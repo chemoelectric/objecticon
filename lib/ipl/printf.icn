@@ -86,9 +86,11 @@ procedure printf(format, args[])
 end
 
 package procedure intparam(args)
-   return if ="*" then
-      integer(get(args))
-   else
+   local a
+   return if ="*" then {
+      a := get(args)
+      integer(a) | runerr(101, a)
+   } else
       integer(tab(many(&digits)))
 end
 
@@ -106,7 +108,7 @@ package procedure one(args)
    if ="." then prec := intparam(args)
    conv := move(1) | ""
 
-   if any('dsxXoitreb', conv) then {
+   if any('dsxXobitre', conv) then {
       # Formats that take an argument.
       a := get(args)
       case string(conv) of {
@@ -120,16 +122,15 @@ package procedure one(args)
          "t": v := str(to_string(a), prec)
          "r": v := fixnum(a, prec, flag)
          "e": v := eformatstr(a, prec, flag)
-         "n": v := Files.EOL
       }
-   } else if any('nw', conv) then {
+   } else {
       # Formats that don't take an argument.
       case string(conv) of {
          "n": v := str(Files.EOL, prec)
          "w": v := str(&why, prec)
+         default: v := str(conv, prec)
       }
-   } else
-      v := conv
+   }
    if \width & *v < width then
       v := just(v, width, pad)
    return v
@@ -148,13 +149,13 @@ package procedure doprnt(format, args)
 end
 
 package procedure str(x, prec)
-   x := text(x) | return image(x)
+   x := text(x) | runerr(129, x)
    return x[1:(\prec+1)|0]
 end
 
 package procedure intstr(x, prec, flag, base)
    local v
-   x := integer(x) | return image(x)
+   x := integer(x) | runerr(101, x)
    v := Format.int_to_string(x, base, prec)
    if any(flag, "+") & x >= 0 then
       v := "+" || v
@@ -163,12 +164,12 @@ end
 
 package procedure fixnum(x, prec, flag)
    /prec := 6
-   x := real(x) | return image(x)
+   x := real(x) | runerr(102, x)
    return Format.numeric_to_string(x, prec, flag)
 end
 
 package procedure decimal(x, prec, flag)
-   x := integer(x) | return image(x)
+   x := integer(x) | runerr(101, x)
    # Limitation: if we have a precision (padded to min prec digits),
    # then we can't have commas.
    return if \prec then
@@ -177,12 +178,10 @@ package procedure decimal(x, prec, flag)
       Format.numeric_to_string(x, 0, flag)
 end
 
-
 # e-format:  [-]m.ddddddE(+|-)xxx
 #
 package procedure eformatstr(x, prec, flag)
    /prec := 6
-   x := real(x) | return image(x)
+   x := real(x) | runerr(102, x)
    return Format.numeric_to_string(x, prec, flag ++ 'e')
 end
-
