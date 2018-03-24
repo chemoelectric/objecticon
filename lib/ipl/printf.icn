@@ -21,7 +21,7 @@
 package ipl.printf
 
 import
-   io(writes, Files),
+   io(stop, writes, Files),
    util(Format),
    lang(to_string)
 
@@ -38,6 +38,11 @@ end
 # Set `&why` from a `printf` format, and fail.
 procedure whyf(format, args[])
    &why := doprnt(format, args)
+end
+
+# Call `stop()` with the result of a `printf` format.
+procedure stopf(format, args[])
+   stop(doprnt(format, args))
 end
 
 # Provides C-style printf formatting.  The specifier format is
