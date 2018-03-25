@@ -16,7 +16,7 @@
  * Prototypes.
  */
 
-static	void	trans1		(char *filename);
+static	void	trans1		(char *filename, struct pp_def *pp_defs);
 
 int tfatals;			/* number of fatal errors in file */
 int twarnings;			/* number of warning errors in file */
@@ -111,7 +111,7 @@ void twarn_at(struct node *n, char *fmt, ...)
 /*
  * translate the parameters contained in the list, returning an error/warning count
  */
-void trans(struct file_param *trans_files, int *fatals, int *warnings)
+void trans(struct file_param *trans_files, struct pp_def *pp_defs, int *fatals, int *warnings)
 {
     struct file_param *p;
 
@@ -120,7 +120,7 @@ void trans(struct file_param *trans_files, int *fatals, int *warnings)
     awarnings = afatals = 0;
 
     for (p = trans_files; p; p = p->next) {
-        trans1(p->name);	/* translate each file in turn */
+        trans1(p->name, pp_defs);	/* translate each file in turn */
         afatals += tfatals;
         awarnings += twarnings;
     }
@@ -190,7 +190,7 @@ static void check_unused(void)
 /*
  * translate one file.
  */
-static void trans1(char *filename)
+static void trans1(char *filename, struct pp_def *pp_defs)
 {
     char *outname;              /* output file name */
 
@@ -210,6 +210,11 @@ static void trans1(char *filename)
 
     if (!ppinit(filename, m4pre))
         equit("cannot open %s",filename);
+
+    while (pp_defs) {
+        ppdef(pp_defs->key, pp_defs->value);
+        pp_defs = pp_defs->next;
+    }
 
     if (pponly) {
         ppecho();
