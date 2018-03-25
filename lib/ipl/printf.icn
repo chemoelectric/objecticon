@@ -25,17 +25,17 @@ import
    util(Format),
    lang(to_string)
 
-# See `printf`
+# Returns a `printf` format as a string result.
 procedure sprintf(format, args[])
    return doprnt(format, args)
 end
 
-# See `printf`
+# Outputs a `printf` format to the given file.
 procedure fprintf(file, format, args[])
    return writes(file, doprnt(format, args))
 end
 
-# Like `printf`, but outputs to stderr.
+# Outputs a `printf` format to stderr.
 procedure eprintf(format, args[])
    return ewrites(doprnt(format, args))
 end
@@ -50,12 +50,10 @@ procedure stopf(format, args[])
    stop(doprnt(format, args))
 end
 
-# Like `printf`, but the arguments are provided as a list.
-procedure lprintf(format, args)
-   return doprnt(format, copy(args))
-end
-
-# Provides C-style printf formatting.  The specifier format is
+#
+# Outputs a C-style `printf` format to stdout.
+#
+# The specifier format is
 # ~
 #     %<flags><width>.<precision><char>
 # ~
