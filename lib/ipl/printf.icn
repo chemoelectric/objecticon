@@ -50,6 +50,11 @@ procedure stopf(format, args[])
    stop(doprnt(format, args))
 end
 
+# Like `printf`, but the arguments are provided as a list.
+procedure lprintf(format, args)
+   return doprnt(format, copy(args))
+end
+
 # Provides C-style printf formatting.  The specifier format is
 # ~
 #     %<flags><width>.<precision><char>
