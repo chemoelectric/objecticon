@@ -33,7 +33,7 @@ procedure usage(opts)
 end
 
 procedure main(a)
-   local s, o, symbol_table
+   local s, o, symbol_table, pp_defs
 
    opts := options(a, [Opt("groff",, "Generate groff output"),
                        Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
@@ -41,10 +41,12 @@ procedure main(a)
                        Opt("a",, "Generate documentation for all packages"),
                        Opt("d",, "Generate scanning event debug output"),
                        Opt("r",, "Restrict output to specified packages"),
+                       Opt("D",string,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
                        Opt("ci",, "Assume case-insensitive file system")],
                        usage)
 
-   symbol_table := SymbolTable()
+   pp_defs := Preprocessor.parse_defs(\opts["D"])
+   symbol_table := SymbolTable().set_pp_defs(pp_defs)
    if \opts["d"] then
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
    if \opts["a"] then {

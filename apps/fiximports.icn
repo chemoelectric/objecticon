@@ -1,6 +1,6 @@
 import parser, ipl.options, io, util
 
-global symbol_table, scanned_file, need, opts
+global symbol_table, scanned_file, need, pp_defs, opts
 
 procedure note(s)
    write("Scanning ", s)
@@ -16,10 +16,12 @@ end
 procedure main(a)
    local s
    opts := options(a, [Opt("d",, "Generate symbol table scanning progress messages"),
+                       Opt("D",string,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
                        Opt("c",, "Output to standard output, without changing the source file")],
                        usage)
 
-   symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U)
+   pp_defs := Preprocessor.parse_defs(\opts["D"])
+   symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U).set_pp_defs(pp_defs)
    if \opts["d"] then
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
 
@@ -39,7 +41,7 @@ procedure do_one(s)
    else {
       # We scanned the ucode file, so we must parse the source file now.
       par := Parser()
-      prog := par.parse_file(s) | stop("Couldn't parse ", s, ": ", &why)
+      prog := par.parse_file(s, pp_defs) | stop("Couldn't parse ", s, ": ", &why)
    }
    need := table()
    every o := prog.get_body().gen() do {
