@@ -419,6 +419,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
 
    public get_authentication(httpc, dom, realm)
       local d
+      exit_menu_mode()
       d := AuthenticationDialog(dom, realm)
       d.show_modal(self)
       return \d.result
