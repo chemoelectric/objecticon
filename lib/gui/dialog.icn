@@ -211,15 +211,19 @@ class Dialog(Component)
          e := if /s then Event.RESUMED else Event.INTERRUPTED
          every c := Seq{traverse_postorder()} do
             c.fire(e)
-         if \s then {
-            point_chain := point_chain_source := &null
-            clear(crossing)
-            clear(held)
-            exit_dnd()
-            change_pointer()
-         }
       }
       return self
+   end
+
+   public on_interrupted()
+      if popup_manager === self then {
+         exit_menu_mode()
+         point_chain := point_chain_source := &null
+         clear(crossing)
+         clear(held)
+         exit_dnd()
+         change_pointer()
+      }
    end
 
    # Restore the window, meaning try to de-iconify it, raise it and
@@ -954,7 +958,6 @@ class Dialog(Component)
    # Initialize the tooltip state and ticker.
    # 
    private tooltip_init()
-      self.tooltip_state := 0
       if popup_manager === self then
          tooltip_ticker.start()
    end
@@ -964,9 +967,7 @@ class Dialog(Component)
    # 
    private tooltip_dispose()
       self.tooltip_ticker.stop()
-      if self.tooltip_state = 2 then
-         hide_tooltip()
-      self.tooltip_last_obj := self.tooltip_last_tip := self.tooltip_last_event := &null
+      reset_tooltip_state()
    end
 
    #
@@ -1045,6 +1046,16 @@ class Dialog(Component)
    end
 
    #
+   # Reset the tooltip state, hiding the tooltip if necessary.
+   #
+   private reset_tooltip_state()
+      if tooltip_state = 2 then
+         hide_tooltip()
+      tooltip_state := 0
+      tooltip_last_obj := tooltip_last_tip := tooltip_last_event := &null
+   end
+
+   #
    # Tooltip processing on a tick.
    # 
    private process_tooltip_tick()
@@ -1052,11 +1063,10 @@ class Dialog(Component)
       repeat {
          (popup_manager === self) | syserr("shouldn't have a tooltip ticker in a popup")
 
-         if \is_blocked_flag then {
-            if tooltip_state = 2 then
-               hide_tooltip()
-            tooltip_state := 0
-         } else {
+         if \is_blocked_flag then
+            # See notes as to why this is better than just hiding & setting state to 0.
+            reset_tooltip_state()
+         else {
             t := Prog.get_runtime_millis()
             case self.tooltip_state of {
                1 : 
@@ -1088,8 +1098,10 @@ class Dialog(Component)
    private process_tooltip_event(e)
       local obj, c, tip, t
 
-      if \is_blocked_flag | 
-            not((e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code))) then {
+      # We should in fact not get events in the blocked state.
+      if \is_blocked_flag then
+         fail
+      if not((e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code))) then {
          if tooltip_state = 2 then
             hide_tooltip()
          tooltip_state := 0
@@ -1516,7 +1528,9 @@ class Dialog(Component)
       self.child_dialogs := set()
       self.menu_mode_stack := []
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
+      self.tooltip_state := 0
       self.popup_manager := self
+      connect(on_interrupted, Event.INTERRUPTED)
       return
    end
 end
