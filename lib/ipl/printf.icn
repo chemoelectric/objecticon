@@ -21,22 +21,39 @@
 package ipl.printf
 
 import
-   io(writes, Files),
+   io(stop, ewrites, writes, Files),
    util(Format),
    lang(to_string)
 
-# See `printf`
+# Returns a `printf` format as a string result.
 procedure sprintf(format, args[])
    return doprnt(format, args)
 end
 
-# See `printf`
+# Outputs a `printf` format to the given file.
 procedure fprintf(file, format, args[])
    return writes(file, doprnt(format, args))
 end
 
+# Outputs a `printf` format to stderr.
+procedure eprintf(format, args[])
+   return ewrites(doprnt(format, args))
+end
 
-# Provides C-style printf formatting.  The specifier format is
+# Set `&why` from a `printf` format, and fail.
+procedure whyf(format, args[])
+   &why := doprnt(format, args)
+end
+
+# Call `stop()` with the result of a `printf` format.
+procedure stopf(format, args[])
+   stop(doprnt(format, args))
+end
+
+#
+# Outputs a C-style `printf` format to stdout.
+#
+# The specifier format is
 # ~
 #     %<flags><width>.<precision><char>
 # ~
@@ -75,15 +92,18 @@ end
 # *   %r  real decimal
 # *   %e  real in exponential format
 # *   %n  platform-independent end-of-line string
+# *   %w  the value of &why
 #
 procedure printf(format, args[])
    return writes(doprnt(format, args))
 end
 
 package procedure intparam(args)
-   return if ="*" then
-      integer(get(args))
-   else
+   local a
+   return if ="*" then {
+      a := get(args)
+      integer(a) | runerr(101, a)
+   } else
       integer(tab(many(&digits)))
 end
 
@@ -101,10 +121,8 @@ package procedure one(args)
    if ="." then prec := intparam(args)
    conv := move(1) | ""
 
-   #io.write("just: ",image(just),", width: ", width, ", prec: ",
-   # prec, ", conv: ", conv)
-
-   if any('dsxXoitrebn', conv) then {
+   if any('dsxXobitre', conv) then {
+      # Formats that take an argument.
       a := get(args)
       case string(conv) of {
          "d": v := decimal(a, prec, flag)
@@ -117,10 +135,15 @@ package procedure one(args)
          "t": v := str(to_string(a), prec)
          "r": v := fixnum(a, prec, flag)
          "e": v := eformatstr(a, prec, flag)
-         "n": v := Files.EOL
       }
-   } else
-      v := conv
+   } else {
+      # Formats that don't take an argument.
+      case string(conv) of {
+         "n": v := str(Files.EOL, prec)
+         "w": v := str(&why, prec)
+         default: v := str(conv, prec)
+      }
+   }
    if \width & *v < width then
       v := just(v, width, pad)
    return v
@@ -139,13 +162,13 @@ package procedure doprnt(format, args)
 end
 
 package procedure str(x, prec)
-   x := text(x) | return image(x)
+   x := text(x) | runerr(129, x)
    return x[1:(\prec+1)|0]
 end
 
 package procedure intstr(x, prec, flag, base)
    local v
-   x := integer(x) | return image(x)
+   x := integer(x) | runerr(101, x)
    v := Format.int_to_string(x, base, prec)
    if any(flag, "+") & x >= 0 then
       v := "+" || v
@@ -154,12 +177,12 @@ end
 
 package procedure fixnum(x, prec, flag)
    /prec := 6
-   x := real(x) | return image(x)
+   x := real(x) | runerr(102, x)
    return Format.numeric_to_string(x, prec, flag)
 end
 
 package procedure decimal(x, prec, flag)
-   x := integer(x) | return image(x)
+   x := integer(x) | runerr(101, x)
    # Limitation: if we have a precision (padded to min prec digits),
    # then we can't have commas.
    return if \prec then
@@ -168,12 +191,10 @@ package procedure decimal(x, prec, flag)
       Format.numeric_to_string(x, 0, flag)
 end
 
-
 # e-format:  [-]m.ddddddE(+|-)xxx
 #
 package procedure eformatstr(x, prec, flag)
    /prec := 6
-   x := real(x) | return image(x)
+   x := real(x) | runerr(102, x)
    return Format.numeric_to_string(x, prec, flag ++ 'e')
 end
-

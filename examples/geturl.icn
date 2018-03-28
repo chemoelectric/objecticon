@@ -94,19 +94,29 @@ class Monitor()
 end
 
 class HttpRequestHelperImpl(HttpRequestHelper)
+   private auth
+
    public get_authentication(httpc, dom, realm)
+      local t
+      if t := \auth then {
+         # Only succeed once, otherwise httpclient will loop forever retrying
+         auth := &null
+         return t
+      }
+   end
+
+   public modify_redirect(httpc, hreq, hresp)
+   end
+
+   public new()
       local u, p
       \opts["a"] ? {
          u := tab(upto(':')) | help_stop("Bad -a option")
          move(1)
          p := tab(0)
-         # Only succeed once, otherwise httpclient will loop forever retrying
-         delete(opts, "a")
-         return Authentication(u, p)
+         auth := Authentication(u, p)
       }
-   end
-
-   public modify_redirect(httpc, hreq, hresp)
+      return
    end
 end
 
@@ -277,12 +287,12 @@ end
 
 procedure process_one(a)
    local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
-      input_stream, content_type, t, k, v, p, f, n
+      input_stream, content_type, t, k, v, p, f, n, l
 
    total +:= 1
 
-   url := URL(a) | stop("Invalid url: " || a)
-   url.scheme == ("http"|"https") | stop("Unknown url scheme: " || url.scheme)
+   url := URL(a) | stop("Invalid url: ", a)
+   url.scheme == ("http"|"https") | stop("Unknown url scheme: ", url.scheme)
 
    if /opts["head"] & /opts["c"] then {
       get_out(url.get_path_last())
@@ -303,17 +313,16 @@ procedure process_one(a)
 
    every s := !\opts["x"] do {
       s ? {
-         if k := tab(upto(':')) then {
-            move(1)
-            tab(many(' \t'))
-            v := tab(0)
-            hr.add_header(k, v)
-         }
+         k := tab(upto(':')) | help_stop("Bad -x option")
+         move(1)
+         tab(many(' \t'))
+         v := tab(0)
+         hr.add_header(k, v)
       }
    }
 
-   if \opts["n"] then {
-      p := Files.stat(opts["n"]) | stop("Couldn't stat ", opts["n"], ": ", &why)
+   if n := \opts["n"] then {
+      p := Files.stat(n) | stop("Couldn't stat ", n, ": ", &why)
       hr.set_range(p.size)
    }
 
@@ -328,15 +337,14 @@ procedure process_one(a)
       hr.set_content_type(content_type)
    }
 
-   if \opts["form"] then {
+   if l := \opts["form"] then {
       t := table()
-      every s := !opts["form"] do {
+      every s := !l do {
          s ? {
-            if k := tab(upto('=')) then {
-               move(1)
-               v := tab(0)
-               t[k] := v
-            }
+            k := tab(upto('=')) | help_stop("Bad -form option")
+            move(1)
+            v := tab(0)
+            t[k] := v
          }
       }
       hr.set_html_form_data(t)
@@ -422,7 +430,6 @@ procedure process_one(a)
    }
 end
 
-
 procedure get_out(fname)
    if \opts["n"] then {
       out := opts["n"]
@@ -445,7 +452,6 @@ procedure get_out(fname)
       out := fname
 end
 
-
 procedure check_skip()
    /opts["n"] | fail
    /opts["over"] | fail
@@ -456,7 +462,6 @@ procedure check_skip()
    skipped +:= 1
    return
 end
-
 
 procedure expand_arg(s)
    local s1, s2, s3

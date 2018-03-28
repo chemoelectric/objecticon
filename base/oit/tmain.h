@@ -8,6 +8,12 @@ struct file_param {
     struct file_param *next;
 };
 
+struct pp_def {
+    char *key;
+    char *value;
+    struct pp_def *next;
+};
+
 extern int m4pre;	/* -m: use m4 preprocessor? [UNIX] */
 extern int trace;	/* -t: initial &trace value */
 extern int pponly;	/* -E: preprocess only */

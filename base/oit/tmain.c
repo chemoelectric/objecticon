@@ -78,6 +78,8 @@ struct file_param *trans_files = 0, *last_trans_file = 0,
                   *link_files = 0, *last_link_file = 0,
                   *remove_files = 0, *last_remove_file = 0;
 
+struct pp_def *pp_defs = 0, *last_pp_def = 0;
+
 static void add_trans_file(char *s)
 {
     struct file_param *p = Alloc(struct file_param);
@@ -98,6 +100,25 @@ static void add_link_file(char *s)
         last_link_file = p;
     } else
         link_files = last_link_file = p;
+}
+
+static void add_pp_def(char *s)
+{
+    char *eq;
+    struct pp_def *p = Alloc(struct pp_def);
+    eq = strchr(s, '=');
+    if (eq) {
+        p->key = intern_n(s, eq - s);
+        p->value = intern(eq + 1);
+    } else {
+        p->key = intern(s);
+        p->value = NULL;
+    }
+    if (last_pp_def) {
+        last_pp_def->next = p;
+        last_pp_def = p;
+    } else
+        pp_defs = last_pp_def = p;
 }
 
 void add_remove_file(char *s)
@@ -178,8 +199,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBfmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i]"	/* omit -e from doc */
-    while ((c = oi_getopt(argc,argv, "?cBfmno:sv:ELIZTVl:O:")) != EOF) {
+#define Usage "[-cBfmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v]"	/* omit -e from doc */
+    while ((c = oi_getopt(argc,argv, "?cBfmno:sv:ELIZTVl:O:D:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -216,6 +237,9 @@ int main(int argc, char **argv)
                 break;
 
             case 'm':			/* -m: preprocess using m4(1) [UNIX] */
+#if !UNIX
+                quit("-m only available on UNIX");
+#endif
                 m4pre = 1;
                 break;
 
@@ -244,6 +268,10 @@ int main(int argc, char **argv)
 
             case 'Z':
                 Zflag = 1;
+                break;
+
+            case 'D':
+                add_pp_def(oi_optarg);
                 break;
 
             case '?':
@@ -288,7 +316,7 @@ int main(int argc, char **argv)
     if (trans_files) {
         if (!pponly)
             report("Translating:");
-        trans(trans_files, &errors, &warnings);
+        trans(trans_files, pp_defs, &errors, &warnings);
         report_errors(1);
         if (errors > 0)	{		/* exit if errors seen */
             remove_intermediate_files();
@@ -561,32 +589,33 @@ static void help_stop(char *msg)
 static void usage()
 {
     fprintf(stderr,"Usage: %s %s file ... [-x args]\n", progname, Usage);
-    fprintf(stderr,"-n      Only translate a .icn to a .u file if it is out-of-date\n"
-                   "-B      Bundle the oix executable in the output\n"
-                   "-m      Preprocess using m4\n"
-                   "-Z      Use zlib compression on the icode file\n"
-                   "-c      Stop after producing ucode files.\n"
-                   "-f      Enable full string invocation by preserving unreferenced globals during linking\n"
-                   "        (equivalent to 'invocable all' in a source file).\n"
-                   "-o file Write the executable program to the specified file.\n"
-                   "-s      Suppress informative messages during translation and linking (equivalent to\n"
-                   "        '-v 0')\n"
-                   "-O i    Optimization level during linking. 1 means do optimizations, 0 means don't\n"
-                   "        (default is 1).\n"
-                   "-v i    Set verbosity level of informative messages to i.\n"
-                   "-l i    Configure the amount of source location info to store in the icode. 0 means none,\n"
-                   "        1 means store location info for procedure call and stack tracebacks (the default,\n"
-                   "        1, adds about 10%% more space compared to option 0) and 2 means additionally\n"
-                   "        store location info of all symbols (costs another 5%% of space).\n"
-                   "-L      During linking, output a '.ux' file giving information about the icode file.\n"
-                   "        This is only useful if you are interested in the virtual machine instructions used\n"
-                   "        by oix.\n"
-                   "-I      During code generation, output a dump of the intermediate code, both in its raw\n"
-                   "        and optimized state.  This is only useful if you are interested in the internals\n"
-                   "        of oit.\n"
-                   "-E      Direct the results of preprocessing to standard output and inhibit further\n"
-                   "        processing.\n"
-                   "-V      Announce version and configuration information on standard error.\n");
+    fprintf(stderr,"-n        Only translate a .icn to a .u file if it is out-of-date\n"
+                   "-B        Bundle the oix executable in the output\n"
+                   "-m        Preprocess using m4\n"
+                   "-Z        Use zlib compression on the icode file\n"
+                   "-c        Stop after producing ucode files.\n"
+                   "-f        Enable full string invocation by preserving unreferenced globals during linking\n"
+                   "          (equivalent to 'invocable all' in a source file).\n"
+                   "-o file   Write the executable program to the specified file.\n"
+                   "-s        Suppress informative messages during translation and linking (equivalent to\n"
+                   "          '-v 0')\n"
+                   "-O i      Optimization level during linking. 1 means do optimizations, 0 means don't\n"
+                   "          (default is 1).\n"
+                   "-v i      Set verbosity level of informative messages to i.\n"
+                   "-l i      Configure the amount of source location info to store in the icode. 0 means none,\n"
+                   "          1 means store location info for procedure call and stack tracebacks (the default,\n"
+                   "          1, adds about 10%% more space compared to option 0) and 2 means additionally\n"
+                   "          store location info of all symbols (costs another 5%% of space).\n"
+                   "-L        During linking, output a '.ux' file giving information about the icode file.\n"
+                   "          This is only useful if you are interested in the virtual machine instructions used\n"
+                   "          by oix.\n"
+                   "-I        During code generation, output a dump of the intermediate code, both in its raw\n"
+                   "          and optimized state.  This is only useful if you are interested in the internals\n"
+                   "          of oit.\n"
+                   "-D k[=v]  Define or clear a preprocessor symbol.\n"
+                   "-E        Direct the results of preprocessing to standard output and inhibit further\n"
+                   "          processing.\n"
+                   "-V        Announce version and configuration information on standard error.\n");
     exit(EXIT_SUCCESS);
 }
 

@@ -356,7 +356,8 @@ class SymbolTable(Connectable)
       symbol_table, 
       scanned_files,
       scanned_packages,
-      file_mode
+      file_mode,
+      pp_defs
 
    public static const
       SCANNING_EVENT,
@@ -380,7 +381,7 @@ class SymbolTable(Connectable)
 
    private parse(f)
       local prog
-      prog := pparser.parse_file(f) | fail
+      prog := pparser.parse_file(f, pp_defs) | fail
       return prog
    end
 
@@ -771,6 +772,11 @@ class SymbolTable(Connectable)
 
    public set_file_mode(s)
       self.file_mode := s
+      return self
+   end
+
+   public set_pp_defs(t)
+      self.pp_defs := t
       return self
    end
 

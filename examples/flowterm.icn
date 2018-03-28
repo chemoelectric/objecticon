@@ -1145,9 +1145,9 @@ class Terminal(TabItem, VtUI)
       added_favourites
 
    private static init()
-      SHOW_NAME_ONLY := 1
-      SHOW_DATE := 2
-      SHOW_SIZE := 3 
+      SHOW_NAME_ONLY := "name only"
+      SHOW_DATE := "date"
+      SHOW_SIZE := "size"
       DEFAULT_HISTORY_SIZE := env_int("OI_FLOWTERM_DEFAULT_HISTORY_SIZE", 1) | 100
       DEFAULT_LIST_WIDTH := env_real("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | 300
       DEFAULT_LIST_HEIGHT := env_real("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | 300
@@ -1396,7 +1396,7 @@ class Terminal(TabItem, VtUI)
          "show-name-only" : on_show_name_only()
          "show-date" : {
             if /param then {
-               if annotate_opt = SHOW_DATE then
+               if annotate_opt === SHOW_DATE then
                   on_show_name_only()
                else
                   on_show_date()
@@ -1410,7 +1410,7 @@ class Terminal(TabItem, VtUI)
          }
          "show-size" : {
             if /param then {
-               if annotate_opt = SHOW_SIZE then
+               if annotate_opt === SHOW_SIZE then
                   on_show_name_only()
                else
                   on_show_size()
@@ -2391,19 +2391,19 @@ $endif
    end
 
    private on_show_name_only(e)
-      annotate_opt ~=:= SHOW_NAME_ONLY | fail
+      annotate_opt ~===:= SHOW_NAME_ONLY | fail
       annotate_cwd_list()
       columns.data_changed()
    end
 
    private on_show_date(e)
-      annotate_opt ~=:= SHOW_DATE | fail
+      annotate_opt ~===:= SHOW_DATE | fail
       annotate_cwd_list()
       columns.data_changed()
    end
 
    private on_show_size(e)
-      annotate_opt ~=:= SHOW_SIZE | fail
+      annotate_opt ~===:= SHOW_SIZE | fail
       annotate_cwd_list()
       columns.data_changed()
    end
@@ -2450,15 +2450,15 @@ $endif
    public create_columns_context_menu()
       local m
       m := Menu()
-      if annotate_opt ~= SHOW_NAME_ONLY then
+      if annotate_opt ~=== SHOW_NAME_ONLY then
          m.add(TextMenuItem().
             set_label("Name only").
             connect(on_show_name_only , Event.ACTION))
-      if annotate_opt ~= SHOW_DATE then
+      if annotate_opt ~=== SHOW_DATE then
          m.add(TextMenuItem().
             set_label("Show date").
             connect(on_show_date, Event.ACTION))
-      if annotate_opt ~= SHOW_SIZE then
+      if annotate_opt ~=== SHOW_SIZE then
          m.add(TextMenuItem().
             set_label("Show size").
             connect(on_show_size, Event.ACTION))

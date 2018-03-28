@@ -10,7 +10,7 @@ class Preprocessor(Connectable)
       include_set,print_filename,
       encoding,print_encoding
 
-   public static const 
+   private static const 
       DEFAULT_SYMBOLS
 
    private static init()
@@ -94,7 +94,15 @@ class Preprocessor(Connectable)
    # a_Initializes the preprocessor "object".
    #
    private preproc_new(fname,predefined_syms)
-      sym_table := \predefined_syms | copy(DEFAULT_SYMBOLS)
+      local k, v
+      sym_table := copy(DEFAULT_SYMBOLS)
+      every k := key(\predefined_syms) do {
+         v := predefined_syms[k]
+         if /v then
+            delete(sym_table, k)
+         else
+            insert(sym_table, k, string(v)) | runerr(103, v)
+      }
       if_stack := []
       file_stack := []
       include_set := set(fname)
@@ -149,7 +157,7 @@ class Preprocessor(Connectable)
                if sym := scan_word() &
                   value := scan_define_value() then 
                {
-                  if \ (old := sym_table[sym]) ~=== value then {
+                  if (old := member(sym_table, sym)) ~=== value then {
                      err("redefinition of " || sym || " = " ||
                                    old)
                   } else {
@@ -182,7 +190,7 @@ class Preprocessor(Connectable)
                                           FilePath(filename).parent().str()) then
                   {
                      if value := image(Files.file_to_string(t)) then {
-                        if \ (old := sym_table[sym]) ~=== value then {
+                        if (old := member(sym_table, sym)) ~=== value then {
                            err("redefinition of " || sym || " = " ||
                                old)
                         } else {
@@ -208,7 +216,7 @@ class Preprocessor(Connectable)
                                           FilePath(filename).parent().str()) then
                   {
                      if value := "u" || image(Files.file_to_string(t)) then {
-                        if \ (old := sym_table[sym]) ~=== value then {
+                        if (old := member(sym_table, sym)) ~=== value then {
                            err("redefinition of " || sym || " = " ||
                                old)
                         } else {
@@ -227,7 +235,7 @@ class Preprocessor(Connectable)
             push(if_stack,if_state)
             if sym := scan_word() & at_end() then {
                if /if_state then {
-                  value := (\sym_table[sym] & &null) | "false"
+                  value := (member(sym_table, sym) & &null) | "false"
                   if match("n",preproc_command,3) then {
                      value := (\value & &null) | "false"
                   }
@@ -256,7 +264,7 @@ class Preprocessor(Connectable)
                   err("no corresponding $if...")
                } else {
                   if \if_state == "false" then {
-                     value := (\sym_table[sym] & &null) | "false"
+                     value := (member(sym_table, sym) & &null) | "false"
                      if match("n",preproc_command,6) then {
                         value := (\value & &null) | "false"
                      }
@@ -447,7 +455,7 @@ class Preprocessor(Connectable)
                      move(-1)
                      p := &pos
                      ident := tab(many(&letters ++ &digits ++ '_'))
-                     if value := \sym_table[ident] then {
+                     if value := member(sym_table, ident) then {
                         if /done_set |
                         {type(done_set) == "string" &
                             done_set := set(done_set)
@@ -598,5 +606,26 @@ class Preprocessor(Connectable)
    private err(msg)
       /msg := "Invalid preprocessor line"
       fire("error", ErrorDetail(FilePath(filename).canonical().standard_case().str(), line, msg))
+   end
+
+   # Helper function to parse a list of strings in the form
+   # "KEY=VALUE" (obtained from command line options), into a table
+   # which can be passed to the preprocessor.
+   #
+   public static parse_defs(l)
+      local s, t, k, v
+      t := table()
+      every s := !l do {
+         s ? {
+            if k := tab(upto('=')) then {
+               move(1)
+               v := tab(0)
+               insert(t, k, v)
+            } else
+               # Insert &null, meaning this key is to be deleted (see above).
+               insert(t, s)
+         }
+      }
+      return t
    end
 end
