@@ -1,5 +1,5 @@
 import
-   http(HttpClient, HttpRequest),
+   http,
    lang(decode_from_file),
    net(URL),
    xml(HtmlParser),
@@ -8,13 +8,41 @@ import
    xdg,
    io
 
-global opts, hc
+global opts, hc, cnv
+
+class HttpRequestHelperImpl(HttpRequestHelper)
+   private auth
+
+   public get_authentication(httpc, dom, realm)
+      local t
+      if t := \auth then {
+         # Only succeed once, otherwise httpclient will loop forever retrying
+         auth := &null
+         return t
+      }
+   end
+
+   public modify_redirect(httpc, hreq, hresp)
+   end
+
+   public new()
+      local u, p
+      \opts["a"] ? {
+         u := tab(upto(':')) | help_stop("Bad -a option")
+         move(1)
+         p := tab(0)
+         auth := Authentication(u, p)
+      }
+      return
+   end
+end
 
 procedure main(args)
    local t, cookies
    opts := options(args, [Opt("a",string, "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("agent",string, "Set user agent field"),
+                          Opt("A",, "Print URLs of any scheme, rather than http, https and file"),
                           Opt("i",, "Search for IMG links"),
                           Opt("b",, "Search for IMG and A links"),
                           Opt("tee",string,"FILE#Redirect retrieved page to FILE"),
@@ -26,6 +54,7 @@ procedure main(args)
                           "Usage: lslinks [URL]... [OPTIONS]\n_
                           List links in URL(s)")
 
+   cnv := if \opts["u"] then ucs else string
    hc := HttpClient()
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
@@ -40,28 +69,20 @@ procedure main(args)
 end
 
 procedure do_one(a)
-   local url, hr, u, p, res, src, parser, doc, sb, f
+   local url, hr, res, src, parser, doc, sb, f, s
    
-   url := URL(a) | stop("Invalid url:" || a)
+   url := URL(cnv(a)) | stop("Invalid url: ", a, ": ", &why)
 
    if f := Files.url_to_file(url) then
       src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
    else {
-      url.scheme == ("http"|"https") | stop("Unknown url scheme: " || url.scheme)
+      url.scheme == ("http" | "https") | stop("Unknown url scheme: " || url.scheme)
       sb := RamStream()
-      hr := HttpRequest().set_output_stream(sb)
-      if \opts["a"] then {
-         opts["a"] ? {
-            u := tab(upto(':')) | help_stop("Bad -a option")
-            move(1)
-            p := tab(0)
-         }
-         hr.set_username(u)
-         hr.set_password(p)
-      }
-
+      hr := HttpRequest().
+         set_url(url).
+         set_output_stream(sb).
+         set_helper(HttpRequestHelperImpl())
       hr.set_referer(\opts["e"])
-      hr.set_url(url)
       res := hc.retrieve(hr) | stop("Couldn't get: ", &why)
 
       src := sb.done()
@@ -69,27 +90,30 @@ procedure do_one(a)
    }
 
    # Optionally save page source
-   if \opts["tee"] then
-      Files.string_to_file(opts["tee"], src) | stop("Couldn't dump file to ", opts["tee"])
+   if s := \opts["tee"] then
+      Files.string_to_file(s, src) | stop("Couldn't dump file to ", s, ": ", &why)
 
-   if \opts["u"] then
-      src := ucs(src) | stop("Couldn't convert to utf-8")
+   src := cnv(src) | stop("Couldn't convert to utf-8")
 
    parser := HtmlParser()
    doc := parser.parse(src)
    if \opts["i"] then
-      do_search(url, src, doc, "IMG", "SRC", "")
+      do_search(url, src, doc, u"IMG", u"SRC", "")
    else if \opts["b"] then {
-      do_search(url, src, doc, "IMG", "SRC", "IMG:")
-      do_search(url, src, doc, "A", "HREF", "A:")
-      do_search(url, src, doc, "AREA", "HREF", "A:")
+      do_search(url, src, doc, u"IMG", u"SRC", "IMG:")
+      do_search(url, src, doc, u"A", u"HREF", "A:")
+      do_search(url, src, doc, u"AREA", u"HREF", "A:")
    } else {
-      do_search(url, src, doc, "A", "HREF", "")
-      do_search(url, src, doc, "AREA", "HREF", "")
+      do_search(url, src, doc, u"A", u"HREF", "")
+      do_search(url, src, doc, u"AREA", u"HREF", "")
    }
 end
 
-procedure print(pfx, url)
+procedure print(pfx, s, base)
+   local url
+   url := URL(s) | base.get_relative(s)
+   \opts["A"] | (url.scheme == ("http" | "https" | "file")) | fail
+
    if FileStream.stdout.is_flowterm_tty() then
       write(pfx, Files.begin_link(url), url.str(), Files.end_link())
    else
@@ -97,17 +121,14 @@ procedure print(pfx, url)
 end
 
 procedure do_search(url, src, doc, tag, attr, pfx)
-   local base, n, s, u
+   local base, n, s
 
    base := url
-   if n := doc.get_root_element().search_tree("BASE") then {
-      base := URL(n.get_attribute("HREF"))
-   }
+   if n := doc.get_root_element().search_tree(cnv(u"BASE")) then
+      base := URL(n.get_attribute(cnv(u"HREF")))
 
-   if \opts["u"] then {
-      tag := ucs(tag)
-      attr := ucs(attr)
-   }
+   tag := cnv(tag)
+   attr := cnv(attr)
       
    if \opts["text"] then {
       map(src) ? {
@@ -115,22 +136,15 @@ procedure do_search(url, src, doc, tag, attr, pfx)
             if tab(past(map(attr) || "=\"")) then {
                if s := tab(upto('\"')) then {
                   s := remove_entities(s)
-                  if u := URL(s) & u.scheme == ("http" | "https" | "file") then
-                     print(pfx, u)
-                  else
-                     print(pfx, base.get_relative(s))
+                  print(pfx, s, base)
                }
             }
          }
       }
    } else {
       every n := doc.get_root_element().search_tree(tag) do {
-         if s := n.get_attribute(attr) then {
-            if u := URL(s) & u.scheme == ("http" | "https" | "file") then
-               print(pfx, u)
-            else
-               print(pfx, base.get_relative(s))
-         }
+         if s := n.get_attribute(attr) then
+            print(pfx, s, base)
       }
    }
 end
