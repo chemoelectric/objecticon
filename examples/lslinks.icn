@@ -1,14 +1,15 @@
 import
    http,
-   lang(decode_from_file),
+   lang(decode_from_file,Text),
    net(URL),
    xml(HtmlParser),
    ipl.scan(past),
    ipl.options,
+   ipl.charset,
    xdg,
    io
 
-global opts, hc, cnv
+global opts, hc
 
 class HttpRequestHelperImpl(HttpRequestHelper)
    private auth
@@ -43,18 +44,17 @@ procedure main(args)
                           Opt("e",string, "URL#Set referer header"),
                           Opt("agent",string, "Set user agent field"),
                           Opt("A",, "Print URLs of any scheme, rather than http, https and file"),
+                          Opt("I",integer, "N#Assume data is encoded in ISO 8859-N"),
                           Opt("i",, "Search for IMG links"),
                           Opt("b",, "Search for IMG and A links"),
                           Opt("tee",string,"FILE#Redirect retrieved page to FILE"),
                           Opt("t",integer,"TIMEOUT#Specify timeout (in seconds) to use"),
                           Opt("r",integer, "RETRIES#Specify number of retries to use"),
                           Opt("k",string, "FILE#Load cookies from file"),
-                          Opt("text",,"Do text search for tags rather than search parsed document"),
-                          Opt("u",,"Retrieved data is in utf-8 format")],
+                          Opt("text",,"Do text search for tags rather than search parsed document")],
                           "Usage: lslinks [URL]... [OPTIONS]\n_
                           List links in URL(s)")
 
-   cnv := if \opts["u"] then ucs else string
    hc := HttpClient()
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
@@ -69,14 +69,15 @@ procedure main(args)
 end
 
 procedure do_one(a)
-   local url, hr, res, src, parser, doc, sb, f, s
-   
-   url := URL(cnv(a)) | stop("Invalid url: ", a, ": ", &why)
+   local url, hr, res, src, parser, doc, sb, f, s, i
+
+   a := ucs(a) | stop("Argument not utf-8")
+   url := URL(a) | stop("Invalid url: ", a, ": ", &why)
 
    if f := Files.url_to_file(url) then
       src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
    else {
-      url.scheme == ("http" | "https") | stop("Unknown url scheme: " || url.scheme)
+      url.scheme == (u"http" | u"https") | stop("Unknown url scheme: " || url.scheme)
       sb := RamStream()
       hr := HttpRequest().
          set_url(url).
@@ -93,7 +94,10 @@ procedure do_one(a)
    if s := \opts["tee"] then
       Files.string_to_file(s, src) | stop("Couldn't dump file to ", s, ": ", &why)
 
-   src := cnv(src) | stop("Couldn't convert to utf-8")
+   src := if i := \opts["I"] then
+      ISO8859.to_ucs(src, i) | stop("Invalid ISO 8859 number")
+   else
+      Text.liberal_ucs(src)
 
    parser := HtmlParser()
    doc := parser.parse(src)
@@ -112,7 +116,7 @@ end
 procedure print(pfx, s, base)
    local url
    url := URL(s) | base.get_relative(s)
-   \opts["A"] | (url.scheme == ("http" | "https" | "file")) | fail
+   \opts["A"] | (url.scheme == (u"http" | u"https" | u"file")) | fail
 
    if FileStream.stdout.is_flowterm_tty() then
       write(pfx, Files.begin_link(url), url.str(), Files.end_link())
@@ -124,16 +128,13 @@ procedure do_search(url, src, doc, tag, attr, pfx)
    local base, n, s
 
    base := url
-   if n := doc.get_root_element().search_tree(cnv(u"BASE")) then
-      base := URL(n.get_attribute(cnv(u"HREF")))
+   if n := doc.get_root_element().search_tree(u"BASE") then
+      base := URL(n.get_attribute(u"HREF"))
 
-   tag := cnv(tag)
-   attr := cnv(attr)
-      
    if \opts["text"] then {
       map(src) ? {
-         while tab(past("<" || map(tag) || " ")) do {
-            if tab(past(map(attr) || "=\"")) then {
+         while tab(past(u"<" || map(tag) || u" ")) do {
+            if tab(past(map(attr) || u"=\"")) then {
                if s := tab(upto('\"')) then {
                   s := remove_entities(s)
                   print(pfx, s, base)
@@ -160,7 +161,7 @@ procedure parse_entity()
       } else
          integer(tab(many(&digits)))
    } else
-   member(HtmlParser.ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
+      member(HtmlParser.ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
    =u";" | fail
    return i
 end
@@ -177,10 +178,7 @@ procedure remove_entities(s)
          break
       i := &pos
       res ||:= if j := parse_entity() then {
-         if \opts["u"] then
-            uchar(j | 63)
-         else
-            char(j | 63)
+         uchar(j | 63)
       } else {
          &pos := i
          move(1)
