@@ -1269,7 +1269,7 @@ class Terminal(TabItem, VtUI)
          }
          "font" : {
             check_param(s, param) | fail
-            output.set_vt_font(param) | return error("invalid parameter to font: " || &why)
+            output.set_vt_font(param) | return error("Invalid parameter to font: " || &why)
          }
          "font-size" : {
             check_live(s) | fail
@@ -1286,23 +1286,23 @@ class Terminal(TabItem, VtUI)
          }
          "reset-keys" : output.reset_custom_keys()
          "reset-menus" : do_reset_custom_menus()
-         "fg": output.set_normal_fg(param) | return error("invalid parameter to fg: " || &why)
-         "bg": output.set_normal_bg(param) | return error("invalid parameter to bg: " || &why)
-         "reverse-fg": output.set_reverse_fg(param) | return error("invalid parameter to reverse-fg: " || &why)
-         "reverse-bg": output.set_reverse_bg(param) | return error("invalid parameter to reverse-bg: " || &why)
+         "fg": output.set_normal_fg(param) | return error("Invalid parameter to fg: " || &why)
+         "bg": output.set_normal_bg(param) | return error("Invalid parameter to bg: " || &why)
+         "reverse-fg": output.set_reverse_fg(param) | return error("Invalid parameter to reverse-fg: " || &why)
+         "reverse-bg": output.set_reverse_bg(param) | return error("Invalid parameter to reverse-bg: " || &why)
          "scroll": {
             /param := Vt.DEFAULT_HISTORY_SIZE
-            param := (0 <= integer(param)) | return error("integer >= 0 expected to scroll")
+            param := (0 <= integer(param)) | return error("Integer >= 0 expected to scroll")
             output.set_history_size(param)
          }
          "list-width": {
             /param := DEFAULT_LIST_WIDTH
-            param := (0 <= integer(param)) | return error("integer >= 0 expected to list-width")
+            param := (0 <= integer(param)) | return error("Integer >= 0 expected to list-width")
             set_list_width(scale(param))
          }
          "list-height": {
             /param := DEFAULT_LIST_HEIGHT
-            param := (0 <= integer(param)) | return error("integer >= 0 expected to list-height")
+            param := (0 <= integer(param)) | return error("Integer >= 0 expected to list-height")
             set_list_height(scale(param))
          }
          "auto-close" : {
@@ -1462,7 +1462,7 @@ class Terminal(TabItem, VtUI)
          }
          "history": {
             /param := DEFAULT_HISTORY_SIZE
-            param := (0 < integer(param)) | return error("integer > 0 expected to history")
+            param := (0 < integer(param)) | return error("Integer > 0 expected to history")
             history_size := param
          }
          "search" : {
@@ -1502,7 +1502,7 @@ class Terminal(TabItem, VtUI)
          "url" : {
             check_live(s) | fail
             check_param(s, param) | fail
-            param := URL(param) | return error("invalid url: " || &why)
+            param := URL(param) | return error("Invalid url: " || &why)
             open_link(param)
          }
          "copy-cwd": {
@@ -1597,7 +1597,7 @@ class Terminal(TabItem, VtUI)
             if /param then
                parent_dialog.menu_bar.set_which_highlight(parent_dialog.menu_bar.menus[1])
             else {
-               param := parent_dialog.menu_bar.menus[integer(param)] | return error("valid menu index expected for open-menu")
+               param := parent_dialog.menu_bar.menus[integer(param)] | return error("Valid menu index expected for open-menu")
                parent_dialog.menu_bar.set_which_open(param)
             }
          }
@@ -1629,7 +1629,7 @@ class Terminal(TabItem, VtUI)
 
    private do_change_vt_font_size(s)
       local n
-      n := real(s) | return error("real number expected to font-size")
+      n := real(s) | return error("Real number expected to font-size")
       if any('+\-', s) then
          n +:= output.font_size
       n <:= 1.0
@@ -1684,15 +1684,15 @@ class Terminal(TabItem, VtUI)
    private do_custom_key(param)
       local code, bits, mask, verb
       param ? {
-         code := parse_key(tab((upto(',') | 0)\1)) | return error("invalid key identifier")
+         code := parse_key(tab((upto(',') | 0)\1)) | return error("Invalid key identifier")
          if pos(0) then {
             # Remove all bindings for code.
             output.remove_custom_key(code)
          } else {
             move(1)
-            bits := Vt.string_to_key_mask(tab(upto(',')\1)) | return error("missing or invalid bits number")
+            bits := Vt.string_to_key_mask(tab(upto(',')\1)) | return error("Missing or invalid bits number")
             move(1)
-            mask := Vt.string_to_key_mask(tab((upto(',') | 0)\1)) | return error("invalid mask number")
+            mask := Vt.string_to_key_mask(tab((upto(',') | 0)\1)) | return error("Invalid mask number")
             if pos(0) then {
                output.remove_custom_key(code, bits, mask)
             } else {
@@ -1702,7 +1702,7 @@ class Terminal(TabItem, VtUI)
                                      bits, 
                                      mask, 
                                      custom_key_func, 
-                                     verb) | return error("failed to add key function: " || &why)
+                                     verb) | return error("Failed to add key function: " || &why)
             }
          }
       }
@@ -2046,7 +2046,7 @@ $endif
    end
 
    private static get_ucs_decoded_path(url)
-      return ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf-8")
+      return ucs(url.get_decoded_path()) | error("URL decoded path not utf-8")
    end
 
    public open_link(url)
@@ -2129,7 +2129,7 @@ $endif
       local s, cd, de, fl
       case string(url.scheme) of {
          "file" : {
-            url.is_local_file() | return error(u"Can't run a file on another host (" || url.host || u")")
+            url.is_local_file() | return error("Can't run a file on another host (" || url.host || ")")
             s := get_ucs_decoded_path(url) | fail
             if Files.is_directory(s) then
                return ImmediateRunner(u"cd " || Format.shell_escape(s))
@@ -2138,7 +2138,7 @@ $endif
                fl := &yes
                suspend DesktopRunner(de, url, s)
             }
-            return if /fl then error(u"No matching desktop entry for this URL")
+            return if /fl then error("No matching desktop entry for this URL")
          }
          "run" : {
             s := get_ucs_decoded_path(url) | fail
@@ -2147,7 +2147,7 @@ $endif
          "launch" : {
             s := get_ucs_decoded_path(url) | fail
             if cd := member(url.extract_cgi_parameters(), "wd")[1] then
-               cd := ucs(cd) | return error(u"CD decoded path not utf-8")
+               cd := ucs(cd) | return error("CD decoded path not utf-8")
             return LaunchRunner(s, cd)
          }
          default : {
@@ -2155,7 +2155,7 @@ $endif
                fl := &yes
                suspend DesktopRunner(de, url, url.ucs())
             }
-            return if /fl then error(u"No desktop entry for url scheme " || url.scheme)
+            return if /fl then error("No desktop entry for url scheme " || url.scheme)
          }
       }
    end

@@ -724,7 +724,7 @@ class DownloadTab(TabItem)
       if u := URL(s) then
          download(u)
       else
-         msg("Not a valid URL")
+         msg("Not a valid URL: " || &why)
    end
 
    private handle_paste_response(target_type, data, e)
@@ -1475,7 +1475,7 @@ class BrowserTab(TabItem, BrowserUI)
       if u := URL(s) then
          browser.goto(u)
       else
-         browser.msg("Invalid url")
+         browser.msg("Invalid url: " || &why)
    end
 
    public msg(s, n)
@@ -1919,7 +1919,8 @@ procedure main(a)
       d.new_tab(settings.home_url)
    else {
       every s := !a do {
-         url := URL(ucs(s)) | stop("Invalid url: ", s)
+         s := ucs(s) | stop("Argument not utf-8")
+         url := URL(s) | stop("Invalid url: ", s, ": ", &why)
          d.new_tab(url)
       }
    }

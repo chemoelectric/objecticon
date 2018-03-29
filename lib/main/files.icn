@@ -1395,9 +1395,9 @@ package class WindowsFileSystem(FileSystem)
    public url_to_file(u)
       local f
       f := u.get_decoded_path()
-      if f[3:5] == ":/" then
-         return map(f[2:0], "/", "\\")
+      return if f[3:5] == ":/" then
+         map(f[2:0], "/", "\\")
       else
-         return "\\\\" || u.get_decoded_host() || map(f, "/", "\\")
+         "\\\\" || u.get_decoded_host() || map(f, "/", "\\")
    end
 end

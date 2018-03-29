@@ -291,8 +291,8 @@ procedure process_one(a)
 
    total +:= 1
 
-   url := URL(a) | stop("Invalid url: ", a)
-   url.scheme == ("http"|"https") | stop("Unknown url scheme: ", url.scheme)
+   url := URL(a) | stop("Invalid url: ", a, ": ", &why)
+   url.scheme == ("http" | "https") | stop("Unknown url scheme: ", url.scheme)
 
    if /opts["head"] & /opts["c"] then {
       get_out(url.get_path_last())
