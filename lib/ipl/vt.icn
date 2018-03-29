@@ -81,7 +81,7 @@ package class KeyTable()
 
    public add(code, bits, mask, val, data)
       local l, e
-      iand(bits, mask) = bits | return error("invalid bits/mask combination")
+      iand(bits, mask) = bits | return error("Invalid bits/mask combination")
       if l := member(t, code) then {
          # Given two entries, e and f, assume i matches both e and f.  Clearly i must
          # be be|bf|z for some other bits z.  Since both match
@@ -94,7 +94,7 @@ package class KeyTable()
          # be&mf = bf&me
          every e := !l do {
             if iand(e.bits, mask) = iand(bits, e.mask) then
-               return error("inconsistent key entry")
+               return error("Inconsistent key entry")
          }
       } else
          insert(t, code, l := [])
@@ -634,7 +634,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local m, m2
       W.set_font(s) | fail
       m := W.text_width("m")
-      (m = W.text_width("i")) | return error("font is not monospace")
+      (m = W.text_width("i")) | return error("Font is not monospace")
       m2 := W.text_width(repl("m", 1000))
       return if m2 = m * 1000 then m else m2 / 1000.0
    end
@@ -643,10 +643,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       local fam, size, width, W, t
       s ? {
          fam := tab(upto(',') | 0)
-         (*fam > 0) | return error("font not in required format")
+         (*fam > 0) | return error("Font not in required format")
          if ="," then {
             t := tab(0)
-            size := real(t) | return error("font not in required format")
+            size := real(t) | return error("Font not in required format")
             if any('+\-', t) then
                size +:= Window.get_default_font_size()
             size <:= 3.0
@@ -1120,7 +1120,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the fg colour to use in reverse mode.
    #
    public set_reverse_fg(c)
-      /c | Window.parse_color(c) | return error("invalid color")
+      /c | Window.parse_color(c) | return error("Invalid color")
       if reverse_fg ~===:= c then {
          if is_live() then
             view.reset()
@@ -1132,7 +1132,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the bg colour to use in reverse mode.
    #
    public set_reverse_bg(c)
-      /c | Window.parse_color(c) | return error("invalid color")
+      /c | Window.parse_color(c) | return error("Invalid color")
       if reverse_bg ~===:= c then {
          if is_live() then
             view.reset()
@@ -1143,7 +1143,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the fg colour to use in normal (non-reverse) mode.
    #
    public set_normal_fg(c)
-      /c | Window.parse_color(c) | return error("invalid color")
+      /c | Window.parse_color(c) | return error("Invalid color")
       if normal_fg ~===:= c then {
          if is_live() then
             view.reset()
@@ -1155,7 +1155,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the bg colour to use in non-reverse mode.
    #
    public set_normal_bg(c)
-      /c | Window.parse_color(c) | return error("invalid color")
+      /c | Window.parse_color(c) | return error("Invalid color")
       if normal_bg ~===:= c then {
          if is_live() then
             view.reset()
