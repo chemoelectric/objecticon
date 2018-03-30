@@ -71,7 +71,7 @@ end
 procedure do_one(a)
    local url, hr, res, src, parser, doc, sb, f, s, i
 
-   a := ucs(a) | stop("Argument not utf-8")
+   a := ucs(a) | stop("Argument not UTF-8")
    url := URL(a) | stop("Invalid url: ", a, ": ", &why)
 
    if f := Files.url_to_file(url) then

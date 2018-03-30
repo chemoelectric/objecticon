@@ -649,7 +649,7 @@ static struct toktab *getucs(int ac, int *cc)
         char *t = p;
         int i = utf8_check(&p, lex_sbuf.endimage);
         if (i == -1) {
-            lexfatal("Invalid utf-8 sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            lexfatal("Invalid UTF-8 sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
             break;
         }
         if (i < 0 || i > MAX_CODE_POINT) {
@@ -970,7 +970,7 @@ static int read_utf_char(int c)
     char utf8[MAX_UTF8_SEQ_LEN], *p = utf8;
     int i, n = UTF8_SEQ_LEN(c);
     if (n < 1) {
-        lexfatal("Invalid utf-8 start char");
+        lexfatal("Invalid UTF-8 start char");
         return ' ';  /* Returning space keeps down follow-through error messages */
     }
     utf8[0] = c;
@@ -982,7 +982,7 @@ static int read_utf_char(int c)
     }
     c = utf8_check(&p, utf8 + n);
     if (c == -1) {
-        lexfatal("Invalid utf-8 sequence");
+        lexfatal("Invalid UTF-8 sequence");
         return ' ';
     }
     if (c < 0 || c > MAX_CODE_POINT) {

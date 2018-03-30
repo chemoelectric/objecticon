@@ -1351,7 +1351,7 @@ static void display(dptr dp)
         }
       ucs: {
             fprintf(out, "\tlength=" WordFmt "\n", UcsBlk(d).length);
-            fputs("\tutf-8=", out);
+            fputs("\tUTF-8=", out);
             outimagex(&UcsBlk(d).utf8);
             fputc('\n', out);
         }

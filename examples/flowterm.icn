@@ -2046,7 +2046,7 @@ $endif
    end
 
    private static get_ucs_decoded_path(url)
-      return ucs(url.get_decoded_path()) | error("URL decoded path not utf-8")
+      return ucs(url.get_decoded_path()) | error("URL decoded path not UTF-8")
    end
 
    public open_link(url)
@@ -2147,7 +2147,7 @@ $endif
          "launch" : {
             s := get_ucs_decoded_path(url) | fail
             if cd := member(url.extract_cgi_parameters(), "wd")[1] then
-               cd := ucs(cd) | return error("CD decoded path not utf-8")
+               cd := ucs(cd) | return error("CD decoded path not UTF-8")
             return LaunchRunner(s, cd)
          }
          default : {
@@ -2244,7 +2244,7 @@ $endif
          dest := d.get_result_path() | fail
       } else
          dest := FilePath(dest).canonical()
-      s := dest.ucs() | return info_msg(u"Log file not utf-8")
+      s := dest.ucs() | return info_msg(u"Log file not UTF-8")
       parent_dialog.last_log_file := log_file := dest
       if log := open(s, "w") then
          info_msg(u"Logging to file " || s)
@@ -2857,7 +2857,7 @@ $endif
          columns_pos_table := table()
          if \dir then {
             if dir := Files.realpath(dir) then
-               start_dir := ucs(dir) | info_msg("Start directory not utf-8")
+               start_dir := ucs(dir) | info_msg("Start directory not UTF-8")
             else
                info_msg("Invalid tab start directory: " || &why)
          }

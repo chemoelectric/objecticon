@@ -12,13 +12,13 @@ procedure main(a)
    local p, fmt, e, s, d, t
    p := HtmlParser().set_debug_recovery(&yes)
 
-   t := options(a, [Opt("u",,"Input is utf-8")])
+   t := options(a, [Opt("u",,"Input is UTF-8")])
    fmt := HtmlFormatter()
 
    every e := !a do {
       s := Files.file_to_string(e) | stop("Couldn't open ", e, ": ", &why)
       if \t["u"] then
-         s := ucs(s) | stop("Couldn't convert to utf-8")
+         s := ucs(s) | stop("Couldn't convert to UTF-8")
       d := p.parse(s) | stop("Couldn't parse ", e, ": ", &why)
       fmt.format(d)
       write("--- Document structure")

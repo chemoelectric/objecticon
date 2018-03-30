@@ -1881,7 +1881,7 @@ procedure main(a)
       d.new_tab(settings.home_url)
    else {
       every s := !a do {
-         s := ucs(s) | stop("Argument not utf-8")
+         s := ucs(s) | stop("Argument not UTF-8")
          url := URL(s) | stop("Invalid url: ", s, ": ", &why)
          d.new_tab(url)
       }

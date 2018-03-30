@@ -878,14 +878,14 @@ class Map(Panel)
       local st, pst, other, arc, rt
 
       every st := !stops do {
-         /st.deleted | stop("stop deleted ", st.name)
+         /st.deleted | stop("Stop deleted ", st.name)
          every other := key(st.arcs) do {
             arc := st.arcs[other]
             /arc.src.deleted | stop("arc.src.deleted ", st.name)
             /arc.dest.deleted | stop("arc.dest.deleted ", st.name)
-            arc.src === st | stop("incorrect arc.src ", arc.src.name, " instead of ", st.name)
-            arc.dest === other | stop("incorrect arc.dest ", arc.src.name, " instead of ", other.name)
-            member(other.ptrs, st) | stop("missing element in ptrs of ", other.name)
+            arc.src === st | stop("Incorrect arc.src ", arc.src.name, " instead of ", st.name)
+            arc.dest === other | stop("Incorrect arc.dest ", arc.src.name, " instead of ", other.name)
+            member(other.ptrs, st) | stop("Missing element in ptrs of ", other.name)
          }          
       }
       every rt := !routes do {

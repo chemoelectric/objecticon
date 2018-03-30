@@ -3576,7 +3576,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          doc := HtmlParser().parse(s2)
       } else {
          # No charset info, so assume ucs to start with.
-         page_charset := "utf-8 (assumed)"
+         page_charset := "UTF-8 (assumed)"
          s2 := Text.liberal_ucs(s)
          doc := HtmlParser().parse(s2)
          # Check for meta tag content attribute

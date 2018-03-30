@@ -20,7 +20,7 @@ procedure main(a)
 
    if d := p.parse(s) then {
       write("A not-wf case parsed successfully : ", a[1])
-      write("there were ", d.validity_errors, " validitiy errors")
+      write("there were ", d.validity_errors, " validity errors")
       write("Parsed:")
       write(s)
       write("Failure")

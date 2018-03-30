@@ -23,20 +23,20 @@ class RFC1522()
    #        don't pass through things that look like encoded words but aren't.
    # :Parameters :
    # :  `delimeter` - the cset of word delimeters, by default `' \t'`.
-   # :  `charset` - the charset to use, default is utf-8 for a ucs string
-   #        and iso-8859-1 for a string.
-   # :  `encoding` - either "b" (the default) or "q"
+   # :  `charset` - the charset to use, default is UTF-8 for a ucs string
+   #        and ISO-8859-1 for a string.
+   # :  `encoding` - either "B" (the default) or "Q"
    #
    public static encode(s, alphabet, delimeter, charset, encoding)
       local t, pre, res, i, j, k, na, adj
       /alphabet := if find("=?", s) then &ascii -- '=?' else &ascii
       /delimeter := LWSP_CHAR
       if type(s) == "ucs" then {
-         /charset := "utf-8"
+         /charset := "UTF-8"
          s := string(s)
       } else
-         /charset := "iso-8859-1"
-      /encoding := "b"
+         /charset := "ISO-8859-1"
+      /encoding := "B"
 
       pre := "=?" || charset || "?" || encoding || "?"
       res := ""
@@ -135,7 +135,7 @@ class RFC1522()
                return error("Unknown content word encoding: " || encoding)
          }
          if map(charset) == "utf-8" then
-            t := ucs(t) | return error("Encoded word data not proper utf-8")
+            t := ucs(t) | return error("Encoded word data not proper UTF-8")
          res ||:= t
          ="?="  | return error("Encoded word did not end with ?=")
          adj := &yes

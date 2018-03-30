@@ -33,10 +33,10 @@ procedure main(a)
       #
       # These could be static constants
       #
-      encoding_style_name := GlobalName(ucs("encodingStyle"), ucs(SOAP_ENV_URI))
-      body_name := GlobalName(ucs("Body"), ucs(SOAP_ENV_URI))
-      query_name := GlobalName(ucs("query"), ucs(NAMESP_URI))
-      type_name := GlobalName(ucs("type"), ucs(XSI_URI))
+      encoding_style_name := GlobalName(u"encodingStyle", ucs(SOAP_ENV_URI))
+      body_name := GlobalName(u"Body", ucs(SOAP_ENV_URI))
+      query_name := GlobalName(u"query", ucs(NAMESP_URI))
+      type_name := GlobalName(u"type", ucs(XSI_URI))
    } else {
       #
       # These could be static constants
