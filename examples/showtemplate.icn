@@ -9,7 +9,7 @@ procedure main(a)
                        "Usage: showtemplate [OPTIONS] template-file [src-file]\n_
                         Utility to test an ipl.WebScraper template file")
    if *a = 0 then
-      stop("template file argument required")
+      help_stop("File argument required")
 
    s := Files.file_to_string(a[1]) | stop(&why)
    if \opts["u"] then

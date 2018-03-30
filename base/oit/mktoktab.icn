@@ -44,10 +44,10 @@ procedure main()
    count := 0
    lastletter := ""
 
-   tokfile := open(tokfnm) | stop("unable to open \"", tokfnm, "\"")
-   opfile := open(opfnm) | stop("unable to open \"", opfnm, "\"")
-   toktab := open(toktbnm,"w") | stop("unable to create \"", toktbnm, "\"")
-   tok_dot_h := open(dothnm,"w") | stop("unable to create \"", dothnm, "\"")
+   tokfile := open(tokfnm) | stop("Unable to open \"", tokfnm, "\"")
+   opfile := open(opfnm) | stop("Unable to open \"", opfnm, "\"")
+   toktab := open(toktbnm,"w") | stop("Unable to create \"", toktbnm, "\"")
+   tok_dot_h := open(dothnm,"w") | stop("Unable to create \"", dothnm, "\"")
    write("  writing ", tokfnm, " and ", dothnm)
 
 # Output header for token table
@@ -88,7 +88,7 @@ procedure main()
       write(toktab,makeline(token,tokval,bflag || eflag,count))
       wrt_tok_def(tokval)
       count +:= 1
-      line := read(tokfile) | stop("premature end-of-file")
+      line := read(tokfile) | stop("Premature end-of-file")
       line ? tokpat() | break
          }
 
@@ -116,7 +116,7 @@ procedure main()
          restable[letter] := count
         }
    count +:= 1
-   line := read(tokfile) | stop("premature end-of-file")
+   line := read(tokfile) | stop("Premature end-of-file")
    if line ? tokpat() then next else break
    }
 
@@ -175,28 +175,28 @@ procedure main()
          if ="(:=" then {
             tab(many(white_sp))
             if not ="AUG)" then
-               err(opfnm, op_linenum, "invalid augmented indication")
+               err(opfnm, op_linenum, "Invalid augmented indication")
             tab(many(white_sp))
             aug := 1
             }
          else
             aug := &null
-         tok := tab(many(tok_chars)) | err(opfnm, op_linenum, "invalid token")
+         tok := tab(many(tok_chars)) | err(opfnm, op_linenum, "Invalid token")
          tab(many(white_sp))
-         unary := tab(any('_us')) | err(opfnm,op_linenum,"invalid unary flag")
+         unary := tab(any('_us')) | err(opfnm,op_linenum,"Invalid unary flag")
          tab(many(white_sp))
-         binary := tab(any('_bs')) | err(opfnm,op_linenum,"invalid binary flag")
+         binary := tab(any('_bs')) | err(opfnm,op_linenum,"Invalid binary flag")
          if unary == "_" & binary == "_" then
-            err(opfnm, op_linenum, "either unary or binary flag must be set")
+            err(opfnm, op_linenum, "Either unary or binary flag must be set")
          if unary ~== "_" then {
             if *op ~= 1 then
                err(opfnm, op_linenum,
-                  "unary operators must be single characters: " || op);
+                  "Unary operators must be single characters: " || op);
             insert(unary_set, op)
             }
          if \aug & binary == "_" then
             err(opfnm, op_linenum,
-              "binary flag must be set for augmented assignment")
+              "Binary flag must be set for augmented assignment")
 
          ops[op] := op_sym(op, aug, tok, unary, binary)
          }
@@ -212,7 +212,7 @@ procedure main()
 
 repeat {
    wrt_op(token, tokval, bflag || eflag, 0, 1)
-   line := read(tokfile) | stop("premature end-of-file")
+   line := read(tokfile) | stop("Premature end-of-file")
    line ? tokpat() | break
    }
 
@@ -222,7 +222,7 @@ repeat {
 
 repeat {
    wrt_op(token, tokval, bflag || eflag, 0, &null)
-   line := read(tokfile) | stop("premature end-of-file")
+   line := read(tokfile) | stop("Premature end-of-file")
    line ? tokpat() | break
    }
    write(toktab,
@@ -299,7 +299,7 @@ end
 
 procedure garbage()
    local line
-   while line := read(tokfile) | stop("premature end-of-file") do
+   while line := read(tokfile) | stop("Premature end-of-file") do
       if line ? tokpat() then return
 end
 
@@ -378,7 +378,7 @@ procedure unary_str(op)
 end
 
 procedure err(file, line, msg)
-   stop("file: ", file, ", line: ", line, " - ", msg)
+   stop("File: ", file, ", line: ", line, " - ", msg)
 end
 
 procedure build_trie(ops)

@@ -20,7 +20,7 @@ class GroffOutputter(Outputter)
       local c, l, s, t, u, m, meths, vars, x, fullname
 
       if s := \opts["o"] then
-         output_file := open(s, "w") | stop("couldn't open output file ", s, ": ", &why)
+         output_file := open(s, "w") | stop("Couldn't open output file ", s, ": ", &why)
 
       every c := get_classes_in(get_packages()) do {
          l := []

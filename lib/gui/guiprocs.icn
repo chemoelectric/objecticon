@@ -602,7 +602,7 @@ end
 #
 # This utility takes a string or ucs and returns a string or ucs
 # according to the target parameter.  Strings are assumed to be in
-# iso-8859 format, rather than utf8 format.
+# ISO-8859 format, rather than UTF-8 format.
 #
 procedure text_convert(s, target)
    s := text(s) | fail
@@ -619,7 +619,7 @@ end
 # This utility takes a string or ucs and returns a string or ucs
 # according to the target parameter.  The format of strings are
 # guessed using the ucs() function; if that fails they are assumed to
-# be in iso-8859 format.
+# be in ISO-8859 format.
 #
 procedure text_guess_convert(s, target)
    s := text(s) | fail

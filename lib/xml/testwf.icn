@@ -18,7 +18,7 @@ procedure main(a)
 
    s := Files.file_to_string(a[1]) | stop("Couldn't open ", a[1], ": ", &why)
    if \opt["u"] then
-      s := ucs(s)
+      s := ucs(s) | stop("Invalid UTF-8 in wf case ", a[1])
 
    if d := p.parse(s) then {
       if *a = 1 then 

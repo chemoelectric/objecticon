@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics(Selection,Key), util, 
+import lang, gui, graphics(Selection,Key), util, 
    ipl.pdco, ipl.numbers
 
 class BorderOfCanvas(Component)
@@ -1042,7 +1042,7 @@ class Canvas(Component,SelectiveObjectCodec)
       e2 := []
       every put(e2, Seq{c.gen_cos().traverse_tree()})
       while insert(t, pop(e1), pop(e2))
-      *e1 = *e2 = 0 | stop("internal duplication error.")
+      *e1 = *e2 = 0 | syserr("internal duplication error.")
 
       # Fixup selections and initial focus.
       c.selected := t[\self.selected]
