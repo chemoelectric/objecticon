@@ -413,7 +413,7 @@ class Ieval(MinimalObjectOutput)
             do_gui()
          else
             do_line_editor()
-         encode_to_file(hfile, input.get_history()) | ewrite("History not saved: ", &why)
+         encode_to_file(hfile, input.get_history()) | stop("Couldn't encode to history file ", hfile, ": ", &why)
       }
       write("Ciao")
    end
