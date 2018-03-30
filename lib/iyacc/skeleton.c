@@ -625,7 +625,7 @@ char *ibody[] =
     "      }",
     "    else { #ERROR RECOVERY",
     "      if yyerrflag == 0 then {",
-    "        err(\"syntax error\") ",
+    "        err(\"Syntax error\") ",
     "      }",
     "      if yyerrflag < 3 then {     # low error count?",
     "        yyerrflag := 3 ",

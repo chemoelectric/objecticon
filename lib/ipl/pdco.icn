@@ -1084,7 +1084,7 @@ procedure Safe1(e)
          "Runtime error " || &errornumber || ": " || &errortext
       else                                                     
          "Runtime error: " || &errortext                       
-      &why ||:= "; offending value: " || image(&errorvalue)
+      &why ||:= "; Offending value: " || image(&errorvalue)
       errorclear()
    } else
       return v

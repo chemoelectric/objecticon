@@ -92,9 +92,9 @@ void next_super(char *name, struct node *n)
     while (cs && cs->name != name)
         cs = cs->b_next;
     if (cs)
-        twarn_at(n, "duplicate superclass: %s", name);
+        twarn_at(n, "Duplicate superclass: %s", name);
     if (curr_class->global->g_name == name)
-        twarn_at(n, "class has self as super: %s", name);
+        twarn_at(n, "Class has self as super: %s", name);
     cs = FAlloc(struct tclass_super);
     cs->b_next = curr_class->super_hash[i];
     curr_class->super_hash[i] = cs;

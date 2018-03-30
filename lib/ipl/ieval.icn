@@ -313,7 +313,7 @@ class Ieval(MinimalObjectOutput)
                error.write("Runtime error ", i, ": ", s)
             else
                error.write("Runtime error: ", s)
-            error.write("offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
+            error.write("Offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
             last_runerr := Prog.eval_keyword("&errorcoexpr", prog)
             errorclear(prog)
          }
@@ -452,7 +452,7 @@ class Ieval(MinimalObjectOutput)
                ewrite("Runtime error ", &errornumber, ": ", &errortext)
             else
                ewrite("Runtime error: ", &errortext)
-            ewrite("offending value: ", image(&errorvalue))
+            ewrite("Offending value: ", image(&errorvalue))
             last_runerr := &errorcoexpr
             errorclear()
             break
@@ -489,7 +489,7 @@ class Ieval(MinimalObjectOutput)
                      error.write("Runtime error ", &errornumber, ": ", &errortext)
                   else
                      error.write("Runtime error: ", &errortext)
-                  error.write("offending value: ", image(&errorvalue))
+                  error.write("Offending value: ", image(&errorvalue))
                   last_runerr := &errorcoexpr
                   errorclear()
                }

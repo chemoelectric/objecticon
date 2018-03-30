@@ -1152,7 +1152,7 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
 
     /* Sanity check. */
     if (blk->title != T_Proc)
-        ffatalerr("lang.Class.load_library() - symbol %s not a procedure block", fq);
+        ffatalerr("lang.Class.load_library(): symbol %s not a procedure block", fq);
 
     free(fq);
 
@@ -1242,7 +1242,7 @@ function lang_Proc_load(filename, funcname)
        }
        /* Sanity check. */
        if (blk->title != T_Proc)
-           ffatalerr("lang.Proc.load - symbol %s not a procedure block", tname);
+           ffatalerr("lang.Proc.load(): symbol %s not a procedure block", tname);
 
        free(tname);
        return proc(blk);

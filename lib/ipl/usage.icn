@@ -50,10 +50,10 @@ procedure Error(L[])
 end
 
 procedure ErrorCheck(line,file)
-   if &errortext == "" then fail	# No converted error
+   &errortext | fail	# No converted error
    write("\nError ",&errornumber," at line ",line, " in file ",file)
    write(&errortext)
-   write("offending value: ",image(&errorvalue))
+   write("Offending value: ",image(&errorvalue))
    return
 end
 

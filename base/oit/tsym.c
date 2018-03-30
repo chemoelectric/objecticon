@@ -80,7 +80,7 @@ void install(char *name, struct node *n)
             break;
 
         default:
-            quit("install: unrecognized symbol table flag %d.", idflag);
+            quit("install: Unrecognized symbol table flag %d.", idflag);
     }
 }
 
@@ -761,7 +761,7 @@ static void nodegen(nodeptr t)
         }
 
         default: {
-            quit("nodegen: unknown node type:%d",TType(t));
+            quit("nodegen: Unknown node type:%d",TType(t));
         }
     }
 }
@@ -898,7 +898,7 @@ static void binop(int op)
             break;
 
         default:
-            quit("binop: undefined binary operator: %d", op);
+            quit("binop: Undefined binary operator: %d", op);
     }
 }
 
@@ -1022,7 +1022,7 @@ static void augop(int op)
             break;
 
         default:
-            quit("binop: undefined binary operator: %d", op);
+            quit("augop: Undefined binary operator: %d", op);
     }
 }
 
@@ -1132,7 +1132,7 @@ static void unop(int op)
             break;
 
         default:
-            quit("unop: undefined unary operator: %d", op);
+            quit("unop: Undefined unary operator: %d", op);
     }
 }
 

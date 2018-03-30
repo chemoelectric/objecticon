@@ -251,7 +251,7 @@ end
     fputc('\n', stderr);
 
     if (have_errval) {
-        fprintf(stderr, "offending value: ");
+        fprintf(stderr, "Offending value: ");
         outimage(stderr, &k_errorvalue, 0);
         putc('\n', stderr);
     }
