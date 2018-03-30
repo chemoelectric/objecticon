@@ -13,8 +13,8 @@ procedure main(a)
    fmt := CanonicalXmlFormatter(ss := RamStream())
    p := XmlParser().set_preserve_insignificant_whitespace(&yes).set_do_namespaces(&no)
 
-   opt := options(a, "-u!")
-   *a > 0 | stop("usage: testcase source [output]")
+   opt := options(a, [Opt("u",, "Ucs input")], "Usage: testvalid SOURCE [OUTPUT]")
+   *a > 0 | help_stop("Need a parameter")
 
    s := Files.file_to_string(a[1]) | stop("Couldn't open ", a[1], ": ", &why)
    if \opt["u"] then
