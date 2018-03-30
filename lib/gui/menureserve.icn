@@ -12,7 +12,7 @@ class MenuReserve(MenuComponent)
 
    public initially()
       MenuComponent.initially()
-      \comp | runerr("no component set")
+      \comp | runerr("No component set")
       # Make comp inherit the parent component's attribs.
       comp.set_wattrib_ancestor(parent_component)
       # Temporarily add comp to the parent dialog in order to

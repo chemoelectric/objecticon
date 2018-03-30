@@ -91,7 +91,7 @@ class Process(HasTask, HasBgProc)
          return error("Timeout")
       if DescStream.poll_in_test(r[1]) then
          return receive()
-      return error("i/o error on reading from socket")
+      return error("I/O error on reading from socket")
    end
 
    #

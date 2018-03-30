@@ -560,7 +560,7 @@ procedure image_string_to_Pixels(s, W)
          move(1)
          q.set_palette(ord(k), v) | {
             q.close()
-            return error("invalid colour in image spec: " || v)
+            return error("Invalid colour in image spec: " || v)
          }
       }
    }
@@ -915,7 +915,7 @@ procedure run_convert(stdin, args)
          Files.find_exe("convert")
    }
    if /ok then
-      return error("convert not available")
+      return error("Convert not available")
    if r := use { 
       p := FilterInputStream(stdin,
                              "convert",

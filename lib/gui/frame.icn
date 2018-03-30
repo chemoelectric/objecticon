@@ -54,7 +54,7 @@ class Frame(Component)
    end
 
    public initially()
-      \self.content | runerr("no content component specified")
+      \self.content | runerr("No content component specified")
       Component.initially()
    end
 

@@ -17,7 +17,7 @@ class ComponentScrollAreaView(Component)
       inner_h
 
    public initially()
-      \self.inner | runerr("no inner component specified")
+      \self.inner | runerr("No inner component specified")
       Component.initially()
    end
 

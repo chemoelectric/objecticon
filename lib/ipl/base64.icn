@@ -68,11 +68,11 @@ procedure base64decode(s)
    s ? {
       tab(many(c64))
       pad := *tab(many('=')) | 0
-      pos(0) | return error("base64decode: extraneous chars in data")
+      pos(0) | return error("Extraneous Base64 chars in data")
    }
 
    if (pad > 2) | (*s % 4  ~= 0) then
-      return error("base64decode: badly formatted Base64 data")
+      return error("Badly formatted Base64 data")
 
    s[0 -: pad] := repl("\x00", pad)
    s := map(s,b64,n64)

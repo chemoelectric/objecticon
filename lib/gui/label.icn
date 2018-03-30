@@ -74,7 +74,7 @@ class Label(Component)
 
    public initially()
       local key
-      \self.paint | runerr("no label specified")
+      \self.paint | runerr("No label specified")
       Component.initially()
       key := (\linked_accel).accel
       paint.initially(self, key)

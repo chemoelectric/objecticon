@@ -1537,7 +1537,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
          return cerr
       if \cout & DescStream.poll_out_test(x[t3]) then
          return cout
-      return error("child command i/o failed")
+      return error("Child command I/O failed")
    end
 
    protected close_cin()

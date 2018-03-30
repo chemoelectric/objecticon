@@ -18,7 +18,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
 
    private tlookup(k)
       if upto('.', k) then
-         (k ?:= (="default.", tab(0))) | runerr("no such id: " || k)
+         (k ?:= (="default.", tab(0))) | runerr("No such id: " || k)
       return .member(\consts, k) | vars[k]
    end
 
@@ -38,7 +38,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       if *t = 1 then
          return lang.Prog.get_global(t[1])
       if *t > 1 then
-         runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
+         runerr("Ambiguous name: " || k || "(" || list2str(t) || ")")
    end
 
    public set_vars(t)
@@ -196,7 +196,7 @@ class Evaluator()
                                    E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
          16: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
                                    E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
-         default: runerr("too many parameters")
+         default: runerr("Too many parameters")
       }
    end
 
@@ -227,7 +227,7 @@ class Evaluator()
                                    E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])}
          16: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
                                    E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])}
-         default: runerr("too many parameters")
+         default: runerr("Too many parameters")
       }
    end
 
@@ -258,7 +258,7 @@ class Evaluator()
                            E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
          16: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
                            E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
-         default: runerr("too many subscripts")
+         default: runerr("Too many subscripts")
       }
    end
 
@@ -289,7 +289,7 @@ class Evaluator()
               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
          16: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
-         default: runerr("too many parenthesized expressions")
+         default: runerr("Too many parenthesized expressions")
       }
    end
 
@@ -371,7 +371,7 @@ class Evaluator()
    private do_keyword(n) 
       local s, f
       s := "&" || n.child(2).s
-      f := lang.Prog.get_keyword(s) | runerr("invalid keyword: "|| s)
+      f := lang.Prog.get_keyword(s) | runerr("Invalid keyword: "|| s)
       suspend f() 
    end
 
@@ -480,14 +480,14 @@ class Evaluator()
    private do_next(n) restore(n) ; return coact("next", brk[loops[n]]) end
    private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[loops[n]]) end
    private do_Empty(n) return end
-   private do_default(n) fatalerr("not implemented: " || n.label) end
+   private do_default(n) fatalerr("Not implemented: " || n.label) end
 
    private E(n)
       if is(n, Token) then
          return case n.tok of {
             YY.IDENT: env.get(n.s, self)
             YY.INTLIT|YY.REALLIT|YY.STRINGLIT|YY.CSETLIT|YY.UCSLIT: n.val
-            default : fatalerr("not implemented: token " || to_string(n))
+            default : fatalerr("Not implemented: token " || to_string(n))
          }
       suspend dispatch[n.label](n)
    end

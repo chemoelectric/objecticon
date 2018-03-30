@@ -134,29 +134,29 @@ final class MySqlRes(NoCopy)
                   MySql.FIELD_TYPE_TINY |
                   MySql.FIELD_TYPE_SHORT |
                   MySql.FIELD_TYPE_LONG :
-                  put(res, integer(o)) | runerr("mysql client: expected integer type:", o)
+                  put(res, integer(o)) | runerr("Expected integer type:", o)
                
                MySql.FIELD_TYPE_DECIMAL |
                   MySql.FIELD_TYPE_FLOAT |
                   MySql.FIELD_TYPE_DOUBLE :
-                  put(res, real(o)) | runerr("mysql client: expected real:", o)
+                  put(res, real(o)) | runerr("Expected real:", o)
                
                MySql.FIELD_TYPE_NULL :
                   put(res)
 
                MySql.FIELD_TYPE_DATE : {
-                  t := Time.parse(o, "yyyy-MM-dd") | runerr("mysql client: expected date:", o)
+                  t := Time.parse(o, "yyyy-MM-dd") | runerr("Expected date:", o)
                   put(res, t)
                }
                
                MySql.FIELD_TYPE_TIME: {
-                  t := Time.parse(o, "HH:mm:ss") | runerr("mysql client: expected time:", o)
+                  t := Time.parse(o, "HH:mm:ss") | runerr("Expected time:", o)
                   put(res, t)
                }
 
                MySql.FIELD_TYPE_DATETIME |
                   MySql.FIELD_TYPE_TIMESTAMP: {
-                  t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected datetime:", o)
+                  t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("Expected datetime:", o)
                   put(res, t)
                }
 
@@ -171,7 +171,7 @@ final class MySqlRes(NoCopy)
                   put(res, o)
 
                default:
-                  runerr("mysql client: unknown coltype:", f.get_type())
+                  runerr("Unknown coltype:", f.get_type())
             }
          }
       }

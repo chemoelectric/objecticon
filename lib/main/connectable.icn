@@ -54,7 +54,7 @@ class Connectable()
    #
    public fire(type, param)
       local e
-      \type | runerr("null type to fire")
+      \type | runerr("Null type to fire")
       every e := !member(listeners, type | &null) do
          e.proc(param, self, type)
       return self

@@ -602,12 +602,12 @@ class SymbolTable(Connectable)
       t := table()
       while s := read(f) do {
          if s == ">package" then {
-            s := read(f) | return error("corrupt - package name expected following package")
+            s := read(f) | return error("Corrupt - package name expected following package")
             if member(t, s) then
-               return error("corrupt - duplicate package entry")
+               return error("Corrupt - duplicate package entry")
             insert(t, s, u := set())
          } else
-            insert(\u, s) | return error("corrupt - package expected")
+            insert(\u, s) | return error("Corrupt - package expected")
       }
       return t
    end
@@ -626,14 +626,14 @@ class SymbolTable(Connectable)
       every d := key(package_db) do {
          if fs := \package_db[d, p] then {
             if \seen then
-               return error("located package " || p || " in multiple directories")
+               return error("Located package " || p || " in multiple directories")
             every f := FilePath(d).child(!fs).str()  do
                scan(f) | fail
             seen := 1
          }
       }
       if /seen then
-         return error("cannot resolve package " || p)
+         return error("Cannot resolve package " || p)
       return self
    end
 

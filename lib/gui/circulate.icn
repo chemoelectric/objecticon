@@ -136,7 +136,7 @@ class Circulate(SelectionList,Component)
    end
 
    public initially()
-      \self.selection_list | runerr("no selection list specified")
+      \self.selection_list | runerr("No selection list specified")
       Component.initially()
    end
 
