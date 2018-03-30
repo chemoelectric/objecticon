@@ -255,7 +255,7 @@ repeat {
    wrt(toktab, 1, "int c;\n")
    wrt(toktab, 1, "*cc = ' ';")
    bld_slct(op_trie, "", "ac", toktab, 1)
-   wrt(toktab, 1, "lexfatal(\"invalid character\");")
+   wrt(toktab, 1, "lexfatal(\"Invalid character\");")
    wrt(toktab, 1, "return -1;")
    wrt(toktab, 1, "}")
 

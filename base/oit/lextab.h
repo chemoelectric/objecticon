@@ -591,6 +591,6 @@ int getopr(int ac, int *cc)
             }
          break;
       }
-   lexfatal("invalid character");
+   lexfatal("Invalid character");
    return -1;
    }

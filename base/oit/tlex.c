@@ -386,7 +386,7 @@ static struct toktab *getnum(int ac, int *cc)
                 if (c == 'r' || c == 'R')  {
                     state = 5;
                     if (over || (wval < 2 || wval > 36))
-                        lexfatal("invalid radix for integer literal");
+                        lexfatal("Invalid radix for integer literal");
                     radix = wval;
                     rval = wval = 0;
                     continue;
@@ -400,7 +400,7 @@ static struct toktab *getnum(int ac, int *cc)
                 if (c == '+' || c == '-') { state = 3; continue; }
             case 3:		/* first digit after e, e+, or e- */
                 if (isdigit_ex(c)) { state = 4; continue; }
-                lexfatal("invalid real literal");
+                lexfatal("Invalid real literal");
                 break;
             case 4:		/* remaining digits after e */
                 if (isdigit_ex(c))   continue;
@@ -411,7 +411,7 @@ static struct toktab *getnum(int ac, int *cc)
                     rval = wval = tonum(c);
                     continue; 
                 }
-                lexfatal("invalid integer literal");
+                lexfatal("Invalid integer literal");
                 break;
             case 6:		/* remaining digits after r */
                 if (isdigit_ex(c) || isletter(c)) {
@@ -425,7 +425,7 @@ static struct toktab *getnum(int ac, int *cc)
                                 wval = wval * radix + d;
                         }
                     } else {	/* illegal digit for radix r */
-                        lexfatal("invalid digit in integer literal");
+                        lexfatal("Invalid digit in integer literal");
                         radix = tonum('z');       /* prevent more messages */
                     }
                     continue;
@@ -460,7 +460,7 @@ static struct toktab *getnum(int ac, int *cc)
         errno = 0;
         rval = strtod(lex_sbuf.strtimage,0);
         if (errno == ERANGE)
-            lexfatal("real literal out of representable range");
+            lexfatal("Real literal out of representable range");
 #endif
         zero_sbuf(&lex_sbuf);
         p = (char *)&rval;
@@ -528,7 +528,7 @@ static struct toktab *getstring(int ac, int *cc)
             else if (c == 'U') {
                 c = hexesc(6);
                 if (c > MAX_CODE_POINT) {
-                    lexfatal("code point out of range");
+                    lexfatal("Code point out of range");
                     c = 0;
                 }
                 n = utf8_seq(c, utf8);
@@ -540,19 +540,19 @@ static struct toktab *getstring(int ac, int *cc)
                 if (c < 256) 
                     AppChar(lex_sbuf, ctlesc(c));
                 else
-                    lexfatal("string literal character out of range (codepoint %d)", c);
+                    lexfatal("String literal character out of range (codepoint %d)", c);
             } else {
                 c = escchar(c);
                 if (c < 256) 
                     AppChar(lex_sbuf, c);
                 else
-                    lexfatal("string literal character out of range (codepoint %d)", c);
+                    lexfatal("String literal character out of range (codepoint %d)", c);
             }
         } else {
             if (c < 256) 
                 AppChar(lex_sbuf, c);
             else
-                lexfatal("string literal character out of range (codepoint %d)", c);
+                lexfatal("String literal character out of range (codepoint %d)", c);
         }
 
         c = NextLitChar;
@@ -560,7 +560,7 @@ static struct toktab *getstring(int ac, int *cc)
     if (c == '"')
         *cc = ' ';
     else {
-        lexfatal("unclosed quote");
+        lexfatal("Unclosed quote");
         *cc = c;
     }
     len = CurrLen(lex_sbuf);
@@ -609,7 +609,7 @@ static struct toktab *getucs(int ac, int *cc)
             else if (c == 'U') {
                 c = hexesc(6);
                 if (c > MAX_CODE_POINT) {
-                    lexfatal("code point out of range");
+                    lexfatal("Code point out of range");
                     c = 0;
                 }
                 n = utf8_seq(c, utf8);
@@ -643,7 +643,7 @@ static struct toktab *getucs(int ac, int *cc)
     if (c == '"')
         *cc = ' ';
     else {
-        lexfatal("unclosed quote");
+        lexfatal("Unclosed quote");
         *cc = c;
     }
 
@@ -659,7 +659,7 @@ static struct toktab *getucs(int ac, int *cc)
             break;
         }
         if (i < 0 || i > MAX_CODE_POINT) {
-            lexfatal("utf-8 code point out of range beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            lexfatal("UTF-8 code point out of range beginning at char %d", 1 + (t - lex_sbuf.strtimage));
             break;
         }
     }
@@ -711,7 +711,7 @@ static struct toktab *getcset(int ac, int *cc)
             else if (c == 'U') {
                 c = hexesc(6);
                 if (c > MAX_CODE_POINT) {
-                    lexfatal("code point out of range");
+                    lexfatal("Code point out of range");
                     c = 0;
                 }
             }
@@ -746,10 +746,10 @@ static struct toktab *getcset(int ac, int *cc)
         if (state == 1) {
             add_range(cs, prev, prev);
         } else if (state == 2)
-            lexfatal("incomplete cset range");
+            lexfatal("Incomplete cset range");
         *cc = ' ';
     } else {
-        lexfatal("unclosed quote");
+        lexfatal("Unclosed quote");
         *cc = c;
     }
 
@@ -852,7 +852,7 @@ static int setlineno()
     while ((c = NextChar) == ' ' || c == '\t')
         ;
     if (c < '0' || c > '9') {
-        lexfatal("no line number in #line directive");
+        lexfatal("No line number in #line directive");
         while (c != EOF && c != '\n')
             c = NextChar;
         return c;
@@ -916,11 +916,11 @@ static int setencoding(int c)
 
     s = str_install(&lex_sbuf);
     if (s == empty_string)
-        lexfatal("no encoding in #line directive");
+        lexfatal("No encoding in #line directive");
     else if (s == ascii_string || s == utf8_string || s == iso_8859_1_string)
         encoding = s;
     else {
-        lexfatal("invalid encoding:%s", s);
+        lexfatal("Invalid encoding:%s", s);
         encoding = ascii_string;
     }
 
@@ -962,7 +962,7 @@ static int nextchar(int in_literal)
                 if (encoding == utf8_string)
                     c = read_utf_char(c);
                 else if (encoding == ascii_string)
-                    lexfatal("non-ascii character (codepoint %d)", c);
+                    lexfatal("Non-ascii character (codepoint %d)", c);
                 /* else encoding == iso_8859_1_string in which case the codepoint is c */
             }
             incol++;
@@ -976,7 +976,7 @@ static int read_utf_char(int c)
     char utf8[MAX_UTF8_SEQ_LEN], *p = utf8;
     int i, n = UTF8_SEQ_LEN(c);
     if (n < 1) {
-        lexfatal("invalid utf-8 start char");
+        lexfatal("Invalid utf-8 start char");
         return ' ';  /* Returning space keeps down follow-through error messages */
     }
     utf8[0] = c;
@@ -988,11 +988,11 @@ static int read_utf_char(int c)
     }
     c = utf8_check(&p, utf8 + n);
     if (c == -1) {
-        lexfatal("invalid utf-8 sequence");
+        lexfatal("Invalid utf-8 sequence");
         return ' ';
     }
     if (c < 0 || c > MAX_CODE_POINT) {
-        lexfatal("utf-8 code point out of range");
+        lexfatal("UTF-8 code point out of range");
         return ' ';
     }
 
