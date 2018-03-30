@@ -87,7 +87,7 @@ class OverlaySet(Component)
 
    public initially()
       if *self.children = 0 then
-         runerr("no OverlayItems in OverlaySet")
+         runerr("No OverlayItems in OverlaySet")
       /self.which_one := self.children[1]
       set_hidden_flags()
       Component.initially()

@@ -203,9 +203,9 @@ class Dialog(Component)
       if \s then {
          # Check were not doing something that might lock up the desktop.
          if is_popup() then
-            runerr("cannot block a popup")
+            runerr("Cannot block a popup")
          if get_menu_mode() then
-            runerr("cannot block a dialog whilst in menu mode")
+            runerr("Cannot block a dialog whilst in menu mode")
       }
       if is_blocked_flag ~===:= s then {
          e := if /s then Event.RESUMED else Event.INTERRUPTED
@@ -384,7 +384,7 @@ class Dialog(Component)
       t := table()
       every k := WAttrib.DISPLAY | WAttrib.DX | WAttrib.DY do
          t[k] := get_wattrib(k)
-      self.buffer_win := open_win_with(t) | runerr("couldn't open buffer window: " || &why)
+      self.buffer_win := open_win_with(t) | runerr("Couldn't open buffer window: " || &why)
    end
 
    #
@@ -466,7 +466,7 @@ class Dialog(Component)
          popup_manager.exit_menu_mode(c)
       else {
          until c === menu_mode do {
-            \menu_mode | runerr("inconsistent menu mode passed to exit_menu_mode", c)
+            \menu_mode | runerr("Inconsistent menu mode passed to exit_menu_mode", c)
             menu_mode.close_all()
          }
          if c := pull(menu_mode_stack) then
@@ -483,7 +483,7 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.add_popup(d)
       else {
-         \popups | runerr("add_popup, but not  in menu mode.")
+         \popups | runerr("add_popup(), but not  in menu mode.")
          d.popup_manager := self
          push(popups, d)
       }
@@ -494,7 +494,7 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.remove_popup(d)
       else {
-         \popups | runerr("remove_popup, but not  in menu mode.")
+         \popups | runerr("remove_popup(), but not  in menu mode.")
          d.popup_manager := d
          ldel(popups, d)
       }

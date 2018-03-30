@@ -87,7 +87,7 @@ class TabItem(Component)
    end
 
    public initially()
-      \self.paint | runerr("no label specified")
+      \self.paint | runerr("No label specified")
       Component.initially()
       # We are painted on the TabSet's attributes, so init
       # the label border and paint on it too.

@@ -89,7 +89,7 @@ class CheckBox(Button)
          else
             self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
-      \self.paint | runerr("no label specified")
+      \self.paint | runerr("No label specified")
       Component.initially()
       self.paint.initially(self, self.accel)
       self.unchecked_paint.initially(self)

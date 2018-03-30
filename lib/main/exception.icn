@@ -39,7 +39,7 @@ procedure throw(x)
    if /throw_handler then {
       # If no handler, convert to runerr.
       x := string(x) | image(x)
-      runerr("thrown with no handler: " || x)      
+      runerr("throw() with no handler: " || x)      
    }
    thrown := x
    thrower := &current
@@ -64,10 +64,10 @@ end
 # `thrown` or `thrower`.
 #
 procedure rethrow()
-   \throw_handler | runerr("rethrow(): no handler set")
-   \thrower | runerr("rethrow(): no exception current")
+   \throw_handler | runerr("rethrow() with no handler set")
+   \thrower | runerr("rethrow() with no exception current")
    cofail(throw_handler)
-   runerr("rethrow(): code co-expression reactivated unexpectedly")
+   runerr("rethrow() code co-expression reactivated unexpectedly")
 end
 
 #

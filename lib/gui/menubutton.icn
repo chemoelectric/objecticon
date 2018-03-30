@@ -40,7 +40,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
    end
 
    public initially()
-      \self.menu | runerr("no menu set")
+      \self.menu | runerr("No menu set")
       Component.initially()
       self.menu.initially()
    end

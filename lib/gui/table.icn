@@ -309,7 +309,7 @@ class Table(Component)
 
    public initially()
       if *table_header.children = 0 then
-         runerr("no TableColumns in Table")
+         runerr("No TableColumns in Table")
       Component.initially()
    end
 

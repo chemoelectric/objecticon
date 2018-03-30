@@ -854,15 +854,15 @@ class Component(Rect,Align,Connectable)
    #
    public initially()
       local t, a
-      /cbwin | runerr("initially called out of sequence")
-      \parent | runerr("incorrect ancestry (parent null)")
+      /cbwin | runerr("initially() called out of sequence")
+      \parent | runerr("Incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
       effective_is_hidden_flag := Yes{ parent.is_hidden() | \is_hidden_flag }
       effective_is_shaded_flag := Yes{ parent.is_shaded() | \is_shaded_flag }
       Gui.style.polish(self)
       a := \wattrib_ancestor | parent
       effective_wattribs := copy(a.get_effective_wattribs()) | 
-         runerr("failed to get effective wattribs from ancestor", a)
+         runerr("Failed to get effective wattribs from ancestor", a)
       every t := key(wattribs) do {
          Gui.is_context_attrib(t) |
             runerr("Invalid (non-graphics context) attribute for component", t)
@@ -901,7 +901,7 @@ class Component(Rect,Align,Connectable)
    # window is closed.
    #
    public finally()
-      \cbwin | runerr("finally called out of sequence")
+      \cbwin | runerr("finally() called out of sequence")
       reset_layout()
       (\border).finally()
       cbwin.close()
@@ -936,7 +936,7 @@ class Component(Rect,Align,Connectable)
    end
 
    public get_preferred_width()
-      return integer(self.w_spec) | get_default_width() | (\layout_delegate).get_preferred_width() | runerr("width must be specified")
+      return integer(self.w_spec) | get_default_width() | (\layout_delegate).get_preferred_width() | runerr("Width must be specified")
    end
 
    public get_preferred_height(pw)
@@ -944,7 +944,7 @@ class Component(Rect,Align,Connectable)
       if i := integer(self.h_spec) then
          return i
       /pw := get_preferred_width()
-      return get_default_height(pw) | (\layout_delegate).get_preferred_height(pw) | runerr("height must be specified")
+      return get_default_height(pw) | (\layout_delegate).get_preferred_height(pw) | runerr("Height must be specified")
    end
 
    #
@@ -1033,12 +1033,12 @@ class Component(Rect,Align,Connectable)
       \self.x_spec | runerr("x position unspecified")
       \self.y_spec | runerr("y position unspecified")
 
-      self.x := parent.x + parse_pos(parent.w, self.x_spec) | runerr("invalid x position specification", self.x_spec)
-      self.y := parent.y + parse_pos(parent.h, self.y_spec) | runerr("invalid y position specification", self.y_spec)
+      self.x := parent.x + parse_pos(parent.w, self.x_spec) | runerr("Invalid x position specification", self.x_spec)
+      self.y := parent.y + parse_pos(parent.h, self.y_spec) | runerr("Invalid y position specification", self.y_spec)
       wspec := \self.w_spec | get_preferred_width()
-      self.w := parse_pos(parent.w, wspec) | runerr("invalid width specification", wspec)
+      self.w := parse_pos(parent.w, wspec) | runerr("Invalid width specification", wspec)
       hspec := \self.h_spec | get_preferred_height(self.w)
-      self.h := parse_pos(parent.h, hspec) | runerr("invalid height specification", hspec)
+      self.h := parse_pos(parent.h, hspec) | runerr("Invalid height specification", hspec)
 
       #
       # Adjust x, y based on alignments
@@ -1047,13 +1047,13 @@ class Component(Rect,Align,Connectable)
          Align.C : self.x -:= self.w / 2
          Align.R : self.x -:= self.w
          Align.L : &null
-         default : runerr("incorrect x alignment specifier", self.x_align)
+         default : runerr("Incorrect x alignment specifier", self.x_align)
       }
       case self.y_align of {
          Align.C : self.y -:= self.h / 2
          Align.B : self.y -:= self.h
          Align.T : &null
-         default : runerr("incorrect y alignment specifier", self.y_align)
+         default : runerr("Incorrect y alignment specifier", self.y_align)
       }
    end
 

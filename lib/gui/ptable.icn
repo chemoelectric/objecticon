@@ -283,7 +283,7 @@ class PTable(SelectableScrollArea)
 
    public initially()
       if *cols = 0 then
-         runerr("no PTableColumns in PTable")
+         runerr("No PTableColumns in PTable")
       SelectableScrollArea.initially()
       every (!cols).initially()
    end

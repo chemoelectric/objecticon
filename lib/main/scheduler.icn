@@ -22,7 +22,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       else if DescStream.poll_in_test(r[1]) then
          other.in(n)
       else
-         error("poll() indicated an i/o error")
+         error("poll() indicated an I/O error")
    end
 
    public out(s)
@@ -33,7 +33,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       else if DescStream.poll_out_test(r[1]) then
          other.out(s)
       else
-         error("poll() indicated an i/o error")
+         error("poll() indicated an I/O error")
    end
 
    public close()
@@ -99,7 +99,7 @@ class Task()
    # :  `n` - The time to wait for.  If `&null`, wait forever.
    #
    public change_time(n)
-      \coex | runerr("change_time called on a currently active task")
+      \coex | runerr("change_time() called on a currently active task")
       if is_sleeping() | is_polling() then
          time_until := (time_from + \n) | &null
       return self
@@ -113,7 +113,7 @@ class Task()
    # :  `n` - The time to wait for.  If `&null`, wait forever.
    #
    public change_time_from_now(n)
-      \coex | runerr("change_time_from_now called on a currently active task")
+      \coex | runerr("change_time_from_now() called on a currently active task")
       if is_sleeping() | is_polling() then
          time_until := (Prog.get_runtime_millis() + \n) | &null
       return self
@@ -181,7 +181,7 @@ class Task()
    # :  `timeout` - The optional timeout
    #
    public poll(l, timeout)
-      self === scheduler.curr_task | runerr("poll called on task which is not current")
+      self === scheduler.curr_task | runerr("poll() called on task which is not current")
       coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \timeout) | &null
@@ -216,7 +216,7 @@ class Task()
    # :  `self` when the task awakes; fails on interrupt
    #
    public sleep(n)
-      self === scheduler.curr_task | runerr("sleep called on task which is not current")
+      self === scheduler.curr_task | runerr("sleep() called on task which is not current")
       coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \n) | &null
@@ -232,7 +232,7 @@ class Task()
    # parameter `why` (the default `&why` is "Interrupted").
    #
    public interrupt(why)
-      \coex | runerr("interrupt called on a currently active task")
+      \coex | runerr("interrupt() called on a currently active task")
       scheduler.interrupt(self, why)
       return self
    end
@@ -242,7 +242,7 @@ class Task()
    # active.
    #
    public notify()
-      \coex | runerr("notify called on a currently active task")
+      \coex | runerr("notify() called on a currently active task")
       scheduler.notify(self)
       return self
    end
@@ -251,7 +251,7 @@ class Task()
    # placing it immediately into the ready state in the scheduler.
    #
    public yield()
-      self === scheduler.curr_task | runerr("yield called on task which is not current")
+      self === scheduler.curr_task | runerr("yield() called on task which is not current")
       self.coex := &current
       scheduler.now_yield(self)
       return self
@@ -264,7 +264,7 @@ class Task()
    # the task's co-expression, `revert` must be used.
    #
    public revert()
-      self === scheduler.curr_task | runerr("revert called on task which is not current")
+      self === scheduler.curr_task | runerr("revert() called on task which is not current")
       self.coex := &current
       scheduler.now_revert()
       return self
@@ -275,7 +275,7 @@ class Task()
    # it continues from that same state.
    #
    public start()
-      \coex | runerr("start called on a currently active task")
+      \coex | runerr("start() called on a currently active task")
       scheduler.start(self)
       return self
    end
@@ -286,7 +286,7 @@ class Task()
    # `start`.
    #
    public stop()
-      \coex | runerr("stop called on a currently active task")
+      \coex | runerr("stop() called on a currently active task")
       scheduler.stop(self)
       return self
    end
@@ -392,25 +392,25 @@ class Scheduler()
    end
 
    package now_sleep(t)
-      \coex | syserr("now_sleep with null coex")
+      \coex | syserr("now_sleep() with null coex")
       set_state(t, sleeping)
       coact(, coex)
    end
 
    package now_poll(t)
-      \coex | syserr("now_poll with null coex")
+      \coex | syserr("now_poll() with null coex")
       set_state(t, polling)
       coact(, coex)
    end
 
    package now_yield(t)
-      \coex | syserr("now_yield with null coex")
+      \coex | syserr("now_yield() with null coex")
       set_state(t, ready)
       coact(, coex)
    end
 
    package now_revert()
-      \coex | syserr("now_revert with null coex")
+      \coex | syserr("now_revert() with null coex")
       coact(, coex)
    end
 
@@ -441,8 +441,8 @@ class Scheduler()
          @te
       }
       t.xstate_swap()
-      \t.coex | runerr("incorrect reversion to scheduler, task co-expression not set", t)
-      coex === &current | syserr("scheduler co-expression not &current")
+      \t.coex | runerr("Incorrect reversion to scheduler, task co-expression not set", t)
+      coex === &current | syserr("Scheduler co-expression not &current")
       coex := sc
       curr_task := st
    end

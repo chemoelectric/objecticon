@@ -369,7 +369,7 @@ $endif
       return if ps.get_exit_info().succeeded() then
          d
       else
-         error("program failed: " || &why)
+         error("Program failed: " || &why)
    end
 
    private read_all(ts)

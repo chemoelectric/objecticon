@@ -219,16 +219,16 @@ $else
          EXITED: {
             if param = 0 then
                return
-            return error("exited with status " || param)
+            return error("Exited with status " || param)
          }
          STOPPED:
-            return error("stopped with signal " || param)
+            return error("Stopped with signal " || param)
          TERMINATED:
-            return error("terminated with signal " || param)
+            return error("Terminated with signal " || param)
          COREDUMP:
-            return error("dumped core with signal " || param)
+            return error("Dumped core with signal " || param)
          default:
-            return error("finished for unknown reason " || reason || "; param " || image(param))
+            return error("Finished for unknown reason " || reason || "; param " || image(param))
       }
 $endif
    end

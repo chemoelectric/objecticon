@@ -139,7 +139,7 @@ class Rect(Point,Size)
             Align.C : self.x + (self.w - s.w) / 2
             Align.L : self.x
             Align.R : self.x + self.w - s.w
-            default : runerr("incorrect x_align specifier", a.x_align)
+            default : runerr("Incorrect x_align specifier", a.x_align)
          }
          w1 := s.w
       }         
@@ -152,7 +152,7 @@ class Rect(Point,Size)
             Align.C : self.y + (self.h - s.h) / 2
             Align.T : self.y
             Align.B : self.y + self.h - s.h
-            default : runerr("incorrect y_align specifier", a.y_align)
+            default : runerr("Incorrect y_align specifier", a.y_align)
          }
          h1 := s.h
       }

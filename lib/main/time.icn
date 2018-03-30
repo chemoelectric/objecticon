@@ -853,7 +853,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       s ? {
          (y := get_int() &
           m := get_int() &
-          d := get_int()) | return error("y m d missing")
+          d := get_int()) | return error("Year, month, day expected")
          hh := get_int() | 0
          mm := get_int() | 0
          ss := get_int() | 0

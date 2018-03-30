@@ -70,7 +70,7 @@ class Border(Component)
    end
 
    public initially()
-      \self.content | runerr("no content component specified")
+      \self.content | runerr("No content component specified")
       Component.initially()
    end
 
@@ -116,7 +116,7 @@ class Border(Component)
             Align.C : (self.w - title.w) / 2
             Align.L : TITLE_OFFSET
             Align.R : self.w - title.w - TITLE_OFFSET
-            default : runerr("incorrect internal_align specifier", self.internal_align)
+            default : runerr("Incorrect internal_align specifier", self.internal_align)
          }
          title.y := self.y
          title.layout()
