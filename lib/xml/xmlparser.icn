@@ -257,7 +257,7 @@ class XmlParser(Connectable)
    private validate_idrefs()
       local x
       every x := !id_attribute_refs do
-         member(doc.id_attribute_values, x.val) | invalid("an IDREF(S) attribute " ||
+         member(doc.id_attribute_values, x.val) | invalid("An IDREF(S) attribute " ||
                                                           x.val || " was used, which does not match any IDs",
                                                           x.pos)
    end
@@ -1238,7 +1238,7 @@ class XmlParser(Connectable)
             dtd_opt_spaces()
             n := dtd_parse_name()
             if member(seen, n) then
-               invalid("name " || n || " appeared multiple times in mixed content spec")
+               invalid("Name " || n || " appeared multiple times in mixed content spec")
             else
                insert(seen, n)
             a := ContentSpec("name", n)
@@ -1278,7 +1278,7 @@ class XmlParser(Connectable)
       # a warning.
       #
       if t := member(doc.attribute_lists, element_name) then
-         warn("multiple ATTLIST definitions for element " || element_name)
+         warn("Multiple ATTLIST definitions for element " || element_name)
       else {
          t := AttList()
          insert(doc.attribute_lists, element_name, t)
@@ -1410,39 +1410,39 @@ class XmlParser(Connectable)
             }
             "ID" : {
                valid_name(val) |
-                  invalid("default attribute value " || val || " must be a valid name")
+                  invalid("Default attribute value " || val || " must be a valid name")
             }
             "IDREF" : {
                valid_name(val) |
-                  invalid("default attribute value " || val || " must be a valid name")
+                  invalid("Default attribute value " || val || " must be a valid name")
             }
             "IDREFS" : {
                valid_names(val) |
-                  invalid("default attribute value " || val || " must be comprised of valid names")
+                  invalid("Default attribute value " || val || " must be comprised of valid names")
             }
             "ENTITY" : {
                valid_name(val) |
-                  invalid("default attribute value " || val || " must be a valid name")
+                  invalid("Default attribute value " || val || " must be a valid name")
             }
             "ENTITIES" : {
                valid_names(val) |
-                  invalid("default attribute value " || val || " must be comprised of valid names")
+                  invalid("Default attribute value " || val || " must be comprised of valid names")
             }
             "NMTOKEN" : {
                valid_nmtoken(val) |
-                  invalid("default attribute value " || val || " must be a valid nmtoken")
+                  invalid("Default attribute value " || val || " must be a valid nmtoken")
             }
             "NMTOKENS" : {
                valid_nmtokens(val) |
-                  invalid("default attribute value " || val || " must be comprised of valid nmtokens")
+                  invalid("Default attribute value " || val || " must be comprised of valid nmtokens")
             }
             "ENUMERATION" : { 
                if not(member(attribute_def.def_set, val)) then
-                  invalid("default attribute value " || val || " is not one of the declared enumerations")
+                  invalid("Default attribute value " || val || " is not one of the declared enumerations")
             }
             "NOTATION" : { 
                if not(member(attribute_def.def_set, val)) then
-                  invalid("default attribute value " || val || " is not one of the declared notations")
+                  invalid("Default attribute value " || val || " is not one of the declared notations")
             }
          }
       }
@@ -1615,7 +1615,7 @@ class XmlParser(Connectable)
          val := parse_pe_def()
          # Second and subsequent definitions generate a warning, and are ignored.
          if member(doc.parameter_entities, name) then
-            warn("multiple parameter entity definitions for " || name)
+            warn("Multiple parameter entity definitions for " || name)
          else
             insert(doc.parameter_entities, name, val)
       } else {
@@ -1624,7 +1624,7 @@ class XmlParser(Connectable)
          val := parse_entity_def()
          # Second and subsequent definitions generate a warning, and are ignored.
          if member(doc.general_entities, name) then
-            warn("multiple parameter entity definitions for " || name)
+            warn("Multiple parameter entity definitions for " || name)
          else
             insert(doc.general_entities, name, val)
       }         
@@ -1884,16 +1884,16 @@ class XmlParser(Connectable)
             # A #FIXED attribute value must match the default.
             if x[2].default_decl === "#FIXED" then {
                if el.attributes[x[1]] ~=== x[2].default_value then
-                  invalid("attribute value " || el.attributes[x[1]] || " doesn't match the defined FIXED value " || x[2].default_value)
+                  invalid("Attribute value " || el.attributes[x[1]] || " doesn't match the defined FIXED value " || x[2].default_value)
             }
          } else {
             # A #REQUIRED attribute must be present.
             if x[2].default_decl === "#REQUIRED" then
-               invalid("the attribute " || x[1] || " is required, but not present")
+               invalid("The attribute " || x[1] || " is required, but not present")
             else {
                # Cannot insert a default from an attdef defined in the external subset, if standalone is "yes"
                if \doc.standalone & \x[2].in_ext_subset then
-                  invalid("cannot use a default from an attribute declared externally, in a standalone document")
+                  invalid("Cannot use a default from an attribute declared externally, in a standalone document")
                # Insert any default value.
                insert(el.attributes, x[1], \x[2].default_value)
             }
@@ -1919,34 +1919,34 @@ class XmlParser(Connectable)
          }
          "ID" : {
             valid_name(val) |
-               invalid("attribute value " || val || " must be a valid name")
+               invalid("Attribute value " || val || " must be a valid name")
             # Store the value of the id
             if member(doc.id_attribute_values, val) then
-               invalid("duplicated ID attribute value: " || val)
+               invalid("Duplicated ID attribute value: " || val)
             else
                insert(doc.id_attribute_values, val)
          }
          "IDREF" : {
             valid_name(val) |
-               invalid("attribute value " || val || " must be a valid name")
+               invalid("Attribute value " || val || " must be a valid name")
             put(id_attribute_refs, IdAttributeRef(val, where()))
          }
          "IDREFS" : {
             if l := valid_names(val) then
                every put(id_attribute_refs, IdAttributeRef(!l, where()))
             else
-               invalid("attribute value " || val || " must be comprised of valid names")
+               invalid("Attribute value " || val || " must be comprised of valid names")
          }
          "ENTITY" : {
             if valid_name(val) then {
                if member(doc.general_entities, val) then {
                   entity_def := doc.general_entities[val]
                   if /entity_def.notation then
-                     invalid("attribute val " || val || " does not match an external entity")
+                     invalid("Attribute val " || val || " does not match an external entity")
                } else
-                  invalid("attribute val " || val || " does not match an external entity")
+                  invalid("Attribute val " || val || " does not match an external entity")
             } else
-               invalid("attribute value " || val || " must be a valid name")
+               invalid("Attribute value " || val || " must be a valid name")
          }
          "ENTITIES" : {
             if l := valid_names(val) then {
@@ -1954,28 +1954,28 @@ class XmlParser(Connectable)
                   if member(doc.general_entities, n) then {
                      entity_def := doc.general_entities[n]
                      if /entity_def.notation then
-                        invalid("attribute val " || n || " does not match an external entity")
+                        invalid("Attribute val " || n || " does not match an external entity")
                   } else
-                     invalid("attribute val " || n || " does not match an external entity")
+                     invalid("Attribute val " || n || " does not match an external entity")
                }
             } else
-               invalid("attribute value " || val || " must be comprised of valid names")
+               invalid("Attribute value " || val || " must be comprised of valid names")
          }
          "NMTOKEN" : {
             valid_nmtoken(val) |
-               invalid("attribute value " || val || " must be a valid nmtoken")
+               invalid("Attribute value " || val || " must be a valid nmtoken")
          }
          "NMTOKENS" : {
             valid_nmtokens(val) |
-               invalid("attribute value " || val || " must be comprised of valid nmtokens")
+               invalid("Attribute value " || val || " must be comprised of valid nmtokens")
          }
          "ENUMERATION" : { 
             if not(member(attdef.def_set, val)) then
-               invalid("attribute value " || val || " is not one of the declared enumerations")
+               invalid("Attribute value " || val || " is not one of the declared enumerations")
          }
          "NOTATION" : { 
             if not(member(attdef.def_set, val)) then
-               invalid("attribute value " || val || " is not one of the declared notations")
+               invalid("Attribute value " || val || " is not one of the declared notations")
          }
       }
    end

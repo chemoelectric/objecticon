@@ -211,7 +211,7 @@ final abstract class Format()
                         unescape_char(move(1))) | "\0")
          }
          res := res.done()
-         return if type(&subject) == "ucs" then ucs(res) | error("Invalid utf-8 escape sequence") else res
+         return if type(&subject) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
       }
    end
 
