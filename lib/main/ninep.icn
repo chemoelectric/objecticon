@@ -111,7 +111,7 @@ abstract class File9P()
    # comments relating to TWstat in Session9P below).
    #
    public set_info(x)
-      if \fixed & (\x.mode | \x.mtime | \x.gid) then throw("permission denied")
+      if \fixed & (\x.mode | \x.mtime | \x.gid) then throw("Permission denied")
       set_perm(\x.mode)
       set_mtime(\x.mtime)
       set_name(\x.name)
@@ -1188,7 +1188,7 @@ class Session9P()
 
    private new_fid(n, path, uid, mode)
       if member(fids, n) then
-         throw("fid already in use: " || n)
+         throw("Fid already in use: " || n)
       insert(fids, n, Fid(path, uid, mode))
       if \mode then
          open_cnt[data.get_file_key(path)] +:= 1
@@ -1197,7 +1197,7 @@ class Session9P()
 
    private del_fid(n)
       local x, k, i
-      x := member(fids, n) | throw("no such fid: " || n)
+      x := member(fids, n) | throw("No such fid: " || n)
       delete(fids, n)
       if \x.omode then {
          k := data.get_file_key(x.path)
@@ -1216,7 +1216,7 @@ class Session9P()
 
    private lookup(n, t)
       local o
-      o := member(fids, n) | throw("no such fid: " || n)
+      o := member(fids, n) | throw("No such fid: " || n)
       tmp(o.path, t)
       return o
    end
@@ -1348,9 +1348,9 @@ class Session9P()
             del_fid(x.fid)
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMDIR) ~= 0 & not data.is_empty(o.path) then
-               throw("directory not empty")
+               throw("Directory not empty")
             p := tmp(data.get_parent(o.path), t)
-            has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
+            has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("Permission denied")
             if \o.omode then
                data.close(o.path)
             data.remove_child(p, o.path)
@@ -1359,15 +1359,15 @@ class Session9P()
          }
          TCreate: {
             o := lookup(x.fid, t)
-            /o.omode | throw("fid already open")
+            /o.omode | throw("Fid already open")
             # See notes for more details.
             if iand(x.perm, Mode9.DMDIR) ~= 0 & x.mode ~= FileOpt9.OREAD then
-               throw("invalid mode for creating a directory")
+               throw("Invalid mode for creating a directory")
             info := data.get_info(o.path)
-            iand(info.mode, Mode9.DMDIR) ~= 0 | throw("attempt to create in a regular file")
-            has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
+            iand(info.mode, Mode9.DMDIR) ~= 0 | throw("Attempt to create in a regular file")
+            has_perm(info, o.uid, Comms9P.AWRITE) | throw("Permission denied")
             if tmp(data.get_child(o.path, x.name), t) then
-               throw("create with name which already exists")
+               throw("Create with name which already exists")
             perm := if iand(x.perm, Mode9.DMDIR) = 0 then
                iand(x.perm, ior(icom(8r666), iand(info.mode, 8r666)))
             else
@@ -1381,26 +1381,26 @@ class Session9P()
          }
          TOpen: {
             o := lookup(x.fid, t)
-            /o.omode | throw("fid already open")
+            /o.omode | throw("Fid already open")
             info := data.get_info(o.path)
             # Same as for TCreate above.
             if iand(info.mode, Mode9.DMDIR) ~= 0 & x.mode ~= FileOpt9.OREAD then
-               throw("invalid mode for opening a directory")
+               throw("Invalid mode for opening a directory")
             if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) then
-               throw("exclusive use file already open")
+               throw("Exclusive use file already open")
             i := case iand(x.mode, 3) of {
                FileOpt9.OREAD : Comms9P.AREAD
                FileOpt9.OWRITE : Comms9P.AWRITE
                FileOpt9.ORDWR : ior(Comms9P.AREAD, Comms9P.AWRITE)
                FileOpt9.OEXEC : Comms9P.AEXEC
-               default: throw("strange permissions value")
+               default: throw("Strange permissions value")
             }
             if iand(x.mode, FileOpt9.OTRUNC) ~= 0 then
                i := ior(i, Comms9P.AWRITE)
-            has_perm(info, o.uid, i) | throw("permission denied")
+            has_perm(info, o.uid, i) | throw("Permission denied")
             if iand(x.mode, FileOpt9.ORCLOSE) ~= 0 then {
                p := tmp(data.get_parent(o.path), t)
-               has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
+               has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("Permission denied")
             }
             p := tmp(data.open(o.path, x.mode), t)
             del_fid(x.fid)
@@ -1414,7 +1414,7 @@ class Session9P()
          }
          TWalk: {
             o := lookup(x.fid, t)
-            /o.omode | throw("cannot clone open fid")
+            /o.omode | throw("Cannot clone open fid")
             p := o.path
             qids := []
             every e := !x.wname do {
@@ -1433,16 +1433,16 @@ class Session9P()
                return RWalk(x.tag, qids)
             } 
             if *qids = 0 then
-               throw("file does not exist")
+               throw("File does not exist")
             return RWalk(x.tag, qids)
          }
          TWrite: {
             o := lookup(x.fid, t)
             (iand(\o.omode, 3) = (FileOpt9.OWRITE | FileOpt9.ORDWR)) |
-               throw("write on file not open for writing")
+               throw("Write on file not open for writing")
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMDIR) ~= 0 then
-               throw("attempt to write to directory")
+               throw("Attempt to write to directory")
             n := data.write(o.path, x.data, x.offset + 1)
             data.modified(o.path, o.uid)
             return RWrite(x.tag, n)
@@ -1450,7 +1450,7 @@ class Session9P()
          TRead: {
             o := lookup(x.fid, t)
             (iand(\o.omode, 3) = (FileOpt9.OREAD | FileOpt9.OEXEC | FileOpt9.ORDWR)) |
-               throw("read on file not open for reading")
+               throw("Read on file not open for reading")
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMDIR) ~= 0 then {
                if x.offset = 0 then {
@@ -1474,39 +1474,39 @@ class Session9P()
          }
          TWstat: {
             o := lookup(x.fid, t)
-            i := Comms9P.decode_wstat(x.stat)  | throw("invalid wstat data")
+            i := Comms9P.decode_wstat(x.stat)  | throw("Invalid wstat data")
             info := data.get_info(o.path)
             if \i.name then {
                # The name can be changed by anyone with write
                # permission in the parent directory
                p := tmp(data.get_parent(o.path), t)
-               has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
+               has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("Permission denied")
                if tmp(data.get_child(p, i.name), t) then
-                  throw("name already exists")
+                  throw("Name already exists")
             }
             if \i.length then {
                # The length can be changed by anyone with write
                # permission on the file.
-               has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
+               has_perm(info, o.uid, Comms9P.AWRITE) | throw("Permission denied")
                if i.length ~= 0 & iand(info.mode, Mode9.DMDIR) ~= 0 then
-                  throw("cannot set length of directory to non-zero value")
+                  throw("Cannot set length of directory to non-zero value")
             }
             if \i.mtime | \i.mode then {
                # The mode and mtime can be changed by the owner of the
                # file or the group leader of the file's current group.
-               (info.uid == o.uid) | users.is_leader(info.gid, o.uid) | throw("permission denied")
+               (info.uid == o.uid) | users.is_leader(info.gid, o.uid) | throw("Permission denied")
                if \i.mode & iand(i.mode, Mode9.DMDIR) ~= iand(info.mode, Mode9.DMDIR) then
-                  throw("directory bit cannot be changed")
+                  throw("Directory bit cannot be changed")
             }
             if \i.gid then {
                # The gid can be changed: by the owner if also a member
                # of the new group; or by the group leader of the
                # file's current group if also leader of the new group
                (info.uid == o.uid & users.is_member(i.gid, o.uid)) |
-                  (users.is_leader(info.gid, o.uid) & users.is_leader(i.gid, o.uid)) | throw("permission denied")
+                  (users.is_leader(info.gid, o.uid) & users.is_leader(i.gid, o.uid)) | throw("Permission denied")
             }
             if \i.atime | \i.uid | \i.muid then
-               throw("invalid value set in wstat")
+               throw("Invalid value set in wstat")
 
             data.set_info(o.path, i)
             if \i.name then
@@ -1519,9 +1519,9 @@ class Session9P()
          TFlush:
             return RFlush(x.tag)
          TAuth:
-            throw("authorization not required")
+            throw("Authorization not required")
          default:
-            throw("unknown message type")
+            throw("Unknown message type")
       }
    end
 

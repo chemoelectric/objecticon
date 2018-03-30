@@ -118,13 +118,13 @@ procedure server_main(attach, sess, sched, ff)
          sess.dump()
          system("cat /proc/" || System.getpid() || "/fd")
       }
-      server_msg("exit")
+      server_msg("Exit")
    } else {
       sess := &null
       p[2].close()
       if s := "/srv/" || \opts["s" | "S"] then {
          Files.string_to_file(s, p[1].get_fd()) | stop(&why)
-         server_msg("serving on ", s)
+         server_msg("Serving on ", s)
       }
       if /opts["s"] then {
          mp := \opts["m"] | get_mountpt()
@@ -139,7 +139,7 @@ procedure server_main(attach, sess, sched, ff)
          if \opts["C"] then
             fl := ior(fl, MountOpt.MCACHE)
          Files.mount(p[1], &null, mp, fl, attach) | stop(&why)
-         server_msg("mounted on ", mp)
+         server_msg("Mounted on ", mp)
       }
       p[1].close()
    }
@@ -211,7 +211,7 @@ procedure gui_main(attach, sess, async_flag, body, ff)
       p[2].close()
       if s := "/srv/" || \opts["s" | "S"] then {
          Files.string_to_file(s, p[1].get_fd()) | stop(&why)
-         server_msg("serving on ", s)
+         server_msg("Serving on ", s)
       }
       if /opts["s"] then {
          mp := \opts["m"] | get_mountpt()
@@ -226,18 +226,18 @@ procedure gui_main(attach, sess, async_flag, body, ff)
          if \opts["C"] then
             fl := ior(fl, MountOpt.MCACHE)
          Files.mount(p[1], &null, mp, fl, attach) | stop(&why)
-         server_msg("mounted on ", mp)
+         server_msg("Mounted on ", mp)
       }
       System.wait(pid)
       if \s then {
          Files.remove(s)
-         server_msg("removed ", s)
+         server_msg("Removed ", s)
       }
       if \mp then {
          Files.unmount(&null, mp)
-         server_msg("unmounted ", mp)
+         server_msg("Unmounted ", mp)
       }
       p[1].close()
-      server_msg("exit")
+      server_msg("Exit")
    }
 end
