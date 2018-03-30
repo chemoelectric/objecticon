@@ -62,8 +62,10 @@ package record TagInfo(limit, autoclose)
 class HtmlParser()
    private 
       doc,
+      node_stack
+
+   private readable
       utf8_flag,
-      node_stack,
       debug_recovery_flag
 
    public static const
@@ -211,7 +213,7 @@ class HtmlParser()
             i := &pos
             # parse_node() must succeed since move_to_node() didn't
             # leave us at pos(0)
-            node := parse_node() | syserr("parse_node failed unexpectedly")
+            node := parse_node() | syserr("parse_node() failed unexpectedly")
 
             if is(node, DocType | Comment) then
                doc.add(node)
@@ -280,13 +282,13 @@ class HtmlParser()
                   i := &pos
                   # parse_node() must succeed since move_to_node() didn't
                   # leave us at pos(0)
-                  node := parse_node(res) | syserr("parse_node failed unexpectedly")
+                  node := parse_node(res) | syserr("parse_node() failed unexpectedly")
 
                   if is(node, Tag) then {
                      if /node.closed then {
                         if should_close_tag(node) then {
                            if \debug_recovery_flag then
-                              write("closing on out of sync opening tag ", node.name, " at ", to_string(node_stack), " pos=", i)
+                              write("Closing on out of sync opening tag ", node.name, " at ", to_string(node_stack), " pos=", i)
                            &pos := i
                            break
                         }
@@ -296,7 +298,7 @@ class HtmlParser()
                            break
                         if find_open_tag(node) then {
                            if \debug_recovery_flag then
-                              write("closing on out of sync closing tag ", node.name, " at ", to_string(node_stack), " pos=", i)
+                              write("Closing on out of sync closing tag ", node.name, " at ", to_string(node_stack), " pos=", i)
                            &pos := i
                            break
                         }
