@@ -914,7 +914,7 @@ static int setencoding(int c)
     else if (s == ascii_string || s == utf8_string || s == iso_8859_1_string)
         encoding = s;
     else {
-        lexfatal("Invalid encoding:%s", s);
+        lexfatal("Invalid encoding: %s", s);
         encoding = ascii_string;
     }
 
