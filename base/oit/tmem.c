@@ -181,7 +181,7 @@ void next_field(char *name, int flag, struct node *n)
     while (cv && cv->name != name)
         cv = cv->b_next;
     if (cv)
-        tfatal_at(n, "duplicate class field: %s", name);
+        tfatal_at(n, "Duplicate class field: %s", name);
     cv = FAlloc(struct tclass_field);
     cv->b_next = curr_class->field_hash[i];
     curr_class->field_hash[i] = cv;
@@ -255,15 +255,15 @@ void next_import(char *s, int mode, struct node *n)
     int i = hasher(s, import_hash);
     struct timport *x = import_hash[i];
     if (s == package_name)
-        tfatal_at(n, "import same as package: %s", s);
+        tfatal_at(n, "Import same as package: %s", s);
     while (x && x->name != s)
         x = x->b_next;
     if (x) {
         /* Can only have duplicate import declarations if both are qualified and of the same import mode */
         if (mode == I_All && x->mode == I_All)
-            tfatal_at(n, "duplicate import: %s", s);
+            tfatal_at(n, "Duplicate import: %s", s);
         else if (mode != x->mode)
-            tfatal_at(n, "package already imported with different import mode: %s", s);
+            tfatal_at(n, "Package already imported with different import mode: %s", s);
         curr_import = x;
         return;
     }
@@ -289,7 +289,7 @@ void add_import_symbol(char *s, struct node *n)
     while (x && x->name != s)
         x = x->b_next;
     if (x)
-        tfatal_at(n, "duplicate imported symbol: %s", s);
+        tfatal_at(n, "Duplicate imported symbol: %s", s);
     x = FAlloc(struct timport_symbol);
     x->b_next = curr_import->symbol_hash[i];
     curr_import->symbol_hash[i] = x;

@@ -3046,7 +3046,7 @@ case 219:
 break;
 case 220:
 #line 499 "tgram.g"
-	{int kn = klookup(Str0(yystack.l_mark[0])); if (kn == 0) tfatal("invalid keyword: %s",Str0(yystack.l_mark[0])); yyval = int_leaf(N_Key,yystack.l_mark[-1],kn);;}
+	{int kn = klookup(Str0(yystack.l_mark[0])); if (kn == 0) tfatal("Invalid keyword: %s",Str0(yystack.l_mark[0])); yyval = int_leaf(N_Key,yystack.l_mark[-1],kn);;}
 break;
 case 221:
 #line 501 "tgram.g"
