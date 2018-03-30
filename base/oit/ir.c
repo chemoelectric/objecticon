@@ -160,7 +160,7 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
      * Check we have a valid last instruction.
      */
     if (chunk->n_inst == 0)
-        quit("empty chunk allocated from line %d", line);
+        quit("Empty chunk allocated from line %d", line);
     switch (chunk->inst[chunk->n_inst - 1]->op) {
         case Ir_Goto:
         case Ir_IGoto:
@@ -171,7 +171,7 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
         case Ir_SysErr:
             break;
         default:
-            quit("invalid last instruction for chunk allocated from line %d", line);
+            quit("Invalid last instruction for chunk allocated from line %d", line);
     }
     if (Iflag)
         print_chunk(chunk);
@@ -925,7 +925,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_local *x = (struct lnode_local *)n;
             if (target && target->type == LOCAL) {
                 if (target->local != x->local)
-                    quit("local target points to wrong var");
+                    quit("Local target points to wrong var");
                 target = 0;
             }
             chunk2(res->start, 
@@ -940,7 +940,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_global *x = (struct lnode_global *)n;
             if (target && target->type == GLOBAL) {
                 if (target->global != x->global)
-                    quit("global target points to wrong var");
+                    quit("Global target points to wrong var");
                 target = 0;
             }
             chunk2(res->start, 
@@ -955,7 +955,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_const *x = (struct lnode_const *)n;
             if (target && target->type == CONST) {
                 if (target->con != x->con)
-                    quit("const target points to wrong constant");
+                    quit("Const target points to wrong constant");
                 target = 0;
             }
             chunk2(res->start, 
@@ -1938,7 +1938,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_Break: {
             if (!loop_stack)
-                quit("break without corresponding loop");
+                quit("Break without corresponding loop");
 
             if (scan_stack != loop_stack->loop->scan_stack) {
                 /* A scan is within the loop, and the break is within the scan.  Find the
@@ -1991,7 +1991,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_stack *expr_st;
 
             if (!loop_stack)
-                quit("break without corresponding loop");
+                quit("Break without corresponding loop");
 
             cur_loop = pop_loop();
             saved_scan_stack = scan_stack;
@@ -2054,7 +2054,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_Next: {                        /* next expression */
             if (!loop_stack)
-                quit("next without corresponding loop");
+                quit("Next without corresponding loop");
 
             if (loop_stack->loop->next_fails_flag) {
                 /*
@@ -2274,7 +2274,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int need_mark, mk;
 
             if (x->n < 2)
-                quit("got slist with < 2 elements");
+                quit("Got slist with < 2 elements");
 
             list_st = branch_stack(st);
             mk = make_mark(list_st);
@@ -2490,7 +2490,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int i;
 
             if (x->n < 2)
-                quit("got mutual with < 2 elements");
+                quit("Got mutual with < 2 elements");
 
             info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             for (i = 0; i < x->n - 1; ++i) {
@@ -3047,7 +3047,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         default:
-            quit("ir_traverse: illegal opcode(%d): %s in file %s\n", n->op, 
+            quit("ir_traverse: Illegal opcode(%d): %s in file %s\n", n->op, 
                   ucode_op_table[n->op].name, n->loc.file);
     }
     if (Iflag)
@@ -4109,7 +4109,7 @@ static void renumber_ir()
                 }
 
                 default: {
-                    quit("renumber: illegal ir opcode(%d)\n", ir->op);
+                    quit("renumber: Illegal ir opcode(%d)\n", ir->op);
                     break;
                 }
             }

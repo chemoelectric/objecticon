@@ -126,7 +126,7 @@ static struct gentry *try_import_lookup(struct lfile *lf, struct fimport *fp, ch
             return gl;
         }
         default:
-            quit("illegal fimport mode");
+            quit("Illegal fimport mode");
     }
     /* Not reached */
     return 0;
@@ -238,7 +238,7 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
             /* Note that the static's index number is set later, during code generation */
             ++func->nstatics;
         } else
-            quit("resolvelocal: unknown flags");
+            quit("resolve_local: Unknown flags");
         return;
     }
 

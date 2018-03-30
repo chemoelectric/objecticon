@@ -248,10 +248,10 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
         ffatalerr("Can't read interpreter file header in file %s", name);
 
     if (!check_version(hdr)) {
-        fprintf(stderr, "icode version mismatch in %s\n", name);
-        fprintf(stderr, "\ticode version: %s\n", (char *)hdr->config);
-        fprintf(stderr, "\texpected version: %s\n", IVersion);
-        ffatalerr("cannot run %s", name);
+        fprintf(stderr, "Icode version mismatch in %s\n", name);
+        fprintf(stderr, "\tIcode version: %s\n", (char *)hdr->config);
+        fprintf(stderr, "\tExpected version: %s\n", IVersion);
+        ffatalerr("Cannot run %s", name);
     }
 
     return ifile;
@@ -310,21 +310,21 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         if ((cbread = gzread(zfd, codeptr, hdr->icodesize)) != hdr->icodesize) {
             fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
                     hdr->icodesize, cbread);
-            ffatalerr("bad icode file: %s", name);
+            ffatalerr("Bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
         if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
             fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
                     hdr->icodesize, cbread);
-            ffatalerr("bad icode file: %s", name);
+            ffatalerr("Bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
     if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
         fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
                 hdr->icodesize, cbread);
-        ffatalerr("bad icode file: %s", name);
+        ffatalerr("Bad icode file: %s", name);
     }
 #endif					/* HAVE_LIBZ */
 }
@@ -395,9 +395,9 @@ void env_int(char *name, int *variable, int min, int max)
     if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, "%d%c", &t, &ch) != 1)
-        ffatalerr("environment variable not numeric: %s=%s", name, value);
+        ffatalerr("Environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
-        ffatalerr("environment variable out of range: %s=%s", name, value);
+        ffatalerr("Environment variable out of range: %s=%s", name, value);
     *variable = t;
 }
 
@@ -411,9 +411,9 @@ void env_word(char *name, word *variable, word min, word max)
     if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, WordFmt "%c", &t, &ch) != 1)
-        ffatalerr("environment variable not numeric: %s=%s", name, value);
+        ffatalerr("Environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
-        ffatalerr("environment variable out of range: %s=%s", name, value);
+        ffatalerr("Environment variable out of range: %s=%s", name, value);
     *variable = t;
 }
 
@@ -427,9 +427,9 @@ void env_uword(char *name, uword *variable, uword min, uword max)
     if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, UWordFmt "%c", &t, &ch) != 1)
-        ffatalerr("environment variable not numeric: %s=%s", name, value);
+        ffatalerr("Environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
-        ffatalerr("environment variable out of range: %s=%s", name, value);
+        ffatalerr("Environment variable out of range: %s=%s", name, value);
     *variable = t;
 }
 
@@ -443,9 +443,9 @@ void env_double(char *name, double *variable, double min, double max)
     if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, "%lf%c", &t, &ch) != 1)
-        ffatalerr("environment variable not numeric: %s=%s", name, value);
+        ffatalerr("Environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
-        ffatalerr("environment variable out of range: %s=%s", name, value);
+        ffatalerr("Environment variable out of range: %s=%s", name, value);
     *variable = t;
 }
 
@@ -1174,7 +1174,7 @@ int main(int argc, char **argv)
     }
 
     if (argc < 2) 
-        ffatalerr("no icode file specified");
+        ffatalerr("No icode file specified");
 
     name = argv[1];
 
@@ -1282,7 +1282,7 @@ int main(int argc, char **argv)
     env_double(OI_LEADING, &defaultleading, 0.0, 1e32);
     env_word(OI_IP_VERSION, &defaultipver, 0, 64);
     if (!(defaultipver == 4 || defaultipver == 6 || defaultipver == 46 || defaultipver == 64 || defaultipver == 0))
-        ffatalerr("environment variable has invalid value: %s=" WordFmt, OI_IP_VERSION, defaultipver);
+        ffatalerr("Environment variable has invalid value: %s=" WordFmt, OI_IP_VERSION, defaultipver);
     env_string(OI_FONT, &defaultfont);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));

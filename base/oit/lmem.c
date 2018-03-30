@@ -241,7 +241,7 @@ void add_field(struct lclass *x, char *name, int flag, struct loc *pos)
     while (cf && cf->name != name)
         cf = cf->b_next;
     if (cf) 
-        quit("duplicate class field: %s", name);
+        quit("Duplicate class field: %s", name);
     cf = Alloc(struct lclass_field);
     cf->b_next = x->field_hash[i];
     x->field_hash[i] = cf;

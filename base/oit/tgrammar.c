@@ -174,7 +174,7 @@ int globalflag;
 #define CoInvoke(x1,x2,x3,x4)	$$ = tree4(N_CoInvoke,x2,x1,x3) 
 #define Keyword(x1,x2)		int kn = klookup(Str0(x2)); \
                                 if (kn == 0) \
-				   tfatal("invalid keyword: %s",Str0(x2));\
+				   tfatal("Invalid keyword: %s",Str0(x2));\
                                 $$ = int_leaf(N_Key,x1,kn);
 #define Kfail(x1,x2)		$$ = int_leaf(N_Key,x1,K_FAIL) 
 #define Kbreak(x1,x2)		$$ = int_leaf(N_Key,x1,K_BREAK) 

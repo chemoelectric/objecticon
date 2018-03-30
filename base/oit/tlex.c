@@ -1013,6 +1013,10 @@ void yyerror(char *msg)
 {
     int line;
 
+    /* Correct yacc's lack of capitalization. */
+    if (strcmp(msg, "syntax error") == 0)
+        msg = "Syntax error";
+
     if (yylval == NULL)
         line = 0;
     else

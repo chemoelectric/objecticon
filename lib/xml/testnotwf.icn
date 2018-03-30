@@ -12,8 +12,8 @@ procedure main(a)
    local p, s, d, opt
    p := XmlParser().set_do_namespaces(&no)
 
-   opt := options(a, "-u!")
-   *a = 1 | stop("usage: testnotwf source")
+   opt := options(a, [Opt("u",, "Ucs input")], "Usage: testnotwf SOURCE")
+   *a = 1 | help_stop("Need a parameter")
    s := Files.file_to_string(a[1]) | stop("Couldn't open ", a[1], ": ", &why)
    if \opt["u"] then
       s := ucs(s) | exit(0)

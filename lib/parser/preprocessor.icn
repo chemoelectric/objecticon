@@ -114,7 +114,7 @@ class Preprocessor(Connectable)
       nest_level := 0
       encoding := "ASCII"
       if not(file := open(fname)) then {
-         err("cannot open " || image(fname) || ": " || &why)
+         err("Cannot open " || image(fname) || ": " || &why)
          fail
       }
       return
@@ -158,7 +158,7 @@ class Preprocessor(Connectable)
                   value := scan_define_value() then 
                {
                   if (old := member(sym_table, sym)) ~=== value then {
-                     err("redefinition of " || sym || " = " ||
+                     err("Redefinition of " || sym || " = " ||
                                    old)
                   } else {
                      sym_table[sym] := value
@@ -191,15 +191,15 @@ class Preprocessor(Connectable)
                   {
                      if value := image(Files.file_to_string(t)) then {
                         if (old := member(sym_table, sym)) ~=== value then {
-                           err("redefinition of " || sym || " = " ||
+                           err("Redefinition of " || sym || " = " ||
                                old)
                         } else {
                            sym_table[sym] := value
                         }
                      } else
-                        err("cannot load " || image(t) || ": " || &why)
+                        err("Cannot load " || image(t) || ": " || &why)
                   } else
-                     err("cannot find " || image(fname) || " on path")
+                     err("Cannot find " || image(fname) || " on path")
                } else
                   err()
                return ""
@@ -217,15 +217,15 @@ class Preprocessor(Connectable)
                   {
                      if value := "u" || image(Files.file_to_string(t)) then {
                         if (old := member(sym_table, sym)) ~=== value then {
-                           err("redefinition of " || sym || " = " ||
+                           err("Redefinition of " || sym || " = " ||
                                old)
                         } else {
                            sym_table[sym] := value
                         }
                      } else
-                        err("cannot load " || image(t) || ": " || &why)
+                        err("Cannot load " || image(t) || ": " || &why)
                   } else
-                     err("cannot find " || image(fname) || " on path")
+                     err("Cannot find " || image(fname) || " on path")
                } else
                   err()
                return ""
@@ -261,7 +261,7 @@ class Preprocessor(Connectable)
          "elsifdef" | "elsifndef" : {
             if sym := scan_word() & at_end() then {
                if *if_stack <= nest_level then {
-                  err("no corresponding $if...")
+                  err("No corresponding $if...")
                } else {
                   if \if_state == "false" then {
                      value := (member(sym_table, sym) & &null) | "false"
@@ -284,7 +284,7 @@ class Preprocessor(Connectable)
          "else": {
             if at_end() then {
                if *if_stack <= nest_level then {
-                  err("no corresponding $if...")
+                  err("No corresponding $if...")
                } else {
                   if_state := {
                      case if_state of {
@@ -307,7 +307,7 @@ class Preprocessor(Connectable)
             if at_end() then {
                (*if_stack >= nest_level &
                 if_state := pop(if_stack)) |
-                  err("no corresponding $if...")
+                  err("No corresponding $if...")
             } else {
                *if_stack >= nest_level &
                   if_state := pop(if_stack)
@@ -325,7 +325,7 @@ class Preprocessor(Connectable)
             if /if_state then {
                if sym := scan_qword() & *sym > 0 & at_end() then {
                   if member(include_set,sym) then {
-                     err("circular reference to " || image(sym))
+                     err("Circular reference to " || image(sym))
                   } else {
                      if new_filename := Files.path_find(sym, 
                                                         "OI_INCL",
@@ -344,9 +344,9 @@ class Preprocessor(Connectable)
                            nest_level := *if_stack
                            insert(include_set,sym)
                         } else
-                           err("cannot open " || image(new_filename) || ": " || &why)
+                           err("Cannot open " || image(new_filename) || ": " || &why)
                      } else
-                        err("cannot find " || image(sym) || " on path")
+                        err("Cannot find " || image(sym) || " on path")
                   }
                } else {
                   err()
@@ -405,7 +405,7 @@ class Preprocessor(Connectable)
          }
          default: {
             if /if_state then {
-               err("unknown preprocessor directive:" || preproc_command)
+               err("Unknown preprocessor directive:" || preproc_command)
                return ""
             }
          }
@@ -490,7 +490,7 @@ class Preprocessor(Connectable)
                break
             # else EOF, fall through
          } else
-            err("error reading: " || &why)
+            err("Error reading: " || &why)
          
          if *if_stack ~= nest_level then {
             err("$if(s) without $endif(s): " ||

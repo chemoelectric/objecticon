@@ -209,7 +209,7 @@ static void trans1(char *filename, struct pp_def *pp_defs)
     }
 
     if (!ppinit(filename, m4pre))
-        equit("cannot open %s",filename);
+        equit("Cannot open %s",filename);
 
     while (pp_defs) {
         ppdef(pp_defs->key, pp_defs->value);
@@ -236,11 +236,11 @@ static void trans1(char *filename, struct pp_def *pp_defs)
 
         ucodefile = fopen(outname, WriteBinary);
         if (!ucodefile)
-            equit("cannot create %s", outname);
+            equit("Cannot create %s", outname);
         output_code();
         fflush(ucodefile);
         if (ferror(ucodefile) != 0)
-            equit("failed to write to ucode file %s", outname);
+            equit("Failed to write to ucode file %s", outname);
         fclose(ucodefile);
         if (tfatals)
             /*

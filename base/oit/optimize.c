@@ -3194,7 +3194,7 @@ static void fold_sect(struct lnode *n, int op)
             }
             /* Ensure we found right num of chars. */
             if (l)
-                quit("cset to str inconsistent parameters");
+                quit("fold_sect: inconsistent parameters");
             out_len = CurrLen(opt_sbuf);
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,

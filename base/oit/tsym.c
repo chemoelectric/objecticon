@@ -80,7 +80,7 @@ void install(char *name, struct node *n)
             break;
 
         default:
-            quit("install: unrecognized symbol table flag %d.", idflag);
+            quit("install: Unrecognized symbol table flag %d.", idflag);
     }
 }
 
@@ -97,13 +97,13 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
     while (x && x->g_name != name)
         x = x->g_blink;
     if (x)
-        tfatal_at(n, "global redeclaration: %s previously declared at line %d", name, Line(x->pos));
+        tfatal_at(n, "Global redeclaration: %s previously declared at line %d", name, Line(x->pos));
 
     if (bsearch(name, builtin_table, ElemCount(builtin_table), 
                 sizeof(char *), (BSearchFncCast)builtin_table_cmp)) 
         tfatal_at(n, package_name ? 
-                          "package symbol uses name of builtin function" :
-                          "global symbol uses name of builtin function");
+                          "Package symbol uses name of builtin function" :
+                          "Global symbol uses name of builtin function");
 
     x = FAlloc(struct tgentry);
     x->g_blink = ghash[i];
@@ -130,7 +130,7 @@ struct tlentry *put_local(char *name, int flag, struct node *n, int unique)
         x = x->l_blink;
     if (x) {
         if (unique)
-            tfatal_at(n, "local redeclaration: %s previously declared at line %d", name, Line(x->pos));
+            tfatal_at(n, "Local redeclaration: %s previously declared at line %d", name, Line(x->pos));
         return x;
     }
     x = FAlloc(struct tlentry);
@@ -430,7 +430,7 @@ static void nodegen(nodeptr t)
             while (TType(u) == N_Clist) {
                 if (TType(Tree1(u)) == N_Cdef) {
                     if (case_default)
-                        tfatal_at(case_default, "more than one default clause");
+                        tfatal_at(case_default, "More than one default clause");
                     case_default = Tree1(u);
                 } else
                     ++len;
@@ -438,7 +438,7 @@ static void nodegen(nodeptr t)
             }
             if (TType(u) == N_Cdef) {
                 if (case_default)
-                    tfatal_at(case_default, "more than one default clause");
+                    tfatal_at(case_default, "More than one default clause");
                 case_default = u;
             } else if (TType(u) == N_Ccls) 
                 ++len;
@@ -592,28 +592,28 @@ static void nodegen(nodeptr t)
 
         case N_Fail: {
             if (in_create)
-                tfatal_at(t, "invalid context for fail");
+                tfatal_at(t, "Invalid context for fail");
             uout_op(Uop_Fail);
             break;
         }
 
         case N_Next: {			/* next expression */
             if (!in_loop)
-                tfatal_at(t, "invalid context for next");
+                tfatal_at(t, "Invalid context for next");
             uout_op(Uop_Next);
             break;
         }
 
         case N_Return: {
             if (in_create)
-                tfatal_at(t, "invalid context for return");
+                tfatal_at(t, "Invalid context for return");
             uout_op(Uop_Return);
             break;
         }
 
         case N_Returnexpr: {
             if (in_create)
-                tfatal_at(t, "invalid context for return");
+                tfatal_at(t, "Invalid context for return");
             uout_op(Uop_Returnexpr);
             nodegen(Tree1(t));
             break;
@@ -641,14 +641,14 @@ static void nodegen(nodeptr t)
 
         case N_Break: {			/* break */
             if (!in_loop)
-                tfatal_at(t, "invalid context for break");
+                tfatal_at(t, "Invalid context for break");
             uout_op(Uop_Break);
             break;
         }
 
         case N_Breakexpr: {			/* break expression */
             if (!in_loop)
-                tfatal_at(t, "invalid context for break");
+                tfatal_at(t, "Invalid context for break");
             uout_op(Uop_Breakexpr);
             --in_loop;
             nodegen(Tree0(t));
@@ -732,7 +732,7 @@ static void nodegen(nodeptr t)
 
         case N_Suspend: {
             if (in_create)
-                tfatal_at(t, "invalid context for suspend");
+                tfatal_at(t, "Invalid context for suspend");
             ++in_loop;
             uout_op(Uop_Suspend);
             --in_loop;
@@ -741,7 +741,7 @@ static void nodegen(nodeptr t)
 
         case N_Suspendexpr: {
             if (in_create)
-                tfatal_at(t, "invalid context for suspend");
+                tfatal_at(t, "Invalid context for suspend");
             ++in_loop;
             uout_op(Uop_Suspendexpr);
             nodegen(Tree1(t));
@@ -751,7 +751,7 @@ static void nodegen(nodeptr t)
 
         case N_Suspenddo: {
             if (in_create)
-                tfatal_at(t, "invalid context for suspend");
+                tfatal_at(t, "Invalid context for suspend");
             ++in_loop;
             uout_op(Uop_Suspenddo);
             nodegen(Tree1(t));
@@ -761,7 +761,7 @@ static void nodegen(nodeptr t)
         }
 
         default: {
-            quit("nodegen: unknown node type:%d",TType(t));
+            quit("nodegen: Unknown node type:%d",TType(t));
         }
     }
 }
@@ -898,7 +898,7 @@ static void binop(int op)
             break;
 
         default:
-            quit("binop: undefined binary operator: %d", op);
+            quit("binop: Undefined binary operator: %d", op);
     }
 }
 
@@ -1022,7 +1022,7 @@ static void augop(int op)
             break;
 
         default:
-            quit("binop: undefined binary operator: %d", op);
+            quit("augop: Undefined binary operator: %d", op);
     }
 }
 
@@ -1132,7 +1132,7 @@ static void unop(int op)
             break;
 
         default:
-            quit("unop: undefined unary operator: %d", op);
+            quit("unop: Undefined unary operator: %d", op);
     }
 }
 

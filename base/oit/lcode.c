@@ -250,7 +250,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
             break;
         }
         default: {
-            quit("emit_ir_var:Unknown type");
+            quit("emit_ir_var: Unknown type");
         }
     }
 }
@@ -325,7 +325,7 @@ void generate_code()
      */
     outfile = fopen(ofile, WriteBinary);
     if (outfile == NULL)
-        equit("cannot create %s",ofile);
+        equit("Cannot create %s",ofile);
 
     /*
      * Write the bootstrap header to the output file.
@@ -339,7 +339,7 @@ void generate_code()
         putc(0, outfile);
     fflush(outfile);
     if (ferror(outfile) != 0)
-        equit("unable to write to icode file");
+        equit("Unable to write to icode file");
 
     nstatics = 0;
     strconst_offset = 0;
@@ -385,7 +385,7 @@ void generate_code()
 
     fflush(outfile);
     if (ferror(outfile) != 0)
-        equit("unable to write to icode file");
+        equit("Unable to write to icode file");
 
     fclose(outfile);
 }
@@ -555,9 +555,9 @@ static void lemitcon(struct centry *ce)
         ce->pc = pc;
         bn = bigradix(ce->data, ce->length);
         if (!bn)
-            quit("unable to parse bignum data");
+            quit("Unable to parse bignum data");
         if (bn->blksize % WordSize != 0)
-            quit("bigint blksize wrong");
+            quit("Bigint blksize wrong");
         outwordx(T_Lrgint, "T_Lrgint");
         outwordx(bn->blksize, "   Blksize");
         p = ((word *)bn) + 2;
@@ -1022,7 +1022,7 @@ static void lemitcode()
                     break;
                 }
                 default: {
-                    quit("lemitcode: illegal ir opcode(%d)\n", ir->op);
+                    quit("lemitcode: Illegal ir opcode(%d)\n", ir->op);
                     break;
                 }
             }
@@ -1768,7 +1768,7 @@ static void gentables()
             outwordx(D_Ucs, "D_Ucs");
             outwordz(ce->pc, "   Block");
         } else
-            quit("unknown constant type");
+            quit("Unknown constant type");
     }
     flushcode();
     
@@ -1801,7 +1801,7 @@ static void gentables()
                 fprintf(dbgfile, "   %s\n", t);
             }
             if (fwrite(sp->s, 1, sp->len, outfile) != sp->len)
-                equit("cannot write icode file");
+                equit("Cannot write icode file");
             pc += sp->len;
         }
     }
@@ -1840,7 +1840,7 @@ static void gentables()
     fseek(outfile, scriptsize, 0);
 
     if (fwrite((char *)&hdr, 1, sizeof(hdr), outfile) != sizeof(hdr))
-        equit("cannot write icode file");
+        equit("Cannot write icode file");
 
     if (verbose > 1) {
         word tsize = sizeof(hdr) + hdr.icodesize;
@@ -2017,7 +2017,7 @@ static void flushcode()
     if (codep > codeb) {
         size_t n = DiffPtrs(codep,codeb);
         if (fwrite(codeb, 1, n, outfile) != n)
-            equit("cannot write icode file");
+            equit("Cannot write icode file");
     }
     codep = codeb;
 }
@@ -2060,7 +2060,7 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
         free_offset = DiffPtrs(*(char **)tblfree,  (char *)table);
 
     if ((new_tbl = realloc(table, num_bytes)) == 0)
-        quit("out of memory for %s", tbl_name);
+        quit("Out of memory for %s", tbl_name);
 
     for (i = *size * unit_size; i < num_bytes; ++i)
         new_tbl[i] = 0;
@@ -2255,7 +2255,7 @@ static word cnv_op(int n)
             break;
 
         default:
-            quit("cnv_op: undefined operator");
+            quit("cnv_op: Undefined operator");
     }
 
     return opcode;
@@ -2286,7 +2286,7 @@ static void writescript()
     scriptsize = strlen(script);
     /* write header */
     if (fwrite(script, scriptsize, 1, outfile) != 1)
-        equit("cannot write header to icode file");
+        equit("Cannot write header to icode file");
 #elif MSWIN32
    char *hdr = findexe("win32header");
    FILE *f;
@@ -2303,7 +2303,7 @@ static void writescript()
    fputs("\n" IcodeDelim "\n", outfile);
    scriptsize += strlen("\n" IcodeDelim "\n");
    if (ferror(f) != 0)
-       equit("unable to read win32header executable");
+       equit("Unable to read win32header executable");
    fclose(f);
 #elif PLAN9
     char script[2048];

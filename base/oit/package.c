@@ -143,7 +143,7 @@ int load_package_dir(struct package_dir *dir)
     }
 
     if (ferror(f) != 0)
-        equit("failed to read package file %s", fn);
+        equit("Failed to read package file %s", fn);
 
     fclose(f);
     dir->modflag = 0;
@@ -169,7 +169,7 @@ static void save_package_dir(struct package_dir *dir)
     dir->modflag = 0;
     fflush(f);
     if (ferror(f) != 0)
-        equit("failed to write to package file %s", fn);
+        equit("Failed to write to package file %s", fn);
     fclose(f);
 }
 

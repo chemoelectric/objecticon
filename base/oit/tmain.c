@@ -253,17 +253,17 @@ int main(int argc, char **argv)
 
             case 'v':			/* -v n: set verbosity level */
                 if (sscanf(oi_optarg, "%d%c", &verbose, &ch) != 1)
-                    quit("bad operand to -v option: %s",oi_optarg);
+                    quit("Bad operand to -v option: %s",oi_optarg);
                 break;
 
             case 'l':			/* -l n: source location store level */
                 if (sscanf(oi_optarg, "%d%c", &loclevel, &ch) != 1)
-                    quit("bad operand to -l option: %s",oi_optarg);
+                    quit("Bad operand to -l option: %s",oi_optarg);
                 break;
 
             case 'O':			/* -O n: optimisation level */
                 if (sscanf(oi_optarg, "%d%c", &Olevel, &ch) != 1)
-                    quit("bad operand to -O option: %s",oi_optarg);
+                    quit("Bad operand to -O option: %s",oi_optarg);
                 break;
 
             case 'Z':
@@ -302,13 +302,13 @@ int main(int argc, char **argv)
             else if (strcasecmp(fp->ext, USuffix) == 0)
                 add_link_file(makename(0, argv[oi_optind], USuffix));
             else
-                quit("bad argument %s", argv[oi_optind]);
+                quit("Bad argument %s", argv[oi_optind]);
         }
         oi_optind++;
     }
 
     if (!link_files)
-        help_stop("no files");				/* error -- no files named */
+        help_stop("No files");				/* error -- no files named */
 
     /*
      * Translate .icn files to make .u files.
@@ -438,7 +438,7 @@ static void execute(char **args)
 
    *p = NULL;
    execv(ofile, argv);
-   equit("could not execute %s", ofile);
+   equit("Could not execute %s", ofile);
 #endif
 }
 
@@ -459,23 +459,23 @@ static void bundle_iconx()
         fputc(c, f2);
 
     if (ferror(f) != 0)
-        equit("failed to read oix binary %s", oixloc);
+        equit("Failed to read oix binary %s", oixloc);
 
     fclose(f);
     if (!(f = fopen(tmp, ReadBinary))) 
-        equit("tried to read %s to append to exe, but couldn't",tmp);
+        equit("Tried to read %s to append to exe, but couldn't",tmp);
 
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
 
     if (ferror(f) != 0)
-        equit("failed to read from temp file %s", tmp);
+        equit("Failed to read from temp file %s", tmp);
 
     fclose(f);
 
     fflush(f2);
     if (ferror(f2) != 0)
-        equit("failed to write to output file %s", ofile);
+        equit("Failed to write to output file %s", ofile);
 
     fclose(f2);
     setexe(ofile);
@@ -520,7 +520,7 @@ static void file_comp()
     /* write the modified header into a new file */
     
     if (fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput) != sizeof(*hdr))
-        equit("failed to write header to temp compression file");
+        equit("Failed to write header to temp compression file");
     
     /* close the new file */
   
@@ -551,11 +551,11 @@ static void file_comp()
     gzclose(f);
     
     if (unlink(ofile))
-        equit("can't remove old %s, compressed version left in %s",
+        equit("Can't remove old %s, compressed version left in %s",
               ofile, tmp);
 
     if (rename(tmp, ofile))
-        equit("can't rename compressed %s back to %s", tmp, ofile);
+        equit("Can't rename compressed %s back to %s", tmp, ofile);
 
     setexe(ofile);
 }
@@ -738,7 +738,7 @@ static int ldbg(int argc, char **argv)
     }
 
     if (!ppinit(argv[1],0))
-        equit("cannot open %s", argv[1]);
+        equit("Cannot open %s", argv[1]);
 
     while (1) {
         yylex();

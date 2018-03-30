@@ -184,7 +184,7 @@ static int ppopen(char *fname, int m4)
    fname = intern(fname);
    for (fs = curfile; fs->fname != NULL; fs = fs->prev)
       if (fname == fs->fname) {
-         pfatal("circular include: %s", fname);	/* issue error message */
+         pfatal("Circular include: %s", fname);	/* issue error message */
          return 1;				/* treat as success */
          }
    if (m4)
@@ -380,7 +380,7 @@ int ppch()
           * The read hit EOF.
           */
          if (curfile->ifdepth != ifdepth) {
-            pfatal("unterminated $if");
+            pfatal("Unterminated $if");
             ifdepth = curfile->ifdepth;
             }
 
@@ -391,7 +391,7 @@ int ppch()
          curfile = fs->prev;
 
          if (ferror(fs->fp) != 0)
-            equit("failed to read from source file %s", fs->fname);
+            equit("Failed to read from source file %s", fs->fname);
 
 #if UNIX
          if (fs->m4flag) {			/* if m4 preprocessing */
@@ -527,7 +527,7 @@ static void ppdir(char *s)
       return;
       }
 
-   pfatal("invalid preprocessing directive: %s", cmd);
+   pfatal("Invalid preprocessing directive: %s", cmd);
    }
 
 /*
@@ -556,7 +556,7 @@ static void pfatal(char *fmt, ...)
  */
 static char *errdir(char *s)
 {
-    pfatal("explicit $error: %s", rmnl(s));		/* issue msg with text */
+    pfatal("Explicit $error: %s", rmnl(s));		/* issue msg with text */
     return NULL;
 }
 
@@ -579,7 +579,7 @@ static char *define(char *s)
    if (isalpha((unsigned char)(c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
-      return "$define: missing name";
+      return "$define: Missing name";
    if (*s == '(')
       return "$define: \"(\" after name requires preceding space";
    val = s = wskip(s);
@@ -588,7 +588,7 @@ static char *define(char *s)
          if (c == '"' || c == '\'') {
             s = matchq(s);
             if (*s == '\0')
-               return "$define: unterminated literal";
+               return "$define: Unterminated literal";
             }
          s++;
          }
@@ -698,7 +698,7 @@ static char *loadfile(char *fname, int *vlen, int ucs)
     s[i] = 0;
 
     if (ferror(f) != 0)
-        equit("failed to read $load file %s", fname);
+        equit("Failed to read $load file %s", fname);
 
     fclose(f);
     *vlen = i;
@@ -716,20 +716,20 @@ static char *load(char *s)
    if (isalpha((unsigned char)(c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
-      return "$load: missing name";
+      return "$load: Missing name";
    s = wskip(s);
    s = getfnm(fname = s - 1, s);
    if (*fname == '\0')
-      return "$load: invalid file name";
+      return "$load: Invalid file name";
    if (*wskip(s) != '\0')
-      return "$load: too many arguments";
+      return "$load: Too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
    if (!fullpath)
-       pfatal("cannot find on path: %s", fname);
+       pfatal("Cannot find on path: %s", fname);
    else if ((val = loadfile(fullpath, &vlen, 0)))
        dinsert_pre(name, val, vlen);		/* install in table */
    else
-       pfatal("cannot open: %s: %s", fullpath, get_system_error());
+       pfatal("Cannot open: %s: %s", fullpath, get_system_error());
    return NULL;
    }
 
@@ -744,20 +744,20 @@ static char *uload(char *s)
    if (isalpha((unsigned char)(c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
-      return "$uload: missing name";
+      return "$uload: Missing name";
    s = wskip(s);
    s = getfnm(fname = s - 1, s);
    if (*fname == '\0')
-      return "$uload: invalid file name";
+      return "$uload: Invalid file name";
    if (*wskip(s) != '\0')
-      return "$uload: too many arguments";
+      return "$uload: Too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
    if (!fullpath)
-       pfatal("cannot find on path: %s", fname);
+       pfatal("Cannot find on path: %s", fname);
    else if ((val = loadfile(fullpath, &vlen, 1)))
        dinsert_pre(name, val, vlen);		/* install in table */
    else
-       pfatal("cannot open: %s: %s", fullpath, get_system_error());
+       pfatal("Cannot open: %s: %s", fullpath, get_system_error());
    return NULL;
    }
 
@@ -771,9 +771,9 @@ static char *undef(char *s)
    if (isalpha((unsigned char)(c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
-      return "$undef: missing name";
+      return "$undef: Missing name";
    if (*wskip(s) != '\0')
-      return "$undef: too many arguments";
+      return "$undef: Too many arguments";
    dremove(name);
    return NULL;
    }
@@ -787,14 +787,14 @@ static char *include(char *s)
 
    s = getfnm(fname = s - 1, s);
    if (*fname == '\0')
-      return "$include: invalid file name";
+      return "$include: Invalid file name";
    if (*wskip(s) != '\0')
-      return "$include: too many arguments";
+      return "$include: Too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
    if (!fullpath)
-      pfatal("cannot find on path: %s", fname);
+      pfatal("Cannot find on path: %s", fname);
    else if (!ppopen(fullpath, 0))
-      pfatal("cannot open: %s: %s", fullpath, get_system_error());
+      pfatal("Cannot open: %s: %s", fullpath, get_system_error());
    return NULL;
    }
 
@@ -807,7 +807,7 @@ static char *setline(char *s)
     char c, *fname = 0, *code = 0;
 
     if (!isdigit((unsigned char)(c = *s)))
-        return "$line: no line number";
+        return "$line: No line number";
     n = c - '0';
 
     while (isdigit((unsigned char)(c = *++s)))		/* extract line number */
@@ -818,7 +818,7 @@ static char *setline(char *s)
     if (isalpha((unsigned char)(c = *s)) || c == '_' || c == '"') {	/* if filename */
         s = getfnm(fname = s - 1, s);			/* extract it */
         if (*fname == '\0')
-            return "$line: invalid file name";
+            return "$line: Invalid file name";
         s = wskip(s);			/* skip whitespace */
         if (isalpha((unsigned char)(c = *s))) {	/* if encoding */
             s = getencoding(code = s - 1, s);		/* get encoding name */
@@ -826,7 +826,7 @@ static char *setline(char *s)
     }
 
     if (*wskip(s) != '\0')
-        return "$line: too many arguments";
+        return "$line: Too many arguments";
 
     /* Set the changed fields */
     curfile->lno = n - 1;			
@@ -870,9 +870,9 @@ static char *ifxdef(char *s, int f)
    if (isalpha((unsigned char)(c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
-      return "$ifdef/$ifndef: missing name";
+      return "$ifdef/$ifndef: Missing name";
    if (*wskip(s) != '\0')
-      return "$ifdef/$ifndef: too many arguments";
+      return "$ifdef/$ifndef: Too many arguments";
    for (;;) {
        if ((dquery(name, -1) != NULL) ^ f) {
            char *cmd;
@@ -884,9 +884,9 @@ static char *ifxdef(char *s, int f)
            if (isalpha((unsigned char)(c = *s)) || c == '_')
                s = getidt(name = s - 1, s);		/* get name */
            else
-               return "$elsifdef/$elsifndef: missing name";
+               return "$elsifdef/$elsifndef: Missing name";
            if (*wskip(s) != '\0')
-               return "$elsifdef/$elsifndef: too many arguments";
+               return "$elsifdef/$elsifndef: Too many arguments";
 
            f = (strcmp(cmd, "elsifdef") == 0) ? 1 : 0;
        } else
@@ -901,9 +901,9 @@ static char *ifxdef(char *s, int f)
 static char *elsedir(char *s)
    {
    if (ifdepth <= curfile->ifdepth)
-      return "unexpected $else";
+      return "Unexpected $else";
    if (*s != '\0')
-      pfatal ("extraneous arguments on $else/$endif: %s", rmnl(s));
+      pfatal ("Extraneous arguments on $else/$endif: %s", rmnl(s));
    skipcode(0, 1, 0, 0);			/* skip the $else section */
    return NULL;
    }
@@ -914,7 +914,7 @@ static char *elsedir(char *s)
 static char *elsif(char *s)
    {
    if (ifdepth <= curfile->ifdepth)
-      return "unexpected $elsifdef/$elsifndef";
+      return "Unexpected $elsifdef/$elsifndef";
    skipcode(0, 1, 0, 0);			/* skip the $elsif section */
    return NULL;
    }
@@ -926,9 +926,9 @@ static char *elsif(char *s)
 static char *endif(char *s)
    {
    if (ifdepth <= curfile->ifdepth)
-      return "unexpected $endif";
+      return "Unexpected $endif";
    if (*s != '\0')
-      pfatal ("extraneous arguments on $else/$endif: %s", rmnl(s));
+      pfatal ("Extraneous arguments on $else/$endif: %s", rmnl(s));
    ifdepth--;
    return NULL;
    }
@@ -942,9 +942,9 @@ static char *encoding(char *s)
    if (isalpha((unsigned char)*s))
        s = getencoding(code = s - 1, s);		/* get encoding name */
    else
-      return "$encoding: missing name";
+      return "$encoding: Missing name";
    if (*wskip(s) != '\0')
-      return "$encoding: too many arguments";
+      return "$encoding: Too many arguments";
    curfile->encoding = intern(code);
    pushline();
    return NULL;
@@ -1001,7 +1001,7 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
              */
             if (*p != '\0' &&
                 (strcmp(cmd, "endif") == 0 || strcmp(cmd, "else") == 0))
-                pfatal ("extraneous arguments on $else/$endif: %s", rmnl(p));
+                pfatal ("Extraneous arguments on $else/$endif: %s", rmnl(p));
 
             if (cmd[1] == 'n')		/* if $endif */
                 ifdepth--;
@@ -1231,7 +1231,7 @@ static void dinsert(char *name, char *val)
              * We found a match in the table.
              */
             if (strcmp(val, d->val) != 0) 
-                pfatal("value redefined: %s", name);
+                pfatal("Value redefined: %s", name);
             return;
         }
         p = &d->next;
@@ -1270,7 +1270,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
              * We found a match in the table.
              */
             if (strcmp(val, d->val) != 0) 
-                pfatal("value redefined: %s", name);
+                pfatal("Value redefined: %s", name);
             return;
         }
         p = &d->next;

@@ -1936,5 +1936,6 @@ $endif
    # Use rename not move to ensure it's atomic
    Files.rename(bak, cookies_file) | stop("Couldn't rename cookie file ", bak, ": ", &why)
    # Save settings
-   encode_to_file(settings_file, settings,, &yes)
+   encode_to_file(settings_file, settings,, &yes) |
+      stop("Couldn't encode to settings file ", settings_file, ": ", &why)
 end
