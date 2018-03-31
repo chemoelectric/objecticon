@@ -81,6 +81,7 @@ static  char *  uload   (char *s);
 static	char *	errdir	(char *s);
 static	char *	include	(char *s);
 static	char *	setline	(char *s);
+static	char *	setline1(char *s, int report);
 static	char *	wskip	(char *s);
 static	char *	nskip	(char *s);
 static	char *	matchq	(char *s);
@@ -799,9 +800,9 @@ static char *include(char *s)
    }
 
 /*
- * setline(s) -- handle $line (or #line) directive.
+ * setline1(s) -- handle $line (or #line) directive.
  */
-static char *setline(char *s)
+static char *setline1(char *s, int report)
 {
     long n;
     char c, *fname = 0, *code = 0;
@@ -843,8 +844,17 @@ static char *setline(char *s)
     if (code)
         curfile->encoding = intern(code);
 
-    pushline();
+    if (report)
+        pushline();
     return NULL;
+}
+
+/*
+ * setline(s) -- handle $line (or #line) directive.
+ */
+static char *setline(char *s)
+{
+    return setline1(s, 1);
 }
 
 /*
@@ -913,10 +923,22 @@ static char *elsedir(char *s)
  */
 static char *elsif(char *s)
    {
+   char c, *name, *res;
    if (ifdepth <= curfile->ifdepth)
       return "Unexpected $elsifdef/$elsifndef";
+
+   /* Check for valid syntax. */
+   res = NULL;
+   if (isalpha((unsigned char)(c = *s)) || c == '_')
+       s = getidt(name = s - 1, s);		/* get name */
+   else
+       res = "$elsifdef/$elsifndef: Missing name";
+   if (*wskip(s) != '\0')
+       res = "$elsifdef/$elsifndef: Too many arguments";
+
    skipcode(0, 1, 0, 0);			/* skip the $elsif section */
-   return NULL;
+
+   return res;
    }
 
 
@@ -993,7 +1015,7 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
             skipcode(0, 0, 0, 0);		/* skip to $endif */
         }
         else if (strcmp(cmd, "line") == 0)
-            setline(p);			/* process $line, ignore errors */
+            setline1(p, 0);			/* process $line, ignore errors */
         else if (strcmp(cmd, "endif") == 0 ||
                  (doelse == 1 && strncmp(cmd, "els", 3) == 0)) {
             /*
@@ -1022,6 +1044,16 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
         *cmd0 = "";
     if (args0)
         *args0 = "";
+
+
+    /*
+     * Since bnxt will be set to point to a "\n" (see ppdir), that
+     * would create an extra line of output (normally this replaces an
+     * erroneous directive.  We don't have a directive in this case,
+     * so set to the empty string.
+     */
+    bnxt = "";
+    bstop = blim = bnxt;
 }
 
 /*
