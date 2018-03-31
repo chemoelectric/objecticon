@@ -265,10 +265,7 @@ class Preprocessor(Connectable)
                err("No corresponding $if...")
                return ""
             }
-            if not (sym := scan_word() & at_end()) then {
-               err()
-               if_state := if \if_state then &null else "off"
-            } else {
+            if sym := scan_word() & at_end() then {
                if \if_state then {
                   value := (member(sym_table, sym) & &null) | "false"
                   if match("n",preproc_command,6) then {
@@ -278,6 +275,9 @@ class Preprocessor(Connectable)
                } else {
                   if_state := "off"
                }
+            } else {
+               err()
+               if_state := if \if_state then &null else "off"
             }
             if /if_state then
                return sync_lines()
@@ -372,9 +372,9 @@ class Preprocessor(Connectable)
                # if no_err is set, then we have a "#line" directive, for which errors are ignored.
                if /no_err then
                   err()
+               if /if_state then    
+                  return ""
             }
-            if /if_state then    
-               return ""
          }
          "error": {
             if /if_state then {
