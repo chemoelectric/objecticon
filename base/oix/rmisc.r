@@ -353,7 +353,7 @@ uword hash(dptr dp)
 static int charstr(int c, char *b)
 {
     static char cbuf[12];
-    if (c < 128 && isprint((unsigned char)c)) {
+    if (c < 128 && oi_isprint(c)) {
         /*
          * c is printable, but special case ", ', - and \.
          */

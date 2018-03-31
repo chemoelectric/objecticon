@@ -579,7 +579,7 @@ static void read_params(struct ucode_op *op)
                 char *s1 = uin_sbin(&l);
                 zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {
-                    if (isprint((unsigned char)*s1))
+                    if (oi_isprint(*s1))
                         AppChar(ucode_sbuf, *s1);
                     else
                         AppChar(ucode_sbuf, '?');
@@ -593,7 +593,7 @@ static void read_params(struct ucode_op *op)
                 char *s1 = uin_lbin(&l);
                 zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {
-                    if (isprint((unsigned char)*s1))
+                    if (oi_isprint(*s1))
                         AppChar(ucode_sbuf, *s1);
                     else
                         AppChar(ucode_sbuf, '?');

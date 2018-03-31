@@ -84,7 +84,7 @@
 
 /*  character macros  */
 
-#define IS_IDENT(c)	(isalnum((unsigned char)(c)) || (c) == '_' || (c) == '.' || (c) == '$')
+#define IS_IDENT(c)	(oi_isalnum((c)) || (c) == '_' || (c) == '.' || (c) == '$')
 #define	IS_OCTAL(c)	((c) >= '0' && (c) <= '7')
 #define	NUMERIC_VALUE(c)	((c) - '0')
 

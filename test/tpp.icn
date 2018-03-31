@@ -324,3 +324,65 @@ $ifdef notdef
 $endif (& show line)
 
 $include "tpp6.icn"
+
+# Extraneous params elsifdef
+$ifdef X
+3
+$elsifdef AA JUNK
+4
+$endif
+$ifdef X
+5
+$elsifndef AA JUNK
+6
+$endif
+$define X 1
+$ifdef X
+7
+$elsifdef AA JUNK
+8
+$endif
+$ifdef X
+9
+$elsifndef AA JUNK
+10
+$endif
+
+# Missing params elsifdef
+$ifdef X
+3
+$elsifdef
+4
+$endif
+$ifdef X
+5
+$elsifndef
+6
+$endif
+$define X 1
+$ifdef X
+7
+$elsifdef
+8
+$endif
+$ifdef X
+9
+$elsifndef
+10
+$endif
+
+# Errors in a nested if block
+$ifdef NO
+1
+$ifdef X
+2
+$elsifdef AA JUNK
+$elsifndef AA JUNK
+$else JUNK
+$else JUNK
+3
+$endif
+4
+$else
+OK
+$endif

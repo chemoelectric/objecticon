@@ -1,0 +1,20 @@
+import parser, io, ipl.options
+
+global res
+
+procedure err(ed)
+   ewrite(if FileStream.stderr.is_flowterm_tty() then ed.esc_str() else ed.str())
+   res +:= 1
+end
+
+procedure main(a)
+   local p, fName, opts, pp_defs
+   res := 0
+   opts := options(a, [ Opt("D",string,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes) ] )
+   pp_defs := Preprocessor.parse_defs(\opts["D"])
+   p := Preprocessor().connect(err)
+   fName := a[1] | stop("usage: pptest filename")
+   every write(p.preprocess_gen(fName, pp_defs))
+   ewrite(res, " errors")
+   exit(res)
+end

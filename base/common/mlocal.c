@@ -180,9 +180,9 @@ void normalize(char *file)
         if (*p == '/')
             *p = '\\';
         else 
-            *p = tolower((unsigned char)*p);
+            *p = oi_tolower(*p);
     }
-    if (isalpha((unsigned char)file[0]) && file[1]==':') 
+    if (oi_isalpha(file[0]) && file[1]==':') 
         file += 2;
     p = q = file;
     while (*p) {
@@ -210,7 +210,7 @@ void normalize(char *file)
  */
 int isabsolute(char *s)
 {
-    return isalpha((unsigned char)*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
+    return oi_isalpha(*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
 }
 
 /*
@@ -1030,7 +1030,7 @@ int strcasecmp(char *s1, char *s2)
 {
     int j;
     while (1) {
-        j = tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+        j = oi_tolower(*s1) - oi_tolower(*s2);
         if (j) 
             return j;
         if (*s1 == '\0') 
@@ -1044,7 +1044,7 @@ int strncasecmp(char *s1, char *s2, int n)
 {
     int j;
     while (n--) {
-        j = tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+        j = oi_tolower(*s1) - oi_tolower(*s2);
         if (j) 
             return j;
         if (*s1 == '\0') 
@@ -1084,7 +1084,7 @@ char *double2cstr(double n)
 
     /* Convert e+0dd -> e+dd */
     if ((p = strchr(s, 'e')) && p[2] == '0' && 
-        isdigit((unsigned char)p[3]) && isdigit((unsigned char)p[4]))
+        oi_isdigit(p[3]) && oi_isdigit(p[4]))
         strcpy(p + 2, p + 3);
 
     return s;
@@ -1326,3 +1326,41 @@ char *getenv_nn(char *name)
     else
         return 0;
 }
+
+unsigned char   oi_ctype[256] =
+{
+/*       0       1       2       3       4       5       6       7  */
+
+/*  0*/ _CC,     _CC,     _CC,     _CC,     _CC,     _CC,     _CC,     _CC,
+/* 10*/ _CC,     _CS|_CC,  _CS|_CC,  _CS|_CC,  _CS|_CC,  _CS|_CC,  _CC,     _CC,
+/* 20*/ _CC,     _CC,     _CC,     _CC,     _CC,     _CC,     _CC,     _CC,
+/* 30*/ _CC,     _CC,     _CC,     _CC,     _CC,     _CC,     _CC,     _CC,
+/* 40*/ _CS|_CB,  _CP,     _CP,     _CP,     _CP,     _CP,     _CP,     _CP,
+/* 50*/ _CP,     _CP,     _CP,     _CP,     _CP,     _CP,     _CP,     _CP,
+/* 60*/ _CN|_CX,  _CN|_CX,  _CN|_CX,  _CN|_CX,  _CN|_CX,  _CN|_CX,  _CN|_CX,  _CN|_CX,
+/* 70*/ _CN|_CX,  _CN|_CX,  _CP,     _CP,     _CP,     _CP,     _CP,     _CP,
+/*100*/ _CP,     _CU|_CX,  _CU|_CX,  _CU|_CX,  _CU|_CX,  _CU|_CX,  _CU|_CX,  _CU,
+/*110*/ _CU,     _CU,     _CU,     _CU,     _CU,     _CU,     _CU,     _CU,
+/*120*/ _CU,     _CU,     _CU,     _CU,     _CU,     _CU,     _CU,     _CU,
+/*130*/ _CU,     _CU,     _CU,     _CP,     _CP,     _CP,     _CP,     _CP,
+/*140*/ _CP,     _CL|_CX,  _CL|_CX,  _CL|_CX,  _CL|_CX,  _CL|_CX,  _CL|_CX,  _CL,
+/*150*/ _CL,     _CL,     _CL,     _CL,     _CL,     _CL,     _CL,     _CL,
+/*160*/ _CL,     _CL,     _CL,     _CL,     _CL,     _CL,     _CL,     _CL,
+/*170*/ _CL,     _CL,     _CL,     _CP,     _CP,     _CP,     _CP,     _CC,
+};
+
+int oi_toupper(int c)
+{
+
+    if (c < 'a' || c > 'z')
+        return c;
+    return oi_mtoupper(c);
+}
+
+int oi_tolower(int c)
+{
+    if (c < 'A' || c > 'Z')
+        return c;
+    return oi_mtolower(c);
+}
+

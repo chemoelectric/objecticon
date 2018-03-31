@@ -71,7 +71,7 @@ function detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || oi_isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -124,7 +124,7 @@ function detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || oi_isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -170,8 +170,8 @@ function detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (isprint((unsigned char)ch) || 
-                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                          if (oi_isprint(ch) || 
+                              !oi_isascii(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -222,8 +222,8 @@ function detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (isprint((unsigned char)ch) || 
-                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                          if (oi_isprint(ch) || 
+                              !oi_isascii(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -335,7 +335,7 @@ function entab(s,i[n])
                       case ' ':
                           break;
                       default:
-                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || oi_isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -419,7 +419,7 @@ function entab(s,i[n])
                       case ' ':
                           break;
                       default:
-                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || oi_isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -491,8 +491,8 @@ function entab(s,i[n])
                           nxttab(&col, &tablst, endlst, &last, &interval);
                           break;
                       default:
-                          if (isprint((unsigned char)ch) || 
-                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                          if (oi_isprint(ch) || 
+                              !oi_isascii(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -568,8 +568,8 @@ function entab(s,i[n])
                           nxttab(&col, &tablst, endlst, &last, &interval);
                           break;
                       default:
-                          if (isprint((unsigned char)ch) || 
-                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                          if (oi_isprint(ch) || 
+                              !oi_isascii(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }

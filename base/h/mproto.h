@@ -112,3 +112,34 @@ void ssexpand(struct staticstr *ss, size_t n);
 char *sscpy(struct staticstr *ss, char *val);
 char *sscat(struct staticstr *ss, char *val);
 void ssdbg(struct staticstr *ss);
+
+int oi_toupper(int c);
+int oi_tolower(int c);
+
+extern unsigned char oi_ctype[];
+
+#define _CU     01
+#define _CL     02
+#define _CN     04
+#define _CS     010
+#define _CP     020
+#define _CC     040
+#define _CB     0100
+#define _CX     0200
+
+extern unsigned char    oi_ctype[];
+
+#define oi_isalpha(c)      (oi_ctype[(unsigned char)(c)]&(_CU|_CL))
+#define oi_isupper(c)      (oi_ctype[(unsigned char)(c)]&_CU)
+#define oi_islower(c)      (oi_ctype[(unsigned char)(c)]&_CL)
+#define oi_isdigit(c)      (oi_ctype[(unsigned char)(c)]&_CN)
+#define oi_isxdigit(c)     (oi_ctype[(unsigned char)(c)]&_CX)
+#define oi_isspace(c)      (oi_ctype[(unsigned char)(c)]&_CS)
+#define oi_ispunct(c)      (oi_ctype[(unsigned char)(c)]&_CP)
+#define oi_isalnum(c)      (oi_ctype[(unsigned char)(c)]&(_CU|_CL|_CN))
+#define oi_isprint(c)      (oi_ctype[(unsigned char)(c)]&(_CP|_CU|_CL|_CN|_CB))
+#define oi_isgraph(c)      (oi_ctype[(unsigned char)(c)]&(_CP|_CU|_CL|_CN))
+#define oi_iscntrl(c)      (oi_ctype[(unsigned char)(c)]&_CC)
+#define oi_isascii(c)      ((unsigned char)(c)<=0177)
+#define oi_mtoupper(c)     ((c)-'a'+'A')
+#define oi_mtolower(c)     ((c)-'A'+'a')

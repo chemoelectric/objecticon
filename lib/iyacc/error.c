@@ -39,7 +39,7 @@ void print_pos(char *st_line,char *st_cptr)
     if (st_line == 0) return;
     for (s = st_line; *s != '\n'; ++s)
     {
-	if (isprint((unsigned char)*s) || *s == '\t')
+	if (oi_isprint(*s) || *s == '\t')
 	    putc(*s, stderr);
 	else
 	    putc('?', stderr);

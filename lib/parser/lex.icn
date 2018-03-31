@@ -75,7 +75,7 @@ class Lex(Connectable)
    private do_encoding()
       if any(&letters) then {
          yyencoding := tab(many(&letters ++ &digits ++ '-'))
-         (yyencoding == ("ASCII" | "UTF-8" |"ISO-8859-1")) | fire("error", ErrorDetail(yyfilename, yylineno, "invalid encoding: " || yyencoding))
+         (yyencoding == ("ASCII" | "UTF-8" |"ISO-8859-1")) | fire("error", ErrorDetail(yyfilename, yylineno, "Invalid encoding: " || yyencoding))
       }
    end
 

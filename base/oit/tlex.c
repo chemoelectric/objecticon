@@ -39,7 +39,7 @@ static	int	octesc		(int ac);
 static  int     read_utf_char(int c);
 static  char    *encoding;
 
-/* Wrappers for Char test functions */
+/* Wrappers for Char test functions, which allow c to be > 255 */
 static int isalnum_ex(int c);
 static int isalpha_ex(int c);
 static int isdigit_ex(int c);
@@ -304,7 +304,7 @@ static struct toktab *findres()
     char c;
 
     c = *lex_sbuf.strtimage;
-    if (!islower((unsigned char)c))
+    if (!oi_islower(c))
         return NULL;
     /*
      * Point t at first reserved word that starts with c (if any).
@@ -920,7 +920,7 @@ static int setencoding(int c)
     else if (s == ascii_string || s == utf8_string || s == iso_8859_1_string)
         encoding = s;
     else {
-        lexfatal("Invalid encoding:%s", s);
+        lexfatal("Invalid encoding: %s", s);
         encoding = ascii_string;
     }
 
@@ -1068,30 +1068,30 @@ static char *mapterm(int typ, nodeptr val)
 
 static int isalnum_ex(int c)
 {
-    return c < 128 && isalnum((unsigned char)c);
+    return c < 128 && oi_isalnum(c);
 }
 
 static int isalpha_ex(int c)
 {
-    return c < 128 && isalpha((unsigned char)c);
+    return c < 128 && oi_isalpha(c);
 }
 
 static int isdigit_ex(int c)
 {
-    return c < 128 && isdigit((unsigned char)c);
+    return c < 128 && oi_isdigit(c);
 }
 
 static int islower_ex(int c)
 {
-    return c < 128 && islower((unsigned char)c);
+    return c < 128 && oi_islower(c);
 }
 
 static int isspace_ex(int c)
 {
-    return c < 128 && isspace((unsigned char)c);
+    return c < 128 && oi_isspace(c);
 }
 
 static int isupper_ex(int c)
 {
-    return c < 128 && isupper((unsigned char)c);
+    return c < 128 && oi_isupper(c);
 }

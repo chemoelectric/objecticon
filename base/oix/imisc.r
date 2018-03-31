@@ -367,7 +367,7 @@ int get_proc_kind(struct b_proc *bp)
             char c = *StrLoc(*bp->name);
             if (c == '&' && StrLen(*bp->name) > 1)
                 return Keyword;
-            if (c == '_' || isalpha((unsigned char)c))
+            if (c == '_' || oi_isalpha(c))
                 return Function;
             return Operator;
             break;

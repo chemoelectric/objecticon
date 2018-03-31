@@ -72,9 +72,9 @@ class Preprocessor(Connectable)
          if /s then
             suspend sync_lines()      
          else s ? {
-            if match("#line") then {
+            if match("#line ") then {
                move(1)
-               suspend scan_directive()
+               suspend scan_directive(&yes)
             } else {
                scan_space()
                if ="$" & any(&letters ++ &digits ++ ' \t\f\r') then {
@@ -141,7 +141,7 @@ class Preprocessor(Connectable)
    # a_Scans a preprocessor directive.  This method fails or returns
    # either a blank line or a #line directive.
    #
-   private scan_directive()
+   private scan_directive(no_err)
       local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command,old_if_state,fname,t
       scan_space()
       preproc_command := scan_word()
@@ -244,8 +244,9 @@ class Preprocessor(Connectable)
                   if_state := "off"
                }
             } else {
-               if_state := "off"
+               # if_state stays the same
                err()
+               return ""
             }
 
             if /if_state then
@@ -259,22 +260,25 @@ class Preprocessor(Connectable)
             fail
          }
          "elsifdef" | "elsifndef" : {
-            if sym := scan_word() & at_end() then {
-               if *if_stack <= nest_level then {
-                  err("No corresponding $if...")
-               } else {
-                  if \if_state == "false" then {
-                     value := (member(sym_table, sym) & &null) | "false"
-                     if match("n",preproc_command,6) then {
-                        value := (\value & &null) | "false"
-                     }
-                     if_state := value
-                  } else {
-                     if_state := "off"
-                  }
-               }
-            } else {
+            if \if_state == "off" then
+               fail
+            if *if_stack <= nest_level then {
+               err("No corresponding $if...")
+               return ""
+            }
+            if not (sym := scan_word() & at_end()) then {
                err()
+               if_state := if \if_state then &null else "off"
+            } else {
+               if \if_state then {
+                  value := (member(sym_table, sym) & &null) | "false"
+                  if match("n",preproc_command,6) then {
+                     value := (\value & &null) | "false"
+                  }
+                  if_state := value
+               } else {
+                  if_state := "off"
+               }
             }
             if /if_state then
                return sync_lines()
@@ -282,21 +286,15 @@ class Preprocessor(Connectable)
                fail
          }
          "else": {
-            if at_end() then {
-               if *if_stack <= nest_level then {
-                  err("No corresponding $if...")
-               } else {
-                  if_state := {
-                     case if_state of {
-                        "false": &null
-                        "off": "off"
-                        default: "false"
-                     }
-                  }
-               }
-            } else {
-               err()
+            if \if_state == "off" then
+               fail
+            if *if_stack <= nest_level then {
+               err("No corresponding $if...")
+               return ""
             }
+            if not at_end() then
+               err()      # extraneous stuff is reported, but the else is processed as if it were OK.
+            if_state := if \if_state then &null else "false"
             if /if_state then
                return sync_lines()
             else
@@ -343,6 +341,7 @@ class Preprocessor(Connectable)
                            encoding := "ASCII"
                            nest_level := *if_stack
                            insert(include_set,sym)
+                           return sync_lines()
                         } else
                            err("Cannot open " || image(new_filename) || ": " || &why)
                      } else
@@ -351,7 +350,7 @@ class Preprocessor(Connectable)
                } else {
                   err()
                }
-               return sync_lines()
+               return ""
             }
          }
          "line": {
@@ -368,16 +367,21 @@ class Preprocessor(Connectable)
                                            FilePath(filename).parent().str()) | \new_filename
                encoding := \new_encoding
                line := new_line - 1
+               if /if_state then
+                  return sync_lines()
             } else {
-               err()
+               # if no_err is set, then we have a "#line" directive, for which errors are ignored.
+               if /no_err then
+                  err()
             }
-            if /if_state then
-               return sync_lines()
+            if /if_state then    
+               return ""
          }
          "error": {
             if /if_state then {
                scan_space()
-               err(trim(tab(find("#") | 0),' \t\f\r'))
+               t := trim(tab(find("#") | 0),' \t\f\r')
+               err(t)
                return ""
             }
          }
@@ -421,11 +425,24 @@ class Preprocessor(Connectable)
          if *sym_table > 0 then {
             &pos := q := 1
             result := ""
-            while tab(upto('#"\'_' ++ &letters)) do {
+            while tab(upto('#"\'_' ++ &letters ++ &digits)) do {
                case move(1) of {
                   "#": {
-                     move(-1)
                      tab(0)
+                  }
+                  !&digits: {
+                     # Reproduces the logic in nskip() in ipp.c
+                     tab(many(&digits))
+                     if =("r"|"R") then
+                        tab(many(&digits ++ &letters))
+                     else {
+                        if ="." then
+                           tab(many(&digits))
+                        if =("e"|"E") then {
+                           =("+"|"-")
+                           tab(many(&digits))
+                        }                           
+                     }
                   }
                   "\"" | "'": {
                      interesting_in_quotes := '\\' ++ &subject[&pos - 1]

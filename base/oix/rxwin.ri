@@ -1101,7 +1101,7 @@ static void wmap(wbp w)
     } else {
         /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
         m2 = get_progname();
-        m2[0] = toupper((unsigned char)m2[0]);
+        m2[0] = oi_toupper(m2[0]);
         clhints.res_class = m2;
     }
     XSetClassHint(wd->display, ws->win, &clhints);

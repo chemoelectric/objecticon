@@ -482,7 +482,6 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
 
-
 #line 134 "if.tst" ASCII
 
 
@@ -506,7 +505,7 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 # test line directives encountered while skipping
 
-#line 114
+#line 114 "invented" ASCII
 
 #line 225
 
@@ -564,3 +563,38 @@ YES 11
 YES 12
 #line 87
 #line 227 "invented" ASCII
+
+# Extraneous params elsifdef
+
+3
+#line 234
+
+5
+#line 239
+
+
+7
+#line 245
+
+9
+#line 250
+
+# Missing params elsifdef
+
+3
+#line 257
+
+5
+#line 262
+
+
+7
+#line 268
+
+9
+#line 273
+
+# Errors in a nested if block
+#line 287
+OK
+

@@ -1079,10 +1079,10 @@ uint64_t physicalmemorysize()
         while (fgets(buf, sizeof(buf), f)) {
             if (!strncmp(TAG, buf, strlen(TAG))) {
                 p = buf+strlen(TAG);
-                while (isspace((unsigned char)*p)) p++;
+                while (oi_isspace(*p)) p++;
                 i = atol(p);
-                while (isdigit((unsigned char)*p)) p++;
-                while (isspace((unsigned char)*p)) p++;
+                while (oi_isdigit(*p)) p++;
+                while (oi_isspace(*p)) p++;
                 if (!strncmp(p, "kB",2)) i *= 1024;
                 else if (!strncmp(p, "MB", 2)) i *= 1024 * 1024;
                 break;
