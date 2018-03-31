@@ -256,18 +256,18 @@ int yylex()
           * Hex integer constant.
           */
          ++s;
-         while (isxdigit((unsigned char)*s))
+         while (oi_isxdigit(*s))
             ++s;
          yylval.t->tok_id = int_suffix(s);
          }
       else {
          is_float = 0;
-         while (isdigit((unsigned char)*s))
+         while (oi_isdigit(*s))
              ++s;
          if (*s == '.') {
             is_float = 1;
             ++s;
-            while (isdigit((unsigned char)*s))
+            while (oi_isdigit(*s))
                ++s;
             }
          if (*s == 'e' || *s == 'E') {
@@ -275,7 +275,7 @@ int yylex()
             ++s;
             if (*s == '+' || *s == '-')
                ++s;
-            while (isdigit((unsigned char)*s))
+            while (oi_isdigit(*s))
                ++s;
             }
          if (is_float) {

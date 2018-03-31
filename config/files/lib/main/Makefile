@@ -14,10 +14,13 @@ etags:
 	$(ETAGS) $(ICNTAGS) $(LIBSRC)
 
 clean:
-	$(RM) mkconsts $(AUTOSRC) *.u packages.txt
+	$(RM) mkconsts mkconsts.o $(AUTOSRC) *.u packages.txt
 
 $(AUTOSRC): 	mkconsts
 	./mkconsts
+
+mkconsts:	mkconsts.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ mkconsts.o ../../base/common/mlocal.o ../../base/common/alloc.o $(LIBS)
 
 $(LIBU): %.u: %.icn
 	oit -snc $(LIBSRC)

@@ -769,7 +769,7 @@ static int ston(dptr sp, union numeric *result)
    /*
     * Skip leading white space.
     */
-   while (isspace((unsigned char)c))
+   while (oi_isspace(c))
       if (s < end_s)
          c = *s++;
       else
@@ -788,7 +788,7 @@ static int ston(dptr sp, union numeric *result)
    /*
     * Get integer part of mantissa.
     */
-   while (isdigit((unsigned char)c)) {
+   while (oi_isdigit(c)) {
       digits++;
       if (mantissa < Big) {
 	 mantissa = mantissa * 10 + (c - '0');
@@ -816,7 +816,7 @@ static int ston(dptr sp, union numeric *result)
    if (c == '.') {
       realflag++;
       c = (s < end_s) ? *s++ : ' ';
-      while (isdigit((unsigned char)c)) {
+      while (oi_isdigit(c)) {
 	 digits++;
 	 if (mantissa < Big) {
 	    mantissa = mantissa * 10 + (c - '0');
@@ -845,9 +845,9 @@ static int ston(dptr sp, union numeric *result)
 	 esign = c;
          c = (s < end_s) ? *s++ : ' ';
 	 }
-      if (!isdigit((unsigned char)c))
+      if (!oi_isdigit(c))
 	 return CvtFail;
-      while (isdigit((unsigned char)c)) {
+      while (oi_isdigit(c)) {
 	 exponent = exponent * 10 + (c - '0');
          c = (s < end_s) ? *s++ : ' ';
 	 }
@@ -859,9 +859,9 @@ static int ston(dptr sp, union numeric *result)
     *  in the string. Note, if we have already reached end-of-string,
     *  c has been set to a space.
     */
-   while (isspace((unsigned char)c) && s < end_s)
+   while (oi_isspace(c) && s < end_s)
       c = *s++;
-   if (!isspace((unsigned char)c))
+   if (!oi_isspace(c))
       return CvtFail;
 
    /*

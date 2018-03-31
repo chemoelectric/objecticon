@@ -824,21 +824,21 @@ int is_C_identifier(char *name)
     if (c == '"')
     {
 	c = *++s;
-	if (!isalpha((unsigned char)c) && c != '_' && c != '$')
+	if (!oi_isalpha(c) && c != '_' && c != '$')
 	    return (0);
 	while ((c = *++s) != '"')
 	{
-	    if (!isalnum((unsigned char)c) && c != '_' && c != '$')
+	    if (!oi_isalnum(c) && c != '_' && c != '$')
 		return (0);
 	}
 	return (1);
     }
 
-    if (!isalpha((unsigned char)c) && c != '_' && c != '$')
+    if (!oi_isalpha(c) && c != '_' && c != '$')
 	return (0);
     while ((c = *++s) != 0)
     {
-	if (!isalnum((unsigned char)c) && c != '_' && c != '$')
+	if (!oi_isalnum(c) && c != '_' && c != '$')
 	    return (0);
     }
     return (1);

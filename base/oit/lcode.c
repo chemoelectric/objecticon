@@ -1791,7 +1791,7 @@ static void gentables()
                         j = 0;
                     }
                     fprintf(dbgfile, " %02x", s[i] & 0xff);
-                    t[j++] = isprint((unsigned char)s[i]) ? s[i] : ' ';
+                    t[j++] = oi_isprint(s[i]) ? s[i] : ' ';
                 }
                 t[j] = 0;
                 while (i % 8 != 0) {
@@ -2353,9 +2353,9 @@ struct b_bignum * bigradix(char *input, int input_len)
 
     bdzero(bd, len);
 
-    for (c = ((s < end_s) ? *s++ : ' '); isalnum((unsigned char)c);
+    for (c = ((s < end_s) ? *s++ : ' '); oi_isalnum(c);
          c = ((s < end_s) ? *s++ : ' ')) {
-        c = isdigit((unsigned char)c) ? (c)-'0' : 10+(((c)|(040))-'a');
+        c = oi_isdigit(c) ? (c)-'0' : 10+(((c)|(040))-'a');
         if (c >= r)
             return 0;
         muli1(bd, (word)r, c, bd, len);
@@ -2366,9 +2366,9 @@ struct b_bignum * bigradix(char *input, int input_len)
      *  in the string. Note, if we have already reached end-of-string,
      *  c has been set to a space.
      */
-    while (isspace((unsigned char)c) && s < end_s)
+    while (oi_isspace(c) && s < end_s)
         c = *s++;
-    if (!isspace((unsigned char)c))
+    if (!oi_isspace(c))
         return 0;
 
     /* see mkdesc() */

@@ -632,7 +632,7 @@ static int gfheader()
     if (gffread(hdr, sizeof(char), sizeof(hdr)) != sizeof(hdr))
         return 0;				/* header short or missing */
     if (strncmp((char *)hdr, "GIF", 3) != 0 ||
-        !isdigit((unsigned char)hdr[3]) || !isdigit((unsigned char)hdr[4]))
+        !oi_isdigit(hdr[3]) || !oi_isdigit(hdr[4]))
         return 0;				/* not GIFnn */
 
     b = hdr[10];				/* flag byte */
@@ -1417,7 +1417,7 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, double *size)
         /*
          * find start of next comma-separated attribute word
          */
-        while (isspace((unsigned char)*s) || *s == ',')	/* trim leading spaces & empty words */
+        while (oi_isspace(*s) || *s == ',')	/* trim leading spaces & empty words */
             s++;
         if (*s == '\0')			/* stop at end of string */
             break;
@@ -1426,7 +1426,7 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, double *size)
          * copy word, converting to lower case to implement case insensitivity
          */
         for (a = attr; (c = *s) != '\0' && c != ','; s++) {
-            *a++ = tolower((unsigned char)c);
+            *a++ = oi_tolower(c);
             if (a - attr >= MAXFONTWORD - 1)
                 return 0;			/* too long */
         }
@@ -1434,7 +1434,7 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, double *size)
         /*
          * trim trailing spaces and terminate word
          */
-        while (isspace((unsigned char)a[-1]))
+        while (oi_isspace(a[-1]))
             a--;
         *a = '\0';
 
@@ -1899,7 +1899,7 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
     *a = 65535;
 
     /* trim leading spaces */
-    while (isspace((unsigned char)*buf))
+    while (oi_isspace(*buf))
         buf++;
 
     /* try interpreting as three comma-separated decimal ints in the range 0..65535 */
@@ -1944,7 +1944,7 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
     /* try interpreting as a hexadecimal value */
     if (*buf == '#') {
         buf++;
-        for (len = 0; isalnum((unsigned char)buf[len]); len++);
+        for (len = 0; oi_isalnum(buf[len]); len++);
         switch (len) {
             case  3:  fmt = "%1x%1x%1x%c";  mul = 0x1111;  break;
             case  4:  fmt = "%1x%1x%1x%1x%c";  mul = 0x1111;  break;
@@ -2397,7 +2397,7 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
      * copy spec, lowering case and replacing spaces and hyphens with NULs
      */
     for(p = cbuffer; (c = *buf) != 0; p++, buf++) {
-        if (isupper((unsigned char)c)) *p = tolower((unsigned char)c);
+        if (oi_isupper(c)) *p = oi_tolower(c);
         else if (c == ' ' || c == '-') *p = '\0';
         else *p = c;
     }

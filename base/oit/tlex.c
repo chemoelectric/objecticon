@@ -39,16 +39,8 @@ static	int	octesc		(int ac);
 static  int     read_utf_char(int c);
 static  char    *encoding;
 
-/* Wrappers for Char test functions */
-static int isalnum_ex(int c);
-static int isalpha_ex(int c);
-static int isdigit_ex(int c);
-static int islower_ex(int c);
-static int isspace_ex(int c);
-static int isupper_ex(int c);
-
-#define isletter(c)	(isupper_ex(c) | islower_ex(c))
-#define tonum(c)        (isdigit_ex(c) ? (c - '0') : ((c & 037) + 9))
+#define isletter(c)	(oi_isupper(c) | oi_islower(c))
+#define tonum(c)        (oi_isdigit(c) ? (c - '0') : ((c & 037) + 9))
 
 struct node tok_loc =
 {0, NULL, 0, 0};	/* "model" node containing location of current token */
@@ -135,7 +127,7 @@ int yylex()
     /*
      * Skip whitespace and comments and process #line directives.
      */
-    while (c == Comment || isspace_ex(c)) {
+    while (c == Comment || oi_isspace(c)) {
         if (c == '\n') {
             nlflag++;
             c = NextChar;
@@ -211,11 +203,11 @@ int yylex()
                 goto loop;
         }
     }
-    else if (isalpha_ex(c) || (c == '_')) {   /* gather ident or reserved word */
+    else if (oi_isalpha(c) || (c == '_')) {   /* gather ident or reserved word */
         if ((t = getident(c, &cc)) == NULL)
             goto loop;
     }
-    else if (isdigit_ex(c) || (c == '.')) {	/* gather numeric literal or "." */
+    else if (oi_isdigit(c) || (c == '.')) {	/* gather numeric literal or "." */
         if ((t = getnum(c, &cc)) == NULL)
             goto loop;
     }
@@ -274,7 +266,7 @@ static struct toktab *getident(int ac, int *cc)
     do {
         AppChar(lex_sbuf, c);
         c = NextChar;
-    } while (isalnum_ex(c) || (c == '_'));
+    } while (oi_isalnum(c) || (c == '_'));
     *cc = c;
     /*
      * If the identifier is a reserved word, make a ResNode for it and return
@@ -304,7 +296,7 @@ static struct toktab *findres()
     char c;
 
     c = *lex_sbuf.strtimage;
-    if (!islower((unsigned char)c))
+    if (!oi_islower(c))
         return NULL;
     /*
      * Point t at first reserved word that starts with c (if any).
@@ -370,7 +362,7 @@ static struct toktab *getnum(int ac, int *cc)
         c = NextChar;
         switch (state) {
             case 0:		/* integer part */
-                if (isdigit_ex(c))	    { 
+                if (oi_isdigit(c))	    { 
                     if (!over) {
                         rval = rval * 10 + (c - '0');
                         /* Check whether we've possibly lost double precision, or have exceeded MaxWord */
@@ -393,20 +385,20 @@ static struct toktab *getnum(int ac, int *cc)
                 }
                 break;
             case 1:		/* fractional part */
-                if (isdigit_ex(c))   continue;
+                if (oi_isdigit(c))   continue;
                 if (c == 'e' || c == 'E')   { state = 2; continue; }
                 break;
             case 2:		/* optional exponent sign */
                 if (c == '+' || c == '-') { state = 3; continue; }
             case 3:		/* first digit after e, e+, or e- */
-                if (isdigit_ex(c)) { state = 4; continue; }
+                if (oi_isdigit(c)) { state = 4; continue; }
                 lexfatal("Invalid real literal");
                 break;
             case 4:		/* remaining digits after e */
-                if (isdigit_ex(c))   continue;
+                if (oi_isdigit(c))   continue;
                 break;
             case 5:		/* first digit after r */
-                if ((isdigit_ex(c) || isletter(c)) && tonum(c) < radix) {
+                if ((oi_isdigit(c) || isletter(c)) && tonum(c) < radix) {
                     state = 6; 
                     rval = wval = tonum(c);
                     continue; 
@@ -414,7 +406,7 @@ static struct toktab *getnum(int ac, int *cc)
                 lexfatal("Invalid integer literal");
                 break;
             case 6:		/* remaining digits after r */
-                if (isdigit_ex(c) || isletter(c)) {
+                if (oi_isdigit(c) || isletter(c)) {
                     int d = tonum(c);
                     if (d < radix) {
                         if (!over) {
@@ -432,7 +424,7 @@ static struct toktab *getnum(int ac, int *cc)
                 }
                 break;
             case 7:		/* token began with "." */
-                if (isdigit_ex(c)) {
+                if (oi_isdigit(c)) {
                     state = 1;		/* followed by digit is a real const */
                     realflag = 1;
                     continue;
@@ -500,7 +492,7 @@ static struct toktab *getstring(int ac, int *cc)
         if (c == '_') {
             int t = NextLitChar;
             if (t == '\n' || t == '\r') {
-                while ((c = NextLitChar) != EOF && isspace_ex(c))
+                while ((c = NextLitChar) != EOF && oi_isspace(c))
                     ;
                 continue;
             } else
@@ -581,7 +573,7 @@ static struct toktab *getucs(int ac, int *cc)
         if (c == '_') {
             int t = NextLitChar;
             if (t == '\n' || t == '\r') {
-                while ((c = NextLitChar) != EOF && isspace_ex(c))
+                while ((c = NextLitChar) != EOF && oi_isspace(c))
                     ;
                 continue;
             } else
@@ -686,7 +678,7 @@ static struct toktab *getcset(int ac, int *cc)
         if (c == '_') {
             int t = NextLitChar;
             if (t == '\n' || t == '\r') {
-                while ((c = NextLitChar) != EOF && isspace_ex(c))
+                while ((c = NextLitChar) != EOF && oi_isspace(c))
                     ;
                 continue;
             } else
@@ -822,7 +814,7 @@ static int hexesc(int digs)
             nc -= 'a' - 10;
         else if (nc >= 'A' && nc <= 'F')
             nc -= 'A' - 10;
-        else if (isdigit_ex(nc))
+        else if (oi_isdigit(nc))
             nc -= '0';
         else {
             PushChar(nc);
@@ -903,7 +895,7 @@ static int setencoding(int c)
         c = NextChar;
 
     zero_sbuf(&lex_sbuf);
-    while (isalnum_ex(c) || (c == '-')) {
+    while (oi_isalnum(c) || (c == '-')) {
         AppChar(lex_sbuf, c);
         c = NextChar;
     }
@@ -1058,34 +1050,4 @@ static char *mapterm(int typ, nodeptr val)
         if (ot->tok.t_type == i)
             return ot->tok.t_word;
     return "???";
-}
-
-static int isalnum_ex(int c)
-{
-    return c < 128 && isalnum((unsigned char)c);
-}
-
-static int isalpha_ex(int c)
-{
-    return c < 128 && isalpha((unsigned char)c);
-}
-
-static int isdigit_ex(int c)
-{
-    return c < 128 && isdigit((unsigned char)c);
-}
-
-static int islower_ex(int c)
-{
-    return c < 128 && islower((unsigned char)c);
-}
-
-static int isspace_ex(int c)
-{
-    return c < 128 && isspace((unsigned char)c);
-}
-
-static int isupper_ex(int c)
-{
-    return c < 128 && isupper((unsigned char)c);
 }

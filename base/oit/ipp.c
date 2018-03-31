@@ -280,14 +280,14 @@ int ppch()
           *  that's what's next, or as much else as we can.
           */
          f = *bnxt & 0xFF;
-         if (isalpha((unsigned char)f) || f == '_') {
+         if (oi_isalpha(f) || f == '_') {
             /*
              * This is the first character of an identifier.  It could
              *  be the name of a definition.  If so, the name will be
              *  contiguous in this buffer.  Check it.
              */
             p = bnxt + 1;
-            while (p < blim && (isalnum((unsigned char)(c = *p)) || c == '_'))	/* find end */
+            while (p < blim && (oi_isalnum((c = *p)) || c == '_'))	/* find end */
                p++;
             bstop = p;			/* safe to consume through end */
             if (((d = dquery(bnxt, p-bnxt)) == 0)  || (d->inuse == 1)) {
@@ -311,11 +311,11 @@ int ppch()
             p = bnxt++;
             while (p < blim) {
                c = *p;
-               if (isalpha((unsigned char)c) || c == '_') {	/* there's an id ahead */
+               if (oi_isalpha(c) || c == '_') {	/* there's an id ahead */
                   bstop = p;
                   return f;
                   }
-               else if (isdigit((unsigned char)c)) {		/* numeric constant */
+               else if (oi_isdigit(c)) {		/* numeric constant */
                   p = nskip(p);
                   }
                else if (c == '#') {		/* comment: skip to EOL */
@@ -359,9 +359,9 @@ int ppch()
           */
          p = bnxt = bstop = blim = buf;		/* reset buffer pointers */
          curfile->lno++;			/* bump line number */
-         while (isspace((unsigned char)(c = *p)))
+         while (oi_isspace((c = *p)))
             p++;				/* find first nonwhite */
-         if (c == '$' && (!ispunct((unsigned char)p[1]) || p[1]==' '))
+         if (c == '$' && (!oi_ispunct(p[1]) || p[1]==' '))
             ppdir(p + 1);			/* handle preprocessor cmd */
          else if (buf[1]=='l' && buf[2]=='i' && buf[3]=='n' && buf[4]=='e' &&
                   buf[0]=='#' && buf[5]==' ')
@@ -577,7 +577,7 @@ static char *define(char *s)
    {
    char c, *name, *val;
 
-   if (isalpha((unsigned char)(c = *s)) || c == '_')
+   if (oi_isalpha((c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
       return "$define: Missing name";
@@ -593,7 +593,7 @@ static char *define(char *s)
             }
          s++;
          }
-      while (isspace((unsigned char)s[-1]))			/* trim trailing whitespace */
+      while (oi_isspace(s[-1]))			/* trim trailing whitespace */
          s--;
       }
    *s = '\0';
@@ -608,7 +608,7 @@ static char *define(char *s)
 static int charstr(int c, char *b)
 {
     static char cbuf[12];
-    if (c < 128 && isprint((unsigned char)c)) {
+    if (c < 128 && oi_isprint(c)) {
         /*
          * c is printable, but special case ", ', - and \.
          */
@@ -714,7 +714,7 @@ static char *load(char *s)
    char c, *name, *val, *fname, *fullpath;
    int vlen = 0;
 
-   if (isalpha((unsigned char)(c = *s)) || c == '_')
+   if (oi_isalpha((c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
       return "$load: Missing name";
@@ -742,7 +742,7 @@ static char *uload(char *s)
    char c, *name, *val, *fname, *fullpath;
    int vlen = 0;
 
-   if (isalpha((unsigned char)(c = *s)) || c == '_')
+   if (oi_isalpha((c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
       return "$uload: Missing name";
@@ -769,7 +769,7 @@ static char *undef(char *s)
    {
    char c, *name;
 
-   if (isalpha((unsigned char)(c = *s)) || c == '_')
+   if (oi_isalpha((c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
       return "$undef: Missing name";
@@ -807,21 +807,21 @@ static char *setline1(char *s, int report)
     long n;
     char c, *fname = 0, *code = 0;
 
-    if (!isdigit((unsigned char)(c = *s)))
+    if (!oi_isdigit((c = *s)))
         return "$line: No line number";
     n = c - '0';
 
-    while (isdigit((unsigned char)(c = *++s)))		/* extract line number */
+    while (oi_isdigit((c = *++s)))		/* extract line number */
         n = 10 * n + c - '0';
 
     s = wskip(s);			/* skip whitespace */
 
-    if (isalpha((unsigned char)(c = *s)) || c == '_' || c == '"') {	/* if filename */
+    if (oi_isalpha((c = *s)) || c == '_' || c == '"') {	/* if filename */
         s = getfnm(fname = s - 1, s);			/* extract it */
         if (*fname == '\0')
             return "$line: Invalid file name";
         s = wskip(s);			/* skip whitespace */
-        if (isalpha((unsigned char)(c = *s))) {	/* if encoding */
+        if (oi_isalpha((c = *s))) {	/* if encoding */
             s = getencoding(code = s - 1, s);		/* get encoding name */
         }
     }
@@ -877,7 +877,7 @@ static char *ifxdef(char *s, int f)
    {
    char c, *name;
    ifdepth++;
-   if (isalpha((unsigned char)(c = *s)) || c == '_')
+   if (oi_isalpha((c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
    else
       return "$ifdef/$ifndef: Missing name";
@@ -891,7 +891,7 @@ static char *ifxdef(char *s, int f)
            if (strcmp(cmd, "elsifdef") != 0 && strcmp(cmd, "elsifndef") != 0)
                break;
            
-           if (isalpha((unsigned char)(c = *s)) || c == '_')
+           if (oi_isalpha((c = *s)) || c == '_')
                s = getidt(name = s - 1, s);		/* get name */
            else
                return "$elsifdef/$elsifndef: Missing name";
@@ -929,7 +929,7 @@ static char *elsif(char *s)
 
    /* Check for valid syntax. */
    res = NULL;
-   if (isalpha((unsigned char)(c = *s)) || c == '_')
+   if (oi_isalpha((c = *s)) || c == '_')
        s = getidt(name = s - 1, s);		/* get name */
    else
        res = "$elsifdef/$elsifndef: Missing name";
@@ -961,7 +961,7 @@ static char *endif(char *s)
 static char *encoding(char *s)
    {
    char *code;
-   if (isalpha((unsigned char)*s))
+   if (oi_isalpha(*s))
        s = getencoding(code = s - 1, s);		/* get encoding name */
    else
       return "$encoding: Missing name";
@@ -996,9 +996,9 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
         /*
          * Check for any other kind of preprocessing directive.
          */
-        while (isspace((unsigned char)(c = *p)))
+        while (oi_isspace((c = *p)))
             p++;				/* find first nonwhite */
-        if (c != '$' || (ispunct((unsigned char)p[1]) && p[1]!=' '))
+        if (c != '$' || (oi_ispunct(p[1]) && p[1]!=' '))
             continue;			/* not a preprocessing directive */
         p = wskip(p+1);			/* skip whitespace */
         p = getidt(cmd = p-1, p);		/* get command name */
@@ -1069,7 +1069,7 @@ static char *wskip(char *s)
    {
    char c;
 
-   while (isspace((unsigned char)(c = *s)))
+   while (oi_isspace((c = *s)))
       s++;
    if (c == '#')
       while ((c = *++s) != 0)
@@ -1084,21 +1084,21 @@ static char *nskip(char *s)
    {
       char c;
 
-      while (isdigit((unsigned char)(c = *++s)))
+      while (oi_isdigit((c = *++s)))
          ;
       if (c == 'r' || c == 'R') {
-         while (isalnum((unsigned char)(c = *++s)))
+         while (oi_isalnum((c = *++s)))
             ;
          return s;
          }
       if (c == '.')
-         while (isdigit((unsigned char)(c = *++s)))
+         while (oi_isdigit((c = *++s)))
             ;
       if (c == 'e' || c == 'E') {
          c = s[1];
          if (c == '+' || c == '-')
             s++;
-         while (isdigit((unsigned char)(c = *++s)))
+         while (oi_isdigit((c = *++s)))
             ;
          }
       return s;
@@ -1142,7 +1142,7 @@ static char *getidt(char *dst, char *src)
    {
    char c;
 
-   while (isalnum((unsigned char)(c = *src)) || (c == '_')) {
+   while (oi_isalnum((c = *src)) || (c == '_')) {
       *dst++ = c;
       src++;
       }
@@ -1157,7 +1157,7 @@ static char *getencoding(char *dst, char *src)
    {
    char c;
 
-   while (isalnum((unsigned char)(c = *src)) || (c == '-')) {
+   while (oi_isalnum((c = *src)) || (c == '-')) {
       *dst++ = c;
       src++;
       }

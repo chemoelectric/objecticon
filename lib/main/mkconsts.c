@@ -146,7 +146,7 @@ void scan_monitor_h(char *path)
             key = strtok(0, " \t\r\n");
             val = strtok(0, " \t\r\n");
             comm = val + strlen(val) + 1;
-            while (isspace((unsigned char)*comm) || *comm == '/' || *comm == '*')
+            while (oi_isspace(*comm) || *comm == '/' || *comm == '*')
                 ++comm;
             comm[strlen(comm) - 4] = 0;
             val[0] = val[strlen(val)-1] = '\"';

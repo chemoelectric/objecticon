@@ -25,13 +25,13 @@ static int pattern_match (char *pattern, char *string)
 {
     char *p = pattern, *n = string;
     char c;
-    for (; (c = tolower((unsigned char)(*p++))) != '\0'; n++)
+    for (; (c = oi_tolower((*p++))) != '\0'; n++)
         if (c == '*')
         {
-            for (c = tolower((unsigned char)(*p)); c == '*'; c = tolower((unsigned char)(*++p)))
+            for (c = oi_tolower((*p)); c == '*'; c = oi_tolower((*++p)))
                 ;
             for (; *n != '\0'; n++)
-                if (tolower((unsigned char)(*n)) == c && pattern_match (p, n))
+                if (oi_tolower((*n)) == c && pattern_match (p, n))
                     return 1;
                 else if (*n == '.')
                     return 0;
@@ -39,7 +39,7 @@ static int pattern_match (char *pattern, char *string)
         }
         else
         {
-            if (c != tolower((unsigned char)(*n)))
+            if (c != oi_tolower((*n)))
                 return 0;
         }
     return *n == '\0';
