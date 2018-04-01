@@ -397,7 +397,6 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     int fl;
     POINT p;
     tended struct descrip curr;
-    static int inited = 0;
 
     if (key_debug) show_keyevent(msg, wp, lp);
     switch(msg) {
@@ -410,13 +409,9 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
                 curr.dword = D_Ucs;
                 BlkLoc(curr) = (union block *)make_one_char_ucs_block(wp);
             }
-            inited = 1;
             break;
         case WM_KEYUP:
         case WM_SYSKEYUP:
-            if (!inited)
-                return;
-            /* Fall through */
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
             if (wp == VK_DELETE) {
@@ -424,7 +419,6 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
                 StrLoc(curr) = &allchars[127];
             } else 
                 MakeInt(wp, &curr);
-            inited = 1;
             break;
         default:
             syserr("Unexpected msg value");
