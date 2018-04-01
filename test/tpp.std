@@ -598,3 +598,12 @@ YES 12
 #line 287
 OK
 
+
+# Check for correct ucs literal handling
+u"the same" || u"the same"
+u
+u + u
+
+u"the same" || u"the same"
+ABC
+ABC + ABC

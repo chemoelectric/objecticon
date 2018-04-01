@@ -386,3 +386,12 @@ $endif
 $else
 OK
 $endif
+
+# Check for correct ucs literal handling
+u"the same" || u"the same"
+u
+u + u
+$define u ABC
+u"the same" || u"the same"
+u
+u + u

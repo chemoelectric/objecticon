@@ -469,6 +469,9 @@ class Preprocessor(Connectable)
                   }
                   default: {
                      move(-1)
+                     # Check for ucs literal
+                     if ="u" & any('"') then
+                        next
                      p := &pos
                      ident := tab(many(&letters ++ &digits ++ '_'))
                      if value := member(sym_table, ident) then {
