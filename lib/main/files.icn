@@ -499,7 +499,8 @@ $endif
    #
    # :Parameters :
    # :  `f` - the file to look for
-   # :  `n` - the name of the environment variable holding the path
+   # :  `n` - the name of the environment variable holding the path;
+   #          if &null then no path is searched
    # :  `cd` - the current directory; if &null then the "real" cd
    # :  `mode` - the access mode to check for; by default `Access.F_OK`
    #
@@ -547,6 +548,7 @@ $endif
    # directories on the path.
    #
    # :Parameters :
+   # :  `f` - the file to look for
    # :  `n` - the name of the environment variable holding the path,
    #          by default (on Unix) "PATH"
    # :  `mode` - the access mode to check for; by default `Access.X_OK`
