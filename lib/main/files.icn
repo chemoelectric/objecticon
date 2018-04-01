@@ -540,14 +540,15 @@ $endif
       }
    end
 
-   # Find absolute executable, searching $PATH (using POSIX 1003.2
-   # rules) for executable name.  The method is similar to path_find above,
-   # but a little more strict.  In particular, the cd isn't tried before
-   # the directories on $PATH.
+   #
+   # Find executable on the given path.  Details vary by platform, but
+   # on Unix, the method is similar to `path_find` above, but a little
+   # more strict.  In particular, the cd isn't tried before the
+   # directories on the path.
    #
    # :Parameters :
    # :  `n` - the name of the environment variable holding the path,
-   #          by default "PATH"
+   #          by default (on Unix) "PATH"
    # :  `mode` - the access mode to check for; by default `Access.X_OK`
    public static find_exe(f, n, mode)
       return FS.find_exe(f, n, mode)
