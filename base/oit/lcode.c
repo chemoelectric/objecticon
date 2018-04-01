@@ -2290,15 +2290,30 @@ static void writescript()
 #elif MSWIN32
    char *hdr = findexe("win32header");
    FILE *f;
-   int c;
+   int c, dc, wloc, oixloclen;
    if (!hdr)
       quit("Couldn't find win32header header file on PATH");
    if (!(f = fopen(hdr, ReadBinary)))
       equit("Tried to open win32header to build .exe, but couldn't");
-   scriptsize = 0;
+   wloc = dc = scriptsize = 0;
+   oixloclen = strlen(oixloc);
    while ((c = fgetc(f)) != EOF) {
-      fputc(c, outfile);
-      ++scriptsize;
+       fputc(c, outfile);
+       if (!wloc) {
+           if (c == '$') {
+               if (++dc == oixloclen + 1) {
+                   /* Found enough $ chars in a row; go back and
+                    * insert the oixloc string.
+                    */
+                   fseek(outfile, -dc, SEEK_END);
+                   fputs(oixloc, outfile);
+                   fputc(0, outfile);
+                   wloc = 1;
+               }
+           } else
+               dc = 0;
+       }
+       ++scriptsize;
    }
    fputs("\n" IcodeDelim "\n", outfile);
    scriptsize += strlen("\n" IcodeDelim "\n");

@@ -586,7 +586,7 @@ $endif
    #
    public static get_extension(f)
       local i                                                     
-      if 2 < (i := backto('.', f)\1) <= *f then
+      if 2 < (i := backto('.' ++ PATH_SPECIALS, f)\1) <= *f & any('.', f[i - 1]) then
          return f[i:0]
    end
 
@@ -597,7 +597,8 @@ $endif
    #
    # :Parameters :
    # :  `f` - the file to look for
-   # :  `n` - the name of the environment variable holding the path
+   # :  `n` - the name of the environment variable holding the path;
+   #          if &null then no path is searched
    # :  `cd` - the current directory; if &null then the "real" cd
    # :  `mode` - the access mode to check for; by default `Access.F_OK`
    #
@@ -638,46 +639,19 @@ $endif
       }
    end
 
-   # Find absolute executable, searching $PATH (using POSIX 1003.2
-   # rules) for executable name.  The method is similar to path_find above,
-   # but a little more strict.  In particular, the cd isn't tried before
-   # the directories on $PATH.
+   #
+   # Find executable on the given path.  Details vary by platform, but
+   # on Unix, the method is similar to `path_find` above, but a little
+   # more strict.  In particular, the cd isn't tried before the
+   # directories on the path.
    #
    # :Parameters :
+   # :  `f` - the file to look for
    # :  `n` - the name of the environment variable holding the path,
-   #          by default "PATH"
+   #          by default (on Unix) "PATH"
    # :  `mode` - the access mode to check for; by default `Access.X_OK`
    public static find_exe(f, n, mode)
-      local p, s, path
-
-$ifdef _PLAN9
-      /n := "path"
-$else
-      /n := "PATH"
-$endif
-      /mode := Access.X_OK
-      p := FilePath(f)
-
-      # Anything with separators in, we just look up and ignore the
-      # path.
-      if p.is_absolute() | (p.size() > 1) then {
-         s := p.str()
-         if access(s, mode) then
-            return s
-         else
-            fail
-      }
-
-      # Search all the elements in the path
-$ifdef _PLAN9
-      path := env_string(n) | ". /bin"
-$else
-      path := env_string(n) | ""
-$endif
-      every s := FilePath(split_paths(path)).append(p).str() do {
-         if access(s, mode) then
-            return s
-      }
+      return FS.find_exe(f, n, mode)
    end
 
    #
@@ -765,6 +739,7 @@ package abstract class FileSystem()
    public abstract get_roots()
    public abstract split_paths(s)
    public abstract get_program_name()
+   public abstract find_exe(f, n, mode)
 end
 
 #
@@ -1235,6 +1210,31 @@ package class UnixFileSystem(FileSystem)
       u.is_local_file() | return error("Can't convert a file: URL from another host")
       return u.get_decoded_path()
    end
+
+   public find_exe(f, n, mode)
+      local p, s, path
+
+      /n := "PATH"
+      /mode := Access.X_OK
+      p := FilePath(f)
+
+      # Anything with separators in, we just look up and ignore the
+      # path.
+      if p.is_absolute() | (p.size() > 1) then {
+         s := p.str()
+         if Files.access(s, mode) then
+            return s
+         else
+            fail
+      }
+
+      # Search all the elements in the path
+      path := env_string(n) | ""
+      every s := FilePath(split_paths(path)).append(p).str() do {
+         if Files.access(s, mode) then
+            return s
+      }
+   end
 end
 
 package class Plan9FileSystem(UnixFileSystem)
@@ -1256,6 +1256,31 @@ package class Plan9FileSystem(UnixFileSystem)
          if pos(0) then
             break
          move(1)
+      }
+   end
+
+   public find_exe(f, n, cd, mode)
+      local p, s, path
+
+      /n := "path"
+      /mode := Access.X_OK
+      p := FilePath(f)
+
+      # Anything with separators in, we just look up and ignore the
+      # path.
+      if p.is_absolute() | (p.size() > 1) then {
+         s := p.str()
+         if Files.access(s, mode) then
+            return s
+         else
+            fail
+      }
+
+      # Search all the elements in the path
+      path := env_string(n) | ". /bin"
+      every s := FilePath(split_paths(path)).append(p).str() do {
+         if Files.access(s, mode) then
+            return s
       }
    end
 end
@@ -1399,5 +1424,35 @@ package class WindowsFileSystem(FileSystem)
          map(f[2:0], "/", "\\")
       else
          "\\\\" || u.get_decoded_host() || map(f, "/", "\\")
+   end
+
+   private executables(s)
+      if Files.get_extension(s) then
+         return s
+      suspend s || (".exe" | ".bat" | ".com")
+   end
+
+   public find_exe(f, n, mode)
+      local p, s, path
+
+      /n := "PATH"
+      /mode := Access.X_OK
+      p := FilePath(f)
+
+      # Try the file as given.
+      every s := executables(p.str()) do
+         if Files.access(s, mode) then
+            return s
+
+      # If it has separators in, do no more.
+      if p.is_absolute() | (p.size() > 1) then
+         fail
+
+      # Search all the elements in the path
+      path := env_string(n) | ""
+      every s := executables(FilePath(split_paths(path)).append(p).str()) do {
+         if Files.access(s, mode) then
+            return s
+      }
    end
 end

@@ -280,7 +280,7 @@ int ppch()
           *  that's what's next, or as much else as we can.
           */
          f = *bnxt & 0xFF;
-         if (oi_isalpha(f) || f == '_') {
+         if ((oi_isalpha(f) || f == '_') && !(f == 'u' && *(bnxt + 1) == '"')) {
             /*
              * This is the first character of an identifier.  It could
              *  be the name of a definition.  If so, the name will be
@@ -311,7 +311,13 @@ int ppch()
             p = bnxt++;
             while (p < blim) {
                c = *p;
-               if (oi_isalpha(c) || c == '_') {	/* there's an id ahead */
+               if (c == 'u' && *(p + 1) == '"') {  /* ucs literal */
+                  ++p;
+                  p = matchq(p);		/* skip to end */
+                  if (*p != '\0')
+                     p++;
+               }
+               else if (oi_isalpha(c) || c == '_') {	/* there's an id ahead */
                   bstop = p;
                   return f;
                   }
