@@ -433,7 +433,7 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     t = GetMessageTime();
 
     fl = 0;
-    if (GetKeyState(VK_LCONTROL) < 0)
+    if (GetKeyState(VK_CONTROL) < 0)
         fl |= MOD_CTRL;
     if (GetKeyState(VK_SHIFT) < 0)
         fl |= MOD_SHIFT;
