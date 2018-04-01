@@ -201,11 +201,11 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
    typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
    typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
    typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
-   typedef int WNDCLASSEX, LONG, ULONG_PTR, LPCTSTR, TRACKMOUSEEVENT;
+   typedef int WNDCLASSEXW, LONG, ULONG_PTR, LPCTSTR, TRACKMOUSEEVENT;
    typedef int BLENDFUNCTION, WCHAR, WSADATA, WORD, HANDLE, MEMORYSTATUS;
    typedef int PVOID, PFIBER_START_ROUTINE, WIN32_FIND_DATAW;
    typedef int INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64;
-   typedef int SOCKET, SIZE_T, INT_PTR, LPWSTR;
+   typedef int SOCKET, SIZE_T, INT_PTR, LPWSTR, SHORT;
    typedef int gb_Bitmap, gb_Draw, gb_Color, gb_Font;
 #endif				/* MSWIN32 */
 
