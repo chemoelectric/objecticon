@@ -247,15 +247,17 @@ int add_package(struct package_dir *p, struct package *new)
 
 void ensure_file_in_package(char *file, char *ipackage)
 {
-    struct fileparts *fps = fparse(file);
+    struct fileparts *fps;
     char *idir, *iname;
     struct package_dir *pd;
     struct package *pk;
     struct package_file *pf;
 
+    fps = fparse(canonicalize(file));
+
     /* Intern the bits */
     iname = intern(fps->name);
-    idir = intern(canonicalize(fps->dir));
+    idir = intern(fps->dir);
     pd = lookup_package_dir(idir);
     if (!pd) {
         /*
