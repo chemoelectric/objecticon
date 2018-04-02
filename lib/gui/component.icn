@@ -1521,64 +1521,56 @@ class Component(Rect,Align,Connectable)
    # Set the `WAttrib.BG` attribute; see `set_wattrib()`.
    #
    public set_bg(v)
-      set_wattrib(WAttrib.BG, v)
-      return self
+      return set_wattrib(WAttrib.BG, v)
    end
 
    #
    # Set the `WAttrib.FG` attribute; see `set_wattrib()`.
    #
    public set_fg(v)
-      set_wattrib(WAttrib.FG, v)
-      return self
+      return set_wattrib(WAttrib.FG, v)
    end
 
    #
    # Set the `WAttrib.DRAW_OP` attribute; see `set_wattrib()`.
    #
    public set_draw_op(v)
-      set_wattrib(WAttrib.DRAW_OP, v)
-      return self
+      return set_wattrib(WAttrib.DRAW_OP, v)
    end
 
    #
    # Set the `WAttrib.FONT` attribute; see `set_wattrib()`.
    #
    public set_font(v)
-      set_wattrib(WAttrib.FONT, v)
-      return self
+      return set_wattrib(WAttrib.FONT, v)
    end
 
    #
    # Set the `WAttrib.LEADING` attribute; see `set_wattrib()`.
    #
    public set_leading(v)
-      set_wattrib(WAttrib.LEADING, v)
-      return self
+      return set_wattrib(WAttrib.LEADING, v)
    end
 
    #
    # Set the `WAttrib.LINE_WIDTH` attribute; see `set_wattrib()`.
    #
    public set_line_width(v)
-      set_wattrib(WAttrib.LINE_WIDTH, v)
-      return self
+      return set_wattrib(WAttrib.LINE_WIDTH, v)
    end
 
    #
    # Set the `WAttrib.LINE_STYLE` attribute; see `set_wattrib()`.
    #
    public set_line_style(v)
-      set_wattrib(WAttrib.LINE_STYLE, v)
-      return self
+      return set_wattrib(WAttrib.LINE_STYLE, v)
    end
 
    #
    # Set the `WAttrib.PATTERN` attribute; see `set_wattrib()`.
    #
    public set_pattern(v)
-      set_wattrib(WAttrib.PATTERN, v)
-      return self
+      return set_wattrib(WAttrib.PATTERN, v)
    end
 
    public new()
