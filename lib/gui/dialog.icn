@@ -1267,6 +1267,7 @@ class Dialog(Component)
             curr_drop := &null
          }
       }
+      return self
    end
 
    #
@@ -1399,6 +1400,7 @@ class Dialog(Component)
    #
    public invoke_later(coex)
       self.win.pending(Window.INVOKE_LATER, coex)
+      return self
    end
 
    public set_label(v)
