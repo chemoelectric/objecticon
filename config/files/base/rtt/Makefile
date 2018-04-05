@@ -20,7 +20,7 @@ PROG=		../../bin/rtt
 all:	$(PROG)
 
 clean:		
-	rm -f *.o $(PROG) typespec y.output
+	$(RM) -f *.o $(PROG) typespec y.output
 
 etags:
 	$(ETAGS) $(RSRC) *.h
