@@ -49,4 +49,4 @@ $(PROG):	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	$(RM) *.obj $(RTTC) $(PROG) $(PROG:.exe=.pdb)
+	$(RM) *.obj *.pdb $(RTTC) $(PROG) $(PROG:.exe=.pdb)

@@ -2,10 +2,6 @@
 
 include ../../Makedefs
 
-DEST	      = .
-HDRS	      = defs.h
-MAKEFILE      = Makefile
-
 OBJS	      = closure.o \
 		error.o \
 		lalr.o \
@@ -21,48 +17,15 @@ OBJS	      = closure.o \
 
 COBJS         = ../../base/common/mlocal.o ../../base/common/alloc.o
 
-PRINT	      = pr -f -l88
-
 PROGRAM	      = ../../bin/iyacc
-
-SRCS	      = closure.c \
-		error.c \
-		lalr.c \
-		lr0.c \
-		main.c \
-		mkpar.c \
-		output.c \
-		reader.c \
-		skeleton.c \
-		symtab.c \
-		verbose.c \
-		warshall.c
 
 all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(COBJS) $(LIBS)
 
-clean:;		@rm -f $(OBJS) $(PROGRAM)
-		$(MAKE) -C test clean
-
-clobber:;	@rm -f $(OBJS) $(PROGRAM)
-
-depend:;	@mkmf -f $(MAKEFILE) PROGRAM=$(PROGRAM) DEST=$(DEST)
-
-index:;		@ctags -wx $(HDRS) $(SRCS)
-
-install:	$(PROGRAM)
-		@echo Installing $(PROGRAM) in $(DEST)
-		@install -s $(PROGRAM) $(DEST)
-
-listing:;	@$(PRINT) Makefile $(HDRS) $(SRCS) | lpr
-
-lint:;		@lint $(SRCS)
-
-program:        $(PROGRAM)
-
-tags:           $(HDRS) $(SRCS); @ctags $(HDRS) $(SRCS)
+clean:
+		$(RM) *.o $(PROGRAM)
 
 test:		$(PROGRAM)
 		$(MAKE) -C test

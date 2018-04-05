@@ -65,11 +65,14 @@ static void init_geom(wsp ws);
 static void synch_pos(wsp ws, int newx, int newy);
 static void synch_size(wsp ws, int neww, int newh);
 
+static void show_keystate(char *name, int k);
+static void show_keyevent(UINT msg, WPARAM wp, LPARAM lp);
 static void dbg(char *fmt, ...);
 
 static wsp grabwin;
 
 static int mouse_debug = 0;
+static int key_debug = 0;
 
 static struct SharedColor *black, *white;
 
@@ -334,26 +337,81 @@ static void synch_state(wsp ws, int new_state)
     }
 }
 
+static void show_keystate(char *name, int k)
+{
+    SHORT s = GetKeyState(k);
+    dbg("\t%s %s %s\n", name, (s < 0) ? "Down":"Up", (s > 0) ? "Toggled":"");
+}
+
+static void show_keyevent(UINT msg, WPARAM wp, LPARAM lp)
+{
+    char *s;
+    switch(msg) {
+        case WM_KEYUP:
+            s = "WM_KEYUP";
+            break;
+        case WM_SYSKEYUP:
+            s = "WM_SYSKEYUP";
+            break;
+        case WM_CHAR:
+            s = "WM_CHAR";
+            break;
+        case WM_SYSCHAR:
+            s = "WM_SYSCHAR";
+            break;
+        case WM_KEYDOWN:
+            s = "WM_KEYDOWN";
+            break;
+        case WM_SYSKEYDOWN:
+            s = "WM_SYSKEYDOWN";
+            break;
+        default:
+            syserr("Unexpected msg value");
+    }
+    dbg("%s(%d) wp=%d\n", s, msg, (int)wp);
+    dbg("\trepeat count=%d\n", lp&0xffff);
+    lp >>= 15;
+    dbg("\tscan code=%d\n", lp&0xff);
+    lp >>= 8;
+    dbg("\textended=%d\n", lp&0x01);
+    lp >>= 1;
+    lp >>= 4;  /* reserved */
+    dbg("\tcontext code=%d\n", lp&0x01);
+    lp >>= 1;
+    dbg("\tprevious key state=%d\n", lp&0x01);
+    lp >>= 1;
+    dbg("\ttransition state=%d\n", lp&0x01);
+
+    show_keystate("VK_LSHIFT",VK_LSHIFT);
+    show_keystate("VK_RSHIFT",VK_RSHIFT);  
+    show_keystate("VK_LCONTROL",VK_LCONTROL);
+    show_keystate("VK_RCONTROL",VK_RCONTROL);
+    show_keystate("VK_LMENU",VK_LMENU);
+    show_keystate("VK_RMENU",VK_RMENU);
+}
+
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     DWORD dw;
     LONG t;
     int fl;
     POINT p;
-    static struct descrip curr;
-    static int inited = 0;
+    tended struct descrip curr;
+
+    if (key_debug) show_keyevent(msg, wp, lp);
     switch(msg) {
-        case WM_KEYUP:
-        case WM_SYSKEYUP:
-            if (!inited)
-                return;
-            break;
         case WM_CHAR:
         case WM_SYSCHAR:
-            StrLen(curr) = 1;
-            StrLoc(curr) = &allchars[wp & 0xFF];
-            inited = 1;
+            if (wp < 256) {
+                StrLen(curr) = 1;
+                StrLoc(curr) = &allchars[wp];
+            } else {
+                curr.dword = D_Ucs;
+                BlkLoc(curr) = (union block *)make_one_char_ucs_block(wp);
+            }
             break;
+        case WM_KEYUP:
+        case WM_SYSKEYUP:
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
             if (wp == VK_DELETE) {
@@ -361,7 +419,6 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
                 StrLoc(curr) = &allchars[127];
             } else 
                 MakeInt(wp, &curr);
-            inited = 1;
             break;
         default:
             syserr("Unexpected msg value");
@@ -380,8 +437,12 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
         fl |= MOD_CTRL;
     if (GetKeyState(VK_SHIFT) < 0)
         fl |= MOD_SHIFT;
-    if (msg == WM_SYSKEYDOWN || msg == WM_SYSCHAR || msg == WM_SYSKEYUP)
+    if (GetKeyState(VK_LMENU) < 0)
         fl |= MOD_META;
+    if (GetKeyState(VK_RMENU) < 0) {
+        fl |= MOD_META5;
+        fl &= ~MOD_CTRL;
+    }
     if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
         fl |= MOD_RELEASE;
     qevent(ws, &curr, p.x, p.y, t, fl);
@@ -628,7 +689,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 return 0;
         }
     }
-    return DefWindowProc(hwnd, msg, wp, lp);
+    return DefWindowProcW(hwnd, msg, wp, lp);
 }
 
 void pollevent(wbp w)
@@ -767,16 +828,16 @@ static void open_screen_win(wsp ws)
 {
     switch (ws->state) {
         case PopupCanvas: {
-            ws->win = CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
-                                     "oix", 
-                                     NULL,
-                                     WS_CHILD,
-                                     ws->reqx == -INT_MAX ? 0 : ws->reqx, 
-                                     ws->reqy == -INT_MAX ? 0 : ws->reqy,
-                                     ws->width,
-                                     ws->height,
-                                     GetDesktopWindow(),
-                                     NULL, NULL, NULL); 
+            ws->win = CreateWindowExW(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
+                                      L"oix", 
+                                      NULL,
+                                      WS_CHILD,
+                                      ws->reqx == -INT_MAX ? 0 : ws->reqx, 
+                                      ws->reqy == -INT_MAX ? 0 : ws->reqy,
+                                      ws->width,
+                                      ws->height,
+                                      GetDesktopWindow(),
+                                      NULL, NULL, NULL); 
             SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
             break;
         } 
@@ -786,16 +847,16 @@ static void open_screen_win(wsp ws)
                 parent = ws->transientfor->win;
             else
                 parent = NULL;
-            ws->win = CreateWindowEx(0,
-                                     "oix", 
-                                     NULL,
-                                     WS_OVERLAPPEDWINDOW,
-                                     ws->reqx == -INT_MAX ? CW_USEDEFAULT : ws->reqx, 
-                                     ws->reqy == -INT_MAX ? CW_USEDEFAULT : ws->reqy,
-                                     ws->width + BORDER_WIDTH,
-                                     ws->height + BORDER_HEIGHT,
-                                     parent,
-                                     NULL, NULL, NULL);
+            ws->win = CreateWindowExW(0,
+                                      L"oix", 
+                                      NULL,
+                                      WS_OVERLAPPEDWINDOW,
+                                      ws->reqx == -INT_MAX ? CW_USEDEFAULT : ws->reqx, 
+                                      ws->reqy == -INT_MAX ? CW_USEDEFAULT : ws->reqy,
+                                      ws->width + BORDER_WIDTH,
+                                      ws->height + BORDER_HEIGHT,
+                                      parent,
+                                      NULL, NULL, NULL);
             apply_windowlabel(ws);
         }
     }
@@ -1775,9 +1836,9 @@ static void setup_cursor(char *name, LPCTSTR cid)
 
 static void init_window_system(void)
 {
-    WNDCLASSEX wc;
+    WNDCLASSEXW wc;
     RECT r;
-    wc.cbSize =         sizeof(WNDCLASSEX); 
+    wc.cbSize =         sizeof(WNDCLASSEXW);
     wc.style =          CS_DBLCLKS;
     wc.lpfnWndProc =    WndProc;
     wc.cbClsExtra =     0;
@@ -1787,9 +1848,9 @@ static void init_window_system(void)
     wc.hCursor =        LoadCursor(0, IDC_ARROW);
     wc.hbrBackground =  GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName =   0;
-    wc.lpszClassName =  "oix";
+    wc.lpszClassName =  L"oix";
     wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
-    RegisterClassEx(&wc);
+    RegisterClassExW(&wc);
     r.left = r.top = r.right = r.bottom = 0;
     AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
     BORDER_WIDTH = r.right - r.left;

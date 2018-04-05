@@ -1267,6 +1267,7 @@ class Dialog(Component)
             curr_drop := &null
          }
       }
+      return self
    end
 
    #
@@ -1399,106 +1400,147 @@ class Dialog(Component)
    #
    public invoke_later(coex)
       self.win.pending(Window.INVOKE_LATER, coex)
+      return self
    end
 
+   #
+   # Set the `WAttrib.LABEL` attribute; see `set_wattrib()`.
+   #
    public set_label(v)
-      set_wattrib(WAttrib.LABEL, v)
-      return self
+      return set_wattrib(WAttrib.LABEL, v)
    end
 
+   #
+   # Set the `WAttrib.CANVAS` attribute; see `set_wattrib()`.
+   #
    public set_canvas(v)
-      set_wattrib(WAttrib.CANVAS, v)
-      return self
+      return set_wattrib(WAttrib.CANVAS, v)
    end
 
+   #
+   # Set the `WAttrib.X` attribute; see `set_wattrib()`.
+   #
    public set_x(v)
-      set_wattrib(WAttrib.X, v)
-      return self
+      return set_wattrib(WAttrib.X, v)
    end
 
+   #
+   # Set the `WAttrib.POS` attribute; see `set_wattrib()`.
+   #
    public set_pos(v1, v2)
-      set_wattrib(WAttrib.POS, [v1, v2])
-      return self
+      return set_wattrib(WAttrib.POS, [v1, v2])
    end
 
+   #
+   # Set the `WAttrib.Y` attribute; see `set_wattrib()`.
+   #
    public set_y(v)
-      set_wattrib(WAttrib.Y, v)
-      return self
+      return set_wattrib(WAttrib.Y, v)
    end
 
+   #
+   # Set the `WAttrib.RESIZE` attribute; see `set_wattrib()`.
+   #
    public set_resize(v)
-      set_wattrib(WAttrib.RESIZE, v)
-      return self
+      return set_wattrib(WAttrib.RESIZE, v)
    end
 
+   #
+   # Set the `WAttrib.SIZE` attribute; see `set_wattrib()`.
+   #
    public set_size(v1, v2)
-      set_wattrib(WAttrib.SIZE, [v1, v2])
-      return self
+      return set_wattrib(WAttrib.SIZE, [v1, v2])
    end
 
+   #
+   # Set the `WAttrib.HEIGHT` attribute; see `set_wattrib()`.
+   #
    public set_height(v)
-      set_wattrib(WAttrib.HEIGHT, v)
-      return self
+      return set_wattrib(WAttrib.HEIGHT, v)
    end
 
+   #
+   # Set the `WAttrib.WIDTH` attribute; see `set_wattrib()`.
+   #
    public set_width(v)
-      set_wattrib(WAttrib.WIDTH, v)
-      return self
+      return set_wattrib(WAttrib.WIDTH, v)
    end
 
+   #
+   # Set the `WAttrib.DISPLAY` attribute; see `set_wattrib()`.
+   #
    public set_display(v)
-      set_wattrib(WAttrib.DISPLAY, v)
-      return self
+      return set_wattrib(WAttrib.DISPLAY, v)
    end
 
+   #
+   # Set the `WAttrib.ICON` attribute; see `set_wattrib()`.
+   #
    public set_icon(v)
-      set_wattrib(WAttrib.ICON, v)
-      return self
+      return set_wattrib(WAttrib.ICON, v)
    end
 
+   #
+   # Set the `WAttrib.GEOMETRY` attribute; see `set_wattrib()`.
+   #
    public set_geometry(v1, v2, v3, v4)
-      set_wattrib(WAttrib.GEOMETRY, [v1, v2, v3, v4])
-      return self
+      return set_wattrib(WAttrib.GEOMETRY, [v1, v2, v3, v4])
    end
 
+   #
+   # Set the `WAttrib.DX` attribute; see `set_wattrib()`.
+   #
    public set_dx(v)
-      set_wattrib(WAttrib.DX, v)
-      return self
+      return set_wattrib(WAttrib.DX, v)
    end
 
+   #
+   # Set the `WAttrib.DY` attribute; see `set_wattrib()`.
+   #
    public set_dy(v)
-      set_wattrib(WAttrib.DY, v)
-      return self
+      return set_wattrib(WAttrib.DY, v)
    end
 
+   #
+   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   #
    public set_min_width(v)
-      set_wattrib(WAttrib.MIN_WIDTH, v)
-      return self
+      return set_wattrib(WAttrib.MIN_WIDTH, v)
    end
 
+   #
+   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   #
    public set_min_height(v)
-      set_wattrib(WAttrib.MIN_HEIGHT, v)
-      return self
+      return set_wattrib(WAttrib.MIN_HEIGHT, v)
    end
 
+   #
+   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   #
    public set_min_size(v1, v2)
-      set_wattrib(WAttrib.MIN_SIZE, [v1, v2])
-      return self
+      return set_wattrib(WAttrib.MIN_SIZE, [v1, v2])
    end
 
+   #
+   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   #
    public set_max_width(v)
-      set_wattrib(WAttrib.MAX_WIDTH, v)
-      return self
+      return set_wattrib(WAttrib.MAX_WIDTH, v)
    end
 
+   #
+   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   #
    public set_max_height(v)
-      set_wattrib(WAttrib.MAX_HEIGHT, v)
-      return self
+      return set_wattrib(WAttrib.MAX_HEIGHT, v)
    end
 
+   #
+   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   #
    public set_max_size(v1, v2)
-      set_wattrib(WAttrib.MAX_SIZE, [v1, v2])
-      return self
+      return set_wattrib(WAttrib.MAX_SIZE, [v1, v2])
    end
 
    private static init()

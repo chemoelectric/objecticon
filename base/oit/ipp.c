@@ -546,8 +546,9 @@ static void ppdir(char *s)
 static void pfatal(char *fmt, ...)
 {
     va_list argp;
-    begin_link(stderr, canonicalize(curfile->fname), curfile->lno);
-    fprintf(stderr, "File %s; Line %ld", curfile->fname, curfile->lno);
+    char *p = intern(canonicalize(curfile->fname));
+    begin_link(stderr, p, curfile->lno);
+    fprintf(stderr, "File %s; Line %ld", abbreviate(p), curfile->lno);
     end_link(stderr);
     fputs(" # ", stderr);
     va_start(argp, fmt);

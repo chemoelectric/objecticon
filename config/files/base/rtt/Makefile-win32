@@ -23,7 +23,7 @@ PROG=		../../bin/rtt.exe
 all:	$(PROG)
 
 clean:		
-	rm -f *.obj $(PROG) $(PROG:.exe=.pdb) typespec
+	$(RM) *.obj *.pdb $(PROG) $(PROG:.exe=.pdb) typespec
 
 $(PROG):	$(OBJ)
 	$(LD) $(LDFLAGS) /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
