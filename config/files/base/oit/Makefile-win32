@@ -21,7 +21,7 @@ HDR=		../../bin/win32header.exe
 all:		$(PROG) $(HDR)
 
 clean:		
-		$(RM) *.obj tgram.g y.tab.c y.tab.h y.output $(PROG) $(PROG:.exe=.pdb) \
+		$(RM) *.obj *.pdb tgram.g y.tab.c y.tab.h y.output $(PROG) $(PROG:.exe=.pdb) \
 			$(HDR) $(HDR:.exe=.pdb) mkkwd fixgram mktoktab
 
 $(PROG):		$(OBJS)
