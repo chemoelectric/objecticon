@@ -6,7 +6,7 @@ OI_BIN=$(OI_HOME)/bin
 CC=cl
 LD=link
 # /Od disables optimzation, /ZI for debugging
-CFLAGS=/Od /Zi /source-charset:utf-8
+CFLAGS=/Od /Zi /utf-8
 LDFLAGS=/DEBUG:FULL
 RM=rm -f
 RMDIR=rm -rf
