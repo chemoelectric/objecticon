@@ -1,4 +1,12 @@
 #!/bin/sh
+unset r_opt
+OPTIND=1
+while getopts "r" options; do
+    case $options in
+        r) r_opt=1 ;;                 # Release mode
+    esac
+done
+shift $((OPTIND-1))
 clver=$(cl 2>&1|head -1)
 case "$clver" in
     *x64*)
@@ -39,7 +47,17 @@ x=$(pwd)
 w=$(cygpath -w "$x")
 # Transform \s into \\s, eg c:\\home\\rpp
 v=$(echo $w | sed -e "s/\\\/\\\\\\\\/g")
+# /Od disables optimzation, /Zi for debugging
+if [ -z $r_opt ]; then
+    CFLAGS="/Od /Zi /utf-8"
+    LDFLAGS="/DEBUG:FULL"
+else
+    CFLAGS="/O2 /utf-8"
+    LDFLAGS=""
+fi
 sed -e "s:@CONFIG_DIR@:$x:"  \
+    -e "s%@CFLAGS@%$CFLAGS%" \
+    -e "s%@LDFLAGS@%$LDFLAGS%" \
     -e "s/@WCONFIG_DIR@/$v/" \
    <./config/files/Makedefs-win32 >Makedefs
 echo creating paths.bat
