@@ -230,7 +230,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    protected read_line_impl()
       local s
       if /isatty then {
-         tty.writes(prompt)
+         FileStream.stdout.writes1(prompt)
          s := tty.read_line() | fail
          if /s then
             return

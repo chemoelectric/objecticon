@@ -698,7 +698,7 @@ class Ieval(MinimalObjectOutput)
          if is(input, LineEditorStream) then
             input.set_prompt(prompt)
          else
-            writes(prompt)
+            FileStream.stdout.writes1(prompt)
          t := input.read_line() | stop("Failed to read input: ", &why)
          if /t then break
          s ||:= t
