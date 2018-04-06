@@ -228,7 +228,15 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    protected read_line_impl()
-      \isatty | return tty.read_line()
+      local s
+      if /isatty then {
+         tty.writes(prompt)
+         s := tty.read_line() | fail
+         if /s then
+            return
+         subj := Text.liberal_ucs(s)
+         return got()
+      }
       if \ctrl_d_flag then
          return
       return use {
