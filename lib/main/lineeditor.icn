@@ -129,6 +129,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    public static get_console_size()
+$ifdef _UNIX
       local w, h
       # Could also use tput cols and tput lines to do this.
       return run_stty("size") ? {
@@ -137,6 +138,9 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             w := integer(tab(many(&digits))) then [w, h]
          else error("Couldn't interpret stty size output")
       }
+$else
+      error("Function not supported")
+$endif
    end
 
    public static get_console_width()
@@ -535,11 +539,16 @@ class LineEditorStream(LineBasedInputStream, HasTask)
 
    public new()
       LineBasedInputStream.new()
+$ifdef _UNIX
       tty := FileStream.stdin
       if run_stty() then {
          isatty := &yes
          ti := read_terminfo() | fail
       }
+$else
+      tty := BufferStream(FileStream.stdin).
+         set_close_underlying(&no)
+$endif
       undo_manager := UndoManager()
       hmod := table()
       history := []
