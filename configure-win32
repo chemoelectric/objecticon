@@ -62,7 +62,7 @@ sed -e "s:@CONFIG_DIR@:$x:"  \
    <./config/files/Makedefs-win32 >Makedefs
 echo creating paths.bat
 cat >paths.bat <<EOF
-# Object Icon path settings
+rem Object Icon path settings
 set OI_HOME=$w
 set OI_BIN=%OI_HOME%\bin
 set OI_LIB=%OI_HOME%\lib
