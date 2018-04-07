@@ -394,7 +394,7 @@ procedure terminal_task(task)
    local s
    repeat {
       if is(input, TaskStream) then
-         output.out("? ")
+         output.writes1("? ")
       s := input.read_line() | stop("Failed to read input: ", &why)
       if /s then
          break
