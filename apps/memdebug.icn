@@ -51,7 +51,7 @@ procedure do_help()
    cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
    cmd_out.write("kbreak [f]        - set or toggle whether to break on &break.")
    cmd_out.write("hlim i            - set the command history limit.")
-   cmd_out.write("hist              - display the history.")
+   cmd_out.write("hist [s]          - display the history, optionally filtered by s.")
    cmd_out.write("llim i            - set the history log limit in the gui.")
    cmd_out.write("slim i            - set the displayed string limit; 0 means no limit.")
    cmd_out.write("addrs i           - set the display of addresses in the regions")
@@ -153,8 +153,7 @@ end
 
 procedure do_hlim(a)
    if *a = 1 & hlim := 10 < integer(a[1]) then {
-      if is(input, TermDialog | LineEditorStream) then
-         input.set_history_limit(hlim)
+      input.set_history_limit(hlim)
       cmd_out.write("hlim is now ", hlim)
    } else
       return errmsg("Usage: hlim length (> 10)")
@@ -169,12 +168,14 @@ procedure do_llim(a)
       return errmsg("Usage: llim length (> 10)")
 end
 
-procedure do_hist()
-   local i, e
-   is(input, TermDialog | LineEditorStream) | fail
+procedure do_hist(a)
+   local i, e, s
+   (*a < 2) | return errmsg("Usage: hist [s]")
+   s := a[1] | u""
    i := input.get_history_start_no()
    every e := !input.get_history() do {
-      cmd_out.write(right(i, 4), "  ", e)
+      if find(s, map(e)) then
+         cmd_out.write(right(i, 4), "  ", e)
       i +:= 1
    }
 end
@@ -393,8 +394,6 @@ end
 procedure terminal_task(task)
    local s
    repeat {
-      if is(input, TaskStream) then
-         output.writes1("? ")
       s := input.read_line() | stop("Failed to read input: ", &why)
       if /s then
          break
@@ -406,28 +405,18 @@ procedure terminal_task(task)
    task.revert()
 end
 
-procedure do_stdin()
-   input := FileStream.stdin
-   do_terminal()
-end
-
 procedure do_line_editor()
-   input := LineEditorStream().
+   local task, f
+   sched := Scheduler()
+   task := Task(sched, create terminal_task(task))
+   if \opts["s"] then
+      f := TaskStream(FileStream.stdin, task).set_close_underlying(&no)
+   input := LineEditorStream(opts["s"], f).
       set_complete_function(complete).
       set_history_limit(hlim).
       set_history(history).
-      set_prompt("? ")
-   do_terminal()
-end
-
-procedure do_terminal()
-   local task
-   sched := Scheduler()
-   task := Task(sched, create terminal_task(task))
-   if is(input, LineEditorStream) then
-      input.set_task(task)
-   else
-      input := TaskStream(input, task)
+      set_prompt("? ").
+      set_task(task)
    output := FileStream.stdout
    task.start()
    prelim()
@@ -511,8 +500,7 @@ end
 procedure cleanup()
    tmp_out.close()
    Files.remove(tmp_out_name)
-   if is(input, TermDialog | LineEditorStream) then
-      encode_to_file(hfile, input.get_history()) | ewrite("History not saved: ", &why)
+   encode_to_file(hfile, input.get_history()) | ewrite("History not saved: ", &why)
 end
 
 procedure usage(opts)
@@ -543,7 +531,7 @@ procedure main(args)
    opts := options(a, [Opt("m",, "Loaded program is initially stopped"),
                        Opt("g",, "Use a gui interface rather than the console"),
                        Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
-                       Opt("s",, "Read commands from standard input rather than using a line editor"),
+                       Opt("s",, "Don't use console line editing (implicit on non-Unix platforms)"),
                        Opt("f",string,"Perform commands from file at startup", &yes),
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
                        Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)"),
@@ -572,16 +560,12 @@ procedure main(args)
    tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stop(&why)
    tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
 
-   if \opts["s"] then
-      do_stdin()
-   else {
-      hfile := FilePath(BaseDir.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
-      history := decode_from_file(hfile) | []
-      if \opts["g"] then
-         do_gui()
-      else
-         do_line_editor()
-   }
+   hfile := FilePath(BaseDir.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
+   history := decode_from_file(hfile) | []
+   if \opts["g"] then
+      do_gui()
+   else
+      do_line_editor()
 
    cleanup()
 
