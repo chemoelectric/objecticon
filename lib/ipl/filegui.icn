@@ -376,9 +376,9 @@ class FileSuggestField(SuggestField)
 
    public convert_element(o)
       if /directories_only_flag & o.stat.mode_str[1] == "d" then
-         return prefix || text(o.name) || Files.PATH_SEPARATOR
+         return prefix || o.name || Files.PATH_SEPARATOR
       else
-         return prefix || text(o.name)
+         return prefix || o.name
    end
 
    public create_popup()
@@ -404,9 +404,9 @@ class FileSuggestField(SuggestField)
             # Tab has been pressed with the cursor in the list.
             # Insert the name (with a trailing / for a directory)
             t := prefix || if o.stat.mode_str[1] == "d" then
-               text(o.name) || Files.PATH_SEPARATOR
+               o.name || Files.PATH_SEPARATOR
             else
-               text(o.name)
+               o.name
             assign_contents(t,, e)
          } else {
             # Calculate the string we could insert.  If not
