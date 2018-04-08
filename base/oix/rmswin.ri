@@ -452,8 +452,7 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     LONG t;
     POINT p;
-    int state = 0;
-    int fl = 0;
+    int state, dir, num, delta, fl;
 
     if (mouse_debug) dbg("handle_mouse_wheel() grabwin=%p\n", grabwin);
 
@@ -462,6 +461,8 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
      */
     if (grabwin)
         ws = grabwin;
+
+    state = fl = 0;
 
     if (MK_LBUTTON & wp) state |= 1;
     if (MK_MBUTTON & wp) state |= 2;
@@ -481,18 +482,20 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     if (MK_SHIFT & wp)
         fl |= MOD_SHIFT;
 
+    delta = GET_WHEEL_DELTA_WPARAM(wp);
+    dir = (delta > 0) ? 8 : 16;
+    num = Abs(delta) / 120;
+
     /*
      * We only get one MS event for a wheel movement, so call
-     * qmouseevents twice, once with the button 4 or 5 going down and
-     * again with it coming up.  This generates one icon event, on the
-     * second qmouseevents call.
+     * qmouseevents twice for each increment, once with the button 4 or
+     * 5 going down and again with it coming up.  This generates one
+     * icon event, on the second qmouseevents call.
      */
-    if ((INT_PTR)wp > 0)
-        qmouseevents(ws, state|8, p.x, p.y, t, fl);
-    else
-        qmouseevents(ws, state|16, p.x, p.y, t, fl);
-    
-    qmouseevents(ws, state, p.x, p.y, t, fl);
+    while (num--) {
+        qmouseevents(ws, state | dir, p.x, p.y, t, fl);
+        qmouseevents(ws, state, p.x, p.y, t, fl);
+    }
 }
 
 static void dbg(char *fmt, ...)
