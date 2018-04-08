@@ -537,18 +537,39 @@ $endif
                  "\e[", cursor_line, ";", cursor_col, "H")
    end
 
-   public new()
+   # Create a LineEditorStream.
+   #
+   # :Parameters :
+   # : `notty` - a flag, implicitly set on non-Unix platforms.  If set,
+   #             then the line editing facilities are disabled
+   #
+   # :  `f`    - a `Stream` to read from if line editing is disabled.
+   #             If omitted a default `BufferStream` of stdin is used.
+   #
+   # Examples :-
+   # ~
+   #    # On Unix use line editing, on other platforms use buffered stdin
+   #    s := LineEditorStream()
+   #
+   #    # Don't use line editing; read from the default buffered stdin.
+   #    s := LineEditorStream(&yes)
+   #
+   #    # Don't use line editing; read from the given stream.
+   #    s := LineEditorStream(&yes, 
+   #                          TaskStream(FileStream.stdin, task))
+   # ~
+   #
+   public new(notty, f)
       LineBasedInputStream.new()
 $ifdef _UNIX
-      tty := FileStream.stdin
-      if run_stty() then {
-         isatty := &yes
+      if /notty then {
+         run_stty() | fail
          ti := read_terminfo() | fail
-      }
-$else
-      tty := BufferStream(FileStream.stdin).
-         set_close_underlying(&no)
+         tty := FileStream.stdin
+         isatty := &yes
+      } else
 $endif
+      tty := \f | BufferStream(FileStream.stdin).set_close_underlying(&no)
       undo_manager := UndoManager()
       hmod := table()
       history := []

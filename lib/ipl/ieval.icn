@@ -271,7 +271,6 @@ class Ieval(MinimalObjectOutput)
       local i, e
       /s := u""
       s := map(ucs(s)) | runerr(128, s)
-      is(input, TermDialog | LineEditorStream) | fail
       i := input.get_history_start_no()
       every e := !input.get_history() do {
          if find(s, map(e)) then
@@ -292,8 +291,7 @@ class Ieval(MinimalObjectOutput)
 
    private set_hlim(n)
       hlim := (10 < \n)
-      if is(input, TermDialog | LineEditorStream) then
-         input.set_history_limit(hlim)
+      input.set_history_limit(hlim)
       return hlim
    end
 
@@ -404,8 +402,6 @@ class Ieval(MinimalObjectOutput)
       is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
       if \opts["z"] then
          do_nothing()
-      else if \opts["s"] then
-         do_stdin()
       else {
          hfile := FilePath(BaseDir.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
          history := decode_from_file(hfile) | []
@@ -674,31 +670,19 @@ class Ieval(MinimalObjectOutput)
       prelim()
    end
 
-   private do_stdin()
-      input := FileStream.stdin
-      do_terminal()
-   end
-
    private do_line_editor()
-      input := LineEditorStream().
+      local s, t, prompt
+      input := LineEditorStream(opts["s"]).
          set_complete_function(complete).
          set_history_limit(hlim).
          set_history(history) | stop("Failed to create LineEditorStream: ", &why)
-      do_terminal()
-   end
-
-   private do_terminal()
-      local s, t, prompt
 
       do_nothing()
 
       s := ""
       prompt := "> "
       repeat {
-         if is(input, LineEditorStream) then
-            input.set_prompt(prompt)
-         else
-            FileStream.stdout.writes1(prompt)
+         input.set_prompt(prompt)
          t := input.read_line() | stop("Failed to read input: ", &why)
          if /t then break
          s ||:= t

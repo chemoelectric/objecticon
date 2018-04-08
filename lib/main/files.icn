@@ -932,6 +932,18 @@ class FilePath(ObjectOutput)
    end
 
    #
+   # Return another `FilePath` with the same elements, but as plain
+   # strings.  Always succeeds.
+   #
+   public str_path()
+      local s, t
+      t := []
+      every s := !l do
+         put(t, string(s))
+      return from_list(t)
+   end
+
+   #
    # Convenient method to convert this path to a file URL, using
    # `Files.file_to_url()`, applied to the absolute path converted
    # to string.

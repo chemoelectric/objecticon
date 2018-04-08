@@ -2162,8 +2162,8 @@ $endif
 
    private on_columns_lclick()
       local item
-      item := columns.object_get_cursor() | fail
-      open_link(item_to_url(item))
+      if item := columns.object_get_cursor() then
+         open_link(item_to_url(item))
    end
 
    private item_to_url(item)
@@ -2172,17 +2172,15 @@ $endif
 
    private on_columns_mclick(ev)
       local item
-      item := columns.object_get_cursor() | fail
-      insert_link(item_to_url(item), ev)
+      if item := columns.object_get_cursor() then
+         insert_link(item_to_url(item), ev)
    end
 
    private on_columns_over_changed(ev)
-      local s, url, item
-      if item := columns.object_get_over() then {
-         s := FilePath(cwd).child(item.name).ucs() | fail
-         url := mk_file_URL(s)
-         msg(url.ucs())
-      } else
+      local item
+      if item := columns.object_get_over() then
+         msg(item_to_url(item).ucs())
+      else
          msg()
    end
 

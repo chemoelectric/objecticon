@@ -69,7 +69,7 @@ procedure main(a)
                        Opt("l", string, "Link the given source file.  Several -l options may be given",&yes),
                        Opt("m",, "Expect a main procedure in one of the linked source files"),
                        Opt("wglob",, "If given, then assignments to global variables are allowed"),
-                       Opt("s",, "Read commands from standard input rather than using a line editor"),
+                       Opt("s",, "Don't use console line editing (implicit on non-Unix platforms)"),
                        Opt("g",, "Use a gui interface rather than the console"),
                        Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
                        Opt("z",, "Don't read commands interactively, but exit after processing input files"),
