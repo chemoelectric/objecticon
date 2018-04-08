@@ -1,5 +1,5 @@
 import io, lang, util, net, ipl.options, gui, ipl.termdialog, 
-   ipl.strings, ipl.lists, ipl.pdco, xdg
+   ipl.strings, ipl.lists, ipl.pdco, xdg, ipl.functional
 
 global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
    curr_file, tmp_out, tmp_out_name, cmd_out, exited, opts, hlim, llim,
@@ -86,50 +86,67 @@ procedure do_regions()
    MemDebug.regions()
 end
 
-procedure errmsg(s)
+procedure err_msg(s)
    output.write(s)
 end
 
-procedure opthelp(opts)
+procedure help_err(msg)
+   output.write(msg, "\nUse the -? option for more information")
+end
+
+procedure bad_params()
+   return help_err("Invalid parameters")
+end
+
+procedure opt_help(msg, opts)
    local o, t
+   output.write(msg)
    every o := !opts do {
       t := o.format()
       output.write(left(t.names, 20), t.help)
    }
 end
 
+procedure get_options(a, l, usage)
+   /l := []
+   return options(a, l, lpartial(opt_help, usage), help_err)
+end
+
 procedure do_list(a)
    local o
-   o := options(a, [Opt("a",, "All regions")], opthelp, errmsg) | fail
-   (*a = 1) | return errmsg("Usage: list [-a] object")
-   MemDebug.list(a[1], o["a"]) | return errmsg(&why)
+   o := get_options(a, [Opt("a",, "All regions")], "Usage: list [-a] object") | fail
+   (*a = 1) | return bad_params()
+   MemDebug.list(a[1], o["a"]) | return err_msg(&why)
 end
 
 procedure do_refs(a)
-   (*a = 1) | return errmsg("Usage: refs object")
-   MemDebug.refs(a[1]) | return errmsg(&why)
+   get_options(a,, "Usage: refs object") | fail
+   (*a = 1) | return bad_params()
+   MemDebug.refs(a[1]) | return err_msg(&why)
 end
 
 procedure do_dump()
-   MemDebug.dump() | return errmsg(&why)
+   MemDebug.dump() | return err_msg(&why)
 end
 
 procedure do_statics(a)
-   (*a = 1) | return errmsg("Usage: statics name")
-   MemDebug.statics(a[1]) | return errmsg(&why)
+   get_options(a,, "Usage: statics name") | fail
+   (*a = 1) | return bad_params()
+   MemDebug.statics(a[1]) | return err_msg(&why)
 end
 
 procedure do_globals()
-   MemDebug.globals() | return errmsg(&why)
+   MemDebug.globals() | return err_msg(&why)
 end
 
 procedure do_nglobals()
-   MemDebug.nglobals() | return errmsg(&why)
+   MemDebug.nglobals() | return err_msg(&why)
 end
 
 procedure do_prog(a)
-   (*a = 1) | return errmsg("Usage: prog name")
-   MemDebug.prog(a[1]) | return errmsg(&why)
+   get_options(a,, "Usage: prog name") | fail
+   (*a = 1) | return bad_params()
+   MemDebug.prog(a[1]) | return err_msg(&why)
 end
 
 procedure do_progs()
@@ -144,33 +161,37 @@ procedure do_cls()
 end
 
 procedure do_slim(a)
+   get_options(a,, "Usage: slim length") | fail
    if *a = 1 & slim := 0 <= integer(a[1]) then {
       MemDebug.set_slim(slim)
       cmd_out.write("slim is now ", slim)
    } else
-      return errmsg("Usage: slim length")
+      return bad_params()
 end
 
 procedure do_hlim(a)
+   get_options(a,, "Usage: hlim length (> 10)") | fail
    if *a = 1 & hlim := 10 < integer(a[1]) then {
       input.set_history_limit(hlim)
       cmd_out.write("hlim is now ", hlim)
    } else
-      return errmsg("Usage: hlim length (> 10)")
+      return bad_params()
 end
 
 procedure do_llim(a)
+   get_options(a,, "Usage: llim length (> 10)") | fail
    if *a = 1 & llim := 10 < integer(a[1]) then {
       if is(input, TermDialog) then
          input.set_log_limit(llim)
       cmd_out.write("llim is now ", llim)
    } else
-      return errmsg("Usage: llim length (> 10)")
+      return bad_params()
 end
 
 procedure do_hist(a)
    local i, e, s
-   (*a < 2) | return errmsg("Usage: hist [s]")
+   get_options(a,, "Usage: hist [s]") | fail
+   (*a < 2) | return bad_params()
    s := a[1] | u""
    i := input.get_history_start_no()
    every e := !input.get_history() do {
@@ -182,42 +203,49 @@ end
 
 procedure do_addrs(a)
    local i
+   get_options(a,, "Usage: addrs n with n=0, 1 or 2") | fail
    if *a = 1 & i := integer(a[1]) & 0 <= i <= 2 then {
       MemDebug.set_addrs(addrs := i)
       cmd_out.write("addrs is now ", addrs)
    } else
-      return errmsg("Usage: addrs n with n=0, 1 or 2")
+      return bad_params()
 end
 
 procedure do_breakproc(a)
+   get_options(a,, "Usage: breakproc [procedure/method name]") | fail
    if *a = 0 then
       break_proc := &null
    else if *a = 1 then
       break_proc := a[1]
    else
-      return errmsg("Usage: breakproc [procedure/method name]")
+      return bad_params()
    synch_mask()
    cmd_out.write(if /break_proc then "break proc cleared" else "break proc now " || break_proc)
 end
 
 procedure do_breakpoint(a)
    local i
+   get_options(a,, "Usage: breakpoint [file line]") | fail
    if *a = 0 then
       break_line := break_file := &null
    else if *a = 2 & i := integer(a[2]) then {
       break_line := i
       break_file := a[1]
    } else
-      return errmsg("Usage: breakpoint [file line]")
+      return bad_params()
    synch_mask()
    cmd_out.write(if /break_file then "break point cleared" else "break now " || break_file || " at " || break_line)
 end
 
 procedure do_kbreak(a)
+   local v
+   get_options(a,, "Usage: kbreak [flag]") | fail
    if *a = 0 then
       kbreak := toggle_flag(kbreak)
+   else if *a = 1 & v := flag(a[1]) then
+      kbreak := v
    else
-      kbreak := flag(a[1]) | return errmsg("Usage: kbreak [flag]")
+      return bad_params()
    synch_mask()
    cmd_out.write(if /kbreak then "&break doesn't cause a break" else "&break causes a break")
 end
@@ -434,7 +462,7 @@ end
 procedure do_file(fn)
    local f
    use {
-      f := open(fn) | errmsg("Couldn't open " || fn || ": " || &why),
+      f := open(fn) | err_msg("Couldn't open " || fn || ": " || &why),
       every do_line(f.gen())
    }
 end
