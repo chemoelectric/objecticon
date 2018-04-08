@@ -269,7 +269,8 @@ class FileDialog(Dialog)
    public synch_flist()
       local i
       if showing_file() then {
-         if i := Positions{(!flist.contents).name, file.get_contents()} then {
+         if i := Positions{Files.standard_case((!flist.contents).name), 
+                           Files.standard_case(file.get_contents())} then {
             flist.
                set_cursor(i).
                set_selections([i]).

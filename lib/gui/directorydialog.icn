@@ -280,14 +280,10 @@ class DirectoryDialog(Dialog)
 
    public find_child(n, s)
       local n1
+      s := Files.standard_case(s)
       every n1 := !n.children do {
-$ifdef _MS_WIN32
-         if map(n1.label.name) == map(s) then
+         if Files.standard_case(n1.label.name) == s then
             return n1
-$else
-         if n1.label.name == s then
-            return n1
-$endif
       }
    end
 

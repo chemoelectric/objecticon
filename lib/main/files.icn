@@ -619,6 +619,15 @@ $endif
    public static file_to_url(f)
       return FS.file_to_url(f)
    end
+
+   #
+   # Given an arbitrary filename, return an equivalent filename in a
+   # standard case.  For case-sensitive file systems, this does
+   # nothing and returns self.
+   #
+   public static standard_case(s)
+      return FS.standard_case(s)
+   end
 end
 
 #
@@ -632,6 +641,7 @@ package abstract class FileSystem()
    public abstract filepath_canonical(fp)
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
+   public abstract standard_case(s)
    public abstract file_to_url(f)
    public abstract url_to_file(u)
    public abstract get_home()
@@ -1007,6 +1017,10 @@ package class UnixFileSystem(FileSystem)
       return fp
    end
 
+   public standard_case(s)
+      return s
+   end
+
    public get_home()
       return env_string("HOME")
    end
@@ -1137,6 +1151,10 @@ package class WindowsFileSystem(FileSystem)
       r := []
       every put(r, map(!fp.l))
       return FilePath.from_list(r)
+   end
+
+   public standard_case(s)
+      return map(s)
    end
 
    public filepath_absolute(fp, other)
