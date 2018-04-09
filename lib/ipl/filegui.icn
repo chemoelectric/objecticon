@@ -370,7 +370,8 @@ class FileSuggestField(SuggestField)
    protected do_request()
       calc_matches()
       # No point in a list which is a copy of what we already have
-      if *matches = 1 & endswith(contents, matches[1].name) then
+      if *matches = 1 & endswith(Files.standard_case(contents),
+                                 Files.standard_case(matches[1].name)) then
          return []
       return matches
    end
