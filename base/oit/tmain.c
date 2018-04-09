@@ -393,8 +393,8 @@ int main(int argc, char **argv)
 static void execute(char **args)
 {
 #if MSWIN32
-   int n, len;
-   char *cmd, **p, *cp;
+   int len;
+   WCHAR *cl, *wofile, *cmd, *xp;
    STARTUPINFOW siStartupInfo; 
    PROCESS_INFORMATION piProcessInfo; 
 
@@ -402,20 +402,33 @@ static void execute(char **args)
    memset(&piProcessInfo, 0, sizeof(piProcessInfo)); 
    siStartupInfo.cb = sizeof(siStartupInfo); 
 
-   len = strlen(ofile) + 4;
-   for (p = args; *p; p++)
-      len += strlen(*p) + 4;
+   cl = GetCommandLineW();
+   wofile = utf8_to_wchar(ofile);
 
-   cp = cmd = safe_zalloc(len + 1);
+   /* Search for the -x in the command line, surrounded by spaces */
+   xp = wcsstr(cl, L" -x ");
+   if (xp) {
+       /* Found, so construct the command line from ofile and the
+        * rest of our command line after -x.
+        */
+       xp += 4;
+       len = wcslen(wofile) + 3 + wcslen(xp) + 1;
+       cmd = safe_malloc(len * sizeof(WCHAR));
+       _snwprintf(cmd, len, L"\"%s\" %s", wofile, xp);
+   } else {
+       /* Search for -x at the end of the command line. */
+       len = wcslen(cl);
+       if (len >= 3 && wcscmp(cl + len - 3, L" -x") == 0)
+           /* Found, so the command line is just wofile */
+           cmd = wofile;
+       else
+           quit("Couldn't find -x in command line\n");
+   }
 
-   cp += sprintf(cmd, "\"%s\" ", ofile);
-   for (p = args; *p; p++)
-      cp += sprintf(cp, "\"%s\" ", *p);
-
-   if (!CreateProcessW(utf8_to_wchar(oixloc), utf8_to_wchar(cmd), 
+   if (!CreateProcessW(utf8_to_wchar(oixloc), cmd,
                        NULL, NULL, FALSE, 0, NULL, NULL, 
                        &siStartupInfo, &piProcessInfo)) {
-      quit("CreateProcess failed GetLastError=%d\n",GetLastError());
+      quit("CreateProcess failed GetLastError=%d\n", GetLastError());
    }
    WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
    CloseHandle( piProcessInfo.hProcess );
