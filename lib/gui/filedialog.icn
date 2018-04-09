@@ -500,7 +500,7 @@ class FileDialog(Dialog)
       pats := []
       filter.get_contents() ? repeat {
          pat := tab(upto(';') | 0)
-         put(pats, Wildcard(pat))
+         put(pats, Wildcard(Files.standard_case(pat)))
          move(1) | break
       }
       file.view.set_patterns(pats)
@@ -739,7 +739,7 @@ class FileDialog(Dialog)
       dir_list := []
       file_list := []
       every e := !loaded_dir_list do {
-         n := e.name
+         n := Files.standard_case(e.name)
          if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(n) | put(dir_list, e)

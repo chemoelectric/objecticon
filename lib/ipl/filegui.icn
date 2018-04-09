@@ -322,6 +322,7 @@ class FileSuggestField(SuggestField)
          if not Files.is_relative_dir(n) then
             return
       } else {
+         n := Files.standard_case(n)
          if /directories_only_flag & (/pats | (!pats).match(n) = *n + 1) then
             return
       }
@@ -357,9 +358,9 @@ class FileSuggestField(SuggestField)
          prefix := contents
       } else {
          do_dir_list(path.parent())
-         s := path.get(-1)
+         s := Files.standard_case(path.get(-1))
          every t := !dir_list do {
-            if match_entry(t) & match(s, t.name) then
+            if match_entry(t) & match(s, Files.standard_case(t.name)) then
                put(matches, t)
          }
          prefix := contents[1:-*s]
