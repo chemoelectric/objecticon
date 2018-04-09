@@ -297,9 +297,8 @@ static void synch_size(wsp ws, int neww, int newh)
 
 static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    /* x,y represents the position of the drawable area. Casting to
-       INT16 ensures -ve values are handle correctly */
-    synch_pos(ws, (INT16)LOWORD(lp), (INT16)HIWORD(lp));
+    /* lp gives the position of the drawable area. */
+    synch_pos(ws, GET_X_LPARAM(lp), GET_Y_LPARAM(lp));
 }
 
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -426,8 +425,8 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
    /* Mouse location in SCREEN coordinates; convert to client */
     dw = GetMessagePos();
-    p.x = (INT16)LOWORD(dw);
-    p.y = (INT16)HIWORD(dw);
+    p.x = GET_X_LPARAM(dw);
+    p.y = GET_Y_LPARAM(dw);
     ScreenToClient(ws->win, &p);
 
     t = GetMessageTime();
@@ -471,8 +470,8 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     /* Unlike normal mouse events, the co-ordinates are absolute, so
      * convert to client co-ordinates.
      */
-    p.x = (INT16)LOWORD(lp);
-    p.y = (INT16)HIWORD(lp);
+    p.x = GET_X_LPARAM(lp);
+    p.y = GET_Y_LPARAM(lp);
     ScreenToClient(ws->win, &p);
 
     t = GetMessageTime();
@@ -484,7 +483,7 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
     delta = GET_WHEEL_DELTA_WPARAM(wp);
     dir = (delta > 0) ? 8 : 16;
-    num = Abs(delta) / 120;
+    num = Abs(delta) / WHEEL_DELTA;
 
     /*
      * We only get one MS event for a wheel movement, so call
@@ -571,8 +570,8 @@ static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     int x, y;
     struct descrip d;
     if (mouse_debug) dbg("handle_mouse_enter()\n");
-    x = (INT16)LOWORD(lp);
-    y = (INT16)HIWORD(lp);
+    x = GET_X_LPARAM(lp);
+    y = GET_Y_LPARAM(lp);
     t = GetMessageTime();
     MakeInt(MOUSEENTERED, &d);
     qevent(ws, &d, x, y, t, 0);
@@ -608,16 +607,16 @@ static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     LONG t;
-    int x, y;
-    int state = 0;
-    int fl = 0;
+    int x, y, state, fl;
+
+    state = fl = 0;
 
     if (MK_LBUTTON & wp) state |= 1;
     if (MK_MBUTTON & wp) state |= 2;
     if (MK_RBUTTON & wp) state |= 4;
 
-    x = (INT16)LOWORD(lp);
-    y = (INT16)HIWORD(lp);
+    x = GET_X_LPARAM(lp);
+    y = GET_Y_LPARAM(lp);
     t = GetMessageTime();
 
     if (MK_CONTROL & wp)
