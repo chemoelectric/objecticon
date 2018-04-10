@@ -11,12 +11,13 @@ char *refpath = 0;
 
 #define GRTTIN_H "grttin.h"
 #define RT_H "rt.h"
+#define IMPORTED_H "imported.h"
 
-static char *ostr = "EWPD:I:U:cir:st:h:";
+static char *ostr = "xEWPD:I:U:cir:st:h:";
 
 static char *options =
-   "[-E] [-W] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
-[-rpath] [-tname] [-x] [files]";
+   "[-E] [-W] [-P] [-x] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
+[-rpath] [-tname] [files]";
 
 /*
  *  Note: rtt presently does not process system include files. If this
@@ -29,9 +30,11 @@ char *progname;
 FILE *out_file;
 char *cname;
 char *inclname;
+char *importedhname;
 int def_fnd;
 
 int enable_out = 0;
+int imported;
 
 static char *cur_src;
 
@@ -111,6 +114,10 @@ int main(argc, argv)
             case 't':  /* -t ident : treat ident as a typedef name */
                 add_tdef(oi_optarg);
                 break;
+            case 'x':   /* -x : input file is to form a library module using
+                         * imported oisymbols structure */
+                imported = 1;
+                break;
             case 'D':  /* define preprocessor symbol */
             case 'I':  /* path to search for preprocessor includes */
             case 'U':  /* undefine preprocessor symbol */
@@ -138,6 +145,11 @@ int main(argc, argv)
     strcpy(inclname, refpath);
     strcat(inclname, RT_H);
     normalize(inclname);
+
+    importedhname = safe_zalloc(strlen(refpath) + strlen(IMPORTED_H) + 1);
+    strcpy(importedhname, refpath);
+    strcat(importedhname, IMPORTED_H);
+    normalize(importedhname);
 
     opt_lst[nopts] = '\0';
 

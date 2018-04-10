@@ -1165,12 +1165,15 @@ struct handle_list {
     struct handle_list *next;
 };
 
+typedef void (*setimportedftype)(struct oisymbols *);
+
 static void *get_handle(char *filename)
 {
     static struct handle_list *tbl[16];
     struct handle_list *x;
     int i;
     void *handle;
+    setimportedftype setimportedf;
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1179,13 +1182,18 @@ static void *get_handle(char *filename)
     }
     /* Not found, try to open library and add a new element. */
     handle = dlopen(filename, RTLD_LAZY);
-    if (handle) {
-        x = safe_zalloc(sizeof(struct handle_list));
-        x->filename = salloc(filename);
-        x->handle = handle;
-        x->next = tbl[i];
-        tbl[i] = x;
+    if (!handle) {
+        why(dlerror());
+        return 0;
     }
+    setimportedf = (setimportedftype)dlsym(handle, "setimported");
+    if (setimportedf)
+        setimportedf(&oiexported);
+    x = safe_zalloc(sizeof(struct handle_list));
+    x->filename = salloc(filename);
+    x->handle = handle;
+    x->next = tbl[i];
+    tbl[i] = x;
     return handle;
 }
 
@@ -1206,10 +1214,9 @@ function lang_Class_load_library(lib)
             runerr(617);
 
         handle = get_handle(lib);
-        if (!handle) {
-            why(dlerror());
+        if (!handle)
+           /* &why already set by get_handle */
             fail;
-        }
 
         for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i) {
             struct class_field *cf = class0->fields[i];
@@ -1240,16 +1247,168 @@ function lang_Proc_load(filename, funcname)
        void *handle;
 
        handle = get_handle(filename);
-       if (!handle) {
-           why(dlerror());
+       if (!handle)
+           /* &why already set by get_handle */
            fail;
-       }
+
        /*
         * Load the function.  Diagnose both library and function errors here.
         */
        tname = safe_malloc(strlen(funcname) + 2);
        sprintf(tname, "B%s", funcname);
        blk = (struct b_proc *)dlsym(handle, tname);
+       if (!blk) {
+           free(tname);
+           whyf("Symbol '%s' not found in library", funcname);
+           fail;
+       }
+       /* Sanity check. */
+       if (blk->title != T_Proc)
+           ffatalerr("lang.Proc.load(): symbol %s not a procedure block", tname);
+
+       free(tname);
+       return proc(blk);
+    }
+end
+
+#elif MSWIN32
+
+static struct b_proc *try_load(HMODULE handle, struct b_class *class0,  struct class_field *cf)
+{
+    word i;
+    char *fq, *p, *t;
+    struct b_proc *blk;
+    dptr fname;
+
+    fname = class0->program->Fnames[cf->fnum];
+    fq = safe_malloc(StrLen(*class0->name) + StrLen(*fname) + 3);
+    p = fq;
+    *p++ = 'B';
+    t = StrLoc(*class0->name);
+    for (i = 0; i < StrLen(*class0->name); ++i)
+        *p++ = (t[i] == '.') ? '_' : t[i];
+    sprintf(p, "_%.*s", StrF(*fname));
+
+    blk = (struct b_proc *)GetProcAddress(handle, fq);
+    if (!blk) {
+        free(fq);
+        return 0;
+    }
+
+    /* Sanity check. */
+    if (blk->title != T_Proc)
+        ffatalerr("lang.Class.load_library(): symbol %s not a procedure block", fq);
+
+    free(fq);
+
+    return blk;
+}
+
+struct handle_list {
+    char *filename;
+    HMODULE handle;
+    struct handle_list *next;
+};
+
+typedef void (*setimportedftype)(struct oisymbols *);
+
+static HMODULE get_handle(char *filename)
+{
+    static struct handle_list *tbl[16];
+    struct handle_list *x;
+    int i;
+    HMODULE handle;
+    WCHAR *wfilename;
+    setimportedftype setimportedf;
+    i = hasher(hashcstr(filename), tbl);
+    /* Search list for match. */
+    for (x = tbl[i]; x; x = x->next) {
+        if (strcmp(filename, x->filename) == 0)
+            return x->handle;
+    }
+    /* Not found, try to open library and add a new element. */
+    wfilename = utf8_to_wchar(filename);
+    handle = LoadLibraryW(wfilename);
+    free(wfilename);
+    if (!handle) {
+        win32error2why();
+        return 0;
+    }
+    setimportedf = (setimportedftype)GetProcAddress(handle, "setimported");
+    if (!setimportedf) {
+        whyf("symbol 'setimported' not found in dll %s", filename);
+        FreeLibrary(handle);
+        return 0;
+    }
+    setimportedf(&oiexported);
+    x = safe_zalloc(sizeof(struct handle_list));
+    x->filename = salloc(filename);
+    x->handle = handle;
+    x->next = tbl[i];
+    tbl[i] = x;
+    return handle;
+}
+
+function lang_Class_load_library(lib)
+   if !cnv:C_string(lib) then
+      runerr(103, lib)
+   body {
+        struct p_proc *caller_proc;
+        struct b_class *class0;
+        word i;
+        HMODULE handle;
+
+        caller_proc = get_current_user_proc();
+        if (!caller_proc->field)
+            runerr(616);
+        class0 = caller_proc->field->defining_class;
+        if (class0->init_state != Initializing)
+            runerr(617);
+
+        handle = get_handle(lib);
+        if (!handle)
+           /* &why already set by get_handle */
+            fail;
+
+        for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i) {
+            struct class_field *cf = class0->fields[i];
+            if ((cf->defining_class == class0) &&
+                (cf->flags & M_Native) &&
+                BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
+                struct b_proc *bp = try_load(handle, class0, cf);
+                if (bp) {
+                    bp = clone_b_proc(bp);
+                    BlkLoc(*cf->field_descriptor) = (union block *)bp;
+                    bp->field = cf;
+                }
+            }
+        }
+
+        return nulldesc;
+   }
+end
+
+function lang_Proc_load(filename, funcname)
+    if !cnv:C_string(filename) then
+        runerr(103, filename)
+    if !cnv:C_string(funcname) then
+        runerr(103, funcname)
+    body {
+       struct b_proc *blk;
+       char *tname;
+       HMODULE handle;
+
+       handle = get_handle(filename);
+       if (!handle)
+           /* &why already set by get_handle */
+           fail;
+
+       /*
+        * Load the function.  Diagnose both library and function errors here.
+        */
+       tname = safe_malloc(strlen(funcname) + 2);
+       sprintf(tname, "B%s", funcname);
+       blk = (struct b_proc *)GetProcAddress(handle, tname);
        if (!blk) {
            free(tname);
            whyf("Symbol '%s' not found in library", funcname);

@@ -470,6 +470,26 @@
         ntend,\
         underef};
 
+#if MSWIN32
+/*
+ * Procedure block for a function in an exported windows DLL.
+ */
+#define FncBlockDLL(f,nargs,vararg,ntend,underef)                          \
+        static struct sdescrip f##_name_desc = {sizeof(#f)-1,#f}; \
+__declspec(dllexport)  \
+      	struct c_proc B##f = {\
+      	T_Proc,\
+        C_Proc, \
+      	nargs,\
+        vararg,\
+        0,\
+      	(dptr)&f##_name_desc, \
+        (int (*)(struct c_frame *))Z##f,     \
+        sizeof(struct f##_frame),\
+        ntend,\
+        underef};
+#endif				/* MSWIN32 */
+
 /*
  * Procedure block for an operator.
  */

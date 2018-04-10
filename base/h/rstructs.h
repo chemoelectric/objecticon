@@ -620,3 +620,12 @@ struct p_frame {
     struct frame_vars *fvars; /* Argument and dynamic local descriptor structure - may be shared between
                                * several p_frames. */
 };
+
+/*
+ * A structure for exporting certain variables to an external library.
+ */
+struct oisymbols {
+    struct descrip *nulldesc;
+    struct progstate **curpstate;
+    void (*err_msg)(int, dptr);
+};

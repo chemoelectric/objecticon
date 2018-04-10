@@ -212,6 +212,12 @@ int keyword_tbl_sz = ElemCount(keyword_tbl);
 struct progstate *curpstate = &rootpstate;
 struct progstate rootpstate;
 
+struct oisymbols oiexported = {
+    &nulldesc,
+    &curpstate,
+    err_msg
+};
+
 /*
  * Check the version number of the icode matches the interpreter version.
  * The string must equal IVersion or IVersion || "Z".

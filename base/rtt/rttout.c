@@ -3219,7 +3219,14 @@ struct node *n;
            break;
 
        case TokFunction:
+#if MSWIN32
+           if (imported)
+               fprintf(out_file, "FncBlockDLL(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+           else
+               fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+#else
            fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+#endif
            line += 2;
            break;
 
@@ -3406,6 +3413,8 @@ void prologue()
    fprintf(out_file, " *   %s: %s\n", progname, Version);
    fprintf(out_file, " */\n");
    fprintf(out_file, "#include \"%s\"\n\n", inclname);
+   if (imported)
+       fprintf(out_file, "#include \"%s\"\n\n", importedhname);
 }
 
 /*
