@@ -1,6 +1,6 @@
 include ../../../Makedefs
 
-export OI_PATH:=$(OI_PATH);$(WOI_HOME)\apps\ivib
+export OI_PATH:=$(OI_PATH);$(OI_HOME)\apps\ivib
 
 PROGSRC:=$(wildcard *.icn)
 PROGU=$(PROGSRC:.icn=.u)
