@@ -133,8 +133,15 @@ int main(argc, argv)
                 show_usage();
         }
 
-    if (!refpath)
-        refpath = salloc(relfile(argv[0], "/../../base/h/"));
+    if (!refpath) {
+        char *h = getenv_nn("OI_HOME");
+        if (!h)
+            err("OI_HOME is not defined");
+        refpath = safe_zalloc(strlen(h) + 9);
+        strcpy(refpath, h);
+        sprintf(refpath, "%s/base/h/", h);
+        normalize(refpath);
+    }
 
     in_header = safe_zalloc(strlen(refpath) + strlen(GRTTIN_H) + 1);
     strcpy(in_header, refpath);
@@ -164,24 +171,8 @@ int main(argc, argv)
      * Scan file name arguments, and translate the files.
      */
     while (oi_optind < argc)  {
-
-#if PatternMatch
-        FINDDATA_T fd;
-
-        if (!FINDFIRST(argv[oi_optind], &fd)) {
-            fprintf(stderr,"File %s: no match\n", argv[oi_optind]);
-            fflush(stderr);
-            exit(EXIT_FAILURE);
-        }
-        do {
-            argv[oi_optind] = FILENAME(&fd);
-#endif					/* PatternMatch */
             trans(argv[oi_optind]);
-#if PatternMatch
-        } while (FINDNEXT(&fd));
-        FINDCLOSE(&fd);
-#endif					/* PatternMatch */
-        oi_optind++;
+            oi_optind++;
     }
 
 
