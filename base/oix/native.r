@@ -1159,17 +1159,32 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     return blk;
 }
 
+struct handle_list {
+    char *filename;
+    void *handle;
+    struct handle_list *next;
+};
+
 static void *get_handle(char *filename)
 {
-    static char *curfile;
-    static void *handle;
-    /*
-     * Get a library handle, reusing it over successive calls.
-     */
-    if (!handle || !curfile || strcmp(filename, curfile) != 0) {
-        free(curfile);	/* free the old file name if any */
-        curfile = salloc(filename);	/* save the new name */
-        handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
+    static struct handle_list *tbl[16];
+    struct handle_list *x;
+    int i;
+    void *handle;
+    i = hasher(hashcstr(filename), tbl);
+    /* Search list for match. */
+    for (x = tbl[i]; x; x = x->next) {
+        if (strcmp(filename, x->filename) == 0)
+            return x->handle;
+    }
+    /* Not found, try to open library and add a new element. */
+    handle = dlopen(filename, RTLD_LAZY);
+    if (handle) {
+        x = safe_zalloc(sizeof(struct handle_list));
+        x->filename = salloc(filename);
+        x->handle = handle;
+        x->next = tbl[i];
+        tbl[i] = x;
     }
     return handle;
 }
