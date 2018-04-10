@@ -11,32 +11,6 @@ static word calc_ucs_index_step(word utf8_len, word len, int offset_bits);
 static char *getcachedcwd(void);
 
 /*
- *  relfile(prog, mod) -- find related file.
- *
- *  Given that prog is the argv[0] by which this program was executed,
- *  and assuming that it was set by the shell or other equally correct
- *  invoker, relfile finds the location of a related file and returns
- *  it in an allocated string.  It takes the location of prog, appends
- *  mod, and normalizes the result; thus if argv[0] is icont or its path,
- *  relfile(argv[0],"/../iconx") finds the location of iconx.
- * 
- *  A pointer to a static buffer is returned.
- */
-char *relfile(char *prog, char *mod) 
-{
-    static struct staticstr buf = {128};
-    char *t = findexe(prog);
-    if (!t) {
-        fprintf(stderr, "cannot find location of %s\n", prog);
-        exit(EXIT_FAILURE);
-    }
-    ssreserve(&buf, strlen(t) + strlen(mod) + 1);
-    sprintf(buf.s, "%s%s", t, mod);     /* append adjustment */
-    normalize(buf.s);                       /* normalize result */
-    return buf.s;
-}
-
-/*
  *  findexe(prog) -- find absolute executable, searching $PATH (using
  *  POSIX 1003.2 rules) for executable name.
  * 
