@@ -118,7 +118,7 @@ static void tabledump(dptr d)
 /*
  * Create a descriptor for an empty list, with initial number of slots.
  */
-void create_list(uword nslots, dptr d) 
+void create_list(word nslots, dptr d) 
 {
    struct b_list *hp;
  
@@ -128,6 +128,22 @@ void create_list(uword nslots, dptr d)
  
    d->dword = D_List;
    BlkLoc(*d) = (union  block *)hp;
+}
+
+void create_table(word nslots, word nelem, dptr d)
+{
+    union block *bp;
+    MemProtect(bp = hmake(T_Table, nslots, nelem));
+    d->dword = D_Table;
+    BlkLoc(*d) = bp;
+}
+
+void create_set(word nslots, word nelem, dptr d)
+{
+    union block *ps;
+    MemProtect(ps = hmake(T_Set, nslots, nelem));
+    d->dword = D_Set;
+    BlkLoc(*d) = ps;
 }
 
 int set_del(dptr s, dptr key)

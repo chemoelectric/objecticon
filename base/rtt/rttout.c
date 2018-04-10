@@ -253,7 +253,7 @@ int indent;
    if (op_type != OrdFunc && !in_quick)
        return;
    ForceNl();
-   prt_str("tend = ", indent);
+   prt_str("tendedlist = ", indent);
    fprintf(out_file, "%s.previous;", tend_struct_loc);
    ForceNl();
    }
@@ -2625,9 +2625,9 @@ void spcl_dcls()
         fprintf(out_file, ".num = %d;", ntend);
         ForceNl();
         prt_str(tend_struct_loc, IndentInc);
-        prt_str(".previous = tend;", IndentInc);
+        prt_str(".previous = tendedlist;", IndentInc);
         ForceNl();
-        prt_str("tend = (struct tend_desc *)&", IndentInc);
+        prt_str("tendedlist = (struct tend_desc *)&", IndentInc);
         fprintf(out_file, "%s;", tend_struct_loc);
         ForceNl();
     }
