@@ -70,7 +70,7 @@ extern char *defaultfont;       /* default font spec */
 extern double defaultleading;   /* default leading */
 extern word defaultipver;       /* default ip version for dns lookup */
 
-extern struct tend_desc *tend;  /* chain of tended descriptors */
+extern struct tend_desc *tendedlist;  /* chain of tended descriptors */
 
 extern struct descrip csetdesc;		/* cset descriptor */
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
@@ -102,6 +102,8 @@ extern word *ipc;
 extern struct c_frame *curr_cf;           /* currently executing c frame */
 
 extern struct progstate rootpstate;
+
+extern struct oisymbols oiexported;
    
 extern int over_flow;
 
@@ -116,11 +118,3 @@ extern dptr xarg1, xarg2, xarg3;   /* Operator args */
  * graphics
  */
 extern char c1list[], c2list[], c3list[], c4list[];
-#if Graphics
-   
-#if MSWIN32
-      extern HINSTANCE mswinInstance;
-      extern int ncmdShow;
-#endif				/* MSWIN32 */
-
-#endif					/* Graphics */

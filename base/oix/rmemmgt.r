@@ -835,7 +835,7 @@ static void sweep_tended()
     struct tend_desc *tp;
     int i;
 
-    for (tp = tend; tp != NULL; tp = tp->previous) {
+    for (tp = tendedlist; tp != NULL; tp = tp->previous) {
         for (i = 0; i < tp->num; ++i) {
             PostDescrip(tp->d[i]);
         }

@@ -326,15 +326,12 @@ end
 function set(x[n])
    body {
      tended struct descrip result;
-     tended union block *ps;
-     int argc;
+     word argc;
 
      /*
       * Make a set.
       */
-     MemProtect(ps = hmake(T_Set, 0, n));
-     result.dword = D_Set;
-     BlkLoc(result) = ps;
+     create_set(0, n, &result);
 
      for (argc = 0; argc < n; argc++)
          set_insert(&result, &x[argc]);
@@ -351,13 +348,10 @@ end
 function table(x, v[n])
    body {
       tended struct descrip result;
-      tended union block *bp;
-      int argc;
-   
-      MemProtect(bp = hmake(T_Table, 0, n/2));
-      bp->table.defvalue = x;
-      result.dword = D_Table;
-      BlkLoc(result) = bp;
+      word argc;
+
+      create_table(0, n/2, &result);
+      TableBlk(result).defvalue = x;
 
       if (n % 2 != 0)
           runerr(134);

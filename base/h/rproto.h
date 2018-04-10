@@ -32,7 +32,7 @@ struct b_tvtbl  *alctvtbl_0     (void);
 struct b_tvtbl  *alctvtbl_1     (void);
 void set_event_mask(struct progstate *p, struct b_cset *cs);
 int             anycmp          (dptr dp1,dptr dp2);
-int             bfunc           (void);
+
 struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog);
 
 #if PLAN9
@@ -82,7 +82,6 @@ void            cpset_1         (dptr dp1,dptr dp2,word size);
 void            cptable_0       (dptr dp1,dptr dp2,word size);
 void            cptable_1       (dptr dp1,dptr dp2,word size);
 void            cpslots         (dptr dp1, dptr slotptr, word i, word size);
-int             csetcmp         (unsigned int *cs1,unsigned int *cs2);
 word            cvpos           (word pos, word len);
 word            cvpos_item      (word pos, word len);
 int             cvslice         (word *i, word *j, word len);
@@ -402,17 +401,9 @@ int     lookup_record_field_by_name(struct b_constructor *recdef, dptr name);
 int     lookup_record_field_by_fnum(struct b_constructor *recdef, int fnum);
 struct loc *lookup_global_loc(dptr name, struct progstate *prog);
 
-long    ckadd           (long i, long j);
-long    ckmul           (long i, long j);
-long    cksub           (long i, long j);
-void    cmd_line        (int argc, char **argv, dptr rslt);
 void    collect         (int region);
-int     cvcset          (dptr dp,int * *cs,int *csbuf);
-int     cvnum           (dptr dp,union numeric *result);
-int     cvreal          (dptr dp,double *r);
 void    deref_0         (dptr dp1, dptr dp2);
 void    deref_1         (dptr dp1, dptr dp2);
-void    envset          (void);
 int     eq              (dptr dp1,dptr dp2);
 int     getname        (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);
@@ -420,8 +411,6 @@ void    print_location  (FILE *f, struct p_frame *pf);
 
 void    hgrow           (union block *bp);
 void    hshrink         (union block *bp);
-word iipow         (word n1, word n2);
-void    init            (char *name, int *argcp, char *argv[], int trc_init);
 int     order           (dptr dp);
 void add_gc_global(dptr d);
 void del_gc_global(dptr d);
@@ -448,7 +437,9 @@ void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to);
 
 void xdisp(struct b_coexpr *ce, int count, FILE *f);
 
-void create_list(uword nslots, dptr d);
+void create_list(word nslots, dptr d);
+void create_table(word nslots, word nelem, dptr d);
+void create_set(word nslots, word nelem, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);
 struct b_lelem *lginit(struct b_list *lb, word i, struct lgstate *state);
 struct b_lelem *lgfirst(struct b_list *lb, struct lgstate *state);
@@ -504,7 +495,6 @@ void show_regions(void);
 
 struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *dynamics);
 struct c_frame *alc_c_frame(struct c_proc *pb, int nargs);
-void dyn_free(void *p);
 void free_frame(struct frame *f);
 
 void push_frame(struct frame *f);

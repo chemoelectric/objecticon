@@ -253,7 +253,7 @@ int indent;
    if (op_type != OrdFunc && !in_quick)
        return;
    ForceNl();
-   prt_str("tend = ", indent);
+   prt_str("tendedlist = ", indent);
    fprintf(out_file, "%s.previous;", tend_struct_loc);
    ForceNl();
    }
@@ -2625,9 +2625,9 @@ void spcl_dcls()
         fprintf(out_file, ".num = %d;", ntend);
         ForceNl();
         prt_str(tend_struct_loc, IndentInc);
-        prt_str(".previous = tend;", IndentInc);
+        prt_str(".previous = tendedlist;", IndentInc);
         ForceNl();
-        prt_str("tend = (struct tend_desc *)&", IndentInc);
+        prt_str("tendedlist = (struct tend_desc *)&", IndentInc);
         fprintf(out_file, "%s;", tend_struct_loc);
         ForceNl();
     }
@@ -3219,7 +3219,14 @@ struct node *n;
            break;
 
        case TokFunction:
+#if MSWIN32
+           if (imported)
+               fprintf(out_file, "FncBlockDLL(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+           else
+               fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+#else
            fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+#endif
            line += 2;
            break;
 
@@ -3410,6 +3417,8 @@ void prologue()
    fprintf(out_file, " *   %s: %s\n", progname, Version);
    fprintf(out_file, " */\n");
    fprintf(out_file, "#include \"%s\"\n\n", inclname);
+   if (imported)
+       fprintf(out_file, "#include \"%s\"\n\n", importedhname);
 }
 
 /*

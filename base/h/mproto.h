@@ -41,7 +41,6 @@ extern char *oi_optarg;		/* argument associated with option */
 int oi_getopt(int nargc, char *const nargv[], const char *ostr);
 
 char *findexe(char *name);
-char *relfile	(char *prog, char *mod);
 void normalize(char *path);
 char *canonicalize(char *path);
 void *safe_calloc(size_t m, size_t n);

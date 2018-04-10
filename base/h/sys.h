@@ -132,6 +132,7 @@
    #include <winsock2.h>
    #include <ws2tcpip.h>
    #include <windows.h>
+   #include <windowsx.h>
    #undef MOD_SHIFT
    #include <sys/types.h>
    #include <sys/stat.h>

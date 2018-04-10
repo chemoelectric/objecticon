@@ -269,7 +269,8 @@ class FileDialog(Dialog)
    public synch_flist()
       local i
       if showing_file() then {
-         if i := Positions{(!flist.contents).name, file.get_contents()} then {
+         if i := Positions{Files.standard_case((!flist.contents).name), 
+                           Files.standard_case(file.get_contents())} then {
             flist.
                set_cursor(i).
                set_selections([i]).
@@ -499,7 +500,7 @@ class FileDialog(Dialog)
       pats := []
       filter.get_contents() ? repeat {
          pat := tab(upto(';') | 0)
-         put(pats, Wildcard(pat))
+         put(pats, Wildcard(Files.standard_case(pat)))
          move(1) | break
       }
       file.view.set_patterns(pats)
@@ -648,13 +649,13 @@ class FileDialog(Dialog)
 
    public save_pos()
       insert(pos_table,
-             (\loaded_dir_path).str(),
+             (\loaded_dir_path).standard_case().str(),
              FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
    end
 
    public restore_pos()
       local e, i
-      if e := member(pos_table, loaded_dir_path.str()) then {
+      if e := member(pos_table, loaded_dir_path.standard_case().str()) then {
          if i := Positions{(!dlist.contents).name, e.cursor_name} then
             dlist.set_cursor(i)
          dlist.set_area_y(e.area_y)
@@ -738,7 +739,7 @@ class FileDialog(Dialog)
       dir_list := []
       file_list := []
       every e := !loaded_dir_list do {
-         n := e.name
+         n := Files.standard_case(e.name)
          if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(n) | put(dir_list, e)

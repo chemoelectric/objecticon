@@ -1192,7 +1192,7 @@ static void traverse_tended()
     int i, j;
 
     j = 0;
-    for (tp = tend; tp != NULL; tp = tp->previous) {
+    for (tp = tendedlist; tp != NULL; tp = tp->previous) {
         for (i = 0; i < tp->num; ++i) {
             stk_add_desc(0, "Tended descriptor", j, &tp->d[i]);
             ++j;

@@ -34,9 +34,11 @@ extern int lex_state;      /* state of operator recognition */
 extern FILE *out_file;     /* output file */
 extern int def_fnd;        /* C input defines something concrete */
 extern char *inclname;     /* include file to be included by C compiler */
+extern char *importedhname;  /* include file to be included with -x option */
 extern char *cname;        /* current C filename */
 extern int enable_out;     /* enable output of C code */
-
+extern int imported;       /* input file is to form a library module using
+                            * imported oisymbols structure */
 
 /*
  * The symbol table is used by the lexical analyser to decide whether an

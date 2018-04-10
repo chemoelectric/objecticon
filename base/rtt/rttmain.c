@@ -11,12 +11,13 @@ char *refpath = 0;
 
 #define GRTTIN_H "grttin.h"
 #define RT_H "rt.h"
+#define IMPORTED_H "imported.h"
 
-static char *ostr = "EWPD:I:U:cir:st:h:";
+static char *ostr = "xEWPD:I:U:cir:st:h:";
 
 static char *options =
-   "[-E] [-W] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
-[-rpath] [-tname] [-x] [files]";
+   "[-E] [-W] [-P] [-x] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
+[-rpath] [-tname] [files]";
 
 /*
  *  Note: rtt presently does not process system include files. If this
@@ -29,9 +30,11 @@ char *progname;
 FILE *out_file;
 char *cname;
 char *inclname;
+char *importedhname;
 int def_fnd;
 
 int enable_out = 0;
+int imported;
 
 static char *cur_src;
 
@@ -111,6 +114,10 @@ int main(argc, argv)
             case 't':  /* -t ident : treat ident as a typedef name */
                 add_tdef(oi_optarg);
                 break;
+            case 'x':   /* -x : input file is to form a library module using
+                         * imported oisymbols structure */
+                imported = 1;
+                break;
             case 'D':  /* define preprocessor symbol */
             case 'I':  /* path to search for preprocessor includes */
             case 'U':  /* undefine preprocessor symbol */
@@ -126,8 +133,15 @@ int main(argc, argv)
                 show_usage();
         }
 
-    if (!refpath)
-        refpath = salloc(relfile(argv[0], "/../../base/h/"));
+    if (!refpath) {
+        char *h = getenv_nn("OI_HOME");
+        if (!h)
+            err("OI_HOME is not defined");
+        refpath = safe_zalloc(strlen(h) + 9);
+        strcpy(refpath, h);
+        sprintf(refpath, "%s/base/h/", h);
+        normalize(refpath);
+    }
 
     in_header = safe_zalloc(strlen(refpath) + strlen(GRTTIN_H) + 1);
     strcpy(in_header, refpath);
@@ -138,6 +152,11 @@ int main(argc, argv)
     strcpy(inclname, refpath);
     strcat(inclname, RT_H);
     normalize(inclname);
+
+    importedhname = safe_zalloc(strlen(refpath) + strlen(IMPORTED_H) + 1);
+    strcpy(importedhname, refpath);
+    strcat(importedhname, IMPORTED_H);
+    normalize(importedhname);
 
     opt_lst[nopts] = '\0';
 
@@ -152,24 +171,8 @@ int main(argc, argv)
      * Scan file name arguments, and translate the files.
      */
     while (oi_optind < argc)  {
-
-#if PatternMatch
-        FINDDATA_T fd;
-
-        if (!FINDFIRST(argv[oi_optind], &fd)) {
-            fprintf(stderr,"File %s: no match\n", argv[oi_optind]);
-            fflush(stderr);
-            exit(EXIT_FAILURE);
-        }
-        do {
-            argv[oi_optind] = FILENAME(&fd);
-#endif					/* PatternMatch */
             trans(argv[oi_optind]);
-#if PatternMatch
-        } while (FINDNEXT(&fd));
-        FINDCLOSE(&fd);
-#endif					/* PatternMatch */
-        oi_optind++;
+            oi_optind++;
     }
 
 
