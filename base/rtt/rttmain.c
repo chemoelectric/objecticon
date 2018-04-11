@@ -133,30 +133,14 @@ int main(argc, argv)
                 show_usage();
         }
 
-    if (!refpath) {
-        char *h = getenv_nn("OI_HOME");
-        if (!h)
-            err("OI_HOME is not defined");
-        refpath = safe_zalloc(strlen(h) + 9);
-        strcpy(refpath, h);
-        sprintf(refpath, "%s/base/h/", h);
-        normalize(refpath);
-    }
+    if (!refpath)
+        refpath = salloc(oihomewalk("base", "h", 0));
 
-    in_header = safe_zalloc(strlen(refpath) + strlen(GRTTIN_H) + 1);
-    strcpy(in_header, refpath);
-    strcat(in_header, GRTTIN_H);
-    normalize(in_header);
+    normalize(refpath);
 
-    inclname = safe_zalloc(strlen(refpath) + strlen(RT_H) + 1);
-    strcpy(inclname, refpath);
-    strcat(inclname, RT_H);
-    normalize(inclname);
-
-    importedhname = safe_zalloc(strlen(refpath) + strlen(IMPORTED_H) + 1);
-    strcpy(importedhname, refpath);
-    strcat(importedhname, IMPORTED_H);
-    normalize(importedhname);
+    in_header = salloc(buffprintf("%s%s", refpath, GRTTIN_H));
+    inclname = salloc(buffprintf("%s%s", refpath, RT_H));
+    importedhname = salloc(buffprintf("%s%s", refpath, IMPORTED_H));
 
     opt_lst[nopts] = '\0';
 
