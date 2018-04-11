@@ -48,6 +48,61 @@ char *findexe(char *name)
     return 0;
 }
 
+/*
+ * Return a directory name which is the value of OI_HOME followed by
+ * the given list of sub-directories, terminated with null.  The
+ * returned path always ends with a separator.
+ */
+char *oihomewalk(char *e, ...)
+{
+    static struct staticstr buf = {128};
+    char *oh, *p, *e1;
+    va_list ap;
+    int len;
+
+    oh = getenv_nn("OI_HOME");
+    if (!oh) {
+        fprintf(stderr, "OI_HOME is not defined\n");
+        exit(EXIT_FAILURE);
+    }
+
+    len = strlen(oh) + 1;  /* +1 for the possible first separator */
+
+    e1 = e;
+    va_start(ap, e);
+    while (e1) {
+        len += strlen(e1) + 1;  /* dir + 1 for the separator */
+        e1 = va_arg(ap, char*);
+    }
+    ++len;  /* null byte at end */
+    va_end(ap);
+
+    ssreserve(&buf, len);
+    p = buf.s;
+    p += sprintf(buf.s, "%s", oh);
+    /* Add a file separator if needed. */
+    if (p > buf.s && !strchr(FILEPREFIX, *(p - 1))) {
+        *p++ = FILESEP;
+        *p = 0;
+    }
+
+    e1 = e;
+    va_start(ap, e);
+    while (e1) {
+        p += sprintf(p, "%s%c", e1, FILESEP);
+        e1 = va_arg(ap, char*);
+    }
+
+    return buf.s;
+}
+
+/*
+ * Find an executable file in the OI_HOME/bin directory.
+ */
+char *findoiexe(char *name) 
+{
+    return tryexe(oihomewalk("bin", 0), name);
+}
 
 #if UNIX
 
@@ -1290,4 +1345,121 @@ int oi_tolower(int c)
         return c;
     return oi_mtolower(c);
 }
+
+int over_flow = 0;
+
+#ifndef AsmOver
+/*
+ * add, sub, mul, neg with overflow check
+ * all return 1 if ok, 0 if would overflow
+ */
+
+/*
+ *  Note: on some systems an improvement in performance can be obtained by
+ *  replacing the C functions that follow by checks written in assembly
+ *  language.  To do so, add #define AsmOver to ../h/define.h.  If your
+ *  C compiler supports the asm directive, put the new code at the end
+ *  of this section under control of #else.  Otherwise put it a separate
+ *  file.
+ */
+
+word add(word a, word b)
+{
+   if ((a ^ b) >= 0 && (a >= 0 ? b > MaxWord - a : b < MinWord - a)) {
+      over_flow = 1;
+      return 0;
+      }
+   else {
+     over_flow = 0;
+     return a + b;
+     }
+}
+
+word sub(word a, word b)
+{
+   if ((a ^ b) < 0 && (a >= 0 ? b < a - MaxWord : b > a - MinWord)) {
+      over_flow = 1;
+      return 0;
+      }
+   else {
+      over_flow = 0;
+      return a - b;
+      }
+}
+
+word mul(word a, word b)
+{
+   if (b != 0) {
+      if ((a ^ b) >= 0) {
+	 if (a >= 0 ? a > MaxWord / b : a < MaxWord / b) {
+            over_flow = 1;
+	    return 0;
+            }
+	 }
+      else if (b != -1 && (a >= 0 ? a > MinWord / b : a < MinWord / b)) {
+         over_flow = 1;
+	 return 0;
+         }
+      }
+
+   over_flow = 0;
+   return a * b;
+}
+
+/* MinWord / -1 overflows; need div3 too */
+
+word mod3(word a, word b)
+{
+   word retval;
+
+   switch ( b )
+   {
+      case 0:
+	 over_flow = 1; /* Not really an overflow, but definitely an error */
+	 return 0;
+
+      case MinWord:
+	 /* Handle this separately, since -MinWord can overflow */
+	 retval = ( a > MinWord ) ? a : 0;
+	 break;
+
+      default:
+	 /* First, we make b positive */
+      	 if ( b < 0 ) b = -b;	
+
+	 /* Make sure retval should have the same sign as 'a' */
+	 retval = a % b;
+	 if ( ( a < 0 ) && ( retval > 0 ) )
+	    retval -= b;
+	 break;
+      }
+
+   over_flow = 0;
+   return retval;
+}
+
+word div3(word a, word b)
+{
+   if ( ( b == 0 ) ||	/* Not really an overflow, but definitely an error */
+        ( b == -1 && a == MinWord ) ) {
+      over_flow = 1;
+      return 0;
+      }
+
+   over_flow = 0;
+   return ( a - mod3 ( a, b ) ) / b;
+}
+
+/* MinWord / -1 overflows; need div3 too */
+
+word neg(word a)
+{
+   if (a == MinWord) {
+      over_flow = 1;
+      return 0;
+      }
+   over_flow = 0;
+   return -a;
+}
+#endif					/* AsmOver */
 
