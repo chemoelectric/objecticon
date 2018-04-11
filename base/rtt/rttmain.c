@@ -133,8 +133,12 @@ int main(argc, argv)
                 show_usage();
         }
 
-    if (!refpath)
-        refpath = salloc(oihomewalk("base", "h", 0));
+    if (!refpath) {
+        refpath = oihomewalk("base", "h", 0);
+        if (!refpath)
+            err1("OI_HOME is not defined");
+        refpath = salloc(refpath);
+    }
 
     normalize(refpath);
 

@@ -51,7 +51,8 @@ char *findexe(char *name)
 /*
  * Return a directory name which is the value of OI_HOME followed by
  * the given list of sub-directories, terminated with null.  The
- * returned path always ends with a separator.
+ * returned path always ends with a separator.  NB: returns null
+ * if OI_HOME is not defined.
  */
 char *oihomewalk(char *e, ...)
 {
@@ -61,10 +62,8 @@ char *oihomewalk(char *e, ...)
     int len;
 
     oh = getenv_nn("OI_HOME");
-    if (!oh) {
-        fprintf(stderr, "OI_HOME is not defined\n");
-        exit(EXIT_FAILURE);
-    }
+    if (!oh)
+        return 0;
 
     len = strlen(oh) + 1;  /* +1 for the possible first separator */
 
@@ -101,7 +100,8 @@ char *oihomewalk(char *e, ...)
  */
 char *findoiexe(char *name) 
 {
-    return tryexe(oihomewalk("bin", 0), name);
+    char *t = oihomewalk("bin", 0);
+    return t ? tryexe(t, name) : 0;
 }
 
 #if UNIX
