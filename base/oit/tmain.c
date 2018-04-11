@@ -191,9 +191,9 @@ int main(int argc, char **argv)
     if (strcasecmp(progname, "ldbg") == 0)
         return ldbg(argc, argv);
 
-    oixloc = findexe("oix");
+    oixloc = findoiexe("oix");
     if (!oixloc)
-        quit("Couldn't find oix on PATH");
+        quit("Couldn't find oix in OI_HOME/bin");
     oixloc = intern(canonicalize(oixloc));
 
     /*
