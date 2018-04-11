@@ -3413,8 +3413,18 @@ void prologue()
    fprintf(out_file, " *   %s: %s\n", progname, Version);
    fprintf(out_file, " */\n");
    fprintf(out_file, "#include \"%s\"\n\n", inclname);
-   if (imported)
+   if (imported) {
        fprintf(out_file, "#include \"%s\"\n\n", importedhname);
+       fprintf(out_file, "static struct oisymbols *imported;\n\n");
+       fprintf(out_file, "/* Called by oix when the library is first loaded */\n");
+#if MSWIN32
+       fprintf(out_file, "__declspec(dllexport)\n");
+#endif
+       fprintf(out_file, "void setimported(struct oisymbols *x)\n");
+       fprintf(out_file, "{\n");
+       fprintf(out_file, "   imported = x;\n");
+       fprintf(out_file, "}\n");
+   }
 }
 
 /*

@@ -5,9 +5,6 @@
 * the -x option.  It is needed for loadable libraries which can't
 * access oix's symbols directly.
 */
-static struct oisymbols *imported;
-
-
 #define curpstate (*(imported->curpstate))
 #define k_current (*(imported->k_current))
 #define progs (*(imported->progs))
@@ -196,13 +193,3 @@ static struct oisymbols *imported;
 #define fopen_utf8 (*(imported->fopen_utf8))
 #define system_utf8 (*(imported->system_utf8))
 #endif
-
-
-/* Called by oix when the library is first loaded */
-#if MSWIN32
-__declspec(dllexport)
-#endif
-void setimported(struct oisymbols *x)
-{
-   imported = x;
-}
