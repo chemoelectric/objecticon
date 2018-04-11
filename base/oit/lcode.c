@@ -2288,11 +2288,11 @@ static void writescript()
     if (fwrite(script, scriptsize, 1, outfile) != 1)
         equit("Cannot write header to icode file");
 #elif MSWIN32
-   char *hdr = findexe("win32header");
+   char *hdr = findoiexe("win32header");
    FILE *f;
    int c, dc, wloc, oixloclen;
    if (!hdr)
-      quit("Couldn't find win32header header file on PATH");
+      quit("Couldn't find win32header header file in OI_HOME/bin");
    if (!(f = fopen(hdr, ReadBinary)))
       equit("Tried to open win32header to build .exe, but couldn't");
    wloc = dc = scriptsize = 0;
@@ -2371,7 +2371,10 @@ struct b_bignum * bigradix(char *input, int input_len)
     /* See ralc.r : MemProtect(b = alcbignum(len)); */
     size = sizeof(struct b_bignum) + ((len - 1) * sizeof(DIGIT));
     size = (size + WordSize - 1) & -WordSize;
-    b = safe_malloc(size);
+
+    /* zalloc since the structure contains "holes" which aren't initialized below. */
+    b = safe_zalloc(size);
+
     b->blksize = size;
     b->msd = b->sign = 0;
     b->lsd = len - 1;

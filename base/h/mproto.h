@@ -41,6 +41,8 @@ extern char *oi_optarg;		/* argument associated with option */
 int oi_getopt(int nargc, char *const nargv[], const char *ostr);
 
 char *findexe(char *name);
+char *findoiexe(char *name);
+char *oihomewalk(char *e, ...);
 void normalize(char *path);
 char *canonicalize(char *path);
 void *safe_calloc(size_t m, size_t n);
@@ -114,6 +116,14 @@ void ssdbg(struct staticstr *ss);
 
 int oi_toupper(int c);
 int oi_tolower(int c);
+
+extern int over_flow;
+word add(word a, word b);
+word sub(word a, word b);
+word mul(word a, word b);
+word mod3(word a, word b);
+word div3(word a, word b);
+word neg(word a);
 
 extern unsigned char oi_ctype[];
 

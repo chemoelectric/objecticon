@@ -103,14 +103,6 @@ static void fold_apply(struct lnode *n);
 static void fold_keyword(struct lnode *n);
 static void fold_return(struct lnode *n);
 
-static int over_flow;
-static word add(word a, word b);
-static word sub(word a, word b);
-static word mul(word a, word b);
-static word mod3(word a, word b);
-static word div3(word a, word b);
-static word neg(word a);
-
 static struct rangeset *rangeset_union(struct rangeset *r1, struct rangeset *r2);
 static struct rangeset *rangeset_inter(struct rangeset *r1, struct rangeset *r2);
 static struct rangeset *rangeset_diff(struct rangeset *r1, struct rangeset *r2);
@@ -774,108 +766,6 @@ void optimize()
     visit_post(tidy_lists);
     if (!strinv)
         scanrefs();
-}
-
-
-/*
- * These are copied from rmisc.r
- */
-
-static word add(word a, word b)
-{
-   if ((a ^ b) >= 0 && (a >= 0 ? b > MaxWord - a : b < MinWord - a)) {
-      over_flow = 1;
-      return 0;
-      }
-   else {
-     over_flow = 0;
-     return a + b;
-     }
-}
-
-static word sub(word a, word b)
-{
-   if ((a ^ b) < 0 && (a >= 0 ? b < a - MaxWord : b > a - MinWord)) {
-      over_flow = 1;
-      return 0;
-      }
-   else {
-      over_flow = 0;
-      return a - b;
-      }
-}
-
-static word mul(word a, word b)
-{
-   if (b != 0) {
-      if ((a ^ b) >= 0) {
-	 if (a >= 0 ? a > MaxWord / b : a < MaxWord / b) {
-            over_flow = 1;
-	    return 0;
-            }
-	 }
-      else if (b != -1 && (a >= 0 ? a > MinWord / b : a < MinWord / b)) {
-         over_flow = 1;
-	 return 0;
-         }
-      }
-
-   over_flow = 0;
-   return a * b;
-}
-
-/* MinWord / -1 overflows; need div3 too */
-
-static word mod3(word a, word b)
-{
-   word retval;
-
-   switch ( b )
-   {
-      case 0:
-	 over_flow = 1; /* Not really an overflow, but definitely an error */
-	 return 0;
-
-      case MinWord:
-	 /* Handle this separately, since -MinWord can overflow */
-	 retval = ( a > MinWord ) ? a : 0;
-	 break;
-
-      default:
-	 /* First, we make b positive */
-      	 if ( b < 0 ) b = -b;	
-
-	 /* Make sure retval should have the same sign as 'a' */
-	 retval = a % b;
-	 if ( ( a < 0 ) && ( retval > 0 ) )
-	    retval -= b;
-	 break;
-      }
-
-   over_flow = 0;
-   return retval;
-}
-
-static word div3(word a, word b)
-{
-   if ( ( b == 0 ) ||	/* Not really an overflow, but definitely an error */
-        ( b == -1 && a == MinWord ) ) {
-      over_flow = 1;
-      return 0;
-      }
-
-   over_flow = 0;
-   return ( a - mod3 ( a, b ) ) / b;
-}
-
-static word neg(word a)
-{
-    if (a == MinWord) {
-        over_flow = 1;
-        return 0;
-    }
-    over_flow = 0;
-    return -a;
 }
 
 static int cnv_eint(struct literal *s)

@@ -352,7 +352,6 @@ static struct toktab *getnum(int ac, int *cc)
     int radix = 0;
     word wval = 0;
     double rval = 0;
-    int over = 0;
     char *p;
 
     c = ac;
@@ -361,23 +360,21 @@ static struct toktab *getnum(int ac, int *cc)
         realflag = 1;
     }
     else {
-        rval = wval = tonum(c);
+        wval = tonum(c);
         state = 0;
         realflag = 0;
     }
+    over_flow = 0;
     for (;;) {
         AppChar(lex_sbuf, c);
         c = NextChar;
         switch (state) {
             case 0:		/* integer part */
                 if (isdigit_ex(c))	    { 
-                    if (!over) {
-                        rval = rval * 10 + (c - '0');
-                        /* Check whether we've possibly lost double precision, or have exceeded MaxWord */
-                        if (rval >= Big || rval > MaxWord)
-                            over = 1;			/* flag overflow */
-                        else
-                            wval = wval * 10 + (c - '0');
+                    if (!over_flow) {
+                        wval = mul(wval, 10);
+                        if (!over_flow)
+                            wval = add(wval, c - '0');
                     }
                     continue; 
                 }
@@ -385,10 +382,10 @@ static struct toktab *getnum(int ac, int *cc)
                 if (c == 'e' || c == 'E')  { state = 2; realflag++; continue; }
                 if (c == 'r' || c == 'R')  {
                     state = 5;
-                    if (over || (wval < 2 || wval > 36))
+                    if (over_flow || (wval < 2 || wval > 36))
                         lexfatal("Invalid radix for integer literal");
                     radix = wval;
-                    rval = wval = 0;
+                    wval = 0;
                     continue;
                 }
                 break;
@@ -408,7 +405,7 @@ static struct toktab *getnum(int ac, int *cc)
             case 5:		/* first digit after r */
                 if ((isdigit_ex(c) || isletter(c)) && tonum(c) < radix) {
                     state = 6; 
-                    rval = wval = tonum(c);
+                    wval = tonum(c);
                     continue; 
                 }
                 lexfatal("Invalid integer literal");
@@ -417,12 +414,10 @@ static struct toktab *getnum(int ac, int *cc)
                 if (isdigit_ex(c) || isletter(c)) {
                     int d = tonum(c);
                     if (d < radix) {
-                        if (!over) {
-                            rval = rval * radix + d;
-                            if (rval >= Big || rval > MaxWord)
-                                over = 1;			/* flag overflow */
-                            else
-                                wval = wval * radix + d;
+                        if (!over_flow) {
+                            wval = mul(wval, radix);
+                            if (!over_flow)
+                                wval = add(wval, d);
                         }
                     } else {	/* illegal digit for radix r */
                         lexfatal("Invalid digit in integer literal");
@@ -468,7 +463,7 @@ static struct toktab *getnum(int ac, int *cc)
             AppChar(lex_sbuf, *p++);
         yylval = RealNode(str_install(&lex_sbuf));
         return T_Real;
-    } else if (over) {
+    } else if (over_flow) {
         /*
          * Large int - data is the string of chars.  Note the token is still
          * a T_Int - gramatically it is the same as a normal integer.
