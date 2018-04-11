@@ -6,7 +6,6 @@
  * Prototypes common to the compiler and interpreter.
  */
 void            EVInit          (void);
-word            add             (word a,word b);
 void            addmem  (struct b_set *ps,struct b_selem *pe, union block **pl);
 struct b_cset   *alccset_0      (word n);
 struct b_cset   *alccset_1      (word n);
@@ -93,7 +92,6 @@ int             def_eint        (dptr s, word df, dptr d);
 int             def_int         (dptr s, word df, dptr d);
 int             def_real        (dptr s, double df, dptr d);
 int             def_str         (dptr s, dptr df, dptr d);
-word            div3            (word a,word b);
 int             doasgn          (dptr dp1,dptr dp2);
 int             doimage         (int c,int q);
 int             equiv           (dptr dp1,dptr dp2);
@@ -120,9 +118,6 @@ int             caseless_lexcmp       (dptr dp1, dptr dp2);
 int             consistent_lexcmp       (dptr dp1, dptr dp2);
 union block     **memb          (union block *pb,dptr x,uword hn, int *res);
 void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
-word            mod3            (word a,word b);
-word            mul             (word a,word b);
-word            neg             (word a);
 void            outimage        (FILE *f,dptr dp,int noimage);
 void            outimage1       (FILE *f, dptr dp, int noimage, word stringlimit, word listlimit);
 uint64_t        physicalmemorysize(void);
@@ -134,7 +129,6 @@ int             radix           (int sign, register int r, register char *s,
 char            *reserve_0      (int region, uword nbytes);
 char            *reserve_1      (int region, uword nbytes);
 void            retderef        (dptr valp, struct frame_vars *dynamics);
-word            sub             (word a,word b);
 void            syserr          (char *fmt, ...);
 
 void    resolve                 (struct progstate *pstate);

@@ -5,8 +5,6 @@
  * protocol encapsulated in the macro ArithOp.
  */
 
-int over_flow = 0;
-
 #begdef ArithOp(icon_op, func_name, int_op, real_op)
 
 operator icon_op func_name(x, y)

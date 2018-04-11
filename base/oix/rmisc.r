@@ -1799,122 +1799,6 @@ int getname(dptr dp1, dptr dp2)
 }
 
 
-#ifndef AsmOver
-/*
- * add, sub, mul, neg with overflow check
- * all return 1 if ok, 0 if would overflow
- */
-
-/*
- *  Note: on some systems an improvement in performance can be obtained by
- *  replacing the C functions that follow by checks written in assembly
- *  language.  To do so, add #define AsmOver to ../h/define.h.  If your
- *  C compiler supports the asm directive, put the new code at the end
- *  of this section under control of #else.  Otherwise put it a separate
- *  file.
- */
-
-word add(word a, word b)
-{
-   if ((a ^ b) >= 0 && (a >= 0 ? b > MaxWord - a : b < MinWord - a)) {
-      over_flow = 1;
-      return 0;
-      }
-   else {
-     over_flow = 0;
-     return a + b;
-     }
-}
-
-word sub(word a, word b)
-{
-   if ((a ^ b) < 0 && (a >= 0 ? b < a - MaxWord : b > a - MinWord)) {
-      over_flow = 1;
-      return 0;
-      }
-   else {
-      over_flow = 0;
-      return a - b;
-      }
-}
-
-word mul(word a, word b)
-{
-   if (b != 0) {
-      if ((a ^ b) >= 0) {
-	 if (a >= 0 ? a > MaxWord / b : a < MaxWord / b) {
-            over_flow = 1;
-	    return 0;
-            }
-	 }
-      else if (b != -1 && (a >= 0 ? a > MinWord / b : a < MinWord / b)) {
-         over_flow = 1;
-	 return 0;
-         }
-      }
-
-   over_flow = 0;
-   return a * b;
-}
-
-/* MinWord / -1 overflows; need div3 too */
-
-word mod3(word a, word b)
-{
-   word retval;
-
-   switch ( b )
-   {
-      case 0:
-	 over_flow = 1; /* Not really an overflow, but definitely an error */
-	 return 0;
-
-      case MinWord:
-	 /* Handle this separately, since -MinWord can overflow */
-	 retval = ( a > MinWord ) ? a : 0;
-	 break;
-
-      default:
-	 /* First, we make b positive */
-      	 if ( b < 0 ) b = -b;	
-
-	 /* Make sure retval should have the same sign as 'a' */
-	 retval = a % b;
-	 if ( ( a < 0 ) && ( retval > 0 ) )
-	    retval -= b;
-	 break;
-      }
-
-   over_flow = 0;
-   return retval;
-}
-
-word div3(word a, word b)
-{
-   if ( ( b == 0 ) ||	/* Not really an overflow, but definitely an error */
-        ( b == -1 && a == MinWord ) ) {
-      over_flow = 1;
-      return 0;
-      }
-
-   over_flow = 0;
-   return ( a - mod3 ( a, b ) ) / b;
-}
-
-/* MinWord / -1 overflows; need div3 too */
-
-word neg(word a)
-{
-   if (a == MinWord) {
-      over_flow = 1;
-      return 0;
-      }
-   over_flow = 0;
-   return -a;
-}
-#endif					/* AsmOver */
-
-
 /*
  * retderef - Dereference local variables and substrings of local
  *  string-valued variables. This is used for return, suspend, and
@@ -2184,7 +2068,7 @@ void buffnstr(dptr d, char **s, ...)
     va_start(ap, s);
     need = 0;
     d1 = d;
-    while (d1) {
+    while (1) {
         need += StrLen(*d1) + 1;
         d1 = va_arg(ap, _DPTR);
         if (!d1)
@@ -2198,7 +2082,7 @@ void buffnstr(dptr d, char **s, ...)
     d1 = d;
     s1 = s;
     t = buf.s;
-    while (d1) {
+    while (1) {
         memcpy(t, StrLoc(*d1), StrLen(*d1));
         *s1 = t;
         t += StrLen(*d1);

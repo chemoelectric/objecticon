@@ -105,8 +105,6 @@ extern struct progstate rootpstate;
 
 extern struct oisymbols oiexported;
    
-extern int over_flow;
-
 extern word curr_op;
 extern dptr xexpr;
 extern dptr xfield;
