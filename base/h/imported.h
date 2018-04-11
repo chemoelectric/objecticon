@@ -107,6 +107,7 @@
 #define bigsign (*(imported->bigsign))
 #define fatalerr (*(imported->fatalerr))
 #define ffatalerr (*(imported->ffatalerr))
+#define syserr (*(imported->syserr))
 #define err_msg (*(imported->err_msg))
 #define errno2why (*(imported->errno2why))
 #define why (*(imported->why))

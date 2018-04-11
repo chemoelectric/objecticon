@@ -103,6 +103,7 @@ struct oisymbols {
     int (*bigsign)(dptr da);
     void (*fatalerr)(int n,dptr v);
     void (*ffatalerr)(char *fmt, ...);
+    void (*syserr)(char *fmt, ...);
     void (*err_msg)(int n, dptr v);
     void (*errno2why)(void);
     void (*why)(char *s);
