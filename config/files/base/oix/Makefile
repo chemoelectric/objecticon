@@ -31,7 +31,7 @@ OBJS=	$(XOBJS) $(COBJS)
 rwinsys.o: rxwin.ri rmswin.ri rxkeysyms.ri
 invoke.o: invokeiasm.ri
 interp.o: interpiasm.ri
-init.o: initiasm.ri
+init.o: initiasm.ri oiexported.ri
 oref.o: orefiasm.ri
 
 $(PROG):	$(OBJS)
@@ -72,4 +72,17 @@ keysymtocodepoint: keysymtocodepoint.icn
 rxkeysyms.ri:	keysyms.txt keysymtocodepoint
 	./keysymtocodepoint <keysyms.txt >rxkeysyms.ri
 
+endif
+
+# Compile with make EXPORTS=Y
+#
+#   This will generate oiexported.ri, and also base/h/oisymbols.h and
+#   base/h/imported.h
+#
+ifeq ($(EXPORTS),Y)
+mkexports: mkexports.icn
+	oit -s mkexports.icn
+
+oiexported.ri:	exportsyms.txt mkexports
+	./mkexports
 endif
