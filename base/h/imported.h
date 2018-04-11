@@ -153,6 +153,8 @@ static struct oisymbols *imported;
 #define hashcstr (*(imported->hashcstr))
 #define get_hostname (*(imported->get_hostname))
 #define is_flowterm_tty (*(imported->is_flowterm_tty))
+#define begin_link (*(imported->begin_link))
+#define end_link (*(imported->end_link))
 #define getenv_nn (*(imported->getenv_nn))
 #define buffvprintf (*(imported->buffvprintf))
 #define buffprintf (*(imported->buffprintf))

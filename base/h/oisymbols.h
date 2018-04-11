@@ -146,6 +146,8 @@ struct oisymbols {
     unsigned int (*hashcstr)(char *s);
     char * (*get_hostname)(void);
     int (*is_flowterm_tty)(FILE *f);
+    void (*begin_link)(FILE *f, dptr fname, word line);
+    void (*end_link)(FILE *f);
     char * (*getenv_nn)(char *name);
     char * (*buffvprintf)(char *fmt, va_list ap);
     char * (*buffprintf)(char *fmt, ...);

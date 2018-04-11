@@ -167,9 +167,11 @@ static char *tryfile(char *dir, char *name, char *extn)
     else
         return 0;
 }
+#endif
 
 int is_flowterm_tty(FILE *f)
 {
+#if UNIX
     static int init, flowterm;
     if (!init) {
         char *s;
@@ -183,8 +185,10 @@ int is_flowterm_tty(FILE *f)
         case 2 : return 1;
         default : return 0;
     }
-}
+#else
+    return 0;
 #endif
+}
 
 #if MSWIN32
 
