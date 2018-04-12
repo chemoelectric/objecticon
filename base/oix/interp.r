@@ -871,8 +871,7 @@ static void do_tcaseinit(void)
 {
     dptr tbl = (dptr)GetAddr;
     word d = GetWord;
-    MemProtect(BlkLoc(*tbl) = hmake(T_Table, 0, d));
-    tbl->dword = D_Table;
+    create_table(0, d, tbl);
     MakeInt(d, &TableBlk(*tbl).defvalue);
 }
 

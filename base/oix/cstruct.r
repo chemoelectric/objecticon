@@ -120,30 +120,22 @@ static void tabledump(dptr d)
  */
 void create_list(word nslots, dptr d) 
 {
-   struct b_list *hp;
- 
    if (nslots == 0)
       nslots = MinListSlots;
-   MemProtect(hp = alclist(0, nslots));
- 
+   MemProtect(BlkLoc(*d) = (union  block *)alclist(0, nslots));
    d->dword = D_List;
-   BlkLoc(*d) = (union  block *)hp;
 }
 
 void create_table(word nslots, word nelem, dptr d)
 {
-    union block *bp;
-    MemProtect(bp = hmake(T_Table, nslots, nelem));
+    MemProtect(BlkLoc(*d) = hmake(T_Table, nslots, nelem));
     d->dword = D_Table;
-    BlkLoc(*d) = bp;
 }
 
 void create_set(word nslots, word nelem, dptr d)
 {
-    union block *ps;
-    MemProtect(ps = hmake(T_Set, nslots, nelem));
+    MemProtect(BlkLoc(*d) = hmake(T_Set, nslots, nelem));
     d->dword = D_Set;
-    BlkLoc(*d) = ps;
 }
 
 int set_del(dptr s, dptr key)
