@@ -1,11 +1,14 @@
 package io
 
 import
-   util(error, check_flag, check_positive_int, save_why, 
-        env_string, HasMode),
+   util(error, check_flag, check_positive_int, save_why, HasMode),
    lang(Class, NoCopy),
    posix(System),
    ipl.strings(replace)
+
+$ifdef _UNIX
+import util(env_string)
+$endif
 
 #
 # This is the top-level stream class.  It is not instantiated
