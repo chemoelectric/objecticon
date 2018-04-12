@@ -122,20 +122,17 @@ void create_list(word nslots, dptr d)
 {
    if (nslots == 0)
       nslots = MinListSlots;
-   MemProtect(BlkLoc(*d) = (union  block *)alclist(0, nslots));
-   d->dword = D_List;
+   DMemProtect(*d, alclist(0, nslots), D_List);
 }
 
 void create_table(word nslots, word nelem, dptr d)
 {
-    MemProtect(BlkLoc(*d) = hmake(T_Table, nslots, nelem));
-    d->dword = D_Table;
+    DMemProtect(*d, hmake(T_Table, nslots, nelem), D_Table);
 }
 
 void create_set(word nslots, word nelem, dptr d)
 {
-    MemProtect(BlkLoc(*d) = hmake(T_Set, nslots, nelem));
-    d->dword = D_Set;
+    DMemProtect(*d, hmake(T_Set, nslots, nelem), D_Set);
 }
 
 int set_del(dptr s, dptr key)

@@ -446,8 +446,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
         /* Arg0 is the class */
         pf->tmp[0] = *expr;
         /* Arg1 is the allocated new object object */
-        MemProtect(BlkLoc(pf->tmp[1]) = (union block *)alcobject(class0));
-        pf->tmp[1].dword = D_Object; 
+        DMemProtect(pf->tmp[1], alcobject(class0), D_Object);
         ObjectBlk(pf->tmp[1]).init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
@@ -470,8 +469,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
         /* Arg0 is the class */
         pf->tmp[0] = *expr;
         /* Arg 1 is a new object */
-        MemProtect(BlkLoc(pf->tmp[1]) = (union block *)alcobject(class0));
-        pf->tmp[1].dword = D_Object; 
+        DMemProtect(pf->tmp[1], alcobject(class0), D_Object);
     }
 
     curr_pf->clo[clo] = (struct frame *)pf;
@@ -491,8 +489,7 @@ static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args,
     push_frame((struct frame *)pf);
     pf->lhs = lhs;
 
-    MemProtect(BlkLoc(pf->tmp[0]) = (union block *)alcrecd(con));
-    pf->tmp[0].dword = D_Record;
+    DMemProtect(pf->tmp[0], alcrecd(con), D_Record);
 
     if (args) {
        type_case *args of {
@@ -1214,8 +1211,7 @@ function lang_Class_create_raw_instance()
            syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
-       MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
-       result.dword = D_Object;
+       DMemProtect(result, alcobject(cl), D_Object);
        ObjectBlk(result).init_state = Initializing;
        EVValD(&result, E_Objectcreate);
        return result;
@@ -1244,8 +1240,7 @@ function lang_Class_create_instance()
            syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
-       MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
-       result.dword = D_Object;
+       DMemProtect(result, alcobject(cl), D_Object);
        ObjectBlk(result).init_state = Initialized;
        EVValD(&result, E_Objectcreate);
        return result;
