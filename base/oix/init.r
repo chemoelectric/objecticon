@@ -212,7 +212,7 @@ int keyword_tbl_sz = ElemCount(keyword_tbl);
 struct progstate *curpstate = &rootpstate;
 struct progstate rootpstate;
 
-#include "oiexported.ri"
+#include "exported.ri"
 
 /*
  * Check the version number of the icode matches the interpreter version.

@@ -31,7 +31,7 @@ OBJS=	$(XOBJS) $(COBJS)
 rwinsys.o: rxwin.ri rmswin.ri rxkeysyms.ri
 invoke.o: invokeiasm.ri
 interp.o: interpiasm.ri
-init.o: initiasm.ri oiexported.ri
+init.o: initiasm.ri exported.ri
 oref.o: orefiasm.ri
 
 $(PROG):	$(OBJS)

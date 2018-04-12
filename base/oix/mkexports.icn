@@ -142,7 +142,7 @@ procedure main(a)
       writes("\n\n", o1.str(), "\n\n", o2.str(), "\n\n", o3.str())
    } else {
       output(open_header("oisymbols.h", "w"),
-             open_file("oiexported.ri", "w"),
+             open_file("exported.ri", "w"),
              open_header("imported.h", "w"))
       write("OK")
    }
