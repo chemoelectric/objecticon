@@ -29,7 +29,7 @@ $(PROG):		$(OBJS)
                       /SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
 
 $(HDR):		win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj
-		$(LD) /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE \
+		$(LD) /INCREMENTAL:NO /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE \
                    win32header.obj ../common/mlocal.obj ../common/alloc.obj \
                    ../common/win32.obj $(LIBS) /OUT:$(HDR)
 
