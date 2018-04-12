@@ -1023,6 +1023,7 @@ class FileStream(DescStream)
    # Succeed if this `FileStream` represents a tty supporting links.
    #
    public is_flowterm_tty()
+$ifdef _UNIX
       static flowterm
       initial
          flowterm := integer(env_string("FLOWTERM"))
@@ -1030,6 +1031,7 @@ class FileStream(DescStream)
          1 : isatty()
          2 : &null
       }
+$endif
    end
 
    public native in(n)
