@@ -13,10 +13,10 @@ char *refpath = 0;
 #define RT_H "rt.h"
 #define IMPORTED_H "imported.h"
 
-static char *ostr = "xEWPD:I:U:cir:st:h:";
+static char *ostr = "xyEWPD:I:U:r:t:h:";
 
 static char *options =
-   "[-E] [-W] [-P] [-x] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
+   "[-E] [-W] [-P] [-x|-y] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
 [-rpath] [-tname] [files]";
 
 /*
@@ -34,7 +34,8 @@ char *importedhname;
 int def_fnd;
 
 int enable_out = 0;
-int imported;
+int subsid;
+int importing;
 
 static char *cur_src;
 
@@ -114,9 +115,12 @@ int main(argc, argv)
             case 't':  /* -t ident : treat ident as a typedef name */
                 add_tdef(oi_optarg);
                 break;
+            case 'y':   /* -y : -x, but file is susbidiary to a main -x file */
+                subsid = 1;
+                /* fall through */
             case 'x':   /* -x : input file is to form a library module using
                          * imported oisymbols structure */
-                imported = 1;
+                importing = 1;
                 break;
             case 'D':  /* define preprocessor symbol */
             case 'I':  /* path to search for preprocessor includes */
