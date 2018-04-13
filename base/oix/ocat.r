@@ -30,8 +30,7 @@ operator || cat(x, y)
           *   adjacent in memory; no allocation is required.
           */
          if (StrLoc(utf8_x) + StrLen(utf8_x) == StrLoc(utf8_y)) {
-             StrLoc(utf8) = StrLoc(utf8_x);
-             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+             MakeStr(StrLoc(utf8_x), StrLen(utf8_x) + StrLen(utf8_y), &utf8);
          }
          /*
           * Optimization 2: The end of x is at the end of the string space.
@@ -45,8 +44,7 @@ operator || cat(x, y)
               * Append y to the end of the string space.
               */
              MemProtect(alcstr(StrLoc(utf8_y),StrLen(utf8_y)));
-             StrLoc(utf8) = StrLoc(utf8_x);
-             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+             MakeStr(StrLoc(utf8_x), StrLen(utf8_x) + StrLen(utf8_y), &utf8);
          }
          /*
           * Otherwise, allocate space for x and y, and copy them
@@ -82,8 +80,7 @@ operator || cat(x, y)
           *   adjacent in memory; no allocation is required.
           */
          if (StrLoc(x) + StrLen(x) == StrLoc(y)) {
-             StrLoc(result) = StrLoc(x);
-             StrLen(result) = StrLen(x) + StrLen(y);
+             MakeStr(StrLoc(x), StrLen(x) + StrLen(y), &result);
              return result;
          }
 
@@ -102,8 +99,7 @@ operator || cat(x, y)
              /*
               *  Set the result and return.
               */
-             StrLoc(result) = StrLoc(x);
-             StrLen(result) = StrLen(x) + StrLen(y);
+             MakeStr(StrLoc(x), StrLen(x) + StrLen(y), &result);
              return result;
          }
 

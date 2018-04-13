@@ -182,8 +182,8 @@ int cnv_c_str(dptr s, dptr d)
    else {
       word slen = StrLen(*d);
       char *sp, *dp;
-      MemProtect(dp = alcstr(NULL,slen+1));
-      StrLen(*d) = StrLen(*d)+1;
+      MemProtect(dp = alcstr(NULL, slen + 1));
+      ++StrLen(*d);
       sp = StrLoc(*d);
       StrLoc(*d) = dp;
       while (slen-- > 0)
@@ -645,8 +645,7 @@ static void deref_tvsubs(dptr s, dptr d)
              * Make a descriptor for the substring by getting the
              *  length and pointing into the string.
              */
-            StrLen(*d) = tvsub->sslen;
-            StrLoc(*d) = StrLoc(v) + tvsub->sspos - 1;
+            MakeStr(StrLoc(v) + tvsub->sspos - 1, tvsub->sslen, d);
         }
       ucs: {
             if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(v).length)

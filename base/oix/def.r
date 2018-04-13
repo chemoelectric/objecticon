@@ -47,8 +47,7 @@ DefConvert(def_c_int, word, word *, cnv_c_int, C_IntAsgn)
  */
 
 #begdef C_StrAsgn
-   StrLen(*d) = strlen(df);
-   StrLoc(*d) = (char *)df;
+   CMakeStr(df, d);
 #enddef
 
 DefConvert(def_c_str, char *, dptr, cnv_c_str, C_StrAsgn)

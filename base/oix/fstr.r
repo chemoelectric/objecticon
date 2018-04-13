@@ -892,9 +892,7 @@ function repl(s,n)
            * Make result a descriptor for the replicated string.
            */
           MemProtect(resloc = alcstr(NULL, size));
-
-          StrLoc(result) = resloc;
-          StrLen(result) = size;
+          MakeStr(resloc, size, &result);
 
           /*
            * Fill the allocated area with copies of s.
@@ -1476,8 +1474,7 @@ function trim(s,c,ends)
           if (slen == 0)
               return ucs(emptystr_ucs);
 
-          StrLoc(utf8) = utf8_start;
-          StrLen(utf8) = utf8_end - utf8_start;
+          MakeStr(utf8_start, utf8_end - utf8_start, &utf8);
 
           return ucs(make_ucs_block(&utf8, slen));
       } else {

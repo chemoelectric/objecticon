@@ -401,20 +401,18 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     switch(msg) {
         case WM_CHAR:
         case WM_SYSCHAR:
-            if (wp < 256) {
-                StrLen(curr) = 1;
-                StrLoc(curr) = &allchars[wp];
-            } else
+            if (wp < 256)
+                MakeStr(&allchars[wp], 1, &curr);
+            else
                 MakeDesc(D_Ucs, make_one_char_ucs_block(wp), &curr);
             break;
         case WM_KEYUP:
         case WM_SYSKEYUP:
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
-            if (wp == VK_DELETE) {
-                StrLen(curr) = 1;
-                StrLoc(curr) = &allchars[127];
-            } else 
+            if (wp == VK_DELETE)
+                MakeStr(&allchars[127], 1, &curr);
+            else 
                 MakeInt(wp, &curr);
             break;
         default:
