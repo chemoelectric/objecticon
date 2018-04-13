@@ -166,7 +166,7 @@ function ssl_SslStream_in(self, i)
       runerr(101, i)
    body {
        word nread;
-       tended struct descrip s;
+       char *s;
        GetSelfSsl();
 
        if (i <= 0)
@@ -175,12 +175,12 @@ function ssl_SslStream_in(self, i)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       MemProtect(StrLoc(s) = alcstr(NULL, i));
+       MemProtect(s = alcstr(NULL, i));
 
-       nread = SSL_read(self_ssl->ssl, StrLoc(s), i);
+       nread = SSL_read(self_ssl->ssl, s, i);
        if (nread <= 0) {
            /* Reset the memory just allocated */
-           dealcstr(StrLoc(s));
+           dealcstr(s);
 
            if (nread < 0 || SSL_get_error(self_ssl->ssl, nread) != SSL_ERROR_ZERO_RETURN) {
                whyf("SSL_read: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, nread), 0));
@@ -189,14 +189,12 @@ function ssl_SslStream_in(self, i)
                return nulldesc;
        }
 
-       StrLen(s) = nread;
-
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       dealcstr(StrLoc(s) + nread);
+       dealcstr(s + nread);
 
-       return s;
+       return string(nread, s);
    }
 end
 

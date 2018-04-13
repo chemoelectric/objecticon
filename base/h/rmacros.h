@@ -167,7 +167,9 @@
  } while (0)
 #else
 #define MakeReal(r,dp)   do {\
-      if (!(BlkLoc(*(dp)) = (union block *)alcreal(r))) fatalerr(309,NULL); \
+      struct b_real *_tmp;  \
+      if (!(_tmp = alcreal(r))) fatalerr(309,NULL); \
+      BlkLoc(*(dp)) = (union block *)_tmp;          \
       (dp)->dword = D_Real;                                \
  } while (0)
 #endif

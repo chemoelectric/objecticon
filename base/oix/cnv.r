@@ -76,8 +76,7 @@ int cnv_c_dbl(dptr s, double *d)
          return 1;
 
       case T_Lrgint:
-         result.dword = D_Lrgint;
-	 BlkLoc(result) = (union block *)numrc.big;
+         MakeDesc(D_Lrgint, numrc.big, &result);
          if (bigtoreal(&result, d) != Succeeded)
              return 0;
          return 1;
@@ -223,8 +222,7 @@ int f(dptr s, dptr d)
            int i = utf8_iter(&s1);
            add_range(rs, i, i);
        }
-       d->dword = D_Cset;
-       BlkLoc(*d) = (union block *)rangeset_to_block(rs);
+       MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
        EVValD(d, e_sconv);
        return 1;
@@ -241,8 +239,7 @@ int f(dptr s, dptr d)
            int i = *s1++ & 0xff;
            add_range(rs, i, i);
        }
-       d->dword = D_Cset;
-       BlkLoc(*d) = (union block *)rangeset_to_block(rs);
+       MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
        EVValD(d, e_sconv);
        return 1;
@@ -274,16 +271,12 @@ int f(dptr s, dptr d)
         return 1;
     }
     if (is:cset(*s)) {
-        tended struct b_ucs *p;
-        p = cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size);
-        d->dword = D_Ucs;
-        BlkLoc(*d) = (union block *)p;
+        MakeDesc(D_Ucs, cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size), d);
         EVValD(d, e_sconv);
         return 1;
     }
 
     if (cnv:string(*s, str)) {
-        tended struct b_ucs *p;
         char *s1, *e1;
         word n = 0;
 
@@ -298,9 +291,7 @@ int f(dptr s, dptr d)
                 return 0;
             }
         }
-        p = make_ucs_block(&str, n);
-        d->dword = D_Ucs;
-        BlkLoc(*d) = (union block *)p;
+        MakeDesc(D_Ucs, make_ucs_block(&str, n), d);
         EVValD(d, e_sconv);
         return 1;
     }
@@ -442,8 +433,7 @@ int cnv_eint(dptr s, dptr d)
 	 return 1;
 
       case T_Lrgint:
-         d->dword = D_Lrgint;
-	 BlkLoc(*d) = (union block *)numrc.big;
+         MakeDesc(D_Lrgint, numrc.big, d);
          return 1;
 
       default:
@@ -512,8 +502,7 @@ int f(dptr s, dptr d)
    switch( ston(s, &numrc) ) {
 
       case T_Lrgint:
-         d->dword = D_Lrgint;
-	 BlkLoc(*d) = (union block *)numrc.big;
+         MakeDesc(D_Lrgint, numrc.big, d);
          EVValD(d, e_sconv);
 	 return 1;
 
@@ -662,10 +651,9 @@ static void deref_tvsubs(dptr s, dptr d)
       ucs: {
             if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(v).length)
                 fatalerr(205, NULL);
-            d->dword = D_Ucs;
-            BlkLoc(*d) = (union block *)make_ucs_substring(&UcsBlk(v), 
-                                                           tvsub->sspos, 
-                                                           tvsub->sslen);
+            MakeDesc(D_Ucs, make_ucs_substring(&UcsBlk(v), 
+                                               tvsub->sspos, 
+                                               tvsub->sslen),  d);
         }
       default: {
             fatalerr(129, &v);

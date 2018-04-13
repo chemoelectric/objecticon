@@ -847,8 +847,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
                new_pf->tmp[1] = arglist;
        }
 
-      result.dword = D_Coexpr;
-      BlkLoc(result) = (union block *)coex;
+       MakeDesc(D_Coexpr, coex, &result);
 
       return result;
       }
@@ -1178,14 +1177,9 @@ int main(int argc, char **argv)
     MakeInt(1000000, &milliondesc);
     MakeInt(1000, &thousanddesc);
 
-    nullptr.dword = D_TendPtr;
-    BlkLoc(nullptr) = 0;
-
-    nulldesc.dword = D_Null;
-    IntVal(nulldesc) = 0;
-
-    yesdesc.dword = D_Yes;
-    IntVal(yesdesc) = 0;
+    MakeDesc(D_TendPtr, 0, &nullptr);
+    MakeDesc(D_Null, 0, &nulldesc);
+    MakeDesc(D_Yes, 0, &yesdesc);
 
 #if !RealInDesc
     {
@@ -1211,10 +1205,8 @@ int main(int argc, char **argv)
 
     emptystr_ucs = make_static_ucs_block("");
     blank_ucs = make_static_ucs_block(" ");
-    defaultwindowlabel.dword = D_Ucs;
-    BlkLoc(defaultwindowlabel) = (union block *)make_static_ucs_block("Object Icon");
-    csetdesc.dword = D_Cset;
-    BlkLoc(csetdesc) = (union block *)k_cset;
+    MakeDesc(D_Ucs, make_static_ucs_block("Object Icon"), &defaultwindowlabel);
+    MakeDesc(D_Cset, k_cset, &csetdesc);
 
     /*
      * Initialize root pstate.

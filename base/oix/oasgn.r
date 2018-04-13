@@ -279,15 +279,13 @@ static int subs_asgn(dptr dest, dptr src)
        } else if (prelen == 0 && UcsBlk(srcstr).length == 0) {
            StrLoc(utf8_new) = StrLoc(UcsBlk(deststr).utf8) + poststrt;
            StrLen(utf8_new) = postlen;
-           rsltstr.dword = D_Ucs;
-           BlkLoc(rsltstr) = (union block *)make_ucs_block(&utf8_new, 
-                                                           UcsBlk(deststr).length - tvsub->sslen);
+           MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
+                                          UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
        } else if (postlen == 0 && UcsBlk(srcstr).length == 0) {
            StrLoc(utf8_new) = StrLoc(UcsBlk(deststr).utf8);
            StrLen(utf8_new) = prelen;
-           rsltstr.dword = D_Ucs;
-           BlkLoc(rsltstr) = (union block *)make_ucs_block(&utf8_new, 
-                                                           UcsBlk(deststr).length - tvsub->sslen);
+           MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
+                                          UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
        } else if (prelen == 0 && postlen == 0) {
            rsltstr = srcstr;
        } else {
@@ -296,8 +294,7 @@ static int subs_asgn(dptr dest, dptr src)
             *  Start by allocating space for the entire result.
             */
            len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
-           MemProtect(StrLoc(utf8_new) = alcstr(NULL, len));
-           StrLen(utf8_new) = len;
+           MakeStrMemProtect(alcstr(NULL, len), len, &utf8_new);
 
            /*
             * Copy the three sections into the reserved space.
@@ -312,10 +309,8 @@ static int subs_asgn(dptr dest, dptr src)
                   StrLoc(UcsBlk(deststr).utf8) + poststrt, 
                   postlen);
 
-           rsltstr.dword = D_Ucs;
-           BlkLoc(rsltstr) = (union block *)
-               make_ucs_block(&utf8_new,
-                              UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length);
+           MakeDesc(D_Ucs, make_ucs_block(&utf8_new,
+                                          UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length), &rsltstr);
        }
        newsslen = UcsBlk(srcstr).length;
    } else {
@@ -353,8 +348,7 @@ static int subs_asgn(dptr dest, dptr src)
             *  Start by allocating space for the entire result.
             */
            len = prelen + StrLen(srcstr) + postlen;
-           MemProtect(StrLoc(rsltstr) = alcstr(NULL, len));
-           StrLen(rsltstr) = len;
+           MakeStrMemProtect(alcstr(NULL, len), len, &rsltstr);
 
            /*
             * Copy the three sections into the reserved space.

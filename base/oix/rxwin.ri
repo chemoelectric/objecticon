@@ -2069,10 +2069,9 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
         if (i < 256) {
             StrLen(d) = 1;
             StrLoc(d) = &allchars[i];
-        } else {
-            d.dword = D_Ucs;
-            BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
-        }
+        } else
+            MakeDesc(D_Ucs, make_one_char_ucs_block(i), &d);
+
         qevent(ws, &d, event->x, event->y,
                (word)event->time, fl);
         return;

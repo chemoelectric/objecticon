@@ -1585,7 +1585,7 @@ function io_FileStream_in(self, i)
       runerr(101, i)
    body {
        word nread;
-       tended struct descrip s;
+       char *s;
        GetSelfFd();
 
        if (i <= 0)
@@ -1594,12 +1594,12 @@ function io_FileStream_in(self, i)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       MemProtect(StrLoc(s) = alcstr(NULL, i));
+       MemProtect(s = alcstr(NULL, i));
 
-       nread = read(self_fd, StrLoc(s), i);
+       nread = read(self_fd, s, i);
        if (nread <= 0) {
            /* Reset the memory just allocated */
-           dealcstr(StrLoc(s));
+           dealcstr(s);
 
            if (nread < 0) {
                errno2why();
@@ -1608,13 +1608,12 @@ function io_FileStream_in(self, i)
                return nulldesc;
        }
 
-       StrLen(s) = nread;
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       dealcstr(StrLoc(s) + nread);
+       dealcstr(s + nread);
 
-       return s;
+       return string(nread, s);
    }
 end
 
@@ -1791,7 +1790,7 @@ function io_FileStream_pread(self, i, offset)
 #if HAVE_PREAD
        word nread;
        off_t c_offset;
-       tended struct descrip s;
+       char *s;
        GetSelfFd();
 
        if (i <= 0)
@@ -1804,12 +1803,12 @@ function io_FileStream_pread(self, i, offset)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       MemProtect(StrLoc(s) = alcstr(NULL, i));
+       MemProtect(s = alcstr(NULL, i));
 
-       nread = pread(self_fd, StrLoc(s), i, c_offset);
+       nread = pread(self_fd, s, i, c_offset);
        if (nread <= 0) {
            /* Reset the memory just allocated */
-           dealcstr(StrLoc(s));
+           dealcstr(s);
 
            if (nread < 0) {
                errno2why();
@@ -1818,13 +1817,12 @@ function io_FileStream_pread(self, i, offset)
                return nulldesc;
        }
 
-       StrLen(s) = nread;
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       dealcstr(StrLoc(s) + nread);
+       dealcstr(s + nread);
 
-       return s;
+       return string(nread, s);
 #else
       Unsupported;
 #endif
@@ -1861,7 +1859,7 @@ function io_SocketStream_in(self, i)
       runerr(101, i)
    body {
        word nread;
-       tended struct descrip s;
+       char *s;
        GetSelfFd();
 
        if (i <= 0)
@@ -1869,12 +1867,12 @@ function io_SocketStream_in(self, i)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       MemProtect(StrLoc(s) = alcstr(NULL, i));
+       MemProtect(s = alcstr(NULL, i));
 
-       nread = recv(self_fd, StrLoc(s), i, 0);
+       nread = recv(self_fd, s, i, 0);
        if (nread <= 0) {
            /* Reset the memory just allocated */
-           dealcstr(StrLoc(s));
+           dealcstr(s);
 
            if (nread < 0) {
                errno2why();
@@ -1883,14 +1881,12 @@ function io_SocketStream_in(self, i)
                return nulldesc;
        }
 
-       StrLen(s) = nread;
-
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       dealcstr(StrLoc(s) + nread);
+       dealcstr(s + nread);
 
-       return s;
+       return string(nread, s);
    }
 end
 
@@ -3913,8 +3909,7 @@ function lang_Proc_get_name(c, flag)
             struct b_class *class0 = proc0->field->defining_class;
             dptr fname = class0->program->Fnames[proc0->field->fnum];
             len = StrLen(*class0->name) + StrLen(*fname) + 1;
-            MemProtect (StrLoc(result) = reserve(Strings, len));
-            StrLen(result) = len;
+            MakeStrMemProtect(reserve(Strings, len), len, &result);
             alcstr(StrLoc(*class0->name), StrLen(*class0->name));
             alcstr(".", 1);
             alcstr(StrLoc(*fname),StrLen(*fname));
@@ -4051,8 +4046,7 @@ function lang_Coexpression_get_stack_info_impl(ce, lim)
                 word nargs;
 
                 create_list(4, &result);
-                prc.dword = D_Proc;
-                BlkLoc(prc) = (union block*)pf->proc;
+                MakeDesc(D_Proc, pf->proc, &prc);
                 getimage(&prc, &img);
                 list_put(&result, &img);
                 
@@ -4240,7 +4234,7 @@ function io_WinsockStream_in(self, i)
       runerr(101, i)
    body {
        word nread;
-       tended struct descrip s;
+       char *s;
        GetSelfSocket();
 
        if (i <= 0)
@@ -4248,12 +4242,12 @@ function io_WinsockStream_in(self, i)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       MemProtect(StrLoc(s) = alcstr(NULL, i));
+       MemProtect(s = alcstr(NULL, i));
 
-       nread = recv(self_socket, StrLoc(s), i, 0);
+       nread = recv(self_socket, s, i, 0);
        if (nread <= 0) {
            /* Reset the memory just allocated */
-           dealcstr(StrLoc(s));
+           dealcstr(s);
 
            if (nread < 0) {
                win32error2why();
@@ -4262,14 +4256,12 @@ function io_WinsockStream_in(self, i)
                return nulldesc;
        }
 
-       StrLen(s) = nread;
-
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       dealcstr(StrLoc(s) + nread);
+       dealcstr(s + nread);
 
-       return s;
+       return string(nread, s);
    }
 end
 
@@ -4803,7 +4795,6 @@ WCHAR *string_to_wchar(dptr str, int nullterm)
 void wchar_to_ucs(WCHAR *src, dptr res)
 {
     tended char *ts;
-    tended struct b_ucs *bp;
     tended struct descrip utf8;
     word wlen, slen;
     WCHAR *p;
@@ -4828,9 +4819,7 @@ void wchar_to_ucs(WCHAR *src, dptr res)
     }
 
     MakeStr(ts, slen, &utf8);
-    bp = make_ucs_block(&utf8, wlen);
-    res->dword = D_Ucs;
-    BlkLoc(*res) = (union block *)bp;
+    MakeDesc(D_Ucs, make_ucs_block(&utf8, wlen), res);
 }
 
 void wchar_to_utf8_string(WCHAR *src, dptr res)

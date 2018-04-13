@@ -329,8 +329,7 @@ static void for_class_supers()
     word *a = GetAddr;      /* Branch when done */
 
     if (IntVal(*i) < ClassBlk(*class0).n_supers) {
-        res->dword = D_Class;
-        BlkLoc(*res) = (union block *)ClassBlk(*class0).supers[IntVal(*i)];
+        MakeDesc(D_Class, ClassBlk(*class0).supers[IntVal(*i)], res);
         IntVal(*i)++;
     } else
         ipc = a;
@@ -446,7 +445,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
         /* Arg0 is the class */
         pf->tmp[0] = *expr;
         /* Arg1 is the allocated new object object */
-        DMemProtect(pf->tmp[1], alcobject(class0), D_Object);
+        MakeDescMemProtect(D_Object, alcobject(class0), &pf->tmp[1]);
         ObjectBlk(pf->tmp[1]).init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
@@ -469,7 +468,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
         /* Arg0 is the class */
         pf->tmp[0] = *expr;
         /* Arg 1 is a new object */
-        DMemProtect(pf->tmp[1], alcobject(class0), D_Object);
+        MakeDescMemProtect(D_Object, alcobject(class0), &pf->tmp[1]);
     }
 
     curr_pf->clo[clo] = (struct frame *)pf;
@@ -489,7 +488,7 @@ static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args,
     push_frame((struct frame *)pf);
     pf->lhs = lhs;
 
-    DMemProtect(pf->tmp[0], alcrecd(con), D_Record);
+    MakeDescMemProtect(D_Record, alcrecd(con), &pf->tmp[0]);
 
     if (args) {
        type_case *args of {
@@ -549,8 +548,7 @@ static void invoke_methp(word clo, dptr lhs, dptr expr, int argc, dptr args, wor
     struct b_proc *bp = MethpBlk(*expr).proc;
     tended struct descrip tmp;
     struct frame *f;
-    tmp.dword = D_Object;
-    BlkLoc(tmp) = (union block *)MethpBlk(*expr).object;
+    MakeDesc(D_Object, MethpBlk(*expr).object, &tmp);
     f = push_frame_for_proc(bp, argc, args, &tmp);
     curr_pf->clo[clo] = f;
     f->lhs = lhs;
@@ -798,8 +796,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
             MemProtect(mp = alcmethp());
             mp->object = &ObjectBlk(*self);
             mp->proc = &ProcBlk(*cf->field_descriptor);
-            lhs->dword = D_Methp;
-            BlkLoc(*lhs) = (union block *)mp;
+            MakeDesc(D_Methp, mp, lhs);
         }
     }
 
@@ -843,8 +840,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
             MemProtect(mp = alcmethp());
             mp->object = &ObjectBlk(*expr);
             mp->proc = &ProcBlk(*cf->field_descriptor);
-            lhs->dword = D_Methp;
-            BlkLoc(*lhs) = (union block *)mp;
+            MakeDesc(D_Methp, mp, lhs);
         }
     } else {
         ac = check_access(cf, class0);
@@ -1084,8 +1080,7 @@ static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct i
         EVVal(i + 1, e_objectsub);
 
         /* Create the "self" param in a tended descriptor */
-        tmp.dword = D_Object;
-        BlkLoc(tmp) = (union block *)&ObjectBlk(*expr);
+        MakeDesc(D_Object, &ObjectBlk(*expr), &tmp);
         f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
                                 argc, args, &tmp);
         curr_pf->clo[clo] = f;
@@ -1178,8 +1173,7 @@ static void create_raw_instance()
     MemProtect(obj = alcobject(&ClassBlk(*c)));
     obj->init_state = Initializing;
     /* lhs is never null */
-    lhs->dword = D_Object;
-    BlkLoc(*lhs) = (union block *)obj;
+    MakeDesc(D_Object, obj, lhs);
     EVValD(lhs, E_Objectcreate);
 }
 
@@ -1211,7 +1205,7 @@ function lang_Class_create_raw_instance()
            syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
-       DMemProtect(result, alcobject(cl), D_Object);
+       MakeDescMemProtect(D_Object, alcobject(cl), &result);
        ObjectBlk(result).init_state = Initializing;
        EVValD(&result, E_Objectcreate);
        return result;
@@ -1240,7 +1234,7 @@ function lang_Class_create_instance()
            syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
-       DMemProtect(result, alcobject(cl), D_Object);
+       MakeDescMemProtect(D_Object, alcobject(cl), &result);
        ObjectBlk(result).init_state = Initialized;
        EVValD(&result, E_Objectcreate);
        return result;

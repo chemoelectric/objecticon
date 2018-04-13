@@ -122,17 +122,17 @@ void create_list(word nslots, dptr d)
 {
    if (nslots == 0)
       nslots = MinListSlots;
-   DMemProtect(*d, alclist(0, nslots), D_List);
+   MakeDescMemProtect(D_List, alclist(0, nslots), d);
 }
 
 void create_table(word nslots, word nelem, dptr d)
 {
-    DMemProtect(*d, hmake(T_Table, nslots, nelem), D_Table);
+    MakeDescMemProtect(D_Table, hmake(T_Table, nslots, nelem), d);
 }
 
 void create_set(word nslots, word nelem, dptr d)
 {
-    DMemProtect(*d, hmake(T_Set, nslots, nelem), D_Set);
+    MakeDescMemProtect(D_Set, hmake(T_Set, nslots, nelem), d);
 }
 
 int set_del(dptr s, dptr key)

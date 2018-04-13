@@ -1127,8 +1127,7 @@ void showstack(FILE *f, struct b_coexpr *c)
         switch (x->type) {
             case C_Frame: {
                 struct c_frame *cf = (struct c_frame *)x;
-                tmp.dword = D_Proc;
-                BlkLoc(tmp) = (union block *)cf->proc;
+                MakeDesc(D_Proc, cf->proc, &tmp);
                 fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
                 fprintf(f, "\tpc=0x" XWordFmt "\n", cf->pc);
                 fprintf(f, "\tnargs=%d\n", cf->nargs);
@@ -1144,8 +1143,7 @@ void showstack(FILE *f, struct b_coexpr *c)
                 struct p_frame *pf = (struct p_frame *)x;
                 dptr *np, dp;
                 int j;
-                tmp.dword = D_Proc;
-                BlkLoc(tmp) = (union block *)pf->proc;
+                MakeDesc(D_Proc, pf->proc, &tmp);
                 fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
                 fprintf(f, "\tipc=%p\n", pf->ipc);
                 fprintf(f, "\tcurr_inst=%p\n", pf->curr_inst);
