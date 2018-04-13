@@ -94,7 +94,7 @@ int cnv_c_dbl(dptr s, double *d)
  */
 int cnv_c_int(dptr s, word *d)
    {
-   tended struct descrip cnvstr, result;
+   tended struct descrip cnvstr;
    union numeric numrc;
 
    type_case *s of {
