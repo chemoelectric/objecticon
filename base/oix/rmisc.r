@@ -1834,13 +1834,10 @@ int string2ucs(dptr str, dptr res)
  */
 void bytes2string(char *s, word len, dptr d) 
 {
-    char *a;
     if (len == 0)
         *d = emptystr;
-    else {
-        MemProtect(a = alcstr(s, len));
-        MakeStr(a, len, d);
-    }
+    else
+        MakeStrMemProtect(alcstr(s, len), len, d);
 }
 
 /*
