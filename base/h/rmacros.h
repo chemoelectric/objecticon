@@ -129,6 +129,8 @@
 
 #define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
 
+#define MemProtect(notnull) do {if (!(notnull)) fatalerr(309,NULL);} while(0)
+
 /*
  * This macro can be used with printf's "%.*s" format to output string descriptors.
  */
@@ -161,28 +163,23 @@
  * Construct an real descriptor
  */
 #if RealInDesc
-#define MakeReal(r,dp)   do {\
+#define MakeReal(r, dp)   do {\
       DSetReal(r, *(dp));                             \
       (dp)->dword = D_Real;                     \
  } while (0)
 #else
-#define MakeReal(r,dp)   do {\
-      struct b_real *_tmp;  \
-      if (!(_tmp = alcreal(r))) fatalerr(309,NULL); \
-      BlkLoc(*(dp)) = (union block *)_tmp;          \
-      (dp)->dword = D_Real;                                \
- } while (0)
+#define MakeReal(r, dp)  MakeDescMemProtect(D_Real, alcreal(r), dp)
 #endif
 
 /*
  * Construct an integer descriptor.
  */
-#define MakeInt(i,dp)		do { \
+#define MakeInt(i, dp)		do { \
                  	 (dp)->dword = D_Integer; \
                          IntVal(*dp) = (word)(i); \
 			 } while (0)
 
-#define MakeNamedVar(x,dp)		do { \
+#define MakeNamedVar(x, dp)		do { \
                  	 (dp)->dword = D_NamedVar; \
                          VarLoc(*dp) = (x); \
 			 } while (0)
@@ -190,7 +187,7 @@
 /*
  * Construct a string descriptor.
  */
-#define MakeStr(s,len,dp)      do { \
+#define MakeStr(s, len, dp)      do { \
                  	 StrLoc(*dp) = (s); \
                          StrLen(*dp) = (len); \
 			 } while (0)
@@ -199,15 +196,51 @@
  * Assign a C string to a descriptor. Assume it is reasonable to use the
  *   descriptor expression more than once, but not the string expression.
  */
-#define CMakeStr(s,dp) do { \
+#define CMakeStr(s, dp) do { \
                  	 StrLoc(*dp) = (s); \
                          StrLen(*dp) = strlen(StrLoc(*dp));  \
 			 } while (0)
 
 /*
+ * Construct a descriptor for a block type.  type is assumed to be a
+ * simple integer expression.
+ */
+#define MakeDesc(type, expr, dp)  do {  \
+                         BlkLoc(*dp) = (union block *)(expr);  \
+                         (*dp).dword = (type);                 \
+                         } while (0)
+
+
+/*
+ * Like MakeDesc, but expr is subject to MemProtect.  The macro
+ * ensures that dp is changed atomically, even in the event that the
+ * memory allocation fails.
+ */
+#define MakeDescMemProtect(type, expr, dp) do {  \
+                         union block *_tmp;  \
+                         MemProtect(_tmp = (union block *)(expr));  \
+                         BlkLoc(*dp) = _tmp;  \
+                         (*dp).dword = (type);  \
+                         } while (0)
+
+/*
+ * Like MakeStr, but expr is subject to MemProtect.  Assuming that len
+ * is a simple non-allocating expression, the macro ensures that dp is
+ * changed atomically, even in the event that the memory allocation
+ * fails.
+ */
+#define MakeStrMemProtect(expr, len, dp)  do {  \
+                         char *_tmp;  \
+                         MemProtect(_tmp = (expr));  \
+                         StrLoc(*dp) = _tmp;  \
+                         StrLen(*dp) = (len);  \
+                         } while (0)
+
+
+/*
  * Make a string descriptor from a string literal.
  */
-#define LitStr(s,dp) do { \
+#define LitStr(s, dp) do { \
                  	 StrLoc(*dp) = (s); \
                          StrLen(*dp) = sizeof(s) - 1;       \
 			 } while (0)

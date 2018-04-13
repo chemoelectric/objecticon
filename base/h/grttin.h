@@ -89,39 +89,6 @@
  */
 #define Protect(notnull,orelse) do {if (!(notnull)) orelse;} while(0)
 
-#define MemProtect(notnull) do {if (!(notnull)) fatalerr(309,NULL);} while(0)
-
-/*
- * A safe way to allocate a block with Expr (using MemProtect), and
- * assign the result to the given descriptor D, also setting its dword
- * to Type.  It is done in such a way that the descriptor is never
- * half-changed, even in the event that the memory allocation fails.
- */
-#begdef MakeDesc(Type, Expr, D)
-   do {
-      BlkLoc(*D) = (union block *)(Expr);
-      (*D).dword = Type;
-   } while (0)
-#enddef
-
-#begdef MakeDescMemProtect(Type, Expr, D)
-   do {
-      union block *_tmp;
-      MemProtect(_tmp = (union block *)(Expr));
-      BlkLoc(*D) = _tmp;
-      (*D).dword = Type;
-   } while (0)
-#enddef
-
-#begdef MakeStrMemProtect(Expr, Len, D)
-   do {
-       char *_tmp;
-       MemProtect(_tmp = (Expr));
-       StrLoc(*D) = _tmp;
-       StrLen(*D) = (Len);
-   } while (0)
-#enddef
-
 #define Unsupported {\
        LitWhy("Function not supported"); \
        fail; \
