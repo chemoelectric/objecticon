@@ -95,8 +95,7 @@ DefConvert(def_ec_int, word, word *, cnv_ec_int, EC_IntAsgn)
  */
 
 #begdef EintAsgn
-   d->dword = D_Integer;
-   IntVal(*d) = df;
+   MakeInt(df, d);
 #enddef
 
 DefConvert(def_eint, word, dptr, cnv_eint, EintAsgn)
@@ -108,8 +107,7 @@ DefConvert(def_eint, word, dptr, cnv_eint, EintAsgn)
  */
 
 #begdef IntAsgn
-   d->dword = D_Integer;
-   IntVal(*d) = df;
+   MakeInt(df, d);
 #enddef
 
 DefConvert(def_int, word, dptr, cnv_int, IntAsgn)
