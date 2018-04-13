@@ -530,8 +530,7 @@ function sort(t, i)
                         tp->listhead->lelem.lslots[0] = ep->telem.tref;
                         tp->listhead->lelem.lslots[1] = ep->telem.tval;
                         d1 = &lp->listhead->lelem.lslots[n++];
-                        d1->dword = D_List;
-                        BlkLoc(*d1) = (union block *)tp;
+                        MakeDesc(D_List, tp, d1);
                         }
                /*
                 * Sort the resulting two-element list using the sorting
@@ -1178,8 +1177,7 @@ struct b_ucs *make_one_char_ucs_block(int i)
     if (i < 0 || i > MAX_CODE_POINT)
         syserr("Bad codepoint to make_one_char_ucs_block");
     n = utf8_seq(i, utf8);
-    MemProtect(StrLoc(s) = alcstr(utf8, n));
-    StrLen(s) = n;
+    MakeStrMemProtect(alcstr(utf8, n), n, &s);
     return make_ucs_block(&s, 1);
 }
 
@@ -1408,8 +1406,7 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
     if (l0)
         syserr("cset_to_ucs_block inconsistent parameters");
 
-    MemProtect(StrLoc(utf8) = reserve(Strings, utf8_len));
-    StrLen(utf8) = utf8_len;
+    MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
 
     /*
      * Same loop again, to build utf8 string.
@@ -1465,8 +1462,7 @@ void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
     /* Ensure we found len chars. */
     if (len)
         syserr("cset_to_string inconsistent parameters");
-    MemProtect(StrLoc(*res) = alcstr(c, out_len));
-    StrLen(*res) = out_len;
+    MakeStrMemProtect(alcstr(c, out_len), out_len, res);
 }
 
 "uchar(i) - produce a ucs consisting of character i."

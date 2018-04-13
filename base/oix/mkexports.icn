@@ -98,13 +98,11 @@ procedure output(o1, o2, o3)
 
    o1.write("struct oisymbols {")
    o2.write("struct oisymbols oiexported = {")
-
    o3.write("/*")
    o3.write("* This file is included by rtt-generated C files when rtt is given")
    o3.write("* the -x option.  It is needed for loadable libraries which can't")
    o3.write("* access oix's symbols directly.")
    o3.write("*/")
-   o3.write("static struct oisymbols *imported;\n\n")
 
    f := open_file("exportsyms.txt") | stopf("Couldn't open export syms file: %w")
    while s := f.read() do {
@@ -120,14 +118,6 @@ procedure output(o1, o2, o3)
    f.close()
    o1.write("};")
    o2.write("};")
-   o3.write("\n\n/* Called by oix when the library is first loaded */")
-   o3.write("#if MSWIN32")
-   o3.write("__declspec(dllexport)")
-   o3.write("#endif")
-   o3.write("void setimported(struct oisymbols *x)")
-   o3.write("{")
-   o3.write("   imported = x;")
-   o3.write("}")
    every (o1 | o2 | o3).close()
 end
 
@@ -152,7 +142,7 @@ procedure main(a)
       writes("\n\n", o1.str(), "\n\n", o2.str(), "\n\n", o3.str())
    } else {
       output(open_header("oisymbols.h", "w"),
-             open_file("oiexported.ri", "w"),
+             open_file("exported.ri", "w"),
              open_header("imported.h", "w"))
       write("OK")
    }

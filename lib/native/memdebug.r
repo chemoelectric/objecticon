@@ -860,8 +860,7 @@ static void outimagey(dptr d, struct frame *frame)
                     /* Find and print the element's table block */
                     while(BlkType(bp) == T_Telem)
                         bp = bp->telem.clink;
-                    tmp.dword = D_Table;
-                    BlkLoc(tmp) = bp;
+                    MakeDesc(D_Table, bp, &tmp);
                     outimagex(&tmp);
                     /* Print the element key */
                     putc('[', out);
@@ -879,8 +878,7 @@ static void outimagey(dptr d, struct frame *frame)
                         bp = bp->lelem.listprev;
                         i += bp->lelem.nused;
                     }
-                    tmp.dword = D_List;
-                    BlkLoc(tmp) = bp->lelem.listprev;
+                    MakeDesc(D_List, bp->lelem.listprev, &tmp);
                     outimagex(&tmp);
                     fprintf(out, "[" WordFmt "]", i);
                     break;
@@ -890,8 +888,7 @@ static void outimagey(dptr d, struct frame *frame)
                     dptr fname;
                     word i = varptr - ObjectBlk(*d).fields;
                     fname =  c->program->Fnames[c->fields[i]->fnum];
-                    tmp.dword = D_Object;
-                    BlkLoc(tmp) = BlkLoc(*d);
+                    MakeDesc(D_Object, BlkLoc(*d), &tmp);
                     outimagex(&tmp);
                     fprintf(out, " . %.*s", StrF(*fname));
                     break;
@@ -901,8 +898,7 @@ static void outimagey(dptr d, struct frame *frame)
                     dptr fname;
                     word i = varptr - RecordBlk(*d).fields;
                     fname = c->program->Fnames[c->fnums[i]];
-                    tmp.dword = D_Record;
-                    BlkLoc(tmp) = BlkLoc(*d);
+                    MakeDesc(D_Record, BlkLoc(*d), &tmp);
                     outimagex(&tmp);
                     fprintf(out," . %.*s", StrF(*fname));
                     break;

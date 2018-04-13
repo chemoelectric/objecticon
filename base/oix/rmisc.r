@@ -665,12 +665,10 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
      methp: {
              fprintf(f, "methp#" UWordFmt "(", MethpBlk(*dp).id);
-             tdp.dword = D_Object;
-             BlkLoc(tdp) = (union block*)MethpBlk(*dp).object;
+             MakeDesc(D_Object, MethpBlk(*dp).object, &tdp);
              outimage1(f, &tdp, noimage, stringlimit, listlimit);
              fprintf(f, ",");
-             tdp.dword = D_Proc;
-             BlkLoc(tdp) = (union block*)MethpBlk(*dp).proc;
+             MakeDesc(D_Proc, MethpBlk(*dp).proc, &tdp);
              outimage1(f, &tdp, noimage, stringlimit, listlimit);
              fprintf(f, ")");
      }
@@ -804,8 +802,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
           * produce "t[s]" where t is the image of the table containing
           *  the element and s is the image of the subscript.
           */
-         tdp.dword = D_Table;
-	 BlkLoc(tdp) = TvtblBlk(*dp).clink;
+         MakeDesc(D_Table, TvtblBlk(*dp).clink, &tdp);
 	 outimage1(f, &tdp, noimage, stringlimit, listlimit);
          putc('[', f);
          tdp = TvtblBlk(*dp).tref;
@@ -841,8 +838,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  /* Find and print the element's table block */
                  while(BlkType(bp) == T_Telem)
                      bp = bp->telem.clink;
-                 tdp.dword = D_Table;
-                 BlkLoc(tdp) = bp;
+                 MakeDesc(D_Table, bp, &tdp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  /* Print the element key */
                  putc('[', f);
@@ -860,8 +856,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                      bp = bp->lelem.listprev;
                      i += bp->lelem.nused;
                  }
-                 tdp.dword = D_List;
-                 BlkLoc(tdp) = bp->lelem.listprev;
+                 MakeDesc(D_List, bp->lelem.listprev, &tdp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  fprintf(f,"[" WordFmt "]", i);
                  break;
@@ -871,8 +866,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  dptr fname;
                  i = varptr - ObjectBlk(*dp).fields;
                  fname =  c->program->Fnames[c->fields[i]->fnum];
-                 tdp.dword = D_Object;
-                 BlkLoc(tdp) = BlkLoc(*dp);
+                 MakeDesc(D_Object, BlkLoc(*dp), &tdp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  fprintf(f," . %.*s", StrF(*fname));
                  break;
@@ -882,8 +876,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  dptr fname;
                  i = varptr - RecordBlk(*dp).fields;
                  fname = c->program->Fnames[c->fnums[i]];
-                 tdp.dword = D_Record;
-                 BlkLoc(tdp) = BlkLoc(*dp);
+                 MakeDesc(D_Record, BlkLoc(*dp), &tdp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  fprintf(f," . %.*s", StrF(*fname));
                  break;
@@ -1148,8 +1141,7 @@ void getimage(dptr dp1, dptr dp2)
          len = 2;  /* quotes */
          while (i-- > 0)
              len += str_charstr(*s++ & 0xff, 0);
-	 MemProtect(StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
          alcstr("\"", 1);
          s = StrLoc(*dp1);
          i = StrLen(*dp1);
@@ -1169,8 +1161,7 @@ void getimage(dptr dp1, dptr dp2)
              j = utf8_iter(&s);
              len += ucs_charstr(j, 0);
          }
-	 MemProtect(StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
 
          alcstr("u\"", 2);
              
@@ -1197,8 +1188,7 @@ void getimage(dptr dp1, dptr dp2)
      class: {
            /* produce "class " + the class name */
          len = 6 + StrLen(*ClassBlk(*dp1).name);
-	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
          alcstr("class ", 6);
          alcstr(StrLoc(*ClassBlk(*dp1).name), StrLen(*ClassBlk(*dp1).name));
        }
@@ -1206,8 +1196,7 @@ void getimage(dptr dp1, dptr dp2)
      constructor: {
           /* produce "constructor " + the type name */
          len = 12 + StrLen(*ConstructorBlk(*dp1).name);
-	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
          alcstr("constructor ", 12);
          alcstr(StrLoc(*ConstructorBlk(*dp1).name), StrLen(*ConstructorBlk(*dp1).name));
        }
@@ -1225,10 +1214,7 @@ void getimage(dptr dp1, dptr dp2)
             if (dlen >= MaxDigits) {
                sprintf(sbuf,"integer(~10^" WordFmt ")", dlen);
 	       len = strlen(sbuf);
-               MemProtect(StrLoc(*dp2) = alcstr(sbuf,len));
-
-
-               StrLen(*dp2) = len;
+               MakeStrMemProtect(alcstr(sbuf,len), len, dp2);
                }
 	    else bigtos(dp1,dp2);
 	    }
@@ -1266,8 +1252,7 @@ void getimage(dptr dp1, dptr dp2)
              }
          }
 
-	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
          alcstr("'", 1);
          for (i = 0; i < CsetBlk(*dp1).n_ranges; ++i) {
              int n;
@@ -1299,8 +1284,7 @@ void getimage(dptr dp1, dptr dp2)
              struct b_class *field_class = field->defining_class;
              dptr field_name = field_class->program->Fnames[field->fnum];
              len = StrLen(*field_class->name) + StrLen(*field_name) + 8;
-             MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-             StrLen(*dp2) = len;
+             MakeStrMemProtect(reserve(Strings, len), len, dp2);
              /* No need to refresh pointers, everything is static data */
              alcstr("method ", 7);
              alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
@@ -1314,8 +1298,7 @@ void getimage(dptr dp1, dptr dp2)
              if (kind == Operator) {
                  char *arity = op_arity[ProcBlk(*dp1).nparam];
                  len = strlen(type0) + 1 + strlen(arity) + 1 + StrLen(*ProcBlk(*dp1).name);
-                 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-                 StrLen(*dp2) = len;
+                 MakeStrMemProtect(reserve(Strings, len), len, dp2);
                  alcstr(type0, strlen(type0));
                  alcstr(" ", 1);
                  alcstr(arity, strlen(arity));
@@ -1323,8 +1306,7 @@ void getimage(dptr dp1, dptr dp2)
                  alcstr(StrLoc(*ProcBlk(*dp1).name), StrLen(*ProcBlk(*dp1).name));
              } else {
                  len = strlen(type0) + 1 + StrLen(*ProcBlk(*dp1).name);
-                 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-                 StrLen(*dp2) = len;
+                 MakeStrMemProtect(reserve(Strings, len), len, dp2);
                  alcstr(type0, strlen(type0));
                  alcstr(" ", 1);
                  alcstr(StrLoc(*ProcBlk(*dp1).name), StrLen(*ProcBlk(*dp1).name));
@@ -1340,8 +1322,7 @@ void getimage(dptr dp1, dptr dp2)
           */
          sprintf(sbuf, "list#" UWordFmt "(" WordFmt ")", ListBlk(*dp1).id, ListBlk(*dp1).size);
          len = strlen(sbuf);
-         MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
-         StrLen(*dp2) = len;
+         MakeStrMemProtect(alcstr(sbuf, len), len, dp2); 
          }
 
       table: {
@@ -1352,8 +1333,7 @@ void getimage(dptr dp1, dptr dp2)
           */
          sprintf(sbuf, "table#" UWordFmt "(" WordFmt ")", TableBlk(*dp1).id, TableBlk(*dp1).size);
          len = strlen(sbuf);
-         MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
-         StrLen(*dp2) = len;
+         MakeStrMemProtect(alcstr(sbuf, len), len, dp2);
          }
 
       set: {
@@ -1362,8 +1342,7 @@ void getimage(dptr dp1, dptr dp2)
           */
          sprintf(sbuf, "set#" UWordFmt "(" WordFmt ")", SetBlk(*dp1).id, SetBlk(*dp1).size);
          len = strlen(sbuf);
-         MemProtect(StrLoc(*dp2) = alcstr(sbuf,len));
-         StrLen(*dp2) = len;
+         MakeStrMemProtect(alcstr(sbuf,len), len, dp2);
          }
 
       record: {
@@ -1375,8 +1354,7 @@ void getimage(dptr dp1, dptr dp2)
          struct b_constructor *rec_const = RecordBlk(*dp1).constructor;
          sprintf(sbuf, "#" UWordFmt "(" WordFmt ")", RecordBlk(*dp1).id, rec_const->n_fields);
          len = 7 + strlen(sbuf) + StrLen(*rec_const->name);
-	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
          /* No need to refresh pointer, rec_const is static */
          alcstr("record ", 7);
          alcstr(StrLoc(*rec_const->name),StrLen(*rec_const->name));
@@ -1389,16 +1367,13 @@ void getimage(dptr dp1, dptr dp2)
           *  "methp#n(object image,method image)"
           */
          tended struct descrip td1, td2, td3;
-         td1.dword = D_Object;
-         BlkLoc(td1) = (union block*)MethpBlk(*dp1).object;
+         MakeDesc(D_Object, MethpBlk(*dp1).object, &td1);
          getimage(&td1, &td2);
-         td1.dword = D_Proc;
-         BlkLoc(td1) = (union block*)MethpBlk(*dp1).proc;
+         MakeDesc(D_Proc, MethpBlk(*dp1).proc, &td1);
          getimage(&td1, &td3);
          sprintf(sbuf, "methp#" UWordFmt "(", MethpBlk(*dp1).id);
          len = strlen(sbuf) + StrLen(td2) + 1 + StrLen(td3) + 1;
-         MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
+         MakeStrMemProtect(reserve(Strings, len), len, dp2);
          alcstr(sbuf, strlen(sbuf));
          alcstr(StrLoc(td2),StrLen(td2));
          alcstr(",", 1);
@@ -1416,14 +1391,12 @@ void getimage(dptr dp1, dptr dp2)
          if (is:null(td1)) {
              sprintf(sbuf, "weakref#" UWordFmt "()", WeakrefBlk(*dp1).id);
              len = strlen(sbuf);
-             MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
-             StrLen(*dp2) = len;
+             MakeStrMemProtect(alcstr(sbuf, len), len, dp2);
          } else {
              sprintf(sbuf, "weakref#" UWordFmt "(", WeakrefBlk(*dp1).id);
              getimage(&td1, &td2);
              len = strlen(sbuf) + StrLen(td2) + 1;
-             MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-             StrLen(*dp2) = len;
+             MakeStrMemProtect(reserve(Strings, len), len, dp2);
              alcstr(sbuf, strlen(sbuf));
              alcstr(StrLoc(td2),StrLen(td2));
              alcstr(")", 1);
@@ -1439,8 +1412,7 @@ void getimage(dptr dp1, dptr dp2)
            struct b_class *obj_class = ObjectBlk(*dp1).class;   
            sprintf(sbuf, "#" UWordFmt "(" WordFmt ")", ObjectBlk(*dp1).id, obj_class->n_instance_fields);
            len = 7 + strlen(sbuf) + StrLen(*obj_class->name);
-           MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-           StrLen(*dp2) = len;
+           MakeStrMemProtect(reserve(Strings, len), len, dp2);
            /* No need to refresh pointer, obj_class is static */
            alcstr("object ", 7);
            alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
@@ -1456,8 +1428,7 @@ void getimage(dptr dp1, dptr dp2)
 
          sprintf(sbuf, "co-expression#" UWordFmt, CoexprBlk(*dp1).id);
          len = strlen(sbuf);
-         MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
-         StrLen(*dp2) = len;
+         MakeStrMemProtect(alcstr(sbuf, len), len, dp2);
          }
 
       default:
@@ -1603,8 +1574,7 @@ static void keyref(dptr dp1, dptr dp2)
     getimage(&tr, &td);
 
     len = strlen(sbuf) + StrLen(td) + 1;
-    MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-    StrLen(*dp2) = len;
+    MakeStrMemProtect(reserve(Strings, len), len, dp2);
     alcstr(sbuf, strlen(sbuf));
     alcstr(StrLoc(td), StrLen(td));
     alcstr("]", 1);
@@ -1629,8 +1599,7 @@ int getname(dptr dp1, dptr dp2)
             tdp1 = TvsubsBlk(*dp1).ssvar;
             getname(&tdp1, &tdp2);
             len = StrLen(tdp2) + strlen(sbuf);
-            MemProtect(StrLoc(*dp2) = reserve(Strings, len));
-            StrLen(*dp2) = len;
+            MakeStrMemProtect(reserve(Strings, len), len, dp2);
             alcstr(StrLoc(tdp2), StrLen(tdp2));
             alcstr(sbuf, strlen(sbuf));
         }
@@ -1709,8 +1678,7 @@ int getname(dptr dp1, dptr dp2)
                 struct b_class *c = cf->defining_class;
                 dptr fname = c->program->Fnames[cf->fnum];
                 len = 6 + StrLen(*c->name) + 1 + StrLen(*fname);
-                MemProtect(StrLoc(*dp2) = reserve(Strings, len));
-                StrLen(*dp2) = len;
+                MakeStrMemProtect(reserve(Strings, len), len, dp2);
                 alcstr("class ", 6);
                 alcstr(StrLoc(*c->name), StrLen(*c->name));
                 alcstr(".", 1);
@@ -1746,8 +1714,7 @@ int getname(dptr dp1, dptr dp2)
                     sprintf(sbuf,"list#" UWordFmt "[" WordFmt "]",
                             bp->lelem.listprev->list.id, i);
                     i = strlen(sbuf);
-                    MemProtect(StrLoc(*dp2) = alcstr(sbuf,i));
-                    StrLen(*dp2) = i;
+                    MakeStrMemProtect(alcstr(sbuf,i), i, dp2);
                     break;
                 case T_Record: { 		/* record */
                     struct b_constructor *c = RecordBlk(*dp1).constructor;
@@ -1756,8 +1723,7 @@ int getname(dptr dp1, dptr dp2)
                     fname = c->program->Fnames[c->fnums[i]];
                     sprintf(sbuf,"#" UWordFmt "", RecordBlk(*dp1).id);
                     len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
-                    MemProtect(StrLoc(*dp2) = reserve(Strings, len));
-                    StrLen(*dp2) = len;
+                    MakeStrMemProtect(reserve(Strings, len), len, dp2);
                     alcstr("record ", 7);
                     alcstr(StrLoc(*c->name), StrLen(*c->name));
                     alcstr(sbuf, strlen(sbuf));
@@ -1772,8 +1738,7 @@ int getname(dptr dp1, dptr dp2)
                     fname =  c->program->Fnames[c->fields[i]->fnum];
                     sprintf(sbuf,"#" UWordFmt "", ObjectBlk(*dp1).id);
                     len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
-                    MemProtect(StrLoc(*dp2) = reserve(Strings, len));
-                    StrLen(*dp2) = len;
+                    MakeStrMemProtect(reserve(Strings, len), len, dp2);
                     alcstr("object ", 7);
                     alcstr(StrLoc(*c->name), StrLen(*c->name));
                     alcstr(sbuf, strlen(sbuf));
@@ -1848,7 +1813,6 @@ void cstr2string(char *s, dptr d)
  */
 int string2ucs(dptr str, dptr res)
 {
-    tended struct b_ucs *p;
     char *s1, *e1;
     word n = 0;
 
@@ -1861,9 +1825,7 @@ int string2ucs(dptr str, dptr res)
         if (i < 0 || i > MAX_CODE_POINT)
             return 0;
     }
-    p = make_ucs_block(str, n);
-    res->dword = D_Ucs;
-    BlkLoc(*res) = (union block *)p;
+    MakeDesc(D_Ucs, make_ucs_block(str, n), res);
     return 1;
 }
 

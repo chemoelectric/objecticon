@@ -60,8 +60,7 @@ DefConvert(def_c_str, char *, dptr, cnv_c_str, C_StrAsgn)
  */
 
 #begdef CsetAsgn
-   d->dword = D_Cset;
-   BlkLoc(*d) = (union block *)df;
+  MakeDesc(D_Cset, df, d);
 #enddef
 
 DefConvert(def_cset, struct b_cset *, dptr, cnv_cset, CsetAsgn)
@@ -73,8 +72,7 @@ DefConvert(def_cset, struct b_cset *, dptr, cnv_cset, CsetAsgn)
  */
 
 #begdef UcsAsgn
-   d->dword = D_Ucs;
-   BlkLoc(*d) = (union block *)df;
+  MakeDesc(D_Ucs, df, d);
 #enddef
 
 DefConvert(def_ucs, struct b_ucs *, dptr, cnv_ucs, UcsAsgn)

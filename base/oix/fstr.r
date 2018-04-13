@@ -86,8 +86,7 @@ function detab(s,i[n])
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
 
           /*
            * Do the copy
@@ -186,8 +185,7 @@ function detab(s,i[n])
           /*
            * Make a descriptor for the result string.
            */
-          MemProtect(StrLoc(result) = alcstr(NULL, len));
-          StrLen(result) = len;
+          MakeStrMemProtect(alcstr(NULL, len), len, &result);
 
           /*
            * Copy the string, expanding tabs.
@@ -350,8 +348,7 @@ function entab(s,i[n])
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8); 
 
           /*
            * Do the copy
@@ -507,8 +504,7 @@ function entab(s,i[n])
           /*
            * Make a descriptor for the result string.
            */
-          MemProtect(StrLoc(result) = alcstr(NULL, len));
-          StrLen(result) = len;
+          MakeStrMemProtect(alcstr(NULL, len), len, &result); 
 
           /*
            * Copy the string, looking for runs of spaces.
@@ -732,8 +728,7 @@ function map(s1,s2,s3)
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8); 
 
           /*
            * Build the result
@@ -811,8 +806,7 @@ function map(s1,s2,s3)
            *  string, but specify no value for it.
            */
           slen = StrLen(s1);
-          MemProtect(StrLoc(result) = alcstr(NULL, slen));
-          StrLen(result) = slen;
+          MakeStrMemProtect(alcstr(NULL, slen), slen, &result); 
           str1 = StrLoc(s1);
           str2 = StrLoc(result);
 
@@ -866,8 +860,7 @@ function repl(s,n)
           /*
            * Make a descriptor for the replicated utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
 
           /*
            * Fill the allocated area with copies of s.
@@ -935,8 +928,7 @@ function reverse(s)
            tended struct descrip utf8;
            char *p, *q;   /* Don't need to be tended */
            word i;
-           MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(UcsBlk(s).utf8)));
-           StrLen(utf8) = StrLen(UcsBlk(s).utf8);
+           MakeStrMemProtect(alcstr(NULL, StrLen(UcsBlk(s).utf8)), StrLen(UcsBlk(s).utf8), &utf8);
 
            p = StrLoc(UcsBlk(s).utf8);
            q = StrLoc(utf8) + StrLen(utf8);
@@ -958,8 +950,7 @@ function reverse(s)
             * Allocate a copy of s.
             */
            slen = StrLen(s);
-           MemProtect(StrLoc(result) = alcstr(StrLoc(s), slen));
-           StrLen(result) = slen;
+           MakeStrMemProtect(alcstr(StrLoc(s), slen), slen, &result);
 
            /*
             * Point floc at the start of s and lloc at the end of s.  Work floc
@@ -1011,10 +1002,8 @@ function left(s1,n,s2)
           /*
            * The padding string is null; make it a blank.
            */
-          if (UcsBlk(s2).length == 0) {
-              s2.dword = D_Ucs;
-              BlkLoc(s2) = (union block *)blank_ucs;
-          }
+          if (UcsBlk(s2).length == 0)
+              MakeDesc(D_Ucs, blank_ucs, &s2);
 
           /*
            * If we are extracting the left part of a large string (not padding)
@@ -1038,9 +1027,7 @@ function left(s1,n,s2)
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
-
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
           alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
           for (i = 0; i < whole_len; ++i)
@@ -1147,10 +1134,8 @@ function right(s1,n,s2)
           /*
            * The padding string is null; make it a blank.
            */
-          if (UcsBlk(s2).length == 0) {
-              s2.dword = D_Ucs;
-              BlkLoc(s2) = (union block *)blank_ucs;
-          }
+          if (UcsBlk(s2).length == 0)
+              MakeDesc(D_Ucs, blank_ucs, &s2);
 
           /*
            * If we are extracting the right part of a large string (not padding)
@@ -1176,9 +1161,7 @@ function right(s1,n,s2)
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
-
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
           for (i = 0; i < whole_len; ++i)
               alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
@@ -1284,10 +1267,8 @@ function center(s1,n,s2)
           /*
            * The padding string is null; make it a blank.
            */
-          if (UcsBlk(s2).length == 0) {
-              s2.dword = D_Ucs;
-              BlkLoc(s2) = (union block *)blank_ucs;
-          }
+          if (UcsBlk(s2).length == 0)
+              MakeDesc(D_Ucs, blank_ucs, &s2);
 
           /*
            * If we are extracting the center of a large string (not padding),
@@ -1328,8 +1309,7 @@ function center(s1,n,s2)
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
-          StrLen(utf8) = utf8_size;
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
 
           for (i = 0; i < whole_left_len; ++i)
               alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));

@@ -404,10 +404,8 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
             if (wp < 256) {
                 StrLen(curr) = 1;
                 StrLoc(curr) = &allchars[wp];
-            } else {
-                curr.dword = D_Ucs;
-                BlkLoc(curr) = (union block *)make_one_char_ucs_block(wp);
-            }
+            } else
+                MakeDesc(D_Ucs, make_one_char_ucs_block(wp), &curr);
             break;
         case WM_KEYUP:
         case WM_SYSKEYUP:

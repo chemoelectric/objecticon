@@ -1,8 +1,7 @@
 package io
 
 import
-   util(error, check_flag, check_positive_int, save_why, 
-        env_string, HasMode),
+   util(error, check_flag, check_positive_int, save_why, HasMode),
 $ifdef _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
@@ -11,6 +10,10 @@ $else
    posix(System),
 $endif
    ipl.strings(replace)
+
+$ifdef _UNIX
+import util(env_string)
+$endif
 
 #
 # This is the top-level stream class.  It is not instantiated
@@ -1227,6 +1230,7 @@ $endif
    # Succeed if this `FileStream` represents a tty supporting links.
    #
    public is_flowterm_tty()
+$ifdef _UNIX
       static flowterm
       initial
          flowterm := integer(env_string("FLOWTERM"))
@@ -1234,6 +1238,7 @@ $endif
          1 : isatty()
          2 : &null
       }
+$endif
    end
 
    public native in(n)

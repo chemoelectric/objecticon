@@ -572,10 +572,8 @@ void pollevent(wbp w)
                      * keys, function keys, etc, and are returned as
                      * integers rather than ucs strings. */
                     MakeInt(arg, &d);
-                } else {
-                    d.dword = D_Ucs;
-                    BlkLoc(d) = (union block *)make_one_char_ucs_block(arg);
-                }
+                } else
+                    MakeDesc(D_Ucs, make_one_char_ucs_block(arg), &d);
 
                 qevent(ws, &d, 
                        mx,

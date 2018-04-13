@@ -44,7 +44,4 @@
 #define I_Some    1             /* import given symbols, eg gui(A,B,C) */
 #define I_Except  2             /* import all but given symbols eg gui -(A,B,C) */
 
-
-#define MemProtect(notnull) do {if (!(notnull)) quit("Out of memory");} while(0)
-
 #endif

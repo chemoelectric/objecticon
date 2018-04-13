@@ -192,8 +192,7 @@ void tail_invoke_frame(struct frame *f)
                     struct descrip t;
                     /* Some info for ttrace... */
                     curr_op = Op_Invoke;
-                    t.dword = D_Proc;
-                    BlkLoc(t) = (union block *)pf->proc;
+                    MakeDesc(D_Proc, pf->proc, &t);
                     xexpr = &t;
                     err_msg(311, NULL);
                     break;
@@ -491,8 +490,7 @@ static void do_create()
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
     coex->curr_pf = coex->base_pf;
     coex->sp = (struct frame *)coex->base_pf;
-    lhs->dword = D_Coexpr;
-    BlkLoc(*lhs) = (union block *)coex;
+    MakeDesc(D_Coexpr, coex, lhs);
     EVValD(lhs, E_Cocreate);
 }
 
@@ -634,8 +632,7 @@ function coact(underef val, ce, activator)
          * Target defaults to &source.
          */
         if (is:null(ce)) {
-            ce.dword = D_Coexpr;
-            BlkLoc(ce) = (union block *)k_current->activator;
+            MakeDesc(D_Coexpr, k_current->activator, &ce);
         } else if (!is:coexpr(ce))
             runerr(118, ce);
 
@@ -709,8 +706,7 @@ function cofail(ce, activator)
          * Target defaults to &source.
          */
         if (is:null(ce)) {
-            ce.dword = D_Coexpr;
-            BlkLoc(ce) = (union block *)k_current->activator;
+            MakeDesc(D_Coexpr, k_current->activator, &ce);
         } else if (!is:coexpr(ce))
             runerr(118, ce);
 
@@ -769,8 +765,7 @@ operator @ activate(underef val, ce)
         push_frame((struct frame *)pf);
         pf->tmp[0] = val;
         pf->tmp[1] = ce;
-        pf->tmp[2].dword = D_Coexpr;
-        BlkLoc(pf->tmp[2]) = (union block *)k_current;
+        MakeDesc(D_Coexpr, k_current, &pf->tmp[2]);
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -779,8 +774,7 @@ end
 static void fatalerr_139()
 {
     tended struct descrip d;
-    d.dword = D_Coexpr;
-    BlkLoc(d) = (union block *)k_current;
+    MakeDesc(D_Coexpr, k_current, &d);
     fatalerr(139, &d);
 }
 
@@ -871,8 +865,7 @@ static void do_tcaseinit(void)
 {
     dptr tbl = (dptr)GetAddr;
     word d = GetWord;
-    MemProtect(BlkLoc(*tbl) = hmake(T_Table, 0, d));
-    tbl->dword = D_Table;
+    create_table(0, d, tbl);
     MakeInt(d, &TableBlk(*tbl).defvalue);
 }
 

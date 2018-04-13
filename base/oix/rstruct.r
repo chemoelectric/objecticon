@@ -78,8 +78,7 @@ void f(dptr dp1, dptr dp2, word i, word size)
    /*
     * Fix type and location fields for the new list.
     */
-   dp2->dword = D_List;
-   BlkLoc(*dp2) = (union block *) lp2;
+   MakeDesc(D_List, lp2, dp2);
    EVValD(dp2, e);
    }
 #enddef

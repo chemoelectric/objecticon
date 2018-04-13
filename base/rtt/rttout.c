@@ -3220,7 +3220,7 @@ struct node *n;
 
        case TokFunction:
 #if MSWIN32
-           if (imported)
+           if (importing)
                fprintf(out_file, "FncBlockDLL(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
            else
                fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
@@ -3417,8 +3417,22 @@ void prologue()
    fprintf(out_file, " *   %s: %s\n", progname, Version);
    fprintf(out_file, " */\n");
    fprintf(out_file, "#include \"%s\"\n\n", inclname);
-   if (imported)
+   if (importing) {
        fprintf(out_file, "#include \"%s\"\n\n", importedhname);
+       if (subsid)
+           fprintf(out_file, "extern struct oisymbols *imported;\n\n");
+       else {
+           fprintf(out_file, "struct oisymbols *imported;\n\n");
+           fprintf(out_file, "/* Called by oix when the library is first loaded */\n");
+#if MSWIN32
+           fprintf(out_file, "__declspec(dllexport)\n");
+#endif
+           fprintf(out_file, "void setimported(struct oisymbols *x)\n");
+           fprintf(out_file, "{\n");
+           fprintf(out_file, "   imported = x;\n");
+           fprintf(out_file, "}\n");
+       }
+   }
 }
 
 /*

@@ -53,10 +53,10 @@ operator || cat(x, y)
           *  to the end of the string space.
           */
          else {
-             MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(utf8_x) + StrLen(utf8_y)));
+             MakeStrMemProtect(alcstr(NULL, StrLen(utf8_x) + StrLen(utf8_y)), 
+                               StrLen(utf8_x) + StrLen(utf8_y), &utf8);
              memcpy(StrLoc(utf8), StrLoc(utf8_x), StrLen(utf8_x));
              memcpy(StrLoc(utf8) + StrLen(utf8_x), StrLoc(utf8_y), StrLen(utf8_y));
-             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
          }
          return ucs(make_ucs_block(&utf8, UcsBlk(x).length + UcsBlk(y).length));
      } else {
@@ -111,14 +111,10 @@ operator || cat(x, y)
           * Otherwise, allocate space for x and y, and copy them
           *  to the end of the string space.
           */
-         MemProtect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)));
+         MakeStrMemProtect(alcstr(NULL, StrLen(x) + StrLen(y)), StrLen(x) + StrLen(y), &result);
          memcpy(StrLoc(result), StrLoc(x), StrLen(x));
          memcpy(StrLoc(result) + StrLen(x), StrLoc(y), StrLen(y));
 
-         /*
-          *  Set the length of the result and return.
-          */
-         StrLen(result) = StrLen(x) + StrLen(y);
          return result;
      }
    }
