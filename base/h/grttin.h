@@ -57,9 +57,8 @@
 
 #begdef Irunerr(n, v)
    do {
+      MakeInt(v, &t_errorvalue);
       t_errornumber = n;
-      IntVal(t_errorvalue) = v;
-      t_errorvalue.dword = D_Integer;
       t_have_val = 1;
       runerr(0);
    } while (0)
@@ -76,8 +75,7 @@
 
 #begdef Blkrunerr(n, bp, type)
    do {
-      BlkLoc(t_errorvalue) = (union block*)(bp);
-      t_errorvalue.dword = type;
+      MakeDesc(type, bp, &t_errorvalue);
       t_errornumber = n;
       t_have_val = 1;
       runerr(0);

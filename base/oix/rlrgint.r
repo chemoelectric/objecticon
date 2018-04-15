@@ -167,12 +167,10 @@ static void mkdesc(struct b_bignum *x, dptr dx)
             val = (val << DigitBits) - x->digits[i];
         if (!x->sign)
             val = -val;
-        dx->dword = D_Integer;
-        IntVal(*dx) = val;
+        MakeInt(val, dx);
     }
     else {
-        dx->dword = D_Lrgint;
-        BlkLoc(*dx) = (union block *)x;
+        MakeDesc(D_Lrgint, x, dx);
     }
 }
 
@@ -209,8 +207,7 @@ static void itobig(word i, struct b_bignum *x, dptr dx)
         i = hi(i);
     }
 
-    dx->dword = D_Lrgint;
-    BlkLoc(*dx) = (union block *)x;
+    MakeDesc(D_Lrgint, x, dx);
 }
 
 /*

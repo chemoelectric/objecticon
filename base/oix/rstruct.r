@@ -167,8 +167,7 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
          if (prev == NULL)
              seg->hslots[slotnum] = (union block *)dst;
          }
-   dp2->dword = tcode | D_Typecode | F_Ptr;
-   BlkLoc(*dp2) = dst;
+   MakeDesc(tcode | D_Typecode | F_Ptr, dst, dp2);
    if (TooSparse(dst))
       hshrink(dst);
    }
