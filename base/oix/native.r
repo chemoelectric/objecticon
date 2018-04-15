@@ -3746,7 +3746,7 @@ static int lookup_proc_local(struct p_proc *proc, dptr query)
         return -1;
     }
 
-    if (query->dword == D_Integer) {
+    if (IsCInteger(*query)) {
         word i = cvpos_item(IntVal(*query), nf);
         if (i == CvtFail)
             return -1;

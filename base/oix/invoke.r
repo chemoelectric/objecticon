@@ -745,10 +745,8 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
               class0->init_field &&       /* .. and must be in init() method */
               (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
         {
-            if (lhs) {
-                lhs->dword = D_NamedVar;
-                VarLoc(*lhs) = dp;
-            }
+            if (lhs)
+                MakeVarDesc(D_NamedVar, dp, lhs);
         } else if (ac == Succeeded || (cf->flags & M_Readable)) {
             if (lhs)
                 *lhs = *dp;

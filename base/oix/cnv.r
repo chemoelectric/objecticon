@@ -38,7 +38,7 @@ int cnv_c_dbl(dptr s, double *d)
  */
 int cnv_c_int(dptr s, word *d)
 {
-    if (s->dword == D_Integer) {
+    if (IsCInteger(*s)) {
         *d = IntVal(*s);
         return 1;
     } else {
@@ -94,7 +94,7 @@ int cnv_str_or_ucs(dptr s, dptr d)
  */
 int cnv_ec_int(dptr s, word *d)
 {
-    if (s->dword == D_Integer) {
+    if (IsCInteger(*s)) {
         *d = IntVal(*s);
         return 1;
     } else {
@@ -182,7 +182,7 @@ static int cnv_c_dbl_impl(dptr s, double *d)
          }
       integer: {
 
-         if (Type(*s) == T_Lrgint) {
+         if (IsLrgint(*s)) {
             if (bigtoreal(s, d) != Succeeded)
                return 0;
          } else
@@ -232,7 +232,7 @@ static int cnv_c_int_impl(dptr s, word *d)
 {
    tended struct descrip tmp;
 
-   if (cnv_int_impl(s, &tmp) && Type(tmp) == T_Integer) {
+   if (cnv_int_impl(s, &tmp) && IsCInteger(tmp)) {
        *d = IntVal(tmp);
        return 1;
    } else
@@ -408,7 +408,7 @@ static int cnv_ec_int_impl(dptr s, word *d)
 {
    tended struct descrip tmp;
 
-   if (cnv_eint_impl(s, &tmp) && Type(tmp) == T_Integer) {
+   if (cnv_eint_impl(s, &tmp) && IsCInteger(tmp)) {
        *d = IntVal(tmp);
        return 1;
    } else
@@ -561,7 +561,7 @@ static int cnv_str_impl(dptr s, dptr d)
        }
       integer: {
 
-         if (Type(*s) == T_Lrgint) {
+         if (IsLrgint(*s)) {
 	    bigtos(s,d);
             return 1;
           }

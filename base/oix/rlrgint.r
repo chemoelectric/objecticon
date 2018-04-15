@@ -264,7 +264,7 @@ word bigradix(int sign,                      /* '-' or not */
 
     /* put value into dx and return the type */
     mkdesc(b, &dx);
-    if (Type(dx) == T_Lrgint)
+    if (IsLrgint(dx))
         result->big = &BignumBlk(dx);
     else
         result->integer = IntVal(dx);
@@ -450,7 +450,7 @@ void bigadd(dptr da, dptr db, dptr dx)
     word alen, blen;
     word c;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         a = &BignumBlk(*da);
@@ -537,9 +537,9 @@ void bigadd(dptr da, dptr db, dptr dx)
         }
         mkdesc(x, dx);
     }
-    else if (Type(*da) == T_Lrgint)    /* bignum + integer */
+    else if (IsLrgint(*da))    /* bignum + integer */
         bigaddi(da, IntVal(*db), dx);
-    else if (Type(*db) == T_Lrgint)    /* integer + bignum */
+    else if (IsLrgint(*db))    /* integer + bignum */
         bigaddi(db, IntVal(*da), dx);
     else {                             /* integer + integer */
         word irslt = add(IntVal(*da), IntVal(*db));
@@ -566,7 +566,7 @@ void bigsub(dptr da, dptr db, dptr dx)
     word alen, blen;
     word c;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         a = &BignumBlk(*da);
@@ -653,9 +653,9 @@ void bigsub(dptr da, dptr db, dptr dx)
         }
         mkdesc(x, dx);
     }
-    else if (Type(*da) == T_Lrgint)     /* bignum - integer */
+    else if (IsLrgint(*da))     /* bignum - integer */
         bigsubi(da, IntVal(*db), dx);
-    else if (Type(*db) == T_Lrgint) {   /* integer - bignum */
+    else if (IsLrgint(*db)) {   /* integer - bignum */
         itobig(IntVal(*da), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(td));
         blen = LEN(&BignumBlk(*db));
@@ -739,7 +739,7 @@ void bigmul(dptr da, dptr db, dptr dx)
     struct b_bignum *x;
     word alen, blen;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         a = &BignumBlk(*da);
@@ -752,9 +752,9 @@ void bigmul(dptr da, dptr db, dptr dx)
         x->sign = a->sign ^ b->sign;
         mkdesc(x, dx);
     }
-    else if (Type(*da) == T_Lrgint)    /* bignum * integer */
+    else if (IsLrgint(*da))    /* bignum * integer */
         bigmuli(da, IntVal(*db), dx);
-    else if (Type(*db) == T_Lrgint)    /* integer * bignum */
+    else if (IsLrgint(*db))    /* integer * bignum */
         bigmuli(db, IntVal(*da), dx);
     else {                             /* integer * integer */
         word irslt = mul(IntVal(*da), IntVal(*db));
@@ -777,7 +777,7 @@ void bigdiv(dptr da, dptr db, dptr dx)
     struct descrip td;
     union word_b_bignum tdigits;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {      /* bignum / bignum */
+    if (IsLrgint(*da) && IsLrgint(*db)) {      /* bignum / bignum */
         tended struct b_bignum *a, *b, *x, *tu, *tv;
         word alen, blen;
         alen = LEN(&BignumBlk(*da));
@@ -805,9 +805,9 @@ void bigdiv(dptr da, dptr db, dptr dx)
         x->sign = a->sign ^ b->sign;
         mkdesc(x, dx);
     }
-    else if (Type(*da) == T_Lrgint)    /* bignum / integer */
+    else if (IsLrgint(*da))    /* bignum / integer */
         bigdivi(da, IntVal(*db), dx);
-    else if (Type(*db) == T_Lrgint) {   /* integer / bignum */
+    else if (IsLrgint(*db)) {   /* integer / bignum */
         /* Put *da into large integer format, recurse */
         itobig(IntVal(*da), &tdigits.blk, &td);
         bigdiv(&td, db, dx);
@@ -831,7 +831,7 @@ void bigmod(dptr da, dptr db, dptr dx)
     struct descrip td;
     union word_b_bignum tdigits;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {      /* bignum % bignum */
+    if (IsLrgint(*da) && IsLrgint(*db)) {      /* bignum % bignum */
         tended struct b_bignum *a, *b, *x, *temp, *tu, *tv;
         word alen, blen;
         alen = LEN(&BignumBlk(*da));
@@ -863,9 +863,9 @@ void bigmod(dptr da, dptr db, dptr dx)
         x->sign = a->sign;
         mkdesc(x, dx);
     }
-    else if (Type(*da) == T_Lrgint)    /* bignum % integer */
+    else if (IsLrgint(*da))    /* bignum % integer */
         bigmodi(da, IntVal(*db), dx);
-    else if (Type(*db) == T_Lrgint) {   /* integer % bignum */
+    else if (IsLrgint(*db)) {   /* integer % bignum */
         /* Put *da into large integer format, recurse */
         itobig(IntVal(*da), &tdigits.blk, &td);
         bigmod(&td, db, dx);
@@ -886,7 +886,7 @@ void bigmod(dptr da, dptr db, dptr dx)
 
 void bigneg(dptr da, dptr dx)
 {
-    if (Type(*da) == T_Lrgint) {
+    if (IsLrgint(*da)) {
         BignumBlk(*da).sign ^= 1;       /* Temporarily change the sign */
         cpbignum(da, dx);
         BignumBlk(*da).sign ^= 1;       /* Change it back */
@@ -909,12 +909,12 @@ void bigneg(dptr da, dptr dx)
 int bigpow(dptr da, dptr db, dptr dx)
 {
 
-    if (Type(*db) == T_Lrgint) {
+    if (IsLrgint(*db)) {
         struct b_bignum *b;
 
         b = &BignumBlk(*db);
 
-        if (Type(*da) == T_Lrgint) {
+        if (IsLrgint(*da)) {
             if ( b->sign ) {
                 /* bignum ^ -bignum = 0 */
                 *dx = zerodesc;
@@ -972,7 +972,7 @@ int bigpow(dptr da, dptr db, dptr dx)
         }
         return Succeeded;
     }
-    else if (Type(*da) == T_Lrgint)    /* bignum ^ integer */
+    else if (IsLrgint(*da))    /* bignum ^ integer */
         return bigpowi(da, IntVal(*db), dx);
     else                               /* integer ^ integer */
         return bigpowii(IntVal(*da), IntVal(*db), dx);
@@ -987,7 +987,7 @@ int bigpowri(double a, dptr db, dptr dx)
 {
     double retval;
 
-    if (Type(*db) == T_Integer) {   /* real ^ integer */
+    if (IsCInteger(*db)) {   /* real ^ integer */
         word n = IntVal(*db);
         if (a == 0.0 && n < 0) 
             ReturnErrNum(204, Error);
@@ -1061,7 +1061,7 @@ void bigand(dptr da, dptr db, dptr dx)
     struct descrip td;
     union word_b_bignum tdigits;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
@@ -1104,7 +1104,7 @@ void bigand(dptr da, dptr db, dptr dx)
                    xlen);
         }
     }
-    else if (Type(*da) == T_Lrgint) {   /* iand(bignum,integer) */
+    else if (IsLrgint(*da)) {   /* iand(bignum,integer) */
         itobig(IntVal(*db), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(td));
@@ -1148,7 +1148,7 @@ void bigand(dptr da, dptr db, dptr dx)
                    xlen);
         }
     }
-    else if (Type(*db) == T_Lrgint) {   /* iand(integer,bignum) */
+    else if (IsLrgint(*db)) {   /* iand(integer,bignum) */
         itobig(IntVal(*da), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(td));
         blen = LEN(&BignumBlk(*db));
@@ -1213,7 +1213,7 @@ void bigor(dptr da, dptr db, dptr dx)
     struct descrip td;
     union word_b_bignum tdigits;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
@@ -1256,7 +1256,7 @@ void bigor(dptr da, dptr db, dptr dx)
                    xlen);
         }
     }
-    else if (Type(*da) == T_Lrgint) {   /* ior(bignum,integer) */
+    else if (IsLrgint(*da)) {   /* ior(bignum,integer) */
         itobig(IntVal(*db), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(td));
@@ -1300,7 +1300,7 @@ void bigor(dptr da, dptr db, dptr dx)
                    xlen);
         }
     }
-    else if (Type(*db) == T_Lrgint) {   /* ior(integer,bignym) */
+    else if (IsLrgint(*db)) {   /* ior(integer,bignym) */
         itobig(IntVal(*da), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(td));
         blen = LEN(&BignumBlk(*db));
@@ -1365,7 +1365,7 @@ void bigxor(dptr da, dptr db, dptr dx)
     struct descrip td;
     union word_b_bignum tdigits;
 
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
@@ -1408,7 +1408,7 @@ void bigxor(dptr da, dptr db, dptr dx)
                    xlen);
         }
     }
-    else if (Type(*da) == T_Lrgint) {   /* ixor(bignum,integer) */
+    else if (IsLrgint(*da)) {   /* ixor(bignum,integer) */
         itobig(IntVal(*db), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(td));
@@ -1452,7 +1452,7 @@ void bigxor(dptr da, dptr db, dptr dx)
                    xlen);
         }
     }
-    else if (Type(*db) == T_Lrgint) {   /* ixor(integer,bignum) */
+    else if (IsLrgint(*db)) {   /* ixor(integer,bignum) */
         itobig(IntVal(*da), &tdigits.blk, &td);
         alen = LEN(&BignumBlk(td));
         blen = LEN(&BignumBlk(*db));
@@ -1510,7 +1510,7 @@ void bigxor(dptr da, dptr db, dptr dx)
 
 void bigshift(dptr da, word n, dptr dx)
 {
-    if (Type(*da) == T_Lrgint) {
+    if (IsLrgint(*da)) {
         tended struct b_bignum *a, *x, *tad;
         word alen;
         word r = n % DigitBits;
@@ -1592,7 +1592,7 @@ void bigshift(dptr da, word n, dptr dx)
 
 int bigcmp(dptr da, dptr db)
 {
-    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+    if (IsLrgint(*da) && IsLrgint(*db)) {
         struct b_bignum *a = &BignumBlk(*da);
         struct b_bignum *b = &BignumBlk(*db);
         word alen, blen; 
@@ -1617,9 +1617,9 @@ int bigcmp(dptr da, dptr db)
                         DIG(b,0),
                         alen);
     }
-    else if (Type(*da) == T_Lrgint)    /* cmp(bignum, integer) */
+    else if (IsLrgint(*da))    /* cmp(bignum, integer) */
         return bigcmpi(da, IntVal(*db));
-    else if (Type(*db) == T_Lrgint)    /* cmp(integer, bignum) */
+    else if (IsLrgint(*db))    /* cmp(integer, bignum) */
         return -bigcmpi(db, IntVal(*da));
     else { /* Two integers */
         if (IntVal(*da) == IntVal(*db))
@@ -1636,7 +1636,7 @@ int bigcmp(dptr da, dptr db)
 
 int bigsign(dptr da)
 {
-    if (Type(*da) == T_Lrgint)
+    if (IsLrgint(*da))
         return bigcmpi(da, 0);
     else {
         if (IntVal(*da) == 0)
@@ -1651,7 +1651,7 @@ int bigsign(dptr da)
 
 void bigrand(dptr da, dptr dx)
 {
-    if (Type(*da) == T_Lrgint) {
+    if (IsLrgint(*da)) {
         tended struct b_bignum *x, *a, *td, *tu, *tv;
         word alen = LEN(&BignumBlk(*da));
         DIGIT *d;
@@ -1968,7 +1968,7 @@ static int bigpowii(word a, word i, dptr dx)
                 else {
                     itobig(x, &tdigits.blk, &td);
                     bigmul(&td, &td, dx);
-                    isbig = (Type(*dx) == T_Lrgint);
+                    isbig = IsLrgint(*dx);
                 } 
             }
             if (i & ((word)1 << n)) {
@@ -1982,7 +1982,7 @@ static int bigpowii(word a, word i, dptr dx)
                     else {
                         itobig(x, &tdigits.blk, &td);
                         bigmuli(&td, a, dx);
-                        isbig = (Type(*dx) == T_Lrgint);
+                        isbig = IsLrgint(*dx);
                     }
                 }
             }

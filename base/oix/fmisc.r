@@ -167,7 +167,7 @@ function icom(i)
       runerr(101, i)
 
    body {
-      if (Type(i) == T_Lrgint) {
+      if (IsLrgint(i)) {
          tended struct descrip result;
          bigsub(&minusonedesc, &i, &result);
          return result;

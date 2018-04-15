@@ -75,63 +75,54 @@ int getvar(dptr s, dptr vp, struct progstate *p)
         switch (StrLen(*s)) {
             case 4 : {
                 if (strncmp(t,"pos",3) == 0) {
-                    vp->dword = D_Kywdpos;
-                    VarLoc(*vp) = &p->Kywd_pos;
+                    MakeVarDesc(D_Kywdpos, &p->Kywd_pos, vp);
                     return Succeeded;
                 }
                 if (strncmp(t,"why",3) == 0) {
-                    vp->dword = D_Kywdstr;
-                    VarLoc(*vp) = &p->Kywd_why;
+                    MakeVarDesc(D_Kywdstr, &p->Kywd_why, vp);
                     return Succeeded;
                 }
                 break;
             }
             case 5 : {
                 if (strncmp(t,"dump",4) == 0) {
-                    vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &kywd_dump;
+                    MakeVarDesc(D_Kywdint, &kywd_dump, vp);
                     return Succeeded;
                 }
                 break;
             }
             case 6 : {
                 if (strncmp(t,"trace",5) == 0) {
-                    vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &p->Kywd_trace;
+                    MakeVarDesc(D_Kywdint, &p->Kywd_trace, vp);
                     return Succeeded;
                 }
                 break;
             }
             case 7 : {
                 if (strncmp(t,"random",6) == 0) {
-                    vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &p->Kywd_ran;
+                    MakeVarDesc(D_Kywdint, &p->Kywd_ran, vp);
                     return Succeeded;
                 }
                 break;
             }
             case 8 : {
                 if (strncmp(t,"handler",7) == 0) {
-                    vp->dword = D_Kywdhandler;
-                    VarLoc(*vp) = &p->Kywd_handler;
+                    MakeVarDesc(D_Kywdhandler, &p->Kywd_handler, vp);
                     return Succeeded;
                 }
                 if (strncmp(t,"subject",7) == 0) {
-                    vp->dword = D_Kywdsubj;
-                    VarLoc(*vp) = &p->Kywd_subject;
+                    MakeVarDesc(D_Kywdsubj, &p->Kywd_subject, vp);
                     return Succeeded;
                 }
                 break;
             }
             case 9 : {
                 if (strncmp(t,"maxlevel",8) == 0) {
-                    vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &p->Kywd_maxlevel;
+                    MakeVarDesc(D_Kywdint, &p->Kywd_maxlevel, vp);
                     return Succeeded;
                 }
                 if (strncmp(t,"progname",8) == 0) {
-                    vp->dword = D_Kywdstr;
-                    VarLoc(*vp) = &p->Kywd_prog;
+                    MakeVarDesc(D_Kywdstr, &p->Kywd_prog, vp);
                     return Succeeded;
                 }
                 break;
@@ -160,9 +151,8 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                /* Don't allow var access to the self argument in an instance method */
                if (bp->field && !(bp->field->flags & M_Static) && i == bp->nparam)
                    return Failed;
-                vp->dword = D_NamedVar;
-                VarLoc(*vp) = (dptr)dp;
-                return ParamName;
+               MakeVarDesc(D_NamedVar, dp, vp);
+               return ParamName;
             }
             dp++;
             np++;
@@ -170,8 +160,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
         for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
             if (eq(s, *np)) {
-                vp->dword = D_NamedVar;
-                VarLoc(*vp) = (dptr)dp;
+                MakeVarDesc(D_NamedVar, dp, vp);
                 return LocalName;
             }
             np++;
@@ -181,8 +170,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
         dp = bp->fstatic; /* Check the local static names. */
         for (i = bp->nstatic; i > 0; i--) {
             if (eq(s, *np)) {
-                vp->dword = D_NamedVar;
-                VarLoc(*vp) = (dptr)dp;
+                MakeVarDesc(D_NamedVar, dp, vp);
                 return StaticName;
             }
             np++;
@@ -192,8 +180,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
     /* Check the global variable names. */
     if ((i = lookup_global_index(s, p)) >= 0 && (p->Gflags[i] & (G_Package | G_Const)) == 0) {
-        vp->dword    =  D_NamedVar;
-        VarLoc(*vp) =  p->Globals + i;
+        MakeVarDesc(D_NamedVar, p->Globals + i, vp);
         return GlobalName;
     }
     return Failed;
@@ -559,7 +546,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
       integer:
 
-         if (Type(*dp) == T_Lrgint)
+         if (IsLrgint(*dp))
             bigprint(f, dp);
          else
             fprintf(f, WordFmt, IntVal(*dp));
@@ -1201,7 +1188,7 @@ void getimage(dptr dp1, dptr dp2)
        }
 
       integer: {
-         if (Type(*dp1) == T_Lrgint) {
+         if (IsLrgint(*dp1)) {
             word slen;
             word dlen;
             struct b_bignum *blk = &BignumBlk(*dp1);
@@ -1963,7 +1950,7 @@ int lookup_global(dptr query, struct progstate *prog)
     if (is:string(*query))
         return lookup_global_index(query, prog);
 
-    if (query->dword == D_Integer) {
+    if (IsCInteger(*query)) {
         int nf = prog->NGlobals;
         /*
          * Simple index into globals array, using conventional icon

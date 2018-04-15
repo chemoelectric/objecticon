@@ -187,7 +187,7 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
         if (is:string(*query))
             return lookup_class_field_by_name(class, query);
 
-        if (query->dword == D_Integer) {
+        if (IsCInteger(*query)) {
             int nf = class->n_instance_fields + class->n_class_fields;
             /*
              * Simple index into fields array, using conventional icon
@@ -271,7 +271,7 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
         if (is:string(*query))
             return lookup_record_field_by_name(recdef, query);
 
-        if (query->dword == D_Integer) {
+        if (IsCInteger(*query)) {
             int nf = recdef->n_fields;
             /*
              * Simple index into fields array, using conventional icon
