@@ -564,8 +564,7 @@ void pollevent(wbp w)
                 if (arg == 10) arg = 13;   /* Hack: convert \n to \r */
                 if (arg < 256) {
                     /* Found a char string, so generate string event */
-                    StrLen(d) = 1;
-                    StrLoc(d) = &allchars[arg & 0xFF];
+                    MakeStr(&allchars[arg & 0xFF], 1, &d);
                 } else if (arg >= 0xe000 && arg <= 0xf8ff) {
                     /* A char in the Private Use Area of the Basic
                      * Multilingual Plane.  These are used for cursor

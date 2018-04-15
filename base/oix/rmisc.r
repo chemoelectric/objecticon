@@ -788,8 +788,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  tended struct descrip q;
                  if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > StrLen(tdp))
                      return;
-                 StrLen(q) = TvsubsBlk(*dp).sslen;
-                 StrLoc(q) = StrLoc(tdp) + TvsubsBlk(*dp).sspos - 1;
+                 MakeStr(StrLoc(tdp) + TvsubsBlk(*dp).sspos - 1, TvsubsBlk(*dp).sslen, &q);
                  fprintf(f, " = ");
                  outimage1(f, &q, noimage, stringlimit, listlimit);
              }
@@ -1233,8 +1232,7 @@ void getimage(dptr dp1, dptr dp2)
 	  * Check for the value of a predefined cset; use keyword name if found.
 	  */
 	 if ((csn = csname(dp1)) != NULL) {
-	    StrLoc(*dp2) = csn;
-	    StrLen(*dp2) = strlen(csn);
+            CMakeStr(csn, dp2);
 	    return;
 	    }
 	 /*
@@ -1836,13 +1834,10 @@ int string2ucs(dptr str, dptr res)
  */
 void bytes2string(char *s, word len, dptr d) 
 {
-    char *a;
     if (len == 0)
         *d = emptystr;
-    else {
-        MemProtect(a = alcstr(s, len));
-        MakeStr(a, len, d);
-    }
+    else
+        MakeStrMemProtect(alcstr(s, len), len, d);
 }
 
 /*

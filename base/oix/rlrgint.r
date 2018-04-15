@@ -385,8 +385,7 @@ void bigtos(dptr da, dptr dx)
 
     if (a->sign)
         *--p = '-';
-    StrLen(*dx) = q - p;
-    StrLoc(*dx) = p;
+    MakeStr(p, q - p, dx);
 }
 
 /*

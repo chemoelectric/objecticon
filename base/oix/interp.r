@@ -1587,8 +1587,7 @@ void add_to_prog_event_queue(dptr value, int event)
         curpstate->event_queue_tail = e;
     } else
         curpstate->event_queue_head = curpstate->event_queue_tail = e;
-    StrLen(e->eventcode) = 1;
-    StrLoc(e->eventcode) = &allchars[event & 0xFF];
+    MakeStr(&allchars[event & 0xFF], 1, &e->eventcode);
     e->eventval = *value;
     e->next = 0;
 }

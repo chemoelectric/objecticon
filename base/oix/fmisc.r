@@ -1202,7 +1202,6 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
         syserr("Invalid pos/len to make_ucs_substring");
 
     p = get_ucs_off(b, first);
-    StrLoc(utf8) = p;
     if (b->index_step == 0 || last / b->index_step > first / b->index_step)
         q = get_ucs_off(b, last + 1);
     else {
@@ -1211,7 +1210,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
         while (i-- > 0)
             q += UTF8_SEQ_LEN(*q);
     }
-    StrLen(utf8) = q - p;
+    MakeStr(p, q - p, &utf8);
     return make_ucs_block(&utf8, len);
 }
 
@@ -1242,7 +1241,6 @@ void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
         syserr("Invalid pos/len to uf8_substr");
 
     p = get_ucs_off(b, first);
-    StrLoc(*res) = p;
     if (b->index_step == 0 || last / b->index_step > first / b->index_step)
         q = get_ucs_off(b, last + 1);
     else {
@@ -1250,7 +1248,7 @@ void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
         while (len-- > 0)
             q += UTF8_SEQ_LEN(*q);
     }
-    StrLen(*res) = q - p;
+    MakeStr(p, q - p, res);
 }
 
 /*

@@ -1087,8 +1087,7 @@ struct descrip block_to_descriptor(union block *ptr)
             d = 0;
         }
     }
-    desc.dword = d;
-    desc.vword.bptr = ptr;
+    MakeDesc(d, ptr, &desc);
     return desc;
 }
 

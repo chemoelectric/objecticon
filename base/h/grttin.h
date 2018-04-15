@@ -136,8 +136,7 @@ end
       if (!curpstate->monitor) break;
       if (curpstate->eventmask->size == 0) break;
       if (!Testb(event, curpstate->eventmask->bits)) break;
-      eventdesc.dword = type;
-      eventdesc.vword.bptr = (union block *)(bp);
+      MakeDesc(type, bp, &eventdesc);
       add_to_prog_event_queue(&eventdesc, event);
    } while (0)
 #endif

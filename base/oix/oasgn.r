@@ -277,13 +277,11 @@ static int subs_asgn(dptr dest, dptr src)
        if (tvsub->sslen == 0 && UcsBlk(srcstr).length == 0) {
            rsltstr = deststr;
        } else if (prelen == 0 && UcsBlk(srcstr).length == 0) {
-           StrLoc(utf8_new) = StrLoc(UcsBlk(deststr).utf8) + poststrt;
-           StrLen(utf8_new) = postlen;
+           MakeStr(StrLoc(UcsBlk(deststr).utf8) + poststrt, postlen, &utf8_new);
            MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
                                           UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
        } else if (postlen == 0 && UcsBlk(srcstr).length == 0) {
-           StrLoc(utf8_new) = StrLoc(UcsBlk(deststr).utf8);
-           StrLen(utf8_new) = prelen;
+           MakeStr(StrLoc(UcsBlk(deststr).utf8), prelen, &utf8_new);
            MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
                                           UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
        } else if (prelen == 0 && postlen == 0) {
@@ -335,11 +333,9 @@ static int subs_asgn(dptr dest, dptr src)
        if (tvsub->sslen == 0 && StrLen(srcstr) == 0) {
            rsltstr = deststr;
        } else if (prelen == 0 && StrLen(srcstr) == 0) {
-           StrLoc(rsltstr) = StrLoc(deststr) + poststrt;
-           StrLen(rsltstr) = postlen;
+           MakeStr(StrLoc(deststr) + poststrt, postlen, &rsltstr);
        } else if (postlen == 0 && StrLen(srcstr) == 0) {
-           StrLoc(rsltstr) = StrLoc(deststr);
-           StrLen(rsltstr) = prelen;
+           MakeStr(StrLoc(deststr), prelen, &rsltstr);
        } else if (prelen == 0 && postlen == 0) {
            rsltstr = srcstr;
        } else {

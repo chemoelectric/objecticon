@@ -47,8 +47,7 @@ DefConvert(def_c_int, word, word *, cnv_c_int, C_IntAsgn)
  */
 
 #begdef C_StrAsgn
-   StrLen(*d) = strlen(df);
-   StrLoc(*d) = (char *)df;
+   CMakeStr(df, d);
 #enddef
 
 DefConvert(def_c_str, char *, dptr, cnv_c_str, C_StrAsgn)
@@ -96,8 +95,7 @@ DefConvert(def_ec_int, word, word *, cnv_ec_int, EC_IntAsgn)
  */
 
 #begdef EintAsgn
-   d->dword = D_Integer;
-   IntVal(*d) = df;
+   MakeInt(df, d);
 #enddef
 
 DefConvert(def_eint, word, dptr, cnv_eint, EintAsgn)
@@ -109,8 +107,7 @@ DefConvert(def_eint, word, dptr, cnv_eint, EintAsgn)
  */
 
 #begdef IntAsgn
-   d->dword = D_Integer;
-   IntVal(*d) = df;
+   MakeInt(df, d);
 #enddef
 
 DefConvert(def_int, word, dptr, cnv_int, IntAsgn)

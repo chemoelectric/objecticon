@@ -93,65 +93,15 @@ int cnv_c_dbl(dptr s, double *d)
  * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a word
  */
 int cnv_c_int(dptr s, word *d)
-   {
-   tended struct descrip cnvstr;
-   union numeric numrc;
+{
+   tended struct descrip tmp;
 
-   type_case *s of {
-      integer: {
-
-         if (Type(*s) == T_Lrgint) {
-            return 0;
-            }
-
-         *d = IntVal(*s);
-         return 1;
-         }
-      real: {
-         double dbl;
-         DGetReal(*s,dbl);
-         if (dbl > MaxWord || dbl < MinWord) {
-            return 0;
-            }
-         *d = dbl;
-         return 1;
-         }
-      string: {
-         /* fall through */
-         }
-      ucs: {
-          s = &UcsBlk(*s).utf8;
-         }
-      cset: {
-        if (!cset2string(s, &cnvstr))
-           return 0;
-        s = &cnvstr;
-        }
-      default: {
-         return 0;
-         }
-      }
-
-   /*
-    * s is now a string.
-    */
-   switch( ston(s, &numrc) ) {
-      case T_Integer: {
-         *d = numrc.integer;
-         return 1;
-	 }
-      case T_Real: {
-         double dbl = numrc.real;
-         if (dbl > MaxWord || dbl < MinWord) {
-            return 0;
-            }
-         *d = dbl;
-         return 1;
-         }
-      default:
-         return 0;
-      }
-   }
+   if (cnv_int(s, &tmp) && Type(tmp) == T_Integer) {
+       *d = IntVal(tmp);
+       return 1;
+   } else
+       return 0;
+}
 
 /*
  * cnv_c_str - cnv:C_string(*s, *d), convert a value into a C (and Icon) string
@@ -182,8 +132,8 @@ int cnv_c_str(dptr s, dptr d)
    else {
       word slen = StrLen(*d);
       char *sp, *dp;
-      MemProtect(dp = alcstr(NULL,slen+1));
-      StrLen(*d) = StrLen(*d)+1;
+      MemProtect(dp = alcstr(NULL, slen + 1));
+      ++StrLen(*d);
       sp = StrLoc(*d);
       StrLoc(*d) = dp;
       while (slen-- > 0)
@@ -354,46 +304,15 @@ int need_ucs(dptr s)
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
  */
 int cnv_ec_int(dptr s, word *d)
-   {
-   tended struct descrip cnvstr; /* tended since ston allocates blocks */
-   union numeric numrc;
+{
+   tended struct descrip tmp;
 
-   type_case *s of {
-      integer: {
-
-         if (Type(*s) == T_Lrgint) {
-            return 0;
-            }
-         *d = IntVal(*s);
-         return 1;
-         }
-      string: {
-         /* fall through */
-         }
-      ucs: {
-          s = &UcsBlk(*s).utf8;
-         }
-      cset: {
-        if (!cset2string(s, &cnvstr))
-           return 0;
-        s = &cnvstr;
-        }
-      default: {
-         return 0;
-         }
-      }
-
-   /*
-    * s is now a string.
-    */
-   if (ston(s, &numrc) == T_Integer) {
-      *d = numrc.integer;
-      return 1;
-      }
-   else {
-      return 0;
-      }
-   }
+   if (cnv_eint(s, &tmp) && Type(tmp) == T_Integer) {
+       *d = IntVal(tmp);
+       return 1;
+   } else
+       return 0;
+}
 
 /*
  * cnv_eint - cnv:(exact)integer(*s, *d), convert to an exact integer
@@ -645,8 +564,7 @@ static void deref_tvsubs(dptr s, dptr d)
              * Make a descriptor for the substring by getting the
              *  length and pointing into the string.
              */
-            StrLen(*d) = tvsub->sslen;
-            StrLoc(*d) = StrLoc(v) + tvsub->sspos - 1;
+            MakeStr(StrLoc(v) + tvsub->sspos - 1, tvsub->sslen, d);
         }
       ucs: {
             if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(v).length)

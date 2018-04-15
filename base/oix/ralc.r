@@ -535,11 +535,10 @@ char *f(char *s, word slen)
     * Make sure there is enough room in the string space.
     */
    if (DiffPtrs(strend,strfree) < slen) {
-      StrLen(ts) = slen;
-      StrLoc(ts) = s;
+      if (s) MakeStr(s, slen, &ts);
       if (!reserve(Strings, slen))
          return NULL;
-      s = StrLoc(ts);
+      if (s) s = StrLoc(ts);
    }
 
    strtotal += slen;

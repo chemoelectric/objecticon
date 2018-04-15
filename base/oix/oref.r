@@ -136,8 +136,7 @@ operator ! bang(underef x -> dx)
               tended char *p = StrLoc(UcsBlk(dx).utf8);
               for (i = 1; i <= UcsBlk(dx).length; i++) {
                   tended struct descrip utf8;
-                  StrLoc(utf8) = p;
-                  StrLen(utf8) = UTF8_SEQ_LEN(*p);
+                  MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
                   p += StrLen(utf8);
                   suspend ucs(make_ucs_block(&utf8, 1));
               }
@@ -787,8 +786,7 @@ function back(underef x -> dx)
               for (i = UcsBlk(dx).length; i > 0; i--) {
                   tended struct descrip utf8;
                   utf8_rev_iter0(&p);
-                  StrLoc(utf8) = p;
-                  StrLen(utf8) = UTF8_SEQ_LEN(*p);
+                  MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
                   suspend ucs(make_ucs_block(&utf8, 1));
               }
           }

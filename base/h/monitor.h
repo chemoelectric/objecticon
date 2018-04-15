@@ -30,8 +30,6 @@
 #define E_Slots		'\167'		/* Hash header allocation */
 #define E_Coexpr	'\170'		/* Co-expression allocation */
 #define E_Refresh	'\171'		/* Refresh allocation */
-#define E_Alien		'\172'		/* Alien allocation */
-#define E_Free		'\132'		/* Free region */
 #define E_String	'\163'		/* String allocation */
 #define E_Weakref	'\162'		/* Weakref allocation */
 
@@ -174,11 +172,11 @@
 
 
 100 115 117 120
-124 126 127 130 131 133 134 135 136
+124 126 127 130 131 132 133 134 135 136
 137 140 141 142 143 146 147
 152 154
 165 166
-173 174 175 
+172 173 174 175 
 204 205 206 207 217 220 221
 226 227
 230 231 232 233 234 235 236 237
