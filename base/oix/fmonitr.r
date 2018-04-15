@@ -28,12 +28,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
    /*
     * Most instrumentation functions depend on a single event.
     */
-   p->Cplist =
-      ((Testb(E_Lcreate, bits)) ? cplist_1 : cplist_0);
-   p->Cpset =
-      ((Testb(E_Screate, bits)) ? cpset_1 : cpset_0);
-   p->Cptable =
-      ((Testb(E_Tcreate, bits)) ? cptable_1 : cptable_0);
    p->Deref =
       ((Testb(E_Deref, bits)) ? deref_1 : deref_0);
    p->Alcbignum =
@@ -99,25 +93,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       p->Alclstb = alclstb_0;
       }
 
-   if ((Testb(E_Aconv, bits)) ||
-       (Testb(E_Tconv, bits)) ||
-       (Testb(E_Nconv, bits)) ||
-       (Testb(E_Sconv, bits)) ||
-       (Testb(E_Fconv, bits))) {
-
-      p->Cnvcset = cnv_cset_1;
-      p->Cnvucs = cnv_ucs_1;
-      p->Cnvint = cnv_int_1;
-      p->Cnvreal = cnv_real_1;
-      p->Cnvstr = cnv_str_1;
-      }
-   else {
-      p->Cnvcset = cnv_cset_0;
-      p->Cnvucs = cnv_ucs_0;
-      p->Cnvint = cnv_int_0;
-      p->Cnvreal = cnv_real_0;
-      p->Cnvstr = cnv_str_0;
-      }
 
    if ((Testb(E_Objectref, bits)) ||
        (Testb(E_Objectsub, bits)) ||

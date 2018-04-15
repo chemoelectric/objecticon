@@ -478,14 +478,6 @@ struct progstate {
     /*
      * Function Instrumentation Fields.
      */
-    void (*Cplist)(dptr, dptr, word, word);
-    void (*Cpset)(dptr, dptr, word);
-    void (*Cptable)(dptr, dptr, word);
-    int (*Cnvcset)(dptr,dptr);
-    int (*Cnvucs)(dptr,dptr);
-    int (*Cnvint)(dptr,dptr);
-    int (*Cnvreal)(dptr,dptr);
-    int (*Cnvstr)(dptr,dptr);
     void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
     struct b_cset * (*Alccset)(word);

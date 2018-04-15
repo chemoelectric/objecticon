@@ -646,14 +646,6 @@ __declspec(dllexport)  \
       
 #define k_main        (curpstate->K_main)
       
-#define cplist	    (curpstate->Cplist)
-#define cpset	    (curpstate->Cpset)
-#define cptable	    (curpstate->Cptable)
-#define cnv_cset	    (curpstate->Cnvcset)
-#define cnv_ucs	    (curpstate->Cnvucs)
-#define cnv_int	    (curpstate->Cnvint)
-#define cnv_real	    (curpstate->Cnvreal)
-#define cnv_str	    (curpstate->Cnvstr)
 #define deref	    (curpstate->Deref)
 #define alcbignum	    (curpstate->Alcbignum)
 #define alccoexp	    (curpstate->Alccoexp)

@@ -10,7 +10,10 @@
 operator icon_op func_name(x,y)
    body {
       tended struct descrip ix, iy;
-      if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
+      if (x.dword == D_Integer && y.dword == D_Integer) {
+          if (real_op (IntVal(x), IntVal(y)))
+             return y;
+      } else if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
           if (int_op (ix, iy))
              return iy;
       } else {

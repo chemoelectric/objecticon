@@ -9,9 +9,11 @@
 
 operator icon_op func_name(x, y)
    body {
-      tended struct descrip ix, iy;
-      if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
-          tended struct descrip iresult;
+      tended struct descrip ix, iy, iresult;
+      if (is:integer(x) && is:integer(y)) {
+          int_op(x, y, iresult);
+          return iresult;
+      } else if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
           int_op(ix, iy, iresult);
           return iresult;
       } else {

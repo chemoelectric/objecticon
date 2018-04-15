@@ -73,10 +73,12 @@ function copy(x)
              * Pass the buck to cplist to copy a list.
              */
             cplist(&x, &result, 1, ListBlk(x).size);
+            EVValD(&result, E_Lcreate);
             return result;
             }
       table: {
             cptable(&x, &result, TableBlk(x).size);
+            EVValD(&result, E_Tcreate);
 	    return result;
          }
 
@@ -85,6 +87,7 @@ function copy(x)
              * Pass the buck to cpset to copy a set.
              */
             cpset(&x, &result, SetBlk(x).size);
+            EVValD(&result, E_Screate);
 	    return result;
          }
 
@@ -391,7 +394,7 @@ function sort(t, i)
             qsort(ListBlk(result).listhead->lelem.lslots,
                   size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
-            Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
+            EVValD(&result, E_Lcreate);
             return result;
             }
          }
@@ -690,7 +693,7 @@ function sortf(t, i)
          qsort(ListBlk(result).listhead->lelem.lslots,
                size, sizeof(struct descrip),(QSortFncCast) nthcmp);
 
-         Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
+         EVValD(&result, E_Lcreate);
          return result;
       }
 

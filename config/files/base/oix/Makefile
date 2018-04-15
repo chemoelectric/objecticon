@@ -76,13 +76,13 @@ endif
 
 # Compile with make EXPORTS=Y
 #
-#   This will generate oiexported.ri, and also base/h/oisymbols.h and
+#   This will generate exported.ri, and also base/h/oisymbols.h and
 #   base/h/imported.h
 #
 ifeq ($(EXPORTS),Y)
 mkexports: mkexports.icn
 	oit -s mkexports.icn
 
-oiexported.ri:	exportsyms.txt mkexports
+exported.ri:	exportsyms.txt mkexports
 	./mkexports
 endif

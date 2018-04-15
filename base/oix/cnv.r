@@ -1,21 +1,163 @@
 /*
  * cnv.r -- Conversion routines:
- *
- *
- * Philosophy: certain redundancy is present which could be avoided,
- * and nested conversion calls are avoided due to the importance of
- * minimizing these routines' costs.
- *
- * Assumed: the C compiler must handle assignments of C integers to
- * C double variables and vice-versa.  Hopefully production C compilers
- * have managed to eliminate bugs related to these assignments.
  */
-
 
 /*
  * Prototypes for static functions.
  */
+static int cnv_c_dbl_impl(dptr s, double *d);
+static int cnv_c_int_impl(dptr s, word *d);
+static int cnv_cset_impl(dptr s, dptr d);
+static int cnv_ucs_impl(dptr s, dptr d);
+static int cnv_str_or_ucs_impl(dptr s, dptr d);
+static int cnv_ec_int_impl(dptr s, word *d);
+static int cnv_eint_impl(dptr s, dptr d);
+static int cnv_int_impl(dptr s, dptr d);
+static int cnv_real_impl(dptr s, dptr d);
+static int cnv_str_impl(dptr s, dptr d);
 static int ston (dptr sp, union numeric *result);
+static int cset2string(dptr src, dptr dest);
+
+
+/*
+ * cnv_c_dbl - cnv:C_double(*s, *d), convert a value directly into a C double
+ */
+int cnv_c_dbl(dptr s, double *d)
+{
+    if (is:real(*s)) {
+        DGetReal(*s, *d);
+        return 1;
+    } else {
+        EVValD(s, E_CnvCDbl);
+        return cnv_c_dbl_impl(s, d);
+    }
+}
+
+/*
+ * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a word
+ */
+int cnv_c_int(dptr s, word *d)
+{
+    if (s->dword == D_Integer) {
+        *d = IntVal(*s);
+        return 1;
+    } else {
+        EVValD(s, E_CnvCInt);
+        return cnv_c_int_impl(s, d);
+    }
+}
+
+/*
+ * cnv_cset - cnv:cset(*s, *d), convert to a cset
+ */
+int cnv_cset(dptr s, dptr d)
+{
+    if (is:cset(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvCset);
+        return cnv_cset_impl(s, d);
+    }
+}
+
+/*
+ * cnv_ucs - cnv:ucs(*s, *d), convert to a ucs
+ */
+int cnv_ucs(dptr s, dptr d)
+{
+    if (is:ucs(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvUcs);
+        return cnv_ucs_impl(s, d);
+    }
+}
+
+/*
+ * cnv_str_or_ucs - cnv:string_or_ucs(*s, *d), convert to a string or ucs type
+ */
+int cnv_str_or_ucs(dptr s, dptr d)
+{
+    if (is:string(*s) || is:ucs(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvStrOrUcs);
+        return cnv_str_or_ucs_impl(s, d);
+    }
+}
+
+/*
+ * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
+ */
+int cnv_ec_int(dptr s, word *d)
+{
+    if (s->dword == D_Integer) {
+        *d = IntVal(*s);
+        return 1;
+    } else {
+        EVValD(s, E_CnvECInt);
+        return cnv_ec_int_impl(s, d);
+    }
+}
+
+/*
+ * cnv_eint - cnv:(exact)integer(*s, *d), convert to an exact integer
+ */
+int cnv_eint(dptr s, dptr d)
+{
+    if (is:integer(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvEInt);
+        return cnv_eint_impl(s, d);
+    }
+}
+
+/*
+ * cnv_int - cnv:integer(*s, *d), convert to integer
+ */
+int cnv_int(dptr s, dptr d)
+{
+    if (is:integer(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvInt);
+        return cnv_int_impl(s, d);
+    }
+}
+
+/*
+ * cnv_real - cnv:real(*s, *d), convert to real
+ */
+int cnv_real(dptr s, dptr d)
+{
+    if (is:real(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvReal);
+        return cnv_real_impl(s, d);
+    }
+}
+
+/*
+ * cnv_str - cnv:string(*s, *d), convert to a string
+ */
+int cnv_str(dptr s, dptr d)
+{
+    if (is:string(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvStr);
+        return cnv_str_impl(s, d);
+    }
+}
 
 static int cset2string(dptr src, dptr dest)
 {
@@ -27,10 +169,7 @@ static int cset2string(dptr src, dptr dest)
         return 0;
 }
 
-/*
- * cnv_c_dbl - cnv:C_double(*s, *d), convert a value directly into a C double
- */
-int cnv_c_dbl(dptr s, double *d)
+static int cnv_c_dbl_impl(dptr s, double *d)
    {
    tended struct descrip result, cnvstr;
 
@@ -89,14 +228,11 @@ int cnv_c_dbl(dptr s, double *d)
       }
   }
 
-/*
- * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a word
- */
-int cnv_c_int(dptr s, word *d)
+static int cnv_c_int_impl(dptr s, word *d)
 {
    tended struct descrip tmp;
 
-   if (cnv_int(s, &tmp) && Type(tmp) == T_Integer) {
+   if (cnv_int_impl(s, &tmp) && Type(tmp) == T_Integer) {
        *d = IntVal(tmp);
        return 1;
    } else
@@ -112,13 +248,14 @@ int cnv_c_str(dptr s, dptr d)
     * Get the string to the end of the string region and append a '\0'.
     */
 
-   if (!is:string(*s)) {
-      if (!cnv_str(s, d)) {
-         return 0;
-         }
+   if (is:string(*s)) {
+      *d = *s;
       }
    else {
-      *d = *s;
+      EVValD(s, E_CnvCStr);
+      if (!cnv_str_impl(s, d)) {
+         return 0;
+         }
       }
 
    /*
@@ -145,20 +282,13 @@ int cnv_c_str(dptr s, dptr d)
    }
 
 
-#begdef cnv_cset_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
-/*
- * cnv_cset - cnv:cset(*s, *d), convert to a cset
- */
-int f(dptr s, dptr d)
+static int cnv_cset_impl(dptr s, dptr d)
    {
    tended struct descrip str;
 
-   EVValD(s, e_aconv);
-   EVValD(&csetdesc, e_tconv);
 
    if (is:cset(*s)) {
       *d = *s;
-      EVValD(s, e_nconv);
       return 1;
       }
 
@@ -174,11 +304,10 @@ int f(dptr s, dptr d)
        }
        MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
-       EVValD(d, e_sconv);
        return 1;
    }
 
-   if (cnv:string(*s, str)) {
+   if (cnv_str_impl(s, &str)) {
        word l;
        char *s1;        /* does not need to be tended */
        struct rangeset *rs;
@@ -191,42 +320,27 @@ int f(dptr s, dptr d)
        }
        MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
-       EVValD(d, e_sconv);
        return 1;
      }
 
-     EVValD(s, e_fconv);
      return 0;
 
   }
-#enddef
 
-cnv_cset_macro(cnv_cset_0,0,0,0,0,0)
-cnv_cset_macro(cnv_cset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-
-#begdef cnv_ucs_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
-/*
- * cnv_ucs - cnv:ucs(*s, *d), convert to a ucs
- */
-int f(dptr s, dptr d)
+static int cnv_ucs_impl(dptr s, dptr d)
 {
     tended struct descrip str;
 
-    EVValD(s, e_aconv);
-    Desc_EVValD(emptystr_ucs, e_tconv, D_Ucs);
-
     if (is:ucs(*s)) {
         *d = *s;
-        EVValD(s, e_nconv);
         return 1;
     }
     if (is:cset(*s)) {
         MakeDesc(D_Ucs, cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size), d);
-        EVValD(d, e_sconv);
         return 1;
     }
 
-    if (cnv:string(*s, str)) {
+    if (cnv_str_impl(s, &str)) {
         char *s1, *e1;
         word n = 0;
 
@@ -237,27 +351,17 @@ int f(dptr s, dptr d)
             int i = utf8_check(&s1, e1);
             ++n;
             if (i < 0 || i > MAX_CODE_POINT) {
-                EVValD(s, e_fconv);
                 return 0;
             }
         }
         MakeDesc(D_Ucs, make_ucs_block(&str, n), d);
-        EVValD(d, e_sconv);
         return 1;
     }
 
-    EVValD(s, e_fconv);
     return 0;
 }
-#enddef
 
-cnv_ucs_macro(cnv_ucs_0,0,0,0,0,0)
-cnv_ucs_macro(cnv_ucs_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-
-/*
- * cnv_str_or_ucs - cnv:string_or_ucs(*s, *d), convert to a string or ucs type
- */
-int cnv_str_or_ucs(dptr s, dptr d)
+static int cnv_str_or_ucs_impl(dptr s, dptr d)
 {
    type_case *s of {
      string: {
@@ -269,10 +373,10 @@ int cnv_str_or_ucs(dptr s, dptr d)
         return 1;
        }
      cset: {
-        return cnv_str(s, d) || cnv_ucs(s, d);
+        return cnv_str_impl(s, d) || cnv_ucs_impl(s, d);
       }
      default: {
-        return cnv_str(s, d);
+        return cnv_str_impl(s, d);
       }
    }
 }
@@ -300,24 +404,18 @@ int need_ucs(dptr s)
    }
 }
 
-/*
- * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
- */
-int cnv_ec_int(dptr s, word *d)
+static int cnv_ec_int_impl(dptr s, word *d)
 {
    tended struct descrip tmp;
 
-   if (cnv_eint(s, &tmp) && Type(tmp) == T_Integer) {
+   if (cnv_eint_impl(s, &tmp) && Type(tmp) == T_Integer) {
        *d = IntVal(tmp);
        return 1;
    } else
        return 0;
 }
 
-/*
- * cnv_eint - cnv:(exact)integer(*s, *d), convert to an exact integer
- */
-int cnv_eint(dptr s, dptr d)
+static int cnv_eint_impl(dptr s, dptr d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
@@ -360,22 +458,14 @@ int cnv_eint(dptr s, dptr d)
       }
    }
 
-#begdef cnv_int_macro(f,e_aconv,e_tconv,e_nconv,e_fconv,e_sconv)
-/*
- * cnv_int - cnv:integer(*s, *d), convert to integer
- */
-int f(dptr s, dptr d)
+static int cnv_int_impl(dptr s, dptr d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
 
-   EVValD(s, e_aconv);
-   EVValD(&zerodesc, e_tconv);
-
    type_case *s of {
       integer: {
          *d = *s;
-         EVValD(s, e_nconv);
          return 1;
          }
       real: {
@@ -384,16 +474,13 @@ int f(dptr s, dptr d)
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
-               EVValD(d, e_sconv);
                return 1;
                }
             else {
-               EVValD(s, e_fconv);
                return 0;
                }
 	    }
          MakeInt((word)dbl,d);
-         EVValD(d, e_sconv);
          return 1;
          }
       string: {
@@ -404,13 +491,11 @@ int f(dptr s, dptr d)
          }
       cset: {
         if (!cset2string(s, &cnvstr)) {
-           EVValD(s, e_fconv);
            return 0;
         }
         s = &cnvstr;
         }
       default: {
-         EVValD(s, e_fconv);
          return 0;
          }
       }
@@ -422,101 +507,66 @@ int f(dptr s, dptr d)
 
       case T_Lrgint:
          MakeDesc(D_Lrgint, numrc.big, d);
-         EVValD(d, e_sconv);
 	 return 1;
 
       case T_Integer:
          MakeInt(numrc.integer,d);
-         EVValD(d, e_sconv);
          return 1;
       case T_Real: {
          double dbl = numrc.real;
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
-               EVValD(d, e_sconv);
                return 1;
                }
             else {
-               EVValD(s, e_fconv);
                return 0;
                }
 	    }
          MakeInt((word)dbl,d);
-         EVValD(d, e_sconv);
          return 1;
          }
       default:
-         EVValD(s, e_fconv);
          return 0;
       }
    }
-#enddef
 
-cnv_int_macro(cnv_int_0,0,0,0,0,0)
-cnv_int_macro(cnv_int_1,E_Aconv,E_Tconv,E_Nconv,E_Fconv,E_Sconv)
-
-#begdef cnv_real_macro(f,e_aconv,e_tconv,e_sconv,e_fconv)
-/*
- * cnv_real - cnv:real(*s, *d), convert to real
- */
-int f(dptr s, dptr d)
+static int cnv_real_impl(dptr s, dptr d)
    {
    double dbl;
 
-   EVValD(s, e_aconv);
-   EVValD(&rzerodesc, e_tconv);
-
    if (is:real(*s)) {
       *d = *s;
-      EVValD(s, e_nconv);
       return 1;
    }
-   else if (cnv_c_dbl(s, &dbl)) {
+   else if (cnv_c_dbl_impl(s, &dbl)) {
       MakeReal(dbl, d);
-      EVValD(d, e_sconv);
       return 1;
       }
    else
-      EVValD(s, e_fconv);
       return 0;
    }
-#enddef
 
-cnv_real_macro(cnv_real_0,0,0,0,0)
-cnv_real_macro(cnv_real_1,E_Aconv,E_Tconv,E_Sconv,E_Fconv)
-
-
-#begdef cnv_str_macro(f, e_aconv, e_tconv, e_nconv, e_sconv, e_fconv)
-/*
- * cnv_str - cnv:string(*s, *d), convert to a string
- */
-int f(dptr s, dptr d)
+static int cnv_str_impl(dptr s, dptr d)
    {
-   EVValD(s, e_aconv);
-   EVValD(&emptystr, e_tconv);
 
    type_case *s of {
       string: {
          *d = *s;
-         EVValD(s, e_nconv);
          return 1;
          }
      ucs: {
            *d = UcsBlk(*s).utf8;
-           EVValD(d, e_sconv);
            return 1;
        }
       integer: {
 
          if (Type(*s) == T_Lrgint) {
 	    bigtos(s,d);
-            EVValD(d, e_sconv);
             return 1;
           }
          else {
             cstr2string(word2cstr(IntVal(*s)), d);
-            EVValD(d, e_sconv);
             return 1;
          }
        }
@@ -524,29 +574,21 @@ int f(dptr s, dptr d)
          double res;
          DGetReal(*s, res);
          cstr2string(double2cstr(res), d);
-         EVValD(d, e_sconv);
          return 1;
          }
      cset: {
            if (cset2string(s, d)) {
-               EVValD(d, e_sconv);
                return 1;
            } else {
-               EVValD(s, e_fconv);
                return 0;
            }
       }
 
       default: {
-         EVValD(s, e_fconv);
          return 0;
          }
       }
    }
-#enddef
-
-cnv_str_macro(cnv_str_0,0,0,0,0,0)
-cnv_str_macro(cnv_str_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 
 static void deref_tvsubs(dptr s, dptr d)
