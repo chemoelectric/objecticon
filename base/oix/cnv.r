@@ -467,7 +467,12 @@ int f(dptr s, dptr d)
    EVValD(s, e_aconv);
    EVValD(&rzerodesc, e_tconv);
 
-   if (cnv_c_dbl(s, &dbl)) {
+   if (is:real(*s)) {
+      *d = *s;
+      EVValD(s, e_nconv);
+      return 1;
+   }
+   else if (cnv_c_dbl(s, &dbl)) {
       MakeReal(dbl, d);
       EVValD(d, e_sconv);
       return 1;
