@@ -10,6 +10,7 @@
 operator icon_op func_name(x,y)
    body {
       tended struct descrip ix, iy;
+      /* Avoid function calls to conversion and operator funcs if possible. */
       if (IsCInteger(x) && IsCInteger(y)) {
           if (real_op (IntVal(x), IntVal(y)))
              return y;

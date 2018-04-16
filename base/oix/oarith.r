@@ -10,6 +10,7 @@
 operator icon_op func_name(x, y)
    body {
       tended struct descrip ix, iy, iresult;
+      /* Avoid function calls to conversion funcs if possible. */
       if (is:integer(x) && is:integer(y)) {
           int_op(x, y, iresult);
           return iresult;
