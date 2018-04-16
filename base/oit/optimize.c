@@ -110,6 +110,7 @@ static struct rangeset *rangeset_compl(struct rangeset *x);
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
+static int str_to_word(char *s, word *val);
 
 static struct str_buf opt_sbuf;
 
@@ -775,22 +776,13 @@ static int cnv_eint(struct literal *s)
             return 1;
         }
         default: {
-            char *e;
-            long t;
+            word t;
             if (!cnv_string(s))
                 return 0;
-            if (!*s->u.str.s)  /* Empty string */
-                return 0;
-            errno = 0;
-            t = strtol(s->u.str.s, &e, 10);
-            if (errno)
-                return 0;       /* overflow */
-            if (*e)             /* End not reached, so reject */
-                return 0;
-            if (t < MinWord || t > MaxWord)
+            if (str_to_word(s->u.str.s, &t) == CvtFail)
                 return 0;
             s->type = INTEGER;
-            s->u.i = (word)t;
+            s->u.i = t;
             return 1;
         }
     }
@@ -812,22 +804,13 @@ static int cnv_int(struct literal *s)
             return 1;
         }
         default: {
-            char *e;
-            long t;
+            word t;
             if (!cnv_string(s))
                 return 0;
-            if (!*s->u.str.s)  /* Empty string */
-                return 0;
-            errno = 0;
-            t = strtol(s->u.str.s, &e, 10);
-            if (errno)
-                return 0;       /* overflow */
-            if (*e)             /* End not reached, so reject */
-                return 0;
-            if (t < MinWord || t > MaxWord)
+            if (str_to_word(s->u.str.s, &t) == CvtFail)
                 return 0;
             s->type = INTEGER;
-            s->u.i = (word)t;
+            s->u.i = t;
             return 1;
         }
     }
@@ -858,10 +841,10 @@ static int cnv_real(struct literal *s)
             if (strchr(s->u.str.s, '.') == 0)
                 return 0;
 
-            errno = 0;
-            t = strtod(s->u.str.s, &e);
-            if (errno)
-                return 0;       /* overflow */
+            over_flow = 0;
+            t = oi_strtod(s->u.str.s, &e);
+            if (over_flow)
+                return 0;
             if (*e)             /* End not reached, so reject */
                 return 0;
             s->type = REAL;
@@ -3381,4 +3364,65 @@ static int equiv(struct literal *x, struct literal *y)
     }
     quit("Bad type to equiv()");
     return 0;
+}
+
+/*
+ * Very simplified form of ston in cnv.r
+ */
+static int str_to_word(char *s, word *val)
+{
+   char msign = '+';    /* sign of mantissa */
+   word lresult = 0;	/* integer result */
+
+   /*
+    * Skip leading white space.
+    */
+   while (oi_isspace(*s))
+       ++s;
+
+   if (!*s)
+       return CvtFail;
+
+   /*
+    * Check for sign.
+    */
+   if (*s == '+' || *s == '-') {
+      msign = *s++;
+      if (!*s)
+          return CvtFail;
+   }
+
+   /*
+    * Get integer part
+    */
+   over_flow = 0;
+   while (oi_isdigit(*s)) {
+       if (!over_flow) {
+           lresult = mul(lresult, 10);
+           if (!over_flow)
+               lresult = add(lresult, *s - '0');
+       }
+       ++s;
+   }
+
+   /* Don't handle non-decimal cases */
+   if (*s == 'r' || *s == 'R')
+       return CvtFail;
+
+   /* Trailing whitespace; if we're then at the end it's a decimal
+    * integer */
+   while (oi_isspace(*s))
+       ++s;
+
+   if (!*s) {
+       /* Base 10 integer or large integer */
+       if (over_flow) {
+           return CvtFail;
+       } else {
+           *val = (msign == '+' ? lresult : -lresult);
+           return Succeeded;
+       }
+   }
+
+   return CvtFail;
 }
