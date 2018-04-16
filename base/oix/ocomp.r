@@ -5,14 +5,14 @@
 /*
  * NumComp is a macro that defines the form of a numeric comparisons.
  */
-#begdef NumComp(icon_op, func_name, int_op, real_op)
+#begdef NumComp(icon_op, func_name, int_op, c_op)
 
 operator icon_op func_name(x,y)
    body {
       tended struct descrip ix, iy;
       /* Avoid function calls to conversion and operator funcs if possible. */
       if (IsCInteger(x) && IsCInteger(y)) {
-          if (real_op (IntVal(x), IntVal(y)))
+          if (c_op (IntVal(x), IntVal(y)))
              return y;
       } else if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
           if (int_op (ix, iy))
@@ -23,7 +23,7 @@ operator icon_op func_name(x,y)
               runerr(102, x);
           if (!cnv:C_double(y, dy))
               runerr(102, y);
-          if real_op (dx, dy)
+          if c_op (dx, dy)
                return C_double dy;
       }
       fail;
