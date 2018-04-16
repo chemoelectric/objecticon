@@ -322,6 +322,7 @@ end
 
 function seq(from, by)
    body {
+    word by0, from0;
     tended struct descrip by1, from1;
     double by2, from2;
     if (is:null(from))
@@ -329,7 +330,41 @@ function seq(from, by)
     if (is:null(by))
         by = onedesc;
 
-    if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
+    if (cnv:(exact)C_integer(by, by0) && cnv:(exact)C_integer(from, from0)) {
+        /*
+         * by must not be zero.
+         */
+        if (by0 == 0)
+           runerr(211);
+
+        if (by0 > 0) {
+            for (;;) {
+                word t;
+                suspend C_integer from0;
+                t = from0 + by0;
+                if (t <= from0)
+                    break;
+                from0 = t;
+            }
+        } else {
+            for (;;) {
+                word t;
+                suspend C_integer from0;
+                t = from0 + by0;
+                if (t >= from0)
+                    break;
+                from0 = t;
+            }
+        }
+        MakeInt(from0, &from1);
+        MakeInt(by0, &by1);
+        for (;;) {
+            bigadd(&from1, &by1, &from1);
+            suspend from1;
+        }
+        fail;
+   }
+   else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
        if (bigsign(&by1) == 0)
            runerr(211);
 
