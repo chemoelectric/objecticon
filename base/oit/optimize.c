@@ -798,7 +798,8 @@ static int cnv_int(struct literal *s)
             return 1;
         }
         case REAL: {
-            if (Abs(s->u.d) >= Big || s->u.d < MinWord || s->u.d > MaxWord)
+            /* Same test as cnv_int_impl in cnv.r that leads to realtobig() */
+            if (s->u.d < MinWord || s->u.d > MaxWord)
                 return 0;
             s->type = INTEGER;
             s->u.i = (word)s->u.d;
