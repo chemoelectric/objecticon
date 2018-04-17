@@ -1072,13 +1072,19 @@ char *double2cstr(double n)
      */
     while (*s == ' ')			/* delete leading blanks */
         s++;
+
+    /*
+     * Check for nan, infinity.
+     */
+    if (strchr(s, 'n') || strchr(s, 'N'))
+        return s;
     if (*s == '.') {			/* prefix 0 to initial period */
         s--;
         *s = '0';
     }
     else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
         strcat(s, ".0");		/* if no decimal point or exp. */
-    if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
+    else if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
         strcat(s, "0");
 
     /* Convert e+0dd -> e+dd */
