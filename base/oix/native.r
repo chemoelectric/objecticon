@@ -1330,9 +1330,9 @@ static HMODULE get_handle(char *filename)
         win32error2why();
         return 0;
     }
-    imported = (struct oisymbols **)GetProcAddress(handle, "setimported");
+    imported = (struct oisymbols **)GetProcAddress(handle, "imported");
     if (!imported) {
-        whyf("symbol 'imported' not found in dll %s", filename);
+        whyf("Symbol 'imported' not found in dll %s", filename);
         FreeLibrary(handle);
         return 0;
     }
