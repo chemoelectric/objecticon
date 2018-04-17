@@ -241,22 +241,25 @@ word bigradix(int sign,                      /* '-' or not */
 
     s = StrLoc(*sd);
     end_s = s + StrLen(*sd);
-    for (c = ((s < end_s) ? *s++ : ' '); oi_isalnum(c);
-         c = ((s < end_s) ? *s++ : ' ')) {
-        c = oi_isdigit(c) ? (c)-'0' : 10+(((c)|(040))-'a');
+    while (s < end_s && oi_isalnum(*s)) {
+        c = oi_isdigit(*s) ? (*s)-'0' : 10+(((*s)|(040))-'a');
         if (c >= r)
             return CvtFail;
         muli1(bd, (word)r, c, bd, len);
+        ++s;
     }
+
+    /* Check for no digits */
+    if (s == StrLoc(*sd))
+        return CvtFail;
 
     /*
      * Skip trailing white space and make sure there is nothing else left
-     *  in the string. Note, if we have already reached end-of-string,
-     *  c has been set to a space.
+     *  in the string.
      */
-    while (oi_isspace(c) && s < end_s)
-        c = *s++;
-    if (!oi_isspace(c))
+    while (s < end_s && oi_isspace(*s))
+       ++s;
+    if (s < end_s)
         return CvtFail;
 
     if (sign == '-')

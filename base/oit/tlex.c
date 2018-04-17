@@ -447,7 +447,6 @@ static struct toktab *getnum(int ac, int *cc)
          * Double - data is a double
          */
         AppChar(lex_sbuf, 0);
-        over_flow = 0;
         rval = oi_strtod(lex_sbuf.strtimage,0);
         if (over_flow)
             lexfatal("Real literal out of representable range");

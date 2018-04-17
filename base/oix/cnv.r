@@ -698,188 +698,95 @@ deref_macro(deref_1,E_Deref)
  */
 static int ston(dptr sp, union numeric *result)
    {
-   char *s = StrLoc(*sp), *end_s;
-   int c;
-   int realflag = 0;	/* indicates a real number */
+   static struct staticstr buf = {64};
+   char *s, *end_s, *ep;
    char msign = '+';    /* sign of mantissa */
-   char esign = '+';    /* sign of exponent */
-   double mantissa = 0; /* scaled mantissa with no fractional part */
    word lresult = 0;	/* integer result */
-   int scale = 0;	/* number of decimal places to shift mantissa */
-   int digits = 0;	/* total number of digits seen */
-   int sdigits = 0;	/* number of significant digits seen */
-   int exponent = 0;	/* exponent part of real number */
-   double fiveto;	/* holds 5^scale */
-   double power;	/* holds successive squares of 5 to compute fiveto */
-   int err_no;
    char *ssave;         /* holds original ptr for bigradix */
+   int digits = 0;	/* number of digits seen */
 
-   if (StrLen(*sp) == 0)
-      return CvtFail;
+   s = StrLoc(*sp);
    end_s = s + StrLen(*sp);
-   c = *s++;
 
    /*
     * Skip leading white space.
     */
-   while (oi_isspace(c))
-      if (s < end_s)
-         c = *s++;
-      else
-         return CvtFail;
+   while (s < end_s && oi_isspace(*s))
+       ++s;
 
    /*
     * Check for sign.
     */
-   if (c == '+' || c == '-') {
-      msign = c;
-      c = (s < end_s) ? *s++ : ' ';
-      }
+   if (s < end_s && (*s == '+' || *s == '-'))
+      msign = *s++;
 
-   ssave = s - 1;   /* set pointer to beginning of digits in case it's needed */
+   ssave = s;   /* set pointer to beginning of digits in case it's needed */
 
    /*
-    * Get integer part of mantissa.
+    * Get integer part
     */
-   while (oi_isdigit(c)) {
-      digits++;
-      if (mantissa < Big) {
-	 mantissa = mantissa * 10 + (c - '0');
-         lresult = lresult * 10 + (c - '0');
-	 if (mantissa > 0.0)
-	    sdigits++;
-	 }
-      else
-	 scale++;
-      c = (s < end_s) ? *s++ : ' ';
-      }
+   over_flow = 0;
+   while (s < end_s && oi_isdigit(*s)) {
+       if (!over_flow) {
+           lresult = mul(lresult, 10);
+           if (!over_flow)
+               lresult = add(lresult, *s - '0');
+       }
+       ++digits;
+       ++s;
+   }
 
    /*
     * Check for based integer.
     */
-   if (c == 'r' || c == 'R') {
+   if (s < end_s && (*s == 'r' || *s == 'R')) {
       tended struct descrip sd;
-      MakeStr(s, end_s-s, &sd);
-      return bigradix((int)msign, (int)mantissa, &sd, result);
-      }
-
-   /*
-    * Get fractional part of mantissa.
-    */
-   if (c == '.') {
-      realflag++;
-      c = (s < end_s) ? *s++ : ' ';
-      while (oi_isdigit(c)) {
-	 digits++;
-	 if (mantissa < Big) {
-	    mantissa = mantissa * 10 + (c - '0');
-	    lresult = lresult * 10 + (c - '0');
-	    scale--;
-	    if (mantissa > 0.0)
-	       sdigits++;
-	    }
-         c = (s < end_s) ? *s++ : ' ';
-	 }
-      }
-
-   /*
-    * Check that at least one digit has been seen so far.
-    */
-   if (digits == 0)
-      return CvtFail;
-
-   /*
-    * Get exponent part.
-    */
-   if (c == 'e' || c == 'E') {
-      realflag++;
-      c = (s < end_s) ? *s++ : ' ';
-      if (c == '+' || c == '-') {
-	 esign = c;
-         c = (s < end_s) ? *s++ : ' ';
-	 }
-      if (!oi_isdigit(c))
+      if (over_flow || lresult < 2 || lresult > 36)
 	 return CvtFail;
-      while (oi_isdigit(c)) {
-	 exponent = exponent * 10 + (c - '0');
-         c = (s < end_s) ? *s++ : ' ';
-	 }
-      scale += (esign == '+') ? exponent : -exponent;
+      ++s; /* move over R */
+      MakeStr(s, end_s - s, &sd);
+      return bigradix(msign, lresult, &sd, result);
       }
 
-   /*
-    * Skip trailing white space and make sure there is nothing else left
-    *  in the string. Note, if we have already reached end-of-string,
-    *  c has been set to a space.
-    */
-   while (oi_isspace(c) && s < end_s)
-      c = *s++;
-   if (!oi_isspace(c))
-      return CvtFail;
 
-   /*
-    * Test for integer.
-    */
-   if (!realflag && !scale && mantissa >= MinWord && mantissa <= MaxWord) {
-      result->integer = (msign == '+' ? lresult : -lresult);
-      return T_Integer;
-      }
+   while (s < end_s && oi_isspace(*s))
+       ++s;
 
-   /*
-    * Test for bignum.
-    */
-      if (!realflag) {
-         tended struct descrip sd;
-         MakeStr(ssave, end_s-ssave, &sd);
-         return bigradix((int)msign, 10, &sd, result);
-         }
-
-   /*
-    * Rough tests for overflow and underflow.
-    */
-   if (sdigits + scale > LogHuge)
-      return CvtFail;
-
-   if (sdigits + scale < -LogHuge) {
-      result->real = 0.0;
-      return T_Real;
-      }
-
-   /*
-    * Put the number together by multiplying the mantissa by 5^scale and
-    *  then using ldexp() to multiply by 2^scale.
-    */
-
-   exponent = (scale > 0)? scale : -scale;
-   fiveto = 1.0;
-   power = 5.0;
-   for (;;) {
-      if (exponent & 01)
-	 fiveto *= power;
-      exponent >>= 1;
-      if (exponent == 0)
-	 break;
-      power *= power;
-      }
-   if (scale > 0)
-      mantissa *= fiveto;
-   else
-      mantissa /= fiveto;
-
-   err_no = 0;
-   mantissa = ldexp(mantissa, scale);
-   if (err_no > 0 && mantissa > 0)
-      /*
-       * ldexp caused overflow.
-       */
-      return CvtFail;
-
-   if (msign == '-')
-      mantissa = -mantissa;
-   result->real = mantissa;
-   return T_Real;
+   if (s == end_s) {
+       /* Check we had some digits */
+       if (!digits)
+           return CvtFail;
+       /* Base 10 integer or large integer */
+       if (over_flow) {
+           tended struct descrip sd;
+           MakeStr(ssave, end_s - ssave, &sd);
+           return bigradix(msign, 10, &sd, result);
+       } else {
+           result->integer = (msign == '+' ? lresult : -lresult);
+           return T_Integer;
+       }
    }
 
+   ssreserve(&buf, StrLen(*sp) + 1);
+   memcpy(buf.s, StrLoc(*sp), StrLen(*sp));
+   buf.s[StrLen(*sp)] = 0;
+   result->real = oi_strtod(buf.s, &ep);
+   if (over_flow)
+       return CvtFail;
+
+   /*
+    * Check only spaces remain.  We don't check that *ep is null,
+    * since the icon string may have contained an invalid \0
+    * character.
+    */
+   s = StrLoc(*sp) + (ep - buf.s);
+   while (s < end_s && oi_isspace(*s))
+       ++s;
+   if (s < end_s)
+       return CvtFail;
+
+   return T_Real;
+   }
 
 /*
  * cvpos - convert position to strictly positive position

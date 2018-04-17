@@ -110,7 +110,7 @@ static struct rangeset *rangeset_compl(struct rangeset *x);
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
-static int str_to_word(char *s, word *val);
+static int str_to_num(struct literal *str, struct literal *result);
 
 static struct str_buf opt_sbuf;
 
@@ -776,13 +776,14 @@ static int cnv_eint(struct literal *s)
             return 1;
         }
         default: {
-            word t;
+            struct literal t;
             if (!cnv_string(s))
                 return 0;
-            if (str_to_word(s->u.str.s, &t) == CvtFail)
+            if (str_to_num(s, &t) == CvtFail)
                 return 0;
-            s->type = INTEGER;
-            s->u.i = t;
+            if (t.type != INTEGER)
+                return 0;
+            *s = t;
             return 1;
         }
     }
@@ -804,13 +805,14 @@ static int cnv_int(struct literal *s)
             return 1;
         }
         default: {
-            word t;
+            struct literal t;
             if (!cnv_string(s))
                 return 0;
-            if (str_to_word(s->u.str.s, &t) == CvtFail)
+            if (str_to_num(s, &t) == CvtFail)
                 return 0;
-            s->type = INTEGER;
-            s->u.i = t;
+            if (cnv_int(&t) == CvtFail)
+                return 0;
+            *s = t;
             return 1;
         }
     }
@@ -821,34 +823,23 @@ static int cnv_int(struct literal *s)
 static int cnv_real(struct literal *s)
 {
     switch (s->type) {
+        case INTEGER: {
+            s->type = REAL;
+            s->u.d = (double)s->u.i;
+            return 1;
+        }
         case REAL: {
             return 1;
         }
         default: {
-            char *e;
-            double t;
+            struct literal t;
             if (!cnv_string(s))
                 return 0;
-            if (!*s->u.str.s)  /* Empty string */
+            if (str_to_num(s, &t) == CvtFail)
                 return 0;
-            /*
-             * We only convert strings with a "." in them to avoid
-             * converting long integer strings, rejected by cnv_eint
-             * as too big, to reals.  They must be left as strings to
-             * be handled at runtime.  If we handled large ints this
-             * wouldn't arise of course.
-             */
-            if (strchr(s->u.str.s, '.') == 0)
+            if (cnv_real(&t) == CvtFail)
                 return 0;
-
-            over_flow = 0;
-            t = oi_strtod(s->u.str.s, &e);
-            if (over_flow)
-                return 0;
-            if (*e)             /* End not reached, so reject */
-                return 0;
-            s->type = REAL;
-            s->u.d = t;
+            *s = t;
             return 1;
         }
     }
@@ -3369,60 +3360,75 @@ static int equiv(struct literal *x, struct literal *y)
 /*
  * Very simplified form of ston in cnv.r
  */
-static int str_to_word(char *s, word *val)
+static int str_to_num(struct literal *str, struct literal *result)
 {
+   char *s, *end_s;
    char msign = '+';    /* sign of mantissa */
    word lresult = 0;	/* integer result */
+   int digits = 0;	/* number of digits seen */
+
+   s = str->u.str.s;
+   end_s = s + str->u.str.len;
 
    /*
     * Skip leading white space.
     */
-   while (oi_isspace(*s))
+   while (s < end_s && oi_isspace(*s))
        ++s;
-
-   if (!*s)
-       return CvtFail;
 
    /*
     * Check for sign.
     */
-   if (*s == '+' || *s == '-') {
+   if (s < end_s && (*s == '+' || *s == '-'))
       msign = *s++;
-      if (!*s)
-          return CvtFail;
-   }
 
    /*
     * Get integer part
     */
    over_flow = 0;
-   while (oi_isdigit(*s)) {
+   while (s < end_s && oi_isdigit(*s)) {
        if (!over_flow) {
            lresult = mul(lresult, 10);
            if (!over_flow)
                lresult = add(lresult, *s - '0');
        }
+       ++digits;
        ++s;
    }
 
    /* Don't handle non-decimal cases */
-   if (*s == 'r' || *s == 'R')
+   if (s < end_s && (*s == 'r' || *s == 'R'))
        return CvtFail;
 
    /* Trailing whitespace; if we're then at the end it's a decimal
     * integer */
-   while (oi_isspace(*s))
+   while (s < end_s && oi_isspace(*s))
        ++s;
 
-   if (!*s) {
+   if (s == end_s) {
+       /* Check we had some digits */
+       if (!digits)
+           return CvtFail;
        /* Base 10 integer or large integer */
        if (over_flow) {
            return CvtFail;
        } else {
-           *val = (msign == '+' ? lresult : -lresult);
+           result->type = INTEGER;
+           result->u.i = (msign == '+' ? lresult : -lresult);
            return Succeeded;
        }
    }
 
-   return CvtFail;
+   result->u.d = oi_strtod(str->u.str.s, &s);
+   if (over_flow)
+       return CvtFail;
+
+   /* Check only spaces remain. */
+   while (s < end_s && oi_isspace(*s))
+       ++s;
+   if (s < end_s)
+       return CvtFail;
+
+   result->type = REAL;
+   return Succeeded;
 }
