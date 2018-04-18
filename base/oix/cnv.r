@@ -181,14 +181,12 @@ static int cnv_c_dbl_impl(dptr s, double *d)
          return 1;
          }
       integer: {
-
-         if (IsLrgint(*s)) {
-            if (bigtoreal(s, d) != Succeeded)
-               return 0;
-         } else
+         if (IsLrgint(*s))
+             return (bigtoreal(s, d) == Succeeded);
+         else {
             *d = IntVal(*s);
-
-         return 1;
+            return 1;
+            }
          }
       string: {
          /* fall through */
@@ -216,13 +214,12 @@ static int cnv_c_dbl_impl(dptr s, double *d)
 
       case T_Lrgint:
          MakeDesc(D_Lrgint, numrc.big, &result);
-         if (bigtoreal(&result, d) != Succeeded)
-             return 0;
-         return 1;
+         return (bigtoreal(&result, d) == Succeeded);
 
       case T_Real:
          *d = numrc.real;
          return 1;
+
       default:
          return 0;
       }
@@ -471,19 +468,7 @@ static int cnv_int_impl(dptr s, dptr d)
       real: {
          double dbl;
          DGetReal(*s,dbl);
-         if (!isfinite(dbl))
-             return 0;
-         if (dbl > MaxWord || dbl < MinWord) {
-
-            if (realtobig(s, d) == Succeeded) {
-               return 1;
-               }
-            else {
-               return 0;
-               }
-	    }
-         MakeInt((word)dbl,d);
-         return 1;
+         return (realtobig(dbl, d) == Succeeded);
          }
       string: {
          /* fall through */
@@ -506,7 +491,6 @@ static int cnv_int_impl(dptr s, dptr d)
     * s is now a string.
     */
    switch( ston(s, &numrc) ) {
-
       case T_Lrgint:
          MakeDesc(D_Lrgint, numrc.big, d);
 	 return 1;
@@ -514,22 +498,10 @@ static int cnv_int_impl(dptr s, dptr d)
       case T_Integer:
          MakeInt(numrc.integer,d);
          return 1;
-      case T_Real: {
-         double dbl = numrc.real;
-         if (!isfinite(dbl))
-             return 0;
-         if (dbl > MaxWord || dbl < MinWord) {
 
-            if (realtobig(s, d) == Succeeded) {
-               return 1;
-               }
-            else {
-               return 0;
-               }
-	    }
-         MakeInt((word)dbl,d);
-         return 1;
-         }
+      case T_Real:
+         return (realtobig(numrc.real, d) == Succeeded);
+
       default:
          return 0;
       }
@@ -560,19 +532,15 @@ static int cnv_str_impl(dptr s, dptr d)
          return 1;
          }
      ucs: {
-           *d = UcsBlk(*s).utf8;
-           return 1;
+         *d = UcsBlk(*s).utf8;
+         return 1;
        }
       integer: {
-
-         if (IsLrgint(*s)) {
-	    bigtos(s,d);
-            return 1;
-          }
-         else {
+         if (IsLrgint(*s))
+	    bigtos(s, d);
+         else
             cstr2string(word2cstr(IntVal(*s)), d);
-            return 1;
-         }
+         return 1;
        }
       real: {
          double res;
@@ -581,11 +549,7 @@ static int cnv_str_impl(dptr s, dptr d)
          return 1;
          }
      cset: {
-           if (cset2string(s, d)) {
-               return 1;
-           } else {
-               return 0;
-           }
+         return cset2string(s, d);
       }
 
       default: {

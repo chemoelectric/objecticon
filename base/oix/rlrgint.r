@@ -298,20 +298,16 @@ int bigtoreal(dptr da, double *d)
 }
 
 /*
- *  real -> bignum
+ *  double -> bignum
  */
 
-int realtobig(dptr da, dptr dx)
+int realtobig(double x, dptr dx)
 {
 
-    double x;
     struct b_bignum *b;
     word i, blen;
     word d;
     int sgn;
-
-    DGetReal(*da, x);
-
 
     /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
      * blen below, which causes a segfault.
@@ -319,7 +315,7 @@ int realtobig(dptr da, dptr dx)
     if (!isfinite(x))
         return CvtFail;
 
-    if (x >= MinWord && x <= MaxWord) {
+    if (x >= Max(MinWord,-Big) && x <= Min(MaxWord,Big)) {
         MakeInt((word)x, dx);
         return Succeeded;		/* got lucky; a simple integer suffices */
     }

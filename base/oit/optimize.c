@@ -798,12 +798,14 @@ static int cnv_int(struct literal *s)
             return 1;
         }
         case REAL: {
-            /* Same tests as cnv_int_impl in cnv.r */
-            if (!isfinite(s->u.d) || s->u.d < MinWord || s->u.d > MaxWord)
+            /* Same tests as realtobig() that would return a normal int. */
+            if (isfinite(s->u.d) && 
+                s->u.d >= Max(MinWord,-Big) && s->u.d <= Min(MaxWord,Big)) {
+                s->type = INTEGER;
+                s->u.i = (word)s->u.d;
+                return 1;
+            } else
                 return 0;
-            s->type = INTEGER;
-            s->u.i = (word)s->u.d;
-            return 1;
         }
         default: {
             struct literal t;
