@@ -73,8 +73,8 @@ procedure main(a)
                        Opt("g",, "Use a gui interface rather than the console"),
                        Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
                        Opt("z",, "Don't read commands interactively, but exit after processing input files"),
-                       Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
-                       Opt("elim",integer,"Set the expression limit for evaluation (default is 35)"),
+                       Opt("hlim",integer,"Set the history limit for the line editor (default is 500, minimum is 10)"),
+                       Opt("elim",integer,"Set the expression limit for evaluation (default is 35, minimum is 10)"),
                        Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")],
                        usage)
    main := if /opts["m"] then "main" else "ieval_main"
@@ -82,5 +82,7 @@ procedure main(a)
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []
    prog := create_prog(main, imports, links) | stop(&why)
+   # Set progname so help_stop gives proper output.
+   Prog.get_variable("&progname", prog) := &progname
    Prog.get_global(main, prog)(imports, a, opts)
 end

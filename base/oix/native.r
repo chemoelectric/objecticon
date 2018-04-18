@@ -1191,15 +1191,13 @@ struct handle_list {
     struct handle_list *next;
 };
 
-typedef void (*setimportedftype)(struct oisymbols *);
-
 static void *get_handle(char *filename)
 {
     static struct handle_list *tbl[16];
     struct handle_list *x;
     int i;
     void *handle;
-    setimportedftype setimportedf;
+    struct oisymbols **imported;
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1212,9 +1210,9 @@ static void *get_handle(char *filename)
         why(dlerror());
         return 0;
     }
-    setimportedf = (setimportedftype)dlsym(handle, "setimported");
-    if (setimportedf)
-        setimportedf(&oiexported);
+    imported = (struct oisymbols **)dlsym(handle, "imported");
+    if (imported)
+        *imported = &oiexported;
     x = safe_zalloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
@@ -1336,8 +1334,6 @@ struct handle_list {
     struct handle_list *next;
 };
 
-typedef void (*setimportedftype)(struct oisymbols *);
-
 static HMODULE get_handle(char *filename)
 {
     static struct handle_list *tbl[16];
@@ -1345,7 +1341,7 @@ static HMODULE get_handle(char *filename)
     int i;
     HMODULE handle;
     WCHAR *wfilename;
-    setimportedftype setimportedf;
+    struct oisymbols **imported;
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1360,13 +1356,13 @@ static HMODULE get_handle(char *filename)
         win32error2why();
         return 0;
     }
-    setimportedf = (setimportedftype)GetProcAddress(handle, "setimported");
-    if (!setimportedf) {
-        whyf("symbol 'setimported' not found in dll %s", filename);
+    imported = (struct oisymbols **)GetProcAddress(handle, "imported");
+    if (!imported) {
+        whyf("Symbol 'imported' not found in dll %s", filename);
         FreeLibrary(handle);
         return 0;
     }
-    setimportedf(&oiexported);
+    *imported = &oiexported;
     x = safe_zalloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
@@ -4224,7 +4220,7 @@ static int lookup_proc_local(struct p_proc *proc, dptr query)
         return -1;
     }
 
-    if (query->dword == D_Integer) {
+    if (IsCInteger(*query)) {
         word i = cvpos_item(IntVal(*query), nf);
         if (i == CvtFail)
             return -1;

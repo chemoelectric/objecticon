@@ -56,11 +56,10 @@ void cpslots(dptr dp1, dptr slotptr, word i, word size)
    }
 
 
-#begdef cplist_macro(f, e)
 /*
  * cplist(dp1,dp2,i,size) - copy sublist dp1[i+:size] into dp2.
  */
-void f(dptr dp1, dptr dp2, word i, word size)
+void cplist(dptr dp1, dptr dp2, word i, word size)
    {
    word nslots;
    tended struct b_list *lp2;
@@ -79,39 +78,21 @@ void f(dptr dp1, dptr dp2, word i, word size)
     * Fix type and location fields for the new list.
     */
    MakeDesc(D_List, lp2, dp2);
-   EVValD(dp2, e);
    }
-#enddef
 
-cplist_macro(cplist_0, 0)
-cplist_macro(cplist_1, E_Lcreate)
-
-
-#begdef cpset_macro(f, e)
 /*
  * cpset(dp1,dp2,n) - copy set dp1 to dp2, reserving memory for n entries.
  */
-void f(dptr dp1, dptr dp2, word n)
+void cpset(dptr dp1, dptr dp2, word n)
    {
    cphash(dp1, dp2, n, T_Set);
-   EVValD(dp2, e);
    }
-#enddef
 
-cpset_macro(cpset_0, 0)
-cpset_macro(cpset_1, E_Screate)
-
-#begdef cptable_macro(f, e)
-void f(dptr dp1, dptr dp2, word n)
+void cptable(dptr dp1, dptr dp2, word n)
    {
    cphash(dp1, dp2, n, T_Table);
    TableBlk(*dp2).defvalue = TableBlk(*dp1).defvalue;
-   EVValD(dp2, e);
    }
-#enddef
-
-cptable_macro(cptable_0, 0)
-cptable_macro(cptable_1, E_Tcreate)
 
 static void cphash(dptr dp1, dptr dp2, word n, int tcode)
    {
@@ -167,8 +148,7 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
          if (prev == NULL)
              seg->hslots[slotnum] = (union block *)dst;
          }
-   dp2->dword = tcode | D_Typecode | F_Ptr;
-   BlkLoc(*dp2) = dst;
+   MakeDesc(tcode | D_Typecode | F_Ptr, dst, dp2);
    if (TooSparse(dst))
       hshrink(dst);
    }

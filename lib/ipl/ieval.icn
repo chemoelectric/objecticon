@@ -5,7 +5,7 @@
 package ipl.ieval
 
 import io, gui-(List), lang, xdg, ipl.columnize, parser(Parser,Token), eval, util,
-   ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists, ipl.scan, net
+   ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists, ipl.scan, net, ipl.options
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
@@ -48,8 +48,8 @@ class Ieval(MinimalObjectOutput)
          write("!cls        Clear the screen.").
          write("old(s)      Search history for commands containing string s.").
          write("hlim(n)     Set the history limit to n.").
-         write("elim(n)     Set the expression limit to n.").
-         write("llim(n)     Set the gui log area line limit to n.").
+         write("elim(n)     Set the expression limit to n (min 10).").
+         write("llim(n)     Set the gui log area line limit to n (min 10).").
          write("load(s)     Load the given prog, and set its error handler.").
          write("gg(s,p)     Get the given global from the the given prog (shorthand for").
          write("            Prog.get_global).").
@@ -285,21 +285,38 @@ class Ieval(MinimalObjectOutput)
    end
 
    private set_elim(n)
-      elim := (10 < \n)
-      return elim
+      if \n then {
+         (elim := (10 <= n)) | {
+            error.write("Parameter to elim() out of range")
+            fail
+         }
+      }
+      return .elim
    end
 
    private set_hlim(n)
-      hlim := (10 < \n)
-      input.set_history_limit(hlim)
-      return hlim
+      if \n then {
+         if hlim := (10 <= n) then
+            input.set_history_limit(hlim)
+         else {
+            error.write("Parameter to hlim() out of range")
+            fail
+         }
+      }
+      return .hlim
    end
 
    private set_llim(n)
-      llim := (0 <= \n)
-      if is(input, TermDialog) then
-         input.set_log_limit(llim)
-      return llim
+      if \n then {
+         if llim := (0 <= n) then {
+            if is(input, TermDialog) then
+               input.set_log_limit(llim)
+         } else {
+            error.write("Parameter to llim() out of range")
+            fail
+         }
+      }
+      return .llim
    end
 
    private load_handler(prog)
@@ -391,9 +408,18 @@ class Ieval(MinimalObjectOutput)
       ev := Evaluator().
          set_env(ee).
          set_imports(imports)
-      hlim := (10 < \opts["hlim"]) | 500
-      llim := (0 <= \opts["llim"]) | 600
-      elim := (10 < \opts["elim"]) | 35
+      if hlim := \opts["hlim"] then
+         (10 <= hlim) | help_stop("Invalid value of hlim")
+      else
+         hlim := 500
+      if llim := \opts["llim"] then
+         (0 <= llim) | help_stop("Invalid value of llim")
+      else
+         llim := 600
+      if elim := \opts["elim"] then
+         (10 <= elim) | help_stop("Invalid value of elim")
+      else
+         elim := 35
       return
    end
 

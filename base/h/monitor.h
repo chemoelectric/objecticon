@@ -48,11 +48,17 @@
    /*
     * Type-conversion events
     */
-#define E_Aconv		'\111'		/* Conversion attempt */
-#define E_Tconv		'\113'		/* Conversion target */
-#define E_Nconv		'\116'		/* Conversion not needed */
-#define E_Sconv		'\121'		/* Conversion success */
-#define E_Fconv		'\112'		/* Conversion failure */
+#define E_CnvCDbl	'\111'		/* Conversion to C double */
+#define E_CnvCInt	'\113'		/* Conversion to C integer */
+#define E_CnvCset	'\116'		/* Conversion to cset */
+#define E_CnvUcs	'\121'		/* Conversion to ucs */
+#define E_CnvStrOrUcs	'\112'		/* Conversion to string or ucs */
+#define E_CnvECInt	'\270'		/* Conversion to exact C integer */
+#define E_CnvEInt	'\271'		/* Conversion to exact integer */
+#define E_CnvInt	'\272'		/* Conversion to integer */
+#define E_CnvReal	'\273'		/* Conversion to real */
+#define E_CnvStr	'\274'		/* Conversion to string */
+#define E_CnvCStr	'\275'		/* Conversion to C string */
 
    /*
     * Structure events
@@ -183,7 +189,7 @@
 240 241 242 243 244 245 246 247
 250 251 252 253 254 255 256 257
 260 261 262 263 264 265 266 267
-270 271 272 273 274 275 276 277
+276 277
 
 341 342 343 344 345 346
 351

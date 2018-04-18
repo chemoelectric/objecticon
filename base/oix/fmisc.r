@@ -73,10 +73,12 @@ function copy(x)
              * Pass the buck to cplist to copy a list.
              */
             cplist(&x, &result, 1, ListBlk(x).size);
+            EVValD(&result, E_Lcreate);
             return result;
             }
       table: {
             cptable(&x, &result, TableBlk(x).size);
+            EVValD(&result, E_Tcreate);
 	    return result;
          }
 
@@ -85,6 +87,7 @@ function copy(x)
              * Pass the buck to cpset to copy a set.
              */
             cpset(&x, &result, SetBlk(x).size);
+            EVValD(&result, E_Screate);
 	    return result;
          }
 
@@ -164,7 +167,7 @@ function icom(i)
       runerr(101, i)
 
    body {
-      if (Type(i) == T_Lrgint) {
+      if (IsLrgint(i)) {
          tended struct descrip result;
          bigsub(&minusonedesc, &i, &result);
          return result;
@@ -319,6 +322,7 @@ end
 
 function seq(from, by)
    body {
+    word by0, from0;
     tended struct descrip by1, from1;
     double by2, from2;
     if (is:null(from))
@@ -326,7 +330,41 @@ function seq(from, by)
     if (is:null(by))
         by = onedesc;
 
-    if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
+    if (cnv:(exact)C_integer(by, by0) && cnv:(exact)C_integer(from, from0)) {
+        /*
+         * by must not be zero.
+         */
+        if (by0 == 0)
+           runerr(211);
+
+        if (by0 > 0) {
+            for (;;) {
+                word t;
+                suspend C_integer from0;
+                t = from0 + by0;
+                if (t <= from0)
+                    break;
+                from0 = t;
+            }
+        } else {
+            for (;;) {
+                word t;
+                suspend C_integer from0;
+                t = from0 + by0;
+                if (t >= from0)
+                    break;
+                from0 = t;
+            }
+        }
+        MakeInt(from0, &from1);
+        MakeInt(by0, &by1);
+        for (;;) {
+            bigadd(&from1, &by1, &from1);
+            suspend from1;
+        }
+        fail;
+   }
+   else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
        if (bigsign(&by1) == 0)
            runerr(211);
 
@@ -391,7 +429,7 @@ function sort(t, i)
             qsort(ListBlk(result).listhead->lelem.lslots,
                   size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
-            Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
+            EVValD(&result, E_Lcreate);
             return result;
             }
          }
@@ -690,7 +728,7 @@ function sortf(t, i)
          qsort(ListBlk(result).listhead->lelem.lslots,
                size, sizeof(struct descrip),(QSortFncCast) nthcmp);
 
-         Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
+         EVValD(&result, E_Lcreate);
          return result;
       }
 

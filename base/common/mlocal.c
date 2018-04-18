@@ -1104,13 +1104,19 @@ char *double2cstr(double n)
      */
     while (*s == ' ')			/* delete leading blanks */
         s++;
+
+    /*
+     * Check for nan, infinity.
+     */
+    if (strchr(s, 'n') || strchr(s, 'N'))
+        return s;
     if (*s == '.') {			/* prefix 0 to initial period */
         s--;
         *s = '0';
     }
     else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
         strcat(s, ".0");		/* if no decimal point or exp. */
-    if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
+    else if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
         strcat(s, "0");
 
     /* Convert e+0dd -> e+dd */
@@ -1512,3 +1518,22 @@ word neg(word a)
 }
 #endif					/* AsmOver */
 
+/*
+ * Wrapper around strtod, which sets over_flow flag.
+ */
+double oi_strtod(char *nptr, char **endptr)
+{
+    double res;
+    over_flow = 0;
+#if PLAN9
+    res = strtod(nptr, endptr);
+    if (isNaN(res) || isInf(res,1) || isInf(res,-1))
+        over_flow = 1;
+#else
+    errno = 0;
+    res = strtod(nptr, endptr);
+    if (errno == ERANGE)
+        over_flow = 1;
+#endif
+    return res;
+}

@@ -3422,15 +3422,11 @@ void prologue()
        if (subsid)
            fprintf(out_file, "extern struct oisymbols *imported;\n\n");
        else {
-           fprintf(out_file, "struct oisymbols *imported;\n\n");
-           fprintf(out_file, "/* Called by oix when the library is first loaded */\n");
+           fprintf(out_file, "/* Initialized by oix when the library is loaded. */\n");
 #if MSWIN32
            fprintf(out_file, "__declspec(dllexport)\n");
 #endif
-           fprintf(out_file, "void setimported(struct oisymbols *x)\n");
-           fprintf(out_file, "{\n");
-           fprintf(out_file, "   imported = x;\n");
-           fprintf(out_file, "}\n");
+           fprintf(out_file, "struct oisymbols *imported;\n\n");
        }
    }
 }

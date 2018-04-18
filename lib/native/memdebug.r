@@ -633,7 +633,7 @@ static void outimagey(dptr d, struct frame *frame)
             litblockout(d);
         }
       integer: {
-            if (Type(*d) == T_Lrgint)
+            if (IsLrgint(*d))
                 litblockout(d);
             else
                 outimage1(out, d, 1, slim, llim);

@@ -277,20 +277,20 @@ class Lex(Connectable)
             yytext ||:= tab(any('+\-'))
             yytext ||:= tab(many(&digits))
          }
-         yytokval := real(yytext) | err("invalid real literal")
+         yytokval := real(yytext) | err("Invalid real literal")
          return YY.REALLIT
       }
       else if yytext ||:= tab(any('eE')) then {
          yytext ||:= tab(any('+\-'))
          yytext ||:= tab(many(&digits))
-         yytokval := real(yytext) | err("invalid real literal")
+         yytokval := real(yytext) | err("Invalid real literal")
          return YY.REALLIT
       }
       else {
          if yytext ||:= tab(any('rR')) then {
             yytext ||:= tab(many(&digits ++ &letters))
          }
-         yytokval := integer(yytext) | err("invalid integer literal")
+         yytokval := integer(yytext) | err("Invalid integer literal")
          return YY.INTLIT
       }
    end
@@ -456,7 +456,7 @@ class Lex(Connectable)
    private do_dot()
       if yytext ||:= tab(many(&digits)) then {
          tokflags +:= Beginner+Ender
-         yytokval := real(yytext) | err("invalid real literal")
+         yytokval := real(yytext) | err("Invalid real literal")
          return YY.REALLIT
       }
       else {

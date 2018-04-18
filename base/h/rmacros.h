@@ -115,6 +115,13 @@
 #define OffsetVarLoc(d)	((dptr)((word *)BlkLoc(d) + Offset(d)))
 
 /*
+ * Macros for testing whether a descriptor is a large integer (stored
+ * in a block) or a C integer (stored in the descriptor).
+ */
+#define IsLrgint(d)      ((d).dword == D_Lrgint)
+#define IsCInteger(d)    ((d).dword == D_Integer)
+
+/*
  *  Important note:  The code that follows is not strictly legal C.
  *   It tests to see if pointer p2 is between p1 and p3. This may
  *   involve the comparison of pointers in different arrays, which
@@ -179,11 +186,6 @@
                          IntVal(*dp) = (word)(i); \
 			 } while (0)
 
-#define MakeNamedVar(x, dp)		do { \
-                 	 (dp)->dword = D_NamedVar; \
-                         VarLoc(*dp) = (x); \
-			 } while (0)
-
 /*
  * Construct a string descriptor.
  */
@@ -244,6 +246,14 @@
                  	 StrLoc(*dp) = (s); \
                          StrLen(*dp) = sizeof(s) - 1;       \
 			 } while (0)
+
+/*
+ * Construct a descriptor for a variable.
+ */
+#define MakeVarDesc(type, expr, dp)  do {  \
+                         VarLoc(*dp) = (expr);  \
+                         (*dp).dword = (type);                 \
+                         } while (0)
 
 /*
  * Set &why to a string literal.
@@ -646,14 +656,6 @@ __declspec(dllexport)  \
       
 #define k_main        (curpstate->K_main)
       
-#define cplist	    (curpstate->Cplist)
-#define cpset	    (curpstate->Cpset)
-#define cptable	    (curpstate->Cptable)
-#define cnv_cset	    (curpstate->Cnvcset)
-#define cnv_ucs	    (curpstate->Cnvucs)
-#define cnv_int	    (curpstate->Cnvint)
-#define cnv_real	    (curpstate->Cnvreal)
-#define cnv_str	    (curpstate->Cnvstr)
 #define deref	    (curpstate->Deref)
 #define alcbignum	    (curpstate->Alcbignum)
 #define alccoexp	    (curpstate->Alccoexp)

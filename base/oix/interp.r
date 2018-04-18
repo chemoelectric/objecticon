@@ -350,11 +350,11 @@ void get_variable(dptr dest)
         }
         case Op_Static:
         case Op_Global: {
-            MakeNamedVar((dptr)GetAddr, dest);
+            MakeVarDesc(D_NamedVar, (dptr)GetAddr, dest);
             break;
         }
         case Op_FrameVar: {
-            MakeNamedVar(&curr_pf->fvars->desc[GetWord], dest);
+            MakeVarDesc(D_NamedVar, &curr_pf->fvars->desc[GetWord], dest);
             break;
         }
         case Op_Self: {

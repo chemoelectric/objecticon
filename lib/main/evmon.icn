@@ -27,8 +27,10 @@ class MonitorCodeSet()
 
       AssignMask := cset(MonitorCode.Assign || MonitorCode.Value)
 
-      ConvMask := cset(MonitorCode.Aconv || MonitorCode.Tconv || MonitorCode.Sconv || 
-                       MonitorCode.Nconv || MonitorCode.Fconv)
+      ConvMask := cset(MonitorCode.CnvCDbl || MonitorCode.CnvCInt || MonitorCode.CnvCset ||
+                       MonitorCode.CnvUcs ||  MonitorCode.CnvStrOrUcs || MonitorCode.CnvECInt ||
+                       MonitorCode.CnvEInt || MonitorCode.CnvInt || MonitorCode.CnvReal ||
+                       MonitorCode.CnvStr || MonitorCode.CnvCStr)
 
       CallMask := cset(MonitorCode.Pcall || MonitorCode.Pfail || MonitorCode.Pret || 
                        MonitorCode.Psusp || MonitorCode.Presum)

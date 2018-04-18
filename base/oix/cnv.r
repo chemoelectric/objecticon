@@ -1,21 +1,163 @@
 /*
  * cnv.r -- Conversion routines:
- *
- *
- * Philosophy: certain redundancy is present which could be avoided,
- * and nested conversion calls are avoided due to the importance of
- * minimizing these routines' costs.
- *
- * Assumed: the C compiler must handle assignments of C integers to
- * C double variables and vice-versa.  Hopefully production C compilers
- * have managed to eliminate bugs related to these assignments.
  */
-
 
 /*
  * Prototypes for static functions.
  */
+static int cnv_c_dbl_impl(dptr s, double *d);
+static int cnv_c_int_impl(dptr s, word *d);
+static int cnv_cset_impl(dptr s, dptr d);
+static int cnv_ucs_impl(dptr s, dptr d);
+static int cnv_str_or_ucs_impl(dptr s, dptr d);
+static int cnv_ec_int_impl(dptr s, word *d);
+static int cnv_eint_impl(dptr s, dptr d);
+static int cnv_int_impl(dptr s, dptr d);
+static int cnv_real_impl(dptr s, dptr d);
+static int cnv_str_impl(dptr s, dptr d);
 static int ston (dptr sp, union numeric *result);
+static int cset2string(dptr src, dptr dest);
+
+
+/*
+ * cnv_c_dbl - cnv:C_double(*s, *d), convert a value directly into a C double
+ */
+int cnv_c_dbl(dptr s, double *d)
+{
+    if (is:real(*s)) {
+        DGetReal(*s, *d);
+        return 1;
+    } else {
+        EVValD(s, E_CnvCDbl);
+        return cnv_c_dbl_impl(s, d);
+    }
+}
+
+/*
+ * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a word
+ */
+int cnv_c_int(dptr s, word *d)
+{
+    if (IsCInteger(*s)) {
+        *d = IntVal(*s);
+        return 1;
+    } else {
+        EVValD(s, E_CnvCInt);
+        return cnv_c_int_impl(s, d);
+    }
+}
+
+/*
+ * cnv_cset - cnv:cset(*s, *d), convert to a cset
+ */
+int cnv_cset(dptr s, dptr d)
+{
+    if (is:cset(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvCset);
+        return cnv_cset_impl(s, d);
+    }
+}
+
+/*
+ * cnv_ucs - cnv:ucs(*s, *d), convert to a ucs
+ */
+int cnv_ucs(dptr s, dptr d)
+{
+    if (is:ucs(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvUcs);
+        return cnv_ucs_impl(s, d);
+    }
+}
+
+/*
+ * cnv_str_or_ucs - cnv:string_or_ucs(*s, *d), convert to a string or ucs type
+ */
+int cnv_str_or_ucs(dptr s, dptr d)
+{
+    if (is:string(*s) || is:ucs(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvStrOrUcs);
+        return cnv_str_or_ucs_impl(s, d);
+    }
+}
+
+/*
+ * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
+ */
+int cnv_ec_int(dptr s, word *d)
+{
+    if (IsCInteger(*s)) {
+        *d = IntVal(*s);
+        return 1;
+    } else {
+        EVValD(s, E_CnvECInt);
+        return cnv_ec_int_impl(s, d);
+    }
+}
+
+/*
+ * cnv_eint - cnv:(exact)integer(*s, *d), convert to an exact integer
+ */
+int cnv_eint(dptr s, dptr d)
+{
+    if (is:integer(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvEInt);
+        return cnv_eint_impl(s, d);
+    }
+}
+
+/*
+ * cnv_int - cnv:integer(*s, *d), convert to integer
+ */
+int cnv_int(dptr s, dptr d)
+{
+    if (is:integer(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvInt);
+        return cnv_int_impl(s, d);
+    }
+}
+
+/*
+ * cnv_real - cnv:real(*s, *d), convert to real
+ */
+int cnv_real(dptr s, dptr d)
+{
+    if (is:real(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvReal);
+        return cnv_real_impl(s, d);
+    }
+}
+
+/*
+ * cnv_str - cnv:string(*s, *d), convert to a string
+ */
+int cnv_str(dptr s, dptr d)
+{
+    if (is:string(*s)) {
+        *d = *s;
+        return 1;
+    } else {
+        EVValD(s, E_CnvStr);
+        return cnv_str_impl(s, d);
+    }
+}
 
 static int cset2string(dptr src, dptr dest)
 {
@@ -27,10 +169,7 @@ static int cset2string(dptr src, dptr dest)
         return 0;
 }
 
-/*
- * cnv_c_dbl - cnv:C_double(*s, *d), convert a value directly into a C double
- */
-int cnv_c_dbl(dptr s, double *d)
+static int cnv_c_dbl_impl(dptr s, double *d)
    {
    tended struct descrip result, cnvstr;
 
@@ -43,7 +182,7 @@ int cnv_c_dbl(dptr s, double *d)
          }
       integer: {
 
-         if (Type(*s) == T_Lrgint) {
+         if (IsLrgint(*s)) {
             if (bigtoreal(s, d) != Succeeded)
                return 0;
          } else
@@ -89,14 +228,11 @@ int cnv_c_dbl(dptr s, double *d)
       }
   }
 
-/*
- * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a word
- */
-int cnv_c_int(dptr s, word *d)
+static int cnv_c_int_impl(dptr s, word *d)
 {
    tended struct descrip tmp;
 
-   if (cnv_int(s, &tmp) && Type(tmp) == T_Integer) {
+   if (cnv_int_impl(s, &tmp) && IsCInteger(tmp)) {
        *d = IntVal(tmp);
        return 1;
    } else
@@ -112,13 +248,14 @@ int cnv_c_str(dptr s, dptr d)
     * Get the string to the end of the string region and append a '\0'.
     */
 
-   if (!is:string(*s)) {
-      if (!cnv_str(s, d)) {
-         return 0;
-         }
+   if (is:string(*s)) {
+      *d = *s;
       }
    else {
-      *d = *s;
+      EVValD(s, E_CnvCStr);
+      if (!cnv_str_impl(s, d)) {
+         return 0;
+         }
       }
 
    /*
@@ -145,20 +282,13 @@ int cnv_c_str(dptr s, dptr d)
    }
 
 
-#begdef cnv_cset_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
-/*
- * cnv_cset - cnv:cset(*s, *d), convert to a cset
- */
-int f(dptr s, dptr d)
+static int cnv_cset_impl(dptr s, dptr d)
    {
    tended struct descrip str;
 
-   EVValD(s, e_aconv);
-   EVValD(&csetdesc, e_tconv);
 
    if (is:cset(*s)) {
       *d = *s;
-      EVValD(s, e_nconv);
       return 1;
       }
 
@@ -174,11 +304,10 @@ int f(dptr s, dptr d)
        }
        MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
-       EVValD(d, e_sconv);
        return 1;
    }
 
-   if (cnv:string(*s, str)) {
+   if (cnv_str_impl(s, &str)) {
        word l;
        char *s1;        /* does not need to be tended */
        struct rangeset *rs;
@@ -191,42 +320,27 @@ int f(dptr s, dptr d)
        }
        MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
-       EVValD(d, e_sconv);
        return 1;
      }
 
-     EVValD(s, e_fconv);
      return 0;
 
   }
-#enddef
 
-cnv_cset_macro(cnv_cset_0,0,0,0,0,0)
-cnv_cset_macro(cnv_cset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-
-#begdef cnv_ucs_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
-/*
- * cnv_ucs - cnv:ucs(*s, *d), convert to a ucs
- */
-int f(dptr s, dptr d)
+static int cnv_ucs_impl(dptr s, dptr d)
 {
     tended struct descrip str;
 
-    EVValD(s, e_aconv);
-    Desc_EVValD(emptystr_ucs, e_tconv, D_Ucs);
-
     if (is:ucs(*s)) {
         *d = *s;
-        EVValD(s, e_nconv);
         return 1;
     }
     if (is:cset(*s)) {
         MakeDesc(D_Ucs, cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size), d);
-        EVValD(d, e_sconv);
         return 1;
     }
 
-    if (cnv:string(*s, str)) {
+    if (cnv_str_impl(s, &str)) {
         char *s1, *e1;
         word n = 0;
 
@@ -237,27 +351,17 @@ int f(dptr s, dptr d)
             int i = utf8_check(&s1, e1);
             ++n;
             if (i < 0 || i > MAX_CODE_POINT) {
-                EVValD(s, e_fconv);
                 return 0;
             }
         }
         MakeDesc(D_Ucs, make_ucs_block(&str, n), d);
-        EVValD(d, e_sconv);
         return 1;
     }
 
-    EVValD(s, e_fconv);
     return 0;
 }
-#enddef
 
-cnv_ucs_macro(cnv_ucs_0,0,0,0,0,0)
-cnv_ucs_macro(cnv_ucs_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-
-/*
- * cnv_str_or_ucs - cnv:string_or_ucs(*s, *d), convert to a string or ucs type
- */
-int cnv_str_or_ucs(dptr s, dptr d)
+static int cnv_str_or_ucs_impl(dptr s, dptr d)
 {
    type_case *s of {
      string: {
@@ -269,10 +373,10 @@ int cnv_str_or_ucs(dptr s, dptr d)
         return 1;
        }
      cset: {
-        return cnv_str(s, d) || cnv_ucs(s, d);
+        return cnv_str_impl(s, d) || cnv_ucs_impl(s, d);
       }
      default: {
-        return cnv_str(s, d);
+        return cnv_str_impl(s, d);
       }
    }
 }
@@ -300,24 +404,18 @@ int need_ucs(dptr s)
    }
 }
 
-/*
- * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
- */
-int cnv_ec_int(dptr s, word *d)
+static int cnv_ec_int_impl(dptr s, word *d)
 {
    tended struct descrip tmp;
 
-   if (cnv_eint(s, &tmp) && Type(tmp) == T_Integer) {
+   if (cnv_eint_impl(s, &tmp) && IsCInteger(tmp)) {
        *d = IntVal(tmp);
        return 1;
    } else
        return 0;
 }
 
-/*
- * cnv_eint - cnv:(exact)integer(*s, *d), convert to an exact integer
- */
-int cnv_eint(dptr s, dptr d)
+static int cnv_eint_impl(dptr s, dptr d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
@@ -360,22 +458,14 @@ int cnv_eint(dptr s, dptr d)
       }
    }
 
-#begdef cnv_int_macro(f,e_aconv,e_tconv,e_nconv,e_fconv,e_sconv)
-/*
- * cnv_int - cnv:integer(*s, *d), convert to integer
- */
-int f(dptr s, dptr d)
+static int cnv_int_impl(dptr s, dptr d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
 
-   EVValD(s, e_aconv);
-   EVValD(&zerodesc, e_tconv);
-
    type_case *s of {
       integer: {
          *d = *s;
-         EVValD(s, e_nconv);
          return 1;
          }
       real: {
@@ -384,16 +474,13 @@ int f(dptr s, dptr d)
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
-               EVValD(d, e_sconv);
                return 1;
                }
             else {
-               EVValD(s, e_fconv);
                return 0;
                }
 	    }
          MakeInt((word)dbl,d);
-         EVValD(d, e_sconv);
          return 1;
          }
       string: {
@@ -404,13 +491,11 @@ int f(dptr s, dptr d)
          }
       cset: {
         if (!cset2string(s, &cnvstr)) {
-           EVValD(s, e_fconv);
            return 0;
         }
         s = &cnvstr;
         }
       default: {
-         EVValD(s, e_fconv);
          return 0;
          }
       }
@@ -422,96 +507,66 @@ int f(dptr s, dptr d)
 
       case T_Lrgint:
          MakeDesc(D_Lrgint, numrc.big, d);
-         EVValD(d, e_sconv);
 	 return 1;
 
       case T_Integer:
          MakeInt(numrc.integer,d);
-         EVValD(d, e_sconv);
          return 1;
       case T_Real: {
          double dbl = numrc.real;
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
-               EVValD(d, e_sconv);
                return 1;
                }
             else {
-               EVValD(s, e_fconv);
                return 0;
                }
 	    }
          MakeInt((word)dbl,d);
-         EVValD(d, e_sconv);
          return 1;
          }
       default:
-         EVValD(s, e_fconv);
          return 0;
       }
    }
-#enddef
 
-cnv_int_macro(cnv_int_0,0,0,0,0,0)
-cnv_int_macro(cnv_int_1,E_Aconv,E_Tconv,E_Nconv,E_Fconv,E_Sconv)
-
-#begdef cnv_real_macro(f,e_aconv,e_tconv,e_sconv,e_fconv)
-/*
- * cnv_real - cnv:real(*s, *d), convert to real
- */
-int f(dptr s, dptr d)
+static int cnv_real_impl(dptr s, dptr d)
    {
    double dbl;
 
-   EVValD(s, e_aconv);
-   EVValD(&rzerodesc, e_tconv);
-
-   if (cnv_c_dbl(s, &dbl)) {
+   if (is:real(*s)) {
+      *d = *s;
+      return 1;
+   }
+   else if (cnv_c_dbl_impl(s, &dbl)) {
       MakeReal(dbl, d);
-      EVValD(d, e_sconv);
       return 1;
       }
    else
-      EVValD(s, e_fconv);
       return 0;
    }
-#enddef
 
-cnv_real_macro(cnv_real_0,0,0,0,0)
-cnv_real_macro(cnv_real_1,E_Aconv,E_Tconv,E_Sconv,E_Fconv)
-
-
-#begdef cnv_str_macro(f, e_aconv, e_tconv, e_nconv, e_sconv, e_fconv)
-/*
- * cnv_str - cnv:string(*s, *d), convert to a string
- */
-int f(dptr s, dptr d)
+static int cnv_str_impl(dptr s, dptr d)
    {
-   EVValD(s, e_aconv);
-   EVValD(&emptystr, e_tconv);
 
    type_case *s of {
       string: {
          *d = *s;
-         EVValD(s, e_nconv);
          return 1;
          }
      ucs: {
            *d = UcsBlk(*s).utf8;
-           EVValD(d, e_sconv);
            return 1;
        }
       integer: {
 
-         if (Type(*s) == T_Lrgint) {
+         if (IsLrgint(*s)) {
 	    bigtos(s,d);
-            EVValD(d, e_sconv);
             return 1;
           }
          else {
             cstr2string(word2cstr(IntVal(*s)), d);
-            EVValD(d, e_sconv);
             return 1;
          }
        }
@@ -519,29 +574,21 @@ int f(dptr s, dptr d)
          double res;
          DGetReal(*s, res);
          cstr2string(double2cstr(res), d);
-         EVValD(d, e_sconv);
          return 1;
          }
      cset: {
            if (cset2string(s, d)) {
-               EVValD(d, e_sconv);
                return 1;
            } else {
-               EVValD(s, e_fconv);
                return 0;
            }
       }
 
       default: {
-         EVValD(s, e_fconv);
          return 0;
          }
       }
    }
-#enddef
-
-cnv_str_macro(cnv_str_0,0,0,0,0,0)
-cnv_str_macro(cnv_str_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 
 static void deref_tvsubs(dptr s, dptr d)
@@ -651,188 +698,95 @@ deref_macro(deref_1,E_Deref)
  */
 static int ston(dptr sp, union numeric *result)
    {
-   char *s = StrLoc(*sp), *end_s;
-   int c;
-   int realflag = 0;	/* indicates a real number */
+   static struct staticstr buf = {64};
+   char *s, *end_s, *ep;
    char msign = '+';    /* sign of mantissa */
-   char esign = '+';    /* sign of exponent */
-   double mantissa = 0; /* scaled mantissa with no fractional part */
    word lresult = 0;	/* integer result */
-   int scale = 0;	/* number of decimal places to shift mantissa */
-   int digits = 0;	/* total number of digits seen */
-   int sdigits = 0;	/* number of significant digits seen */
-   int exponent = 0;	/* exponent part of real number */
-   double fiveto;	/* holds 5^scale */
-   double power;	/* holds successive squares of 5 to compute fiveto */
-   int err_no;
    char *ssave;         /* holds original ptr for bigradix */
+   int digits = 0;	/* number of digits seen */
 
-   if (StrLen(*sp) == 0)
-      return CvtFail;
+   s = StrLoc(*sp);
    end_s = s + StrLen(*sp);
-   c = *s++;
 
    /*
     * Skip leading white space.
     */
-   while (oi_isspace(c))
-      if (s < end_s)
-         c = *s++;
-      else
-         return CvtFail;
+   while (s < end_s && oi_isspace(*s))
+       ++s;
 
    /*
     * Check for sign.
     */
-   if (c == '+' || c == '-') {
-      msign = c;
-      c = (s < end_s) ? *s++ : ' ';
-      }
+   if (s < end_s && (*s == '+' || *s == '-'))
+      msign = *s++;
 
-   ssave = s - 1;   /* set pointer to beginning of digits in case it's needed */
+   ssave = s;   /* set pointer to beginning of digits in case it's needed */
 
    /*
-    * Get integer part of mantissa.
+    * Get integer part
     */
-   while (oi_isdigit(c)) {
-      digits++;
-      if (mantissa < Big) {
-	 mantissa = mantissa * 10 + (c - '0');
-         lresult = lresult * 10 + (c - '0');
-	 if (mantissa > 0.0)
-	    sdigits++;
-	 }
-      else
-	 scale++;
-      c = (s < end_s) ? *s++ : ' ';
-      }
+   over_flow = 0;
+   while (s < end_s && oi_isdigit(*s)) {
+       if (!over_flow) {
+           lresult = mul(lresult, 10);
+           if (!over_flow)
+               lresult = add(lresult, *s - '0');
+       }
+       ++digits;
+       ++s;
+   }
 
    /*
     * Check for based integer.
     */
-   if (c == 'r' || c == 'R') {
+   if (s < end_s && (*s == 'r' || *s == 'R')) {
       tended struct descrip sd;
-      MakeStr(s, end_s-s, &sd);
-      return bigradix((int)msign, (int)mantissa, &sd, result);
-      }
-
-   /*
-    * Get fractional part of mantissa.
-    */
-   if (c == '.') {
-      realflag++;
-      c = (s < end_s) ? *s++ : ' ';
-      while (oi_isdigit(c)) {
-	 digits++;
-	 if (mantissa < Big) {
-	    mantissa = mantissa * 10 + (c - '0');
-	    lresult = lresult * 10 + (c - '0');
-	    scale--;
-	    if (mantissa > 0.0)
-	       sdigits++;
-	    }
-         c = (s < end_s) ? *s++ : ' ';
-	 }
-      }
-
-   /*
-    * Check that at least one digit has been seen so far.
-    */
-   if (digits == 0)
-      return CvtFail;
-
-   /*
-    * Get exponent part.
-    */
-   if (c == 'e' || c == 'E') {
-      realflag++;
-      c = (s < end_s) ? *s++ : ' ';
-      if (c == '+' || c == '-') {
-	 esign = c;
-         c = (s < end_s) ? *s++ : ' ';
-	 }
-      if (!oi_isdigit(c))
+      if (over_flow || lresult < 2 || lresult > 36)
 	 return CvtFail;
-      while (oi_isdigit(c)) {
-	 exponent = exponent * 10 + (c - '0');
-         c = (s < end_s) ? *s++ : ' ';
-	 }
-      scale += (esign == '+') ? exponent : -exponent;
+      ++s; /* move over R */
+      MakeStr(s, end_s - s, &sd);
+      return bigradix(msign, lresult, &sd, result);
       }
 
-   /*
-    * Skip trailing white space and make sure there is nothing else left
-    *  in the string. Note, if we have already reached end-of-string,
-    *  c has been set to a space.
-    */
-   while (oi_isspace(c) && s < end_s)
-      c = *s++;
-   if (!oi_isspace(c))
-      return CvtFail;
 
-   /*
-    * Test for integer.
-    */
-   if (!realflag && !scale && mantissa >= MinWord && mantissa <= MaxWord) {
-      result->integer = (msign == '+' ? lresult : -lresult);
-      return T_Integer;
-      }
+   while (s < end_s && oi_isspace(*s))
+       ++s;
 
-   /*
-    * Test for bignum.
-    */
-      if (!realflag) {
-         tended struct descrip sd;
-         MakeStr(ssave, end_s-ssave, &sd);
-         return bigradix((int)msign, 10, &sd, result);
-         }
-
-   /*
-    * Rough tests for overflow and underflow.
-    */
-   if (sdigits + scale > LogHuge)
-      return CvtFail;
-
-   if (sdigits + scale < -LogHuge) {
-      result->real = 0.0;
-      return T_Real;
-      }
-
-   /*
-    * Put the number together by multiplying the mantissa by 5^scale and
-    *  then using ldexp() to multiply by 2^scale.
-    */
-
-   exponent = (scale > 0)? scale : -scale;
-   fiveto = 1.0;
-   power = 5.0;
-   for (;;) {
-      if (exponent & 01)
-	 fiveto *= power;
-      exponent >>= 1;
-      if (exponent == 0)
-	 break;
-      power *= power;
-      }
-   if (scale > 0)
-      mantissa *= fiveto;
-   else
-      mantissa /= fiveto;
-
-   err_no = 0;
-   mantissa = ldexp(mantissa, scale);
-   if (err_no > 0 && mantissa > 0)
-      /*
-       * ldexp caused overflow.
-       */
-      return CvtFail;
-
-   if (msign == '-')
-      mantissa = -mantissa;
-   result->real = mantissa;
-   return T_Real;
+   if (s == end_s) {
+       /* Check we had some digits */
+       if (!digits)
+           return CvtFail;
+       /* Base 10 integer or large integer */
+       if (over_flow) {
+           tended struct descrip sd;
+           MakeStr(ssave, end_s - ssave, &sd);
+           return bigradix(msign, 10, &sd, result);
+       } else {
+           result->integer = (msign == '+' ? lresult : -lresult);
+           return T_Integer;
+       }
    }
 
+   ssreserve(&buf, StrLen(*sp) + 1);
+   memcpy(buf.s, StrLoc(*sp), StrLen(*sp));
+   buf.s[StrLen(*sp)] = 0;
+   result->real = oi_strtod(buf.s, &ep);
+   if (over_flow)
+       return CvtFail;
+
+   /*
+    * Check only spaces remain.  We don't check that *ep is null,
+    * since the icon string may have contained an invalid \0
+    * character.
+    */
+   s = StrLoc(*sp) + (ep - buf.s);
+   while (s < end_s && oi_isspace(*s))
+       ++s;
+   if (s < end_s)
+       return CvtFail;
+
+   return T_Real;
+   }
 
 /*
  * cvpos - convert position to strictly positive position

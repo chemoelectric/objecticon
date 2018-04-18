@@ -5,13 +5,23 @@
  * protocol encapsulated in the macro ArithOp.
  */
 
-#begdef ArithOp(icon_op, func_name, int_op, real_op)
+#begdef ArithOp(icon_op, func_name, c_func, int_op, c_op)
 
 operator icon_op func_name(x, y)
    body {
-      tended struct descrip ix, iy;
-      if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
-          tended struct descrip iresult;
+      tended struct descrip ix, iy, iresult;
+      /* Avoid function calls to conversion funcs if possible. */
+      if (IsCInteger(x) && IsCInteger(y)) {
+          word w;
+          /* Optimistically try the basic c function; if it overflows
+           * then use the bigint function instead. */
+          w = c_func(IntVal(x), IntVal(y));
+          if (over_flow) {
+              int_op(x, y, iresult);
+          } else
+              MakeInt(w, &iresult);
+          return iresult;
+      } else if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
           int_op(ix, iy, iresult);
           return iresult;
       } else {
@@ -20,7 +30,7 @@ operator icon_op func_name(x, y)
               runerr(102, x);
           if (!cnv:C_double(y, dy))
               runerr(102, y);
-          real_op(dx, dy, dresult);
+          c_op(dx, dy, dresult);
           return C_double dresult;
       }
    }
@@ -45,14 +55,14 @@ end
    result = x / y;
 }
 #enddef
-ArithOp( / , div , IntDivide , RealDivide)
+ArithOp( / , div , div3, IntDivide , RealDivide)
 
 /*
  * x - y
  */
 #define IntSub(x,y,result) bigsub(&x,&y,&result);
 #define RealSub(x,y,result) result = x - y;
-ArithOp( - , minus , IntSub , RealSub)
+ArithOp( - , minus , sub, IntSub , RealSub)
 
 
 /*
@@ -81,14 +91,14 @@ ArithOp( - , minus , IntSub , RealSub)
       }
 }
 #enddef
-ArithOp( % , mod , IntMod , RealMod)
+ArithOp( % , mod , mod3, IntMod , RealMod)
 
 /*
  * x * y
  */
 #define IntMpy(x,y,result) bigmul(&x,&y,&result);
 #define RealMpy(x,y,result) result = x * y;
-ArithOp( * , mult , IntMpy , RealMpy)
+ArithOp( * , mult , mul, IntMpy , RealMpy)
 
 
 /*
@@ -96,28 +106,32 @@ ArithOp( * , mult , IntMpy , RealMpy)
  */
 #define IntAdd(x,y,result) bigadd(&x,&y,&result);
 #define RealAdd(x,y,result) result = x + y;
-ArithOp( + , plus , IntAdd , RealAdd)
+ArithOp( + , plus , add, IntAdd , RealAdd)
 
 
 "-x - negate x."
 
 operator - neg(x)
-   if cnv:(exact) integer(x) then {
-      body {
-         tended struct descrip result;
-         bigneg(&x, &result);
-	 return result;
-         }
+   body {
+      tended struct descrip ix, iresult;
+      if (IsCInteger(x)) {
+          word w;
+          w = neg(IntVal(x));
+          if (over_flow)
+              bigneg(&x, &iresult);
+          else
+              MakeInt(w, &iresult);
+          return iresult;
+      } else if (cnv:(exact)integer(x, ix)) {
+          bigneg(&ix, &iresult);
+          return iresult;
+      } else {
+          double dx;
+          if (!cnv:C_double(x, dx))
+              runerr(102, x);
+          return C_double -dx;
       }
-   else {
-      if !cnv:C_double(x) then
-         runerr(102, x)
-      body {
-         double drslt;
-	 drslt = -x;
-         return C_double drslt;
-         }
-      }
+   }
 end
 
 
