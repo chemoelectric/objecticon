@@ -67,6 +67,11 @@ struct str_buf {
 #define Min(x,y)        ((x)<(y)?(x):(y))
 
 /*
+ * Compare double to zero with given tolerance factor.
+ */
+#define NearZero(x, zs) (fabs(x) < pow(10.0, -(zs + 1)))
+
+/*
  * Hash functions for symbol tables.  Cast to uword so that the result
  * is never -ve, and avoid compiler warnings about casting pointer to
  * narrower type.
