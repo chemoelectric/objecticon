@@ -319,7 +319,7 @@ int realtobig(dptr da, dptr dx)
     if (x > DBL_MAX || x < -DBL_MAX)
         return CvtFail;
 
-    if (x > 0.9999 * MinWord && x < 0.9999 * MaxWord) {
+    if (x >= MinWord && x <= MaxWord) {
         MakeInt((word)x, dx);
         return Succeeded;		/* got lucky; a simple integer suffices */
     }
