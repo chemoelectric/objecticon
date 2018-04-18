@@ -42,6 +42,10 @@
    #define F_Typecode	0x20000000	/* set if dword includes type code */
 #endif					/* WordBits == 32 */
 
+#ifndef Big
+   #define Big 9007199254740992.	/* larger than 2^53 lose precision */
+#endif					/* Big */
+
 #ifndef Precision
    #define Precision 10			/* digits in string from real */
 #endif					/* Precision */
