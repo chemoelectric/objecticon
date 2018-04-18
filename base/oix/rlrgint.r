@@ -290,7 +290,7 @@ int bigtoreal(dptr da, double *d)
         r = -r;
 
     /* Check for inf */
-    if (r > DBL_MAX || r < -DBL_MAX)
+    if (!isfinite(r))
         return CvtFail;
 
     *d = r;
@@ -316,7 +316,7 @@ int realtobig(dptr da, dptr dx)
     /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
      * blen below, which causes a segfault.
      */
-    if (x > DBL_MAX || x < -DBL_MAX)
+    if (!isfinite(x))
         return CvtFail;
 
     if (x >= MinWord && x <= MaxWord) {
