@@ -471,6 +471,8 @@ static int cnv_int_impl(dptr s, dptr d)
       real: {
          double dbl;
          DGetReal(*s,dbl);
+         if (!isfinite(dbl))
+             return 0;
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
@@ -514,6 +516,8 @@ static int cnv_int_impl(dptr s, dptr d)
          return 1;
       case T_Real: {
          double dbl = numrc.real;
+         if (!isfinite(dbl))
+             return 0;
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
