@@ -2351,6 +2351,9 @@ struct b_bignum * bigradix(char *input, int input_len)
     if (s == end_s)
         r = 10;
 
+    if (r < 2 || r > 36)
+        return 0;
+
     /* printf("r=%d len=%d s='%.*s'\n",r,input_len,input_len,input); */
 
     s = input;
@@ -2370,23 +2373,26 @@ struct b_bignum * bigradix(char *input, int input_len)
     bd = DIG(b,0);
 
     bdzero(bd, len);
-
-    for (c = ((s < end_s) ? *s++ : ' '); oi_isalnum(c);
-         c = ((s < end_s) ? *s++ : ' ')) {
-        c = oi_isdigit(c) ? (c)-'0' : 10+(((c)|(040))-'a');
+    
+    while (s < end_s && oi_isalnum(*s)) {
+        c = oi_isdigit(*s) ? (*s)-'0' : 10+(((*s)|(040))-'a');
         if (c >= r)
             return 0;
         muli1(bd, (word)r, c, bd, len);
+        ++s;
     }
+
+    /* Check for no digits */
+    if (s == input)
+        return 0;
 
     /*
      * Skip trailing white space and make sure there is nothing else left
-     *  in the string. Note, if we have already reached end-of-string,
-     *  c has been set to a space.
+     *  in the string.
      */
-    while (oi_isspace(c) && s < end_s)
-        c = *s++;
-    if (!oi_isspace(c))
+    while (s < end_s && oi_isspace(*s))
+        ++s;
+    if (s < end_s)
         return 0;
 
     /* see mkdesc() */
