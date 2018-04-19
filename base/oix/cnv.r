@@ -586,7 +586,7 @@ deref_macro(deref_1,E_Deref)
 static int numeric_via_string(dptr src, dptr result)
    {
    static struct staticstr buf = {64};
-   tended struct descrip sp;
+   tended struct descrip str;
    char *s, *end_s, *ep;
    char msign = '+';    /* sign of mantissa */
    word lresult = 0;	/* integer result */
@@ -594,11 +594,11 @@ static int numeric_via_string(dptr src, dptr result)
    int digits = 0;	/* number of digits seen */
    double d;
 
-   if (!cnv_str_impl(src, &sp))
+   if (!cnv_str_impl(src, &str))
        return 0;
 
-   s = StrLoc(sp);
-   end_s = s + StrLen(sp);
+   s = StrLoc(str);
+   end_s = s + StrLen(str);
 
    /*
     * Skip leading white space.
@@ -632,12 +632,11 @@ static int numeric_via_string(dptr src, dptr result)
     * Check for based integer.
     */
    if (s < end_s && (*s == 'r' || *s == 'R')) {
-      tended struct descrip sd;
       if (over_flow || lresult < 2 || lresult > 36)
 	 return 0;
       ++s; /* move over R */
-      MakeStr(s, end_s - s, &sd);
-      return bigradix(msign, lresult, &sd, result);
+      MakeStr(s, end_s - s, &str);
+      return bigradix(msign, lresult, &str, result);
       }
 
 
@@ -650,18 +649,17 @@ static int numeric_via_string(dptr src, dptr result)
            return 0;
        /* Base 10 integer or large integer */
        if (over_flow) {
-           tended struct descrip sd;
-           MakeStr(ssave, end_s - ssave, &sd);
-           return bigradix(msign, 10, &sd, result);
+           MakeStr(ssave, end_s - ssave, &str);
+           return bigradix(msign, 10, &str, result);
        } else {
            MakeInt(msign == '+' ? lresult : -lresult, result);
            return 1;
        }
    }
 
-   ssreserve(&buf, StrLen(sp) + 1);
-   memcpy(buf.s, StrLoc(sp), StrLen(sp));
-   buf.s[StrLen(sp)] = 0;
+   ssreserve(&buf, StrLen(str) + 1);
+   memcpy(buf.s, StrLoc(str), StrLen(str));
+   buf.s[StrLen(str)] = 0;
    d = oi_strtod(buf.s, &ep);
    if (over_flow)
        return 0;
@@ -671,7 +669,7 @@ static int numeric_via_string(dptr src, dptr result)
     * since the icon string may have contained an invalid \0
     * character.
     */
-   s = StrLoc(sp) + (ep - buf.s);
+   s = StrLoc(str) + (ep - buf.s);
    while (s < end_s && oi_isspace(*s))
        ++s;
    if (s < end_s)
