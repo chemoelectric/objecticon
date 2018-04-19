@@ -1660,7 +1660,7 @@ function lang_Text_slice(c, i, j)
        tended struct b_cset *blk;
        word len;
 
-       if (cvslice(&i, &j, CsetBlk(c).size) != Succeeded)
+       if (!cvslice(&i, &j, CsetBlk(c).size))
           fail;
        len = j - i;
 
@@ -1735,7 +1735,7 @@ function ord(x, i, j)
          cset: {
             int a, b, pos, from, to;
 
-            if (cvslice(&i, &j, CsetBlk(x).size) != Succeeded)
+            if (!cvslice(&i, &j, CsetBlk(x).size))
                 fail;
             len = j - i;
 
@@ -1761,7 +1761,7 @@ function ord(x, i, j)
          ucs : {
             tended char *p;
 
-            if (cvslice(&i, &j, UcsBlk(x).length) != Succeeded)
+            if (!cvslice(&i, &j, UcsBlk(x).length))
                 fail;
             len = j - i;
 
@@ -1781,7 +1781,7 @@ function ord(x, i, j)
             if (!cnv:string(x,x))
                 runerr(132, x);
 
-            if (cvslice(&i, &j, StrLen(x)) != Succeeded)
+            if (!cvslice(&i, &j, StrLen(x)))
                 fail;
             len = j - i;
 

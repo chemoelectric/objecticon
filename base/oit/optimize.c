@@ -110,7 +110,7 @@ static struct rangeset *rangeset_compl(struct rangeset *x);
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
-static int str_to_num(struct literal *str, struct literal *result);
+static int numeric_via_string(struct literal *src);
 
 static struct str_buf opt_sbuf;
 
@@ -775,16 +775,11 @@ static int cnv_eint(struct literal *s)
         case INTEGER: {
             return 1;
         }
+        case REAL: {
+            return 0;
+        }
         default: {
-            struct literal t;
-            if (!cnv_string(s))
-                return 0;
-            if (str_to_num(s, &t) == CvtFail)
-                return 0;
-            if (t.type != INTEGER)
-                return 0;
-            *s = t;
-            return 1;
+            return numeric_via_string(s) && cnv_eint(s);
         }
     }
 
@@ -798,23 +793,17 @@ static int cnv_int(struct literal *s)
             return 1;
         }
         case REAL: {
-            /* Same test as cnv_int_impl in cnv.r that leads to realtobig() */
-            if (s->u.d < MinWord || s->u.d > MaxWord)
+            /* Same tests as realtobig() that would return a normal int. */
+            if (isfinite(s->u.d) && 
+                s->u.d >= Max(MinWord,-Big) && s->u.d <= Min(MaxWord,Big)) {
+                s->type = INTEGER;
+                s->u.i = (word)s->u.d;
+                return 1;
+            } else
                 return 0;
-            s->type = INTEGER;
-            s->u.i = (word)s->u.d;
-            return 1;
         }
         default: {
-            struct literal t;
-            if (!cnv_string(s))
-                return 0;
-            if (str_to_num(s, &t) == CvtFail)
-                return 0;
-            if (cnv_int(&t) == CvtFail)
-                return 0;
-            *s = t;
-            return 1;
+            return numeric_via_string(s) && cnv_int(s);
         }
     }
 
@@ -833,15 +822,7 @@ static int cnv_real(struct literal *s)
             return 1;
         }
         default: {
-            struct literal t;
-            if (!cnv_string(s))
-                return 0;
-            if (str_to_num(s, &t) == CvtFail)
-                return 0;
-            if (cnv_real(&t) == CvtFail)
-                return 0;
-            *s = t;
-            return 1;
+            return numeric_via_string(s) && cnv_real(s);
         }
     }
 
@@ -2968,7 +2949,7 @@ static void fold_sect(struct lnode *n, int op)
         case UCS: {
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *start = l1.u.str.s, *end;
-            if (cvslice(&i, &j, len) != Succeeded) {
+            if (!cvslice(&i, &j, len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -2990,7 +2971,7 @@ static void fold_sect(struct lnode *n, int op)
         case CSET: {
             int k, ch, count, len = cset_size(l1.u.rs), type;
             word last, from, to, m, out_len;
-            if (cvslice(&i, &j, len) != Succeeded) {
+            if (!cvslice(&i, &j, len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -3053,7 +3034,7 @@ static void fold_sect(struct lnode *n, int op)
         default: {
             if (!cnv_string(&l1))
                 break;
-            if (cvslice(&i, &j, l1.u.str.len) != Succeeded) {
+            if (!cvslice(&i, &j, l1.u.str.len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -3172,10 +3153,10 @@ static int cvslice(word *i, word *j, word len)
     word p1, p2;
     p1 = cvpos(*i, len);
     if (p1 == CvtFail)
-        return Failed;
+        return 0;
     p2 = cvpos(*j, len);
     if (p2 == CvtFail)
-        return Failed;
+        return 0;
     if (p1 > p2) {
         *i = p2;
         *j = p1;
@@ -3183,7 +3164,7 @@ static int cvslice(word *i, word *j, word len)
         *i = p1;
         *j = p2;
     }
-    return Succeeded;
+    return 1;
 }
 
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)
@@ -3359,17 +3340,21 @@ static int equiv(struct literal *x, struct literal *y)
 }
 
 /*
- * Very simplified form of ston in cnv.r
+ * Simplified form of the function in cnv.r
  */
-static int str_to_num(struct literal *str, struct literal *result)
+static int numeric_via_string(struct literal *src)
 {
    char *s, *end_s;
    char msign = '+';    /* sign of mantissa */
    word lresult = 0;	/* integer result */
    int digits = 0;	/* number of digits seen */
+   double d;
 
-   s = str->u.str.s;
-   end_s = s + str->u.str.len;
+   if (!cnv_string(src))
+       return 0;
+
+   s = src->u.str.s;
+   end_s = s + src->u.str.len;
 
    /*
     * Skip leading white space.
@@ -3399,7 +3384,7 @@ static int str_to_num(struct literal *str, struct literal *result)
 
    /* Don't handle non-decimal cases */
    if (s < end_s && (*s == 'r' || *s == 'R'))
-       return CvtFail;
+       return 0;
 
    /* Trailing whitespace; if we're then at the end it's a decimal
     * integer */
@@ -3409,27 +3394,28 @@ static int str_to_num(struct literal *str, struct literal *result)
    if (s == end_s) {
        /* Check we had some digits */
        if (!digits)
-           return CvtFail;
+           return 0;
        /* Base 10 integer or large integer */
        if (over_flow) {
-           return CvtFail;
+           return 0;
        } else {
-           result->type = INTEGER;
-           result->u.i = (msign == '+' ? lresult : -lresult);
-           return Succeeded;
+           src->type = INTEGER;
+           src->u.i = (msign == '+' ? lresult : -lresult);
+           return 1;
        }
    }
 
-   result->u.d = oi_strtod(str->u.str.s, &s);
+   d = oi_strtod(src->u.str.s, &s);
    if (over_flow)
-       return CvtFail;
+       return 0;
 
    /* Check only spaces remain. */
    while (s < end_s && oi_isspace(*s))
        ++s;
    if (s < end_s)
-       return CvtFail;
+       return 0;
 
-   result->type = REAL;
-   return Succeeded;
+   src->type = REAL;
+   src->u.d = d;
+   return 1;
 }

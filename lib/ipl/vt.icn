@@ -2271,9 +2271,17 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_popup_key(e, src, ty)
+      local o
       \popup | fail
       if member(Key.NAVIGATE ++ set("\r"), e.code) then {
          popup.fire(ty, e)
+         return
+      } else if e.code === "\t" then {
+         # Pressing tab behaves just like selecting with return
+         if o := popup.object_get_cursor() then {
+            close_all()
+            send_tr_nl(o.str)
+         }
          return
       } else if e.code === "\e" then {
          close_all()
@@ -2691,7 +2699,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private on_popup_selection()
       local pe
       pe := popup.object_get_selections()[1]
-      close_popup()
+      close_all()
       send_tr_nl(pe.str)
    end
 

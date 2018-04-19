@@ -71,7 +71,7 @@
    #define AF_INET 0
    #define SOCK_STREAM 0
 
-   #define PointerMotionMask    1
+   #define isfinite(x) (!isNaN(x) && !isInf((x),1) && !isInf((x),-1))
 
    struct timeval {
       time_t  tv_sec;

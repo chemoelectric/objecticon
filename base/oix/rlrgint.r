@@ -214,20 +214,19 @@ static void itobig(word i, struct b_bignum *x, dptr dx)
  *  string -> bignum 
  */
 
-word bigradix(int sign,                      /* '-' or not */
-              int r,                         /* radix 2 .. 36 */
-              dptr sd,                       /* input string (pointer to tended descriptor) */
-              union numeric *result)         /* output T_Integer or T_Lrgint */
+int bigradix(int sign,                      /* '-' or not */
+             int r,                         /* radix 2 .. 36 */
+             dptr sd,                       /* input string (pointer to tended descriptor) */
+             dptr result)                   /* result (also a pointer to tended descriptor) */
 {
     struct b_bignum *b;   /* Doesn't need to be tended */
     DIGIT *bd;
     word len;
     int c;
     char *s, *end_s;     /* Don't need to be tended */
-    struct descrip dx;
 
-    if (r == 0)
-        return CvtFail;
+    if (r < 2 || r > 36)
+        return 0;
 
     len = ceil(StrLen(*sd) * ln(r) / ln(B));
 
@@ -236,22 +235,19 @@ word bigradix(int sign,                      /* '-' or not */
 
     bdzero(bd, len);
 
-    if (r < 2 || r > 36)
-        return CvtFail;
-
     s = StrLoc(*sd);
     end_s = s + StrLen(*sd);
     while (s < end_s && oi_isalnum(*s)) {
         c = oi_isdigit(*s) ? (*s)-'0' : 10+(((*s)|(040))-'a');
         if (c >= r)
-            return CvtFail;
+            return 0;
         muli1(bd, (word)r, c, bd, len);
         ++s;
     }
 
     /* Check for no digits */
     if (s == StrLoc(*sd))
-        return CvtFail;
+        return 0;
 
     /*
      * Skip trailing white space and make sure there is nothing else left
@@ -260,18 +256,14 @@ word bigradix(int sign,                      /* '-' or not */
     while (s < end_s && oi_isspace(*s))
        ++s;
     if (s < end_s)
-        return CvtFail;
+        return 0;
 
     if (sign == '-')
         b->sign = 1;
 
-    /* put value into dx and return the type */
-    mkdesc(b, &dx);
-    if (IsLrgint(dx))
-        result->big = &BignumBlk(dx);
-    else
-        result->integer = IntVal(dx);
-    return Type(dx);
+    /* put value into result and return success */
+    mkdesc(b, result);
+    return 1;
 }
 
 /*
@@ -290,48 +282,34 @@ int bigtoreal(dptr da, double *d)
         r = -r;
 
     /* Check for inf */
-#if PLAN9
-    if (isInf(r,1) || isInf(r,-1))
-        return CvtFail;
-#else
-    if (r > DBL_MAX || r < -DBL_MAX)
-        return CvtFail;
-#endif
+    if (!isfinite(r))
+        return 0;
 
     *d = r;
-    return Succeeded;
+    return 1;
 }
 
 /*
- *  real -> bignum
+ *  double -> bignum
  */
 
-int realtobig(dptr da, dptr dx)
+int realtobig(double x, dptr dx)
 {
 
-    double x;
     struct b_bignum *b;
     word i, blen;
     word d;
     int sgn;
 
-    DGetReal(*da, x);
-
-
     /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
      * blen below, which causes a segfault.
      */
-#if PLAN9
-    if (isInf(x,1) || isInf(x,-1))
-        return CvtFail;
-#else
-    if (x > DBL_MAX || x < -DBL_MAX)
-        return CvtFail;
-#endif
+    if (!isfinite(x))
+        return 0;
 
-    if (x > 0.9999 * MinWord && x < 0.9999 * MaxWord) {
+    if (x >= Max(MinWord,-Big) && x <= Min(MaxWord,Big)) {
         MakeInt((word)x, dx);
-        return Succeeded;		/* got lucky; a simple integer suffices */
+        return 1;		/* got lucky; a simple integer suffices */
     }
 
     if ((sgn = x < 0))
@@ -353,7 +331,7 @@ int realtobig(dptr da, dptr dx)
      
     b->sign = sgn;
     mkdesc(b, dx);
-    return Succeeded;
+    return 1;
 }
 
 /*
