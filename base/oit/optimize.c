@@ -110,7 +110,7 @@ static struct rangeset *rangeset_compl(struct rangeset *x);
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
-static int numeric_via_string(struct literal *str, struct literal *result);
+static int numeric_via_string(struct literal *src);
 
 static struct str_buf opt_sbuf;
 
@@ -779,13 +779,7 @@ static int cnv_eint(struct literal *s)
             return 0;
         }
         default: {
-            struct literal t;
-            if (!numeric_via_string(s, &t))
-                return 0;
-            if (t.type != INTEGER)
-                return 0;
-            *s = t;
-            return 1;
+            return numeric_via_string(s) && cnv_eint(s);
         }
     }
 
@@ -809,13 +803,7 @@ static int cnv_int(struct literal *s)
                 return 0;
         }
         default: {
-            struct literal t;
-            if (!numeric_via_string(s, &t))
-                return 0;
-            if (!cnv_int(&t))
-                return 0;
-            *s = t;
-            return 1;
+            return numeric_via_string(s) && cnv_int(s);
         }
     }
 
@@ -834,13 +822,7 @@ static int cnv_real(struct literal *s)
             return 1;
         }
         default: {
-            struct literal t;
-            if (!numeric_via_string(s, &t))
-                return 0;
-            if (!cnv_real(&t))
-                return 0;
-            *s = t;
-            return 1;
+            return numeric_via_string(s) && cnv_real(s);
         }
     }
 
@@ -3360,7 +3342,7 @@ static int equiv(struct literal *x, struct literal *y)
 /*
  * Simplified form of the function in cnv.r
  */
-static int numeric_via_string(struct literal *str, struct literal *result)
+static int numeric_via_string(struct literal *src)
 {
    char *s, *end_s;
    char msign = '+';    /* sign of mantissa */
@@ -3368,11 +3350,11 @@ static int numeric_via_string(struct literal *str, struct literal *result)
    int digits = 0;	/* number of digits seen */
    double d;
 
-   if (!cnv_string(str))
+   if (!cnv_string(src))
        return 0;
 
-   s = str->u.str.s;
-   end_s = s + str->u.str.len;
+   s = src->u.str.s;
+   end_s = s + src->u.str.len;
 
    /*
     * Skip leading white space.
@@ -3417,13 +3399,13 @@ static int numeric_via_string(struct literal *str, struct literal *result)
        if (over_flow) {
            return 0;
        } else {
-           result->type = INTEGER;
-           result->u.i = (msign == '+' ? lresult : -lresult);
+           src->type = INTEGER;
+           src->u.i = (msign == '+' ? lresult : -lresult);
            return 1;
        }
    }
 
-   d = oi_strtod(str->u.str.s, &s);
+   d = oi_strtod(src->u.str.s, &s);
    if (over_flow)
        return 0;
 
@@ -3433,7 +3415,7 @@ static int numeric_via_string(struct literal *str, struct literal *result)
    if (s < end_s)
        return 0;
 
-   result->type = REAL;
-   result->u.d = d;
+   src->type = REAL;
+   src->u.d = d;
    return 1;
 }
