@@ -403,7 +403,7 @@ operator [:] sect(underef x -> dx, i, j)
       type_case dx of {
       list: {
          tended struct descrip result;
-         if (cvslice(&i, &j, ListBlk(dx).size) != Succeeded)
+         if (!cvslice(&i, &j, ListBlk(dx).size))
              fail;
          len = j - i;
          cplist(&dx, &result, i, len);
@@ -413,7 +413,7 @@ operator [:] sect(underef x -> dx, i, j)
      ucs: {
          if (is:variable(x) && !_rval)
                use_trap = 1;
-         if (cvslice(&i, &j, UcsBlk(dx).length) != Succeeded)
+         if (!cvslice(&i, &j, UcsBlk(dx).length))
              fail;
          len = j - i;
          if (use_trap) 
@@ -424,7 +424,7 @@ operator [:] sect(underef x -> dx, i, j)
 
      cset: {
          int k, last;
-         if (cvslice(&i, &j, CsetBlk(dx).size) != Succeeded)
+         if (!cvslice(&i, &j, CsetBlk(dx).size))
              fail;
          len = j - i;
 
@@ -452,7 +452,7 @@ operator [:] sect(underef x -> dx, i, j)
          else if (!cnv:string(dx,dx))
              runerr(131, dx);
 
-         if (cvslice(&i, &j, StrLen(dx)) != Succeeded)
+         if (!cvslice(&i, &j, StrLen(dx)))
              fail;
          len = j - i;
    

@@ -2967,7 +2967,7 @@ static void fold_sect(struct lnode *n, int op)
         case UCS: {
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *start = l1.u.str.s, *end;
-            if (cvslice(&i, &j, len) != Succeeded) {
+            if (!cvslice(&i, &j, len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -2989,7 +2989,7 @@ static void fold_sect(struct lnode *n, int op)
         case CSET: {
             int k, ch, count, len = cset_size(l1.u.rs), type;
             word last, from, to, m, out_len;
-            if (cvslice(&i, &j, len) != Succeeded) {
+            if (!cvslice(&i, &j, len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -3052,7 +3052,7 @@ static void fold_sect(struct lnode *n, int op)
         default: {
             if (!cnv_string(&l1))
                 break;
-            if (cvslice(&i, &j, l1.u.str.len) != Succeeded) {
+            if (!cvslice(&i, &j, l1.u.str.len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -3171,10 +3171,10 @@ static int cvslice(word *i, word *j, word len)
     word p1, p2;
     p1 = cvpos(*i, len);
     if (p1 == CvtFail)
-        return Failed;
+        return 0;
     p2 = cvpos(*j, len);
     if (p2 == CvtFail)
-        return Failed;
+        return 0;
     if (p1 > p2) {
         *i = p2;
         *j = p1;
@@ -3182,7 +3182,7 @@ static int cvslice(word *i, word *j, word len)
         *i = p1;
         *j = p2;
     }
-    return Succeeded;
+    return 1;
 }
 
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)

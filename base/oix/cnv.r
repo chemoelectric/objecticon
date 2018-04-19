@@ -683,7 +683,8 @@ static int numeric_via_string(dptr src, dptr result)
 
 /*
  * cvpos - convert position to strictly positive position
- *  given length.  The returned value is >= 1 and <= len+1
+ *  given length.  The returned value is >= 1 and <= len+1,
+ *  or CvtFail on failure.
  */
 
 word cvpos(word pos, word len)
@@ -704,7 +705,7 @@ word cvpos(word pos, word len)
 
 /*
  * As above, but disallow the rightmost position (ie, position zero).  The
- * returned value is >= 1 and <= len
+ * returned value is >= 1 and <= len, or CvtFail on failure.
  */
 word cvpos_item(word pos, word len)
 {
@@ -725,17 +726,17 @@ word cvpos_item(word pos, word len)
 /*
  * Convert a slice of the form i:j into the corresponding positions,
  * based on the given len.  On success, i is replaced by the lower
- * position, j the higher.
+ * position, j the higher.  Returns a boolean value.
  */
 int cvslice(word *i, word *j, word len)
 {
     word p1, p2;
     p1 = cvpos(*i, len);
     if (p1 == CvtFail)
-        return Failed;
+        return 0;
     p2 = cvpos(*j, len);
     if (p2 == CvtFail)
-        return Failed;
+        return 0;
     if (p1 > p2) {
         *i = p2;
         *j = p1;
@@ -743,5 +744,5 @@ int cvslice(word *i, word *j, word len)
         *i = p1;
         *j = p2;
     }
-    return Succeeded;
+    return 1;
 }
