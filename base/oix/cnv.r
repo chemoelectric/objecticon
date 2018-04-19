@@ -15,8 +15,7 @@ static int cnv_eint_impl(dptr s, dptr d);
 static int cnv_int_impl(dptr s, dptr d);
 static int cnv_real_impl(dptr s, dptr d);
 static int cnv_str_impl(dptr s, dptr d);
-static int ston (dptr sp, union numeric *result);
-static int cset2string(dptr src, dptr dest);
+static int numeric_via_string (dptr sp, dptr result);
 
 
 /*
@@ -159,21 +158,10 @@ int cnv_str(dptr s, dptr d)
     }
 }
 
-static int cset2string(dptr src, dptr dest)
-{
-    struct b_cset *c = &CsetBlk(*src);  /* Doesn't need to be tended */
-    if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256) {
-        cset_to_string(c, 1, c->size, dest);
-        return 1;
-    } else
-        return 0;
-}
 
 static int cnv_c_dbl_impl(dptr s, double *d)
    {
-   tended struct descrip result, cnvstr;
-
-   union numeric numrc;
+   tended struct descrip num;
 
    type_case *s of {
       real: {
@@ -182,47 +170,19 @@ static int cnv_c_dbl_impl(dptr s, double *d)
          }
       integer: {
          if (IsLrgint(*s))
-             return (bigtoreal(s, d) == Succeeded);
+             return bigtoreal(s, d);
          else {
             *d = IntVal(*s);
             return 1;
             }
          }
-      string: {
-         /* fall through */
-         }
-      ucs: {
-          s = &UcsBlk(*s).utf8;
-         }
-      cset: {
-        if (!cset2string(s, &cnvstr))
-           return 0;
-        s = &cnvstr;
-        }
       default: {
-        return 0;
+        if (numeric_via_string(s, &num))
+            return cnv_c_dbl_impl(&num, d);
+        else
+           return 0;
         }
-      }
-
-   /*
-    * s is now a string.
-    */
-   switch( ston(s, &numrc) ) {
-      case T_Integer:
-         *d = numrc.integer;
-         return 1;
-
-      case T_Lrgint:
-         MakeDesc(D_Lrgint, numrc.big, &result);
-         return (bigtoreal(&result, d) == Succeeded);
-
-      case T_Real:
-         *d = numrc.real;
-         return 1;
-
-      default:
-         return 0;
-      }
+     }
   }
 
 static int cnv_c_int_impl(dptr s, word *d)
@@ -283,13 +243,13 @@ static int cnv_cset_impl(dptr s, dptr d)
    {
    tended struct descrip str;
 
-
-   if (is:cset(*s)) {
+   type_case *s of {
+     cset: {
       *d = *s;
       return 1;
       }
 
-   if (is:ucs(*s)) {
+     ucs: {
        char *s1;
        struct rangeset *rs;
        word l = UcsBlk(*s).length;
@@ -302,60 +262,65 @@ static int cnv_cset_impl(dptr s, dptr d)
        MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
        return 1;
-   }
-
-   if (cnv_str_impl(s, &str)) {
-       word l;
-       char *s1;        /* does not need to be tended */
-       struct rangeset *rs;
-       rs = init_rangeset();
-       s1 = StrLoc(str);
-       l = StrLen(str);
-       while(l--) {
-           int i = *s1++ & 0xff;
-           add_range(rs, i, i);
-       }
-       MakeDesc(D_Cset, rangeset_to_block(rs), d);
-       free_rangeset(rs);
-       return 1;
      }
 
-     return 0;
-
-  }
+     default: {
+        if (cnv_str_impl(s, &str)) {
+            word l;
+            char *s1;        /* does not need to be tended */
+            struct rangeset *rs;
+            rs = init_rangeset();
+            s1 = StrLoc(str);
+            l = StrLen(str);
+            while(l--) {
+                int i = *s1++ & 0xff;
+                add_range(rs, i, i);
+            }
+            MakeDesc(D_Cset, rangeset_to_block(rs), d);
+            free_rangeset(rs);
+            return 1;
+        } else
+           return 0;
+     }
+   }
+ }
 
 static int cnv_ucs_impl(dptr s, dptr d)
 {
-    tended struct descrip str;
+   tended struct descrip str;
 
-    if (is:ucs(*s)) {
+   type_case *s of {
+     ucs: {
         *d = *s;
         return 1;
-    }
-    if (is:cset(*s)) {
+     }
+
+     cset: {
         MakeDesc(D_Ucs, cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size), d);
         return 1;
-    }
+     }
 
-    if (cnv_str_impl(s, &str)) {
-        char *s1, *e1;
-        word n = 0;
+     default: {
+        if (cnv_str_impl(s, &str)) {
+            char *s1, *e1;
+            word n = 0;
 
-        s1 = StrLoc(str);
-        e1 = s1 + StrLen(str);
+            s1 = StrLoc(str);
+            e1 = s1 + StrLen(str);
 
-        while (s1 < e1) {
-            int i = utf8_check(&s1, e1);
-            ++n;
-            if (i < 0 || i > MAX_CODE_POINT) {
-                return 0;
+            while (s1 < e1) {
+                int i = utf8_check(&s1, e1);
+                ++n;
+                if (i < 0 || i > MAX_CODE_POINT) {
+                    return 0;
+                }
             }
-        }
-        MakeDesc(D_Ucs, make_ucs_block(&str, n), d);
-        return 1;
-    }
-
-    return 0;
+            MakeDesc(D_Ucs, make_ucs_block(&str, n), d);
+            return 1;
+        } else
+            return 0;
+     }
+   }
 }
 
 static int cnv_str_or_ucs_impl(dptr s, dptr d)
@@ -414,51 +379,28 @@ static int cnv_ec_int_impl(dptr s, word *d)
 
 static int cnv_eint_impl(dptr s, dptr d)
    {
-   tended struct descrip cnvstr; /* tended since ston allocates blocks */
-   union numeric numrc;
+   tended struct descrip num;
 
    type_case *s of {
       integer: {
          *d = *s;
          return 1;
          }
-      string: {
-         /* fall through */
-         }
-      ucs: {
-          s = &UcsBlk(*s).utf8;
-         }
-      cset: {
-       if (!cset2string(s, &cnvstr))
-           return 0;
-        s = &cnvstr;
-        }
-      default: {
-        return 0;
-        }
-      }
-
-   /*
-    * s is now a string.
-    */
-   switch (ston(s, &numrc)) {
-      case T_Integer:
-         MakeInt(numrc.integer, d);
-	 return 1;
-
-      case T_Lrgint:
-         MakeDesc(D_Lrgint, numrc.big, d);
-         return 1;
-
-      default:
+      real: {
          return 0;
+         }
+      default: {
+         if (numeric_via_string(s, &num) )
+            return cnv_eint_impl(&num, d);
+         else
+           return 0;
+        }
       }
    }
 
 static int cnv_int_impl(dptr s, dptr d)
    {
-   tended struct descrip cnvstr; /* tended since ston allocates blocks */
-   union numeric numrc;
+   tended struct descrip num;
 
    type_case *s of {
       integer: {
@@ -468,42 +410,14 @@ static int cnv_int_impl(dptr s, dptr d)
       real: {
          double dbl;
          DGetReal(*s,dbl);
-         return (realtobig(dbl, d) == Succeeded);
+         return realtobig(dbl, d);
          }
-      string: {
-         /* fall through */
-         }
-      ucs: {
-          s = &UcsBlk(*s).utf8;
-         }
-      cset: {
-        if (!cset2string(s, &cnvstr)) {
-           return 0;
-        }
-        s = &cnvstr;
-        }
       default: {
-         return 0;
+         if (numeric_via_string(s, &num) )
+             return cnv_int_impl(&num, d);
+         else
+            return 0;
          }
-      }
-
-   /*
-    * s is now a string.
-    */
-   switch( ston(s, &numrc) ) {
-      case T_Lrgint:
-         MakeDesc(D_Lrgint, numrc.big, d);
-	 return 1;
-
-      case T_Integer:
-         MakeInt(numrc.integer,d);
-         return 1;
-
-      case T_Real:
-         return (realtobig(numrc.real, d) == Succeeded);
-
-      default:
-         return 0;
       }
    }
 
@@ -531,7 +445,7 @@ static int cnv_str_impl(dptr s, dptr d)
          *d = *s;
          return 1;
          }
-     ucs: {
+      ucs: {
          *d = UcsBlk(*s).utf8;
          return 1;
        }
@@ -548,8 +462,13 @@ static int cnv_str_impl(dptr s, dptr d)
          cstr2string(double2cstr(res), d);
          return 1;
          }
-     cset: {
-         return cset2string(s, d);
+      cset: {
+           struct b_cset *c = &CsetBlk(*s);  /* Doesn't need to be tended */
+           if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256) {
+               cset_to_string(c, 1, c->size, d);
+               return 1;
+           } else
+               return 0;
       }
 
       default: {
@@ -658,23 +577,28 @@ deref_macro(deref_1,E_Deref)
 
 
 /*
- * ston - convert a string to a numeric quantity if possible.
- * Returns a typecode or CvtFail.  Its answer is in the dptr,
- * unless its a double, in which case its in the union numeric
- * (we do this to avoid allocating a block for a real
- * that will later be used directly as a C_double).
+ * Try to convert an arbitrary descriptor to a numeric by first trying
+ * to convert it to a string, and then, if successful, trying to parse
+ * that string to get a numeric.  Returns 0 if either stage
+ * fails.  On success result will contain either a real descriptor, a
+ * large integer block descriptor or a normal integer descriptor.
  */
-static int ston(dptr sp, union numeric *result)
+static int numeric_via_string(dptr src, dptr result)
    {
    static struct staticstr buf = {64};
+   tended struct descrip sp;
    char *s, *end_s, *ep;
    char msign = '+';    /* sign of mantissa */
    word lresult = 0;	/* integer result */
    char *ssave;         /* holds original ptr for bigradix */
    int digits = 0;	/* number of digits seen */
+   double d;
 
-   s = StrLoc(*sp);
-   end_s = s + StrLen(*sp);
+   if (!cnv_str_impl(src, &sp))
+       return 0;
+
+   s = StrLoc(sp);
+   end_s = s + StrLen(sp);
 
    /*
     * Skip leading white space.
@@ -710,7 +634,7 @@ static int ston(dptr sp, union numeric *result)
    if (s < end_s && (*s == 'r' || *s == 'R')) {
       tended struct descrip sd;
       if (over_flow || lresult < 2 || lresult > 36)
-	 return CvtFail;
+	 return 0;
       ++s; /* move over R */
       MakeStr(s, end_s - s, &sd);
       return bigradix(msign, lresult, &sd, result);
@@ -723,37 +647,38 @@ static int ston(dptr sp, union numeric *result)
    if (s == end_s) {
        /* Check we had some digits */
        if (!digits)
-           return CvtFail;
+           return 0;
        /* Base 10 integer or large integer */
        if (over_flow) {
            tended struct descrip sd;
            MakeStr(ssave, end_s - ssave, &sd);
            return bigradix(msign, 10, &sd, result);
        } else {
-           result->integer = (msign == '+' ? lresult : -lresult);
-           return T_Integer;
+           MakeInt(msign == '+' ? lresult : -lresult, result);
+           return 1;
        }
    }
 
-   ssreserve(&buf, StrLen(*sp) + 1);
-   memcpy(buf.s, StrLoc(*sp), StrLen(*sp));
-   buf.s[StrLen(*sp)] = 0;
-   result->real = oi_strtod(buf.s, &ep);
+   ssreserve(&buf, StrLen(sp) + 1);
+   memcpy(buf.s, StrLoc(sp), StrLen(sp));
+   buf.s[StrLen(sp)] = 0;
+   d = oi_strtod(buf.s, &ep);
    if (over_flow)
-       return CvtFail;
+       return 0;
 
    /*
     * Check only spaces remain.  We don't check that *ep is null,
     * since the icon string may have contained an invalid \0
     * character.
     */
-   s = StrLoc(*sp) + (ep - buf.s);
+   s = StrLoc(sp) + (ep - buf.s);
    while (s < end_s && oi_isspace(*s))
        ++s;
    if (s < end_s)
-       return CvtFail;
+       return 0;
 
-   return T_Real;
+   MakeReal(d, result);
+   return 1;
    }
 
 /*

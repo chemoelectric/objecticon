@@ -351,12 +351,6 @@ struct region {
     struct region *Gprev, *Gnext;	/* global (all programs) lists */
 };
 
-union numeric {			/* long integers or real numbers */
-    word integer;
-    double real;
-    struct b_bignum *big;
-};
-
 
 /*
  * Structures for the interpreter.
