@@ -339,21 +339,19 @@ function seq(from, by)
 
         if (by0 > 0) {
             for (;;) {
-                word t;
                 suspend C_integer from0;
-                t = from0 + by0;
-                if (t <= from0)
+                if (from0 <= MaxWord - by0)
+                    from0 += by0;
+                else
                     break;
-                from0 = t;
             }
-        } else {
+        } else {     /* by < 0 */
             for (;;) {
-                word t;
                 suspend C_integer from0;
-                t = from0 + by0;
-                if (t >= from0)
+                if (from0 >= MinWord - by0)
+                    from0 += by0;
+                else
                     break;
-                from0 = t;
             }
         }
         MakeInt(from0, &from1);

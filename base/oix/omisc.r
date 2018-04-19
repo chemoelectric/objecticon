@@ -203,34 +203,32 @@ operator ... toby(from, to, by)
            runerr(211);
 
         if (by0 > 0) {
-            if (to0 + by0 > to0) {
+            if (to0 <= MaxWord - by0) {
                 while (from0 <= to0) {
                     suspend C_integer from0;
                     from0 += by0;
                 }
             } else {
-                word t;
                 while (from0 <= to0) {
                     suspend C_integer from0;
-                    t = from0;
-                    from0 += by0;
-                    if (from0 < t)
+                    if (from0 <= MaxWord - by0)
+                        from0 += by0;
+                    else
                         break;
                 }
             }
         } else {     /* by < 0 */
-            if (to0 + by0 < to0) {
+            if (to0 >= MinWord - by0) {
                 while (from0 >= to0) {
                     suspend C_integer from0;
                     from0 += by0;
                 }
             } else {
-                word t;
                 while (from0 >= to0) {
                     suspend C_integer from0;
-                    t = from0;
-                    from0 += by0;
-                    if (from0 > t)
+                    if (from0 >= MinWord - by0)
+                        from0 += by0;
+                    else
                         break;
                 }
             }
