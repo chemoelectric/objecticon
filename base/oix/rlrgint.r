@@ -225,7 +225,7 @@ int bigradix(int sign,                      /* '-' or not */
     int c;
     char *s, *end_s;     /* Don't need to be tended */
 
-    if (r == 0)
+    if (r < 2 || r > 36)
         return 0;
 
     len = ceil(StrLen(*sd) * ln(r) / ln(B));
@@ -234,9 +234,6 @@ int bigradix(int sign,                      /* '-' or not */
     bd = DIG(b,0);
 
     bdzero(bd, len);
-
-    if (r < 2 || r > 36)
-        return 0;
 
     s = StrLoc(*sd);
     end_s = s + StrLen(*sd);
