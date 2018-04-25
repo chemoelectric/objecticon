@@ -61,27 +61,30 @@ final abstract class Format()
    #
    # :Parameters :
    # :  `p` - The number of decimal places to produce (default 4).
-   # :  `f` - A cset of flags.  If c contains `'e'` then the output is
-   #           in scientific notation.  If c contains `','` then commas
+   # :  `f` -  A cset of flags.  If c contains `'e'` then the output is
+   #           in scientific notation.  `'E'` is the same, but uses a
+   #           a capital "E" in the result. If c contains `','` then commas
    #           are introduced into the non-fractional part of the number;
    #           if c contains `'+'` then a leading + is added to positive
    #           numbers.  If c contains `'s'` then trailing fractional
    #           zeroes are replaced with spaces, whilst `'z'` means drop
    #           such zeroes altogether.
-   #             
    #
    public static numeric_to_string(subject, p, f)
-      local n1, s, t, lim, d, zs, dig, i, n
+      local n1, s, t, lim, d, zs, dig, i, n, ec
 
       /f := ''
       n := numeric(subject) | runerr(102, subject)
       /p := 4
+      if p < 0 then
+         runerr(205, p)
       n1 := abs(n)
-      if not any(f, "e") & type(n1) == "integer" then 
+      any(f, ec <- "e"|"E")
+      if /ec & type(n1) == "integer" then 
          s := string(n1) || repl("0", p)
       else {
          t := norm(n1)
-         lim := if any(f, "e") then p else p + t[2]
+         lim := if \ec then p else p + t[2]
          if lim >= -1 then {
             s := ""
             d := t[1]
@@ -99,7 +102,7 @@ final abstract class Format()
                 else s[i] := 0
                 ) | {          # need to add 1 to left of s
                    s := "1" || s
-                   if any(f, "e") then {
+                   if \ec then {
                       s[-1] := ""
                       t[2] +:= 1
                    }
@@ -123,22 +126,31 @@ final abstract class Format()
             else ""
          }
       }
-      if n < 0 & upto('123456789', s) then
+      if n < 0 then
          s := "-" || s
       else
          if any(f, "+") then 
             s := "+" || s
 
-      return if any(f, "e") then
-         s || "E" || (if t[2] < 0 then "-" else "+") || 
-         right(abs(t[2]), 3, "0")
+      return if \ec then
+         s || ec || (if t[2] < 0 then "-" else "+") || abs(t[2])
       else s   
    end
 
    private static norm(n)
-      local m, e, ve
+      local m, e, ve, s
       static pwr
       initial pwr := [1e1, 1e2, 1e4, 1e8, 1e16, 1e32]
+
+      # Do integers separately so that we don't have any problems with
+      # large integers outside of the range of reals.
+      #
+      if type(n) == "integer" then {
+         s := string(n)
+         e := *s - 1
+         s[1] ||:= "."
+         return [real(s), e]
+      }
 
       if n = 0.0 then
          return [0.0, 0]
