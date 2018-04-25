@@ -21,7 +21,7 @@ import
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
-   ipl.rational(rational),
+   numbers(Rat),
    lang(Internal),
    util(save_state, HandlerState, cvpos_item)
 
@@ -68,17 +68,17 @@ procedure CFapprox(e)
   prev_n := [1]
   prev_m := [0, 1]
 
-  put(prev_n, (@e).denom) | fail
+  put(prev_n, (@e).d) | fail
 
   while t := @e do {
-     n := t.denom * get(prev_n) + t.numer * prev_n[1]
-     m := t.denom * get(prev_m) + t.numer * prev_m[1]
-     suspend rational(n, m, 1)
+     n := t.d * get(prev_n) + t.n * prev_n[1]
+     m := t.d * get(prev_m) + t.n * prev_m[1]
+     suspend Rat(n, m)
      put(prev_n, n)
      put(prev_m, m)
-     if t.denom ~= 0 then {		# renormalize
-        every !prev_n /:= t.denom
-        every !prev_m /:= t.denom
+     if t.d ~= 0 then {		# renormalize
+        every !prev_n /:= t.d
+        every !prev_m /:= t.d
         }
      }
 

@@ -2,7 +2,6 @@
 
 import 
    ipl.options, 
-   ipl.rational,
    ipl.convert,
    ipl.datetime,
    ipl.factors,
@@ -23,7 +22,7 @@ $define LSIZE 16
 $define GENLIMIT 25
 
 procedure main()
-   local L, LR, T, r1, r2, r3, argv, SL
+   local L, LR, T, argv, SL
 
    L := [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]
    LR := lreverse(L)
@@ -189,22 +188,6 @@ $endif
    gen(shuffle, "A23456789TJQK")
 
    write()
-   write("rational:")			# rational  (not part of core)
-   rat(str2rat, "(355/113)")
-   r1 := rat(real2rat, 355. / 113.)
-   gen(rat2str, r1)
-   gen(rat2real, r1)
-   r2 := rat(negrat, r1)
-   r3 := rat(reciprat, r1)
-   rat(addrat, r1, r3)
-   rat(subrat, r1, r3)
-   rat(mpyrat, r1, r2)
-   rat(divrat, r1, r3)
-   rat(medrat, rational(2,5,1), rational(11,7,1))
-   rat(medrat, rational(5,13,1), rational(4,5,1))
-   trat()
-
-   write()
    write("records:")			# records
    lst(movecorr, date1(10,30,1952), date2(09,1956,0.97))
 
@@ -341,13 +324,6 @@ procedure tbl(p, a[])			#: test a procedure that returns a table
    return \T
 end
 
-procedure rat(p, a[])			#: test a procedure that rets a rational
-   local v
-   v := p ! a
-   write(left(pimg(p), LSIZE), rat2str(\v) | ["[FAILED]"])
-   return \v
-end
-
 procedure tfact(n)			#: test factorization of n
    local D, F, P, i, v
 
@@ -398,17 +374,4 @@ procedure tprimes(n)			#: test the first n primes
    every i := 1 to n do
       if not (L1[i] = L2[i] = L3[i]) then
          write("   PRIME ENTRY ", i, ":   ", L1[i], ", ", L2[i], ", ", L3[i])
-end
-
-procedure trat()			#: test rational arithmetic
-   local L, n, d, r, g
-
-   write("[testing conversions]")
-   L := [2, 3, 5, 7, 9, 17, 19, 27, 45, 63, 75, 81, 98, 99, 121, 175, 225]
-   every (n := !L) & (d := !L) do {
-      r := real2rat(n * (1. / d))
-      g := gcd(n, d)
-      if r.numer ~= n / g | r.denom ~= d / g then
-         write("   REAL2RAT: ", n, " / ", d, " => ", r.numer, " / ", r.denom)
-      }
 end
