@@ -284,6 +284,31 @@ procedure memoize(f)
    return Memoize(f).call
 end
 
+# Implementation class for `memoize1`.
+package class Memoize1()
+   private f, t
+
+   public call(a)
+      local l
+      (l := member(t, a)) | insert(t, a, l := f(a)) | fail
+      return l
+   end
+
+   public new(f)
+      self.f := f
+      self.t := table()
+      return
+   end
+end
+
+# This is a simpler (but faster) version of `memoize()`.  Only a
+# single parameter is passed to the given function, and only a single
+# result is cached.
+#
+procedure memoize1(f)
+   return Memoize1(f).call
+end
+
 # Implementation class for `adjoin`.
 package class Adjoin()
    private f
