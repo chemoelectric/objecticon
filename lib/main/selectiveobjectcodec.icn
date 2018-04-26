@@ -44,7 +44,7 @@ package record TemplateElement(ident, fnum)
 # If not implemented by a subclass, a default `get_template()`
 # suspends all of the fields in the class.
 #
-class SelectiveObjectCodec(ObjectCodec)
+abstract class SelectiveObjectCodec(ObjectCodec)
    #
    # This empty method may be overridden; it is invoked just before
    # the object is encoded.
