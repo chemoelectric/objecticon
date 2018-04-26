@@ -57,8 +57,8 @@ end
 class Cpx(Number)
    public const r, i
 
-   public str(f)
-      return "r=" || r.str(f) || " i=" || i.str(f)
+   public str(f, dp)
+      return "r=" || r.str(f, dp) || " i=" || i.str(f, dp)
    end
 
    public add(x)
@@ -86,7 +86,7 @@ class Cpx(Number)
    end
 
    private dec_or_rat()
-      if cmp(i, "=", 0) then
+      if i.cmp0("=") then
          return r
    end
 
@@ -110,13 +110,12 @@ class Cpx(Number)
       return dec_or_rat().cmp0(f)
    end
 
+   # Create a new `Cpx` instance with real part `x` and imaginary part
+   # `y`.  Both parameters must be convertible to `Rat` or `Dec`.
+   #
    public new(x, y)
-      r := cvt(x) | fail
-      i := cvt(y) | fail
-      if is(r, Cpx) then
-         runerr("Can't have a nested Cpx", r)
-      if is(i, Cpx) then
-         runerr("Can't have a nested Cpx", i)
+      r := need_Rat_or_Dec(x)
+      i := need_Rat_or_Dec(y)
       return
    end
 end
@@ -149,7 +148,7 @@ class Rat(Number)
    #
    public str(f)
       local i, s, n1
-      n1 := abs(n)
+      n1 := default.abs(n)
       /f := ''
       if d = 1 then
          s := commas(n1, f)
@@ -224,6 +223,16 @@ class Rat(Number)
    public cmp0(f)
       if f(n, 0) then
          return
+   end
+
+   # Return the absolute value of this rational.
+   public abs()
+      return if n >= 0 then self else Rat(-n, d)
+   end
+
+   # Return the reciprocal of this rational.
+   public reciprocal()
+      return Rat(d, n)
    end
 
    # Create a new instance.  If `x` and `y` are given, then they must
@@ -314,13 +323,24 @@ end
 # that two instances representing the same number always have the same
 # numerator and denominator.
 #
-class Dec(Number)
+class Dec(Number, ObjectHash, ObjectEquals)
    public const m, e
+
+   # Cached calculation of precision
+   private cp
 
    private static const p10
 
    private static init()
       p10 := memoize1(lpb(10, "^"))
+   end
+
+   private object_equals(x)
+      return m = x.m & e = x.e
+   end
+
+   private object_hash()
+      return iand(m, 16rffff) + 37 * default.abs(e)
    end
 
    #
@@ -358,7 +378,7 @@ class Dec(Number)
          } else {
             m1 := m; e1 := e
          }
-         s := string(abs(m1))
+         s := string(default.abs(m1))
          e1 +:= *s - 1
          # Unless dp is > 0, express something like "3000" as "3e+3" rather
          # than "3.0e3".
@@ -380,7 +400,7 @@ class Dec(Number)
          } else {
             m1 := m; e1 := e
          }
-         s := string(abs(m1))
+         s := string(default.abs(m1))
          if e1 >= 0 then {
             # Case 1, point to right of digits, eg 12340000
             s ||:= repl("0", e1)
@@ -429,6 +449,11 @@ class Dec(Number)
          return
    end
 
+   # Return the absolute value of this decimal.
+   public abs()
+      return if m >= 0 then self else Dec(-m, e)
+   end
+
    public mul(x)
       return Dec(m * x.m, e + x.e)
    end
@@ -437,7 +462,8 @@ class Dec(Number)
    # digits in the mantissa.
    #
    public precision()
-      return *abs(m)
+      /cp := *default.abs(m)
+      return cp
    end
 
    private static round_dig(n)
@@ -449,54 +475,56 @@ class Dec(Number)
          0
    end
 
+   # Return this number with its mantissa shifted right n places; if n
+   # <= 0 returns self.
+   #
+   public shift_trunc(n)
+      return if n <= 0 then
+         self
+      else
+         Dec(m / p10(n), e + n)
+   end
+
+   # Return this number with its mantissa shifted right n places,
+   # rounding the last digit; if n <= 0 returns self.
+   #
+   public shift_round(n)
+      local m1
+      if n <= 0 then
+         return self
+      m1 := m / p10(n - 1)
+      m1 := m1 / 10 + round_dig(m1 % 10)
+      return Dec(m1, e + n)
+   end
+
    # Round to the given precision; for example 123.456 rounded to
    # precision 2 would be 120.  Note that the result will be
    # normalized, and so the result of `precision()` on the outcome may
    # be less than the `prec`.
    #
    public round(prec)
-      local p, m1, e1
-      p := precision()
-      if p <= prec then
-         return self
-      m1 := m / p10(p - prec - 1)
-      m1 := m1 / 10 + round_dig(m1 % 10)
-      e1 := e + p - prec
-      return Dec(m1, e1)
+      return shift_round(precision() - prec)
    end
 
    # Truncate to the given precision; like `round()` above, but no
    # rounding takes place.
    #
    public trunc(prec)
-      local p
-      p := precision()
-      return if p <= prec then
-         self
-      else
-         Dec(m / p10(p - prec), e + p - prec)
+      return shift_trunc(precision() - prec)
    end
 
    # Round to the given number of decimal places; for example 123.456
    # rounded to 1 decimal place would be 123.5
    #
    public round_dp(dp)
-      local m1
-      if -e < dp + 1 then
-         return self
-      m1 := m / p10(-e - dp - 1)
-      m1 := m1 / 10 + round_dig(m1 % 10)
-      return Dec(m1, -dp)
+      return shift_round(-e - dp)
    end
 
    # Truncate to the given number of decimal places; like `round_dp()`
    # above, but no rounding takes place.
    #
    public trunc_dp(dp)
-      return if -e <= dp then
-         self
-      else
-         Dec(m / p10(-e - dp), -dp)
+      return shift_trunc(-e - dp)
    end
 
    # Divide this number by another `Dec`.
@@ -513,45 +541,86 @@ class Dec(Number)
    # parameter of 5 however, it will succeed with `Dec(205.67)`.
    #
    public div(x, prec)
-      local m1, e1, m2, e2, p, p1, p2, d, s
+      return if /prec then
+         div_exact(x)
+      else
+         div_round(x, prec)
+   end
+
+   # Return this number divided by `x` if it can be divided exactly,
+   # or fail if it cannot.
+   #
+   public div_exact(x)
+      local p, d
+      if x.m = 0 then
+         runerr(201, x)
+      # Work out if 1 / x.m is expressible as a decimal with finite
+      # digits; it will be so if x.m's only factors are 2 and 5.
+      # Each factor adds at most 1 to the number of decimal digits
+      # in the answer.  We count this with p, and then know that
+      # (10^p)/x.m does not lose any digits.
+      d := default.abs(x.m)
+      p := 1
+      while d > 1 do {
+         if d % 2 = 0 then
+            d /:= 2
+         else if d % 5 = 0 then
+            d /:= 5
+         else
+            fail
+         p +:= 1
+      }
+      return Dec((m * p10(p)) / x.m, e - x.e - p)
+   end
+
+   # A helper for the other divide operations; if n > 0 then the
+   # numerator is shifted left n places to provide n more digits of
+   # accuracy in the result.
+   #
+   public div_raw(x, n)
+      local m1, e1, m2, e2
       m1 := self.m
       e1 := self.e
       m2 := x.m
       e2 := x.e
       if m2 = 0 then
          runerr(201, x)
-      if /prec then {
-         # Work out if 1 / m2 is expressible as a decimal with finite
-         # digits; it will be so if m2's only factors are 2 and 5.
-         # Each factor adds at most 1 to the number of decimal digits
-         # in the answer.  We count this with p, and then know that
-         # (10^p)/m2 does not lose any digits.
-         d := abs(m2)
-         p := 1
-         while d > 1 do {
-            if d % 2 = 0 then
-               d /:= 2
-            else if d % 5 = 0 then
-               d /:= 5
-            else
-               fail
-            p +:= 1
-         }
-         return Dec((m1 * p10(p)) / m2, e1 - e2 - p)
-      } else {
-         p1 := precision()
-         p2 := x.precision()
-         # After the division we want the mantissa to have at least
-         # prec+1 digits (ie p1 - p2 <= -(prec + 1)).  So adjust e1 and
-         # m1 now to ensure that is the case.
-         s := p1 - p2 - prec - 1
-         #printf("p1=%d p2=%d s=%d\n",p1,p2,s)
-         if s < 0 then {
-            m1 *:= p10(-s)
-            e1 +:= s
-         }
-         return Dec(m1 / m2, e1 - e2).round(prec)
+      if n > 0 then {
+         m1 *:= p10(n)
+         e1 -:= n
       }
+      return Dec(m1 / m2, e1 - e2)
+   end
+
+   # Divide this number by `x` and round to `prec` digits of
+   # precision.
+   #
+   public div_round(x, prec)
+      # After the division we want the mantissa to have at least
+      # prec+1 digits (ie precision() - x.precision() >= prec + 1).
+      # So pass that adjustment to div_raw. 
+      return div_raw(x, x.precision() - precision() + prec + 1).round(prec)
+   end
+
+   # Divide this number by `x` and truncate to `prec` digits of
+   # precision.
+   #
+   public div_trunc(x, prec)
+      return div_raw(x, x.precision() - precision() + prec).trunc(prec)
+   end
+
+   # Divide this number by `x` and round to `dp` decimal places.
+   #
+   public div_round_dp(x, dp)
+      return div_raw(x, e - x.e + dp + 1).round_dp(dp)
+   end
+
+   # Divide this number by `x` and truncate to `dp` decimal places.
+   # Notably, if `dp` is 0, the result is the integer part of the
+   # division.
+   #
+   public div_trunc_dp(x, dp)
+      return div_raw(x, e - x.e + dp).trunc_dp(dp)
    end
 
    # Convert to a `Rat`.
@@ -690,7 +759,7 @@ end
 # or "E", and a `Rat` otherwise.  If the parsing fails, this procedure
 # fails.
 #
-procedure cvt(x)
+procedure to_Number(x)
    x := case typeof(x) of {
       Rat|Dec|Cpx: x
       "integer"|"real": Dec(x)
@@ -708,8 +777,16 @@ end
 #
 # Helper procedure to signal a runerr if `cvt` fails.
 #
-procedure need(x)
-   return cvt(x) | runerr("Something convertible to Rat or Dec expected", x)
+procedure need_Number(x)
+   return to_Number(x) | runerr("Something convertible to Rat, Dec or Cpx expected", x)
+end
+
+#
+# Helper procedure to signal a runerr if `cvt` fails.
+#
+procedure need_Rat_or_Dec(x)
+   (x := to_Number(x) & is(x, Rat|Dec)) | runerr("Something convertible to Rat or Dec expected", x)
+   return x
 end
 
 # Helper procedure to convert x to a `Dec` (using its constructor),
@@ -731,8 +808,8 @@ record Align(x, y)
 # exact.
 # 
 procedure align(x, y)
-   x := need(x)
-   y := need(y)
+   x := need_Number(x)
+   y := need_Number(y)
    if classof(x) === classof(y) then
       return Align(x, y)
    if is(x, Cpx) then
