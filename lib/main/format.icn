@@ -35,7 +35,7 @@ final abstract class Format()
       local s, n, digs, neg
       s := ""
       /base := 16
-      base := need_integer(base, 2)
+      base := need_integer(base, 2, 16)
       /p := 1
       p := need_integer(p, 0)
       n := need_integer(subject)
