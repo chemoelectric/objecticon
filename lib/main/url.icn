@@ -451,7 +451,7 @@ class URL(ObjectOutput)
    #
    public static make_cgi_table(s)
       local cgi, key, val
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       cgi := table()
       s ? until pos(0) do {
          key := cgi_decode(tab(upto('&=') | 0))
@@ -470,7 +470,7 @@ class URL(ObjectOutput)
    # characters.  The result is always a string, never ucs.
    #
    public static cgi_decode(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       return percent_decode(map(s, "+", " "))
    end
 
@@ -479,7 +479,7 @@ class URL(ObjectOutput)
    #
    public static percent_decode(s)
       local res
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       res := ""
       s ? repeat {
          res ||:= tab(upto('%') | 0)
@@ -494,7 +494,7 @@ class URL(ObjectOutput)
    #
    public static percent_encode(s, c)
       local res, ch
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       res := ""
       s ? repeat {
          res ||:= tab(many(c))

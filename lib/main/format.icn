@@ -36,7 +36,7 @@ final abstract class Format()
       s := ""
       /base := 16
       /p := 1
-      n := integer(subject) | runerr(101, subject)
+      n := need_integer(subject)
       if n < 0 then {
          n := -n
          neg := 1
@@ -74,7 +74,7 @@ final abstract class Format()
       local n1, s, t, lim, d, zs, dig, i, n, ec
 
       /f := ''
-      n := numeric(subject) | runerr(102, subject)
+      n := need_numeric(subject)
       /p := 4
       if p < 0 then
          runerr(205, p)
@@ -333,7 +333,7 @@ final abstract class Format()
          pwr10num := [1000000, 1000, 100]
       }
 
-      n := integer(subject) | runerr(101, subject)
+      n := need_integer(subject)
 
       s := ""
 

@@ -37,9 +37,11 @@
 
 package ipl.unsigned
 
+import util(need_string)
+
 procedure unsigned(s)
    local i
-   s := string(s) | runerr(103, s)
+   s := need_string(s)
    i := 0
    every i := ior(ord(s),ishift(i,8))
    return i

@@ -425,7 +425,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # used if the size of the component is not set in pixels.
    #
    public set_vt_width(n)
-      n := (0 < integer(n)) | runerr(101, n)
+      n := need_positive_integer(n)
       self.vt_width := n
       return self
    end
@@ -434,7 +434,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # if the size of the component is not set in pixels.
    #
    public set_vt_height(n)
-      n := (0 < integer(n)) | runerr(101, n)
+      n := need_positive_integer(n)
       self.vt_height := n
       return self
    end
@@ -667,7 +667,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_vt_font(s)
       local seg, l
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       l := check_font(s) | fail
       set_font(s)
       if is_live() & not(l[1] == font_family & l[2] = font_size) then {
@@ -698,7 +698,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Provide input to the terminal
    #
    public input(s)
-      got := string(s) | runerr(103, s)
+      got := need_string(s)
       @input_handler_coex
       return self
    end
@@ -1167,7 +1167,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the history size; 0 implies no scrollbar.
    #
    public set_history_size(n)
-      n := (0 <= integer(n)) | runerr(101, n)
+      n := need_non_negative_integer(n)
       if history_size ~=:= n then {
          trim_history()
          invalidate_line_count()

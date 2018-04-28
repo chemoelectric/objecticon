@@ -521,7 +521,7 @@ class Lex(Connectable)
    public yylex(str, filename, encoding, line)
       local rv, ender, chunk, buffer
 
-      str := string(str) | runerr(103, str)
+      str := need_string(str)
       /encoding := "ASCII"
       /line := 0
       yytext := ""

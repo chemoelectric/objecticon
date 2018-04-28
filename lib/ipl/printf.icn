@@ -22,7 +22,7 @@ package ipl.printf
 
 import
    io(stop, ewrites, writes, Files),
-   util(Format),
+   util(Format, need_integer, need_text, need_real),
    lang(to_string)
 
 # Returns a `printf` format as a string result.
@@ -123,7 +123,7 @@ package class Args()
          # Optional *N$ form
          i := optpos()
          a := get(i)
-         integer(a) | runerr(101, a)
+         need_integer(a)
       } else
          integer(tab(many(&digits)))
    end
@@ -194,13 +194,13 @@ package procedure doprnt(format, args)
 end
 
 package procedure str(x, prec)
-   x := text(x) | runerr(129, x)
+   x := need_text(x)
    return x[1:(\prec+1)|0]
 end
 
 package procedure intstr(x, prec, flag, base)
    local v
-   x := integer(x) | runerr(101, x)
+   x := need_integer(x)
    v := Format.int_to_string(x, base, prec)
    if any(flag, "+") & x >= 0 then
       v := "+" || v
@@ -209,12 +209,12 @@ end
 
 package procedure fixnum(x, prec, flag)
    /prec := 6
-   x := real(x) | runerr(102, x)
+   x := need_real(x)
    return Format.numeric_to_string(x, prec, flag)
 end
 
 package procedure decimal(x, prec, flag)
-   x := integer(x) | runerr(101, x)
+   x := need_integer(x)
    # Limitation: if we have a precision (padded to min prec digits),
    # then we can't have commas.
    return if \prec then
@@ -227,6 +227,6 @@ end
 #
 package procedure eformatstr(x, prec, flag)
    /prec := 6
-   x := real(x) | runerr(102, x)
+   x := need_real(x)
    return Format.numeric_to_string(x, prec, flag)
 end

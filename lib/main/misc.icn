@@ -103,11 +103,58 @@ procedure protect_why(e)
    return 1(@e, &why := t)
 end
 
+# Convert to a positive integer or signal a runtime error
 #
-# Utility to check for a positive integer
-#
-procedure check_positive_int(n)
+procedure need_positive_integer(n)
    return (0 < integer(n)) | runerr("Positive integer expected", n)
+end
+
+# Convert to a non-negative integer or signal a runtime error
+#
+procedure need_non_negative_integer(n)
+   return (0 <= integer(n)) | runerr("Non-negative integer expected", n)
+end
+
+# Convert to an integer or signal a runtime error
+#
+procedure need_integer(x)
+   return integer(x) | runerr(101, x)
+end
+
+# Convert to a string or signal a runtime error
+#
+procedure need_string(x)
+   return string(x) | runerr(103, x)
+end
+
+# Convert to a real or signal a runtime error
+#
+procedure need_real(x)
+   return real(x) | runerr(102, x)
+end
+
+# Convert to a numeric (real or integer) or signal a runtime error
+#
+procedure need_numeric(x)
+   return numeric(x) | runerr(102, x)
+end
+
+# Convert to a cset or signal a runtime error
+#
+procedure need_cset(x)
+   return cset(x) | runerr(104, x)
+end
+
+# Convert to a ucs or signal a runtime error
+#
+procedure need_ucs(x)
+   return ucs(x) | runerr(128, x)
+end
+
+# Convert to text (string or ucs) or signal a runtime error
+#
+procedure need_text(x)
+   return text(x) | runerr(129, x)
 end
 
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.
@@ -177,8 +224,8 @@ end
 # using Icon semantics of indices <= 0.  Fails if pos is out of range.
 #
 procedure cvpos(pos, len)
-   pos := integer(pos) | runerr(101, pos)
-   len := integer(len) | runerr(101, len)
+   pos := need_integer(pos)
+   len := need_integer(len)
    if pos < -len | pos > len + 1 then
       fail
    if pos > 0 then
@@ -191,8 +238,8 @@ end
 # or points at the end of the range (pos = 0 or equivalent).
 #
 procedure cvpos_item(pos, len)
-   pos := integer(pos) | runerr(101, pos)
-   len := integer(len) | runerr(101, len)
+   pos := need_integer(pos)
+   len := need_integer(len)
    if pos < -len | pos > len | pos = 0 then
       fail
    if pos > 0 then

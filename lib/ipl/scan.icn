@@ -49,7 +49,7 @@ package ipl.scan
 import
    ipl.pdco(optional_param),
    io(write, writes),
-   util(save_state, PosState)
+   util(save_state, PosState, need_string, need_ucs)
 
 # `bal()` with escape processing
 procedure slashbal(c1, c2, c3, s, i, j)	
@@ -802,9 +802,9 @@ end
 #
 procedure same_type(s1, s2)
    return if type(s2) == "string" then
-      string(s1) | runerr(103, s1)
+      need_string(s1)
    else
-      ucs(s1) | runerr(128, s1)
+      need_ucs(s1)
 end
 
 #

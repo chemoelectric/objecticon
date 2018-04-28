@@ -23,7 +23,7 @@ import
    ipl.periodic(repeater),
    numbers(Rat),
    lang(Internal),
-   util(save_state, HandlerState, cvpos_item)
+   util(save_state, HandlerState, cvpos_item, need_integer)
 
 # Adds tabby to treadling sequence
 procedure AddTabby(e, i)	
@@ -101,7 +101,7 @@ procedure Complint(e)
    j := 0
 
    while i := @e do {
-      i := integer(i) | runerr(101, i)
+      i := need_integer(i)
       suspend j to i - 1
       j := i + 1
       }
@@ -818,7 +818,7 @@ procedure Repeat(e1, e2)
    local i
 
    while i := @e2 do {
-      i := integer(i) | runerr(101, i)
+      i := need_integer(i)
       every 1 to i do {
          suspend |@e1
          e1 := ^e1
@@ -908,7 +908,7 @@ procedure Selfrepl(e, j)
    local i
    j := optional_param(j, 1, integer, 101) | fail
    while i := @e do {
-      i := integer(i) | runerr(101, i)
+      i := need_integer(i)
       suspend (1 to i * j) & i
       }
 
@@ -921,7 +921,7 @@ procedure Compl(e)
    j := 1
 
    while i := @e do {
-      i := integer(i) | runerr(101, i)
+      i := need_integer(i)
       suspend j to i - 1
       j := i + 1
       }

@@ -17,7 +17,7 @@ class Message(MimeHeaders)
    # Set the content
    #
    public set_content(s)
-      self.content := string(s) | runerr(103, s)
+      self.content := need_string(s)
       return self
    end
 
@@ -52,7 +52,7 @@ class Message(MimeHeaders)
    public set_decoded_content(s)
       local h
 
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
 
       #
       # Get the handler
