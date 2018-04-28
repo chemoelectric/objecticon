@@ -103,46 +103,54 @@ procedure protect_why(e)
    return 1(@e, &why := t)
 end
 
-# Convert to a positive integer or signal a runtime error
+# Produce a string showing a min, max range (one of the two params may
+# be &null).
 #
-procedure need_positive_integer(n)
-   return (0 < integer(n)) | runerr("Positive integer expected", n)
-end
-
-# Convert to a non-negative integer or signal a runtime error
-#
-procedure need_non_negative_integer(n)
-   return (0 <= integer(n)) | runerr("Non-negative integer expected", n)
+procedure range_string(min, max)
+   local s
+   s := "("
+   if \min then
+      s ||:= ">= " || min
+   if \max then {
+      if \min then
+         s ||:= " and "
+      s ||:= "<= " || max
+   }
+   s ||:= ")"
+   return s
 end
 
 # Convert to an integer or signal a runtime error
 #
-procedure need_integer(x)
-   return integer(x) | runerr(101, x)
+procedure need_integer(x, min, max)
+   x := integer(x) | runerr(101, x)
+   if x < \min | x > \max then
+      runerr("Integer value out of valid range " || range_string(min, max), x)
+   return x
+end
+
+# Convert to a real or signal a runtime error
+#
+procedure need_real(x, min, max)
+   x := real(x) | runerr(102, x)
+   if x < \min | x > \max then
+      runerr("Real value out of valid range " || range_string(min, max), x)
+   return x
+end
+
+# Convert to a numeric (real or integer) or signal a runtime error
+#
+procedure need_numeric(x, min, max)
+   x := numeric(x) | runerr(102, x)
+   if x < \min | x > \max then
+      runerr("Numeric value out of valid range " || range_string(min, max), x)
+   return x
 end
 
 # Convert to a string or signal a runtime error
 #
 procedure need_string(x)
    return string(x) | runerr(103, x)
-end
-
-# Convert to a real or signal a runtime error
-#
-procedure need_real(x)
-   return real(x) | runerr(102, x)
-end
-
-# Convert to a numeric (real or integer) or signal a runtime error
-#
-procedure need_numeric(x)
-   return numeric(x) | runerr(102, x)
-end
-
-# Convert to a cset or signal a runtime error
-#
-procedure need_cset(x)
-   return cset(x) | runerr(104, x)
 end
 
 # Convert to a ucs or signal a runtime error
@@ -155,6 +163,12 @@ end
 #
 procedure need_text(x)
    return text(x) | runerr(129, x)
+end
+
+# Convert to a cset or signal a runtime error
+#
+procedure need_cset(x)
+   return cset(x) | runerr(104, x)
 end
 
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.
@@ -511,7 +525,7 @@ procedure env_real(s, min, max)
    v := env_string(s) | fail
    v := real(v) | runerr("Real value expected for " || s, v)
    if v < \min | v > \max then
-      runerr("Value of " || s || " out of range", v)
+      runerr("Value of " || s || " out of valid range " || range_string(min, max), v)
    return v
 end
 
@@ -525,6 +539,6 @@ procedure env_int(s, min, max)
    v := env_string(s) | fail
    v := integer(v) | runerr("Integer value expected for " || s, v)
    if v < \min | v > \max then
-      runerr("Value of " || s || " out of range", v)
+      runerr("Value of " || s || " out of valid range " || range_string(min, max), v)
    return v
 end

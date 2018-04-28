@@ -35,13 +35,15 @@ final abstract class Format()
       local s, n, digs, neg
       s := ""
       /base := 16
+      base := need_integer(base, 2)
       /p := 1
+      p := need_integer(p, 0)
       n := need_integer(subject)
       if n < 0 then {
          n := -n
          neg := 1
       }
-      digs := "0123456789ABCDEF"[1:base + 1] | runerr("Invalid base", base)
+      digs := "0123456789ABCDEF"[1:base + 1]
       while n > 0 do {
          s := digs[n % base + 1] || s
          n /:= base
@@ -74,10 +76,11 @@ final abstract class Format()
       local n1, s, t, lim, d, zs, dig, i, n, ec
 
       /f := ''
+      f := need_cset(f)
       n := need_numeric(subject)
       /p := 4
-      if p < 0 then
-         runerr(205, p)
+      p := need_integer(p, 0)
+
       n1 := abs(n)
       any(f, ec <- "e"|"E")
       if /ec & type(n1) == "integer" then 
