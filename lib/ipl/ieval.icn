@@ -270,7 +270,7 @@ class Ieval(MinimalObjectOutput)
    private hist(s)
       local i, e
       /s := u""
-      s := map(ucs(s)) | runerr(128, s)
+      s := map(need_ucs(s))
       i := input.get_history_start_no()
       every e := !input.get_history() do {
          if find(s, map(e)) then

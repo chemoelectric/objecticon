@@ -156,7 +156,7 @@ class TextField(Component)
    #
    public set_contents(x)
       /x := ""
-      self.contents := text(x) | runerr(129, x)
+      self.contents := need_text(x)
       self.cursor := *self.contents + 1
       self.loff := 0
       clear_mark()
@@ -182,7 +182,7 @@ class TextField(Component)
    public assign_contents(x, pos, e, coalesce)
       local ed
       /x := ""
-      x := text(x) | runerr(129, x)
+      x := need_text(x)
       /pos := *x + 1
       start_handle(e)
       if self.contents == x then {

@@ -788,7 +788,7 @@ class RenameDialog(NameDialog)
 
    # The constructor requires a ucs string, being the file to be renamed.
    public new(s)
-      s := ucs(s) | runerr(128, s)
+      s := need_ucs(s)
       p := FilePath(s)
       NameDialog.new(p.get(-1))
       set_label("Rename file")
@@ -823,7 +823,7 @@ class NewDirectoryDialog(NameDialog)
    # The constructor requires a ucs string, being the directory in
    # which the new directory is to be created. to be renamed.
    public new(s)
-      s := ucs(s) | runerr(128, s)
+      s := need_ucs(s)
       p := FilePath(s)
       NameDialog.new()
       set_label("New directory")

@@ -189,7 +189,7 @@ class JSONParser()
    end
 
    public parse(s)
-      s := text(s) | runerr(129, s)
+      s := need_text(s)
       utf8_flag := Yes{ type(s) == "ucs" }
       return s ? clean{try1{ end_check(parse_impl()) }}
    end

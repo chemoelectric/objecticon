@@ -16,7 +16,7 @@
 
 package ipl.strings
 
-import lang(Prog,Text)
+import lang(Prog,Text), util(need_text)
 
 # Concatenates an arbitrary number of strings.
 procedure cat(args[])			
@@ -713,7 +713,7 @@ end
 #
 procedure remove_surrogate_pairs(s)
    local t, c1, c2
-   s := text(s) | runerr(129, s)
+   s := need_text(s)
    upto('\ud800-\udfff', s) | return s
    t := ""
    s ? repeat {
@@ -735,7 +735,7 @@ end
 #
 procedure add_surrogate_pairs(s)
    local t, c, i
-   s := text(s) | runerr(129, s)
+   s := need_text(s)
    upto('\U10000-\U10FFFF', s) | return s
    t := ""
    s ? repeat {

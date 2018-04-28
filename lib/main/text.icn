@@ -1,6 +1,6 @@
 package lang
 
-import util(need_string)
+import util(need_string, need_cset, need_ucs)
 
 final abstract class Text()
    # Generate the ranges in a cset, as a sequence of from-to pairs.
@@ -42,7 +42,7 @@ final abstract class Text()
    #
    public static subset(x, y)
       local c
-      y := cset(y) | runerr(104, y)
+      y := need_cset(y)
       every c := ord(x) do
          Text.has_ord(y, c) | fail
       return
@@ -115,7 +115,7 @@ final abstract class Text()
    #
    public static ucs_to_iso_8859_1(s, subst)
       local t, ch
-      s := ucs(s) | runerr(128, s)
+      s := need_ucs(s)
       /subst := "?"
       t := ""
       s ? repeat {
