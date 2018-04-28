@@ -1,15 +1,19 @@
 package numbers
 
-import lang, ipl.numbers(gcd), ipl.types, util(Format), ipl.functional
-
-package procedure tab_ws()
-   return tab(many(' \t\n\r'))
-end
+import lang, ipl.numbers(gcd), ipl.types, util, ipl.functional
 
 # Abstract parent class for the three number types, `Cpx`, `Rat` and
-# `Dec`.
+# `Dec`.  The latter two are in fact subclasses via `RealNumber`.
 #
 abstract class Number(ObjectOutput)
+   public static const
+      # Precision used in converting to icon real type
+      REAL_DIGS
+
+   private static init()
+      REAL_DIGS := 20
+   end
+
    # Add this instance to another instance of the same type.
    public abstract add(x)
 
@@ -28,21 +32,12 @@ abstract class Number(ObjectOutput)
    # simplification is possible, `self` is returned.
    public abstract reduce()
 
-   # Compare this instance to zero, using the operator `f`.
-   public abstract cmp0(f)
-
    # Produce formatted string output.
    public abstract str(fmt, prec)
 
    # Subtract the other instance of the same type from this instance.
    public sub(x)
       return add(x.neg())
-   end
-
-   # Compare this instance to another of the same type using the
-   # relational operator `f`.
-   public cmp(f, x)
-      return sub(x).cmp0(f)
    end
 
    private object_output(oo)
@@ -82,42 +77,73 @@ class Cpx(Number)
    end
 
    public reduce()
-      return dec_or_rat() | self
+      return real_number() | self
    end
 
-   private dec_or_rat()
-      if i.cmp0("=") then
+   # Convert to a `RealNumber`, returning the real part if and only if
+   # the imaginary part is zero.
+   public real_number()
+      if i.sign() = 0 then
          return r
-   end
-
-   public decimal(prec)
-      return dec_or_rat().decimal(prec)
-   end
-
-   public rational()
-      return dec_or_rat().rational()
-   end
-
-   public integer()
-      return dec_or_rat().integer()
-   end
-
-   public real()
-      return dec_or_rat().real()
-   end
-
-   public cmp0(f)
-      return dec_or_rat().cmp0(f)
    end
 
    # Create a new `Cpx` instance with real part `x` and imaginary part
    # `y`.  Both parameters must be convertible to `Rat` or `Dec`.
    #
    public new(x, y)
-      r := need_Rat_or_Dec(x)
-      i := need_Rat_or_Dec(y)
+      r := need_RealNumber(x)
+      i := need_RealNumber(y)
       return
    end
+end
+
+# This class just lists operations common to its two subclasses, `Dec` and `Rat`.
+#
+abstract class RealNumber(Number)
+   # Compare this instance to another of the same type using the
+   # relational operator `f`.  For example,
+   # ~
+   #   x.cmp("<", y)
+   # ~
+   # succeeds iff `x < y`.
+   #
+   public cmp(f, x)
+      if f(sub(x).sign(), 0) then
+         return
+   end
+
+   # Return the absolute value of this number.
+   public abs()
+      return if sign() >= 0 then self else neg()
+   end
+
+   # Return the sign of this number (-1, 0 or 1, depending on whether
+   # it is less than, equal to, or greater than zero).
+   public abstract sign()
+
+   # Subtract x from this instance and return the sign of the result.
+   # This is useful for sorting; see `number_comparator()` below.
+   #
+   public sub_sign(x)
+      return sub(x).sign()
+   end
+
+   # Convert to `Dec`, or fail if no precision is specified and an
+   # exact conversion is not possible.
+   #
+   public abstract decimal(prec)
+
+   # Convert to `Rat`
+   #
+   public abstract rational()
+
+   # Convert to integer
+   #
+   public abstract integer()
+
+   # Convert to real, or fail if that is not possible.
+   #
+   public abstract real()
 end
 
 # A class representing rational numbers.
@@ -126,7 +152,7 @@ end
 # that two instances representing the same number always have the same
 # numerator and denominator.
 #
-class Rat(Number)
+class Rat(RealNumber)
    public const n, d
 
    private static commas(n, f)
@@ -197,7 +223,7 @@ class Rat(Number)
    # Returns a real number approximating this rational, or fails if
    # the result would be outside real's expressible range.
    public real()
-      return decimal(20).real()
+      return decimal(REAL_DIGS).real()
    end
 
    public add(x)
@@ -220,19 +246,30 @@ class Rat(Number)
       return Rat(d, n)
    end
 
-   public cmp0(f)
-      if f(n, 0) then
-         return
-   end
-
-   # Return the absolute value of this rational.
-   public abs()
-      return if n >= 0 then self else Rat(-n, d)
+   public sign()
+      return ipl.numbers.sign(n)
    end
 
    # Return the reciprocal of this rational.
    public reciprocal()
       return Rat(d, n)
+   end
+
+   private parse(x)
+      x ? {
+         tab_ws()
+         n := default.integer(tab(many(&digits ++ '+\-'))) | fail
+         tab_ws()
+         if ="/" then {
+            tab_ws()
+            d := default.integer(tab(many(&digits))) | fail
+         } else
+            d := 1
+         # Check at end
+         tab_ws()
+         pos(0) | fail
+      }
+      return
    end
 
    # Create a new instance.  If `x` and `y` are given, then they must
@@ -251,20 +288,13 @@ class Rat(Number)
    #   denominator. If the string cannot be parsed, the constructor
    #   fails.
    #
-   # Examples :-
-   # ~~~
-   #   Dec("1/4")      # ok, Dec(0.25)
-   #   Dec("1/3")      # fails
-   #   Dec("123e100")  # ok  1.23e+102
-   #   Dec(123)        # ok
-   #   Dec("rubbish")  # fails
-   # ~~~
+   # On failure, `&why` is set indicating the reason.
    #
    public new(x, y)
       local g
       if \y then {
-         n := default.integer(x) | runerr(101, x)
-         d := default.integer(y) | runerr(101, y)
+         n := need_integer(x)
+         d := need_integer(y)
          if d < 0 then {
             d := -d
             n := -n
@@ -273,6 +303,11 @@ class Rat(Number)
          "integer" : {
             n := x
             d := 1
+         }
+         Cpx: {
+            x := x.real_number().rational() | return error("Couldn't convert complex to a rational")
+            n := x.n
+            d := x.d
          }
          Rat: {
             n := x.n
@@ -284,24 +319,15 @@ class Rat(Number)
             d := x.d
          }
          default: {
-            x := string(x) | runerr(103, x)
-            if upto('.eE', x) then {
+            x := need_string(x)
+            # The two tests are needed to stop the Rat and Dec
+            # constructors calling one another endlessly.
+            if probably_decimal(x) & not probably_rational(x) then {
                x := Dec(x).rational() | fail
                n := x.n
                d := x.d
-            } else x ? {
-               tab_ws()
-               n := default.integer(tab(many(&digits ++ '+\-'))) | fail
-               tab_ws()
-               if ="/" then {
-                  tab_ws()
-                  d := default.integer(tab(many(&digits))) | fail
-               } else
-                  d := 1
-               # Check at end
-               tab_ws()
-               pos(0) | fail
-            }
+            } else
+               parse(x) | return error("Couldn't parse string as a rational")
          }
       }
 
@@ -323,7 +349,7 @@ end
 # that two instances representing the same number always have the same
 # numerator and denominator.
 #
-class Dec(Number, ObjectHash, ObjectEquals)
+class Dec(RealNumber, ObjectHash, ObjectEquals)
    public const m, e
 
    # Cached calculation of precision
@@ -444,14 +470,8 @@ class Dec(Number, ObjectHash, ObjectEquals)
       return Dec(-m, e)
    end
 
-   public cmp0(f)
-      if f(m, 0) then
-         return
-   end
-
-   # Return the absolute value of this decimal.
-   public abs()
-      return if m >= 0 then self else Dec(-m, e)
+   public sign()
+      return ipl.numbers.sign(m)
    end
 
    public mul(x)
@@ -634,7 +654,7 @@ class Dec(Number, ObjectHash, ObjectEquals)
    # Convert to a real, or fail if the number is out of the allowable
    # range of that type.
    public real()
-      return default.real(str('e'))
+      return default.real(trunc(REAL_DIGS).str('e'))
    end
 
    # Returns self
@@ -655,6 +675,38 @@ class Dec(Number, ObjectHash, ObjectEquals)
       return self
    end
 
+   private parse(x)
+      local l, r, s
+      x ? {
+         tab_ws()
+         s := tab(any('+\-'))
+         if ="." then {
+            l := 0
+            # Note we don't convert to integer, since we use *r below and need any preceding "0"s.
+            r := tab(many(&digits)) | fail
+         } else {
+            l := tab(many(&digits)) | fail
+            r := if ="." then
+               # Allow a trailing "." on its own
+               tab(many(&digits)) | 0
+            else
+               0
+         }
+         m := l * p10(*r) + r
+         if \s == "-" then
+            m := -m
+         e := -*r
+         if any('eE') then {
+            move(1)
+            e +:= default.integer(tab(many(&digits ++ '+\-'))) | fail
+         }
+         # Check at end
+         tab_ws()
+         pos(0) | fail
+      }
+      return
+   end
+
    # Create a new instance.  If `x` and `y` are given, then they must
    # both be integers representing the mantissa and exponent
    # respectively.  Otherwise, if only `x` is given, then `x` may be :-
@@ -671,6 +723,8 @@ class Dec(Number, ObjectHash, ObjectEquals)
    #   decimal number, possibly in scientific notation.  If the string
    #   cannot be parsed, the constructor fails.
    #
+   # On failure, `&why` is set indicating the reason.
+   #
    # Examples :-
    # ~~~
    #   Dec("1/4")      # ok, Dec(0.25)
@@ -681,58 +735,40 @@ class Dec(Number, ObjectHash, ObjectEquals)
    # ~~~
    #
    public new(x, y)
-      local l, r, s
       if \y then {
-         m := default.integer(x) | runerr(101, x)
-         e := default.integer(y) | runerr(101, y)
+         m := need_integer(x)
+         e := need_integer(y)
       } else case typeof(x) of {
          "integer" : {
             m := x
             e := 0
+         }
+         Cpx: {
+            x := x.real_number().decimal() | return error("Couldn't convert complex to an exact decimal")
+            m := x.m
+            e := x.e
          }
          Dec: {
             m := x.m
             e := x.e
          }
          Rat: {
-            x := x.decimal() | fail
+            x := x.decimal() | return error("Couldn't convert rational to an exact decimal")
             m := x.m
             e := x.e
          }
          default: {
-            x := string(x) | runerr(103, x)
-            if upto('/', x) then {
-               x := Rat(x).decimal() | fail
+            x := need_string(x)
+            # The two tests are needed to stop the Rat and Dec
+            # constructors calling one another endlessly.
+            if probably_rational(x) & not probably_decimal(x) then {
+               x := Rat(x) | fail
+               x := x.decimal() | return error("Couldn't convert rational to an exact decimal")
                m := x.m
                e := x.e
             }
-            else x ? {
-               tab_ws()
-               s := tab(any('+\-'))
-               if ="." then {
-                  l := 0
-                  # Note we don't convert to integer, since we use *r below and need any preceding "0"s.
-                  r := tab(many(&digits)) | fail
-               } else {
-                  l := tab(many(&digits)) | fail
-                  r := if ="." then
-                     # Allow a trailing "." on its own
-                     tab(many(&digits)) | 0
-                  else
-                     0
-               }
-               m := l * p10(*r) + r
-               if \s == "-" then
-                  m := -m
-               e := -*r
-               if any('eE') then {
-                  move(1)
-                  e +:= default.integer(tab(many(&digits ++ '+\-'))) | fail
-               }
-               # Check at end
-               tab_ws()
-               pos(0) | fail
-            }
+            else 
+               parse(x) | return error("Couldn't parse string as a decimal")
          }
       }
 
@@ -746,6 +782,18 @@ class Dec(Number, ObjectHash, ObjectEquals)
 
       return
    end
+end
+
+package procedure probably_decimal(s)
+   return upto('.eE', s)
+end
+
+package procedure probably_rational(s)
+   return upto('/', s)
+end
+
+package procedure tab_ws()
+   return tab(many(' \t\n\r'))
 end
 
 # Convert an arbitrary value x into a `Rat`, `Dec` or `Cpx` instance,
@@ -764,8 +812,8 @@ procedure to_Number(x)
       Rat|Dec|Cpx: x
       "integer"|"real": Dec(x)
       default: {
-         x := string(x) | runerr(103, x)
-         if upto('.eE', x) then
+         x := need_string(x)
+         if probably_decimal(x) then
             Dec(x)
          else
             Rat(x)
@@ -775,17 +823,18 @@ procedure to_Number(x)
 end
 
 #
-# Helper procedure to signal a runerr if `cvt` fails.
+# Helper procedure to signal a runerr if `to_Number` fails.
 #
 procedure need_Number(x)
-   return to_Number(x) | runerr("Something convertible to Rat, Dec or Cpx expected", x)
+   return to_Number(x) | runerr("Number expected: " || &why, x)
 end
 
 #
-# Helper procedure to signal a runerr if `cvt` fails.
+# Helper procedure to signal a runerr if `to_Number` fails, or a `Cpx`
 #
-procedure need_Rat_or_Dec(x)
-   (x := to_Number(x) & is(x, Rat|Dec)) | runerr("Something convertible to Rat or Dec expected", x)
+procedure need_RealNumber(x)
+   x := need_Number(x)
+   is(x, RealNumber) | runerr("Complex number not allowed", x)
    return x
 end
 
@@ -793,7 +842,14 @@ end
 # and signal a runerr if that is not possible.
 #
 procedure need_Dec(x)
-   return if is(x,Dec) then x else Dec(x) | runerr("Something convertible to Dec expected", x)
+   return if is(x,Dec) then x else Dec(x) | runerr("Decimal expected: " || &why, x)
+end
+
+# Helper procedure to convert x to a `Rat` (using its constructor),
+# and signal a runerr if that is not possible.
+#
+procedure need_Rat(x)
+   return if is(x,Rat) then x else Rat(x) | runerr("Rational expected: " || &why, x)
 end
 
 record Align(x, y)
@@ -808,8 +864,16 @@ record Align(x, y)
 # exact.
 # 
 procedure align(x, y)
-   x := need_Number(x)
-   y := need_Number(y)
+   return align_impl(need_Number(x), need_Number(y))
+end
+
+# Like `align`, but accepts only real numbers (`Dec` or `Rat`), but not `Cpx`.
+#
+procedure align_real_numbers(x, y)
+   return align_impl(need_RealNumber(x), need_RealNumber(y))
+end
+
+package procedure align_impl(x, y)
    if classof(x) === classof(y) then
       return Align(x, y)
    if is(x, Cpx) then
@@ -887,6 +951,29 @@ end
 #
 procedure cmp(x, f, y)
    local c
-   c := align(x, y)
+   c := align_real_numbers(x, y)
    return c.x.cmp(f, c.y)
+end
+
+# This procedure takes two `Rat` or `Dec` instances and returns -1, 0
+# or 1 depending on whether `x` is less than, equal to, or greater
+# than `y`, respectively.
+#
+# This procedure can also be used with sorting functions such as
+# `ipl.sort.qsort()`.  For example :-
+#
+# ~
+#     l := [Dec(100), Dec(2.3), Rat(1,3), Dec(99), Rat(32,7),
+#           Dec(13),Rat(11,4) ]
+#
+#     qsort(l, number_comparator)
+#
+#     # Now l is [ Rat5(1/3), Dec(2.3), Rat(2 3/4), Rat(4 4/7),
+#                  Dec4(13), Dec(99), Dec(100) ]
+# ~
+#
+procedure number_comparator(x, y)
+   local c
+   c := align_real_numbers(x, y)
+   return c.x.sub_sign(c.y)
 end
