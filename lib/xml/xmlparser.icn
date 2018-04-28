@@ -148,7 +148,7 @@ class XmlParser(Connectable)
    # [1] document ::= prolog element Misc*
    #
    public parse(s, base)
-      s := text(s) | runerr(129, s)
+      s := need_text(s)
       doc := XmlDocument()
 
       # The predefined entities.  Note that the values are in each case valid content.

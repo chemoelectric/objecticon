@@ -68,8 +68,8 @@ class MoveTo(PathElement)
    public const x, y
 
    public new(x, y)
-      self.x := real(x) | runerr(102, x)
-      self.y := real(y) | runerr(102, y)
+      self.x := need_real(x)
+      self.y := need_real(y)
       return
    end
 end
@@ -80,8 +80,8 @@ class LineTo(PathElement)
    public const x, y
 
    public new(x, y)
-      self.x := real(x) | runerr(102, x)
-      self.y := real(y) | runerr(102, y)
+      self.x := need_real(x)
+      self.y := need_real(y)
       return
    end
 end
@@ -92,12 +92,12 @@ class CurveTo(PathElement)
    public const x1, y1, x2, y2, x3, y3
 
    public new(x1, y1, x2, y2, x3, y3)
-      self.x1 := real(x1) | runerr(102, x1)
-      self.y1 := real(y1) | runerr(102, y1)
-      self.x2 := real(x2) | runerr(102, x2)
-      self.y2 := real(y2) | runerr(102, y2)
-      self.x3 := real(x3) | runerr(102, x3)
-      self.y3 := real(y3) | runerr(102, y3)
+      self.x1 := need_real(x1)
+      self.y1 := need_real(y1)
+      self.x2 := need_real(x2)
+      self.y2 := need_real(y2)
+      self.x3 := need_real(x3)
+      self.y3 := need_real(y3)
       return
    end
 end
@@ -213,12 +213,12 @@ class Matrix()
    public new(xx, yx, xy, yy, x0, y0)
       /x0 := 0.0
       /y0 := 0.0
-      self.xx := real(xx) | runerr(102, xx)
-      self.yx := real(yx) | runerr(102, yx)
-      self.xy := real(xy) | runerr(102, xy)
-      self.yy := real(yy) | runerr(102, yy)
-      self.x0 := real(x0) | runerr(102, x0)
-      self.y0 := real(y0) | runerr(102, y0)
+      self.xx := need_real(xx)
+      self.yx := need_real(yx)
+      self.xy := need_real(xy)
+      self.yy := need_real(yy)
+      self.x0 := need_real(x0)
+      self.y0 := need_real(y0)
       return
    end
 end

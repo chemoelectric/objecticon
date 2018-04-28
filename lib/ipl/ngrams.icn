@@ -29,16 +29,16 @@
 package ipl.ngrams
 
 import
-   io(reads, Stream)
+   io(reads, Stream), util(need_cset, need_positive_integer)
 
 # n-grams with count
 procedure ngrams(s, i, c, t)		
    local line, grams, a, count
 
-   if not (integer(i) > 0) then runerr("*** invalid ngrams specification", i)
+   i := need_positive_integer(i)
 
    /c := &lcase || &ucase
-   if not (c := cset(c)) then runerr("*** invalid cset specification", c)
+   c := need_cset(c)
 
    grams := table(0)
 

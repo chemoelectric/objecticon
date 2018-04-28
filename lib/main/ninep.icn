@@ -133,7 +133,7 @@ abstract class File9P()
 
    public set_name(x)
       # Must be string since it's used as a table key
-      x := string(x) | runerr(103, x)
+      x := need_string(x)
       (\parent).rename_child(self, x)
       self.name := x
       return self
@@ -354,7 +354,7 @@ class StringFile9P(Regular9P)
    end
 
    public set_data(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       data := s
       return self
    end
@@ -401,13 +401,13 @@ class FifoFile9P(Regular9P)
    end
 
    public set_data(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       data := s
       return self
    end
 
    public add(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       write(s)
       return self
    end
@@ -492,7 +492,7 @@ class QueueFile9P(Regular9P)
    end
 
    public add(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       if *s > 0 then {
          len +:= *s
          put(q, s)

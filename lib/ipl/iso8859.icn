@@ -1,6 +1,6 @@
 package ipl.charset
 
-import lang(Text)
+import lang(Text), util(need_integer, need_string, need_ucs)
 
 class ISO8859()
    private static const
@@ -46,8 +46,8 @@ class ISO8859()
    #
    public static to_ucs(s, n)
       local t, ch, l
-      s := string(s) | runerr(103, s)
-      n := integer(n) | runerr(101, n)
+      s := need_string(s)
+      n := need_integer(n)
       l := member(TO_UCS, n) | fail
       t := ""
       s ? repeat {
@@ -66,8 +66,8 @@ class ISO8859()
    #
    public static from_ucs(s, n, subst)
       local t, ch, m
-      s := ucs(s) | runerr(128, s)
-      n := integer(n) | runerr(101, n)
+      s := need_ucs(s)
+      n := need_integer(n)
       m := member(FROM_UCS, n) | fail
       /subst := "?"
       t := ""

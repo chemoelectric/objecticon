@@ -414,7 +414,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
 
    #
    # The hash code, to be consistent with `equals()` above, returns the
-   # secons past the base date.
+   # seconds past the base date.
    #
    private object_hash()
       return self.seconds

@@ -1,7 +1,8 @@
 package io
 
 import
-   util(error, check_flag, check_positive_int, save_why, HasMode),
+   util(error, check_flag, need_positive_integer, need_string,
+        need_integer, save_why, HasMode),
 $ifdef _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
@@ -132,7 +133,7 @@ abstract class Stream(HasMode)
    #
    public read_exactly(n)
       local s, t
-      n := check_positive_int(n)
+      n := need_positive_integer(n)
       s := ""
       while n > 0 do {
          t := in(n) | fail
@@ -183,7 +184,7 @@ abstract class Stream(HasMode)
    #
    public writes1(s)
       local n
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       while *s > 0 do {
          n := out(s) | fail
          s := s[n + 1:0]
@@ -273,7 +274,7 @@ class StringStream(Stream)
 
    public in(n)
       local t, e
-      n := check_positive_int(n)
+      n := need_positive_integer(n)
       if pos > *subj then
          return
       e := min(pos + n, *subj + 1)
@@ -284,7 +285,7 @@ class StringStream(Stream)
 
    public out(s)
       local e
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       if pos > *subj then {
          subj ||:= repl("\0", pos - *subj - 1) || s
          pos := *subj + 1
@@ -313,7 +314,7 @@ class StringStream(Stream)
    end
 
    public seek(offset)
-      offset := integer(offset) | runerr(101, offset)
+      offset := need_integer(offset)
       return .if offset > 0 then
          pos := offset
       else if -offset <= *subj then
@@ -331,7 +332,7 @@ class StringStream(Stream)
    end
 
    public truncate(len)
-      len := integer(len) | runerr(101, len)
+      len := need_integer(len)
       if len > *subj then
          subj ||:= repl("\0", len - *subj)
       else if len >= 0 then
@@ -354,7 +355,7 @@ class StringStream(Stream)
    #
    public new(subj)
       /subj := ""
-      self.subj := string(subj) | runerr(103, subj)
+      self.subj := need_string(subj)
       self.pos := 1
       return
    end
@@ -370,7 +371,7 @@ class NullStream(Stream)
    end
 
    public out(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       return *s
    end
 
@@ -397,11 +398,11 @@ end
 #
 class ZeroStream(Stream)
    public in(n)
-      return repl("\0", check_positive_int(n))
+      return repl("\0", need_positive_integer(n))
    end
 
    public out(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       return *s
    end
 
@@ -457,7 +458,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    # Push the string s onto the read buffer, so that it is read next.
    #
    public push(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       unbuff() | fail
       rbuff := s || rbuff
       return self
@@ -501,7 +502,7 @@ class BufferStream(Stream, HasUnderlyingStream)
 
    public in(n)
       local t
-      n := check_positive_int(n)
+      n := need_positive_integer(n)
       flush() | fail
       if *rbuff > 0 then {
          rbuff ? {
@@ -529,7 +530,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    end
 
    public out(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       unbuff() | fail
       # Avoid concatenating a large s in flush().
       if *s > buff_size then
@@ -1421,7 +1422,7 @@ abstract class LineBasedInputStream(Stream)
 
    public in(n)
       local t
-      n := check_positive_int(n)
+      n := need_positive_integer(n)
       if *line = 0 then {
          t := read_line_impl() | fail
          if /t then
@@ -1461,7 +1462,7 @@ abstract class LineBasedOutputStream(Stream)
 
    public out(s)
       local t, c
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       if *s > 0 then {
          put(buff, s)
          if upto('\n', s) then {
@@ -2068,7 +2069,7 @@ class FilterOutputStream(FilterStreamBase)
    end
 
    public out(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       repeat {
          case do_poll() of {
             cin: cp_cin()
@@ -2701,7 +2702,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
 
    public in(n)
       local t, rc
-      n := check_positive_int(n)
+      n := need_positive_integer(n)
       \reader | return error("stream not open for reading")
       rc := reader.await() | fail
       if rc = 0 then
@@ -2724,7 +2725,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
 
    public out(s)
       local n
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       flush_out() | fail
       n := min(*s, writer.get_buff_size())
       writer.op_write_all(s[1+:n])
@@ -3027,7 +3028,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
          coex := &null
          return
       }
-      t := string(t) | runerr(103, t)
+      t := need_string(t)
       return t
    end
 
@@ -3072,7 +3073,7 @@ class GeneratorStream(Stream, NoCopy)
             coex := &null
             return
          }
-         buff := string(t) | runerr(103, t)
+         buff := need_string(t)
       }
       buff ? {
          t := move(n) | tab(0)

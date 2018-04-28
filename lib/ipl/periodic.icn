@@ -27,9 +27,8 @@ package ipl.periodic
 
 import
    ipl.lists(lequiv, lextend),
-   ipl.rational(addrat, divrat, mpyrat, rational,
-                ratred),
-   util(Math)
+   util(Math),
+   numbers(Rat)
 
 record perseq(pre, rep)
 
@@ -39,30 +38,27 @@ procedure Sqrt(i, j)
 
    /j := 5
 
-   half := rational(1, 2, 1)
+   half := Rat(1, 2)
 
-   rat := rational(integer(Math.sqrt(i)), 1, 1)	# initial approximation
+   rat := Rat(integer(Math.sqrt(i)))	# initial approximation
 
-   i := rational(i, 1, 1)
+   i := Rat(i)
 
    every 1 to j do
-      rat := mpyrat(half, addrat(rat, divrat(i, rat, 1), 1))
+      rat := half.mul(rat.add(i.div(rat)))
 
    return rat
 
 end
 
 # continued fraction sequence for rational
-procedure rat2cf(rat)		
-   local r, result, i, j
-
-   i := rat.numer
-   j := rat.denom
+procedure rat2cf(i, j)		
+   local r, result
 
    result := []
 
    repeat {
-     put(result, rational(integer(i / j), 1, 1).numer)
+     put(result, integer(i / j))
      r := i % j
      i := j
      j := r
@@ -82,17 +78,17 @@ procedure cfapprox(lst)
    prev_n := [1]
    prev_m := [0, 1]
 
-   put(prev_n, get(lst).denom) | fail
+   put(prev_n, get(lst).d) | fail
 
    while t := get(lst) do {
-      n := t.denom * get(prev_n) + t.numer * prev_n[1]
-      m := t.denom * get(prev_m) + t.numer * prev_m[1]
-      suspend rational(n, m, 1)
+      n := t.d * get(prev_n) + t.n * prev_n[1]
+      m := t.d * get(prev_m) + t.n * prev_m[1]
+      suspend Rat(n, m)
       put(prev_n, n)
       put(prev_m, m)
-      if t.denom ~= 0 then {		# renormalize
-         every !prev_n /:= t.denom
-         every !prev_m /:= t.denom
+      if t.d ~= 0 then {		# renormalize
+         every !prev_n /:= t.d
+         every !prev_m /:= t.d
          }
       }
 
@@ -106,43 +102,41 @@ procedure dec2rat(pre, rep)
 
    every s ||:= (!pre | |!rep) \ (*pre + *rep)
 
-   return ratred(rational(s - left(s, *pre),
-      10 ^ (*pre + *rep) - 10 ^ *pre, 1))
+   return Rat(s - left(s, *pre),
+      10 ^ (*pre + *rep) - 10 ^ *pre)
 
 end
 
 # decimal expansion of rational
-procedure rat2dec(rat)		
+procedure rat2dec(numer, denom)		
    local  result, remainders, count, seq
-
-   rat := copy(rat)
 
    result := ""
 
    remainders := table()
 
-   rat.numer %:= rat.denom
-   rat.numer *:= 10
+   numer %:= denom
+   numer *:= 10
 
    count := 0
 
-   while rat.numer > 0 do {
+   while numer > 0 do {
       count +:= 1
-      if member(remainders, rat.numer) then {	# been here; done that
+      if member(remainders, numer) then {	# been here; done that
          seq := perseq()
          result ? {
-            seq.pre := move(remainders[rat.numer] - 1)
+            seq.pre := move(remainders[numer] - 1)
             seq.rep := tab(0)
             }
          return seq
          }
-      else insert(remainders, rat.numer, count)
-      result ||:= rat.numer / rat.denom
-      rat.numer %:= rat.denom
-      rat.numer *:= 10
+      else insert(remainders, numer, count)
+      result ||:= numer / denom
+      numer %:= denom
+      numer *:= 10
       }
 
-   return perseq([rat.denom], [])		# WRONG!!!
+   return perseq([denom], [])		# WRONG!!!
 
 end
 

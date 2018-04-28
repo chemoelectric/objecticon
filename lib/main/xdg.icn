@@ -420,7 +420,7 @@ final abstract class IconTheme()
    # Set the icon theme; fails if the theme is invalid.
    #
    public static set_theme(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       get_theme_index(s) | fail
       theme := s
       clear(FIND_ICON_CACHE)
@@ -513,7 +513,7 @@ final abstract class IconTheme()
    #
    public static find_icon(icon, size)
       local k, v
-      icon := string(icon) | runerr(103, icon)
+      icon := need_string(icon)
       k := icon || "/" || size
       if not(v := member(FIND_ICON_CACHE, k)) then {
          v := find_icon_helper(icon, size, theme, set()) | lookup_fallback_icon(icon)
@@ -686,7 +686,7 @@ final abstract class Mime()
    #
    public static alternative_mime_types(mt)
       local l
-      mt := string(mt) | runerr(103, mt)
+      mt := need_string(mt)
       if not(l := member(MIME_ALTERNATIVES, mt)) then {
          l := []
          alternative_mime_types1(mt, l, set())
@@ -981,7 +981,7 @@ package class Globs()
 
    public lookup(f)
       local i, v, fm
-      text(f) | runerr(129, f)
+      need_text(f)
       f := ucs(f) | fail
       fm := map(f)
       if v := member(literal, f | fm) then

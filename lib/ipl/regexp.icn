@@ -19,7 +19,7 @@ package ipl.regexp
 import
    ipl.scan(caseless_cset, caseless_match, caseless_find, begin_analysis),
    lang(Prog),
-   util(check_flag)
+   util(check_flag, need_string, need_cset)
 
 package record Pos(n)
 package record Move(n)
@@ -370,34 +370,34 @@ class Pattern()
 
    public set_word_chars(c)
       check_open()
-      Re_WordChars := cset(c) | runerr(104, c)
+      Re_WordChars := need_cset(c)
       Re_NonWordChars := ~Re_WordChars
       return self
    end
 
    public set_space_chars(c)
       check_open()
-      Re_Space := cset(c) | runerr(104, c)
+      Re_Space := need_cset(c)
       Re_NonSpace := ~Re_Space
       return self
    end
 
    public set_digit_chars(c)
       check_open()
-      Re_Digits := cset(c) | runerr(104, c)
+      Re_Digits := need_cset(c)
       Re_NonDigits := ~Re_Digits
       return self
    end
 
    public set_arb_string(s)
       check_open()
-      Re_ArbString := string(s) | runerr(103, s)
+      Re_ArbString := need_string(s)
       return self
    end
 
    public set_any_string(s)
       check_open()
-      Re_AnyString := string(s) | runerr(103, s)
+      Re_AnyString := need_string(s)
       return self
    end
 

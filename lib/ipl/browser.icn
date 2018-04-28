@@ -26,7 +26,8 @@ $endif
    ipl.numbers,
    ipl.imagedetect,
    ipl.charset,
-   ipl.dataurl
+   ipl.dataurl,
+   ipl.functional
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -391,16 +392,12 @@ class FileSubWorker(SubWorker)
       return data.tell() - 1
    end
 
-   private static grname(gid, cache)
-      local s
-      (s := member(cache, gid)) | insert(cache, gid, s := (System.getgr(gid).name | gid))
-      return s
+   private static grname(gid)
+      return System.getgr(gid).name | gid
    end
 
-   private static uname(uid, cache)
-      local s
-      (s := member(cache, uid)) | insert(cache, uid, s := (System.getpw(uid).name | uid))
-      return s
+   private static uname(uid)
+      return System.getpw(uid).name | uid
    end
 
    public get_data(worker)
@@ -417,8 +414,8 @@ $endif
       if Files.is_directory(f) then {
          l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
          now := Time.get_system_seconds()
-         ucache := table()
-         gcache := table()
+         ucache := memoize1(uname)
+         gcache := memoize1(grname)
          return use {
             rs := RamStream(),
             {
@@ -431,7 +428,7 @@ $endif
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("NNN'&nbsp;'dd'&nbsp;'HH:mm")
                   g := path.child(e.name).canonical().to_url()
-                  rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
+                  rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || ucache(t.uid) || "&nbsp;</td><td>" || gcache(t.gid) ||
                          "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || string(tf) || "&nbsp;</td>" ||
                          "<td nowrap><a href=\"" || g || "\">" || 
                                  Browser.to_content(e.name) || "</a></td></tr>\n")

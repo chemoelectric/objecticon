@@ -70,7 +70,7 @@ class DefaultResolver(Resolver)
    # Cache an individual system id (URI) to the given value.
    #
    public cache_uri(sys_id, val)
-      val := string(val) | runerr(103, val)
+      val := need_string(val)
       insert(uri_cache, sys_id, val)
       return self
    end

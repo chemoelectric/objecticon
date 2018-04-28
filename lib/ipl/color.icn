@@ -66,7 +66,8 @@
 package ipl.graphics
 
 import
-   graphics(Window)
+   graphics(Window),
+   util(need_string)
 
 # scale with gamma correction
 procedure ScaleGamma(v, g)              
@@ -145,7 +146,7 @@ end
 
 # grayscale entries from palette
 procedure PaletteGrays(palette)    
-   palette := string(palette) | runerr(103, palette)
+   palette := need_string(palette)
 
    if palette ? ="g" then
       return Window.palette_chars(palette)

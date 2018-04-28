@@ -26,7 +26,7 @@
 package ipl.converge
 
 import
-   ipl.rational(rational)
+   numbers
 
 # continued-fraction convergents
 procedure converge(seq)		
@@ -40,7 +40,7 @@ procedure converge(seq)
    while t := get(seq) do {
       p := t * prev_p[2] + prev_p[1]
       q := t * prev_q[2] + prev_q[1]
-      suspend rational(p, q, 1)
+      suspend Rat(p, q)
       prev_p[1] := prev_p[2]
       prev_p[2] := p
       prev_q[1] := prev_q[2]

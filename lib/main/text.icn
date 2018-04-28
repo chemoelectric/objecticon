@@ -1,5 +1,7 @@
 package lang
 
+import util(need_string, need_cset, need_ucs)
+
 final abstract class Text()
    # Generate the ranges in a cset, as a sequence of from-to pairs.
    #
@@ -40,7 +42,7 @@ final abstract class Text()
    #
    public static subset(x, y)
       local c
-      y := cset(y) | runerr(104, y)
+      y := need_cset(y)
       every c := ord(x) do
          Text.has_ord(y, c) | fail
       return
@@ -76,9 +78,9 @@ final abstract class Text()
       local t, n
       if s := ucs(s) then
          return s
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       /subst := "\uFFFD"
-      subst := string(subst) | runerr(103, subst)
+      subst := need_string(subst)
       t := ""
       s ? repeat {
          t ||:= tab(many(&ascii))
@@ -97,7 +99,7 @@ final abstract class Text()
    #
    public static iso_8859_1_to_ucs(s)
       local t, ch
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       t := ""
       s ? repeat {
          t ||:= tab(many(&ascii))
@@ -113,7 +115,7 @@ final abstract class Text()
    #
    public static ucs_to_iso_8859_1(s, subst)
       local t, ch
-      s := ucs(s) | runerr(128, s)
+      s := need_ucs(s)
       /subst := "?"
       t := ""
       s ? repeat {

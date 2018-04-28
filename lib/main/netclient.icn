@@ -412,7 +412,7 @@ $endif
    #
    private send(s)
       local i, r
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       if \ssl_connection then {
          while *s > 0 do {
             if i := ssl_connection.out(s) then

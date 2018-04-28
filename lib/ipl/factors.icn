@@ -75,7 +75,7 @@ import
    ipl.io(dopen),
    ipl.numbers(round),
    ipl.sets(elementset),
-   util(Math)
+   util(Math,need_integer)
 
 # generate the divisors of n
 procedure divisors(n)			
@@ -107,7 +107,7 @@ end
 procedure factorial(n)			
    local i
 
-   n := integer(n) | runerr(101, n)
+   n := need_integer(n)
 
    if n < 0 then fail
 
@@ -132,7 +132,7 @@ end
 procedure genfactors(i, j)		
    local p
 
-   i := integer(i) | runerr(101, i)
+   i := need_integer(i)
    /j := i
 
    every p := prime() do {
@@ -151,7 +151,7 @@ end
 procedure gfactorial(n, i)		
    local j
 
-   n := integer(n) | runerr(101, n)
+   n := need_integer(n)
    i := integer(i) | 1
 
    if n < 0 then fail
@@ -172,7 +172,7 @@ end
 procedure pfactors(i)			
    local facts, p
 
-   i := integer(i) | runerr(101, i)
+   i := need_integer(i)
    facts := []
    every p := prime() do {
       if p > i then break
@@ -204,7 +204,7 @@ end
 procedure isprime(n)			
    local p
 
-   n := integer(n) | runerr(101, n)
+   n := need_integer(n)
    if n <= 1 then fail		# 1 is not a prime
    every p := prime() do {
       if p * p > n then return n
@@ -223,7 +223,7 @@ procedure nxtprime(n)
       div := [7]			# list of known primes
       }
 
-   n := integer(n) | runerr(101, n)
+   n := need_integer(n)
    if n < 7 then			# handle small primes specially
       return n < (2 | 3 | 5 | 7)
 

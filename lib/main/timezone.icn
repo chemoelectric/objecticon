@@ -82,7 +82,7 @@ class Timezone()
    #
    public static get_known_timezone(id)
       local s, sign, t
-      id := string(id) | runerr(103, id)
+      id := need_string(id)
       if t := member(KNOWN_TIMEZONES, id) then
          return t
       id ? {

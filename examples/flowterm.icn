@@ -1806,7 +1806,7 @@ class Terminal(TabItem, VtUI)
    end
 
    public send_tty(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       put(input, s)
       # We may be in the io_task already since some writes to the vt
       # cause it to output something (eg device attr string).  So in

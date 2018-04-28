@@ -300,7 +300,7 @@ $endif
 
    public insert_string(s)
       local ed
-      s := text(s) | runerr(129, s)
+      s := need_text(s)
       if *s > 0 then {
          ed := LineEditorInsertEdit(self, s)
          ed.doit()
@@ -312,7 +312,7 @@ $endif
    public assign_contents(x, pos, coalesce)
       local ed
       /x := ""
-      x := text(x) | runerr(129, x)
+      x := need_text(x)
       /pos := *x + 1
       if subj == x then {
          self.pos := pos

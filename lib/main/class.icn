@@ -1,5 +1,7 @@
 package lang
 
+import util(need_string)
+
 #
 # This class contains various helpful methods to get information about
 # a class at runtime.
@@ -322,7 +324,7 @@ final abstract class Class()
    #
    public static for_name(s, ce)
       local t
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       if not(integer(s)) &
          t := Prog.get_named_global(s, ce) &
          type(t) == "class" then

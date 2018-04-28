@@ -124,7 +124,7 @@ package ipl.numbers
 
 import
    ipl.strings(palins),
-   util(Format, Math)
+   util(Format, Math, need_integer, need_real)
 
 # additive digital persistence
 procedure adp(i)		
@@ -234,7 +234,7 @@ procedure decipos(r, i, j)
    /i := 3
    /j := 5
 
-   r := real(r) | runerr(102, r)
+   r := need_real(r)
 
    if i < 1 then fail
 
@@ -302,8 +302,8 @@ end
 procedure distseq(low, high)		
    local n, start, incr, range
 
-   low := integer(low) | runerr(101, low)
-   high := integer(high) | runerr(101, high)
+   low := need_integer(low)
+   high := need_integer(high)
    if low > high then fail
    range := high - low + 1
    start := n := range / 2
@@ -341,7 +341,7 @@ procedure fix(i, j, w, d)
    if j = 0 then fail
    w <:= 3
    d <:= 1
-   r := real(i) / j | runerr(102, i)
+   r := need_real(i) / j
 
    return frn(r, w, d)
 end
@@ -356,7 +356,7 @@ end
 # format real number
 procedure frn(r, w, d)		
    local s
-   r := real(r) | runerr(102, r)
+   r := need_real(r)
    /d := 0
    s := Format.numeric_to_string(r, d)
    s := right(s, *s < \w)

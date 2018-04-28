@@ -49,7 +49,8 @@ package ipl.scan
 import
    ipl.pdco(optional_param),
    io(write, writes),
-   util(save_state, PosState)
+   util(save_state, PosState, need_string, need_ucs, need_cset,
+        need_text)
 
 # `bal()` with escape processing
 procedure slashbal(c1, c2, c3, s, i, j)	
@@ -589,7 +590,7 @@ class Scan()
    end
 
    public set_subject(s)
-      s := text(s) | runerr(129, s)
+      s := need_text(s)
       ksubject := s
       kpos := 1
       return self
@@ -769,7 +770,7 @@ end
 #
 procedure caseless_cset(c)
    local ls
-   c := cset(c) | runerr(104, c)
+   c := need_cset(c)
    ls := map(string(c ** &letters))
    return c ++ cset(ls || map(ls, &lcase, &ucase))
 end
@@ -786,7 +787,7 @@ procedure begin_analysis(s, i, j)
    if /s := &subject then
       (/i := &pos) | (i := match("", s, i)) | fail
    else {
-      s := text(s) | runerr(129, s)
+      s := need_text(s)
       (/i := 1) | (i := match("", s, i)) | fail
    }
    (/j := *s + 1) | (j := match("", s, j)) | fail
@@ -802,9 +803,9 @@ end
 #
 procedure same_type(s1, s2)
    return if type(s2) == "string" then
-      string(s1) | runerr(103, s1)
+      need_string(s1)
    else
-      ucs(s1) | runerr(128, s1)
+      need_ucs(s1)
 end
 
 #
@@ -868,7 +869,7 @@ end
 #
 procedure backto(c, s, i, j)
    local a
-   c := cset(c) | runerr(104, c)
+   c := need_cset(c)
    a := begin_analysis(s, i, j) | fail
    s := a.s; i := a.i; j := a.j
    while j > i do {
@@ -892,7 +893,7 @@ end
 #
 procedure rev_many(c, s, i, j)
    local a
-   c := cset(c) | runerr(104, c)
+   c := need_cset(c)
    a := begin_analysis(s, i, j) | fail
    s := a.s; i := a.i; j := a.j
    while j > i & any(c, s, j - 1) do
@@ -904,7 +905,7 @@ end
 #
 procedure rev_any(c, s, i, j)
    local a
-   c := cset(c) | runerr(104, c)
+   c := need_cset(c)
    a := begin_analysis(s, i, j) | fail
    s := a.s; i := a.i; j := a.j
    if j > i & any(c, s, j - 1) then

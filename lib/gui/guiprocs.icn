@@ -472,7 +472,7 @@ class ImageStringInfo()
      width, height, pal, extra, data
 
    public new(s)
-      s := string(s) | runerr(103, s)
+      s := need_string(s)
       s ? {
          tab_ws()
          width := (0 < integer(tab(many(&digits)))) | return error("Width expected")
