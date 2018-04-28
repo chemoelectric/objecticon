@@ -60,7 +60,7 @@
 package ipl.random
 
 import
-   util(Time),
+   util(Time, need_integer),
    ipl.factors(nxtprime)
 
 global random
@@ -86,7 +86,7 @@ procedure rand_int(i)
 	
    initial scale := 1.0 / (2 ^ 31 - 1)
 
-   (i := (0 < integer(i))) | runerr(205, i)
+   i := need_integer(i, 1)
 
    return integer(i * rand_num() * scale) + 1
 

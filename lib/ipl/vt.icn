@@ -425,7 +425,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # used if the size of the component is not set in pixels.
    #
    public set_vt_width(n)
-      n := need_positive_integer(n)
+      n := need_integer(n, 1)
       self.vt_width := n
       return self
    end
@@ -434,7 +434,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # if the size of the component is not set in pixels.
    #
    public set_vt_height(n)
-      n := need_positive_integer(n)
+      n := need_integer(n, 1)
       self.vt_height := n
       return self
    end
@@ -1167,7 +1167,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the history size; 0 implies no scrollbar.
    #
    public set_history_size(n)
-      n := need_non_negative_integer(n)
+      n := need_integer(n, 0)
       if history_size ~=:= n then {
          trim_history()
          invalidate_line_count()

@@ -29,13 +29,13 @@
 package ipl.ngrams
 
 import
-   io(reads, Stream), util(need_cset, need_positive_integer)
+   io(reads, Stream), util(need_cset, need_integer)
 
 # n-grams with count
 procedure ngrams(s, i, c, t)		
    local line, grams, a, count
 
-   i := need_positive_integer(i)
+   i := need_integer(i, 1)
 
    /c := &lcase || &ucase
    c := need_cset(c)

@@ -176,6 +176,7 @@ class Rat(RealNumber)
       local i, s, n1
       n1 := default.abs(n)
       /f := ''
+      f := need_cset(f)
       if d = 1 then
          s := commas(n1, f)
       else {
@@ -387,10 +388,9 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    public str(f, dp)
       local s, m1, e1, t, zch, tp, ec
       /f := ''
-
+      f := need_cset(f)
       if \dp then {
-         if dp < 0 then
-            runerr(205, dp)
+         dp := need_integer(dp, 0)
          if not any(f, "z") then
             zch := if any(f, "s") then " " else "0"
       }
@@ -498,7 +498,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Return this number with its mantissa shifted right n places; if n
    # <= 0 returns self.
    #
-   public shift_trunc(n)
+   private shift_trunc(n)
       return if n <= 0 then
          self
       else
@@ -508,7 +508,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Return this number with its mantissa shifted right n places,
    # rounding the last digit; if n <= 0 returns self.
    #
-   public shift_round(n)
+   private shift_round(n)
       local m1
       if n <= 0 then
          return self
@@ -523,6 +523,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # be less than the `prec`.
    #
    public round(prec)
+      prec := need_integer(prec)
       return shift_round(precision() - prec)
    end
 
@@ -530,6 +531,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # rounding takes place.
    #
    public trunc(prec)
+      prec := need_integer(prec)
       return shift_trunc(precision() - prec)
    end
 
@@ -537,6 +539,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # rounded to 1 decimal place would be 123.5
    #
    public round_dp(dp)
+      dp := need_integer(dp)
       return shift_round(-e - dp)
    end
 
@@ -544,6 +547,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # above, but no rounding takes place.
    #
    public trunc_dp(dp)
+      dp := need_integer(dp)
       return shift_trunc(-e - dp)
    end
 
@@ -597,7 +601,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # numerator is shifted left n places to provide n more digits of
    # accuracy in the result.
    #
-   public div_raw(x, n)
+   private div_raw(x, n)
       local m1, e1, m2, e2
       m1 := self.m
       e1 := self.e
@@ -616,6 +620,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # precision.
    #
    public div_round(x, prec)
+      prec := need_integer(prec)
       # After the division we want the mantissa to have at least
       # prec+1 digits (ie precision() - x.precision() >= prec + 1).
       # So pass that adjustment to div_raw. 
@@ -626,12 +631,14 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # precision.
    #
    public div_trunc(x, prec)
+      prec := need_integer(prec)
       return div_raw(x, x.precision() - precision() + prec).trunc(prec)
    end
 
    # Divide this number by `x` and round to `dp` decimal places.
    #
    public div_round_dp(x, dp)
+      dp := need_integer(dp)
       return div_raw(x, e - x.e + dp + 1).round_dp(dp)
    end
 
@@ -640,6 +647,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # division.
    #
    public div_trunc_dp(x, dp)
+      dp := need_integer(dp)
       return div_raw(x, e - x.e + dp).trunc_dp(dp)
    end
 
