@@ -280,6 +280,19 @@ class Rat(RealNumber)
       return
    end
 
+   private normalize()
+      local g
+      if d = 0 then
+         runerr(201)
+      if d < 0 then {
+         d := -d
+         n := -n
+      }
+      g := gcd(n, d)
+      n /:= g
+      d /:= g
+   end
+
    # Create a new instance.  If `x` and `y` are given, then they must
    # both be integers representing the numerator and denominator
    # respectively.  Otherwise, if only `x` is given, then `x` may be :-
@@ -299,14 +312,9 @@ class Rat(RealNumber)
    # On failure, `&why` is set indicating the reason.
    #
    public new(x, y)
-      local g
       if \y then {
          n := need_integer(x)
          d := need_integer(y)
-         if d < 0 then {
-            d := -d
-            n := -n
-         }
       } else case typeof(x) of {
          "integer" : {
             n := x
@@ -338,15 +346,7 @@ class Rat(RealNumber)
                parse(x) | return error("Couldn't parse string as a rational")
          }
       }
-
-      if d = 0 then
-         runerr(201)
-
-      # Normalize
-      g := gcd(n, d)
-      n /:= g
-      d /:= g
-
+      normalize()
       return
    end
 end
@@ -729,6 +729,15 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return
    end
 
+   private normalize()
+      if m = 0 then
+         e := 0
+      else while m % 10 = 0 do {
+         m /:= 10
+         e +:= 1
+      }
+   end
+
    # Create a new instance.  If `x` and `y` are given, then they must
    # both be integers representing the mantissa and exponent
    # respectively.  Otherwise, if only `x` is given, then `x` may be :-
@@ -793,15 +802,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
                parse(x) | return error("Couldn't parse string as a decimal")
          }
       }
-
-      # Normalize
-      if m = 0 then
-         e := 0
-      else while m % 10 = 0 do {
-         m /:= 10
-         e +:= 1
-      }
-
+      normalize()
       return
    end
 end
