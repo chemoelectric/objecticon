@@ -536,7 +536,7 @@ final abstract class BigMath()
       if x.abs().cmp(">", ONE) then
          runerr(205, x)
       mc := prec + 6
-      result := pi(mc).div(TWO, mc).sub(asin(x, mc))
+      result := pi(mc).div(TWO).sub(asin(x, mc))
       return result.round(prec)
    end
 
