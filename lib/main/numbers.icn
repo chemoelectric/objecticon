@@ -47,7 +47,8 @@ end
 
 # A class representing complex numbers.
 #
-# All instances are immutable and are stored in a normalized form.
+# Instances are immutable and the real and imaginary parts are either
+# `Rat` or `Dec` instances
 #
 class Cpx(Number)
    public const r, i
@@ -57,16 +58,19 @@ class Cpx(Number)
    end
 
    public add(x)
+      x := need_Cpx(x)
       return Cpx(numbers.add(r, x.r), numbers.add(i, x.i))
    end
 
    public mul(x)
+      x := need_Cpx(x)
       return Cpx(numbers.sub(numbers.mul(r, x.r), numbers.mul(i, x.i)),
                  numbers.add(numbers.mul(r, x.i), numbers.mul(i, x.r)))
    end
 
    public div(x, prec)
       local denom
+      x := need_Cpx(x)
       denom := numbers.add(numbers.mul(x.r,x.r), numbers.mul(x.i,x.i))
       return Cpx(numbers.div(numbers.add(numbers.mul(r, x.r), numbers.mul(i, x.i)), denom, prec),
                  numbers.div(numbers.sub(numbers.mul(i, x.r), numbers.mul(r, x.i)), denom, prec))
@@ -228,14 +232,17 @@ class Rat(RealNumber)
    end
 
    public add(x)
+      x := need_Rat(x)
       return Rat(n * x.d + x.n * d, d * x.d)
    end
 
    public mul(x)
+      x := need_Rat(x)
       return Rat(n * x.n, d * x.d)
    end
 
    public div(x)
+      x := need_Rat(x)
       return Rat(n * x.d, d * x.n)
    end
 
@@ -456,6 +463,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
 
    public add(x)
       local m1, e1, m2, e2
+      x := need_Dec(x)
       m1 := self.m
       e1 := self.e
       m2 := x.m
@@ -475,6 +483,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    public mul(x)
+      x := need_Dec(x)
       return Dec(m * x.m, e + x.e)
    end
 
@@ -523,7 +532,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # be less than the `prec`.
    #
    public round(prec)
-      prec := need_integer(prec)
+      prec := need_integer(prec, 1)
       return shift_round(precision() - prec)
    end
 
@@ -531,7 +540,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # rounding takes place.
    #
    public trunc(prec)
-      prec := need_integer(prec)
+      prec := need_integer(prec, 1)
       return shift_trunc(precision() - prec)
    end
 
@@ -576,6 +585,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    public div_exact(x)
       local p, d
+      x := need_Dec(x)
       if x.m = 0 then
          runerr(201, x)
       # Work out if 1 / x.m is expressible as a decimal with finite
@@ -620,7 +630,8 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # precision.
    #
    public div_round(x, prec)
-      prec := need_integer(prec)
+      x := need_Dec(x)
+      prec := need_integer(prec, 1)
       # After the division we want the mantissa to have at least
       # prec+1 digits (ie precision() - x.precision() >= prec + 1).
       # So pass that adjustment to div_raw. 
@@ -631,13 +642,15 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # precision.
    #
    public div_trunc(x, prec)
-      prec := need_integer(prec)
+      x := need_Dec(x)
+      prec := need_integer(prec, 1)
       return div_raw(x, x.precision() - precision() + prec).trunc(prec)
    end
 
    # Divide this number by `x` and round to `dp` decimal places.
    #
    public div_round_dp(x, dp)
+      x := need_Dec(x)
       dp := need_integer(dp)
       return div_raw(x, e - x.e + dp + 1).round_dp(dp)
    end
@@ -647,6 +660,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # division.
    #
    public div_trunc_dp(x, dp)
+      x := need_Dec(x)
       dp := need_integer(dp)
       return div_raw(x, e - x.e + dp).trunc_dp(dp)
    end
@@ -858,6 +872,12 @@ end
 #
 procedure need_Rat(x)
    return if is(x,Rat) then x else Rat(x) | runerr("Rational expected: " || &why, x)
+end
+
+# Helper procedure to convert x to a `Cpx`, or raise a runerr.
+#
+procedure need_Cpx(x)
+   return if is(x,Cpx) then x else Cpx(x, 0)
 end
 
 record Align(x, y)
