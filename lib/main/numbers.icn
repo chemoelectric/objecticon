@@ -270,7 +270,7 @@ class Rat(RealNumber)
          tab_ws()
          if ="/" then {
             tab_ws()
-            d := default.integer(tab(many(&digits))) | fail
+            d := 0 ~= default.integer(tab(many(&digits))) | fail
          } else
             d := 1
          # Check at end
