@@ -30,7 +30,7 @@ package ipl.spirals
 
 import
    ipl.gobject(Point),
-   ipl.numbers(div),
+   ipl.numbers(realdiv),
    util(Math)
 
 procedure spiral(x, y, extent, n, t, e, r, incr, yfact)
@@ -39,7 +39,7 @@ procedure spiral(x, y, extent, n, t, e, r, incr, yfact)
    incr := Math.dtor(incr)
 
    every i := 0 to n do {
-      redrad := r ^ div(i, n)
+      redrad := r ^ realdiv(i, n)
       angle := (incr * i) / n
       x1 := redrad * Math.cos(t * angle)
       y1 := redrad * e * Math.sin(t * angle)
