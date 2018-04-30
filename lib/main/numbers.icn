@@ -36,9 +36,7 @@ abstract class Number(ObjectOutput)
    public abstract str(fmt, prec)
 
    # Subtract the other instance of the same type from this instance.
-   public sub(x)
-      return add(x.neg())
-   end
+   public abstract sub(x)
 
    private object_output(oo)
       oo.object_string(self, str())
@@ -60,6 +58,10 @@ class Cpx(Number)
    public add(x)
       x := need_Cpx(x)
       return Cpx(numbers.add(r, x.r), numbers.add(i, x.i))
+   end
+
+   public sub(x)
+      return add(need_Cpx(x).neg())
    end
 
    public mul(x)
@@ -234,6 +236,10 @@ class Rat(RealNumber)
    public add(x)
       x := need_Rat(x)
       return Rat(n * x.d + x.n * d, d * x.d)
+   end
+
+   public sub(x)
+      return add(need_Rat(x).neg())
    end
 
    public mul(x)
@@ -472,6 +478,10 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          Dec(m1 + m2 * p10(e2 - e1), e1)
       else
          Dec(m1 * p10(e1 - e2) + m2, e2)
+   end
+
+   public sub(x)
+      return add(need_Dec(x).neg())
    end
 
    public neg()
