@@ -270,15 +270,35 @@ class Rat(RealNumber)
    end
 
    private parse(x)
+      local i, j
       x ? {
          tab_ws()
-         n := default.integer(tab(many(&digits ++ '+\-'))) | fail
+         # The first integer may be either the whole number ("1 2/3")
+         # or the numerator ("2/3").
+         i := default.integer(tab(many(&digits ++ '+\-'))) | fail
          tab_ws()
+         if any(&digits) then {
+            # It was the whole number, get the numerator
+            j := default.integer(tab(many(&digits)))
+            tab_ws()
+         }
          if ="/" then {
             tab_ws()
             d := 0 ~= default.integer(tab(many(&digits))) | fail
-         } else
+            if /j then
+               n := i
+            else {
+               if i < 0 then
+                  j := -j
+               n := j + i * d
+            }
+         } else {
+            # Can't have a whole number and no /, eg "1 3" is rejected.
+            /j | fail
+            n := i
             d := 1
+         }
+
          # Check at end
          tab_ws()
          pos(0) | fail
@@ -981,6 +1001,8 @@ procedure div(x, y, prec)
       c.x.div(c.y) | c.x.rational().div(c.y.rational())
    else
       c.x.div(c.y, prec)
+   if \prec & is(r, Rat) then
+      r := r.decimal(prec)
    return r.reduce()
 end
 
