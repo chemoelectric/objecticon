@@ -1,6 +1,6 @@
 package ipl.numbers
 
-import numbers, util(Math, need_integer), ipl.functional
+import numbers, util(Math), ipl.functional
 
 package abstract class SeriesCalculator()
    private calculateInPairs, factors, factors_coex
@@ -240,57 +240,66 @@ final abstract class BigMath()
    end
 
    # Return Pi to the requested precision.
-   public static pi(prec)
+   public static pi(rnd)
       static memoized_pi
       initial memoized_pi := memoize1(piChudnovski)
-      return memoized_pi(need_integer(prec, 1))
+      rnd := need_Round(rnd)
+      return if rnd.mode == Round.HALF_UP then
+         memoized_pi(rnd.digits)
+      else
+         memoized_pi(rnd.digits + 6).round(rnd)
    end
 
    # Return `e` to the requested precision.
-   public static e(prec)
+   public static e(rnd)
       static memoized_e
       initial memoized_e := memoize1(lpartial(exp, ONE))
-      return memoized_e(need_integer(prec, 1))
+      rnd := need_Round(rnd)
+      return if rnd.mode == Round.HALF_UP then
+         memoized_e(rnd.digits)
+      else
+         memoized_e(rnd.digits + 6).round(rnd)
    end
 
-   public static exp(x, prec)
+   public static exp(x, rnd)
       local integralPart, fractionalPart, mc, z, t, result
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
       if x.sign() = 0 then
          return ONE
 
       integralPart := integral_part(x)
 
       if integralPart.sign() = 0 then
-         return expTaylor(x, prec)
+         return expTaylor(x, rnd)
 
       fractionalPart := x.sub(integralPart)
-      mc := prec + 10
+      mc := rnd.digits + 10
       z := ONE.add(fractionalPart.div(integralPart, mc))
       t := expTaylor(z, mc)
 
       result := powi(t, integralPart.integer(), mc)
         
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   private static expTaylor(x, prec)
+   private static expTaylor(x, rnd)
       static ec
       local mc, result
       initial ec := ExpCalculator()
-      mc := prec + 6
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
       x := x.div(Dec(256), mc)
       result := ec.calculate(x, mc)
       result := powi(result, 256, mc)
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   public static pow(x, y, prec)
+   public static pow(x, y, rnd)
       local i, mc, result
       x := need_Dec(x)
       y := need_Dec(y)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
       if y.sign() = 0 then       # x^0 = 1
          return ONE
       if y.cmp("=", ONE) then   # x^1 = x
@@ -299,21 +308,22 @@ final abstract class BigMath()
          return ZERO
 
       if i := exact_integer(y) then
-         return powi(x, i, prec)
+         return powi(x, i, rnd)
 
-      mc := prec + 6
+      mc := rnd.digits + 6
       result := exp(y.mul(log(x, mc)), mc)
 
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   private static powi(x, y, prec)
+   private static powi(x, y, rnd)
       local mc, result
 
-      mc := prec + 10
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 10
 
       if y < 0 then
-         return ONE.div(powi(x, -y, mc)).round(prec)
+         return ONE.div(powi(x, -y, mc)).round(rnd)
 
       result := ONE
       while y > 0 do {
@@ -327,14 +337,14 @@ final abstract class BigMath()
          y /:= 2
       }
 
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   public static log(x, prec)
+   public static log(x, rnd)
       local result
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
 
       if x.sign() <= 0 then
          runerr(205, x)
@@ -343,20 +353,20 @@ final abstract class BigMath()
          return ZERO
 
       result := case x.sub_sign(Dec(10)) of {
-         0:  logTen(prec)
-         1:  logUsingExponent(x, prec)
-         -1: logUsingNewton(x, prec)
+         0:  logTen(rnd.digits + 6)
+         1:  logUsingExponent(x, rnd.digits)
+         -1: logUsingNewton(x, rnd.digits)
       }
 
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   public static log10(x, prec)
+   public static log10(x, rnd)
       local mc
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 2
-      return log(x, mc).div(logTen(mc), mc).round(prec)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      return log(x, mc).div(logTen(mc), mc).round(rnd)
    end
 
    private static logUsingExponent(x, prec)
@@ -412,38 +422,39 @@ final abstract class BigMath()
       return result
    end
 
-   public static root(x, n, prec)
+   public static root(x, n, rnd)
       local maxPrecision, acceptableError, result, adaptivePrecision, step, nMinus1, mc
 
       x := need_Dec(x)
       n := need_Dec(n)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
 
       case x.sign() of {
          0: return ZERO
          -1: runerr(205, x)
       }
 
+      mc := rnd.digits + 6
+
       if n.cmp("<=", ONE) then {
-         mc := prec + 6
-         return pow(x, ONE.div(n, mc), prec)
+         result := pow(x, ONE.div(n, mc), mc)
+      } else {
+         maxPrecision := mc + 4
+         acceptableError := Dec(1, -(mc + 1))
+         nMinus1 := n.sub(ONE)
+         result := if n.cmp("=", TWO) then Dec(Math.sqrt(x.real())) | x.div(TWO) else x.div(TWO)
+         adaptivePrecision := 2
+
+         repeat {
+            adaptivePrecision *:= 3
+            adaptivePrecision >:= maxPrecision
+            step := x.div(pow(result, nMinus1, adaptivePrecision), adaptivePrecision).sub(result).div(n, adaptivePrecision)
+            result := result.add(step);
+            (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
+         }
       }
 
-      maxPrecision := prec + 4
-      acceptableError := Dec(1, -(prec + 1))
-      nMinus1 := n.sub(ONE)
-      result := x.div(TWO)
-      adaptivePrecision := 2
-
-      repeat {
-         adaptivePrecision *:= 3
-         adaptivePrecision >:= maxPrecision
-         step := x.div(pow(result, nMinus1, adaptivePrecision), adaptivePrecision).sub(result).div(n, adaptivePrecision)
-         result := result.add(step);
-         (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
-      }
-
-      return result.round(prec)
+      return result.round(rnd)
    end
 
    private static exact_integer(x)
@@ -451,7 +462,7 @@ final abstract class BigMath()
    end
 
    private static integral_part(x)
-      return x.trunc_dp(0)
+      return x.round("0dp t")
    end
 
    private static fractional_part(x)
@@ -459,7 +470,7 @@ final abstract class BigMath()
    end
 
    private static remainder(x, y)
-      return x.sub(x.div_trunc_dp(y, 0).mul(y))
+      return x.sub(x.div(y,"0dp t").mul(y))
    end
 
    private static mod2pi(x, prec)
@@ -471,159 +482,162 @@ final abstract class BigMath()
       return x
    end
 
-   public static sin(x, prec)
+   public static sin(x, rnd)
       static sc
       local mc
       initial sc := SinCalculator()
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 6
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
       x := mod2pi(x, mc)
 
-      return sc.calculate(x, mc).round(prec)
+      return sc.calculate(x, mc).round(rnd)
    end
 
-   public static cos(x, prec)
+   public static cos(x, rnd)
       static cc
       local mc
       initial cc := CosCalculator()
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 6
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
       x := mod2pi(x, mc)
 
-      return cc.calculate(x, mc).round(prec)
+      return cc.calculate(x, mc).round(rnd)
    end
 
-   public static tan(x, prec)
+   public static tan(x, rnd)
       local mc
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
       if x.sign() = 0 then
          return ZERO
-      mc := prec + 4
-      return sin(x, mc).div(cos(x, mc), mc).round(prec)
+      mc := rnd.digits + 4
+      return sin(x, mc).div(cos(x, mc), mc).round(rnd)
    end
 
-   public static asin(x, prec)
+   public static asin(x, rnd)
       static sc
-      local mc, xTransformed
+      local mc, xTransformed, result
       initial sc := AsinCalculator()
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
       if x.abs().cmp(">", ONE) then
          runerr(205, x)
 
-      if x.sign() < 0 then
-         return asin(x.neg(), prec).neg()
+      mc := rnd.digits + 6
 
-      mc := prec + 6
-      if x.cmp(">=", Dec(0.707107)) then {
+      result := if x.sign() < 0 then
+         asin(x.neg(), mc).neg()
+      else if x.cmp(">=", Dec(0.707107)) then {
          xTransformed := sqrt(ONE.sub(x.mul(x)), mc)
-         return acos(xTransformed, prec)
-      }
+         acos(xTransformed, mc)
+      } else
+         sc.calculate(x, mc)
 
-      return sc.calculate(x, mc).round(prec)
+      return result.round(rnd)
    end
 
-   public static acos(x, prec)
+   public static acos(x, rnd)
       local mc, result
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
       if x.abs().cmp(">", ONE) then
          runerr(205, x)
-      mc := prec + 6
+      mc := rnd.digits + 6
       result := pi(mc).div(TWO).sub(asin(x, mc))
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   public static atan(x, prec)
+   public static atan(x, rnd)
       local mc, result
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 6
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
       x := x.div(sqrt(ONE.add(x.mul(x)), mc), mc)
       result := asin(x, mc)
-      return result.round(prec)
+      return result.round(rnd)
    end
 
-   public static sinh(x, prec)
+   public static sinh(x, rnd)
       static sc
       local mc
       initial sc := SinhCalculator()
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 4
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 4
 
-      return sc.calculate(x, mc).round(prec)
+      return sc.calculate(x, mc).round(rnd)
    end
 
-   public static cosh(x, prec)
+   public static cosh(x, rnd)
       static cc
       local mc
       initial cc := CoshCalculator()
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 4
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 4
 
-      return cc.calculate(x, mc).round(prec)
+      return cc.calculate(x, mc).round(rnd)
    end
 
-   public static tanh(x, prec)
+   public static tanh(x, rnd)
       local mc
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
-      mc := prec + 6
-      return sinh(x, mc).div(cosh(x, mc), mc).round(prec)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      return sinh(x, mc).div(cosh(x, mc), mc).round(rnd)
    end
 
-   public static atan2(y, x, prec)
+   public static atan2(y, x, rnd)
       local mc
       x := need_Dec(x)
       y := need_Dec(y)
-      prec := need_integer(prec, 1)
-      mc := prec + 3
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 3
       return if x.sign() > 0 then # x > 0
-         atan(y.div(x, mc), prec)
+         atan(y.div(x, mc), rnd)
       else if x.sign() < 0 then {
          if y.sign() > 0 then  # x < 0 && y > 0
-            atan(y.div(x, mc), mc).add(pi(mc)).round(prec)
+            atan(y.div(x, mc), mc).add(pi(mc)).round(rnd)
          else if y.sign() < 0 then  # x < 0 && y < 0
-            atan(y.div(x, mc), mc).sub(pi(mc)).round(prec)
+            atan(y.div(x, mc), mc).sub(pi(mc)).round(rnd)
          else #  x < 0 && y = 0
-            pi(prec)
+            pi(rnd)
       } else {
          if y.sign() > 0 then # x = 0 && y > 0
-            pi(mc).div(TWO, prec)
+            pi(mc).div(TWO).round(rnd)
          else if y.sign() < 0 then # x = 0 && y < 0
-            pi(mc).div(TWO, prec).negate()
+            pi(mc).div(TWO).negate().round(rnd)
          else
             runerr(205, y)
       }
    end
 
-   public static sqrt(x, prec)
-      local maxPrecision, acceptableError, result, adaptivePrecision, last
+   public static sqrt(x, rnd)
+      local maxPrecision, acceptableError, result, adaptivePrecision, last, mc
 
       x := need_Dec(x)
-      prec := need_integer(prec, 1)
+      rnd := need_Round(rnd)
+
       if x.sign() < 0 then
          runerr(205, x)
 
-      maxPrecision := prec + 6
-      acceptableError := Dec(1, -(prec + 1))
+      mc := rnd.digits + 2
+      maxPrecision := mc + 4
+      acceptableError := Dec(1, -(mc + 1))
 
       # Start with floating point approximation if possible
       result := Dec(Math.sqrt(x.real())) | x.div(TWO)
 
       # early exit if x is a square number
       if result.mul(result).cmp("=", x) then
-         return result.round(prec)
+         return result.round(rnd)
 
       adaptivePrecision := EXPECTED_INITIAL_PRECISION
       repeat {
@@ -631,11 +645,10 @@ final abstract class BigMath()
          adaptivePrecision *:= 2
          adaptivePrecision >:= maxPrecision
          result := x.div(result, adaptivePrecision).add(last).div(TWO)
-
          (adaptivePrecision < maxPrecision) | result.sub(last).abs().cmp(">", acceptableError) | break
       }
 
-      return result.round(prec)
+      return result.round(rnd)
    end
 
    private static piChudnovski(prec)
