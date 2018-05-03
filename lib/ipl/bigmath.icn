@@ -1,0 +1,694 @@
+package ipl.numbers
+
+import numbers, util(Math), ipl.functional
+
+package abstract class SeriesCalculator()
+   private calculateInPairs, factors, factors_coex
+
+   public new(calculateInPairs)
+      self.calculateInPairs := calculateInPairs
+      factors := []
+      factors_coex := create gen_factors()
+      return
+   end
+
+   public calculate(x, prec)
+      local sum, acceptableError, powerCoex, i, factor, step, step2, xToThePower
+
+      acceptableError := Dec(1, -(prec + 1))
+      powerCoex := create gen_powers(x, prec)
+      sum := BigMath.ZERO
+      i := 0
+      repeat {
+         factor := getFactor(i)
+         xToThePower := @powerCoex
+         step := Dec(factor.n).mul(xToThePower).div(Dec(factor.d), prec)
+         i +:= 1
+         if \calculateInPairs then {
+            xToThePower := @powerCoex
+            factor := getFactor(i)
+            step2 := Dec(factor.n).mul(xToThePower).div(Dec(factor.d), prec)
+            step := step.add(step2)
+            i +:= 1
+         }
+         sum := sum.add(step).round(prec)
+
+         step.abs().cmp(">", acceptableError) | break
+      }
+
+      return sum.round(prec)
+   end
+
+   public getFactor(index)
+      local factor
+      while *factors <= index do {
+         factor := @factors_coex
+         put(factors, factor)
+      }
+      return factors[index + 1]
+   end
+
+   public abstract gen_factors()
+
+   public abstract gen_powers(x, prec)
+end
+
+package class SinCalculator(SeriesCalculator)
+   public new()
+      SeriesCalculator.new(&yes)
+      return
+   end
+
+   public gen_factors()
+      local factorial2nPlus1, factor, n
+      factorial2nPlus1 := Rat(1)
+      n := 0
+      repeat {
+         factor := factorial2nPlus1.reciprocal()
+         if n % 2 = 1 then
+            factor := factor.neg()
+         suspend factor
+         n +:= 1
+         factorial2nPlus1 := factorial2nPlus1.mul(Rat((2 * n) * (2 * n + 1)))
+      }
+   end
+
+   public gen_powers(x, prec)
+      suspend PowerTwoNPlusOneIterator(x, prec)
+   end
+end
+
+package class CosCalculator(SeriesCalculator)
+   public new()
+      SeriesCalculator.new(&yes)
+      return
+   end
+
+   public gen_factors()
+      local factorial2n, factor, n
+      factorial2n := Rat(1)
+      n := 0
+      repeat {
+         factor := factorial2n.reciprocal()
+         if n % 2 = 1 then
+            factor := factor.neg()
+         suspend factor
+         n +:= 1
+         factorial2n := factorial2n.mul(Rat((2 * n - 1) * (2 * n)))
+      }
+   end
+
+   public gen_powers(x, prec)
+      suspend PowerTwoNIterator(x, prec)
+   end
+end
+
+package class SinhCalculator(SeriesCalculator)
+   public new()
+      SeriesCalculator.new(&yes)
+      return
+   end
+
+   public gen_factors()
+      local factorial2nPlus1, factor, n
+      factorial2nPlus1 := Rat(1)
+      n := 0
+      repeat {
+         factor := factorial2nPlus1.reciprocal()
+         suspend factor
+         n +:= 1
+         factorial2nPlus1 := factorial2nPlus1.mul(Rat((2 * n) * (2 * n + 1)))
+      }
+   end
+
+   public gen_powers(x, prec)
+      suspend PowerTwoNPlusOneIterator(x, prec)
+   end
+end
+
+package class CoshCalculator(SeriesCalculator)
+   public new()
+      SeriesCalculator.new(&yes)
+      return
+   end
+
+   public gen_factors()
+      local factorial2n, factor, n
+      factorial2n := Rat(1)
+      n := 0
+      repeat {
+         factor := factorial2n.reciprocal()
+         suspend factor
+         n +:= 1
+         factorial2n := factorial2n.mul(Rat((2 * n - 1) * (2 * n)))
+      }
+   end
+
+   public gen_powers(x, prec)
+      suspend PowerTwoNIterator(x, prec)
+   end
+end
+
+package class ExpCalculator(SeriesCalculator)
+   public gen_factors()
+      local oneOverFactorialOfN, n
+      oneOverFactorialOfN := Rat(1)
+      n := 0
+      repeat {
+         suspend oneOverFactorialOfN
+         n +:= 1
+         oneOverFactorialOfN := oneOverFactorialOfN.div(Rat(n));
+      }
+   end
+
+   public gen_powers(x, prec)
+      suspend PowerNIterator(x, prec)
+   end
+end
+
+package class AsinCalculator(SeriesCalculator)
+   public gen_factors()
+      local factorial2n, factorialN, fourPowerN, factor, n
+
+      factorial2n := factorialN := fourPowerN := Rat(1)
+      n := 0
+      repeat {
+         factor := factorial2n.div(fourPowerN.mul(factorialN).mul(factorialN).mul(Rat(2 * n + 1)))
+         suspend factor
+         n +:= 1
+         factorial2n := factorial2n.mul(Rat((2 * n - 1) * (2 * n)))
+         factorialN := factorialN.mul(Rat(n))
+         fourPowerN := fourPowerN.mul(Rat(4))
+      }
+   end
+
+   public gen_powers(x, prec)
+      suspend PowerTwoNPlusOneIterator(x, prec)
+   end
+end
+
+package procedure PowerNIterator(x, prec)
+   local powerOfX
+   powerOfX := BigMath.ONE
+   repeat {
+      suspend powerOfX
+      powerOfX := powerOfX.mul(x).round(prec)
+   }
+end
+
+package procedure PowerTwoNPlusOneIterator(x, prec)
+   local xPowerTwo
+   xPowerTwo := x.mul(x)
+   repeat {
+      x := x.round(prec)
+      suspend x
+      x := x.mul(xPowerTwo)
+   }
+end
+
+package procedure PowerTwoNIterator(x, prec)
+   local xPowerTwo, powerOfX
+   xPowerTwo := x.mul(x)
+   powerOfX := BigMath.ONE
+   repeat {
+      suspend powerOfX
+      powerOfX := powerOfX.mul(xPowerTwo).round(prec)
+   }
+end
+
+# This class provides static methods to calculate some common
+# mathematical functions using the arbitrary precision `Dec` class.
+# They are based on Eric Obermühlner's BigDecimalMath java library.
+# See :-
+#
+# http://obermuhlner.ch/wordpress/2016/06/02/bigdecimalmath/
+#
+final abstract class BigMath()
+   public static const 
+      EXPECTED_INITIAL_PRECISION,
+      ROUGHLY_TWO_PI,
+      TWO,
+      ONE,
+      ZERO
+
+   private static init()
+      TWO := Dec(2)
+      ONE := Dec(1)
+      ZERO := Dec(0)
+      EXPECTED_INITIAL_PRECISION := 17
+      ROUGHLY_TWO_PI := TWO.mul(Dec("3.141592653589793"))
+   end
+
+   # Return Pi to the requested precision.
+   public static pi(rnd)
+      static memoized_pi
+      initial memoized_pi := memoize1(piChudnovski)
+      rnd := need_Round(rnd)
+      return if rnd.mode == Round.HALF_UP then
+         memoized_pi(rnd.digits)
+      else
+         memoized_pi(rnd.digits + 6).round(rnd)
+   end
+
+   # Return `e` to the requested precision.
+   public static e(rnd)
+      static memoized_e
+      initial memoized_e := memoize1(lpartial(exp, ONE))
+      rnd := need_Round(rnd)
+      return if rnd.mode == Round.HALF_UP then
+         memoized_e(rnd.digits)
+      else
+         memoized_e(rnd.digits + 6).round(rnd)
+   end
+
+   public static exp(x, rnd)
+      local integralPart, fractionalPart, mc, z, t, result
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      if x.sign() = 0 then
+         return ONE
+
+      integralPart := integral_part(x)
+
+      if integralPart.sign() = 0 then
+         return expTaylor(x, rnd)
+
+      fractionalPart := x.sub(integralPart)
+      mc := rnd.digits + 10
+      z := ONE.add(fractionalPart.div(integralPart, mc))
+      t := expTaylor(z, mc)
+
+      result := powi(t, integralPart.integer(), mc)
+        
+      return result.round(rnd)
+   end
+
+   private static expTaylor(x, rnd)
+      static ec
+      local mc, result
+      initial ec := ExpCalculator()
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      x := x.div(Dec(256), mc)
+      result := ec.calculate(x, mc)
+      result := powi(result, 256, mc)
+      return result.round(rnd)
+   end
+
+   public static pow(x, y, rnd)
+      local i, mc, result
+      x := need_Dec(x)
+      y := need_Dec(y)
+      rnd := need_Round(rnd)
+      if y.sign() = 0 then       # x^0 = 1
+         return ONE
+      if y.cmp("=", ONE) then   # x^1 = x
+         return x
+      if x.sign() = 0 & y.sign() = 1 then  # 0^n = 0, n>0
+         return ZERO
+
+      if i := exact_integer(y) then
+         return powi(x, i, rnd)
+
+      mc := rnd.digits + 6
+      result := exp(y.mul(log(x, mc)), mc)
+
+      return result.round(rnd)
+   end
+
+   private static powi(x, y, rnd)
+      local mc, result
+
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 10
+
+      if y < 0 then
+         return ONE.div(powi(x, -y, mc)).round(rnd)
+
+      result := ONE
+      while y > 0 do {
+         if y % 2 = 1 then {
+            result := result.mul(x, mc)
+            y -:= 1
+         }
+         if y > 0 then
+            x := x.mul(x).round(mc)
+
+         y /:= 2
+      }
+
+      return result.round(rnd)
+   end
+
+   public static log(x, rnd)
+      local result
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+
+      if x.sign() <= 0 then
+         runerr(205, x)
+
+      if x.cmp("=", ONE) then
+         return ZERO
+
+      result := case x.sub_sign(Dec(10)) of {
+         0:  logTen(rnd.digits + 6)
+         1:  logUsingExponent(x, rnd.digits)
+         -1: logUsingNewton(x, rnd.digits)
+      }
+
+      return result.round(rnd)
+   end
+
+   public static log10(x, rnd)
+      local mc
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      return log(x, mc).div(logTen(mc), mc).round(rnd)
+   end
+
+   private static logUsingExponent(x, prec)
+      local mc, result, exponent, mantissa
+
+      mc := prec * 2
+
+      exponent := x.precision() + x.e - 1
+      mantissa := Dec(x.m, 1 - x.precision())
+
+      result := logUsingNewton(mantissa, mc)
+      if exponent ~= 0 then
+         result := result.add(Dec(exponent).mul(logTen(mc)))
+
+      return result
+   end
+
+   private static logTen(prec)
+      static memoized_logTen
+      initial memoized_logTen := memoize1(calcLogTen)
+      return memoized_logTen(prec)
+   end
+
+   private static calcLogTen(prec)
+      return logUsingNewton(Dec(10), prec).round(prec)
+   end
+
+   private static logUsingNewton(x, prec)
+      local maxPrecision, acceptableError, result, adaptivePrecision, step, expY
+
+      maxPrecision := prec + 20
+      acceptableError := Dec(1, -(prec + 1))
+
+      if result := Dec(Math.log(x.real())) then
+         adaptivePrecision := EXPECTED_INITIAL_PRECISION
+      else {
+         result := x.div(TWO)
+         adaptivePrecision := 1
+      }
+
+      repeat {
+         adaptivePrecision *:= 3
+         adaptivePrecision >:= maxPrecision
+
+         expY := exp(result, adaptivePrecision)
+
+         step := TWO.mul(x.sub(expY)).div(x.add(expY), adaptivePrecision)
+         result := result.add(step);
+
+         (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
+      }
+
+      return result
+   end
+
+   public static root(x, n, rnd)
+      local maxPrecision, acceptableError, result, adaptivePrecision, step, nMinus1, mc
+
+      x := need_Dec(x)
+      n := need_Dec(n)
+      rnd := need_Round(rnd)
+
+      case x.sign() of {
+         0: return ZERO
+         -1: runerr(205, x)
+      }
+
+      mc := rnd.digits + 6
+
+      if n.cmp("<=", ONE) then {
+         result := pow(x, ONE.div(n, mc), mc)
+      } else {
+         maxPrecision := mc + 4
+         acceptableError := Dec(1, -(mc + 1))
+         nMinus1 := n.sub(ONE)
+         result := if n.cmp("=", TWO) then Dec(Math.sqrt(x.real())) | x.div(TWO) else x.div(TWO)
+         adaptivePrecision := 2
+
+         repeat {
+            adaptivePrecision *:= 3
+            adaptivePrecision >:= maxPrecision
+            step := x.div(pow(result, nMinus1, adaptivePrecision), adaptivePrecision).sub(result).div(n, adaptivePrecision)
+            result := result.add(step);
+            (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
+         }
+      }
+
+      return result.round(rnd)
+   end
+
+   private static exact_integer(x)
+      return x.e >= 0 & x.integer()
+   end
+
+   private static integral_part(x)
+      return x.round("0dp t")
+   end
+
+   private static fractional_part(x)
+      return x.sub(integral_part(x))
+   end
+
+   private static remainder(x, y)
+      return x.sub(x.div(y,"0dp t").mul(y))
+   end
+
+   private static mod2pi(x, prec)
+      local twoPi
+      if x.abs().cmp(">", ROUGHLY_TWO_PI) then {
+         twoPi := TWO.mul(pi(prec))
+         x := remainder(x, twoPi)
+      }
+      return x
+   end
+
+   public static sin(x, rnd)
+      static sc
+      local mc
+      initial sc := SinCalculator()
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      x := mod2pi(x, mc)
+
+      return sc.calculate(x, mc).round(rnd)
+   end
+
+   public static cos(x, rnd)
+      static cc
+      local mc
+      initial cc := CosCalculator()
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      x := mod2pi(x, mc)
+
+      return cc.calculate(x, mc).round(rnd)
+   end
+
+   public static tan(x, rnd)
+      local mc
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      if x.sign() = 0 then
+         return ZERO
+      mc := rnd.digits + 4
+      return sin(x, mc).div(cos(x, mc), mc).round(rnd)
+   end
+
+   public static asin(x, rnd)
+      static sc
+      local mc, xTransformed, result
+      initial sc := AsinCalculator()
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      if x.abs().cmp(">", ONE) then
+         runerr(205, x)
+
+      mc := rnd.digits + 6
+
+      result := if x.sign() < 0 then
+         asin(x.neg(), mc).neg()
+      else if x.cmp(">=", Dec(0.707107)) then {
+         xTransformed := sqrt(ONE.sub(x.mul(x)), mc)
+         acos(xTransformed, mc)
+      } else
+         sc.calculate(x, mc)
+
+      return result.round(rnd)
+   end
+
+   public static acos(x, rnd)
+      local mc, result
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      if x.abs().cmp(">", ONE) then
+         runerr(205, x)
+      mc := rnd.digits + 6
+      result := pi(mc).div(TWO).sub(asin(x, mc))
+      return result.round(rnd)
+   end
+
+   public static atan(x, rnd)
+      local mc, result
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      x := x.div(sqrt(ONE.add(x.mul(x)), mc), mc)
+      result := asin(x, mc)
+      return result.round(rnd)
+   end
+
+   public static sinh(x, rnd)
+      static sc
+      local mc
+      initial sc := SinhCalculator()
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 4
+
+      return sc.calculate(x, mc).round(rnd)
+   end
+
+   public static cosh(x, rnd)
+      static cc
+      local mc
+      initial cc := CoshCalculator()
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 4
+
+      return cc.calculate(x, mc).round(rnd)
+   end
+
+   public static tanh(x, rnd)
+      local mc
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 6
+      return sinh(x, mc).div(cosh(x, mc), mc).round(rnd)
+   end
+
+   public static atan2(y, x, rnd)
+      local mc
+      x := need_Dec(x)
+      y := need_Dec(y)
+      rnd := need_Round(rnd)
+      mc := rnd.digits + 3
+      return if x.sign() > 0 then # x > 0
+         atan(y.div(x, mc), rnd)
+      else if x.sign() < 0 then {
+         if y.sign() > 0 then  # x < 0 && y > 0
+            atan(y.div(x, mc), mc).add(pi(mc)).round(rnd)
+         else if y.sign() < 0 then  # x < 0 && y < 0
+            atan(y.div(x, mc), mc).sub(pi(mc)).round(rnd)
+         else #  x < 0 && y = 0
+            pi(rnd)
+      } else {
+         if y.sign() > 0 then # x = 0 && y > 0
+            pi(mc).div(TWO).round(rnd)
+         else if y.sign() < 0 then # x = 0 && y < 0
+            pi(mc).div(TWO).negate().round(rnd)
+         else
+            runerr(205, y)
+      }
+   end
+
+   public static sqrt(x, rnd)
+      local maxPrecision, acceptableError, result, adaptivePrecision, last, mc
+
+      x := need_Dec(x)
+      rnd := need_Round(rnd)
+
+      if x.sign() < 0 then
+         runerr(205, x)
+
+      mc := rnd.digits + 2
+      maxPrecision := mc + 4
+      acceptableError := Dec(1, -(mc + 1))
+
+      # Start with floating point approximation if possible
+      result := Dec(Math.sqrt(x.real())) | x.div(TWO)
+
+      # early exit if x is a square number
+      if result.mul(result).cmp("=", x) then
+         return result.round(rnd)
+
+      adaptivePrecision := EXPECTED_INITIAL_PRECISION
+      repeat {
+         last := result
+         adaptivePrecision *:= 2
+         adaptivePrecision >:= maxPrecision
+         result := x.div(result, adaptivePrecision).add(last).div(TWO)
+         (adaptivePrecision < maxPrecision) | result.sub(last).abs().cmp(">", acceptableError) | break
+      }
+
+      return result.round(rnd)
+   end
+
+   private static piChudnovski(prec)
+      local valueDivisor, mc, sumA, sumB, a, b, dividendTerm1, dividendTerm2,
+         dividendTerm3, kPower3, iterationCount, k, valueK, dividend,
+         divisor, factor, pi
+
+      mc := prec + 10
+      valueDivisor := Dec(640320^3).div(Dec(24), mc)
+
+      a := sumA := ONE
+      sumB := ZERO
+
+      dividendTerm1 := 5         # -(6*k - 5)
+      dividendTerm2 := -1        #  2*k - 1
+      dividendTerm3 := -1        # 6*k - 1
+      kPower3 := ZERO
+      
+      iterationCount := (mc + 13) / 14
+
+      every k := 1 to iterationCount do {
+         valueK := Dec(k)
+         dividendTerm1 +:= -6
+         dividendTerm2 +:= 2
+         dividendTerm3 +:= 6
+
+         dividend := Dec(dividendTerm1).mul(Dec(dividendTerm2)).mul(Dec(dividendTerm3))
+         kPower3 := Dec(k^3)
+
+         divisor := kPower3.mul(valueDivisor)
+         a := a.mul(dividend).div(divisor, mc)
+         b := valueK.mul(a)
+			
+         sumA := sumA.add(a)
+         sumB := sumB.add(b)
+      }
+
+      factor := Dec(426880).mul(sqrt(10005, mc))
+      pi := factor.div(Dec(13591409).mul(sumA).add(Dec(545140134).mul(sumB)), mc)
+		
+      return pi.round(prec);
+   end
+end

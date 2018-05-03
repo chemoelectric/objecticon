@@ -2,6 +2,177 @@ package numbers
 
 import lang, ipl.numbers(gcd), ipl.types, util, ipl.functional
 
+# This class encapsulates options for rounding a decimal number.
+#
+class Round()
+   public const
+      # Set if rounding is to decimal places rather than a precision.
+      dp_flag,
+      # The number of digits to round to.
+      digits,
+      # The mode, indicating which direction to round
+      mode
+
+   public static const
+      # Rounding mode to round away from zero.
+      UP,
+      # Rounding mode to round towards zero (ie, simple truncation).
+      DOWN,
+      # Rounding mode to round towards positive infinity.
+      CEILING,
+      # Rounding mode to round towards negative infinity.
+      FLOOR,
+      # Rounding mode to round towards "nearest neighbour" unless both
+      # neighbours are equidistant, in which case round up.  This is
+      # conventional rounding.
+      HALF_UP,
+      # Rounding mode to round towards "nearest neighbour" unless both
+      # neighbours are equidistant, in which case round down.
+      HALF_DOWN
+
+   private static init()
+      UP := "up"
+      DOWN := "down"
+      CEILING := "ceiling"
+      FLOOR := "floor"
+      HALF_UP := "half-up"
+      HALF_DOWN := "half-down"
+   end
+
+   # Return another instance with the same settings, but with digits
+   # set to `n`.
+   #
+   public with_digits(n)
+      return need_Round(need_integer(n) || 
+         (if \dp_flag then "dp " else " ") || mode)
+   end
+
+   # Convenient method to call `with_digits` with this instance's
+   # digits setting plus n.
+   public add(n)
+      return with_digits(digits + n)
+   end
+
+   # Succeed if this mode's rounding is influenced by digits truncated
+   # beyond the first truncated digit.  For example `HALF_UP` isn't
+   # influenced; if we are rounding 6.5xxx to one digit then we don't
+   # care what the digits xxx are; it will round to 7 regardless.  But for
+   # `HALF_DOWN` it does matter; if xxx is zero then we get 6,
+   # otherwise we get 7.
+   #
+   # In fact, only `HALF_UP` and `DOWN` don't care about these extra
+   # truncated digits;
+   #
+   public uses_all_digits()
+      return not( mode == (HALF_UP | DOWN) )
+   end
+
+   # Given a digit `n`, which is in the range -9 to +9, return -1, 0,
+   # or 1 indicating how the associated number should be rounded.  `d`
+   # indicates whether any digits beyond `n` have been truncated.  If
+   # it is 0, then they haven't, otherwise it will have the sign of
+   # the number being rounded.  For example, if rounding 1.235 to two
+   # decimal places, n would be 5 and d would be 0; if we were
+   # rounding 1.2350001, then n would be 5, and d would be >0, to
+   # indicate that digits existed to the right of 5.
+   #
+   public round_dig(n, d)
+      return case mode of {
+         HALF_UP :  {
+            if n <= -5 then -1
+            else if n >= 5 then 1
+            else 0
+         }
+         HALF_DOWN :  {
+            if n = 5 then if d = 0 then 0 else 1
+            else if n = -5 then if d = 0 then 0 else -1
+            else if n < -5 then -1
+            else if n > 5 then 1
+            else 0
+         }
+         UP : {
+            if (n|d) > 0 then 1
+            else if (n|d) < 0 then -1
+            else 0
+         }
+         DOWN: 0
+         CEILING: if (n|d) > 0 then 1 else 0
+         FLOOR: if (n|d) < 0 then -1 else 0
+         default: syserr("Invalid rounding mode")
+      }
+   end
+
+   private parse(x, m)
+      local t
+      x ? {
+         tab_ws()
+         digits := integer(tab(many(&digits ++ '+\-'))) | fail
+         if ="dp" then
+            dp_flag := &yes
+         tab_ws()
+         if pos(0) then
+            mode := \m | HALF_UP
+         else {
+            t := map(tab(many(&letters ++ '\-'))) | fail
+            mode := case t of {
+               UP | "u" : UP
+               DOWN | "d" | "t" | "trunc" : DOWN
+               CEILING | "c": CEILING
+               FLOOR | "f" : FLOOR
+               HALF_UP | "hu" : HALF_UP
+               HALF_DOWN | "hd" : HALF_DOWN
+               default : fail
+            }
+            # Check at end
+            tab_ws()
+            pos(0) | fail
+         }
+      }
+      return
+   end
+
+   # Create a new instance from string `s` and optional mode `m`.  The
+   # mode may also be specified within the string if desired.  The
+   # string is in the format
+   #
+   # ~
+   #    <digits>["dp"] [mode]
+   # ~
+   #
+   # Digits provides the digit setting; if followed immediately by
+   # "dp", then this sets the dp_flag.  The mode follows after one or
+   # more spaces, or alternatively may be given my the `m` parameter.
+   # If neither is given, then the mode is `HALF_UP`.
+   #
+   # Within the string, possible mode strings are :-
+   #
+   # ~
+   #     "up" or "u" : UP
+   #     "down", "d", "t" or "trunc" : DOWN
+   #     "ceiling" or "c" : CEILING
+   #     "floor" or "f" : FLOOR
+   #     "half-up" or "hu" : HALF_UP
+   #     "half-down" or "hd" : HALF_DOWN
+   # ~
+   #
+   # Examples :
+   #
+   # ~
+   #      "8dp trunc"    -  truncate to 8 decimal places.
+   #      "10 hd"        -  precision 10, with half down
+   #                        rounding.
+   #      10             -  precision 10, half up.
+   #      Round(12, 
+   #        Round.CEILING) - precision 10, ceiling.
+   # ~
+   public new(s, m)
+      parse(s, m) | return error("Couldn't parse string to a Round")
+      if /dp_flag & digits < 1 then
+         return error("Number of rounding digits outside valid range (>= 1)")
+      return
+   end
+end
+
 # Abstract parent class for the three number types, `Cpx`, `Rat` and
 # `Dec`.  The latter two are in fact subclasses via `RealNumber`.
 #
@@ -21,8 +192,8 @@ abstract class Number(ObjectOutput)
    public abstract mul(x)
 
    # Divide this instance by another instance of the same type, with
-   # optional precision `prec`, if applicable to the type concerned.
-   public abstract div(x, prec)
+   # optional rounding `rnd`, if applicable to the type concerned.
+   public abstract div(x, rnd)
 
    # Return this instance negated.
    public abstract neg()
@@ -33,12 +204,10 @@ abstract class Number(ObjectOutput)
    public abstract reduce()
 
    # Produce formatted string output.
-   public abstract str(fmt, prec)
+   public abstract str(fmt, dp)
 
    # Subtract the other instance of the same type from this instance.
-   public sub(x)
-      return add(x.neg())
-   end
+   public abstract sub(x)
 
    private object_output(oo)
       oo.object_string(self, str())
@@ -47,7 +216,8 @@ end
 
 # A class representing complex numbers.
 #
-# All instances are immutable and are stored in a normalized form.
+# Instances are immutable and the real and imaginary parts are either
+# `Rat` or `Dec` instances
 #
 class Cpx(Number)
    public const r, i
@@ -57,19 +227,26 @@ class Cpx(Number)
    end
 
    public add(x)
+      x := need_Cpx(x)
       return Cpx(numbers.add(r, x.r), numbers.add(i, x.i))
    end
 
+   public sub(x)
+      return add(need_Cpx(x).neg())
+   end
+
    public mul(x)
+      x := need_Cpx(x)
       return Cpx(numbers.sub(numbers.mul(r, x.r), numbers.mul(i, x.i)),
                  numbers.add(numbers.mul(r, x.i), numbers.mul(i, x.r)))
    end
 
-   public div(x, prec)
+   public div(x, rnd)
       local denom
+      x := need_Cpx(x)
       denom := numbers.add(numbers.mul(x.r,x.r), numbers.mul(x.i,x.i))
-      return Cpx(numbers.div(numbers.add(numbers.mul(r, x.r), numbers.mul(i, x.i)), denom, prec),
-                 numbers.div(numbers.sub(numbers.mul(i, x.r), numbers.mul(r, x.i)), denom, prec))
+      return Cpx(numbers.div(numbers.add(numbers.mul(r, x.r), numbers.mul(i, x.i)), denom, rnd),
+                 numbers.div(numbers.sub(numbers.mul(i, x.r), numbers.mul(r, x.i)), denom, rnd))
    end
 
    public neg()
@@ -128,10 +305,10 @@ abstract class RealNumber(Number)
       return sub(x).sign()
    end
 
-   # Convert to `Dec`, or fail if no precision is specified and an
+   # Convert to `Dec`, or fail if no rounding is specified and an
    # exact conversion is not possible.
    #
-   public abstract decimal(prec)
+   public abstract decimal(rnd)
 
    # Convert to `Rat`
    #
@@ -200,15 +377,15 @@ class Rat(RealNumber)
          self
    end
 
-   # Try to convert to an equivalent `Dec` instance.  If `prec` is
+   # Try to convert to an equivalent `Dec` instance.  If `rnd` is
    # omitted, then this method only succeeds if this rational number
    # can be precisely expressed as a decimal.  If so, that a `Dec` is
-   # returned, otherwise this method fails.  If `prec` is given, then
+   # returned, otherwise this method fails.  If `rnd` is given, then
    # this method always succeeds and returns a `Dec` with the division
-   # calculated with that precision.
+   # calculated with that rounding.
    #
-   public decimal(prec)
-      return Dec(n).div(Dec(d), prec)
+   public decimal(rnd)
+      return Dec(n).div(Dec(d), rnd)
    end
 
    # Returns self
@@ -228,14 +405,21 @@ class Rat(RealNumber)
    end
 
    public add(x)
+      x := need_Rat(x)
       return Rat(n * x.d + x.n * d, d * x.d)
    end
 
+   public sub(x)
+      return add(need_Rat(x).neg())
+   end
+
    public mul(x)
+      x := need_Rat(x)
       return Rat(n * x.n, d * x.d)
    end
 
    public div(x)
+      x := need_Rat(x)
       return Rat(n * x.d, d * x.n)
    end
 
@@ -257,20 +441,53 @@ class Rat(RealNumber)
    end
 
    private parse(x)
+      local i, j
       x ? {
          tab_ws()
-         n := default.integer(tab(many(&digits ++ '+\-'))) | fail
+         # The first integer may be either the whole number ("1 2/3")
+         # or the numerator ("2/3").
+         i := default.integer(tab(many(&digits ++ '+\-'))) | fail
          tab_ws()
+         if any(&digits) then {
+            # It was the whole number, get the numerator
+            j := default.integer(tab(many(&digits)))
+            tab_ws()
+         }
          if ="/" then {
             tab_ws()
-            d := default.integer(tab(many(&digits))) | fail
-         } else
+            d := 0 ~= default.integer(tab(many(&digits))) | fail
+            if /j then
+               n := i
+            else {
+               if i < 0 then
+                  j := -j
+               n := j + i * d
+            }
+         } else {
+            # Can't have a whole number and no /, eg "1 3" is rejected.
+            /j | fail
+            n := i
             d := 1
+         }
+
          # Check at end
          tab_ws()
          pos(0) | fail
       }
       return
+   end
+
+   private normalize()
+      local g
+      if d = 0 then
+         runerr(201)
+      if d < 0 then {
+         d := -d
+         n := -n
+      }
+      g := gcd(n, d)
+      n /:= g
+      d /:= g
    end
 
    # Create a new instance.  If `x` and `y` are given, then they must
@@ -292,14 +509,9 @@ class Rat(RealNumber)
    # On failure, `&why` is set indicating the reason.
    #
    public new(x, y)
-      local g
       if \y then {
          n := need_integer(x)
          d := need_integer(y)
-         if d < 0 then {
-            d := -d
-            n := -n
-         }
       } else case typeof(x) of {
          "integer" : {
             n := x
@@ -331,15 +543,7 @@ class Rat(RealNumber)
                parse(x) | return error("Couldn't parse string as a rational")
          }
       }
-
-      if d = 0 then
-         runerr(201)
-
-      # Normalize
-      g := gcd(n, d)
-      n /:= g
-      d /:= g
-
+      normalize()
       return
    end
 end
@@ -456,6 +660,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
 
    public add(x)
       local m1, e1, m2, e2
+      x := need_Dec(x)
       m1 := self.m
       e1 := self.e
       m2 := x.m
@@ -464,6 +669,10 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          Dec(m1 + m2 * p10(e2 - e1), e1)
       else
          Dec(m1 * p10(e1 - e2) + m2, e2)
+   end
+
+   public sub(x)
+      return add(need_Dec(x).neg())
    end
 
    public neg()
@@ -475,6 +684,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    public mul(x)
+      x := need_Dec(x)
       return Dec(m * x.m, e + x.e)
    end
 
@@ -486,98 +696,100 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return cp
    end
 
-   private static round_dig(n)
-      return if n <= -5 then
-         -1
-      else if n >= 5 then
-          1
-      else
-         0
-   end
-
-   # Return this number with its mantissa shifted right n places; if n
-   # <= 0 returns self.
-   #
-   private shift_trunc(n)
-      return if n <= 0 then
-         self
-      else
-         Dec(m / p10(n), e + n)
-   end
-
-   # Return this number with its mantissa shifted right n places,
-   # rounding the last digit; if n <= 0 returns self.
-   #
-   private shift_round(n)
-      local m1
-      if n <= 0 then
-         return self
-      m1 := m / p10(n - 1)
-      m1 := m1 / 10 + round_dig(m1 % 10)
-      return Dec(m1, e + n)
-   end
-
-   # Round to the given precision; for example 123.456 rounded to
-   # precision 2 would be 120.  Note that the result will be
-   # normalized, and so the result of `precision()` on the outcome may
-   # be less than the `prec`.
-   #
-   public round(prec)
-      prec := need_integer(prec)
-      return shift_round(precision() - prec)
-   end
-
-   # Truncate to the given precision; like `round()` above, but no
-   # rounding takes place.
-   #
-   public trunc(prec)
-      prec := need_integer(prec)
-      return shift_trunc(precision() - prec)
-   end
-
    # Round to the given number of decimal places; for example 123.456
    # rounded to 1 decimal place would be 123.5
    #
    public round_dp(dp)
-      dp := need_integer(dp)
-      return shift_round(-e - dp)
+      return round(need_integer(dp) || "dp")
    end
 
-   # Truncate to the given number of decimal places; like `round_dp()`
-   # above, but no rounding takes place.
+   # Truncate to the given precision.
+   #
+   public trunc(prec)
+      return round(need_integer(prec) || " t")
+   end
+
+   # Truncate to the given number of decimal places.
    #
    public trunc_dp(dp)
-      dp := need_integer(dp)
-      return shift_trunc(-e - dp)
+      return round(need_integer(dp) || "dp t")
+   end
+
+   # Round this decimal as indicated by the `Round` instance `r`.
+   #
+   public round(rnd)
+      return round_impl(need_Round(rnd))
+   end
+
+   private round_impl(rnd, chop)
+      local n, m1, i
+      # Calculate the number of digits to shift right
+      n := if /rnd.dp_flag then
+         precision() - rnd.digits
+      else
+         -e - rnd.digits
+      if n <= 0 then {
+         # No shift needed, ie the number has less digits than the
+         # round indicates.
+         if /chop then
+            return self
+         # We chopped off some digits (in a previous division), so
+         # adjustment may be necessary.  For example, dividing
+         # 23267.7217 by 79727.39 (=0.2918410059579...), would give
+         # m=291841,e=-6 with chop set.  We may need to adjust m and
+         # e; if rounding to "6 up", n=0, we want m=291842; if "7 up"
+         # then n = -1, we want m=291411.  In general we shift m left
+         # by -n places and add any rounding digit.
+         i := rnd.round_dig(0, m)
+         # Nothing to add, so result stays the same
+         if i = 0 then
+            return self
+         m1 := m * p10(-n) + i
+      } else {
+         # We need to shift right n places.  Firstly shift right n-1
+         # places; the last shift place is needed for rounding.
+         m1 := m / p10(n - 1)
+         # If we have shifted right by one or more digits then, since
+         # the mantissa is normalized, we must have chopped off some
+         # digits.  (Unless m=0, in which case chop makes no
+         # difference).
+         if /chop & n > 1 then
+            chop := &yes
+         # Now do the last shift of one place , and add any rounding.
+         m1 := m1 / 10 + rnd.round_dig(m1 % 10,
+                                       if /chop then 0 else m)
+      }
+      return Dec(m1, e + n)
    end
 
    # Divide this number by another `Dec`.
    #
-   # If `prec` is given, then the result is rounded to that precision.
+   # If `Round` `rnd` is given, then the result is rounded accordingly.
    # 
-   # If `prec` is omitted, and the division can be expressed exactly
+   # If `rnd` is omitted, and the division can be expressed exactly
    # without rounding, then the result is exact; otherwise this method
    # fails.
    # 
    # For example, `Dec(1234).div(Dec(1024))` can be expressed
    # precisely and results in `Dec(1.205078125)`, whereas
-   # `Dec(1234).div(Dec(6))` cannot, and fails.  With a precision
+   # `Dec(1234).div(Dec(6))` cannot, and fails.  With a rounding
    # parameter of 5 however, it will succeed with `Dec(205.67)`.
    #
-   public div(x, prec)
-      return if /prec then
+   public div(x, rnd)
+      x := need_Dec(x)
+      if x.m = 0 then
+         runerr(201, x)
+      return if /rnd then
          div_exact(x)
       else
-         div_round(x, prec)
+         div_round(x, rnd)
    end
 
    # Return this number divided by `x` if it can be divided exactly,
    # or fail if it cannot.
    #
-   public div_exact(x)
+   private div_exact(x)
       local p, d
-      if x.m = 0 then
-         runerr(201, x)
       # Work out if 1 / x.m is expressible as a decimal with finite
       # digits; it will be so if x.m's only factors are 2 and 5.
       # Each factor adds at most 1 to the number of decimal digits
@@ -597,58 +809,33 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return Dec((m * p10(p)) / x.m, e - x.e - p)
    end
 
-   # A helper for the other divide operations; if n > 0 then the
-   # numerator is shifted left n places to provide n more digits of
-   # accuracy in the result.
+   # Return this number divided by `x`, with rounding `rnd`.
    #
-   private div_raw(x, n)
-      local m1, e1, m2, e2
+   private div_round(x, rnd)
+      local m1, e1, m2, e2, n, d, chop
+      rnd := need_Round(rnd)
       m1 := self.m
       e1 := self.e
       m2 := x.m
       e2 := x.e
-      if m2 = 0 then
-         runerr(201, x)
+      # Calculate the number of places to shift left to have
+      # sufficient precision in the mantissa before the division.
+      n := if /rnd.dp_flag then
+         x.precision() - precision() + rnd.digits + 1
+      else
+         e - x.e + rnd.digits + 1
+      # Shift if necessary
       if n > 0 then {
          m1 *:= p10(n)
          e1 -:= n
       }
-      return Dec(m1 / m2, e1 - e2)
-   end
-
-   # Divide this number by `x` and round to `prec` digits of
-   # precision.
-   #
-   public div_round(x, prec)
-      prec := need_integer(prec)
-      # After the division we want the mantissa to have at least
-      # prec+1 digits (ie precision() - x.precision() >= prec + 1).
-      # So pass that adjustment to div_raw. 
-      return div_raw(x, x.precision() - precision() + prec + 1).round(prec)
-   end
-
-   # Divide this number by `x` and truncate to `prec` digits of
-   # precision.
-   #
-   public div_trunc(x, prec)
-      prec := need_integer(prec)
-      return div_raw(x, x.precision() - precision() + prec).trunc(prec)
-   end
-
-   # Divide this number by `x` and round to `dp` decimal places.
-   #
-   public div_round_dp(x, dp)
-      dp := need_integer(dp)
-      return div_raw(x, e - x.e + dp + 1).round_dp(dp)
-   end
-
-   # Divide this number by `x` and truncate to `dp` decimal places.
-   # Notably, if `dp` is 0, the result is the integer part of the
-   # division.
-   #
-   public div_trunc_dp(x, dp)
-      dp := need_integer(dp)
-      return div_raw(x, e - x.e + dp).trunc_dp(dp)
+      d := m1 / m2
+      # Note (if needed by the round mode) whether digits have been
+      # chopped from the result.
+      if rnd.uses_all_digits() & m1 % m2 ~= 0 then
+         chop := &yes
+      # Divide and round result.
+      return Dec(d, e1 - e2).round_impl(rnd, chop)
    end
 
    # Convert to a `Rat`.
@@ -662,7 +849,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Convert to a real, or fail if the number is out of the allowable
    # range of that type.
    public real()
-      return default.real(trunc(REAL_DIGS).str('e'))
+      return default.real(round(REAL_DIGS).str('e'))
    end
 
    # Returns self
@@ -713,6 +900,15 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          pos(0) | fail
       }
       return
+   end
+
+   private normalize()
+      if m = 0 then
+         e := 0
+      else while m % 10 = 0 do {
+         m /:= 10
+         e +:= 1
+      }
    end
 
    # Create a new instance.  If `x` and `y` are given, then they must
@@ -779,15 +975,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
                parse(x) | return error("Couldn't parse string as a decimal")
          }
       }
-
-      # Normalize
-      if m = 0 then
-         e := 0
-      else while m % 10 = 0 do {
-         m /:= 10
-         e +:= 1
-      }
-
+      normalize()
       return
    end
 end
@@ -858,6 +1046,18 @@ end
 #
 procedure need_Rat(x)
    return if is(x,Rat) then x else Rat(x) | runerr("Rational expected: " || &why, x)
+end
+
+# Helper procedure to convert x to a `Cpx`, or raise a runerr.
+#
+procedure need_Cpx(x)
+   return if is(x,Cpx) then x else Cpx(x, 0)
+end
+
+# Helper procedure to convert x to a `Round`, or raise a runerr.
+#
+procedure need_Round(x)
+   return if is(x,Round) then x else Round(x) | runerr("Round expected: " || &why, x)
 end
 
 record Align(x, y)
@@ -934,23 +1134,25 @@ procedure mul(x, y)
    return c.x.mul(c.y).reduce()
 end
 
-# Return `x` divided by `y` with optional precision `prec`.  The two
+# Return `x` divided by `y` with optional rounding `rnd`.  The two
 # values are first converted and made the same type by `align()`.
 #
-# If no precision is given, and both are `Dec`, then an exact `Dec`
+# If no rounding is given, and both are `Dec`, then an exact `Dec`
 # division is tried first.  If that is not possible, an exact `Rat`
 # division is used instead.  For example, div(1,1024) gives a `Dec`
-# but div(1,1023) gives a `Rat`.  If a precision were given to the
-# latter division, a `Dec` with that precision would result.
+# but div(1,1023) gives a `Rat`.  If a rounding were given to the
+# latter division, a rounded `Dec` would result.
 #
-procedure div(x, y, prec)
-   local c, r
+procedure div(x, y, rnd)
+   local c, res
    c := align(x, y)
-   r := if /prec & is(c.x, Dec) then
+   res := if /rnd & is(c.x, Dec) then
       c.x.div(c.y) | c.x.rational().div(c.y.rational())
    else
-      c.x.div(c.y, prec)
-   return r.reduce()
+      c.x.div(c.y, rnd)
+   if \rnd & is(res, Rat) then
+      res := res.decimal(rnd)
+   return res.reduce()
 end
 
 #

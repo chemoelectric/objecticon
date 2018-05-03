@@ -1,9 +1,9 @@
 .PHONY:         all clean etags
 .PRECIOUS:      %.u
 
-OI_HOME=@CONFIG_DIR@
-OI_BIN=$(OI_HOME)/bin
-OI_LIB=$(OI_HOME)/lib
+export OI_HOME:=@CONFIG_DIR@
+export OI_BIN:=$(OI_HOME)/bin
+export OI_LIB:=$(OI_HOME)/lib
 LDFLAGS=@LDFLAGS@
 LIBS=@LIBS@
 CFLAGS=@CFLAGS@
@@ -32,6 +32,7 @@ RTLTAGS=--lang=c \
 
 export OI_PATH:=$(OI_LIB)/main:$(OI_LIB)/gui:$(OI_LIB)/xml:$(OI_LIB)/parser:$(OI_LIB)/ipl
 export OI_INCL:=$(OI_LIB)/incl
+export OI_NATIVE:=$(OI_LIB)/native
 export PATH:=$(OI_BIN):$(PATH)
 
 %.u: %.icn
