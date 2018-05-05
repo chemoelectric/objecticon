@@ -27,7 +27,7 @@
 #
 #	amean ! L	returns arithmetic mean of numbers in L.
 #
-#	ceil(r)		returns nearest integer to r away from 0.
+#	ceil(x)		given a real number x, round towards positive infinity.
 #
 #	commas(s)	inserts commas in s to separate digits into groups of
 #			three.
@@ -65,7 +65,7 @@
 #			function fails if j is 0 or if the number cannot
 #			be formatted.
 #
-# 	floor(r)	nearest integer to r toward 0.
+# 	floor(x)	given a real number x, round towards negative infinity.
 #
 #	frn(r, w, d)    format real number r into a string with d digits
 #			after the decimal point; a result narrower than w
@@ -164,13 +164,49 @@ procedure amean(L[])
 
 end
 
-# ceiling
-procedure ceil(r)		
+# Given a real number x, round away from zero.
+procedure up(x)
+   local i
+   i := integer(x)
+   return if x = i then i else if x >= 0 then i + 1 else i - 1
+end
 
-   if integer(r) = r then return integer(r)
+# Given integers x and y, return the value of x ÷ y rounded away from
+# zero.
+procedure up2(x, y)
+   local i
+   i := x / y
+   return if x % y = 0 then i else if (sign(x) * sign(y) >= 0) then i + 1 else i - 1
+end
 
-   if r > 0 then return integer(r) + 1 else return -(integer(-r) + 1)
+# Given a real number x, round towards negative infinity.
+procedure floor(x) 
+   local i
+   i := integer(x)
+   return if x = i | x >= 0 then i else i - 1
+end
 
+# Given integers x and y, return the value of x ÷ y rounded towards
+# negative infinity.
+procedure floor2(x, y) 
+   local i
+   i := x / y
+   return if (x % y = 0) | (sign(x) * sign(y) >= 0) then i else i - 1
+end
+
+# Given a real number x, round towards positive infinity.
+procedure ceil(x) 
+   local i
+   i := integer(x)
+   return if x = i | x < 0 then i else i + 1
+end
+
+# Given integers x and y, return the value of x ÷ y rounded towards
+# positive infinity.
+procedure ceil2(x, y) 
+   local i
+   i := x / y
+   return if (x % y = 0) | (sign(x) * sign(y) < 0) then i else i + 1
 end
 
 # insert commas in number
@@ -346,13 +382,6 @@ procedure fix(i, j, w, d)
    return frn(r, w, d)
 end
 
-# floor
-procedure floor(r)		
-
-   if r > 0 then return integer(r) else return -integer(-r)
-
-end
-
 # format real number
 procedure frn(r, w, d)		
    local s
@@ -453,7 +482,7 @@ procedure mantissa(r)
 
    r := real(r)
 
-   fpart := r - floor(r)
+   fpart := r - integer(r)
 
    fpart ?:= {
       tab(upto('.') + 1)
@@ -632,3 +661,4 @@ procedure unroman(s)
    return nbr
 
 end
+
