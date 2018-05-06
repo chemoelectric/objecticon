@@ -15,7 +15,6 @@ package abstract class SeriesCalculator()
    public calculate(x, prec)
       local sum, acceptableError, powerCoex, i, factor, step, step2, xToThePower
 
-      acceptableError := Dec(1, -(prec + 1))
       powerCoex := create gen_powers(x, prec)
       sum := BigMath.ZERO
       i := 0
@@ -32,6 +31,7 @@ package abstract class SeriesCalculator()
             i +:= 1
          }
          sum := sum.add(step).round(prec)
+         acceptableError := BigMath.calcAcceptableError(sum, prec)
 
          step.abs().cmp(">", acceptableError) | break
       }
@@ -235,11 +235,15 @@ final abstract class BigMath()
       TWO := Dec(2)
       ONE := Dec(1)
       ZERO := Dec(0)
-      EXPECTED_INITIAL_PRECISION := 17
+      EXPECTED_INITIAL_PRECISION := 15
       ROUGHLY_TWO_PI := TWO.mul(Dec("3.141592653589793"))
    end
 
-   # Return Pi to the requested precision.
+   # Return Pi to the requested precision and rounding.
+   #
+   # :Parameters :
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static pi(rnd)
       static memoized_pi
       initial memoized_pi := memoize1(piChudnovski)
@@ -250,7 +254,11 @@ final abstract class BigMath()
          memoized_pi(rnd.digits + 6).round(rnd)
    end
 
-   # Return `e` to the requested precision.
+   # Return `e` to the requested precision and rounding.
+   #
+   # :Parameters :
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static e(rnd)
       static memoized_e
       initial memoized_e := memoize1(lpartial(exp, ONE))
@@ -261,24 +269,31 @@ final abstract class BigMath()
          memoized_e(rnd.digits + 6).round(rnd)
    end
 
+   # Calculates the natural exponent of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static exp(x, rnd)
       local integralPart, fractionalPart, mc, z, t, result
       x := need_Dec(x)
       rnd := need_Round(rnd)
       if x.sign() = 0 then
-         return ONE
+         result := ONE
+      else {
+         integralPart := integral_part(x)
 
-      integralPart := integral_part(x)
+         if integralPart.sign() = 0 then
+            return expTaylor(x, rnd)
 
-      if integralPart.sign() = 0 then
-         return expTaylor(x, rnd)
+         fractionalPart := x.sub(integralPart)
+         mc := rnd.digits + 10
+         z := ONE.add(fractionalPart.div(integralPart, mc))
+         t := expTaylor(z, mc)
 
-      fractionalPart := x.sub(integralPart)
-      mc := rnd.digits + 10
-      z := ONE.add(fractionalPart.div(integralPart, mc))
-      t := expTaylor(z, mc)
-
-      result := powi(t, integralPart.integer(), mc)
+         result := powi(t, integralPart.integer(), mc)
+      }
         
       return result.round(rnd)
    end
@@ -289,29 +304,37 @@ final abstract class BigMath()
       initial ec := ExpCalculator()
       rnd := need_Round(rnd)
       mc := rnd.digits + 6
-      x := x.div(Dec(256), mc)
+      x := x.div(256, mc)
       result := ec.calculate(x, mc)
       result := powi(result, 256, mc)
       return result.round(rnd)
    end
 
+   # Calculates `x` raised to the power of `y`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `y` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static pow(x, y, rnd)
       local i, mc, result
       x := need_Dec(x)
       y := need_Dec(y)
       rnd := need_Round(rnd)
+
       if y.sign() = 0 then       # x^0 = 1
-         return ONE
-      if y.cmp("=", ONE) then   # x^1 = x
-         return x
-      if x.sign() = 0 & y.sign() = 1 then  # 0^n = 0, n>0
+         result := ONE
+      else if y.cmp("=", ONE) then   # x^1 = x
+         result := x
+      else if x.sign() = 0 & y.sign() = 1 then  # 0^n = 0, n>0
          return ZERO
-
-      if i := exact_integer(y) then
+      else if i := exact_integer(y) then
          return powi(x, i, rnd)
-
-      mc := rnd.digits + 6
-      result := exp(y.mul(log(x, mc)), mc)
+      else {
+         mc := rnd.digits + 6
+         result := exp(y.mul(log(x, mc)), mc)
+      }
 
       return result.round(rnd)
    end
@@ -323,7 +346,7 @@ final abstract class BigMath()
       mc := rnd.digits + 10
 
       if y < 0 then
-         return ONE.div(powi(x, -y, mc)).round(rnd)
+         return ONE.div(powi(x, -y, mc), rnd)
 
       result := ONE
       while y > 0 do {
@@ -340,8 +363,14 @@ final abstract class BigMath()
       return result.round(rnd)
    end
 
+   # Calculates the natural logarithm of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static log(x, rnd)
-      local result
+      local mc, result, exponent, mantissa
 
       x := need_Dec(x)
       rnd := need_Round(rnd)
@@ -352,15 +381,28 @@ final abstract class BigMath()
       if x.cmp("=", ONE) then
          return ZERO
 
-      result := case x.sub_sign(Dec(10)) of {
-         0:  logTen(rnd.digits + 6)
-         1:  logUsingExponent(x, rnd.digits)
-         -1: logUsingNewton(x, rnd.digits)
-      }
+      mc := rnd.digits * 2
+
+      exponent := x.precision() + x.e - 1
+      mantissa := Dec(x.m, 1 - x.precision())
+
+      # Now mantissa*10^exponent = x, since mantissa = x.m*10^(1-x.precision()) and
+      # x.m*10^(1-x.precision())*10^(x.precision() + x.e - 1) = x.m*10^x.e = x
+      #
+
+      result := logUsingNewton(mantissa, mc)
+      if exponent ~= 0 then
+         result := result.add(Dec(exponent).mul(logTen(mc)))
 
       return result.round(rnd)
    end
 
+   # Calculates the logarithm of `x` to the base 10.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static log10(x, rnd)
       local mc
       x := need_Dec(x)
@@ -369,21 +411,7 @@ final abstract class BigMath()
       return log(x, mc).div(logTen(mc), mc).round(rnd)
    end
 
-   private static logUsingExponent(x, prec)
-      local mc, result, exponent, mantissa
-
-      mc := prec * 2
-
-      exponent := x.precision() + x.e - 1
-      mantissa := Dec(x.m, 1 - x.precision())
-
-      result := logUsingNewton(mantissa, mc)
-      if exponent ~= 0 then
-         result := result.add(Dec(exponent).mul(logTen(mc)))
-
-      return result
-   end
-
+   # Return ln(10) to the given precision.
    private static logTen(prec)
       static memoized_logTen
       initial memoized_logTen := memoize1(calcLogTen)
@@ -397,15 +425,14 @@ final abstract class BigMath()
    private static logUsingNewton(x, prec)
       local maxPrecision, acceptableError, result, adaptivePrecision, step, expY
 
-      maxPrecision := prec + 20
-      acceptableError := Dec(1, -(prec + 1))
+      if x.cmp("=", ONE) then
+         return ZERO
 
-      if result := Dec(Math.log(x.real())) then
-         adaptivePrecision := EXPECTED_INITIAL_PRECISION
-      else {
-         result := x.div(TWO)
-         adaptivePrecision := 1
-      }
+      maxPrecision := prec + 20
+
+      result := Dec(Math.log(x.real())) | syserr("logUsingNewton, x not convertible to real")
+      adaptivePrecision := EXPECTED_INITIAL_PRECISION
+      acceptableError := calcAcceptableError(result, prec)
 
       repeat {
          adaptivePrecision *:= 3
@@ -414,7 +441,7 @@ final abstract class BigMath()
          expY := exp(result, adaptivePrecision)
 
          step := TWO.mul(x.sub(expY)).div(x.add(expY), adaptivePrecision)
-         result := result.add(step);
+         result := result.add(step).round(prec + 10)
 
          (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
       }
@@ -422,9 +449,19 @@ final abstract class BigMath()
       return result
    end
 
-   public static root(x, n, rnd)
-      local maxPrecision, acceptableError, result, adaptivePrecision, step, nMinus1, mc
+   package static calcAcceptableError(result, mc)
+      return Dec(1, -(mc + 1) + result.e + result.precision())
+   end
 
+   # Calculates the n'th root of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `n` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
+   public static root(x, n, rnd)
+      local maxPrecision, acceptableError, result, adaptivePrecision, step, mc, hi, lo, p, d
       x := need_Dec(x)
       n := need_Dec(n)
       rnd := need_Round(rnd)
@@ -436,22 +473,44 @@ final abstract class BigMath()
 
       mc := rnd.digits + 6
 
-      if n.cmp("<=", ONE) then {
-         result := pow(x, ONE.div(n, mc), mc)
-      } else {
-         maxPrecision := mc + 4
-         acceptableError := Dec(1, -(mc + 1))
-         nMinus1 := n.sub(ONE)
-         result := if n.cmp("=", TWO) then Dec(Math.sqrt(x.real())) | x.div(TWO) else x.div(TWO)
-         adaptivePrecision := 2
+      if n.cmp("<=", ONE) | not(n := exact_integer(n)) then
+         return pow(x, ONE.div(n, mc), rnd)
 
-         repeat {
-            adaptivePrecision *:= 3
-            adaptivePrecision >:= maxPrecision
-            step := x.div(pow(result, nMinus1, adaptivePrecision), adaptivePrecision).sub(result).div(n, adaptivePrecision)
-            result := result.add(step);
-            (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
-         }
+      # Now n is integer type, n > 1.
+
+      maxPrecision := mc + 4
+      if n = 2 & hi := lo := Dec(Math.sqrt(x.real())) then
+         adaptivePrecision := EXPECTED_INITIAL_PRECISION
+      else {
+         # Calculate upper and lower bounds for the result.  If
+         # x=d*10^p, (0<d<10, p=x.precision() + x.e - 1, and
+         # d=x.m*10^(1-x.precision()) - see log() above).
+         # then
+         # 1*10^floor(p/n) < x^(1/n) < d*10^ceil(p/n) = x.m*10^
+         #                    (ceil(p/n) + 1-x.precision())
+         #
+         p := x.precision() + x.e - 1
+         hi := Dec(x.m, ceil2(p, n) + 1 - x.precision())
+         lo := Dec(1, floor2(p, n))
+
+         adaptivePrecision := 1
+      }
+
+      # Start with the result set to hi; this ensures good newton
+      # behaviour since the function gets ugly to the left of the
+      # result.
+      result := hi
+
+      # Calculate the error bound relative to lo
+      acceptableError := calcAcceptableError(lo, mc + 1)
+
+      repeat {
+         adaptivePrecision *:= 3
+         adaptivePrecision >:= maxPrecision
+         d := if n = 2 then result else powi(result, n - 1, adaptivePrecision)
+         step := x.div(d, adaptivePrecision).sub(result).div(n, adaptivePrecision)
+         result := result.add(step).round(mc + 6)
+         (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
       }
 
       return result.round(rnd)
@@ -482,6 +541,12 @@ final abstract class BigMath()
       return x
    end
 
+   # Calculates the sine (sinus) of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static sin(x, rnd)
       static sc
       local mc
@@ -495,6 +560,12 @@ final abstract class BigMath()
       return sc.calculate(x, mc).round(rnd)
    end
 
+   # Calculates the cosine of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static cos(x, rnd)
       static cc
       local mc
@@ -508,6 +579,12 @@ final abstract class BigMath()
       return cc.calculate(x, mc).round(rnd)
    end
 
+   # Calculates the tan of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static tan(x, rnd)
       local mc
       x := need_Dec(x)
@@ -518,6 +595,12 @@ final abstract class BigMath()
       return sin(x, mc).div(cos(x, mc), mc).round(rnd)
    end
 
+   # Calculates the arc sine (inverted sine) of `x`
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static asin(x, rnd)
       static sc
       local mc, xTransformed, result
@@ -532,7 +615,7 @@ final abstract class BigMath()
 
       result := if x.sign() < 0 then
          asin(x.neg(), mc).neg()
-      else if x.cmp(">=", Dec(0.707107)) then {
+      else if x.cmp(">=", Dec("0.707107")) then {
          xTransformed := sqrt(ONE.sub(x.mul(x)), mc)
          acos(xTransformed, mc)
       } else
@@ -541,6 +624,12 @@ final abstract class BigMath()
       return result.round(rnd)
    end
 
+   # Calculates the arc cosine (inverted cosine) of `x`
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static acos(x, rnd)
       local mc, result
       x := need_Dec(x)
@@ -552,6 +641,12 @@ final abstract class BigMath()
       return result.round(rnd)
    end
 
+   # Calculates the arc tangent (inverted tangent) of `x`
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static atan(x, rnd)
       local mc, result
       x := need_Dec(x)
@@ -562,6 +657,12 @@ final abstract class BigMath()
       return result.round(rnd)
    end
 
+   # Calculates the hyperbolic sine of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static sinh(x, rnd)
       static sc
       local mc
@@ -574,6 +675,12 @@ final abstract class BigMath()
       return sc.calculate(x, mc).round(rnd)
    end
 
+   # Calculates the hyperbolic cosine of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static cosh(x, rnd)
       static cc
       local mc
@@ -586,6 +693,12 @@ final abstract class BigMath()
       return cc.calculate(x, mc).round(rnd)
    end
 
+   # Calculates the hyperbolic tangent of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static tanh(x, rnd)
       local mc
       x := need_Dec(x)
@@ -594,6 +707,13 @@ final abstract class BigMath()
       return sinh(x, mc).div(cosh(x, mc), mc).round(rnd)
    end
 
+   # Calculates the arc tangent (inverted tangent) of `y / x` in the range -pi to pi.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `y` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static atan2(y, x, rnd)
       local mc
       x := need_Dec(x)
@@ -619,36 +739,14 @@ final abstract class BigMath()
       }
    end
 
+   # Calculates the square root of `x`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public static sqrt(x, rnd)
-      local maxPrecision, acceptableError, result, adaptivePrecision, last, mc
-
-      x := need_Dec(x)
-      rnd := need_Round(rnd)
-
-      if x.sign() < 0 then
-         runerr(205, x)
-
-      mc := rnd.digits + 2
-      maxPrecision := mc + 4
-      acceptableError := Dec(1, -(mc + 1))
-
-      # Start with floating point approximation if possible
-      result := Dec(Math.sqrt(x.real())) | x.div(TWO)
-
-      # early exit if x is a square number
-      if result.mul(result).cmp("=", x) then
-         return result.round(rnd)
-
-      adaptivePrecision := EXPECTED_INITIAL_PRECISION
-      repeat {
-         last := result
-         adaptivePrecision *:= 2
-         adaptivePrecision >:= maxPrecision
-         result := x.div(result, adaptivePrecision).add(last).div(TWO)
-         (adaptivePrecision < maxPrecision) | result.sub(last).abs().cmp(">", acceptableError) | break
-      }
-
-      return result.round(rnd)
+      return root(x, 2, rnd)
    end
 
    private static piChudnovski(prec)
@@ -675,7 +773,7 @@ final abstract class BigMath()
          dividendTerm2 +:= 2
          dividendTerm3 +:= 6
 
-         dividend := Dec(dividendTerm1).mul(Dec(dividendTerm2)).mul(Dec(dividendTerm3))
+         dividend := Dec(dividendTerm1).mul(dividendTerm2).mul(dividendTerm3)
          kPower3 := Dec(k^3)
 
          divisor := kPower3.mul(valueDivisor)
