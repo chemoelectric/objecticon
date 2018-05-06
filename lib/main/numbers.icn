@@ -188,7 +188,7 @@ abstract class Number(ObjectOutput)
    # Add this instance to another instance of the same type.
    public abstract add(x)
 
-   # Multiply this instance to another instance of the same type.
+   # Multiply this instance by another instance of the same type.
    public abstract mul(x)
 
    # Divide this instance by another instance of the same type, with
@@ -222,25 +222,57 @@ end
 class Cpx(Number)
    public const r, i
 
+   #
+   # Convert to a string.
+   #
+   # :Parameters :
+   # :  `f` -  A cset of flags, passed to the `str` method of the
+   #           real and imaginary parts.
+   # :  `dp`   The number of decimal places to produce (if either
+   #           part is a `Dec`).
+   #
    public str(f, dp)
       return "r=" || r.str(f, dp) || " i=" || i.str(f, dp)
    end
 
+   #
+   # Add this complex to another.
+   #
+   # :Parameters :
+   # :  `x` - a `Cpx`.
+   #
    public add(x)
       x := need_Cpx(x)
       return Cpx(numbers.add(r, x.r), numbers.add(i, x.i))
    end
 
+   # Subtract another complex from this one.
+   #
+   # :Parameters :
+   # :  `x` - a `Cpx`.
+   #
    public sub(x)
       return add(need_Cpx(x).neg())
    end
 
+   #
+   # Multiply this complex by another.
+   #
+   # :Parameters :
+   # :  `x` - a `Cpx`.
+   #
    public mul(x)
       x := need_Cpx(x)
       return Cpx(numbers.sub(numbers.mul(r, x.r), numbers.mul(i, x.i)),
                  numbers.add(numbers.mul(r, x.i), numbers.mul(i, x.r)))
    end
 
+   # Divide this complex by another, using the specified rounding.
+   #
+   # :Parameters :
+   # :  `x` - a `Cpx`.
+   # :  `rnd` - null, or something convertible to a `Round`.
+   #
    public div(x, rnd)
       local denom
       x := need_Cpx(x)
@@ -249,6 +281,8 @@ class Cpx(Number)
                  numbers.div(numbers.sub(numbers.mul(i, x.r), numbers.mul(r, x.i)), denom, rnd))
    end
 
+   # Return this complex negated.
+   #
    public neg()
       return Cpx(r.neg(), i.neg())
    end
@@ -266,6 +300,10 @@ class Cpx(Number)
 
    # Create a new `Cpx` instance with real part `x` and imaginary part
    # `y`.  Both parameters must be convertible to `Rat` or `Dec`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to `Dec` or `Rat`
+   # :  `y` - something convertible to `Dec` or `Rat`
    #
    public new(x, y)
       r := need_RealNumber(x)
@@ -384,6 +422,9 @@ class Rat(RealNumber)
    # this method always succeeds and returns a `Dec` with the division
    # calculated with that rounding.
    #
+   # :Parameters :
+   # :  `rnd` - something convertible to a `Round`.
+   #
    public decimal(rnd)
       return Dec(n).div(Dec(d), rnd)
    end
@@ -394,43 +435,71 @@ class Rat(RealNumber)
    end
 
    # Returns the integer whole number part of this rational.
+   #
    public integer()
       return n / d
    end
 
    # Returns a real number approximating this rational, or fails if
    # the result would be outside real's expressible range.
+   #
    public real()
       return decimal(REAL_DIGS).real()
    end
 
+   # Add this rational to another.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Rat`.
+   #
    public add(x)
       x := need_Rat(x)
       return Rat(n * x.d + x.n * d, d * x.d)
    end
 
+   # Subtract another rational from this one.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Rat`.
+   #
    public sub(x)
       return add(need_Rat(x).neg())
    end
 
+   # Multiply this rational by another.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Rat`.
+   #
    public mul(x)
       x := need_Rat(x)
       return Rat(n * x.n, d * x.d)
    end
 
+   # Divide this rational by another.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Rat`.
+   #
    public div(x)
       x := need_Rat(x)
       return Rat(n * x.d, d * x.n)
    end
 
+   # Return this rational negated.
+   #
    public neg()
       return Rat(-n, d)
    end
 
+   # Return the inverse of this rational.
+   #
    public inv()
       return Rat(d, n)
    end
 
+   # Return the sign of this rational.
+   #
    public sign()
       return ipl.numbers.sign(n)
    end
@@ -658,6 +727,11 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return s
    end
 
+   # Add this decimal to another.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   #
    public add(x)
       local m1, e1, m2, e2
       x := need_Dec(x)
@@ -671,18 +745,32 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          Dec(m1 * p10(e1 - e2) + m2, e2)
    end
 
+   # Subtract another decimal from this one.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   #
    public sub(x)
       return add(need_Dec(x).neg())
    end
 
+   # Return this decimal negated.
+   #
    public neg()
       return Dec(-m, e)
    end
 
+   # Return the sign of this decimal.
+   #
    public sign()
       return ipl.numbers.sign(m)
    end
 
+   # Multiply this decimal by another.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   #
    public mul(x)
       x := need_Dec(x)
       return Dec(m * x.m, e + x.e)
@@ -699,11 +787,17 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Round to the given number of decimal places; for example 123.456
    # rounded to 1 decimal place would be 123.5
    #
+   # :Parameters :
+   # :  `dp` - an integer
+   #
    public round_dp(dp)
       return round(need_integer(dp) || "dp")
    end
 
    # Truncate to the given precision.
+   #
+   # :Parameters :
+   # :  `prec` - an integer
    #
    public trunc(prec)
       return round(need_integer(prec) || " t")
@@ -711,11 +805,17 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
 
    # Truncate to the given number of decimal places.
    #
+   # :Parameters :
+   # :  `dp` - an integer
+   #
    public trunc_dp(dp)
       return round(need_integer(dp) || "dp t")
    end
 
-   # Round this decimal as indicated by the `Round` instance `r`.
+   # Round this decimal
+   #
+   # :Parameters :
+   # :  `rnd` - something convertible to a `Round`.
    #
    public round(rnd)
       return round_impl(need_Round(rnd))
@@ -762,7 +862,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return Dec(m1, e + n)
    end
 
-   # Divide this number by another `Dec`.
+   # Divide this decimal by another.
    #
    # If `Round` `rnd` is given, then the result is rounded accordingly.
    # 
@@ -774,6 +874,10 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # precisely and results in `Dec(1.205078125)`, whereas
    # `Dec(1234).div(Dec(6))` cannot, and fails.  With a rounding
    # parameter of 5 however, it will succeed with `Dec(205.67)`.
+   #
+   # :Parameters :
+   # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
    public div(x, rnd)
       x := need_Dec(x)
@@ -1008,6 +1112,9 @@ end
 # or "E", and a `Rat` otherwise.  If the parsing fails, this procedure
 # fails.
 #
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+#
 procedure to_Number(x)
    x := case typeof(x) of {
       Rat|Dec|Cpx: x
@@ -1026,12 +1133,18 @@ end
 #
 # Helper procedure to signal a runerr if `to_Number` fails.
 #
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+#
 procedure need_Number(x)
    return to_Number(x) | runerr("Number expected: " || &why, x)
 end
 
 #
 # Helper procedure to signal a runerr if `to_Number` fails, or a `Cpx`
+#
+# :Parameters :
+# :  `x` - something convertible to `Dec` or `Rat`
 #
 procedure need_RealNumber(x)
    x := need_Number(x)
@@ -1042,6 +1155,9 @@ end
 # Helper procedure to convert x to a `Dec` (using its constructor),
 # and signal a runerr if that is not possible.
 #
+# :Parameters :
+# :  `x` - something convertible to a `Dec`.
+#
 procedure need_Dec(x)
    return if is(x,Dec) then x else Dec(x) | runerr("Decimal expected: " || &why, x)
 end
@@ -1049,11 +1165,17 @@ end
 # Helper procedure to convert x to a `Rat` (using its constructor),
 # and signal a runerr if that is not possible.
 #
+# :Parameters :
+# :  `x` - something convertible to a `Rat`.
+#
 procedure need_Rat(x)
    return if is(x,Rat) then x else Rat(x) | runerr("Rational expected: " || &why, x)
 end
 
 # Helper procedure to convert x to a `Cpx`, or raise a runerr.
+#
+# :Parameters :
+# :  `x` - a `Cpx`.
 #
 procedure need_Cpx(x)
    return if is(x,Cpx) then x else Cpx(x, 0)
@@ -1061,10 +1183,14 @@ end
 
 # Helper procedure to convert x to a `Round`, or raise a runerr.
 #
+# :Parameters :
+# :  `x` - something convertible to a `Round`.
+#
 procedure need_Round(x)
    return if is(x,Round) then x else Round(x) | runerr("Round expected: " || &why, x)
 end
 
+# Structure used to return values by `align()`.
 record Align(x, y)
 
 # Take two arbitrary values and returns two equivalent values which are
@@ -1076,11 +1202,19 @@ record Align(x, y)
 # converted so their types are the same.  Any conversion made will be
 # exact.
 # 
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
+#
 procedure align(x, y)
    return align_impl(need_Number(x), need_Number(y))
 end
 
 # Like `align`, but accepts only real numbers (`Dec` or `Rat`), but not `Cpx`.
+#
+# :Parameters :
+# :  `x` - something convertible to `Dec`, or `Rat`
+# :  `y` - something convertible to `Dec`, or `Rat`
 #
 procedure align_real_numbers(x, y)
    return align_impl(need_RealNumber(x), need_RealNumber(y))
@@ -1115,6 +1249,10 @@ end
 # Return the sum of `x` and `y`.  The two values are first converted
 # and made the same type by `align()`.
 #
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
+#
 procedure add(x, y)
    local c
    c := align(x, y)
@@ -1123,6 +1261,10 @@ end
 
 # Return 'y' subtracted from `x`.  The two values are first converted
 # and made the same type by `align()`.
+#
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
 #
 procedure sub(x, y)
    local c
@@ -1133,6 +1275,9 @@ end
 # Return the product of `x` and `y`.  The two values are first converted
 # and made the same type by `align()`.
 #
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
 procedure mul(x, y)
    local c
    c := align(x, y)
@@ -1148,6 +1293,11 @@ end
 # but div(1,1023) gives a `Rat`.  If a rounding were given to the
 # latter division, a rounded `Dec` would result.
 #
+# :Parameters :
+# :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `rnd` - something convertible to a `Round`.
+#
 procedure div(x, y, rnd)
    local c, res
    c := align(x, y)
@@ -1162,7 +1312,18 @@ end
 
 #
 # Compare `x` and `y` using the binary operator `f`.  The two values
-# are first converted and made the same type by `align()`.
+# are first converted and made the same type by `align_real_numbers()`.
+#
+# For example :-
+# ~
+#      x := Dec("0.4") ; y := Rat("1/3")
+#      if cmp(x, ">", y) then write("x is greater than y")
+# ~
+#
+# :Parameters :
+# :  `x` - something convertible to `Dec` or `Rat`
+# :  `f` - something convertible to a comparison operator.
+# :  `y` - something convertible to `Dec` or `Rat`
 #
 procedure cmp(x, f, y)
    local c
@@ -1186,6 +1347,10 @@ end
 #     # Now l is [ Rat5(1/3), Dec(2.3), Rat(2 3/4), Rat(4 4/7),
 #                  Dec4(13), Dec(99), Dec(100) ]
 # ~
+#
+# :Parameters :
+# :  `x` - something convertible to `Dec` or `Rat`
+# :  `y` - something convertible to `Dec` or `Rat`
 #
 procedure number_comparator(x, y)
    local c
