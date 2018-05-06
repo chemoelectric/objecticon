@@ -117,7 +117,7 @@ class Round()
             mode := case t of {
                UP | "u" : UP
                DOWN | "d" | "t" | "trunc" : DOWN
-               CEILING | "c": CEILING
+               CEILING | "ceil" | "c": CEILING
                FLOOR | "f" : FLOOR
                HALF_UP | "hu" : HALF_UP
                HALF_DOWN | "hd" : HALF_DOWN
@@ -777,7 +777,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    # Return the precision of this number, which is the number of
-   # digits in the mantissa.
+   # digits in the integer part of the number.
    #
    public precision()
       /cp := *default.abs(m)
@@ -850,7 +850,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          # places; the last shift place is needed for rounding.
          m1 := m / p10(n - 1)
          # If we have shifted right by one or more digits then, since
-         # the mantissa is normalized, we must have chopped off some
+         # the integer is normalized, we must have chopped off some
          # digits.  (Unless m=0, in which case chop makes no
          # difference).
          if /chop & n > 1 then
@@ -923,7 +923,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       m2 := x.m
       e2 := x.e
       # Calculate the number of places to shift left to have
-      # sufficient precision in the mantissa before the division.
+      # sufficient precision in the integer before the division.
       n := if /rnd.dp_flag then
          x.precision() - precision() + rnd.digits + 1
       else
@@ -1021,7 +1021,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    # Create a new instance.  If `x` and `y` are given, then they must
-   # both be integers representing the mantissa and exponent
+   # both be integers representing the integer and exponent
    # respectively.  Otherwise, if only `x` is given, then `x` may be :-
    #
    # * an integer, which produces a `Dec` of corresponding value, with
