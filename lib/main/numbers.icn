@@ -755,7 +755,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          # difference).
          if /chop & n > 1 then
             chop := &yes
-         # Now do the last shift of one place , and add any rounding.
+         # Now do the last shift of one place, and add any rounding.
          m1 := m1 / 10 + rnd.round_dig(m1 % 10,
                                        if /chop then 0 else m)
       }
@@ -823,7 +823,12 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       n := if /rnd.dp_flag then
          x.precision() - precision() + rnd.digits + 1
       else
-         e - x.e + rnd.digits + 1
+         # The rhs here just ensures that m1>m2 in the division below.
+         # This preserves the sign of m1/m2, which is needed for
+         # round_impl().  If we didn't do this, then, eg, 1/20 rounded
+         # to "0dp up" would give n=0, d=0, and would round to 0, not 1.
+         max(e1 - e2 + rnd.digits + 1, x.precision() - precision() + 1)
+
       # Shift if necessary
       if n > 0 then {
          m1 *:= p10(n)
