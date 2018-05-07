@@ -217,10 +217,14 @@ end
 # A class representing complex numbers.
 #
 # Instances are immutable and the real and imaginary parts are either
-# `Rat` or `Dec` instances
+# `Rat` or `Dec` instances.
 #
 class Cpx(Number)
-   public const r, i
+   public const
+      # The real part of this number
+      r,
+      # The imaginary part of this number
+      i
 
    #
    # Convert to a string.
@@ -368,7 +372,11 @@ end
 # numerator and denominator.
 #
 class Rat(RealNumber)
-   public const n, d
+   public const
+      # The integer numerator
+      n,
+      # The integer denominator, which is always positive.
+      d
 
    private static commas(n, f)
       n := string(n)
@@ -617,14 +625,23 @@ class Rat(RealNumber)
    end
 end
 
-# A class representing arbitrary precision decimal numbers.
+# A class representing arbitrary precision decimal numbers.  A decimal
+# is stored as an integer `i` and an exponent `e`, so that the number
+# represented is :-
+# ~
+#     i * 10^e
+# ~
 #
 # All instances are immutable and are stored in a normalized form, so
 # that two instances representing the same number always have the same
-# numerator and denominator.
+# integer and exponent.
 #
 class Dec(RealNumber, ObjectHash, ObjectEquals)
-   public const m, e
+   public const
+      # The integer part of the decimal
+      i,
+      # The exponent part of the decimal
+      e
 
    # Cached calculation of precision
    private cp
@@ -636,11 +653,11 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    private object_equals(x)
-      return m = x.m & e = x.e
+      return i = x.i & e = x.e
    end
 
    private object_hash()
-      return iand(m, 16rffff) + 37 * default.abs(e)
+      return iand(i, 16rffff) + 37 * default.abs(e)
    end
 
    #
@@ -659,7 +676,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #           significant places).
    #
    public str(f, dp)
-      local s, m1, e1, t, zch, tp, ec
+      local s, i1, e1, t, zch, tp, ec
       /f := ''
       f := need_cset(f)
       if \dp then {
@@ -672,12 +689,12 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          if \dp then {
             # One place to the left of the point and dp to the right.
             t := round(dp + 1)
-            m1 := t.m; e1 := t.e
+            i1 := t.i; e1 := t.e
             # Now *s below will be <= dp+1
          } else {
-            m1 := m; e1 := e
+            i1 := i; e1 := e
          }
-         s := string(default.abs(m1))
+         s := string(default.abs(i1))
          e1 +:= *s - 1
          # Unless dp is > 0, express something like "3000" as "3e+3" rather
          # than "3.0e3".
@@ -694,12 +711,12 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       } else {
          if \dp then {
             t := round_dp(dp)
-            m1 := t.m; e1 := t.e
+            i1 := t.i; e1 := t.e
             # Now e1 >= -dp
          } else {
-            m1 := m; e1 := e
+            i1 := i; e1 := e
          }
-         s := string(default.abs(m1))
+         s := string(default.abs(i1))
          if e1 >= 0 then {
             # Case 1, point to right of digits, eg 12340000
             s ||:= repl("0", e1)
@@ -722,7 +739,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          if \tp & any(f, ",") then
             every s[tp - 4 to 1 by -3] ||:= Format.THOUSANDS_SEPARATOR
       }
-      if m < 0 then s := "-" || s
+      if i < 0 then s := "-" || s
       else if any(f, "+") then s := "+" || s
       return s
    end
@@ -733,16 +750,16 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # :  `x` - something convertible to a `Dec`.
    #
    public add(x)
-      local m1, e1, m2, e2
+      local i1, e1, i2, e2
       x := need_Dec(x)
-      m1 := self.m
+      i1 := self.i
       e1 := self.e
-      m2 := x.m
+      i2 := x.i
       e2 := x.e
       return if e1 < e2 then
-         Dec(m1 + m2 * p10(e2 - e1), e1)
+         Dec(i1 + i2 * p10(e2 - e1), e1)
       else
-         Dec(m1 * p10(e1 - e2) + m2, e2)
+         Dec(i1 * p10(e1 - e2) + i2, e2)
    end
 
    # Subtract another decimal from this one.
@@ -757,13 +774,13 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Return this decimal negated.
    #
    public neg()
-      return Dec(-m, e)
+      return Dec(-i, e)
    end
 
    # Return the sign of this decimal.
    #
    public sign()
-      return ipl.numbers.sign(m)
+      return ipl.numbers.sign(i)
    end
 
    # Multiply this decimal by another.
@@ -773,14 +790,14 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    public mul(x)
       x := need_Dec(x)
-      return Dec(m * x.m, e + x.e)
+      return Dec(i * x.i, e + x.e)
    end
 
    # Return the precision of this number, which is the number of
    # digits in the integer part of the number.
    #
    public precision()
-      /cp := *default.abs(m)
+      /cp := *default.abs(i)
       return cp
    end
 
@@ -822,7 +839,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    private round_impl(rnd, chop)
-      local n, m1, i
+      local n, i1, j
       # Calculate the number of digits to shift right
       n := if /rnd.dp_flag then
          precision() - rnd.digits
@@ -840,15 +857,15 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          # e; if rounding to "6 up", n=0, we want m=291842; if "7 up"
          # then n = -1, we want m=291411.  In general we shift m left
          # by -n places and add any rounding digit.
-         i := rnd.round_dig(0, m)
+         j := rnd.round_dig(0, i)
          # Nothing to add, so result stays the same
-         if i = 0 then
+         if j = 0 then
             return self
-         m1 := m * p10(-n) + i
+         i1 := i * p10(-n) + j
       } else {
          # We need to shift right n places.  Firstly shift right n-1
          # places; the last shift place is needed for rounding.
-         m1 := m / p10(n - 1)
+         i1 := i / p10(n - 1)
          # If we have shifted right by one or more digits then, since
          # the integer is normalized, we must have chopped off some
          # digits.  (Unless m=0, in which case chop makes no
@@ -856,10 +873,10 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          if /chop & n > 1 then
             chop := &yes
          # Now do the last shift of one place, and add any rounding.
-         m1 := m1 / 10 + rnd.round_dig(m1 % 10,
-                                       if /chop then 0 else m)
+         i1 := i1 / 10 + rnd.round_dig(i1 % 10,
+                                       if /chop then 0 else i)
       }
-      return Dec(m1, e + n)
+      return Dec(i1, e + n)
    end
 
    # Divide this decimal by another.
@@ -881,7 +898,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    public div(x, rnd)
       x := need_Dec(x)
-      if x.m = 0 then
+      if x.i = 0 then
          runerr(201, x)
       return if /rnd then
          div_exact(x)
@@ -894,12 +911,12 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    private div_exact(x)
       local p, d
-      # Work out if 1 / x.m is expressible as a decimal with finite
-      # digits; it will be so if x.m's only factors are 2 and 5.
+      # Work out if 1 / x.i is expressible as a decimal with finite
+      # digits; it will be so if x.i's only factors are 2 and 5.
       # Each factor adds at most 1 to the number of decimal digits
       # in the answer.  We count this with p, and then know that
-      # (10^p)/x.m does not lose any digits.
-      d := default.abs(x.m)
+      # (10^p)/x.i does not lose any digits.
+      d := default.abs(x.i)
       p := 1
       while d > 1 do {
          if d % 2 = 0 then
@@ -910,38 +927,38 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             fail
          p +:= 1
       }
-      return Dec((m * p10(p)) / x.m, e - x.e - p)
+      return Dec((i * p10(p)) / x.i, e - x.e - p)
    end
 
    # Return this number divided by `x`, with rounding `rnd`.
    #
    private div_round(x, rnd)
-      local m1, e1, m2, e2, n, d, chop
+      local i1, e1, i2, e2, n, d, chop
       rnd := need_Round(rnd)
-      m1 := self.m
+      i1 := self.i
       e1 := self.e
-      m2 := x.m
+      i2 := x.i
       e2 := x.e
       # Calculate the number of places to shift left to have
       # sufficient precision in the integer before the division.
       n := if /rnd.dp_flag then
          x.precision() - precision() + rnd.digits + 1
       else
-         # The rhs here just ensures that m1>m2 in the division below.
-         # This preserves the sign of m1/m2, which is needed for
+         # The rhs here just ensures that i1>i2 in the division below.
+         # This preserves the sign of i1/i2, which is needed for
          # round_impl().  If we didn't do this, then, eg, 1/20 rounded
          # to "0dp up" would give n=0, d=0, and would round to 0, not 1.
          max(e1 - e2 + rnd.digits + 1, x.precision() - precision() + 1)
 
       # Shift if necessary
       if n > 0 then {
-         m1 *:= p10(n)
+         i1 *:= p10(n)
          e1 -:= n
       }
-      d := m1 / m2
+      d := i1 / i2
       # Note (if needed by the round mode) whether digits have been
       # chopped from the result.
-      if rnd.uses_all_digits() & m1 % m2 ~= 0 then
+      if rnd.uses_all_digits() & i1 % i2 ~= 0 then
          chop := &yes
       # Divide and round result.
       return Dec(d, e1 - e2).round_impl(rnd, chop)
@@ -950,9 +967,9 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Convert to a `Rat`.
    public rational()
       return if e >= 0 then
-         Rat(m * p10(e))
+         Rat(i * p10(e))
       else
-         Rat(m, p10(-e))
+         Rat(i, p10(-e))
    end
 
    # Convert to a real, or fail if the number is out of the allowable
@@ -969,9 +986,9 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Convert to an integer, truncating any fractional part.
    public integer()
       return if e >= 0 then
-         m * p10(e)
+         i * p10(e)
       else
-         m / p10(-e)
+         i / p10(-e)
    end
 
    # Returns self
@@ -996,9 +1013,9 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             else
                0
          }
-         m := l * p10(*r) + r
+         i := l * p10(*r) + r
          if \s == "-" then
-            m := -m
+            i := -i
          e := -*r
          if any('eE') then {
             move(1)
@@ -1012,10 +1029,10 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    private normalize()
-      if m = 0 then
+      if i = 0 then
          e := 0
-      else while m % 10 = 0 do {
-         m /:= 10
+      else while i % 10 = 0 do {
+         i /:= 10
          e +:= 1
       }
    end
@@ -1049,25 +1066,25 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    public new(x, y)
       if \y then {
-         m := need_integer(x)
+         i := need_integer(x)
          e := need_integer(y)
       } else case typeof(x) of {
          "integer" : {
-            m := x
+            i := x
             e := 0
          }
          Cpx: {
             x := x.real_number().decimal() | return error("Couldn't convert complex to an exact decimal")
-            m := x.m
+            i := x.i
             e := x.e
          }
          Dec: {
-            m := x.m
+            i := x.i
             e := x.e
          }
          Rat: {
             x := x.decimal() | return error("Couldn't convert rational to an exact decimal")
-            m := x.m
+            i := x.i
             e := x.e
          }
          default: {
@@ -1077,7 +1094,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             if probably_rational(x) & not probably_decimal(x) then {
                x := Rat(x) | fail
                x := x.decimal() | return error("Couldn't convert rational to an exact decimal")
-               m := x.m
+               i := x.i
                e := x.e
             }
             else 

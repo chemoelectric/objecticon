@@ -384,10 +384,10 @@ final abstract class BigMath()
       mc := rnd.digits * 2
 
       exponent := x.precision() + x.e - 1
-      mantissa := Dec(x.m, 1 - x.precision())
+      mantissa := Dec(x.i, 1 - x.precision())
 
-      # Now mantissa*10^exponent = x, since mantissa = x.m*10^(1-x.precision()) and
-      # x.m*10^(1-x.precision())*10^(x.precision() + x.e - 1) = x.m*10^x.e = x
+      # Now mantissa*10^exponent = x, since mantissa = x.i*10^(1-x.precision()) and
+      # x.i*10^(1-x.precision())*10^(x.precision() + x.e - 1) = x.i*10^x.e = x
       #
 
       result := logUsingNewton(mantissa, mc)
@@ -473,10 +473,10 @@ final abstract class BigMath()
 
       mc := rnd.digits + 6
 
-      if n.cmp("<=", ONE) | not(n := exact_integer(n)) then
+      if not(n := exact_integer(n)) | n < 2 | n > 50 then
          return pow(x, ONE.div(n, mc), rnd)
 
-      # Now n is integer type, n > 1.
+      # Now n is integer type, 50 >= n >= 2.
 
       maxPrecision := mc + 4
       if n = 2 & hi := lo := Dec(Math.sqrt(x.real())) then
@@ -484,13 +484,13 @@ final abstract class BigMath()
       else {
          # Calculate upper and lower bounds for the result.  If
          # x=d*10^p, (0<d<10, p=x.precision() + x.e - 1, and
-         # d=x.m*10^(1-x.precision()) - see log() above).
+         # d=x.i*10^(1-x.precision()) - see log() above).
          # then
-         # 1*10^floor(p/n) < x^(1/n) < d*10^ceil(p/n) = x.m*10^
+         # 1*10^floor(p/n) < x^(1/n) < d*10^ceil(p/n) = x.i*10^
          #                    (ceil(p/n) + 1-x.precision())
          #
          p := x.precision() + x.e - 1
-         hi := Dec(x.m, ceil2(p, n) + 1 - x.precision())
+         hi := Dec(x.i, ceil2(p, n) + 1 - x.precision())
          lo := Dec(1, floor2(p, n))
 
          adaptivePrecision := 1
