@@ -646,10 +646,11 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Cached calculation of precision
    private cp
 
-   private static const p10
+   private static const p10, p10p2
 
    private static init()
-      p10 := memoize1(lpb(10, "^"))
+      p10p2 := memoize1(calc_p10p2)
+      p10 := memoize1(calc_p10)
    end
 
    private object_equals(x)
@@ -658,6 +659,68 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
 
    private object_hash()
       return iand(i, 16rffff) + 37 * default.abs(e)
+   end
+
+   # Return 10^(2^n) for integer n.
+   #
+   private static calc_p10p2(n)
+      return 10^(2^n)
+   end
+
+   # Return 10^n for integer n.  This is rather faster than evaluating
+   # 10^n, especially for larger n.
+   #
+   private static calc_p10(n)
+      local res, j
+      j := 0
+      res := 1
+      while n > 0 do {
+         if n % 2 = 1 then
+            res *:= p10p2(j)
+         n /:= 2
+         j +:= 1
+      }
+      return res
+   end
+
+   # Return the number of decimal digits in integer n (returns the same
+   # value as *abs(n), but faster for large n).
+   #
+   private static ndig(n)
+      static p
+      local res, j, d, x
+      # p contains a list of p10p2 values, such that p[i] = 10^(2^(i-1))
+      initial 
+         p := [10]
+      n := default.abs(n)
+      # Find the lowest j (>= 1) such that n < p[j+1] ( = 10^(2^j))
+      j := 1
+      repeat {
+         # Get the next highest element, creating a new one if needed.
+         (d := p[j + 1]) | put(p, d := p10p2(j))
+         if n < d then
+            break
+         j +:= 1
+      }
+      # Now go back through the powers list reducing n and adding e to
+      # the result as we go.
+      #
+      # Set x so that p[j] = 10^x
+      x := 2^(j - 1)
+      res := 0
+      repeat {
+         d := p[j]
+         if n >= d then {
+            n /:= d
+            res +:= x
+         }
+         if j = 1 then
+            break
+         j -:= 1
+         x /:= 2
+      }
+      # We now have one digit left, ie n < 10.
+      return res + 1
    end
 
    #
@@ -797,7 +860,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # digits in the integer part of the number.
    #
    public precision()
-      /cp := *default.abs(i)
+      /cp := ndig(i)
       return cp
    end
 
@@ -933,7 +996,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # Return this number divided by `x`, with rounding `rnd`.
    #
    private div_round(x, rnd)
-      local i1, e1, i2, e2, n, d, chop
+      local i1, e1, i2, e2, n, chop
       rnd := need_Round(rnd)
       i1 := self.i
       e1 := self.e
@@ -955,13 +1018,12 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          i1 *:= p10(n)
          e1 -:= n
       }
-      d := i1 / i2
       # Note (if needed by the round mode) whether digits have been
       # chopped from the result.
       if rnd.uses_all_digits() & i1 % i2 ~= 0 then
          chop := &yes
       # Divide and round result.
-      return Dec(d, e1 - e2).round_impl(rnd, chop)
+      return Dec(i1 / i2, e1 - e2).round_impl(rnd, chop)
    end
 
    # Convert to a `Rat`.
