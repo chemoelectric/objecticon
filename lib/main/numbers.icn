@@ -588,6 +588,7 @@ class Rat(RealNumber)
    # On failure, `&why` is set indicating the reason.
    #
    public new(x, y)
+      local other
       if \y then {
          n := need_integer(x)
          d := need_integer(y)
@@ -597,32 +598,30 @@ class Rat(RealNumber)
             d := 1
          }
          Cpx: {
-            x := x.real_number().rational() | return error("Couldn't convert complex to a rational")
-            n := x.n
-            d := x.d
+            other := x.real_number().rational() | return error("Couldn't convert complex to a rational")
          }
          Rat: {
-            n := x.n
-            d := x.d
+            other := x
          }
          Dec: {
-            x := x.rational()
-            n := x.n
-            d := x.d
+            other := x.rational()
          }
          default: {
             x := need_string(x)
             # The two tests are needed to stop the Rat and Dec
             # constructors calling one another endlessly.
-            if probably_decimal(x) & not probably_rational(x) then {
-               x := Dec(x).rational() | fail
-               n := x.n
-               d := x.d
-            } else
+            if probably_decimal(x) & not probably_rational(x) then
+               other := Dec(x).rational() | fail
+            else
                parse(x) | return error("Couldn't parse string as a rational")
          }
       }
-      normalize()
+      if /other then
+         normalize()
+      else {
+         n := other.n
+         d := other.d
+      }
       return
    end
 end
@@ -832,7 +831,14 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       e1 := self.e
       i2 := x.i
       e2 := x.e
-      return if e1 < e2 then
+      # Checks for 0 are important to avoid creating huge integers to
+      # be normalized (eg Dec("1e6000").add(0) would give Dec(10^6000,
+      # 0).
+      return if i1 = 0 then
+         x
+      else if i2 = 0 then
+         self
+      else if e1 < e2 then
          Dec(i1 + i2 * p10(e2 - e1), e1)
       else
          Dec(i1 * p10(e1 - e2) + i2, e2)
@@ -1033,7 +1039,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       # in the answer.  We count this with p, and then know that
       # (10^p)/x.i does not lose any digits.
       d := default.abs(x.i)
-      p := 1
+      p := 0
       while d > 1 do {
          if d % 2 = 0 then
             d /:= 2
@@ -1179,6 +1185,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # ~~~
    #
    public new(x, y)
+      local other
       if \y then {
          i := need_integer(x)
          e := need_integer(y)
@@ -1188,18 +1195,13 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             e := 0
          }
          Cpx: {
-            x := x.real_number().decimal() | return error("Couldn't convert complex to an exact decimal")
-            i := x.i
-            e := x.e
+            other := x.real_number().decimal() | return error("Couldn't convert complex to an exact decimal")
          }
          Dec: {
-            i := x.i
-            e := x.e
+            other := x
          }
          Rat: {
-            x := x.decimal() | return error("Couldn't convert rational to an exact decimal")
-            i := x.i
-            e := x.e
+            other := x.decimal() | return error("Couldn't convert rational to an exact decimal")
          }
          default: {
             x := need_string(x)
@@ -1207,15 +1209,18 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             # constructors calling one another endlessly.
             if probably_rational(x) & not probably_decimal(x) then {
                x := Rat(x) | fail
-               x := x.decimal() | return error("Couldn't convert rational to an exact decimal")
-               i := x.i
-               e := x.e
+               other := x.decimal() | return error("Couldn't convert rational to an exact decimal")
             }
             else 
                parse(x) | return error("Couldn't parse string as a decimal")
          }
       }
-      normalize()
+      if /other then
+         normalize()
+      else {
+         i := other.i
+         e := other.e
+      }
       return
    end
 end
