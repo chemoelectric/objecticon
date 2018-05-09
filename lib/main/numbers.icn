@@ -102,7 +102,7 @@ class Round()
       }
    end
 
-   private parse(x, m)
+   private parse(x)
       local t
       x ? {
          tab_ws()
@@ -111,7 +111,7 @@ class Round()
             dp_flag := &yes
          tab_ws()
          if pos(0) then
-            mode := \m | HALF_UP
+            mode := HALF_UP
          else {
             t := map(tab(many(&letters ++ '\-'))) | fail
             mode := case t of {
@@ -162,11 +162,10 @@ class Round()
    #      "10 hd"        -  precision 10, with half down
    #                        rounding.
    #      10             -  precision 10, half up.
-   #      Round(12, 
-   #        Round.CEILING) - precision 10, ceiling.
    # ~
-   public new(s, m)
-      parse(s, m) | return error("Couldn't parse string to a Round")
+   public new(s)
+      s := need_string(s)
+      parse(s) | return error("Couldn't parse string to a Round")
       if /dp_flag & digits < 1 then
          return error("Number of rounding digits outside valid range (>= 1)")
       return
@@ -186,10 +185,10 @@ abstract class Number(ObjectOutput)
    end
 
    # Add this instance to another instance of the same type.
-   public abstract add(x)
+   public abstract add(x, rnd)
 
    # Multiply this instance by another instance of the same type.
-   public abstract mul(x)
+   public abstract mul(x, rnd)
 
    # Divide this instance by another instance of the same type, with
    # optional rounding `rnd`, if applicable to the type concerned.
@@ -207,7 +206,7 @@ abstract class Number(ObjectOutput)
    public abstract str(fmt, dp)
 
    # Subtract the other instance of the same type from this instance.
-   public abstract sub(x)
+   public abstract sub(x, rnd)
 
    private object_output(oo)
       oo.object_string(self, str())
@@ -244,19 +243,21 @@ class Cpx(Number)
    #
    # :Parameters :
    # :  `x` - a `Cpx`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
-   public add(x)
+   public add(x, rnd)
       x := need_Cpx(x)
-      return Cpx(numbers.add(r, x.r), numbers.add(i, x.i))
+      return Cpx(numbers.add(r, x.r, rnd), numbers.add(i, x.i, rnd))
    end
 
    # Subtract another complex from this one.
    #
    # :Parameters :
    # :  `x` - a `Cpx`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
-   public sub(x)
-      return add(need_Cpx(x).neg())
+   public sub(x, rnd)
+      return add(need_Cpx(x).neg(), rnd)
    end
 
    #
@@ -264,11 +265,12 @@ class Cpx(Number)
    #
    # :Parameters :
    # :  `x` - a `Cpx`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
-   public mul(x)
+   public mul(x, rnd)
       x := need_Cpx(x)
-      return Cpx(numbers.sub(numbers.mul(r, x.r), numbers.mul(i, x.i)),
-                 numbers.add(numbers.mul(r, x.i), numbers.mul(i, x.r)))
+      return Cpx(numbers.sub(numbers.mul(r, x.r), numbers.mul(i, x.i), rnd),
+                 numbers.add(numbers.mul(r, x.i), numbers.mul(i, x.r), rnd))
    end
 
    # Divide this complex by another, using the specified rounding.
@@ -807,14 +809,25 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return s
    end
 
-   # Add this decimal to another.
+   # Add this decimal to another.  If `rnd` is omitted, then the
+   # result is exact, otherwise it is rounded so that result is the
+   # same as calling `add` and then `round` separately (combining the
+   # two operations is more efficient for numbers that differ greatly).
    #
    # :Parameters :
    # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
-   public add(x)
-      local i1, e1, i2, e2
+   public add(x, rnd)
       x := need_Dec(x)
+      return if /rnd then
+         add_exact(x)
+      else
+         add_round(x, need_Round(rnd))
+   end
+
+   private add_exact(x)
+      local i1, e1, i2, e2
       i1 := self.i
       e1 := self.e
       i2 := x.i
@@ -825,13 +838,46 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          Dec(i1 * p10(e1 - e2) + i2, e2)
    end
 
-   # Subtract another decimal from this one.
+   private add_round(big, rnd)
+      local small, dp, hd
+
+      # Based on the preAlign method in BigDecimal.java
+
+      small := self
+      if big.e < small.e then
+         big :=: small
+
+      # Number of digits of precision in big to the right of the dp.
+      dp := if /rnd.dp_flag then
+         rnd.digits - (big.e + big.precision())
+      else
+         rnd.digits
+
+      # High digit pos in small, with positions denoted as follows :-
+      #        d  d  d  d . d  d  d  d
+      #   ... -3 -2 -1  0   1  2  3  4 ...
+      hd := 1 - (small.e + small.precision())
+
+      # On the above position scale, -big.e is the least significant
+      # digit in big, and dp is the least significant digit of
+      # requested precision.
+
+      if hd > -big.e + 2 &             # big and small disjoint
+         hd > dp + 2 then              # small digits not visible
+         small := Dec(small.sign(), -(max(-big.e, dp) + 3))
+
+      return big.add_exact(small).round_impl(rnd)
+   end
+
+   # Subtract another decimal from this one.  This negates `x` and
+   # calls `add()`.
    #
    # :Parameters :
    # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
-   public sub(x)
-      return add(need_Dec(x).neg())
+   public sub(x, rnd)
+      return add(need_Dec(x).neg(), rnd)
    end
 
    # Return this decimal negated.
@@ -846,14 +892,21 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return ipl.numbers.sign(i)
    end
 
-   # Multiply this decimal by another.
+   # Multiply this decimal by another.  The optional `rnd` is just for
+   # consistency with the other binary arithmetic methods; it just has
+   # the same effect as calling `round` separately on the result.
    #
    # :Parameters :
    # :  `x` - something convertible to a `Dec`.
+   # :  `rnd` - null, or something convertible to a `Round`.
    #
-   public mul(x)
+   public mul(x, rnd)
+      local res
       x := need_Dec(x)
-      return Dec(i * x.i, e + x.e)
+      res := Dec(i * x.i, e + x.e)
+      if \rnd then
+         res := res.round(need_Round(rnd))
+      return res
    end
 
    # Return the precision of this number, which is the number of
@@ -966,7 +1019,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return if /rnd then
          div_exact(x)
       else
-         div_round(x, rnd)
+         div_round(x, need_Round(rnd))
    end
 
    # Return this number divided by `x` if it can be divided exactly,
@@ -997,7 +1050,6 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    private div_round(x, rnd)
       local i1, e1, i2, e2, n, chop
-      rnd := need_Round(rnd)
       i1 := self.i
       e1 := self.e
       i2 := x.i
@@ -1325,17 +1377,24 @@ package procedure align_impl(x, y)
    syserr("Unexpected arrival in align")
 end
 
+package procedure arith_finish(res, rnd)
+   if \rnd & is(res, Rat) then
+      res := res.decimal(rnd)
+   return res.reduce()
+end
+
 # Return the sum of `x` and `y`.  The two values are first converted
 # and made the same type by `align()`.
 #
 # :Parameters :
 # :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
 # :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `rnd` - null, or something convertible to a `Round`.
 #
-procedure add(x, y)
+procedure add(x, y, rnd)
    local c
    c := align(x, y)
-   return c.x.add(c.y).reduce()
+   return arith_finish(c.x.add(c.y, rnd), rnd)
 end
 
 # Return 'y' subtracted from `x`.  The two values are first converted
@@ -1344,11 +1403,12 @@ end
 # :Parameters :
 # :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
 # :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
+# :  `rnd` - null, or something convertible to a `Round`.
 #
-procedure sub(x, y)
+procedure sub(x, y, rnd)
    local c
    c := align(x, y)
-   return c.x.sub(c.y).reduce()
+   return arith_finish(c.x.sub(c.y, rnd), rnd)
 end
 
 # Return the product of `x` and `y`.  The two values are first converted
@@ -1357,10 +1417,12 @@ end
 # :Parameters :
 # :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
 # :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
-procedure mul(x, y)
+# :  `rnd` - null, or something convertible to a `Round`.
+#
+procedure mul(x, y, rnd)
    local c
    c := align(x, y)
-   return c.x.mul(c.y).reduce()
+   return arith_finish(c.x.mul(c.y, rnd), rnd)
 end
 
 # Return `x` divided by `y` with optional rounding `rnd`.  The two
@@ -1375,7 +1437,7 @@ end
 # :Parameters :
 # :  `x` - something convertible to `Dec`, `Rat` or `Cpx`
 # :  `y` - something convertible to `Dec`, `Rat` or `Cpx`
-# :  `rnd` - something convertible to a `Round`.
+# :  `rnd` - null, or something convertible to a `Round`.
 #
 procedure div(x, y, rnd)
    local c, res
@@ -1384,9 +1446,7 @@ procedure div(x, y, rnd)
       c.x.div(c.y) | c.x.rational().div(c.y.rational())
    else
       c.x.div(c.y, rnd)
-   if \rnd & is(res, Rat) then
-      res := res.decimal(rnd)
-   return res.reduce()
+   return arith_finish(res, rnd)
 end
 
 #

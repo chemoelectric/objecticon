@@ -30,7 +30,7 @@ package abstract class SeriesCalculator()
             step := step.add(step2)
             i +:= 1
          }
-         sum := sum.add(step).round(prec)
+         sum := sum.add(step, prec)
          acceptableError := BigMath.calcAcceptableError(sum, prec)
 
          step.abs().cmp(">", acceptableError) | break
@@ -192,7 +192,7 @@ package procedure PowerNIterator(x, prec)
    powerOfX := BigMath.ONE
    repeat {
       suspend powerOfX
-      powerOfX := powerOfX.mul(x).round(prec)
+      powerOfX := powerOfX.mul(x, prec)
    }
 end
 
@@ -212,7 +212,7 @@ package procedure PowerTwoNIterator(x, prec)
    powerOfX := BigMath.ONE
    repeat {
       suspend powerOfX
-      powerOfX := powerOfX.mul(xPowerTwo).round(prec)
+      powerOfX := powerOfX.mul(xPowerTwo, prec)
    }
 end
 
@@ -351,11 +351,11 @@ final abstract class BigMath()
       result := ONE
       while y > 0 do {
          if y % 2 = 1 then {
-            result := result.mul(x).round(mc)
+            result := result.mul(x, mc)
             y -:= 1
          }
          if y > 0 then
-            x := x.mul(x).round(mc)
+            x := x.mul(x, mc)
 
          y /:= 2
       }
@@ -441,7 +441,7 @@ final abstract class BigMath()
          expY := exp(result, adaptivePrecision)
 
          step := TWO.mul(x.sub(expY)).div(x.add(expY), adaptivePrecision)
-         result := result.add(step).round(prec + 10)
+         result := result.add(step, prec + 10)
 
          (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
       }
@@ -508,8 +508,8 @@ final abstract class BigMath()
          adaptivePrecision *:= 3
          adaptivePrecision >:= maxPrecision
          d := if n = 2 then result else powi(result, n - 1, adaptivePrecision)
-         step := x.div(d, adaptivePrecision).sub(result).div(n, adaptivePrecision)
-         result := result.add(step).round(mc + 6)
+         step := x.div(d, adaptivePrecision).sub(result, adaptivePrecision).div(n, adaptivePrecision)
+         result := result.add(step, mc + 6)
          (adaptivePrecision < maxPrecision | step.abs().cmp(">", acceptableError)) | break
       }
 
@@ -724,16 +724,16 @@ final abstract class BigMath()
          atan(y.div(x, mc), rnd)
       else if x.sign() < 0 then {
          if y.sign() > 0 then  # x < 0 && y > 0
-            atan(y.div(x, mc), mc).add(pi(mc)).round(rnd)
+            atan(y.div(x, mc), mc).add(pi(mc), rnd)
          else if y.sign() < 0 then  # x < 0 && y < 0
-            atan(y.div(x, mc), mc).sub(pi(mc)).round(rnd)
+            atan(y.div(x, mc), mc).sub(pi(mc), rnd)
          else #  x < 0 && y = 0
             pi(rnd)
       } else {
          if y.sign() > 0 then # x = 0 && y > 0
-            pi(mc).div(TWO).round(rnd)
+            pi(mc).div(TWO, rnd)
          else if y.sign() < 0 then # x = 0 && y < 0
-            pi(mc).div(TWO).negate().round(rnd)
+            pi(mc).div(TWO, rnd).negate()
          else
             runerr(205, y)
       }
