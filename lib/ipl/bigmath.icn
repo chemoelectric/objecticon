@@ -349,14 +349,14 @@ final abstract class BigMath()
          return ONE.div(powi(x, -y, mc), rnd)
 
       result := ONE
-      while y > 0 do {
+      repeat {
          if y % 2 = 1 then {
             result := result.mul(x, mc)
             y -:= 1
          }
-         if y > 0 then
-            x := x.mul(x, mc)
-
+         if y = 0 then
+            break
+         x := x.mul(x, mc)
          y /:= 2
       }
 
