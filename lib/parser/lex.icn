@@ -455,6 +455,10 @@ class Lex(Connectable)
 
    private do_dot()
       if yytext ||:= tab(many(&digits)) then {
+         if yytext ||:= tab(any('eE')) then {
+            yytext ||:= tab(any('+\-'))
+            yytext ||:= tab(many(&digits))
+         }
          tokflags +:= Beginner+Ender
          yytokval := real(yytext) | err("Invalid real literal")
          return YY.REALLIT
