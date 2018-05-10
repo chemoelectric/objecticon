@@ -1137,10 +1137,8 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          if \s == "-" then
             i := -i
          e := -*r
-         if any('eE') then {
-            move(1)
+         if tab(any('eE')) then
             e +:= default.integer(tab(many(&digits ++ '+\-'))) | fail
-         }
          # Check at end
          tab_ws()
          pos(0) | fail
