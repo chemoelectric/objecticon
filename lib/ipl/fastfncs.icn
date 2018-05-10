@@ -37,7 +37,6 @@ package ipl.fastfncs
 
 import
    ipl.factors(factorial),
-   ipl.numbers(floor),
    util(Math)
 
 procedure g(k, n)
@@ -50,7 +49,7 @@ procedure g(k, n)
 
    value := 0
 
-   value +:= floor(psi * floor((seq(0) \ k + n) / real(k)) + psi)
+   value +:= integer(psi * integer((seq(0) \ k + n) / real(k)) + psi)
 
    return value
 

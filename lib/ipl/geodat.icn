@@ -108,7 +108,7 @@ import
    io(close, ewrite, read, reads),
    ipl.cartog(compose),
    ipl.io(dopen),
-   ipl.numbers(ceil),
+   ipl.numbers(up),
    util(Math)
 
 
@@ -309,7 +309,7 @@ procedure gdt_nadcon_box(f, g, xcol, yrow)
    t1 := reads(f, 12)
    if (xcol % 6 = 0) then reads(f, g.termLen)	# line termination
    t3 := reads(f, 12)
-   f.seek(pos + 12 * g.nc + g.termLen * ceil(g.nc / 6.0))
+   f.seek(pos + 12 * g.nc + g.termLen * up(g.nc / 6.0))
    t2 := reads(f, 12)
    if (xcol % 6 = 0) then reads(f, g.termLen)	# line termination
    t4 := reads(f, 12)

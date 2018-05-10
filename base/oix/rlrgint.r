@@ -1866,7 +1866,6 @@ static void bigmodi(dptr da, word i, dptr dx)
     else {
         alen = LEN(&BignumBlk(*da));
         a = &BignumBlk(*da);
-        temp = a;			/* avoid trash pointer */
         MemProtect(temp = alcbignum(alen));
         x = divi1(DIG(a,0),
                   Abs(i),
