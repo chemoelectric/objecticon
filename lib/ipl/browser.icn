@@ -1531,7 +1531,7 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
    #
    # Prevent children from getting in the point chain.
    #
-   public build_point_chain(l)
+   public build_point_chain()
    end
 
    public get_default_width()
@@ -5531,14 +5531,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   private on_wheel_up(e)
+   public handle_wheel_up(e)
       if /e.ctrl then
          (\vsb).handle_wheel_up(e)
       else
          do_increase_font()
    end
 
-   private on_wheel_down(e)
+   public handle_wheel_down(e)
       if /e.ctrl then
          (\vsb).handle_wheel_down(e)
       else
@@ -5567,11 +5567,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
       set_use_default_keys(&yes)
-      set_use_wheel(&no)
       set_vertical_increment(SCROLL_INCREMENT)
       set_horizontal_increment(SCROLL_INCREMENT)
-      connect(on_wheel_up, Event.MOUSE_WHEEL_UP)
-      connect(on_wheel_down, Event.MOUSE_WHEEL_DOWN)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0

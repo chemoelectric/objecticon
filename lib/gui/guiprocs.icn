@@ -767,6 +767,10 @@ procedure split_string(s, f, n)
    return r
 end
 
+#
+# Helpful mixin-style class for a `Component` which has a horizontal
+# or vertical orientation.
+#
 abstract class HasOrientation()
    public 
       is_horizontal_flag
@@ -776,6 +780,30 @@ abstract class HasOrientation()
    #
    public set_is_horizontal(s)
       self.is_horizontal_flag := check_flag(s)
+      return self
+   end
+end
+
+#
+# Helpful mixin-style class for a `Component` which has an optional
+# wheel capability.
+#
+abstract class HasUseWheel()
+   public
+      wheel_listeners
+
+   public abstract handle_wheel_up(e)
+
+   public abstract handle_wheel_down(e)
+   
+   public set_use_wheel(s)
+      check_flag(s)
+      every (!\wheel_listeners).disconnect()
+      wheel_listeners := if /s then
+         &null
+      else
+         [self.connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener,
+          self.connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener]
       return self
    end
 end

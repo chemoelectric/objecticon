@@ -70,14 +70,13 @@ end
 # ~
 # An `Event.VALUE_CHANGED` event is fired whenever the value changes.
 #
-class ScrollBar(Component, HasOrientation)
+class ScrollBar(Component, HasOrientation, HasUseWheel)
    public 
       value,                   #             
       old_value,
       page_size,               #                 
       increment_size,          #                      
       wheel_factor,
-      wheel_component,
       total_size,              #                  
       hi,                      #          
       lo,                      #          
@@ -94,8 +93,6 @@ class ScrollBar(Component, HasOrientation)
       old_bar_area_pos,
       old_bar_area_size,
       is_range_flag,           
-      wu_listener,
-      wd_listener,
       repeat_ticker,
       repeat_delay
 
@@ -210,25 +207,8 @@ class ScrollBar(Component, HasOrientation)
    end
 
    #
-   # Set the component in whose region we will detect wheel events.
-   # Setting to &null disables wheel activity.
-   #
-   public set_wheel_component(c)
-      (\wu_listener).disconnect()
-      (\wd_listener).disconnect()
-      self.wheel_component := c
-      if /self.wheel_component then 
-         wu_listener := wd_listener := &null
-      else {
-         wu_listener := wheel_component.connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener
-         wd_listener := wheel_component.connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener
-      }
-      return self
-   end
-
-   #
    # Set the wheel factor, being the number of increments to
-   # move on a wheel press; by default is `DEFAULT_WHEEL_FACTOR`
+   # move on a wheel press; by default it is `DEFAULT_WHEEL_FACTOR`
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
@@ -618,7 +598,7 @@ class ScrollBar(Component, HasOrientation)
       connect(handle_interrupted, Event.INTERRUPTED)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
-      set_wheel_component(self)
+      set_use_wheel(&yes)
       set_border(RaisedBorder())
       return
    end
