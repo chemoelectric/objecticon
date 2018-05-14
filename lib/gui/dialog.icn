@@ -636,7 +636,7 @@ class Dialog(Component)
 
       every p := !\popups do {
          if p.inside(e.x, e.y) then {
-            p.build_point_chain(point_chain, e.x, e.y)
+            p.build_point_chain(point_chain, e)
             put(point_chain, p)
             break
          }
@@ -648,7 +648,7 @@ class Dialog(Component)
       # work consistently.
       if inside(e.x, e.y) | (*point_chain > 0) then {
          if *point_chain = 0 then
-            build_point_chain(point_chain, e.x, e.y)
+            build_point_chain(point_chain, e)
          put(point_chain, self)
       }
    end
@@ -816,7 +816,18 @@ class Dialog(Component)
       }
 
       generate_crossing_events(e) 
+
+      #
+      # Set the processing flag and re-create the point chain.  This
+      # gives fine control to a component that wishes to filter out
+      # particular types of events at this stage of processing; for
+      # example ComponentScrollArea filters out wheel events under
+      # certain circumstances.
+      #
+      e.processing := &yes
+      create_point_chain(e)
       generate_events(e)
+      e.processing := &no
 
       #
       # If a handler closed or blocked this dialog, do no more.
@@ -1602,7 +1613,8 @@ class WinEvent(Point)
       meta4,
       meta5,
       release,
-      time
+      time,
+      processing
 
    public new(code, x, y, time, mod)
       self.code := code

@@ -1058,15 +1058,15 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Given a point `ex`, `ey`, recursively add to list `l` so that it
+   # Given a `WinEvent` `e`, recursively add to list `l` so that it
    # contains a list of the components containing the point, with the
    # deepest in the component hierarchy being at the front of the
    # list.
    #
-   public build_point_chain(l, ex, ey)
+   public build_point_chain(l, e)
       local c
-      if c := whose_point(ex, ey) then {
-         c.build_point_chain(l, ex, ey)
+      if c := whose_point(e.x, e.y) then {
+         c.build_point_chain(l, e)
          put(l, c)
       }
    end
