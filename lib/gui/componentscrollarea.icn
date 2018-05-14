@@ -135,7 +135,7 @@ class ComponentScrollArea(ScrollArea)
    public build_point_chain(l, e)
       # Only hide events if \e.processing; this means that crossing events, setting the pointer and so on
       # work correctly.
-      if \wheel_listeners & \e.processing & member(Mouse.WHEEL, e.code) then
+      if \wheel_listeners & \vsb & \e.processing & member(Mouse.WHEEL, e.code) then
          fail
       ScrollArea.build_point_chain(l, e)
    end
