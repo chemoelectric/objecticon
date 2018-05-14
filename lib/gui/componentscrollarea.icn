@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, graphics
 
 class ComponentScrollAreaView(Component)
    public
@@ -126,6 +126,18 @@ class ComponentScrollArea(ScrollArea)
                   c.y - view.inner.y,
                   c.w,
                   c.h)
+   end
+
+   # Overridden to hide wheel up and wheel down events from the child
+   # components, if this scrollarea is consuming wheel events itself.
+   # This prevents ugly conflicts with two things scrolling at once.
+   #
+   public build_point_chain(l, e)
+      # Only hide events if \e.processing; this means that crossing events, setting the pointer and so on
+      # work correctly.
+      if \wheel_listeners & \e.processing & member(Mouse.WHEEL, e.code) then
+         fail
+      ScrollArea.build_point_chain(l, e)
    end
 
    public create_view()
