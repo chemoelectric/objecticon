@@ -678,7 +678,7 @@ end
 # Instances of this class are immutable.
 #
 class FilePath(ObjectOutput)
-   package l
+   package const l
 
    #
    # Return the number of elements in the path.
@@ -878,9 +878,9 @@ class FilePath(ObjectOutput)
    #
    package static from_list(l)
       local i
-      i := Class.create_instance()
+      i := Class.create_raw_instance()
       i.l := l
-      return i
+      return Class.complete_raw_instance(i)
    end
 
    # Create a new instance from `x`, which may be another `FilePath`,
