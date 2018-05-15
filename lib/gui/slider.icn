@@ -54,7 +54,7 @@ end
 #   s.set_snaps(1)
 #   self.add(s)
 # ~
-class Slider(Component, HasOrientation)
+class Slider(Component, HasOrientation, HasUseWheel)
    public 
       value,                   
       old_value,
@@ -83,13 +83,14 @@ class Slider(Component, HasOrientation)
 
    # These values refer to a horizontal slider, the logic is backwards for a vertical one.
    public static const
-      AREA_W, AREA_H, INNER_H, TICK_H
+      AREA_W, AREA_H, INNER_H, TICK_H, DEFAULT_WHEEL_FACTOR
 
    private static init()
       AREA_W := env_scale("OI_SLIDER_AREA_W") | scale(31)
       AREA_H := env_scale("OI_SLIDER_AREA_H") | scale(19)
       INNER_H := env_scale("OI_SLIDER_INNER_H") | scale(4)
       TICK_H := env_scale("OI_SLIDER_TICK_H") | scale(10)
+      DEFAULT_WHEEL_FACTOR := env_int("OI_SLIDER_DEFAULT_WHEEL_FACTOR", 1) | 1
    end
 
    #
@@ -137,7 +138,7 @@ class Slider(Component, HasOrientation)
 
    #
    # Set the wheel factor, being the number of increments to
-   # move on a wheel press; by default it is set to 1.
+   # move on a wheel press; by default it is `DEFAULT_WHEEL_FACTOR`
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
@@ -576,15 +577,14 @@ class Slider(Component, HasOrientation)
       slider_area := SliderArea()
       accepts_focus_flag := &yes
       increment_size := 1
-      wheel_factor := 1
+      wheel_factor := DEFAULT_WHEEL_FACTOR
+      set_use_wheel(&yes)
       set_border(NullBorder())
       add(slider_area)
       slider_area.
          connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      connect(handle_wheel_up, Event.MOUSE_WHEEL_UP)
-      connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
       connect(handle_key, Event.KEY_PRESS)
       connect(handle_interrupted, Event.INTERRUPTED)
       return

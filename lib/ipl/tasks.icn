@@ -2,7 +2,7 @@ package ipl.tasks
 
 import ipl.lists(ldel1)
 
-# A semaphore implementation using `Task`s.
+# A semaphore implementation using `io.Task`s.
 #
 class Semaphore()
    private readable n
@@ -10,7 +10,7 @@ class Semaphore()
 
    # Perform a wait on the semaphore.
    # :Parameters :
-   # :  `t` - the current `Task` which may be put to sleep
+   # :  `t` - the current `io.Task` which may be put to sleep
    # :  `timeout` - the optional timeout
    # :Fails :
    # :  on timeout/interrupt to `t`

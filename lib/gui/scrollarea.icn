@@ -15,7 +15,7 @@ import graphics, util
 # using a pair of scroll bars.  This specification of the object is
 # provided by implementing methods in a subclass.
 #
-abstract class ScrollArea(Component)
+abstract class ScrollArea(Component, HasUseWheel)
    public 
       hsb,              
       vsb,
@@ -25,7 +25,6 @@ abstract class ScrollArea(Component)
       wheel_factor,
       vertical_increment,
       horizontal_increment,
-      use_wheel_flag,
       default_key_listener
 
    public static const
@@ -423,7 +422,7 @@ abstract class ScrollArea(Component)
          if \new_vsb then {
             self.vsb.set_wheel_factor(\self.wheel_factor)
             self.vsb.
-               set_wheel_component(if /use_wheel_flag then &null else self).
+               set_use_wheel(&no).
                connect(self.on_vsb, Event.VALUE_CHANGED).
                set_value(0)
             self.add(self.vsb)
@@ -441,7 +440,7 @@ abstract class ScrollArea(Component)
          self.hsb.set_increment_size(i)
          if \new_hsb then {
             self.hsb.
-               set_wheel_component(&null).
+               set_use_wheel(&no).
                connect(self.on_hsb, Event.VALUE_CHANGED).
                set_value(0)
             self.add(self.hsb)
@@ -450,6 +449,14 @@ abstract class ScrollArea(Component)
       }
 
       view.layout()
+   end
+
+   public handle_wheel_up(e)
+      (\vsb).handle_wheel_up(e)
+   end
+
+   public handle_wheel_down(e)
+      (\vsb).handle_wheel_down(e)
    end
 
    public remove_hsb()
@@ -538,13 +545,6 @@ abstract class ScrollArea(Component)
       return self
    end
 
-   # Configure whether or not to use the mouse wheel; default yes.
-   #
-   public set_use_wheel(s)
-      use_wheel_flag := check_flag(s)
-      return self
-   end
-
    public keeps(e)
       return \default_key_listener & member(Key.CURSOR, e.code)
    end
@@ -613,7 +613,7 @@ abstract class ScrollArea(Component)
    public new()
       Component.new()
       self.set_border(SunkenBorder())
-      use_wheel_flag := &yes
+      set_use_wheel(&yes)
       self.view := create_view()
       add(view)
       self.set_constraint("x_fill", &yes)
