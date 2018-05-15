@@ -795,6 +795,7 @@ end
 #    :  "a+" - `FileStream` with `FileOpt.RDWR`, `FileOpt.APPEND`, `FileOpt.CREAT`
 #    :  "p"|"pr" - `ProgInputStream`, using shell interpreter
 #    :  "pw" - `ProgOutputStream`, using shell interpreter
+#    :  "prw" - `ProgInputOutputStream`, using shell interpreter
 #
 procedure open(name, mode)
    return BufferStream(case mode of {
@@ -807,8 +808,9 @@ procedure open(name, mode)
 $ifdef _UNIX
       "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
       "pw" : ProgOutputStream("/bin/sh", ["-c", name])
+      "prw" : ProgInputOutputStream("/bin/sh", ["-c", name])
 $else
-      "p"|"pr"|"pw" : error("Mode not supported")
+      "p"|"pr"|"pw"|"prw" : error("Mode not supported")
 $endif
       default: runerr("Invalid mode flag: " || mode)
    })
@@ -1488,6 +1490,64 @@ class ProgOutputStream(SocketStream, HasBgProc)
          if \stderr then
             stderr.dup2(FileStream.stderr) | stop(&why)
          l[1].dup2(FileStream.stdin) | stop(&why)
+         lclose(l)
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
+# This stream represents a bi-directional pipe to a command running in
+# a forked child process.
+#
+class ProgInputOutputStream(SocketStream, HasBgProc)
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public close()
+      shutdown(Shut.RDWR)
+      SocketStream.close()
+      do_wait()
+      return self
+   end
+
+   # Open a new readable and writeable `Stream` based on the given
+   # command.  The first three parameters are the same as for the
+   # method `posix.System.exec`; `stderr` optionally gives the
+   # standard error of the command; by default the command inherits
+   # this from the parent.  If the stderr param is the string "pipe",
+   # then stderr is sent to the pipe along with stdout.
+   #
+   # For example :-
+   # ~
+   #     f := ProgInputOutputStream("myprog", []) | stop(&why)
+   #     f.write("Some input")
+   #     s := f.read()  # The response
+   #     f.close()
+   # ~
+   public new(cmd, args, env, stderr)
+      local l
+      l := SocketStream.socketpair() | fail
+      (l[1].dflag(DescOpt.CLOEXEC) &
+       pid := System.fork()) | {
+         save_why{ lclose(l) }
+         fail
+      }
+      if pid > 0 then {
+         # Parent
+         l[2].close()
+         return setup(l[1].get_fd(), READ_WRITE)
+      } else {
+         # Child
+         if \stderr then {
+            if stderr === "pipe" then
+               l[2].dup2(FileStream.stderr) | stop(&why)
+            else
+               stderr.dup2(FileStream.stderr) | stop(&why)
+         }
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[2].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
          System.exec(cmd, args, env) | stop(&why)
          syserr("Not reached")
