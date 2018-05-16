@@ -322,9 +322,10 @@ int definepointer(wbp w, char *name, int x, int y)
     nc = XRenderCreateCursor(wd->display, w->window->ppic, x, y);
     rv = ensure_wcursor(wd, name);
     if (rv->shared_cursor) {
-        unlink_sharedcursor(rv->shared_cursor);
+        struct SharedCursor *tmp = rv->shared_cursor;
         rv->shared_cursor = new_sharedcursor(wd, nc);
         synch_cursors(wd, rv);
+        unlink_sharedcursor(tmp);
     } else
         rv->shared_cursor = new_sharedcursor(wd, nc);
     return Succeeded;
@@ -349,9 +350,10 @@ int copypointer(wbp w, char *dest, char *src)
     dc = ensure_wcursor(wd, dest);
     if (sc != dc) {
         if (dc->shared_cursor) {
-            unlink_sharedcursor(dc->shared_cursor);
+            struct SharedCursor *tmp = dc->shared_cursor;
             dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
             synch_cursors(wd, dc);
+            unlink_sharedcursor(tmp);
         } else
             dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
     }
