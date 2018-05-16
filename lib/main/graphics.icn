@@ -654,16 +654,6 @@ final class Window(NoCopy, ObjectOutput)
 
    private native set_icon_impl(id)
 
-   # Return a new `Pixels` instance which contains the current window
-   # icon Fails if no icon set.  Note a new distinct instance is
-   # always returned, which must be closed by the caller.
-   #
-   public get_icon()
-      return Pixels.create_for_ptr(get_icon_impl())
-   end
-
-   private native get_icon_impl()
-
    # The canvas attribute label specifies a title used to identify the
    # window.
    #
@@ -761,16 +751,6 @@ final class Window(NoCopy, ObjectOutput)
    end
 
    private native set_pattern_impl(v)
-
-   # Return a new `Pixels` instance which contains the current fill
-   # pattern.  Fails if no pattern set.  Note a new distinct instance
-   # is always returned, which must be closed by the caller.
-   #
-   public get_pattern()
-      return Pixels.create_for_ptr(get_pattern_impl())
-   end
-
-   private native get_pattern_impl()
 
    # Set the shape of the figure that represents the mouse position.
    # The recognised values for string `v` are system dependent; see
@@ -1094,13 +1074,22 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native request_selection(selection, target_type)
 
-   # Define a custom pointer.  The contents of this window provide the source image.
-   # :Parameters :
-   # :  `name` - the name of the pointer
-   # :  `x` - the x hotpoint
-   # :  `y` - the y hotpoint
    #
-   public native define_pointer(name, x, y)
+   # Define a custom pointer.  `name` is the name of the pointer, to
+   # be used subsequently with `set_pointer()`.  `v` may be a `Pixels`
+   # instance, a raw binary image data (eg a gif file), or the name of
+   # a file containing an image.
+   #
+   public define_pointer(name, v)
+      return if /v | is(v, Pixels) then
+         define_pointer_impl(name, v)
+      else use {
+         v := Pixels(v),
+         define_pointer_impl(name, v)
+      }
+   end
+
+   private native define_pointer_impl(name, v)
 
    # Make the destination pointer be the same as the src.
    # :Parameters :

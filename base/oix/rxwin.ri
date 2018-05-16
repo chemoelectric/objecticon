@@ -314,12 +314,18 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
     return rv;
 }
 
-int definepointer(wbp w, char *name, int x, int y)
+int definepointer(wbp w, char *name, struct imgdata *imd)
 {
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    Pixmap pix;
+    Picture pic;
     struct wcursor *rv;
     Cursor nc;
-    wdp wd = w->window->display;
-    nc = XRenderCreateCursor(wd->display, w->window->ppic, x, y);
+
+    pix = imgdata_to_Pixmap(wd, imd);
+    pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, 0, 0);
+    nc = XRenderCreateCursor(wd->display, pic, 0, 0);
     rv = ensure_wcursor(wd, name);
     if (rv->shared_cursor) {
         struct SharedCursor *tmp = rv->shared_cursor;
@@ -328,6 +334,9 @@ int definepointer(wbp w, char *name, int x, int y)
         unlink_sharedcursor(tmp);
     } else
         rv->shared_cursor = new_sharedcursor(wd, nc);
+
+    XFreePixmap(wd->display, pix);
+    XRenderFreePicture(wd->display, pic);
     return Succeeded;
 }
 
@@ -872,32 +881,6 @@ int setwindowicon(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
-int getwindowicon(wbp w, struct imgdata *imd)
-{
-    wsp ws = w->window;
-    int i, j;
-    unsigned long *p;
-    if (!ws->icondata)
-        return Failed;
-    p = ws->icondata;
-    imd->format = &imgdataformat_RGBA32;
-    imd->width = *p++;
-    imd->height = *p++;
-    imd->data = safe_malloc(imd->format->getlength(imd));
-    for (j = 0; j < imd->height; ++j) {
-        for (i = 0; i < imd->width; ++i) {
-            int r, g, b, a;
-            b = 257 * (*p & 0xff);
-            g = 257 * (*p>>8 & 0xff);
-            r = 257 * (*p>>16 & 0xff);
-            a = 257 * (*p>>24 & 0xff);
-            imd->format->setpixel(imd, i, j, r, g, b, a);
-            ++p;
-        }
-    }
-    return Succeeded;
-}
-
 int setpattern(wbp w, struct imgdata *imd)
 {
     wcp wc = w->context;
@@ -908,29 +891,6 @@ int setpattern(wbp w, struct imgdata *imd)
         wc->pattern = new_sharedpicture(wd, imd);
     else
         wc->pattern = 0;
-    return Succeeded;
-}
-
-int getpattern(wbp w, struct imgdata *imd)
-{
-    wcp wc = w->context;
-    wdp wd = w->window->display;
-    XImage *xi;
-    if (!wc->pattern)
-        return Failed;
-    MemProtect(xi = XGetImage(wd->display, wc->pattern->pix,
-                              0, 0,
-                              wc->pattern->width,
-                              wc->pattern->height,
-                              AllPlanes,
-                              ZPixmap));
-
-    imd->format = wd->format;
-    imd->data = (unsigned char *)xi->data;
-    imd->width = wc->pattern->width;
-    imd->height = wc->pattern->height;
-    xi->data = 0;
-    XDestroyImage(xi);
     return Succeeded;
 }
 

@@ -583,32 +583,6 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_get_pattern_impl(self)
-   body {
-      struct imgdata *imd;
-      int rv;
-      GetSelfW();
-      imd = newimgdata();
-      if ((rv = getpattern(self_w, imd)) != Succeeded)
-          unlinkimgdata(imd);
-      AttemptOp(rv);
-      return C_integer((word)imd);
-   }
-end
-
-function graphics_Window_get_icon_impl(self)
-   body {
-      struct imgdata *imd;
-      int rv;
-      GetSelfW();
-      imd = newimgdata();
-      if ((rv = getwindowicon(self_w, imd)) != Succeeded)
-          unlinkimgdata(imd);
-      AttemptOp(rv);
-      return C_integer((word)imd);
-   }
-end
-
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
@@ -1650,18 +1624,17 @@ function graphics_Window_set_transient_for(self, val)
    }
 end
 
-function graphics_Window_define_pointer(self, name, x, y)
+function graphics_Window_define_pointer_impl(self, name, val)
    if !cnv:string(name) then
        runerr(103, name)
-   if !def:C_integer(x, 0) then
-      runerr(101, x)
-   if !def:C_integer(y, 0) then
-      runerr(101, y)
    body {
        char *s;
        GetSelfW();
+       {
+       PixelsStaticParam(val, id);
        s = buffstr(&name);
-       AttemptOp(definepointer(self_w, s, x, y));
+       AttemptOp(definepointer(self_w, s, id));
+       }
        return self;
    }
 end

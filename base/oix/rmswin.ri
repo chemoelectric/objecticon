@@ -1117,15 +1117,6 @@ int setdrawop(wbp w, char *val)
     return Succeeded;
 }
 
-int getpattern(wbp w, struct imgdata *imd)
-{
-    wcp wc = w->context;
-    if (!wc->pattern)
-        return Failed;
-    bitmap_to_imgdata(wc->pattern->bitmap, imd);
-    return Succeeded;
-}
-
 char *getlinestyle(wbp w)
 {
     return w->context->linestyle->s;
@@ -1603,11 +1594,6 @@ int setwindowicon(wbp w, struct imgdata *imd)
     return Failed;
 }
 
-int getwindowicon(wbp w, struct imgdata *imd)
-{
-    return Failed;
-}
-
 int grabkeyboard(wbp w)
 {
     return Succeeded;
@@ -1793,7 +1779,7 @@ static void synch_cursors(struct wcursor *c)
     }
 }
 
-int definepointer(wbp w, char *name, int x, int y)
+int definepointer(wbp w, char *name, struct imgdata *imd)
 {
     struct wcursor *rv;
     rv = ensure_wcursor(name);

@@ -279,9 +279,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  requestselection(wbp w, char *selection, char *targetname);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowicon   (wbp w, struct imgdata *imd);
-   int  getwindowicon   (wbp w, struct imgdata *imd);
    int  setpattern  (wbp w, struct imgdata *imd);
-   int  getpattern  (wbp w, struct imgdata *imd);
    int  setwindowlabel  (wbp w, dptr val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
@@ -304,7 +302,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  readimagedataimpl(dptr data, struct imgdata *imd);
    int  settransientfor(wbp w, wbp other);
    void registerplatformimgdataformats(void);
-   int definepointer(wbp w, char *name, int x, int y);
+   int definepointer(wbp w, char *name, struct imgdata *imd);
    int copypointer(wbp w, char *dest, char *src);
 
 #if XWindows
