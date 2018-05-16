@@ -1777,6 +1777,29 @@ function io_FileStream_pipe_impl()
    }
 end
 
+#if UNIX
+function io_PipeStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       word rc;
+       GetSelfFd();
+       {
+       struct sigaction saved, tmp;
+       tmp.sa_handler = SIG_IGN;
+       sigaction(SIGPIPE, &tmp, &saved);
+       rc = write(self_fd, StrLoc(s), StrLen(s));
+       sigaction(SIGPIPE, &saved, NULL);
+       }
+       if (rc < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+#endif
+
 function io_FileStream_pread(self, i, offset)
    if !cnv:C_integer(i) then
       runerr(101, i)
