@@ -1,5 +1,6 @@
 #if PLAN9
 static void stat2list(struct Dir *st, dptr res);
+static void catchpipe(void *a, char *msg);
 #elif MSWIN32
 static void stat2list(struct _stat64 *st, dptr res);
 #else
@@ -1885,6 +1886,46 @@ function io_FileStream_pipe_impl()
 #endif
    }
 end
+
+#if UNIX
+function io_PipeStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       word rc;
+       GetSelfFd();
+       {
+       struct sigaction saved, tmp;
+       tmp.sa_handler = SIG_IGN;
+       sigaction(SIGPIPE, &tmp, &saved);
+       rc = write(self_fd, StrLoc(s), StrLen(s));
+       sigaction(SIGPIPE, &saved, NULL);
+       }
+       if (rc < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+#elif PLAN9
+function io_PipeStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       word rc;
+       GetSelfFd();
+       notify(catchpipe);
+       rc = write(self_fd, StrLoc(s), StrLen(s));
+       notify(nil);
+       if (rc < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+#endif
 
 function io_FileStream_pread(self, i, offset)
    if !cnv:C_integer(i) then
@@ -5130,7 +5171,6 @@ function io_FileWorker_dup_fd(self)
       return C_integer i;
    }
 end
-
 #endif
 
 function weakref(val)

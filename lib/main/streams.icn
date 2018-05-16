@@ -1103,34 +1103,33 @@ $ifdef _PLAN9
    end
 
    #
-   # Create a pair of `FileStream`s using the pipe system call.
+   # Create a pair of `PipeStream`s using the pipe system call.
    # :Parameters :
    # :  `m1` - additional flags from `FileOpt9`, in addition to ORDWR to apply
    #        to the first end of the pipe
    # :  `m2` - the same for the other end of the pipe.
    #
    public static pipe(m1, m2)
-      local t, p1, p2, dir
+      local t, p1, p2, dir, f
       static ser
       initial ser := 0
       if /m1 & /m2 then {
          t := pipe_impl() | fail
-         return [create_for_fd(t[1], READ_WRITE), create_for_fd(t[2], READ_WRITE)]
       } else {
          /m1 := 0
          /m2 := 0
          dir := "/n/pipe." || System.getpid() || "." || (ser +:= 1)
          Files.bind("#|", dir, MountOpt.MREPL) | fail
-         p1 := open9(dir || "/data", ior(m1, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
-         p2 := open9(dir || "/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
+         (p1 := open9(dir || "/data", ior(m1, FileOpt9.ORDWR), READ_WRITE) &
+          p2 := open9(dir || "/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)) | (f := &why)
          Files.unmount(, dir)
-         if /p1 | /p2 then {
+         if \f then {
             (\p1).close()
-            (\p2).close()
-            fail
+            return error(f)
          }
-         return [p1, p2]
+         t := [p1.fd, p2.fd]
       }
+      return [PipeStream(t[1], READ_WRITE), PipeStream(t[2], READ_WRITE)]
    end
 
    private static native open_impl(path, flags)
@@ -1189,12 +1188,12 @@ $else
    private static native new_impl(path, flags, perm)
 
    #
-   # Create a pair of `FileStream`s using the pipe system call.
+   # Create a pair of `PipeStream`s using the pipe system call.
    #
    public static pipe()
       local t
       t := pipe_impl() | fail
-      return [create_for_fd(t[1], READ), create_for_fd(t[2], WRITE)]
+      return [PipeStream(t[1], READ), PipeStream(t[2], WRITE)]
    end
 $endif
 
@@ -1262,6 +1261,34 @@ $endif
    public native ttyname()
 
    public native close()
+end
+
+#
+# This subclass of `FileStream` is the type returned by
+# `FileStream.pipe`; it overrides the `out` method to catch signals on
+# writing to a closed pipe.  These cause simple failure of `out`,
+# rather than terminating the program.
+#
+class PipeStream(FileStream)
+   private static create_for_fd(fd, mode)
+      return Class.create_instance().setup(fd, mode)
+   end
+
+   #
+   # Return a new instance which has a duplicated file descriptor
+   # (using the dup() system call), and the same mode as this
+   # instance.
+   #
+   public dup()
+      return create_for_fd(dup_impl(), mode)
+   end
+
+   public native out(s)
+
+   package new(fd, mode)
+      setup(fd, mode)
+      return
+   end
 end
 
 #
@@ -1592,7 +1619,7 @@ $ifdef _PLAN9
 # This stream represents a pipe to a command running in a forked child
 # process.
 #
-class ProgInputStream(FileStream, HasBgProc)
+class ProgInputStream(PipeStream, HasBgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -1650,7 +1677,7 @@ end
 # This stream represents a pipe from a command running in a forked child
 # process.
 #
-class ProgOutputStream(FileStream, HasBgProc)
+class ProgOutputStream(PipeStream, HasBgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -1703,7 +1730,7 @@ end
 # This stream represents a bi-directional pipe to a command running in
 # a forked child process.
 #
-class ProgInputOutputStream(FileStream, HasBgProc)
+class ProgInputOutputStream(PipeStream, HasBgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -1730,7 +1757,7 @@ class ProgInputOutputStream(FileStream, HasBgProc)
    public new(cmd, args, env, stderr)
       local l
       l := pipe(FileOpt9.OCEXEC) | fail
-       pid := System.fork() | {
+      pid := System.fork() | {
          save_why{ lclose(l) }
          fail
       }
