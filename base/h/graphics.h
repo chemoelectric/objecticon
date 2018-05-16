@@ -395,7 +395,6 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   struct wcursor *cursor;               /* current cursor */
   struct _wstate *transientfor;
-  HCURSOR	savedcursor;
   HWND          savedcapture;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
   int           capturecount;           /* Set if SetCapture in use */

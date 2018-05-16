@@ -566,6 +566,7 @@ static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     int x, y;
     struct descrip d;
     if (mouse_debug) dbg("handle_mouse_enter()\n");
+    synch_cursor(ws);
     x = GET_X_LPARAM(lp);
     y = GET_Y_LPARAM(lp);
     t = GetMessageTime();
@@ -1676,7 +1677,7 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
-        free(x->cursor);
+        /* Don't free the HCURSOR, since it is a shared win32 resource. */
         free(x);
     }
 }
@@ -1774,8 +1775,8 @@ int focuswindow(wbp w)
 
 static void synch_cursor(wsp ws)
 {
-    ws->savedcursor = SetCursor(ws->cursor->shared_cursor->cursor);
-    if (mouse_debug) dbg("synch_cursor to %s, savedcursor=%x\n", ws->cursor->name, ws->savedcursor);
+    SetCursor(ws->cursor->shared_cursor->cursor);
+    if (mouse_debug) dbg("synch_cursor to %s\n", ws->cursor->name);
 }
 
 int definepointer(wbp w, char *name, int x, int y)
@@ -1843,7 +1844,7 @@ static void init_window_system(void)
     wc.cbWndExtra =     0;
     wc.hInstance =      GetModuleHandle(0);
     wc.hIcon =          LoadIcon(0, IDI_APPLICATION);
-    wc.hCursor =        LoadCursor(0, IDC_ARROW);
+    wc.hCursor =        0;
     wc.hbrBackground =  GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName =   0;
     wc.lpszClassName =  L"oix";
