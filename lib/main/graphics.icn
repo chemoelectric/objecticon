@@ -1078,18 +1078,20 @@ final class Window(NoCopy, ObjectOutput)
    # Define a custom pointer.  `name` is the name of the pointer, to
    # be used subsequently with `set_pointer()`.  `v` may be a `Pixels`
    # instance, a raw binary image data (eg a gif file), or the name of
-   # a file containing an image.
+   # a file containing an image.  `x` and `y` specify the pointer's
+   # hotspot (such as the exact tip of an arrow cursor) and default to
+   # zero.
    #
-   public define_pointer(name, v)
+   public define_pointer(name, v, x, y)
       return if /v | is(v, Pixels) then
-         define_pointer_impl(name, v)
+         define_pointer_impl(name, v, x, y)
       else use {
          v := Pixels(v),
-         define_pointer_impl(name, v)
+         define_pointer_impl(name, v, x, y)
       }
    end
 
-   private native define_pointer_impl(name, v)
+   private native define_pointer_impl(name, v, x, y)
 
    # Make the destination pointer be the same as the src.
    # :Parameters :

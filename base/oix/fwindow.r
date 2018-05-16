@@ -1624,16 +1624,20 @@ function graphics_Window_set_transient_for(self, val)
    }
 end
 
-function graphics_Window_define_pointer_impl(self, name, val)
+function graphics_Window_define_pointer_impl(self, name, val, x, y)
    if !cnv:string(name) then
        runerr(103, name)
+   if !def:C_integer(x, 0) then
+      runerr(101, x)
+   if !def:C_integer(y, 0) then
+      runerr(101, y)
    body {
        char *s;
        GetSelfW();
        {
        PixelsStaticParam(val, id);
        s = buffstr(&name);
-       AttemptOp(definepointer(self_w, s, id));
+       AttemptOp(definepointer(self_w, s, id, x, y));
        }
        return self;
    }

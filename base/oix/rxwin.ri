@@ -314,7 +314,7 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
     return rv;
 }
 
-int definepointer(wbp w, char *name, struct imgdata *imd)
+int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -325,7 +325,7 @@ int definepointer(wbp w, char *name, struct imgdata *imd)
 
     pix = imgdata_to_Pixmap(wd, imd);
     pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, 0, 0);
-    nc = XRenderCreateCursor(wd->display, pic, 0, 0);
+    nc = XRenderCreateCursor(wd->display, pic, x, y);
     rv = ensure_wcursor(wd, name);
     if (rv->shared_cursor) {
         struct SharedCursor *tmp = rv->shared_cursor;

@@ -1779,7 +1779,7 @@ static void synch_cursors(struct wcursor *c)
     }
 }
 
-int definepointer(wbp w, char *name, struct imgdata *imd)
+int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
 {
     struct wcursor *rv;
     rv = ensure_wcursor(name);
