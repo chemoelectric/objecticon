@@ -1066,11 +1066,6 @@ end
 # rather than terminating the program.
 #
 class PipeStream(FileStream)
-   #
-   # Return a new instance which has a duplicated file descriptor
-   # (using the dup() system call), and the same mode as this
-   # instance.
-   #
    public dup()
       return PipeStream(dup_impl(), mode)
    end
