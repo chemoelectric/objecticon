@@ -555,3 +555,15 @@ gb_Bitmap *gb_load_Bitmap(char *filename)
     return (gb_Bitmap *)b;
 }
 
+extern "C"
+HICON gb_get_HICON(gb_Bitmap *bm)
+{
+    HICON res;
+    Status st;
+    Bitmap *b = (Bitmap *)bm;
+    st = b->GetHICON(&res);
+    if (st == Ok)
+        return res;
+    else
+        return 0;
+}

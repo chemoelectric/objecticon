@@ -88,6 +88,7 @@ void gb_get_Bitmap_size(gb_Bitmap *bm, UINT *width, UINT *height);
 
 gb_Font *gb_find_Font(char *family, int flags, double size);
 void gb_get_metrics(HDC dc, gb_Font *f, int *ascent, int *descent, int *maxwidth);
+HICON gb_get_HICON(gb_Bitmap *bm);
 
 #ifdef __cplusplus
 }

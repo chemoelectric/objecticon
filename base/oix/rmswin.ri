@@ -30,7 +30,7 @@ static void unlink_sharedcolor(struct SharedColor *i);
 static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd);
 static struct SharedBitmap *link_sharedbitmap(struct SharedBitmap *x);
 static void unlink_sharedbitmap(struct SharedBitmap *x);
-static struct SharedCursor *new_sharedcursor(HCURSOR cursor);
+static struct SharedCursor *new_sharedcursor(HCURSOR cursor, int private);
 static struct SharedCursor *link_sharedcursor(struct SharedCursor *x);
 static void unlink_sharedcursor(struct SharedCursor *x);
 static struct wcursor *lookup_wcursor(char *name);
@@ -74,6 +74,7 @@ static wsp grabwin;
 
 static int mouse_debug = 0;
 static int key_debug = 0;
+static int cursor_debug = 0;
 
 static struct SharedColor *black, *white;
 
@@ -96,6 +97,7 @@ static wbp wbndngs;
 
 static int BORDER_HEIGHT;
 static int BORDER_WIDTH;
+static HCURSOR using_cursor;
 
 /*
  * draw ops
@@ -1646,11 +1648,12 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-static struct SharedCursor *new_sharedcursor(HCURSOR cursor)
+static struct SharedCursor *new_sharedcursor(HCURSOR cursor, int private)
 {
     struct SharedCursor *res;
     GAlloc(res, SharedCursor);
     res->cursor = cursor;
+    res->private = private;
     return res;
 }
 
@@ -1663,8 +1666,23 @@ static struct SharedCursor *link_sharedcursor(struct SharedCursor *x)
 static void unlink_sharedcursor(struct SharedCursor *x)
 {
     --x->refcount;
+    if (cursor_debug) dbg("unlink_sharedcursor %p refcount=%d\n", x, x->refcount);
     if (x->refcount == 0) {
-        /* Don't free the HCURSOR, since it is a shared win32 resource. */
+        if (cursor_debug) dbg("freeing %p, cursor=%p private=%d\n", x, x->cursor, x->private);
+        /* Only free cursors we created ourselves (with CreateIconIndirect) */
+        if (x->private) {
+            /* Is the cursor the last one used with SetCursor.  If so,
+             * ensure it is unused by windows, by using SetCursor
+             * again.
+             */
+            if (x->cursor == using_cursor) {
+                if (cursor_debug) dbg("cursor is in use, clearing\n");
+                SetCursor(null_cursor->cursor);
+                using_cursor = 0;
+            }
+            if (cursor_debug) dbg("DestroyCursor(%p)\n", x->cursor);
+            DestroyCursor(x->cursor);
+        }
         free(x);
     }
 }
@@ -1764,15 +1782,17 @@ static void synch_cursor(wsp ws)
 {
     /* Only call SetCursor if the mouse is over this window. */
     if (ws->trackingmouse) {
-        SetCursor(ws->cursor->shared_cursor->cursor);
-        if (mouse_debug) dbg("synch_cursor to %s\n", ws->cursor->name);
+        /* Keep track of what we set, in case we need to destroy this cursor. */
+        using_cursor = ws->cursor->shared_cursor->cursor;
+        SetCursor(using_cursor);
+        if (cursor_debug) dbg("synch_cursor to %s, SetCursor(%p)\n", ws->cursor->name, using_cursor);
     }
 }
 
 static void synch_cursors(struct wcursor *c)
 {
     wsp x;
-    if (mouse_debug) dbg("synch_cursors\n");
+    if (cursor_debug) dbg("synch_cursors\n");
     for (x = vwstates; x; x = x->vnext) {
         if (x->cursor == c)
             synch_cursor(x);
@@ -1782,28 +1802,59 @@ static void synch_cursors(struct wcursor *c)
 int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
 {
     struct wcursor *rv;
+    gb_Bitmap *bm;
+    HICON icon, cursor;
+    ICONINFO info;
+    BOOL res;
+    if (cursor_debug) dbg("definepointer %s %dx%d, hotspot %d,%d\n", name, imd->width,
+                          imd->height, x, y);
+    bm = imgdata_to_bitmap(imd);
+    icon = gb_get_HICON(bm);
+    gb_free_Bitmap(bm);
+    if (!icon) {
+        LitWhy("Failed to create HICON");
+        return Failed;
+    }
+    res = GetIconInfo(icon, &info);
+    DestroyIcon(icon);
+    if (!res) {
+        win32error2why();
+        return Failed;
+    }
+    info.xHotspot = x;
+    info.yHotspot = y;
+    cursor = CreateIconIndirect(&info);
+    DeleteObject(info.hbmMask);
+    DeleteObject(info.hbmColor);
+    if (!cursor) {
+        win32error2why();
+        return Failed;
+    }
     rv = ensure_wcursor(name);
     if (rv->shared_cursor) {
-        unlink_sharedcursor(rv->shared_cursor);
-        rv->shared_cursor = link_sharedcursor(null_cursor);
+        struct SharedCursor *tmp = rv->shared_cursor;
+        rv->shared_cursor = new_sharedcursor(cursor, 1);
         synch_cursors(rv);
+        unlink_sharedcursor(tmp);
     } else
-        rv->shared_cursor = link_sharedcursor(null_cursor);
+        rv->shared_cursor = new_sharedcursor(cursor, 1);
     return Succeeded;
 }
 
 int copypointer(wbp w, char *dest, char *src)
 {
     struct wcursor *sc, *dc;
+    if (cursor_debug) dbg("copypointer %s %s\n", dest, src);
     sc = lookup_wcursor(src);
     if (!sc)
         return Failed;
     dc = ensure_wcursor(dest);
     if (sc != dc) {
         if (dc->shared_cursor) {
-            unlink_sharedcursor(dc->shared_cursor);
+            struct SharedCursor *tmp = dc->shared_cursor;
             dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
             synch_cursors(dc);
+            unlink_sharedcursor(tmp);
         } else
             dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
     }
@@ -1828,7 +1879,7 @@ static void setup_cursor(char *name, LPCTSTR cid)
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     if (cid)
-        rv->shared_cursor = new_sharedcursor(LoadCursor(NULL, cid));
+        rv->shared_cursor = new_sharedcursor(LoadCursor(NULL, cid), 0);
     else
         rv->shared_cursor = link_sharedcursor(null_cursor);
     rv->next = cursors[i];
@@ -1868,7 +1919,7 @@ static void init_window_system(void)
 
 static void setup_cursors()
 {
-    null_cursor = new_sharedcursor(LoadCursor(NULL, IDC_ARROW));
+    null_cursor = new_sharedcursor(LoadCursor(NULL, IDC_ARROW), 0);
 
     /* Windows ones */
     setup_cursor("help", IDC_HELP);

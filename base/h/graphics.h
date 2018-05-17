@@ -227,6 +227,7 @@ struct SharedBitmap {
 struct SharedCursor {
    HCURSOR cursor;
    int refcount;
+   int private;
 };
 
 struct wcursor {
