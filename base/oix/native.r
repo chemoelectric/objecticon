@@ -3354,6 +3354,25 @@ function io_Files_access(s, mode)
    }
 end
 
+function io_Files_bulk_close(start, gap)
+   if !def:C_integer(start, 3) then
+      runerr(101, start)
+   if !def:C_integer(gap, 512) then
+      runerr(101, gap)
+   body {
+       word c = gap;
+       while (c) {
+           if (close(start) < 0)
+               --c;
+           else
+               c = gap;
+           ++start;
+       }
+
+      return nulldesc;
+   }
+end
+
 function util_Time_get_system_seconds()
    body {
       tended struct descrip result;
