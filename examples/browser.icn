@@ -134,10 +134,15 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       if \opts["v"] then 
          write("Command: ", image(cmd))
       System.setpgid()
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
       Files.bulk_close()
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
+   end
+
+   private on_icon_event(ev)
+      if ev.code === "\^q" then
+         dispose()
    end
 
    private static on_prog_exit(r)
@@ -475,7 +480,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_label("Refresh XDG")
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
-         set_label("Quit")
+         set_label("Quit").
+         set_label_right("^Q")
       file_menu := Menu().
          set_accel("f").
          set_label("File").
@@ -515,9 +521,10 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_draggable_tabs(&yes).
          set_accepts_focus(&no).
          connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS)
-      self.add(tabs)
-      self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
-      self.set_layout(GridLayout().set_extra("cells"))
+      add(tabs)
+      connect(on_quit, Event.WINDOW_CLOSE_BUTTON)
+      connect(on_icon_event, Event.ICON)
+      set_layout(GridLayout().set_extra("cells"))
       set_label("Browser")
       return
    end
