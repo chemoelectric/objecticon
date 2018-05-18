@@ -796,7 +796,7 @@ class Worker()
       }
       Files.chdir(Files.get_home())
       System.setpgid()
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
       Files.bulk_close()
       System.exec("/bin/sh", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")

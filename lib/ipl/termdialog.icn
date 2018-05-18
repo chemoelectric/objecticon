@@ -42,8 +42,8 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       # Get the command to run.
       cmd := de.subst_file(Format.shell_escape(file), line)
       System.setpgid()
+      null_stdio()
       Files.bulk_close()
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end

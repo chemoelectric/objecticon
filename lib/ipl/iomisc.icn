@@ -2,7 +2,7 @@ package ipl.io
 
 import
    io(Files, FileOpt, FileStream, DirStream, FilePath, stop), 
-   util(use),
+   util(use, error),
    exception(throw)
 
 #
@@ -25,6 +25,21 @@ procedure get_zero()
    initial
       zero := FileStream("/dev/zero", FileOpt.RDWR) | stop("Can't open /dev/zero: ", &why)
    return zero
+end
+
+#
+# Set the three stdio files to the null file.
+#
+procedure null_stdio()
+   local nul, c, f
+   return use {
+      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR),
+      {
+         every c := FileStream.stdin | FileStream.stdout | FileStream.stderr do
+            nul.dup2(c) | (/f := &why)
+         /f | error(f)
+      }
+   }
 end
 
 package record Msg(file, revert)
