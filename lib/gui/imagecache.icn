@@ -275,18 +275,21 @@ final abstract class ImageCache()
       if member(imap, key) then
          return key
       (s := member(names, s)) | Files.access(s) | return error("Invalid key for ImageCache")
-      svg := SVG(s) | fail
-      w := Window().
-         set_size(width, height).
-         set_bg("transparent").
-         erase_area()
       use {
-         cc := Context(w).
-            scale(real(width) / svg.get_width(), real(height) / svg.get_height()),
-         svg.render(cc)
-      }
-      svg.close()
-      insert(imap, key, w)
+         svg := SVG(s),
+         {
+            w := Window().
+               set_size(width, height).
+               set_bg("transparent").
+               erase_area()
+            use {
+               cc := Context(w).
+                  scale(real(width) / svg.get_width(), real(height) / svg.get_height()),
+               svg.render(cc)
+            }
+            insert(imap, key, w)
+         }
+      } | fail
       return key
    end
 

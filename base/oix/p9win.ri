@@ -1173,11 +1173,6 @@ int setwindowicon(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
-int getwindowicon(wbp w, struct imgdata *imd)
-{
-    return Failed;
-}
-
 #passthru #undef fillarc
 #passthru #define fillarc oi_fillarc        
 
@@ -1300,25 +1295,6 @@ int setpattern(wbp w, struct imgdata *imd)
         wc->pattern = new_sharedimage(imd);
     else
         wc->pattern = 0;
-    return Succeeded;
-}
-
-int getpattern(wbp w, struct imgdata *imd)
-{
-    int len;
-    Image *im;
-    uchar *data;
-    wcp wc = w->context;
-    if (!wc->pattern)
-        return Failed;
-    im = wc->pattern->i;
-    imd->width = Dx(im->r);
-    imd->height = Dy(im->r);
-    len = imd->width * imd->height * 4;
-    data = safe_malloc(len);
-    unloadimage(im, im->r, data, len);
-    imd->format = &imgdataformat_P9ABGR32;
-    imd->data = data;
     return Succeeded;
 }
 
@@ -2804,7 +2780,7 @@ static void get_P9AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b
 static struct imgdataformat imgdataformat_P9ABGR32 =   {set_P9ABGR32,get_P9ABGR32,0,0,getlength_32,8,24,0,"P9ABGR32"};
 static struct imgdataformat imgdataformat_P9AG16 =   {set_P9AG16,get_P9AG16,0,0,getlength_16,8,8,0,"P9AG16"};
 
-int definepointer(wbp w, char *name, int x, int y)
+int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
 {
     struct wcursor *rv;
     rv = ensure_wcursor(name);
