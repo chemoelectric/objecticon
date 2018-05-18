@@ -15,6 +15,7 @@ import
    ipl.childwait,
    ipl.lists,
    ipl.pdco,
+   ipl.io,
    ipl.sort,
    ipl.strings,
    ipl.scan,
@@ -783,17 +784,21 @@ class Worker()
       }
    end
 
-   private handle_run_req()
+   private handle_launch_req()
       local pid, f
       if (\req.referer).scheme == (u"http" | u"https") then
-         return error("Can't run a prog from an http page")
+         return error("Can't launch a prog from an http page")
       f := req.url.get_decoded_path()
       pid := System.fork() | fail
       if pid > 0 then {
          ChildWait.add_pid(pid)
          return
       }
-      System.exec("/bin/sh", ["-c", f]) | stop(&why)
+      Files.chdir(Files.get_home())
+      System.setpgid()
+      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      Files.bulk_close()
+      System.exec("/bin/sh", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")
    end
 
@@ -838,7 +843,7 @@ class Worker()
          "file": handle_func(FileSubWorker)
          "data": handle_func(handle_data_req)
          "prog": handle_func(ProgSubWorker)
-         "run": handle_func(handle_run_req)
+         "launch": handle_func(handle_launch_req)
          "cache": handle_func(handle_cache_req)
          "http"|"https": handle_func(HttpSubWorker)
          default: {

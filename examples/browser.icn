@@ -135,6 +135,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          write("Command: ", image(cmd))
       System.setpgid()
       every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      Files.bulk_close()
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
