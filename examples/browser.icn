@@ -142,7 +142,8 @@ $ifdef _PLAN9
       cmd := de.subst_file(Format.rc_escape(file))
       if \opts["v"] then 
          write("Command: ", image(cmd))
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
+      Files.bulk_close()
       System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
@@ -166,7 +167,8 @@ $else
       if \opts["v"] then 
          write("Command: ", image(cmd))
       System.setpgid()
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
+      Files.bulk_close()
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
@@ -176,6 +178,11 @@ $else
          write("Child application exited: ", to_string(r))
    end
 $endif
+
+   private on_icon_event(ev)
+      if ev.code === "\^q" then
+         dispose()
+   end
 
    public goto_tab(t)
       tabs.set_which_one(t)
@@ -507,7 +514,8 @@ $endif
          set_label("Refresh XDG")
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
-         set_label("Quit")
+         set_label("Quit").
+         set_label_right("^Q")
       file_menu := Menu().
          set_accel("f").
          set_label("File").
@@ -547,9 +555,10 @@ $endif
          set_draggable_tabs(&yes).
          set_accepts_focus(&no).
          connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS)
-      self.add(tabs)
-      self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
-      self.set_layout(GridLayout().set_extra("cells"))
+      add(tabs)
+      connect(on_quit, Event.WINDOW_CLOSE_BUTTON)
+      connect(on_icon_event, Event.ICON)
+      set_layout(GridLayout().set_extra("cells"))
       set_label("Browser")
       return
    end

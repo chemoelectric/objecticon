@@ -1891,6 +1891,7 @@ $endif
          tty.dup2(FileStream.stderr) | stop(&why)
          tty.close()
          Files.chdir(cwd)
+         Files.bulk_close()
          System.exec(sh, shell_args, env) | stop(&why)
          syserr("Not reached")
       }
@@ -2022,7 +2023,8 @@ $endif
       # Get the command to run.
       cmd := runner.get_command()
       System.setpgid()
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
+      Files.bulk_close()
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end

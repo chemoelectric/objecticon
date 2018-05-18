@@ -529,6 +529,22 @@ $endif
    public static native access(s, mode)
 
    #
+   # This method can be used after a `posix.System.fork` and before a
+   # `posix.System.exec` to close unnecessary duplicated file
+   # descriptors.  The algorithm used is not perfect, but should be
+   # effective in almost all cases.  Starting at descriptor number
+   # `start`, descriptors are closed in sequence until `gap`
+   # descriptors in succession are found to be absent from the file
+   # descriptor table (in other words, attempting to close them
+   # returns an error).
+   #
+   # :Parameters :
+   # :  `start` - the starting descriptor number (default 3)
+   # :  `gap` - the gap (default 512)
+   #
+   public static native bulk_close(start, gap)
+
+   #
    # Copy a file.
    # :Parameters :
    # :  `s1` - the source filename

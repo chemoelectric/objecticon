@@ -51,7 +51,8 @@ $ifdef _PLAN9
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
       cmd := de.subst_file(Format.rc_escape(file), line)
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
+      Files.bulk_close()
       System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
@@ -69,7 +70,8 @@ $else
       # Get the command to run.
       cmd := de.subst_file(Format.shell_escape(file), line)
       System.setpgid()
-      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      null_stdio()
+      Files.bulk_close()
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
