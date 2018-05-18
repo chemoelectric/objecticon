@@ -32,14 +32,14 @@ end
 #
 procedure null_stdio()
    local nul, c, f
-   return use {
-      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR),
-      {
-         every c := FileStream.stdin | FileStream.stdout | FileStream.stderr do
-            nul.dup2(c) | (/f := &why)
-         /f | error(f)
-      }
-   }
+   nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | fail
+   every c := FileStream.stdin | FileStream.stdout | FileStream.stderr do
+      nul.dup2(c) | (/f := &why)
+   # If we started with an empty file descriptor table, nul may be one
+   # of the 3 descriptors, so don't close.
+   if nul.get_fd() > 2 then
+      nul.close()
+   return /f | error(f)
 end
 
 package record Msg(file, revert)

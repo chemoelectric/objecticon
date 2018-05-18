@@ -803,14 +803,13 @@ $ifdef _PLAN9
       if (\req.referer).scheme == (u"http" | u"https") then
          return error("Can't launch a prog from an http page")
       f := req.url.get_decoded_path()
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then
          return
       Files.unmount_windows()
       Files.chdir(Files.get_home())
       null_stdio()
-      Files.bulk_close()
       System.exec("/bin/rc", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")
    end

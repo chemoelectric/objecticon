@@ -35,7 +35,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
 $ifdef _PLAN9
    public static launch_prog(de, file, line)
       local pid, cmd
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
          # Parent
@@ -52,7 +52,6 @@ $ifdef _PLAN9
       # Get the command to run.
       cmd := de.subst_file(Format.rc_escape(file), line)
       null_stdio()
-      Files.bulk_close()
       System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end

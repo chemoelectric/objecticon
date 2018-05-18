@@ -124,7 +124,7 @@ $ifdef _PLAN9
          write("Desktop entry: ", to_string(de, 3, &yes))
          write("File: ", image(file))
       }
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
          # Parent
@@ -143,7 +143,6 @@ $ifdef _PLAN9
       if \opts["v"] then 
          write("Command: ", image(cmd))
       null_stdio()
-      Files.bulk_close()
       System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
