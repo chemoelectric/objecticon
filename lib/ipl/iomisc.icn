@@ -2,7 +2,7 @@ package ipl.io
 
 import
    io(Files, FileOpt, FileStream, DirStream, FilePath, stop), 
-   util(use, error),
+   util(use),
    exception(throw)
 
 #
@@ -31,15 +31,18 @@ end
 # Set the three stdio files to the null file.
 #
 procedure null_stdio()
-   local nul, c, f
-   nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | fail
-   every c := FileStream.stdin | FileStream.stdout | FileStream.stderr do
-      nul.dup2(c) | (/f := &why)
-   # If we started with an empty file descriptor table, nul may be one
-   # of the 3 descriptors, so don't close.
+   local nul
+   nul := FileStream(Files.NULL_FILE, FileOpt.RDONLY) | fail
+   if nul.get_fd() > 0 then {
+      nul.dup2(FileStream.stdin) | fail
+      nul.close()
+   }
+   nul := FileStream(Files.NULL_FILE, FileOpt.WRONLY) | fail
+   nul.dup2(FileStream.stdout) | fail
+   nul.dup2(FileStream.stderr) | fail
    if nul.get_fd() > 2 then
       nul.close()
-   return /f | error(f)
+   return
 end
 
 package record Msg(file, revert)
