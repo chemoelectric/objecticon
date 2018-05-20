@@ -539,10 +539,10 @@ $endif
    # returns an error).
    #
    # :Parameters :
-   # :  `start` - the starting descriptor number (default 3)
    # :  `gap` - the gap (default 512)
+   # :  `start` - the starting descriptor number (default 3)
    #
-   public static native bulk_close(start, gap)
+   public static native bulk_close(gap, start)
 
    #
    # Copy a file.

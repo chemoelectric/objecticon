@@ -167,7 +167,7 @@ $else
          write("Command: ", image(cmd))
       System.setpgid()
       null_stdio()
-      Files.bulk_close()
+      Files.bulk_close(100)
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end

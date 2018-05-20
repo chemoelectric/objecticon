@@ -827,7 +827,7 @@ $else
       Files.chdir(Files.get_home())
       System.setpgid()
       null_stdio()
-      Files.bulk_close()
+      Files.bulk_close(100)
       System.exec("/bin/sh", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")
    end
