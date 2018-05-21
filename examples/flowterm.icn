@@ -1313,7 +1313,7 @@ class Terminal(TabItem, VtUI)
          "title" : set_title(param)
          "fav-dir" : {
             check_param(s, param) | fail
-            push(added_favourites, FilePath(param).canonical().ucs())
+            push(added_favourites, FilePath(param).canonical().ucs()) | return error("Directory not convertible to canonical ucs")
          }
          "max-list" : {
             if /param then {
