@@ -100,7 +100,7 @@ operator = tabmat(x)
 
       if (is:ucs(k_subject)) {
           /*
-           * x must be a string.
+           * x must be a ucs.
            */
           if (!cnv:ucs(x,x))
               runerr(128, x);
@@ -132,14 +132,6 @@ operator = tabmat(x)
           k_pos += l;
 
           suspend x;
-
-          /*
-           * tabmat has been resumed, restore &pos and fail.
-           */
-          if (i > UcsBlk(k_subject).length + 1)
-              runerr(205, kywd_pos);
-          else
-              k_pos = i;
       } else {
           /*
            * x must be a string.
@@ -174,15 +166,23 @@ operator = tabmat(x)
           k_pos += l;
 
           suspend x;
-
-          /*
-           * tabmat has been resumed, restore &pos and fail.
-           */
-          if (i > StrLen(k_subject) + 1)
-              runerr(205, kywd_pos);
-          else 
-              k_pos = i;
       }
+
+      /*
+       * tabmat has been resumed, restore &pos and fail.  Note that the type of
+       * &subject may have changed since we suspended.
+       */
+
+      if (is:string(k_subject))
+          j = StrLen(k_subject);
+      else
+          j = UcsBlk(k_subject).length;
+
+      if (i > j + 1)
+          runerr(205, kywd_pos);
+      else 
+          k_pos = i;
+
       fail;
    }
 end

@@ -42,14 +42,6 @@ function move(i)
            * Suspend substring of &subject that was moved over.
            */
           suspend string(i, StrLoc(k_subject) + j - 1);
-
-          /*
-           * If move is resumed, restore the old position and fail.
-           */
-          if (oldpos > StrLen(k_subject) + 1)
-              runerr(205, kywd_pos);
-          else
-              k_pos = oldpos;
       } else {
           /*
            * If attempted move is past either end of the string, fail.
@@ -74,18 +66,25 @@ function move(i)
            * Suspend substring of &subject that was moved over.
            */
           LazySuspend(ucs(make_ucs_substring(&UcsBlk(k_subject), j, i)));
-
-          /*
-           * If move is resumed, restore the old position and fail.
-           */
-          if (oldpos > UcsBlk(k_subject).length + 1)
-              runerr(205, kywd_pos);
-          else
-              k_pos = oldpos;
       }
+
+      /*
+       * If move is resumed, restore the old position and fail.  Note that the type of
+       * &subject may have changed since we suspended.
+       */
+
+      if (is:string(k_subject))
+          j = StrLen(k_subject);
+      else
+          j = UcsBlk(k_subject).length;
+
+      if (oldpos > j + 1)
+          runerr(205, kywd_pos);
+      else
+          k_pos = oldpos;
 
       fail;
-      }
+   }
 end
 
 
@@ -160,14 +159,6 @@ function tab(i)
            * Suspend the portion of &subject that was tabbed over.
            */
           suspend string(i, StrLoc(k_subject) + j - 1);
-
-          /*
-           * If tab is resumed, restore the old position and fail.
-           */
-          if (oldpos > StrLen(k_subject) + 1)
-              runerr(205, kywd_pos);
-          else
-              k_pos = oldpos;
       } else {
           /*
            * Convert i to an absolute position.
@@ -201,16 +192,23 @@ function tab(i)
            * Suspend the portion of &subject that was tabbed over.
            */
           LazySuspend(ucs(make_ucs_substring(&UcsBlk(k_subject), j, i)));
-
-          /*
-           * If tab is resumed, restore the old position and fail.
-           */
-          if (oldpos > UcsBlk(k_subject).length + 1)
-              runerr(205, kywd_pos);
-          else
-              k_pos = oldpos;
       }
+
+      /*
+       * If tab is resumed, restore the old position and fail.  Note that the type of
+       * &subject may have changed since we suspended.
+       */
+
+      if (is:string(k_subject))
+          j = StrLen(k_subject);
+      else
+          j = UcsBlk(k_subject).length;
+
+      if (oldpos > j + 1)
+          runerr(205, kywd_pos);
+      else
+          k_pos = oldpos;
 
       fail;
-      }
+   }
 end
