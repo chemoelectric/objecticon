@@ -243,7 +243,7 @@ class DirectoryDialog(Dialog)
 
    public goto_dir(d)
       local n, s, p, err, i, root
-      p := FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
+      p := need_FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
       n := root := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
@@ -342,7 +342,7 @@ class DirectoryDialog(Dialog)
 
    public on_up_button(ev)
       if selected_path.size() > 1 then
-         goto_dir(selected_path.parent().str())
+         goto_dir(selected_path.parent())
       else
          msg("At root")
    end
