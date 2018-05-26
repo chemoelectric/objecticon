@@ -4832,7 +4832,7 @@ WCHAR *string_to_wchar(dptr str, int nullterm)
 
 void wchar_to_ucs(WCHAR *src, dptr res)
 {
-    tended char *ts;
+    char *ts;
     tended struct descrip utf8;
     word wlen, slen;
     WCHAR *p;
@@ -4862,7 +4862,7 @@ void wchar_to_ucs(WCHAR *src, dptr res)
 
 void wchar_to_utf8_string(WCHAR *src, dptr res)
 {
-    tended char *ts;
+    char *ts;
     word wlen, slen;
     WCHAR *p;
     char *q;
