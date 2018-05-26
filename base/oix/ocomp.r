@@ -81,6 +81,31 @@ NumComp( ~=, numne, IntNumNe, RealNumNe)
 operator icon_op func_name(x, y)
    body {
      if (need_ucs(&x) || need_ucs(&y)) {
+         /*
+          * If we have no lhs and one of the params is a simple ascii
+          * string, we can avoid a conversion to ucs.
+          */
+         if (!_lhs) {
+             if (is_ascii_string(&x)) {
+                 if (!cnv:ucs(y, y))
+                     runerr(128, y);
+                 y = UcsBlk(y).utf8;
+                 if (special_test_str (lexcmp(&x, &y) c_comp comp_value))
+                     return;
+                 else
+                     fail;
+             }
+             if (is_ascii_string(&y)) {
+                 if (!cnv:ucs(x, x))
+                     runerr(128, x);
+                 x = UcsBlk(x).utf8;
+                 if (special_test_str (lexcmp(&x, &y) c_comp comp_value))
+                     return;
+                 else
+                     fail;
+             }
+         }
+
          if (!cnv:ucs(x, x))
              runerr(128, x);
          if (!cnv:ucs(y, y))
