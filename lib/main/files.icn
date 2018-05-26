@@ -996,7 +996,7 @@ package class UnixFileSystem(FileSystem)
       local l, t
       l := []
       s ? {
-         put(l, =u"/")
+         put(l, ="/")
          until pos(0) do {
             t := tab(upto('/') | 0)
             if *t > 0 then
@@ -1019,7 +1019,8 @@ package class UnixFileSystem(FileSystem)
    end
 
    public filepath_is_absolute(fp)
-      return fp.l[1] == "/"
+      if fp.l[1] == "/" then
+         return
    end
 
    public filepath_normal(fp)
@@ -1160,7 +1161,8 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public filepath_is_absolute(fp)
-      return fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
+      if fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\" then
+         return
    end
 
    public filepath_normal(fp)
