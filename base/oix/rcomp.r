@@ -300,7 +300,6 @@ LexCmp(lexcmp, SimpleCharCmp)
  * Caseless string comparison
  */
 #begdef CaselessCharCmp(c1, c2)
-    /* Don't use tolower since that is locale dependent. */
     if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
     if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
     if (c1 != c2)
