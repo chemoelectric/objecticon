@@ -713,13 +713,10 @@ procedure ch(c)
    suspend if /c then move(1) else tab(any(c))
 end
 
-# Match the string `s` exactly once.  Note this is equivalent to `=s`,
-# but is preferable since it returns a substring of the string being
-# scanned, rather than `s`.  This will make any string catenation of
-# the result with adjacent matching expressions more efficient.
+# Match the string `s` exactly once.  Note this is equivalent to `=s`.
 #
 procedure str(s)
-   suspend tab(match(s))
+   suspend =s
 end
 
 # Match arbitrary chars to end of string, longest first.
