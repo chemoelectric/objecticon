@@ -197,36 +197,67 @@ function find(s1,s2,i,j)
               }
           }
       } else {
-          if (!cnv:ucs(s1,s1))
-              runerr(128,s1);
+          /*
+           * If x is a simple ascii string, we can avoid a conversion to ucs.
+           */
+          if (is_ascii_string(&s1)) {
 
-          s1_len = UcsBlk(s1).length;
-          /* Special case if s1 is empty string */
-          if (s1_len == 0) {
-              while (cnv_i <= cnv_j) {
-                  suspend C_integer cnv_i;
-                  cnv_i++;
-              }
-          } else {
-              int first, ch;
-              tended char *rest;
-
-              /* Get first char of s1 in "first", and leave the remainder
-               * of s1 after that char in "rest".
-               */
-              rest = StrLoc(UcsBlk(s1).utf8);
-              first = utf8_iter(&rest);
-
-              term = cnv_j - s1_len;
-              p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
-              while (cnv_i <= term) {
-                  int ch = utf8_iter(&p);
-                  if (ch == first) {
-                      /* First char matches, check remainder. */
-                      if (utf8_eq(p, rest, s1_len - 1))
-                          suspend C_integer cnv_i;
+              s1_len = StrLen(s1);
+              /* Special case if s1 is empty string */
+              if (s1_len == 0) {
+                  while (cnv_i <= cnv_j) {
+                      suspend C_integer cnv_i;
+                      cnv_i++;
                   }
-                  cnv_i++;
+              } else {
+                  int first, ch;
+
+                  first = *(unsigned char *)StrLoc(s1);
+                  term = cnv_j - s1_len;
+                  p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+                  while (cnv_i <= term) {
+                      int ch = utf8_iter(&p);
+                      if (ch == first) {
+                          /* First char matches, check remainder. */
+                          if (memcmp(p, StrLoc(s1) + 1, s1_len - 1) == 0)
+                              suspend C_integer cnv_i;
+                      }
+                      cnv_i++;
+                  }
+              }
+
+          } else {
+              if (!cnv:ucs(s1,s1))
+                  runerr(128,s1);
+
+              s1_len = UcsBlk(s1).length;
+              /* Special case if s1 is empty string */
+              if (s1_len == 0) {
+                  while (cnv_i <= cnv_j) {
+                      suspend C_integer cnv_i;
+                      cnv_i++;
+                  }
+              } else {
+                  int first, ch;
+                  tended char *rest;
+
+                  /* Get first char of s1 in "first", and leave the remainder
+                   * of s1 after that char in "rest".
+                   */
+                  rest = StrLoc(UcsBlk(s1).utf8);
+                  first = utf8_iter(&rest);
+
+                  term = cnv_j - s1_len;
+                  p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+                  while (cnv_i <= term) {
+                      int ch = utf8_iter(&p);
+                      if (ch == first) {
+                          /* First char matches, check remainder. */
+                          if (utf8_eq(p, rest, s1_len - 1))
+                              suspend C_integer cnv_i;
+                      }
+                      cnv_i++;
+                  }
               }
           }
       }
@@ -306,28 +337,55 @@ function match(s1,s2,i,j)
            */
           return C_integer cnv_i + StrLen(s1);
       } else {
-          if (!cnv:ucs(s1,s1))
-              runerr(128,s1);
-
           /*
-           * Cannot match unless s2[i:j] is as long as s1.
+           * If x is a simple ascii string, we can avoid a conversion to ucs.
            */
-          if (cnv_j - cnv_i < UcsBlk(s1).length)
-              fail;
+          if (is_ascii_string(&s1)) {
+              /*
+               * Cannot match unless s2[i:j] is as long as s1.
+               */
+              if (cnv_j - cnv_i < StrLen(s1))
+                  fail;
 
-          /*
-           * Compare s1 with s2[i:j] for *s1 characters; fail if an
-           *  inequality is found.
-           */
-          str1 = StrLoc(UcsBlk(s1).utf8);
-          str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
-          if (!utf8_eq(str1, str2, UcsBlk(s1).length))
-              fail;
+              /*
+               * Compare s1 with s2[i:j] for *s1 characters; fail if an
+               *  inequality is found.
+               */
+              str1 = StrLoc(s1);
+              str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+              if (memcmp(str1, str2, StrLen(s1)) != 0)
+                  fail;
 
-          /*
-           * Return position of end of matched string in s2.
-           */
-          return C_integer cnv_i + UcsBlk(s1).length;
+              /*
+               * Return position of end of matched string in s2.
+               */
+              return C_integer cnv_i + StrLen(s1);
+
+          } else {
+          
+              if (!cnv:ucs(s1,s1))
+                  runerr(128,s1);
+
+              /*
+               * Cannot match unless s2[i:j] is as long as s1.
+               */
+              if (cnv_j - cnv_i < UcsBlk(s1).length)
+                  fail;
+
+              /*
+               * Compare s1 with s2[i:j] for *s1 characters; fail if an
+               *  inequality is found.
+               */
+              str1 = StrLoc(UcsBlk(s1).utf8);
+              str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+              if (!utf8_eq(str1, str2, UcsBlk(s1).length))
+                  fail;
+
+              /*
+               * Return position of end of matched string in s2.
+               */
+              return C_integer cnv_i + UcsBlk(s1).length;
+          }
       }
    }
 end

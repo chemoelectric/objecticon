@@ -525,13 +525,15 @@ struct b_proc *clone_b_proc(struct b_proc *bp);
 void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
-int isflag(dptr d);
+int is_flag(dptr d);
+int is_ascii_string(dptr d);
 char *datatofile(dptr data);
 
 void *safe_calloc(size_t m, size_t n);
 void *safe_zalloc(size_t size);
 void *safe_malloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
+void *padded_malloc(size_t size);
 
 void do_op_cat(void);
 void do_op_conj(void);

@@ -19,7 +19,8 @@ struct header {
     word Snames;		/* location of names of statics */
     word TCaseTables;		/* location of tcase tables */
     word Constants;             /* location of constant descriptors */
-    word Strcons;		/* location of identifier table */
+    word Strcons;		/* location of string table */
+    word AsciiStrcons;		/* location of ascii-only part of string table */
     word Filenms;		/* location of ipc/file name table */
     word Linenums;		/* location of ipc/line number table */
     word config[16];		/* icode version */

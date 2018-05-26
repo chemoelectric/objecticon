@@ -376,9 +376,12 @@ class FileDialog(Dialog)
    #
    # Set the initial file/directory from a whole path.
    # 
+   # :Parameters :
+   # :  `s` - something convertible to a `FilePath`.
+   #
    public set_path(s)
       local l
-      l := FilePath(s).canonical()
+      l := need_FilePath(s).canonical()
       self.init_dirs := [l.parent().str()]
       self.init_files := [l.get(-1)]
       return self
@@ -457,7 +460,7 @@ class FileDialog(Dialog)
    end
 
    public on_dlist()
-      goto_dir(loaded_dir_path.child(dlist.object_get_selections()[1].name).str())
+      goto_dir(loaded_dir_path.child(dlist.object_get_selections()[1].name))
    end
 
    public update_file_label()
@@ -529,7 +532,7 @@ class FileDialog(Dialog)
 
    public on_up_button(ev)
       if loaded_dir_path.size() > 1 then
-         goto_dir(loaded_dir_path.parent().str())
+         goto_dir(loaded_dir_path.parent())
       else
          msg("At root")
    end
@@ -666,7 +669,7 @@ class FileDialog(Dialog)
       local t, ds
       # Use a temporary variable here so that we save_pos() before
       # setting loaded_dir_path.
-      t := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
+      t := need_FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
       save_pos()
       loaded_dir_path := t
       trail.set_path(loaded_dir_path)

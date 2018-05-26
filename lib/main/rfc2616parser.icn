@@ -156,7 +156,7 @@ class RFC2616Parser()
       local key, val
       key := parse_atom()
       next_token()
-      =u"=" | throw("= expected")
+      ="=" | throw("= expected")
       next_token()
       val := parse_value()
       o.set_parameter(key, val)
@@ -173,14 +173,14 @@ class RFC2616Parser()
 
       ty := parse_type()
       next_token()
-      =u"/" | throw("/ expected")
+      ="/" | throw("/ expected")
       next_token()
       st := parse_subtype()
       ct := ContentType(ty, st)
 
       repeat {
          next_token()
-         =u";" | break
+         =";" | break
          next_token()
          parse_parameter(ct)
       }
@@ -212,11 +212,11 @@ class RFC2616Parser()
       local s, lang, cs
       cs := parse_charset()
       next_token()
-      =u"'" | throw("' expected")
+      ="'" | throw("' expected")
       next_token()
       lang := tab(many(LANGUAGE_CHAR))
       next_token()
-      =u"'" | throw("' expected")
+      ="'" | throw("' expected")
       next_token()
       s := parse_value_chars()
       return ExtValue(cs, lang, s)
@@ -276,12 +276,12 @@ class RFC2616Parser()
       key := parse_atom()
       if key[-1] == "*" then {
          next_token()
-         =u"=" | throw("= expected")
+         ="=" | throw("= expected")
          next_token()
          val := parse_ext_value()
       } else {
          next_token()
-         =u"=" | throw("= expected")
+         ="=" | throw("= expected")
          next_token()
          val := parse_value()
       }
@@ -301,7 +301,7 @@ class RFC2616Parser()
 
       repeat {
          next_token()
-         =u";" | break
+         =";" | break
          next_token()
          parse_disposition_parm(cd)
       }

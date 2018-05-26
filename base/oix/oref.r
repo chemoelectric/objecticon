@@ -32,12 +32,10 @@ operator ! bang(underef x -> dx)
 
    type_case dx of {
      string : {
-            char ch;
             if (is:variable(x)) {
                 if (_rval) {
                     for (i = 1; i <= StrLen(dx); i++) {
-                        ch = *(StrLoc(dx) + i - 1);
-                        suspend string(1, &allchars[ch & 0xFF]);
+                        suspend string(1, StrLoc(dx) + i - 1);
                         deref(&x, &dx);
                         if (!is:string(dx)) 
                             runerr(103, dx);
@@ -52,8 +50,7 @@ operator ! bang(underef x -> dx)
                 }
             } else {
                 for (i = 1; i <= StrLen(dx); i++) {
-                    ch = *(StrLoc(dx) + i - 1);
-                    suspend string(1, &allchars[ch & 0xFF]);
+                    suspend string(1, StrLoc(dx) + i - 1);
                 }
             }
      }
@@ -174,16 +171,13 @@ operator ! bang(underef x -> dx)
 
        default: {
            if (cnv:string(dx,dx)) {
-               char ch;
                /*
                 * A (converted or non-variable) string is being banged.
                 * Loop through the string suspending simple one character
                 *  substrings.
                 */
-               for (i = 1; i <= StrLen(dx); i++) {
-                  ch = *(StrLoc(dx) + i - 1);
-                  suspend string(1, &allchars[ch & 0xFF]);
-                  }
+               for (i = 1; i <= StrLen(dx); i++)
+                  suspend string(1, StrLoc(dx) + i - 1);
             }
          else
             runerr(116, dx);
@@ -629,7 +623,6 @@ operator [] subsc(underef x -> dx,y)
        }
 
       default: {
-         char ch;
          word i;
 
          /*
@@ -674,8 +667,7 @@ operator [] subsc(underef x -> dx,y)
               * back into. Just return a string containing the selected
               * character.
               */
-             ch = *(StrLoc(dx)+i-1);
-             return string(1, &allchars[ch & 0xFF]);
+             return string(1, StrLoc(dx) + i - 1);
          }
       }
     }
@@ -690,7 +682,6 @@ function back(underef x -> dx)
 
    type_case dx of {
      string : {
-            char ch;
             if (is:variable(x)) {
                 if (_rval) {
                     for (i = StrLen(dx); i > 0; i--) {
@@ -699,8 +690,7 @@ function back(underef x -> dx)
                             if (i == 0)
                                 break;
                         }
-                        ch = *(StrLoc(dx) + i - 1);
-                        suspend string(1, &allchars[ch & 0xFF]);
+                        suspend string(1, StrLoc(dx) + i - 1);
                         deref(&x, &dx);
                         if (!is:string(dx)) 
                             runerr(103, dx);
@@ -719,10 +709,8 @@ function back(underef x -> dx)
                     }
                 }
             } else {
-                for (i = StrLen(dx); i > 0; i--) {
-                    ch = *(StrLoc(dx) + i - 1);
-                    suspend string(1, &allchars[ch & 0xFF]);
-                }
+                for (i = StrLen(dx); i > 0; i--)
+                    suspend string(1, StrLoc(dx) + i - 1);
            }
       }
 
@@ -809,16 +797,13 @@ function back(underef x -> dx)
 
        default: {
            if (cnv:string(dx,dx)) {
-               char ch;
                /*
                 * A (converted or non-variable) string is being banged.
                 * Loop through the string suspending simple one character
                 *  substrings.
                 */
-               for (i = StrLen(dx); i > 0; i--) {
-                  ch = *(StrLoc(dx) + i - 1);
-                  suspend string(1, &allchars[ch & 0xFF]);
-                  }
+               for (i = StrLen(dx); i > 0; i--)
+                  suspend string(1, StrLoc(dx) + i - 1);
             }
          else
             runerr(116, dx);

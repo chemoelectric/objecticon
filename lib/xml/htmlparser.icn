@@ -239,7 +239,7 @@ class HtmlParser()
    # Parse the current input into an `Node`
    #
    private parse_node()
-      return if =u"<!" then {
+      return if ="<!" then {
          if tab(caseless_match(u"doctype")) then
             parse_doctype()
          else
@@ -363,11 +363,11 @@ class HtmlParser()
       res.name := tab(many(IDCHARS))
 
       tab(many(SPACE))
-      if =u"SYSTEM" then {
+      if ="SYSTEM" then {
          res.external_id := ExternalID()
          tab(many(SPACE))
          res.external_id.system_id := parse_system_literal()
-      } else if =u"PUBLIC" then {
+      } else if ="PUBLIC" then {
          res.external_id := ExternalID()
          tab(many(SPACE))
          res.external_id.public_id := parse_pubid_literal()
@@ -410,11 +410,11 @@ class HtmlParser()
    private parse_comment()
       local res
       res := Comment()
-      if =(u">" | u"->" | u"-->" | u"--->") then
+      if =(">" | "->" | "-->" | "--->") then
          res.comment := move(0)  # Empty string, same type as &subject
       else {
-         =u"--"
-         res.comment := tab(find(u"-->") | 0)
+         ="--"
+         res.comment := tab(find("-->") | 0)
          move(3)
       }
       return res
@@ -427,22 +427,22 @@ class HtmlParser()
       local res, key, c, s, value
 
       res := Tag()
-      =u"<" | fail
-      if =u"/" then {
+      ="<" | fail
+      if ="/" then {
          res.set_closed()
          s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
          res.set_name(s)
          tab(many(SPACE))
-         =u">" | fail
+         =">" | fail
       } else {
          s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
          res.set_name(s)
          repeat {
             tab(upto(KEYINTRO ++ '/>')) | fail
-            if =u">" then
+            if =">" then
                break
-            if =u"/" then {
-               if =u">" then {
+            if ="/" then {
+               if =">" then {
                   res.set_empty()
                   break
                }
@@ -452,7 +452,7 @@ class HtmlParser()
             # Should now be at a KEYINTRO, which is a subset of KEYCHARS
             key := tab(many(KEYCHARS))
             tab(many(SPACE))
-            if =u"=" then {
+            if ="=" then {
                tab(many(SPACE))
                if any(DELIM) then {
                   c := move(1)
@@ -523,7 +523,7 @@ class HtmlParser()
    #
    private static parse_entity()
       local i
-      =u"&"
+      ="&"
       i := (if any('#') then {
          move(1)
          if any('x') then {
@@ -533,7 +533,7 @@ class HtmlParser()
             integer(tab(many(&digits)))
       } else
          member(ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
-      =u";" | fail
+      =";" | fail
       return i
    end
 

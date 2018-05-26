@@ -28,6 +28,7 @@ char *keyword_names[] = {
 
 static int nstatics = 0;               /* Running count of static variables */
 static int ntcase = 0;                 /* Running count of tcase tables */
+static long codeoffset;                /* ftell() for start of code */
 
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
@@ -62,6 +63,16 @@ int const_desc_count;
 #define ln(n)        (log((double)n))
 #define bdzero(dest,l)  memset(dest, '\0', (l) * sizeof(DIGIT))
 
+/* A list of patches needed for utf8 ucs string locations */
+struct utf8_patch {
+    word pc;                         /* offset to write patch to */ 
+    struct centry *ce;               /* constant entry for the ucs */
+    struct strconst *sc;             /* string constant entry giving the offset to patch */
+    struct utf8_patch *next;
+};
+struct utf8_patch *utf8_patch_list;
+
+
 /*
  * Prototypes.
  */
@@ -77,6 +88,9 @@ static void	patchrefs       (void);
 static void     lemitcon(struct centry *ce);
 static void outword(word oword);
 static struct centry *inst_sdescrip(char *s);
+static void gencode_func(struct lfunction *f);
+static void gencode(void);
+static int is_ascii_string(char *p, int n);
 
 
 static DIGIT muli1	(DIGIT *u, word k, int c, DIGIT *w, word n);
@@ -127,7 +141,7 @@ struct ipc_line {
 };
 
 static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
-static int strconst_offset;
+static int strconst_offset, ascii_offset, ascii_only;
 static struct centry *constblock_hash[128];
 static void outbytex(char b, char *fmt, ...);
 static void outuint16(uint16_t s, char *fmt, ...);
@@ -297,6 +311,14 @@ static struct strconst *inst_strconst(char *s, int len)
     while (p && p->s != s)
         p = p->b_next;
     if (!p) {
+        if (is_ascii_string(s, len)) {
+            if (!ascii_only)
+                quit("Attempted to insert ascii string into strconst table at wrong time");
+        } else {
+            if (ascii_only)
+                quit("Attempted to insert non-ascii string into strconst table at wrong time");
+        }
+
         p = Alloc(struct strconst);
         p->b_next = strconst_hash[i];
         strconst_hash[i] = p;
@@ -312,9 +334,6 @@ static struct strconst *inst_strconst(char *s, int len)
     }
     return p;
 }
-
-static void gencode_func(struct lfunction *f);
-static void gencode(void);
 
 void generate_code()
 {
@@ -341,8 +360,13 @@ void generate_code()
     if (ferror(outfile) != 0)
         equit("Unable to write to icode file");
 
+    codeoffset = ftell(outfile);
+    if (codeoffset < 0)
+        equit("Failed to ftell");
+
     nstatics = 0;
     strconst_offset = 0;
+
     first_strconst = last_strconst = 0;
     ArrClear(strconst_hash);
     curr_file = last_fnmtbl_filen = 0;
@@ -354,12 +378,6 @@ void generate_code()
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     codep = codeb = safe_calloc(maxcode, 1);
-
-    /*
-     * This ensures empty strings point to the start of the string region,
-     * which is a bit tidier than pointing to some arbitrary offset.
-     */
-    inst_strconst(empty_string, 0);
 
     gencode();
 
@@ -434,6 +452,14 @@ static void gencode()
     }
 }
 
+static int is_ascii_string(char *p, int n)
+{
+    while (n--) {
+        if (*p++ & 0x80)
+            return 0;
+    }
+    return 1;
+}
 
 static void synch_file()
 {
@@ -619,28 +645,39 @@ static void lemitcon(struct centry *ce)
     }
     else if (ce->c_flag & F_UcsLit) {
         word index_step, n_offs, offset_bits, n_off_words, length, i, j, *off;
-        struct strconst *utf8;
         char *p, *e;
+        struct utf8_patch *patch;
 
         ce->pc = pc;
-        /* Install the uft8 data */
-        utf8 = inst_strconst(ce->data, ce->length);
 
         /* Calculate the length in unicode chars */
-        p = utf8->s;
-        e = p + utf8->len;
+        p = ce->data;
+        e = p + ce->length;
         length = 0;
         while (p < e) {
             p += UTF8_SEQ_LEN(*p);
             ++length;
         }
 
-        calc_ucs_index_settings(utf8->len, length, &index_step, &n_offs, &offset_bits, &n_off_words);
+        calc_ucs_index_settings(ce->length, length, &index_step, &n_offs, &offset_bits, &n_off_words);
 
         outwordx(T_Ucs, "T_Ucs");
         outwordx((9 + n_off_words) * WordSize, "   Block size");
         outwordx(length, "   Length");
-        outstr(utf8, "   UTF-8 string");
+
+        outwordx(ce->length, "   UTF-8 length");
+
+        /* Add a patch entry to the list - we need to come back later
+         * and fill in the utf8 string offset
+         */
+        patch = safe_malloc(sizeof(struct utf8_patch));
+        patch->pc = pc;
+        patch->ce = ce;
+        patch->next = utf8_patch_list;
+        utf8_patch_list = patch;
+
+        outwordx(0, "   UTF-8 string");
+
         outwordx(n_offs, "   N left indexed");
         outwordx(n_offs, "   N right indexed");
         outwordx(offset_bits, "   Offset bits");
@@ -649,13 +686,13 @@ static void lemitcon(struct centry *ce)
         /* This mirrors the loop in fmisc.r (get_ucs_off) */
         if (index_step > 0) {
             off = safe_malloc(n_off_words * WordSize);
-            p = utf8->s;
+            p = ce->data;
             i = j = 0;
             while (i < length - 1) {
                 p += UTF8_SEQ_LEN(*p);
                 ++i;
                 if (i % index_step == 0)
-                    set_ucs_slot(off, offset_bits, j++, p - utf8->s);
+                    set_ucs_slot(off, offset_bits, j++, p - ce->data);
             }
             for (i = 0; i < n_off_words; ++i)
                 outwordx(off[i],   "   Offset data %d", i);
@@ -1481,6 +1518,7 @@ static void gentables()
     struct ipc_fname *fnptr;
     struct ipc_line *lnptr;
     struct centry *ce;
+    struct utf8_patch *pe;
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -1740,6 +1778,40 @@ static void gentables()
     }
     flushcode();
 
+    /*
+     * Install non-ascii string constants, from the ucs utf-8 strings
+     * and all other strings, which are stored in the const descriptor
+     * list.
+     */
+    ascii_only = 0;
+    for (pe = utf8_patch_list; pe; pe = pe->next) {
+        if (!is_ascii_string(pe->ce->data, pe->ce->length))
+            pe->sc = inst_strconst(pe->ce->data, pe->ce->length);
+    }
+    for (ce = const_desc_first; ce; ce = ce->d_next) {
+        if (ce->c_flag & F_StrLit && !is_ascii_string(ce->data, ce->length))
+            inst_strconst(ce->data, ce->length);
+    }
+
+    /*
+     * Now every string inserted must be ascii.
+     */
+    ascii_offset = strconst_offset;
+    ascii_only = 1;
+
+    /*
+     * This ensures empty strings point to the start of the ascii string region,
+     * which is a bit tidier than pointing to some arbitrary offset.
+     */
+    inst_strconst(empty_string, 0);
+
+    /*
+     * Now the ascii ucs utf8 strings are installed.  The ascii
+     * strings are installed in the for loop below.
+     */
+    for (pe = utf8_patch_list; pe; pe = pe->next)
+        pe->sc = inst_strconst(pe->ce->data, pe->ce->length);
+
     if (Dflag)
         fprintf(dbgfile, "\n# Constant descriptors\n");
     hdr.Constants = pc;
@@ -1773,9 +1845,10 @@ static void gentables()
     flushcode();
     
     if (Dflag)
-        fprintf(dbgfile, "\n# string constants table\n");
+        fprintf(dbgfile, "\n# String constants table\n");
 
     hdr.Strcons = pc;
+    hdr.AsciiStrcons = hdr.Strcons + ascii_offset;
     for (sp = first_strconst; sp; sp = sp->next) {
         if (sp->len > 0) {
             if (Dflag) {
@@ -1808,6 +1881,20 @@ static void gentables()
     flushcode();
 
     /*
+     * Fill in ucs utf-8 string addresses.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n# Patched UTF-8 string locations\n");
+    for (pe = utf8_patch_list; pe; pe = pe->next) {
+        if (fseek(outfile, codeoffset + pe->pc, SEEK_SET) < 0)
+            equit("Cannot seek to patch location");
+        if (Dflag)
+            fprintf(dbgfile, PadWordFmt ": S+" PadWordFmt "\n", pe->pc, pe->sc->offset);
+        if (fwrite((char *)&pe->sc->offset, 1, WordSize, outfile) != WordSize)
+            equit("Cannot patch icode file");
+    }
+
+    /*
      * Output icode file header.
      */
     hdr.icodesize = pc;
@@ -1834,10 +1921,12 @@ static void gentables()
         fprintf(dbgfile, "linenums:         " XWordFmt "\n", hdr.Linenums);
         fprintf(dbgfile, "constants:        " XWordFmt "\n", hdr.Constants);
         fprintf(dbgfile, "strcons:          " XWordFmt "\n", hdr.Strcons);
+        fprintf(dbgfile, "asciistrcons:     " XWordFmt "\n", hdr.AsciiStrcons);
         fprintf(dbgfile, "config:           %s\n", (char*)hdr.config);
     }
 
-    fseek(outfile, scriptsize, 0);
+    if (fseek(outfile, scriptsize, SEEK_SET) < 0)
+        equit("Cannot seek to header location");
 
     if (fwrite((char *)&hdr, 1, sizeof(hdr), outfile) != sizeof(hdr))
         equit("Cannot write icode file");
@@ -2305,7 +2394,8 @@ static void writescript()
                    /* Found enough $ chars in a row; go back and
                     * insert the oixloc string.
                     */
-                   fseek(outfile, -dc, SEEK_END);
+                   if (fseek(outfile, -dc, SEEK_END) < 0)
+                       equit("Failed to seek");
                    fputs(oixloc, outfile);
                    fputc(0, outfile);
                    wloc = 1;

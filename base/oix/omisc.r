@@ -92,7 +92,9 @@ end
 operator = tabmat(x)
    body {
       char *s1, *s2;
-      word i, j, l;
+      word i, j;
+      tended struct descrip sub;
+
       /*
        * Make a copy of &pos.
        */
@@ -100,46 +102,78 @@ operator = tabmat(x)
 
       if (is:ucs(k_subject)) {
           /*
-           * x must be a string.
+           * If x is a simple ascii string, we can avoid a conversion to ucs.
            */
-          if (!cnv:ucs(x,x))
-              runerr(128, x);
-
-          /*
-           * Fail if &subject[&pos:0] is not of sufficient length to contain x.
-           */
-          j = UcsBlk(k_subject).length - i + 1;
-          if (j < UcsBlk(x).length)
-              fail;
-
-          /*
-           * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
-           *  basis and fail if s1 doesn't match s2 for *s1 characters.
-           */
-          s1 = StrLoc(UcsBlk(x).utf8);
-          s2 = ucs_utf8_ptr(&UcsBlk(k_subject), i);
-          l = UcsBlk(x).length;
-          while (l-- > 0) {
-              if (utf8_iter(&s1) != utf8_iter(&s2))
+          if (is_ascii_string(&x)) {
+              /*
+               * Fail if &subject[&pos:0] is not of sufficient length to contain x.
+               */
+              j = UcsBlk(k_subject).length - i + 1;
+              if (j < StrLen(x))
                   fail;
+
+              /*
+               * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
+               *  basis and fail if s1 doesn't match s2 for *s1 characters.
+               */
+              s1 = StrLoc(x);
+              s2 = ucs_utf8_ptr(&UcsBlk(k_subject), i);
+              if (memcmp(s1, s2, StrLen(x)) != 0)
+                  fail;
+
+              /*
+               * Increment &pos to tab over the matched string.
+               */
+              k_pos += StrLen(x);
+
+              /*
+               * Suspend the matched string.
+               */
+              if (_lhs) {
+                  MakeStr(s2, StrLen(x), &sub);
+                  suspend ucs(make_ucs_block(&sub, StrLen(x)));
+              } else
+                  suspend;
+
+          } else {
+
+              /*
+               * x must be a ucs.
+               */
+              if (!cnv:ucs(x,x))
+                  runerr(128, x);
+
+              /*
+               * Fail if &subject[&pos:0] is not of sufficient length to contain x.
+               */
+              j = UcsBlk(k_subject).length - i + 1;
+              if (j < UcsBlk(x).length)
+                  fail;
+
+              /*
+               * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
+               *  basis and fail if s1 doesn't match s2 for *s1 characters.
+               */
+              s1 = StrLoc(UcsBlk(x).utf8);
+              s2 = ucs_utf8_ptr(&UcsBlk(k_subject), i);
+              if (!utf8_eq(s1, s2, UcsBlk(x).length))
+                  fail;
+
+              /*
+               * Increment &pos to tab over the matched string.
+               */
+              k_pos += UcsBlk(x).length;
+
+              /*
+               * Suspend the matched string.
+               */
+              if (_lhs) {
+                  MakeStr(s2, StrLen(UcsBlk(x).utf8), &sub);
+                  suspend ucs(make_ucs_block(&sub, UcsBlk(x).length));
+              } else
+                  suspend;
           }
 
-          /*
-           * Increment &pos to tab over the matched string and suspend the
-           *  matched string.
-           */
-          l = UcsBlk(x).length;
-          k_pos += l;
-
-          suspend x;
-
-          /*
-           * tabmat has been resumed, restore &pos and fail.
-           */
-          if (i > UcsBlk(k_subject).length + 1)
-              runerr(205, kywd_pos);
-          else
-              k_pos = i;
       } else {
           /*
            * x must be a string.
@@ -160,29 +194,35 @@ operator = tabmat(x)
            */
           s1 = StrLoc(x);
           s2 = StrLoc(k_subject) + i - 1;
-          l = StrLen(x);
-          while (l-- > 0) {
-              if (*s1++ != *s2++)
-                  fail;
-          }
+          if (memcmp(s1, s2, StrLen(x)) != 0)
+              fail;
 
           /*
-           * Increment &pos to tab over the matched string and suspend the
-           *  matched string.
+           * Increment &pos to tab over the matched string.
            */
-          l = StrLen(x);
-          k_pos += l;
-
-          suspend x;
+          k_pos += StrLen(x);
 
           /*
-           * tabmat has been resumed, restore &pos and fail.
+           * Suspend the matched string.
            */
-          if (i > StrLen(k_subject) + 1)
-              runerr(205, kywd_pos);
-          else 
-              k_pos = i;
+          suspend string(StrLen(x), s2);
       }
+
+      /*
+       * tabmat has been resumed, restore &pos and fail.  Note that the type of
+       * &subject may have changed since we suspended.
+       */
+
+      if (is:string(k_subject))
+          j = StrLen(k_subject);
+      else
+          j = UcsBlk(k_subject).length;
+
+      if (i > j + 1)
+          runerr(205, kywd_pos);
+      else 
+          k_pos = i;
+
       fail;
    }
 end

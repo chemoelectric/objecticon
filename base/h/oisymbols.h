@@ -151,7 +151,8 @@ struct oisymbols {
     void (*add_range)(struct rangeset *cs, int from, int to);
     long (*millisec)(void);
     struct descrip (*block_to_descriptor)(union block *ptr);
-    int (*isflag)(dptr d);
+    int (*is_flag)(dptr d);
+    int (*is_ascii_string)(dptr d);
     unsigned int (*hashcstr)(char *s);
     char * (*get_hostname)(void);
     int (*is_flowterm_tty)(FILE *f);
@@ -169,6 +170,7 @@ struct oisymbols {
     void * (*safe_malloc)(size_t size);
     void * (*safe_realloc)(void *ptr, size_t size);
     char * (*salloc)(char *s);
+    void * (*padded_malloc)(size_t size);
 #if MSWIN32
     void (*ucs_to_wchar1)(WCHAR *buff, dptr str, int nullterm);
     WCHAR * (*ucs_to_wchar)(dptr str, int nullterm);

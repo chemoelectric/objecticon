@@ -625,6 +625,7 @@ __declspec(dllexport)  \
 #define n_statics (curpstate->NStatics)
 #define n_constants (curpstate->NConstants)
 #define strcons (curpstate->Strcons)
+#define asciistrcons (curpstate->AsciiStrcons)
 #define estrcons (curpstate->Estrcons)
 #define filenms (curpstate->Filenms)
 #define efilenms (curpstate->Efilenms)

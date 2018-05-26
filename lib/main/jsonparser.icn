@@ -48,9 +48,9 @@ class JSONParser()
 
    private parse_number()
       local s
-      s := (=u"-" | "") || 
-         (=u"0" | (tab(any('123456789')) || (tab(many(&digits)) | ""))) ||
-         ((=u"." || tab(many(&digits))) | "") ||
+      s := (="-" | "") || 
+         (="0" | (tab(any('123456789')) || (tab(many(&digits)) | ""))) ||
+         ((="." || tab(many(&digits))) | "") ||
          ((=(u"e" | u"E") || (tab(any('+\-')) | "") || tab(many(&digits))) | "") | err("Invalid number")
       return numeric(s) | err("Number out of range")
    end
@@ -58,7 +58,7 @@ class JSONParser()
    private parse_string()
       local res
       # Shortcut for common case
-      if =u"\"" & res := tab(many(UNESCAPED_CHAR)) & =u"\"" then
+      if ="\"" & res := tab(many(UNESCAPED_CHAR)) & ="\"" then
          return res
       return use {
          res := RamStream(),
@@ -68,14 +68,14 @@ class JSONParser()
 
    private parse_string1(res)
       local t, ch, i
-      =u"\""
+      ="\""
       repeat {
          res.out(tab(many(UNESCAPED_CHAR)))
          if pos(0) then
             err("Unclosed quote")
-         if =u"\"" then
+         if ="\"" then
             break
-         if =u"\\" then {
+         if ="\\" then {
             ch := move(1) | err("Unclosed quote")
             res.out(case string(ch) of {
                "\"": "\""
@@ -104,11 +104,11 @@ class JSONParser()
    end
 
    private parse_value()
-      return if =u"false" then
+      return if ="false" then
          false
-      else if =u"true" then
+      else if ="true" then
          true
-      else if =u"null" then
+      else if ="null" then
          null
       else if any('[') then
          parse_array()
@@ -129,16 +129,16 @@ class JSONParser()
    private parse_array()
       local res
       res := []
-      =u"["
+      ="["
       next_token()
-      if =u"]" then
+      if ="]" then
          return res
       repeat {
          put(res, parse_value())
          next_token()
-         if =u"]" then
+         if ="]" then
             return res
-         =u"," | err(", expected")
+         ="," | err(", expected")
          next_token()
       }
       return res
@@ -147,21 +147,21 @@ class JSONParser()
    private parse_object()
       local res, m, v
       res := table()
-      =u"{"
+      ="{"
       next_token()
-      if =u"}" then
+      if ="}" then
          return res
       repeat {
          m := parse_string()
          next_token()
-         =u":" | err(": expected")
+         =":" | err(": expected")
          next_token()
          v := parse_value()
          next_token()
          insert(res, m, v)
-         if =u"}" then
+         if ="}" then
             return res
-         =u"," | err(", expected")
+         ="," | err(", expected")
          next_token()
       }
       return res

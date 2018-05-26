@@ -152,7 +152,7 @@ end
 
 procedure parse_entity()
    local i
-   =u"&"
+   ="&"
    i := (if any('#') then {
       move(1)
       if any('x') then {
@@ -162,7 +162,7 @@ procedure parse_entity()
          integer(tab(many(&digits)))
    } else
       member(HtmlParser.ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
-   =u";" | fail
+   =";" | fail
    return i
 end
 

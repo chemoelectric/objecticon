@@ -2039,9 +2039,35 @@ void buffnstr(dptr d, char **s, ...)
     va_end(ap);
 }
 
-int isflag(dptr d)
+/*
+ * Return true iff *d is a flag (either &null or &yes).
+ */
+int is_flag(dptr d)
 {
     return is:null(*d) || is:yes(*d);
+}
+
+/*
+ * Return true iff *d is a string, and its characters are all ascii.
+ */
+int is_ascii_string(dptr d)
+{
+    word n;
+    char *s;
+    struct progstate *p;
+    if (!is:string(*d))
+        return 0;
+    s = StrLoc(*d);
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->AsciiStrcons, s, p->Estrcons))
+            return 1;
+    }
+    n = StrLen(*d);
+    while (n--) {
+        if (*s++ & 0x80)
+            return 0;
+    }
+    return 1;
 }
 
 /*

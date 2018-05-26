@@ -4,8 +4,10 @@ import
    lang,
    util,
    net,
+   posix,
    ipl.random,
-   ipl.scan
+   ipl.scan,
+   ipl.pdco(List)
 
 #
 # This class has several static methods which provide
@@ -752,7 +754,7 @@ package abstract class FileSystem()
    public abstract get_path_list(s)
    public abstract filepath_str(fp)
    public abstract filepath_is_absolute(fp)
-   public abstract filepath_canonical(fp)
+   public abstract filepath_normal(fp)
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
    public abstract standard_case(s)
@@ -783,6 +785,16 @@ class ListEntry()
       self.stat := stat
       return
    end
+end
+
+# Helper procedure to convert x to a `FilePath` (using its constructor),
+# and signal a runerr if that is not possible.
+#
+# :Parameters :
+# :  `x` - something convertible to a `FilePath`.
+#
+procedure need_FilePath(x)
+   return if is(x, FilePath) then x else FilePath(x)
 end
 
 #
@@ -832,23 +844,19 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Returns the path formed by appending the elements of this path to
-   # the elements of `other`.  `other` must be a list or another
-   #`FilePath`.
+   # Returns the path formed by appending the elements of `other` to
+   # this path.  `other` must be something convertible to a `FilePath`.
    #
    public append(other)
-      return if is(other, FilePath) then
-         from_list(l ||| other.l)
-      else
-         from_list(l ||| other)
+      return from_list(l ||| need_FilePath(other).l)
    end
 
    #
    # Takes a variable arguments list, and returns the path formed by
-   # appending the elements of this path to that list.
+   # appending the elements of that list to this path.
    #
    public walk(a[])
-      return from_list(l ||| a)
+      return from_list(List{ !l | need_text(!a) })
    end
 
    #
@@ -868,7 +876,7 @@ class FilePath(ObjectOutput)
    # element `s`.
    #
    public child(s)
-      return from_list(l ||| [s])
+      return from_list(l ||| [need_text(s)])
    end
 
    #
@@ -878,7 +886,7 @@ class FilePath(ObjectOutput)
    public sibling(s)
       local t
       t := copy(l)
-      t[-1] := s | fail
+      t[-1] := need_text(s) | fail
       return from_list(t)
    end
 
@@ -886,17 +894,18 @@ class FilePath(ObjectOutput)
    # Return a path which represents the absolute path of this path.
    # `other` is an optional `FilePath` being the directory with which
    # to calculate the absolute path; by default it is the current
-   # working directory.
+   # working directory, or, if that is not evaluable, the first root
+   # directory.
    #
    public absolute(other)
       return if is_absolute() then
          self
       else {
          other := if /other then 
-            FilePath(Files.getcwd())
+            FilePath(Files.getcwd() | Files.get_roots())
          else
-            other.absolute()
-         Files.FS.filepath_absolute(self, \other)
+            need_FilePath(other).absolute()
+         Files.FS.filepath_absolute(self, other)
       }
    end
 
@@ -934,7 +943,15 @@ class FilePath(ObjectOutput)
    # path and removing any redundant path elements.
    #
    public canonical()
-      return Files.FS.filepath_canonical(absolute())
+      return Files.FS.filepath_normal(absolute())
+   end
+
+   #
+   # Normalize a path, which means removing any redundant path
+   # elements.
+   #
+   public normal()
+      return Files.FS.filepath_normal(self)
    end
 
    #
@@ -962,11 +979,7 @@ class FilePath(ObjectOutput)
    # strings.  Always succeeds.
    #
    public str_path()
-      local s, t
-      t := []
-      every s := !l do
-         put(t, string(s))
-      return from_list(t)
+      return from_list(List{ string(!l) })
    end
 
    #
@@ -974,7 +987,7 @@ class FilePath(ObjectOutput)
    # `Files.file_to_url()`, applied to the absolute path converted
    # to string.
    #
-   public to_url(f)
+   public to_url()
       return Files.file_to_url(absolute().str())
    end
 
@@ -1008,7 +1021,7 @@ class FilePath(ObjectOutput)
       else if is(x, FilePath) then
          x.l
       else if type(x) == "list" then
-         copy(x)
+         List{ need_text(!x) }
       else
          runerr("text, list or FilePath expected", x)
       return
@@ -1155,7 +1168,7 @@ package class UnixFileSystem(FileSystem)
       local l, t
       l := []
       s ? {
-         put(l, =u"/")
+         put(l, ="/")
          until pos(0) do {
             t := tab(upto('/') | 0)
             if *t > 0 then
@@ -1178,10 +1191,11 @@ package class UnixFileSystem(FileSystem)
    end
 
    public filepath_is_absolute(fp)
-      return fp.l[1] == "/"
+      if fp.l[1] == "/" then
+         return
    end
 
-   public filepath_canonical(fp)
+   public filepath_normal(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1189,8 +1203,12 @@ package class UnixFileSystem(FileSystem)
             next
          else if e == ".." then {
             # /.. -> /
-            if *r > 1 then
-               pull(r)
+            (*r = 1 & filepath_is_absolute(fp)) | {
+               if *r = 0 | (r[-1] == "..") then
+                  put(r, e)
+               else
+                  pull(r)
+            }
          } else
             put(r, e)
       }
@@ -1210,7 +1228,7 @@ package class UnixFileSystem(FileSystem)
    end
 
    public get_home()
-      return env_string("HOME")
+      return env_string("HOME") | System.getpw(System.getuid()).dir | get_temp()
    end
 
    public get_temp()
@@ -1281,7 +1299,7 @@ end
 
 package class Plan9FileSystem(UnixFileSystem)
    public get_home()
-      return env_string("home")
+      return env_string("home") | get_temp()
    end
 
    public get_temp()
@@ -1363,10 +1381,11 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public filepath_is_absolute(fp)
-      return fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
+      if fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\" then
+         return
    end
 
-   public filepath_canonical(fp)
+   public filepath_normal(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1374,8 +1393,12 @@ package class WindowsFileSystem(FileSystem)
             next
          else if e == ".." then {
             # Avoid, eg, c:\.. -> empty; c:\.. is in fact invalid.
-            if *r > 1 then
-               pull(r)
+            (*r = 1 & filepath_is_absolute(fp)) | {
+               if *r = 0 | (r[-1] == "..") then
+                  put(r, e)
+               else
+                  pull(r)
+            }
          } else
             put(r, e)
       }

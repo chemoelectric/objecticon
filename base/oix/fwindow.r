@@ -1570,7 +1570,7 @@ end
 function graphics_Window_set_resize(self, val)
    body {
        GetSelfW();
-       if (!isflag(&val))
+       if (!is_flag(&val))
            runerr(171, val);
        self_w->window->resizable = !is:null(val);
        SimpleAttr(C_RESIZE);

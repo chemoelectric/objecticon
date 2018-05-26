@@ -44,7 +44,7 @@ $(PROG):	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	$(RM) *.o $(RTTC) $(PROG) keysymtocodepoint iasm
+	$(RM) *.o $(RTTC) $(PROG) keysymtocodepoint iasm mkexports
 
 etags:
 	$(ETAGS) $(RTLTAGS) $(RFILES) rmswin.ri rxwin.ri

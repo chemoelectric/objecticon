@@ -598,7 +598,7 @@ void ffatalerr(char *fmt, ...)
 
 static void initregion(struct region *r)
 {
-    Protect(r->free = r->base = malloc(r->size), fatalerr(314, NULL));
+    Protect(r->free = r->base = padded_malloc(r->size), fatalerr(314, NULL));
     r->end = r->base + r->size;
 }
 
@@ -701,6 +701,7 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Econstants = (dptr)(p->Code + h->Strcons);
     p->NConstants = p->Econstants - p->Constants;
     p->Strcons = (char *)(p->Econstants);
+    p->AsciiStrcons = (char *)(p->Code + h->AsciiStrcons);
     p->Estrcons = (char *)(p->Code + h->icodesize);
 }
 
@@ -1271,7 +1272,7 @@ int main(int argc, char **argv)
         ffatalerr("Environment variable has invalid value: %s=" WordFmt, OI_IP_VERSION, defaultipver);
     env_string(OI_FONT, &defaultfont);
 
-    Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
+    Protect(rootpstate.Code = padded_malloc(hdr.icodesize), fatalerr(315, NULL));
 
     /*
      * Establish pointers to icode data regions.		[[I?]]

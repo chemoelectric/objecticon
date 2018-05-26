@@ -1664,7 +1664,7 @@ function MemDebug_list(s, flag)
    if !cnv:string(s) then
       runerr(103, s)
     body {
-       if (!isflag(&flag))
+       if (!is_flag(&flag))
           runerr(171, flag);
        if (!parsequery(buffstr(&s), &query))
            fail;
@@ -2024,7 +2024,7 @@ end
 
 function MemDebug_set_flowterm(flag)
     body {
-       if (!isflag(&flag))
+       if (!is_flag(&flag))
           runerr(171, flag);
        flowterm = !is:null(flag);
        return nulldesc;

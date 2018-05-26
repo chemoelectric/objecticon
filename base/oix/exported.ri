@@ -151,7 +151,8 @@ struct oisymbols oiexported = {
     &add_range,
     &millisec,
     &block_to_descriptor,
-    &isflag,
+    &is_flag,
+    &is_ascii_string,
     &hashcstr,
     &get_hostname,
     &is_flowterm_tty,
@@ -169,6 +170,7 @@ struct oisymbols oiexported = {
     &safe_malloc,
     &safe_realloc,
     &salloc,
+    &padded_malloc,
 #if MSWIN32
     &ucs_to_wchar1,
     &ucs_to_wchar,

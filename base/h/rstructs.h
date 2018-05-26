@@ -430,7 +430,7 @@ struct progstate {
     dptr TCaseTables, ETCaseTables;
     dptr Constants, Econstants;
     int NGlobals, NStatics, NConstants, NTCaseTables;
-    char *Strcons, *Estrcons;
+    char *Strcons, *AsciiStrcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
     struct ipc_line *Current_line_ptr;
