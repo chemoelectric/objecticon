@@ -155,7 +155,7 @@
 #define add_range (*(imported->add_range))
 #define millisec (*(imported->millisec))
 #define block_to_descriptor (*(imported->block_to_descriptor))
-#define isflag (*(imported->isflag))
+#define is_flag (*(imported->is_flag))
 #define is_ascii_string (*(imported->is_ascii_string))
 #define hashcstr (*(imported->hashcstr))
 #define get_hostname (*(imported->get_hostname))

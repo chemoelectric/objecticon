@@ -2042,7 +2042,7 @@ void buffnstr(dptr d, char **s, ...)
 /*
  * Return true iff *d is a flag (either &null or &yes).
  */
-int isflag(dptr d)
+int is_flag(dptr d)
 {
     return is:null(*d) || is:yes(*d);
 }

@@ -3939,7 +3939,7 @@ function lang_Proc_get_name(c, flag)
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-        if (!isflag(&flag))
+        if (!is_flag(&flag))
            runerr(171, flag);
         if (proc0->field && is:null(flag)) {
             tended struct descrip result;
@@ -3963,7 +3963,7 @@ function lang_Proc_get_program(c, flag)
         struct progstate *prog;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (!isflag(&flag))
+        if (!is_flag(&flag))
            runerr(171, flag);
         if (proc0->field && is:null(flag))
             prog = proc0->field->defining_class->program;
@@ -4057,7 +4057,7 @@ function lang_Coexpression_traceback(ce, act_chain)
        tended struct b_coexpr *b;
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
-       if (!isflag(&act_chain))
+       if (!is_flag(&act_chain))
           runerr(171, act_chain);
        traceback(b, 0, !is:null(act_chain));
        return nulldesc;
@@ -4366,7 +4366,7 @@ function io_WinsockStream_set_blocking_mode(self, flag)
    body {
        unsigned long mode;
        GetSelfSocket();
-       if (!isflag(&flag))
+       if (!is_flag(&flag))
           runerr(171, flag);
        mode = is:null(flag) ? 1 : 0;
        if (ioctlsocket(self_socket, FIONBIO, &mode) == SOCKET_ERROR) {
