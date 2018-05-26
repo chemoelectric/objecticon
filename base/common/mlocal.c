@@ -680,10 +680,11 @@ void print_rangeset(struct rangeset *rs)
  */
 
 #define ISCONT(b) (((b) & 0xc0) == 0x80)
+#define NEXT(p) (*(*(unsigned char **)(p))++)
 
 int utf8_check(char **p, char *end)
 {
-    int b1 = (unsigned int)*(*p)++;
+    int b1 = NEXT(p);
     switch ((b1 >> 4) & 0x0f) {
         case 0: case 1: case 2: case 3:
         case 4: case 5: case 6: case 7: {
@@ -695,7 +696,7 @@ int utf8_check(char **p, char *end)
             /* 2 bytes, 11 bits: 110xxxxx 10xxxxxx */
             if (*p >= end)
                 return -1;
-            b2 = (unsigned int)*(*p)++;
+            b2 = NEXT(p);
             if (!ISCONT(b2)) return -1;
             i = ((((b1 & 0x1f) << 6) |
                   ((b2 & 0x3f))));
@@ -708,9 +709,9 @@ int utf8_check(char **p, char *end)
             /* 3 bytes, 16 bits: 1110xxxx 10xxxxxx 10xxxxxx */
             if (end - *p < 2)
                 return -1;
-            b2 = (unsigned int)*(*p)++;
+            b2 = NEXT(p);
             if (!ISCONT(b2)) return -1;
-            b3 = (unsigned int)*(*p)++;
+            b3 = NEXT(p);
             if (!ISCONT(b3)) return -1;
             i = ((((b1 & 0x0f) << 12) |
                   ((b2 & 0x3f) << 06) |
@@ -727,11 +728,11 @@ int utf8_check(char **p, char *end)
                     /* 4 bytes, 21 bits */
                     if (end - *p < 3)
                         return -1;
-                    b2 = (unsigned int)*(*p)++;
+                    b2 = NEXT(p);
                     if (!ISCONT(b2)) return -1;
-                    b3 = (unsigned int)*(*p)++;
+                    b3 = NEXT(p);
                     if (!ISCONT(b3)) return -1;
-                    b4 = (unsigned int)*(*p)++;
+                    b4 = NEXT(p);
                     if (!ISCONT(b4)) return -1;
                     i = (((b1 & 0x07) << 18) |
                          ((b2 & 0x3f) << 12) |
@@ -747,13 +748,13 @@ int utf8_check(char **p, char *end)
                     /* 5 bytes, 26 bits */
                     if (end - *p < 4)
                         return -1;
-                    b2 = (unsigned int)*(*p)++;
+                    b2 = NEXT(p);
                     if (!ISCONT(b2)) return -1;
-                    b3 = (unsigned int)*(*p)++;
+                    b3 = NEXT(p);
                     if (!ISCONT(b3)) return -1;
-                    b4 = (unsigned int)*(*p)++;
+                    b4 = NEXT(p);
                     if (!ISCONT(b4)) return -1;
-                    b5 = (unsigned int)*(*p)++;
+                    b5 = NEXT(p);
                     if (!ISCONT(b5)) return -1;
                     i = (((b1 & 0x03) << 24) |
                          ((b2 & 0x3f) << 18) |
@@ -770,15 +771,15 @@ int utf8_check(char **p, char *end)
                     /* 6 bytes, 31 bits */
                     if (end - *p < 5)
                         return -1;
-                    b2 = (unsigned int)*(*p)++;
+                    b2 = NEXT(p);
                     if (!ISCONT(b2)) return -1;
-                    b3 = (unsigned int)*(*p)++;
+                    b3 = NEXT(p);
                     if (!ISCONT(b3)) return -1;
-                    b4 = (unsigned int)*(*p)++;
+                    b4 = NEXT(p);
                     if (!ISCONT(b4)) return -1;
-                    b5 = (unsigned int)*(*p)++;
+                    b5 = NEXT(p);
                     if (!ISCONT(b5)) return -1;
-                    b6 = (unsigned int)*(*p)++;
+                    b6 = NEXT(p);
                     if (!ISCONT(b6)) return -1;
                     i = (((b1 & 0x01) << 30) |
                          ((b2 & 0x3f) << 24) |
@@ -801,7 +802,7 @@ int utf8_check(char **p, char *end)
 
 int utf8_iter(char **p)
 {
-    int b1 = (unsigned int)*(*p)++;
+    int b1 = NEXT(p);
     switch ((b1 >> 4) & 0x0f) {
         case 0: case 1: case 2: case 3:
         case 4: case 5: case 6: case 7: {
@@ -811,7 +812,7 @@ int utf8_iter(char **p)
         case 12: case 13: {
             int i, b2;
             /* 2 bytes, 11 bits: 110xxxxx 10xxxxxx */
-            b2 = (unsigned int)*(*p)++;
+            b2 = NEXT(p);
             i = ((((b1 & 0x1f) << 6) |
                   ((b2 & 0x3f))));
             return i;
@@ -819,8 +820,8 @@ int utf8_iter(char **p)
         case 14: {
             int i, b2, b3;
             /* 3 bytes, 16 bits: 1110xxxx 10xxxxxx 10xxxxxx */
-            b2 = (unsigned int)*(*p)++;
-            b3 = (unsigned int)*(*p)++;
+            b2 = NEXT(p);
+            b3 = NEXT(p);
             i = ((((b1 & 0x0f) << 12) |
                   ((b2 & 0x3f) << 06) |
                   ((b3 & 0x3f))));
@@ -832,9 +833,9 @@ int utf8_iter(char **p)
                 case 4: case 5: case 6: case 7: {
                     int i, b2, b3, b4;
                     /* 4 bytes, 21 bits */
-                    b2 = (unsigned int)*(*p)++;
-                    b3 = (unsigned int)*(*p)++;
-                    b4 = (unsigned int)*(*p)++;
+                    b2 = NEXT(p);
+                    b3 = NEXT(p);
+                    b4 = NEXT(p);
                     i = (((b1 & 0x07) << 18) |
                          ((b2 & 0x3f) << 12) |
                          ((b3 & 0x3f) << 06) |
@@ -845,10 +846,10 @@ int utf8_iter(char **p)
                 case 8: case 9: case 10: case 11: {
                     int i, b2, b3, b4, b5;
                     /* 5 bytes, 26 bits */
-                    b2 = (unsigned int)*(*p)++;
-                    b3 = (unsigned int)*(*p)++;
-                    b4 = (unsigned int)*(*p)++;
-                    b5 = (unsigned int)*(*p)++;
+                    b2 = NEXT(p);
+                    b3 = NEXT(p);
+                    b4 = NEXT(p);
+                    b5 = NEXT(p);
                     i = (((b1 & 0x03) << 24) |
                          ((b2 & 0x3f) << 18) |
                          ((b3 & 0x3f) << 12) |
@@ -860,11 +861,11 @@ int utf8_iter(char **p)
                 case 12: case 13: {
                     int i, b2, b3, b4, b5, b6;
                     /* 6 bytes, 31 bits */
-                    b2 = (unsigned int)*(*p)++;
-                    b3 = (unsigned int)*(*p)++;
-                    b4 = (unsigned int)*(*p)++;
-                    b5 = (unsigned int)*(*p)++;
-                    b6 = (unsigned int)*(*p)++;
+                    b2 = NEXT(p);
+                    b3 = NEXT(p);
+                    b4 = NEXT(p);
+                    b5 = NEXT(p);
+                    b6 = NEXT(p);
                     i = (((b1 & 0x01) << 30) |
                          ((b2 & 0x3f) << 24) |
                          ((b3 & 0x3f) << 18) |
