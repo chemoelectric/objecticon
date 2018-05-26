@@ -153,7 +153,7 @@ struct progstate *alcprog(word icodesize)
    prog = calloc(sizeof(struct progstate), 1);
    if (!prog)
        return 0;
-   icode = malloc(icodesize);
+   icode = padded_malloc(icodesize);
    if (!icode) {
        free(prog);
        return 0;
@@ -655,6 +655,10 @@ dealcblk_macro(dealcblk_1,E_BlkDeAlc)
 void f (char *p)
 {
     word nbytes;
+    /*
+     * We allow p == strfree; in other words deallocating zero bytes
+     * (which is of course a no-op).
+     */
     if (!InRange(strbase, p, strfree + 1))
         syserr("Attempt to dealcstr, but pointer not in current string region");
     nbytes = DiffPtrs(strfree, p);
@@ -795,7 +799,7 @@ static struct region *newregion(uword nbytes, uword stdsize)
       if (rp->size < nbytes)
          rp->size = Max(nbytes+stdsize, nbytes);
       do {
-         rp->free = rp->base = malloc(rp->size);
+         rp->free = rp->base = padded_malloc(rp->size);
          if (rp->free != NULL) {
             rp->end = rp->base + rp->size;
             return rp;
@@ -1001,4 +1005,17 @@ void free_frame(struct frame *f)
         default:
             syserr("Unknown frame type");
     }
+}
+
+/*
+ * Allocate with malloc, but pad beginning and end with an extra
+ * unused 8 bytes.  This ensures that no other allocation will exactly
+ * adjoin the (inner) region returned.
+ */
+void *padded_malloc(size_t size)
+{
+    char *p = malloc(size + 16);
+    if (p)
+        p += 8;
+    return p;
 }
