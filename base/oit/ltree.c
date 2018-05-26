@@ -532,7 +532,8 @@ void loadtrees()
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             equit("Cannot open .u for %s", inname);
-        fseek(ucodefile, lf->declend_offset, SEEK_SET);
+        if (fseek(ucodefile, lf->declend_offset, SEEK_SET) < 0)
+            equit("Cannot fseek in ucode file %s", inname);
         loadtree();
         if (ferror(ucodefile) != 0)
             equit("Failed to read from ucode file %s", inname);
