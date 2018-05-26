@@ -1280,6 +1280,8 @@ int brace;
                 } else if (t->tok_id != TokRegister || !in_struct) { /* Don't print "register" in header */
                     if (strcmp(t->image, "_rval") == 0 && op_type != OrdFunc && !in_quick)
                         fprintf(out_file, "frame->rval");
+                    else if (strcmp(t->image, "_lhs") == 0 && op_type != OrdFunc && !in_quick)
+                        fprintf(out_file, "frame->lhs");
                     else
                         prt_tok(t, indent);
                 }
