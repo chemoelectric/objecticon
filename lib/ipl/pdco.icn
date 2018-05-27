@@ -17,13 +17,13 @@
 package ipl.pdco
 
 import
-   ipl.callable(callable),
+   ipl.callable(need_callable),
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
    numbers(Rat),
    lang(Internal),
-   util(save_state, HandlerState, cvpos_item, need_integer)
+   util(save_state, HandlerState, ce_param, cvpos_item, need_integer)
 
 # Adds tabby to treadling sequence
 procedure AddTabby(e, i)	
@@ -205,7 +205,7 @@ end
 procedure Decollate(e, i)	
    local j, x
 
-   i := optional_param(i, 1, integer, 101) | fail
+   i := need_integer(ce_param(i, 1)) | fail
 
    i %:= 2
  
@@ -235,8 +235,8 @@ end
 procedure Elevate(e1, m, n)	
    local shafts, i, j, k
 
-   m := mandatory_param(m, integer, 101) | fail
-   n := mandatory_param(n, integer, 101) | fail
+   m := need_integer(ce_param(m)) | fail
+   n := need_integer(ce_param(n)) | fail
 
    shafts := list(m)
 
@@ -265,7 +265,7 @@ end
 procedure ExtendSeq(e, count)	
    local fl
 
-   count := mandatory_param(count, integer, 101) | fail
+   count := need_integer(ce_param(count)) | fail
    if count < 1 then fail
 
    repeat {
@@ -328,9 +328,10 @@ end
 procedure Friendly(mod, state, e)	
    local value
 
-   mod := mandatory_param(mod, integer, 101) | fail
-   state := optional_param(state, &null, integer, 101) | fail
+   mod := need_integer(ce_param(mod)) | fail
+   state := ce_param(state) | fail
    /state := ?mod
+   state := need_integer(state)
 
    repeat {
       suspend state
@@ -668,7 +669,7 @@ end
 procedure Period(e, limit)		
    local result
 
-   limit := optional_param(limit, 300, integer, 101) | fail
+   limit := need_integer(ce_param(limit, 300)) | fail
 
    result := []
 
@@ -704,7 +705,7 @@ end
 procedure Pivot(e, m)		
    local current, direction, new
 
-   m := optional_param(m, 100, integer, 101) | fail
+   m := need_integer(ce_param(m, 100)) | fail
 
    direction := "+"
 
@@ -750,7 +751,7 @@ end
 procedure Positions(e, v)	
    local count, x
 
-   v := mandatory_param(v) | fail
+   v := ce_param(v) | fail
 
    count := 0
 
@@ -802,10 +803,9 @@ end
 #
 procedure Reduce(op, x, e)	
 
-   op := mandatory_param(op) | fail
-   op := callable(op, 2) | runerr("invalid operation for Reduce{}", op)
+   op := need_callable(ce_param(op), 2) | fail
 
-   x := mandatory_param(x) | fail
+   x := ce_param(x) | fail
 
    while x := op(x, @e)
 
@@ -884,7 +884,7 @@ end
 procedure Rotate(e, i)		
    local result, x
 
-   i := mandatory_param(i, integer, 101) | fail
+   i := need_integer(ce_param(i)) | fail
 
    result := []
 
@@ -906,7 +906,7 @@ end
 # PDCO to produce multiple of values in sequence, producing `e * j` copies of `e`
 procedure Selfrepl(e, j)	
    local i
-   j := optional_param(j, 1, integer, 101) | fail
+   j := need_integer(ce_param(j, 1)) | fail
    while i := @e do {
       i := need_integer(i)
       suspend (1 to i * j) & i
@@ -986,7 +986,7 @@ end
 procedure Span(e, m)		
    local i, j
 
-   m := optional_param(m, 100, integer, 101) | fail
+   m := need_integer(ce_param(m, 100)) | fail
 
    j := @e | fail
    while i := residue(@e, m, 1) do {
@@ -1004,8 +1004,8 @@ end
 procedure Sumlimit(e, limit, min) 	
    local sum, i
 
-   limit := optional_param(limit, 2^15, integer, 101) | fail
-   min := optional_param(min, 0, integer, 101) | fail
+   limit := need_integer(ce_param(limit, 2^15)) | fail
+   min := need_integer(ce_param(min, 0)) | fail
    sum := 0
 
    while i := @e do {
@@ -1133,7 +1133,7 @@ end
 #
 procedure Each(n, e[])
    local f
-   n := mandatory_param(n, integer, 101) | fail
+   n := need_integer(ce_param(n)) | fail
    n := cvpos_item(n, *e) | fail
    every f := !e do {
       if (n -:= 1) = 0 then
@@ -1146,8 +1146,9 @@ end
 # Generate the results of e between the elements i to j inclusive.
 #
 procedure Subseq(e, i, j)
-   i := optional_param(i, 1, integer, 101) | fail
-   j := optional_param(j, &null, integer, 101) | fail
+   i := need_integer(ce_param(i, 1)) | fail
+   j := ce_param(j) | fail
+   \j := need_integer(j)
    if i > \j then
       i :=: j
    every 2 to i do
@@ -1175,7 +1176,7 @@ end
 #
 procedure TakeWhile(f, e)
    local i
-   f := mandatory_param(f, callable, "invalid function for TakeWhile{}") | fail
+   f := need_callable(ce_param(f)) | fail
    while f(i := @e) do
       suspend i
 end
@@ -1187,7 +1188,7 @@ end
 #
 procedure DropWhile(f, e)
    local i
-   f := mandatory_param(f, callable, "invalid function for DropWhile{}") | fail
+   f := need_callable(ce_param(f)) | fail
    repeat {
       i := @e | fail
       f(i) | break
@@ -1200,7 +1201,7 @@ end
 #
 procedure Filter(f, e)
    local i
-   f := mandatory_param(f, callable, "invalid function for Filter{}") | fail
+   f := need_callable(ce_param(f)) | fail
    while i := @e do
       if f(i) then
          suspend i
@@ -1215,7 +1216,7 @@ procedure Zip(ef, el[])
    if 1 <= *el <= 3 then
       n := *el
    f := @ef | fail
-   f := callable(f, n) | runerr("invalid operation for Zip{}", f)
+   f := need_callable(f, n)
    if *el = 0 then
       fail
    repeat {
@@ -1224,7 +1225,7 @@ procedure Zip(ef, el[])
          put(t, @e) | fail
       suspend f!t
       if f := @ef then
-         f := callable(f, n) | runerr("invalid operation for Zip{}", f)
+         f := need_callable(f, n)
    }
 end
 
@@ -1234,7 +1235,7 @@ end
 #
 procedure AllOf(f, e)
    local i
-   f := mandatory_param(f, callable, "invalid function for AllOf{}") | fail
+   f := need_callable(ce_param(f)) | fail
    while i := @e do
       f(i) | fail
    return
@@ -1242,7 +1243,7 @@ end
 
 package procedure MinMaxImpl(e, cmp, dir)
    local i, v
-   cmp := optional_param(cmp, Internal.compare, callable, "invalid function for Min/Max{}") | fail
+   cmp := need_callable(ce_param(cmp, Internal.compare)) | fail
    v := @e | fail
    while i := @e do {
       if dir * cmp(i, v) > 0 then
@@ -1263,36 +1264,4 @@ end
 #
 procedure Min(e, cmp)
    return MinMaxImpl(e, cmp, -1)
-end
-
-# Helper function to convert an optional parameter specified in a pdco
-# invocation.  `v` is the parameter (the value itself or a
-# coexpression giving the value, or &null).  `def` is a default value
-# if `v` is &null.  If v is a coexpression and it fails to produce a
-# result, the procedure fails.  If the optional conversion function
-# fails, then a runerr is signalled with the given error message.
-#
-procedure optional_param(v, def, cvt, err)
-   if /v then
-      return def
-   if type(v) == "co-expression" then {
-      v := @v | fail
-      # This allows omitted parameters to take the default, eg the second
-      # param in f{x,,y}.
-      if /v then
-         return def
-   }
-   if \cvt then
-      v := cvt(v) | runerr(err, v)
-   return v
-end
-
-# This is like `optional_param`, but doesn't allow a default value.
-#
-procedure mandatory_param(v, cvt, err)
-   if type(v) == "co-expression" then
-      v := @v | fail
-   if \cvt then
-      v := cvt(v) | runerr(err, v)
-   return v
 end
