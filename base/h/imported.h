@@ -176,11 +176,9 @@
 #define salloc (*(imported->salloc))
 #define padded_malloc (*(imported->padded_malloc))
 #if MSWIN32
-#define ucs_to_wchar1 (*(imported->ucs_to_wchar1))
 #define ucs_to_wchar (*(imported->ucs_to_wchar))
 #define wchar_to_utf8_string (*(imported->wchar_to_utf8_string))
 #define wchar_to_ucs (*(imported->wchar_to_ucs))
-#define string_to_wchar1 (*(imported->string_to_wchar1))
 #define string_to_wchar (*(imported->string_to_wchar))
 #define utf8_to_wchar (*(imported->utf8_to_wchar))
 #define wchar_to_utf8 (*(imported->wchar_to_utf8))
