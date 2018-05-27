@@ -4780,110 +4780,88 @@ function io_DescStream_poll(l, timeout)
    }
 end
 
-void ucs_to_wchar1(WCHAR *buff, dptr str, int nullterm)
-{
-    word len, i;
-    char *p;
-    len = UcsBlk(*str).length;
-    p = StrLoc(UcsBlk(*str).utf8);
-    for (i = 0; i < len; ++i) {
-        int ch = utf8_iter(&p);
-        buff[i] = (WCHAR)(ch < 0x10000 ? ch : 0xfffd);
-    }
-    if (nullterm)
-        buff[len] = 0;
-}
-
-WCHAR *ucs_to_wchar(dptr str, int nullterm)
+WCHAR *ucs_to_wchar(dptr str, int nullterm, word *len)
 {
     WCHAR *mbs;
-    size_t alc;
-    alc = UcsBlk(*str).length;
+    int n;
+    n = MultiByteToWideChar(CP_UTF8,
+                            0,
+                            StrLoc(UcsBlk(*str).utf8),
+                            StrLen(UcsBlk(*str).utf8),
+                            0,
+                            0);
     if (nullterm)
-        ++alc;
-    mbs = safe_malloc(alc * sizeof(WCHAR));
-    ucs_to_wchar1(mbs, str, nullterm);
+        ++n;
+    mbs = safe_malloc(n * sizeof(WCHAR));
+    MultiByteToWideChar(CP_UTF8,
+                        0,
+                        StrLoc(UcsBlk(*str).utf8),
+                        StrLen(UcsBlk(*str).utf8),
+                        mbs,
+                        n);
+    if (nullterm)
+        mbs[n - 1] = 0;
+    if (len)
+        *len = n;
     return mbs;
 }
 
-void string_to_wchar1(WCHAR *buff, dptr str, int nullterm)
-{
-    word len, i;
-    char *p;
-    len = StrLen(*str);
-    p = StrLoc(*str);
-    for (i = 0; i < len; ++i)
-        buff[i] = (unsigned char)*p++;
-    if (nullterm)
-        buff[len] = 0;
-}
-
-WCHAR *string_to_wchar(dptr str, int nullterm)
+WCHAR *string_to_wchar(dptr str, int nullterm, word *len)
 {
     WCHAR *mbs;
-    size_t alc;
-    alc = StrLen(*str);
+    char *p;
+    word slen, i, n;
+    n = slen = StrLen(*str); 
     if (nullterm)
-        ++alc;
-    mbs = safe_malloc(alc * sizeof(WCHAR));
-    string_to_wchar1(mbs, str, nullterm);
+        ++n;
+    mbs = safe_malloc(n * sizeof(WCHAR));
+    p = StrLoc(*str);
+    for (i = 0; i < slen; ++i)
+        mbs[i] = (unsigned char)p[i];
+    if (nullterm)
+        mbs[n - 1] = 0;
+    if (len)
+        *len = n;
     return mbs;
 }
 
 void wchar_to_ucs(WCHAR *src, dptr res)
 {
-    char *ts;
     tended struct descrip utf8;
-    word wlen, slen;
-    WCHAR *p;
-    char *q;
-
-    wlen = 0;
-    slen = 0;
-    p = src;
-    while (*p) {
-        slen += utf8_seq(*p, 0);
-        ++wlen;
-        ++p;
-    }
-
-    MemProtect(ts = alcstr(0, slen));
-    p = src;
-    q = ts;
-    while (*p) {
-        int n = utf8_seq(*p, q);
-        q += n;
-        ++p;
-    }
-
-    MakeStr(ts, slen, &utf8);
-    MakeDesc(D_Ucs, make_ucs_block(&utf8, wlen), res);
+    wchar_to_utf8_string(src, &utf8);
+    if (!string2ucs(&utf8, res))
+        syserr("invalid utf-8 returned by wchar_to_utf8_string");
 }
 
 void wchar_to_utf8_string(WCHAR *src, dptr res)
 {
-    char *ts;
-    word slen;
-    WCHAR *p;
-    char *q;
+    char *s;
+    size_t srclen;
+    int slen;
 
-    slen = 0;
-    p = src;
-    while (*p) {
-        slen += utf8_seq(*p, 0);
-        ++p;
-    }
+    srclen = wcslen(src);
 
-    MemProtect(ts = alcstr(0, slen));
-    p = src;
-    q = ts;
-    while (*p) {
-        int n = utf8_seq(*p, q);
-        q += n;
-        ++p;
-    }
+    slen = WideCharToMultiByte(CP_UTF8,
+                               0,
+                               src,
+                               srclen,
+                               0,
+                               0,
+                               NULL,
+                               NULL);
 
-    MakeStr(ts, slen, res);
+    MemProtect(s = alcstr(0, slen));
+
+    WideCharToMultiByte(CP_UTF8,
+                        0,
+                        src,
+                        srclen,
+                        s,
+                        slen,
+                        NULL,
+                        NULL);
+
+    MakeStr(s, slen, res);
 }
 
 #endif
