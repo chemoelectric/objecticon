@@ -4863,16 +4863,14 @@ void wchar_to_ucs(WCHAR *src, dptr res)
 void wchar_to_utf8_string(WCHAR *src, dptr res)
 {
     char *ts;
-    word wlen, slen;
+    word slen;
     WCHAR *p;
     char *q;
 
-    wlen = 0;
     slen = 0;
     p = src;
     while (*p) {
         slen += utf8_seq(*p, 0);
-        ++wlen;
         ++p;
     }
 
