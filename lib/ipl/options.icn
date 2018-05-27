@@ -143,7 +143,7 @@ procedure help_line(ns, h)
    if /h then {
       repeat {
          if i := backto(' ', ns, 1, cols - 5) then {
-            write(ns[1:i])
+            write(ns[1:i - 1])
             ns := ns[i:0]
          } else {
             write(ns)
@@ -151,13 +151,15 @@ procedure help_line(ns, h)
          }
       }
    } else {
-      if *ns > 18 then
-         writes(ns, "\n", repl(" ", 20))
-      else
+      if *ns > 18 then {
+         write(ns)
+         writes(repl(" ", 20))
+      } else
          writes(left(ns, 20))
       repeat {
          if i := backto(' ', h, 1, cols - 25) then {
-            writes(h[1:i], "\n", repl(" ", 20))
+            write(h[1:i - 1])
+            writes(repl(" ", 20))
             h := h[i:0]
          } else {
             write(h)
@@ -173,7 +175,7 @@ end
 #
 procedure help_stop(a[])
    push(a, Files.get_program_name() || ": ")
-   put(a, "\nUse the -? option for more information")
+   put(a, Files.EOL || "Use the -? option for more information")
    stop!a
 end
 
