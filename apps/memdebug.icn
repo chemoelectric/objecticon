@@ -91,7 +91,8 @@ procedure err_msg(s)
 end
 
 procedure help_err(msg)
-   output.write(msg, "\nUse the -? option for more information")
+   output.write(msg)
+   output.write("Use the -? option for more information")
 end
 
 procedure bad_params()
@@ -533,11 +534,12 @@ end
 
 procedure usage(opts)
    local u
-   write("Usage: memdebug [OPTIONS] program [program options/arguments]\n_
-          Examine program memory")
+   write("Usage: memdebug [OPTIONS] program [program options/arguments]")
+   write("Examine program memory")
    options_help(opts)
    u := URL("http://objecticon.sourceforge.net/Memdebug.html")
-   writes("\nFor more details, visit ")
+   write()
+   writes("For more details, visit ")
    if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else

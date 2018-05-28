@@ -7,9 +7,9 @@ procedure main(a)
    opts := options(a, [Opt("d", string, "Delete the given key; multiple uses allowed", &yes),
                        Opt("k", string, "Show just the given key; multiple uses allowed", &yes),
                        Opt("x",, "Expire out-of-date cookies")],
-                       "Usage: lscookies [OPTIONS] [cookie-file]\n_
-                        Show or edit the Object Icon cookies file\n_
-                        If invoked with no options, show all the cookies")
+                       "Usage: lscookies [OPTIONS] [cookie-file]" || Files.EOL ||
+                       "Show or edit the Object Icon cookies file" || Files.EOL ||
+                       "If invoked with no options, show all the cookies")
 
    home := FilePath(BaseDir.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
 

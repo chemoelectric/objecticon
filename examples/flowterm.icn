@@ -3444,7 +3444,8 @@ procedure usage(opts)
    help_line(":send-vt=STRING", "Send a string directly to the terminal")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
-   writes("\nFor more details, visit ")
+   write()
+   writes("For more details, visit ")
    if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else

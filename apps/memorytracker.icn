@@ -18,7 +18,8 @@ procedure print_stats(prog)
    t2 := Prog.get_allocation_info(prog)
    t3 := Prog.get_collection_info(prog)
 
-   write("\nRegion                        Usage                      Total    Colls")
+   write()
+   write("Region                        Usage                      Total    Colls")
    write("------                        --------------------        ----    -----")
    write("Stack     ", right(f(s1),22), right(t3.stack_requests,39))
    i := 1
@@ -92,7 +93,8 @@ procedure main(args)
       }
    }
    print_stats(prog)
-   write("\nSummary")
+   write()
+   write("Summary")
    write("Code           Desc                                     N           Total")
    write("----           ----                                 -----          ------")
    t := 0

@@ -52,8 +52,8 @@ procedure main(args)
                           Opt("r",integer, "RETRIES#Specify number of retries to use"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("text",,"Do text search for tags rather than search parsed document")],
-                          "Usage: lslinks [URL]... [OPTIONS]\n_
-                          List links in URL(s)")
+                          "Usage: lslinks [URL]... [OPTIONS]" || Files.EOL ||
+                          "List links in URL(s)")
 
    hc := HttpClient()
    hc.set_timeout(\opts["t"] * 1000)
