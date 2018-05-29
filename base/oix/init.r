@@ -1136,6 +1136,10 @@ int main(int argc, char **argv)
 #if MSWIN32
     WSADATA cData;
     WSAStartup(MAKEWORD(2, 2), &cData);
+    /* Set binary mode on stdin, stdout and stderr */
+    _setmode(0, _O_BINARY);
+    _setmode(1, _O_BINARY);
+    _setmode(2, _O_BINARY);
 #endif
 
     fp = fparse(argv[0]);
