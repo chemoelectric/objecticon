@@ -164,7 +164,7 @@ class Lex(Connectable)
    # u" or ', depending on the type.
    #
    private get_strlit()
-      local spos, cs, q, val
+      local spos, cs, q, val, i
       spos := &pos
       # Closing quote is last char of yytext (either ' or ")
       q := cset(yytext[-1])
@@ -184,8 +184,8 @@ class Lex(Connectable)
             break
          }
          if any('_') then {
-            if =("_\n" | "_\r\n") then {
-               yytext ||:= &subject[spos:&pos - 2]
+            if i := &pos & =("_\n" | "_\r\n") then {
+               yytext ||:= &subject[spos:i]
                yylineno +:= 1
                yylinestart := &pos - 1
                tab(many(' \t'))
