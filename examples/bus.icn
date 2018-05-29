@@ -1033,7 +1033,8 @@ class Map(Panel)
          if \coex & (itno % 100 = 0) then 
             suspend
          if itno - best_itno > 2000 then {
-            write("\ngiving up")
+            write()
+            write("giving up")
             if \opts["g"] then
                every write((!q).name)
             break
