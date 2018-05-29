@@ -172,10 +172,10 @@ struct oisymbols {
     char * (*salloc)(char *s);
     void * (*padded_malloc)(size_t size);
 #if MSWIN32
-    WCHAR * (*ucs_to_wchar)(dptr str, int nullterm);
+    WCHAR * (*ucs_to_wchar)(dptr str, int nullterm, word *len);
     void (*wchar_to_utf8_string)(WCHAR *src, dptr res);
     void (*wchar_to_ucs)(WCHAR *src, dptr res);
-    WCHAR * (*string_to_wchar)(dptr str, int nullterm);
+    WCHAR * (*string_to_wchar)(dptr str, int nullterm, word *len);
     WCHAR * (*utf8_to_wchar)(char *s);
     char * (*wchar_to_utf8)(WCHAR *s);
     void (*win32error2why)(void);
