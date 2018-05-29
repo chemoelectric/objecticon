@@ -116,7 +116,7 @@ class Lex(Connectable)
                tokflags +:= Newline
             next
          }
-         if tab(any(' \t\v\^l')) then
+         if tab(any(' \r\t\v\^l')) then
             next
 
          yycolno := &pos - yylinestart
@@ -184,7 +184,7 @@ class Lex(Connectable)
             break
          }
          if any('_') then {
-            if ="_\n" then {
+            if =("_\n" | "_\r\n") then {
                yytext ||:= &subject[spos:&pos - 2]
                yylineno +:= 1
                yylinestart := &pos - 1
