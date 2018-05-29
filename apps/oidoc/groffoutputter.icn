@@ -135,14 +135,14 @@ class GroffOutputter(Outputter)
    end
 
    protected end_line(fl)
-      if /fl then
-         write(output_file)
-      else
-         write(output_file, "\n.br")
+      write(output_file)
+      if \fl then
+         write(output_file, ".br")
    end
 
    protected begin_pre()
-      write(output_file, ".nf\n.ft C")
+      write(output_file, ".nf")
+      write(output_file, ".ft C")
    end
 
    protected output_pre(s)
@@ -150,7 +150,8 @@ class GroffOutputter(Outputter)
    end
 
    protected end_pre()
-      write(output_file, ".ft P\n.fi")
+      write(output_file, ".ft P")
+      write(output_file, ".fi")
    end
 
    protected begin_ul()
