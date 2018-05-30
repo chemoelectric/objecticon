@@ -171,6 +171,27 @@ procedure need_cset(x)
    return cset(x) | runerr(104, x)
 end
 
+# Check that x is a list, signalling a runtime error otherwise.
+#
+procedure need_list(x)
+   type(x) == "list" | runerr(108, x)
+   return x
+end
+
+# Check that x is a set, signalling a runtime error otherwise.
+#
+procedure need_set(x)
+   type(x) == "set" | runerr(119, x)
+   return x
+end
+
+# Check that x is a table, signalling a runtime error otherwise.
+#
+procedure need_table(x)
+   type(x) == "table" | runerr(124, x)
+   return x
+end
+
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.
 #
 package global cleanup
