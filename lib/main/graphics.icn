@@ -1083,7 +1083,7 @@ final class Window(NoCopy, ObjectOutput)
    # zero.
    #
    public define_pointer(name, v, x, y)
-      return if /v | is(v, Pixels) then
+      return if is(v, Pixels) then
          define_pointer_impl(name, v, x, y)
       else use {
          v := Pixels(v),
