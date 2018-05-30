@@ -1,4 +1,4 @@
-import gui, io, lang
+import gui, io, lang, ipl.lists
 
 class PaintEdit(Dialog)
    public 
@@ -235,7 +235,7 @@ class GridPaintEdit(PaintEdit)
 
    public set_vals()
       PaintEdit.set_vals()
-      c.fmt := input.get_contents_str()
+      c.fmt := list2str(input.contents, "\n")
    end
 
    public render(ev)
