@@ -479,14 +479,12 @@ procedure expand_braces(s)
    local l, s1, s2, s3
    s ? repeat {
       s1 := tab(upto('-+') | 0)
-      if any('-') then {
-         move(1)
+      if tab(any('-')) then {
          s2 := tab(upto(':+') | 0)
-         if any(':') then {
-            move(1)
-            s3 := tab(upto('+') | 0)
-         } else
-            s3 := 1
+         s3 := if tab(any(':')) then
+            tab(upto('+') | 0)
+         else
+            1
          if any('0', s1 | s2) then {
             l := *s1
             l <:= *s2
