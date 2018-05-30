@@ -1,5 +1,7 @@
 import
-   gui, graphics, lang
+   gui, graphics, lang, ipl.options
+
+global opts
 
 class DragLabel(Label)
    public can_drag(ev)
@@ -79,18 +81,42 @@ class Untitled(Dialog)
       return s
    end
 
+   private log(s)
+      paused() | text_display_1.log([s],100)
+   end
+
    private on_event(ev)
-      if not text_button_10.is_checked() then
-         text_display_1.log([ev_to_str(ev)],100)
+      if \opts["q"] & ev.code === Mouse.MOVEMENT then
+         fail
+      log(ev_to_str(ev))
    end
 
    public component_setup()
       self.setup()
       text_button_11.set_pointer("cross")
       connect(on_event, Event.ICON)
+      connect(on_resize, Window.RESIZE)
+      connect(on_move, Window.MOVE)
+      connect(on_state, Window.STATE)
    end
 
-   public end_dialog()
+   private on_resize(e)
+      log("Window.RESIZE (now " || win.get_width() || "," || win.get_height() || ")")
+   end
+
+   private on_move(e) 
+      log("Window.MOVE (now " || win.get_x() || "," || win.get_y() || ")")
+   end
+
+   private on_state(e)
+      log("Window.STATE (now " || win.get_canvas() || ")")
+   end
+
+   private paused()
+      return text_button_10.is_checked()
+   end
+
+   public end_dialog(e)
    end
 
    public init_dialog()
@@ -105,8 +131,7 @@ class Untitled(Dialog)
    end
 
    private on_test_button_event(ev,src,type)
-      if not text_button_10.is_checked() then
-         text_display_1.log(["B:t="||type_to_str(type)||" e="||ev_to_str(ev)],100)
+      log("B:t=" || type_to_str(type) || " e=" || ev_to_str(ev))
    end
 
    private on_text_button_8(ev)
@@ -120,7 +145,6 @@ class Untitled(Dialog)
    end
 
    private on_text_button_10(ev)
-
    end
 
    private on_text_button_1(ev)
@@ -262,8 +286,9 @@ class Untitled(Dialog)
    end
 end
 
-procedure main()
+procedure main(a)
    local d
+   opts := options(a, [Opt("q",, "Don't output mouse movement events")])
    d := Untitled()
    d.show_modal()
 end
