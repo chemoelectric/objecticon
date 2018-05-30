@@ -27,10 +27,9 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
    end
 
    private on_ucs_cb()
-      if ucs_cb.is_checked() then
-         contents.set_contents([u""])
-      else
-         contents.set_contents([""])
+      local t
+      t := if ucs_cb.is_checked() then "ucs" else "string"
+      contents.set_contents(convert_text_list(contents.get_contents(), t))
    end
 
    public setup()

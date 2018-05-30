@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, io, ipl.lists, util
+import gui, io, ipl.lists, util, ipl.pdco()
 
 #
 # Convert a list l to a string representation.
@@ -274,4 +274,12 @@ procedure valid_dotted_id(s)
    return *s > 0 &
       any(&letters ++ '_', s) &
       not(upto(~(&letters ++ &digits ++ '_.'), s))
+end
+
+#
+# Convert a list of strings or ucs to a corresponding list with the
+# given target type.
+#
+procedure convert_text_list(l, target)
+   return ipl.pdco.List{ text_convert(!l, target) }
 end

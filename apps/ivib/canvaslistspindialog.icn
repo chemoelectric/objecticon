@@ -41,10 +41,9 @@ class CanvasListSpinDialog(CanvasComponentDialog)
    end
 
    private on_ucs_cb()
-      if ucs_cb.is_checked() then
-         selection_list.set_contents([u""])
-      else
-         selection_list.set_contents([""])
+      local t
+      t := if ucs_cb.is_checked() then "ucs" else "string"
+      selection_list.set_contents(convert_text_list(selection_list.get_contents(), t))
    end
 
    public on_set_selection()

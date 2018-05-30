@@ -243,10 +243,9 @@ class GridPaintEdit(PaintEdit)
    end
 
    private on_ucs_cb()
-      if ucs_cb.is_checked() then
-         input.set_contents([u""])
-      else
-         input.set_contents([""])
+      local t
+      t := if ucs_cb.is_checked() then "ucs" else "string"
+      input.set_contents(convert_text_list(input.contents, t))
       render()
    end
 
