@@ -271,7 +271,8 @@ $endif
    # Succeed iff the given file is a directory.
    #
    public static is_directory(s)
-      return stat(s).mode_str[1] == "d"
+      if stat(s).mode_str[1] == "d" then
+         return
    end
 
    #
@@ -898,7 +899,8 @@ class FilePath(ObjectOutput)
    # `str()` values.
    #
    public static equiv(x, y)
-      return x.str() == y.str()
+      if x.str() == y.str() then
+         return
    end
 
    #
@@ -1064,11 +1066,13 @@ package class UnixFileSystem(FileSystem)
    end
 
    public is_hidden(s)
-      return any('.', s)
+      if any('.', s) then
+         return
    end
 
    public is_relative_dir(s)
-      return s == ("." | "..")
+      if s == ("." | "..") then
+         return
    end
 
    public get_roots()
@@ -1230,7 +1234,8 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public is_relative_dir(s)
-      return s == ("." | "..")
+      if s == ("." | "..") then
+         return
    end
 
    public native get_roots()
