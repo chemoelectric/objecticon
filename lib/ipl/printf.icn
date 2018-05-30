@@ -22,7 +22,7 @@ package ipl.printf
 
 import
    io(stop, ewrites, writes, Files),
-   util(Format, need_integer, need_text, need_real),
+   util(Format, need_integer, need_text, need_real, need_list),
    lang(to_string)
 
 # Returns a `printf` format as a string result.
@@ -48,6 +48,24 @@ end
 # Call `stop()` with the result of a `printf` format.
 procedure stopf(format, args[])
    stop(doprnt(format, args))
+end
+
+#
+# This is like `sprintf`, but the second argument is a list of the
+# arguments used by the format string.  Thus
+#
+# ~
+#    sprintf("%d %d", 100, 200)
+# ~
+# and
+# ~
+#    lprintf("%d %d", [100, 200])
+# ~
+#
+# are equivalent.
+#
+procedure lprintf(format, args)
+   return doprnt(format, need_list(args))
 end
 
 #
