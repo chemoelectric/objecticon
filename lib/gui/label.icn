@@ -68,7 +68,7 @@ class Label(Component)
    # `copy_label()` below should be overridden.
    #
    public set_menu_on_rpress(s)
-      self.menu_on_rpress_flag := check_flag(s)
+      self.menu_on_rpress_flag := need_flag(s)
       return self
    end
 

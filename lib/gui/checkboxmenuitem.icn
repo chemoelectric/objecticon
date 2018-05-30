@@ -52,7 +52,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
    # Set the checked status according to the given flag.
    #
    public set_is_checked(s)
-      check_flag(s)
+      need_flag(s)
       if s ~=== self.is_checked_flag then {
          Toggle.set_is_checked(s)
          synch_left_image()

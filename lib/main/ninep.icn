@@ -1673,12 +1673,12 @@ class Session9P()
    end
 
    public set_verbose(x)
-      self.verbose := check_flag(x)
+      self.verbose := need_flag(x)
       return self
    end
 
    public set_track_refs(x)
-      self.track_refs := check_flag(x)
+      self.track_refs := need_flag(x)
       return self
    end
 

@@ -1,4 +1,4 @@
-import gui, io, lang
+import gui, io, lang, ipl.lists
 
 class PaintEdit(Dialog)
    public 
@@ -235,7 +235,7 @@ class GridPaintEdit(PaintEdit)
 
    public set_vals()
       PaintEdit.set_vals()
-      c.fmt := input.get_contents_str()
+      c.fmt := list2str(input.contents, "\n")
    end
 
    public render(ev)
@@ -243,10 +243,9 @@ class GridPaintEdit(PaintEdit)
    end
 
    private on_ucs_cb()
-      if ucs_cb.is_checked() then
-         input.set_contents([u""])
-      else
-         input.set_contents([""])
+      local t
+      t := if ucs_cb.is_checked() then "ucs" else "string"
+      input.set_contents(convert_text_list(input.contents, t))
       render()
    end
 

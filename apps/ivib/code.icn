@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang(encode, encode_to_file), gui, parser, io
+import lang(encode, encode_to_file), gui, parser, io, ipl.strings
 
 #
 # Record to store a method to generate
@@ -27,7 +27,8 @@ class Code()
       cache_path,
       parent_Canvas,           #                     
       indent1,                 # Spaces for indentation              
-      indent2                 #
+      indent2,                 #
+      eol                      # Line ending string
 
    #
    # Display an error message
@@ -38,8 +39,6 @@ class Code()
 
    public set_parent_Canvas(c)
       self.parent_Canvas := c
-      self.indent1 := "\n" || repl(" ", self.parent_Canvas.gen_indent)
-      self.indent2 := "\n" || repl(" ", 2 * self.parent_Canvas.gen_indent)
       return self
    end
 
@@ -168,7 +167,7 @@ class Code()
 
    private add_nice_import(im, pack, ids)
       local ispec, k, pad, f
-      ispec := Factory.new_import_some_spec("\n   ", pack, [])
+      ispec := Factory.new_import_some_spec(eol || "   ", pack, [])
       im.put(ispec)
       k := 0
       pad := ""
@@ -176,11 +175,17 @@ class Code()
          ispec.put(Factory.new_id(pad, f))
          k +:= 1
          if k % 4 = 0 then
-            pad := "\n" || repl(" ", 4 + *pack)
+            pad := eol || repl(" ", 4 + *pack)
          else
             pad := " "
       }
       return im
+   end
+
+   private set_eol(s)
+      self.eol := s
+      self.indent1 := eol || repl(" ", self.parent_Canvas.gen_indent)
+      self.indent2 := eol || repl(" ", 2 * self.parent_Canvas.gen_indent)
    end
 
    #
@@ -189,17 +194,18 @@ class Code()
    public output_code(s)
       local prog, im, cl, e, fl
 
+      set_eol(Files.EOL)
       prog := Factory.new_prog()
       im := Factory.new_import("", [])
       prog.get_imports().put(im)
       every e := !sort(imports) do
          add_nice_import(im, e[1], e[2])
 
-      cl := Factory.new_class("\n\n", [], self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
+      cl := Factory.new_class(eol || eol, [], self.parent_Canvas.name, [self.parent_Canvas.superclass_name], eol)
       prog.get_body().put(cl)
       if *class_vars > 0 then {
          fl := Factory.new_fields(indent1, ["private"], [])
-         every fl.put(Factory.new_id("\n      ", !class_vars))
+         every fl.put(Factory.new_id(eol || "      ", !class_vars))
          cl.get_members().put(fl)
       }
       generate_methods(prog, cl)
@@ -213,7 +219,7 @@ class Code()
       f := open(temp_name, "w") | return alert_error(["Couldn't open " || temp_name || ":", &why])
 
       prog.pos.output(f)
-      writes(f, "\n\n")
+      writes(f, eol || eol)
 
       if l_name := resolve_layout_filename(dest_name,
                                            \parent_Canvas.layout_filename) then {
@@ -225,18 +231,18 @@ class Code()
             close(f)
             return alert_error(["Couldn't encode to " || l_temp_name || ":", &why])
          }
-         write(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename)
+         writes(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename, eol)
       } else {
          #
          # Output the encoded canvas to the source file, splitting the output over several
          # comment lines.
          #
-         write(f, Ivib.V2_MARKER)
+         writes(f, Ivib.V2_MARKER, eol)
          encode(parent_Canvas) ? {
             # Check if we need to use two #'s to avoid mistaken #line directives
             hash := if find("line") % 70 = 1 then "##" else "#"
             until pos(0) do
-               write(f, hash, move(70) | tab(0))
+               writes(f, hash, move(70) | tab(0), eol)
          }
       }
 
@@ -267,6 +273,8 @@ class Code()
       p := Parser()
       s := Files.file_to_string(src_name) | return alert_error(["Couldn't load " || src_name || ":", &why])
       prog := p.parse(s) | return alert_error(["Couldn't parse ", &why])
+      set_eol(guess_eol(s))
+
       seen_importspec := table()
 
       # Delete package from imports
@@ -309,7 +317,7 @@ class Code()
                im := Factory.new_import("", [])
                # Prepend a \n to the chunk of the current first token in the prog.
                t := prog.get_body().get(1).get_first_token()
-               t.set_chunk("\n" || t.chunk)
+               t.set_chunk(eol || t.chunk)
                prog.get_imports().put(im)
             }
             add_nice_import(im, e[1], e[2])
@@ -329,10 +337,10 @@ class Code()
       if *class_vars > 0 then {
          if /fl then {
             fl := Factory.new_fields(indent1, ["private"], [])
-            every fl.put(Factory.new_id("\n      ", !class_vars))
+            every fl.put(Factory.new_id(eol || "      ", !class_vars))
             cl.get_members().insert(1, fl)
          } else
-            every fl.put(Factory.new_id("\n      ", !class_vars))
+            every fl.put(Factory.new_id(eol || "      ", !class_vars))
       }
 
       # Add methods, main proc.
@@ -346,7 +354,7 @@ class Code()
          # Output code only to the stream
          #
          prog.pos.output(dest)
-         dest.write()
+         dest.writes(eol)
       } else 
          #
          # Re-create file
@@ -388,7 +396,7 @@ class Code()
 
    private nice_pad(cl)
       if cl.get_members().size() > 0 then
-         return "\n" || indent1
+         return eol || indent1
       else
          return indent1
    end
@@ -499,7 +507,7 @@ class Code()
       if find_procedure(pr, "main") then
          return
 
-      x := Factory.new_procedure("\n\n", "main", [], "\n")
+      x := Factory.new_procedure(eol || eol, "main", [], eol)
       pr.get_body().put(x)
 
       x.get_locals_list().put(Factory.new_local(indent1, "local", ["d"]))

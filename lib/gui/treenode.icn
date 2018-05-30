@@ -260,7 +260,7 @@ class TreeNode()
    # for display purposes, event though it may in fact have no children.
    #
    public set_always_expandable(s)
-      self.always_expandable_flag := check_flag(s)
+      self.always_expandable_flag := need_flag(s)
       return self
    end
 
@@ -269,7 +269,7 @@ class TreeNode()
    # call tree.tree_structure_changed() on the tree in which the node resides.
    #
    public set_expanded(s)
-      self.is_expanded_flag := check_flag(s)
+      self.is_expanded_flag := need_flag(s)
       return self
    end
       

@@ -171,6 +171,27 @@ procedure need_cset(x)
    return cset(x) | runerr(104, x)
 end
 
+# Check that x is a list, signalling a runtime error otherwise.
+#
+procedure need_list(x)
+   type(x) == "list" | runerr(108, x)
+   return x
+end
+
+# Check that x is a set, signalling a runtime error otherwise.
+#
+procedure need_set(x)
+   type(x) == "set" | runerr(119, x)
+   return x
+end
+
+# Check that x is a table, signalling a runtime error otherwise.
+#
+procedure need_table(x)
+   type(x) == "table" | runerr(124, x)
+   return x
+end
+
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.
 #
 package global cleanup
@@ -540,5 +561,18 @@ procedure env_int(s, min, max)
    v := integer(v) | runerr("Integer value expected for " || s, v)
    if v < \min | v > \max then
       runerr("Value of " || s || " out of valid range " || range_string(min, max), v)
+   return v
+end
+
+# Helper function to convert an optional parameter specified in a pdco
+# invocation.  `v` is the parameter (the value itself or a
+# coexpression giving the value, or &null).  `def` is a default value
+# if `v` is &null.  If v is a coexpression and it fails to produce a
+# result, the procedure fails.
+#
+procedure ce_param(v, def)
+   if type(v) == "co-expression" then
+      v := @v | fail
+   /v := def
    return v
 end

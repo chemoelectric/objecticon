@@ -42,15 +42,11 @@ class CanvasEditListDialog(CanvasComponentDialog)
    end
 
    private on_ucs_cb()
-      if ucs_cb.is_checked() then {
-         selection_list.set_contents([u""])
-         initial_text.set_contents(u"")
-         filter.set_contents(u"")
-      } else {
-         selection_list.set_contents([""])
-         initial_text.set_contents("")
-         filter.set_contents("")
-      }
+      local t
+      t := if ucs_cb.is_checked() then "ucs" else "string"
+      selection_list.set_contents(convert_text_list(selection_list.get_contents(), t))
+      initial_text.set_contents(text_convert(initial_text.get_contents(), t))
+      filter.set_contents(text_convert(filter.get_contents(), t))
    end
 
    public on_set_initial_text()

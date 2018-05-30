@@ -273,12 +273,12 @@ class FileSuggestField(SuggestField)
       pats
 
    public set_directories_only(s)
-      self.directories_only_flag := check_flag(s)
+      self.directories_only_flag := need_flag(s)
       return self
    end
 
    public set_show_hidden_files(s)
-      self.show_hidden_files_flag := check_flag(s)
+      self.show_hidden_files_flag := need_flag(s)
       return self
    end
 
@@ -648,7 +648,7 @@ class FileTrail(Component)
    # lists.
    #
    public set_show_hidden_files(s)
-      self.show_hidden_files_flag := check_flag(s)
+      self.show_hidden_files_flag := need_flag(s)
       return self
    end
 

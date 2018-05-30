@@ -32,7 +32,7 @@ class CheckBoxGroup(Connectable)
    # checked box, leaving none checked.
    #
    public set_allow_none_checked(s)
-      self.allow_none_checked_flag := check_flag(s)
+      self.allow_none_checked_flag := need_flag(s)
       return self
    end
 

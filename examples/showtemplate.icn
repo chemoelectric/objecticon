@@ -6,8 +6,8 @@ procedure main(a)
    opts := options(a, [Opt("u",, "Use ucs"),
                        Opt("e",, "Just show encoded template"),
                        Opt("d",, "Turn debug flag on")],
-                       "Usage: showtemplate [OPTIONS] template-file [src-file]\n_
-                        Utility to test an ipl.WebScraper template file")
+                       "Usage: showtemplate [OPTIONS] template-file [src-file]" || Files.EOL ||
+                       "Utility to test an ipl.WebScraper template file")
    if *a = 0 then
       help_stop("File argument required")
 
@@ -33,7 +33,8 @@ procedure main(a)
       p := HtmlParser()
       d := p.parse(s) | stop(&why)
       every k := ws.get_ids() do {
-         write("\nTesting path ", k)
+         write()
+         write("Testing path ", k)
          if v := ws.lookup(d, k) then
             write("Success: ", image(v))
          else

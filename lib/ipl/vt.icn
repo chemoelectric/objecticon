@@ -1113,7 +1113,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # If set, some debug output is produced.
    #
    public set_verbose(f)
-      self.verbose_flag := check_flag(f)
+      self.verbose_flag := need_flag(f)
       return self
    end
 

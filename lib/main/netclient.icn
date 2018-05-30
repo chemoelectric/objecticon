@@ -564,7 +564,7 @@ $endif
    # an SslStream.
    #
    public set_ssl(s)
-      self.ssl_flag := check_flag(s)
+      self.ssl_flag := need_flag(s)
       return self
    end
 
@@ -573,7 +573,7 @@ $endif
    # verified.  By default, this flag is on.
    #
    public set_ssl_verify(s)
-      self.ssl_verify_flag := check_flag(s)
+      self.ssl_verify_flag := need_flag(s)
       return self
    end
 

@@ -118,7 +118,7 @@ class GridLayout(Layout)
    end
 
    public set_debug(s)
-      self.debug := check_flag(s)
+      self.debug := need_flag(s)
       return self
    end
 

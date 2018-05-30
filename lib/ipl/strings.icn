@@ -746,3 +746,22 @@ procedure add_surrogate_pairs(s)
    }
    return ucs(t)
 end
+
+#
+# Guess the end-of-line character used in a string (typically a file's
+# contents).  Returns either "\n" or "\r\n".
+#
+procedure guess_eol(s)
+   local i, j
+   i := j := 0
+   s ? while tab(upto('\r\n')) do {
+      if tab(any('\n')) then
+         i +:= 1
+      else {
+         move(1)
+         if tab(any('\n')) then
+            j +:= 1
+      }
+   }
+   return if i >= j then "\n" else "\r\n"
+end

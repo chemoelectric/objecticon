@@ -1154,17 +1154,17 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_select(f)
-      self.select_flag := check_flag(f)
+      self.select_flag := need_flag(f)
       return self
    end
 
    public set_adjacent(f)
-      self.adjacent_flag := check_flag(f)
+      self.adjacent_flag := need_flag(f)
       return self
    end
 
    public set_auto_close(f)
-      self.auto_close_flag := check_flag(f)
+      self.auto_close_flag := need_flag(f)
       return self
    end
 
@@ -3444,7 +3444,8 @@ procedure usage(opts)
    help_line(":send-vt=STRING", "Send a string directly to the terminal")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
-   writes("\nFor more details, visit ")
+   write()
+   writes("For more details, visit ")
    if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else

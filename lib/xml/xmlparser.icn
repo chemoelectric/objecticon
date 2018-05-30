@@ -107,7 +107,7 @@ class XmlParser(Connectable)
    # default is yes).
    #
    public set_do_namespaces(s)
-      self.do_namespaces_flag := check_flag(s)
+      self.do_namespaces_flag := need_flag(s)
       return self
    end
 
@@ -115,7 +115,7 @@ class XmlParser(Connectable)
    # Configure whether the parser validates (the default is yes).
    #
    public set_validate(s)
-      self.validate_flag := check_flag(s)
+      self.validate_flag := need_flag(s)
       return self
    end
 
@@ -123,7 +123,7 @@ class XmlParser(Connectable)
    # Configure whether the parser preserves comments (the default is yes).
    #
    public set_preserve_comments(s)
-      preserve_comments_flag := check_flag(s)
+      preserve_comments_flag := need_flag(s)
       return self
    end
 
@@ -136,7 +136,7 @@ class XmlParser(Connectable)
    # The default is off.
    #
    public set_preserve_insignificant_whitespace(s)
-      preserve_insignificant_whitespace_flag := check_flag(s)
+      preserve_insignificant_whitespace_flag := need_flag(s)
       return self
    end
 

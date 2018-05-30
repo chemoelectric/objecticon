@@ -290,7 +290,7 @@ class Component(Rect,Align,Connectable)
    # Set the hidden status of the component.
    #
    public set_is_hidden(s)
-      check_flag(s)
+      need_flag(s)
       if s ~=== is_hidden_flag then {
          # NB - try invalidate before and after, since invalidating a hidden
          # component is a no-op.
@@ -350,7 +350,7 @@ class Component(Rect,Align,Connectable)
    # class will shade the component.
    #
    public set_draw_own_shading(s)
-      check_flag(s)
+      need_flag(s)
       if draw_own_shading_flag ~===:= s then
          invalidate()
       return self
@@ -415,7 +415,7 @@ class Component(Rect,Align,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      check_flag(s)
+      need_flag(s)
       if is_shaded_flag ~===:= s then {
          shaded_change()
          invalidate()
@@ -427,7 +427,7 @@ class Component(Rect,Align,Connectable)
    # Set the flag indicating that the component accepts tab focus.
    #
    public set_accepts_focus(s)
-      self.accepts_focus_flag := check_flag(s)
+      self.accepts_focus_flag := need_flag(s)
       return self
    end
 
@@ -1486,7 +1486,7 @@ class Component(Rect,Align,Connectable)
    # Configure whether the component allows drags, if it is so capable.
    #
    public set_allow_drag(s)
-      self.allow_drag_flag := check_flag(s)
+      self.allow_drag_flag := need_flag(s)
       return self
    end
 
@@ -1494,7 +1494,7 @@ class Component(Rect,Align,Connectable)
    # Configure whether the component allows drops, if it is so capable.
    #
    public set_allow_drop(s)
-      self.allow_drop_flag := check_flag(s)
+      self.allow_drop_flag := need_flag(s)
       return self
    end
 
@@ -1513,7 +1513,7 @@ class Component(Rect,Align,Connectable)
    # Set whether the component will show the layout grid, if any.
    #
    public set_show_layout(s)
-      self.show_layout_flag := check_flag(s)
+      self.show_layout_flag := need_flag(s)
       return self
    end
 

@@ -101,7 +101,7 @@ class WebScraper()
    # Turn on debugging info
    #
    public set_debug(s)
-      self.debug_flag := check_flag(s)
+      self.debug_flag := need_flag(s)
       return self
    end
 

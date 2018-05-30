@@ -33,7 +33,8 @@ procedure need_pair(a)
 end
 
 procedure usage(opts)
-   write("Usage: lsxdg [OPTIONS] CMD [ARGS]\nQuery the xdg database")
+   write("Usage: lsxdg [OPTIONS] CMD [ARGS]")
+   write("Query the xdg database")
    options_help(opts)
    write("Possible values of CMD :-")
    help_line("mime", "Get mime type for file(s)")

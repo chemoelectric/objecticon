@@ -1,4 +1,4 @@
-import parser, ipl.options, io, util
+import parser, ipl.options, io, util, ipl.strings
 
 global symbol_table, scanned_file, need, pp_defs, opts
 
@@ -7,8 +7,8 @@ procedure note(s)
 end
 
 procedure usage(opts)
-   write("Usage: fiximports [OPTIONS] [SRC FILES...]\n_
-          Rewrite import declarations so that each used symbol is explicitly imported.")
+   write("Usage: fiximports [OPTIONS] [SRC FILES...]")
+   write("Rewrite import declarations so that each used symbol is explicitly imported.")
    options_help(opts)
    exit(0)
 end
@@ -74,11 +74,13 @@ procedure get_locals(f)
 end
 
 procedure print(s)
-   local e, f, p, im, ispec, pad, k, par, tname
+   local e, f, p, im, ispec, pad, k, par, tname, src, eol
 
    # Re-parse, but without preprocessing
    par := Parser()
-   p := par.parse(Files.file_to_string(s)) |  stop("Couldn't reparse ", s, ": ", &why)
+   p := par.parse(src := Files.file_to_string(s)) |  stop("Couldn't reparse ", s, ": ", &why)
+   eol := guess_eol(src)
+
    #
    # Delete the current imports, saving the index and padding of the first.
    pad := p.get_imports().get(1).get_first_token().get_pad() | ""
@@ -92,7 +94,7 @@ procedure print(s)
       im := Factory.new_import(pad, [])
       p.get_imports().put(im)
       every e := !sort(need) do {
-         ispec := Factory.new_import_some_spec("\n   ", e[1], [])
+         ispec := Factory.new_import_some_spec(eol || "   ", e[1], [])
          im.put(ispec)
          k := 0
          pad := ""
@@ -100,7 +102,7 @@ procedure print(s)
             ispec.put(Factory.new_id(pad, f))
             k +:= 1
             if k % 4 = 0 then
-               pad := "\n" || repl(" ", 4 + *e[1])
+               pad := eol || repl(" ", 4 + *e[1])
             else
                pad := " "
          }

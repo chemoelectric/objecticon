@@ -497,7 +497,7 @@ class Calendar(Component)
    end
 
    public set_week_mode(s)
-      self.week_mode_flag := check_flag(s)
+      self.week_mode_flag := need_flag(s)
       update()
       return self
    end

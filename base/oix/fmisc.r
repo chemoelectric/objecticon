@@ -1728,6 +1728,7 @@ function ord(x, i, j)
    }
    body {
        word len;
+       tended char *p;
 
        type_case x of {
          cset: {
@@ -1757,8 +1758,6 @@ function ord(x, i, j)
          }
 
          ucs : {
-            tended char *p;
-
             if (!cvslice(&i, &j, UcsBlk(x).length))
                 fail;
             len = j - i;
@@ -1774,8 +1773,6 @@ function ord(x, i, j)
          }
 
          default : {
-            tended char *p;
-
             if (!cnv:string(x,x))
                 runerr(132, x);
 

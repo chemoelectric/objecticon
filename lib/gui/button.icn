@@ -52,7 +52,7 @@ abstract class Button(Toggle,Component)
    # not get the focus on a left click.
    #
    public set_no_click_focus(s)
-      self.no_click_focus_flag := check_flag(s)
+      self.no_click_focus_flag := need_flag(s)
       return self
    end
 
@@ -181,7 +181,7 @@ abstract class Button(Toggle,Component)
    # Set the checked status according to the given flag.
    #
    public set_is_checked(s)
-      check_flag(s)
+      need_flag(s)
       if s ~=== self.is_checked_flag then {
          Toggle.set_is_checked(s)
          self.invalidate()
@@ -206,7 +206,7 @@ abstract class Button(Toggle,Component)
    # showing the button as being "down".
    #
    public set_toggles(s)
-      self.toggles_flag := check_flag(s)
+      self.toggles_flag := need_flag(s)
       return self
    end
 

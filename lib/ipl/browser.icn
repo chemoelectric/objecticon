@@ -932,7 +932,7 @@ class WorkerPool()
       scheme_handlers
 
    public set_log_http(s)
-      self.log_http_flag := check_flag(s)
+      self.log_http_flag := need_flag(s)
       return self
    end
 
@@ -5058,7 +5058,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public set_shared_worker_pool(s)
-      self.shared_worker_pool_flag := check_flag(s)
+      self.shared_worker_pool_flag := need_flag(s)
       return self
    end
 

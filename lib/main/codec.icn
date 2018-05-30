@@ -382,7 +382,7 @@ class Encode(Stream, HasUnderlyingStream)
    # structure changes to objects.
    #
    public set_fast(s)
-      self.fast_flag := check_flag(s)
+      self.fast_flag := need_flag(s)
       return self
    end
 
@@ -391,7 +391,7 @@ class Encode(Stream, HasUnderlyingStream)
    # be faster for long strings such as jpeg images.  Default is no.
    #
    public set_allow_binary(s)
-      self.allow_binary_flag := check_flag(s)
+      self.allow_binary_flag := need_flag(s)
       return self
    end
 

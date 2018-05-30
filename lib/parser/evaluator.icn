@@ -52,7 +52,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
    end
 
    public set_write_globals(f)
-      write_globals_flag := check_flag(f)
+      write_globals_flag := need_flag(f)
       return self
    end
 

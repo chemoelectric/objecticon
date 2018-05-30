@@ -66,7 +66,7 @@ class Sizer(Component, HasOrientation)
    # ie whilst it is being dragged.
    #
    public set_show_inter(s)
-      self.show_inter_flag := check_flag(s)
+      self.show_inter_flag := need_flag(s)
       return self
    end
 

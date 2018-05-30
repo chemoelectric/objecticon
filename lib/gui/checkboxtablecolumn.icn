@@ -24,7 +24,7 @@ class CheckBoxTableColumn(BaseTableColumn)
    # checkboxes.
    #
    public set_single_selection(s)
-      self.single_selection_flag := check_flag(s)
+      self.single_selection_flag := need_flag(s)
       return self
    end
 

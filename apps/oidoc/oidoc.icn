@@ -20,11 +20,12 @@ end
 
 procedure usage(opts)
    local u
-   write("Usage: oidoc [OPTIONS] [SRC FILES/PACKAGES...]\n_
-          Generate documentation")
+   write("Usage: oidoc [OPTIONS] [SRC FILES/PACKAGES...]")
+   write("Generate documentation")
    options_help(opts)
    u := URL("http://objecticon.sourceforge.net/Oidoc.html")
-   writes("\nFor more details, visit ")
+   write()
+   writes("For more details, visit ")
    if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else

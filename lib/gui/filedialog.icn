@@ -172,7 +172,7 @@ class FileDialog(Dialog)
    end
 
    public set_multiple_files(s)
-      self.multiple_files_flag := check_flag(s)
+      self.multiple_files_flag := need_flag(s)
       return self
    end
 

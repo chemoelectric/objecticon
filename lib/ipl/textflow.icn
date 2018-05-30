@@ -317,7 +317,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    public set_trim(s)
-      self.trim_flag := check_flag(s)
+      self.trim_flag := need_flag(s)
       return self
    end
 

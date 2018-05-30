@@ -166,7 +166,7 @@ abstract class BorderWhilstEntered(Component)
    # buttons.
    #
    public set_border_whilst_entered(s)
-      s := check_flag(s)
+      s := need_flag(s)
       if s ~=== border_whilst_entered_flag then {
          border_whilst_entered_flag := s
          invalidate()

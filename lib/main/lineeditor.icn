@@ -544,14 +544,14 @@ $endif
    #             then the line editing facilities are disabled
    #
    # :  `f`    - a `Stream` to read from if line editing is disabled.
-   #             If omitted a default `BufferStream` of stdin is used.
+   #             If omitted, FileStream.stdin is used.
    #
    # Examples :-
    # ~
-   #    # On Unix use line editing, on other platforms use buffered stdin
+   #    # On Unix use line editing, on other platforms use stdin
    #    s := LineEditorStream()
    #
-   #    # Don't use line editing; read from the default buffered stdin.
+   #    # Don't use line editing; read from the default stdin.
    #    s := LineEditorStream(&yes)
    #
    #    # Don't use line editing; read from the given stream.
@@ -569,7 +569,7 @@ $ifdef _UNIX
          isatty := &yes
       } else
 $endif
-      tty := \f | BufferStream(FileStream.stdin).set_close_underlying(&no)
+      tty := \f | FileStream.stdin
       undo_manager := UndoManager()
       hmod := table()
       history := []

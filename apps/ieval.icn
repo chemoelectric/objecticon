@@ -51,11 +51,12 @@ end
 
 procedure usage(opts)
    local u
-   write("Usage: ieval [OPTIONS] [INPUT-FILES...]\n_
-          Interactively evaluate expressions")
+   write("Usage: ieval [OPTIONS] [INPUT-FILES...]")
+   write("Interactively evaluate expressions")
    options_help(opts)
    u := URL("http://objecticon.sourceforge.net/Ieval.html")
-   writes("\nFor more details, visit ")
+   write()
+   writes("For more details, visit ")
    if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else

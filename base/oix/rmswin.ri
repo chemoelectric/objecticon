@@ -256,7 +256,7 @@ static void mk_Draw(wbp w, gb_Draw *d)
 
 static void apply_windowlabel(wsp ws)
 {
-    WCHAR *mbs = ucs_to_wchar(&ws->windowlabel, 1);
+    WCHAR *mbs = ucs_to_wchar(&ws->windowlabel, 1, NULL);
     SetWindowTextW(ws->win, mbs);
     free(mbs);
 }
@@ -765,6 +765,8 @@ int sendselectionresponse(wbp w, word requestor, char *property,
     HGLOBAL hg;
     char *phg;
     SIZE_T nbytes;
+    WCHAR *tmp;
+    word tmplen;
 
     CheckUnhidden(ws);
 
@@ -780,14 +782,16 @@ int sendselectionresponse(wbp w, word requestor, char *property,
         return Failed;
     }
 
+    tmp = ucs_to_wchar(data, 1, &tmplen);
     EmptyClipboard();
-    nbytes = (UcsBlk(*data).length + 1) * sizeof(WCHAR);
+    nbytes = tmplen * sizeof(WCHAR);
     MemProtect(hg = GlobalAlloc(GMEM_DDESHARE, nbytes));
     phg = (char *)GlobalLock(hg);
-    ucs_to_wchar1((WCHAR *)phg, data, 1);
+    memcpy(phg, tmp, nbytes);
     GlobalUnlock(hg);
     SetClipboardData(CF_UNICODETEXT, hg);
     CloseClipboard();
+    free(tmp);
     return Succeeded;
 }
 
@@ -1504,13 +1508,10 @@ int textwidth(wbp w, dptr str)
     word len;
     gb_Draw d;
     mk_Draw(w, &d);
-    if (is:string(*str)) {
-        mbs = string_to_wchar(str, 0);
-        len = StrLen(*str);
-    } else {
-        mbs = ucs_to_wchar(str, 0);
-        len = UcsBlk(*str).length;
-    }
+    if (is:string(*str))
+        mbs = string_to_wchar(str, 0, &len);
+    else
+        mbs = ucs_to_wchar(str, 0, &len);
     f = gb_textwidth(&d, mbs, len);
     free(mbs);
     return (int)ceilf(f);
@@ -1523,13 +1524,10 @@ void drawstring(wbp w, int x, int y, dptr str)
     word len;
     gb_Draw d;
     mk_Draw(w, &d);
-    if (is:string(*str)) {
-        mbs = string_to_wchar(str, 0);
-        len = StrLen(*str);
-    } else {
-        mbs = ucs_to_wchar(str, 0);
-        len = UcsBlk(*str).length;
-    }
+    if (is:string(*str))
+        mbs = string_to_wchar(str, 0, &len);
+    else
+        mbs = ucs_to_wchar(str, 0, &len);
     gb_drawstring(&d, x, y, mbs, len);
     free(mbs);
 }
