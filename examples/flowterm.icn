@@ -1154,17 +1154,17 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_select(f)
-      self.select_flag := check_flag(f)
+      self.select_flag := need_flag(f)
       return self
    end
 
    public set_adjacent(f)
-      self.adjacent_flag := check_flag(f)
+      self.adjacent_flag := need_flag(f)
       return self
    end
 
    public set_auto_close(f)
-      self.auto_close_flag := check_flag(f)
+      self.auto_close_flag := need_flag(f)
       return self
    end
 

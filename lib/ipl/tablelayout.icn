@@ -348,7 +348,7 @@ class TableGrid()
    end
 
    public set_fix_col1(s)
-      self.fix_col1_flag := check_flag(s)
+      self.fix_col1_flag := need_flag(s)
       return self
    end
 
@@ -588,7 +588,7 @@ class TableLayout(Layout)
    end
 
    public set_fix_col1(s)
-      self.fix_col1_flag := check_flag(s)
+      self.fix_col1_flag := need_flag(s)
       return self
    end
 
@@ -638,7 +638,7 @@ class TableLayout(Layout)
    end
 
    public set_debug(s)
-      self.debug := check_flag(s)
+      self.debug := need_flag(s)
       return self
    end
 

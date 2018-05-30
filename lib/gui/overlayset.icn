@@ -24,7 +24,7 @@ class OverlaySet(Component)
    # deselected, and restores it when it is reselected.
    #
    public set_remember_focus(s)
-      self.remember_focus_flag := check_flag(s)
+      self.remember_focus_flag := need_flag(s)
       return self
    end
 

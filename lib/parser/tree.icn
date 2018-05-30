@@ -967,7 +967,7 @@ abstract class Function()
    end
 
    public set_varargs(f)
-      check_flag(f)
+      need_flag(f)
       if \f then {
          if not has_varargs() then
             fpos.set(arglist_index, Node("arglist",

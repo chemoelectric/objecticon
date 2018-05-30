@@ -1,7 +1,7 @@
 package io
 
 import
-   util(error, check_flag, need_integer, need_string,
+   util(error, need_flag, need_integer, need_string,
         save_why, HasMode),
    lang(Class, NoCopy),
    posix(System),
@@ -251,7 +251,7 @@ abstract class HasUnderlyingStream()
    # If set, the stream will close any underlying `Stream`s when it is closed.
    #
    public set_close_underlying(s)
-      self.close_underlying_flag := check_flag(s)
+      self.close_underlying_flag := need_flag(s)
       return self
    end
 end
@@ -437,7 +437,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    # If set, the stream is flushed whenever a newline is written.
    #
    public set_flush_on_nl(s)
-      self.flush_on_nl_flag := check_flag(s)
+      self.flush_on_nl_flag := need_flag(s)
       return self
    end
 

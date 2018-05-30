@@ -57,7 +57,7 @@ class Opt()
    # Set whether multiple uses of the option are allowed.
    #
    public set_multiple(multi) 
-      self.multiple_flag := check_flag(multi)
+      self.multiple_flag := need_flag(multi)
       return self
    end
 

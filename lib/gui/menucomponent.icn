@@ -254,7 +254,7 @@ abstract class MenuComponent(Rect,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      check_flag(s)
+      need_flag(s)
       if s ~=== self.is_shaded_flag then {
          self.is_shaded_flag := s
          possibly_invalidate()
@@ -308,7 +308,7 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    public set_is_decorative(s)
-      self.is_decorative_flag := check_flag(s)
+      self.is_decorative_flag := need_flag(s)
       return self
    end
 
@@ -374,7 +374,7 @@ abstract class MenuComponent(Rect,Connectable)
    # down.
    #
    public set_keep_open_on_shift(s)
-      self.keep_open_on_shift_flag := check_flag(s)
+      self.keep_open_on_shift_flag := need_flag(s)
       return self
    end
 

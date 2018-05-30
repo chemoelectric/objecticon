@@ -533,7 +533,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    # Configure whether or not to use the default cursor movement keys; default no.
    #
    public set_use_default_keys(s)
-      check_flag(s)
+      need_flag(s)
       (\default_key_listener).disconnect()
       if /s then {
          set_accepts_focus(&no)

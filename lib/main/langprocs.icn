@@ -492,7 +492,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    # ignored, and the default object output format is used instead.
    #
    public set_ignore_object_output(s)
-      self.ignore_object_output_flag := check_flag(s)
+      self.ignore_object_output_flag := need_flag(s)
       return self
    end
 
@@ -503,7 +503,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    # many lines.
    #
    public set_always_structure(s)
-      self.always_structure_flag := check_flag(s)
+      self.always_structure_flag := need_flag(s)
       return self
    end
 

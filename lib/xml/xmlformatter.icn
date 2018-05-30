@@ -37,7 +37,7 @@ class XmlFormatter(Formatter)
    # is off, ie keep whitespace.
    #
    public set_no_whitespace(s)
-      self.no_whitespace_flag := check_flag(s)
+      self.no_whitespace_flag := need_flag(s)
       return self
    end
 
@@ -47,7 +47,7 @@ class XmlFormatter(Formatter)
    # default is off
    #
    public set_text_trim(s)
-      self.text_trim_flag := check_flag(s)
+      self.text_trim_flag := need_flag(s)
       return self
    end
 
@@ -57,7 +57,7 @@ class XmlFormatter(Formatter)
    # list.  The default is off.
    #
    public set_as_read(s)
-      as_read_flag := check_flag(s)
+      as_read_flag := need_flag(s)
       return self
    end
 

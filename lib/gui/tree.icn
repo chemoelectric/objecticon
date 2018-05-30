@@ -151,7 +151,7 @@ abstract class BaseTree(SelectableScrollArea)
    # Set whether root handles are shown (default yes).
    #
    public set_show_root_handles(s)
-      self.show_root_handles_flag := check_flag(s)
+      self.show_root_handles_flag := need_flag(s)
       self.tree_structure_changed()
       return self
    end
@@ -160,7 +160,7 @@ abstract class BaseTree(SelectableScrollArea)
    # Set whether the root is shown (default yes).
    #
    public set_show_root(s)
-      self.show_root_flag := check_flag(s)
+      self.show_root_flag := need_flag(s)
       self.tree_structure_changed()
       return self
    end

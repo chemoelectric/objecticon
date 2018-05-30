@@ -94,7 +94,7 @@ class TextField(Component)
    # Set the editable status of the component.
    #
    public set_is_editable(s)
-      self.is_editable_flag := check_flag(s)
+      self.is_editable_flag := need_flag(s)
       return self
    end
 
@@ -102,7 +102,7 @@ class TextField(Component)
    # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
    #
    public set_move_on_rpress(s)
-      self.move_on_rpress_flag := check_flag(s)
+      self.move_on_rpress_flag := need_flag(s)
       return self
    end
 
@@ -110,7 +110,7 @@ class TextField(Component)
    # Show the context menu on mouse right press?
    #
    public set_menu_on_rpress(s)
-      self.menu_on_rpress_flag := check_flag(s)
+      self.menu_on_rpress_flag := need_flag(s)
       return self
    end
 

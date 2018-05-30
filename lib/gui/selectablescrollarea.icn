@@ -149,7 +149,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # component).
    #
    public set_draggable_cursor(s)
-      self.draggable_cursor_flag := check_flag(s)
+      self.draggable_cursor_flag := need_flag(s)
       return self
    end
 
@@ -157,7 +157,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Configure the object so that mouse motion moves the cursor.
    #
    public set_motion_cursor(s)
-      self.motion_cursor_flag := check_flag(s)
+      self.motion_cursor_flag := need_flag(s)
       return self
    end
 
@@ -165,7 +165,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Configure the object so that the row the mouse is over is indicated.
    #
    public set_show_over(s)
-      self.show_over_flag := check_flag(s)
+      self.show_over_flag := need_flag(s)
       return self
    end
 
@@ -174,7 +174,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # displayed, even if focus is not held.
    #
    public set_always_show_focus_cursor(s)
-      self.always_show_focus_cursor_flag := check_flag(s)
+      self.always_show_focus_cursor_flag := need_flag(s)
       return self
    end
 
@@ -183,7 +183,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # selection (the default behaviour).
    #
    public set_selection_on_key_moves(s)
-      self.selection_on_key_moves_flag := check_flag(s)
+      self.selection_on_key_moves_flag := need_flag(s)
       return self
    end
 

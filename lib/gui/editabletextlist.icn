@@ -360,7 +360,7 @@ class EditableTextList(LineBasedScrollArea)
    # Set the editable status of the component.
    #
    public set_is_editable(s)
-      self.is_editable_flag := check_flag(s)
+      self.is_editable_flag := need_flag(s)
       return self
    end
 
@@ -368,7 +368,7 @@ class EditableTextList(LineBasedScrollArea)
    # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
    #
    public set_move_on_rpress(s)
-      self.move_on_rpress_flag := check_flag(s)
+      self.move_on_rpress_flag := need_flag(s)
       return self
    end
 
@@ -376,7 +376,7 @@ class EditableTextList(LineBasedScrollArea)
    # Show the context menu on mouse right press?
    #
    public set_menu_on_rpress(s)
-      self.menu_on_rpress_flag := check_flag(s)
+      self.menu_on_rpress_flag := need_flag(s)
       return self
    end
 
@@ -385,7 +385,7 @@ class EditableTextList(LineBasedScrollArea)
    # scrollbar (or wheel) is used; by default no.
    #
    public set_constrain_cursor_on_scroll(s)
-      self.constrain_cursor_on_scroll_flag := check_flag(s)
+      self.constrain_cursor_on_scroll_flag := need_flag(s)
       return self
    end
 
@@ -1419,7 +1419,7 @@ class EditableTextList(LineBasedScrollArea)
    # Indicate, if wrapping, whether to split words or not (default no).
    #
    public set_split_words(s)
-      self.split_words_flag := check_flag(s)
+      self.split_words_flag := need_flag(s)
       if is_live() then {
          clear_split_list()
          compute_and_invalidate()

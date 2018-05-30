@@ -116,7 +116,7 @@ class Grid()
    public static validate_flag(t, key)
       local val
       if val := member(t, key) then
-         return check_flag(val) | runerr("Expected flag-valued grid constraint", val)
+         return need_flag(val) | runerr("Expected flag-valued grid constraint", val)
       else
          return &no
    end

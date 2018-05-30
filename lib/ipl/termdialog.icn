@@ -185,7 +185,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    end
 
    public set_popup_on_tab(s)
-      input.set_popup_on_tab(check_flag(s))
+      input.set_popup_on_tab(need_flag(s))
       return self
    end
 

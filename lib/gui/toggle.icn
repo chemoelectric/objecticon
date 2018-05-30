@@ -64,7 +64,7 @@ abstract class Toggle()
    # Set the checked status according to the given flag.
    #
    public set_is_checked(s)
-      self.is_checked_flag := check_flag(s)
+      self.is_checked_flag := need_flag(s)
       synch_cbg()
       return self
    end

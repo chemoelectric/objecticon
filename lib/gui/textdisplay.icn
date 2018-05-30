@@ -369,7 +369,7 @@ class TextDisplay(LineBasedScrollArea)
    # Indicate, if wrapping, whether to split words or not (default no).
    #
    public set_split_words(s)
-      self.split_words_flag := check_flag(s)
+      self.split_words_flag := need_flag(s)
       if is_live() then {
          clear_split_list()
          compute_and_invalidate()

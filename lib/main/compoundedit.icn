@@ -69,7 +69,7 @@ class CompoundEdit(UndoableEdit)
    # this edit's list will not be added to.
    #
    public set_liberal(s)
-      self.liberal_flag := check_flag(s)
+      self.liberal_flag := need_flag(s)
       return self
    end
 

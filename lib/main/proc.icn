@@ -1,6 +1,6 @@
 package lang
 
-import util(check_flag, error)
+import util(need_flag, error)
 
 final abstract class Proc()
    public static const
@@ -40,7 +40,7 @@ final abstract class Proc()
    #
    public static get_package(p, flag)
       local cl
-      check_flag(flag)
+      need_flag(flag)
       if /flag & cl := get_defining_class(p) then
          return Class.get_package(cl)
       if get_kind(p) = Procedure then
@@ -55,7 +55,7 @@ final abstract class Proc()
    #
    public static get_location(p, flag)
       local cl, i, prog
-      check_flag(flag)
+      need_flag(flag)
       return if prog := get_program(p, &yes) then {
          # Note that we ignore flag in this case since we don't want
          # to lookup (if flag is 1), a method's name in the global

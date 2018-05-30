@@ -165,7 +165,7 @@ class HttpClient(NetClient)
    # default is yes).
    #
    public set_keep_alive(s)
-      self.keep_alive_flag := check_flag(s)
+      self.keep_alive_flag := need_flag(s)
       return self
    end
 
@@ -174,7 +174,7 @@ class HttpClient(NetClient)
    # be reset if any data was received.
    #
    public set_retry_while_data(s)
-      self.retry_while_data_flag := check_flag(s)
+      self.retry_while_data_flag := need_flag(s)
       return self
    end
 
@@ -212,7 +212,7 @@ class HttpClient(NetClient)
    # A flag value.  When set, indicates that gzip compression may be used, if available.
    #
    public set_gzip(s)
-      self.gzip_flag := check_flag(s)
+      self.gzip_flag := need_flag(s)
       return self
    end
 

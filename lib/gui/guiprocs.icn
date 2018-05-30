@@ -779,7 +779,7 @@ abstract class HasOrientation()
    # Configure the orientation.
    #
    public set_is_horizontal(s)
-      self.is_horizontal_flag := check_flag(s)
+      self.is_horizontal_flag := need_flag(s)
       return self
    end
 end
@@ -797,7 +797,7 @@ abstract class HasUseWheel()
    public abstract handle_wheel_down(e)
    
    public set_use_wheel(s)
-      check_flag(s)
+      need_flag(s)
       every (!\wheel_listeners).disconnect()
       wheel_listeners := if /s then
          &null

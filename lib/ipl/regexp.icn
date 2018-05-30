@@ -19,7 +19,7 @@ package ipl.regexp
 import
    ipl.scan(caseless_cset, caseless_match, caseless_find, begin_analysis),
    lang(Prog),
-   util(check_flag, need_string, need_cset)
+   util(need_flag, need_string, need_cset)
 
 package record Pos(n)
 package record Move(n)
@@ -336,19 +336,19 @@ class Pattern()
 
    public set_ordered(f)
       check_open()
-      Re_Ordered := check_flag(f)
+      Re_Ordered := need_flag(f)
       return self
    end
 
    public set_leftmost_shortest(f)
       check_open()
-      Re_LeftmostShortest := check_flag(f)
+      Re_LeftmostShortest := need_flag(f)
       return self
    end
 
    public set_case_dependent(f)
       check_open()
-      if /check_flag(f) then {
+      if /need_flag(f) then {
          Re__find := caseless_find
          Re__any := Re_c_any
          Re__upto := Re_c_upto

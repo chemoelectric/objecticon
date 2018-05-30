@@ -70,7 +70,7 @@ class TabSet(Component)
    # If set, then the tabs are at the bottom, not the top.
    #
    public set_tabs_at_bottom(s)
-      self.tabs_at_bottom_flag := check_flag(s)
+      self.tabs_at_bottom_flag := need_flag(s)
       return self
    end
 
@@ -81,7 +81,7 @@ class TabSet(Component)
    # tabs programatically.
    #
    public set_remember_focus(s)
-      self.remember_focus_flag := check_flag(s)
+      self.remember_focus_flag := need_flag(s)
       return self
    end
 
@@ -90,7 +90,7 @@ class TabSet(Component)
    # not get the focus on a left click.
    #
    public set_no_click_focus(s)
-      self.no_click_focus_flag := check_flag(s)
+      self.no_click_focus_flag := need_flag(s)
       return self
    end
 
@@ -98,7 +98,7 @@ class TabSet(Component)
    # Set the draggable tabs behaviour.  If set, the tabs can be moved.
    #
    public set_draggable_tabs(s)
-      allow_drop_flag := allow_drag_flag := check_flag(s)
+      allow_drop_flag := allow_drag_flag := need_flag(s)
       return self
    end
 
@@ -107,7 +107,7 @@ class TabSet(Component)
    # enough to accommodate a single row of tabs.
    #
    public set_prefer_one_row(s)
-      self.prefer_one_row_flag := check_flag(s)
+      self.prefer_one_row_flag := need_flag(s)
       return self
    end
 

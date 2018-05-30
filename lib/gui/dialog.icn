@@ -199,7 +199,7 @@ class Dialog(Component)
    #
    public set_is_blocked(s)
       local c, e
-      check_flag(s)
+      need_flag(s)
       if \s then {
          # Check were not doing something that might lock up the desktop.
          if is_popup() then
@@ -338,7 +338,7 @@ class Dialog(Component)
    # remembered size.
    #
    public set_remember_size(s)
-      self.remember_size_flag := check_flag(s)
+      self.remember_size_flag := need_flag(s)
       return self
    end
 

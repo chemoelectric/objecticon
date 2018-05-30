@@ -14,12 +14,12 @@ procedure flag(s)
 end
 
 #
-# Check if a flag is &yes or &no, or give a runtime error message.
+# Check that x is a flag (&yes or &no), or give a runtime error
+# message.  Note that no conversion is done.
 #
-procedure check_flag(f)
-   if f === (&yes | &no) then
-      return f
-   runerr(171, f)
+procedure need_flag(x)
+   x === (&yes | &no) | runerr(171, x)
+   return x
 end
 
 #

@@ -70,7 +70,7 @@ class ComponentScrollArea(ScrollArea)
    # before `inner` is laid out.
    #
    public set_reset_layouts_on_size_inner(s)
-      self.reset_layouts_on_size_inner_flag := check_flag(s)
+      self.reset_layouts_on_size_inner_flag := need_flag(s)
       return self
    end
 

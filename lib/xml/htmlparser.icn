@@ -184,7 +184,7 @@ class HtmlParser()
    end
 
    public set_debug_recovery(s)
-      self.debug_recovery_flag := check_flag(s)
+      self.debug_recovery_flag := need_flag(s)
       return self
    end
 
