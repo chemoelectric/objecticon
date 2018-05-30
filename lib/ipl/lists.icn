@@ -890,15 +890,7 @@ end
 # :  `f` - an optional function to apply to each element before appending to result
 #
 procedure cat_lines(l, f)
-   local s, e
-   /f := 1
-   s := ""
-   every e := !l do {
-      e := f(e)
-      s ||:= e || Files.EOL
-   }
-   s[-*Files.EOL:0] := ""
-   return s
+   return list2str(l, Files.EOL, f)
 end
 
 #
