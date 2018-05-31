@@ -1316,14 +1316,23 @@ char *ucs_utf8_ptr(struct b_ucs *b, word pos)
 }
 
 /*
- * Return true iff the first n codepoints of the two utf8 strings are
- * equal.
+ * Compare n bytes of memory from s1 and s2 for equality.  This is
+ * rather like memcmp, but will never read beyond the first different
+ * byte of either string.
  */
-int utf8_eq(char *s1, char *s2, word n)
+int mem_eq(char *s1, char *s2, word n)
 {
-    while (n > 0 && utf8_iter(&s1) == utf8_iter(&s2))
+    while (n > 0 && *s1++ == *s2++)
         --n;
     return n == 0;
+}
+
+/*
+ * Compare the contents of string s with t using mem_eq().
+ */
+int str_mem_eq(dptr s, char *t)
+{
+    return mem_eq(StrLoc(*s), t, StrLen(*s));
 }
 
 /*
