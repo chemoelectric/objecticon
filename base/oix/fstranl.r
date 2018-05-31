@@ -154,6 +154,20 @@ function bal(c1,c2,c3,s,i,j)
       }
 end
 
+/*
+ * Helper function to take a (non-empty) utf8 string, and return the
+ * first codepoint, whilst setting res to the remainder of the utf8
+ * string.
+ */
+static int get_rest(dptr utf8, dptr res)
+{
+    char *p;
+    int first;
+    p = StrLoc(*utf8);
+    first = utf8_iter(&p);
+    MakeStr(p, StrLen(*utf8) - DiffPtrs(p, StrLoc(*utf8)), res);
+    return first;
+}
 
 "find(s1,s2,i1,i2) - generates the sequence of positions in s2 at which "
 "s1 occurs as a substring in s2[i1:i2], but fails if there is no such position."
@@ -163,6 +177,7 @@ function find(s1,s2,i,j)
 
    body {
       tended char *p;
+      tended struct descrip rest;
       word s1_len, term;
 
       /*
@@ -183,14 +198,19 @@ function find(s1,s2,i,j)
           } else {
               char first, ch;
 
+              /* Get first char of s1 in "first", and leave the remainder
+               * of s1 after that char in "rest".
+               */
               first = *StrLoc(s1);
+              MakeStr(StrLoc(s1) + 1, s1_len - 1, &rest);
+
               term = cnv_j - s1_len;
               p = StrLoc(s2) + cnv_i - 1;
               while (cnv_i <= term) {
                   ch = *p++;
                   if (ch == first) {
                       /* First char matches, check remainder. */
-                      if (memcmp(p, StrLoc(s1) + 1, s1_len - 1) == 0)
+                      if (str_mem_eq(&rest, p))
                           suspend C_integer cnv_i;
                   }
                   cnv_i++;
@@ -212,14 +232,19 @@ function find(s1,s2,i,j)
               } else {
                   int first, ch;
 
-                  first = *(unsigned char *)StrLoc(s1);
+                  /* Get first char of s1 in "first", and leave the remainder
+                   * of s1 after that char in "rest".
+                   */
+                  first = (unsigned char)*StrLoc(s1);
+                  MakeStr(StrLoc(s1) + 1, s1_len - 1, &rest);
+
                   term = cnv_j - s1_len;
                   p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
                   while (cnv_i <= term) {
                       int ch = utf8_iter(&p);
                       if (ch == first) {
                           /* First char matches, check remainder. */
-                          if (memcmp(p, StrLoc(s1) + 1, s1_len - 1) == 0)
+                          if (str_mem_eq(&rest, p))
                               suspend C_integer cnv_i;
                       }
                       cnv_i++;
@@ -239,13 +264,11 @@ function find(s1,s2,i,j)
                   }
               } else {
                   int first, ch;
-                  tended char *rest;
 
                   /* Get first char of s1 in "first", and leave the remainder
                    * of s1 after that char in "rest".
                    */
-                  rest = StrLoc(UcsBlk(s1).utf8);
-                  first = utf8_iter(&rest);
+                  first = get_rest(&UcsBlk(s1).utf8, &rest);
 
                   term = cnv_j - s1_len;
                   p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
@@ -253,7 +276,7 @@ function find(s1,s2,i,j)
                       int ch = utf8_iter(&p);
                       if (ch == first) {
                           /* First char matches, check remainder. */
-                          if (utf8_eq(p, rest, s1_len - 1))
+                          if (str_mem_eq(&rest, p))
                               suspend C_integer cnv_i;
                       }
                       cnv_i++;
@@ -311,8 +334,6 @@ end
 function match(s1,s2,i,j)
    str_anal( s2, i, j )
    body {
-      char *str1, *str2;
-
       if (is:string(s2)) {
           if (!cnv:string(s1,s1))
               runerr(103,s1);
@@ -327,9 +348,7 @@ function match(s1,s2,i,j)
            * Compare s1 with s2[i:j] for *s1 characters; fail if an
            *  inequality is found.
            */
-          str1 = StrLoc(s1);
-          str2 = StrLoc(s2) + cnv_i - 1;
-          if (memcmp(str1, str2, StrLen(s1)) != 0)
+          if (!str_mem_eq(&s1, StrLoc(s2) + cnv_i - 1))
               fail;
 
           /*
@@ -351,9 +370,7 @@ function match(s1,s2,i,j)
                * Compare s1 with s2[i:j] for *s1 characters; fail if an
                *  inequality is found.
                */
-              str1 = StrLoc(s1);
-              str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
-              if (memcmp(str1, str2, StrLen(s1)) != 0)
+              if (!str_mem_eq(&s1, ucs_utf8_ptr(&UcsBlk(s2), cnv_i)))
                   fail;
 
               /*
@@ -376,9 +393,7 @@ function match(s1,s2,i,j)
                * Compare s1 with s2[i:j] for *s1 characters; fail if an
                *  inequality is found.
                */
-              str1 = StrLoc(UcsBlk(s1).utf8);
-              str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
-              if (!utf8_eq(str1, str2, UcsBlk(s1).length))
+              if (!str_mem_eq(&UcsBlk(s1).utf8, ucs_utf8_ptr(&UcsBlk(s2), cnv_i)))
                   fail;
 
               /*

@@ -73,37 +73,41 @@ NumComp( < , numlt, IntNumLt, RealNumLt)
 #define IntNumNe(x,y) (bigcmp(&x,&y) != 0)
 NumComp( ~=, numne, IntNumNe, RealNumNe)
 
+
+#define StrLenEq(x,y) (x == y) &&
+#define StrLenNe(x,y) (x != y) ||
+#define StrLenNone(x,y)
+
 /*
  * StrComp is a macro that defines the form of a string comparisons.
  */
-#begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value)
+#begdef StrComp(icon_op, func_name, special_test, c_comp, comp_value)
 
 operator icon_op func_name(x, y)
    body {
      if (need_ucs(&x) || need_ucs(&y)) {
          /*
-          * If we have no lhs and one of the params is a simple ascii
-          * string, we can avoid a conversion to ucs.
+          * Check for simple ascii optimization, to avoid a conversion to ucs.
           */
-         if (!_lhs) {
-             if (is_ascii_string(&x)) {
-                 if (!cnv:ucs(y, y))
-                     runerr(128, y);
-                 y = UcsBlk(y).utf8;
-                 if (special_test_str (lexcmp(&x, &y) c_comp comp_value))
-                     return;
-                 else
-                     fail;
-             }
-             if (is_ascii_string(&y)) {
-                 if (!cnv:ucs(x, x))
-                     runerr(128, x);
-                 x = UcsBlk(x).utf8;
-                 if (special_test_str (lexcmp(&x, &y) c_comp comp_value))
-                     return;
-                 else
-                     fail;
-             }
+         if (is_ascii_string(&x)) {
+             if (!cnv:ucs(y, y))
+                 runerr(128, y);
+             if (special_test(StrLen(x), StrLen(UcsBlk(y).utf8)) (lexcmp(&x, &UcsBlk(y).utf8) c_comp comp_value))
+                 return y;
+             else
+                 fail;
+         }
+
+         /*
+          * We can only do this one if there is no lhs, since otherwise we need to return y as a ucs.
+          */
+         if (!_lhs && is_ascii_string(&y)) {
+             if (!cnv:ucs(x, x))
+                 runerr(128, x);
+             if (special_test(StrLen(UcsBlk(x).utf8), StrLen(y)) (lexcmp(&UcsBlk(x).utf8, &y) c_comp comp_value))
+                 return;
+             else
+                 fail;
          }
 
          if (!cnv:ucs(x, x))
@@ -114,7 +118,7 @@ operator icon_op func_name(x, y)
          /*
           * lexcmp does the work.
           */
-         if (special_test_ucs (lexcmp(&UcsBlk(x).utf8, 
+         if (special_test(StrLen(UcsBlk(x).utf8), StrLen(UcsBlk(y).utf8)) (lexcmp(&UcsBlk(x).utf8, 
                                       &UcsBlk(y).utf8) c_comp comp_value))
              return y;
          else
@@ -130,7 +134,7 @@ operator icon_op func_name(x, y)
          /*
           * lexcmp does the work.
           */
-         if (special_test_str (lexcmp(&x, &y) c_comp comp_value))
+         if (special_test(StrLen(x), StrLen(y)) (lexcmp(&x, &y) c_comp comp_value))
              return y;
          else
              fail;
@@ -140,14 +144,12 @@ operator icon_op func_name(x, y)
 end
 #enddef
 
-StrComp(==,  lexeq, (StrLen(x) == StrLen(y)) &&, 
-        (StrLen(UcsBlk(x).utf8) == StrLen(UcsBlk(y).utf8)) &&,==, Equal) 
-StrComp(~==, lexne, (StrLen(x) != StrLen(y)) ||, 
-        (StrLen(UcsBlk(x).utf8) != StrLen(UcsBlk(y).utf8)) ||, !=, Equal)
-StrComp(>>=, lexge, , , !=, Less    ) 
-StrComp(>>,  lexgt, , , ==, Greater )
-StrComp(<<=, lexle, , , !=, Greater )
-StrComp(<<,  lexlt, , , ==, Less    )
+StrComp(==,  lexeq, StrLenEq,   ==, Equal) 
+StrComp(~==, lexne, StrLenNe,   !=, Equal)
+StrComp(>>=, lexge, StrLenNone, !=, Less    ) 
+StrComp(>>,  lexgt, StrLenNone, ==, Greater )
+StrComp(<<=, lexle, StrLenNone, !=, Greater )
+StrComp(<<,  lexlt, StrLenNone, ==, Less    )
 
 
 "x === y - test equivalence of x and y."
