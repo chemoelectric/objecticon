@@ -1322,9 +1322,10 @@ char *ucs_utf8_ptr(struct b_ucs *b, word pos)
  */
 int mem_eq(char *s1, char *s2, word n)
 {
-    while (n > 0 && *s1++ == *s2++)
-        --n;
-    return n == 0;
+    while (n--)
+        if (*s1++ != *s2++)
+            return 0;
+    return 1;
 }
 
 /*
