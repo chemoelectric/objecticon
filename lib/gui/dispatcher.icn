@@ -30,7 +30,7 @@ final abstract class Dispatcher()
       BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, 
                                                Window.RESIZE, Window.STATE, Window.MOVE)
       BLOCKED_QUIET := set(Mouse.RELEASE, Mouse.MOVEMENT) ++ Mouse.CROSSING
-      REPEATING := Mouse.DRAG_OR_MOVEMENT ++ set(Window.RESIZE)
+      REPEATING := Mouse.DRAG_OR_MOVEMENT ++ set(Window.RESIZE, Window.STATE, Window.MOVE)
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
    end

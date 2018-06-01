@@ -251,9 +251,6 @@ static int subs_asgn(dptr dest, dptr src)
        if (!cnv:ucs(deststr, deststr))
            ReturnErrVal(128, deststr, Error);
 
-       if (!cnv:ucs(*src, srcstr))
-           ReturnErrVal(128, *src, Error);
-       
        if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(deststr).length)
            ReturnErrNum(205, Error);
 
@@ -271,51 +268,96 @@ static int subs_asgn(dptr dest, dptr src)
        }
        postlen = StrLen(UcsBlk(deststr).utf8) - poststrt;
 
-       /*
-        * Check for various cases where we don't need to construct a new utf8 string.
-        */
-       if (tvsub->sslen == 0 && UcsBlk(srcstr).length == 0) {
-           rsltstr = deststr;
-       } else if (prelen == 0 && UcsBlk(srcstr).length == 0) {
-           MakeStr(StrLoc(UcsBlk(deststr).utf8) + poststrt, postlen, &utf8_new);
-           MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
-                                          UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
-       } else if (postlen == 0 && UcsBlk(srcstr).length == 0) {
-           MakeStr(StrLoc(UcsBlk(deststr).utf8), prelen, &utf8_new);
-           MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
-                                          UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
-       } else if (prelen == 0 && postlen == 0) {
-           rsltstr = srcstr;
+       if (is_ascii_string(src)) {
+           srcstr = *src;
+
+           /*
+            * Check for various cases where we don't need to construct a new utf8 string.
+            */
+           if (tvsub->sslen == 0 && StrLen(srcstr) == 0) {
+               rsltstr = deststr;
+           } else if (prelen == 0 && StrLen(srcstr) == 0) {
+               MakeStr(StrLoc(UcsBlk(deststr).utf8) + poststrt, postlen, &utf8_new);
+               MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
+                                              UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
+           } else if (postlen == 0 && StrLen(srcstr) == 0) {
+               MakeStr(StrLoc(UcsBlk(deststr).utf8), prelen, &utf8_new);
+               MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
+                                              UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
+           } else if (prelen == 0 && postlen == 0) {
+               MakeDesc(D_Ucs, make_ucs_block(src, StrLen(srcstr)), &rsltstr);
+           } else {
+               /*
+                * Form the result string.
+                *  Start by allocating space for the entire result.
+                */
+               len = prelen + StrLen(srcstr) + postlen;
+               MakeStrMemProtect(alcstr(NULL, len), len, &utf8_new);
+
+               /*
+                * Copy the three sections into the reserved space.
+                */
+               memcpy(StrLoc(utf8_new), 
+                      StrLoc(UcsBlk(deststr).utf8), 
+                      prelen);
+               memcpy(StrLoc(utf8_new) + prelen, 
+                      StrLoc(srcstr), 
+                      StrLen(srcstr));
+               memcpy(StrLoc(utf8_new) + prelen + StrLen(srcstr), 
+                      StrLoc(UcsBlk(deststr).utf8) + poststrt, 
+                      postlen);
+
+               MakeDesc(D_Ucs, make_ucs_block(&utf8_new,
+                                              UcsBlk(deststr).length - tvsub->sslen + StrLen(srcstr)), &rsltstr);
+           }
+           newsslen = StrLen(srcstr);
+
        } else {
+           if (!cnv:ucs(*src, srcstr))
+               ReturnErrVal(128, *src, Error);
+       
            /*
-            * Form the result string.
-            *  Start by allocating space for the entire result.
+            * Check for various cases where we don't need to construct a new utf8 string.
             */
-           len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
-           MakeStrMemProtect(alcstr(NULL, len), len, &utf8_new);
+           if (tvsub->sslen == 0 && UcsBlk(srcstr).length == 0) {
+               rsltstr = deststr;
+           } else if (prelen == 0 && UcsBlk(srcstr).length == 0) {
+               MakeStr(StrLoc(UcsBlk(deststr).utf8) + poststrt, postlen, &utf8_new);
+               MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
+                                              UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
+           } else if (postlen == 0 && UcsBlk(srcstr).length == 0) {
+               MakeStr(StrLoc(UcsBlk(deststr).utf8), prelen, &utf8_new);
+               MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
+                                              UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
+           } else if (prelen == 0 && postlen == 0) {
+               rsltstr = srcstr;
+           } else {
+               /*
+                * Form the result string.
+                *  Start by allocating space for the entire result.
+                */
+               len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
+               MakeStrMemProtect(alcstr(NULL, len), len, &utf8_new);
 
-           /*
-            * Copy the three sections into the reserved space.
-            */
-           memcpy(StrLoc(utf8_new), 
-                  StrLoc(UcsBlk(deststr).utf8), 
-                  prelen);
-           memcpy(StrLoc(utf8_new) + prelen, 
-                  StrLoc(UcsBlk(srcstr).utf8), 
-                  StrLen(UcsBlk(srcstr).utf8));
-           memcpy(StrLoc(utf8_new) + prelen + StrLen(UcsBlk(srcstr).utf8), 
-                  StrLoc(UcsBlk(deststr).utf8) + poststrt, 
-                  postlen);
+               /*
+                * Copy the three sections into the reserved space.
+                */
+               memcpy(StrLoc(utf8_new), 
+                      StrLoc(UcsBlk(deststr).utf8), 
+                      prelen);
+               memcpy(StrLoc(utf8_new) + prelen, 
+                      StrLoc(UcsBlk(srcstr).utf8), 
+                      StrLen(UcsBlk(srcstr).utf8));
+               memcpy(StrLoc(utf8_new) + prelen + StrLen(UcsBlk(srcstr).utf8), 
+                      StrLoc(UcsBlk(deststr).utf8) + poststrt, 
+                      postlen);
 
-           MakeDesc(D_Ucs, make_ucs_block(&utf8_new,
-                                          UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length), &rsltstr);
+               MakeDesc(D_Ucs, make_ucs_block(&utf8_new,
+                                              UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length), &rsltstr);
+           }
+           newsslen = UcsBlk(srcstr).length;
        }
-       newsslen = UcsBlk(srcstr).length;
    } else {
-       /* deststr must be a string, so ensure src is too */
-       if (!cnv:string(*src, srcstr))
-           ReturnErrVal(129, *src, Error);
-
        /*
         * Be sure that the variable in the trapped variable points
         *  to a string and that the string is big enough to contain
@@ -326,6 +368,10 @@ static int subs_asgn(dptr dest, dptr src)
        postlen = StrLen(deststr) - poststrt;
        if (poststrt > StrLen(deststr))
            ReturnErrNum(205, Error);
+
+       /* deststr must be a string, so ensure src is too */
+       if (!cnv:string(*src, srcstr))
+           ReturnErrVal(129, *src, Error);
 
        /*
         * Check for various cases where we don't need to construct a new string.

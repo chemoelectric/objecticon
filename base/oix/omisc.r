@@ -91,7 +91,7 @@ end
 
 operator = tabmat(x)
    body {
-      char *s1, *s2;
+      char *ssub;
       word i, j;
       tended struct descrip sub;
 
@@ -113,12 +113,10 @@ operator = tabmat(x)
                   fail;
 
               /*
-               * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
-               *  basis and fail if s1 doesn't match s2 for *s1 characters.
+               * Compare x to &subject[&pos+:*x]
                */
-              s1 = StrLoc(x);
-              s2 = ucs_utf8_ptr(&UcsBlk(k_subject), i);
-              if (memcmp(s1, s2, StrLen(x)) != 0)
+              ssub = ucs_utf8_ptr(&UcsBlk(k_subject), i);
+              if (!str_mem_eq(&x, ssub))
                   fail;
 
               /*
@@ -130,7 +128,7 @@ operator = tabmat(x)
                * Suspend the matched string.
                */
               if (_lhs) {
-                  MakeStr(s2, StrLen(x), &sub);
+                  MakeStr(ssub, StrLen(x), &sub);
                   suspend ucs(make_ucs_block(&sub, StrLen(x)));
               } else
                   suspend;
@@ -151,12 +149,10 @@ operator = tabmat(x)
                   fail;
 
               /*
-               * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
-               *  basis and fail if s1 doesn't match s2 for *s1 characters.
+               * Compare x to &subject[&pos+:*x]
                */
-              s1 = StrLoc(UcsBlk(x).utf8);
-              s2 = ucs_utf8_ptr(&UcsBlk(k_subject), i);
-              if (!utf8_eq(s1, s2, UcsBlk(x).length))
+              ssub = ucs_utf8_ptr(&UcsBlk(k_subject), i);
+              if (!str_mem_eq(&UcsBlk(x).utf8, ssub))
                   fail;
 
               /*
@@ -168,7 +164,7 @@ operator = tabmat(x)
                * Suspend the matched string.
                */
               if (_lhs) {
-                  MakeStr(s2, StrLen(UcsBlk(x).utf8), &sub);
+                  MakeStr(ssub, StrLen(UcsBlk(x).utf8), &sub);
                   suspend ucs(make_ucs_block(&sub, UcsBlk(x).length));
               } else
                   suspend;
@@ -189,12 +185,10 @@ operator = tabmat(x)
               fail;
 
           /*
-           * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
-           *  basis and fail if s1 doesn't match s2 for *s1 characters.
+           * Compare x to &subject[&pos+:*x]
            */
-          s1 = StrLoc(x);
-          s2 = StrLoc(k_subject) + i - 1;
-          if (memcmp(s1, s2, StrLen(x)) != 0)
+          ssub = StrLoc(k_subject) + i - 1;
+          if (!str_mem_eq(&x, ssub))
               fail;
 
           /*
@@ -205,7 +199,7 @@ operator = tabmat(x)
           /*
            * Suspend the matched string.
            */
-          suspend string(StrLen(x), s2);
+          suspend string(StrLen(x), ssub);
       }
 
       /*
