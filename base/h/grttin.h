@@ -39,7 +39,7 @@
 
 #begdef LazySuspend(expr)
    do {
-       if (frame->lhs)
+       if (_lhs)
            suspend expr;
        else
            suspend;
@@ -48,7 +48,7 @@
 
 #begdef LazyReturn(expr)
    do {
-       if (frame->lhs)
+       if (_lhs)
            return expr;
        else
            return;
