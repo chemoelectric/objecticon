@@ -87,7 +87,7 @@ operator icon_op func_name(x, y)
    body {
      if (need_ucs(&x) || need_ucs(&y)) {
          /*
-          * Check for simple ascii optimization, to avoid a conversion to ucs.
+          * Check for simple ascii optimizations, to avoid a conversion to ucs.
           */
          if (is_ascii_string(&x)) {
              if (!cnv:ucs(y, y))
@@ -97,15 +97,11 @@ operator icon_op func_name(x, y)
              else
                  fail;
          }
-
-         /*
-          * We can only do this one if there is no lhs, since otherwise we need to return y as a ucs.
-          */
-         if (!_lhs && is_ascii_string(&y)) {
+         if (is_ascii_string(&y)) {
              if (!cnv:ucs(x, x))
                  runerr(128, x);
              if (special_test(StrLen(UcsBlk(x).utf8), StrLen(y)) (lexcmp(&UcsBlk(x).utf8, &y) c_comp comp_value))
-                 return;
+                 LazyReturn(ucs(make_ucs_block(&y, StrLen(y))));
              else
                  fail;
          }
