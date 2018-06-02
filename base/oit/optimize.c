@@ -2759,6 +2759,16 @@ static void fold_field(struct lnode *n)
     struct lnode_field *x = (struct lnode_field *)n;
     struct lnode_global *y;
     struct lclass_field *f;
+    struct literal l;
+
+    if (get_literal(x->child, &l)) {
+        if (l.type == FAIL) {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+            return;
+        }
+        free_literal(&l);
+    }
 
     if (curr_vfunc->method && curr_vfunc->method->name == init_string)
         return;
