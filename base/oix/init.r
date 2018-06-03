@@ -940,11 +940,12 @@ void resolve(struct progstate *p)
                         if (n < 0 || n >= ElemCount(native_methods))
                             ffatalerr("Native method index out of range: %d", n);
                         cp = (struct c_proc *)native_methods[n];
-                        /* Clone the c_proc for a loaded program; we don't
-                         * want to change the original's reference to the
+                        /* Clone the c_proc if we're using this block
+                         * already in another program; we don't want
+                         * to change the original's reference to the
                          * corresponding field (cp->field)
                          */
-                        if (p != &rootpstate) 
+                        if (cp->field)
                             cp = (struct c_proc *)clone_b_proc((struct b_proc *)cp);
                         t = *p->Fnames[cf->fnum];
                         /* The field name should match the end of the procedure block's name */

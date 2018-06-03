@@ -1235,7 +1235,13 @@ function lang_Class_load_library(lib)
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bnative_method_stub) {
                 struct b_proc *bp = try_load(handle, class0, cf);
                 if (bp) {
-                    bp = clone_b_proc(bp);
+                    /* Use the original the first time we see this
+                     * block, and clones on second and subsequent
+                     * appearances, so that we don't overwrite the
+                     * first bp->field setting.
+                     */
+                    if (bp->field)
+                        bp = clone_b_proc(bp);
                     BlkLoc(*cf->field_descriptor) = (union block *)bp;
                     bp->field = cf;
                 }
@@ -1385,7 +1391,13 @@ function lang_Class_load_library(lib)
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bnative_method_stub) {
                 struct b_proc *bp = try_load(handle, class0, cf);
                 if (bp) {
-                    bp = clone_b_proc(bp);
+                    /* Use the original the first time we see this
+                     * block, and clones on second and subsequent
+                     * appearances, so that we don't overwrite the
+                     * first bp->field setting.
+                     */
+                    if (bp->field)
+                        bp = clone_b_proc(bp);
                     BlkLoc(*cf->field_descriptor) = (union block *)bp;
                     bp->field = cf;
                 }
