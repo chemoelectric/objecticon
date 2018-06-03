@@ -144,6 +144,7 @@ struct lfunction {
     int vararg;           /* Flag set to 1 for vararg function */
     int nstatics;         /* Count of statics */
     int native_method_id; /* For a deferred method, the native method number, or -1 */
+    int ref;                          /* flag used for methods during scanrefs2() */
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */
     struct gentry *proc;              /* Pointer to proc, if a proc */

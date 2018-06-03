@@ -226,7 +226,8 @@ class ScannedFile()
 
    private readable
       obj,
-      strinv
+      strinv,
+      methinv
 
    private const
       imports,
@@ -293,6 +294,11 @@ class ScannedFile()
 
    package set_strinv(v)
       self.strinv := need_flag(v)
+      return self
+   end
+
+   package set_methinv(v)
+      self.methinv := need_flag(v)
       return self
    end
 
@@ -519,12 +525,14 @@ class SymbolTable(Connectable)
                every e := d.gen() do {
                   if is(e, Id) then {
                      s := e.str()
-                     if s == "all" then
-                        sf.set_strinv(&yes)
-                     else {
-                        if s[1] == "\"" then
-                           s := s[2:-1]
-                        sf.add_invocable(s)
+                     case s of {
+                        "all": sf.set_strinv(&yes)
+                        "methods": sf.set_methinv(&yes)
+                        default: {
+                           if s[1] == "\"" then
+                              s := s[2:-1]
+                           sf.add_invocable(s)
+                        }
                      }
                   }
                }
@@ -544,6 +552,7 @@ class SymbolTable(Connectable)
       sf.set_package(uf.pack)
       every sf.add_import(uf.get_imports())
       sf.set_strinv(uf.strinv)
+      sf.set_methinv(uf.methinv)
       every sf.add_invocable(uf.get_invocables())
       every d := uf.get_symbols() do {
          case classof(d) of {
@@ -735,8 +744,10 @@ class SymbolTable(Connectable)
       local sf, s, x
       every sf := !scanned_files do {
          every s := sf.get_invocables() do {
-            x := resolve(sf, s) | fail
-            sf.add_resolved_invocable(x)
+            if s[1] ~== "." then {
+               x := resolve(sf, s) | fail
+               sf.add_resolved_invocable(x)
+            }
          }
       }
       return

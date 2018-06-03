@@ -495,6 +495,8 @@ void compute_inheritance()
 
 static struct gentry *resolve_invocable(struct linvocable *inv)
 {
+    if (*inv->iv_name == '.')
+        return 0;
     resolve_global(inv->defined, inv->iv_name);
     if (rres_ambig) {
         lfatal(inv->defined, &inv->pos, 

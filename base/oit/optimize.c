@@ -765,8 +765,12 @@ void optimize()
     compute_class_consts();
     visit_post(fold_consts);
     visit_post(tidy_lists);
-    if (!strinv)
-        scanrefs();
+    if (!strinv) {
+        if (methinv)
+            scanrefs();
+        else
+            scanrefs2();
+    }
 }
 
 static int cnv_eint(struct literal *s)

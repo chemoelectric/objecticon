@@ -177,9 +177,11 @@ procedure do_invocable(o)
    every i := o.gen() do {
       if is(i, Id) then {
          id := i.str()
-         if id[1] == "\"" then
-            id := id[2:-1]
-         (id == "all") | seen(id)
+         (id == ("all"|"methods")) | {
+            if id[1] == "\"" then
+               id := id[2:-1]
+            (id[1] == ".") | seen(id)
+         }
       }
    }
 end

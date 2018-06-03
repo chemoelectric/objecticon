@@ -118,6 +118,8 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Final "
       if iand(f, Class.Special) ~= 0 then
          s ||:= "Special "
+      if iand(f, Class.Removed) ~= 0 then
+         s ||:= "Removed "
       s[-1] := ""
       return s
    end

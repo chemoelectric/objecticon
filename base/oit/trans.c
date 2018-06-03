@@ -163,7 +163,8 @@ static void check_dottedidents(void)
         }
     }
     for (iv = tinvocables; iv; iv = iv->next)
-        check_dottedident(iv->pos, iv->name);
+        if (*iv->name != '.')
+            check_dottedident(iv->pos, iv->name);
 }
 
 static void check_unused(void)

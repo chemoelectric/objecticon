@@ -620,6 +620,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                      StrF(*field->defining_class->program->Fnames[field->fnum]));
          } else if (&ProcBlk(*dp) == (struct b_proc *)&Bdeferred_method_stub)
              fprintf(f, "deferred method");
+         else if (&ProcBlk(*dp) == (struct b_proc *)&Bremoved_method_stub)
+             fprintf(f, "removed method");
          else {
              int kind = get_proc_kind(&ProcBlk(*dp));
              if (kind == Operator)
@@ -1277,6 +1279,8 @@ void getimage(dptr dp1, dptr dp2)
              alcstr(StrLoc(*field_name),StrLen(*field_name));
          } else if (&ProcBlk(*dp1) == (struct b_proc *)&Bdeferred_method_stub)
              LitStr("deferred method", dp2);
+         else if (&ProcBlk(*dp1) == (struct b_proc *)&Bremoved_method_stub)
+             LitStr("removed method", dp2);
          else {
              int kind = get_proc_kind(&ProcBlk(*dp1));
              char *type0 = proc_kinds[kind];

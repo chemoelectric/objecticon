@@ -85,9 +85,19 @@ struct c_proc *keyblks[] = {
 #undef KDef
 };
 
-function deferred_method_stub(a[n])
+/*
+ * Deferred and removed method stubs.
+ */
+
+function deferred_method_stub()
    body {
-      runerr(612);       
+      runerr(612);
+   }
+end
+
+function removed_method_stub()
+   body {
+      runerr(628);
    }
 end
 
@@ -904,65 +914,71 @@ void resolve(struct progstate *p)
         if (cf->field_descriptor) {
             cf->field_descriptor = (dptr)(p->Code + (uword)cf->field_descriptor);
             /* Follow the same logic as lcode.c */
-            if (cf->flags & (M_Defer | M_Abstract | M_Native)) {
-                int n = IntVal(*cf->field_descriptor);
-                if (n == -1) {
-                    /* Unresolved, point to stub */
+            if (cf->flags & M_Method) {
+                if (cf->flags & M_Removed) {
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Bremoved_method_stub;
+                } else if (cf->flags & M_Native) {
+                    int n = IntVal(*cf->field_descriptor);
+                    if (n == -1) {
+                        /* Unresolved, point to stub */
+                        BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
+                    } else {
+                        struct descrip t;
+                        /* Resolved to native method, do sanity checks, set pointer */
+                        if (n < 0 || n >= ElemCount(native_methods))
+                            ffatalerr("Native method index out of range: %d", n);
+                        cp = (struct c_proc *)native_methods[n];
+                        /* Clone the c_proc for a loaded program; we don't
+                         * want to change the original's reference to the
+                         * corresponding field (cp->field)
+                         */
+                        if (p != &rootpstate) 
+                            cp = (struct c_proc *)clone_b_proc((struct b_proc *)cp);
+                        t = *p->Fnames[cf->fnum];
+                        /* The field name should match the end of the procedure block's name */
+                        if (strncmp(StrLoc(t),
+                                    StrLoc(*cp->name) + StrLen(*cp->name) - StrLen(t),
+                                    StrLen(t)))
+                            ffatalerr("Native method name mismatch: %.*s", 
+                                      (int)StrLen(t), StrLoc(t));
+                        /* Pointer back to the corresponding field */
+                        cp->field = cf;
+                        BlkLoc(*cf->field_descriptor) = (union block *)cp;
+                    }
+                } else if (cf->flags & (M_Defer | M_Abstract)) {
                     BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
                 } else {
-                    struct descrip t;
-                    /* Resolved to native method, do sanity checks, set pointer */
-                    if (n < 0 || n >= ElemCount(native_methods))
-                        ffatalerr("Native method index out of range: %d", n);
-                    cp = (struct c_proc *)native_methods[n];
-                    /* Clone the c_proc for a loaded program; we don't
-                     * want to change the original's reference to the
-                     * corresponding field (cp->field)
+                    /*
+                     * Method in the icode file, relocate the entry point
+                     * and the names of the parameters, locals, and static
+                     * variables.
                      */
-                    if (p != &rootpstate) 
-                        cp = (struct c_proc *)clone_b_proc((struct b_proc *)cp);
-                    t = *p->Fnames[cf->fnum];
-                    /* The field name should match the end of the procedure block's name */
-                    if (strncmp(StrLoc(t),
-                                StrLoc(*cp->name) + StrLen(*cp->name) - StrLen(t),
-                                StrLen(t)))
-                        ffatalerr("Native method name mismatch: %.*s", 
-                                  (int)StrLen(t), StrLoc(t));
+                    pp = (struct p_proc *)(p->Code + IntVal(*cf->field_descriptor));
+                    BlkLoc(*cf->field_descriptor) = (union block *)pp;
                     /* Pointer back to the corresponding field */
-                    cp->field = cf;
-                    BlkLoc(*cf->field_descriptor) = (union block *)cp;
-                }
-            } else if (cf->flags & M_Method) {
-                /*
-                 * Method in the icode file, relocate the entry point
-                 * and the names of the parameters, locals, and static
-                 * variables.
-                 */
-                pp = (struct p_proc *)(p->Code + IntVal(*cf->field_descriptor));
-                BlkLoc(*cf->field_descriptor) = (union block *)pp;
-                /* Pointer back to the corresponding field */
-                pp->field = cf;
-                /* Relocate the name */
-                pp->name = p->Constants + (uword)pp->name;
-                /* The entry point */
-                pp->icode = (word *)(p->Code + (uword)pp->icode);
-                relocate_code(p, pp->icode);
-                /* The statics */
-                if (pp->nstatic == 0)
-                    pp->fstatic = 0;
-                else
-                    pp->fstatic = (dptr)(p->Statics + (uword)pp->fstatic);
-                /* The two tables */
-                pp->lnames = (dptr *)(p->Code + (uword)pp->lnames);
-                if (pp->llocs)
-                    pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
-                /* The variables */
-                for (i = 0; i < pp->nparam + pp->ndynam + pp->nstatic; i++) {
-                    pp->lnames[i] = p->Constants + (uword)pp->lnames[i];
+                    pp->field = cf;
+                    /* Relocate the name */
+                    pp->name = p->Constants + (uword)pp->name;
+                    /* The entry point */
+                    pp->icode = (word *)(p->Code + (uword)pp->icode);
+                    relocate_code(p, pp->icode);
+                    /* The statics */
+                    if (pp->nstatic == 0)
+                        pp->fstatic = 0;
+                    else
+                        pp->fstatic = (dptr)(p->Statics + (uword)pp->fstatic);
+                    /* The two tables */
+                    pp->lnames = (dptr *)(p->Code + (uword)pp->lnames);
                     if (pp->llocs)
-                        pp->llocs[i].fname = p->Constants + (uword)pp->llocs[i].fname;
+                        pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
+                    /* The variables */
+                    for (i = 0; i < pp->nparam + pp->ndynam + pp->nstatic; i++) {
+                        pp->lnames[i] = p->Constants + (uword)pp->lnames[i];
+                        if (pp->llocs)
+                            pp->llocs[i].fname = p->Constants + (uword)pp->llocs[i].fname;
+                    }
+                    pp->program = p;
                 }
-                pp->program = p;
             }
         }
     }

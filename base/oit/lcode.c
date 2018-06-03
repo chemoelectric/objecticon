@@ -445,7 +445,7 @@ static void gencode()
         else if (gl->class) {
             struct lclass_field *me;
             for (me = gl->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
+                if (me->func && !(me->flag & (M_Removed | M_Defer | M_Abstract | M_Native))) 
                     gencode_func(me->func);
             }
         }
@@ -1405,16 +1405,25 @@ static void genclasses(void)
         fprintf(dbgfile, "\n# class method descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
         for (cf = cl->fields; cf; cf = cf->next) {
-            if (cf->flag & (M_Defer | M_Abstract | M_Native)) {
-                /* Deferred method, perhaps resolved to native method */
+            if (cf->flag & M_Method) {
                 cf->dpc = pc;
-                outwordx(D_Proc, "D_Proc, Deferred method %s.%s", cl->global->name, cf->name);
-                outwordx(cf->func->native_method_id, "   Native method id");
-            } else if (cf->flag & M_Method) {
-                /* Method, with definition in the icode file  */
-                cf->dpc = pc;
-                outwordx(D_Proc, "D_Proc, Method %s.%s", cl->global->name, cf->name);
-                outwordz(cf->func->pc, "   Block");
+                if (cf->flag & M_Removed) {
+                    /* Deferred method, perhaps resolved to native method */
+                    outwordx(D_Proc, "D_Proc, Removed method %s.%s", cl->global->name, cf->name);
+                    outwordx(0, "   Removed method stub");
+                } else if (cf->flag & M_Native) {
+                    /* Deferred method, perhaps resolved to native method */
+                    outwordx(D_Proc, "D_Proc, Native method %s.%s", cl->global->name, cf->name);
+                    outwordx(cf->func->native_method_id, "   Native method id");
+                } else if (cf->flag & (M_Defer | M_Abstract)) {
+                    /* Deferred method, perhaps resolved to native method */
+                    outwordx(D_Proc, "D_Proc, Deferred or abstract method %s.%s", cl->global->name, cf->name);
+                    outwordx(0, "   Deferred method stub");
+                } else {
+                    /* Method, with definition in the icode file  */
+                    outwordx(D_Proc, "D_Proc, Method %s.%s", cl->global->name, cf->name);
+                    outwordz(cf->func->pc, "   Block");
+                }
             }
         }
     }
@@ -1740,7 +1749,7 @@ static void gentables()
         else if (gp->class) {
             struct lclass_field *me;
             for (me = gp->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
+                if (me->func && !(me->flag & (M_Removed | M_Defer | M_Abstract | M_Native))) 
                     genstaticnames(me->func);
             }
         }

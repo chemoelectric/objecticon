@@ -17,7 +17,8 @@ struct pp_def {
 extern int m4pre;	/* -m: use m4 preprocessor? [UNIX] */
 extern int trace;	/* -t: initial &trace value */
 extern int pponly;	/* -E: preprocess only */
-extern int strinv;	/* -f s: allow full string invocation */
+extern int strinv;	/* -f: allow full string invocation */
+extern int methinv;	/* -g: allow full method invocation */
 extern int verbose;	/* -v n: verbosity of commentary */
 extern int neweronly;	/* -n: only translate .icn if newer than .u */
 extern int Dflag;       /* -L: link debug */
@@ -46,6 +47,7 @@ extern char *new_string;
 extern char *init_string;
 extern char *empty_string;
 extern char *all_string;
+extern char *methods_string;
 extern char *lang_string;
 extern char *stdin_string;
 extern char *package_marker_string;
