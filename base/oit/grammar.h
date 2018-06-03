@@ -48,6 +48,7 @@ invoclist : invocop;
 
 invocop  : dottedident {Invocop1($1);} ;
 	 | STRINGLIT {Invocop2($1);} ;
+         | DOT IDENT {Invocop3($1,$2);} ;
 
 import  : IMPORT importlist ;
 

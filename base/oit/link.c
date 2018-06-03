@@ -355,6 +355,7 @@ char *m_flag2str(int flag)
     if (flag & M_Special) strcat(buff, "M_Special ");
     if (flag & M_Abstract) strcat(buff, "M_Abstract ");
     if (flag & M_Native) strcat(buff, "M_Native ");
+    if (flag & M_Removed) strcat(buff, "M_Removed ");
     if (*buff)
         buff[strlen(buff) - 1] = 0;
     return buff;
@@ -388,7 +389,7 @@ void dumpstate()
     struct linvocable *inv;
     int i;
 
-    fprintf(stderr, "Invocables, strinv=%d\n", strinv);
+    fprintf(stderr, "Invocables, strinv=%d methinv=%d\n", strinv, methinv);
     for (inv = linvocables; inv; inv = inv->iv_link) {
         if (inv->resolved)
             fprintf(stderr, "\t%s -> %s\n", inv->iv_name, inv->resolved->name);

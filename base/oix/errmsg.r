@@ -124,6 +124,7 @@ struct errtab errtab[] = {
     {624, "Record, class or object expected"},
     {625, "Record or constructor expected"},
     {627, "This method must be called from within a class"},
+    {628, "Method removed by translator"},
     {630, "Weakref expected"},
     {631, "Procedure or methp expected"},
     {632, "Co-expression which is a program's &main expected"},

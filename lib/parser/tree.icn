@@ -244,7 +244,12 @@ class Id(Tree)
    # To get that, use pos.str().
    #
    public str()
-      return Util.dottedid2string(pos)
+      return if is(pos, Token) then
+         pos.s
+      else case pos.label of {
+         "dotident": Util.dotid2string(pos)
+         "dottedident": Util.dottedid2string(pos)
+      }
    end
 
    public get_first_token()
@@ -601,6 +606,10 @@ final abstract class Util()
          s := n.child(2).s || n.child(3).s || s
          n := n.child(1)
       }
+   end
+
+   public static dotid2string(n)
+      return n.child(1).s || n.child(2).s
    end
 
    public static first_token(n)

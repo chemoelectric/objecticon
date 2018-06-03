@@ -33,7 +33,9 @@ final abstract class Class()
       # Integer flag for an abstract class/method.
       Abstract,
       # Integer flag for a native method.
-      Native
+      Native,
+      # Integer flag for a removed method.
+      Removed
 
    private static init()
       Method := 8r01
@@ -49,6 +51,7 @@ final abstract class Class()
       Special := 8r02000
       Abstract := 8r04000
       Native := 8r010000
+      Removed := 8r020000
    end
 
    # This method creates a new instance of the class from which the

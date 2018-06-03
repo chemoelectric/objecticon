@@ -18,7 +18,8 @@ static int errors = 0;		    /* translator and linker errors */
 
 int m4pre	=0;	/* -m: use m4 preprocessor? [UNIX] */
 int pponly	=0;	/* -E: preprocess only */
-int strinv	=0;	/* -f s: allow full string invocation */
+int strinv	=0;	/* -f: allow full string invocation */
+int methinv	=0;	/* -g: allow all methods to be invoked by string */
 int verbose	=1;	/* -v n: verbosity of commentary, 0 = silent */
 int Iflag       =0;     /* -I: produce listing of raw and optimized intermediate code */
 int neweronly	=0;	/* -n: only translate .icn if newer than .u */
@@ -40,6 +41,7 @@ char *new_string;
 char *init_string;
 char *empty_string;
 char *all_string;
+char *methods_string;
 char *lang_string;
 char *stdin_string;
 char *package_marker_string;
@@ -199,8 +201,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBfmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v]"	/* omit -e from doc */
-    while ((c = oi_getopt(argc,argv, "?cBfmno:sv:ELIZTVl:O:D:")) != EOF) {
+#define Usage "[-cBfgmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v]"	/* omit -e from doc */
+    while ((c = oi_getopt(argc,argv, "?cBfgmno:sv:ELIZTVl:O:D:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -234,6 +236,10 @@ int main(int argc, char **argv)
 
             case 'f':			/* -f : full invocation */
                 strinv = 1;		
+                break;
+
+            case 'g':			/* -g : full string method invocation */
+                methinv = 1;		
                 break;
 
             case 'm':			/* -m: preprocess using m4(1) [UNIX] */
@@ -607,8 +613,10 @@ static void usage()
                    "-m        Preprocess using m4\n"
                    "-Z        Use zlib compression on the icode file\n"
                    "-c        Stop after producing ucode files.\n"
-                   "-f        Enable full string invocation by preserving unreferenced globals during linking\n"
-                   "          (equivalent to 'invocable all' in a source file).\n"
+                   "-f        Enable full string invocation by preserving unreferenced globals and methods\n"
+                   "          during linking (equivalent to 'invocable all' in a source file).\n"
+                   "-g        Enable full string method invocation by preserving unreferenced methods during\n"
+                   "          linking (equivalent to 'invocable methods' in a source file).\n"
                    "-o file   Write the executable program to the specified file.\n"
                    "-s        Suppress informative messages during translation and linking (equivalent to\n"
                    "          '-v 0')\n"
@@ -729,6 +737,7 @@ void init_strings()
     empty_string = spec_str("");
     init_string = spec_str("init");
     all_string = spec_str("all");
+    methods_string = spec_str("methods");
     lang_string = spec_str("lang");
     stdin_string = spec_str("stdin");
     package_marker_string = spec_str(">package");

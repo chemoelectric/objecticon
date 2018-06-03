@@ -918,6 +918,9 @@ static void visitnode_post(struct lnode *n, visitf v)
 
 void visitfunc_pre(struct lfunction *f, visitf v)
 {
+    /* The function may be a deferred method, and have no body. */
+    if (!f->start)
+        return;
     curr_vfunc = f;
     visitnode_pre(curr_vfunc->start, v);
     visitnode_pre(curr_vfunc->initial, v);
@@ -927,6 +930,8 @@ void visitfunc_pre(struct lfunction *f, visitf v)
 
 void visitfunc_post(struct lfunction *f, visitf v)
 {
+    if (!f->start)
+        return;
     curr_vfunc = f;
     visitnode_post(curr_vfunc->start, v);
     visitnode_post(curr_vfunc->initial, v);
@@ -943,7 +948,7 @@ void visit_pre(visitf v)
         else if (gl->class) {
             struct lclass_field *me;
             for (me = gl->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
+                if (me->func)
                     visitfunc_pre(me->func, v);
             }
         }
@@ -959,7 +964,7 @@ void visit_post(visitf v)
         else if (gl->class) {
             struct lclass_field *me;
             for (me = gl->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
+                if (me->func)
                     visitfunc_post(me->func, v);
             }
         }

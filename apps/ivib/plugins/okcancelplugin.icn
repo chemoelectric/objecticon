@@ -4,6 +4,8 @@ $load IMG "okcancel.gif"
 
 global IC
 
+invocable OkCancelPlugin
+
 class OkCancelPlugin(Plugin)
    private static init()
       IC.name_image("okcancel", IMG)

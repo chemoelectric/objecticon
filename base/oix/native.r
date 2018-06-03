@@ -1005,6 +1005,10 @@ function lang_Decode_decode_methp_impl(obj, cl, fn, target)
            LitWhy("Field is the deferred method stub");
            fail;
        }
+       if (BlkLoc(*cf->field_descriptor) == (union block *)&Bremoved_method_stub) {
+           LitWhy("Field is the removed method stub");
+           fail;
+       }
        MethpBlk(target).object = &ObjectBlk(obj);
        MethpBlk(target).proc = &ProcBlk(*cf->field_descriptor);
        return target;

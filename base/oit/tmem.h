@@ -25,6 +25,7 @@ void next_import(char *s, int mode, struct node *n);
 void add_import_symbol(char *s, struct node *n); 
 void add_invocable(char *name, int x, struct node *n);
 char *dottedid2string(struct node *n);
+char *prepend_dot(char *s);
 struct node *convert_dottedidentexpr(struct node *n);
 
 #endif

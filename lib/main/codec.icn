@@ -184,7 +184,7 @@ class Encode(Stream, HasUnderlyingStream)
 
    private encode_methp(mp)
       writes1(Codec.METHP_CODE)
-      Proc.get_defining_class(mp) | throw("Can't encode a deferred methp: " || image(mp))
+      Proc.get_defining_class(mp) | throw("Can't encode a deferred or removed methp: " || image(mp))
       note_seen(mp)
       line_out(Proc.get_name(mp))
       encode(Class.get_methp_object(mp))
@@ -214,6 +214,7 @@ class Encode(Stream, HasUnderlyingStream)
                "M"
             }
             "deferred": throw("Can't encode a deferred method")
+            "removed": throw("Can't encode a removed method")
             "internal": throw("Can't encode an internal procedure")
             default: syserr("Not a proc")
          }

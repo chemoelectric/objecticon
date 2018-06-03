@@ -62,6 +62,7 @@ extern struct descrip billiondesc;	/* 10^9 */
 extern struct descrip defaultwindowlabel;	/* ucs string, the default window label */
 
 extern struct c_proc Bdeferred_method_stub;  /* Deferred method block */
+extern struct c_proc Bremoved_method_stub;   /* Removed method block */
 
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */

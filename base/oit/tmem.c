@@ -314,6 +314,9 @@ void add_invocable(char *name, int x, struct node *n)
     if (x == 1 && name == all_string)
         name = "0";			/* "0" represents "all" */
 
+    if (x == 1 && name == methods_string)
+        name = "1";			/* "1" represents "methods" */
+
     p = FAlloc(struct tinvocable);
     p->name = name;
     p->pos = n;
@@ -353,6 +356,18 @@ char *dottedid2string(struct node *n)
         return Str0(n);
     zero_sbuf(&sb);
     dottedid2string_impl(n);
+    return str_install(&sb);
+}
+
+/*
+ * Install the string "." || s.
+ */
+char *prepend_dot(char *s)
+{
+    zero_sbuf(&sb);
+    AppChar(sb, '.');
+    while (*s)
+        AppChar(sb, *s++);
     return str_install(&sb);
 }
 

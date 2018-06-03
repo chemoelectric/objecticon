@@ -17,7 +17,9 @@
  * Prototypes.
  */
 
-static void	reference(struct gentry *gp);
+static void reference(struct gentry *gp);
+static void rebuild_lists(void);
+static struct gentry *gmain;
 
 struct package_id {
     char *name;
@@ -240,6 +242,8 @@ void readglob(struct lfile *lf)
                 name = uin_str();	/* get name */
                 if (name[0] == '0')
                     strinv = 1;	/* name of "0" means "invocable all" */
+                else if (name[0] == '1')  /* name of "1" means "invocable methods" */
+                    methinv = 1;
                 else
                     addinvk(name, lf, &pos);
                 break;
@@ -291,11 +295,9 @@ void resolve_locals()
  */
 void scanrefs()
 {
-    struct gentry *gp, **gpp, *gmain;
+    struct gentry *gp;
     struct linvocable *inv;
-    struct lclass *cp, **cpp;
-    struct lrecord *rp, **rpp;
-    struct lfile *lf, **lfp;
+    struct lfile *lf;
 
     /*
      * Mark every global as unreferenced; search for main.
@@ -325,7 +327,18 @@ void scanrefs()
      * Reference (recursively) every global declared to be "invocable".
      */
     for (inv = linvocables; inv; inv = inv->iv_link)
-        reference(inv->resolved);
+        if (*inv->iv_name != '.')
+            reference(inv->resolved);
+
+    rebuild_lists();
+}
+
+static void rebuild_lists()
+{
+    struct gentry *gp, **gpp;
+    struct lclass *cp, **cpp;
+    struct lrecord *rp, **rpp;
+    struct lfile *lf, **lfp;
 
     /*
      * Rebuild the global list to include only referenced globals.
@@ -600,4 +613,196 @@ void resolve_native_methods()
     }
 }
 
+static int changed;
+static void reference2(struct gentry *gp);
+static void freference(struct lfunction *lf);
 
+/*
+ * Structure and methods for a simple set of field names.
+ */
+
+static struct seen_field *seen_fields[500];
+
+struct seen_field {
+    char *name;
+    struct seen_field *next;
+};
+
+/*
+ * Have we seen the given field?
+ */
+static int have_seen_field(char *name)
+{
+    int i = hasher(name, seen_fields);
+    struct seen_field *x = seen_fields[i];
+    while (x && x->name != name)
+        x = x->next;
+    return x != 0;
+}
+
+/*
+ * Note that we have seen the given field, adding it to the set if
+ * necessary.
+ */
+static void note_seen_field(char *name)
+{
+    int i = hasher(name, seen_fields);
+    struct seen_field *x = seen_fields[i];
+    while (x && x->name != name)
+        x = x->next;
+    if (!x) {
+        x = Alloc(struct seen_field);
+        x->name = name;
+        x->next = seen_fields[i];
+        seen_fields[i] = x;
+        changed = 1;
+    }
+}
+
+static int add_seen_field(struct lnode *n)
+{
+    switch (n->op) {
+        case Uop_Field: {
+            struct lnode_field *x = (struct lnode_field *)n;
+            note_seen_field(x->fname);
+            break;
+        }
+    }
+    return 1;
+}
+
+static void freference(struct lfunction *lf)
+{
+    struct lentry *le;
+    if (lf->ref)
+        return;
+    lf->ref = 1;
+    changed = 1;
+
+    /*
+     * Mark all the globals used as referenced.
+     */
+    for (le = lf->locals; le; le = le->next) {
+        if (le->l_flag & F_Global)
+            reference2(le->l_val.global);
+    }
+
+    /*
+     * Note all the field usages.
+     */
+    visitfunc_post(lf, add_seen_field);
+}
+
+static void reference2(struct gentry *gp)
+{
+    struct lclass_ref *sup;
+
+    if (gp->ref)
+        return;
+
+    gp->ref = 1;
+    changed = 1;
+    if (gp->func) {
+        /*
+         * Top level procedure.
+         */
+        freference(gp->func);
+    } else if (gp->class) {
+        /* Class; mark all the superclasses.  Note that we don't go through
+         * the methods and reference them at this point.
+         */
+        for (sup = gp->class->resolved_supers; sup; sup = sup->next) 
+            reference2(sup->class->global);
+    }
+}
+
+void scanrefs2()
+{
+    struct gentry *gp;
+    struct linvocable *inv;
+    struct lfile *lf;
+    struct lclass *cp;
+    struct lclass_field *lm;
+    struct lclass_field_ref *lr;
+
+    /*
+     * Mark every global as unreferenced.
+     */
+    for (gp = lgfirst; gp; gp = gp->g_next) {
+        gp->ref = 0;
+    }
+
+    for (lf = lfiles; lf; lf = lf->next)
+        lf->ref = 0;
+
+    /*
+     * "new" and "init" are always used.
+     */
+    note_seen_field(new_string);
+    note_seen_field(init_string);
+
+    /*
+     * Start scanninng with main.  gmain has been set by scanrefs()
+     * previously.
+     */
+    reference2(gmain);
+
+    /*
+     * Reference invocable declarations
+     */
+    for (inv = linvocables; inv; inv = inv->iv_link) {
+        if (*inv->iv_name == '.')
+            /* A field name */
+            note_seen_field(intern(inv->iv_name + 1));
+        else {
+            /* A global; if a class reference all its methods (inherited ones too). */
+            reference2(inv->resolved);
+            if (inv->resolved->class) {
+                for (lr = inv->resolved->class->implemented_class_fields; lr; lr = lr->next) {
+                    if (lr->field->func)
+                        freference(lr->field->func);
+                }
+            }
+        }
+    }
+
+    /*
+     * Loop until no changes are made.
+     */
+    for(;;) {
+        changed = 0;
+        /*
+         * For each referenced class, ensure we have referenced all
+         * methods with names in the seen set.
+         */
+        for (cp = lclasses; cp; cp = cp->next) {
+            if (cp->global->ref) {
+                for (lm = cp->fields; lm; lm = lm->next) {
+                    if (lm->func && !lm->func->ref && have_seen_field(lm->name))
+                        freference(lm->func);
+                }
+            }
+        }
+        if (!changed)
+            break;
+    }
+
+    /*
+     * Rebuild global lists.
+     */
+    rebuild_lists();
+
+    /*
+     * Mark methods we can remove.
+     */
+    for (cp = lclasses; cp; cp = cp->next) {
+        struct lclass_field *lm;
+        for (lm = cp->fields; lm; lm = lm->next) {
+            if (lm->func && !lm->func->ref && !(lm->flag & (M_Defer | M_Abstract | M_Native))) {
+                if (verbose > 2) 
+                    report("Discarding method    %s.%s", cp->global->name, lm->name);
+                lm->flag |= M_Removed;
+            }
+        }
+    }
+}

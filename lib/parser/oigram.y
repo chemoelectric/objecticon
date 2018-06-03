@@ -188,6 +188,7 @@ invoclist : invocop;
 
 invocop  : dottedident ;
          | STRINGLIT ;
+         | DOT IDENT { $$ := Node("dotident", $1,$2);} ;
 
 import  : IMPORT importlist {$$ := Node("import",$1,$2) } ;
 
