@@ -75,7 +75,7 @@ class Source()
       version, 
       code
 
-   public defer createconverterset()
+   public optional createconverterset()
 
    public migrate()
       local cs, d, o, e
@@ -427,7 +427,7 @@ end
 # An action to apply to a field of a class
 #
 class Action()
-   public defer apply()
+   public optional apply()
 end
 
 

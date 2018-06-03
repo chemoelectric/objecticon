@@ -9,7 +9,7 @@ class CanvasABorder(CanvasObject)
      x_align_val,
      y_align_val
 
-   public defer create_visual_border()
+   public optional create_visual_border()
 
    #
    # Copy fields from self to c.
@@ -189,7 +189,7 @@ class CanvasLineBorder(CanvasABorder)
       return b
    end
 
-   public defer create_outer_visual_border()
+   public optional create_outer_visual_border()
 end
 
 class CanvasPlainBorder(CanvasLineBorder)

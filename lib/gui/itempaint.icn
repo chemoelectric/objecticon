@@ -24,7 +24,7 @@ abstract class ItemPaint()
    # :  `W` - The window to use for text metrics
    # :  `data` - The data item
    #
-   public defer get_width(W, data)
+   public optional get_width(W, data)
 
    # Return the height of the given data.  Implementing this method is
    # not necessary if `get_constant_height` is overridden instead.
@@ -33,7 +33,7 @@ abstract class ItemPaint()
    # :  `W` - The window to use for text metrics
    # :  `data` - The data item
    #
-   public defer get_height(W, data)
+   public optional get_height(W, data)
 
    # Return the size of the given data, as a `Size` instance.
    # :Parameters :

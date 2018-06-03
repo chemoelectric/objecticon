@@ -945,7 +945,7 @@ void resolve(struct progstate *p)
                         cp->field = cf;
                         BlkLoc(*cf->field_descriptor) = (union block *)cp;
                     }
-                } else if (cf->flags & (M_Defer | M_Abstract)) {
+                } else if (cf->flags & (M_Optional | M_Abstract)) {
                     BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
                 } else {
                     /*

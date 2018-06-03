@@ -798,7 +798,7 @@ void scanrefs2()
     for (cp = lclasses; cp; cp = cp->next) {
         struct lclass_field *lm;
         for (lm = cp->fields; lm; lm = lm->next) {
-            if (lm->func && !lm->func->ref && !(lm->flag & (M_Defer | M_Abstract | M_Native))) {
+            if (lm->func && !lm->func->ref && !(lm->flag & (M_Optional | M_Abstract | M_Native))) {
                 if (verbose > 2) 
                     report("Discarding method    %s.%s", cp->global->name, lm->name);
                 lm->flag |= M_Removed;

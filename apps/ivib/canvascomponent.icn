@@ -444,7 +444,7 @@ class CanvasComponent(CanvasObject)
    #
    # Open the configuration dialog box.
    #
-   public defer dialog()
+   public optional dialog()
 
    public op_dialog()
       parent_Canvas.parent_dialog.show_dialog(self)

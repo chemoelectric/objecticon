@@ -430,7 +430,7 @@ abstract class MenuComponent(Rect,Connectable)
    # so that the submenu may initialize its size.  The method should leave the
    # instance variables w and h initialized.
    #
-   public defer resize()
+   public optional resize()
 
    #
    # Invoked by the parent menu when the right cursor key is pressed.
@@ -441,12 +441,12 @@ abstract class MenuComponent(Rect,Connectable)
    #
    # Display the submenu
    #
-   public defer display(w)
+   public optional display(w)
 
    #
    # Handle the given key event.
    #
-   public defer handle_key(e)
+   public optional handle_key(e)
 
    #
    # Is the cursor over us?

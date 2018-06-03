@@ -38,7 +38,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Insert a new entry.  Always succeeds and returns `self`.  Only
    # implemented with INSERT capability.
    #
-   public defer insert(key, val)
+   public optional insert(key, val)
 
    # Return the value for the given key if it is in the table, or fail
    # if it is not present.  If the table has MODIFY capability, a
@@ -51,7 +51,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # present, otherwise succeeds and returns `self`.  Only implemented
    # with DELETE capability.
    #
-   public defer delete(key)
+   public optional delete(key)
 
    #
    # Return the value with the given key, or the default value if
@@ -118,7 +118,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Generate the keys (cf the builtin key() function) in reverse
    # order.  Only implemented with ORDER capability.
    #
-   public defer back_key()
+   public optional back_key()
 
    #
    # Generate alternating key/values (cf the builtin keyval()
@@ -137,7 +137,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # table; fails if there is no matching key in the table.  Only
    # implemented for tables with ORDER capability.
    #
-   public defer rank(key)
+   public optional rank(key)
 
    #
    # Return the `i`th key, in order, in the table.  Fails if `i` is

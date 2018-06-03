@@ -30,23 +30,23 @@ struct toktab toktab[] = {
    { "const",            CONST,         0},                /*  12 */
    { "create",           CREATE,        Beginner},         /*  13 */
    { "default",          DEFAULT,       Beginner},         /*  14 */
-   { "defer",            DEFER,         0},                /*  15 */
-   { "do",               DO,            0},                /*  16 */
-   { "else",             ELSE,          0},                /*  17 */
-   { "end",              END,           0},                /*  18 */
-   { "every",            EVERY,         Beginner},         /*  19 */
-   { "fail",             FAIL,          Beginner+Ender},   /*  20 */
-   { "final",            FINAL,         0},                /*  21 */
-   { "global",           GLOBAL,        0},                /*  22 */
-   { "if",               IF,            Beginner},         /*  23 */
-   { "import",           IMPORT,        0},                /*  24 */
-   { "initial",          INITIAL,       0},                /*  25 */
-   { "invocable",        INVOCABLE,     0},                /*  26 */
-   { "local",            LOCAL,         0},                /*  27 */
-   { "native",           NATIVE,        0},                /*  28 */
-   { "next",             NEXT,          Beginner+Ender},   /*  29 */
-   { "not",              NOT,           Beginner},         /*  30 */
-   { "of",               OF,            0},                /*  31 */
+   { "do",               DO,            0},                /*  15 */
+   { "else",             ELSE,          0},                /*  16 */
+   { "end",              END,           0},                /*  17 */
+   { "every",            EVERY,         Beginner},         /*  18 */
+   { "fail",             FAIL,          Beginner+Ender},   /*  19 */
+   { "final",            FINAL,         0},                /*  20 */
+   { "global",           GLOBAL,        0},                /*  21 */
+   { "if",               IF,            Beginner},         /*  22 */
+   { "import",           IMPORT,        0},                /*  23 */
+   { "initial",          INITIAL,       0},                /*  24 */
+   { "invocable",        INVOCABLE,     0},                /*  25 */
+   { "local",            LOCAL,         0},                /*  26 */
+   { "native",           NATIVE,        0},                /*  27 */
+   { "next",             NEXT,          Beginner+Ender},   /*  28 */
+   { "not",              NOT,           Beginner},         /*  29 */
+   { "of",               OF,            0},                /*  30 */
+   { "optional",         OPTIONAL,      0},                /*  31 */
    { "package",          PACKAGE,       0},                /*  32 */
    { "private",          PRIVATE,       0},                /*  33 */
    { "procedure",        PROCEDURE,     0},                /*  34 */
@@ -72,9 +72,9 @@ struct toktab toktab[] = {
 
 struct toktab *restab[] = {
    &toktab[ 7], &toktab[ 8], &toktab[10], &toktab[14], /* 61-64 abcd */
-   &toktab[17], &toktab[20], &toktab[22], NULL,        /* 65-68 efgh */
-   &toktab[23], NULL,        NULL,        &toktab[27], /* 69-6C ijkl */
-   NULL,        &toktab[28], &toktab[31], &toktab[32], /* 6D-70 mnop */
+   &toktab[16], &toktab[19], &toktab[21], NULL,        /* 65-68 efgh */
+   &toktab[22], NULL,        NULL,        &toktab[26], /* 69-6C ijkl */
+   NULL,        &toktab[27], &toktab[30], &toktab[32], /* 6D-70 mnop */
    NULL,        &toktab[37], &toktab[41], &toktab[43], /* 71-74 qrst */
    &toktab[45], NULL,        &toktab[46], NULL,        /* 75-78 uvwx */
    NULL,        NULL,                                  /* 79-7A yz */

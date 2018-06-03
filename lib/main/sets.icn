@@ -31,7 +31,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Insert a new member.  Always succeeds and returns `self`.  Only
    # implemented with INSERT capability.
    #
-   public defer insert(x)
+   public optional insert(x)
 
    #
    # Succeed with `x` if it is a member of the set.
@@ -43,7 +43,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # otherwise succeeds and returns `self`.  Only implemented with
    # DELETE capability.
    #
-   public defer delete(x)
+   public optional delete(x)
 
    #
    # Return a sorted list of members.
@@ -63,14 +63,14 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Generate the entries in reverse order.  Only implemented with
    # ORDER capability.
    #
-   public defer back()
+   public optional back()
 
    #
    # Return the rank of the given entry, ie its order number in the
    # set; fails if there is no matching entry in the set.  Only
    # implemented for sets with ORDER capability.
    #
-   public defer rank(x)
+   public optional rank(x)
 
    #
    # Return the `i`th entry, in order, in the set.  Fails if `i` is

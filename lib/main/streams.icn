@@ -47,7 +47,7 @@ abstract class Stream(HasMode)
    # :Parameters :
    # :  `n` - the maximum number of chars to read; n must be > 0.
    #
-   public defer in(n)
+   public optional in(n)
 
    #
    # Output the given string to the stream.  The number of characters
@@ -58,7 +58,7 @@ abstract class Stream(HasMode)
    # :Parameters :
    # :  `s` - the string to write
    #
-   public defer out(s)
+   public optional out(s)
 
    #
    # Seek to the given offset.  Icon-style offsets are used, so 1 is
@@ -70,18 +70,18 @@ abstract class Stream(HasMode)
    # :Returns :
    # :  the new position.
    #
-   public defer seek(offset)
+   public optional seek(offset)
 
    #
    # Return the current position of the stream.
    #
-   public defer tell()
+   public optional tell()
 
    #
    # Truncate this stream to the given length.  The file position
    # remains unchanged.
    #
-   public defer truncate(len)
+   public optional truncate(len)
 
    #
    # Close the stream.  After being closed, any further calls on the
