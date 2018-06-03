@@ -130,10 +130,6 @@ final abstract class Proc()
    # load C function dynamically.
    public static native load(filename, funcname)
 
-   # Succeed if and only if the given procedure has a definition, ie
-   # is not an unresolved native, deferred or abstract method.
-   public static native is_defined(p)
-
    # Lookup a procedure (or function) by name.  First the globals are
    # searched for a matching procedure or function.  Failing that, the
    # builtin function, operator and keyword tables are searched.

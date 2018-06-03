@@ -89,9 +89,21 @@ struct c_proc *keyblks[] = {
  * Deferred and removed method stubs.
  */
 
-function deferred_method_stub()
+function optional_method_stub()
    body {
       runerr(612);
+   }
+end
+
+function native_method_stub()
+   body {
+      runerr(629);
+   }
+end
+
+function abstract_method_stub()
+   body {
+      runerr(614);
    }
 end
 
@@ -921,7 +933,7 @@ void resolve(struct progstate *p)
                     int n = IntVal(*cf->field_descriptor);
                     if (n == -1) {
                         /* Unresolved, point to stub */
-                        BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
+                        BlkLoc(*cf->field_descriptor) = (union block *)&Bnative_method_stub;
                     } else {
                         struct descrip t;
                         /* Resolved to native method, do sanity checks, set pointer */
@@ -945,9 +957,11 @@ void resolve(struct progstate *p)
                         cp->field = cf;
                         BlkLoc(*cf->field_descriptor) = (union block *)cp;
                     }
-                } else if (cf->flags & (M_Optional | M_Abstract)) {
-                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
-                } else {
+                } else if (cf->flags & M_Optional)
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Boptional_method_stub;
+                else if (cf->flags & M_Abstract)
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Babstract_method_stub;
+                else {
                     /*
                      * Method in the icode file, relocate the entry point
                      * and the names of the parameters, locals, and static

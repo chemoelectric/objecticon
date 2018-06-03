@@ -974,8 +974,16 @@ function lang_Decode_decode_methp_impl(obj, cl, fn, target)
            LitWhy("Field not a valid instance method");
            fail;
        }
-       if (BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
-           LitWhy("Field is the deferred method stub");
+       if (BlkLoc(*cf->field_descriptor) == (union block *)&Boptional_method_stub) {
+           LitWhy("Field is the optional method stub");
+           fail;
+       }
+       if (BlkLoc(*cf->field_descriptor) == (union block *)&Babstract_method_stub) {
+           LitWhy("Field is the abstract method stub");
+           fail;
+       }
+       if (BlkLoc(*cf->field_descriptor) == (union block *)&Bnative_method_stub) {
+           LitWhy("Field is the native method stub");
            fail;
        }
        if (BlkLoc(*cf->field_descriptor) == (union block *)&Bremoved_method_stub) {
@@ -1224,7 +1232,7 @@ function lang_Class_load_library(lib)
             struct class_field *cf = class0->fields[i];
             if ((cf->defining_class == class0) &&
                 (cf->flags & M_Native) &&
-                BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
+                BlkLoc(*cf->field_descriptor) == (union block *)&Bnative_method_stub) {
                 struct b_proc *bp = try_load(handle, class0, cf);
                 if (bp) {
                     bp = clone_b_proc(bp);
@@ -1374,7 +1382,7 @@ function lang_Class_load_library(lib)
             struct class_field *cf = class0->fields[i];
             if ((cf->defining_class == class0) &&
                 (cf->flags & M_Native) &&
-                BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
+                BlkLoc(*cf->field_descriptor) == (union block *)&Bnative_method_stub) {
                 struct b_proc *bp = try_load(handle, class0, cf);
                 if (bp) {
                     bp = clone_b_proc(bp);
@@ -3987,18 +3995,6 @@ function lang_Proc_get_kind(c)
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         return C_integer get_proc_kind(proc0);
-     }
-end
-
-function lang_Proc_is_defined(c)
-   body {
-        struct b_proc *proc0;
-        if (!(proc0 = get_proc_for(&c)))
-            runerr(0);
-        if (proc0 == (struct b_proc *)&Bdeferred_method_stub)
-            fail;
-        else
-            return nulldesc;
      }
 end
 

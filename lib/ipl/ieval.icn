@@ -108,8 +108,8 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Const "
       if iand(f, Class.Readable) ~= 0 then
          s ||:= "Readable "
-      if iand(f, Class.Defer) ~= 0 then
-         s ||:= "Defer "
+      if iand(f, Class.Optional) ~= 0 then
+         s ||:= "Optional "
       if iand(f, Class.Abstract) ~= 0 then
          s ||:= "Abstract "
       if iand(f, Class.Native) ~= 0 then
