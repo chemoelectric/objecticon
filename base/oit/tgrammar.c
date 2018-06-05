@@ -132,7 +132,7 @@ int globalflag;
 #define Modifier6()             modflag |= M_Const
 #define Modifier7()             modflag |= M_Readable
 #define Modifier8()             modflag |= M_Final
-#define Modifier9()             modflag |= M_Defer
+#define Modifier9()             modflag |= M_Optional
 #define Modifier10()            modflag |= M_Abstract
 #define Modifier11()            modflag |= M_Native
 

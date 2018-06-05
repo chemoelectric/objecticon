@@ -618,8 +618,12 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              fprintf(f, "method %.*s.%.*s", 
                      StrF(*field->defining_class->name), 
                      StrF(*field->defining_class->program->Fnames[field->fnum]));
-         } else if (&ProcBlk(*dp) == (struct b_proc *)&Bdeferred_method_stub)
-             fprintf(f, "deferred method");
+         } else if (&ProcBlk(*dp) == (struct b_proc *)&Boptional_method_stub)
+             fprintf(f, "optional method");
+         else if (&ProcBlk(*dp) == (struct b_proc *)&Bnative_method_stub)
+             fprintf(f, "unresolved native method");
+         else if (&ProcBlk(*dp) == (struct b_proc *)&Babstract_method_stub)
+             fprintf(f, "abstract method");
          else if (&ProcBlk(*dp) == (struct b_proc *)&Bremoved_method_stub)
              fprintf(f, "removed method");
          else {
@@ -1277,8 +1281,12 @@ void getimage(dptr dp1, dptr dp2)
              alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
-         } else if (&ProcBlk(*dp1) == (struct b_proc *)&Bdeferred_method_stub)
-             LitStr("deferred method", dp2);
+         } else if (&ProcBlk(*dp1) == (struct b_proc *)&Boptional_method_stub)
+             LitStr("optional method", dp2);
+         else if (&ProcBlk(*dp1) == (struct b_proc *)&Bnative_method_stub)
+             LitStr("unresolved native method", dp2);
+         else if (&ProcBlk(*dp1) == (struct b_proc *)&Babstract_method_stub)
+             LitStr("abstract method", dp2);
          else if (&ProcBlk(*dp1) == (struct b_proc *)&Bremoved_method_stub)
              LitStr("removed method", dp2);
          else {

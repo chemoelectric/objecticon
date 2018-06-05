@@ -313,8 +313,8 @@ end
 # who should implement the `read` and `write` methods as appropriate.
 #
 abstract class Regular9P(File9P)
-   public defer write(s, pos)
-   public defer read(pos, count)
+   public optional write(s, pos)
+   public optional read(pos, count)
 end
 
 # An implementation of `Regular9P` which keeps its file content in a string.

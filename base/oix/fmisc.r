@@ -1700,6 +1700,15 @@ function lang_Text_slice(c, i, j)
    }
 end
 
+function lang_Text_is_ascii_string(s)
+   body {
+    if (is_ascii_string(&s))
+        return s;
+    else
+        fail;
+  }
+end
+
 function lang_Text_has_ord(c, x)
    if !cnv:cset(c) then
       runerr(120, c)

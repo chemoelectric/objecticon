@@ -89,9 +89,21 @@ struct c_proc *keyblks[] = {
  * Deferred and removed method stubs.
  */
 
-function deferred_method_stub()
+function optional_method_stub()
    body {
       runerr(612);
+   }
+end
+
+function native_method_stub()
+   body {
+      runerr(629);
+   }
+end
+
+function abstract_method_stub()
+   body {
+      runerr(614);
    }
 end
 
@@ -934,18 +946,19 @@ void resolve(struct progstate *p)
                     int n = IntVal(*cf->field_descriptor);
                     if (n == -1) {
                         /* Unresolved, point to stub */
-                        BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
+                        BlkLoc(*cf->field_descriptor) = (union block *)&Bnative_method_stub;
                     } else {
                         struct descrip t;
                         /* Resolved to native method, do sanity checks, set pointer */
                         if (n < 0 || n >= ElemCount(native_methods))
                             ffatalerr("Native method index out of range: %d", n);
                         cp = (struct c_proc *)native_methods[n];
-                        /* Clone the c_proc for a loaded program; we don't
-                         * want to change the original's reference to the
+                        /* Clone the c_proc if we're using this block
+                         * already in another program; we don't want
+                         * to change the original's reference to the
                          * corresponding field (cp->field)
                          */
-                        if (p != &rootpstate) 
+                        if (cp->field)
                             cp = (struct c_proc *)clone_b_proc((struct b_proc *)cp);
                         t = *p->Fnames[cf->fnum];
                         /* The field name should match the end of the procedure block's name */
@@ -958,9 +971,11 @@ void resolve(struct progstate *p)
                         cp->field = cf;
                         BlkLoc(*cf->field_descriptor) = (union block *)cp;
                     }
-                } else if (cf->flags & (M_Defer | M_Abstract)) {
-                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
-                } else {
+                } else if (cf->flags & M_Optional)
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Boptional_method_stub;
+                else if (cf->flags & M_Abstract)
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Babstract_method_stub;
+                else {
                     /*
                      * Method in the icode file, relocate the entry point
                      * and the names of the parameters, locals, and static

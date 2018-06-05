@@ -184,7 +184,7 @@ class Encode(Stream, HasUnderlyingStream)
 
    private encode_methp(mp)
       writes1(Codec.METHP_CODE)
-      Proc.get_defining_class(mp) | throw("Can't encode a deferred or removed methp: " || image(mp))
+      Proc.get_defining_class(mp) | throw("Can't encode an optional, abstract, unresolved native or removed methp: " || image(mp))
       note_seen(mp)
       line_out(Proc.get_name(mp))
       encode(Class.get_methp_object(mp))
@@ -213,7 +213,7 @@ class Encode(Stream, HasUnderlyingStream)
                   throw("Can only encode a public static method: " || image(f))
                "M"
             }
-            "deferred": throw("Can't encode a deferred method")
+            "unresolved": throw("Can't encode an unresolved native method")
             "removed": throw("Can't encode a removed method")
             "internal": throw("Can't encode an internal procedure")
             default: syserr("Not a proc")
@@ -430,7 +430,7 @@ class Decode()
       }
    end
 
-   private defer nothing()
+   private optional nothing()
    private static native decode_methp_impl(obj, cl, fn, target)
 
    private decode_methp()

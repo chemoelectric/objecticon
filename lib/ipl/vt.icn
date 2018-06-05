@@ -1946,7 +1946,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       return 0
    end
 
-   public defer draw_line()
+   public optional draw_line()
 
    public draw()
       local n, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,

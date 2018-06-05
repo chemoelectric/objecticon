@@ -161,8 +161,8 @@ class BaseNode(TreeNode)
    public 
       component
 
-   public defer get_child_components()
-   public defer get_name()
+   public optional get_child_components()
+   public optional get_name()
 
    public create_menu()
       return self.component.create_menu()

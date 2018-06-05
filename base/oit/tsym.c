@@ -1211,7 +1211,7 @@ void output_code()
                 break;
             }
             case F_Method: {
-                if (!(curr_func->field->flag & (M_Defer | M_Abstract | M_Native))) {
+                if (!(curr_func->field->flag & (M_Optional | M_Abstract | M_Native))) {
                     report("  %s.%s", curr_func->field->class->global->g_name, curr_func->field->name);
                     ensure_pos(curr_func->field->pos);
                     uout_op(Uop_Method);

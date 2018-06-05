@@ -86,7 +86,7 @@ class CanvasObject(SelectiveObjectCodec)
    public gen_cos()
    end
 
-   public defer dup()
+   public optional dup()
 
    # Duplicate and put in the given new Canvas.
    public dup_to(nc)

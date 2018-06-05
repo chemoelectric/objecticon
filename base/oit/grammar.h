@@ -79,7 +79,7 @@ method :  IDENT { Method1($1);} LPAREN arglist RPAREN locals initial optsemi com
 
 deferredmethod : deferredtype IDENT { Method1($2);} LPAREN arglist RPAREN ;
 
-deferredtype : DEFER { Modifier9(); };
+deferredtype : OPTIONAL { Modifier9(); };
         | ABSTRACT { Modifier10();};
         | NATIVE { Modifier11();};
 

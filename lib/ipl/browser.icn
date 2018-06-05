@@ -5500,7 +5500,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private static scale_font(s, f)
-      return s ? tab(backto(',')) || real(tab(0)) * f
+      return s ? tab(backto(',',, 0)) || real(tab(0)) * f
    end
 
    # Magnify the fonts in the page by multiplying by the given factor.

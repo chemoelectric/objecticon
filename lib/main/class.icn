@@ -24,8 +24,8 @@ final abstract class Class()
       Const,
       # Integer flag for a readable field
       Readable,
-      # Integer flag for a deferred method
-      Defer, 
+      # Integer flag for an optional method
+      Optional, 
       # Integer flag for a final method or class
       Final,
       # Integer flag for a special method, ie init or new.
@@ -46,7 +46,7 @@ final abstract class Class()
       Static := 8r040
       Const := 8r0100
       Readable := 8r0200
-      Defer := 8r0400
+      Optional := 8r0400
       Final := 8r01000
       Special := 8r02000
       Abstract := 8r04000

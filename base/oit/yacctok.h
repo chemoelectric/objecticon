@@ -24,7 +24,6 @@
 %token	CONST       /* const     */
 %token	CREATE      /* create    */
 %token	DEFAULT     /* default   */
-%token	DEFER       /* defer     */
 %token	DO          /* do        */
 %token	ELSE        /* else      */
 %token	END         /* end       */
@@ -41,6 +40,7 @@
 %token	NEXT        /* next      */
 %token	NOT         /* not       */
 %token	OF          /* of        */
+%token	OPTIONAL    /* optional  */
 %token	PACKAGE     /* package   */
 %token	PRIVATE     /* private   */
 %token	PROCEDURE   /* procedure */

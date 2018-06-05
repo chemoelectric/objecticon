@@ -522,7 +522,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 end
 
 package class CloneMethp()
-   private defer nothing()
+   private optional nothing()
 end
 
 #
@@ -821,6 +821,6 @@ end
 # Given an global name, return the package element, or fail if there is none.
 #
 procedure extract_package(s)
-   s ? if tab(backto('.') - 1) then
+   s ? if tab(backto('.',, 0) - 1) then
       return tab(1)
 end

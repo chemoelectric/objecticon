@@ -1032,13 +1032,22 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    # or fail if it cannot.
    #
    private div_exact(x)
-      local p, d
-      # Work out if 1 / x.i is expressible as a decimal with finite
-      # digits; it will be so if x.i's only factors are 2 and 5.
+      local i1, i2, g, p, d
+      # Firstly reduce the integer part of numerator and denominator
+      # by their gcd.  This may remove a factor from the denominator
+      # which would stop it being a finite decimal (eg: 12/3).
+      i1 := self.i
+      i2 := x.i
+      g := gcd(i1, i2)
+      i1 /:= g
+      i2 /:= g
+
+      # Work out if 1 / i2 is expressible as a decimal with finite
+      # digits; it will be so if i2's only factors are 2 and 5.
       # Each factor adds at most 1 to the number of decimal digits
       # in the answer.  We count this with p, and then know that
-      # (10^p)/x.i does not lose any digits.
-      d := default.abs(x.i)
+      # (10^p)/i2 does not lose any digits.
+      d := default.abs(i2)
       p := 0
       while d > 1 do {
          if d % 2 = 0 then
@@ -1049,7 +1058,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             fail
          p +:= 1
       }
-      return Dec((i * p10(p)) / x.i, e - x.e - p)
+      return Dec((i1 * p10(p)) / i2, e - x.e - p)
    end
 
    # Return this number divided by `x`, with rounding `rnd`.

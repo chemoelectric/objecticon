@@ -132,8 +132,8 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A static method cannot be abstract: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & (M_Static | M_Defer)) == (M_Static | M_Defer))
-            tfatal_at(n, "A static method cannot be deferred: method %s in class %s", 
+        if ((flag & (M_Static | M_Optional)) == (M_Static | M_Optional))
+            tfatal_at(n, "A static method cannot be optional: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if ((flag & M_Final) && (curr_class->flag & M_Final))
@@ -144,16 +144,16 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A method cannot be abstract in a class marked final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & M_Defer) && (curr_class->flag & M_Final))
-            tfatal_at(n, "A method cannot be deferred in a class marked final: method %s in class %s", 
+        if ((flag & M_Optional) && (curr_class->flag & M_Final))
+            tfatal_at(n, "A method cannot be optional in a class marked final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if ((flag & (M_Abstract | M_Final)) == (M_Abstract | M_Final))
             tfatal_at(n, "An abstract method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & (M_Defer | M_Final)) == (M_Defer | M_Final))
-            tfatal_at(n, "A deferred method cannot be final: method %s in class %s", 
+        if ((flag & (M_Optional | M_Final)) == (M_Optional | M_Final))
+            tfatal_at(n, "An optional method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if (flag & M_Const)

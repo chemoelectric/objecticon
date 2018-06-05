@@ -957,7 +957,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          Gui.style.fill_over_rectangle(view.cbwin, x, y, w, h)
    end
 
-   public defer draw_line_data(xp, yp, lh, i)
+   public optional draw_line_data(xp, yp, lh, i)
 
    public can_drag(ev)
       if view.is_held(Mouse.LEFT_PRESS) & /self.draggable_cursor_flag & \self.on_a_line then

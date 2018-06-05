@@ -32,14 +32,14 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # invalid; otherwise succeeds and returns `self`.  Only implemented
    # with INSERT capability.
    #
-   public defer insert(i, x)
+   public optional insert(i, x)
    
    #
    # Delete element at position `i` from the list.  Fails if `i` is
    # invalid; otherwise succeeds and returns `self`.  Only implemented
    # with DELETE capability.
    #
-   public defer delete(i)
+   public optional delete(i)
 
    #
    # Return the member at position `i`.  If the list has MODIFY

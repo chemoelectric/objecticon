@@ -181,8 +181,8 @@ abstract class Outputter()
             s ||:= "abstract "
          if iand(obj.flags, Class.Native) ~= 0 then
             s ||:= "native "
-         if iand(obj.flags, Class.Defer) ~= 0 then
-            s ||:= "defer "
+         if iand(obj.flags, Class.Optional) ~= 0 then
+            s ||:= "optional "
          if iand(obj.flags, Class.Final) ~= 0 then
             s ||:= "final "
       }

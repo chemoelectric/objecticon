@@ -9,7 +9,7 @@
 #define M_Static           040  /* static variable/method */
 #define M_Const           0100  /* const variable */
 #define M_Readable        0200  /* readable access */
-#define M_Defer           0400  /* deferred method */
+#define M_Optional           0400  /* deferred method */
 #define M_Final          01000  /* final class/method */
 #define M_Special        02000  /* special method (new/init) */
 #define M_Abstract       04000  /* abstract class/method */

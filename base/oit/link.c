@@ -351,7 +351,7 @@ char *m_flag2str(int flag)
     if (flag & M_Const) strcat(buff, "M_Const ");
     if (flag & M_Readable) strcat(buff, "M_Readable ");
     if (flag & M_Final) strcat(buff, "M_Final ");
-    if (flag & M_Defer) strcat(buff, "M_Defer ");
+    if (flag & M_Optional) strcat(buff, "M_Optional ");
     if (flag & M_Special) strcat(buff, "M_Special ");
     if (flag & M_Abstract) strcat(buff, "M_Abstract ");
     if (flag & M_Native) strcat(buff, "M_Native ");
