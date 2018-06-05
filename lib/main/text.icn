@@ -130,4 +130,9 @@ final abstract class Text()
    # positions `i`:`j`.
    #
    public static native slice(c, i, j)
+
+   # Succeed and return `s` if `s` is a string composed of ascii
+   # characters.  No conversions are performed.
+   #
+   public static native is_ascii_string(s)
 end
