@@ -49,7 +49,8 @@ package ipl.scan
 import
    io(write, writes),
    util(save_state, PosState, need_string, need_ucs, need_cset,
-        need_integer, need_text, ce_param)
+        need_integer, need_text, ce_param),
+   lang(Text)
 
 # `bal()` with escape processing
 procedure slashbal(c1, c2, c3, s, i, j)	
@@ -536,7 +537,7 @@ procedure past(s1, s2, i, j)
    # change the type of s1 (and hence *s1).
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := same_type(s1, s2)
+   s1 := similar_type(s1, s2)
    suspend find(s1, s2, i, j) + *s1
 end
 
@@ -777,8 +778,18 @@ package record StringAnalysis(s, i, j)
 #
 # This procedure can be used to normalize the three parameters
 # commonly given to string analysis functions (like upto, find etc).
+#
+# The defaults applied are :-
+#
+#  * `s` - `&subject`
+#  * `i` - `&pos` if `s` is defaulted, otherwise `1`
+#  * `j` - `0`
+# 
 # The result is a `StringAnalysis` record with the normalized values
 # of `s`, `i` and `j`, or failure if `i` and/or `j` are out of bounds.
+#
+# Note that the returned values in the `StringAnalysis` record will be
+# adjusted so that `i <= j`.
 #
 procedure begin_analysis(s, i, j)
    if /s := &subject then
@@ -788,6 +799,30 @@ procedure begin_analysis(s, i, j)
       (/i := 1) | (i := match("", s, i)) | fail
    }
    (/j := *s + 1) | (j := match("", s, j)) | fail
+   if i > j then
+      i :=: j
+   return StringAnalysis(s, i, j)
+end
+
+# This procedure is similar to `begin_analysis`, but provides
+# different defaults, more suited to procedures that search backwards,
+# as follows :-
+#
+#  * `s` - `&subject`
+#  * `i` - `&pos` if `s` is defaulted, otherwise `0`
+#  * `j` - `1` 
+# 
+# Note that the returned values in a `StringAnalysis` record
+# will still be adjusted so that `i <= j`.
+#
+procedure begin_rev_analysis(s, i, j)
+   if /s := &subject then
+      (/i := &pos) | (i := match("", s, i)) | fail
+   else {
+      s := need_text(s)
+      (/i := *s + 1) | (i := match("", s, i)) | fail
+   }
+   (/j := 1) | (j := match("", s, j)) | fail
    if i > j then
       i :=: j
    return StringAnalysis(s, i, j)
@@ -806,25 +841,37 @@ procedure same_type(s1, s2)
 end
 
 #
+# This is like `same_type`, but if `s2` is a `ucs` and `s1` is an ascii string,
+# then `s1` is returned as-is, rather than converted to a `ucs`.
+#
+procedure similar_type(s1, s2)
+   return if type(s2) == "string" then
+      need_string(s1)
+   else
+      Text.is_ascii_string(s1) | need_ucs(s1)
+end
+
+#
 # Caseless version of `match()`
 #
 procedure caseless_match(s1, s2, i, j)
-   local a
+   local a, t
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := same_type(s1, s2)
-   if map(s1) == map(s2[i:j][1+:*s1]) then
-      return i + *s1
+   s1 := similar_type(s1, s2)
+   t := i + *s1
+   if j >= t & map(s1) == map(s2[i:t]) then
+      return t
 end
 
 #
 # Caseless version of `find()`
 #
 procedure caseless_find(s1, s2, i, j)
-   local c, t, a
+   local c, p, a, t
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := same_type(s1, s2)
+   s1 := similar_type(s1, s2)
    # Special case if s1 empty
    if *s1 = 0 then {
       suspend i to j
@@ -834,11 +881,12 @@ procedure caseless_find(s1, s2, i, j)
    # Cset of first char in upper and lower case; eg if searching for
    # "cat", c = 'cC'.
    c := caseless_cset(s1[1])
-   every t := upto(c, s2, i, j) do {
-      if t > j - *s1 then
+   every p := upto(c, s2, i, j) do {
+      t := p + *s1 
+      if t > j then
          break
-      if s1 == map(s2[t+:*s1]) then
-         suspend t
+      if s1 == map(s2[p:t]) then
+         suspend p
    }
 end
 
@@ -851,23 +899,26 @@ end
 # ~
 #    backto('aeiou', "quick brown fox") -> {15,10,4,3} 
 # ~
-# Note that
+# Note that, if no parameters are defaulted,
 # ~
 #    backto(c, s, i, j) - 1
 # ~
-# should give the same sequence of results as
+# gives the same sequence of results as
 # ~
 #    upto(c, s, i, j)
 # ~
-# but in reverse order, so upto applied to the above example
-# gives `{2,3,9,14}`.
+# but in reverse order.
 #
-# Defaults: as for `upto`
+# Defaults:
+#
+#  * `s` - `&subject`
+#  * `i` - `&pos` if `s` is defaulted, otherwise `0`
+#  * `j` - `1` 
 #
 procedure backto(c, s, i, j)
    local a
    c := need_cset(c)
-   a := begin_analysis(s, i, j) | fail
+   a := begin_rev_analysis(s, i, j) | fail
    s := a.s; i := a.i; j := a.j
    while j > i do {
       if any(c, s, j - 1) then
@@ -876,22 +927,17 @@ procedure backto(c, s, i, j)
    }
 end
 
+
 # This behaves like `many`, but searches backward from the end of the
 # string.  The position just to the left of the last char which is in
 # `c` is returned, but fails if there is no such character.
 #
-# Note that the parameters still take the standard scanning form, so
-# to search backwards from `&pos` to the beginning of the string during
-# a scan, use
-# ~
-# rev_many(c,,, 1)
-# ~
-# otherwise it will search from the end of `&subject` towards `&pos`.
+# The parameters take the same defaults as `backto`.
 #
 procedure rev_many(c, s, i, j)
    local a
    c := need_cset(c)
-   a := begin_analysis(s, i, j) | fail
+   a := begin_rev_analysis(s, i, j) | fail
    s := a.s; i := a.i; j := a.j
    while j > i & any(c, s, j - 1) do
       j -:= 1
@@ -903,57 +949,80 @@ end
 procedure rev_any(c, s, i, j)
    local a
    c := need_cset(c)
-   a := begin_analysis(s, i, j) | fail
+   a := begin_rev_analysis(s, i, j) | fail
    s := a.s; i := a.i; j := a.j
    if j > i & any(c, s, j - 1) then
       return j - 1
 end
 
 #
-# Like `rev_many`, but succeeds with the position `j` if zero matching chars. `rev_many` needs
-# one or more to succeed.
+# Like `rev_many`, but succeeds with the position of the end of the
+# string if there are no matching chars. `rev_many` needs one or more
+# to succeed.
 #
 procedure rev_many0(c, s, i, j)
    local a
-   a := begin_analysis(s, i, j) | fail
+   a := begin_rev_analysis(s, i, j) | fail
    return rev_many(c, a.s, a.i, a.j) | .a.j
 end
 
 #
-# Like `rev_any`, but succeeds with the position `j` if there is no matching char.
+# Like `rev_any`, but succeeds with the position with the position of
+# the end of the string if there is no matching char.
 #
 procedure rev_any0(c, s, i, j)
    local a
-   a := begin_analysis(s, i, j) | fail
+   a := begin_rev_analysis(s, i, j) | fail
    return rev_any(c, a.s, a.i, a.j) | .a.j
 end
 
-# Do a reverse find from the end of the string.  For each match, the
-# position just after the match is generated.
+# Search backwards for s1 in s2[i:j].  For each match, the position
+# just to the right of the match is generated.
 #
-# The sequence generated should be equivalent to
+# If no parameters are defaulted, the sequence generated is equivalent
+# to
 # ~~
 #      find(s1, s2, i, j) + *s1
 # ~~
 # but in reverse order.
 #
+# Defaults:
+#
+#  * `s2` - `&subject`
+#  * `i` - `&pos` if `s` is defaulted, otherwise `0`
+#  * `j` - `1` 
+#
 procedure rev_find(s1, s2, i, j)
-   local c, t, a
-   a := begin_analysis(s2, i, j) | fail
+   local c, p, a, t
+   a := begin_rev_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := same_type(s1, s2)
+   s1 := similar_type(s1, s2)
    # Special case if s1 empty
    if *s1 = 0 then {
       suspend j to i by -1
       fail
    }
    c := cset(s1[-1])
-   every t := backto(c, s2, i, j) do {
-      if t < i + *s1 then
+   every p := backto(c, s2, i, j) do {
+      t := p - *s1
+      if t < i then
          break
-      if s1 == s2[t-:*s1] then
-         suspend t
+      if match(s1, s2, t, p) then
+         suspend p
    }
+end
+
+# If s2[i:j] ends with s1, produce the position just to the left of
+# that substring.  The defaults are the same as `rev_find`.
+#
+procedure rev_match(s1, s2, i, j)
+   local a, t
+   a := begin_rev_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := similar_type(s1, s2)
+   t := j - *s1
+   if t >= i & match(s1, s2, t, j) then
+      return t
 end
 
 #

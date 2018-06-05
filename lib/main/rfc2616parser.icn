@@ -196,7 +196,7 @@ class RFC2616Parser()
    private parse_disposition_type()
       local s
 
-      if s := tab(caseless_match(u"inline" | u"attachment")) then
+      if s := tab(caseless_match("inline" | "attachment")) then
          return s
 
       return parse_atom()

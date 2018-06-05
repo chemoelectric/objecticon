@@ -240,7 +240,7 @@ class HtmlParser()
    #
    private parse_node()
       return if ="<!" then {
-         if tab(caseless_match(u"doctype")) then
+         if tab(caseless_match("doctype")) then
             parse_doctype()
          else
             parse_comment()

@@ -643,9 +643,9 @@ class Ieval(MinimalObjectOutput)
       local p, l
       subj ? {
          tab(pos)
-         l := if p := tab(rev_many0(&letters,,, 1)) & rev_any('&',,, 1) then
+         l := if p := tab(rev_many0(&letters)) & rev_any('&') then
             complete_keyword(u"&" || p, subj, pos)
-         else if p := tab(rev_many(&letters ++ &digits ++ '_.',,, 1)) & any(&letters ++ '_', p[1]) then
+         else if p := tab(rev_many(&letters ++ &digits ++ '_.')) & any(&letters ++ '_', p[1]) then
             complete_ident(p, subj, pos)
          else
             []

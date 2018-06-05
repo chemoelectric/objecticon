@@ -5,7 +5,7 @@ global syms, opts, home
 record Symbol(id, typ, params)
 
 procedure backspace()
-   return tab(rev_many(' \t',,,1))
+   return tab(rev_many(' \t'))
 end
 
 procedure fwdspace()
@@ -13,7 +13,7 @@ procedure fwdspace()
 end
 
 procedure rev_id()
-   return tab(rev_many(&letters ++ &digits ++ '_',,,1))
+   return tab(rev_many(&letters ++ &digits ++ '_'))
 end
 
 procedure one_line(s)
@@ -28,8 +28,8 @@ procedure one_line(s)
          i := &pos
          tab(upto(';')) | stopf("No ; in line '%s'", s)
          backspace()
-         if rev_any(']',,,1) then
-            arr := tab(backto('[',,,1) - 1)
+         if rev_any(']') then
+            arr := tab(backto('[') - 1)
          else
             arr := ""
          backspace()
@@ -37,8 +37,8 @@ procedure one_line(s)
          typ := tab(i) || arr
       } else {
          tab(upto(';')) | stopf("No ; in line '%s'", s)
-         tab(backto(')',,,1)) | stopf("No ) in line '%s'", s)
-         params := tab(backto('(',,,1) - 1)
+         tab(backto(')')) | stopf("No ) in line '%s'", s)
+         params := tab(backto('(') - 1)
          backspace()
          id := rev_id() | stopf("No identifier in line '%s'", s)
          backspace()
@@ -52,7 +52,7 @@ procedure incomplete(s)
    s ? {
       tab(0)
       backspace()
-      if rev_any(',',,,1) then
+      if rev_any(',') then
          return
    }
 end
