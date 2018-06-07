@@ -296,8 +296,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public should_close(e)
-      if member(Mouse.PRESS, e.code) & not(popup.in_region(e)) then 
-         return
+      succeed member(Mouse.PRESS, e.code) & not(popup.in_region(e))
    end
 
    # Close the textlist (if it is open), and stop any running

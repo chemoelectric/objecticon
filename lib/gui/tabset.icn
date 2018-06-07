@@ -514,7 +514,7 @@ class TabSet(Component)
          if member(Mouse.PRESS, e.code) & not self.in_tab_region(e) then
             fail
       }
-      return Component.accepts_focus(e)
+      succeed Component.accepts_focus(e)
    end
 
    public get_tooltip(e)
@@ -532,7 +532,7 @@ class TabSet(Component)
    end
  
    public match_accel(e)
-      return find_key(e)
+      succeed find_key(e)
    end
 
    #

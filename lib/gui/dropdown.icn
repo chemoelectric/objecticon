@@ -36,14 +36,12 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
    end
 
    public should_close(e)
-      if (member(Mouse.PRESS, e.code) & 
-                not(popup.in_region(e) | b.in_region(e))) then 
-         return
+      succeed member(Mouse.PRESS, e.code) & not(popup.in_region(e) | b.in_region(e))
    end
 
    public allow_nested(c)
       c := c.get_nesting_component()
-      return c.gen_parents() === popup
+      succeed c.gen_parents() === popup
    end
 
    public get_nesting_component()

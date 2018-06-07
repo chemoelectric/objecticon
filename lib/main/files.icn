@@ -164,7 +164,7 @@ $endif
    # Succeed iff the given file is hidden.
    #
    public static is_hidden(s)
-      return FS.is_hidden(s)
+      succeed FS.is_hidden(s)
    end
 
    #
@@ -172,7 +172,7 @@ $endif
    # "." or "..").
    #
    public static is_relative_dir(s)
-      return FS.is_relative_dir(s)
+      succeed FS.is_relative_dir(s)
    end
 
    #
@@ -836,7 +836,7 @@ class FilePath(ObjectOutput)
    # Succeed iff this path represents an absolute path.
    #
    public is_absolute()
-      return Files.FS.filepath_is_absolute(self)
+      succeed Files.FS.filepath_is_absolute(self)
    end
 
    #

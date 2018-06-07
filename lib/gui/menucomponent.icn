@@ -590,7 +590,7 @@ class SubMenuProxyComponent(Component, MenuMode)
    end
 
    public should_close(e)
-      return member(Mouse.PRESS, e.code) & not(in_region(e))
+      succeed member(Mouse.PRESS, e.code) & not(in_region(e))
    end
 
    public close_all()
@@ -608,11 +608,11 @@ class SubMenuProxyComponent(Component, MenuMode)
    public allow_nested(c) 
       local t
       if is(c, SubMenuProxyComponent) then
-         return c.menu.parent === menu
+         succeed c.menu.parent === menu
       c := c.get_nesting_component()
       every t := c.gen_parents() do {
          if is(t, SubMenuProxyComponent) then
-            return t === self
+            succeed t === self
       }
    end
 

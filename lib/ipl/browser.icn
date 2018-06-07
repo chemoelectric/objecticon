@@ -3092,7 +3092,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public is_visited(url)
-      return (\ui).is_visited(url)
+      succeed (\ui).is_visited(url)
    end
 
    public create_image_menu(img)

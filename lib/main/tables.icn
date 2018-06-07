@@ -610,7 +610,7 @@ class SortTable(Table)
    end
 
    private is_red(n)
-      return \ (\n).is_red_flag
+      succeed \ (\n).is_red_flag
    end
 
    private size1(n)
@@ -706,33 +706,33 @@ class SortTable(Table)
          is_red(n) | (b +:= 1)
          n := n.l
       }
-      return is_balanced1(root, b)
+      succeed is_balanced1(root, b)
    end
 
    private is_balanced1(n, b)
-      if /n then return b = 0
+      if /n then succeed b = 0
       is_red(n) | (b -:= 1)
-      return is_balanced1(n.l, b) & is_balanced1(n.r, b)
+      succeed is_balanced1(n.l, b) & is_balanced1(n.r, b)
    end
 
    private is_23(n)
       if /n then return
       if is_red(n.r) then fail
       if n ~=== root & is_red(n) & is_red(n.l) then fail
-      return is_23(n.l) & is_23(n.r)
+      succeed is_23(n.l) & is_23(n.r)
    end
 
    private is_bst(n, min, max)
       if /n then return
       if cmp(n.key, \min) <= 0 then fail
       if cmp(n.key, \max) >= 0 then fail
-      return is_bst(n.l, min, n.key) & is_bst(n.r, n.key, max)
+      succeed is_bst(n.l, min, n.key) & is_bst(n.r, n.key, max)
    end
 
    private is_size_consistent(n)
       if /n then return
       (n.N = size1(n.l) + size1(n.r) + 1) | fail
-      return is_size_consistent(n.l) & is_size_consistent(n.r)
+      succeed is_size_consistent(n.l) & is_size_consistent(n.r)
    end
 
    private is_rank_consistent()
