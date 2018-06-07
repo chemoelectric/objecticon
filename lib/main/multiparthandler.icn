@@ -8,7 +8,7 @@ import util(error)
 
 class MultipartHandler(TypeHandler)
    public can_handle(ct)
-      return map(ct.get_type()) == "multipart"
+      succeed map(ct.get_type()) == "multipart"
    end
    
    public convert_to_object(m, data)

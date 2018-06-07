@@ -144,8 +144,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Succeed iff the size is zero.
    #
    public empty()
-      if size() = 0 then
-         return
+      succeed size() = 0
    end
 
    #

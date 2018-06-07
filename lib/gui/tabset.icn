@@ -112,7 +112,7 @@ class TabSet(Component)
    end
 
    public keeps(e)
-      return member(Key.CURSOR_H, e.code)
+      succeed member(Key.CURSOR_H, e.code)
    end
 
    public focus_changed(e) 

@@ -291,6 +291,8 @@ return	: FAIL {Fail($1);} ;
 	| SUSPEND {Suspend0($1);} ;
 	| SUSPEND expr {Suspend1($1,$2);} ;
         | SUSPEND expr DO expr {Suspend2($1,$2,$3,$4);};
+	| SUCCEED {Succeed0($1);} ;
+	| SUCCEED expr {Succeed1($1,$2);} ;
 
 if	: IF expr THEN expr {If0($1,$2,$3,$4);} ;
 	| IF expr THEN expr ELSE expr {If1($1,$2,$3,$4,$5,$6);} ;

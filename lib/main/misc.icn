@@ -15,7 +15,7 @@ procedure has_feature(x)
       s := set()
       every insert(s, &features)
    }
-   return member(s, x)
+   succeed member(s, x)
 end
 
 #

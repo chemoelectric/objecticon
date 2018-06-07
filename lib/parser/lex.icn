@@ -61,6 +61,7 @@ class Lex(Connectable)
       reswords["repeat"] := [Beginner, YY.REPEAT]
       reswords["return"] := [Beginner+Ender, YY.RETURN]
       reswords["static"] := [0, YY.STATIC]
+      reswords["succeed"] := [Beginner+Ender, YY.SUCCEED]
       reswords["suspend"] := [Beginner+Ender, YY.SUSPEND]
       reswords["then"] := [0, YY.THEN]
       reswords["to"] := [0, YY.TO]

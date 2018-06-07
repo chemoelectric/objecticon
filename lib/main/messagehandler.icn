@@ -6,7 +6,7 @@ package mail
 
 class MessageHandler(TypeHandler)
    public can_handle(ct)
-      return (map(ct.get_type()) == "message") & (map(ct.get_subtype()) == "rfc822")
+      succeed (map(ct.get_type()) == "message") & (map(ct.get_subtype()) == "rfc822")
    end
 
    public convert_to_object(m,  data)

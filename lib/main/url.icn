@@ -252,9 +252,7 @@ class URL(ObjectOutput)
    # Succeed iff this URL represents a local file.
    #
    public is_local_file()
-      if scheme == "file" &
-         host == ("localhost" | &host) then
-         return
+      succeed scheme == "file" & host == ("localhost" | &host)
    end
 
    # Extract the cgi parameters from the `file` field.  Fails if there

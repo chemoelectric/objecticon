@@ -505,7 +505,7 @@ class Grid()
    end
 
    public static is_constraint(s)
-      return member(CONSTRAINT_SET, s)
+      succeed member(CONSTRAINT_SET, s)
    end
 
    public new()

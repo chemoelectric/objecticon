@@ -371,6 +371,18 @@ static struct lnode *buildtree(void)
             return (struct lnode *)x;
         }
 
+        case Uop_Succeedexpr: {                 /* succeed expr */
+            struct loc t = curr_loc;
+            struct lnode *c = buildtree();
+            return (struct lnode *)lnode_1(Uop_Returnexpr, &t,
+                                           (struct lnode *)lnode_2(Uop_Conj, &t, c, 
+                                                                   (struct lnode *)lnode_keyword(&t, K_NULL)));
+        }
+
+        case Uop_Succeed: {                     /* succeed */
+            return (struct lnode *)lnode_0(Uop_Return, &curr_loc);
+        }
+
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             int i, n = uin_16();
             struct loc t = curr_loc;

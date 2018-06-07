@@ -219,6 +219,8 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Method      226
 #define Uop_Empty       228
 #define Uop_Slist       229
+#define Uop_Succeed     230
+#define Uop_Succeedexpr 231
 #define Uop_Alt         232
 #define Uop_Conj        233
 #define Uop_Augconj     234

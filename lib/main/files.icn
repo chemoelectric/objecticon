@@ -1193,8 +1193,7 @@ package class UnixFileSystem(FileSystem)
    end
 
    public filepath_is_absolute(fp)
-      if fp.l[1] == "/" then
-         return
+      succeed fp.l[1] == "/"
    end
 
    public filepath_normal(fp)
@@ -1238,13 +1237,11 @@ package class UnixFileSystem(FileSystem)
    end
 
    public is_hidden(s)
-      if any('.', s) then
-         return
+      succeed any('.', s)
    end
 
    public is_relative_dir(s)
-      if s == ("." | "..") then
-         return
+      succeed s == ("." | "..")
    end
 
    public get_roots()
@@ -1385,8 +1382,7 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public filepath_is_absolute(fp)
-      if fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\" then
-         return
+      succeed fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
    end
 
    public filepath_normal(fp)
@@ -1454,8 +1450,7 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public is_relative_dir(s)
-      if s == ("." | "..") then
-         return
+      succeed s == ("." | "..")
    end
 
    public native get_roots()

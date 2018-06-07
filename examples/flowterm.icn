@@ -120,6 +120,12 @@ class ColumnsMenu(DynamicMenu)
    end
 end
 
+class MiscMenu(DynamicMenu)
+   public populate()
+      move_all(parent_component.parent_dialog.tabs.which_one.create_misc_menu())
+   end
+end
+
 class FlowTermDialog(Dialog)
    private readable
       favourite_dirs,
@@ -297,7 +303,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
    public new()
       local quit_menu_item, file_menu, terminal_menu, columns_menu, 
          new_tab_item, favourite_dirs_item, xdg_refresh_item,
-         help_menu, about_item, help_item
+         help_menu, misc_menu, about_item, help_item
       Dialog.new()
       set_resize(&yes)
       file_dialog := FileDialog().set_remember_size(&yes)
@@ -323,6 +329,8 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_label("Terminal")
       columns_menu := ColumnsMenu().
          set_label("List")
+      misc_menu := MiscMenu().
+         set_label("Misc")
       help_item := TextMenuItem().
          connect(on_help, Event.ACTION).
          set_label("Help...")
@@ -345,6 +353,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          add(file_menu).
          add(columns_menu).
          add(terminal_menu).
+         add(misc_menu).
          add(help_menu)
       self.add(menu_bar)
       tabs := TabSet().
@@ -1103,7 +1112,9 @@ class Terminal(TabItem, VtUI)
       best_focus,         # Either columns or output (the vt)
       log_file,
       log,
-      menu_commands
+      terminal_menu_commands,
+      columns_menu_commands,
+      misc_menu_commands
 
    private readable
       ascending,
@@ -1133,6 +1144,7 @@ class Terminal(TabItem, VtUI)
       mix_entries_menu_item,
       sort_dirs_menu_item,
       filter_dirs_menu_item,
+      dont_quieten_menu_item,
       revert_tab,
       adjacent_flag,
       shell,
@@ -1280,12 +1292,22 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             do_custom_key(param) | fail
          }
-         "menu" : {
+         "terminal-menu" : {
             check_param(s, param) | fail
-            do_custom_menu(param) | fail
+            do_custom_menu(terminal_menu_commands, param) | fail
+         }
+         "list-menu" : {
+            check_param(s, param) | fail
+            do_custom_menu(columns_menu_commands, param) | fail
+         }
+         "misc-menu" : {
+            check_param(s, param) | fail
+            do_custom_menu(misc_menu_commands, param) | fail
          }
          "reset-keys" : output.reset_custom_keys()
-         "reset-menus" : do_reset_custom_menus()
+         "reset-terminal-menus" : do_reset_custom_menus(terminal_menu_commands)
+         "reset-list-menus" : do_reset_custom_menus(columns_menu_commands)
+         "reset-misc-menus" : do_reset_custom_menus(misc_menu_commands)
          "fg": output.set_normal_fg(param) | return error("Invalid parameter to fg: " || &why)
          "bg": output.set_normal_bg(param) | return error("Invalid parameter to bg: " || &why)
          "reverse-fg": output.set_reverse_fg(param) | return error("Invalid parameter to reverse-fg: " || &why)
@@ -1309,6 +1331,14 @@ class Terminal(TabItem, VtUI)
             /param := &yes
             param := check_flag_param(s, param) | fail
             set_auto_close(param)
+         }
+         "dont-quieten" : {
+            if /param then
+               toggle_dont_quieten_menu_item()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === dont_quieten_menu_item.get_status()) | toggle_dont_quieten_menu_item()
+            }
          }
          "title" : set_title(param)
          "fav-dir" : {
@@ -1709,31 +1739,31 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
-   private remove_menu_command(label)
+   private remove_menu_command(list, label)
       local e
-      if (e := !menu_commands).label == label then
-         ldel1(menu_commands, e)
+      if (e := !list).label == label then
+         ldel1(list, e)
    end
 
-   private add_menu_command(label, verb)
-      put(menu_commands, MenuCommand(label, verb))
+   private add_menu_command(list, label, verb)
+      put(list, MenuCommand(label, verb))
    end
 
-   private do_custom_menu(param)
+   private do_custom_menu(list, param)
       local label, verb
       param ? {
          label := tab(upto(',') | 0)
          if label == u"-" | endswith(label, u"/-") then
             # Separator
-            add_menu_command(label)
+            add_menu_command(list, label)
          else if pos(0) then {
             # Remove any binding for label.
-            remove_menu_command(label)
+            remove_menu_command(list, label)
          } else {
             move(1)
             verb := tab(0)
-            remove_menu_command(label)
-            add_menu_command(label, verb)
+            remove_menu_command(list, label)
+            add_menu_command(list, label, verb)
          }
       }
       return self
@@ -1756,10 +1786,10 @@ class Terminal(TabItem, VtUI)
          TextMenuItem().set_label(s).connect(create custom_key_func(c.verb), Event.ACTION)
    end
 
-   private create_custom_menu()
+   private create_custom_menu(list)
       local res, c, m, s
       res := Menu()
-      every c := !menu_commands do {
+      every c := !list do {
          m := res
          c.label ? {
             while s := tab(upto('/')) do {
@@ -1773,8 +1803,8 @@ class Terminal(TabItem, VtUI)
       return res
    end
 
-   private do_reset_custom_menus()
-      clear(menu_commands)
+   private do_reset_custom_menus(list)
+      clear(list)
    end
 
    private custom_key_func(verb)
@@ -2264,14 +2294,23 @@ $endif
       info_msg(u"Closed log file " || log_file.ucs())
    end
 
+   private add_custom_menus(m, list)
+      local t
+      m.move_all(create_custom_menu(list))
+      # Tidy recursively.
+      every t := Seq{m.traverse_postorder()} do
+         if is(t, Menu) then
+            t.tidy()
+      return m
+   end
+
    public create_context_menu()
-      local m, t
+      local m
       m := Menu()
-      if output.get_current_text_selection() then {
+      if output.get_current_text_selection() then
          m.add(TextMenuItem().
                set_label("Copy text").
                connect(output.handle_copy, Event.ACTION))
-      }
       m.add(TextMenuItem().
             set_label("Paste").
             connect(output.handle_paste, Event.ACTION))
@@ -2306,14 +2345,15 @@ $endif
                set_label("End log").
                connect(on_end_log, Event.ACTION))
 
-      m.move_all(create_custom_menu())
+      return add_custom_menus(m, terminal_menu_commands)
+   end
 
-      # Tidy recursively.
-      every t := Seq{m.traverse_postorder()} do
-         if is(t, Menu) then
-            t.tidy()
+   public create_misc_menu()
+      local m
+      m := Menu().
+         add(dont_quieten_menu_item)
 
-      return m
+      return add_custom_menus(m, misc_menu_commands)
    end
 
    private create_open_with_menu_item(r)
@@ -2438,6 +2478,15 @@ $endif
       resort_cwd(&yes)
    end
 
+   private toggle_dont_quieten_menu_item()
+      dont_quieten_menu_item.toggle_is_checked()
+      on_dont_quieten_menu_item()
+   end
+
+   private on_dont_quieten_menu_item(e)
+      output.set_dont_quieten(dont_quieten_menu_item.get_status())
+   end
+
    private toggle_show_hidden_menu_item()
       show_hidden_menu_item.toggle_is_checked()
       on_show_hidden_menu_item()
@@ -2479,7 +2528,8 @@ $endif
          m.add(TextMenuItem().
                set_label("Restore").
                connect(on_restore, Event.ACTION))
-      return m
+
+      return add_custom_menus(m, columns_menu_commands)
    end
 
    private on_popup_closed()
@@ -2785,6 +2835,10 @@ $endif
          set_label("Filter dirs").
          set_keep_open_on_shift(&yes).
          connect(on_filter_dirs_menu_item, Event.ACTION)
+      dont_quieten_menu_item := CheckBoxMenuItem().
+         set_label("Don't quieten cursor").
+         set_keep_open_on_shift(&yes).
+         connect(on_dont_quieten_menu_item, Event.ACTION)
 
       favourites_list.set_size().set_selection_list([])
       filter.set_selection_list([u"*"]).set_use_wheel(&no)
@@ -2835,10 +2889,13 @@ $endif
          filter_dirs_menu_item.set_is_checked(other.filter_dirs_menu_item.get_status())
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
+         dont_quieten_menu_item.set_is_checked(other.dont_quieten_menu_item.get_status())
          history := clone(other.history)
          history_pos := other.history_pos
          history_size := other.history_size
-         menu_commands := copy(other.menu_commands)
+         terminal_menu_commands := copy(other.terminal_menu_commands)
+         columns_menu_commands := copy(other.columns_menu_commands)
+         misc_menu_commands := copy(other.misc_menu_commands)
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
          added_favourites := clone(other.added_favourites)
@@ -2853,7 +2910,9 @@ $endif
          history := []
          history_pos := 0
          history_size := DEFAULT_HISTORY_SIZE
-         menu_commands := []
+         terminal_menu_commands := []
+         columns_menu_commands := []
+         misc_menu_commands := []
          columns_pos_table := table()
          if \dir then {
             if dir := Files.realpath(dir) then
@@ -2868,6 +2927,7 @@ $endif
          every e := !glob_cmds do
             do_tab_cmd(e) | fail
       }
+      on_dont_quieten_menu_item()
       synch_paints()
       update_grey()
       return
@@ -3380,6 +3440,7 @@ procedure usage(opts)
    help_line(":show-hidden=FLAG", "Toggle or set whether or not to show hidden files and directories in the list")
    help_line(":sort-dirs=FLAG", "Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name)")
    help_line(":filter-dirs=FLAG", "Toggle or set whether or not to filter directories using the filter setting (by default, the directories are not filtered)")
+   help_line(":dont-quieten=FLAG", "Toggle or set whether to turn off the default cursor quietening behaviour.")
    help_line(":select=FLAG", "Set whether to make this tab the selected tab.  The default is \"yes\"")
    help_line(":history=INTEGER", "Specify the directory history size.  The default is 100")
    help_line(":adjacent=FLAG", "Set whether to add this tab adjacent to the current tab, rather than at the end of all the tabs.  The default is \"yes\"")
@@ -3398,9 +3459,13 @@ procedure usage(opts)
    help_line(":auto-close=FLAG", "Set whether to automatically close the tab if the forked shell process ends.  The default is \"yes\"")
    help_line(":title=STRING" , "Set the title of the tab.  The default is null, meaning show the shell's current directory")
    help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details")
-   help_line(":menu=LABEL,COMMAND", "Set/clear a custom menu setting.  See the full documentation page for details")
+   help_line(":terminal-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the terminal menu.  See the full documentation page for details")
+   help_line(":list-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the list menu.")
+   help_line(":misc-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the misc menu.")
    help_line(":reset-keys", "Reset custom key settings back to their default state")
-   help_line(":reset-menus", "Reset (clear) custom menu settings")
+   help_line(":reset-terminal-menus", "Reset (clear) custom terminal menu settings")
+   help_line(":reset-list-menus", "Reset (clear) custom list menu settings")
+   help_line(":reset-misc-menus", "Reset (clear) custom misc menu settings")
    help_line(":string=STRING", "Insert a string as though typed by the user; like :send-tty, but quietens the cursor and goes to the bottom of the terminal content")
    help_line(":search=FLAG", "Toggle or set the visibility of the search panel")
    help_line(":filter=PATTERN", "Set the list filter to the given pattern.  The default is \"*\", meaning show all files")

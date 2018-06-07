@@ -445,7 +445,7 @@ end
 
 class DropDownLabel(Label)
    public keeps(e)
-      return member(Key.CURSOR_V, e.code)
+      succeed member(Key.CURSOR_V, e.code)
    end
 
    public on_key(e)
@@ -475,7 +475,7 @@ end
 
 class DropDownTextField(TextField)
    public keeps(e)
-      return member(Key.CURSOR, e.code)
+      succeed member(Key.CURSOR, e.code)
    end
 
    public on_key(e)

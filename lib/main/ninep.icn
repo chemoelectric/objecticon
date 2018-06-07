@@ -252,7 +252,7 @@ class TableDir9P(Dir9P)
    end
 
    public is_empty()
-      return *ent = 0
+      succeed *ent = 0
    end
 
    package rename_child(x, s)
@@ -925,11 +925,11 @@ end
 #
 class DefaultUsers(Users)
    public is_member(group, user)
-      return group == user
+      succeed group == user
    end
 
    public is_leader(group, user)
-      return group == user
+      succeed group == user
    end
 end
 
@@ -964,14 +964,14 @@ class AdmUsers(Users)
    public is_member(group, user)
       local g
       if g := member(groups, group) then
-         return member(g.members, user)
+         succeed member(g.members, user)
    end
 
    public is_leader(group, user)
       local g
       if g := member(groups, group) then {
          # If there is no specific leader then any member is a leader.
-         return if /g.leader then 
+         succeed if /g.leader then 
             member(g.members, user)
          else
             g.leader == user
@@ -1281,7 +1281,7 @@ class Session9P()
    end
 
    public is_path_referenced(p)
-      return .member(ref_cnt, p)
+      succeed member(ref_cnt, p)
    end
 
    public is_path_unreferenced(p)

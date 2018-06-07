@@ -329,8 +329,7 @@ abstract class RealNumber(Number)
    # succeeds iff `x < y`.
    #
    public cmp(f, x)
-      if f(sub(x).sign(), 0) then
-         return
+      succeed f(sub(x).sign(), 0)
    end
 
    # Return the absolute value of this number.

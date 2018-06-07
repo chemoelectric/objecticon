@@ -211,7 +211,7 @@ abstract class MenuComponent(Rect,Connectable)
    # not yet cleaned up with `finally()`.
    #
    public is_initialized()
-      return \self.parent_component
+      succeed \self.parent_component
    end
 
    public set_parent(x)
@@ -230,14 +230,14 @@ abstract class MenuComponent(Rect,Connectable)
    # Succeed iff the component is shaded
    #
    public is_shaded()
-      return \self.is_shaded_flag
+      succeed \self.is_shaded_flag
    end
 
    #
    # Succeed if the component is not shaded.
    #
    public is_unshaded()
-      return /self.is_shaded_flag
+      succeed /self.is_shaded_flag
    end
 
    #
@@ -304,7 +304,7 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    public is_sub_menu()
-      return \self.is_sub_menu_flag
+      succeed \self.is_sub_menu_flag
    end
 
    public set_is_decorative(s)
@@ -313,11 +313,11 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    public is_decorative()
-      return \self.is_decorative_flag
+      succeed \self.is_decorative_flag
    end
 
    public in_label_region(e)
-      return (self.label_y <= e.y < self.label_y + self.label_h) & 
+      succeed (self.label_y <= e.y < self.label_y + self.label_h) & 
          (self.label_x <= e.x < self.label_x + self.label_w)
    end
 
@@ -381,7 +381,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    # Called when the menu component is selected
    #
-   public succeed(ev)
+   public selected(ev)
       if /keep_open_on_shift_flag | /ev | 
          /ev.shift | not(member(Mouse.RELEASE, ev.code) | ev.code === "\r") then
          close_all()
@@ -452,7 +452,7 @@ abstract class MenuComponent(Rect,Connectable)
    # Is the cursor over us?
    # 
    public in_region(e)
-      return temp_win.in_region(e)
+      succeed temp_win.in_region(e)
    end
 
    #

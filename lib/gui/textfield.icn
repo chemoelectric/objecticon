@@ -581,11 +581,11 @@ class TextField(Component)
    end
 
    public is_editable()
-      return \is_editable_flag
+      succeed \is_editable_flag
    end
 
    public has_contents()
-      return *contents > 0
+      succeed *contents > 0
    end
 
    public can_undo()
@@ -597,7 +597,7 @@ class TextField(Component)
    end
 
    public keeps(e)
-      return member(Key.CURSOR_H, e.code)
+      succeed member(Key.CURSOR_H, e.code)
    end
 
    public apply_filter(t)
@@ -736,7 +736,7 @@ class TextField(Component)
    end
 
    public has_region()
-      return \self.mark ~= self.cursor
+      succeed \self.mark ~= self.cursor
    end
 
    public get_view()

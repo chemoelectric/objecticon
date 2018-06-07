@@ -41,7 +41,7 @@ class Size()
    end
 
    public empty()
-      return (w|h) <= 0
+      succeed (w|h) <= 0
    end
 
    public new(w, h)
@@ -58,11 +58,11 @@ class Rect(Point,Size)
    end
 
    public inside(x1, y1)
-      return (x <= x1 < x + w) & (y <= y1 < y + h)
+      succeed (x <= x1 < x + w) & (y <= y1 < y + h)
    end
 
    public contains(r)
-      return (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
+      succeed (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
    end
 
    public center()

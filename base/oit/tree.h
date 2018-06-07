@@ -112,6 +112,8 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_If		56		/* if-then statement */
 #define N_Ifelse	57		/* if-then-else statement */
 #define N_Subsc         58              /* a[i, j, k, ....] */
+#define N_Succeed	59		/* succeed */
+#define N_Succeedexpr	60		/* succeed expr */
 
 /*
  * Macros for constructing basic nodes.

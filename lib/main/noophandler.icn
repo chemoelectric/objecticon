@@ -9,7 +9,7 @@ package mail
 #
 class NoOpEncodingHandler(EncodingHandler)
    public can_handle(enc)
-      return map(enc) == ("7bit" | "8bit" | "binary")
+      succeed map(enc) == ("7bit" | "8bit" | "binary")
    end
 
    public decode_data(m, data)
@@ -26,7 +26,7 @@ end
 #
 class NoOpTypeHandler(TypeHandler)
    public can_handle(ct)
-      return (map(ct.get_type()) == "application") & 
+      succeed (map(ct.get_type()) == "application") & 
          (map(ct.get_subtype()) == "octet-stream")
    end
    

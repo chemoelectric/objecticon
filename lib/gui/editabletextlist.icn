@@ -428,11 +428,11 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public is_editable()
-      return \is_editable_flag
+      succeed \is_editable_flag
    end
 
    public has_contents()
-      return *contents > 1 | *contents[1] > 0
+      succeed *contents > 1 | *contents[1] > 0
    end
 
    public can_undo()
@@ -662,7 +662,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public has_region()
-      return \mark_x & (mark_x ~= cursor_x | mark_y ~= cursor_y)
+      succeed \mark_x & (mark_x ~= cursor_x | mark_y ~= cursor_y)
    end
 
    public handle_lpress(e)
@@ -1252,9 +1252,7 @@ class EditableTextList(LineBasedScrollArea)
    public keeps(e)
       # This component keeps all events if editable, but just the four
       # cursor keys otherwise.
-      if \is_editable_flag then
-         return
-      return member(Key.CURSOR, e.code)
+      succeed \is_editable_flag | member(Key.CURSOR, e.code)
    end
 
    public calculate_subject_width()

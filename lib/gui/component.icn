@@ -269,14 +269,14 @@ class Component(Rect,Align,Connectable)
    # within a tabbed pane not presently visible.
    #
    public is_hidden()
-      return \effective_is_hidden_flag
+      succeed \effective_is_hidden_flag
    end
 
    #
    # Succeed if the component is not hidden.
    #
    public is_unhidden()
-      return /effective_is_hidden_flag
+      succeed /effective_is_hidden_flag
    end
 
    #
@@ -321,14 +321,14 @@ class Component(Rect,Align,Connectable)
    # differently, and will not generate events.
    #
    public is_shaded()
-      return \effective_is_shaded_flag
+      succeed \effective_is_shaded_flag
    end
 
    #
    # Succeed if the component is not shaded.
    #
    public is_unshaded()
-      return /effective_is_shaded_flag
+      succeed /effective_is_shaded_flag
    end
 
    #
@@ -599,10 +599,10 @@ class Component(Rect,Align,Connectable)
       #
       # Use the point chain if we can
       #
-      if /e | (e === parent_dialog.get_point_chain_source()) then
-         return keyof(parent_dialog.get_point_chain(), self)
+      succeed if /e | (e === parent_dialog.get_point_chain_source()) then
+         keyof(parent_dialog.get_point_chain(), self)
       else
-         return get_clip_rect().inside(e.x, e.y)
+         get_clip_rect().inside(e.x, e.y)
    end
 
    #
@@ -611,7 +611,7 @@ class Component(Rect,Align,Connectable)
    # :  `e` - The mouse press event code - Mouse.LEFT_PRESS, Mouse.RIGHT_PRESS or Mouse.MIDDLE_PRESS
    #
    public is_held(e)
-      return keyof(parent_dialog.get_held(e), self)
+      succeed keyof(parent_dialog.get_held(e), self)
    end
 
    #
@@ -642,7 +642,7 @@ class Component(Rect,Align,Connectable)
    # Succeed if this component has the dialog's focus.
    #
    public has_focus()
-      return (\self.parent_dialog).get_focus() === self
+      succeed (\self.parent_dialog).get_focus() === self
    end
 
    #
@@ -1305,7 +1305,7 @@ class Component(Rect,Align,Connectable)
    # not yet cleaned up with `finally()`.
    #
    public is_initialized()
-      return \self.parent_dialog
+      succeed \self.parent_dialog
    end
 
    # Remove the children in the range `i:j`, returning the
@@ -1367,7 +1367,7 @@ class Component(Rect,Align,Connectable)
    # size on the screen, ie has been laid out by its parent.
    #
    public is_live()
-      return \self.x & \self.parent_dialog
+      succeed \self.x & \self.parent_dialog
    end
 
    #

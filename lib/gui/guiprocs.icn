@@ -428,15 +428,15 @@ final abstract class Gui()
    end
 
    public static allow_internal_popups()
-      return \ALLOW_INTERNAL_POPUPS
+      succeed \ALLOW_INTERNAL_POPUPS
    end
 
    public static is_window_attrib(s)
-      return member(WATTRIB_SET, s)
+      succeed member(WATTRIB_SET, s)
    end
 
    public static is_context_attrib(s)
-      return member(CONTEXT_WATTRIB_SET, s)
+      succeed member(CONTEXT_WATTRIB_SET, s)
    end
 end
 

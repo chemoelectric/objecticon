@@ -546,7 +546,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    end
 
    public keeps(e)
-      return \default_key_listener & member(Key.CURSOR, e.code)
+      succeed \default_key_listener & member(Key.CURSOR, e.code)
    end
 
    #
