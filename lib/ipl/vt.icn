@@ -246,6 +246,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       quieten                     # A flag to stop distracting in_chain cursor updates
 
    private readable
+      dont_quieten_flag,          # Don't quieten the cursor if set
       verbose_flag,
       cursor_x,                   # The selection cursor/mark
       cursor_y,
@@ -1114,6 +1115,14 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_verbose(f)
       self.verbose_flag := need_flag(f)
+      return self
+   end
+
+   #
+   # If set, quietening of the cursor is disabled.
+   #
+   public set_dont_quieten(f)
+      self.dont_quieten_flag := need_flag(f)
       return self
    end
 
@@ -2604,20 +2613,17 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private quieten_cursor_and_clear_msg()
-      quieten_cursor()
+      parent_dialog.get_held_count() = 0 | fail
+      if /dont_quieten_flag & /quieten then {
+         set_over()
+         # No need to synch_pointer since we call this method out of the
+         # keyboard handler.
+         quieten := &yes
+         ui.quieten_cursor()
+      }
       # This is done in order to clear any info message which may
       # still persist even after quieten cursor state has begun.
-      if parent_dialog.get_held_count() = 0 then
-         ui.msg()
-   end
-
-   private quieten_cursor()
-      (/quieten & parent_dialog.get_held_count() = 0) | fail
-      set_over()
-      # No need to synch_pointer since we call this method out of the
-      # keyboard handler.
-      quieten := &yes
-      ui.quieten_cursor()
+      ui.msg()
    end
 
    public unquieten_cursor()
