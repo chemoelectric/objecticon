@@ -317,6 +317,7 @@ static struct lnode *buildtree(void)
         case Uop_Suspendexpr:
         case Uop_Until: 
         case Uop_Returnexpr: 
+        case Uop_Succeedexpr: 
         case Uop_Breakexpr: {
             struct loc t = curr_loc;
             struct lnode *c = buildtree();
@@ -369,14 +370,6 @@ static struct lnode *buildtree(void)
                 z->parent = (struct lnode *)x;
             }
             return (struct lnode *)x;
-        }
-
-        case Uop_Succeedexpr: {                 /* succeed expr */
-            struct loc t = curr_loc;
-            struct lnode *c = buildtree();
-            return (struct lnode *)lnode_1(Uop_Returnexpr, &t,
-                                           (struct lnode *)lnode_2(Uop_Conj, &t, c, 
-                                                                   (struct lnode *)lnode_keyword(&t, K_NULL)));
         }
 
         case Uop_Succeed: {                     /* succeed */
@@ -600,6 +593,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Every: 
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
+        case Uop_Succeedexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
@@ -785,6 +779,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Every: 
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
+        case Uop_Succeedexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
@@ -1048,6 +1043,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Every: 
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
+        case Uop_Succeedexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
