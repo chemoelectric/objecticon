@@ -177,7 +177,7 @@ end
 
 class SpinTextField(TextField)
    public keeps(e)
-      return member(Key.CURSOR, e.code)
+      succeed member(Key.CURSOR, e.code)
    end
 
    public on_key(e)
@@ -198,7 +198,7 @@ end
 
 class SpinLabel(Label)
    public keeps(e)
-      return member(Key.CURSOR_V, e.code)
+      succeed member(Key.CURSOR_V, e.code)
    end
 
    public on_key(e)

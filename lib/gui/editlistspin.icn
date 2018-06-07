@@ -17,7 +17,7 @@ class EditListSpin(SelectionSpin)
       applied_event
 
    public was_applied(ev)
-      return ev === applied_event
+      succeed ev === applied_event
    end
 
    public apply_selection(ev)

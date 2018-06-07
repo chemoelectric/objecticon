@@ -368,14 +368,14 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Succeed iff the index `i` is currently selected.
    #
    public is_selected(i)
-      return member(selections, i)
+      succeed member(selections, i)
    end
 
    #
    # Succeed iff the index `o` is currently selected.
    #
    public object_is_selected(o)
-      return member(selections, find_line(o))
+      succeed member(selections, find_line(o))
    end
 
    #
@@ -854,23 +854,23 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public keeps(e)
-      return member(Key.CURSOR, e.code)
+      succeed member(Key.CURSOR, e.code)
    end
 
    public object_get_gesture_selections()
       \self.cursor | fail
-      if member(self.selections, self.cursor) then
-         return object_get_selections()
+      return if member(self.selections, self.cursor) then
+         object_get_selections()
       else
-         return [self.contents[self.cursor]]
+         [self.contents[self.cursor]]
    end
 
    public get_gesture_selections()
       \self.cursor | fail
-      if member(self.selections, self.cursor) then
-         return get_selections()
+      return if member(self.selections, self.cursor) then
+         get_selections()
       else
-         return [self.cursor]
+         [self.cursor]
    end
 
    public draw()

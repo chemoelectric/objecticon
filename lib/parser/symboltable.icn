@@ -44,10 +44,10 @@ end
 
 class ProcedureSymbol(TopLevelSymbol)
    public has_package_flag()
-      if is(obj, Tree) then
-         return obj.get_package_flag()
+      succeed if is(obj, Tree) then
+         obj.get_package_flag()
       else
-         return \obj.package_flag
+         \obj.package_flag
    end
 end
 
@@ -63,10 +63,10 @@ end
 
 class RecordSymbol(TopLevelSymbol)
    public has_package_flag()
-      if is(obj, Tree) then
-         return obj.get_package_flag()
+      succeed if is(obj, Tree) then
+         obj.get_package_flag()
       else
-         return \obj.package_flag
+         \obj.package_flag
    end
 end
 
@@ -76,18 +76,18 @@ class GlobalSymbol(TopLevelSymbol)
 
    public has_package_flag()
       # Check the "global" node (rather than the ident node).
-      if is(decl_obj, Tree) then
-         return decl_obj.get_package_flag()
+      succeed if is(decl_obj, Tree) then
+         decl_obj.get_package_flag()
       else
-         return \decl_obj.package_flag
+         \decl_obj.package_flag
    end
 
    public has_readable_flag()
       # Check the "global" node (rather than the ident node).
-      if is(decl_obj, Tree) then
-         return decl_obj.get_readable_flag()
+      succeed if is(decl_obj, Tree) then
+         decl_obj.get_readable_flag()
       else
-         return \decl_obj.readable_flag
+         \decl_obj.readable_flag
    end
 
    package new(scanned_file, obj, name, decl_obj)
@@ -156,24 +156,24 @@ class ClassSymbol(TopLevelSymbol)
    end
 
    public has_package_flag()
-      if is(obj, Tree) then
-         return obj.get_package_flag()
+      succeed if is(obj, Tree) then
+         obj.get_package_flag()
       else
-         return \obj.package_flag
+         \obj.package_flag
    end
 
    public is_final()
-      if is(obj, Tree) then
-         return obj.get_access().gen().str() == "final"
+      succeed if is(obj, Tree) then
+         obj.get_access().gen().str() == "final"
       else
-         return iand(obj.flags, Class.Final) ~= 0
+         iand(obj.flags, Class.Final) ~= 0
    end
 
    public is_abstract()
-      if is(obj, Tree) then
-         return obj.get_access().gen().str() == "abstract"
+      succeed if is(obj, Tree) then
+         obj.get_access().gen().str() == "abstract"
       else
-         return iand(obj.flags, Class.Abstract) ~= 0
+         iand(obj.flags, Class.Abstract) ~= 0
    end
 
    package new(scanned_file, obj, name)
@@ -344,7 +344,7 @@ class ImportDec()
    end
 
    public has(sym)
-      return member(syms, sym)
+      succeed member(syms, sym)
    end
 
    package new(name, mode)

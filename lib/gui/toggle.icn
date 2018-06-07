@@ -35,14 +35,14 @@ abstract class Toggle()
    # Succeed if the object is checked.
    #
    public is_checked()
-      return \self.is_checked_flag
+      succeed \self.is_checked_flag
    end
 
    #
    # Succeed if the object is not checked.
    #
    public is_unchecked()
-      return /self.is_checked_flag
+      succeed /self.is_checked_flag
    end
 
    #

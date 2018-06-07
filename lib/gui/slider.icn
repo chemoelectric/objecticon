@@ -568,7 +568,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    end
 
    public keeps(e)
-      return member(if /self.is_horizontal_flag then Key.CURSOR_V else Key.CURSOR_H, e.code)
+      succeed member(if /self.is_horizontal_flag then Key.CURSOR_V else Key.CURSOR_H, e.code)
    end
 
    public new()

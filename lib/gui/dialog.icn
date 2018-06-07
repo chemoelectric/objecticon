@@ -156,12 +156,11 @@ class Dialog(Component)
    end
 
    public is_blocked()
-      return \self.is_blocked_flag
+      succeed \self.is_blocked_flag
    end
 
    public is_popup()
-      if popup_manager ~=== self then
-         return
+      succeed popup_manager ~=== self
    end
 
    # Return the menu mode component, if menu mode is active.
@@ -192,7 +191,7 @@ class Dialog(Component)
    # Succeed iff the sequence of events indicates the mouse is over the
    # dialog.
    public is_entered()
-      return \popup_manager.entered
+      succeed \popup_manager.entered
    end
 
    # Set whether the dialog is blocked to mouse/keyboard events.

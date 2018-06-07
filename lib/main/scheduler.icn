@@ -122,7 +122,7 @@ class Task()
    # Succeed iff the task is currently active.
    #
    public is_active()
-      return ./coex
+      succeed /coex
    end
 
    # Succeed iff the task is the current task.  Note that a task may
@@ -133,29 +133,29 @@ class Task()
    # event loop.
    #
    public is_current()
-      return self === scheduler.curr_task
+      succeed self === scheduler.curr_task
    end
 
    # Succeed iff the task is currently sleeping
    public is_sleeping()
-      return scheduler.is_sleeping(self)
+      succeed scheduler.is_sleeping(self)
    end
 
    # Succeed iff the task is currently polling
    public is_polling()
-      return scheduler.is_polling(self)
+      succeed scheduler.is_polling(self)
    end
 
    # Succeed iff the task is currently in the ready state
    public is_ready()
-      return scheduler.is_ready(self)
+      succeed scheduler.is_ready(self)
    end
 
    # Succeed iff the task is dormant, meaning it is not active, and is
    # not sleeping, polling or ready, meaning it won't be scheduled by
    # the scheduler, at least until `start` is called on it.
    public is_dormant()
-      return scheduler.is_dormant(self)
+      succeed scheduler.is_dormant(self)
    end
 
    # Suspend this task, which must be the currently scheduled task, in
@@ -356,19 +356,19 @@ class Scheduler()
    end
 
    package is_sleeping(t)
-      return member(sleeping, t)
+      succeed member(sleeping, t)
    end
 
    package is_polling(t)
-      return member(polling, t)
+      succeed member(polling, t)
    end
 
    package is_ready(t)
-      return member(ready, t)
+      succeed member(ready, t)
    end
 
    package is_dormant(t)
-      return \t.coex & not member(ready | polling | sleeping, t)
+      succeed \t.coex & not member(ready | polling | sleeping, t)
    end
 
    private set_state(t, x)
@@ -418,7 +418,7 @@ class Scheduler()
    # Test whether there are any tasks in the internal lists.
    #
    public empty()
-      return not(*(ready | sleeping | polling) > 0)
+      succeed not(*(ready | sleeping | polling) > 0)
    end
 
    private run(t)

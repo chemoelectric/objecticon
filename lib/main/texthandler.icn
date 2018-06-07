@@ -8,7 +8,7 @@ import util, io, ipl.strings
 
 class TextHandler(TypeHandler)
    public can_handle(ct)
-      return map(ct.get_type()) == "text"
+      succeed map(ct.get_type()) == "text"
    end
    
    public convert_to_object(m, data)

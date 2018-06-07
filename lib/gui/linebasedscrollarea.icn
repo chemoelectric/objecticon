@@ -35,7 +35,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    # Succeed if the line count is non-zero
    #
    public has_lines()
-      return get_line_count() > 0
+      succeed get_line_count() > 0
    end
 
    #

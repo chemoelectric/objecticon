@@ -22,7 +22,7 @@ class Base64Handler(EncodingHandler)
    end
 
    public can_handle(enc)
-      return map(enc) == "base64"
+      succeed map(enc) == "base64"
    end
 
    public decode_data(m, data)

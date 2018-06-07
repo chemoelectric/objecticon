@@ -329,11 +329,11 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public keeps(e)
-      return e.code === "\t" | member(Key.CURSOR_H, e.code)
+      succeed e.code === "\t" | member(Key.CURSOR_H, e.code)
    end
 
    public was_applied(ev)
-      return ev === applied_event
+      succeed ev === applied_event
    end
 
    public handle_return(e)

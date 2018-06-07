@@ -20,7 +20,7 @@ class QuotedPrintableHandler(EncodingHandler)
    private res, ll
 
    public can_handle(enc)
-      return map(enc) == "quoted-printable"
+      succeed map(enc) == "quoted-printable"
    end
 
    public encode_data(m, data)

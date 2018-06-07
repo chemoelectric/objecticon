@@ -116,7 +116,7 @@ class MimeHeaders()
    # Succeed iff there is a header with the given key.
    #
    public has_header(key)
-      return headers.member(key)
+      succeed headers.member(key)
    end
 
    public new()

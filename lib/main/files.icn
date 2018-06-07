@@ -1065,13 +1065,11 @@ package class UnixFileSystem(FileSystem)
    end
 
    public is_hidden(s)
-      if any('.', s) then
-         return
+      succeed any('.', s)
    end
 
    public is_relative_dir(s)
-      if s == ("." | "..") then
-         return
+      succeed s == ("." | "..")
    end
 
    public get_roots()
@@ -1232,8 +1230,7 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public is_relative_dir(s)
-      if s == ("." | "..") then
-         return
+      succeed s == ("." | "..")
    end
 
    public native get_roots()
