@@ -375,7 +375,7 @@ static struct lnode *buildtree(void)
             struct loc t = curr_loc;
             struct lnode *c = buildtree();
             return (struct lnode *)lnode_1(Uop_Returnexpr, &t,
-                                           (struct lnode *)lnode_2(Uop_If, &t, c, 
+                                           (struct lnode *)lnode_2(Uop_Conj, &t, c, 
                                                                    (struct lnode *)lnode_keyword(&t, K_NULL)));
         }
 
