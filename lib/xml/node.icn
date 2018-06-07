@@ -219,7 +219,7 @@ abstract class Node()
    # Succeed if this node has string `s` as a child.
    #
    public has_string(s)
-      return text(!self.children) == s
+      succeed text(!self.children) == s
    end
 
    #
@@ -227,7 +227,7 @@ abstract class Node()
    # comparison.
    #
    public has_trimmed_string(s)
-      return xml_trim(text(!self.children)) == s
+      succeed xml_trim(text(!self.children)) == s
    end
 
    #

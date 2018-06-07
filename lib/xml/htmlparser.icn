@@ -573,6 +573,6 @@ class HtmlParser()
    # matching closing tag.
    #
    public static is_standalone_tag(name)
-      return member(STANDALONE, string(name))
+      succeed member(STANDALONE, string(name))
    end
 end

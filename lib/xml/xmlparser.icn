@@ -1045,7 +1045,7 @@ class XmlParser(Connectable)
                insert(c2, ref)
                o := lookup_entity_ref(ref)
                #
-               # If standalone "yes", then can't refernce the entity if it was defined in the external subset
+               # If standalone "yes", then can't reference the entity if it was defined in the external subset
                #
                if \doc.standalone & \o.in_ext_subset then
                   throw("Cannot reference an entity declared externally, in a standalone document")

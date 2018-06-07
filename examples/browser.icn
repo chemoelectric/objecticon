@@ -1550,7 +1550,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public is_visited(url)
-      return member(parent_dialog.visited_set, url.str())
+      succeed member(parent_dialog.visited_set, url.str())
    end
 
    public page_loaded()

@@ -271,8 +271,7 @@ $endif
    # Succeed iff the given file is a directory.
    #
    public static is_directory(s)
-      if stat(s).mode_str[1] == "d" then
-         return
+      succeed stat(s).mode_str[1] == "d"
    end
 
    #

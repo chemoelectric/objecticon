@@ -69,11 +69,11 @@ class ContentSpec(ObjectOutput)
    end
 
    public is_mixed()
-      return \self.is_mixed_flag
+      succeed \self.is_mixed_flag
    end
 
    public isnt_mixed()
-      return /self.is_mixed_flag
+      succeed /self.is_mixed_flag
    end
 
    #

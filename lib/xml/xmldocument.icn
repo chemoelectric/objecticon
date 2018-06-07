@@ -40,10 +40,10 @@ class XmlDocument(Document)
    end
 
    #
-   # Fail iff this is a standalone document
+   # Succeed iff this is a standalone document
    #
    public is_standalone()
-      return \standalone
+      succeed \standalone
    end
 
    #
