@@ -4,7 +4,7 @@
 
 package mail
 
-import util
+import util, io, ipl.strings
 
 class TextHandler(TypeHandler)
    public can_handle(ct)
@@ -15,14 +15,11 @@ class TextHandler(TypeHandler)
       local res
 
       #
-      # Convert from canonical form (CRLF) to local form (\n)
+      # Convert line endings to local form
       #
       res := ""
-      data ? repeat {
-         res ||:= tab(find("\r\n") | 0)
-         move(2) | break
-         res ||:= "\n"
-      }
+      every res ||:= separate_lines(data) || Files.EOL
+      res[-*Files.EOL:0] := ""
 
       if map(m.get_content_type().get_parameter("charset")) == "utf-8" then
          res := ucs(res) | return error("TextHandler: raw data not in UTF-8 format")
@@ -36,14 +33,12 @@ class TextHandler(TypeHandler)
       obj := string(obj) | return error("TextHandler: Couldn't convert object to string: " || image(obj))
 
       #
-      # Convert from local form to canonical form (CRLF)
+      # Convert line endings to canonical form (CRLF)
       #
       res := ""
-      obj ? repeat {
-         res ||:= tab(upto('\n') | 0)
-         move(1) | break
-         res ||:= "\r\n"
-      }
+      every res ||:= separate_lines(obj) || "\r\n"
+      res[-2:0] := ""
+
       return res
    end
 end
