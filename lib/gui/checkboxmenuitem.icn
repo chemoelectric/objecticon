@@ -78,9 +78,9 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
          set_paint_left(curr_paint := i)
    end
 
-   public succeed(e)
+   public selected(e)
       toggle_action(e)
-      TextMenuItem.succeed(e)
+      TextMenuItem.selected(e)
    end
 end
 

@@ -46,6 +46,7 @@
 %token  REPEAT      /* repeat    */
 %token  RETURN      /* return    */
 %token  STATIC      /* static    */
+%token	SUCCEED     /* succeed   */
 %token  SUSPEND     /* suspend   */
 %token  TCASE       /* tcase     */
 %token  THEN        /* then      */
@@ -429,6 +430,8 @@ return  : FAIL { $$ := Node("fail", $1);} ;
         | SUSPEND { $$ := Node("suspend", $1);} ;
         | SUSPEND expr { $$ := Node("suspendexpr", $1,$2);} ;
         | SUSPEND expr DO expr { $$ := Node("suspendexprdo", $1,$2,$3,$4);};
+        | SUCCEED { $$ := Node("succeed", $1);} ;
+        | SUCCEED expr { $$ := Node("succeedexpr", $1, $2);} ;
 
 if      : IF expr THEN expr { $$ := Node("if", $1,$2,$3,$4);} ;
         | IF expr THEN expr ELSE expr { $$ := Node("ifelse", $1,$2,$3,$4,$5,$6);} ;

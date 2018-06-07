@@ -213,7 +213,7 @@ class Menu(TextMenuItem)
             set_which_open(self.which_highlight)
             self.which_open.cursor_on()
          } else
-            self.which_highlight.succeed(e)
+            self.which_highlight.selected(e)
       }
    end
 
@@ -239,7 +239,7 @@ class Menu(TextMenuItem)
          #
          # If item selected and not a sub-menu, return its selected
          # event.
-         self.which_highlight.is_sub_menu() | self.which_highlight.succeed(e)
+         self.which_highlight.is_sub_menu() | self.which_highlight.selected(e)
       }
    end
 
@@ -284,7 +284,7 @@ class Menu(TextMenuItem)
             set_which_open(m)
             m.cursor_on()
          } else
-            m.succeed(e)
+            m.selected(e)
       }
    end
 

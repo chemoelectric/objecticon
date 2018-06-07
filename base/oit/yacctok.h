@@ -51,6 +51,7 @@
 %token	REPEAT      /* repeat    */
 %token	RETURN      /* return    */
 %token	STATIC      /* static    */
+%token	SUCCEED     /* succeed   */
 %token	SUSPEND     /* suspend   */
 %token	THEN        /* then      */
 %token	TO          /* to        */

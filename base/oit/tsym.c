@@ -619,6 +619,21 @@ static void nodegen(nodeptr t)
             break;
         }
 
+        case N_Succeed: {
+            if (in_create)
+                tfatal_at(t, "Invalid context for succeed");
+            uout_op(Uop_Succeed);
+            break;
+        }
+
+        case N_Succeedexpr: {
+            if (in_create)
+                tfatal_at(t, "Invalid context for succeed");
+            uout_op(Uop_Succeedexpr);
+            nodegen(Tree1(t));
+            break;
+        }
+
         case N_Alt: {
             uout_op(Uop_Alt);
             nodegen(Tree0(t));
