@@ -343,6 +343,12 @@ class Menu(TextMenuItem)
    #
    public tidy()
       local i
+      # Remove empty child menus
+      every i := *children to 1 by -1 do {
+         if is(children[i], Menu) & *children[i].children = 0 then
+            remove_index(i)
+      }
+      # Remove redundant separators
       every i := *children to 1 by -1 do {
          if is(children[i], MenuSeparator) then {
             if is(children[i + 1], MenuSeparator) then
