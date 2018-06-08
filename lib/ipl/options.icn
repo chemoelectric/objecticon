@@ -120,6 +120,7 @@ end
 # :  `opts` - a list of `Opt`s
 procedure options_help(opts)
    local o, t
+   write("Options :-")
    every o := !opts do {
       if is(o, Opt) then {
          t := o.format()
@@ -431,6 +432,8 @@ procedure options(arg, opts, usage, errproc)
 
    if member(option, "help" | "?") then {
       /usage := "Usage: " || Files.get_program_name() || " [OPTIONS...]"
+      if type(usage) == "list" then
+         usage := cat_lines(usage)
       if usage := text(usage) then {
          write(usage)
          options_help(opts)
