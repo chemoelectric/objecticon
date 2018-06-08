@@ -6,13 +6,13 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, io, ipl.lists, util, ipl.pdco()
+import gui, io, ipl.lists, util, ipl.pdco(String)
 
 #
 # Convert a list l to a string representation.
 #
 procedure contents_string(l)
-   return "[" || list2str(l, ", ", image) || "]"
+   return "[" || String{ image(!l), ", " } || "]"
 end
 
 procedure is_image_file(s)

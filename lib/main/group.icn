@@ -4,6 +4,8 @@
 
 package mail
 
+import ipl.pdco(String)
+
 #
 # This class represents a group, which is a phrase, plus
 # zero or more mailboxes.
@@ -38,15 +40,11 @@ class Group(Address)
 
    public to_rfc822()
       local tmp
-
-      tmp := ""
-      every tmp ||:= (!mailboxes).to_rfc822() || ", "
-      tmp[-2:0] := ""
-
-      if *phrase > 0 then
-         return phrase || ": " || tmp || " ;"
+      tmp := String{ (!mailboxes).to_rfc822(), ", " }
+      return if *phrase > 0 then
+         phrase || ": " || tmp || " ;"
       else
-         return ": " || tmp || " ;"
+         ": " || tmp || " ;"
    end
 
    public static parse(s)

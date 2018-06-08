@@ -125,11 +125,7 @@ class Ieval(MinimalObjectOutput)
    end
 
    private comma_string(e)
-      local s
-      s := ""
-      while s ||:= @e || ", "
-      s[-2:0] := ""
-      return s
+      return String(e, ", ")
    end
 
    private supers_string(c)

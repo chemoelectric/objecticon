@@ -4,7 +4,7 @@
 
 package mail
 
-import util, io
+import util, io, ipl.pdco(String, List)
 
 #
 # This class represents an email message
@@ -256,23 +256,14 @@ class Message(MimeHeaders)
    end
 
    #
-   # Turn the given parameter into a delim-separated list of addresses.  The
+   # Turn the given parameter into a comma-separated list of addresses.  The
    # param is either an `Address` or a list of `Address`es.
    # 
-   private catenate_addresses(a, delim)
-      local s, e
-      if type(a) == "list" then {
-         s := ""
-         every e := !a do {
-            if *s > 0 then 
-               s ||:= delim
-            s ||:= e
-         }
-         return s
-      }
-      else {
+   private catenate_addresses(a)
+      return if type(a) == "list" then
+         String{ (!a).to_rfc822(), ", " }
+      else
          return a.to_rfc822()
-      }
    end
 
    # 
@@ -348,7 +339,7 @@ class Message(MimeHeaders)
    public get_reply_to()
       local s
       s := get_catenated_headers("Reply-To") | return error("Missing header: Reply-To")
-      return RFC822Parser().parse_address_list(s, 1) | header_error("Reply-To", s)
+      return RFC822Parser().parse_address_list(s, &yes) | header_error("Reply-To", s)
    end
 
    #
@@ -488,7 +479,7 @@ class Message(MimeHeaders)
    public get_bcc()
       local s
       s := get_catenated_headers("bcc") | return error("Missing header: bcc")
-      return RFC822Parser().parse_address_list(s, 1) | header_error("bcc", s)
+      return RFC822Parser().parse_address_list(s, &yes) | header_error("bcc", s)
    end
 
    #
@@ -523,7 +514,7 @@ class Message(MimeHeaders)
    public get_resent_bcc()
       local s
       s := get_catenated_headers("Resent-bcc") | return error("Missing header: Resent-bcc")
-      return RFC822Parser().parse_address_list(s, 1) | header_error("Resent-bcc", s)
+      return RFC822Parser().parse_address_list(s, &yes) | header_error("Resent-bcc", s)
    end
 
    #
@@ -772,8 +763,5 @@ end
 # contain either Mailboxes or Groups.
 #
 procedure get_all_mailboxes(l)
-   local res
-   res := []
-   every put(res, (!l).gen_mailboxes())
-   return res
+   return List{ (!l).gen_mailboxes() }
 end

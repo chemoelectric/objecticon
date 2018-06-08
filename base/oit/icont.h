@@ -11,6 +11,7 @@
 #undef CONST
 #undef TILDE
 #undef PRIVATE
+#undef OPTIONAL
 #if MSWIN32
 #define WORD _WORD
 #endif

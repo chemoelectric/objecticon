@@ -2,6 +2,7 @@ import
    lang(Class, Text),
    parser(ClassSymbol, ClassVariable, DeferredMethod, Tree, ULocal,
           UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol),
+   ipl.pdco(String),
    ipl.sort(qsort),
    datastruct(SortTable),
    util(Yes)
@@ -76,28 +77,29 @@ abstract class Outputter()
             suspend e
    end
 
+   private ucode_params(obj)
+      local a, has_self
+      # A non-static method will have an implicit self param.
+      if is(obj, UMethod) & iand(obj.flags, Class.Static) = 0 then
+         has_self := &yes
+      every a := obj.get_locals() do {
+         if iand(a.flags, ULocal.Argument) ~= 0 then {
+            if \has_self then
+               has_self := &null
+            else
+               suspend a.id
+         }
+      }
+   end
+
    protected get_param_string(obj)
-      local s, a, has_self
-      s := ""
+      local s
       if is(obj, Tree) then {
-         every a := obj.get_args().gen() do
-            s ||:= a.str() || ", "
-         s[-2:0] := ""
+         s := String{ obj.get_args().gen().str(), ", " }
          if obj.has_varargs() then
             s ||:= "[]"
       } else {
-         # A non-static method will have an implicit self param.
-         if is(obj, UMethod) & iand(obj.flags, Class.Static) = 0 then
-            has_self := &yes
-         every a := obj.get_locals() do {
-            if iand(a.flags, ULocal.Argument) ~= 0 then {
-               if \has_self then
-                  has_self := &null
-               else
-                  s ||:= a.id || ", "
-            }
-         }
-         s[-2:0] := ""
+         s := String{ ucode_params(obj), ", " }
          if iand(obj.locals[-1].flags, ULocal.Vararg) ~= 0 then
             s ||:= "[]"
       }
@@ -112,11 +114,7 @@ abstract class Outputter()
    end
 
    protected get_record_field_string(obj)
-      local s
-      s := ""
-      every s ||:= get_record_fields(obj) || ", "
-      s[-2:0] := ""
-      return s
+      return String{ get_record_fields(obj), ", " }
    end
 
    protected get_class_prefix(c)
