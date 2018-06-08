@@ -1478,26 +1478,34 @@ int ownselection(wbp w, char *selection)
 int requestselection(wbp w, char *selection, char *target)
 {
     wsp ws = w->window;
-    tended struct descrip tmp;
+    tended struct descrip tmp, res;
     int snarf_len = 0;
     char *snarf = 0;
 
     CheckUnhidden(ws);
+    res = nulldesc;
 
-    if (strcmp(selection, "CLIPBOARD") == 0 &&
-        strcmp(target, "UTF8_STRING") == 0) {
-        int fd, n_read;
-        char buff[512];
-        if ((fd = open_winfile(ws, "snarf", OREAD)) < 0) {
-            whyf("Can't open snarf file: %r");
-            return Failed;
+    if (strcmp(selection, "CLIPBOARD") == 0) {
+        if (strcmp(target, "TARGETS") == 0)
+            LitStr("UTF8_STRING\n", &res);
+        else if (strcmp(target, "UTF8_STRING") == 0) {
+            int fd, n_read;
+            char buff[512];
+            int snarf_len = 0;
+            char *snarf = 0;
+            if ((fd = open_winfile(ws, "snarf", OREAD)) < 0) {
+                whyf("Can't open snarf file: %r");
+                return Failed;
+            }
+            while ((n_read = read(fd, buff, sizeof buff)) > 0) {
+                snarf = safe_realloc(snarf, snarf_len + n_read);
+                memcpy(snarf + snarf_len, buff, n_read);
+                snarf_len += n_read;
+            }
+            close(fd);
+            bytes2string(snarf, snarf_len, &res);
+            free(snarf);
         }
-        while ((n_read = read(fd, buff, sizeof buff)) > 0) {
-            snarf = safe_realloc(snarf, snarf_len + n_read);
-            memcpy(snarf + snarf_len, buff, n_read);
-            snarf_len += n_read;
-        }
-        close(fd);
     }
 
     MakeInt(SELECTIONRESPONSE, &tmp);
@@ -1506,12 +1514,7 @@ int requestselection(wbp w, char *selection, char *target)
     list_put(&ws->listp, &tmp);
     cstr2string(target, &tmp);      /* target */
     list_put(&ws->listp, &tmp);
-    if (snarf) {
-        bytes2string(snarf, snarf_len, &tmp);
-        list_put(&ws->listp, &tmp);
-        free(snarf);
-    } else
-        list_put(&ws->listp, &nulldesc);
+    list_put(&ws->listp, &res);
 
     return Succeeded;
 }
