@@ -1,0 +1,77 @@
+import io, ipl.options, util, net
+
+global fl, opts, non_ws
+
+record Loc(str, file, line)
+
+procedure try_url(s)
+   if match("http://" | "https://" | "file://", s) then
+      return link(s, URL(s))
+end
+
+procedure try_file(x)
+   if Files.access(x.file) then
+      return link(x.str, FilePath(x.file).canonical().str(), x.line)
+end
+
+procedure link(x, y, line)
+   return Files.begin_link(y, line) || x || Files.end_link()
+end
+
+procedure whole()
+   suspend tab(many(non_ws))
+end
+
+procedure with_line_no()
+   local f, l, s
+   suspend s := ((f := tab(upto(':'))) || move(1) || (l := tab(many(&digits))) || =":") & Loc(s, f, integer(l))
+end
+
+procedure without_line_no()
+   local s
+   suspend s := (tab(upto(':')) | whole()) & Loc(s, s)
+end
+
+procedure linkify(s)
+   local r
+   r := ""
+   s ? repeat {
+      r ||:= tab(upto(non_ws) | 0)
+      if pos(0) then
+         break
+      r ||:= try_url(whole()) | try_file(with_line_no() | without_line_no()) | whole()
+   }
+   return r
+end
+
+procedure do_one(f)
+   local s
+   repeat {
+      s := f.read_line() | fail
+      if /s then
+         break
+      if \fl then
+         s := linkify(s)
+      write(s)
+   }
+   return
+end
+
+procedure main(a)
+   local s, f
+   opts := options(a, [Opt("f",, "Always output links")], 
+                   ["Usage: fl [OPTIONS] [FILES...]", 
+                    "Copy files to stdout, inserting flowterm links"])
+   fl := Yes{ \opts["f"] | FileStream.stdout.is_flowterm_tty() }
+   non_ws := ~' \t\f'
+   if *a = 0 then
+      do_one(FileStream.stdin)
+   else {
+      every s := !a do {
+         use {
+            f := open(s),
+            do_one(f)
+         } | stop("Couldn't read from ", s, ": ", &why)
+      }
+   }
+end
