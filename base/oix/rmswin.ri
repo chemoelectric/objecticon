@@ -730,21 +730,24 @@ int requestselection(wbp w, char *selection, char *target)
 
     CheckUnhidden(ws);
     res = nulldesc;
-    if (strcmp(selection, "CLIPBOARD") == 0 &&
-        strcmp(target, "UTF8_STRING") == 0) {
-        HANDLE hg;
-        char *phg;
-        if (!OpenClipboard(NULL)) {
-            win32error2why();
-            return Failed;
+    if (strcmp(selection, "CLIPBOARD") == 0) {
+        if (strcmp(target, "TARGETS") == 0)
+            LitStr("UTF8_STRING\n", &res);
+        else if (strcmp(target, "UTF8_STRING") == 0) {
+            HANDLE hg;
+            char *phg;
+            if (!OpenClipboard(NULL)) {
+                win32error2why();
+                return Failed;
+            }
+            hg = GetClipboardData(CF_UNICODETEXT);
+            if (hg) {
+                phg = (char *)GlobalLock(hg);
+                wchar_to_ucs((WCHAR *)phg, &res);
+                GlobalUnlock(hg);
+            }
+            CloseClipboard();
         }
-        hg = GetClipboardData(CF_UNICODETEXT);
-        if (hg) {
-            phg = (char *)GlobalLock(hg);
-            wchar_to_ucs((WCHAR *)phg, &res);
-            GlobalUnlock(hg);
-        }
-        CloseClipboard();
     }
 
     MakeInt(SELECTIONRESPONSE, &tmp);
