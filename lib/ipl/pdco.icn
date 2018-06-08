@@ -21,9 +21,11 @@ import
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
+   ipl.scan(same_type),
    numbers(Rat),
    lang(Internal),
-   util(save_state, HandlerState, ce_param, cvpos_item, need_integer)
+   util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
+        need_text)
 
 # Adds tabby to treadling sequence
 procedure AddTabby(e, i)	
@@ -559,22 +561,20 @@ procedure Table(e)
 end
 
 #
-# Build a string from the results of the co-expression `e`.
+# Build a string from the results of the co-expression `e`, separated
+# by the string `sep` (default ",").  If `sep` is ucs, or any of the
+# results of `e` are `ucs`, then the result is `ucs`, otherwise it is
+# a string.
 #
-procedure String(e)
+procedure String(e, sep)
    local s
-   s := ""
-   while s ||:= @e
-   return s
-end
-
-#
-# Build a ucs string from the results of the co-expression `e`.
-#
-procedure Ucs(e)
-   local s
-   s := u""
-   while s ||:= @e
+   sep := need_text(ce_param(sep, ","))
+   # Ensure result is same type as sep, even if the sequence is empty.
+   s := same_type("", sep)
+   while s ||:= @e || sep
+   # Ensure that -*sep below is correct
+   sep := same_type(sep, s)
+   s[-*sep:0] := ""
    return s
 end
 
