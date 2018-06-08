@@ -856,7 +856,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public keeps(e)
-      return member(Key.CURSOR, e.code)
+      succeed member(Key.CURSOR, e.code)
    end
 
    public new()
