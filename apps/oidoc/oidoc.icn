@@ -57,7 +57,7 @@ procedure main(a)
 
    arg_packs := set()
    every s := !a do {
-      if s[-4:0] == ".icn" then
+      if s[-4:0] == ".icn" | s[-2:0] == ".u" then
          symbol_table.scan_file(s) | warn(&why)
       else {
          insert(arg_packs, s)
