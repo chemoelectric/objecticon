@@ -23,7 +23,7 @@
 package ipl.options
 
 import
-   io, lang, util, ipl.scan, ipl.lists
+   io, lang, util, ipl.scan, ipl.lists, ipl.pdco
 
 # The result of the `Opt.format` method.
 record OptFormat(names, help)
@@ -36,11 +36,8 @@ class Opt()
 
    # A utility function to help format an option string.
    public format()
-      local f, ns, h, ph
-      ns := ""
-      every f := !names do
-         ns ||:= "-" || f || ", "
-      ns[-2:0] := ""
+      local ns, h, ph
+      ns := String{ "-" || !names, ", " }
       h := \help | ""
       if \convert then {
          h ? {
