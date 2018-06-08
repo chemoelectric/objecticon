@@ -1,4 +1,4 @@
-import mail, util, lang, io, ipl.test
+import mail, util, lang, io, ipl.test, ipl.strings
 
 procedure test_folding()
    local m,i,spc,j,word,k,s,t
@@ -35,7 +35,7 @@ procedure test_canonical_handling()
    m := Message()
    m.set_content_transfer_encoding("quoted-printable")
    m.set_content_object("abc\ndef")
-   print{"Canonical content object", m.get_content_object()}
+   print{"Canonical content object", replace(m.get_content_object(), Files.EOL, "\n") }
 end
 
 procedure test_quoted_printable_impl(x)
@@ -460,7 +460,7 @@ procedure test_message1()
    yes_no{"Test decoded content", 
              z.get_content_object().parts[1].get_decoded_content() == img}
    yes_no{"Test content object",
-             z.get_content_object().parts[2].get_content_object() == xml}
+             replace(z.get_content_object().parts[2].get_content_object(), Files.EOL, "\n") == xml}
 end
 
 procedure test_message2()
