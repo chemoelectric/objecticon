@@ -4,7 +4,7 @@
 
 package mail
 
-import util, io, ipl.pdco(String)
+import util, io, ipl.pdco(String, List)
 
 #
 # This class represents an email message
@@ -763,8 +763,5 @@ end
 # contain either Mailboxes or Groups.
 #
 procedure get_all_mailboxes(l)
-   local res
-   res := []
-   every put(res, (!l).gen_mailboxes())
-   return res
+   return List{ (!l).gen_mailboxes() }
 end
