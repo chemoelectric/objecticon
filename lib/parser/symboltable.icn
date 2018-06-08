@@ -166,14 +166,14 @@ class ClassSymbol(TopLevelSymbol)
       succeed if is(obj, Tree) then
          obj.get_access().gen().str() == "final"
       else
-         iand(obj.flags, Class.Final) ~= 0
+         iand(obj.flags, lang.Class.Final) ~= 0
    end
 
    public is_abstract()
       succeed if is(obj, Tree) then
          obj.get_access().gen().str() == "abstract"
       else
-         iand(obj.flags, Class.Abstract) ~= 0
+         iand(obj.flags, lang.Class.Abstract) ~= 0
    end
 
    package new(scanned_file, obj, name)
