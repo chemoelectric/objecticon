@@ -2148,6 +2148,43 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_Succeedexpr: {                      /* succeed expression */
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            struct ir_info *expr;
+
+            expr = ir_traverse(x->child, branch_stack(st), 0, 1, 0);
+
+            chunk1(res->start, 
+                   ir_goto(n, expr->start));
+            if (!bounded)
+                chunk1(res->resume, ir_syserr(n));
+
+            /*
+             * Note that there is no point in marking/unmarking expr,
+             * since the return instruction will clean up the stack,
+             * leaving just the returning P frame at the top.
+             */
+            if (scan_stack) {
+                struct ir_info *t = scan_stack;
+                /* Get bottom of scan stack */
+                while (t->scan->next)
+                    t = t->scan->next;
+                chunk2(expr->success, 
+                       ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_return(n, make_knull()));
+                chunk2(expr->failure, 
+                       ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_fail(n));
+            } else {
+                chunk1(expr->success, 
+                       ir_return(n, make_knull()));
+                chunk1(expr->failure, 
+                       ir_fail(n));
+            }
+
+            break;
+        }
+
         case Uop_Alt: {               /* Alternation */
             struct lnode *n1;
             int count, i;

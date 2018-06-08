@@ -377,7 +377,7 @@ class Component(Rect,Align,Connectable)
    # Determines whether the component accepts the tab focus
    #
    public accepts_focus()
-      return \self.accepts_focus_flag
+      succeed \self.accepts_focus_flag
    end
 
    #
@@ -1135,7 +1135,7 @@ class Component(Rect,Align,Connectable)
    # Succeed if the given (key) event matches this component's accelerator.
    #
    public match_accel(e)
-      return self.accel === e
+      succeed self.accel === e
    end
 
    #

@@ -1478,7 +1478,7 @@ end
 procedure cmp(x, f, y)
    local c
    c := align_real_numbers(x, y)
-   return c.x.cmp(f, c.y)
+   succeed c.x.cmp(f, c.y)
 end
 
 # This procedure takes two `Rat` or `Dec` instances and returns -1, 0

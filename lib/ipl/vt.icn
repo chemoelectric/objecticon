@@ -2669,9 +2669,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public should_close(e)
-      if (member(Mouse.PRESS, e.code) & 
-                not(popup.in_region(e))) then 
-         return
+      succeed member(Mouse.PRESS, e.code) & not(popup.in_region(e))
    end
 
    public gen_popup_components()

@@ -123,13 +123,13 @@ function is(o, target)
        type_case target of {
          class: {
             if (is:object(o) && class_is(ObjectBlk(o).class, &ClassBlk(target)))
-                return target;
+                return nulldesc;
             else
                 fail;
          }
          constructor: {
             if (is:record(o) && RecordBlk(o).constructor == &ConstructorBlk(target))
-                return target;
+                return nulldesc;
             else
                 fail;
          }
@@ -642,7 +642,7 @@ function lang_Coexpression_is_main(ce)
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
        if (b->main_of)
-           return ce;
+           return nulldesc;
        else
            fail;
    }

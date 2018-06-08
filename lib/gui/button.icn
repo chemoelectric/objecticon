@@ -192,7 +192,7 @@ abstract class Button(Toggle,Component)
    public accepts_focus(e)
       if (\e).code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
          fail
-      return Component.accepts_focus(e)
+      succeed Component.accepts_focus(e)
    end
 
    #

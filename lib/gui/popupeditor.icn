@@ -31,13 +31,12 @@ class PopupEditor(Component, MenuMode)
    end
 
    public should_close(e)
-      if member(Mouse.PRESS, e.code) & not(editor.in_region(e)) then 
-         return
+      succeed member(Mouse.PRESS, e.code) & not(editor.in_region(e))
    end
 
    public allow_nested(c)
       c := c.get_nesting_component()
-      return c.gen_parents() === editor
+      succeed c.gen_parents() === editor
    end
 
    public get_nesting_component()

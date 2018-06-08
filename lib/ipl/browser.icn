@@ -93,8 +93,7 @@ abstract class CacheEntry()
 
    public hasnt_expired(now)
       /now := Time.get_system_seconds()
-      if /expiry | (expiry > now) then
-         return
+      succeed /expiry | (expiry > now)
    end
 
    public abstract is_valid(now)
@@ -125,8 +124,7 @@ class CacheData(CacheEntry, StaticData)
    end
 
    public may_revalidate()
-      if \ (last_modified | etag) then
-         return
+      succeed \ (last_modified | etag)
    end
 
    public new(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
@@ -3125,7 +3123,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public is_visited(url)
-      return (\ui).is_visited(url)
+      succeed (\ui).is_visited(url)
    end
 
    public create_image_menu(img)
