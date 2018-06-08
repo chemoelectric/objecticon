@@ -26,6 +26,7 @@ import
    ipl.numbers(residue),
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
+   ipl.pdco(String, List),
    lang(equals,Prog),
    util(cvpos, cvslice, cvslice_def, cvpos_item, use)
 
@@ -827,18 +828,9 @@ end
 # :  `s` - the string to convert
 # :  `sep` - cset of the separator chars, default ',' - note each separator
 #        in the string is always one character wide.
-# :  `f` - an optional function to apply to each element before adding to list
 #
-procedure str2list(s, sep, f)
-   local l, t
-   /sep := ','
-   /f := 1
-   l := []
-   every t := separate(s, sep) do {
-      t := f(t)
-      put(l, t)
-   }
-   return l
+procedure str2list(s, sep)
+   return List{ separate(s, sep) }
 end
 
 #
@@ -848,19 +840,9 @@ end
 # :Parameters :
 # :  `l` - the list
 # :  `sep` - the separator char, default ","
-# :  `f` - an optional function to apply to each element before appending to result
 #
-procedure list2str(l, sep, f)
-   local s, e
-   /sep := ","
-   /f := 1
-   s := ""
-   every e := !l do {
-      e := f(e)
-      s ||:= e || sep
-   }
-   s[-*sep:0] := ""
-   return s
+procedure list2str(l, sep)
+   return String{!l, sep}
 end
 
 #
@@ -868,17 +850,9 @@ end
 #
 # :Parameters :
 # :  `s` - the string to convert
-# :  `f` - an optional function to apply to each element before adding to list
 #
-procedure break_lines(s, f)
-   local l, t
-   /f := 1
-   l := []
-   every t := separate_lines(s) do {
-      t := f(t)
-      put(l, t)
-   }
-   return l
+procedure break_lines(s)
+   return List{ separate_lines(s) }
 end
 
 #
@@ -887,10 +861,9 @@ end
 #
 # :Parameters :
 # :  `l` - the list
-# :  `f` - an optional function to apply to each element before appending to result
 #
-procedure cat_lines(l, f)
-   return list2str(l, Files.EOL, f)
+procedure cat_lines(l)
+   return list2str(l, Files.EOL)
 end
 
 #
