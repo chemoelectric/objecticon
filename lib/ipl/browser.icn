@@ -1390,9 +1390,9 @@ class Img(Image, HasLastHighlight)
    end
 
    public display()
-      local r, W
+      local W
       Image.display()
-      if r := browser.is_banded(self) then
+      if browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
       if \last_highlight then
          Gui.style.draw_dashed_rectangle(cbwin, x, y, w, h)
