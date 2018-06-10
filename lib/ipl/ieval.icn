@@ -55,6 +55,7 @@ class Ieval(MinimalObjectOutput)
          write("            Prog.get_global).").
          write("oos         The ObjectOutputStream used to output results.").
          write("out         The OutputStream of the terminal.")
+         write("vars        The environment (as shown by !env), as a table.")
    end
 
    private get_screen_width()
@@ -458,6 +459,7 @@ class Ieval(MinimalObjectOutput)
       consts["traceback"] := create traceback()
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
       consts["out"] := output
+      consts["vars"] := vars
 
       f := FilePath(BaseDir.ensure_config_home()).child("ieval").str() | stop("Couldn't access config dir: ", &why)
       if Files.access(f) then
@@ -500,7 +502,10 @@ class Ieval(MinimalObjectOutput)
                         output.write(".... (result sequence truncated)")
                         break
                      }
-                     oos.show(v)
+                     # Handle the possibility that v's object_output may give a runerr.
+                     Safe{ oos.show(v) }
+                     if &errortext then
+                        break
                      output.write()
                   }
                }
