@@ -10,15 +10,16 @@ import io, util, ipl.tables, ipl.scan, exception
 # :  `o` - The object to be converted.
 #
 procedure to_string(o, indent, always_structure, depth, ignore_object_output)
-   local sb
-   sb := RamStream()
-   ObjectOutputStream(sb).
-      set_indent(indent).
-      set_always_structure(always_structure).
-      set_depth(depth).
-      set_ignore_object_output(ignore_object_output).
-      show(o)
-   return sb.done()
+   local rs
+   return use {
+      rs := RamStream(),
+      ObjectOutputStream(rs).
+         set_indent(indent).
+         set_always_structure(always_structure).
+         set_depth(depth).
+         set_ignore_object_output(ignore_object_output).
+         show(o) & rs.str()
+   }
 end
 
 #
