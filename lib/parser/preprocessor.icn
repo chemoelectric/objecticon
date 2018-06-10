@@ -52,10 +52,14 @@ class Preprocessor(Connectable)
    # Preprocess a file to a string.
    #
    public preprocess(fname, predefined_syms)
-      local sb
-      sb := RamStream()
-      every sb.out(preprocess_gen(fname, predefined_syms) || "\n")
-      return sb.done()
+      local rs
+      return use {
+         rs := RamStream(),
+         {
+            every rs.out(preprocess_gen(fname, predefined_syms) || "\n")
+            rs.str()
+         }
+      }
    end
 
    #
