@@ -7,7 +7,8 @@ import
    ipl.options,
    ipl.charset,
    xdg,
-   io
+   io,
+   util(use)
 
 global opts, hc
 
@@ -69,7 +70,7 @@ procedure main(args)
 end
 
 procedure do_one(a)
-   local url, hr, res, src, parser, doc, sb, f, s, i
+   local url, hr, res, src, parser, doc, rs, f, s, i
 
    a := ucs(a) | stop("Argument not UTF-8")
    url := URL(a) | stop("Invalid url: ", a, ": ", &why)
@@ -78,15 +79,18 @@ procedure do_one(a)
       src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
    else {
       url.scheme == (u"http" | u"https") | stop("Unknown url scheme: " || url.scheme)
-      sb := RamStream()
-      hr := HttpRequest().
-         set_url(url).
-         set_output_stream(sb).
-         set_helper(HttpRequestHelperImpl())
-      hr.set_referer(\opts["e"])
-      res := hc.retrieve(hr) | stop("Couldn't get: ", &why)
-
-      src := sb.done()
+      src := use {
+         rs := RamStream(),
+         {
+            hr := HttpRequest().
+               set_url(url).
+               set_output_stream(rs).
+               set_helper(HttpRequestHelperImpl())
+            hr.set_referer(\opts["e"])
+            res := hc.retrieve(hr) | stop("Couldn't get: ", &why)
+            rs.str()
+         }
+      }
       url := res.url
    }
 

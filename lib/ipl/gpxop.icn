@@ -84,7 +84,7 @@
 
 package ipl.graphics
 
-import graphics(Mouse,Window), io(RamStream)
+import graphics(Mouse,Window), io(RamStream), util(use)
 
 #   LeftString(x, y, s) -- draw string left-justified at (x,y).
 
@@ -251,13 +251,18 @@ procedure Capture(win, pal, x, y, w, h)
 
    # accumulate the image in chunks and then concatenate
    # (much faster than concatenating single chars on a very long string)
-   s := RamStream()
-   s.out(w || "," || pal || ",")
-   px := win.get_pixels(x, y, w, h)
-   every k := px.gen() do {
-      c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
-      s.out(c)
+   return use {
+      s := RamStream(),
+      {
+         s.out(w || "," || pal || ",")
+         use {
+            px := win.get_pixels(x, y, w, h),
+            every k := px.gen().pixel do {
+               c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
+               s.out(c)
+            }
+         }
+         s.str()
       }
-   px.close()
-   return s.done()
+   }
 end

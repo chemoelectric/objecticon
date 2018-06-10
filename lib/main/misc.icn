@@ -317,7 +317,7 @@ abstract class HasMode()
    # Succeed iff the object's mode has all the flags in `c`
    #
    public can(c)
-      return iand(get_mode(), c) = c
+      succeed iand(get_mode(), c) = c
    end
 
    # This method is implemented to return the integer bit flag

@@ -6,7 +6,10 @@ package mail
 
 class MessageHandler(TypeHandler)
    public can_handle(ct)
-      succeed (map(ct.get_type()) == "message") & (map(ct.get_subtype()) == "rfc822")
+      local t, s
+      t := map(ct.get_type())
+      s := map(ct.get_subtype())
+      succeed (t == "message" & s == "rfc822") | (t == "application" & s == "x-extension-eml")
    end
 
    public convert_to_object(m,  data)

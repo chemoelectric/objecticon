@@ -32,7 +32,7 @@ class MultipartHandler(TypeHandler)
             =b
          }
          repeat {
-            if ="--\r\n" then
+            if ="--\r\n" | (="--" & pos(0)) then
                break
 
             ="\r\n" | return error("Unexpected char after boundary")

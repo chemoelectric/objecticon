@@ -954,11 +954,11 @@ final class Window(NoCopy, ObjectOutput)
    #
    public static native palette_chars(p)
 
-   # Return color of key s1 in palette s2
+   # Return color of key s2 in palette s1
    #
    public static native palette_color(s1, s2)
 
-   # Return key of closest color to s in palette p
+   # Return key of closest color to s2 in palette s1
    #
    public static native palette_key(s1, s2)
 

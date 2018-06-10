@@ -153,10 +153,11 @@ class Message(MimeHeaders)
    # Return a string representation of the message in RFC822 format.
    # 
    public to_rfc822()
-      local b
-      b := RamStream()
-      to_rfc822_stream(b)
-      return b.done()
+      local rs
+      return use {
+         rs := RamStream(),
+         to_rfc822_stream(rs) & rs.str()
+      }
    end
 
    #
