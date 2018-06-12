@@ -134,9 +134,11 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    # This method is implemented to provide the list of suggestions, based on
-   # the current contents of the textfield.
+   # the current contents of the textfield.  `fg` is a flag, indicating
+   # whether we are called from the background task, or in the foreground,
+   # (after the tab key is pressed).
    #
-   protected abstract do_request()
+   protected abstract do_request(fg)
 
    # This method is called to abort a request in progress; do_request() should then
    # fail.
@@ -399,7 +401,7 @@ abstract class SuggestField(TextField, MenuMode)
                apply_value(o, ev)
          }
       } else {
-         l := do_request() | fail
+         l := do_request(&yes) | fail
          if o := get_insertion(l) then {
             apply_value(o, ev)
             if *l > 1 then
