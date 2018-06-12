@@ -66,7 +66,7 @@ class Editor(Dialog)
    private save(fname)
       local s, fd
       if /fname then {
-         fd := FileDialog()
+         fd := FileDialog().set_existing_file_mode(FileDialog.WARN)
          fd.show_modal(self)
          fname := fd.get_result() | fail
       }
