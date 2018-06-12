@@ -441,7 +441,7 @@ class FileSuggestField(SuggestField)
          }
       } else {
          # As above, calculate the string we could insert.
-         l := do_request()
+         l := do_request(&yes)
          t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             matches[1].name || Files.PATH_SEPARATOR
          else

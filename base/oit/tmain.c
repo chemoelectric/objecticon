@@ -387,6 +387,11 @@ int main(int argc, char **argv)
 
     if (oi_optind < argc)  {
         report("Executing:");
+        /*
+         * Avoid any unwanted interaction with findexe() in init.r by
+         * ensuring ofile is absolute. 
+         */
+        ofile = intern(canonicalize(ofile));
         execute(argv + oi_optind + 1);
     }
 
@@ -456,8 +461,8 @@ static void execute(char **args)
       ;
 
    *p = NULL;
-   execv(ofile, argv);
-   equit("Could not execute %s", ofile);
+   execv(oixloc, argv);
+   equit("Could not execute %s", oixloc);
 #endif
 }
 
