@@ -28,13 +28,16 @@ package class EditListField(FileSuggestField)
       parent.was_applied(ev) | SuggestField.on_change(ev)
    end
 
-   protected do_request()
-      # Don't popup if an existing file warning is in place.
+   protected do_request(fg)
+      # Don't popup if an existing file warning is in place, except on
+      # tab press (fg is &yes).
+      #
       # Returning [] rather than failing causes the popup to close,
       # rather than stay open.
-      if \parent_dialog.warned then
+      #
+      if /fg & \parent_dialog.warned then
          return []
-      return FileSuggestField.do_request()
+      return FileSuggestField.do_request(fg)
    end
 
    public new()
