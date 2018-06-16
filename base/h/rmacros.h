@@ -472,6 +472,7 @@
 #define G_Const         1
 #define G_Package       2
 #define G_Readable      4
+#define G_Builtin       8
 
 /*
  * "In place" dereferencing.

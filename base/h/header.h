@@ -3,7 +3,8 @@
  *  an icode file after the start-up program.
  */
 struct header {
-    word icodesize;		/* size of interpreter code */
+    word Base;                  /* base address of icode */
+    word IcodeSize;		/* size of interpreter code */
     word ClassStatics;          /* class field descriptors (statics) */
     word ClassMethods;          /* class field descriptors (methods) */
     word ClassFields;           /* class field info */
@@ -23,5 +24,5 @@ struct header {
     word AsciiStrcons;		/* location of ascii-only part of string table */
     word Filenms;		/* location of ipc/file name table */
     word Linenums;		/* location of ipc/line number table */
-    word config[16];		/* icode version */
+    word Config[16];		/* icode version */
 };

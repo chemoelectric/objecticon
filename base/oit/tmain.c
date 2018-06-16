@@ -30,6 +30,7 @@ int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace i
                          *       2 = trace & symbol info */
 int Olevel      =1;     /* -O n: optimisation */
 int nolink      =0;	/* suppress linking? */
+int baseopt     =1;
 
 /*
  * Some convenient interned strings.
@@ -201,8 +202,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBfgmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v]"	/* omit -e from doc */
-    while ((c = oi_getopt(argc,argv, "?cBfgmno:sv:ELIZTVl:O:D:")) != EOF) {
+#define Usage "[-cBfgmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
+    while ((c = oi_getopt(argc,argv, "?cBfgmno:sv:ELIZTVl:O:D:b:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -278,6 +279,11 @@ int main(int argc, char **argv)
 
             case 'D':
                 add_pp_def(oi_optarg);
+                break;
+
+            case 'b':
+                if (sscanf(oi_optarg, "%d%c", &baseopt, &ch) != 1)
+                    quit("Bad operand to -b option: %s",oi_optarg);
                 break;
 
             case '?':
@@ -514,7 +520,7 @@ static void file_comp()
   
     hdr = safe_zalloc(sizeof(struct header));
     
-    /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
+    /* use fopen() to open the target file then read the header and add "z" to the hdr->Config. */
     
     if (!(finput = fopen(ofile, ReadBinary)))
         equit("Can't open the file to compress: %s", ofile);
@@ -535,7 +541,7 @@ static void file_comp()
         equit("gz compressor can't read the header, compression");
     
     /* Turn on the Z flag */
-    strcat((char *)hdr->config,"Z");
+    strcat((char *)hdr->Config,"Z");
 
     /* write the modified header into a new file */
     
@@ -637,6 +643,7 @@ static void usage()
                    "-D k[=v]  Define or clear a preprocessor symbol.\n"
                    "-E        Direct the results of preprocessing to standard output and inhibit further\n"
                    "          processing.\n"
+                   "-b i      Base option in icode file; 0 means zero base\n"
                    "-V        Announce version and configuration information on standard error.\n");
     exit(EXIT_SUCCESS);
 }

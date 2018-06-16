@@ -390,7 +390,7 @@ struct prog_event {
  * many global structures.
  */
 struct progstate {
-    word icodesize;			/* size of icode */
+    word IcodeSize;			/* size of icode */
     struct progstate *next;
 
     struct progstate *monitor;
@@ -413,6 +413,7 @@ struct progstate {
     struct descrip Kywd_maxlevel;
     char *Code;
     char *Ecode;
+    word Offset;        /* Amount to add to icode addresses on relocation */
 
     dptr ClassStatics, EClassStatics;
     dptr ClassMethods, EClassMethods;

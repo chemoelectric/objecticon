@@ -27,6 +27,7 @@ extern int Zflag;	/* -Z: icode-gz compression */
 extern int loclevel;    /* -l n: location info */
 extern int Olevel;      /* -O n: optimisation */
 extern int nolink;
+extern int baseopt;
 
 
 /*

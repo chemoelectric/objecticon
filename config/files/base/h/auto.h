@@ -63,6 +63,9 @@
 /* define as 1 if poll exists */
 #undef HAVE_POLL
 
+/* define as 1 if mmap exists */
+#undef HAVE_MMAP
+
 /* define as 1 if uname exists */
 #undef HAVE_UNAME
 
