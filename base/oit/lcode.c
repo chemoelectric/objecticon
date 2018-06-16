@@ -33,7 +33,7 @@ static long codeoffset;                /* ftell() for start of code */
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
  */
-static size_t maxcode	= 100000;        /* code space */
+static size_t maxcode	= 2000000;        /* code space */
 static size_t nsize       = 10000;         /* ipc/line num. assoc. table */
 static size_t fnmsize     = 100;           /* ipc/file name assoc. table */
 
@@ -209,8 +209,12 @@ static void word_field(word w, char *desc)
 static void tcase_field(struct ir_tcaseinit *x)
 {
     int i = get_tcaseno(x);
+    if (Dflag) {
+        fprintf(dbgfile, PadWordFmt ": T[" PadWordFmt "]   #    no=%d", pc, (word)i, i);
+        putc('\n', dbgfile);
+    }
     add_relocation(pc, NTH_TCASE, i);
-    word_field(0, "no");
+    outword(0);
 }
 
 static void emit_ir_var(struct ir_var *v, char *desc)
@@ -239,8 +243,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
 #endif
             } else {
                 outwordx(Op_Const, "   %s=const", desc);
+                if (Dflag)
+                    fprintf(dbgfile, PadWordFmt ": C[" PadWordFmt "]   #       " WordFmt "\n", pc, ce->desc_no, ce->desc_no);
                 add_relocation(pc, NTH_CONST, ce->desc_no);
-                outwordx(0, "      %d", ce->desc_no);
+                outword(0);
             }
             break;
         }
@@ -261,8 +267,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
             struct lentry *le = v->local;
             if (le->l_flag & F_Static) {
                 outwordx(Op_Static, "   %s=static", desc);
+                if (Dflag)
+                    fprintf(dbgfile, PadWordFmt ": A[" PadWordFmt "]   #       %d (%s)\n", pc, (word)le->l_val.index, le->l_val.index, le->name);
                 add_relocation(pc, NTH_STATIC, le->l_val.index);
-                outwordx(0, "      %d  (%s)", le->l_val.index, le->name);
+                outword(0);
             } else if (le->l_flag & F_Argument) {
                 if (curr_lfunc->method && !(curr_lfunc->method->flag & M_Static) && (le->l_flag & F_Argument) && le->l_val.index == 0) {
                     outwordx(Op_Self, "   %s=self", desc);
@@ -288,8 +296,11 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                     outwordx(Op_Global, "   %s=global", desc);
             } else
                 outwordx(Op_GlobalVal, "   %s=globalval", desc);
+
+            if (Dflag)
+                fprintf(dbgfile, PadWordFmt ": G[" PadWordFmt "]   #       %d (%s)\n", pc, (word)ge->g_index, ge->g_index, ge->name);
             add_relocation(pc, NTH_GLOBAL, ge->g_index);
-            outwordx(0, "      %d (%s)", ge->g_index, ge->name);
+            outword(0);
             break;
         }
         case TMP: {
@@ -411,7 +422,7 @@ void generate_code()
      */
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
-    codep = codeb = safe_calloc(maxcode, 1);
+    codep = codeb = safe_zalloc(maxcode);
 
 #if HAVE_MMAP && WordBits == 64
     if (baseopt)
@@ -1132,8 +1143,10 @@ static void lemitproc()
     outwordx(curr_lfunc->ndynamic, "   Num dynamic");
     outwordx(curr_lfunc->nstatics, "   Num static");
     if (curr_lfunc->nstatics) {
+        if (Dflag)
+            fprintf(dbgfile, PadWordFmt ": A[" PadWordFmt "]   #    First static (%d)\n", pc, (word)nstatics, nstatics);
         add_relocation(pc, NTH_STATIC, nstatics);
-        outwordx(0, "   First static");
+        outword(0);
     } else
         outwordx(0, "   First static (null pointer)");
     outwordx(0, "   Owning prog");
@@ -2105,7 +2118,7 @@ static void outwordz_nullable(word oword, char *fmt, ...)
         if (oword)
             fprintf(dbgfile, PadWordFmt ": Z+" PadWordFmt "    # ", pc, oword);
         else
-            fprintf(dbgfile, PadWordFmt ": " PadWordFmt "    # ", pc, oword);
+            fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    # ", pc, oword);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
