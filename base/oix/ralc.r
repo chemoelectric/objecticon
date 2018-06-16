@@ -1032,12 +1032,16 @@ void *icode_alloc(void *base, size_t size)
    /* Padding at end to avoid anything adjoining the string
     * constants */
    size += 8;
+   if (base) {
 #if HAVE_MMAP
-   p = mmap((void *)base, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-   if (p == MAP_FAILED)
-       return 0;
-#else
-   p = malloc(size);
+       p = mmap(base, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+       if (p != MAP_FAILED)
+           return p;
+#elif MSWIN32
+       p = VirtualAlloc(base, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+       if (p)
+           return p;
 #endif
-   return p;
+   }
+   return malloc(size);
 }

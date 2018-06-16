@@ -424,7 +424,7 @@ void generate_code()
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     codep = codeb = safe_zalloc(maxcode);
 
-#if HAVE_MMAP && WordBits == 64
+#if (MSWIN32 || HAVE_MMAP) && WordBits == 64
     if (baseopt)
         hdr.Base = (10 + baseopt) * 0x100000000;
 #endif
