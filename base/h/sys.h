@@ -188,6 +188,9 @@
    #if HAVE_POLL
    #include <sys/poll.h>
    #endif
+   #if HAVE_MMAP
+   #include <sys/mman.h>
+   #endif
    #include <utime.h>
    #include <sys/resource.h>
    #include <fcntl.h>

@@ -13,12 +13,15 @@ final abstract class Prog()
       # Integer flag for a global with package visibility
       Package,
       # Integer flag for a global with readable visibility
-      Readable
+      Readable,
+      # Integer flag for a global procedure which is a builtin function.
+      Builtin
 
    private static init()
       Const := 1
       Package := 2
       Readable := 4
+      Builtin := 8
    end
 
    # Load and return a program from file `s`.

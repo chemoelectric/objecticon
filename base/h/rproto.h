@@ -128,7 +128,6 @@ char            *reserve_1      (int region, uword nbytes);
 void            retderef        (dptr valp, struct frame_vars *dynamics);
 void            syserr          (char *fmt, ...);
 
-void    resolve                 (struct progstate *pstate);
 void showcurrstack(void);
 void showstack(FILE *f, struct b_coexpr *c);
 void showbig(FILE *f, struct b_bignum *x);
@@ -396,7 +395,7 @@ void add_gc_global(dptr d);
 void del_gc_global(dptr d);
 
 
-struct progstate *alcprog(word icodesize);
+struct progstate *alcprog(word base, word icodesize);
 
 int get_proc_kind(struct b_proc *bp);
 
@@ -533,6 +532,7 @@ void *safe_zalloc(size_t size);
 void *safe_malloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
 void *padded_malloc(size_t size);
+void *icode_alloc(void *base, size_t size);
 
 void do_op_cat(void);
 void do_op_conj(void);

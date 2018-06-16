@@ -30,7 +30,7 @@ end
 procedure compile1(prog, pf, tf, links)
    local s, i
    Files.string_to_file(pf, prog) | fail
-   s := "oit -s -l 2 -o " || esc(tf) || " " || esc(pf)
+   s := "oit -s -l2 -b2 -o " || esc(tf) || " " || esc(pf)
    every s ||:= " " || esc(!links)
    i := system(s)
    if i = 0 then

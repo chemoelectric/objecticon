@@ -139,7 +139,7 @@ alccoexp_macro(alccoexp_1,E_Coexpr)
  * 
  * Note that this memory is never freed.
  */
-struct progstate *alcprog(word icodesize)
+struct progstate *alcprog(word base, word icodesize)
 {
    struct progstate *prog;
    char *icode;
@@ -153,11 +153,13 @@ struct progstate *alcprog(word icodesize)
    prog = calloc(sizeof(struct progstate), 1);
    if (!prog)
        return 0;
-   icode = padded_malloc(icodesize);
+
+   icode = icode_alloc((void *)base, icodesize);
    if (!icode) {
        free(prog);
        return 0;
    }
+
    prog->Code = icode;
    return prog;
 }
@@ -1018,4 +1020,24 @@ void *padded_malloc(size_t size)
     if (p)
         p += 8;
     return p;
+}
+
+/*
+ * Allocate code for icode; use mmap to allocate at base if possible
+ * to reduce the relocations needed.
+ */
+void *icode_alloc(void *base, size_t size)
+{
+   void *p;
+   /* Padding at end to avoid anything adjoining the string
+    * constants */
+   size += 8;
+#if HAVE_MMAP
+   p = mmap((void *)base, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+   if (p == MAP_FAILED)
+       return 0;
+#else
+   p = malloc(size);
+#endif
+   return p;
 }
