@@ -93,6 +93,7 @@ struct lclass_field {
     word flag;
     word dpc;                            /* Address of descriptor, if a static or method */
     word ipc;                            /* Address of info block */
+    int index;                           /* Index in icode class field info table */
     struct fentry *ftab_entry;           /* Field table entry (gives field number) */
     int const_flag;                      /* Optimisation - constant flag */
     struct centry *const_val;            /* Optimisation - constant value */

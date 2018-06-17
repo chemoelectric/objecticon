@@ -982,7 +982,7 @@ static void slow_resolve(struct progstate *p)
                      */
                     Relocate( BlkLoc(*cf->field_descriptor) );
                     pp = (struct p_proc *)&ProcBlk(*cf->field_descriptor);
-                    /* Pointer back to the corresponding field */
+                    /* Pointer back to the corresponding field (could equally Relocate this one). */
                     pp->field = cf;
                     /* Relocate the name */
                     Relocate(pp->name);
@@ -1200,8 +1200,6 @@ static void quick_resolve(struct progstate *p)
                     BlkLoc(*cf->field_descriptor) = (union block *)&Babstract_method_stub;
                 else {
                     pp = (struct p_proc *)&ProcBlk(*cf->field_descriptor);
-                    /* Pointer back to the corresponding field */
-                    pp->field = cf;
                     pp->program = p;
                 }
             }
@@ -1212,16 +1210,12 @@ static void quick_resolve(struct progstate *p)
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
-                struct b_class *cb;
-                cb = &ClassBlk(p->Globals[j]);
-                cb->program = p;
+                ClassBlk(p->Globals[j]).program = p;
                 break;
             }
 
             case D_Constructor: {
-                struct b_constructor *c;
-                c = &ConstructorBlk(p->Globals[j]);
-                c->program = p;
+                ConstructorBlk(p->Globals[j]).program = p;
                 break;
             }
             case D_Proc: {

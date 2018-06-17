@@ -80,7 +80,7 @@ struct relocation {
 };
 static struct relocation *relocation_list;
 
-enum relocation_kind { NTH_STATIC, NTH_GLOBAL, NTH_CONST, NTH_TCASE, STRCONS_OFFSET };
+enum relocation_kind { NTH_STATIC, NTH_GLOBAL, NTH_CONST, NTH_TCASE, NTH_FIELDINFO, STRCONS_OFFSET };
 
 /*
  * Prototypes.
@@ -209,10 +209,8 @@ static void word_field(word w, char *desc)
 static void tcase_field(struct ir_tcaseinit *x)
 {
     int i = get_tcaseno(x);
-    if (Dflag) {
-        fprintf(dbgfile, PadWordFmt ": T[" PadWordFmt "]   #    no=%d", pc, (word)i, i);
-        putc('\n', dbgfile);
-    }
+    if (Dflag)
+        fprintf(dbgfile, PadWordFmt ": T[" PadWordFmt "]   #    no=%d\n", pc, (word)i, i);
     add_relocation(pc, NTH_TCASE, i);
     outword(0);
 }
@@ -485,7 +483,16 @@ static void gencode_func(struct lfunction *f)
 
 static void gencode()
 {
+    struct lclass *cl;
+    struct lclass_field *cf;
     struct gentry *gl;
+    int i;
+
+    i = 0;
+    for (cl = lclasses; cl; cl = cl->next)
+        for (cf = cl->fields; cf; cf = cf->next)
+            cf->index = i++;
+
     for (gl = lgfirst; gl; gl = gl->g_next) {
         if (gl->func)
             gencode_func(gl->func);
@@ -1136,7 +1143,13 @@ static void lemitproc()
     outwordx(P_Proc, "   Type");
     outwordx(curr_lfunc->narguments, "   Num args");
     outwordx(curr_lfunc->vararg, "   Vararg flag");
-    outwordx(0, "   Field");
+    if (curr_lfunc->method) {
+        if (Dflag)
+            fprintf(dbgfile, PadWordFmt ": F[" PadWordFmt "]   #    Field info %d\n", pc, (word)curr_lfunc->method->index, curr_lfunc->method->index);
+        add_relocation(pc, NTH_FIELDINFO, curr_lfunc->method->index);
+        outword(0);
+    } else
+        outwordx(0, "   Field info");
     outdptr(ce, "   Procedure name (%s)", p);
     outwordz(curr_lfunc->pc + size, "   Entry point");
     outwordx(has_op_create(), "   Creates flag");
@@ -2618,6 +2631,7 @@ static void do_relocations()
             case NTH_GLOBAL: w = hdr.Base + hdr.Globals + r->param * 2 * WordSize; break;
             case NTH_CONST: w = hdr.Base + hdr.Constants + r->param * 2 * WordSize; break;
             case NTH_TCASE: w = hdr.Base + hdr.TCaseTables + r->param * 2 * WordSize; break;
+            case NTH_FIELDINFO: w = hdr.Base + hdr.ClassFields + r->param * 4 * WordSize; break;
             case STRCONS_OFFSET: w = hdr.Base + hdr.Strcons + r->param ; break;
             default:
                 quit("do_relocations: Unknown kind");
