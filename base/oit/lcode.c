@@ -33,7 +33,7 @@ static long codeoffset;                /* ftell() for start of code */
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
  */
-static size_t maxcode	= 100000;        /* code space */
+static size_t maxcode	= 2000000;        /* code space */
 static size_t nsize       = 10000;         /* ipc/line num. assoc. table */
 static size_t fnmsize     = 100;           /* ipc/file name assoc. table */
 
@@ -78,9 +78,9 @@ struct relocation {
     word param;                      /* param varies according to kind */
     struct relocation *next;
 };
-static struct relocation *relocation_list, *relocation_list_last;
+static struct relocation *relocation_list;
 
-enum relocation_kind { NTH_STATIC, NTH_GLOBAL, NTH_CONST, NTH_TCASE, STRCONS_OFFSET };
+enum relocation_kind { NTH_STATIC, NTH_GLOBAL, NTH_CONST, NTH_TCASE, NTH_FIELDINFO, STRCONS_OFFSET };
 
 /*
  * Prototypes.
@@ -190,11 +190,8 @@ static void add_relocation(word pc, int kind, word param)
     r->pc = pc;
     r->kind = kind;
     r->param = param;
-    if (relocation_list_last) {
-        relocation_list_last->next = r;
-        relocation_list_last = r;
-    } else
-        relocation_list = relocation_list_last = r;
+    r->next = relocation_list;
+    relocation_list = r;
 }
 
 static void out_op(word op)
@@ -212,8 +209,10 @@ static void word_field(word w, char *desc)
 static void tcase_field(struct ir_tcaseinit *x)
 {
     int i = get_tcaseno(x);
+    if (Dflag)
+        fprintf(dbgfile, PadWordFmt ": T[" PadWordFmt "]   #    no=%d\n", pc, (word)i, i);
     add_relocation(pc, NTH_TCASE, i);
-    word_field(0, "no");
+    outword(0);
 }
 
 static void emit_ir_var(struct ir_var *v, char *desc)
@@ -242,8 +241,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
 #endif
             } else {
                 outwordx(Op_Const, "   %s=const", desc);
+                if (Dflag)
+                    fprintf(dbgfile, PadWordFmt ": C[" PadWordFmt "]   #       " WordFmt "\n", pc, ce->desc_no, ce->desc_no);
                 add_relocation(pc, NTH_CONST, ce->desc_no);
-                outwordx(0, "      %d", ce->desc_no);
+                outword(0);
             }
             break;
         }
@@ -264,8 +265,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
             struct lentry *le = v->local;
             if (le->l_flag & F_Static) {
                 outwordx(Op_Static, "   %s=static", desc);
+                if (Dflag)
+                    fprintf(dbgfile, PadWordFmt ": A[" PadWordFmt "]   #       %d (%s)\n", pc, (word)le->l_val.index, le->l_val.index, le->name);
                 add_relocation(pc, NTH_STATIC, le->l_val.index);
-                outwordx(0, "      %d  (%s)", le->l_val.index, le->name);
+                outword(0);
             } else if (le->l_flag & F_Argument) {
                 if (curr_lfunc->method && !(curr_lfunc->method->flag & M_Static) && (le->l_flag & F_Argument) && le->l_val.index == 0) {
                     outwordx(Op_Self, "   %s=self", desc);
@@ -291,8 +294,11 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                     outwordx(Op_Global, "   %s=global", desc);
             } else
                 outwordx(Op_GlobalVal, "   %s=globalval", desc);
+
+            if (Dflag)
+                fprintf(dbgfile, PadWordFmt ": G[" PadWordFmt "]   #       %d (%s)\n", pc, (word)ge->g_index, ge->g_index, ge->name);
             add_relocation(pc, NTH_GLOBAL, ge->g_index);
-            outwordx(0, "      %d (%s)", ge->g_index, ge->name);
+            outword(0);
             break;
         }
         case TMP: {
@@ -414,9 +420,9 @@ void generate_code()
      */
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
-    codep = codeb = safe_calloc(maxcode, 1);
+    codep = codeb = safe_zalloc(maxcode);
 
-#if HAVE_MMAP && WordBits == 64
+#if (MSWIN32 || HAVE_MMAP) && WordBits == 64
     if (baseopt)
         hdr.Base = (10 + baseopt) * 0x100000000;
 #endif
@@ -433,8 +439,6 @@ void generate_code()
     lntable = 0;
     free(fnmtbl);   
     fnmtbl = 0;
-    free(codep);
-    codep = 0;
 
     /*
      * Close the .ux file if debugging is on.
@@ -475,12 +479,20 @@ static void gencode_func(struct lfunction *f)
     lemitproc();
     lemitcode();
     patchrefs();
-    flushcode();
 }
 
 static void gencode()
 {
+    struct lclass *cl;
+    struct lclass_field *cf;
     struct gentry *gl;
+    int i;
+
+    i = 0;
+    for (cl = lclasses; cl; cl = cl->next)
+        for (cf = cl->fields; cf; cf = cf->next)
+            cf->index = i++;
+
     for (gl = lgfirst; gl; gl = gl->g_next) {
         if (gl->func)
             gencode_func(gl->func);
@@ -745,10 +757,7 @@ static void lemitcon(struct centry *ce)
 
 static void patchrefs()
 {
-    word basepc;
     int i;
-    /* Compute the pc corresponding to &codeb[0] */
-    basepc = pc - (codep - codeb);
     for (i = 0; i <= hi_chunk; ++i) {
         struct chunk *chunk;
         word p;
@@ -758,9 +767,9 @@ static void patchrefs()
         p = chunk->refs;
         while (p) {
             word t, off;
-            memcpy(&t, &codeb[p - basepc], WordSize);
+            memcpy(&t, &codeb[p], WordSize);
             off = chunk->pc + hdr.Base;
-            memcpy(&codeb[p - basepc], &off, WordSize);
+            memcpy(&codeb[p], &off, WordSize);
             p = t;
         }
     }
@@ -1134,15 +1143,23 @@ static void lemitproc()
     outwordx(P_Proc, "   Type");
     outwordx(curr_lfunc->narguments, "   Num args");
     outwordx(curr_lfunc->vararg, "   Vararg flag");
-    outwordx(0, "   Field");
+    if (curr_lfunc->method) {
+        if (Dflag)
+            fprintf(dbgfile, PadWordFmt ": F[" PadWordFmt "]   #    Field info %d\n", pc, (word)curr_lfunc->method->index, curr_lfunc->method->index);
+        add_relocation(pc, NTH_FIELDINFO, curr_lfunc->method->index);
+        outword(0);
+    } else
+        outwordx(0, "   Field info");
     outdptr(ce, "   Procedure name (%s)", p);
     outwordz(curr_lfunc->pc + size, "   Entry point");
     outwordx(has_op_create(), "   Creates flag");
     outwordx(curr_lfunc->ndynamic, "   Num dynamic");
     outwordx(curr_lfunc->nstatics, "   Num static");
     if (curr_lfunc->nstatics) {
+        if (Dflag)
+            fprintf(dbgfile, PadWordFmt ": A[" PadWordFmt "]   #    First static (%d)\n", pc, (word)nstatics, nstatics);
         add_relocation(pc, NTH_STATIC, nstatics);
-        outwordx(0, "   First static");
+        outword(0);
     } else
         outwordx(0, "   First static (null pointer)");
     outwordx(0, "   Owning prog");
@@ -1399,8 +1416,6 @@ static void genclass(struct lclass *cl)
         quit("I got my sums wrong(b): %d != %d", ap, pc);
     if (cl->pc + cl->size != pc)
         quit("I got my sums wrong(c): %d != %d", cl->pc + cl->size, pc);
-
-    flushcode();
 }
 
 static void genclasses(void)
@@ -1670,8 +1685,6 @@ static void gentables()
             quit("I got my sums wrong(d): %d != %d", ap, pc);
         if (rec->pc + size != pc)
             quit("I got my sums wrong(e): %d != %d", rec->pc + size, pc);
-
-        flushcode();
     }
 
     /*
@@ -1685,7 +1698,6 @@ static void gentables()
         ce = inst_sdescrip(fp->name);
         outdptr(ce, "Field %s", fp->name);
     }
-    flushcode();
 
     /*
      * Output global variable descriptors.
@@ -1715,7 +1727,6 @@ static void gentables()
             outwordx(0, "");
         }
     }
-    flushcode();
 
     /*
      * Output descriptors for global variable names.
@@ -1727,7 +1738,6 @@ static void gentables()
         ce = inst_sdescrip(gp->name);
         outdptr(ce, "%s", gp->name);
     }
-    flushcode();
 
     /*
      * Output global variable flags.
@@ -1748,7 +1758,6 @@ static void gentables()
         outbytex(f, "Flag %s", gp->name);
     }
     align();
-    flushcode();
 
     /*
      * Output locations for global variables.
@@ -1768,7 +1777,6 @@ static void gentables()
             }
         }
     }
-    flushcode();
 
     /*
      * Output a null descriptor for each static variable.
@@ -1780,7 +1788,6 @@ static void gentables()
         outwordx(D_Null, "D_Null");
         outwordx(0, "");
     }
-    flushcode();
 
     /*
      * Output descriptors for static variable names.
@@ -1799,7 +1806,6 @@ static void gentables()
             }
         }
     }
-    flushcode();
 
     /*
      * Output a null descriptor for each tcase table.
@@ -1811,7 +1817,6 @@ static void gentables()
         outwordx(D_Null, "D_Null");
         outwordx(0, "");
     }
-    flushcode();
 
     if (Dflag)
         fprintf(dbgfile, "\n# File names table\n");
@@ -1821,7 +1826,6 @@ static void gentables()
         outwordx(fnptr->ipc, "IPC");
         outdptr(ce, "   File %s", fnptr->fname);
     }
-    flushcode();
 
     if (Dflag)
         fprintf(dbgfile, "\n# Line number table\n");
@@ -1830,7 +1834,6 @@ static void gentables()
         outwordx(lnptr->ipc, "IPC");
         outwordx(lnptr->line, "   Line %d", lnptr->line);        
     }
-    flushcode();
 
     /*
      * Install non-ascii string constants, from the ucs utf-8 strings
@@ -1900,13 +1903,16 @@ static void gentables()
         } else
             quit("Unknown constant type");
     }
+
+    hdr.Strcons = pc;
+    hdr.AsciiStrcons = hdr.Strcons + ascii_offset;
+
+    do_relocations();
     flushcode();
     
     if (Dflag)
         fprintf(dbgfile, "\n# String constants table\n");
 
-    hdr.Strcons = pc;
-    hdr.AsciiStrcons = hdr.Strcons + ascii_offset;
     for (sp = first_strconst; sp; sp = sp->next) {
         if (sp->len > 0) {
             if (Dflag) {
@@ -1936,7 +1942,6 @@ static void gentables()
             pc += sp->len;
         }
     }
-    flushcode();
 
     /*
      * Output icode file header.
@@ -1975,8 +1980,6 @@ static void gentables()
 
     if (fwrite((char *)&hdr, 1, sizeof(hdr), outfile) != sizeof(hdr))
         equit("Cannot write icode file");
-
-    do_relocations();
 
     if (verbose > 1) {
         word tsize = sizeof(hdr) + hdr.IcodeSize;
@@ -2128,7 +2131,7 @@ static void outwordz_nullable(word oword, char *fmt, ...)
         if (oword)
             fprintf(dbgfile, PadWordFmt ": Z+" PadWordFmt "    # ", pc, oword);
         else
-            fprintf(dbgfile, PadWordFmt ": " PadWordFmt "    # ", pc, oword);
+            fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    # ", pc, oword);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -2170,13 +2173,13 @@ static void outword(word oword)
  */
 static void flushcode()
 {
-    if (codep > codeb) {
-        size_t n = DiffPtrs(codep,codeb);
-        if (fwrite(codeb, 1, n, outfile) != n)
-            equit("Cannot write icode file");
-    }
-    codep = codeb;
+    size_t n = DiffPtrs(codep,codeb);
+    if (fwrite(codeb, 1, n, outfile) != n)
+        equit("Cannot write icode file");
+    free(codeb);
+    codep = codeb = 0;
 }
+
 
 static void labout(int i, char *desc)
 {
@@ -2635,13 +2638,12 @@ static void do_relocations()
     if (Dflag)
         fprintf(dbgfile, "\n# Relocations\n");
     for (r = relocation_list; r; r = r->next) {
-        if (fseek(outfile, codeoffset + r->pc, SEEK_SET) < 0)
-            equit("Cannot seek to patch location");
         switch (r->kind) {
             case NTH_STATIC: w = hdr.Base + hdr.Statics + r->param * 2 * WordSize; break;
             case NTH_GLOBAL: w = hdr.Base + hdr.Globals + r->param * 2 * WordSize; break;
             case NTH_CONST: w = hdr.Base + hdr.Constants + r->param * 2 * WordSize; break;
             case NTH_TCASE: w = hdr.Base + hdr.TCaseTables + r->param * 2 * WordSize; break;
+            case NTH_FIELDINFO: w = hdr.Base + hdr.ClassFields + r->param * 4 * WordSize; break;
             case STRCONS_OFFSET: w = hdr.Base + hdr.Strcons + r->param ; break;
             default:
                 quit("do_relocations: Unknown kind");
@@ -2650,7 +2652,6 @@ static void do_relocations()
         if (Dflag)
             fprintf(dbgfile, PadWordFmt ": " PadWordFmt " (kind=%d)\n", r->pc, w, r->kind);
 
-        if (fwrite((char *)&w, 1, WordSize, outfile) != WordSize)
-            equit("Cannot patch icode file");
+        memcpy(&codeb[r->pc], &w, WordSize);
     }
 }

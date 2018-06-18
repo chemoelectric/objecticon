@@ -1,8 +1,8 @@
-import ivib.plugin, util, lang
+import ivib.plugin, lang
 
 $load IMG "okcancel.gif"
 
-global IC
+global IC, error
 
 invocable OkCancelPlugin
 
@@ -68,14 +68,16 @@ class OkCancelPlugin(Plugin)
    end
 
    private get_icon(obj)
-      return IC.get("okcancel", obj.cbwin)
+      return IC.get_with_resize("okcancel")
    end
 end
 
 procedure main(m)
+   local e
+   e := Class.get_program(m)
    # Use the main prog's ImageCache so images use the same display.
-   IC := Prog.get_global("gui.ImageCache", Class.get_program(m))
+   IC := Prog.get_global("gui.ImageCache", e)
+   # and error, so &why is set correctly
+   error := Prog.get_global("util.error", e)
    return OkCancelPlugin()
 end
-
-

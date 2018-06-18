@@ -47,14 +47,12 @@ SRC=canvas.icn canvasborder.icn canvasborderdialog.icn \
 	groupsdialog.icn layoutfield.icn \
 	borderfield.icn paintedit.icn canvasvsplitui.icn canvashsplitui.icn \
 	canvassplit.icn canvassplitdialog.icn canvasoverlayitemdialog.icn \
-	selectmodelist.icn plugin.icn maptab.icn canvasplugin.icn ivib.icn
+	selectmodelist.icn maptab.icn canvasplugin.icn ivib.icn
 
 UFILES=$(SRC:.icn=.u)
 PROG=../../bin/ivib
 
-.PHONY: plugins
-
-all: $(PROG)
+all: $(PROG) plugin.u
 	$(MAKE) -C plugins
 
 etags:
@@ -63,6 +61,9 @@ etags:
 clean:
 	rm -f *.u packages.txt $(PROG)
 	$(MAKE) -C plugins clean
+
+plugin.u:	plugin.icn
+	oit -snc plugin.icn
 
 %.u: %.icn
 	oit -snc $(SRC)

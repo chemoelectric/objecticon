@@ -149,7 +149,7 @@ class CanvasPluginDialog(CanvasComponentDialog)
 
    public validate_input()
       c.plugin.validate_config(c, config_tab.get_table()) |
-         return alert_error(self, c.plugin.get_reason())
+         return alert_error(self, &why)
       return CanvasComponentDialog.validate_input()
    end
 

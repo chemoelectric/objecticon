@@ -16,4 +16,4 @@ $(PROGU): %.u: %.icn
 	oit -snc $(PROGSRC)
 
 %:      %.u
-	oit -B -o $@ $@.u
+	oit -b2 -o $@ $@.u
