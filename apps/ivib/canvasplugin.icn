@@ -18,14 +18,19 @@ class MissingPlugin()
    end
 
    public get_default_width(obj)
-      return 100
+      return scale(200)
    end
 
    public get_default_height(obj)
-      return 50
+      return scale(100)
    end
 
    public gen_code(code, obj)
+   end
+
+   public new(id)
+      self.id := id
+      return
    end
 end
 
