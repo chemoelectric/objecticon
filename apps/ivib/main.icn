@@ -10,6 +10,9 @@ import lang, gui, io, util, graphics(Selection,Mouse), ipl.pdco, xdg, ipl.filegu
 
 $include "version.icn"
 
+# Some invocables for plugins
+invocable Code, gui.ImageCache
+
 class Ivib()
    public static const
       TB_ICON_SIZE,
