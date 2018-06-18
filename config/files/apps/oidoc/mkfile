@@ -6,7 +6,7 @@ PROG=../../bin/oidoc
 
 all:V:	$PROG
 
-clean:
+clean:V:
 	rm -f $PROG *.u packages.txt
 
 $PROG:  $UFILES

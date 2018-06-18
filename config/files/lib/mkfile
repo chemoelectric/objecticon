@@ -1,6 +1,6 @@
 default:V:	all
 
-all :
+all:V:
 	@{ cd incl ; mk all }
 	@{ cd iyacc ; mk all }
 	@{ cd ipl ; mk all }
@@ -9,7 +9,7 @@ all :
 	@{ cd xml ; mk all }
 	@{ cd parser ; mk all }
 
-clean :
+clean:V:
 	@{ cd incl ; mk clean }
 	@{ cd iyacc ; mk clean }
 	@{ cd ipl ; mk clean }

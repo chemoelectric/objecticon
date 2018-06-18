@@ -17,7 +17,7 @@ PROGU=${PROGSRC:%.icn=%.u}
 
 all:V: $LIBU $PROGS
 
-clean:
+clean:V:
 	rm -f $PROGS *.u packages.txt
 
 %.u:Q: %.icn

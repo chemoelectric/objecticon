@@ -8,7 +8,7 @@ AUTOU=${AUTOSRC:%.icn=%.u}
 
 all:V: mkconsts $LIBU $AUTOU
 
-clean:
+clean:V:
 	rm -f mkconsts mkconsts.$O $AUTOSRC *.u packages.txt
 
 $AUTOSRC: 	mkconsts

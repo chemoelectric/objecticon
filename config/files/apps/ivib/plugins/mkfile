@@ -6,7 +6,7 @@ PROGS=${PROGSRC:%.icn=%}
 
 all:V: $PROGS
 
-clean:
+clean:V:
 	rm -f $PROGS *.u packages.txt
 
 %: %.icn

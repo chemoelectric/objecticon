@@ -5,11 +5,11 @@ BIN=${PROGS:%=../bin/%}
 
 default:V:	all
 
-all :   $BIN
+all:V:   $BIN
 	@{ cd ivib ; mk all }
 	@{ cd oidoc ; mk all }
 
-clean :
+clean:V:
 	rm -f $BIN *.u packages.txt
 	@{ cd ivib ; mk clean }
 	@{ cd oidoc ; mk clean }

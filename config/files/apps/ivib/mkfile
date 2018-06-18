@@ -53,15 +53,12 @@ PROG=../../bin/ivib
 all:V: $PROG plugin.u
 	@{ cd plugins ; mk all }
 
-clean:
+clean:V:
 	rm -f $PROG *.u packages.txt
 	@{ cd plugins ; mk clean }
-
-plugin.u:	plugin.icn
-	oit -snc plugin.icn
 
 $PROG:  $UFILES
 	oit -sn -o $target $UFILES
 
 %.u:Q: %.icn
-	test $stem.u -nt $stem.icn || oit -snc $SRC
+	test $stem.u -nt $stem.icn || oit -snc $SRC plugin.icn
