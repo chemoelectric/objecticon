@@ -56,17 +56,14 @@ all: $(PROG) plugin.u
 	$(MAKE) -C plugins
 
 etags:
-	$(ETAGS) $(ICNTAGS) $(SRC)
+	$(ETAGS) $(ICNTAGS) $(SRC) plugin.icn
 
 clean:
 	rm -f *.u packages.txt $(PROG)
 	$(MAKE) -C plugins clean
 
-plugin.u:	plugin.icn
-	oit -snc plugin.icn
-
 %.u: %.icn
-	oit -snc $(SRC)
+	oit -snc $(SRC) plugin.icn
 
 $(PROG):	$(UFILES)
 	oit -o $@ $(UFILES)
