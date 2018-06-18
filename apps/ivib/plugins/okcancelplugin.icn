@@ -68,7 +68,7 @@ class OkCancelPlugin(Plugin)
    end
 
    private get_icon(obj)
-      return IC.get("okcancel", obj.cbwin)
+      return IC.get_with_resize("okcancel")
    end
 end
 
