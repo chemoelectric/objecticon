@@ -11,4 +11,4 @@ clean:V:
 
 %: %.icn
 	OI_PATH=($OI_PATH $OI_HOME/apps/ivib)
-	oit -so $stem $stem.icn
+	oit -b2 -so $stem $stem.icn

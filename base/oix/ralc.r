@@ -1041,6 +1041,10 @@ void *icode_alloc(void *base, size_t size)
        p = VirtualAlloc(base, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
        if (p)
            return p;
+#elif PLAN9
+       p = segattach(0, "memory", base, size);
+       if (p != (void*)-1)
+           return p;
 #endif
    }
    return malloc(size);
