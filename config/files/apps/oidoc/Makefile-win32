@@ -18,4 +18,4 @@ clean:
 	oit -snc $(SRC)
 
 $(PROG):	$(UFILES)
-	oit -o $@ $(UFILES)
+	oit -s -o $@ $(UFILES)

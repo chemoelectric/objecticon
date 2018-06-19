@@ -422,9 +422,11 @@ void generate_code()
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     codep = codeb = safe_zalloc(maxcode);
 
-#if (MSWIN32 || HAVE_MMAP) && WordBits == 64
     if (baseopt)
-        hdr.Base = (10 + baseopt) * 0x100000000;
+#if WordBits == 32
+        hdr.Base = (9 + baseopt) * 0x10000000;
+#elif WordBits == 64
+        hdr.Base = (9 + baseopt) * 0x100000000;
 #endif
 
     gencode();

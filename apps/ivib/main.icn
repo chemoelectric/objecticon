@@ -6,7 +6,8 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, util, graphics(Selection,Mouse), ipl.pdco, xdg, ipl.filegui
+import lang, gui, io, util, graphics(Selection,Mouse), 
+   posix, ipl.pdco, xdg, ipl.filegui
 
 $include "version.icn"
 
@@ -47,17 +48,18 @@ end
 class Prefs(SelectiveObjectCodec)
    public 
       undo_size,                # Size of undo buffer
-      plugin_directory,
+      plugin_path,
       named_image_path
 
    public get_template()
       suspend ["Undo Size", "undo_size"] |
-              ["Plugin Directory", "plugin_directory"] |
+              ["Plugin Path", "plugin_path"] |
               ["Named Image Path", "named_image_path"]
    end
 
    protected post_decode()
       /named_image_path := ["images"]
+      /plugin_path := ["plugins"]
    end
 
    #
@@ -65,8 +67,7 @@ class Prefs(SelectiveObjectCodec)
    #
    public new()
       undo_size := 7
-      plugin_directory := "plugins"
-      named_image_path := ["images"]
+      post_decode()
       return
    end
 end
@@ -1248,21 +1249,31 @@ class Main(Dialog)
       }
 
       plugins := table()
-      pp := FilePath(prefs.plugin_directory)
-      every f := !Files.list(pp.str()) do {
-         if f.stat.mode_str[1] == "-" & upto('x', f.stat.mode_str) then {
-            fn := pp.child(f.name).str()
-            ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
-            plugin := Prog.get_global("main", ce)(self) | stop("Plugin didn't return a Plugin from main")
-            insert(plugins, plugin.get_unique_id(), plugin)
-            ui := PluginUI(plugin)
-            listener := ObjectActionListener(self, ui)
-            mi := add_ui_to_menu(objects_menu, ui)
-            mi.connect(listener.on_event, Event.ACTION)
+      
+      every pp := FilePath(!FileDialog.unique_ucs_list{
+                      FilePath(!prefs.plugin_path | 
+                               FilePath(System.getenv("OI_HOME")).walk("apps", "ivib", "plugins")).
+                               canonical().ucs() }) do {
+         every f := !Files.list(pp.str()) do {
+            if find("plugin", f.name) & f.stat.mode_str[1] == "-" & upto('x', f.stat.mode_str) then {
+               fn := pp.child(f.name).str()
+               ce := Prog.load(fn,, 0, 0) | stop("Failed to load plugin:", fn)
+               plugin := Prog.get_global("main", ce)(self) | stop("Plugin ", fn, " didn't return a Plugin from main")
+               if member(plugins, plugin.get_unique_id()) then
+                  stop("Plugin ", fn, " already found on path")
+               insert(plugins, plugin.get_unique_id(), plugin)
+               ui := PluginUI(plugin)
+               listener := ObjectActionListener(self, ui)
+               mi := add_ui_to_menu(objects_menu, ui)
+               mi.connect(listener.on_event, Event.ACTION)
+            }
          }
       }
 
-      every fp := FilePath(!prefs.named_image_path) do {
+      every fp := FilePath(!FileDialog.unique_ucs_list{
+         FilePath(!prefs.named_image_path |
+                  FilePath(System.getenv("OI_HOME")).walk("lib", "gui", "images")).
+                  canonical().ucs() }) do {
          every f := !Files.list(fp.str()) do {
             if ext := is_image_file(f.name) then {
                k := f.name[1:-*ext - 1]
@@ -1392,30 +1403,21 @@ class Preferences(Dialog)
    public 
       c, 
       undo_size, 
-      plugin_dir_field,
-      path_tab,
+      plugin_path_tab,
+      named_image_path_tab,
       okay_result
 
    public on_okay()
       integer(self.undo_size.get_contents()) | return alert_error(self, "Non-integer undo size")
-      c.named_image_path := path_tab.get_contents()
+      c.named_image_path := named_image_path_tab.get_contents()
+      c.plugin_path := plugin_path_tab.get_contents()
       c.undo_size := integer(self.undo_size.get_contents())
-      c.plugin_directory := plugin_dir_field.get_contents()
       okay_result := &yes
       self.dispose()
    end
 
    public on_cancel()
       self.dispose()
-   end
-
-   public on_plugin_dir_browse()
-      local d, s
-      d := DirectoryDialog().set_existing_file_mode(DirectoryDialog.REQUIRE)
-      d.set_directory(plugin_dir_field.get_contents())
-      d.show_modal(self)
-      if s := d.get_result() then
-         plugin_dir_field.set_contents(s)
    end
 
    public new(c)
@@ -1438,14 +1440,11 @@ class Preferences(Dialog)
       undo_size.set_contents(c.undo_size)
       t.add(undo_size)
 
-      t.add(Label().set_label("Plugin directory"))
-      plugin_dir_field := FileSuggestField().set_directories_only(&yes).set_size(scale(150))
-      plugin_dir_field.set_contents(c.plugin_directory)
-      t.add(plugin_dir_field)
-      t.add(TextButton().set_label("...").set_constraint("eol", &yes).connect(on_plugin_dir_browse, Event.ACTION))
+      named_image_path_tab := PathTab(c.named_image_path).set_label("Named Image Paths")
+      tabset.add(named_image_path_tab)
 
-      path_tab := PathTab(c)
-      tabset.add(path_tab)
+      plugin_path_tab := PathTab(c.plugin_path).set_label("Plugin Paths")
+      tabset.add(plugin_path_tab)
 
       oc := OkCancel()
       oc.listen(self)
@@ -1456,31 +1455,37 @@ end
 
 class PathTab(TabItem)
    public 
-      c,
       path_list,
       path,
       add_button,   # Buttons              
       delete,                         
       contents,
       browse,
-      apply
+      apply,
+      up,
+      down
 
    public update_grey()
-      if *path_list.get_selections() > 0 then {
+      local i
+      if *path_list.get_selections() = 1 then {
+         i := path_list.get_selections()[1]
+         up.set_is_shaded(No{ i > 1})
+         down.set_is_shaded(No{ i < *contents })
          path.set_is_shaded(&no)
          browse.set_is_shaded(&no)
-         delete.set_is_shaded(&no)
          apply.set_is_shaded(&no)
       } else {
+         up.set_is_shaded(&yes)
+         down.set_is_shaded(&yes)
          path.set_is_shaded(&yes)
          browse.set_is_shaded(&yes)
-         delete.set_is_shaded(&yes)
          apply.set_is_shaded(&yes)
       }
+      delete.set_is_shaded(Yes{ *path_list.get_selections() = 0 })
    end
 
    public on_add()
-      put(contents, "Edit me")
+      put(contents, u"Edit me")
       path_list.contents_changed()
       path_list.goto_first(*contents)
       path_list.set_selections([*contents])
@@ -1494,6 +1499,12 @@ class PathTab(TabItem)
    public on_delete()
       path_list.delete_lines(path_list.get_selections())
       update_grey()
+   end
+
+   public on_path()
+      # Only act on a return if there is no suggestion list showing.
+      if /path.popup then
+         on_apply()
    end
 
    public on_apply()
@@ -1527,48 +1538,87 @@ class PathTab(TabItem)
       }
    end
 
+   public on_up()
+      local l
+      l := path_list.get_selections()
+      path_list.move_lines(l, l[1] - 1)
+      update_grey()
+   end
+
+   public on_down()
+      local l
+      l := path_list.get_selections()
+      path_list.move_lines(l, l[1] + 2)
+      update_grey()
+   end
+
    public get_contents()
       return contents
    end
 
-   public new(c)
+   public new(l)
       local p
       TabItem.new()
-      self.c := c
-      contents := copy(c.named_image_path)
+      contents := ipl.pdco.List{ ucs(!l) }
       set_layout(GridLayout())
-      set_label("Named Image Paths")
 
-      path_list := TextList().set_size(scale(250),scale(150)).set_constraint("eol", &yes).set_select_mode("one").set_contents(contents)
-      path_list.connect(self.on_list, Event.SELECTION_CHANGED)
+      path_list := TextList().
+         set_size(scale(350),scale(150)).
+         set_constraint("eol", &yes).
+         set_select_mode(Select.MANY).
+         set_contents(contents).
+         connect(self.on_list, Event.SELECTION_CHANGED)
       add(path_list)
 
-      p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0.0).set_layout(GridLayout().set_doi(0))
-      path := FileSuggestField().set_directories_only(&yes).set_size(scale(150))
-      path.connect(self.on_apply, Event.ACTION)
+      p := Panel().
+         set_constraint("eol", &yes).
+         set_constraint("y_weight", 0.0).
+         set_layout(GridLayout().set_doi(0))
+
+      path := FileSuggestField().
+         set_directories_only(&yes).
+         set_size(scale(150)).
+         set_contents(u"").
+         connect(self.on_path, Event.ACTION)
       p.add(path)
 
-      browse := TextButton().set_label("...").set_constraint("eol", &yes)
-      browse.connect(self.on_browse, Event.ACTION)
+      browse := TextButton().
+         set_label("...").
+         set_constraint("eol", &yes).
+         connect(self.on_browse, Event.ACTION)
       p.add(browse)
 
       add(p)
     
-      p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0.0).set_layout(GridLayout().set_doi(0))
-      add_button := TextButton()
-      add_button.connect(self.on_add, Event.ACTION)
-      add_button.set_label("Add")
+      p := Panel().
+       set_constraint("eol", &yes).
+       set_constraint("y_weight", 0.0).
+       set_layout(GridLayout().set_doi(0))
+
+      add_button := TextButton().
+         set_label("Add").
+         connect(self.on_add, Event.ACTION)
       p.add(add_button)
 
-      delete := TextButton()
-      delete.connect(self.on_delete, Event.ACTION)
-      delete.set_label("Delete")
+      delete := TextButton().
+         set_label("Delete").
+         connect(self.on_delete, Event.ACTION)
       p.add(delete)
 
-      apply := TextButton()
-      apply.connect(self.on_apply, Event.ACTION)
-      apply.set_label("Apply")
+      apply := TextButton().
+         set_label("Apply").
+         connect(self.on_apply, Event.ACTION)
       p.add(apply)
+
+      up := TextButton().
+         set_label("Up").
+         connect(self.on_up, Event.ACTION)
+      p.add(up)
+
+      down := TextButton().
+         set_label("Down").
+         connect(self.on_down, Event.ACTION)
+      p.add(down)
 
       add(p)
 
