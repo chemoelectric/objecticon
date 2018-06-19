@@ -66,4 +66,4 @@ clean:
 	oit -snc $(SRC) plugin.icn
 
 $(PROG):	$(UFILES)
-	oit -o $@ $(UFILES)
+	oit -s -o $@ $(UFILES)
