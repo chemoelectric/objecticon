@@ -1257,7 +1257,7 @@ class Main(Dialog)
          every f := !Files.list(pp.str()) do {
             if find("plugin", f.name) & f.stat.mode_str[1] == "-" & upto('x', f.stat.mode_str) then {
                fn := pp.child(f.name).str()
-               ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
+               ce := Prog.load(fn,, 0, 0) | stop("Failed to load plugin:", fn)
                plugin := Prog.get_global("main", ce)(self) | stop("Plugin ", fn, " didn't return a Plugin from main")
                if member(plugins, plugin.get_unique_id()) then
                   stop("Plugin ", fn, " already found on path")
