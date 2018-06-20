@@ -492,15 +492,6 @@ void env_string(char *name, char **variable)
  * Termination routines.
  */
 
-/*
- * Produce run-time error 204 on floating-point traps.
- */
-
-void fpetrap(int n)
-{
-    fatalerr(204, NULL);
-}
-
 
 /*
  * syserr - print s as a system error.
@@ -1352,13 +1343,6 @@ int main(int argc, char **argv)
 
     rootstring.size = Min(Max(pmem / 256, MinDefStrSpace), MaxDefStrSpace);
     rootblock.size  = Min(Max(WordSize * (pmem / 1024), MinDefAbrSize), MaxDefAbrSize);
-
-    /*
-     * Catch floating-point traps
-     */
-#if UNIX
-    signal(SIGFPE, fpetrap);
-#endif					/* UNIX */
 
     t = findexe(name);
     if (!t)
