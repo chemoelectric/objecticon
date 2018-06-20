@@ -536,3 +536,12 @@ class URL(ObjectOutput)
          return
    end
 end
+
+# Helper procedure to convert x to a `URL`, or raise a runerr.
+#
+# :Parameters :
+# :  `x` - something convertible to a `URL`.
+#
+procedure need_URL(x)
+   return if is(x,URL) then x else URL(x) | runerr("URL expected: " || &why, x)
+end
