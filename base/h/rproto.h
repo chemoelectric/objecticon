@@ -105,7 +105,6 @@ void abbr_fname(dptr s, dptr d);
 void begin_link(FILE *f, dptr fname, word line);
 void end_link(FILE *f);
 struct ipc_line *find_ipc_line(word *ipc, struct progstate *p);
-void            fpetrap         (int);
 int             getvar          (dptr s,dptr vp,struct progstate *p);
 uword           hash            (dptr dp);
 union block     **hchain        (union block *pb,uword hn);

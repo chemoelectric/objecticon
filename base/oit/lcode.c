@@ -424,9 +424,9 @@ void generate_code()
 
     if (baseopt)
 #if WordBits == 32
-        hdr.Base = (9 + baseopt) * 0x10000000;
+        hdr.Base = (9 + baseopt) * (word)0x10000000;
 #elif WordBits == 64
-        hdr.Base = (9 + baseopt) * 0x100000000;
+        hdr.Base = (9 + baseopt) * (word)0x100000000;
 #endif
 
     gencode();

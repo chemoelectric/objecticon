@@ -64,7 +64,7 @@ final abstract class Prog()
       i := get_global_index(q, P) | fail
       return case get_global_flags(i, P) of {
          Package+Readable : .get_global_impl(i, P)
-         0 | Const : get_global_impl(i, P)
+         0 | Const | Const+Builtin : get_global_impl(i, P)
       }
    end
 
@@ -76,7 +76,7 @@ final abstract class Prog()
    public static get_named_global(q, P)
       local i
       if i := get_global_index(q, P) &
-         get_global_flags(i, P) = Const then
+         get_global_flags(i, P) = (Const | Const+Builtin) then
          return get_global_impl(i, P)
    end
 

@@ -30,7 +30,7 @@ int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace i
                          *       2 = trace & symbol info */
 int Olevel      =1;     /* -O n: optimisation */
 int nolink      =0;	/* suppress linking? */
-int baseopt     =1;
+int baseopt     =1;     /* indicates where to set hdr.Base */
 
 /*
  * Some convenient interned strings.

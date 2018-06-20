@@ -1518,23 +1518,3 @@ word neg(word a)
    return -a;
 }
 #endif					/* AsmOver */
-
-/*
- * Wrapper around strtod, which sets over_flow flag.
- */
-double oi_strtod(char *nptr, char **endptr)
-{
-    double res;
-    over_flow = 0;
-#if PLAN9
-    res = strtod(nptr, endptr);
-    if (isNaN(res) || isInf(res,1) || isInf(res,-1))
-        over_flow = 1;
-#else
-    errno = 0;
-    res = strtod(nptr, endptr);
-    if (errno == ERANGE)
-        over_flow = 1;
-#endif
-    return res;
-}

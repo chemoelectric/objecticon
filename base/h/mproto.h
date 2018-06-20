@@ -125,8 +125,6 @@ word mod3(word a, word b);
 word div3(word a, word b);
 word neg(word a);
 
-double oi_strtod(char *nptr, char **endptr);
-
 extern unsigned char oi_ctype[];
 
 #define _CU     01

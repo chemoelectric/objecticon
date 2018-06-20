@@ -2457,7 +2457,8 @@ static void fold_div(struct lnode *n)
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         if (l2.u.d != 0.0) {
             double d = l1.u.d / l2.u.d;
-            replace_node(n, (struct lnode*)
+            if (isfinite(d))
+                replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
                                      new_constant(F_RealLit, 
                                                   intern_n((char *)&d, sizeof(double)), 
@@ -2499,7 +2500,8 @@ static void fold_mult(struct lnode *n)
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         double d = l1.u.d * l2.u.d;
-        replace_node(n, (struct lnode*)
+        if (isfinite(d))
+            replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
                                  new_constant(F_RealLit, 
                                               intern_n((char *)&d, sizeof(double)), 
@@ -2540,7 +2542,8 @@ static void fold_minus(struct lnode *n)
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         double d = l1.u.d - l2.u.d;
-        replace_node(n, (struct lnode*)
+        if (isfinite(d))
+            replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
                                  new_constant(F_RealLit, 
                                               intern_n((char *)&d, sizeof(double)), 
@@ -2581,7 +2584,8 @@ static void fold_plus(struct lnode *n)
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         double d = l1.u.d + l2.u.d;
-        replace_node(n, (struct lnode*)
+        if (isfinite(d))
+            replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
                                  new_constant(F_RealLit, 
                                               intern_n((char *)&d, sizeof(double)), 
@@ -3422,8 +3426,8 @@ static int numeric_via_string(struct literal *src)
        }
    }
 
-   d = oi_strtod(src->u.str.s, &s);
-   if (over_flow)
+   d = strtod(src->u.str.s, &s);
+   if (!isfinite(d))
        return 0;
 
    /* Check only spaces remain. */
