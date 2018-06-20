@@ -603,7 +603,7 @@ class Rat(RealNumber)
             other := x.rational()
          }
          default: {
-            x := need_string(x)
+            x := string(x) | runerr("Type not convertible to Rational", x)
             # The two tests are needed to stop the Rat and Dec
             # constructors calling one another endlessly.
             if probably_decimal(x) & not probably_rational(x) then
@@ -1207,7 +1207,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
             other := x.decimal() | return error("Couldn't convert rational to an exact decimal")
          }
          default: {
-            x := need_string(x)
+            x := string(x) | runerr("Type not convertible to Decimal", x)
             # The two tests are needed to stop the Rat and Dec
             # constructors calling one another endlessly.
             if probably_rational(x) & not probably_decimal(x) then {
@@ -1259,7 +1259,7 @@ procedure to_Number(x)
       Rat|Dec|Cpx: x
       "integer"|"real": Dec(x)
       default: {
-         x := need_string(x)
+         x := string(x) | runerr("Type not convertible to Number", x)
          if probably_decimal(x) then
             Dec(x)
          else
