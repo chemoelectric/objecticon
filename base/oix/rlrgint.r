@@ -929,7 +929,7 @@ int bigpow(dptr da, dptr db, dptr dx)
                         *dx = onedesc;
                     return Succeeded;
                 case 0:
-                    ReturnErrNum(201,Error);
+                    ReturnErrNum(209,Error);
                 default:
                     /* da ^ (negative int) = 0 for all non-special cases */
                     *dx = zerodesc;
@@ -987,7 +987,7 @@ int bigpowri(double a, dptr db, dptr dx)
              * (-1) - n never overflows, even when n == MinWord.
              */
             if (a == 0.0) 
-                ReturnErrNum(201, Error);
+                ReturnErrNum(209, Error);
             n = (-1) - n;
             a = 1.0 / a;
             retval = a;
@@ -1011,7 +1011,7 @@ int bigpowri(double a, dptr db, dptr dx)
         blen = LEN(b);
         if ( b->sign ) {
             if ( a == 0.0 )
-                ReturnErrNum(201, Error);
+                ReturnErrNum(209, Error);
             else
                 a = 1.0 / a;
         }
@@ -1925,7 +1925,7 @@ static int bigpowii(word a, word i, dptr dx)
 
     if (a == 0 || i <= 0) {              /* special cases */
         if (a == 0 && i < 0)             /* 0 ^ negative -> error */
-            ReturnErrNum(201,Error);
+            ReturnErrNum(209,Error);
         if (i == 0) {
             *dx = onedesc;
             return Succeeded;

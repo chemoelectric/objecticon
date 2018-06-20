@@ -327,9 +327,12 @@ final abstract class BigMath()
          result := ONE
       else if y.cmp("=", ONE) then   # x^1 = x
          result := x
-      else if x.sign() = 0 & y.sign() = 1 then  # 0^n = 0, n>0
+      else if x.sign() = 0 then {
+         if y.sign() < 0 then  # 0^n, n<0 -> error
+            runerr(209)
+         # y.sign() = 1;  0^n = 0, n>0
          return ZERO
-      else if i := exact_integer(y) then
+      } else if i := exact_integer(y) then
          return powi(x, i, rnd)
       else {
          mc := rnd.digits + 6

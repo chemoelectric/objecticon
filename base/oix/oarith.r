@@ -188,7 +188,7 @@ operator ^ power(x, y)
       body {
          double r;
 	 if (x == 0.0 && y < 0.0)
-	     runerr(201);
+	     runerr(209);
 	 if (x < 0.0)
 	    runerr(206);
          r = pow(x,y);
