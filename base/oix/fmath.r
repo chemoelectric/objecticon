@@ -7,8 +7,7 @@
  * sometimes with additional error checking to avoid and/or detect
  * various C runtime errors.
  */
-#begdef MathOp(funcname,ccode,comment,pre,post)
-#funcname "(r)" comment
+#begdef MathOp(funcname,ccode,pre,post)
 function funcname(x)
 
    if !cnv:C_double(x) then
@@ -17,9 +16,8 @@ function funcname(x)
    body {
       double y;
       pre		/* Pre math-operation range checking */
-      errno = 0;
       y = ccode(x);
-      post		/* Post math-operation C library error detection */
+      post             /* Post math-operation C library error detection */
       return C_double y;
       }
 end
@@ -28,21 +26,19 @@ end
 
 #define aroundone if (x < -1.0 || x > 1.0) {Drunerr(205, x);}
 #define positive  if (x < 0)               {Drunerr(205, x);}
+#define finite    if (!isfinite(y)) runerr(204);
 
-#define erange    if (errno == ERANGE)     runerr(204);
-#define edom      if (errno == EDOM)       runerr(205);
-
-MathOp(util_Math_sin, sin,  ", x in radians.", ;, ;)
-MathOp(util_Math_cos, cos,  ", x in radians.", ;, ;)
-MathOp(util_Math_tan, tan,  ", x in radians.", ; , erange)
-MathOp(util_Math_acos,acos, ", x in radians.", aroundone, edom)
-MathOp(util_Math_asin,asin, ", x in radians.", aroundone, edom)
-MathOp(util_Math_exp, exp,  " - e^x.", ; , erange)
-MathOp(util_Math_sqrt,sqrt, " - square root of x.", positive, edom)
+MathOp(util_Math_sin, sin, ;, ;)
+MathOp(util_Math_cos, cos, ;, ;)
+MathOp(util_Math_tan, tan, ;, finite)
+MathOp(util_Math_acos,acos, aroundone, ;)
+MathOp(util_Math_asin,asin, aroundone, ;)
+MathOp(util_Math_exp, exp, ; , finite)
+MathOp(util_Math_sqrt,sqrt, positive, ;)
 #define DTOR(x) ((x) * Pi / 180)
 #define RTOD(x) ((x) * 180 / Pi)
-MathOp(util_Math_dtor,DTOR, " - convert x from degrees to radians.", ; , ;)
-MathOp(util_Math_rtod,RTOD, " - convert x from radians to degrees.", ; , ;)
+MathOp(util_Math_dtor,DTOR, ;, finite )
+MathOp(util_Math_rtod,RTOD, ;, finite )
 
 
 
@@ -98,8 +94,7 @@ function util_Math_log(x,b)
             divisor = log(b);
             lastbase = b;
             }
-	 x = log(x) / divisor;
-         return C_double x;
+         return C_double log(x) / divisor;
          }  
       }
 end

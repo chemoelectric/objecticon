@@ -31,6 +31,8 @@ operator icon_op func_name(x, y)
           if (!cnv:C_double(y, dy))
               runerr(102, y);
           c_op(dx, dy, dresult);
+          if (!isfinite(dresult))
+              runerr(204);
           return C_double dresult;
       }
    }
@@ -51,7 +53,7 @@ end
 #begdef RealDivide(x,y,result)
 {
    if (y == 0.0)
-      runerr(204);
+      runerr(201);
    result = x / y;
 }
 #enddef
@@ -78,7 +80,7 @@ ArithOp( - , minus , sub, IntSub , RealSub)
 #begdef RealMod(x,y,result)
 {
    if (y == 0.0)
-      runerr(204);
+      runerr(202);
    result = fmod(x, y);
    /* result must have the same sign as x */
    if (x < 0.0) {
@@ -184,11 +186,15 @@ operator ^ power(x, y)
       if !cnv:C_double(y) then
 	 runerr(102, y)
       body {
+         double r;
 	 if (x == 0.0 && y < 0.0)
-	     runerr(204);
+	     runerr(201);
 	 if (x < 0.0)
 	    runerr(206);
-	 return C_double pow(x,y);
+         r = pow(x,y);
+         if (!isfinite(r))
+             runerr(204);
+         return C_double r;
 	 }
       }
 end

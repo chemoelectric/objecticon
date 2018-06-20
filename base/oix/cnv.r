@@ -660,8 +660,8 @@ static int numeric_via_string(dptr src, dptr result)
    ssreserve(&buf, StrLen(str) + 1);
    memcpy(buf.s, StrLoc(str), StrLen(str));
    buf.s[StrLen(str)] = 0;
-   d = oi_strtod(buf.s, &ep);
-   if (over_flow)
+   d = strtod(buf.s, &ep);
+   if (!isfinite(d))
        return 0;
 
    /*
