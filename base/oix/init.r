@@ -664,48 +664,71 @@ static void initprogstate(struct progstate *p)
     p->GeneralInvokef = general_invokef_0;
 }
 
+#define Relocate(w) w += p->Offset
+
 static void initptrs(struct progstate *p, struct header *h)
 {
     p->IcodeSize = h->IcodeSize;
     p->Offset = DiffPtrsBytes(p->Code, h->Base);
-    p->Ecode = (char *)(p->Code + h->ClassStatics);
-    p->ClassStatics = (dptr)(p->Ecode);
-    p->ClassMethods = p->EClassStatics = (dptr)(p->Code + h->ClassMethods);
-    p->EClassMethods = (dptr)(p->Code + h->ClassFields);
-    p->ClassFields = (struct class_field *)(p->EClassMethods);
-    p->EClassFields = (struct class_field *)(p->Code + h->ClassFieldLocs);
-    p->ClassFieldLocs = (struct loc *)(p->EClassFields);
-    p->EClassFieldLocs = (struct loc *)(p->Code + h->Classes);
-    p->Classes = (word *)(p->EClassFieldLocs);
-    p->Records = (word *)(p->Code + h->Records);
-    p->Fnames  = (dptr *)(p->Code + h->Fnames);
-    p->Efnames = (dptr *)(p->Code + h->Globals);
+    if (p->Offset) {
+        Relocate(h->ClassStatics);
+        Relocate(h->ClassMethods);
+        Relocate(h->ClassFields);
+        Relocate(h->ClassFieldLocs);
+        Relocate(h->Classes);
+        Relocate(h->Records);
+        Relocate(h->Fnames);
+        Relocate(h->Globals);
+        Relocate(h->Gnames);
+        Relocate(h->Gflags);
+        Relocate(h->Glocs);
+        Relocate(h->Statics);
+        Relocate(h->Snames);
+        Relocate(h->TCaseTables);
+        Relocate(h->Constants);
+        Relocate(h->Strcons);
+        Relocate(h->AsciiStrcons);
+        Relocate(h->Filenms);
+        Relocate(h->Linenums);
+    }
+    p->Ecode = (char *)h->ClassStatics;
+    p->ClassStatics = (dptr)p->Ecode;
+    p->ClassMethods = p->EClassStatics = (dptr)h->ClassMethods;
+    p->EClassMethods = (dptr)h->ClassFields;
+    p->ClassFields = (struct class_field *)p->EClassMethods;
+    p->EClassFields = (struct class_field *)h->ClassFieldLocs;
+    p->ClassFieldLocs = (struct loc *)p->EClassFields;
+    p->EClassFieldLocs = (struct loc *)h->Classes;
+    p->Classes = (word *)p->EClassFieldLocs;
+    p->Records = (word *)h->Records;
+    p->Fnames  = (dptr *)h->Fnames;
+    p->Efnames = (dptr *)h->Globals;
     p->Globals = (dptr)p->Efnames;
-    p->Eglobals = (dptr)(p->Code + h->Gnames);
+    p->Eglobals = (dptr)h->Gnames;
     p->Gnames = (dptr *)p->Eglobals;
-    p->Egnames = (dptr *)(p->Code + h->Gflags);
+    p->Egnames = (dptr *)h->Gflags;
     p->Gflags = (char *)p->Egnames;
-    p->Egflags = (char *)(p->Code + h->Glocs);
-    p->Glocs = (struct loc *)(p->Egflags);
-    p->Eglocs = (struct loc *)(p->Code + h->Statics);
+    p->Egflags = (char *)h->Glocs;
+    p->Glocs = (struct loc *)p->Egflags;
+    p->Eglocs = (struct loc *)h->Statics;
     p->NGlobals = p->Eglobals - p->Globals;
-    p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->Snames);
+    p->Statics = (dptr)p->Eglocs;
+    p->Estatics = (dptr)h->Snames;
     p->NStatics = p->Estatics - p->Statics;
     p->Snames = (dptr *)p->Estatics;
-    p->Esnames = (dptr *)(p->Code + h->TCaseTables);
-    p->TCaseTables = (dptr)(p->Esnames);
-    p->ETCaseTables = (dptr)(p->Code + h->Filenms);
+    p->Esnames = (dptr *)h->TCaseTables;
+    p->TCaseTables = (dptr)p->Esnames;
+    p->ETCaseTables = (dptr)h->Filenms;
     p->NTCaseTables = p->ETCaseTables - p->TCaseTables;
-    p->Filenms = (struct ipc_fname *)(p->ETCaseTables);
-    p->Efilenms = (struct ipc_fname *)(p->Code + h->Linenums);
-    p->Ilines = (struct ipc_line *)(p->Efilenms);
-    p->Elines = (struct ipc_line *)(p->Code + h->Constants);
-    p->Constants = (dptr)(p->Elines);
-    p->Econstants = (dptr)(p->Code + h->Strcons);
+    p->Filenms = (struct ipc_fname *)p->ETCaseTables;
+    p->Efilenms = (struct ipc_fname *)h->Linenums;
+    p->Ilines = (struct ipc_line *)p->Efilenms;
+    p->Elines = (struct ipc_line *)h->Constants;
+    p->Constants = (dptr)p->Elines;
+    p->Econstants = (dptr)h->Strcons;
     p->NConstants = p->Econstants - p->Constants;
-    p->Strcons = (char *)(p->Econstants);
-    p->AsciiStrcons = (char *)(p->Code + h->AsciiStrcons);
+    p->Strcons = (char *)p->Econstants;
+    p->AsciiStrcons = (char *)h->AsciiStrcons;
     p->Estrcons = (char *)(p->Code + h->IcodeSize);
 }
 
@@ -873,6 +896,7 @@ static struct c_proc *native_methods[] = {
 #undef NativeDef
 };
 
+#undef Relocate
 #define Relocate(ptr) ptr = (void *)((char *)(ptr) + p->Offset)
 
 /*
