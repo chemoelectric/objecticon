@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io
+import io, util(Math), ipl.test
 
 procedure main()
    write("This test of floating-point arithmetic is likely to show")
@@ -14,6 +14,7 @@ procedure main()
    p4()
    p5()
    p6()
+   p7()
 end
 
 procedure p4()
@@ -159,6 +160,24 @@ procedure p6()
    write("36. ^ 9. ----> ",Image(36. ^ 9.) | "none")
    write("-36. ^ 9 ----> ",Image(-36. ^ 9) | "none")
    write("-36. ^ -9 ----> ",Image(-36. ^ -9) | "none")
+end
+
+procedure p7()
+   local d1, d2 
+   d1 := 1e300
+   d2 := 1e-300
+   try{ "d1*d1", d1*d1 }
+   try{ "d1/d2", d1/d2 }
+   try{ "d1^2", d1^2 }
+   try{ "d1^2.0", d1^2.0 }
+   try{ "2^d1", 2^d1 }
+   try{ "2.0^d1", 2.0^d1 }
+   try{ "0^-1", 0^-1 }
+   try{ "0.0^-1", 0.0^-1 }
+   try{ "0.0^-1.0", 0.0^-1.0 }
+   try{ "0^-1.0", 0^-1.0 }
+   try{ "Math.exp(100000)", Math.exp(100000) }
+   try{ "Math.log(0)", Math.log(0) }
 end
 
 procedure Image(x)
