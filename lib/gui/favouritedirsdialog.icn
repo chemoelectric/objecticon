@@ -117,7 +117,9 @@ class FavouriteDirectoriesDialog(Dialog)
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, 0, 0, 0).
                             set_x_align(Align.L))
-      directory_field.set_directories_only(&yes)
+      directory_field.
+         set_directories_only(&yes).
+         set_select_using_enter(&yes)
       update_grey()
    end
 
@@ -181,7 +183,7 @@ class FavouriteDirectoriesDialog(Dialog)
       msg()
    end
 
-   private on_apply_button(ev)
+   private on_apply_button()
       etc.set_lines([[if application_check_box.is_checked() then &null else application_field.get_contents(), 
                       FilePath(directory_field.get_contents()).canonical().ucs()]], 
                     etc.get_selections()[1])
@@ -198,9 +200,7 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private on_directory_field(ev)
-      # Only act on a return if there is no suggestion list showing.
-      if /directory_field.popup then
-         on_apply_button(ev)
+      directory_field.was_applied(ev) | on_apply_button()
    end
 
    private on_down_button(ev)

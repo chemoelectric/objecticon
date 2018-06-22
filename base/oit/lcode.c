@@ -1429,7 +1429,7 @@ static void genclasses(void)
     word x;
 
     align();
-    hdr.ClassStatics = pc;
+    hdr.ClassStatics = hdr.Base + pc;
 
     /*
      * Output descriptors for class static variables.  Each gets a
@@ -1456,7 +1456,7 @@ static void genclasses(void)
     }
 
     align();
-    hdr.ClassMethods = pc;
+    hdr.ClassMethods = hdr.Base + pc;
 
     /*
      * Output descriptors for class methods :-
@@ -1490,7 +1490,7 @@ static void genclasses(void)
 
 
     align();
-    hdr.ClassFields = pc;
+    hdr.ClassFields = hdr.Base + pc;
 
     /* 
      * Firstly work out the "address" each class will have, so we can forward
@@ -1534,7 +1534,7 @@ static void genclasses(void)
     }
 
     align();
-    hdr.ClassFieldLocs = pc;
+    hdr.ClassFieldLocs = hdr.Base + pc;
     if (Dflag)
         fprintf(dbgfile, "\n# class field location table\n");
     if (loclevel > 1) {
@@ -1548,7 +1548,7 @@ static void genclasses(void)
     }
 
     align();
-    hdr.Classes = pc;
+    hdr.Classes = hdr.Base + pc;
 
     if (Dflag)
         fprintf(dbgfile, "\n");
@@ -1604,7 +1604,7 @@ static void gentables()
      * Output record constructor procedure blocks.
      */
     align();
-    hdr.Records = pc;
+    hdr.Records = hdr.Base + pc;
 
     if (Dflag)
         fprintf(dbgfile, "\n");
@@ -1695,7 +1695,7 @@ static void gentables()
     align();
     if (Dflag)
         fprintf(dbgfile, "\n# Field names table\n");
-    hdr.Fnames = pc;
+    hdr.Fnames = hdr.Base + pc;
     for (fp = lffirst; fp; fp = fp->next) {
         ce = inst_sdescrip(fp->name);
         outdptr(ce, "Field %s", fp->name);
@@ -1704,7 +1704,7 @@ static void gentables()
     /*
      * Output global variable descriptors.
      */
-    hdr.Globals = pc;
+    hdr.Globals = hdr.Base + pc;
     if (Dflag)
         fprintf(dbgfile, "\n# Global variable descriptors\n");
     for (gp = lgfirst; gp; gp = gp->g_next) {
@@ -1735,7 +1735,7 @@ static void gentables()
      */
     if (Dflag)
         fprintf(dbgfile, "\n# Global variable names\n");
-    hdr.Gnames = pc;
+    hdr.Gnames = hdr.Base + pc;
     for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
         ce = inst_sdescrip(gp->name);
         outdptr(ce, "%s", gp->name);
@@ -1746,7 +1746,7 @@ static void gentables()
      */
     if (Dflag)
         fprintf(dbgfile, "\n# Global variable flags\n");
-    hdr.Gflags = pc;
+    hdr.Gflags = hdr.Base + pc;
     for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
         char f = 0;
         if (gp->g_flag & F_Package)
@@ -1766,7 +1766,7 @@ static void gentables()
      */
     if (Dflag)
         fprintf(dbgfile, "\n# Global variable locations\n");
-    hdr.Glocs = pc;
+    hdr.Glocs = hdr.Base + pc;
     if (loclevel > 1) {
         for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
             if (gp->g_flag & F_Builtin) {
@@ -1785,7 +1785,7 @@ static void gentables()
      */
     if (Dflag)
         fprintf(dbgfile, "\n# Static variable null descriptors\n");
-    hdr.Statics = pc;
+    hdr.Statics = hdr.Base + pc;
     for (i = 0; i < nstatics; ++i) {
         outwordx(D_Null, "D_Null");
         outwordx(0, "");
@@ -1796,7 +1796,7 @@ static void gentables()
      */
     if (Dflag)
         fprintf(dbgfile, "\n# Static variable names\n");
-    hdr.Snames = pc;
+    hdr.Snames = hdr.Base + pc;
     for (gp = lgfirst; gp; gp = gp->g_next) {
         if (gp->func)
             genstaticnames(gp->func);
@@ -1814,7 +1814,7 @@ static void gentables()
      */
     if (Dflag)
         fprintf(dbgfile, "\n# TCase table null descriptors\n");
-    hdr.TCaseTables = pc;
+    hdr.TCaseTables = hdr.Base + pc;
     for (i = 0; i < ntcase; ++i) {
         outwordx(D_Null, "D_Null");
         outwordx(0, "");
@@ -1822,7 +1822,7 @@ static void gentables()
 
     if (Dflag)
         fprintf(dbgfile, "\n# File names table\n");
-    hdr.Filenms = pc;
+    hdr.Filenms = hdr.Base + pc;
     for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
         ce = inst_sdescrip(fnptr->fname);
         outwordx(fnptr->ipc, "IPC");
@@ -1831,7 +1831,7 @@ static void gentables()
 
     if (Dflag)
         fprintf(dbgfile, "\n# Line number table\n");
-    hdr.Linenums = pc;
+    hdr.Linenums = hdr.Base + pc;
     for (lnptr = lntable; lnptr < lnfree; lnptr++) {
         outwordx(lnptr->ipc, "IPC");
         outwordx(lnptr->line, "   Line %d", lnptr->line);        
@@ -1875,7 +1875,7 @@ static void gentables()
 
     if (Dflag)
         fprintf(dbgfile, "\n# Constant descriptors\n");
-    hdr.Constants = pc;
+    hdr.Constants = hdr.Base + pc;
     i = 0;
     for (ce = const_desc_first; ce; ce = ce->d_next) {
         if (Dflag)
@@ -1906,7 +1906,7 @@ static void gentables()
             quit("Unknown constant type");
     }
 
-    hdr.Strcons = pc;
+    hdr.Strcons = hdr.Base + pc;
     hdr.AsciiStrcons = hdr.Strcons + ascii_offset;
 
     do_relocations();
@@ -1944,6 +1944,12 @@ static void gentables()
             pc += sp->len;
         }
     }
+
+    /*
+     * Check for wraparound
+     */
+    if ((uword)(hdr.Base + pc) < (uword)hdr.Base)
+        quit("Code size too big for selected base address");
 
     /*
      * Output icode file header.
@@ -2641,12 +2647,12 @@ static void do_relocations()
         fprintf(dbgfile, "\n# Relocations\n");
     for (r = relocation_list; r; r = r->next) {
         switch (r->kind) {
-            case NTH_STATIC: w = hdr.Base + hdr.Statics + r->param * 2 * WordSize; break;
-            case NTH_GLOBAL: w = hdr.Base + hdr.Globals + r->param * 2 * WordSize; break;
-            case NTH_CONST: w = hdr.Base + hdr.Constants + r->param * 2 * WordSize; break;
-            case NTH_TCASE: w = hdr.Base + hdr.TCaseTables + r->param * 2 * WordSize; break;
-            case NTH_FIELDINFO: w = hdr.Base + hdr.ClassFields + r->param * 4 * WordSize; break;
-            case STRCONS_OFFSET: w = hdr.Base + hdr.Strcons + r->param ; break;
+            case NTH_STATIC: w = hdr.Statics + r->param * 2 * WordSize; break;
+            case NTH_GLOBAL: w = hdr.Globals + r->param * 2 * WordSize; break;
+            case NTH_CONST: w = hdr.Constants + r->param * 2 * WordSize; break;
+            case NTH_TCASE: w = hdr.TCaseTables + r->param * 2 * WordSize; break;
+            case NTH_FIELDINFO: w = hdr.ClassFields + r->param * 4 * WordSize; break;
+            case STRCONS_OFFSET: w = hdr.Strcons + r->param ; break;
             default:
                 quit("do_relocations: Unknown kind");
         }

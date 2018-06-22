@@ -1501,10 +1501,8 @@ class PathTab(TabItem)
       update_grey()
    end
 
-   public on_path()
-      # Only act on a return if there is no suggestion list showing.
-      if /path.popup then
-         on_apply()
+   public on_path(ev)
+      path.was_applied(ev) | on_apply()
    end
 
    public on_apply()
@@ -1577,6 +1575,7 @@ class PathTab(TabItem)
 
       path := FileSuggestField().
          set_directories_only(&yes).
+         set_select_using_enter(&yes).
          set_size(scale(150)).
          set_contents(u"").
          connect(self.on_path, Event.ACTION)
