@@ -465,6 +465,7 @@ class FileSuggestField(SuggestField)
    public new()
       SuggestField.new()
       self.set_contents(u"")
+      set_select_using_enter(&yes)
       set_direction(Direction.DOWN)
       return
    end

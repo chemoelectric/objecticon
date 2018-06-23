@@ -43,7 +43,6 @@ package class EditListField(FileSuggestField)
    public new()
       FileSuggestField.new()
       set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
-      set_select_using_enter(&yes)
       return
    end
 end

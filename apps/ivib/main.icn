@@ -1575,7 +1575,6 @@ class PathTab(TabItem)
 
       path := FileSuggestField().
          set_directories_only(&yes).
-         set_select_using_enter(&yes).
          set_size(scale(150)).
          set_contents(u"").
          connect(self.on_path, Event.ACTION)
