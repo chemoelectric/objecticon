@@ -717,8 +717,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    public handle_exit(e)
       if \self.motion_cursor_flag then {
-         # We don't move the motion cursor on a drag
-         parent_dialog.get_held_count() = 0 | fail
+         # We don't move the motion cursor on a drag.  Also, we
+         # don't change the cursor from null on an exit.
+         (\cursor & parent_dialog.get_held_count() = 0) | fail
          start_handle(e)
          self.cursor := get_nearest_line_to_pointer(e)
          ensure_line_visible(self.cursor)
