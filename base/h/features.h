@@ -39,7 +39,7 @@
    Feature("_PIPES", "pipes")
    Feature("_SYSTEM_FUNCTION", "system function")
 
-#if HAVE_LIBDL
+#if HAVE_LIBDL || MSWIN32
    Feature("_DYNAMIC_LOADING", "dynamic loading")
 #endif
 
