@@ -9,6 +9,7 @@
 static struct SharedCursor *null_cursor;
 static wcp alccontext(wbp w);
 static void init_window_system(void);
+static void note_skip(wsp ws);
 static void setup_cursors(void);
 static int inited;
 static void open_screen_win(wsp ws);
@@ -335,6 +336,8 @@ static void synch_state(wsp ws, int new_state)
 {
     if (ws->state != new_state) {
         ws->state = new_state;
+        if (new_state == NormalCanvas || new_state == MaximizedCanvas)
+            note_skip(ws);
         qeventcode(ws, WINDOWSTATE);
     }
 }
@@ -452,7 +455,7 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     POINT p;
     int state, dir, num, delta, fl;
 
-    if (mouse_debug) dbg("handle_mouse_wheel() grabwin=%p\n", grabwin);
+    if (mouse_debug) dbg("handle_mouse_wheel(%x)\n", ws->win);
 
     /* Wheel events aren't redirected to the captured window, so if a grab is
      * in progress they have to be redirected manually. 
@@ -506,7 +509,7 @@ static void dbg(char *fmt, ...)
 
 static void capture_mouse(wsp ws)
 {
-    if (mouse_debug) dbg("capture_mouse() capturecount=%d\n", ws->capturecount);
+    if (mouse_debug) dbg("capture_mouse(%x) capturecount=%d\n", ws->win, ws->capturecount);
     if (ws->capturecount == 0) {
         ws->savedcapture = SetCapture(ws->win);
         if (mouse_debug) dbg("SetCapture, savedcapture=%x ourselves=%x\n", ws->savedcapture, ws->win);
@@ -517,7 +520,7 @@ static void capture_mouse(wsp ws)
 
 static void uncapture_mouse(wsp ws)
 {
-    if (mouse_debug) dbg("uncapture_mouse() capturecount=%d\n", ws->capturecount);
+    if (mouse_debug) dbg("uncapture_mouse(%x) capturecount=%d\n", ws->win, ws->capturecount);
     if (ws->capturecount > 0) {
         --ws->capturecount;
         if (ws->capturecount == 0) {
@@ -537,7 +540,7 @@ static void uncapture_mouse(wsp ws)
  */
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    if (mouse_debug) dbg("handle_capture_changed(), resetting capturecount to 0\n");
+    if (mouse_debug) dbg("handle_capture_changed(%x), resetting capturecount to 0\n", ws->win);
     ws->savedcapture = 0;
     ws->capturecount = 0;
 }
@@ -556,7 +559,7 @@ static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     LONG t;
     struct descrip d;
-    if (mouse_debug) dbg("handle_mouse_leave()\n");
+    if (mouse_debug) dbg("handle_mouse_leave(%x)\n", ws->win);
     t = GetMessageTime();
     MakeInt(MOUSEEXITED, &d);
     qevent(ws, &d, 0, 0, t, 0);
@@ -568,7 +571,7 @@ static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     LONG t;
     int x, y;
     struct descrip d;
-    if (mouse_debug) dbg("handle_mouse_enter()\n");
+    if (mouse_debug) dbg("handle_mouse_enter(%x)\n", ws->win);
     x = GET_X_LPARAM(lp);
     y = GET_Y_LPARAM(lp);
     t = GetMessageTime();
@@ -578,25 +581,33 @@ static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    if (mouse_debug) dbg("handle_mouse_move()\n");
+    int x, y;
+    x = GET_X_LPARAM(lp);
+    y = GET_Y_LPARAM(lp);
+    if (mouse_debug) dbg("handle_mouse_move(%x) skipped=%d\n", ws->win,
+                                    (x == ws->skipx && y == ws->skipy));
     if (!ws->trackingmouse) {
         handle_mouse_enter(ws, msg, wp, lp);
         track_mouse(ws);
         synch_cursor(ws);
     }
-    handle_mouse(ws, msg, wp, lp);
+    if (x != ws->skipx || y != ws->skipy) {
+        handle_mouse(ws, msg, wp, lp);
+        ws->skipx = x;
+        ws->skipy = y;
+    }
 }
 
 static void handle_mouse_up(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    if (mouse_debug) dbg("handle_mouse_up()\n");
+    if (mouse_debug) dbg("handle_mouse_up(%x)\n", ws->win);
     uncapture_mouse(ws);
     handle_mouse(ws, msg, wp, lp);
 }
 
 static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    if (mouse_debug) dbg("handle_mouse_down()\n");
+    if (mouse_debug) dbg("handle_mouse_down(%x)\n", ws->win);
     capture_mouse(ws);
     handle_mouse(ws, msg, wp, lp);
 }
@@ -831,6 +842,15 @@ static void init_geom(wsp ws)
     synch_size(ws, r.right - r.left, r.bottom - r.top);
 }
 
+static void note_skip(wsp ws)
+{
+    POINT p;
+    GetCursorPos(&p);
+    ScreenToClient(ws->win, &p);
+    ws->skipx = p.x;
+    ws->skipy = p.y;
+}
+
 static void open_screen_win(wsp ws)
 {
     switch (ws->state) {
@@ -888,6 +908,7 @@ static void open_screen_win(wsp ws)
         }
     }
 
+    note_skip(ws);
     init_geom(ws);
 
     GLink4(ws, vwstates, vnext, vprevious);
@@ -1478,6 +1499,7 @@ int grabpointer(wbp w)
     CheckUnhidden(ws);
     capture_mouse(ws);
     grabwin = ws;
+    note_skip(ws);
     return Succeeded;
 }
 
@@ -1786,7 +1808,8 @@ static void synch_cursor(wsp ws)
         /* Keep track of what we set, in case we need to destroy this cursor. */
         using_cursor = ws->cursor->shared_cursor->cursor;
         SetCursor(using_cursor);
-        if (cursor_debug) dbg("synch_cursor to %s, SetCursor(%p)\n", ws->cursor->name, using_cursor);
+        if (cursor_debug) dbg("synch_cursor(%x) to %s, SetCursor(%p)\n", 
+                              ws->win, ws->cursor->name, using_cursor);
     }
 }
 

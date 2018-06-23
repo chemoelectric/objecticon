@@ -399,6 +399,7 @@ typedef struct _wstate {
   HWND          savedcapture;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
   int           capturecount;           /* Set if SetCapture in use */
+  int           skipx, skipy;           /* For skipping spurious mouse move events */
 #endif
 } wstate, *wsp;
 
