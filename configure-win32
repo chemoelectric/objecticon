@@ -69,6 +69,7 @@ set OI_LIB=%OI_HOME%\lib
 set OI_PATH=%OI_LIB%\main;%OI_LIB%\gui;%OI_LIB%\xml;%OI_LIB%\parser;%OI_LIB%\ipl
 set OI_INCL=%OI_LIB%\incl
 set OI_NATIVE=%OI_LIB%\native
+set OIX=
 set PATH=%OI_BIN%;%PATH%
 EOF
 echo creating paths.sh
@@ -80,6 +81,7 @@ export OI_LIB="\$OI_HOME\\\\lib"
 export OI_PATH="\$OI_LIB\\\\main;\$OI_LIB\\\\gui;\$OI_LIB\\\\xml;\$OI_LIB\\\\parser;\$OI_LIB\\\\ipl"
 export OI_INCL="\$OI_LIB\\\\incl"
 export OI_NATIVE="\$OI_LIB\\\\native"
+unset OIX
 PATH="$x/bin:\$PATH"
 export TRACE
 EOF

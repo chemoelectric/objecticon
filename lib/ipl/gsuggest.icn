@@ -90,6 +90,7 @@ class GoogleSuggestField(GSuggestField)
    public new()
       GSuggestField.new()
       set_lang("en")
+      set_select_using_enter(&no)
       return
    end
 end

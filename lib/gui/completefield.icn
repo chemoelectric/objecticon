@@ -78,7 +78,6 @@ abstract class CompleteField(SuggestField)
 
    public new()
       SuggestField.new()
-      set_select_using_enter(&yes)
       set_popup_on_tab(&yes)
       return
    end
