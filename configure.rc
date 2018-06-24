@@ -33,6 +33,7 @@ OI_LIB=$$OI_HOME/lib
 OI_PATH=($$OI_LIB/main $$OI_LIB/gui $$OI_LIB/xml $$OI_LIB/parser $$OI_LIB/ipl)
 OI_INCL=($$OI_LIB/incl)
 OI_FONTINFO=$$OI_HOME/fontinfo.txt
+OIX=() ; rm /env/OIX
 bind -b $$OI_BIN /bin 
 EOF
 echo creating paths.sh
@@ -44,6 +45,7 @@ export OI_LIB="$$OI_HOME/lib"
 export OI_PATH="$$OI_LIB/main $$OI_LIB/gui $$OI_LIB/xml $$OI_LIB/parser $$OI_LIB/ipl"
 export OI_INCL="$$OI_LIB/incl"
 export OI_FONTINFO="$$OI_HOME/fontinfo.txt"
+unset OIX
 PATH="$$OI_BIN:$$PATH"
 EOF
 echo creating base/h/version.h
