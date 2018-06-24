@@ -63,7 +63,7 @@ abstract class SuggestField(TextField, MenuMode)
 
    #
    # If set, the enter key is used to select from the list, rather than items being selected
-   # using the cursor keys.
+   # using the cursor keys.  Default is yes.
    #
    public set_select_using_enter(s)
       self.select_using_enter_flag := need_flag(s)
@@ -441,8 +441,8 @@ abstract class SuggestField(TextField, MenuMode)
       TextField.new()
       connect(on_change, Event.CONTENT_CHANGED)
       req := Dispatcher.new_task{requests()}
-      self.direction := Direction.BEST
-      self.forward_home_end_flag := &yes
+      direction := Direction.BEST
+      forward_home_end_flag := select_using_enter_flag := &yes
       return
    end
 end
