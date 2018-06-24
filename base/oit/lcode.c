@@ -2492,9 +2492,9 @@ static void writescript()
     char script[2048];
     sprintf(script,
             "#!/bin/rc\n"
-            "if(~ $#OIX 0) OIX=oix\n"
-            "exec $OIX $0 $*\n"
-            "exit 'oix not found'\n"
+            "if(~ $#OIX 0) exec oix $0 $*\n"
+            "if not exec $OIX $0 $*\n"
+            "exit 'interpreter not found'\n"
             IcodeDelim "\n");
     scriptsize = strlen(script);
     /* write header */
