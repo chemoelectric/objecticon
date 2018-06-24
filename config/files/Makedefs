@@ -34,6 +34,7 @@ export OI_PATH:=$(OI_LIB)/main:$(OI_LIB)/gui:$(OI_LIB)/xml:$(OI_LIB)/parser:$(OI
 export OI_INCL:=$(OI_LIB)/incl
 export OI_NATIVE:=$(OI_LIB)/native
 export PATH:=$(OI_BIN):$(PATH)
+undefine OIX
 
 %.u: %.icn
 	oit -c -s $<
