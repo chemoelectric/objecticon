@@ -2,7 +2,7 @@
 
 . ../paths.sh
 
-unset TRACE OI_MAX_LEVEL
+unset OIX TRACE OI_MAX_LEVEL
 
 [ -f custom.sh ] && . ./custom.sh
 
