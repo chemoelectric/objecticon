@@ -9,6 +9,8 @@ OI_INCL=$OI_LIB/incl
 OI_FONTINFO=$OI_HOME/fontinfo.txt
 path=$OI_BIN /bin
 OIX=
+TRACE=
+OI_MAX_LEVEL=
 
 %.$O:	%.c
 	$CC $CFLAGS $stem.c

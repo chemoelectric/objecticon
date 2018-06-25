@@ -18,6 +18,8 @@ export OI_INCL:=$(OI_LIB)\incl
 export OI_NATIVE:=$(OI_LIB)\native
 export PATH:=@CONFIG_DIR@/bin:$(PATH)
 undefine OIX
+undefine TRACE
+undefine OI_MAX_LEVEL
 
 %.obj: %.c
 	cl $(CFLAGS) /c $<

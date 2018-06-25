@@ -35,6 +35,8 @@ export OI_INCL:=$(OI_LIB)/incl
 export OI_NATIVE:=$(OI_LIB)/native
 export PATH:=$(OI_BIN):$(PATH)
 undefine OIX
+undefine TRACE
+undefine OI_MAX_LEVEL
 
 %.u: %.icn
 	oit -c -s $<
