@@ -520,6 +520,10 @@ final class Window(NoCopy, ObjectOutput)
 
    private native get_clip_impl()
 
+   public native hold()
+
+   public native restore()
+
    # Return the size of the window as a `Size` record.
    #
    public get_size()

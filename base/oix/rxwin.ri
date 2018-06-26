@@ -314,6 +314,21 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
     return rv;
 }
 
+void hold(wbp w)
+{
+    wsp ws = w->window;
+    ws->holding = 1;
+    ws->holdx = ws->holdy = ws->holdwidth = ws->holdheight = 0;
+}
+
+void restore(wbp w)
+{
+    wsp ws = w->window;
+    ws->holding = 0;
+    synch_pix_and_win(ws,
+                      ws->holdx, ws->holdy, ws->holdwidth, ws->holdheight);
+}
+
 int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
 {
     wsp ws = w->window;
@@ -1502,7 +1517,7 @@ static void clip(wbp w)
         XRenderSetPictureClipRectangles(wd->display,
                                         ws->ppic,
                                         0, 0, &rec, 1);
-        if (ws->wpic)
+        if (ws->wpic && !ws->holding)
             XRenderSetPictureClipRectangles(wd->display,
                                              ws->wpic,
                                              0, 0, &rec, 1);
@@ -1519,7 +1534,7 @@ static void no_clip(wsp ws, int and_win)
                          ws->ppic,
                          CPClipMask,
                          &attr);
-    if (and_win && ws->wpic)
+    if (and_win && ws->wpic && !ws->holding)
         XRenderChangePicture(wd->display,
                              ws->wpic,
                              CPClipMask,
@@ -1782,7 +1797,7 @@ int setfont(wbp w, char *s)
 
 void synch_pix_and_win(wsp ws, int x, int y, int w, int h)
 {
-    if (ws->win) {
+    if (ws->win && !ws->holding) {
         no_clip(ws, 1);
         pix_to_win(ws, x, y, w, h);
     }
@@ -1791,9 +1806,14 @@ void synch_pix_and_win(wsp ws, int x, int y, int w, int h)
 static void pix_to_win(wsp ws, int x, int y, int w, int h)
 {
     wdp wd = ws->display;
-    if (ws->win)
-        XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
-                         x, y, 0, 0, x, y, w, h);
+    if (ws->win) {
+        if (ws->holding)
+            unionrect(&ws->holdx, &ws->holdy, &ws->holdwidth, &ws->holdheight,
+                      x, y, w, h);
+        else
+            XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
+                             x, y, 0, 0, x, y, w, h);
+    }
 }
 
 /*

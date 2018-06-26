@@ -422,6 +422,22 @@ function graphics_Window_pending(self, argv[argc])
    }
 end
 
+function graphics_Window_hold(self)
+   body {
+      GetSelfW();
+      hold(self_w);
+      return self;
+   }
+end
+
+function graphics_Window_restore(self)
+   body {
+      GetSelfW();
+      restore(self_w);
+      return self;
+   }
+end
+
 function graphics_Window_fill_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
       double x, y, rx, ry, a1, a2;
