@@ -64,7 +64,7 @@ static void pat1(wbp w, int x, int y, int width, int height);
 static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
 static Picture get_draw_picture(wcp wc);
-static void pix_to_win(wsp ws, int x, int y, int w, int h);
+static void pix_to_win(wbp w, int x, int y, int width, int height);
 static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
 static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
@@ -1795,24 +1795,77 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
+static void add_holding_rect(wbp w, int x, int y, int width, int height)
+{
+    int ux, uy, uw, uh;
+    wcp wc = w->context;
+    wsp ws = w->window;
+    if (x < 0)  { 
+        width += x; 
+        x = 0; 
+    }
+    if (y < 0)  { 
+        height += y; 
+        y = 0; 
+    }
+    if (x + width > ws->pixwidth)
+        width = ws->pixwidth - x; 
+    if (y + height > ws->pixheight)
+        height = ws->pixheight - y; 
+
+    if (width <= 0 || height <= 0)
+        return;
+
+    if (wc->clipw >= 0) {
+        /* Further reduce the rectangle to the clipping region */
+        if (x < wc->clipx) {
+            width += x - wc->clipx;
+            x = wc->clipx;
+        }
+        if (y < wc->clipy) {
+            height += y - wc->clipy; 
+            y = wc->clipy;
+        }
+        if (x + width > wc->clipx + wc->clipw)
+            width = wc->clipx + wc->clipw - x;
+        if (y + height > wc->clipy + wc->cliph)
+            height = wc->clipy + wc->cliph - y;
+
+        if (width <= 0 || height <= 0)
+            return;
+    }
+
+    ux = Min(ws->holdx, x);
+    uw = Max(ws->holdx + ws->holdwidth, x + width) - ux;
+    uy = Min(ws->holdy, y);
+    uh = Max(ws->holdy + ws->holdheight, y + height) - uy;
+
+    ws->holdx = ux;
+    ws->holdy = uy;
+    ws->holdwidth = uw;
+    ws->holdheight = uh;
+}
+
 void synch_pix_and_win(wsp ws, int x, int y, int w, int h)
 {
+    wdp wd = ws->display;
     if (ws->win && !ws->holding) {
         no_clip(ws, 1);
-        pix_to_win(ws, x, y, w, h);
+        XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
+                         x, y, 0, 0, x, y, w, h);
     }
 }
 
-static void pix_to_win(wsp ws, int x, int y, int w, int h)
+static void pix_to_win(wbp w, int x, int y, int width, int height)
 {
+    wsp ws = w->window;
     wdp wd = ws->display;
     if (ws->win) {
         if (ws->holding)
-            unionrect(&ws->holdx, &ws->holdy, &ws->holdwidth, &ws->holdheight,
-                      x, y, w, h);
+            add_holding_rect(w, x, y, width, height);
         else
             XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
-                             x, y, 0, 0, x, y, w, h);
+                             x, y, 0, 0, x, y, width, height);
     }
 }
 
@@ -2448,7 +2501,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
                                    0, 0, 0,
                                    traps, ntraps);
         free(traps);
-        pix_to_win(ws, cx - rx - 2, cy - ry - 2, 2 * rx + 4, 2 * ry + 4);
+        pix_to_win(w, cx - rx - 2, cy - ry - 2, 2 * rx + 4, 2 * ry + 4);
     }
 }
 
@@ -2780,7 +2833,7 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
         XRenderFreePicture(wd->display, mask);
     } else {
         drawlineinfos_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis, closed);
-        pix_to_win(ws, x, y, width, height);
+        pix_to_win(w, x, y, width, height);
     }
 }
 
@@ -2894,7 +2947,7 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
                                   r, 4);
         }
 
-        pix_to_win(ws, x, y, width, height);
+        pix_to_win(w, x, y, width, height);
     }
 }
 
@@ -2938,7 +2991,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
                                    ws->ppic, 
                                    None, 0, 0, 0, 0,
                                    xpoints, npoints, 0);
-        pix_to_win(ws, x, y, width, height);
+        pix_to_win(w, x, y, width, height);
     }
     free(xpoints);
 }
@@ -2978,7 +3031,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
                                    ws->ppic, 
                                    0, 0, 0,
                                    xtraps, ntraps);
-        pix_to_win(ws, x, y, width, height);
+        pix_to_win(w, x, y, width, height);
     }
     free(xtraps);
 }
@@ -3020,7 +3073,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
                                   ws->ppic, 
                                   0, 0, 0,
                                   xtris, ntris);
-        pix_to_win(ws, x, y, width, height);
+        pix_to_win(w, x, y, width, height);
     }
     free(xtris);
 }
@@ -3039,7 +3092,7 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
                      0,0,          /* mask x,y */
                      x, y,         /* dst x,y */
                      width, height);
-    pix_to_win(ws, x, y, width, height);
+    pix_to_win(w, x, y, width, height);
 }
 
 static void pic2(wbp w, Picture src, int x, int y, int width, int height)
@@ -3056,7 +3109,7 @@ static void pic2(wbp w, Picture src, int x, int y, int width, int height)
                      0,0,          /* mask x,y */
                      x, y,         /* dst x,y */
                      width, height);
-    pix_to_win(ws, x, y, width, height);
+    pix_to_win(w, x, y, width, height);
 }
 
 static void pat1(wbp w, int x, int y, int width, int height)
@@ -3078,7 +3131,7 @@ static void pat1(wbp w, int x, int y, int width, int height)
 static void pat2(wbp w, int x, int y, int width, int height)
 {
     pat1(w, x, y, width, height);
-    pix_to_win(w->window, x, y, width, height);
+    pix_to_win(w, x, y, width, height);
 }
 
 static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, int height)
@@ -3090,7 +3143,7 @@ static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, i
                          ws->ppic,
                          color,
                          x, y, width, height);
-    pix_to_win(ws, x, y, width, height);
+    pix_to_win(w, x, y, width, height);
 }
 
 static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
@@ -3223,7 +3276,7 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2,
                      x3, y3,       /* mask x,y */
                      x2, y2,       /* dst x,y */
                      width, height);
-    pix_to_win(ws2, x2, y2, width, height);
+    pix_to_win(w2, x2, y2, width, height);
     return Succeeded;
 }
 
@@ -3413,7 +3466,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                           (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
                           limit_strlen(StrLen(UcsBlk(*str).utf8)));
     clip(w);
-    pix_to_win(ws, 
+    pix_to_win(w, 
                x, y - wc->font->ascent, 
                textwidth(w, str),
                wc->font->ascent + wc->font->descent);

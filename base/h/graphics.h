@@ -371,6 +371,7 @@ typedef struct _wstate {
   struct descrip listp;		        /* event list for this window */
   struct descrip windowlabel;		/* window label */
   int           mousestate;             /* buttons down after last mouse event */
+  int           holding;
 #if XWindows
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
@@ -387,7 +388,6 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
-  int           holding;
   int           holdx, holdy,
                 holdwidth, holdheight;
 #elif MSWIN32

@@ -195,8 +195,6 @@ char *tocolorstring(int r, int g, int b, int a);
 int pixels_rectargs(struct imgdata *img, dptr argv, word *px, word *py, word *pw, word *ph);
 int pixels_reducerect(struct imgdata *img, word *x, word *y, word *width, word *height);
 
-void unionrect(int *x1, int *y1, int *w1, int *h1, int x2, int y2, int w2, int h2);
-
 struct imgdataformat *parseimgdataformat(char *s);
 void registerimgdataformat(struct imgdataformat *fmt);
 int getlength_1(struct imgdata *imd);

@@ -3132,14 +3132,3 @@ int pixels_reducerect(struct imgdata *img, word *x, word *y, word *width, word *
 
     return 1;
 }
-
-void unionrect(int *x1, int *y1, int *w1, int *h1,
-               int x2, int y2, int w2, int h2)
-{
-    int ux, uy, uw, uh;
-    ux = Min(*x1, x2);
-    uw = Max(*x1 + *w1, x2 + w2) - ux;
-    uy = Min(*y1, y2);
-    uh = Max(*y1 + *h1, y2 + h2) - uy;
-    *x1 = ux; *y1 = uy; *w1 = uw; *h1 = uh;
-}

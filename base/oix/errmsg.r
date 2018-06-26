@@ -67,6 +67,7 @@ struct errtab errtab[] = {
     {152, "Attempt to read/write on closed data"},
     {153, "Invalid pixel format"},
     {154, "Paletted pixel format expected"},
+    {155, "Hold or restore called out of sequence"},
 #endif					/* Graphics */
 
     {169, "Insufficient arguments"},

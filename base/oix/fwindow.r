@@ -425,6 +425,8 @@ end
 function graphics_Window_hold(self)
    body {
       GetSelfW();
+      if (self_w->window->holding)
+          runerr(155);
       hold(self_w);
       return self;
    }
@@ -433,6 +435,8 @@ end
 function graphics_Window_restore(self)
    body {
       GetSelfW();
+      if (!self_w->window->holding)
+          runerr(155);
       restore(self_w);
       return self;
    }
