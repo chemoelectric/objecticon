@@ -377,9 +377,13 @@ static void copy_to(Image *dest, Image *src)
 
 static void add_holding_rect(wbp w, int x, int y, int width, int height)
 {
-    int ux, uy, uw, uh;
+    int ux, uy, uw, uh, bh, bw;
     wcp wc = w->context;
     wsp ws = w->window;
+
+    bw = Dx(ws->pix->r);
+    bh = Dy(ws->pix->r);
+
     if (x < 0)  { 
         width += x; 
         x = 0; 
@@ -388,10 +392,10 @@ static void add_holding_rect(wbp w, int x, int y, int width, int height)
         height += y; 
         y = 0; 
     }
-    if (x + width > ws->width)
-        width = ws->width - x; 
-    if (y + height > ws->height)
-        height = ws->height - y; 
+    if (x + width > bw)
+        width = bw - x; 
+    if (y + height > bh)
+        height = bh - y; 
 
     if (width <= 0 || height <= 0)
         return;
