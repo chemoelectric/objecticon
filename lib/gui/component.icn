@@ -632,13 +632,6 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Return the Icon buffer window of the dialog in which the component resides.
-   #
-   public get_parent_buffer_win()
-      return (\self.parent_dialog).get_buffer_win()
-   end
-
-   #
    # Succeed if this component has the dialog's focus.
    #
    public has_focus()

@@ -274,6 +274,8 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    char *getpointer     (wbp w);
    int  lowerwindow     (wbp w);
    void pollevent       (wbp w);
+   void hold            (wbp w);
+   void restore         (wbp w);
    int  querypointer    (wbp w, int *x, int *y);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);
@@ -330,7 +332,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
    wbp alcwbinding(wdp wd);
    wbp findwbp(wsp ws);
-   void synch_pix_and_win(wsp ws, int x, int y, int w, int h);
+   void unclipped_pix_to_win(wbp w, int x, int y, int width, int height);
 #endif
 
 void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height);

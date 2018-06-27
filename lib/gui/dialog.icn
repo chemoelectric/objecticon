@@ -50,8 +50,6 @@ class Dialog(Component)
    private readable
       # The dialog's window.
       win,
-      # Buffer window for double buffering                 
-      buffer_win,
       # For a popup dialog, this points to the `Dialog` controlling events
       # and other delegated things.  For normal dialogs, it is set to self.
       popup_manager,
@@ -135,10 +133,11 @@ class Dialog(Component)
       rs := invalid_rects
       invalid_rects := &null
 
-      every r := !\rs do {
+      win.hold()
+      every r := !\rs do
          self.invoke_display(r.x, r.y, r.w, r.h)
-         cbwin.copy_to(r.x, r.y, r.w, r.h, win, r.x, r.y)
-      }
+      win.restore()
+
       return self
    end
 
@@ -367,7 +366,7 @@ class Dialog(Component)
       }
       compute_z_order()
       compute_tab_order()
-      cbwin := clone_win_with(buffer_win,
+      cbwin := clone_win_with(win,
                               effective_wattribs)
       every (!children).initially()
    end
@@ -383,7 +382,7 @@ class Dialog(Component)
       t := table()
       every k := WAttrib.DISPLAY | WAttrib.DX | WAttrib.DY do
          t[k] := get_wattrib(k)
-      self.buffer_win := open_win_with(t) | runerr("Couldn't open buffer window: " || &why)
+      self.win := open_win_with(t) | runerr("Couldn't open buffer window: " || &why)
    end
 
    #
@@ -413,27 +412,20 @@ class Dialog(Component)
       if pw := (\owning_dialog).win then
          t[WAttrib.TRANSIENT_FOR] := pw
       /t[WAttrib.CANVAS] := "normal"
-      self.win := open_win_with(t) | runerr("Couldn't open window: " || &why)
-      # Make the buffer the same size as the visible win.
-      self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
+      apply_window_table(win, t) | runerr("Couldn't open window: " || &why)
    end
 
    public close_win()
       local t
-      t := buffer_win.get_references()
+      t := win.get_references()
       if t[1] ~= 1 then
          runerr("Dialog close_win(): canvas reference count not 1")
       if t[2] ~= 1 then
          runerr("Dialog close_win(): context reference count not 1")
       if \remember_size_flag then
          set_size!win.get_size()
-      self.buffer_win.close()
       self.win.close()
-      self.buffer_win := self.win := &null
-   end
-
-   public get_buffer_win()
-      return \self.buffer_win
+      self.win := &null
    end
 
    #
@@ -1328,10 +1320,6 @@ class Dialog(Component)
    end
 
    private resize_win_impl()
-      #
-      # Resize buffer canvas
-      #
-      buffer_win.set_size(win.get_width(), win.get_height())
       resize()
       invalidate()
    end
