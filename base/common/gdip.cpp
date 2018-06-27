@@ -103,9 +103,6 @@ static Brush *get_bg_brush(gb_Draw *d)
     return new SolidBrush(c);
 }
 
-#define Max(x,y)        ((x)>(y)?(x):(y))
-#define Min(x,y)        ((x)<(y)?(x):(y))
-
 static void add_holding_rect(gb_Draw *d, int x, int y, int width, int height)
 {
     int ux, uy, uw, uh, bh, bw;
@@ -155,10 +152,10 @@ static void add_holding_rect(gb_Draw *d, int x, int y, int width, int height)
         *d->holdwidth = width;
         *d->holdheight = height;
     } else {
-        ux = Min(*d->holdx, x);
-        uw = Max(*d->holdx + *d->holdwidth, x + width) - ux;
-        uy = Min(*d->holdy, y);
-        uh = Max(*d->holdy + *d->holdheight, y + height) - uy;
+        ux = min(*d->holdx, x);
+        uw = max(*d->holdx + *d->holdwidth, x + width) - ux;
+        uy = min(*d->holdy, y);
+        uh = max(*d->holdy + *d->holdheight, y + height) - uy;
         *d->holdx = ux;
         *d->holdy = uy;
         *d->holdwidth = uw;
