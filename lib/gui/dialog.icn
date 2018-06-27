@@ -133,10 +133,11 @@ class Dialog(Component)
       rs := invalid_rects
       invalid_rects := &null
 
-      win.hold()
-      every r := !\rs do
+      every r := !\rs do {
+         win.hold()
          self.invoke_display(r.x, r.y, r.w, r.h)
-      win.restore()
+         win.restore()
+      }
 
       return self
    end
