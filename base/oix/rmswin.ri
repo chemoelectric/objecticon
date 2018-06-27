@@ -253,6 +253,13 @@ static void mk_Draw(wbp w, gb_Draw *d)
         d->pattern = 0;
     d->drawop = wc->drawop->i;
     d->linestyle = wc->linestyle->i;
+    d->holding = ws->holding;
+    if (d->holding) {
+        d->holdx = &ws->holdx;
+        d->holdy = &ws->holdy;
+        d->holdwidth = &ws->holdwidth;
+        d->holdheight = &ws->holdheight;
+    }
 }
 
 static void apply_windowlabel(wsp ws)
@@ -637,7 +644,8 @@ static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_paint(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    gb_do_paint(ws->win, ws->pix);
+    if (!ws->holding)
+        gb_do_paint(ws->win, ws->pix);
 }
 
 LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -1821,6 +1829,25 @@ static void synch_cursors(struct wcursor *c)
         if (x->cursor == c)
             synch_cursor(x);
     }
+}
+
+void hold(wbp w)
+{
+    wsp ws = w->window;
+    ws->holding = 1;
+    ws->holdx = ws->holdy = ws->holdwidth = ws->holdheight = 0;
+}
+
+void restore(wbp w)
+{
+    wsp ws = w->window;
+    gb_Draw d;
+    ws->holding = 0;
+    mk_Draw(w, &d);
+    d.clipx = d.clipy = 0;
+    d.clipw = d.cliph = -1;
+    gb_pix_to_win(&d,
+                  ws->holdx, ws->holdy, ws->holdwidth, ws->holdheight);
 }
 
 int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
