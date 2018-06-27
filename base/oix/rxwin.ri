@@ -54,6 +54,7 @@ static int make_mod(unsigned int state);
 static char* property_to_string(wdp wd, Atom target, int number_items, void* data);
 static Atom convert_target(wdp wd, Atom desired_target);
 static void get_atom_descriptor(wdp wd, Atom a, dptr dest);
+static void add_holding_rect(wbp w, int clip, int x, int y, int width, int height);
 static void synch_state(wsp ws);
 static void synch_state1(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
@@ -64,6 +65,7 @@ static void pat1(wbp w, int x, int y, int width, int height);
 static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
 static Picture get_draw_picture(wcp wc);
+static void synch_pix_and_win(wsp ws, int x, int y, int w, int h);
 static void pix_to_win(wbp w, int x, int y, int width, int height);
 static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
@@ -1519,8 +1521,8 @@ static void clip(wbp w)
                                         0, 0, &rec, 1);
         if (ws->wpic && !ws->holding)
             XRenderSetPictureClipRectangles(wd->display,
-                                             ws->wpic,
-                                             0, 0, &rec, 1);
+                                            ws->wpic,
+                                            0, 0, &rec, 1);
     } else
         no_clip(ws, 1);
 }
@@ -1795,11 +1797,12 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
-static void add_holding_rect(wbp w, int x, int y, int width, int height)
+static void add_holding_rect(wbp w, int clip, int x, int y, int width, int height)
 {
     int ux, uy, uw, uh;
     wcp wc = w->context;
     wsp ws = w->window;
+
     if (x < 0)  { 
         width += x; 
         x = 0; 
@@ -1816,7 +1819,7 @@ static void add_holding_rect(wbp w, int x, int y, int width, int height)
     if (width <= 0 || height <= 0)
         return;
 
-    if (wc->clipw >= 0) {
+    if (clip && wc->clipw >= 0) {
         /* Further reduce the rectangle to the clipping region */
         if (x < wc->clipx) {
             width += x - wc->clipx;
@@ -1835,37 +1838,70 @@ static void add_holding_rect(wbp w, int x, int y, int width, int height)
             return;
     }
 
-    ux = Min(ws->holdx, x);
-    uw = Max(ws->holdx + ws->holdwidth, x + width) - ux;
-    uy = Min(ws->holdy, y);
-    uh = Max(ws->holdy + ws->holdheight, y + height) - uy;
-
-    ws->holdx = ux;
-    ws->holdy = uy;
-    ws->holdwidth = uw;
-    ws->holdheight = uh;
+    if (ws->holdwidth == 0) {
+        ws->holdx = x;
+        ws->holdy = y;
+        ws->holdwidth = width;
+        ws->holdheight = height;
+    } else {
+        ux = Min(ws->holdx, x);
+        uw = Max(ws->holdx + ws->holdwidth, x + width) - ux;
+        uy = Min(ws->holdy, y);
+        uh = Max(ws->holdy + ws->holdheight, y + height) - uy;
+        ws->holdx = ux;
+        ws->holdy = uy;
+        ws->holdwidth = uw;
+        ws->holdheight = uh;
+    }
 }
 
-void synch_pix_and_win(wsp ws, int x, int y, int w, int h)
+/*
+ * Copy the given region from pix to win, ignoring the clipping
+ * region.  If holding is on, do nothing.
+ */
+static void synch_pix_and_win(wsp ws, int x, int y, int width, int height)
 {
     wdp wd = ws->display;
     if (ws->win && !ws->holding) {
         no_clip(ws, 1);
         XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
-                         x, y, 0, 0, x, y, w, h);
+                         x, y, 0, 0, x, y, width, height);
     }
 }
 
+/*
+ * Copy the given area from pix to win (or add it to the holding
+ * region if appropriate).  The caller must have called clip()
+ * beforehand.
+ */
 static void pix_to_win(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
     if (ws->win) {
         if (ws->holding)
-            add_holding_rect(w, x, y, width, height);
+            add_holding_rect(w, 1, x, y, width, height);
         else
             XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
                              x, y, 0, 0, x, y, width, height);
+    }
+}
+
+/*
+ * Like pix_to_win, but the clip region is ignored.
+ */
+void unclipped_pix_to_win(wbp w, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    if (ws->win) {
+        if (ws->holding)
+            add_holding_rect(w, 0, x, y, width, height);
+        else {
+            no_clip(ws, 1);
+            XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
+                             x, y, 0, 0, x, y, width, height);
+        }
     }
 }
 

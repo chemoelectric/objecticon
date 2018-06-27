@@ -520,8 +520,17 @@ final class Window(NoCopy, ObjectOutput)
 
    private native get_clip_impl()
 
+   # Temporarily stop copying graphic operations from the backing
+   # image to the visible window.  The extent of drawing operations is
+   # remembered.  This call must be followed by a call to `restore()`.
+   #
    public native hold()
 
+   # After a call to `hold()`, update the visible window with the
+   # drawing that has taken place since `hold()`.  This can be used as
+   # a form of double-buffering, with several drawing operations
+   # taking place off-screen, and being updated in one go.
+   #
    public native restore()
 
    # Return the size of the window as a `Size` record.
