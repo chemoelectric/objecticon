@@ -351,7 +351,7 @@ class Dialog(Component)
    end
 
    public initially()
-      local t
+      local k
       parent_dialog := self
       effective_is_hidden_flag := is_hidden_flag
       effective_is_shaded_flag := is_shaded_flag
@@ -361,9 +361,9 @@ class Dialog(Component)
       selections := table()
       selection_requests := table()
       effective_wattribs := table()
-      every t := key(wattribs) do {
-         if Gui.is_context_attrib(t) then
-            insert(effective_wattribs, t, wattribs[t])
+      every k := key(wattribs) do {
+         if Gui.is_context_attrib(k) then
+            effective_wattribs[k] := wattribs[k]
       }
       compute_z_order()
       compute_tab_order()
@@ -374,12 +374,11 @@ class Dialog(Component)
 
    public open_buffer_win()
       local t, k
-      # Note that the window attribs are applied in initially() above.
-      # This may be called several times (eg via reset()), so we must
-      # start with the most basic attributes here since we may start
-      # with say "bg=blue", then delete that attrib and call reset().
-      # We wouldn't then want "bg=blue" to still be stuck in the root
-      # buffer window's context.
+      # Just set the bare minimum attributes.  dx and dy must be set
+      # so that they are propagated into the cbwins.  Drawing
+      # attributes like "bg" must not be set, since we may remove them
+      # later, and call reset().  We wouldn't then want "bg=blue" to
+      # still be stuck in the root buffer window's context.
       t := table()
       every k := WAttrib.DISPLAY | WAttrib.DX | WAttrib.DY do
          t[k] := get_wattrib(k)
@@ -407,8 +406,13 @@ class Dialog(Component)
    end
 
    public open_visible_win()
-      local t, pw
-      t := copy(self.wattribs)
+      local t, k, pw
+      # Apply other attributes to the window before making it visible,
+      # in particular the size.  Graphic attributes are excluded (see
+      # the comment in open_buffer_win() above).
+      t := table()
+      every k := key(wattribs) do
+         Gui.is_context_attrib(k) | (t[k] := wattribs[k])
       ensure_size(t)
       if pw := (\owning_dialog).win then
          t[WAttrib.TRANSIENT_FOR] := pw
