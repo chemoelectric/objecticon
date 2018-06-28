@@ -388,8 +388,6 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
-  int           holdx, holdy,
-                holdwidth, holdheight;
 #elif MSWIN32
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */

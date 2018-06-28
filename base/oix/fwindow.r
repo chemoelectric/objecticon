@@ -427,17 +427,22 @@ function graphics_Window_hold(self)
       GetSelfW();
       if (self_w->window->holding)
           runerr(155);
-      hold(self_w);
+      self_w->window->holding = 1;
       return self;
    }
 end
 
-function graphics_Window_restore(self)
+function graphics_Window_restore(self, x0, y0, w0, h0)
    body {
+      word x, y, width, height;
       GetSelfW();
       if (!self_w->window->holding)
           runerr(155);
-      restore(self_w);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+      self_w->window->holding = 0;
+      if (reducerect(self_w, 0, &x, &y, &width, &height))
+          restore(self_w, x, y, width, height);
       return self;
    }
 end

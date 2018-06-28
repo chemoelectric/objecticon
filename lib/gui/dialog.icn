@@ -136,7 +136,7 @@ class Dialog(Component)
       every r := !\rs do {
          win.hold()
          self.invoke_display(r.x, r.y, r.w, r.h)
-         win.restore()
+         win.restore(r.x, r.y, r.w, r.h)
       }
 
       return self
