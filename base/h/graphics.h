@@ -418,8 +418,6 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
-  int           holdx, holdy,
-                holdwidth, holdheight;
 #elif PLAN9
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Image         *win;
@@ -439,8 +437,6 @@ typedef struct _wstate {
   struct wcursor *cursor;               /* current cursor */
   int           using_win;
   int           border_width;
-  int           holdx, holdy,
-                holdwidth, holdheight;
 #elif MSWIN32
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */
@@ -454,8 +450,6 @@ typedef struct _wstate {
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
   int           capturecount;           /* Set if SetCapture in use */
   int           skipx, skipy;           /* For skipping spurious mouse move events */
-  int           holdx, holdy,
-                holdwidth, holdheight;
 #endif
 } wstate, *wsp;
 

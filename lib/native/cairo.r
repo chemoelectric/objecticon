@@ -509,11 +509,15 @@ static void pix_to_win(cairo_t *cr, double x1, double y1, double x2, double y2)
 {
     int x, y, width, height;
     wbp w;
+    wsp ws;
     w = getwindow(cr);
     if (!w)
         return;
+    ws = w->window;
+    if (!ws->win || ws->holding)
+        return;
     range_extent(x1, y1, x2, y2, &x, &y, &width, &height);
-    unclipped_pix_to_win(w, x, y, width, height);
+    restore(w, x, y, width, height);
 }
 
 function cairo_Context_set_matrix_impl(self, xx, yx, xy, yy, x0, y0)

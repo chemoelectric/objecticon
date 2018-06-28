@@ -254,12 +254,6 @@ static void mk_Draw(wbp w, gb_Draw *d)
     d->drawop = wc->drawop->i;
     d->linestyle = wc->linestyle->i;
     d->holding = ws->holding;
-    if (d->holding) {
-        d->holdx = &ws->holdx;
-        d->holdy = &ws->holdy;
-        d->holdwidth = &ws->holdwidth;
-        d->holdheight = &ws->holdheight;
-    }
 }
 
 static void apply_windowlabel(wsp ws)
@@ -1831,23 +1825,14 @@ static void synch_cursors(struct wcursor *c)
     }
 }
 
-void hold(wbp w)
-{
-    wsp ws = w->window;
-    ws->holding = 1;
-    ws->holdx = ws->holdy = ws->holdwidth = ws->holdheight = 0;
-}
-
-void restore(wbp w)
+void restore(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     gb_Draw d;
-    ws->holding = 0;
     mk_Draw(w, &d);
     d.clipx = d.clipy = 0;
     d.clipw = d.cliph = -1;
-    gb_pix_to_win(&d,
-                  ws->holdx, ws->holdy, ws->holdwidth, ws->holdheight);
+    gb_pix_to_win(&d, x, y, width, height);
 }
 
 int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)

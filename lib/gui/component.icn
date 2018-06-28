@@ -846,7 +846,7 @@ class Component(Rect,Align,Connectable)
    # dialog reference and creating the cloned windows.
    #
    public initially()
-      local t, a
+      local k, a
       /cbwin | runerr("initially() called out of sequence")
       \parent | runerr("Incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
@@ -856,10 +856,10 @@ class Component(Rect,Align,Connectable)
       a := \wattrib_ancestor | parent
       effective_wattribs := copy(a.get_effective_wattribs()) | 
          runerr("Failed to get effective wattribs from ancestor", a)
-      every t := key(wattribs) do {
-         Gui.is_context_attrib(t) |
-            runerr("Invalid (non-graphics context) attribute for component", t)
-         insert(effective_wattribs, t, member(wattribs, t))
+      every k := key(wattribs) do {
+         Gui.is_context_attrib(k) |
+            runerr("Invalid (non-graphics context) attribute for component", k)
+         effective_wattribs[k] := wattribs[k]
       }
       compute_z_order()
       compute_tab_order()
