@@ -401,8 +401,6 @@ typedef struct _wstate {
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
   int           capturecount;           /* Set if SetCapture in use */
   int           skipx, skipy;           /* For skipping spurious mouse move events */
-  int           holdx, holdy,
-                holdwidth, holdheight;
 #endif
 } wstate, *wsp;
 

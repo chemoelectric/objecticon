@@ -103,76 +103,11 @@ static Brush *get_bg_brush(gb_Draw *d)
     return new SolidBrush(c);
 }
 
-static void add_holding_rect(gb_Draw *d, int x, int y, int width, int height)
-{
-    int ux, uy, uw, uh, bh, bw;
-    Bitmap *b = (Bitmap *)d->pix;
-
-    bw = b->GetWidth();
-    bh = b->GetHeight();
-
-    if (x < 0)  { 
-        width += x; 
-        x = 0; 
-    }
-    if (y < 0)  { 
-        height += y; 
-        y = 0; 
-    }
-    if (x + width > bw)
-        width = bw - x; 
-    if (y + height > bh)
-        height = bh - y; 
-
-    if (width <= 0 || height <= 0)
-        return;
-
-    if (d->clipw >= 0) {
-        /* Further reduce the rectangle to the clipping region */
-        if (x < d->clipx) {
-            width += x - d->clipx;
-            x = d->clipx;
-        }
-        if (y < d->clipy) {
-            height += y - d->clipy; 
-            y = d->clipy;
-        }
-        if (x + width > d->clipx + d->clipw)
-            width = d->clipx + d->clipw - x;
-        if (y + height > d->clipy + d->cliph)
-            height = d->clipy + d->cliph - y;
-
-        if (width <= 0 || height <= 0)
-            return;
-    }
-
-    if (d->holdwidth == 0) {
-        *d->holdx = x;
-        *d->holdy = y;
-        *d->holdwidth = width;
-        *d->holdheight = height;
-    } else {
-        ux = min(*d->holdx, x);
-        uw = max(*d->holdx + *d->holdwidth, x + width) - ux;
-        uy = min(*d->holdy, y);
-        uh = max(*d->holdy + *d->holdheight, y + height) - uy;
-        *d->holdx = ux;
-        *d->holdy = uy;
-        *d->holdwidth = uw;
-        *d->holdheight = uh;
-    }
-}
-
 extern "C"
 void gb_pix_to_win(gb_Draw *d, int x, int y, int width, int height)
 {
-    if (!d->win)
+    if (!d->win || d->holding)
         return;
-    if (d->holding) {
-        add_holding_rect(d, x, y, width, height);
-        return;
-    }
-
     Graphics h(d->win);
     if (draw_debug) dbg("gb_pix_to_win %d %d %dx%d\n",x,y,width,height);
     if (d->clipw >= 0) {
