@@ -643,9 +643,7 @@ procedure selection_convert(target_type, data)
 end
 
 procedure open_win_with(t)
-   local w
-   w := Window(t[WAttrib.DISPLAY]) | fail
-   return apply_window_table(w, t)
+   return apply_window_table(Window(t[WAttrib.DISPLAY]), t)
 end
 
 procedure apply_window_table(w, t)
@@ -908,8 +906,7 @@ end
 #
 procedure contained(f1, t1, f2, t2)
    if f2 > t2 then f2 :=: t2
-   if f2 <= f1 <= t2 & f2 <= t1 <= t2 then
-      return
+   succeed f2 <= f1 <= t2 & f2 <= t1 <= t2
 end
 
 # This provides some logic to text components on whether or not their
