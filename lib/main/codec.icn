@@ -2,8 +2,6 @@ package lang
 
 import io, util, exception, ipl.scan
 
-$define PUBLIC_STATIC_METHOD ior(Class.Public, Class.Static, Class.Method)
-
 # A class implements this interface to provide custom encoding/decoding.
 #
 abstract class ObjectCodec()
@@ -209,8 +207,8 @@ class Encode(Stream, HasUnderlyingStream)
             "procedure": "P"
             "method": {
                j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
-               iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD |
-                  throw("Can only encode a public static method: " || image(f))
+               iand(j, Class.Static + Class.Method + Class.Special) = Class.Static + Class.Method |
+                  throw("Can only encode a static method: " || image(f))
                "M"
             }
             "unresolved": throw("Can't encode an unresolved native method")
@@ -483,10 +481,10 @@ class Decode()
                (i := backto('.', s)) | throw("Invalid method name: " || s)
                if cl := lookup_class(s[1:i-1]) &
                   j := Class.get_field_flags(cl, s[i:0]) &
-                  iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
+                  iand(j, Class.Static + Class.Method + Class.Special) = Class.Static + Class.Method
                then
                   return Class.get(cl, s[i:0]) 
-               throw("No such public static method: " || s)
+               throw("No such static method: " || s)
             }
             default: throw("Unknown proc code")
          }
