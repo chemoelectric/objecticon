@@ -916,7 +916,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    public precision()
       /cp := ndig(i)
-      return cp
+      return .cp
    end
 
    # Round to the given number of decimal places; for example 123.456
