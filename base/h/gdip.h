@@ -9,7 +9,6 @@ typedef struct gb_Draw {
    gb_Bitmap *pix;
    int clipx, clipy, clipw, cliph;
    int holding;
-   int *holdx, *holdy, *holdwidth, *holdheight;
    gb_Font *font;
    gb_Color fg, bg;
    gb_Bitmap *pattern;
