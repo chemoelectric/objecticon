@@ -34,13 +34,12 @@ import
 #
 # :Parameters :
 # :  `s` - the file name
-# :  `f` - an optional function to apply to each element before appending to the list
 #
-procedure file2list(s, f)
+procedure file2list(s)
    local input
    return use {
       input := open(s),
-      stream2list(input, f)
+      stream2list(input)
    }
 end
 
@@ -48,17 +47,14 @@ end
 #
 # :Parameters :
 # :  `s` - the `io.Stream`
-# :  `f` - an optional function to apply to each element before appending to the list
 #
-procedure stream2list(s, f)
+procedure stream2list(s)
    local l, t
-   /f := 1
    l := []
    repeat {
       t := s.read_line() | fail
       if /t then
          return l
-      t := f(t)
       put(l, t)
    }
 end
@@ -68,13 +64,12 @@ end
 # :Parameters :
 # :  `l` - the list to output
 # :  `s` - the file name
-# :  `f` - an optional function to apply to each element before output
 #
-procedure list2file(l, s, f)
+procedure list2file(l, s)
    local output
    return use {
       output := open(s, "w"),
-      list2stream(l, output, f)
+      list2stream(l, output)
    }
 end
 
@@ -83,14 +78,11 @@ end
 # :Parameters :
 # :  `l` - the list to output
 # :  `s` - the `io.Stream`
-# :  `f` - an optional function to apply to each element before output
 #
-procedure list2stream(l, s, f)
+procedure list2stream(l, s)
    local t
-   every t := !l do {
-      t := f(t)
+   every t := !l do
       s.write(t) | fail
-   }
    return
 end
 
