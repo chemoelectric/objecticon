@@ -15,7 +15,7 @@ struct errtab {
  */
 struct errtab errtab[] = {
     {101, "Integer expected or out of range"},
-    {102, "Numeric expected"},
+    {102, "Numeric expected or out of range"},
     {103, "String expected"},
     {104, "Cset expected"},
     {105, "File expected"},
