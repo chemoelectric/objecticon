@@ -2,7 +2,7 @@
 error in line 6:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
 seq("a") | monitor(&line) ----> 6
 
 error in line 8:
@@ -64,7 +64,7 @@ c[1] | monitor(&line) ----> 22
 error in line 24:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = function image
 (image + image) | monitor(&line) ----> 24
 
@@ -92,7 +92,7 @@ error in line 34:
 error in line 36:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = &null
 (x + 1) | monitor(&line) ----> 36
 
@@ -106,7 +106,7 @@ error in line 38:
 error in line 40:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "o"
 ("o" + 0) | monitor(&line) ----> 40
 
@@ -120,7 +120,7 @@ error in line 42:
 error in line 44:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
 (every 1 to "a") | monitor(&line) ----> 44
 
 error in line 46:
@@ -195,7 +195,7 @@ error in line 68:
 error in line 70:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = 'abc'
 ('abc' ~= ('abc' ++ '')) | monitor(&line) ----> 70
 
@@ -216,7 +216,7 @@ x["a"] | monitor(&line) ----> 78
 error in line 80:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = &null
 (100-()) | monitor(&line) ----> 80
 
@@ -272,21 +272,21 @@ error in line 94:
 error in line 96:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 +"a" | monitor(&line) ----> 96
 
 error in line 102:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = &null
 (i <= []) | monitor(&line) ----> 102
 
 error in line 104:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = list#*(0)
 ([] ^ i) | monitor(&line) ----> 104
 
@@ -307,7 +307,7 @@ error in line 108:
 error in line 110:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = &null
 (s = 0) | monitor(&line) ----> 110
 
@@ -321,7 +321,7 @@ put(s) | monitor(&line) ----> 112
 error in line 114:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = 'abc'
 ('abc' = ('abc' ++ '')) | monitor(&line) ----> 114
 
@@ -405,28 +405,28 @@ error in line 139:
 error in line 141:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 % "a") | monitor(&line) ----> 141
 
 error in line 146:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 * "a") | monitor(&line) ----> 146
 
 error in line 148:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 / "a") | monitor(&line) ----> 148
 
 error in line 150:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 + "a") | monitor(&line) ----> 150
 (-36 ^ -9) | monitor(&line) ----> 0
@@ -434,42 +434,42 @@ error in line 150:
 error in line 154:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 < "a") | monitor(&line) ----> 154
 
 error in line 156:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = &null
 (0 > &null) | monitor(&line) ----> 156
 
 error in line 158:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 <= "a") | monitor(&line) ----> 158
 
 error in line 160:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 > "a") | monitor(&line) ----> 160
 
 error in line 162:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 = "a") | monitor(&line) ----> 162
 
 error in line 164:
    &errorcoexpr = co-expression#*
    &errornumber = 102
-   &errortext = "Numeric expected"
+   &errortext = "Numeric expected or out of range"
    &errorvalue = "a"
 (2 ~= "a") | monitor(&line) ----> 164
 
