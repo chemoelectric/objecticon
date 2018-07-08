@@ -1424,7 +1424,7 @@ static void genclasses(void)
 {
     struct lclass *cl;
     struct lclass_field *cf;
-    int n_classes = 0, n_fields = 0;
+    int n_fields = 0;
     struct centry *ce;
     word x;
 
@@ -1452,7 +1452,6 @@ static void genclasses(void)
             }
             ++n_fields;
         }
-        ++n_classes;
     }
 
     align();
@@ -1496,9 +1495,8 @@ static void genclasses(void)
      * Firstly work out the "address" each class will have, so we can forward
      * reference them.
      */
-    x = pc + WordSize * (1 + 4 * n_fields);  /* The size of the class
-                                              * field table plus the
-                                              * n_classes entry */
+    x = pc + WordSize * (4 * n_fields);  /* The size of the class
+                                          * field table */
     if (loclevel > 1)
         x += WordSize * 2 * n_fields;        /* The optional classfieldlocs table */
 
@@ -1553,8 +1551,6 @@ static void genclasses(void)
     if (Dflag)
         fprintf(dbgfile, "\n");
 
-    outwordx(n_classes, "Num class blocks");
-
     for (cl = lclasses; cl; cl = cl->next)
         genclass(cl);
 }
@@ -1577,7 +1573,7 @@ static void genstaticnames(struct lfunction *lf)
  */
 static void gentables()
 {
-    int i, nrecords;
+    int i;
     char *s;
     struct gentry *gp;
     struct lrecord *rec;
@@ -1595,11 +1591,6 @@ static void gentables()
 
     genclasses();
 
-    /* Count how many records we have. */
-    nrecords = 0;
-    for (rec = lrecords; rec; rec = rec->next)
-        ++nrecords;
-
     /*
      * Output record constructor procedure blocks.
      */
@@ -1608,8 +1599,6 @@ static void gentables()
 
     if (Dflag)
         fprintf(dbgfile, "\n");
-
-    outwordx(nrecords, "Num constructor blocks");
 
     for (rec = lrecords; rec; rec = rec->next) {
         struct field_sort_item *sortf;
