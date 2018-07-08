@@ -1825,7 +1825,7 @@ static void gentables()
     hdr.Filenms = hdr.Base + pc;
     for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
         ce = inst_sdescrip(fnptr->fname);
-        outwordx(fnptr->ipc, "IPC");
+        outwordz(fnptr->ipc, "IPC");
         outdptr(ce, "   File %s", fnptr->fname);
     }
 
@@ -1833,7 +1833,7 @@ static void gentables()
         fprintf(dbgfile, "\n# Line number table\n");
     hdr.Linenums = hdr.Base + pc;
     for (lnptr = lntable; lnptr < lnfree; lnptr++) {
-        outwordx(lnptr->ipc, "IPC");
+        outwordz(lnptr->ipc, "IPC");
         outwordx(lnptr->line, "   Line %d", lnptr->line);        
     }
 

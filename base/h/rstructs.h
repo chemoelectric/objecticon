@@ -361,12 +361,12 @@ struct region {
  *  source program location.
  */
 struct ipc_fname {
-    word ipc;		  /* offset of instruction into code region */
+    word *ipc;		  /* pointer into code region */
     dptr fname;           /* file name string descriptor */
 };
 
 struct ipc_line {
-    word ipc;		/* offset of instruction into code region */
+    word *ipc;		/* pointer into code region */
     word line;		/* line number */
 };
 

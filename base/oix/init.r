@@ -920,6 +920,7 @@ static void slow_resolve(struct progstate *p)
     struct class_field *cf;
     dptr *dpp;
     struct ipc_fname *fnptr;
+    struct ipc_line *lineptr;
     struct loc *lp;
 
     /*
@@ -1158,10 +1159,18 @@ static void slow_resolve(struct progstate *p)
     }
 
     /*
-     * Relocate the names of the files in the ipc->filename table.
+     * Relocate the names of the files in the ipc->filename table and the ipc offsets.
      */
-    for (fnptr = p->Filenms; fnptr < p->Efilenms; ++fnptr)
+    for (fnptr = p->Filenms; fnptr < p->Efilenms; ++fnptr) {
         Relocate(fnptr->fname);
+        Relocate(fnptr->ipc);
+    }
+
+    /*
+     * Relocate the ipc offsets in the linenumber table.
+     */
+    for (lineptr = p->Ilines; lineptr < p->Elines; ++lineptr)
+        Relocate(lineptr->ipc);
 }
 
 /*

@@ -942,14 +942,11 @@ static void check_timer(void)
 static void check_location(void)
 {
     if (InRange(curpstate->Code, ipc, curpstate->Ecode)) {
-        uword ipc_offset;
-        ipc_offset = DiffPtrsBytes(ipc, curpstate->Code);
-
         if (Testb(E_File, curpstate->eventmask->bits) &&
             (!curpstate->Current_fname_ptr ||
-             ipc_offset < curpstate->Current_fname_ptr->ipc ||
+             ipc < curpstate->Current_fname_ptr->ipc ||
              (curpstate->Current_fname_ptr + 1 < curpstate->Efilenms &&
-              ipc_offset >= (curpstate->Current_fname_ptr + 1)->ipc)))
+              ipc >= (curpstate->Current_fname_ptr + 1)->ipc)))
         {
             /* 
              * We remember not only the last ipc_fname, but also the
@@ -967,9 +964,9 @@ static void check_location(void)
 
         if (Testb(E_Line, curpstate->eventmask->bits) &&
             (!curpstate->Current_line_ptr ||
-                ipc_offset < curpstate->Current_line_ptr->ipc ||
+                ipc < curpstate->Current_line_ptr->ipc ||
              (curpstate->Current_line_ptr + 1 < curpstate->Elines &&
-              ipc_offset >= (curpstate->Current_line_ptr + 1)->ipc)))
+              ipc >= (curpstate->Current_line_ptr + 1)->ipc)))
         {
             curpstate->Current_line_ptr = find_ipc_line(ipc, curpstate);
             if (curpstate->Current_line_ptr) {
