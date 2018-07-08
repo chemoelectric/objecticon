@@ -699,8 +699,6 @@ static void initptrs(struct progstate *p, struct header *h)
     p->EClassFields = (struct class_field *)h->ClassFieldLocs;
     p->ClassFieldLocs = (struct loc *)p->EClassFields;
     p->EClassFieldLocs = (struct loc *)h->Classes;
-    p->Classes = (word *)p->EClassFieldLocs;
-    p->Records = (word *)h->Records;
     p->Fnames  = (dptr *)h->Fnames;
     p->Efnames = (dptr *)h->Globals;
     p->Globals = (dptr)p->Efnames;

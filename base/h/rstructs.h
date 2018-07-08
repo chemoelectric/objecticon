@@ -419,8 +419,6 @@ struct progstate {
     dptr ClassMethods, EClassMethods;
     struct class_field *ClassFields, *EClassFields;
     struct loc *ClassFieldLocs, *EClassFieldLocs;
-    word *Classes;
-    word *Records;
     dptr *Fnames, *Efnames;
     dptr Globals, Eglobals;
     dptr *Gnames, *Egnames;

@@ -606,8 +606,6 @@ __declspec(dllexport)  \
 #define eclassfields (curpstate->EClassFields)
 #define classfieldlocs (curpstate->ClassFieldLocs)
 #define eclassfieldlocs (curpstate->EClassFieldLocs)
-#define classes (curpstate->Classes)
-#define records (curpstate->Records)
 #define fnames (curpstate->Fnames)
 #define efnames (curpstate->Efnames)
 #define globals (curpstate->Globals)
