@@ -780,8 +780,6 @@ static void fatalerr_139()
 
 static void coact_handler()
 {
-    word *failure_label = GetAddr;
-
     EVValD(&kywd_handler, E_Coact);
 
     if (k_trace) {
@@ -790,7 +788,8 @@ static void coact_handler()
     }
 
     k_current->tvalloc = 0;
-    k_current->failure_label = failure_label;
+    /* If someone transmits failure to this coexpression, just act as though resumed */
+    k_current->failure_label = ipc;
 
     /* The handler must have an activator, since we don't set it */
     if (!CoexprBlk(kywd_handler).activator) {
