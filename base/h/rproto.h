@@ -487,6 +487,7 @@ struct p_frame *get_current_user_frame(void);
 struct p_frame *get_current_user_frame_of(struct b_coexpr *ce);
 struct progstate *get_current_program_of(struct b_coexpr *ce);
 void switch_to(struct b_coexpr *ce);
+void fail_to(struct b_coexpr *ce);
 void add_to_prog_event_queue(dptr value, int event);
 void general_call_0(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 void general_call_1(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);

@@ -73,6 +73,20 @@ void switch_to(struct b_coexpr *ce)
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
+    k_current->failure_label = 0;
+}
+
+/*
+ * Like switch_to, but jump to the coexpression's failure label.
+ */
+void fail_to(struct b_coexpr *ce)
+{
+    curr_pf->ipc = ipc;
+    curpstate = get_current_program_of(ce);
+    k_current = curpstate->K_current = ce;
+    curr_pf = k_current->curr_pf;
+    ipc = k_current->failure_label;
+    k_current->failure_label = 0;
 }
 
 /*
@@ -583,8 +597,7 @@ static void do_cofail()
     k_current->tvalloc = 0;
 
     /* Switch to the target and jump to its failure label */
-    switch_to(k_current->activator);
-    ipc = k_current->failure_label;
+    fail_to(k_current->activator);
 }
 
 static void coact_ex()
@@ -694,8 +707,7 @@ static void cofail_ex()
     /* Perform the switch with the various option possibilities */
     if (!is:null(*activator))
         CoexprBlk(*ce).activator = &CoexprBlk(*activator);
-    switch_to(&CoexprBlk(*ce));
-    ipc = k_current->failure_label;
+    fail_to(&CoexprBlk(*ce));
 }
 
 function cofail(ce, activator)
@@ -800,8 +812,7 @@ static void coact_handler()
     }
 
     /* Fail to the handler coexpression */
-    switch_to(&CoexprBlk(kywd_handler));
-    ipc = k_current->failure_label;
+    fail_to(&CoexprBlk(kywd_handler));
 }
 
 void activate_handler(void)
