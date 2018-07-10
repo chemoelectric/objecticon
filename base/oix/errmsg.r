@@ -52,7 +52,7 @@ struct errtab errtab[] = {
     {136, "Cannot set activator to a unactivated co-expression"},
     {137, "Must specify activator for an unactivated co-expression"},
     {138, "Cannot activate this co-expression"},
-    {139, "Cannot activate a co-expression that has caused a runtime error"},
+    {139, "Cannot activate a co-expression that has caused a runtime error or called exit()"},
     {140, "&handler co-expression cannot be an unactivated co-expression"},
 
 #if Graphics

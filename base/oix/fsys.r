@@ -9,6 +9,13 @@ function exit(status)
    if !def:C_integer(status, EXIT_SUCCESS) then
       runerr(101, status)
    body {
+      if (curpstate->monitor &&
+           Testb(E_Exit, curpstate->eventmask->bits)) {
+           add_to_prog_event_queue(&nulldesc, E_Exit);
+           curpstate->exited = 1;
+           push_fatalerr_139_frame();
+           return;
+      }
       c_exit((int)status);
       fail;
       }
