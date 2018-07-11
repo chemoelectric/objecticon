@@ -337,7 +337,7 @@ class Ieval(MinimalObjectOutput)
 
    private load(s)
       local p, e
-      p := Prog.load(s) | fail
+      p := Prog.load(s,, 0, 0) | fail
       e := create load_handler(p)
       @e
       Prog.eval_keyword("&handler", p) := e
