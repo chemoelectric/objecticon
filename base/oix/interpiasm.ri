@@ -53,7 +53,6 @@ static word lang_Prog_get_event_impl_impl_code[] = {
 static word activate_handler_impl_code[] = {
    Op_Custom,
    (word)coact_handler,
-   (word)&activate_handler_impl_code[3],
    Op_Custom,
    (word)fatalerr_139,
 };

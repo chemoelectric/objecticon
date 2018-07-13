@@ -46,7 +46,7 @@ procedure compile(prog, tf, links)
       compile1(prog, pf, tf, links),
       Files.remove(pf)
    } | fail
-   return lang.Prog.load(tf)
+   return lang.Prog.load(tf,, 0, 0)
 end
 
 procedure usage(opts)

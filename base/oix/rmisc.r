@@ -995,23 +995,21 @@ static void listimage(FILE *f, dptr dp, int noimage, word stringlimit, word list
  */
 struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
 {
-   uword ipc_offset;
    int size, l, r, m;
 
    if (!InRange(p->Code, ipc, p->Ecode))
        return 0;
 
-   ipc_offset = DiffPtrsBytes(ipc, p->Code);
    size = p->Elines - p->Ilines;
    l = 0;
    r = size - 1;
    while (l <= r) {
        m = (l + r) / 2;
-       if (ipc_offset < p->Ilines[m].ipc)
+       if (ipc < p->Ilines[m].ipc)
            r = m - 1;
-       else if (m < size - 1 && ipc_offset >= p->Ilines[m + 1].ipc)
+       else if (m < size - 1 && ipc >= p->Ilines[m + 1].ipc)
            l = m + 1;
-       else  /* ipc_offset >= p->Ilines[m].ipc && (m == size - 1 || ipc_offset < p->Ilines[m + 1].ipc) */
+       else  /* ipc >= p->Ilines[m].ipc && (m == size - 1 || ipc < p->Ilines[m + 1].ipc) */
            return &p->Ilines[m];
    }
    return 0;
@@ -1019,24 +1017,21 @@ struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
 
 struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
 {
-   uword ipc_offset;
    int size, l, r, m;
 
    if (!InRange(p->Code, ipc, p->Ecode))
        return 0;
-
-   ipc_offset = DiffPtrsBytes(ipc, p->Code);
 
    size = p->Efilenms - p->Filenms;
    l = 0;
    r = size - 1;
    while (l <= r) {
        m = (l + r) / 2;
-       if (ipc_offset < p->Filenms[m].ipc)
+       if (ipc < p->Filenms[m].ipc)
            r = m - 1;
-       else if (m < size - 1 && ipc_offset >= p->Filenms[m + 1].ipc)
+       else if (m < size - 1 && ipc >= p->Filenms[m + 1].ipc)
            l = m + 1;
-       else  /* ipc_offset >= p->Filenms[m].ipc && (m == size - 1 || ipc_offset < p->Filenms[m + 1].ipc) */
+       else  /* ipc >= p->Filenms[m].ipc && (m == size - 1 || ipc < p->Filenms[m + 1].ipc) */
            return &p->Filenms[m];
    }
    return 0;

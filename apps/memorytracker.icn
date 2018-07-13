@@ -69,7 +69,7 @@ procedure main(args)
 
    proact := table(0)
    totals := table(0)
-   mask := MonitorCodeSet.AllocMask ++ MonitorCode.Timer
+   mask := MonitorCodeSet.AllocMask ++ MonitorCode.Timer ++ MonitorCode.Exit
    Prog.set_event_mask(mask, prog).set_timer_interval(2000, prog)
    while e := Prog.get_event(prog) do {
       if e.code == MonitorCode.Timer then {
@@ -78,6 +78,7 @@ procedure main(args)
          proact[e.code] +:= 1
          totals[e.code] +:= integer(e.value)
       } else case e.code of {
+         MonitorCode.Exit:{}
          MonitorCode.BlkDeAlc: {
             proact[prev_code] -:= 1
             totals[prev_code] +:= integer(e.value)

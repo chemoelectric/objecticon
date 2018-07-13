@@ -73,6 +73,20 @@ void switch_to(struct b_coexpr *ce)
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
+    k_current->failure_label = 0;
+}
+
+/*
+ * Like switch_to, but jump to the coexpression's failure label.
+ */
+void fail_to(struct b_coexpr *ce)
+{
+    curr_pf->ipc = ipc;
+    curpstate = get_current_program_of(ce);
+    k_current = curpstate->K_current = ce;
+    curr_pf = k_current->curr_pf;
+    ipc = k_current->failure_label;
+    k_current->failure_label = 0;
 }
 
 /*
@@ -583,8 +597,7 @@ static void do_cofail()
     k_current->tvalloc = 0;
 
     /* Switch to the target and jump to its failure label */
-    switch_to(k_current->activator);
-    ipc = k_current->failure_label;
+    fail_to(k_current->activator);
 }
 
 static void coact_ex()
@@ -694,8 +707,7 @@ static void cofail_ex()
     /* Perform the switch with the various option possibilities */
     if (!is:null(*activator))
         CoexprBlk(*ce).activator = &CoexprBlk(*activator);
-    switch_to(&CoexprBlk(*ce));
-    ipc = k_current->failure_label;
+    fail_to(&CoexprBlk(*ce));
 }
 
 function cofail(ce, activator)
@@ -780,8 +792,6 @@ static void fatalerr_139()
 
 static void coact_handler()
 {
-    word *failure_label = GetAddr;
-
     EVValD(&kywd_handler, E_Coact);
 
     if (k_trace) {
@@ -790,7 +800,8 @@ static void coact_handler()
     }
 
     k_current->tvalloc = 0;
-    k_current->failure_label = failure_label;
+    /* If someone transmits failure to this coexpression, just act as though resumed */
+    k_current->failure_label = ipc;
 
     /* The handler must have an activator, since we don't set it */
     if (!CoexprBlk(kywd_handler).activator) {
@@ -801,8 +812,7 @@ static void coact_handler()
     }
 
     /* Fail to the handler coexpression */
-    switch_to(&CoexprBlk(kywd_handler));
-    ipc = k_current->failure_label;
+    fail_to(&CoexprBlk(kywd_handler));
 }
 
 void activate_handler(void)
@@ -942,14 +952,11 @@ static void check_timer(void)
 static void check_location(void)
 {
     if (InRange(curpstate->Code, ipc, curpstate->Ecode)) {
-        uword ipc_offset;
-        ipc_offset = DiffPtrsBytes(ipc, curpstate->Code);
-
         if (Testb(E_File, curpstate->eventmask->bits) &&
             (!curpstate->Current_fname_ptr ||
-             ipc_offset < curpstate->Current_fname_ptr->ipc ||
+             ipc < curpstate->Current_fname_ptr->ipc ||
              (curpstate->Current_fname_ptr + 1 < curpstate->Efilenms &&
-              ipc_offset >= (curpstate->Current_fname_ptr + 1)->ipc)))
+              ipc >= (curpstate->Current_fname_ptr + 1)->ipc)))
         {
             /* 
              * We remember not only the last ipc_fname, but also the
@@ -967,9 +974,9 @@ static void check_location(void)
 
         if (Testb(E_Line, curpstate->eventmask->bits) &&
             (!curpstate->Current_line_ptr ||
-                ipc_offset < curpstate->Current_line_ptr->ipc ||
+                ipc < curpstate->Current_line_ptr->ipc ||
              (curpstate->Current_line_ptr + 1 < curpstate->Elines &&
-              ipc_offset >= (curpstate->Current_line_ptr + 1)->ipc)))
+              ipc >= (curpstate->Current_line_ptr + 1)->ipc)))
         {
             curpstate->Current_line_ptr = find_ipc_line(ipc, curpstate);
             if (curpstate->Current_line_ptr) {

@@ -361,12 +361,12 @@ struct region {
  *  source program location.
  */
 struct ipc_fname {
-    word ipc;		  /* offset of instruction into code region */
+    word *ipc;		  /* pointer into code region */
     dptr fname;           /* file name string descriptor */
 };
 
 struct ipc_line {
-    word ipc;		/* offset of instruction into code region */
+    word *ipc;		/* pointer into code region */
     word line;		/* line number */
 };
 
@@ -419,8 +419,6 @@ struct progstate {
     dptr ClassMethods, EClassMethods;
     struct class_field *ClassFields, *EClassFields;
     struct loc *ClassFieldLocs, *EClassFieldLocs;
-    word *Classes;
-    word *Records;
     dptr *Fnames, *Efnames;
     dptr Globals, Eglobals;
     dptr *Gnames, *Egnames;

@@ -516,7 +516,7 @@ end
 
 procedure synch_mask()
    local c
-   c := MonitorCode.Timer ++ MonitorCode.Error
+   c := MonitorCode.Timer ++ MonitorCode.Error ++ MonitorCode.Exit
    if \kbreak then
       c ++:= MonitorCode.Break
    if \break_line then

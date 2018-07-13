@@ -1424,7 +1424,7 @@ static void genclasses(void)
 {
     struct lclass *cl;
     struct lclass_field *cf;
-    int n_classes = 0, n_fields = 0;
+    int n_fields = 0;
     struct centry *ce;
     word x;
 
@@ -1441,7 +1441,7 @@ static void genclasses(void)
      * need to be scanned).
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# class static descriptors\n");
+        fprintf(dbgfile, "\n# Class static descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
         for (cf = cl->fields; cf; cf = cf->next) {
             if ((cf->flag & (M_Method | M_Static)) == M_Static) {
@@ -1452,7 +1452,6 @@ static void genclasses(void)
             }
             ++n_fields;
         }
-        ++n_classes;
     }
 
     align();
@@ -1465,7 +1464,7 @@ static void genclasses(void)
      *   other methods get a proc descriptor pointing to the b_proc
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# class method descriptors\n");
+        fprintf(dbgfile, "\n# Class method descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
         for (cf = cl->fields; cf; cf = cf->next) {
             if (cf->flag & M_Method) {
@@ -1496,9 +1495,8 @@ static void genclasses(void)
      * Firstly work out the "address" each class will have, so we can forward
      * reference them.
      */
-    x = pc + WordSize * (1 + 4 * n_fields);  /* The size of the class
-                                              * field table plus the
-                                              * n_classes entry */
+    x = pc + WordSize * (4 * n_fields);  /* The size of the class
+                                          * field table */
     if (loclevel > 1)
         x += WordSize * 2 * n_fields;        /* The optional classfieldlocs table */
 
@@ -1520,7 +1518,7 @@ static void genclasses(void)
      * Output the class field info table
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# class field info table\n");
+        fprintf(dbgfile, "\n# Class field info table\n");
     for (cl = lclasses; cl; cl = cl->next) {
         for (cf = cl->fields; cf; cf = cf->next) {
             cf->ipc = pc;
@@ -1536,7 +1534,7 @@ static void genclasses(void)
     align();
     hdr.ClassFieldLocs = hdr.Base + pc;
     if (Dflag)
-        fprintf(dbgfile, "\n# class field location table\n");
+        fprintf(dbgfile, "\n# Class field location table\n");
     if (loclevel > 1) {
         for (cl = lclasses; cl; cl = cl->next) {
             for (cf = cl->fields; cf; cf = cf->next) {
@@ -1551,9 +1549,7 @@ static void genclasses(void)
     hdr.Classes = hdr.Base + pc;
 
     if (Dflag)
-        fprintf(dbgfile, "\n");
-
-    outwordx(n_classes, "Num class blocks");
+        fprintf(dbgfile, "\n# Class blocks\n");
 
     for (cl = lclasses; cl; cl = cl->next)
         genclass(cl);
@@ -1577,7 +1573,7 @@ static void genstaticnames(struct lfunction *lf)
  */
 static void gentables()
 {
-    int i, nrecords;
+    int i;
     char *s;
     struct gentry *gp;
     struct lrecord *rec;
@@ -1590,26 +1586,19 @@ static void gentables()
     struct utf8_patch *pe;
 
     if (Dflag) {
-        fprintf(dbgfile,"\n\n# global tables\n");
+        fprintf(dbgfile,"\n\n# Global tables\n");
     }
 
     genclasses();
 
-    /* Count how many records we have. */
-    nrecords = 0;
-    for (rec = lrecords; rec; rec = rec->next)
-        ++nrecords;
-
     /*
-     * Output record constructor procedure blocks.
+     * Output record constructor blocks.
      */
     align();
     hdr.Records = hdr.Base + pc;
 
     if (Dflag)
-        fprintf(dbgfile, "\n");
-
-    outwordx(nrecords, "Num constructor blocks");
+        fprintf(dbgfile, "\n# Constructor blocks\n");
 
     for (rec = lrecords; rec; rec = rec->next) {
         struct field_sort_item *sortf;
@@ -1825,7 +1814,7 @@ static void gentables()
     hdr.Filenms = hdr.Base + pc;
     for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
         ce = inst_sdescrip(fnptr->fname);
-        outwordx(fnptr->ipc, "IPC");
+        outwordz(fnptr->ipc, "IPC");
         outdptr(ce, "   File %s", fnptr->fname);
     }
 
@@ -1833,7 +1822,7 @@ static void gentables()
         fprintf(dbgfile, "\n# Line number table\n");
     hdr.Linenums = hdr.Base + pc;
     for (lnptr = lntable; lnptr < lnfree; lnptr++) {
-        outwordx(lnptr->ipc, "IPC");
+        outwordz(lnptr->ipc, "IPC");
         outwordx(lnptr->line, "   Line %d", lnptr->line);        
     }
 
