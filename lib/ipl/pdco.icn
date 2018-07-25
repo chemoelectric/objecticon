@@ -1128,6 +1128,12 @@ procedure Seq(e)
    suspend |@e
 end
 
+#
+# Succeed (with &null) iff the given co-expression produces a result.
+#
+procedure Succeeds(e)
+   succeed @e
+end
 
 # Evaluate each element of e, suspending all the results of the nth element.
 #
