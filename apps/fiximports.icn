@@ -16,6 +16,7 @@ end
 procedure main(a)
    local s
    opts := options(a, [Opt("d",, "Generate symbol table scanning progress messages"),
+                       Opt("f",string,"Specify file to scan, but not to rewrite.  Several -f options may be given",&yes),
                        Opt("D",string,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
                        Opt("c",, "Output to standard output, without changing the source file")],
                        usage)
@@ -25,7 +26,7 @@ procedure main(a)
    if \opts["d"] then
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
 
-   every s := !a do
+   every s := !\opts["f"] | !a do
       symbol_table.scan_file(s) | stop("Couldn't scan ", s, ": ", &why)
    symbol_table.resolve_classes() | stop("Problem resolving classes in ", s, ": ", &why)
 
