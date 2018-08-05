@@ -568,7 +568,7 @@ end
 #
 procedure String(e, sep)
    local s
-   sep := need_text(ce_param(sep, ","))
+   sep := need_text(ce_param(sep, ",")) | fail
    # Ensure result is same type as sep, even if the sequence is empty.
    s := same_type("", sep)
    while s ||:= @e || sep
