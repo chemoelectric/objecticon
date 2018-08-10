@@ -354,8 +354,7 @@ class StringStream(Stream)
    #        string.
    #
    public new(subj)
-      /subj := ""
-      self.subj := need_string(subj)
+      self.subj := need_string(\subj) | ""
       self.pos := 1
       return
    end

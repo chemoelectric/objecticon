@@ -396,8 +396,7 @@ class Rat(RealNumber)
    public str(f)
       local i, s, n1
       n1 := default.abs(n)
-      /f := ''
-      f := need_cset(f)
+      f := need_cset(\f) | ''
       if d = 1 then
          s := commas(n1, f)
       else {
@@ -737,8 +736,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    #
    public str(f, dp)
       local s, i1, e1, t, zch, tp, ec
-      /f := ''
-      f := need_cset(f)
+      f := need_cset(\f) | ''
       if \dp then {
          dp := need_integer(dp, 0)
          if not any(f, "z") then

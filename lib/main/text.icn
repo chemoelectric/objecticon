@@ -79,8 +79,7 @@ final abstract class Text()
       if s := ucs(s) then
          return s
       s := need_string(s)
-      /subst := "\uFFFD"
-      subst := need_string(subst)
+      subst := need_string(\subst) | "\uFFFD"
       t := ""
       s ? repeat {
          t ||:= tab(many(&ascii))

@@ -211,14 +211,12 @@ class Matrix()
    # Create a new instance based on the given six elements.
    #
    public new(xx, yx, xy, yy, x0, y0)
-      /x0 := 0.0
-      /y0 := 0.0
       self.xx := need_real(xx)
       self.yx := need_real(yx)
       self.xy := need_real(xy)
       self.yy := need_real(yy)
-      self.x0 := need_real(x0)
-      self.y0 := need_real(y0)
+      self.x0 := need_real(\x0) | 0.0
+      self.y0 := need_real(\y0) | 0.0
       return
    end
 end

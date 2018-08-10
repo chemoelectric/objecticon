@@ -34,10 +34,8 @@ final abstract class Format()
    public static int_to_string(subject, base, p)
       local s, n, digs, neg
       s := ""
-      /base := 16
-      base := need_integer(base, 2, 16)
-      /p := 1
-      p := need_integer(p, 0)
+      base := need_integer(\base, 2, 16) | 16
+      p := need_integer(\p, 0) | 1
       n := need_integer(subject)
       if n < 0 then {
          n := -n
@@ -75,11 +73,9 @@ final abstract class Format()
    public static numeric_to_string(subject, p, f)
       local n1, s, t, lim, d, zs, dig, i, n, ec
 
-      /f := ''
-      f := need_cset(f)
+      f := need_cset(\f) | ''
       n := need_numeric(subject)
-      /p := 4
-      p := need_integer(p, 0)
+      p := need_integer(\p, 0) | 4
 
       n1 := abs(n)
       any(f, ec <- "e"|"E")

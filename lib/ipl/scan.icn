@@ -676,7 +676,8 @@ end
 # defaults to zero, `max` to infinity.
 #
 procedure range(e, min, max)
-   min := need_integer(ce_param(min, 0)) | fail
+   min := ce_param(min) | fail
+   min := need_integer(\min) | 0
    max := ce_param(max) | fail
    \max := need_integer(max)
    suspend range_impl(e, 0, min, max)

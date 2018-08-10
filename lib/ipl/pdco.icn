@@ -207,7 +207,8 @@ end
 procedure Decollate(e, i)	
    local j, x
 
-   i := need_integer(ce_param(i, 1)) | fail
+   i := ce_param(i) | fail
+   i := need_integer(\i) | 1
 
    i %:= 2
  
@@ -237,8 +238,11 @@ end
 procedure Elevate(e1, m, n)	
    local shafts, i, j, k
 
-   m := need_integer(ce_param(m)) | fail
-   n := need_integer(ce_param(n)) | fail
+   m := ce_param(m) | fail
+   n := ce_param(n) | fail
+
+   m := need_integer(m)
+   n := need_integer(n)
 
    shafts := list(m)
 
@@ -330,10 +334,11 @@ end
 procedure Friendly(mod, state, e)	
    local value
 
-   mod := need_integer(ce_param(mod)) | fail
+   mod := ce_param(mod) | fail
    state := ce_param(state) | fail
-   /state := ?mod
-   state := need_integer(state)
+
+   mod := need_integer(mod)
+   state := need_integer(\state) | ?mod
 
    repeat {
       suspend state
@@ -568,7 +573,8 @@ end
 #
 procedure String(e, sep)
    local s
-   sep := need_text(ce_param(sep, ","))
+   sep := ce_param(sep) | fail
+   sep := need_text(\sep) | ","
    # Ensure result is same type as sep, even if the sequence is empty.
    s := same_type("", sep)
    while s ||:= @e || sep
@@ -669,7 +675,8 @@ end
 procedure Period(e, limit)		
    local result
 
-   limit := need_integer(ce_param(limit, 300)) | fail
+   limit := ce_param(limit) | fail
+   limit := need_integer(\limit) | 300
 
    result := []
 
@@ -705,7 +712,8 @@ end
 procedure Pivot(e, m)		
    local current, direction, new
 
-   m := need_integer(ce_param(m, 100)) | fail
+   m := ce_param(m) | fail
+   m := need_integer(\m) | 100
 
    direction := "+"
 
@@ -803,9 +811,10 @@ end
 #
 procedure Reduce(op, x, e)	
 
-   op := need_callable(ce_param(op), 2) | fail
-
+   op := ce_param(op) | fail
    x := ce_param(x) | fail
+
+   op := need_callable(op, 2)
 
    while x := op(x, @e)
 
@@ -906,7 +915,8 @@ end
 # PDCO to produce multiple of values in sequence, producing `e * j` copies of `e`
 procedure Selfrepl(e, j)	
    local i
-   j := need_integer(ce_param(j, 1)) | fail
+   j := ce_param(j) | fail
+   j := need_integer(\j) | 1
    while i := @e do {
       i := need_integer(i)
       suspend (1 to i * j) & i
@@ -986,7 +996,8 @@ end
 procedure Span(e, m)		
    local i, j
 
-   m := need_integer(ce_param(m, 100)) | fail
+   m := ce_param(m) | fail
+   m := need_integer(\m) | 100
 
    j := @e | fail
    while i := residue(@e, m, 1) do {
@@ -1004,8 +1015,11 @@ end
 procedure Sumlimit(e, limit, min) 	
    local sum, i
 
-   limit := need_integer(ce_param(limit, 2^15)) | fail
-   min := need_integer(ce_param(min, 0)) | fail
+   limit := ce_param(limit) | fail
+   min := ce_param(min) | fail
+
+   limit := need_integer(\limit) | 2^15
+   min := need_integer(\min) | 0
    sum := 0
 
    while i := @e do {
@@ -1128,6 +1142,12 @@ procedure Seq(e)
    suspend |@e
 end
 
+#
+# Succeed (with &null) iff the given co-expression produces a result.
+#
+procedure Succeeds(e)
+   succeed @e
+end
 
 # Evaluate each element of e, suspending all the results of the nth element.
 #
@@ -1146,8 +1166,9 @@ end
 # Generate the results of e between the elements i to j inclusive.
 #
 procedure Subseq(e, i, j)
-   i := need_integer(ce_param(i, 1)) | fail
+   i := ce_param(i) | fail
    j := ce_param(j) | fail
+   i := need_integer(\i) | 1
    \j := need_integer(j)
    if i > \j then
       i :=: j
@@ -1243,7 +1264,8 @@ end
 
 package procedure MinMaxImpl(e, cmp, dir)
    local i, v
-   cmp := need_callable(ce_param(cmp, Internal.compare)) | fail
+   cmp := ce_param(cmp) | fail
+   cmp := need_callable(\cmp) | Internal.compare
    v := @e | fail
    while i := @e do {
       if dir * cmp(i, v) > 0 then
