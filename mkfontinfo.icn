@@ -1,4 +1,4 @@
-import io, graphics, ipl.sort, util
+import io, graphics, ipl.sort, util, lang
 
 record Font(path, str, pri)
 
@@ -134,11 +134,18 @@ procedure get_size(w, s, fam)
    return Format.numeric_to_string(max(1.0, font_size * 72.0 / 96.0), 1)
 end
 
+procedure font_cmp(x, y)
+   return if x.pri = y.pri then
+      Text.caseless_compare(x.path, y.path)
+   else
+      x.pri - y.pri
+end
+
 procedure main(a)
    local p, x, s, fam, w, l, e
    l := []
    use {
-      p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort", "pr"),
+      p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '\\.font$'", "pr"),
       while x := p.read() do {
          use {
             w := Window(),
@@ -156,11 +163,7 @@ procedure main(a)
          }
       }
    }
-   isort(l, pri_sort)
+   qsort(l, font_cmp)
    every e := !l do
       write(e.path, "=", e.str)
-end
-
-procedure pri_sort(x)
-   return x.pri
 end
