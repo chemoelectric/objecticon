@@ -36,7 +36,7 @@ class FontTestDialog(Dialog)
       t.get_font() ? (fsys := tab(upto(':')))
       t.close()
       case fsys of {
-         "p9": command_field.set_contents("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort")
+         "p9": command_field.set_contents("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '\\.font$' | sort -f")
          "fc": command_field.set_contents("fc-list : family style spacing")
          default: native_tab.set_is_shaded(&yes)
       }
