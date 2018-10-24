@@ -9,7 +9,7 @@
 "&clock - a string consisting of the current time of day"
 keyword clock
    body {
-      char sbuf[9], *tmp;
+      char sbuf[32], *tmp;
 #if PLAN9
       struct Tm *ct;
 
@@ -38,7 +38,7 @@ end
 "&date - the current date"
 keyword date
    body {
-      char sbuf[11], *tmp;
+      char sbuf[32], *tmp;
 #if PLAN9
       struct Tm *ct;
 

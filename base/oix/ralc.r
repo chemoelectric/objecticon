@@ -1028,21 +1028,20 @@ void *padded_malloc(size_t size)
  */
 void *icode_alloc(void *base, size_t size)
 {
-   void *p;
    /* Padding at end to avoid anything adjoining the string
     * constants */
    size += 8;
    if (base) {
 #if HAVE_MMAP
-       p = mmap(base, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+       void *p = mmap(base, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
        if (p != MAP_FAILED)
            return p;
 #elif MSWIN32
-       p = VirtualAlloc(base, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+       void *p = VirtualAlloc(base, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
        if (p)
            return p;
 #elif PLAN9
-       p = segattach(0, "memory", base, size);
+       void *p = segattach(0, "memory", base, size);
        if (p != (void*)-1)
            return p;
 #endif
