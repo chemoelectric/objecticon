@@ -2285,21 +2285,29 @@ class Vt(LineBasedScrollArea, MenuMode)
       if member(Key.NAVIGATE ++ set("\r"), e.code) then {
          popup.fire(ty, e)
          return
-      } else if e.code === "\t" then {
+      }
+      if e.code === "\t" then {
          # Pressing tab behaves just like selecting with return
          if o := popup.object_get_cursor() then {
             close_all()
             send_tr_nl(o.str)
          }
          return
-      } else if e.code === "\e" then {
+      }
+      if e.code === "\e" then {
          close_all()
          return
-      } else if type(e.code) == ("string" | "ucs") then {
+      }
+      if type(e.code) == ("string" | "ucs") then {
          # A char has been pressed; close popup, fail, and so "fall
          # through" to the other key handlers
          close_all()
+         fail
       }
+      # Something else (eg a function or meta key); just ignore
+      # (and don't pass onto custom handlers to avoid odd
+      # interactions with the popup).
+      return
    end
 
    private handle_key(e, src, ty)
