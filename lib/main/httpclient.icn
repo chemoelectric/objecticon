@@ -885,7 +885,7 @@ class HttpClient(NetClient)
    private write_request()
       local rs, sz, s, f, v, l, h, p
       request.set_header("user-agent", user_agent)
-      h := URL.bracket_host(request.url.get_host())
+      h := URL.bracket_host(request.url.get_decoded_host())
       p := request.url.get_port()
       if not(p = URL.get_default_port(request.url.get_scheme())) then
          h ||:= ":" || p
