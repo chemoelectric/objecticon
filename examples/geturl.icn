@@ -68,7 +68,7 @@ class Monitor()
    end
 
    public connecting(ev, src, type)
-      write("Connecting to ", src.server, ":", src.port)
+      write("Connecting to ", URL.bracket_host(src.server), ":", src.port)
    end
 
    public connected(ev)

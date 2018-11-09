@@ -46,6 +46,17 @@ class URL(ObjectOutput)
    end
 
    #
+   # Helper function to put square brackets around a hostname, if it
+   # is an IPv6 literal (ie: contains a ":").
+   #
+   public static bracket_host(host)
+      return if upto(':', host) then
+         "[" || host || "]"
+      else
+         host
+   end
+
+   #
    # Set the scheme field.
    #
    public set_scheme(x)
@@ -219,12 +230,8 @@ class URL(ObjectOutput)
       if \host then {
          s ||:= "//"
          s ||:= string(\userinfo) || "@"
-         if not(scheme == "file" & host == "localhost") then {
-            s ||:= if upto(':', host) then
-               "[" || string(host) || "]"
-            else
-               string(host)
-         }
+         if not(scheme == "file" & host == "localhost") then
+            s ||:= bracket_host(string(host))
          if \port & not(port = get_default_port(scheme)) then
             s ||:= ":" || port
       }

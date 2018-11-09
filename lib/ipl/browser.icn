@@ -741,7 +741,7 @@ class Worker()
    end
 
    private connecting(ev, src)
-      dwrite("Connecting to ", src.server, ":", src.port)
+      dwrite("Connecting to ", URL.bracket_host(src.server), ":", src.port)
    end
 
    private connected(ev)
