@@ -14,8 +14,9 @@ abstract class MenuWithPopup(Menu)
    # be shown for this event.
    #
    # :Parameters :
+   # :  `item` - the child menu item clicked on
    # :  `ev` - the right click event.
-   public abstract create_popup(ev)
+   public abstract create_popup(item, ev)
 
    public set_which_highlight(x)
       #
@@ -45,7 +46,7 @@ abstract class MenuWithPopup(Menu)
       local m, p
 
       if m := which_item(e) then {
-         if e.code === Mouse.RIGHT_PRESS & (p := create_popup(e)) then {
+         if e.code === Mouse.RIGHT_PRESS & (p := create_popup(m, e)) then {
             # Since it has no label... otherwise in_label_region crashes out.
             p.label_x := p.label_y := p.label_w := p.label_h := 0
             set_which_highlight(m)
