@@ -67,16 +67,16 @@ package class LRPartial()
       suspend f!(x ||| a)
    end
 
-   public lcall1(a)
-      suspend f(x, a)
+   public lcall1(a[])
+      suspend f!push(a, x)
    end
 
    public rcall(a[])
       suspend f!(a ||| x)
    end
 
-   public rcall1(a)
-      suspend f(a, x)
+   public rcall1(a[])
+      suspend f!put(a, x)
    end
 
    public new(f, x)
