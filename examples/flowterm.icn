@@ -108,6 +108,36 @@ class DesktopRunner(ExternalRunner)
    end
 end
 
+class OpenWithMenu(MenuWithPopup)
+   private const
+      term
+
+   public create_popup(item)
+      return Menu().
+         add(TextMenuItem().
+                connect(create term.copy_text(item.runner.get_command()),
+                        Event.ACTION).
+                set_label("Copy command"))
+   end
+
+   public new(term)
+      MenuWithPopup.new()
+      self.term := term
+      return
+   end
+end
+
+class OpenWithMenuItem(TextMenuItem)
+   public const
+      runner
+
+   public new(runner)
+      TextMenuItem.new()
+      self.runner := runner
+      return
+   end
+end
+
 class TerminalMenu(DynamicMenu)
    public populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_context_menu())
@@ -2216,12 +2246,12 @@ $endif
          msg()
    end
 
-   private copy_text(s)
+   public copy_text(s)
       parent_dialog.own_selection(Selection.CLIPBOARD, 
                                   StaticTextSelectionOwner(s))
    end
 
-   private copy_url(url)
+   public copy_url(url)
       parent_dialog.own_selection(Selection.CLIPBOARD,
                                   URLSelectionOwner([url]))
    end 
@@ -2356,19 +2386,28 @@ $endif
       return add_custom_menus(m, misc_menu_commands)
    end
 
+   private on_open_with(ev, src)
+      local r
+      r := src.runner
+      if ev.code === Mouse.MIDDLE_RELEASE then
+         send_tty(r.get_command() || u" ")
+      else
+         launch_prog(r)
+   end
+
    private create_open_with_menu_item(r)
       local m, de
       de := r.desktop_entry
-      m := TextMenuItem().
+      m := OpenWithMenuItem(r).
          set_label(de.name).
-         connect(create launch_prog(r), Event.ACTION)
+         connect(on_open_with, Event.ACTION)
       m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
       return m
    end
 
    private create_open_with_menu(url)
       local m, r
-      m := Menu().set_label("Open with")
+      m := OpenWithMenu(self).set_label("Open with")
       every r := get_runners(url) do {
          if is(r, DesktopRunner) then
             m.add(create_open_with_menu_item(r))
