@@ -2820,6 +2820,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       mark_y,
       cursor_x,
       cursor_y,
+      draw_band,
       banded,
       searched,                # Map of TextOut to list of TextSelection, giving the highlighted
                                # search result elements for each TextOut.
@@ -5042,14 +5043,22 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private handle_lpress(e)
       parent_dialog.get_held_count() = 1 | fail
-      /mark_x | fail
       running === 0 | fail
       can_lpress(e) | fail
-      set_cursor_from_pos(e)
-      mark_x := cursor_x
-      mark_y := cursor_y
       view.inner.invalidate(calculate_banded_rect())
-      clear_selections()
+      set_cursor_from_pos(e)
+      if \e.shift then {
+         /mark_y := cursor_y
+         /mark_x := cursor_x
+         calculate_banded()
+         view.inner.invalidate(get_band_rect())
+         view.inner.invalidate(calculate_banded_rect())
+      } else {
+         mark_x := cursor_x
+         mark_y := cursor_y
+         clear_selections()
+      }
+      draw_band := &yes
    end
 
    private set_cursor_from_pos(e)
@@ -5124,7 +5133,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public display()
       local W, r
       ComponentScrollArea.display()
-      if r := get_band_rect() then {
+      if \draw_band & r := get_band_rect() then {
          use {
             W := view.cbwin.clone(),
             W.set_fg("purple").
@@ -5200,7 +5209,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private clear_mark()
-      cursor_x := cursor_y := mark_x := mark_y := &null
+      mark_x := mark_y := &null
    end
 
    private clear_selections()
@@ -5210,6 +5219,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    package on_lost_primary_ownership()
+      clear_mark()
       view.inner.invalidate(calculate_banded_rect())
       clear_selections()
       primary := &null
@@ -5333,10 +5343,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private handle_lrelease(e)
       scroll_ticker.stop()
-      if \mark_x then {
-         view.inner.invalidate(get_band_rect())
-         clear_mark()
-      }
+      view.inner.invalidate(get_band_rect())
+      draw_band := &no
+      finish_selection()
+   end
+
+   private finish_selection()
       calculate_text_selection()
       calculate_links_selection()
       do_update_grey()
@@ -5350,13 +5362,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public handle_select_all(e)
-      /mark_x | fail
+      /draw_band | fail
       running === 0 | fail
       mark_x := mark_y := 0
       cursor_x := view.inner.w
       cursor_y := view.inner.h
       calculate_banded()
-      handle_lrelease(e)
+      view.inner.invalidate(calculate_banded_rect())
+      finish_selection()
    end
 
    private can_rpress(e)
