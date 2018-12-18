@@ -48,7 +48,6 @@
 %token  STATIC      /* static    */
 %token	SUCCEED     /* succeed   */
 %token  SUSPEND     /* suspend   */
-%token  TCASE       /* tcase     */
 %token  THEN        /* then      */
 %token  TO          /* to        */
 %token  UNTIL       /* until     */
