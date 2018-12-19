@@ -1,6 +1,6 @@
 package parser
 
-import io, util
+import io, util, ipl.scan
 
 class Preprocessor(Connectable)
    private
@@ -600,8 +600,7 @@ class Preprocessor(Connectable)
    # Scans optional white space.
    #
    private scan_opt_space()
-      local i
-      suspend if i := many(' \t\f\r') then tab(i) else ""
+      suspend tab(many0(' \t\f\r'))
    end
 
    #
