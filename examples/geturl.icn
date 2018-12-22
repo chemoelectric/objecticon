@@ -161,7 +161,7 @@ procedure main(args)
                           Opt("agent",string, "Set user agent field"),
                           Opt("while",, "Set the retry-while-data flag"),
                           Opt("close",, "Use Connection: Close"),
-                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0",,, "IP version"),
+                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0",, "IP version"),
                           Opt("x",string,"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0")],
