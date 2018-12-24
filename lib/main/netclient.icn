@@ -289,7 +289,7 @@ $else
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                save_why{ close_connection() }
-               return error("Couldn't verify SSL connection: " || &why)
+               return error_dont_retry("Couldn't verify SSL connection: " || &why)
             }
          }
       }
