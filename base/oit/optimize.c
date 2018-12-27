@@ -1245,6 +1245,21 @@ static int is_repeatable(struct lnode *n)
             return is_repeatable(x->child1) && is_repeatable(x->child2) && is_repeatable(x->child3);
         }
 
+        case Uop_Field: { 			/* field reference */
+            struct lnode_field *x = (struct lnode_field *)n;
+            struct lnode_global *y;
+            struct lclass_field *f;
+            if (x->child->op != Uop_Global)
+                return 0;
+            y = (struct lnode_global *)x->child;
+            if (!y->global->class)
+                return 0;
+            f = lookup_implemented_field(y->global->class, x->fname);
+            if (!f)
+                return 0;
+            return (f->flag & M_Static) && (f->flag & (M_Method | M_Const));
+        }
+
         case Uop_Asgn:
         case Uop_Rasgn:
         case Uop_Rswap:
@@ -1292,7 +1307,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Suspend:
         case Uop_Return:
         case Uop_Fail:
-        case Uop_Field: 			/* field reference */
         case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke:                       /* e(x1, x2.., xn) */
         case Uop_Apply:			/* application e!l */
