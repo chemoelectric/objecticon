@@ -84,7 +84,7 @@ static	char *	setline	(char *s);
 static	char *	setline1(char *s, int report);
 static	char *	wskip	(char *s);
 static	char *	nskip	(char *s);
-static	char *	matchq	(char *s);
+static	char *	matchq	(char q, char *s);
 static	char *	getidt	(char *dst, char *src);
 static	char *	getencoding(char *dst, char *src);
 static	char *	getfnm	(char *dst, char *src);
@@ -130,6 +130,7 @@ static cdefn *cbin[HTBINS];		/* hash bins for defn table */
 static char *lpath;				/* LPATH for finding source files */
 
 static int ifdepth;			/* depth of $if nesting */
+static int quoting;
 static char *last_line_file, 
             *last_line_encoding;        /* last file/encoding on a #line directive */
 
@@ -167,6 +168,7 @@ int ppinit(char *fname, int m4)
    lpath = getenv_nn(OI_INCL);
    curfile = &nofile;			/* init file struct pointer */
    last_line_file = last_line_encoding = 0;
+   quoting = 0;
    return ppopen(fname, m4);		/* open main source file */
    }
 
@@ -279,6 +281,24 @@ int ppch()
           *  checked for substitutions yet.  Process either one id, if
           *  that's what's next, or as much else as we can.
           */
+          if (quoting) {
+             /*
+              * We are on a string literal continuation line; search for end of
+              * the string.
+              */
+             p = matchq(quoting, bnxt);		/* skip to end */
+             if (*p != '\0') {
+                quoting = 0;                            /* found end of string */
+                bstop = p + 1;
+                }
+             else if (strlen(bnxt) > 1 && p[-1] == '\n' && p[-2] == '_')    /* another continuation line follows */
+                bstop = blim;
+             else {
+                bstop = blim;
+                quoting = 0;                            /* didn't find quote or _ at end (a syntax error) */
+                }
+             continue;                           /* go round to top to return first char */
+            }
          f = *bnxt & 0xFF;
          if ((oi_isalpha(f) || f == '_') && !(f == 'u' && *(bnxt + 1) == '"')) {
             /*
@@ -313,9 +333,11 @@ int ppch()
                c = *p;
                if (c == 'u' && *(p + 1) == '"') {  /* ucs literal */
                   ++p;
-                  p = matchq(p);		/* skip to end */
+                  p = matchq('"', p);		/* skip to end */
                   if (*p != '\0')
                      p++;
+                  else if (p[-1] == '\n' && p[-2] == '_')
+                     quoting = '"';
                }
                else if (oi_isalpha(c) || c == '_') {	/* there's an id ahead */
                   bstop = p;
@@ -328,10 +350,12 @@ int ppch()
                   bstop = blim;
                   return f;
                   }
-               else if (c == '"' || c == '\''){	/* quoted literal */
-                  p = matchq(p);		/* skip to end */
+               else if (c == '"' || c == '\'') {	/* quoted literal */
+                  p = matchq(c, p);		/* skip to end */
                   if (*p != '\0')
                      p++;
+                  else if (p[-1] == '\n' && p[-2] == '_')
+                     quoting = c;
                   }
                else
                   p++;				/* else advance one char */
@@ -365,20 +389,29 @@ int ppch()
           */
          p = bnxt = bstop = blim = buf;		/* reset buffer pointers */
          curfile->lno++;			/* bump line number */
-         while (oi_isspace((c = *p)))
-            p++;				/* find first nonwhite */
-         if (c == '$' && (!oi_ispunct(p[1]) || p[1]==' '))
-            ppdir(p + 1);			/* handle preprocessor cmd */
-         else if (buf[1]=='l' && buf[2]=='i' && buf[3]=='n' && buf[4]=='e' &&
-                  buf[0]=='#' && buf[5]==' ')
-            ppdir(p + 1);			/* handle #line form */
-         else {
+         if (quoting) {
             /*
-             * Not a preprocessor line; will need to scan for symbols.
+             * We're in a multi-line quote
              */
             bnxt = buf;
             blim = buf + strlen(buf);
             bstop = bnxt;			/* no chars scanned yet */
+            }
+         else {
+            while (oi_isspace((c = *p)))
+               p++;				/* find first nonwhite */
+            if (c == '$' && (!oi_ispunct(p[1]) || p[1]==' '))
+               ppdir(p + 1);			/* handle preprocessor cmd */
+            else if (strncmp(buf, "#line ", 6) == 0)
+               ppdir(p + 1);			/* handle #line form */
+            else {
+               /*
+                * Not a preprocessor line; will need to scan for symbols.
+                */
+               bnxt = buf;
+               blim = buf + strlen(buf);
+               bstop = bnxt;			/* no chars scanned yet */
+               }
             }
          }
    
@@ -390,6 +423,8 @@ int ppch()
             pfatal("Unterminated $if");
             ifdepth = curfile->ifdepth;
             }
+
+         quoting = 0;
 
          /*
           * switch to previous file and close current file.
@@ -594,7 +629,7 @@ static char *define(char *s)
    if (*s != '\0') {
       while ((c = *s) != '\0' && c != '#') {	/* scan value */
          if (c == '"' || c == '\'') {
-            s = matchq(s);
+            s = matchq(c, s);
             if (*s == '\0')
                return "$define: Unterminated literal";
             }
@@ -987,15 +1022,22 @@ static char *encoding(char *s)
 static void skipcode(int doelse, int report, char **cmd0, char **args0)
 {
     char c, *p, *cmd;
+    int quoting = 0;
 
     while ((p = buf = rline(curfile->fp)) != NULL) {
         curfile->lno++;			/* bump line number */
 
+        if (quoting) {
+            int len = strlen(buf);
+            if (len < 2 || buf[len - 2] != '_' || buf[len - 1] != '\n')
+                quoting = 0;
+            continue;
+        }
+
         /*
          * Handle #line form encountered while skipping.
          */
-        if (buf[1]=='l' && buf[2]=='i' && buf[3]=='n' && buf[4]=='e' &&
-            buf[0]=='#' && buf[5]==' ') {
+        if (strncmp(buf, "#line ", 6) == 0) {
             ppdir(buf + 1);			/* interpret #line */
             continue;
         }
@@ -1005,8 +1047,14 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
          */
         while (oi_isspace((c = *p)))
             p++;				/* find first nonwhite */
-        if (c != '$' || (oi_ispunct(p[1]) && p[1]!=' '))
-            continue;			/* not a preprocessing directive */
+        if (c != '$' || (oi_ispunct(p[1]) && p[1]!=' ')) {
+            /* Not a preprocessing directive */
+            int len = strlen(buf);
+            /*    Check for multi-line string */
+            if (len > 1 && buf[len - 2] == '_' && buf[len - 1] == '\n')
+                quoting = 1;
+            continue;
+        }
         p = wskip(p+1);			/* skip whitespace */
         p = getidt(cmd = p-1, p);		/* get command name */
         p = wskip(p);			/* skip whitespace */
@@ -1112,20 +1160,16 @@ static char *nskip(char *s)
    }
 
 /*
- * matchq(s) -- scan for matching quote character and return pointer.
+ * matchq(q, s) -- scan for matching quote character and return pointer.
  *
- *  Taking *s as the quote character, s is incremented until it points
+ *  Taking q as the quote character, s is incremented until it points
  *  to either another occurrence of the character or the '\0' terminating
  *  the string.  Escaped quote characters do not stop the scan.  The
  *  updated pointer is returned.
  */
-static char *matchq(char *s)
+static char *matchq(char q, char *s)
    {
-   char c, q;
-
-   q = *s;
-   if (q == '\0')
-      return s;
+   char c;
    while ((c = *++s) != q && c != '\0') {
       if (c == '\\')
          if (*++s == '\0')

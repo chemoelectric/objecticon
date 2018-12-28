@@ -454,20 +454,25 @@ class Preprocessor(Connectable)
                            case move(1) of {
                               "\\": move(1)
                               default: {
-                                 break break
+                                 break break  # Found closing quote; go back to top of while loop above.
                               }
                            }
                         }
-                        suspend if q = 1 then .&subject else result || &subject[q:0]
-                        if not match("_",,-1) then {
-                           break
-                        }
+                        # Didn't find closing quote.  Suspend line and maybe loop on further continuation
+                        # lines.
+                        suspend result || &subject[q:0]
+
+                        # Stop unless there is a following continuation line
+                        match("_",, -1) | fail
+
                         t := read_line() | fail
-                        # If we've just come back from a $include, t will be &null, so set it to
+                        # If we've just come back from a $include, t will be &null, so return
                         # "#line ..." (this is bound to be a nonsense result anyway, since we're in
                         # the middle of a multi-line string).
-                        /t := sync_lines()
+                        if /t then
+                           return sync_lines()
                         &subject := t
+                        q := 1
                         result := ""
                      }
                   }
@@ -493,10 +498,23 @@ class Preprocessor(Connectable)
                   }
                }
             }
-            suspend if q = 1 then .&subject else result || &subject[q:0]
+            return result || &subject[q:0]
          }
          else {
-            suspend .&subject
+            return .&subject
+         }
+      } else {
+         # We're skipping an $ifdef section, so skip over any lines
+         # ending in _ (assume they're multi-line quotes)
+         t := &subject
+         while match("_", t, -1) do {
+            t := read_line() | fail
+            if /t then {
+               if /if_state then
+                  return sync_lines()
+               else
+                  fail
+            }
          }
       }
    end
@@ -507,6 +525,7 @@ class Preprocessor(Connectable)
    #
    private read_line()
       local result
+      \file | fail
       repeat {
          if result := file.read_line() then {
             if \result then

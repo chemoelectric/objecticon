@@ -395,3 +395,31 @@ $define u ABC
 u"the same" || u"the same"
 u
 u + u
+
+# Check for multi-line string literal handling
+$define ONE 1
+$define TWO 2
+x := ONE"ONE_
+$ifdef_
+TWO_
+THREE"TWO
+
+x := ONE'ONE_
+#line_
+TWO_
+THREE'TWO
+
+x := u"ONE_
+TWO_
+THREE"TWO
+
+OK ONE TWO
+
+$ifdef JUNK
+
+x := ONE"ONE_
+$endif_
+TWO_
+THREE"TWO
+
+$endif
