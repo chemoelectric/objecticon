@@ -413,13 +413,24 @@ x := u"ONE_
 TWO_
 THREE"TWO
 
+x := "ABC_
+$endif_
+123"ONE'123_
+$endif_
+345'"_
+TWO"
+
 OK ONE TWO
 
 $ifdef JUNK
+x := "ABC_
+$endif_
+123"'123_
+$endif_
+345'
 
 x := ONE"ONE_
 $endif_
 TWO_
 THREE"TWO
-
 $endif

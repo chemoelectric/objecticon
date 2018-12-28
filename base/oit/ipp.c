@@ -84,7 +84,7 @@ static	char *	setline	(char *s);
 static	char *	setline1(char *s, int report);
 static	char *	wskip	(char *s);
 static	char *	nskip	(char *s);
-static	char *	matchq	(char q, char *s);
+static	char *	matchq	(char *s);
 static	char *	getidt	(char *dst, char *src);
 static	char *	getencoding(char *dst, char *src);
 static	char *	getfnm	(char *dst, char *src);
@@ -93,6 +93,8 @@ static cdefn *dquery(char *name, int len);
 static void  dremove(char *name);
 static void  dinsert(char *name, char *val);
 static void  dinsert_pre(char *name, char *val, int vlen);
+static char *skipstring(char q, char *s);
+static int multistart(char *s);
 
 struct ppcmd {
    char *name;
@@ -286,17 +288,14 @@ int ppch()
               * We are on a string literal continuation line; search for end of
               * the string.
               */
-             p = matchq(quoting, bnxt);		/* skip to end */
-             if (*p != '\0') {
-                quoting = 0;                            /* found end of string */
-                bstop = p + 1;
+             p = skipstring(quoting, bnxt);		/* skip to end */
+             if (p) {
+                bstop = p;
+                quoting = 0;                            /* found end of string (may be end of line) */
                 }
-             else if (strlen(bnxt) > 1 && p[-1] == '\n' && p[-2] == '_')    /* another continuation line follows */
-                bstop = blim;
              else {
-                bstop = blim;
-                quoting = 0;                            /* didn't find quote or _ at end (a syntax error) */
-                }
+                bstop = blim;                           /* another continuation line follows */
+             }
              continue;                           /* go round to top to return first char */
             }
          f = *bnxt & 0xFF;
@@ -332,12 +331,11 @@ int ppch()
             while (p < blim) {
                c = *p;
                if (c == 'u' && *(p + 1) == '"') {  /* ucs literal */
-                  ++p;
-                  p = matchq('"', p);		/* skip to end */
-                  if (*p != '\0')
-                     p++;
-                  else if (p[-1] == '\n' && p[-2] == '_')
+                  p = skipstring('"', p + 2);		/* skip to end */
+                  if (!p) {
                      quoting = '"';
+                     break;
+                     }
                }
                else if (oi_isalpha(c) || c == '_') {	/* there's an id ahead */
                   bstop = p;
@@ -351,11 +349,11 @@ int ppch()
                   return f;
                   }
                else if (c == '"' || c == '\'') {	/* quoted literal */
-                  p = matchq(c, p);		/* skip to end */
-                  if (*p != '\0')
-                     p++;
-                  else if (p[-1] == '\n' && p[-2] == '_')
+                  p = skipstring(c, p + 1);		/* skip to end */
+                  if (!p) {
                      quoting = c;
+                     break;
+                     }
                   }
                else
                   p++;				/* else advance one char */
@@ -629,7 +627,7 @@ static char *define(char *s)
    if (*s != '\0') {
       while ((c = *s) != '\0' && c != '#') {	/* scan value */
          if (c == '"' || c == '\'') {
-            s = matchq(c, s);
+            s = matchq(s);
             if (*s == '\0')
                return "$define: Unterminated literal";
             }
@@ -1013,6 +1011,57 @@ static char *encoding(char *s)
    pushline();
    return NULL;
    }
+   
+/*
+ * If this line ends on a multi-line literal, return the
+ * relevant opening quote char; otherwise return 0.
+ * Eg :-
+ *    abc 'def' "xyz_  -> returns "
+ *    abc 'def' "xyz"  -> returns 0
+ */
+static int multistart(char *s)
+{
+   char c;
+   while (*s) {
+       c = *s++;
+       if (c == '\'' || c == '\"') {
+           s = skipstring(c, s);
+           if (!s)
+               return c;
+       }
+   }
+   return 0;
+}
+
+/*
+ * Skip a string/cset literal. q is " or ', and s should be just
+ * after the opening quote.  Returns a pointer to just after the
+ * closing quote, or at end of line if not closing quote was found.
+ * 
+ * Returns 0 iff the literal is a multi-line, ie the end is not
+ * in the string.
+ *
+ * Examples (q=") :-
+ *  one"blah -> returns a pointer to the 'b'.
+ *  noquote -> returns a pointer to the \0 at the end.
+ *  noend_ -> returns 0.
+ */
+static char *skipstring(char q, char *s)
+{
+   char c;
+   while (*s) {
+       c = *s++;
+       if (c == '_') {
+           if (*s == '\n' && *(s + 1) == '\0')
+               return 0;
+       } else if (c == '\\') {
+           if (*s)
+               ++s;
+       } else if (c == q)
+           return s;
+   }
+   return s;
+}
 
 /*
  * skipcode(doelse,report) -- skip code to $else (doelse=1) or $endif (=0).
@@ -1028,9 +1077,10 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
         curfile->lno++;			/* bump line number */
 
         if (quoting) {
-            int len = strlen(buf);
-            if (len < 2 || buf[len - 2] != '_' || buf[len - 1] != '\n')
-                quoting = 0;
+            char *p;
+            p = skipstring(quoting, buf);
+            if (p)
+                quoting = multistart(p);
             continue;
         }
 
@@ -1049,10 +1099,8 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
             p++;				/* find first nonwhite */
         if (c != '$' || (oi_ispunct(p[1]) && p[1]!=' ')) {
             /* Not a preprocessing directive */
-            int len = strlen(buf);
-            /*    Check for multi-line string */
-            if (len > 1 && buf[len - 2] == '_' && buf[len - 1] == '\n')
-                quoting = 1;
+            /* Check for multi-line string */
+            quoting = multistart(buf);
             continue;
         }
         p = wskip(p+1);			/* skip whitespace */
@@ -1160,16 +1208,17 @@ static char *nskip(char *s)
    }
 
 /*
- * matchq(q, s) -- scan for matching quote character and return pointer.
+ * matchq(s) -- scan for matching quote character and return pointer.
  *
- *  Taking q as the quote character, s is incremented until it points
+ *  Taking *s as the quote character, s is incremented until it points
  *  to either another occurrence of the character or the '\0' terminating
  *  the string.  Escaped quote characters do not stop the scan.  The
  *  updated pointer is returned.
  */
-static char *matchq(char q, char *s)
+static char *matchq(char *s)
    {
-   char c;
+   char c, q;
+   q = *s;
    while ((c = *++s) != q && c != '\0') {
       if (c == '\\')
          if (*++s == '\0')
