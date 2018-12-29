@@ -56,7 +56,7 @@ class Preprocessor(Connectable)
       return use {
          rs := RamStream(),
          {
-            every rs.out(preprocess_gen(fname, predefined_syms) || "\n")
+            every rs.write1(preprocess_gen(fname, predefined_syms))
             rs.str()
          }
       }
