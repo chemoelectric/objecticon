@@ -135,7 +135,7 @@ function func_name(i, j, a[n])
       op(i, j, result);
 
       /*
-       * Process any optional additonal params.
+       * Process any optional additional params.
        */
       for (k = 0; k < n; ++k) {
           if (!cnv:integer(a[k], a[k]))
