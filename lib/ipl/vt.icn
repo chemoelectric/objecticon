@@ -2119,7 +2119,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_ldrag(e)
       if \held then
          handle_mdrag(e)
-      else if /no_drag then {
+      else if /no_drag & \mark_y then {
          if cursor_y > 1 & e.y < self.view.y then {
             going_up := &yes
             check_scroll_ticker(self.view.y - e.y)
@@ -2569,16 +2569,15 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_lpress1(e)
       invalidate_region()
       reset_search()
+      set_cursor_from_pos(e)
       if \e.shift then {
-         /self.mark_y := self.cursor_y
-         /self.mark_x := self.cursor_x
-         set_cursor_from_pos(e)
+         /mark_y := cursor_y
+         /mark_x := cursor_x
       } else {
-         set_cursor_from_pos(e)
          case (parent_dialog.get_click_count() - 1) % 3 of {
             0 : {
-               self.mark_y := self.cursor_y
-               self.mark_x := self.cursor_x
+               mark_y := cursor_y
+               mark_x := cursor_x
             }
             1 : handle_double_click()
             2 : handle_triple_click()

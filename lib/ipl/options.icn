@@ -32,7 +32,7 @@ class Opt()
    public const
       names, convert, help
    private readable
-      multiple_flag, def, param_err
+      multiple_flag, param_err
 
    # A utility function to help format an option string.
    public format()
@@ -58,14 +58,6 @@ class Opt()
       return self
    end
 
-   # Set a default value if a flag requiring a value doesn't specify
-   # one.  Note that it is still subject to the `convert` function.
-   #
-   public set_default(def)
-      self.def := def
-      return self
-   end
-
    # Set an error string describing the type of parameter (for error
    # output); by default the name of the `convert` procedure.  For
    # example, if the `convert` procedure converted the parameter's
@@ -87,13 +79,10 @@ class Opt()
    # :  `help` - a descriptive help string
    # :  `multiple` - a flag value, set if multiple uses of the option are 
    #          allowed; see `set_multi()`.
-   # :  `def` - a default value if a flag requiring a value doesn't specify one.
-   #          Note that it is still subject to the `convert` 
-   #          function; see `set_default()`.
    # :  `param_err` - a string describing the type of parameter (for error output);
    #           see `set_param_err()`.
    #
-   public new(s, convert, help, multiple, def, param_err)
+   public new(s, convert, help, multiple, param_err)
       names := if type(s) == "list" then
          s
       else
@@ -102,7 +91,6 @@ class Opt()
       self.help := help
       set_multiple(multiple)
       if \convert then {
-         set_default(def)
          /param_err := Proc.get_name(convert)
          set_param_err(param_err)
       }
@@ -281,16 +269,6 @@ end
 #  ~~~
 #  This would allow `-f yes`, `--f=no`, etc.
 #
-#     `Opt` also allows a default parameter value to be specified.  In this case,
-#  the option will never obtain a parameter from the next argument, but only
-#  from within the option's own argument string.  For example:
-#  ~~~
-#         Opt("w", integer, "Width",, 200)
-#  ~~~
-#  In this case `-w30` or `--w=30` would give the result `"w"->30`,
-#  whilst `-w` alone, or `-w anything` would give the result
-#  `"w"->200`.
-#
 #     The list of `Opt`s may also contain strings; these are interspersed
 #  with the formatted option output when help is produced with the `-help`
 #  option (or by calling `options_help()`).
@@ -371,10 +349,10 @@ procedure options(arg, opts, usage, errproc)
                   } else {
                      p := if ="=" then
                         tab(0)
-                     else if \arg[1] & /opt.def then
+                     else if \arg[1] then
                         get(arg)
                      else
-                        \opt.def | return errproc("No parameter following --" || optname)
+                        return errproc("No parameter following --" || optname)
                      v := opt.convert(p) | return errproc("--" || optname || " needs " ||  article(opt.param_err) || " parameter")
                   }
 
@@ -396,10 +374,10 @@ procedure options(arg, opts, usage, errproc)
 
                      p := if not pos(0) then
                         tab(0)
-                     else if \arg[1] & /opt.def then
+                     else if \arg[1] then
                         get(arg)
                      else
-                        \opt.def | return errproc("No parameter following -" || optname)
+                        return errproc("No parameter following -" || optname)
                      v := opt.convert(p) | return errproc("-" || optname || " needs " ||  article(opt.param_err) || " parameter")
                   }
                   

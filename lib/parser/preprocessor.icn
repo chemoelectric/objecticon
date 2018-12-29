@@ -1,6 +1,6 @@
 package parser
 
-import io, util
+import io, util, ipl.scan
 
 class Preprocessor(Connectable)
    private
@@ -57,7 +57,7 @@ class Preprocessor(Connectable)
       return use {
          rs := RamStream(),
          {
-            every rs.out(preprocess_gen(fname, predefined_syms) || "\n")
+            every rs.write1(preprocess_gen(fname, predefined_syms))
             rs.str()
          }
       }
@@ -424,13 +424,13 @@ class Preprocessor(Connectable)
    # Scans and make substitutions in a text line.
    #
    private scan_text(done_set)
-      local q,result,p,interesting_in_quotes,ident,value,t
+      local q,result,p,ident,value,t,c
       if /if_state then {
          if *sym_table > 0 then {
             &pos := q := 1
             result := ""
             while tab(upto('#"\'_' ++ &letters ++ &digits)) do {
-               case move(1) of {
+               case c := move(1) of {
                   "#": {
                      tab(0)
                   }
@@ -449,26 +449,22 @@ class Preprocessor(Connectable)
                      }
                   }
                   "\"" | "'": {
-                     interesting_in_quotes := '\\' ++ &subject[&pos - 1]
                      repeat {
-                        while tab(upto(interesting_in_quotes)) do {
-                           case move(1) of {
-                              "\\": move(1)
-                              default: {
-                                 break break
-                              }
-                           }
-                        }
-                        suspend if q = 1 then .&subject else result || &subject[q:0]
-                        if not match("_",,-1) then {
+                        # Look for end of literal; if found continue scannning
+                        if skip_string(c) then
                            break
-                        }
+
+                        # Multi-line literal.  Suspend line and read more.
+                        suspend result || &subject[q:0]
+
                         t := read_line() | fail
-                        # If we've just come back from a $include, t will be &null, so set it to
+                        # If we've just come back from a $include, t will be &null, so return
                         # "#line ..." (this is bound to be a nonsense result anyway, since we're in
                         # the middle of a multi-line string).
-                        /t := sync_lines()
+                        if /t then
+                           return sync_lines()
                         &subject := t
+                        q := 1
                         result := ""
                      }
                   }
@@ -494,10 +490,67 @@ class Preprocessor(Connectable)
                   }
                }
             }
-            suspend if q = 1 then .&subject else result || &subject[q:0]
+            return result || &subject[q:0]
          }
          else {
-            suspend .&subject
+            return .&subject
+         }
+      } else {
+         # We're skipping an $ifdef section, so skip over any multi-line
+         # string literals.
+         if c := multi_line_start() then {
+            repeat {
+               t := read_line() | fail
+               if /t then {
+                  if /if_state then
+                     return sync_lines()
+                  else
+                     fail
+               }
+               &subject := t
+               if skip_string(c) then
+                  c := multi_line_start() | break
+            }
+         }
+      }
+   end
+
+   # If this line ends on a multi-line literal, succeed and return the
+   # relevant opening quote char.
+   # Eg :-
+   #    abc 'def' "xyz_
+   # would succeed and return "
+   #
+   private static multi_line_start()
+      local c
+      while tab(upto('\"\'')) do {
+         c := move(1)
+         skip_string(c) | return c
+      }
+   end
+
+   # Skip a string/cset literal. q is " or ', and &pos should be just
+   # after the opening quote.  Succeeds and leaves &pos just after the
+   # closing quote, or at end of line if not closing quote was found.
+   # Fails iff the literal is a multi-line.
+   #
+   # Examples (q=") :-
+   #  one"blah -> succeeds leaving &pos after the "
+   #  noquote -> succeeds leaving &pos at the end
+   #  noend_ -> fails, also leaving &pos at the end
+   #
+   private static skip_string(q)
+      local c
+      q ++:= '\\_'
+      while tab(upto(q) | 0) do {
+         c := move(1) | return
+         case c of {
+            "_" : {
+               if pos(0) then
+                  fail
+            }
+            "\\" : move(1)
+            default: return    # Closing quote found
          }
       }
    end
@@ -508,6 +561,7 @@ class Preprocessor(Connectable)
    #
    private read_line()
       local result
+      \file | fail
       repeat {
          if result := file.read_line() then {
             if \result then
@@ -540,14 +594,14 @@ class Preprocessor(Connectable)
    #
    # Scans an identifier.
    #
-   private scan_word()
+   private static scan_word()
       suspend any(&letters ++ '_') & tab(many(&letters ++ &digits ++ '_'))
    end
 
    #
    # Scans a possibly-quoted word (e.g. a file name).
    #
-   private scan_qword()
+   private static scan_qword()
       suspend 2(="\"",
                 tab(find("\"")),
                 move(1)) |
@@ -557,7 +611,7 @@ class Preprocessor(Connectable)
    #
    # Scans the value of a $define.
    #
-   private scan_define_value()
+   private static scan_define_value()
       local q,interesting_in_quotes
 
       if ="(" then {
@@ -593,24 +647,23 @@ class Preprocessor(Connectable)
    #
    # Scans white space.
    #
-   private scan_space()
+   private static scan_space()
       suspend tab(many(' \t\f\r'))
    end
 
    #
    # Scans optional white space.
    #
-   private scan_opt_space()
-      local i
-      suspend if i := many(' \t\f\r') then tab(i) else ""
+   private static scan_opt_space()
+      suspend tab(many0(' \t\f\r'))
    end
 
    #
    # Tests for &pos at the logical end of a preprocessor directive.
    #
-   private at_end()
+   private static at_end()
       scan_space()
-      return pos(0) | match("#")
+      succeed pos(0) | match("#")
    end
 
    #

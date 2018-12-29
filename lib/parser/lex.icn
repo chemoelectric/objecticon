@@ -165,8 +165,9 @@ class Lex(Connectable)
    # u" or ', depending on the type.
    #
    private get_strlit()
-      local spos, cs, q, val, i
-      spos := &pos
+      local spos, cs, q, val, i, vpos
+      vpos := spos := &pos
+      val := ""
       # Closing quote is last char of yytext (either ' or ")
       q := cset(yytext[-1])
       cs := '\\_\n' ++ q
@@ -180,17 +181,18 @@ class Lex(Connectable)
             break
          }
          if any(q) then {
+            val ||:= &subject[vpos:&pos]
             move(1)
             yytext ||:= &subject[spos:&pos]
             break
          }
          if any('_') then {
             if i := &pos & =("_\n" | "_\r\n") then {
-               yytext ||:= &subject[spos:i]
+               val ||:= &subject[vpos:i]
                yylineno +:= 1
                yylinestart := &pos - 1
                tab(many(' \t'))
-               spos := &pos
+               vpos := &pos
             } else
                move(1)
             next
@@ -207,7 +209,6 @@ class Lex(Connectable)
          else
             move(1)
       }
-      val := if yytext[1] == "u" then yytext[3:-1] else yytext[2:-1]
 
       # Check encodings for valid chars
       if yyencoding == "UTF-8" then

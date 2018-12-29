@@ -607,3 +607,31 @@ u + u
 u"the same" || u"the same"
 ABC
 ABC + ABC
+
+# Check for multi-line string literal handling
+
+
+x := 1"ONE_
+$ifdef_
+TWO_
+THREE"2
+
+x := 1'ONE_
+#line_
+TWO_
+THREE'2
+
+x := u"ONE_
+TWO_
+THREE"2
+
+x := "ABC_
+$endif_
+123"1'123_
+$endif_
+345'"_
+TWO"
+
+OK 1 2
+
+#line 337

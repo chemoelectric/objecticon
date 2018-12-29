@@ -44,7 +44,6 @@ class EditableTextList(LineBasedScrollArea)
       old_cursor_y,
       old_mark_x,
       old_mark_y,
-      old_has_region,
       old_region,
       no_drag,                 # Don't allow drag to set the cursor
       view_list,
@@ -524,7 +523,6 @@ class EditableTextList(LineBasedScrollArea)
       old_cursor_y := cursor_y
       old_mark_x := mark_x
       old_mark_y := mark_y
-      old_has_region := has_region() | &null
       old_region := get_region_list() | &null
       changed := &null
    end
@@ -575,7 +573,7 @@ class EditableTextList(LineBasedScrollArea)
       {
          t := [get_view_list_index(old_cursor_x, old_cursor_y),
                get_view_list_index()]
-         if not has_region() & /old_has_region then
+         if not has_region() & /old_region then
             # No regions, so just invalidate cursor lines
             every invalidate_line(!t, i)
          else {

@@ -46,7 +46,7 @@ function mysql_MySql_new_impl()
        MYSQL *res;
        res = mysql_init(NULL);
        if (res == NULL) {
-           why("mysql_init returned null");
+           LitWhy("mysql_init returned null");
            fail;
        }
        return C_integer (word)res;
@@ -133,7 +133,7 @@ function mysql_MySql_options(self, option, arg)
           }
 
           default: {
-              why("Bad option number");
+              LitWhy("Bad option number");
               fail;
           }
       }
@@ -690,7 +690,7 @@ function mysql_MySqlRes_fetch_field_impl(self)
        GetSelfMySqlRes();
        field = mysql_fetch_field(self_mysql_res);
        if (!field) {
-           why("No more fields");
+           LitWhy("No more fields");
            fail;
        }
        field_to_list(field, &result);
@@ -736,7 +736,7 @@ function mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
        GetSelfMySqlRes();
        field = mysql_fetch_field_direct(self_mysql_res, fieldnr);
        if (!field) {
-           why("No more fields");
+           LitWhy("No more fields");
            fail;
        }
        field_to_list(field, &result);
@@ -753,7 +753,7 @@ function mysql_MySqlRes_fetch_fields_impl(self)
 
        fields = mysql_fetch_fields(self_mysql_res);
        if (!fields) {
-           why("No more fields");
+           LitWhy("No more fields");
            fail;
        }
 
@@ -792,7 +792,7 @@ function mysql_MySqlRes_fetch_lengths(self)
        GetSelfMySqlRes();
        lengths = mysql_fetch_lengths(self_mysql_res);
        if (!lengths) {
-           why("mysql_fetch_lengths returned null");
+           LitWhy("mysql_fetch_lengths returned null");
            fail;
        }
        n = mysql_num_fields(self_mysql_res);
@@ -820,7 +820,7 @@ function mysql_MySqlRes_fetch_row(self)
        }
        lengths = mysql_fetch_lengths(self_mysql_res);
        if (!lengths) {
-           why("mysql_fetch_lengths returned null");
+           LitWhy("mysql_fetch_lengths returned null");
            fail;
        }
 

@@ -193,6 +193,16 @@ abstract class Stream(HasMode)
    end
 
    #
+   # Output the string `s`, followed by a newline.
+   # 
+   public write1(s)
+      local e
+      every e := s | Files.EOL do
+         writes1(e) | fail
+      return self
+   end
+
+   #
    # This writes each parameter to the stream.  Each parameter is
    # guaranteed to be completely output, except on error, in which
    # case the method fails and sets &why.
