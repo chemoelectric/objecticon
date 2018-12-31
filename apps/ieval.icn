@@ -18,9 +18,9 @@ end\n"
 end
 
 procedure esc(s)
-$ifdef _UNIX
+$if _UNIX
    return Format.shell_escape(s)
-$elsifdef _PLAN9
+$elsif _PLAN9
    return Format.rc_escape(s)
 $else
    return s

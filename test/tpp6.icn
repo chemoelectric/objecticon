@@ -2,84 +2,84 @@ $define A 1
 $undef B
 $undef C
 
-$ifdef B
+$if B
 NO 1
-$elsifndef C
+$elsif ~ C
 YES 1
 $endif
 
-$ifdef A
+$if A
 YES 2
 $else
 NO 2
 $endif
 
-$ifdef B
+$if B
 NO 3
 $else
 YES 3
 $endif
 
-$ifdef B
+$if B
 NO 4
-$elsifdef A
+$elsif A
 YES 4
 $endif
 
-$ifdef B
+$if B
 NO 5
-$elsifndef C
+$elsif ~ C
 YES 5
 $endif
 
-$ifdef B
+$if B
 NO 6
-$elsifdef C
+$elsif C
 NO 6
-$elsifdef A
+$elsif A
 YES 6
 $endif
 
 
-$ifdef B
+$if B
 NO 7
-$elsifdef C
+$elsif C
 NO 7
 $else
 YES 7
 $endif
 
-$ifdef A
+$if A
 YES 8
 $endif
 
-$ifdef A
+$if A
 YES 9
-$elsifdef C
+$elsif C
 NO 9
 $else
 NO 9
 $endif
 
-$ifdef B
+$if B
 NO 10
-$elsifdef A
+$elsif A
 YES 10
 $else
 NO 10
 $endif
 
-$ifdef B
+$if B
 NO 11
-$elsifndef C
+$elsif ~ C
 YES 11
 $else
 NO 11
 $endif
 
-$ifdef A
+$if A
 YES 12
-$elsifdef A
+$elsif A
 NO 12
 $else
 NO 12

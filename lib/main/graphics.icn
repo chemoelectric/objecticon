@@ -1118,7 +1118,7 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native close()
 
-$ifdef _PLAN9
+$if _PLAN9
    public native get_dir()
 $endif
 
@@ -1416,7 +1416,7 @@ final abstract class Key()
       MOD_META4 :=   64
       MOD_META5 :=   128
       MOD_RELEASE := 256
-$ifdef _X_WINDOW_SYSTEM
+$if _X_WINDOW_SYSTEM
       SHIFT_TAB :=           65056
       COMPOSE :=             65312
       DO :=                  65383
@@ -1533,7 +1533,7 @@ $ifdef _X_WINDOW_SYSTEM
       LAUNCH_APP2 :=         269025053
       SLEEP :=               269025071
 
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
       DOWN :=               40
       END :=                35
       SCROLL_LOCK :=        145
@@ -1649,7 +1649,7 @@ $elsifdef _MS_WIN32
       LAUNCH_APP1 :=        182
       LAUNCH_APP2 :=        183
       SLEEP :=               95
-$elsifdef _PLAN9
+$elsif _PLAN9
       DOWN :=               63488
       END :=                61464
       SCROLL_LOCK :=        0

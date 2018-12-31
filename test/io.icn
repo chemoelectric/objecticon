@@ -2,14 +2,14 @@
 #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 
 import io, ipl.test
-$ifdef _MS_WIN32
+$if _MS_WIN32
 import ipl.strings(replace)
 $endif
 
 procedure main()
    local L, f, m, n, t1, t2
 
-$ifdef _MS_WIN32
+$if _MS_WIN32
    local s
    L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
    	m := open("io.icn"), n := open("nul", "w")]
@@ -70,7 +70,7 @@ $endif
    write(t1, ">1f")
    write(t2, ">2f")
    every (t1 | t2).close()
-$ifdef _MS_WIN32
+$if _MS_WIN32
    every s := "tmp1" | "tmp2" do
       Files.string_to_file(s, replace(Files.file_to_string(s), "\r\n", "\n"))
 $endif
@@ -91,11 +91,11 @@ $endif
    writes("\n")
 
    write()
-$ifdef _PLAN9
+$if _PLAN9
    tsys("echo hello world")			# simple echo
    tsys("ls io.[ids][tca][dnt]")		# check wildcarding
    tpipe()
-$elsifdef _UNIX
+$elsif _UNIX
    tsys("echo hello world")			# simple echo
    tsys("ls io.[ids][tca][dnt]")		# check wildcarding
    tpipe()
@@ -216,7 +216,7 @@ procedure tpipe()
 
    # check wildcarding, and also !pipe
    write()
-$ifdef _PLAN9
+$if _PLAN9
    p := ProgInputStream("rc", ["-c", "ls io.i?n io.d?t io.s?d"]) | stop("can't open ls pipe")
 $else
    p := ProgInputStream("sh", ["-c", "ls io.i?n io.d?t io.s?d"]) | stop("can't open ls pipe")

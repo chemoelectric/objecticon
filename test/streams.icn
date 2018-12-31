@@ -79,7 +79,7 @@ procedure test_modes()
    do_mode(f)
    f.close()
 
-$ifdef _PLAN9
+$if _PLAN9
    write("Prog Read")
    f := ProgInputStream("echo", ["hello"]) | stop(&why)
    do_mode(f)
@@ -90,7 +90,7 @@ $ifdef _PLAN9
    f := ProgOutputStream("rc", ["-c", "cat >/dev/null"]) | stop(&why)
    do_mode(f)
    f.close()
-$elsifdef _UNIX
+$elsif _UNIX
    write("Prog Read")
    f := ProgInputStream("echo", ["hello"]) | stop(&why)
    do_mode(f)
@@ -120,7 +120,7 @@ $else
    write("Can all: no")
 $endif
 
-$ifdef _UNIX
+$if _UNIX
    write("Socket")
    f := SocketStream() | stop(&why)
    do_mode(f)

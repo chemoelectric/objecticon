@@ -4,13 +4,13 @@
 
 package net
 
-$ifdef _PLAN9
+$if _PLAN9
 import 
    util, 
    io,
    lang,
    ipl.scan
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
 import 
    util, 
    io,
@@ -122,7 +122,7 @@ abstract class NetClient(Connectable, HasTask)
       return choose_poll([connection, for], timeout)
    end
 
-$ifdef _PLAN9
+$if _PLAN9
    #
    # Open the connection.
    #
@@ -147,7 +147,7 @@ $ifdef _PLAN9
       fire(CONNECTED_EVENT, cs)
       return self
    end
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
    private dns_query()
       return WinsockStream.dns_query(server, ip_version)
    end

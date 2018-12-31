@@ -35,7 +35,7 @@ final abstract class Files()
       NULL_FILE
 
    private static init()
-$ifdef _UNIX
+$if _UNIX
       EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
@@ -44,7 +44,7 @@ $ifdef _UNIX
       PROG_SUFFIX := ""
       NULL_FILE := "/dev/null"
       FS := UnixFileSystem()
-$elsifdef _PLAN9
+$elsif _PLAN9
       EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
@@ -53,7 +53,7 @@ $elsifdef _PLAN9
       PROG_SUFFIX := ""
       NULL_FILE := "/dev/null"
       FS := Plan9FileSystem()
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
       EOL := "\r\n"
       PATH_SEPARATOR := "\\"
       PATH_SPECIALS := ':\\/'
@@ -67,7 +67,7 @@ $else
 $endif
    end
 
-$ifdef _PLAN9
+$if _PLAN9
    #
    # Read the given directory returning a list of `ListEntry` objects,
    # each containing the name, lstat and stat values for each entry.
@@ -409,7 +409,7 @@ $endif
    #
    public static native chdir(s)
 
-$ifdef _PLAN9
+$if _PLAN9
    #
    # Get current working directory
    #
@@ -490,7 +490,7 @@ $endif
 
    private static native lstat_impl(s)
 
-$ifdef _PLAN9
+$if _PLAN9
    #
    # Write selected attributes about a file.  If any of the parameters
    # are `&null`, they are left unchanged.
@@ -1029,7 +1029,7 @@ class FilePath(ObjectOutput)
    end
 end
 
-$ifdef _PLAN9
+$if _PLAN9
 #
 # This class represents file stat information.
 #

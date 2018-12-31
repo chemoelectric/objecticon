@@ -82,6 +82,7 @@ class Lex(Connectable)
 
    private yylex2()
       repeat {
+         tab(many(' \r\t\v\^l'))
          if pos(0) then {
             yycolno := &pos - yylinestart
             fail
@@ -117,8 +118,6 @@ class Lex(Connectable)
                tokflags +:= Newline
             next
          }
-         if tab(any(' \r\t\v\^l')) then
-            next
 
          yycolno := &pos - yylinestart
          yytext := move(1)
@@ -172,11 +171,8 @@ class Lex(Connectable)
       q := cset(yytext[-1])
       cs := '\\_\n' ++ q
       repeat {
-         tab(upto(cs)) | {
-            err("Unclosed quote")
-            break
-         }
-         if any('\n') then {
+         tab(upto(cs) | 0)
+         if pos(0) | any('\n') then {
             err("Unclosed quote")
             break
          }
@@ -195,19 +191,12 @@ class Lex(Connectable)
                vpos := &pos
             } else
                move(1)
-            next
+         } else {
+            # Must be at a "\".  Skip that and the first char of the
+            # escape; the others will be skipped by the tab at the top
+            # of the loop.
+            move(2 | 1)
          }
-         # must be at a \
-         move(1)
-         if any('01234567') then
-            tab(many('01234567'))
-         else if any('xuU') then {
-            move(1)
-            tab(many(&digits ++ 'abcdefABCDEF'))
-         } else if ="^" then
-            move(1)
-         else
-            move(1)
       }
 
       # Check encodings for valid chars

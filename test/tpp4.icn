@@ -1,28 +1,28 @@
 #  tpp4.icn: nested $if test
-$ifdef id1
-   $ifdef id2
-      $ifdef id3
-	  $ifdef id4
+$if id1
+   $if id2
+      $if id3
+	  $if id4
 	    + + + + : id1 id2 id3 id4
 	  $else
 	    + + + - : id1 id2 id3 id4
 	  $endif
       $else
-	  $ifdef id4
+	  $if id4
 	    + + - + : id1 id2 id3 id4
 	  $else
 	    + + - - : id1 id2 id3 id4
 	  $endif
       $endif
    $else
-      $ifdef id3
-	  $ifdef id4
+      $if id3
+	  $if id4
 	    + - + + : id1 id2 id3 id4
 	  $else
 	    + - + - : id1 id2 id3 id4
 	  $endif
       $else
-	  $ifdef id4
+	  $if id4
 	    + - - + : id1 id2 id3 id4
 	  $else
 	    + - - - : id1 id2 id3 id4
@@ -30,29 +30,29 @@ $ifdef id1
       $endif
    $endif
 $else
-   $ifdef id2
-      $ifdef id3
-	  $ifdef id4
+   $if id2
+      $if id3
+	  $if id4
 	    - + + + : id1 id2 id3 id4
 	  $else
 	    - + + - : id1 id2 id3 id4
 	  $endif
       $else
-	  $ifdef id4
+	  $if id4
 	    - + - + : id1 id2 id3 id4
 	  $else
 	    - + - - : id1 id2 id3 id4
 	  $endif
       $endif
    $else
-      $ifdef id3
-	  $ifdef id4
+      $if id3
+	  $if id4
 	    - - + + : id1 id2 id3 id4
 	  $else
 	    - - + - : id1 id2 id3 id4
 	  $endif
       $else
-	  $ifdef id4
+	  $if id4
 	    - - - + : id1 id2 id3 id4
 	  $else
 	    - - - - : id1 id2 id3 id4

@@ -2,7 +2,7 @@ package ipl.termdialog
 
 import
    gui, io, graphics, util, undo, ipl.vt, xdg, 
-$ifndef _PLAN9
+$if ~ _PLAN9
       ipl.childwait,
 $endif
       ipl.io, posix
@@ -32,7 +32,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       complete_function,
       line
 
-$ifdef _PLAN9
+$if _PLAN9
    public static launch_prog(de, file, line)
       local pid, cmd
       pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,

@@ -3,7 +3,7 @@ package io
 import
    util(error, need_flag, need_integer, need_string,
         save_why, HasMode),
-$ifdef _PLAN9
+$if _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
 $else
@@ -12,7 +12,7 @@ $else
 $endif
    ipl.strings(replace)
 
-$ifdef _UNIX
+$if _UNIX
 import util(env_string)
 $endif
 
@@ -682,7 +682,7 @@ abstract class DescStream(Stream, NoCopy)
    # `&why` accordingly.  On a timeout, it succeeds and returns
    # `&null`.
    #
-$ifdef _PLAN9
+$if _PLAN9
    public static poll(l, timeout)
       local loop_until, f, ev, r, done, i, res, snooze
       if *l % 2 ~= 0 then
@@ -800,7 +800,7 @@ $endif
 
    private native stat_impl()
 
-$ifdef _PLAN9
+$if _PLAN9
    #
    # Write selected attributes about a file.  If any of the parameters
    # are `&null`, they are left unchanged.
@@ -867,11 +867,11 @@ procedure open(name, mode)
       "crw"|"w+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
       "a" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
       "a+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
-$ifdef _UNIX
+$if _UNIX
       "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
       "pw" : ProgOutputStream("/bin/sh", ["-c", name])
       "prw" : ProgInputOutputStream("/bin/sh", ["-c", name])
-$elsifdef _PLAN9
+$elsif _PLAN9
       "p"|"pr" : ProgInputStream("/bin/rc", ["-c", name])
       "pw" : ProgOutputStream("/bin/rc", ["-c", name])
       "prw" : ProgInputOutputStream("/bin/rc", ["-c", name])
@@ -1002,7 +1002,7 @@ class FileStream(DescStream)
       return create_for_fd(dup_impl(), mode)
    end
 
-$ifdef _PLAN9
+$if _PLAN9
    #
    # Open a new `FileStream` using the underlying system open
    # function.
@@ -1242,7 +1242,7 @@ $endif
    # Succeed if this `FileStream` represents a tty supporting links.
    #
    public is_flowterm_tty()
-$ifdef _UNIX
+$if _UNIX
       static flowterm
       initial
          flowterm := integer(env_string("FLOWTERM"))
@@ -1544,7 +1544,7 @@ final class DirStream(LineBasedInputStream, NoCopy)
 
    public new(path)
       LineBasedInputStream.new()
-$ifdef _MS_WIN32
+$if _MS_WIN32
       if *path = 0 then
          return error("Empty path")
       if any('\\/:', path[-1]) then
@@ -1614,7 +1614,7 @@ abstract class HasTask()
    end
 end
 
-$ifdef _PLAN9
+$if _PLAN9
 #
 # This stream represents a pipe to a command running in a forked child
 # process.
@@ -2476,7 +2476,7 @@ final class RamStream(Stream, NoCopy)
    end
 end
 
-$ifdef _PLAN9
+$if _PLAN9
 class CtrlStream(FileStream)
    package new(cfd)
       setup(cfd, READ_WRITE)
@@ -3268,7 +3268,7 @@ class PttyStream(FileStream)
    end
 end
 
-$ifdef _MS_WIN32
+$if _MS_WIN32
 
 #
 # Win32 Winsock socket stream.

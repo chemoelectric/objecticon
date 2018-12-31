@@ -235,21 +235,15 @@ class Preprocessor(Connectable)
                return ""
             }
          }
-         "ifdef" | "ifndef": {
+         "if": {
             push(if_stack,if_state)
-            if sym := scan_word() & at_end() then {
-               if /if_state then {
-                  value := (member(sym_table, sym) & &null) | "false"
-                  if match("n",preproc_command,3) then {
-                     value := (\value & &null) | "false"
-                  }
-                  if_state := value
-               } else {
+            if value := scan_expr() then {
+               if /if_state then
+                  if_state := if \value then &null else "false"
+               else
                   if_state := "off"
-               }
             } else {
                # if_state stays the same
-               err()
                return ""
             }
 
@@ -263,25 +257,19 @@ class Preprocessor(Connectable)
             if_state := "off"
             fail
          }
-         "elsifdef" | "elsifndef" : {
+         "elsif" : {
             if \if_state == "off" then
                fail
             if *if_stack <= nest_level then {
                err("No corresponding $if...")
                return ""
             }
-            if sym := scan_word() & at_end() then {
-               if \if_state then {
-                  value := (member(sym_table, sym) & &null) | "false"
-                  if match("n",preproc_command,6) then {
-                     value := (\value & &null) | "false"
-                  }
-                  if_state := value
-               } else {
+            if value := scan_expr() then {
+               if \if_state then
+                  if_state := if \value then &null else "false"
+               else
                   if_state := "off"
-               }
             } else {
-               err()
                if_state := if \if_state then &null else "off"
             }
             if /if_state then
@@ -496,7 +484,7 @@ class Preprocessor(Connectable)
             return .&subject
          }
       } else {
-         # We're skipping an $ifdef section, so skip over any multi-line
+         # We're skipping an $if section, so skip over any multi-line
          # string literals.
          if c := multi_line_start() then {
             repeat {
@@ -665,6 +653,64 @@ class Preprocessor(Connectable)
       scan_space()
       succeed pos(0) | match("#")
    end
+
+   private scan_expr()
+      local r
+      r := expr1() | fail
+      if at_end() then
+         return r
+      err("$if/$elsif: Extraneous characters")
+   end
+
+   private expr1()
+      local r, x
+      r := expr2() | fail
+      repeat {
+         scan_space()
+         any('|') | break
+         move(1)
+         x := expr2() | fail
+         r := Yes{ \x | \r }
+      }
+      return r
+   end
+
+   private expr2()
+      local r, x
+      r := expr3() | fail
+      repeat {
+         scan_space()
+         any('&') | break
+         move(1)
+         x := expr3() | fail
+         r := Yes{ \x & \r }
+      }
+      return r
+   end
+
+   private expr3()
+      local c, x
+      scan_space()
+      if x := scan_word() then
+         return Yes{ member(sym_table, x) }
+      if c := move(1) then {
+         case c of {
+            "~" : return toggle_flag(expr1())
+            "(" : {
+               x := expr1() | fail
+               scan_space()
+               if =")" then
+                  return x
+               else
+                  err("$if/$elsif: ) expected")
+            }
+            default:
+               err("$if/$elsif: Unexpected character")
+         } 
+      } else
+         err("$if/$elsif: Identifier expected")
+   end
+
 
    #
    # Determines if a "#lines" is called for and generates one if so.

@@ -259,7 +259,7 @@ final abstract class BaseDir()
    # Return the XDG_DATA_DIRS path
    #
    public static get_data_dirs()
-$ifdef _MS_WIN32
+$if _MS_WIN32
       return env_string("XDG_DATA_DIRS") | "C:\\usr\\local\\share;C:\\usr\\share"
 $else
       return env_string("XDG_DATA_DIRS") | "/usr/local/share:/usr/share"
@@ -270,7 +270,7 @@ $endif
    # Return the XDG_CONFIG_DIRS path
    #
    public static get_config_dirs()
-$ifdef _MS_WIN32
+$if _MS_WIN32
       return env_string("XDG_CONFIG_DIRS") | "C:\\etc\\xdg"
 $else
       return env_string("XDG_CONFIG_DIRS") | "/etc/xdg"

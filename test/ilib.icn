@@ -72,7 +72,7 @@ procedure main()
    write()
    write("io:")				# io
    gen(Files.access, "/foo/bar/baz/not/very/likely")
-$ifdef _MS_WIN32
+$if _MS_WIN32
    gen(Files.is_directory, "C:\\")
 $else
    gen(Files.is_directory, "/tmp")

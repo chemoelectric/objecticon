@@ -1,7 +1,7 @@
 import
    gui, graphics, lang, ipl.options
 
-$ifdef _PLAN9
+$if _PLAN9
 import io
 $endif
 
@@ -162,14 +162,14 @@ class Untitled(Dialog)
 
    private on_text_button_5(ev)
       text_button_6.set_is_checked(&no)
-$ifdef _PLAN9
+$if _PLAN9
       Files.string_to_file(win.get_dir() || "/wctl", "set -layer " || if text_button_5.is_checked() then 1 else 0)
 $endif
    end
 
    private on_text_button_6(ev)
       text_button_5.set_is_checked(&no)
-$ifdef _PLAN9
+$if _PLAN9
       Files.string_to_file(win.get_dir() || "/wctl", "set -layer " || if text_button_6.is_checked() then -1 else 0)
 $endif
    end

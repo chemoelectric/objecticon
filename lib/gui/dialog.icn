@@ -1793,7 +1793,7 @@ class WindowControl(Component)
           set_paint(ImagePaint().set_cache("win.WINDOW_ICONIFY")).
           set_border(NullBorder()).
           set_accepts_focus(&no).
-$ifdef _PLAN9
+$if _PLAN9
           set_tooltip("Hide").
 $else
           set_tooltip("Iconify").

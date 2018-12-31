@@ -2,7 +2,7 @@ import io, ipl.test
 
 procedure test1(p, abs)
    local s
-$ifdef _MS_WIN32
+$if _MS_WIN32
    local p1
    static drv
    initial {
@@ -22,7 +22,7 @@ end
 
 procedure test2(p, clean)
    local s
-$ifdef _MS_WIN32
+$if _MS_WIN32
    local p1
    static drv
    initial {
@@ -48,7 +48,7 @@ procedure test3()
    yes_no{"1.Stat size", st1.size = 520}
    f := FileStream("testfile", FileOpt.RDWR)
    st1 := f.stat()
-$ifdef _PLAN9
+$if _PLAN9
    f.writes(left(repl(&ucase,20), 1000, "\0"))
 $else
    f.truncate(1000) | stop(&why)
@@ -64,7 +64,7 @@ $endif
    yes_no{"1.testfile -v- testfile2a", Files.equal_files("testfile", "testfile2a")}
    Files.rename("testfile2a", "testfile2") | stop(&why)
    yes_no{"2.testfile -v- testfile2", Files.equal_files("testfile", "testfile2")}
-$ifdef _UNIX
+$if _UNIX
    Files.hardlink("testfile2", "testfile2b") | stop(&why)
    yes_no{"3.testfile -v- testfile2b", Files.equal_files("testfile", "testfile2b")}
    Files.remove("testfile2b") | stop(&why)
@@ -72,7 +72,7 @@ $else
    write("3.testfile -v- testfile2b: yes")
 $endif
    yes_no{"4.testfile -v- testfile2", Files.equal_files("testfile", "testfile2")}
-$ifdef _UNIX
+$if _UNIX
    Files.symlink("testfile2", "testfile2c") | stop(&why)
    yes_no{"5.testfile -v- testfile2c", Files.equal_files("testfile", "testfile2c")}
    print{"readlink",Files.readlink("testfile2c")}
@@ -89,7 +89,7 @@ $endif
    yes_no{"1.Access dir", Files.access("testdir")}
    Files.rmdir("testdir") | stop(&why)
    yes_no{"2.Access dir", Files.access("testdir")}
-$ifdef _PLAN9
+$if _PLAN9
    yes_no{"Truncated", "yes"}
 $else
    Files.truncate("testfile", 1000) | stop(&why)

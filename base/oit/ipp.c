@@ -69,11 +69,9 @@ static  void    pfatal(char *fmt, ...);
 static	void	skipcode (int doelse, int report, char **cmd0, char **args0);
 static	char *	define	(char *s);
 static	char *	undef	(char *s);
-static	char *	ifdef	(char *s);
-static	char *	ifndef	(char *s);
-static	char *	ifxdef	(char *s, int f);
+static	char *	ifdir	(char *s);
+static	char *	elsifdir(char *s);
 static	char *	elsedir	(char *s);
-static	char *	elsif	(char *s);
 static	char *	endif	(char *s);
 static	char *	encoding(char *s);
 static  char *  load    (char *s);
@@ -95,6 +93,10 @@ static void  dinsert(char *name, char *val);
 static void  dinsert_pre(char *name, char *val, int vlen);
 static char *skipstring(char q, char *s);
 static int multistart(char *s);
+static char *evaldef(char **ss, int *val);
+static char *evaldef1(char **ss, int *val);
+static char *evaldef2(char **ss, int *val);
+static char *evaldef3(char **ss, int *val);
 
 struct ppcmd {
    char *name;
@@ -103,10 +105,8 @@ struct ppcmd {
 pplist[] = {
    { "define",  define  },
    { "undef",   undef   },
-   { "ifdef",   ifdef   },
-   { "ifndef",  ifndef  },
-   { "elsifdef",   elsif   },
-   { "elsifndef",  elsif  },
+   { "if",      ifdir   },
+   { "elsif",   elsifdir   },
    { "else",    elsedir },
    { "endif",   endif   },
    { "include", include },
@@ -898,50 +898,26 @@ static char *setline(char *s)
 }
 
 /*
- * ifdef(s), ifndef(s) -- conditional processing if s is/isn't defined.
+ * ifdir(s) -- handle $if
  */
-static char *ifdef(char *s)
+static char *ifdir(char *s)
    {
-   return ifxdef(s, 1);
-   }
+   char *r;
+   int val;
 
-static char *ifndef(char *s)
-   {
-   return ifxdef(s, 0);
-   }
-
-/*
- * ifxdef(s) -- handle $ifdef (if n is 1) or $ifndef (if n is 0).
- */
-static char *ifxdef(char *s, int f)
-   {
-   char c, *name;
    ifdepth++;
-   if (oi_isalpha((c = *s)) || c == '_')
-      s = getidt(name = s - 1, s);		/* get name */
-   else
-      return "$ifdef/$ifndef: Missing name";
-   if (*wskip(s) != '\0')
-      return "$ifdef/$ifndef: Too many arguments";
-   for (;;) {
-       if ((dquery(name, -1) != NULL) ^ f) {
-           char *cmd;
-           skipcode(1, 1, &cmd, &s);	/* skip to $else, $elsifdef, $elsifndef or $endif */
+   if ((r = evaldef(&s, &val)))
+       return r;
+   while (!val) {
+       char *cmd;
+       skipcode(1, 1, &cmd, &s);	/* skip to $else, $elsif or $endif */
 
-           if (strcmp(cmd, "elsifdef") != 0 && strcmp(cmd, "elsifndef") != 0)
-               break;
-           
-           if (oi_isalpha((c = *s)) || c == '_')
-               s = getidt(name = s - 1, s);		/* get name */
-           else
-               return "$elsifdef/$elsifndef: Missing name";
-           if (*wskip(s) != '\0')
-               return "$elsifdef/$elsifndef: Too many arguments";
-
-           f = (strcmp(cmd, "elsifdef") == 0) ? 1 : 0;
-       } else
+       if (strcmp(cmd, "elsif") != 0)
            break;
-   }
+
+       if ((r = evaldef(&s, &val)))
+           return r;
+       }
    return NULL;
    }
 
@@ -959,28 +935,22 @@ static char *elsedir(char *s)
    }
 
 /*
- * elsif(s) -- handle $elsif(n)def by skipping to $endif.
+ * elsifdir(s) -- handle $elsif by skipping to $endif.
  */
-static char *elsif(char *s)
+static char *elsifdir(char *s)
    {
-   char c, *name, *res;
+   char *r;
+   int val;
    if (ifdepth <= curfile->ifdepth)
-      return "Unexpected $elsifdef/$elsifndef";
+      return "Unexpected $elsif";
 
    /* Check for valid syntax. */
-   res = NULL;
-   if (oi_isalpha((c = *s)) || c == '_')
-       s = getidt(name = s - 1, s);		/* get name */
-   else
-       res = "$elsifdef/$elsifndef: Missing name";
-   if (*wskip(s) != '\0')
-       res = "$elsifdef/$elsifndef: Too many arguments";
+   r =  evaldef(&s, &val);
 
    skipcode(0, 1, 0, 0);			/* skip the $elsif section */
 
-   return res;
+   return r;
    }
-
 
 /*
  * endif(s) -- handle $endif.
@@ -1418,4 +1388,90 @@ static void dinsert_pre(char *name, char *val, int vlen)
     if (d->next != NULL)
         d->next->prev = d;
     cbin[h] = d;
+}
+
+static char *evaldef(char **ss, int *val)
+{
+    char *r;
+    if ((r = evaldef1(ss, val)))
+        return r;
+    *ss = wskip(*ss);			/* skip whitespace */
+    if (**ss != '\0')
+        return "$if/$elsif: Extraneous characters";
+    return NULL;
+}
+
+static char *evaldef1(char **ss, int *val)
+{
+    char *r;
+    int v;
+
+    if ((r = evaldef2(ss, val)))
+        return r;
+    for (;;) {
+        *ss = wskip(*ss);			/* skip whitespace */
+        if (**ss != '|')
+            break;
+        ++*ss;
+        if ((r = evaldef2(ss, &v)))
+            return r;
+        *val = (*val || v);
+    }
+    return NULL;
+}
+
+static char *evaldef2(char **ss, int *val)
+{
+    char *r;
+    int v;
+
+    if ((r = evaldef3(ss, val)))
+        return r;
+
+    for (;;) {
+        *ss = wskip(*ss);			/* skip whitespace */
+        if (**ss != '&')
+            break;
+        ++*ss;
+        if ((r = evaldef3(ss, &v)))
+            return r;
+        *val = (*val && v);
+    }
+    return NULL;
+}
+
+static char *evaldef3(char **ss, int *val)
+{
+    char c, *name, *r;
+    int v;
+    *ss = wskip(*ss);			/* skip whitespace */
+    if (**ss == '\0')
+        return "$if/$elsif: Identifier expected";
+    c = **ss;
+    if (oi_isalpha(c) || c == '_') {
+        *ss = getidt(name = *ss - 1, *ss);		/* get name */
+        *val = (dquery(name, -1) != NULL);
+    } else {
+        ++*ss;
+        switch (c) {
+            case '~' : {
+                if ((r = evaldef1(ss, &v)))
+                    return r;
+                *val = !v;
+                break;
+            }
+            case '(' : {
+                if ((r = evaldef1(ss, val)))
+                    return r;
+                *ss = wskip(*ss);			/* skip whitespace */
+                if (**ss != ')')
+                    return "$if/$elsif: ) expected";
+                ++*ss;
+                break;
+            }
+            default:
+                return "$if/$elsif: Unexpected character";
+        }
+    }
+    return NULL;
 }

@@ -7,7 +7,7 @@ global what, c
 procedure main(a)
    local p
    what := 100
-$ifdef _MS_WIN32
+$if _MS_WIN32
    c := Prog.load("mt_c2.exe") | stop("Couldn't load mt_c2")
 $else
    c := Prog.load("mt_c2") | stop("Couldn't load mt_c2")

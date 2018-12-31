@@ -58,7 +58,7 @@ final abstract class System()
    private static native wait_impl()
 
    # Return a list of the environment values as key=value strings
-$ifdef _PLAN9
+$if _PLAN9
    public static environ()
       local l, e, r
       l := Files.list("/env") | fail
@@ -142,19 +142,19 @@ $endif
    public static native getpgid(pid)
 
    # Get current working directory of the given process
-$ifdef _PLAN9
+$if _PLAN9
    public static getcwd(pid)
       local s
       s := Files.file_to_string("/proc/" || pid || "/fd") | return error("No such pid")
       return s ? tab(upto('\n')) | error("Process has no cwd")
    end
-$elsifdef _SOLARIS
+$elsif _SOLARIS
    public static getcwd(pid)
       return Files.readlink("/proc/" || pid || "/path/cwd") | error("No such pid or permission denied")
    end
-$elsifdef _DARWIN
+$elsif _DARWIN
    public static native getcwd(pid)
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
    public static getcwd(pid)
       error("Function not supported")
    end
@@ -208,7 +208,7 @@ class ExitInfo()
    # success.  If not, then &why is set appropriately.
    #
    public succeeded()
-$ifdef _PLAN9
+$if _PLAN9
       case reason of {
          "exited normally" : return
          "exited" : return error("exited with status " || param)
