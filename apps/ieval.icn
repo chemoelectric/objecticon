@@ -18,7 +18,7 @@ end\n"
 end
 
 procedure esc(s)
-$ifdef _UNIX
+$if _UNIX
    return Format.shell_escape(s)
 $else
    return s

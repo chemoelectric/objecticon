@@ -7,7 +7,7 @@ import
    posix(System),
    ipl.strings(replace)
 
-$ifdef _UNIX
+$if _UNIX
 import util(env_string)
 $endif
 
@@ -814,7 +814,7 @@ procedure open(name, mode)
       "crw"|"w+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
       "a" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
       "a+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
-$ifdef _UNIX
+$if _UNIX
       "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
       "pw" : ProgOutputStream("/bin/sh", ["-c", name])
       "prw" : ProgInputOutputStream("/bin/sh", ["-c", name])
@@ -1038,7 +1038,7 @@ class FileStream(DescStream)
    # Succeed if this `FileStream` represents a tty supporting links.
    #
    public is_flowterm_tty()
-$ifdef _UNIX
+$if _UNIX
       static flowterm
       initial
          flowterm := integer(env_string("FLOWTERM"))
@@ -1340,7 +1340,7 @@ final class DirStream(LineBasedInputStream, NoCopy)
 
    public new(path)
       LineBasedInputStream.new()
-$ifdef _MS_WIN32
+$if _MS_WIN32
       if *path = 0 then
          return error("Empty path")
       if any('\\/:', path[-1]) then
@@ -2153,7 +2153,7 @@ class PttyStream(FileStream)
    end
 end
 
-$ifdef _MS_WIN32
+$if _MS_WIN32
 
 #
 # Win32 Winsock socket stream.

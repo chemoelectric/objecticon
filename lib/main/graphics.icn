@@ -1411,7 +1411,7 @@ final abstract class Key()
       MOD_META4 :=   64
       MOD_META5 :=   128
       MOD_RELEASE := 256
-$ifdef _X_WINDOW_SYSTEM
+$if _X_WINDOW_SYSTEM
       SHIFT_TAB :=           65056
       COMPOSE :=             65312
       DO :=                  65383
@@ -1528,7 +1528,7 @@ $ifdef _X_WINDOW_SYSTEM
       LAUNCH_APP2 :=         269025053
       SLEEP :=               269025071
 
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
       DOWN :=               40
       END :=                35
       SCROLL_LOCK :=        145

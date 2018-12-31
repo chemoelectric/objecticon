@@ -19,17 +19,17 @@ $define xx 1
 # test undefinition of something that isn't defined
 $undef notdefined
 
-# test ifdef of undefined symbol, and successful skip past bogus directive
-$ifdef notdef
+# test if of undefined symbol, and successful skip past bogus directive
+$if notdef
 $BOGUS
 $endif
 
-# test ifdef of defined symbol, and null test body
-$ifdef abc
+# test if of defined symbol, and null test body
+$if abc
 $endif
 
-# test ifndef of defined symbol
-$ifndef abc
+# test if ~ of defined symbol
+$if ~ abc
 $error -- abc not defined
 $endif#comment on if terminator
 
@@ -49,118 +49,118 @@ procedure main()
 
    # test that predefined symbols agree with &features
    # (if defined, first argument is 1, else it's null)
-$ifdef _AMIGA
+$if _AMIGA
    precheck(_AMIGA,		"Amiga")
 $endif
-$ifdef _ACORN
+$if _ACORN
    precheck(_ACORN,		"Acorn Archimedes")
 $endif
-$ifdef _ATARI
+$if _ATARI
    precheck(_ATARI,		"Atari ST")
 $endif
-$ifdef _CMS
+$if _CMS
    precheck(_CMS,		"CMS")
 $endif
-$ifdef _MACINTOSH
+$if _MACINTOSH
    precheck(_MACINTOSH,		"Macintosh")
 $endif
-$ifdef _MSDOS_386
+$if _MSDOS_386
    precheck(_MSDOS_386,		"MS-DOS/386")
 $endif
-$ifdef _MSDOS
+$if _MSDOS
    precheck(_MSDOS,		"MS-DOS")
 $endif
-$ifdef _MVS
+$if _MVS
    precheck(_MVS,		"MVS")
 $endif
-$ifdef _OS2
+$if _OS2
    precheck(_OS2,		"OS/2")
 $endif
-$ifdef _PORT
+$if _PORT
    precheck(_PORT,		"PORT")
 $endif
-$ifdef _UNIX
+$if _UNIX
    precheck(_UNIX,		"UNIX")
 $endif
-$ifdef _VMS
+$if _VMS
    precheck(_VMS,		"VMS")
 $endif
-$ifdef _COMPILED
+$if _COMPILED
    precheck(_COMPILED,		"compiled")
 $endif
-$ifdef _INTERPRETED
+$if _INTERPRETED
    precheck(_INTERPRETED,	"interpreted")
 $endif
-$ifdef _JAVA
+$if _JAVA
    precheck(_JAVA,		"Java")
 $endif
-$ifdef _ASCII
+$if _ASCII
    precheck(_ASCII,		"ASCII", 1)
 $endif
-$ifdef _EBCDIC
+$if _EBCDIC
    precheck(_EBCDIC,		"EBCDIC", 1)
 $endif
-$ifdef _CALLING
+$if _CALLING
    precheck(_CALLING,		"calling to Icon")
 $endif
-$ifdef _CO_EXPRESSIONS
+$if _CO_EXPRESSIONS
    precheck(_CO_EXPRESSIONS,	"co-expressions")
 $endif
-$ifdef _DIRECT_EXECUTION
+$if _DIRECT_EXECUTION
    precheck(_DIRECT_EXECUTION,	"direct execution")
 $endif
-$ifdef _EVENT_MONITOR
+$if _EVENT_MONITOR
    precheck(_EVENT_MONITOR,	"event monitoring")
 $endif
-$ifdef _EXECUTABLE_IMAGES
+$if _EXECUTABLE_IMAGES
    precheck(_EXECUTABLE_IMAGES,	"executable images")
 $endif
-$ifdef _EXTERNAL_FUNCTIONS
+$if _EXTERNAL_FUNCTIONS
    precheck(_EXTERNAL_FUNCTIONS,"external functions")
 $endif
-$ifdef _KEYBOARD_FUNCTIONS
+$if _KEYBOARD_FUNCTIONS
    precheck(_KEYBOARD_FUNCTIONS,"keyboard functions")
 $endif
-$ifdef _LARGE_INTEGERS
+$if _LARGE_INTEGERS
    precheck(_LARGE_INTEGERS,	"large integers")
 $endif
-$ifdef _MEMORY_MONITOR
+$if _MEMORY_MONITOR
    precheck(_MEMORY_MONITOR,	"memory monitoring")
 $endif
-$ifdef _MULTITASKING
+$if _MULTITASKING
    precheck(_MULTITASKING,	"multiple programs")
 $endif
-$ifdef _MULTIREGION
+$if _MULTIREGION
    precheck(_MULTIREGION,	"multiple regions")
 $endif
-$ifdef _PIPES
+$if _PIPES
    precheck(_PIPES,		"pipes")
 $endif
-$ifdef _RECORD_IO
+$if _RECORD_IO
    precheck(_RECORD_IO,		"record I/O")
 $endif
-$ifdef _STRING_INVOKE
+$if _STRING_INVOKE
    precheck(_STRING_INVOKE,	"string invocation")
 $endif
-$ifdef _SYSTEM_FUNCTION
+$if _SYSTEM_FUNCTION
    precheck(_SYSTEM_FUNCTION,	"system function")
 $endif
-$ifdef _VISUALIZATION
+$if _VISUALIZATION
    precheck(_VISUALIZATION,	"visualization support")
 $endif
-$ifdef _WINDOW_FUNCTIONS
+$if _WINDOW_FUNCTIONS
    precheck(_WINDOW_FUNCTIONS,	"window functions")
 $endif
-$ifdef _X_WINDOW_SYSTEM
+$if _X_WINDOW_SYSTEM
    precheck(_X_WINDOW_SYSTEM,	"X Windows")
 $endif
-$ifdef _PRESENTATION_MGR
+$if _PRESENTATION_MGR
    precheck(_PRESENTATION_MGR,	"Presentation Manager")
 $endif
-$ifdef _ARM_FUNCTIONS
+$if _ARM_FUNCTIONS
    precheck(_ARM_FUNCTIONS,	"Archimedes extensions")
 $endif
-$ifdef _DOS_FUNCTIONS
+$if _DOS_FUNCTIONS
    precheck(_DOS_FUNCTIONS,	"MS-DOS extensions")
 $endif
    write("done")

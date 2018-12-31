@@ -392,7 +392,7 @@ class FileSubWorker(SubWorker)
 
    public get_data(worker)
       local f, g, e, l, t, path, rs, now, tf, gcache, ucache
-$ifndef _MS_WIN32
+$if ~ _MS_WIN32
       local ts
 $endif
 
@@ -428,7 +428,7 @@ $endif
             }
          }
       } else {
-$ifdef _MS_WIN32
+$if _MS_WIN32
          # Can't poll a file under win32.
          return Files.file_to_string(f)
 $else

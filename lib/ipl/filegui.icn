@@ -184,7 +184,7 @@ class IconFilesItemPaint(ItemPaint)
       return data.name
    end
 
-$ifdef _PNG
+$if _PNG
    public get_xdg_for_file(f)
       return Mime.find_icon_for_file_and_cache(f, ICON_SIZE, &yes) | 
              IconTheme.find_icon_and_cache("text-x-generic", ICON_SIZE, &yes)

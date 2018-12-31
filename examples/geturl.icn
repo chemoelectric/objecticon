@@ -257,7 +257,7 @@ procedure main(args)
    t := cookies || ".bak"
    encode_to_file(t, Cookie.expire_cookies(hc.get_cookies())) | 
       stop("Couldn't encode to temp cookie file ", t, ": ", &why)
-$ifdef _MS_WIN32
+$if _MS_WIN32
    Files.remove(cookies)
 $endif
    # Use rename not move to ensure it's atomic

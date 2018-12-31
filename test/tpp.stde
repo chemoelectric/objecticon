@@ -29,8 +29,8 @@ File error.tst; Line 2 # Explicit $error:
 File error.tst; Line 3 # Explicit $error: 
 File error.tst; Line 4 # Explicit $error: 
 File error.tst; Line 5 # Explicit $error: this program does not work
-File if.tst; Line 117 # $ifdef/$ifndef: Missing name
-File if.tst; Line 119 # $ifdef/$ifndef: Missing name
+File if.tst; Line 117 # $if/$elsif: Identifier expected
+File if.tst; Line 119 # $if/$elsif: Identifier expected
 File if.tst; Line 124 # Extraneous arguments on $else/$endif: notdef
 File if.tst; Line 125 # Extraneous arguments on $else/$endif: notdef
 File if.tst; Line 127 # Extraneous arguments on $else/$endif: notdef
@@ -49,14 +49,14 @@ File if.tst; Line 139 # Unexpected $else
 File if.tst; Line 140 # Unexpected $endif
 File invented; Line 113 # Extraneous arguments on $else/$endif: (& show line)
 File invented; Line 224 # Extraneous arguments on $else/$endif: (& show line)
-File invented; Line 233 # $elsifdef/$elsifndef: Too many arguments
-File invented; Line 238 # $elsifdef/$elsifndef: Too many arguments
+File invented; Line 233 # $if/$elsif: Extraneous characters
+File invented; Line 238 # $if/$elsif: Extraneous characters
 File invented; Line 239 # Value redefined: X
-File invented; Line 244 # $elsifdef/$elsifndef: Too many arguments
-File invented; Line 249 # $elsifdef/$elsifndef: Too many arguments
-File invented; Line 256 # $elsifdef/$elsifndef: Missing name
-File invented; Line 261 # $elsifdef/$elsifndef: Missing name
+File invented; Line 244 # $if/$elsif: Extraneous characters
+File invented; Line 249 # $if/$elsif: Extraneous characters
+File invented; Line 256 # $if/$elsif: Identifier expected
+File invented; Line 261 # $if/$elsif: Identifier expected
 File invented; Line 262 # Value redefined: X
-File invented; Line 267 # $elsifdef/$elsifndef: Missing name
-File invented; Line 272 # $elsifdef/$elsifndef: Missing name
+File invented; Line 267 # $if/$elsif: Identifier expected
+File invented; Line 272 # $if/$elsif: Identifier expected
 60 errors

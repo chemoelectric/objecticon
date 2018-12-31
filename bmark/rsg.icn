@@ -151,7 +151,7 @@
 #
 ############################################################################
 
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
 import io
 $endif
 
@@ -304,7 +304,7 @@ procedure grammar(line)
       name := tab(find("->")) &
       move(2) &
       file := tab(0) &
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
       out := if *file = 0 then FileStream.stdout else {
 $else
       out := if *file = 0 then &output else {

@@ -129,7 +129,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    public static get_console_size()
-$ifdef _UNIX
+$if _UNIX
       local w, h
       # Could also use tput cols and tput lines to do this.
       return run_stty("size") ? {
@@ -561,7 +561,7 @@ $endif
    #
    public new(notty, f)
       LineBasedInputStream.new()
-$ifdef _UNIX
+$if _UNIX
       if /notty then {
          run_stty() | fail
          ti := read_terminfo() | fail

@@ -35,7 +35,7 @@ final abstract class Files()
       NULL_FILE
 
    private static init()
-$ifdef _UNIX
+$if _UNIX
       EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
@@ -44,7 +44,7 @@ $ifdef _UNIX
       PROG_SUFFIX := ""
       NULL_FILE := "/dev/null"
       FS := UnixFileSystem()
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
       EOL := "\r\n"
       PATH_SEPARATOR := "\\"
       PATH_SPECIALS := ':\\/'

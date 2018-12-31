@@ -10,7 +10,7 @@ procedure main()
    yes_no{"progof main", Proc.get_program(main) === &main}
 
    what := 50
-$ifdef _MS_WIN32
+$if _MS_WIN32
    c := Prog.load("mt_c1.exe") | stop("Couldn't load mt_c1")
 $else
    c := Prog.load("mt_c1") | stop("Couldn't load mt_c1")
@@ -325,7 +325,7 @@ end
 
 procedure test27()
    local c,p
-$ifdef _MS_WIN32
+$if _MS_WIN32
    c := Prog.load("mt_c3.exe") | stop("Couldn't load mt_c3")
    Prog.get_global("main",c)([1,2,3])
    c := Prog.load("mt_c3.exe")  | stop("Couldn't load mt_c3")
@@ -343,7 +343,7 @@ end
 
 procedure test28()
    local c
-$ifdef _MS_WIN32
+$if _MS_WIN32
    c := Prog.load("kwds.exe") | stop("Couldn't load kwds.icn")
 $else
    c := Prog.load("kwds") | stop("Couldn't load kwds.icn")

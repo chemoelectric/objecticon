@@ -20,7 +20,7 @@ import
 
 global opts
 
-$ifdef _PNG
+$if _PNG
 $load INCREASE_FONT "rpp.INCREASE_FONT_24.png"
 $load DECREASE_FONT "rpp.DECREASE_FONT_24.png"
 $else
@@ -1900,7 +1900,7 @@ procedure main(a)
    bak := cookies_file || ".bak"
    encode_to_file(bak, Cookie.expire_cookies(cookies)) | 
       stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
-$ifdef _MS_WIN32
+$if _MS_WIN32
    Files.remove(cookies_file)
 $endif
    # Use rename not move to ensure it's atomic

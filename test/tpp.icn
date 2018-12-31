@@ -172,31 +172,31 @@ $line 1 "if.tst"
 
 $define isdef
 
-# $ifdef & $ifndef both true and false, with and without $else
+# $if & $if ~ both true and false, with and without $else
 
-$ifdef isdef
+$if isdef
    "isdef is defined"
 $endif
 
-$ifdef notdef
+$if notdef
    "notdef is defined"
 $endif
 
-$ifndef isdef
+$if ~ isdef
    "isdef is not defined"
 $endif
 
-$ifndef notdef
+$if ~ notdef
    "notdef is not defined"
 $endif
 
-$ifdef isdef
+$if isdef
    "isdef is defined"
 $else
    "isdef is not defined"
 $endif
 
-$ifdef notdef
+$if notdef
    "notdef is defined"
 $else
    "notdef is not defined"
@@ -204,11 +204,11 @@ $endif
 
 # nesting without $else
 
-$ifdef isdef
+$if isdef
    (true...)
-   $ifndef isdef
+   $if ~ isdef
        (wrong...)
-       $ifdef isdef
+       $if isdef
 	   (yes, but skipped)
        $endif
        (...wrong)
@@ -218,9 +218,9 @@ $endif
 
 # full nesting, with some nonstandard spacing
 
-$ifdef isdef	# meaningless comment
+$if isdef	# meaningless comment
    (begin true branch)
-   $ ifdef isdef
+   $ if isdef
       "isdef is defined"
    $ else	# else
       "isdef is not defined"
@@ -228,7 +228,7 @@ $ifdef isdef	# meaningless comment
    (end true branch)
   $  else	#isdef not defined
    (begin else branch)
-   $ ifdef notdef
+   $ if notdef
       "notdef is defined"
    $ else
       "notdef is not defined"
@@ -272,7 +272,7 @@ $undef id1
 
 # make sure it accepts anything resembling an $if when skipping
 
-$ifdef notdef
+$if notdef
    <skipped>
    $bogus	# should be no problem when skipped
    <skipped>
@@ -284,40 +284,40 @@ $endif
 <should pass this line>
 
 # test diagnostics for missing args
-$ifdef
+$if
 $endif
-$ifndef		# missing here too
+$if ~		# missing here too
 $endif
 
 # test diagnostics for extraneous args
-$ifdef notdef
+$if notdef
 $else notdef
 $endif notdef
-$ifndef notdef
+$if ~ notdef
 $else notdef
 $endif notdef
 
 # test else/endif out of place
 $endif			# wrong place -- should get error
 $else			# wrong place -- should get error
-$include "tpp5.icn"	# includes unterminated $ifdef
+$include "tpp5.icn"	# includes unterminated $if
 $else			# should <not> match $if in tpp5.icn
 $endif			# should <not> match $if in tpp5.icn
 # now try again when unterminated $if succeeds
 $define id5
-$include "tpp5.icn"	# includes unterminated $ifdef
+$include "tpp5.icn"	# includes unterminated $if
 $else			# should <not> match $if in tpp5.icn
 $endif			# should <not> match $if in tpp5.icn
 
 # test line directives encountered while skipping
 
-$ifdef notdef
+$if notdef
 ...
 $line 112 "invented"
 ...
 $endif (& show line)
 
-$ifdef notdef
+$if notdef
 ...
   $   line    223    "invented"
 ...
@@ -325,59 +325,59 @@ $endif (& show line)
 
 $include "tpp6.icn"
 
-# Extraneous params elsifdef
-$ifdef X
+# Extraneous params elsif
+$if X
 3
-$elsifdef AA JUNK
+$elsif AA JUNK
 4
 $endif
-$ifdef X
+$if X
 5
-$elsifndef AA JUNK
+$elsif ~ AA JUNK
 6
 $endif
 $define X 1
-$ifdef X
+$if X
 7
-$elsifdef AA JUNK
+$elsif AA JUNK
 8
 $endif
-$ifdef X
+$if X
 9
-$elsifndef AA JUNK
+$elsif ~ AA JUNK
 10
 $endif
 
-# Missing params elsifdef
-$ifdef X
+# Missing params elsif
+$if X
 3
-$elsifdef
+$elsif
 4
 $endif
-$ifdef X
+$if X
 5
-$elsifndef
+$elsif ~
 6
 $endif
 $define X 1
-$ifdef X
+$if X
 7
-$elsifdef
+$elsif
 8
 $endif
-$ifdef X
+$if X
 9
-$elsifndef
+$elsif ~
 10
 $endif
 
 # Errors in a nested if block
-$ifdef NO
+$if NO
 1
-$ifdef X
+$if X
 2
-$elsifdef AA JUNK
-$elsifndef AA JUNK
+$elsif AA JUNK
+$elsif ~ AA JUNK
 $else JUNK
 $else JUNK
 3
@@ -400,7 +400,7 @@ u + u
 $define ONE 1
 $define TWO 2
 x := ONE"ONE_
-$ifdef_
+$if_
 TWO_
 THREE"TWO
 
@@ -422,7 +422,7 @@ TWO"
 
 OK ONE TWO
 
-$ifdef JUNK
+$if JUNK
 x := "ABC_
 $endif_
 123"'123_

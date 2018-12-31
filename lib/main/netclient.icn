@@ -4,7 +4,7 @@
 
 package net
 
-$ifdef _MS_WIN32
+$if _MS_WIN32
 import 
    util, 
    io,
@@ -116,7 +116,7 @@ abstract class NetClient(Connectable, HasTask)
       return choose_poll([connection, for], timeout)
    end
 
-$ifdef _MS_WIN32
+$if _MS_WIN32
    private dns_query()
       return WinsockStream.dns_query(server, ip_version)
    end

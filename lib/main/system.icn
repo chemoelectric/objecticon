@@ -127,13 +127,13 @@ final abstract class System()
    public static native getpgid(pid)
 
    # Get current working directory of the given process
-$ifdef _SOLARIS
+$if _SOLARIS
    public static getcwd(pid)
       return Files.readlink("/proc/" || pid || "/path/cwd") | error("No such pid or permission denied")
    end
-$elsifdef _DARWIN
+$elsif _DARWIN
    public static native getcwd(pid)
-$elsifdef _MS_WIN32
+$elsif _MS_WIN32
    public static getcwd(pid)
       error("Function not supported")
    end

@@ -84,7 +84,7 @@
 #
 ############################################################################
 
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
 import io, util(Math)
 $endif
 
@@ -130,7 +130,7 @@ procedure main(args)
 
    latmin := hdr1[16+:7]
    latmax := hdr2[16+:7]
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
    latsin := Math.sin(((latmax + latmin) / 2.0) * (Math.PI / 9999999))
 $else
    latsin := sin(((latmax + latmin) / 2.0) * (&pi / 9999999))
@@ -328,7 +328,7 @@ procedure collapse()
       return
    maxsq := maxerr * maxerr		# square of error (avoid sqrt later)
 
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
    maxa := maxangle * Math.PI / 180
    maxa >:= Math.PI				# max angle in radians
    x2 := latsin * xoff[1]
@@ -348,7 +348,7 @@ $endif
       a1 := a2
       x2 := latsin * xoff[i]
       y2 := yoff[i]
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
       a2 := Math.atan(y2, x2)
 $else
       a2 := atan(y2, x2)
@@ -358,7 +358,7 @@ $endif
       if da > maxa then			# if too big, forget it
          next
 
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
       d := abs((x1 * x1 + y1 * y1) * Math.sin(da))	# deviation from straight line
 $else
       d := abs((x1 * x1 + y1 * y1) * sin(da))	# deviation from straight line
@@ -431,7 +431,7 @@ procedure crack(line)
       o.y1 := y1
       o.x2 := x2
       o.y2 := y2
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
       a := Math.atan(y2 - y1, latsin * (x2 - x1))
       o.aindex := 1 + integer(SECTORS * ((a / Math.PI) + 2.25)) % SECTORS
 $else

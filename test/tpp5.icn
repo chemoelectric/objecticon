@@ -4,9 +4,9 @@ $endif		# should not match includer's $if
 
 $else		# should not match includer's $if
 
-$ifdef id5
-   $ifdef x
+$if id5
+   $if x
    $else
    $endif
 
-#outer unterminated $ifdef should get error
+#outer unterminated $if should get error

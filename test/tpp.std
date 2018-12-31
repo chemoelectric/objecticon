@@ -205,7 +205,7 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
 
-# $ifdef & $ifndef both true and false, with and without $else
+# $if & $if ~ both true and false, with and without $else
 
 
    "isdef is defined"
@@ -498,7 +498,7 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 #line 10
 
 
-#outer unterminated $ifdef should get error
+#outer unterminated $if should get error
 #line 139 "if.tst" ASCII
 
 
@@ -564,7 +564,7 @@ YES 12
 #line 87
 #line 227 "invented" ASCII
 
-# Extraneous params elsifdef
+# Extraneous params elsif
 
 3
 #line 234
@@ -579,7 +579,7 @@ YES 12
 9
 #line 250
 
-# Missing params elsifdef
+# Missing params elsif
 
 3
 #line 257
@@ -612,7 +612,7 @@ ABC + ABC
 
 
 x := 1"ONE_
-$ifdef_
+$if_
 TWO_
 THREE"2
 

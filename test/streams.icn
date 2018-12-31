@@ -79,7 +79,7 @@ procedure test_modes()
    do_mode(f)
    f.close()
 
-$ifdef _UNIX
+$if _UNIX
    write("Prog Read")
    f := ProgInputStream("echo", ["hello"]) | stop(&why)
    do_mode(f)
@@ -109,7 +109,7 @@ $else
    write("Can all: no")
 $endif
 
-$ifdef _UNIX
+$if _UNIX
    write("Socket")
    f := SocketStream() | stop(&why)
    do_mode(f)

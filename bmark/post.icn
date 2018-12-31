@@ -22,14 +22,14 @@
 #
 #################################################################
 
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
 import lang, io, posix
 $endif
 
 global Name__, Write__, Writes__
 
 procedure Getenv__(s)
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
    return "" ~== System.getenv(s)
 $else
    return "" ~== getenv(s)
@@ -72,7 +72,7 @@ procedure Term__()
    return
 end
 
-$ifdef _OBJECT_ICON
+$if _OBJECT_ICON
 # List garbage collections performed.
 #
 procedure Collections__()
