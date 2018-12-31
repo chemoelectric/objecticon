@@ -863,7 +863,7 @@ static char *setline1(char *s, int report)
         if (*fname == '\0')
             return "$line: Invalid file name";
         s = wskip(s);			/* skip whitespace */
-        if (oi_isalpha((c = *s))) {	/* if encoding */
+        if (oi_isalpha(*s)) {	/* if encoding */
             s = getencoding(code = s - 1, s);		/* get encoding name */
         }
     }
