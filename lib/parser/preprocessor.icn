@@ -653,6 +653,11 @@ class Preprocessor(Connectable)
       succeed pos(0) | match("#")
    end
 
+   #
+   # Scan a boolean expression in a $if or $elsif line.  Returns the
+   # resulting flag value, or fails on an error, having output an
+   # appropriate message.
+   #
    private scan_expr()
       local r
       r := expr1() | fail
@@ -666,10 +671,9 @@ class Preprocessor(Connectable)
       r := expr2() | fail
       repeat {
          scan_space()
-         any('|') | break
-         move(1)
+         ="|" | break
          x := expr2() | fail
-         r := Yes{ \x | \r }
+         /r := x
       }
       return r
    end
@@ -679,10 +683,9 @@ class Preprocessor(Connectable)
       r := expr3() | fail
       repeat {
          scan_space()
-         any('&') | break
-         move(1)
+         ="&" | break
          x := expr3() | fail
-         r := Yes{ \x & \r }
+         \r := x
       }
       return r
    end
