@@ -371,7 +371,7 @@ class Preprocessor(Connectable)
          "error": {
             if /if_state then {
                scan_space()
-               t := trim(tab(find("#") | 0),' \t\f\r')
+               t := "Explicit $error: " || trim(tab(find("#") | 0),' \t\f\r')
                err(t)
                return ""
             }
