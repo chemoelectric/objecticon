@@ -130,7 +130,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    end
 
    public out(s)
-      stuff := 1
+      stuff := &yes
       return file.out(s) | throw(&why)
    end
 
@@ -166,7 +166,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       ty := type(o)
       level +:= 1
       if /depth | (level <= depth) then
-         desc := 1
+         desc := &yes
 
       case ty of {
          "record" : {
@@ -250,7 +250,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                   if \sep then
                      writes1(",")
                   traverse(e)
-                  sep := 1
+                  sep := &yes
                }
                writes1("}")
             } else {
@@ -262,7 +262,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                      writes1(",")
                   nl()
                   traverse(e)
-                  sep := 1
+                  sep := &yes
                }
                iminus()
                nl()
@@ -281,7 +281,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                   if \sep then
                      writes1(",")
                   traverse(e)
-                  sep := 1
+                  sep := &yes
                }
                writes1("]")
             } else {
@@ -293,7 +293,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                      writes1(",")
                   nl()
                   traverse(e)
-                  sep := 1
+                  sep := &yes
                }
                iminus()
                nl()
@@ -333,7 +333,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                      traverse(e[1])
                      writes1("->")
                      traverse(e[2])
-                     sep := 1
+                     sep := &yes
                   }
                   writes1("}")
                } else {
@@ -434,7 +434,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                writes1(";")
             writes(s, "=")
             traverse(Class.getf(o, s))
-            sep := 1
+            sep := &yes
          }
          object_end(o)
       } else {

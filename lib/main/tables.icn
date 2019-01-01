@@ -270,7 +270,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
          if \def then {
             oo.writes1("default=").
                traverse(def)
-            sep := 1
+            sep := &yes
          }
          every e := !pairs do {
             if \sep then
@@ -278,7 +278,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
             oo.traverse(e.key).
                writes1("->").
                traverse(e.val)
-            sep := 1
+            sep := &yes
          }
          oo.object_end(self)
       } else {

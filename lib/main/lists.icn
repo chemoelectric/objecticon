@@ -181,7 +181,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
             if \sep then
                oo.writes1(",")
             oo.traverse(e)
-            sep := 1
+            sep := &yes
          }
          oo.object_end(self)
       } else {
@@ -193,7 +193,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
                oo.writes1(",")
             oo.nl().
                traverse(e)
-            sep := 1
+            sep := &yes
          }
          oo.iminus().
             nl().
