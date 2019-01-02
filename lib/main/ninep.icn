@@ -1427,8 +1427,22 @@ class Session9P()
                   break
                if e == ".." then
                   p := tmp(data.get_parent(p), t)   # Note parent of root is root
-               else 
+               else {
+                  # Check directory exec permission.  The 9P intro man
+                  # page says
+                  #    "A walk in a directory is regarded as
+                  #     executing the directory, not reading it."
+                  has_perm(info, o.uid, Comms9P.AEXEC) | {
+                     # For consistency with fossil, we give a
+                     # different error message to the usual "File does
+                     # not exist" if we just did a break.  See 9p.c in
+                     # fossil.
+                     if *qids = 0 then
+                        throw("Permission denied")
+                     break
+                  }
                   p := tmp(data.get_child(p, e), t) | break
+               }
                put(qids, Comms9P.encode_qid(data.get_qid(p)))
             }
             if *qids = *x.wname then {
