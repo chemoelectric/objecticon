@@ -6,10 +6,12 @@
  *	#line n [filename]
  *	$line n [filename]
  *	$include filename
+ *	$load identifier filename
+ *	$uload identifier filename
  *	$define identifier text
  *	$undef identifier
- *	$ifdef identifier
- *	$ifndef identifier
+ *	$if expression
+ *	$elsif expression
  *	$else
  *	$endif
  *      $encoding name
@@ -93,10 +95,10 @@ static void  dinsert(char *name, char *val);
 static void  dinsert_pre(char *name, char *val, int vlen);
 static char *skipstring(char q, char *s);
 static int multistart(char *s);
-static char *evaldef(char **ss, int *val);
-static char *evaldef1(char **ss, int *val);
-static char *evaldef2(char **ss, int *val);
-static char *evaldef3(char **ss, int *val);
+static char *evalexpr(char *s, int *val);
+static char *evalexpr1(char **ss, int *val);
+static char *evalexpr2(char **ss, int *val);
+static char *evalexpr3(char **ss, int *val);
 
 struct ppcmd {
    char *name;
@@ -861,7 +863,7 @@ static char *setline1(char *s, int report)
         if (*fname == '\0')
             return "$line: Invalid file name";
         s = wskip(s);			/* skip whitespace */
-        if (oi_isalpha((c = *s))) {	/* if encoding */
+        if (oi_isalpha(*s)) {	/* if encoding */
             s = getencoding(code = s - 1, s);		/* get encoding name */
         }
     }
@@ -906,7 +908,7 @@ static char *ifdir(char *s)
    int val;
 
    ifdepth++;
-   if ((r = evaldef(&s, &val)))
+   if ((r = evalexpr(s, &val)))
        return r;
    while (!val) {
        char *cmd;
@@ -915,7 +917,7 @@ static char *ifdir(char *s)
        if (strcmp(cmd, "elsif") != 0)
            break;
 
-       if ((r = evaldef(&s, &val)))
+       if ((r = evalexpr(s, &val)))
            return r;
        }
    return NULL;
@@ -945,7 +947,7 @@ static char *elsifdir(char *s)
       return "Unexpected $elsif";
 
    /* Check for valid syntax. */
-   r =  evaldef(&s, &val);
+   r =  evalexpr(s, &val);
 
    skipcode(0, 1, 0, 0);			/* skip the $elsif section */
 
@@ -1390,57 +1392,59 @@ static void dinsert_pre(char *name, char *val, int vlen)
     cbin[h] = d;
 }
 
-static char *evaldef(char **ss, int *val)
+/*
+ * Evaluate a logical expression in an $if or $elsif line.  s is the
+ * start of the expression, the boolean value is returned in *val.  On
+ * error, the message is returned; on success NULL is returned.
+ */
+static char *evalexpr(char *s, int *val)
 {
     char *r;
-    if ((r = evaldef1(ss, val)))
+    if ((r = evalexpr1(&s, val)))
         return r;
-    *ss = wskip(*ss);			/* skip whitespace */
-    if (**ss != '\0')
+    s = wskip(s);			/* skip whitespace */
+    if (*s != '\0')
         return "$if/$elsif: Extraneous characters";
     return NULL;
 }
 
-static char *evaldef1(char **ss, int *val)
+static char *evalexpr1(char **ss, int *val)
 {
     char *r;
     int v;
-
-    if ((r = evaldef2(ss, val)))
+    if ((r = evalexpr2(ss, val)))
         return r;
     for (;;) {
         *ss = wskip(*ss);			/* skip whitespace */
         if (**ss != '|')
             break;
         ++*ss;
-        if ((r = evaldef2(ss, &v)))
+        if ((r = evalexpr2(ss, &v)))
             return r;
         *val = (*val || v);
     }
     return NULL;
 }
 
-static char *evaldef2(char **ss, int *val)
+static char *evalexpr2(char **ss, int *val)
 {
     char *r;
     int v;
-
-    if ((r = evaldef3(ss, val)))
+    if ((r = evalexpr3(ss, val)))
         return r;
-
     for (;;) {
         *ss = wskip(*ss);			/* skip whitespace */
         if (**ss != '&')
             break;
         ++*ss;
-        if ((r = evaldef3(ss, &v)))
+        if ((r = evalexpr3(ss, &v)))
             return r;
         *val = (*val && v);
     }
     return NULL;
 }
 
-static char *evaldef3(char **ss, int *val)
+static char *evalexpr3(char **ss, int *val)
 {
     char c, *name, *r;
     int v;
@@ -1455,13 +1459,13 @@ static char *evaldef3(char **ss, int *val)
         ++*ss;
         switch (c) {
             case '~' : {
-                if ((r = evaldef1(ss, &v)))
+                if ((r = evalexpr1(ss, &v)))
                     return r;
                 *val = !v;
                 break;
             }
             case '(' : {
-                if ((r = evaldef1(ss, val)))
+                if ((r = evalexpr1(ss, val)))
                     return r;
                 *ss = wskip(*ss);			/* skip whitespace */
                 if (**ss != ')')

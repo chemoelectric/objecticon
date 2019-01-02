@@ -434,3 +434,56 @@ $endif_
 TWO_
 THREE"TWO
 $endif
+
+# Check boolean expressions
+$define A 1
+$define B 1
+$undef X
+$undef Y
+$if A
+"yes A"
+$endif
+
+$if A&B
+"yes A&B"
+$endif
+
+$if A|B
+"yes A|B"
+$endif
+
+$if A&X
+"yes A&X"
+$endif
+
+$if A|X
+"yes A|X"
+$endif
+
+$if ~A
+"yes ~A"
+$endif
+
+$if ~X
+"yes ~X"
+$endif
+
+$if A&(B|X)
+"yes A&(B|X)"
+$endif
+
+$if X&(B|Y)
+"yes X&(B|Y)"
+$endif
+
+$if A
+"yes A"
+$elsif B
+"yes B"
+$endif
+
+$if X
+"yes X"
+$elsif Y
+"yes Y"
+$endif
