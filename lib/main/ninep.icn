@@ -212,16 +212,19 @@ end
 
 # A `File9P` which is a directory, rather than a regular file.  The
 # details of how directory information is stored is left to
-# subclasses.
+# subclasses.  The optional methods are only needed for writable
+# directories.
 #
 abstract class Dir9P(File9P)
-   public abstract add_child(x)
-   public abstract remove_child(x)
+   public optional add_child(x)
+   public optional remove_child(x)
    public abstract get_child(x)
-   package abstract rename_child(x, s)
+   package optional rename_child(x, s)
    public abstract gen_children()
-   public abstract create_child(name, uid, perm)
-   public abstract is_empty()
+   public optional create_child(name, uid, perm)
+   public is_empty()
+      succeed not gen_children()
+   end
 end
 
 # An implementation of `Dir9P` which keeps its children in a simple table.
