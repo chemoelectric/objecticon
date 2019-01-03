@@ -254,6 +254,14 @@ class TableDir9P(Dir9P)
       suspend .!ent
    end
 
+   #
+   # Clear all child entries, leaving the directory empty.
+   #
+   public clear()
+      default.clear(ent)
+      return self
+   end
+
    public is_empty()
       succeed *ent = 0
    end
