@@ -1830,7 +1830,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
          return cerr
       if \cout & DescStream.poll_out_test(x[t3]) then
          return cout
-      return error("child command i/o failed")
+      return error("Child command i/o failed")
    end
 
    protected close_cin()
@@ -2607,7 +2607,7 @@ class NetStream(FileStream)
    #
    public open_data()
       if \fd  then
-         return error("data stream already open")
+         return error("Data stream already open")
       fd := open_subfile("data", FileOpt.RDWR).get_fd() |
          return error("Couldn't open data stream: " || &why)
       return self
@@ -2840,7 +2840,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    public in(n)
       local t, rc
       n := need_integer(n, 1)
-      \reader | return error("stream not open for reading")
+      \reader | return error("Stream not open for reading")
       rc := reader.await() | fail
       if rc = 0 then
          return      # eof
@@ -2875,7 +2875,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    # call to `out` will not block.
    #
    public flush_out()
-      \writer | return error("stream not open for writing")
+      \writer | return error("Stream not open for writing")
       writer.await() | fail
       return self
    end
