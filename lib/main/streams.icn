@@ -2501,7 +2501,7 @@ class NetStream(FileStream)
    end
 
    private static cs_query1(q, ver, task, f)
-      local l, r, nb
+      local l, r, cw
       if /task then
          # May block for a few seconds during dns
          f.out(q) | fail
@@ -2509,19 +2509,15 @@ class NetStream(FileStream)
          # Use a non-blocking stream and poll so that other work can be
          # done whilst waiting for dns.
          use {
-            nb := NonBlockStream(f, Stream.WRITE).
-               set_close_underlying(&no).
-               set_write_on_close(NonBlockStream.DISCARD),
-            {
-               nb.out(q)
+            cw := FileWorker(f),
+            if cw.op_write_all(q) &
                # Poll with no timeout.  It may fail, since the task
-               # may be interrupted.  Otherwise, we call flush_out to
+               # may be interrupted.  Otherwise, we call await to
                # check for any error from the underlying write.  This
                # will not block, since the write has completed, but
                # will fail if there was an error.
-               if task.poll([nb, Poll.OUT]) then 
-                  nb.flush_out()
-            }
+               task.poll([cw, Poll.OUT]) then 
+                  cw.await()
          } | fail
       }
       # Read the results
@@ -2580,25 +2576,22 @@ class NetStream(FileStream)
    #        whilst waiting for a response (eg on a connect).
    #
    public write_ctrl(msg, timeout, task)
-      local nb, r
-      return if /timeout & /task then
+      local cw, r
+      succeed if /timeout & /task then
          ctrl.out(msg)
       else {
          use {
-            nb := NonBlockStream(ctrl, Stream.WRITE).
-               set_close_underlying(&no).
-               set_write_on_close(NonBlockStream.DISCARD),     # Needed since on a timeout the writer will still be writing
-            {                                                  # and would thus hang on a flush from close()
-               nb.out(msg)
+            cw := FileWorker(ctrl),
+            if cw.op_write_all(msg) &
                # The poll may fail if the task is interrupted.
-               if r := (if /task then DescStream else task).poll([nb, Poll.OUT], timeout) then {
-                  if /r then
-                     error("Timeout")
-                  else
-                     # Test the error status of the writer process - this won't hang since we
-                     # didn't timeout, but it may fail (eg connection refused).
-                     nb.flush_out()
-               }
+               r := (if /task then DescStream else task).poll([cw, Poll.OUT], timeout) then
+            {
+               if /r then
+                  error("Timeout")
+               else
+                  # Test the error status of the writer process - this won't hang since we
+                  # didn't timeout, but it may fail (eg connection refused).
+                  cw.await()
             }
          }
       }
