@@ -554,20 +554,20 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private gen_package_global_names(p)
+   private gen_package_global_names(h)
       local e
-      if p == u"default" then {
+      if h == u"default" then {
          every e := get_accessible_global_names() do
             upto('.', e) | suspend "default." || e
          suspend "default." || key(consts | vars)
-      } else if member(imports, string(p)) then {
+      } else if member(imports, string(h)) then {
          every e := get_accessible_global_names() do
-            e ? if =p & ="." & (not upto('.')) then
+            e ? if =h & ="." & (not upto('.')) then
                suspend e
       }
    end
 
-   private dot_candidates(h, t)
+   private dot_candidates(h)
       local v, f, i
       suspend !imports || "." | gen_package_global_names(h)
       if v := lookup_global(h) then {
@@ -598,7 +598,7 @@ class Ieval(MinimalObjectOutput)
 
    private complete_ident_dot(p, h, t, subj, pos)
       local c
-      every c := dot_candidates(h, t) do
+      every c := dot_candidates(h) do
          if match(p, c) then
             suspend simple_insert(c, p, subj, pos)
    end
