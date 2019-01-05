@@ -10,6 +10,13 @@ package mysql
 
 import lang, io, util
 
+# Succeed if the mysql library is available, or fail and set &why if
+# it isn't.
+#
+procedure mysql_available()
+   succeed \MySql.LOADED | error("MySql not supported")
+end
+
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
 # methods have a single underlying corresponding C function - see the MySql
@@ -565,9 +572,8 @@ final class MySql(NoCopy)
    end
 
    public new()
-      \LOADED | return error("MySQL not supported")
+      mysql_available() | fail
       ptr := new_impl() | fail
       return
    end
 end
-

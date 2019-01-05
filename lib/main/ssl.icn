@@ -6,7 +6,7 @@ import io, lang, util
 # it isn't.
 #
 procedure ssl_available()
-   return \SslStream.LOADED | error("SSL not supported")
+   succeed \SslStream.LOADED | error("SSL not supported")
 end
 
 #
