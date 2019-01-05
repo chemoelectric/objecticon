@@ -6,7 +6,7 @@ import lang, io, util
 # it isn't.
 #
 procedure ipc_available()
-   return \Ipc.LOADED | error("Sys-V IPC not supported")
+   succeed \Ipc.LOADED | error("Sys-V IPC not supported")
 end
 
 # This class is just used to check whether the IPC facilities are

@@ -12,7 +12,7 @@ record ColorStop(offset, color)
 # it isn't.
 #
 procedure cairo_available()
-   return \Context.LOADED | error("Cairo not supported")
+   succeed \Context.LOADED | error("Cairo not supported")
 end
 
 package procedure to_cairo_color(col)

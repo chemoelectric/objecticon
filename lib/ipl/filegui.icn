@@ -105,6 +105,7 @@ class ColorFilesItemPaint(WithCloneItemPaint)
    end
 end
 
+$if _PNG
 $load PDF_16 "fileicons/pdf.png"
 $load IMAGE_16 "fileicons/image.png"
 $load VIDEO_16 "fileicons/video.png"
@@ -117,6 +118,20 @@ $load SYMLINK_16 "fileicons/symlink.png"
 $load SOCKET_16 "fileicons/socket.png"
 $load PIPE_16 "fileicons/pipe.png"
 $load HTML_16 "fileicons/html.png"
+$else
+$load PDF_16 "fileicons/pdf.gif"
+$load IMAGE_16 "fileicons/image.gif"
+$load VIDEO_16 "fileicons/video.gif"
+$load ARCHIVE_16 "fileicons/archive.gif"
+$load AUDIO_16 "fileicons/audio.gif"
+$load EXE_16 "fileicons/exe.gif"
+$load CHARDEVICE_16 "fileicons/chardevice.gif"
+$load BLOCKDEVICE_16 "fileicons/blockdevice.gif"
+$load SYMLINK_16 "fileicons/symlink.gif"
+$load SOCKET_16 "fileicons/socket.gif"
+$load PIPE_16 "fileicons/pipe.gif"
+$load HTML_16 "fileicons/html.gif"
+$endif
 
 #
 # An `ItemPaint` which adds an appropriate icon to each lines displayed.  The data should be
@@ -184,7 +199,6 @@ class IconFilesItemPaint(ItemPaint)
       return data.name
    end
 
-$if _PNG
    public get_xdg_for_file(f)
       return Mime.find_icon_for_file_and_cache(f, ICON_SIZE, &yes) | 
              IconTheme.find_icon_and_cache("text-x-generic", ICON_SIZE, &yes)
@@ -218,16 +232,6 @@ $if _PNG
       } | "fi.file"
       return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
    end
-$else
-   public get_icon(data)
-      local k
-      k := if data.stat.mode_str[1] == "d" then
-         "fi.folder"
-      else
-         "fi.file"
-      return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
-   end
-$endif
 
    public draw(W, data, x, y, w, h)
       local i

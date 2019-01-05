@@ -183,7 +183,7 @@ $elsif _MS_WIN32
       connection := WinsockStream(domain)
       connection.set_blocking_mode(&no) | {
          save_why{ close_connection() }
-         return error("Couldn't put socket in non-blocking mode: " || &why)
+         return error_dont_retry("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
@@ -279,7 +279,7 @@ $else
       connection := SocketStream(domain)
       connection.flag(FileOpt.NONBLOCK) | {
          save_why{ close_connection() }
-         return error("Couldn't put socket in non-blocking mode: " || &why)
+         return error_dont_retry("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
