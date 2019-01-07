@@ -7,7 +7,7 @@ class CustomList(TextList)
    #
    # If the drag just consists of folders, indicate it can't drop
    #
-   public can_drop(drag, e)
+   public override can_drop(drag, e)
       if is( drag.get_source(),CustomTree) then {
          if not( /(!drag.get_content()).is_folder_flag ) then
             fail
@@ -18,7 +18,7 @@ class CustomList(TextList)
    #
    # A drop has occurred; we succeed iff we accept it
    #
-   public perform_drop(drag, drop)
+   public override perform_drop(drag, drop)
       local l, ll, el
       # Calculate insertion index
       if l := self.get_highlight() then {
@@ -55,7 +55,7 @@ class CustomList(TextList)
    # list was the source.  If the destination (c) wasn't the
    # list, then we must delete the rows from the list.
    #
-   public end_drag(drag, drop)
+   public override end_drag(drag, drop)
       if drop.get_source() ~=== self then
          self.delete_lines(self.get_gesture_selections())
    end
@@ -69,7 +69,7 @@ class CustomTree(Tree)
    #
    # Override so that we can't drop directly on non-folders (just between them).
    #
-   protected get_dnd_mode()
+   protected override get_dnd_mode()
       return if /object_get_highlight().is_folder_flag then
          EDGES_ONLY
       else
@@ -79,7 +79,7 @@ class CustomTree(Tree)
    #
    # A drop has occurred; we succeed iff we accept it
    #
-   public perform_drop(drag, drop)
+   public override perform_drop(drag, drop)
       local other, n, el, l
       #
       # Only consider a drop on a folder
@@ -149,7 +149,7 @@ class CustomTree(Tree)
    # tree was the source.  If the destination (c) wasn't the
    # tree, then we must delete the nodes from the tree.
    #
-   public end_drag(drag, drop)
+   public override end_drag(drag, drop)
       local n
 
       if drop.get_source() ~=== self then {
@@ -176,7 +176,7 @@ end
 class FolderNode(TreeNode)
    public is_folder_flag
 
-   public new(is_folder_flag)
+   public override new(is_folder_flag)
       TreeNode.new()
       self.is_folder_flag := is_folder_flag
       if \is_folder_flag then
@@ -197,7 +197,7 @@ class DNDTest(Dialog)
    public static
       folder_paint
 
-   public init_dialog()
+   public override init_dialog()
       folder_paint := ImagePaint().set_cache("tree.CLOSED_FOLDER")
       folder_paint.initially(self)
       tree.set_root_node(create_tree())
@@ -377,7 +377,7 @@ class DNDTest(Dialog)
       pm.popup(self, m, ev.x, ev.y)
    end
 
-   public component_setup()
+   public override component_setup()
       local quit, split
 
       set_resize(&yes)

@@ -62,7 +62,7 @@ class XmlDecl(Node)
       return self
    end
 
-   public new(v, e, s)
+   public override new(v, e, s)
       Node.new()
       self.version := v
       self.encoding := e

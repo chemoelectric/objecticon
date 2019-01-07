@@ -82,7 +82,7 @@ class Sieve(Dialog)
       }
    end
 
-   public component_setup()
+   public override component_setup()
       local prime_border, rate, buttons, b, p
 
       self.set_label("Sieve").set_resize(&yes)

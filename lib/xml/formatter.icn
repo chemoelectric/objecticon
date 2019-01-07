@@ -32,15 +32,15 @@ abstract class Formatter(Stream, HasUnderlyingStream)
       return
    end
 
-   public out(s)
+   public override out(s)
       return file.out(s) | throw(&why)
    end
 
-   public get_mode()
+   public override get_mode()
       return WRITE
    end
 
-   public close()
+   public override close()
       if \close_underlying_flag then
          file.close() | fail
       return self

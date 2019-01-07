@@ -17,7 +17,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       every (!self.children).gen_code(c)
       CanvasComponent.gen_code(c)
       if \self.no_click_focus_flag then
@@ -33,7 +33,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c, e, e1
       c := CanvasTabSet()
       CanvasComponent.dup_fields(c)
@@ -52,7 +52,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Children", "children"] |
          ["Which One", "which_one"] |
@@ -64,14 +64,14 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    # Overrides CanvasComponent.is_inside)
    #
-   public is_inside(c)
+   public override is_inside(c)
       return (c ~=== self) & self.which_one.is_inside(c)
    end
 
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
@@ -84,18 +84,18 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTabSetDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       local c
       every c := !self.children do
          c.allows_null_width() | fail
       return
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       local c
       every c := !self.children do
          c.allows_null_height() | fail
@@ -115,11 +115,11 @@ class CanvasTabSet(CanvasComponent,TabSet)
       return l
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | !self.children
    end
 
-   public new()
+   public override new()
       TabSet.new()
       CanvasComponent.new()
       self.class_name := "TabSet"

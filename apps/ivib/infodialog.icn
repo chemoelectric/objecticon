@@ -19,7 +19,7 @@ class InfoDialog(Dialog)
       button_text,
       alignment
 
-   public component_setup()
+   public override component_setup()
       local l, s, b
       /button_text := "Close"
       /title := "Information"
@@ -39,7 +39,7 @@ class InfoDialog(Dialog)
       set_focus(b)
    end
 
-   public new(lines, title, button_text, alignment)
+   public override new(lines, title, button_text, alignment)
       Dialog.new()
       self.lines := lines
       self.title := title

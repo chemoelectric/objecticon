@@ -13,19 +13,19 @@ end
 
 class Two(ObjectOutput,ObjectClone,ObjectHash,ObjectEquals)
    public id, junk
-   public object_equals(other)
+   public override object_equals(other)
       return id=other.id
    end
 
-   public object_output(o)
+   public override object_output(o)
       return o.writes("id=" || id)
    end
 
-   public object_clone()
+   public override object_clone()
       return Two(id, "cloned")
    end
 
-   public object_hash()
+   public override object_hash()
       return id
    end
 
@@ -39,7 +39,7 @@ end
 class Three(ObjectClone)
    public x, y
 
-   public object_clone()
+   public override object_clone()
       return Three(x, "cloned")
    end
 
@@ -55,7 +55,7 @@ class Four()
 end
 
 class Five(ObjectOutput)
-   public object_output(oo)
+   public override object_output(oo)
       return oo.writes("Nothing here")
    end
 end
@@ -73,7 +73,7 @@ end
 class Seven(ObjectOutput)
    public a,b,c,d
 
-   private object_output(oo)
+   private override object_output(oo)
       return oo.object_selected(self, "a","c")
    end
 
@@ -571,7 +571,7 @@ end
 class E1(ObjectEquals)
    private x
 
-   private object_equals(other)
+   private override object_equals(other)
       return other.x === x
    end
 
@@ -585,7 +585,7 @@ class E2(E1)
 end
 
 class E3(E1)
-   private object_equals(other)
+   private override object_equals(other)
       return other.x === x
    end
 end
@@ -660,7 +660,7 @@ class Sub(Par)
       try{"Class.get(Par,f4)", Class.get(Par,"f4")}
    end
 
-   public new()
+   public override new()
       write("in Sub.new")
       Par.new()
       return

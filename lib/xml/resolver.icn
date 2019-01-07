@@ -42,7 +42,7 @@ end
 # resolution of any external id.
 #
 class EmptyResolver(Resolver)
-   public resolve(base, external_id)
+   public override resolve(base, external_id)
       return Resolved(base, "")
    end
 end

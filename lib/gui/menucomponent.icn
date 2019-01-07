@@ -565,7 +565,7 @@ abstract class MenuComponent(Rect,Connectable)
       self.temp_win := &null
    end
 
-   public new()
+   public override new()
       Connectable.new()
       self.children := []
       return
@@ -576,12 +576,12 @@ end
 class SubMenuProxyComponent(Component, MenuMode)
    public menu
 
-   public display()
+   public override display()
       menu.display(self.cbwin)
       display_children()
    end
 
-   public get_tooltip(e)
+   public override get_tooltip(e)
       local m
       every m := !menu.children do {
          if m.in_label_region(e) then
@@ -589,23 +589,23 @@ class SubMenuProxyComponent(Component, MenuMode)
       }
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(in_region(e))
    end
 
-   public close_all()
+   public override close_all()
       menu.hide()
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
       return self
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
       return self
    end
 
-   public allow_nested(c) 
+   public override allow_nested(c) 
       local t
       if is(c, SubMenuProxyComponent) then
          succeed c.menu.parent === menu
@@ -616,7 +616,7 @@ class SubMenuProxyComponent(Component, MenuMode)
       }
    end
 
-   public new(m)
+   public override new(m)
       Component.new()
       self.menu := m
       return

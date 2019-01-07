@@ -28,7 +28,7 @@ class FontTestDialog(Dialog)
       oifont_label,
       oifontsize_label
 
-   public component_setup()
+   public override component_setup()
       local t
       self.setup()
       # Work out what the underlying font system is.
@@ -58,10 +58,10 @@ class FontTestDialog(Dialog)
                                      ])
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
       synch_range()
       synch_font()
    end
@@ -458,7 +458,7 @@ end
 class Viewer(DrawScrollArea)
    public font, text
 
-   public set_font(f)
+   public override set_font(f)
       self.font := f
       invalidate_subject_width()
       invalidate_subject_height()
@@ -481,7 +481,7 @@ class Viewer(DrawScrollArea)
       t.close()
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local cw,sw
       cw := get_clone() | return 50
       sw := cw.text_width(self.text)
@@ -489,7 +489,7 @@ class Viewer(DrawScrollArea)
       return sw + 20
    end
 
-   public calculate_subject_height()
+   public override calculate_subject_height()
       local cw,fh
       cw := get_clone() | return 50
       fh := cw.get_font_height()
@@ -497,15 +497,15 @@ class Viewer(DrawScrollArea)
       return fh + 20
    end
 
-   public get_default_vertical_increment()
+   public override get_default_vertical_increment()
       return 10
    end
 
-   public get_default_horizontal_increment()
+   public override get_default_horizontal_increment()
       return 10
    end
 
-   public draw(r)
+   public override draw(r)
       local px, py, cw, fh, ah, dh
 
       cw := get_clone() | fail
@@ -526,7 +526,7 @@ class Viewer(DrawScrollArea)
       cw.close()
    end
 
-   public new()
+   public override new()
       DrawScrollArea.new()
       set_use_default_keys(&yes)
       self.text := ""

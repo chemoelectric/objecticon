@@ -12,11 +12,11 @@ import gui
 $define SPACING 25
 
 class MenuTree(SelectableScrollArea)
-   public calculate_line_height()
+   public override calculate_line_height()
       return self.cbwin.get_line_height()
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       local dashed, s, lp, y0, thick, thick2
 
       y0 := yp + self.line_height / 2
@@ -56,7 +56,7 @@ class MenuTree(SelectableScrollArea)
       }
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local ww, mw, s
 
       mw := 0
@@ -69,7 +69,7 @@ class MenuTree(SelectableScrollArea)
       return mw
    end
 
-   public new()
+   public override new()
       SelectableScrollArea.new()
       self.set_draggable_cursor(&yes)
 

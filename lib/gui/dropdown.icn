@@ -31,28 +31,28 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
          set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
    end
 
-   public close_all()
+   public override close_all()
       close_popup()
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(popup.in_region(e) | b.in_region(e))
    end
 
-   public allow_nested(c)
+   public override allow_nested(c)
       c := c.get_nesting_component()
       succeed c.gen_parents() === popup
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
       return self
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
       return popup
    end
 
-   public finally()
+   public override finally()
       close_popup()
       Component.finally()
    end
@@ -165,7 +165,7 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       return self
    end
 
-   public layout()
+   public override layout()
       local bw
 
       bw := b.get_preferred_width()
@@ -183,21 +183,21 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       view.layout()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return border.get_total_width() + b.get_preferred_width() + view.get_preferred_width()
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       dw -:= border.get_total_width() + b.get_preferred_width()
       return border.get_total_height() + view.get_preferred_height(dw)
    end
 
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
       display_children()
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       view.invalidate()
    end
 
@@ -243,15 +243,15 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       end_change(e)
    end
 
-   public handle_wheel_up(e)
+   public override handle_wheel_up(e)
       go_up(e)
    end
 
-   public handle_wheel_down(e)
+   public override handle_wheel_down(e)
       go_down(e)
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
@@ -296,7 +296,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       return text(o)
    end
 
-   public create_popup()
+   public override create_popup()
       return TextList()
    end
 
@@ -318,7 +318,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       return self
    end
 
-   public do_increment(e)
+   public override do_increment(e)
       if *selection_list = 0 then
          fail
       if /self.selection | (self.selection = 1) then
@@ -327,7 +327,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          set_selection(self.selection - 1, e)
    end
 
-   public do_decrement(e)
+   public override do_decrement(e)
       if *selection_list = 0 then
          fail
       if /self.selection then
@@ -342,7 +342,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       end_change(e)
    end
 
-   protected open_popup(ev)
+   protected override open_popup(ev)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
@@ -435,14 +435,14 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       }
    end
 
-   public initially()
+   public override initially()
       \self.selection_list | runerr("No selection list specified")
       Component.initially()
    end
 end
 
 class DropDownLabel(Label)
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR_V, e.code)
    end
 
@@ -457,7 +457,7 @@ class DropDownLabel(Label)
       }
    end
 
-   public new()
+   public override new()
       Label.new()
       self.set_label("")
       self.set_accepts_focus(&yes)
@@ -472,7 +472,7 @@ class DropDownLabel(Label)
 end
 
 class DropDownTextField(TextField)
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR, e.code)
    end
 
@@ -483,7 +483,7 @@ class DropDownTextField(TextField)
       }
    end
 
-   public new()
+   public override new()
       TextField.new()
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))

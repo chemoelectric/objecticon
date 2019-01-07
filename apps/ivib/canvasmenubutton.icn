@@ -20,7 +20,7 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.menu.gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_menu(" || self.menu.name || ")")
@@ -29,7 +29,7 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasMenuButton()
       CanvasComponent.dup_fields(c)
@@ -40,11 +40,11 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() | ["Menu", "menu"]
    end
 
-   protected post_decode()
+   protected override post_decode()
       CanvasComponent.post_decode()
       self.menu.component_link := self
    end
@@ -62,23 +62,23 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasMenuBarDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.menu
    end
 
-   public new()
+   public override new()
       MenuButton.new()
       CanvasComponent.new()
       self.class_name := "MenuButton"

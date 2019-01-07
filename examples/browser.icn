@@ -77,7 +77,7 @@ class VisitedEntry()
 end
 
 class PageMenu(DynamicMenu)
-   public populate()
+   public override populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_page_menu())
    end
 end
@@ -167,12 +167,12 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       page_menu.set_is_shaded(No{ is(tabs.which_one, BrowserTab) })
    end
 
-   public initially()
+   public override initially()
       Dialog.initially()
       pool.initially()
    end
 
-   public finally()
+   public override finally()
       Dialog.finally()
       pool.finally()
    end
@@ -423,7 +423,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       }
    end
 
-   public get_authentication(httpc, dom, realm)
+   public override get_authentication(httpc, dom, realm)
       local d
       exit_menu_mode()
       d := AuthenticationDialog(dom, realm)
@@ -451,7 +451,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       pm.popup(self, m, e.x, e.y)
    end
 
-   public new(cookies, settings)
+   public override new(cookies, settings)
       local quit_menu_item, menu_bar, file_menu, new_tab_item, 
          xdg_refresh_item
       Dialog.new()
@@ -533,7 +533,7 @@ end
 class MessageDialog(Dialog)
    public const text
 
-   public new()
+   public override new()
       local close_button
       Dialog.new()
       set_resize(&yes)
@@ -861,12 +861,12 @@ class DownloadTab(TabItem)
       }
    end
 
-   public initially()
+   public override initially()
       TabItem.initially()
       ticker.start()
    end
 
-   public finally()
+   public override finally()
       TabItem.finally() 
       ticker.stop()
    end
@@ -876,7 +876,7 @@ class DownloadTab(TabItem)
       refresh()
    end
 
-   public new()
+   public override new()
       TabItem.new()
       label_border.set_x_align(Align.L)
       setup()
@@ -983,7 +983,7 @@ class URLList(SelectableScrollArea)
       URL_FONT := "sans,*0.9"
    end
    
-   public calculate_line_height()
+   public override calculate_line_height()
       local W, v
       use {
          W := view.cbwin.clone().set_font(TITLE_FONT),
@@ -996,14 +996,14 @@ class URLList(SelectableScrollArea)
       return v
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       # A nominal minimum width; the width will be expanded by the
       # owning EditList to its own width, and then we use limit_text
       # to draw nicely in the allocated view.
       return scale(250)
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       local W
       use {
          W := view.cbwin.clone().set_font(TITLE_FONT),
@@ -1022,7 +1022,7 @@ class URLList(SelectableScrollArea)
 end
 
 class URLEditList(IndependentEditList)
-   public create_view()
+   public override create_view()
       # Using a standard textfield inhibits cursor up/down from going
       # back/forward in the history, which interacts poorly with the
       # focus.
@@ -1030,13 +1030,13 @@ class URLEditList(IndependentEditList)
          set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
    end
 
-   protected open_popup(ev)
+   protected override open_popup(ev)
       set_selection_list(copy(parent.browser.history))
       set_selection(parent.browser.history_pos)
       IndependentEditList.open_popup(ev)
    end
 
-   public create_popup()
+   public override create_popup()
       return URLList()
    end
 end
@@ -1051,7 +1051,7 @@ class TabHeaderPaint(Paint)
       ICON_SIZE := scale(16)
    end
    
-   public initially(c)
+   public override initially(c)
       local iw
       iw := Window.open_image(\icon)
       self.h := max(ICON_SIZE, c.cbwin.get_font_height())
@@ -1067,12 +1067,12 @@ class TabHeaderPaint(Paint)
          self.w := c.cbwin.text_width(str)
    end
 
-   public finally()
+   public override finally()
       (\icon_win).close()
       icon_win := &null
    end
 
-   public draw(W, x, y, w, h)
+   public override draw(W, x, y, w, h)
       if \icon_win then {
          icon_win.copy_to(,,,, W, x, y + (h - icon_win.get_height()) / 2)
          x +:= icon_win.get_width() + Gui.TEXT_INSET
@@ -1089,7 +1089,7 @@ class TabHeaderPaint(Paint)
          W.text_width(str) <= w
    end
 
-   public new(s, icon)
+   public override new(s, icon)
       self.str := s
       self.icon := icon
       return
@@ -1126,12 +1126,12 @@ class BrowserTab(TabItem, BrowserUI)
       close_tab()
    end
 
-   public initially()
+   public override initially()
       TabItem.initially()
       browser.goto(\start_url, start_referer_url)
    end
 
-   public finally()
+   public override finally()
       TabItem.finally()
       revert_tab := &null
    end
@@ -1164,7 +1164,7 @@ class BrowserTab(TabItem, BrowserUI)
       t.browser.clone_history(browser)
    end
 
-   public get_label_width()
+   public override get_label_width()
       return scale(100)
    end
 
@@ -1176,11 +1176,11 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_prev()
    end
 
-   public link_left_clicked(url)
+   public override link_left_clicked(url)
       browser.goto(url, browser.page_url)
    end
 
-   public link_middle_clicked(url)
+   public override link_middle_clicked(url)
       parent_dialog.new_tab(url, browser.page_url,, self)
    end
 
@@ -1251,7 +1251,7 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.new_tab(url,, &yes)
    end
 
-   public display_search()
+   public override display_search()
       search_panel.is_live() | open_search_panel()
    end
 
@@ -1317,7 +1317,7 @@ class BrowserTab(TabItem, BrowserUI)
       browser.handle_select_all(e)
    end
 
-   public create_page_menu()
+   public override create_page_menu()
       local m, s, l
       m := Menu()
       if \browser.page_url then {
@@ -1398,14 +1398,14 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(m1)
    end
 
-   public create_link_menu(url)
+   public override create_link_menu(url)
       local m
       m := Menu()
       populate_link_menu(url, m)
       return m
    end
 
-   public create_image_menu(img)
+   public override create_image_menu(img)
       local m, url
       url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
       m := Menu()
@@ -1425,7 +1425,7 @@ class BrowserTab(TabItem, BrowserUI)
       return m
    end
 
-   public update_grey(gs)
+   public override update_grey(gs)
       prev_button.set_is_shaded(gs.prev)
       next_button.set_is_shaded(gs.nxt)
       refresh_button.set_is_shaded(gs.refresh)
@@ -1448,7 +1448,7 @@ class BrowserTab(TabItem, BrowserUI)
          browser.msg("Invalid url: " || &why)
    end
 
-   public msg(s, n)
+   public override msg(s, n)
       message_label.set(s, n)
    end
 
@@ -1478,13 +1478,13 @@ class BrowserTab(TabItem, BrowserUI)
       return t
    end
 
-   public save_attachment(file, res)
+   public override save_attachment(file, res)
       parent_dialog.exit_menu_mode()
       do_save(file, res.data)
       parent_dialog.update_visited(res.url)
    end
 
-   public display_externally(res)
+   public override display_externally(res)
       local de, file
       de := BrowserDialog.gen_desktop_entries_for_resp(res) | fail
       file := make_display_file(res)
@@ -1493,7 +1493,7 @@ class BrowserTab(TabItem, BrowserUI)
       return
    end
 
-   public goto_externally(url)
+   public override goto_externally(url)
       local f, de, sc
       if f := ucs(Files.url_to_file(url)) &
          Files.access(f) &
@@ -1517,7 +1517,7 @@ class BrowserTab(TabItem, BrowserUI)
       }
    end
 
-   public browse_for_file(s)
+   public override browse_for_file(s)
       local d, p
       d := parent_dialog.file_dialog
       if *s = 0 then
@@ -1549,11 +1549,11 @@ class BrowserTab(TabItem, BrowserUI)
       }
    end
 
-   public is_visited(url)
+   public override is_visited(url)
       succeed member(parent_dialog.visited_set, url.str())
    end
 
-   public page_loaded()
+   public override page_loaded()
       local ru
       # Don't save pages that didn't load in the visited list.
       if \browser.page_data then {
@@ -1592,7 +1592,7 @@ class BrowserTab(TabItem, BrowserUI)
       set_title(browser.page_title, data)
    end
 
-   public page_fully_loaded()
+   public override page_fully_loaded()
       update_title(\browser.page_favicon_resp)
    end
 
@@ -1612,7 +1612,7 @@ class BrowserTab(TabItem, BrowserUI)
       return l
    end
 
-   public get_tab_tooltip()
+   public override get_tab_tooltip()
       # Only produce a tab tooltip if the title will be limited.
       if paint.label_will_fit(cbwin, tab_w - label_border.get_total_width()) then
          fail
@@ -1656,7 +1656,7 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_increase_font()
    end
 
-   public new(browser_dialog, url, referer_url, revert_tab)
+   public override new(browser_dialog, url, referer_url, revert_tab)
       local b
       TabItem.new()
       self.revert_tab := revert_tab

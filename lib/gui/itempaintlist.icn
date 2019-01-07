@@ -13,14 +13,14 @@ class ItemPaintList(SelectableScrollArea)
       item_border,
       item_paint
 
-   public initially()
+   public override initially()
       \self.item_paint | runerr("ItemPaint not set")
       SelectableScrollArea.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
-   public finally()
+   public override finally()
       SelectableScrollArea.finally()
       self.item_paint.finally()
       self.item_border.finally()
@@ -49,7 +49,7 @@ class ItemPaintList(SelectableScrollArea)
       return self
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       local h, bh
       bh := item_border.get_total_height()
       if not(h := item_paint.get_constant_height(self.cbwin) + bh) then 
@@ -60,7 +60,7 @@ class ItemPaintList(SelectableScrollArea)
       return h
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local mw
       if not(mw := item_paint.get_constant_width(self.cbwin)) then {
          mw := 0
@@ -69,7 +69,7 @@ class ItemPaintList(SelectableScrollArea)
       return mw + item_border.get_total_width()
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       local d, r
       d := contents[i]
       r := Rect(xp, yp, max(subject_width, view.w), lh)
@@ -79,7 +79,7 @@ class ItemPaintList(SelectableScrollArea)
       item_border.draw_rect(view.cbwin, r)
    end
 
-   public draw_line_sel_cur(x, y, w, h, sel, cur, hi, ov)
+   public override draw_line_sel_cur(x, y, w, h, sel, cur, hi, ov)
       if \sel then
          Gui.style.fill_selection_rectangle(view.cbwin, x, y, w, h)
       case \cur of {
@@ -95,7 +95,7 @@ class ItemPaintList(SelectableScrollArea)
          Gui.style.fill_over_rectangle(view.cbwin, x, y, w, h)
    end
 
-   public new()
+   public override new()
       SelectableScrollArea.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))

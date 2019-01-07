@@ -17,7 +17,7 @@ class CanvasList(CanvasComponent,List)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_constant_label(" || image(\self.constant_label) || ")")
       c.chain("set_selection_list(" || contents_string(self.selection_list) || ")")
@@ -28,7 +28,7 @@ class CanvasList(CanvasComponent,List)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasList()
       CanvasComponent.dup_fields(c)
@@ -41,14 +41,14 @@ class CanvasList(CanvasComponent,List)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Constant Label", "constant_label"] |
          ["Selection", "selection"] |
          ["Selection List", "selection_list"]
    end
 
-   private post_decode()
+   private override post_decode()
       CanvasComponent.post_decode()
       # Little trick to initialize the selection index nicely
       set_selection_list(self.selection_list)
@@ -57,19 +57,19 @@ class CanvasList(CanvasComponent,List)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasListDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public new()
+   public override new()
       List.new()
       CanvasComponent.new()
       self.class_name := "List"

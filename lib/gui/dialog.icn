@@ -266,7 +266,7 @@ class Dialog(Component)
       return \popup_manager.click_count
    end
 
-   public compute_absolutes()
+   public override compute_absolutes()
       self.x := -self.win.get_dx()
       self.y := -self.win.get_dy()
       self.w := self.win.get_width()
@@ -350,7 +350,7 @@ class Dialog(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       local k
       parent_dialog := self
       effective_is_hidden_flag := is_hidden_flag
@@ -1430,21 +1430,21 @@ class Dialog(Component)
    #
    # Set the `WAttrib.X` attribute; see `set_wattrib()`.
    #
-   public set_x(v)
+   public override set_x(v)
       return set_wattrib(WAttrib.X, v)
    end
 
    #
    # Set the `WAttrib.POS` attribute; see `set_wattrib()`.
    #
-   public set_pos(v1, v2)
+   public override set_pos(v1, v2)
       return set_wattrib(WAttrib.POS, [v1, v2])
    end
 
    #
    # Set the `WAttrib.Y` attribute; see `set_wattrib()`.
    #
-   public set_y(v)
+   public override set_y(v)
       return set_wattrib(WAttrib.Y, v)
    end
 
@@ -1458,21 +1458,21 @@ class Dialog(Component)
    #
    # Set the `WAttrib.SIZE` attribute; see `set_wattrib()`.
    #
-   public set_size(v1, v2)
+   public override set_size(v1, v2)
       return set_wattrib(WAttrib.SIZE, [v1, v2])
    end
 
    #
    # Set the `WAttrib.HEIGHT` attribute; see `set_wattrib()`.
    #
-   public set_height(v)
+   public override set_height(v)
       return set_wattrib(WAttrib.HEIGHT, v)
    end
 
    #
    # Set the `WAttrib.WIDTH` attribute; see `set_wattrib()`.
    #
-   public set_width(v)
+   public override set_width(v)
       return set_wattrib(WAttrib.WIDTH, v)
    end
 
@@ -1493,7 +1493,7 @@ class Dialog(Component)
    #
    # Set the `WAttrib.GEOMETRY` attribute; see `set_wattrib()`.
    #
-   public set_geometry(v1, v2, v3, v4)
+   public override set_geometry(v1, v2, v3, v4)
       return set_wattrib(WAttrib.GEOMETRY, [v1, v2, v3, v4])
    end
 
@@ -1574,7 +1574,7 @@ class Dialog(Component)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
@@ -1593,7 +1593,7 @@ end
 # empty set of attribs.
 #
 class PureDialog(Dialog)
-   public new()
+   public override new()
       Dialog.new()
       self.clear_wattribs()
       return
@@ -1615,7 +1615,7 @@ class WinEvent(Point)
       time,
       processing
 
-   public new(code, x, y, time, mod)
+   public override new(code, x, y, time, mod)
       self.code := code
       self.x := x
       self.y := y
@@ -1670,11 +1670,11 @@ end
 abstract class TextSelectionOwner(SelectionOwner)
    protected abstract get_text()
 
-   public get_targets()
+   public override get_targets()
       suspend Selection.TIMESTAMP_TARGET | Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
    end
 
-   public get_content(target)
+   public override get_content(target)
       case target of {
          Selection.STRING_TARGET: return text_convert(get_text(), "string")
          Selection.UTF8_STRING_TARGET: return text_convert(get_text(), "ucs")
@@ -1686,7 +1686,7 @@ end
 class StaticTextSelectionOwner(TextSelectionOwner)
    private s
 
-   protected get_text()
+   protected override get_text()
       return s
    end
 
@@ -1695,7 +1695,7 @@ class StaticTextSelectionOwner(TextSelectionOwner)
       return self
    end
 
-   public lost_ownership()
+   public override lost_ownership()
    end
 
    public new(s)
@@ -1707,7 +1707,7 @@ end
 class URLSelectionOwner(SelectionOwner)
    private urls
 
-   public get_content(target)
+   public override get_content(target)
       local s
       case target of {
          Selection.URI_LIST_TARGET : {
@@ -1732,10 +1732,10 @@ class URLSelectionOwner(SelectionOwner)
       }
    end
 
-   public lost_ownership()
+   public override lost_ownership()
    end
 
-   public get_targets()
+   public override get_targets()
       suspend Selection.TIMESTAMP_TARGET | Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | Selection.URI_LIST_TARGET
    end
 
@@ -1755,11 +1755,11 @@ end
 #    add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
 # ~
 class Accelerator(Component)
-   public handle_accel(e)
+   public override handle_accel(e)
       fire(Event.ACTION, e)
    end
 
-   public new()
+   public override new()
       Component.new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
       return
@@ -1784,7 +1784,7 @@ class WindowControl(Component)
       parent_dialog.win.set_canvas("iconic")
    end
 
-   public new()
+   public override new()
       Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       set_pos("100%","0")

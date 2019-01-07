@@ -17,7 +17,7 @@ class CanvasButton(CanvasComponent)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       #
       # Extend superclass method
       #
@@ -44,7 +44,7 @@ class CanvasButton(CanvasComponent)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
           ["No click focus", "no_click_focus_flag"] |
           ["Accepts focus Flag", "accepts_focus_flag"] |
@@ -54,7 +54,7 @@ class CanvasButton(CanvasComponent)
           ["Parent Button Group", "parent_button_group"]
    end
 
-   public dup_fields(c)
+   public override dup_fields(c)
       CanvasComponent.dup_fields(c)
       c.accepts_focus_flag := self.accepts_focus_flag
       c.no_click_focus_flag := self.no_click_focus_flag
@@ -62,11 +62,11 @@ class CanvasButton(CanvasComponent)
       c.is_checked_flag := self.is_checked_flag
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 end

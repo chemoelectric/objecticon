@@ -31,16 +31,16 @@ class List(SelectionDropDown)
       old_selection,
       constant_label
 
-   public start_change(e)
+   public override start_change(e)
       self.old_selection := self.selection
    end
 
-   public end_change(e)
+   public override end_change(e)
       if self.old_selection ~=== self.selection then
          fire(Event.SELECTION_CHANGED, e)
    end
 
-   public apply_selection()
+   public override apply_selection()
       local s
       s := \self.constant_label | convert_element(object_get_selection()) | ""
       self.view.set_label(s)
@@ -56,11 +56,11 @@ class List(SelectionDropDown)
       return self
    end
 
-   public create_view()
+   public override create_view()
       return DropDownLabel()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       if \self.constant_label then
          t := self.cbwin.text_width(self.constant_label)
@@ -77,7 +77,7 @@ end
 # by overriding `create_button`, giving a `List` with just a button.
 #
 abstract class ButtonOnlyList(List)
-   public layout()
+   public override layout()
       view.x := b.x := x
       view.y := b.y := y
       b.w := w
@@ -87,15 +87,15 @@ abstract class ButtonOnlyList(List)
       view.layout()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return b.get_preferred_width()
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       return b.get_preferred_height(dw)
    end
 
-   public set_selection_list(x)
+   public override set_selection_list(x)
       # This is overridden to avoid setting the selection to 1 if
       # &null.  Since we can't see the label, it makes no sense to set
       # the selection to 1.  If we did that, and opened the list, and
@@ -106,7 +106,7 @@ abstract class ButtonOnlyList(List)
       return self
    end
 
-   public new()
+   public override new()
       List.new()
       view.set_is_hidden(&yes)
       set_border(NullBorder())

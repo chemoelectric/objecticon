@@ -22,7 +22,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       range_to,        
       initial_value
 
-   public validate_input()
+   public override validate_input()
       #
       # Check valid numeric fields
       #
@@ -38,7 +38,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       c.set_increment_size(numeric(increment_size.get_contents()))
       c.set_value(numeric(initial_value.get_contents()))
       if slider.is_checked() then
@@ -58,7 +58,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       range_to.toggle_is_shaded()
    end
 
-   public setup()
+   public override setup()
       local p, l
 
       CanvasComponentDialog.setup()

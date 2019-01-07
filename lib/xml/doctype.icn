@@ -46,7 +46,7 @@ class DocType(Node)
       return self
    end
 
-   public new(n, i)
+   public override new(n, i)
       Node.new()
       self.name := n
       self.external_id := i

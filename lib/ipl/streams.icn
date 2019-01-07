@@ -28,13 +28,13 @@ class IntersperseStream(LineBasedGeneratorStream, HasUnderlyingStream)
       return
    end
 
-   public close()
+   public override close()
       if \close_underlying_flag then
          lclose(a) | fail
       return self
    end
 
-   public new(a[])
+   public override new(a[])
       self.a := a
       return LineBasedGeneratorStream.new{line_gen()}
    end

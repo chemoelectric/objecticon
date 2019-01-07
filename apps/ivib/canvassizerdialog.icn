@@ -20,7 +20,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
       lo_flag,
       hi_flag
 
-   public validate_input()
+   public override validate_input()
       local lo_val, hi_val
 
       if lo_flag.is_checked() then
@@ -32,7 +32,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       local lo_val, hi_val
 
       if lo_flag.is_checked() then
@@ -53,7 +53,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
       lo.toggle_is_shaded()
    end
 
-   public setup()
+   public override setup()
       local p
 
       CanvasComponentDialog.setup()

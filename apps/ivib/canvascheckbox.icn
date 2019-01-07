@@ -14,7 +14,7 @@ import gui
 # Class for representing a CheckBox on the canvas.
 #
 class CanvasCheckBox(CanvasButton,CheckBox)
-   public set_parent_check_box_group(x)
+   public override set_parent_check_box_group(x)
       #
       # Set the images to the standard ones
       #  
@@ -29,7 +29,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.paint.gen_code(c)
       CanvasButton.gen_code(c)
       c.chain("set_paint(" || self.paint.name || ")")
@@ -38,7 +38,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasButton.get_template() |
          ["Paint", "paint"]
    end
@@ -46,7 +46,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    # Duplicate object.
    #
-   public dup(pc)
+   public override dup(pc)
       local c
       c := CanvasCheckBox()
       CanvasButton.dup_fields(c)
@@ -57,15 +57,15 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasCheckBoxDialog(self)
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.paint
    end
 
-   public new()
+   public override new()
       CheckBox.new()
       CanvasButton.new()
       self.class_name := "CheckBox"

@@ -7,7 +7,7 @@
 #
 
 class CanvasCheckBoxDialog(CanvasButtonDialog)
-   public on_in_checkbox_group()
+   public override on_in_checkbox_group()
       CanvasButtonDialog.on_in_checkbox_group()
    end
 end

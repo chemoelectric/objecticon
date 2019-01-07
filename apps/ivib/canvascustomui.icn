@@ -8,22 +8,22 @@
 import gui
 
 class CanvasCustomUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasCustom()
       t.set_size(scale(100), scale(100))
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Other"
    end
 
-   public get_name()
+   public override get_name()
       return "Custom"
    end
 
-   public get_icon()
+   public override get_icon()
       return "ivib.icn21"
    end
 end

@@ -61,7 +61,7 @@ class PopClient(NetClient)
    #
    # Disconnect using the QUIT command
    #
-   public close()
+   public override close()
       local f
       send_command("QUIT") | (f := &why)
       close_connection() | (/f := &why)
@@ -231,7 +231,7 @@ class PopClient(NetClient)
       return error("POP unrecognized response: " || s)
    end
 
-   public new()
+   public override new()
       NetClient.new()
       set_port(110)
       set_server("localhost")

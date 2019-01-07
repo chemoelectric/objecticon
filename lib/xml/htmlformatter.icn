@@ -12,7 +12,7 @@ package xml
 # A formatter for outputting HTML documents
 #
 class HtmlFormatter(Formatter)
-   protected format_document(n)
+   protected override format_document(n)
       local c
       every c := !n.children do {
          format_node(c)
@@ -20,11 +20,11 @@ class HtmlFormatter(Formatter)
       }
    end
 
-   protected format_content(s)
+   protected override format_content(s)
       writes1(s)
    end
 
-   protected format_doctype(n)
+   protected override format_doctype(n)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -42,11 +42,11 @@ class HtmlFormatter(Formatter)
       writes1(s)
    end
 
-   protected format_comment(n)
+   protected override format_comment(n)
       writes("<!--", n.comment, "-->")
    end
 
-   protected format_element(n)
+   protected override format_element(n)
       local s, l, e
 
       s := "<" || n.name
@@ -72,9 +72,9 @@ class HtmlFormatter(Formatter)
          writes("</", n.name, ">")
    end
 
-   protected format_pi(n) end
-   protected format_cdata(n) end
-   protected format_xmldecl(n) end
+   protected override format_pi(n) end
+   protected override format_cdata(n) end
+   protected override format_xmldecl(n) end
 
 end
 

@@ -4,11 +4,11 @@ import
 global opts
 
 class DragLabel(Label)
-   public can_drag(ev)
+   public override can_drag(ev)
       return "Hello"
    end
 
-   public new()
+   public override new()
       Component.new()
       set_allow_drag(&yes)
       return
@@ -91,7 +91,7 @@ class Untitled(Dialog)
       log(ev_to_str(ev))
    end
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       text_button_11.set_pointer("cross")
       connect(on_event, Event.ICON)
@@ -116,10 +116,10 @@ class Untitled(Dialog)
       return text_button_10.is_checked()
    end
 
-   public end_dialog(e)
+   public override end_dialog(e)
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
    private on_text_button_3(ev)

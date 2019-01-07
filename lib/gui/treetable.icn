@@ -52,17 +52,17 @@ abstract class BaseTreeTableContent(BaseTree)
       return parent.table_header.children[n]
    end
 
-   public on_hsb()
+   public override on_hsb()
       BaseTree.on_hsb()
       synch_header()
    end
 
-   public handle_key_right(e)
+   public override handle_key_right(e)
       BaseTree.handle_key_right(e)
       synch_header()
    end
 
-   public handle_key_left(e)
+   public override handle_key_left(e)
       BaseTree.handle_key_left(e)
       synch_header()
    end
@@ -71,7 +71,7 @@ abstract class BaseTreeTableContent(BaseTree)
       parent.table_header.synch_with_content()
    end
 
-   public draw()
+   public override draw()
       local xp, yp, i, j, info, h, lh, r, cols, col, cc, W
 
       r := view.get_cbwin_clip()
@@ -130,11 +130,11 @@ abstract class BaseTreeTableContent(BaseTree)
 
    # Override draw_line so that call to SelectableScrollArea.draw() above draws
    # the selections etc (rather than displaying the tree column again).
-   public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
+   public override draw_line(xp, yp, lh, i, sel, cur, hi, ov)
       draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi, ov)
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       local t, m, h, r, e, i, j, cols
       t := []
       m := 0
@@ -165,7 +165,7 @@ abstract class BaseTreeTableContent(BaseTree)
       return r
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       return parent.get_total_column_width()
    end
 
@@ -176,13 +176,13 @@ end
 # data in the tree column.
 #
 class TreeTableContent(BaseTreeTableContent,Tree)
-   protected calculate_tree_line_height()
+   protected override calculate_tree_line_height()
       return Tree.calculate_line_height()
    end
 end
 
 class TreeTableHeader(TableHeader)
-   public can_drag(ev)
+   public override can_drag(ev)
       local c
       every c := children[2 to *children] do {
          if \c.is_down then {
@@ -192,11 +192,11 @@ class TreeTableHeader(TableHeader)
       }
    end
 
-   public can_drop(drag, e)
+   public override can_drop(drag, e)
       return drag.content ~=== (children[1] ~=== \which_highlight)
    end
 
-   public perform_drop(drag, drop, e)
+   public override perform_drop(drag, drop, e)
       local i, j
       i := drag.content.get_column_index()
       j := drop.content.get_column_index()
@@ -216,11 +216,11 @@ end
 # See the example program ttexplorer.icn for one in use.
 #
 class TreeTable(Table)
-   public create_table_header()
+   public override create_table_header()
       return TreeTableHeader()
    end
 
-   public create_table_content()
+   public override create_table_content()
       return TreeTableContent()
    end
 end
@@ -230,11 +230,11 @@ end
 # node data to an `ItemPaint` instance.
 #
 class ItemPaintTreeTableContent(BaseTreeTableContent,ItemPaintTree)
-   protected calculate_tree_line_height()
+   protected override calculate_tree_line_height()
       return ItemPaintTree.calculate_line_height()
    end
 
-   public draw_node_data(n, xp, yp, lh)
+   public override draw_node_data(n, xp, yp, lh)
       local r, s, col
       col := parent.table_header.children[1]
       s := item_paint.get_size(view.cbwin, n.label)
@@ -249,11 +249,11 @@ end
 # A `TreeTable` which uses an `ItemPaint` to paint its tree column.
 #
 class ItemPaintTreeTable(Table)
-   public create_table_header()
+   public override create_table_header()
       return TreeTableHeader()
    end
 
-   public create_table_content()
+   public override create_table_content()
       return ItemPaintTreeTableContent()
    end
 end

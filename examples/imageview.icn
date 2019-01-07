@@ -2,12 +2,12 @@ import gui, graphics, io
 
 class ImageViewTest(Dialog)
    public iv, img
-   public component_setup()
+   public override component_setup()
       self.setup()
       iv.set_image(img)
    end
 
-   public end_dialog()
+   public override end_dialog()
       img.close()
    end
 
@@ -16,14 +16,14 @@ class ImageViewTest(Dialog)
       (\iv).set_image(img)
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
    public on_quit(ev)
       dispose()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end
@@ -66,24 +66,24 @@ end
 class ImageView(DrawScrollArea)
    public img
 
-   public draw(r)
+   public override draw(r)
       img.copy_to(get_area_x(), get_area_y(), view.w, view.h, 
                   view.cbwin, view.x, view.y)
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       return img.get_width()
    end
 
-   public calculate_subject_height()
+   public override calculate_subject_height()
       return img.get_height()
    end
 
-   public get_default_vertical_increment()
+   public override get_default_vertical_increment()
       return 10
    end
 
-   public get_default_horizontal_increment()
+   public override get_default_horizontal_increment()
       return 10
    end
 
@@ -92,7 +92,7 @@ class ImageView(DrawScrollArea)
       compute_and_invalidate()
    end
 
-   public new()
+   public override new()
       DrawScrollArea.new()
       set_use_default_keys(&yes)
       return

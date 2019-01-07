@@ -20,7 +20,7 @@ class EditListSpin(SelectionSpin)
       succeed ev === applied_event
    end
 
-   public apply_selection(ev)
+   public override apply_selection(ev)
       local s 
       s := convert_element(object_get_selection()) | view.get_contents()[1:1]
       if /ev then
@@ -53,7 +53,7 @@ class EditListSpin(SelectionSpin)
       return view.get_contents()
    end
 
-   public create_view()
+   public override create_view()
       return SpinTextField()
    end
 
@@ -94,7 +94,7 @@ class EditListSpin(SelectionSpin)
       }
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       t := 0
       # Max string length + space for cursor (cf TextField's get_view() method)
@@ -102,7 +102,7 @@ class EditListSpin(SelectionSpin)
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 
-   public new()
+   public override new()
       SelectionSpin.new()
       every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return

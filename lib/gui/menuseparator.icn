@@ -19,34 +19,34 @@ class MenuSeparator(MenuComponent)
       HEIGHT := env_scale("OI_MENUSEPARATOR_HEIGHT") | scale(4)
    end
 
-   public get_label_mid_width()
+   public override get_label_mid_width()
       return 0
    end
 
-   public get_label_mid_height()
+   public override get_label_mid_height()
       return HEIGHT
    end
 
-   public get_label_left_width()
+   public override get_label_left_width()
    end
 
-   public get_label_left_height()
+   public override get_label_left_height()
    end
 
-   public get_label_right_width()
+   public override get_label_right_width()
    end
 
-   public get_label_right_height()
+   public override get_label_right_height()
    end
 
-   public draw_label(W, lw, mw, rw)
+   public override draw_label(W, lw, mw, rw)
       Gui.style.draw_raised_rectangle(W,
                                   self.label_x, self.label_y + (self.label_h - HEIGHT) / 2,
                                   lw + mw + rw, HEIGHT,
                                   HEIGHT / 2)
    end
 
-   public new()
+   public override new()
       MenuComponent.new()
       self.is_decorative_flag := &yes
       return

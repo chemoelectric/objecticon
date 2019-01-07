@@ -20,7 +20,7 @@ class BarArea(Component)
       bar_w,                   #             
       bar_h
 
-   public display()
+   public override display()
       Gui.style.draw_raised_rectangle(self.cbwin, self.bar_x, self.bar_y, 
                                       self.bar_w, self.bar_h, 
                                       Gui.BORDER_WIDTH)
@@ -256,12 +256,12 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          move_value(self.lo)
    end
 
-   public get_default_height()
+   public override get_default_height()
       if \self.is_horizontal_flag then
          return DEFAULT_INNER_SIZE + border.get_total_height()
    end
 
-   public get_default_width()
+   public override get_default_width()
       if /self.is_horizontal_flag then
          return DEFAULT_INNER_SIZE + border.get_total_width()
    end
@@ -332,7 +332,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          fire(Event.VALUE_CHANGED, e)
    end
 
-   public handle_wheel_up(e)
+   public override handle_wheel_up(e)
       /self.bar_down | fail
       start_handle(e)
       move_value(self.value - self.wheel_factor * self.increment_size)
@@ -340,7 +340,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       end_handle(e)
    end
 
-   public handle_wheel_down(e)
+   public override handle_wheel_down(e)
       /self.bar_down | fail
       start_handle(e)
       move_value(self.value + self.wheel_factor * self.increment_size)
@@ -388,7 +388,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          handle_lrelease()
    end
 
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
       display_children()
    end
@@ -458,7 +458,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          self.bar_area.bar_w := self.bar_size
    end
 
-   public initially()
+   public override initially()
       if /self.is_range_flag then {
          \self.total_size | runerr("Total size not set")
          \self.page_size | runerr("Page size not set")
@@ -476,7 +476,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       Component.initially()
    end
 
-   public layout()
+   public override layout()
       if /self.is_horizontal_flag then {
          #
          # Set button positions
@@ -541,7 +541,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       }
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       Component.shift(dx, dy)
       if /self.is_horizontal_flag then {
          self.bar_pos +:= dy
@@ -570,13 +570,13 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       if bar_pos + bar_size = bar_area_pos + bar_area_size then return
    end
 
-   public finally()
+   public override finally()
       repeat_ticker.stop()
       old_bar_area_pos := old_bar_area_size := &null
       Component.finally()
    end
 
-   public new()
+   public override new()
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.b1 := IconButton().

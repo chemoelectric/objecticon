@@ -7,11 +7,11 @@ package mail
 import util(error)
 
 class MultipartHandler(TypeHandler)
-   public can_handle(ct)
+   public override can_handle(ct)
       succeed map(ct.get_type()) == "multipart"
    end
    
-   public convert_to_object(m, data)
+   public override convert_to_object(m, data)
       local s, res, b, ct, sm
 
       res := Multipart()
@@ -48,7 +48,7 @@ class MultipartHandler(TypeHandler)
       return res
    end
 
-   public convert_from_object(m, obj)
+   public override convert_from_object(m, obj)
       local b, s, ct
 
       b := generate_boundary(obj.get_parts())

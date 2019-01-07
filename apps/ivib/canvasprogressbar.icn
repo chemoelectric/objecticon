@@ -16,7 +16,7 @@ class CanvasProgressBar(CanvasComponent,ProgressBar)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasProgressBar()
       CanvasComponent.dup_fields(c)
@@ -26,15 +26,15 @@ class CanvasProgressBar(CanvasComponent,ProgressBar)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasComponentDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public new()
+   public override new()
       ProgressBar.new()
       CanvasComponent.new()
       self.class_name := "ProgressBar"

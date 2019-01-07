@@ -19,14 +19,14 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    #
    # CanvasComponent has an in_resize_region too, but we want TableColumn's (for preview).
    #
-   public in_resize_region(e)
+   public override in_resize_region(e)
       return TableColumn.in_resize_region(e)
    end
 
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local e
 
       self.paint.gen_code(c)
@@ -44,13 +44,13 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
       c.add_event_handlers(\self.event_handlers)
    end
 
-   public set_column_align(x)
+   public override set_column_align(x)
       self.column_align := x
       TableColumn.set_column_align(x)
       return self
    end
 
-   public rescale(f)
+   public override rescale(f)
       CanvasComponent.rescale(f)
       self.column_width := round(\self.column_width * f)
    end
@@ -58,7 +58,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTableColumn()
       CanvasComponent.dup_fields(c)
@@ -71,25 +71,25 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTableColumnDialog(self)
    end
 
-   public allows_selection()
+   public override allows_selection()
    end
 
-   public allows_positioning()
+   public override allows_positioning()
    end
 
-   public allows_copy()
+   public override allows_copy()
    end
 
-   public allows_delete()
+   public override allows_delete()
       # Can't delete the last item
       return *parent.children > 1
    end
 
-   public op_delete()
+   public override op_delete()
       local t
       parent_Canvas.parent_dialog.push_undo()
       t := self.parent.parent
@@ -102,7 +102,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
       parent_Canvas.invalidate()
    end
 
-   public post_decode()
+   public override post_decode()
       self.set_column_align(self.column_align)
       CanvasComponent.post_decode()
    end
@@ -110,7 +110,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasObject.get_template() |
                ["Paint", "paint"] |
                ["Column Width", "column_width"] |
@@ -119,11 +119,11 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
                ["Event Handlers", "event_handlers"]
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.paint
    end
 
-   public new()
+   public override new()
       TableColumn.new()
       CanvasComponent.new()
       self.column_align := Align.L

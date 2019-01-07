@@ -4,7 +4,7 @@ import
 class ColorRectangle(Component)
    private c
 
-   public display()
+   public override display()
       self.cbwin.set_fg(c)
       self.cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
    end
@@ -37,19 +37,19 @@ class Untitled(Dialog)
       colr,
       panel_2
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       rgb_label.set_menu_on_rpress(&yes)
       update_rgb()
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end

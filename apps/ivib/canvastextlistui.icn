@@ -8,7 +8,7 @@
 import gui
 
 class CanvasTextListUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasTextList()
       t.set_contents([])
@@ -16,15 +16,15 @@ class CanvasTextListUI(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Text"
    end
 
-   public get_name()
+   public override get_name()
       return "TextList"
    end
 
-   public get_icon()
+   public override get_icon()
       return "ivib.icn16"
    end
 end

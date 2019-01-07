@@ -185,13 +185,13 @@ end
 # Left-assoc list; define put and flatten
 #
 abstract class LList(List)
-   package unflatten(l)
+   package override unflatten(l)
       clear()
       every put(!l)
       return self
    end
 
-   public push(o)
+   public override push(o)
       local l
       l := flatten()
       default.push(l, o)
@@ -204,13 +204,13 @@ end
 # Right-assoc list; define push and flatten
 #
 abstract class RList(List)
-   package unflatten(l)
+   package override unflatten(l)
       clear()
       every push(back(l))
       return self
    end
 
-   public put(s)
+   public override put(s)
       local l
       l := flatten()
       default.put(l, s)
@@ -230,7 +230,7 @@ class Leaf(Tree)
       return pos.s
    end
 
-   public get_first_token()
+   public override get_first_token()
       return pos
    end
 end
@@ -252,11 +252,11 @@ class Id(Tree)
       }
    end
 
-   public get_first_token()
+   public override get_first_token()
       return pos
    end
 
-   package new(pos, comma)
+   package override new(pos, comma)
       Tree.new(pos)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
@@ -267,7 +267,7 @@ end
 abstract class IdList(LList)
    private const lab
 
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -284,7 +284,7 @@ abstract class IdList(LList)
       return l
    end
 
-   public put(s)
+   public override put(s)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, s.pos)
       else
@@ -295,7 +295,7 @@ abstract class IdList(LList)
       return self
    end
 
-   package new(lpos, index, lab)
+   package override new(lpos, index, lab)
       LList.new(lpos, index)
       /lab := "idlist"
       self.lab := lab
@@ -304,7 +304,7 @@ abstract class IdList(LList)
 end
 
 abstract class SimpleLList(Tree, LList)
-   package new(pos, index)
+   package override new(pos, index)
       Tree.new(pos)
       LList.new(pos, index)
       return
@@ -312,7 +312,7 @@ abstract class SimpleLList(Tree, LList)
 end
 
 abstract class SimpleRList(Tree, RList)
-   package new(pos, index)
+   package override new(pos, index)
       Tree.new(pos)
       RList.new(pos, index)
       return
@@ -320,7 +320,7 @@ abstract class SimpleRList(Tree, RList)
 end
 
 class SimpleIdList(Tree, IdList)
-   package new(pos, index, lab)
+   package override new(pos, index, lab)
       Tree.new(pos)
       IdList.new(pos, index, lab)
       return
@@ -330,7 +330,7 @@ end
 class AccessList(SimpleLList)
    private const lab
 
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -346,7 +346,7 @@ class AccessList(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, x.pos)
       else
@@ -356,7 +356,7 @@ class AccessList(SimpleLList)
       return self
    end
 
-   package new(lpos, index, lab)
+   package override new(lpos, index, lab)
       SimpleLList.new(lpos, index)
       /lab := "fieldaccess"
       self.lab := lab
@@ -365,7 +365,7 @@ class AccessList(SimpleLList)
 end
 
 class LocalsList(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -376,7 +376,7 @@ class LocalsList(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       lpos.set(index, Node("locals", 
                            lpos.child(index),
                            x.pos.child(2),
@@ -386,11 +386,11 @@ class LocalsList(SimpleLList)
 end
 
 class Invocable(SimpleLList)
-   public get_first_token()
+   public override get_first_token()
       return pos.child(1)
    end
 
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -406,7 +406,7 @@ class Invocable(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, x.pos)
       else
@@ -417,18 +417,18 @@ class Invocable(SimpleLList)
       return self
    end
 
-   package new(pos)
+   package override new(pos)
       SimpleLList.new(pos, 2)
       return
    end
 end
 
 class Import(SimpleLList)
-   public get_first_token()
+   public override get_first_token()
       return pos.child(1)
    end
 
-   package flatten()
+   package override flatten()
       local l, n, t
       l := []
       n := lpos.child(index)
@@ -451,7 +451,7 @@ class Import(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, x.pos)
       else
@@ -462,14 +462,14 @@ class Import(SimpleLList)
       return self
    end
 
-   package new(pos)
+   package override new(pos)
       SimpleLList.new(pos, 2)
       return
    end
 end
 
 class Imports(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := pos.child(index)
@@ -480,7 +480,7 @@ class Imports(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       pos.set(index, Node("importdecls", 
                           pos.child(index),
                           x.pos))
@@ -489,7 +489,7 @@ class Imports(SimpleLList)
 end
 
 class Body(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n, t, t2
       l := []
       n := lpos.child(index)
@@ -514,7 +514,7 @@ class Body(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       lpos.set(index, Node("bodydecls", 
                            lpos.child(index),
                            x.pos))
@@ -547,7 +547,7 @@ class Prog(Tree)
       return Body(decls, 3)
    end
 
-   package new(pos)
+   package override new(pos)
       Tree.new(pos)
       decls := pos.child(1)
       return
@@ -557,7 +557,7 @@ end
 class InvocableOp(Tree)
    public const comma
    
-   public get_first_token()
+   public override get_first_token()
       return pos.child(1)
    end
 
@@ -569,7 +569,7 @@ class InvocableOp(Tree)
       return Leaf(pos.child(3))
    end
 
-   package new(pos, comma)
+   package override new(pos, comma)
       Tree.new(pos)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
@@ -584,7 +584,7 @@ class ImportSpec(SimpleIdList)
       return Id(pos.child(1))
    end
 
-   package new(pos, comma)
+   package override new(pos, comma)
       # pos.size() will be 4 for a "some" import, 5 for an "excl"
       # import, and the list of symbols is one child in from the end.
       SimpleIdList.new(pos, pos.size() - 1)
@@ -666,7 +666,9 @@ class Factory()
          "final": YY.FINAL
          "abstract": YY.ABSTRACT
          "native": YY.NATIVE
-         "defer": YY.DEFER
+         "optional": YY.OPTIONAL
+         "override": YY.OVERRIDE
+         "mixin": YY.MIXIN
          default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))
@@ -883,7 +885,7 @@ class Factory()
 end
 
 class ClassMembers(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n, t
       l := []
       n := lpos.child(index)
@@ -901,7 +903,7 @@ class ClassMembers(SimpleLList)
       return l
    end
 
-   public put(x)
+   public override put(x)
       lpos.set(index, Node("classbody", 
                            lpos.child(index),
                            x.pos.child(2),
@@ -927,7 +929,7 @@ abstract class TopLevel(Tree)
 end
 
 class Class(TopLevel)
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
@@ -1043,7 +1045,7 @@ abstract class Function()
 end
 
 class Local(SimpleIdList)
-   public get_first_token()
+   public override get_first_token()
       return pos.child(2)
    end
 
@@ -1056,14 +1058,14 @@ class Local(SimpleIdList)
       return self
    end
 
-   package new(pos)
+   package override new(pos)
       SimpleIdList.new(pos, 3)
       return
    end
 end
 
 class FieldList(SimpleIdList)
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos.child(2))
    end
 
@@ -1071,14 +1073,14 @@ class FieldList(SimpleIdList)
       return AccessList(pos, 2)
    end
 
-   package new(pos)
+   package override new(pos)
       SimpleIdList.new(pos, 3)
       return
    end
 end
 
 class Method(Tree, Function)
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos.child(2))
    end
 
@@ -1086,7 +1088,7 @@ class Method(Tree, Function)
       return AccessList(pos, 2)
    end
 
-   package new(pos)
+   package override new(pos)
       Tree.new(pos)
       Function.new(pos.child(3), 1, 3, 5)
       return
@@ -1094,7 +1096,7 @@ class Method(Tree, Function)
 end
 
 class DeferredMethod(Tree, Function)
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos.child(2))
    end
 
@@ -1111,7 +1113,7 @@ class DeferredMethod(Tree, Function)
       return self
    end
 
-   package new(pos)
+   package override new(pos)
       Tree.new(pos)
       Function.new(pos.child(3), 2, 4)
       return
@@ -1119,11 +1121,11 @@ class DeferredMethod(Tree, Function)
 end
 
 class Procedure(TopLevel, Function)
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
-   package new(pos)
+   package override new(pos)
       Tree.new(pos)
       Function.new(pos.child(2), 2, 4, 6)
       return
@@ -1131,7 +1133,7 @@ class Procedure(TopLevel, Function)
 end
 
 class Record(TopLevel)
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
@@ -1153,7 +1155,7 @@ class Global(TopLevel, IdList)
    public const
       gpos
 
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
@@ -1171,7 +1173,7 @@ class Global(TopLevel, IdList)
       return self
    end
 
-   package new(pos)
+   package override new(pos)
       Tree.new(pos)
       gpos := pos.child(2)
       IdList.new(gpos, 3)
@@ -1180,7 +1182,7 @@ class Global(TopLevel, IdList)
 end
 
 class Package(Tree)
-   public get_first_token()
+   public override get_first_token()
       return pos.child(1)
    end
 
@@ -1201,11 +1203,11 @@ end
 class ExprListElement(Tree)
    public const comma
 
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
-   public new(pos, comma)
+   public override new(pos, comma)
       Tree.new(pos)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
@@ -1217,7 +1219,7 @@ end
 # List for handling a "exprlist" Node
 #
 class ExprList(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -1236,7 +1238,7 @@ class ExprList(SimpleLList)
       return l
    end
 
-   public put(s)
+   public override put(s)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, s.pos)
       else
@@ -1247,7 +1249,7 @@ class ExprList(SimpleLList)
       return self
    end
 
-   public new(pos, index)
+   public override new(pos, index)
       SimpleLList.new(pos, index)
       return
    end
@@ -1256,11 +1258,11 @@ end
 class CompoundElement(Tree)
    public const semi
 
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
-   public new(pos, semi)
+   public override new(pos, semi)
       Tree.new(pos)
       /semi := Token(YY.SEMICOL, ";", ";")
       self.semi := semi
@@ -1272,7 +1274,7 @@ end
 # List for handling a "compound" Node
 #
 class Compound(SimpleRList)
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -1291,7 +1293,7 @@ class Compound(SimpleRList)
       return l
    end
 
-   public push(s)
+   public override push(s)
       local n
       n := lpos.child(index)
       if n === Node.EMPTY then
@@ -1304,7 +1306,7 @@ class Compound(SimpleRList)
       return self
    end
 
-   public new(pos, index)
+   public override new(pos, index)
       SimpleRList.new(pos, index)
       return
    end
@@ -1313,11 +1315,11 @@ end
 class CaseListElement(Tree)
    public const semi
 
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
-   public new(pos, semi)
+   public override new(pos, semi)
       Tree.new(pos)
       /semi := Token(YY.SEMICOL, ";", ";")
       self.semi := semi
@@ -1329,7 +1331,7 @@ end
 # List for handling a "caselist" Node
 #
 class CaseList(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -1348,7 +1350,7 @@ class CaseList(SimpleLList)
       return l
    end
 
-   public put(s)
+   public override put(s)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, s.pos)
       else
@@ -1359,7 +1361,7 @@ class CaseList(SimpleLList)
       return self
    end
 
-   public new(pos, index)
+   public override new(pos, index)
       SimpleLList.new(pos, index)
       return
    end
@@ -1368,11 +1370,11 @@ end
 class DottedIdentListElement(Tree)
    public const dot
 
-   public get_first_token()
+   public override get_first_token()
       return Util.first_token(pos)
    end
 
-   public new(pos, dot)
+   public override new(pos, dot)
       Tree.new(pos)
       /dot := Token(YY.DOT, ".", ".")
       self.dot := dot
@@ -1384,7 +1386,7 @@ end
 # List for handling a "dottedident" Node
 #
 class DottedIdentList(SimpleLList)
-   package flatten()
+   package override flatten()
       local l, n
       l := []
       n := lpos.child(index)
@@ -1403,7 +1405,7 @@ class DottedIdentList(SimpleLList)
       return l
    end
 
-   public put(s)
+   public override put(s)
       if lpos.child(index) === Node.EMPTY then
          lpos.set(index, s.pos)
       else
@@ -1414,7 +1416,7 @@ class DottedIdentList(SimpleLList)
       return self
    end
 
-   public new(pos, index)
+   public override new(pos, index)
       SimpleLList.new(pos, index)
       return
    end

@@ -20,7 +20,7 @@ class CanvasSplitDialog(CanvasComponentDialog)
       min_second,
       weight
 
-   public set_vals()
+   public override set_vals()
       if show_inter.is_checked() then
          c.sizer.set_show_inter(&yes)
       else
@@ -31,7 +31,7 @@ class CanvasSplitDialog(CanvasComponentDialog)
       CanvasComponentDialog.set_vals()
    end
 
-   public setup()
+   public override setup()
       local p
       CanvasComponentDialog.setup()
       

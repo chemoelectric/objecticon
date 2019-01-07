@@ -19,11 +19,11 @@ class QuotedPrintableHandler(EncodingHandler)
 
    private res, ll
 
-   public can_handle(enc)
+   public override can_handle(enc)
       succeed map(enc) == "quoted-printable"
    end
 
-   public encode_data(m, data)
+   public override encode_data(m, data)
       local s
 
       res := ""
@@ -83,7 +83,7 @@ class QuotedPrintableHandler(EncodingHandler)
       }
    end
 
-   public decode_data(m, data) 
+   public override decode_data(m, data) 
       local res
       res := ""
       data ? repeat {

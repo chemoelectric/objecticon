@@ -18,7 +18,7 @@ class CanvasMenuComponentDialog(MenuComponentEdit)
       paint_field_l,
       paint_field_r
 
-   public validate_input()
+   public override validate_input()
       MenuComponentEdit.validate_input() | fail
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
@@ -27,14 +27,14 @@ class CanvasMenuComponentDialog(MenuComponentEdit)
       return
    end
 
-   public set_vals()
+   public override set_vals()
       MenuComponentEdit.set_vals()
       c.set_paint_mid(paint_field.get_contents())
       c.set_paint_left(paint_field_l.get_contents())
       c.set_paint_right(paint_field_r.get_contents())
    end
 
-   public setup()
+   public override setup()
       local main_panel
 
       MenuComponentEdit.setup()

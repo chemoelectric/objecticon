@@ -50,13 +50,13 @@ class AnnotatedListEntryWithIcon(ListEntryWithIcon)
 end
 
 class AnnotatedIconFilesItemPaint(IconFilesItemPaint)
-   public get_string(data)
+   public override get_string(data)
       return data.annotation
    end
 end
 
 class ColorFilesItemPaint(WithCloneItemPaint)
-   protected make_clone(W)
+   protected override make_clone(W)
       return W.clone()
    end
 
@@ -87,19 +87,19 @@ class ColorFilesItemPaint(WithCloneItemPaint)
       return data.name
    end
 
-   public get_width(W, data)
+   public override get_width(W, data)
       return W.text_width(get_string(data))
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return W.get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(get_width(W, data), W.get_line_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       W := get_clone(W).set_fg(get_color(data))
       W.draw_string(x, y + W.get_line_ascent(), get_string(data))
    end
@@ -183,15 +183,15 @@ class IconFilesItemPaint(ItemPaint)
       ImageCache.copy_key(key, k)
    end
 
-   public get_width(W, data)
+   public override get_width(W, data)
       return ICON_SIZE + Gui.TEXT_INSET + W.text_width(get_string(data))
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return max(W.get_line_height(), ICON_SIZE)
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(get_width(W, data), get_constant_height(W))
    end
 
@@ -233,7 +233,7 @@ class IconFilesItemPaint(ItemPaint)
       return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
    end
 
-   public draw(W, data, x, y, w, h)
+   public override draw(W, data, x, y, w, h)
       local i
       if is(data, ListEntryWithIcon) then {
          if not(i := \data.icon) then
@@ -253,11 +253,11 @@ end
 #
 #
 class StringDirItemPaint(IconFilesItemPaint)
-   public get_string(data)
+   public override get_string(data)
       return data
    end
 
-   public get_icon(data)
+   public override get_icon(data)
       return ImageCache.get("fi.folder")
    end
 end
@@ -374,7 +374,7 @@ class FileSuggestField(SuggestField)
       }
    end
 
-   protected do_request()
+   protected override do_request()
       calc_matches()
       # No point in a list which is a copy of what we already have
       if *matches = 1 & endswith(Files.standard_case(contents),
@@ -383,14 +383,14 @@ class FileSuggestField(SuggestField)
       return matches
    end
 
-   public convert_element(o)
+   public override convert_element(o)
       if /directories_only_flag & o.stat.mode_str[1] == "d" then
          return prefix || o.name || Files.PATH_SEPARATOR
       else
          return prefix || o.name
    end
 
-   public create_popup()
+   public override create_popup()
       return ItemPaintList().
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
@@ -406,7 +406,7 @@ class FileSuggestField(SuggestField)
       return coprefix(ipl.pdco.List{(!matches).name}) | u""
    end
 
-   public handle_tab(e)
+   public override handle_tab(e)
       local t, o, l
       if \popup then {
          if \select_using_enter_flag & o := popup.object_get_cursor() then {
@@ -466,7 +466,7 @@ class FileSuggestField(SuggestField)
       }
    end
 
-   public new()
+   public override new()
       SuggestField.new()
       self.set_contents(u"")
       set_direction(Direction.DOWN)
@@ -478,7 +478,7 @@ end
 # over.
 #
 package class FileTrailBorder(LineBorder)
-   public draw(W, x, y, w, h)
+   public override draw(W, x, y, w, h)
       local W2
       use {
          W2 := Gui.style.get_dashed_clone(W),
@@ -523,7 +523,7 @@ class FileTrailButton(TextButton)
       }
    end
 
-   public new(p, tt)
+   public override new(p, tt)
       TextButton.new()
       self.p := p
       self.tt := tt
@@ -550,13 +550,13 @@ class FileTrailList(ButtonOnlyList)
       p,        # The FilePath giving the path to this point
       child     # The optional child to the right, for setting the selection in the popup
 
-   public create_button()
+   public override create_button()
       local l
       l := if p.size() = 1 then p.str() else Files.PATH_SEPARATOR
       return TextButton().set_label(l)
    end
 
-   public create_popup()
+   public override create_popup()
       return ItemPaintList().
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
@@ -573,7 +573,7 @@ class FileTrailList(ButtonOnlyList)
       return
    end
 
-   protected open_popup(ev)
+   protected override open_popup(ev)
       local e, i, l
       l := []
       every e := !Files.ucs_list(p.str(), ListEntryWithIcon) do {
@@ -606,7 +606,7 @@ class FileTrailList(ButtonOnlyList)
       parent.on_change(p.child(o.name).ucs())
    end
 
-   public new(p, child)
+   public override new(p, child)
       self.p := p
       self.child := child
       ButtonOnlyList.new()
@@ -656,7 +656,7 @@ class FileTrail(Component)
       return self
    end
 
-   public layout()
+   public override layout()
       reset_all()
       Component.layout()
       check_limits()
@@ -750,7 +750,7 @@ class FileTrail(Component)
       return self
    end
 
-   public new()
+   public override new()
       Component.new()
       set_layout(GridLayout().set_dii(0).set_doi(0))
       set_constraint("x_fill", &yes)
@@ -769,7 +769,7 @@ class RenameDialog(NameDialog)
    private
       p
 
-   public on_okay_button(ev)
+   public override on_okay_button(ev)
       local s
       s := name_field.get_contents()
       if upto(Files.PATH_SPECIALS, s) then {
@@ -787,7 +787,7 @@ class RenameDialog(NameDialog)
          msg("Failed: " || &why)
    end
 
-   public init_dialog()
+   public override init_dialog()
       local s, x
       s := name_field.get_contents()
       # Start with text selected, but not the extension.
@@ -797,7 +797,7 @@ class RenameDialog(NameDialog)
    end
 
    # The constructor requires a ucs string, being the file to be renamed.
-   public new(s)
+   public override new(s)
       s := need_ucs(s)
       p := FilePath(s)
       NameDialog.new(p.get(-1))
@@ -814,7 +814,7 @@ class NewDirectoryDialog(NameDialog)
    private
       p
 
-   public on_okay_button(ev)
+   public override on_okay_button(ev)
       local s
       s := name_field.get_contents()
       if upto(Files.PATH_SPECIALS, s) then {
@@ -832,7 +832,7 @@ class NewDirectoryDialog(NameDialog)
 
    # The constructor requires a ucs string, being the directory in
    # which the new directory is to be created. to be renamed.
-   public new(s)
+   public override new(s)
       s := need_ucs(s)
       p := FilePath(s)
       NameDialog.new()

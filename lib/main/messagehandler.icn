@@ -5,20 +5,20 @@
 package mail
 
 class MessageHandler(TypeHandler)
-   public can_handle(ct)
+   public override can_handle(ct)
       local t, s
       t := map(ct.get_type())
       s := map(ct.get_subtype())
       succeed (t == "message" & s == "rfc822") | (t == "application" & s == "x-extension-eml")
    end
 
-   public convert_to_object(m,  data)
+   public override convert_to_object(m,  data)
       local res
       res := Message.parse(data) | fail
       return res
    end
 
-   public convert_from_object(m, obj)
+   public override convert_from_object(m, obj)
       return obj.to_rfc822()
    end
 end

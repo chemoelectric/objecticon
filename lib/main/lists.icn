@@ -150,7 +150,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin lists.
    #
-   private object_equals(other, seen)
+   private override object_equals(other, seen)
       local i
       other.size() = size() | fail
       every i := 1 to size() do
@@ -161,7 +161,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin lists.
    #
-   private object_hash(depth)
+   private override object_hash(depth)
       local n, i
       n := size()
       if depth > 1 then
@@ -173,7 +173,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local e, sep
       if oo.simple{gen()} then {
          oo.object_start(self)
@@ -205,27 +205,27 @@ end
 class UnmodifiableList(List)
    private const l
 
-   public at(i)
+   public override at(i)
       return .l.at(i)
    end
 
-   public gen()
+   public override gen()
       suspend .l.gen()
    end
 
-   public back()
+   public override back()
       suspend .l.back()
    end
 
-   public size()
+   public override size()
       return l.size()
    end
 
-   public keyof(x)
+   public override keyof(x)
       suspend l.keyof(x)
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 
@@ -241,62 +241,62 @@ end
 class BuiltinList(List)
    private const l
 
-   public insert(i, x)
+   public override insert(i, x)
       return default.insert(l, i, x) & self
    end
 
-   public delete(i)
+   public override delete(i)
       return default.delete(l, i) & self
    end
 
-   public at(i)
+   public override at(i)
       return l[i]
    end
 
-   public get()
+   public override get()
       return default.get(l)
    end
 
-   public pull()
+   public override pull()
       return default.pull(l)
    end
 
-   public push(x)
+   public override push(x)
       default.push(l, x)
       return self
    end
 
-   public put(x)
+   public override put(x)
       default.put(l, x)
       return self
    end
 
-   public keyof(x)
+   public override keyof(x)
       suspend default.keyof(l, x)
    end
 
-   public gen()
+   public override gen()
       suspend !l
    end
 
-   public back()
+   public override back()
       suspend default.back(l)
    end
 
-   public slice(i, j)
+   public override slice(i, j)
       return l[i:j]
    end
 
-   public size()
+   public override size()
       return *l
    end
 
-   public clear()
+   public override clear()
       default.clear(l)
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -308,14 +308,14 @@ class BuiltinList(List)
 end
 
 package class EmptyList(List, SelfClone)
-   public at(i)
+   public override at(i)
    end
 
-   public size()
+   public override size()
       return 0
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 
@@ -345,7 +345,7 @@ end
 class LinkedList(List)
    private nhead
 
-   public insert(i, x)
+   public override insert(i, x)
       local n
       if i = 0 then {
          if /nhead then
@@ -369,7 +369,7 @@ class LinkedList(List)
       return self
    end
 
-   public delete(i)
+   public override delete(i)
       local n
       if i <= 0 then
          i := cvpos_item(i, size()) | fail
@@ -382,18 +382,18 @@ class LinkedList(List)
       return self
    end
 
-   public at(i)
+   public override at(i)
       return node_at(i).val
    end
 
-   public get()
+   public override get()
       local v
       v := (\nhead).val | fail
       nhead := nhead.nxt
       return v
    end
 
-   public pull()
+   public override pull()
       local v, n
       \nhead | fail
       if /nhead.nxt then {
@@ -409,7 +409,7 @@ class LinkedList(List)
       return v
    end
 
-   public gen()
+   public override gen()
       local n
       n := nhead
       while \n do {
@@ -418,7 +418,7 @@ class LinkedList(List)
       }
    end
 
-   public keyof(x)
+   public override keyof(x)
       local i, n
       i := 1
       n := nhead
@@ -430,7 +430,7 @@ class LinkedList(List)
       }
    end
 
-   public back()
+   public override back()
       local l, n
       l := []
       n := nhead
@@ -441,13 +441,13 @@ class LinkedList(List)
       suspend default.back(l).val
    end
 
-   public slice(i, j)
+   public override slice(i, j)
       local s
       s := cvslice(i, j, size()) | fail
       return ipl.pdco.List{from(s.lo).gen() \ (s.hi - s.lo)}
    end
 
-   public size()
+   public override size()
       local i, n
       i := 0
       n := nhead
@@ -458,12 +458,12 @@ class LinkedList(List)
       return i
    end
 
-   public clear()
+   public override clear()
       nhead := &null
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -570,31 +570,31 @@ end
 class UnmodifiableBuiltinList(List)
    private const l
 
-   public at(i)
+   public override at(i)
       return .l[i]
    end
 
-   public keyof(x)
+   public override keyof(x)
       suspend default.keyof(l, x)
    end
 
-   public gen()
+   public override gen()
       suspend .!l
    end
 
-   public back()
+   public override back()
       suspend .default.back(l)
    end
 
-   public slice(i, j)
+   public override slice(i, j)
       return l[i:j]
    end
 
-   public size()
+   public override size()
       return *l
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 

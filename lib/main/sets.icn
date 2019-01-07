@@ -116,7 +116,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin sets.
    #
-   private object_equals(other, seen)
+   private override object_equals(other, seen)
       other.size() = self.size() | fail
       return hash_and_check(other.member_list(), self.member_list(), seen)
    end
@@ -124,7 +124,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin sets.
    #
-   private object_hash(depth)
+   private override object_hash(depth)
       local n
       n := size()
       if depth > 1 then
@@ -135,7 +135,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local elements, e, sep
       elements := sort()
       if oo.simple{!elements} then {
@@ -171,35 +171,35 @@ end
 class UnmodifiableSet(Set)
    private const s
 
-   public member(x)
+   public override member(x)
       return s.member(x)
    end
 
-   public sort()
+   public override sort()
       return s.sort()
    end
 
-   public gen()
+   public override gen()
       suspend s.gen()
    end
 
-   public back()
+   public override back()
       suspend s.back()
    end
 
-   public rank(x)
+   public override rank(x)
       return s.rank(x)
    end
 
-   public select(i)
+   public override select(i)
       return s.select(i)
    end
 
-   public size()
+   public override size()
       return s.size()
    end
 
-   public get_mode()
+   public override get_mode()
       return iand(ORDER, s.get_mode())
    end
 
@@ -215,50 +215,50 @@ end
 class TableSet(Set)
    private const t
 
-   public insert(x)
+   public override insert(x)
       t.insert(x, t.def)
       return self
    end
 
-   public member(x)
+   public override member(x)
       if t.member(x) then
          return x
    end
 
-   public delete(x)
+   public override delete(x)
       return t.delete(x) & self
    end
 
-   public sort()
+   public override sort()
       return t.key_sort()
    end
 
-   public gen()
+   public override gen()
       suspend t.key()
    end
 
-   public back()
+   public override back()
       suspend t.back_key()
    end
 
-   public rank(x)
+   public override rank(x)
       return t.rank(x)
    end
 
-   public select(i)
+   public override select(i)
       return t.select(i)
    end
 
-   public size()
+   public override size()
       return t.size()
    end
 
-   public clear()
+   public override clear()
       t.clear()
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return iand(INSERT + DELETE + ORDER, t.get_mode())
    end
 
@@ -281,17 +281,17 @@ class TableSet(Set)
 end
 
 package class EmptySet(Set, SelfClone)
-   public member(x)
+   public override member(x)
    end
 
-   public gen()
+   public override gen()
    end
 
-   public size()
+   public override size()
       return 0
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 
@@ -306,37 +306,37 @@ end
 class BuiltinSet(Set)
    private const s
 
-   public insert(x)
+   public override insert(x)
       default.insert(s, x)
       return self
    end
 
-   public member(x)
+   public override member(x)
       return default.member(s, x)
    end
 
-   public delete(x)
+   public override delete(x)
       return default.delete(s, x) & self
    end
 
-   public sort()
+   public override sort()
       return default.sort(s)
    end
 
-   public gen()
+   public override gen()
       suspend !s
    end
 
-   public size()
+   public override size()
       return *s
    end
 
-   public clear()
+   public override clear()
       default.clear(s)
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return INSERT + DELETE
    end
 
@@ -359,23 +359,23 @@ end
 class UnmodifiableBuiltinSet(Set)
    private const s
 
-   public member(x)
+   public override member(x)
       return default.member(s, x)
    end
 
-   public sort()
+   public override sort()
       return default.sort(s)
    end
 
-   public gen()
+   public override gen()
       suspend !s
    end
 
-   public size()
+   public override size()
       return *s
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 

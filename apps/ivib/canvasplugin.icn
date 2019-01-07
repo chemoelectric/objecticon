@@ -38,15 +38,15 @@ end
 class PluginUI(CanvasComponentUI)
    public plugin
 
-   public get_category()
+   public override get_category()
       return plugin.get_ui_category()
    end
 
-   public get_name()
+   public override get_name()
       return plugin.get_ui_name()
    end
 
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       return CanvasPlugin(plugin)
    end
 
@@ -66,7 +66,7 @@ class CanvasPlugin(CanvasComponent,Component)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       plugin.gen_code(c, self)
    end
@@ -74,7 +74,7 @@ class CanvasPlugin(CanvasComponent,Component)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasPlugin()
       CanvasComponent.dup_fields(c)
@@ -83,25 +83,25 @@ class CanvasPlugin(CanvasComponent,Component)
       return c
    end
 
-   public display()
+   public override display()
       self.plugin.display(self)
    end
 
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Id", "id"] |
          ["Config", "config"]
    end
 
-   public pre_encode()
+   public override pre_encode()
       CanvasComponent.pre_encode()
       id := plugin.get_unique_id()
    end
 
-   public post_decode()
+   public override post_decode()
       CanvasComponent.post_decode()
       plugin := Ivib.main.get_plugin(id) | MissingPlugin(id)
    end
@@ -109,27 +109,27 @@ class CanvasPlugin(CanvasComponent,Component)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasPluginDialog(self)
    end
 
-   public get_default_width()
+   public override get_default_width()
       return self.plugin.get_default_width(self)
    end
 
-   public get_default_height()
+   public override get_default_height()
       return self.plugin.get_default_height(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return get_default_width()
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return get_default_height()
    end
 
-   public new(plugin)
+   public override new(plugin)
       Component.new()
       CanvasComponent.new()
       # We only have this param when creating via the UI class.
@@ -146,19 +146,19 @@ end
 class CanvasPluginDialog(CanvasComponentDialog)
    public config_tab
 
-   public setup()
+   public override setup()
       CanvasComponentDialog.setup()
       config_tab := MapTab().set_label("Config").set_table(c.config)
       add_tab_at_front(config_tab)
    end
 
-   public validate_input()
+   public override validate_input()
       c.plugin.validate_config(c, config_tab.get_table()) |
          return alert_error(self, &why)
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       c.config := config_tab.get_table()
       CanvasComponentDialog.set_vals()
    end

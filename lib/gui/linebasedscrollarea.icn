@@ -292,7 +292,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       return r
    end
 
-   public draw()
+   public override draw()
       local xp, yp, i, info, h, lh, r
 
       r := view.get_cbwin_clip()
@@ -377,7 +377,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       return self
    end
 
-   public calculate_subject_height()
+   public override calculate_subject_height()
       local h, s
       if integer(h := get_line_height()) then
          return get_line_count() * h
@@ -396,7 +396,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
          return h[i]
    end
 
-   public get_default_vertical_increment()
+   public override get_default_vertical_increment()
       local h
       if integer(h := get_line_height()) then
          return h
@@ -404,7 +404,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
          return scale(16)
    end
 
-   public get_default_horizontal_increment()
+   public override get_default_horizontal_increment()
       return self.cbwin.text_width("m")
    end
 

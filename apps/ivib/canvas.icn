@@ -24,7 +24,7 @@ class BorderOfCanvas(Component)
       self.add(self.canvas)
    end
 
-   public get_pointer(e)
+   public override get_pointer(e)
       if in_resize_corner(e) then
          return "bottom right corner"
    end
@@ -111,7 +111,7 @@ class BorderOfCanvas(Component)
           (self.y + self.h - Canvas.EDGE <= e.y < self.y + self.h)) 
    end
 
-   public display()
+   public override display()
       local cw, i
       #
       # Draw the border.
@@ -133,7 +133,7 @@ class BorderOfCanvas(Component)
       display_children()
    end
 
-   public new()
+   public override new()
       Component.new()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
@@ -232,7 +232,7 @@ class Canvas(Component,SelectiveObjectCodec)
       return self.name
    end
 
-   public get_parent_dialog()
+   public override get_parent_dialog()
       return dialog_struct
    end
 
@@ -968,7 +968,7 @@ class Canvas(Component,SelectiveObjectCodec)
       return self
    end
    
-   public get_template()
+   public override get_template()
       suspend ["SuperClass Name", "superclass_name"] |
               ["Import Name", "import_name"] |
               ["Button Groups", "button_groups"] |
@@ -1074,7 +1074,7 @@ class Canvas(Component,SelectiveObjectCodec)
       return CanvasPreferencesDialog(self)
    end
 
-   public initially()
+   public override initially()
       local k
       # Copy the attribs from the dialog struct (the wattrib ancestor is set to
       # Gui.EMPTY_WATTRIB_ANCESTOR in the constructor below).
@@ -1099,7 +1099,7 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    # Display the canvas.
    #
-   public display()
+   public override display()
       #
       # Draw and highlight the items.
       #
@@ -1116,10 +1116,10 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    # Prevent children in the canvas from getting in the point chain.
    #
-   public build_point_chain(l)
+   public override build_point_chain(l)
    end
 
-   public keeps(e)
+   public override keeps(e)
       # This component keeps all events.
       return
    end
@@ -1342,7 +1342,7 @@ class Canvas(Component,SelectiveObjectCodec)
       self.set_modified()
    end
 
-   public get_pointer(e)
+   public override get_pointer(e)
       local i
       if \self.moving then {
          i := self.resize_mode
@@ -1899,11 +1899,11 @@ class Canvas(Component,SelectiveObjectCodec)
       return n
    end
 
-   private pre_decode()
+   private override pre_decode()
       new()
    end
 
-   public new()
+   public override new()
       Component.new()
       set_wattrib_ancestor(Gui.EMPTY_WATTRIB_ANCESTOR)
       self.parent_Canvas := self

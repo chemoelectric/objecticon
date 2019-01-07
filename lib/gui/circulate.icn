@@ -11,7 +11,7 @@ package gui
 import graphics
 
 class CirculateLabel(Label)
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR_V, e.code)
    end
 
@@ -24,7 +24,7 @@ class CirculateLabel(Label)
       }
    end
 
-   public new()
+   public override new()
       Label.new()
       self.set_label("")
       connect(self.on_key, Event.KEY_PRESS)
@@ -47,25 +47,25 @@ class Circulate(SelectionList,Component)
       b,
       l
 
-   public apply_selection()
+   public override apply_selection()
       local s
       s := self.selection_list[\self.selection] | ""
       self.l.set_label(s)
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       dw -:= border.get_total_width() + b.get_preferred_width()
       return border.get_total_height() + l.get_preferred_height(dw)
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       t := 0
       every t <:= self.cbwin.text_width(!self.selection_list)
       return border.get_total_width() + b.get_preferred_width() + t + l.border.get_total_width()
    end
 
-   public layout()
+   public override layout()
       #
       # Set button position and size
       #
@@ -82,12 +82,12 @@ class Circulate(SelectionList,Component)
    #
    # Display the object.
    #
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
       display_children()
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       l.invalidate()
    end
 
@@ -135,12 +135,12 @@ class Circulate(SelectionList,Component)
       end_change(e)
    end
 
-   public initially()
+   public override initially()
       \self.selection_list | runerr("No selection list specified")
       Component.initially()
    end
 
-   public new() 
+   public override new() 
       Component.new()
       self.set_border(SunkenBorder())
       self.preferred_focus := self.l := CirculateLabel()

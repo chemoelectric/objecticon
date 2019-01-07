@@ -20,14 +20,14 @@ class CanvasTableColumnDialog(CanvasComponentDialog)
       internal_alignment,
       auto_width_cb
 
-   public validate_input()
+   public override validate_input()
       CanvasComponentDialog.validate_input() | fail 
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
       return
    end
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_paint(paint_field.get_contents())
       if auto_width_cb.is_checked() then {
@@ -42,7 +42,7 @@ class CanvasTableColumnDialog(CanvasComponentDialog)
       size.toggle_is_shaded()
    end
 
-   public setup() 
+   public override setup() 
       local p, l
       CanvasComponentDialog.setup()
 

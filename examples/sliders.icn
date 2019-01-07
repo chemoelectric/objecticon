@@ -2,7 +2,7 @@ import gui
 
 class Untitled(Dialog)
    public slider1, label1, slider2,label2,slider3,label3
-   public component_setup()
+   public override component_setup()
       self.setup()
 
       slider1.set_range(0,5)
@@ -50,17 +50,17 @@ class Untitled(Dialog)
       label3.set_label(slider3.get_value())
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
    public on_qb(ev)
       dispose()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end

@@ -11,7 +11,7 @@ package gui
 import util, ipl.lists
 
 class TableContent(SelectableScrollArea)
-   public calculate_line_height()
+   public override calculate_line_height()
       local t, m, h, r, e, i
       t := []
       m := 0
@@ -45,7 +45,7 @@ class TableContent(SelectableScrollArea)
       return contents[line, col]
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       return parent.get_total_column_width()
    end
 
@@ -54,17 +54,17 @@ class TableContent(SelectableScrollArea)
       parent.table_header.synch_with_content()
    end
 
-   public on_hsb()
+   public override on_hsb()
       SelectableScrollArea.on_hsb()
       synch_header()
    end
 
-   public handle_key_right(e)
+   public override handle_key_right(e)
       SelectableScrollArea.handle_key_right(e)
       synch_header()
    end
 
-   public handle_key_left(e)
+   public override handle_key_left(e)
       SelectableScrollArea.handle_key_left(e)
       synch_header()
    end
@@ -84,7 +84,7 @@ class TableContent(SelectableScrollArea)
             return c
    end
 
-   public draw()
+   public override draw()
       local yp, i, j, info, h, lh, r, cols, col, cc, W
 
       r := view.get_cbwin_clip()
@@ -117,7 +117,7 @@ class TableContent(SelectableScrollArea)
       SelectableScrollArea.draw()
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
    end
 end
 
@@ -144,7 +144,7 @@ class TableHeader(Component)
       return self
    end
 
-   public get_default_height()
+   public override get_default_height()
       local hh, col
       hh := 0
       every col := !children do
@@ -160,7 +160,7 @@ class TableHeader(Component)
             return c
    end
 
-   public define_dnd_pointers(drag)
+   public override define_dnd_pointers(drag)
       cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
       cbwin.copy_pointer("dnd positive", "sb h double arrow")
    end
@@ -203,7 +203,7 @@ class TableHeader(Component)
       }
    end
 
-   public can_drag(ev)
+   public override can_drag(ev)
       local c
       every c := !children do {
          if \c.is_down then {
@@ -213,7 +213,7 @@ class TableHeader(Component)
       }
    end
 
-   public drag_event(drag, e)
+   public override drag_event(drag, e)
       local c, rhs
       drag.get_source() === self | fail
       if \parent.table_content.hsb & \which_highlight then {
@@ -234,11 +234,11 @@ class TableHeader(Component)
       return \c
    end
 
-   public can_drop(drag, e)
+   public override can_drop(drag, e)
       return drag.content ~=== \which_highlight
    end
 
-   public perform_drop(drag, drop, e)
+   public override perform_drop(drag, drop, e)
       local i, j
       i := drag.content.get_column_index()
       j := drop.content.get_column_index()
@@ -249,7 +249,7 @@ class TableHeader(Component)
       return
    end
 
-   public drag_reset(e)
+   public override drag_reset(e)
       scroll_ticker.stop()
       set_which_highlight()
       # Resynch since the components in the table header may have
@@ -274,7 +274,7 @@ class TableHeader(Component)
       invalidate()
    end
 
-   public layout()
+   public override layout()
       local i, b
       i := self.x - parent.table_content.get_area_x()
       every b := !self.children do {
@@ -288,7 +288,7 @@ class TableHeader(Component)
       }
    end
 
-   public new()
+   public override new()
       Component.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       return
@@ -307,7 +307,7 @@ class Table(Component)
       head_h,
       no_more_sizing
 
-   public initially()
+   public override initially()
       if *table_header.children = 0 then
          runerr("No TableColumns in Table")
       Component.initially()
@@ -534,13 +534,13 @@ class Table(Component)
       l[-1].w_spec := max(av - dw * (*l - 1), TableColumn.MIN_COLUMN_WIDTH)
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       dw -:= border.get_total_width()
       return self.table_header.get_preferred_height(dw) + 2 * Gui.BORDER_WIDTH + 
          self.table_content.get_preferred_height(dw) + border.get_total_height()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local col, tw
       tw := 0
       # No go if we have any auto-size columns...
@@ -549,7 +549,7 @@ class Table(Component)
       return border.get_total_width() + tw
    end
 
-   public layout()
+   public override layout()
       local hw, hh
 
       if /no_more_sizing then
@@ -572,7 +572,7 @@ class Table(Component)
       self.table_header.layout()
    end
 
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
       Gui.style.draw_raised_rectangle(self.cbwin, 
                                   self.x + border.get_l_inset(), 
@@ -604,7 +604,7 @@ class Table(Component)
       return TableHeader()
    end
 
-   public new()
+   public override new()
       Component.new()
       self.preferred_focus := self.table_content := create_table_content()
       self.table_content.set_border(NullBorder())

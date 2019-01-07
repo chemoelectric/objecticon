@@ -82,7 +82,7 @@ class EditList(SelectionDropDown)
       succeed ev === applied_event
    end
 
-   public apply_selection(ev)
+   public override apply_selection(ev)
       local s 
       s := convert_element(object_get_selection()) | view.get_contents()[1:1]
       if /ev then
@@ -97,11 +97,11 @@ class EditList(SelectionDropDown)
       fire(type, ev)
    end
 
-   public create_view()
+   public override create_view()
       return DropDownTextField()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       t := 0
       # Max string length + space for cursor (cf TextField's get_view() method)
@@ -109,7 +109,7 @@ class EditList(SelectionDropDown)
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end
 
-   public new()
+   public override new()
       SelectionDropDown.new()
       every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return
@@ -125,14 +125,14 @@ class IndependentEditList(EditList)
    # These two methods are overridden to do nothing, effectively
    # making the list and the textfield independent, so that
    # changes/selection from one don't affect the other.
-   public apply_selection(ev) end
-   public synch_selection() end
+   public override apply_selection(ev) end
+   public override synch_selection() end
 
-   public start_change(e)
+   public override start_change(e)
       self.old_selection := self.selection
    end
 
-   public end_change(e)
+   public override end_change(e)
       if self.old_selection ~=== self.selection then
          fire(Event.SELECTION_CHANGED, e)
    end

@@ -75,7 +75,7 @@ class LayoutEdit(Dialog)
       code_tab.set_vals()
    end
 
-   public new(c)
+   public override new(c)
       Dialog.new()
       self.c := c
       setup(c)
@@ -100,7 +100,7 @@ class GridLayoutEdit(LayoutEdit)
       dii_field.toggle_is_shaded()
    end
 
-   public setup()
+   public override setup()
       local p
       LayoutEdit.setup()
       p := TabItem().set_label("General")
@@ -140,7 +140,7 @@ class GridLayoutEdit(LayoutEdit)
       })
    end
 
-   public set_vals()
+   public override set_vals()
       LayoutEdit.set_vals()
 
       if set_doi.is_checked() then {

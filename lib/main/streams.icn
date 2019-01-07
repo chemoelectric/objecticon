@@ -277,7 +277,7 @@ class StringStream(Stream)
       subj,
       pos
 
-   public in(n)
+   public override in(n)
       local t, e
       n := need_integer(n, 1)
       if pos > *subj then
@@ -288,7 +288,7 @@ class StringStream(Stream)
       return t
    end
 
-   public out(s)
+   public override out(s)
       local e
       s := need_string(s)
       if pos > *subj then {
@@ -302,7 +302,7 @@ class StringStream(Stream)
       return *s
    end
 
-   public read_line()
+   public override read_line()
       local i, s
       if pos > *subj then
          return
@@ -318,7 +318,7 @@ class StringStream(Stream)
       return s
    end
 
-   public seek(offset)
+   public override seek(offset)
       offset := need_integer(offset)
       return .if offset > 0 then
          pos := offset
@@ -328,15 +328,15 @@ class StringStream(Stream)
          error("Seek out of range")
    end
 
-   public tell()
+   public override tell()
       return .pos
    end
 
-   public get_mode()
+   public override get_mode()
       return ALL
    end
 
-   public truncate(len)
+   public override truncate(len)
       len := need_integer(len)
       if len > *subj then
          subj ||:= repl("\0", len - *subj)
@@ -370,28 +370,28 @@ end
 # no effect, and reads always fail with end of file.
 #
 class NullStream(Stream)
-   public in(n)
+   public override in(n)
       return
    end
 
-   public out(s)
+   public override out(s)
       s := need_string(s)
       return *s
    end
 
-   public seek(offset)
+   public override seek(offset)
       return 1
    end
 
-   public tell()
+   public override tell()
       return 1
    end
 
-   public get_mode()
+   public override get_mode()
       return ALL
    end
 
-   public truncate(len)
+   public override truncate(len)
       return self
    end
 end
@@ -401,28 +401,28 @@ end
 # no effect, and reads return however many zero bytes were requested.
 #
 class ZeroStream(Stream)
-   public in(n)
+   public override in(n)
       return repl("\0", need_integer(n, 1))
    end
 
-   public out(s)
+   public override out(s)
       s := need_string(s)
       return *s
    end
 
-   public seek(offset)
+   public override seek(offset)
       return 1
    end
 
-   public tell()
+   public override tell()
       return 1
    end
 
-   public get_mode()
+   public override get_mode()
       return ALL
    end
 
-   public truncate(len)
+   public override truncate(len)
       return self
    end
 end
@@ -475,7 +475,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       return push(s || Files.EOL)
    end
 
-   public read_line()
+   public override read_line()
       local t
       flush() | fail
       repeat {
@@ -504,7 +504,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       }
    end
 
-   public in(n)
+   public override in(n)
       local t
       n := need_integer(n, 1)
       flush() | fail
@@ -533,7 +533,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       return t
    end
 
-   public out(s)
+   public override out(s)
       s := need_string(s)
       unbuff() | fail
       # Avoid concatenating a large s in flush().
@@ -588,7 +588,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       return self
    end
 
-   public close()
+   public override close()
       local f
       flush() | (f := &why)
       if \close_underlying_flag then
@@ -597,22 +597,22 @@ class BufferStream(Stream, HasUnderlyingStream)
       return if /f then self else error(f)
    end
 
-   public seek(offset)
+   public override seek(offset)
       synch() | fail
       return other.seek(offset)
    end
 
-   public tell()
+   public override tell()
       synch() | fail
       return other.tell()
    end
 
-   public truncate(len)
+   public override truncate(len)
       synch() | fail
       return other.truncate(len) & self
    end
 
-   public get_mode()
+   public override get_mode()
       return other.get_mode()
    end
 
@@ -644,7 +644,7 @@ abstract class DescStream(Stream, NoCopy)
       return .\fd
    end
 
-   public get_mode()
+   public override get_mode()
       return .mode
    end
 
@@ -1049,15 +1049,15 @@ $if _UNIX
 $endif
    end
 
-   public native in(n)
+   public override native in(n)
 
-   public native out(s)
+   public override native out(s)
 
-   public native seek(offset)
+   public override native seek(offset)
 
-   public native tell()
+   public override native tell()
 
-   public native truncate(len)
+   public override native truncate(len)
 
    public native chdir()
 
@@ -1065,7 +1065,7 @@ $endif
 
    public native ttyname()
 
-   public native close()
+   public override native close()
 end
 
 #
@@ -1075,13 +1075,13 @@ end
 # rather than terminating the program.
 #
 class PipeStream(FileStream)
-   public dup()
+   public override dup()
       return PipeStream(dup_impl(), mode)
    end
 
-   public native out(s)
+   public override native out(s)
 
-   package new(fd, mode)
+   package override new(fd, mode)
       setup(fd, mode)
       return
    end
@@ -1147,7 +1147,7 @@ class SocketStream(DescStream)
       return l
    end
 
-   public native in(n)
+   public override native in(n)
 
    #
    # Connect a socket to the given address.  The address is a string
@@ -1219,9 +1219,9 @@ class SocketStream(DescStream)
 
    private native accept_impl()
 
-   public native out(s)
+   public override native out(s)
 
-   public native close()
+   public override native close()
 
    private static native socketpair_impl(typ)
 
@@ -1236,7 +1236,7 @@ abstract class LineBasedInputStream(Stream)
    private
       line
 
-   public read_line()
+   public override read_line()
       local t
       if *line > 0 then {
          t := line[1:-*Files.EOL]
@@ -1246,7 +1246,7 @@ abstract class LineBasedInputStream(Stream)
       return read_line_impl()
    end
 
-   public in(n)
+   public override in(n)
       local t
       n := need_integer(n, 1)
       if *line = 0 then {
@@ -1262,7 +1262,7 @@ abstract class LineBasedInputStream(Stream)
       return t
    end
 
-   public get_mode()
+   public override get_mode()
       return READ
    end
 
@@ -1286,7 +1286,7 @@ abstract class LineBasedOutputStream(Stream)
    private
       buff
 
-   public out(s)
+   public override out(s)
       local t, c
       s := need_string(s)
       if *s > 0 then {
@@ -1315,7 +1315,7 @@ abstract class LineBasedOutputStream(Stream)
    #
    protected abstract write_line_impl(s)
    
-   public get_mode()
+   public override get_mode()
       return WRITE
    end
 
@@ -1332,13 +1332,13 @@ final class DirStream(LineBasedInputStream, NoCopy)
    private 
       ptr
 
-   protected native read_line_impl()
+   protected override native read_line_impl()
 
-   public native close()
+   public override native close()
 
    private static native new_impl(path)
 
-   public new(path)
+   public override new(path)
       LineBasedInputStream.new()
 $if _MS_WIN32
       if *path = 0 then
@@ -1418,7 +1418,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
-   public close()
+   public override close()
       shutdown(Shut.RD)
       SocketStream.close()
       do_wait()
@@ -1440,7 +1440,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    #     while write(f.read())   # writes the number of lines in /tmp/data
    #     f.close()
    # ~
-   public new(cmd, args, env, stdin, stderr)
+   public override new(cmd, args, env, stdin, stderr)
       local l
       l := one_way_socketpair() | fail
       (pid := System.fork()) | {
@@ -1477,7 +1477,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
-   public close()
+   public override close()
       shutdown(Shut.WR)
       SocketStream.close()
       do_wait()
@@ -1499,7 +1499,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
    #      f.close()
    #      # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
    # ~
-   public new(cmd, args, env, stdout, stderr)
+   public override new(cmd, args, env, stdout, stderr)
       local l
       l := one_way_socketpair() | fail
       (l[2].dflag(DescOpt.CLOEXEC) &
@@ -1533,7 +1533,7 @@ class ProgInputOutputStream(SocketStream, HasBgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
-   public close()
+   public override close()
       shutdown(Shut.RDWR)
       SocketStream.close()
       do_wait()
@@ -1554,7 +1554,7 @@ class ProgInputOutputStream(SocketStream, HasBgProc)
    #     s := f.read()  # The response
    #     f.close()
    # ~
-   public new(cmd, args, env, stderr)
+   public override new(cmd, args, env, stderr)
       local l
       l := SocketStream.socketpair() | fail
       (l[1].dflag(DescOpt.CLOEXEC) &
@@ -1730,7 +1730,7 @@ class FilterOutputStream(FilterStreamBase)
       return
    end
 
-   public out(s)
+   public override out(s)
       s := need_string(s)
       repeat {
          case do_poll() of {
@@ -1757,7 +1757,7 @@ class FilterOutputStream(FilterStreamBase)
    # `err_sink` are not closed unless the `set_close_underlying` has
    # been set to `&yes`.
    #
-   public close()
+   public override close()
       local f
       \pid | runerr(219, self)
       close_cout()
@@ -1772,7 +1772,7 @@ class FilterOutputStream(FilterStreamBase)
       return if /f then self else error(f)
    end
 
-   public get_mode()
+   public override get_mode()
       return WRITE
    end
 
@@ -1812,7 +1812,7 @@ class FilterInputStream(FilterStreamBase)
       source,
       buff
 
-   public in(n)
+   public override in(n)
       local x, i, t
       repeat {
          x := do_poll() | {
@@ -1894,7 +1894,7 @@ class FilterInputStream(FilterStreamBase)
    # NB: `source` and `err_sink` are not closed unless the
    # `set_close_underlying` has been set to `&yes`.
    #
-   public close()
+   public override close()
       local f
       \pid | runerr(219, self)
       close_cout()
@@ -1910,7 +1910,7 @@ class FilterInputStream(FilterStreamBase)
       return if /f then self else error(f)
    end
 
-   public get_mode()
+   public override get_mode()
       return READ
    end
    
@@ -1944,24 +1944,24 @@ final class RamStream(Stream, NoCopy)
    private
       ptr
 
-   public native in(n)
+   public override native in(n)
 
-   public native out(s)
+   public override native out(s)
 
-   public native read_line()
+   public override native read_line()
 
-   public native seek(offset)
+   public override native seek(offset)
 
-   public native tell()
+   public override native tell()
 
-   public native truncate(len)
+   public override native truncate(len)
 
    #
    # Return the current content of the `RamStream` as a string.
    #
    public native str()
 
-   public native close()
+   public override native close()
 
    #
    # Close the stream and return the finished content as a string.
@@ -1975,7 +1975,7 @@ final class RamStream(Stream, NoCopy)
 
    private static native new_impl(s, wiggle)
 
-   public get_mode()
+   public override get_mode()
       return ALL
    end
 
@@ -2002,7 +2002,7 @@ class SequenceStream(Stream, HasUnderlyingStream)
    private
       a, ac
 
-   public in(n)
+   public override in(n)
       local s
       repeat {
          if *a = 0 then
@@ -2014,11 +2014,11 @@ class SequenceStream(Stream, HasUnderlyingStream)
       }
    end
 
-   public get_mode()
+   public override get_mode()
       return READ
    end
 
-   public close()
+   public override close()
       if \close_underlying_flag then
          lclose(ac) | fail
       return self
@@ -2045,7 +2045,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
-   protected read_line_impl()
+   protected override read_line_impl()
       local t
       if /coex then
          return
@@ -2061,7 +2061,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
       return t
    end
 
-   public new(coex)
+   public override new(coex)
       self.coex := coex
       LineBasedInputStream.new()
       return
@@ -2085,11 +2085,11 @@ class GeneratorStream(Stream, NoCopy)
    private
       coex, buff
 
-   public get_mode()
+   public override get_mode()
       return READ
    end
 
-   public in(n)
+   public override in(n)
       local t
       if /coex then
          return
@@ -2145,7 +2145,7 @@ class PttyStream(FileStream)
       return f
    end
 
-   public new()
+   public override new()
       local l
       l := new_impl() | fail
       slave_name := l[2]

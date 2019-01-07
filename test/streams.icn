@@ -8,7 +8,7 @@ class NStream(Stream)
       inex,
       wrote
 
-   public in(n)
+   public override in(n)
       local s
       s := ""
       n >:= self.n
@@ -17,18 +17,18 @@ class NStream(Stream)
       return s
    end
 
-   public out(s)
+   public override out(s)
       local t
       t := min(*s, n)
       wrote ||:= s[1+:t]
       return t
    end
    
-   public get_mode()
+   public override get_mode()
       return READ_WRITE
    end
 
-   public close()
+   public override close()
    end
 
    public get_wrote()

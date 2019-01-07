@@ -15,22 +15,22 @@ class Line(Component, HasOrientation)
    public
       line_width
 
-   public set_line_width(n)
+   public override set_line_width(n)
       self.line_width := n
       return self
    end
 
-   public get_default_width()
+   public override get_default_width()
       if /self.is_horizontal_flag then
          return line_width
    end
 
-   public get_default_height()
+   public override get_default_height()
       if \self.is_horizontal_flag then
          return line_width
    end
 
-   public display()
+   public override display()
       local i, x1, y1
       if \self.is_horizontal_flag then {
          y1 := self.y + (self.h - line_width) / 2 
@@ -47,7 +47,7 @@ class Line(Component, HasOrientation)
       }
    end
 
-   public new()
+   public override new()
       Component.new()
       self.line_width := Gui.BORDER_WIDTH
       self.is_horizontal_flag := &yes

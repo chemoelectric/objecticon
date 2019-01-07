@@ -24,13 +24,13 @@ class CanvasEditListDialog(CanvasComponentDialog)
       default_setting,
       ucs_cb
 
-   public validate_input()
+   public override validate_input()
       if (group.get_which_one() === set_selection) & not(integer(selection.get_contents())) then
          return alert_error(self, "Selection is non-integer")
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_selection_list(selection_list.get_contents())
       case group.get_which_one() of {
@@ -65,7 +65,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
       initial_text.set_is_shaded(&yes) 
    end
 
-   public setup()
+   public override setup()
       local p, q, l, sn
 
       CanvasComponentDialog.setup()

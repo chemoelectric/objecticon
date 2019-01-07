@@ -22,7 +22,7 @@ class NameDialog(Dialog)
       message_label.set(s, n)
    end
 
-   public new(name)
+   public override new(name)
       Dialog.new()
       setup()
       name_field.set_contents(\name)

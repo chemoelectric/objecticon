@@ -97,7 +97,7 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       update_grey()
    end
 
-   public validate_input()
+   public override validate_input()
       # Check any null dimension is allowable - it won't be if we've added
       # a new item.
       #
@@ -143,7 +143,7 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       struct.set_contents(c.string_rep())
    end
 
-   public setup()
+   public override setup()
       local p, q
 
       CanvasComponentDialog.setup()

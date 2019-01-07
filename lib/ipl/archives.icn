@@ -43,7 +43,7 @@ abstract class ArchiveListerStream(LineBasedGeneratorStream)
       return f.succeeded()
    end
 
-   public close()
+   public override close()
       bf.close() | fail
       return self
    end
@@ -64,7 +64,7 @@ abstract class ArchiveListerStream(LineBasedGeneratorStream)
    #
    protected abstract line_gen()
 
-   protected new(prog, args)
+   protected override new(prog, args)
       self.bf := BufferStream(f := FilterInputStream(, prog, args))
       return LineBasedGeneratorStream.new{line_gen()}
    end
@@ -74,7 +74,7 @@ end
 # `Stream` for reading the entries in a zip archive, one per line of the stream.
 #
 class ZipDirStream(ArchiveListerStream)
-   protected line_gen()
+   protected override line_gen()
       local s, marker
       every 1 to 3 do
          expect_line() | fail
@@ -87,7 +87,7 @@ class ZipDirStream(ArchiveListerStream)
       }
    end
 
-   public new(zname)
+   public override new(zname)
       return ArchiveListerStream.new("unzip", ["-l", zname])
    end
 end
@@ -104,7 +104,7 @@ end
 # `Stream` for reading the entries in a rar archive, one per line of the stream.
 #
 class RarDirStream(ArchiveListerStream)
-   protected line_gen()
+   protected override line_gen()
       local s, marker
       every 1 to 8 do
          expect_line() | fail
@@ -118,7 +118,7 @@ class RarDirStream(ArchiveListerStream)
       }
    end
 
-   public new(rname)
+   public override new(rname)
       return ArchiveListerStream.new("unrar", ["v", "-c-", rname])
    end
 end
@@ -135,11 +135,11 @@ end
 # `Stream` for reading the entries in a tar archive, one per line of the stream.
 #
 class TarDirStream(ArchiveListerStream)
-   protected line_gen()
+   protected override line_gen()
       suspend |next_line()
    end
 
-   public new(tname)
+   public override new(tname)
       return ArchiveListerStream.new("tar", ["tf", tname])
    end
 end

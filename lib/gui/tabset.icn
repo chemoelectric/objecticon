@@ -111,11 +111,11 @@ class TabSet(Component)
       return self
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR_H, e.code)
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       invalidate_tab_region()
    end
 
@@ -241,7 +241,7 @@ class TabSet(Component)
                           self.x + self.w - nx)
    end
 
-   public display()
+   public override display()
       local r
       r := get_cbwin_clip()
       
@@ -458,17 +458,17 @@ class TabSet(Component)
          handle_key_right(e)
    end
 
-   public can_drag(ev)
+   public override can_drag(ev)
       if \may_drag & is_held(Mouse.LEFT_PRESS) then
          return which_one
    end
 
-   public define_dnd_pointers(drag)
+   public override define_dnd_pointers(drag)
       cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
       cbwin.copy_pointer("dnd positive", "sb h double arrow")
    end
 
-   public drag_event(drag, e)
+   public override drag_event(drag, e)
       local t
       drag.get_source() === self | fail
       t := which_tab(e)
@@ -476,11 +476,11 @@ class TabSet(Component)
       return \t
    end
 
-   public can_drop(drag, e)
+   public override can_drop(drag, e)
       return which_one ~=== \which_highlight
    end
 
-   public perform_drop(drag, drop, e)
+   public override perform_drop(drag, drop, e)
       reposition(which_one, get_index(drop.content))
       invalidate_line_break()
       layout()
@@ -493,7 +493,7 @@ class TabSet(Component)
       return self
    end
 
-   public drag_reset(e)
+   public override drag_reset(e)
       set_which_highlight()
    end
 
@@ -506,7 +506,7 @@ class TabSet(Component)
          self.y + self.h - border.get_b_inset() - self.tab_h <= e.y < self.y + self.h - border.get_b_inset()
    end
 
-   public accepts_focus(e)
+   public override accepts_focus(e)
       if \e then {
          if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
             fail
@@ -517,13 +517,13 @@ class TabSet(Component)
       succeed Component.accepts_focus(e)
    end
 
-   public get_tooltip(e)
+   public override get_tooltip(e)
       if \self.tooltip then
          return self.tooltip
       return which_tab(e).get_tab_tooltip(e)
    end
 
-   public handle_accel(e)
+   public override handle_accel(e)
       start_handle(e)
       set_which_one(find_key(e.code))
       if /self.no_click_focus_flag then
@@ -531,7 +531,7 @@ class TabSet(Component)
       end_handle(e)
    end
  
-   public match_accel(e)
+   public override match_accel(e)
       succeed find_key(e)
    end
 
@@ -584,7 +584,7 @@ class TabSet(Component)
       return l
    end
 
-   public initially()
+   public override initially()
       if *self.children = 0 then
          runerr("No TabItems in TabSet")
       /self.which_one := self.children[1]
@@ -592,7 +592,7 @@ class TabSet(Component)
       Component.initially()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local c, mw, tw
 
       # Max width of tab contents.
@@ -623,7 +623,7 @@ class TabSet(Component)
       return mw
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       local c, mh
 
       # Our border's width
@@ -716,7 +716,7 @@ class TabSet(Component)
       return
    end
 
-   public layout()
+   public override layout()
       local pad, l2, n, curr_line, t, c, d
 
       # Cache the label height.
@@ -800,14 +800,14 @@ class TabSet(Component)
       }
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       local c
       Component.shift(dx, dy)
        every c := !self.children do
           c.tab_x +:= dx
    end
 
-   public new()
+   public override new()
       Component.new()
       self.accepts_focus_flag := &yes
       self.set_constraint("x_fill", &yes)

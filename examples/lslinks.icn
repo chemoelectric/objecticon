@@ -15,7 +15,7 @@ global opts, hc
 class HttpRequestHelperImpl(HttpRequestHelper)
    private auth
 
-   public get_authentication(httpc, dom, realm)
+   public override get_authentication(httpc, dom, realm)
       local t
       if t := \auth then {
          # Only succeed once, otherwise httpclient will loop forever retrying
@@ -24,7 +24,7 @@ class HttpRequestHelperImpl(HttpRequestHelper)
       }
    end
 
-   public modify_redirect(httpc, hreq, hresp)
+   public override modify_redirect(httpc, hreq, hresp)
    end
 
    public new()

@@ -69,12 +69,12 @@ class Border(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       \self.content | runerr("No content component specified")
       Component.initially()
    end
 
-   public display()
+   public override display()
       border.draw(self.cbwin, self.x, y0, self.w, h0)
       if \title then {
          # A little space to the left and right of the title.
@@ -84,7 +84,7 @@ class Border(Component)
       self.display_children()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local w1
       w1 := border.get_total_width() + content.get_preferred_width()
       return if \title then
@@ -93,7 +93,7 @@ class Border(Component)
          w1
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       dw -:= border.get_total_width()
       return if \title then
          max(border.get_t_inset(), title.get_preferred_height()) + content.get_preferred_height(dw) + border.get_b_inset()
@@ -101,7 +101,7 @@ class Border(Component)
          border.get_total_height() + content.get_preferred_height(dw)
    end
 
-   public layout()
+   public override layout()
       local co
       if \title then {
          #
@@ -139,12 +139,12 @@ class Border(Component)
       content.layout()
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       Component.shift(dx, dy)
       y0 +:= dy
    end
 
-   public new()
+   public override new()
       Component.new()
       self.internal_align := Align.L
       self.set_border(BevelledBorder())

@@ -21,21 +21,21 @@ class CanvasTable(CanvasComponent,Table)
    #
    # Default minimum width for the object
    #
-   public min_width()
+   public override min_width()
       return 65
    end
 
    #
    # Default minimum height for the object
    #
-   public min_height()
+   public override min_height()
       return 65
    end
 
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       every (!self.get_columns()).gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
@@ -47,7 +47,7 @@ class CanvasTable(CanvasComponent,Table)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTable()
       CanvasComponent.dup_fields(c)
@@ -60,13 +60,13 @@ class CanvasTable(CanvasComponent,Table)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Select Mode", "select_mode"] |
          ["Columns", "columns"]
    end
 
-   public add_column(c)
+   public override add_column(c)
       c.parent_Canvas := self.parent_Canvas
       return Table.add_column(c)
    end
@@ -78,12 +78,12 @@ class CanvasTable(CanvasComponent,Table)
    # encodeable itself.
    #
 
-   public pre_encode()
+   public override pre_encode()
       CanvasComponent.pre_encode()
       self.columns := get_columns()
    end
 
-   public post_decode()
+   public override post_decode()
       CanvasComponent.post_decode()
       every add_column(!self.columns)
    end
@@ -91,7 +91,7 @@ class CanvasTable(CanvasComponent,Table)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTableDialog(self)
    end
 
@@ -111,11 +111,11 @@ class CanvasTable(CanvasComponent,Table)
       return l
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | !self.get_columns()
    end
 
-   public new()
+   public override new()
       Table.new()
       CanvasComponent.new()
       self.set_contents([])

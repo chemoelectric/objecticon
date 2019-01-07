@@ -51,7 +51,7 @@ class Mailbox(Address)
       return self
    end
 
-   public to_rfc822()
+   public override to_rfc822()
       local res, addr
 
       addr := local_part || "@" || domain
@@ -74,7 +74,7 @@ class Mailbox(Address)
       return RFC822Parser().parse_mailbox(s)
    end   
 
-   public gen_mailboxes()
+   public override gen_mailboxes()
       return self
    end
 

@@ -25,7 +25,7 @@ class Menu(TextMenuItem)
       which_highlight,
       pressed
 
-   public resize()
+   public override resize()
       local py, m, tw
 
       self.max_label_left_w := self.max_label_right_w := self.max_label_mid_w := 0
@@ -61,7 +61,7 @@ class Menu(TextMenuItem)
       every (!self.children).label_w := tw
    end
 
-   public display(cw)
+   public override display(cw)
       local c
 
       #
@@ -88,7 +88,7 @@ class Menu(TextMenuItem)
    #
    # Go to the first non-shaded item.
    #
-   public cursor_on()
+   public override cursor_on()
       local m
       every m := !children do {
          if not(m.is_shaded() | m.is_decorative()) then {
@@ -296,7 +296,7 @@ class Menu(TextMenuItem)
       }
    end
 
-   public handle_key(e)
+   public override handle_key(e)
       if e === accel_skip then
          accel_skip := &null
       else case /e.release & e.code of {
@@ -312,7 +312,7 @@ class Menu(TextMenuItem)
       }
    end
 
-   protected create_proxy()
+   protected override create_proxy()
       local c
       c := SubMenuProxyComponent(self)
       every c.connect(handle_press, 
@@ -329,7 +329,7 @@ class Menu(TextMenuItem)
    #
    # Close this menu.
    #
-   public hide()
+   public override hide()
       #
       # Recursively close any open sub-menu.
       #
@@ -360,7 +360,7 @@ class Menu(TextMenuItem)
       return self
    end
 
-   public new()
+   public override new()
       TextMenuItem.new()
       self.set_border(RaisedBorder())
       self.is_sub_menu_flag := &yes

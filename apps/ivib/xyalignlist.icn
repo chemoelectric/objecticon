@@ -1,7 +1,7 @@
 import gui
 
 class XYAlignList(List)
-   public set_align(xa, ya)
+   public override set_align(xa, ya)
       set_selection(case xa || ya of {
          "lt" : 1
          "lc" : 2
@@ -15,7 +15,7 @@ class XYAlignList(List)
       return self
    end
 
-   public get_x_align()
+   public override get_x_align()
       return case get_selection() of {
          1|2|3 : "l"
          4|5|6 : "c"
@@ -23,7 +23,7 @@ class XYAlignList(List)
       }
    end
 
-   public get_y_align()
+   public override get_y_align()
       return case get_selection() of {
          1|4|7 : "t"
          2|5|8 : "c"
@@ -31,7 +31,7 @@ class XYAlignList(List)
       }
    end
 
-   public new()
+   public override new()
       List.new()
       set_selection_list(["(l, t)", "(l, c)", "(l, b)", 
                           "(c, t)", "(c, c)", "(c, b)", 

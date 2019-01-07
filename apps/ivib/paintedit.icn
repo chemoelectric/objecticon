@@ -61,7 +61,7 @@ class PaintEdit(Dialog)
       code_tab.set_vals()
    end
 
-   public new(c)
+   public override new(c)
       Dialog.new()
       self.c := c
       setup()
@@ -89,7 +89,7 @@ class ImagePaintEdit(PaintEdit)
       max_h_field.toggle_is_shaded()
    end
 
-   public set_vals()
+   public override set_vals()
       PaintEdit.set_vals()
       c.max_w := if max_w.is_checked() then
          integer(max_w_field.get_contents())
@@ -149,7 +149,7 @@ class ImagePaintEdit(PaintEdit)
       img.set_image(img_field.get_contents())
    end
 
-   public setup()
+   public override setup()
       local p, q
       PaintEdit.setup()
 
@@ -229,11 +229,11 @@ class GridPaintEdit(PaintEdit)
       render()
    end
 
-   public init_dialog()
+   public override init_dialog()
       render()
    end
 
-   public set_vals()
+   public override set_vals()
       PaintEdit.set_vals()
       c.fmt := list2str(input.contents, "\n")
    end
@@ -325,7 +325,7 @@ class GridPaintEdit(PaintEdit)
       }
    end
 
-   public setup()
+   public override setup()
       local p
       PaintEdit.setup()
 
@@ -362,29 +362,29 @@ end
 class ShowGridPaint(DrawScrollArea)
    public d
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       return (\d).w | 0
    end
 
-   public calculate_subject_height()
+   public override calculate_subject_height()
       return (\d).h | 0
    end
 
-   public get_default_vertical_increment()
+   public override get_default_vertical_increment()
       return scale(10)
    end
 
-   public get_default_horizontal_increment()
+   public override get_default_horizontal_increment()
       return scale(10)
    end
 
-   public draw()
+   public override draw()
       (\d).draw(view.cbwin, 
                 view.x - get_area_x(), 
                 view.y - get_area_y())
    end
 
-   public finally()
+   public override finally()
       DrawScrollArea.finally()
       (\d).finally()
    end
@@ -432,7 +432,7 @@ class NamedImageDialog(Dialog)
       self.add(oc)
    end
 
-   public init_dialog()
+   public override init_dialog()
       lst.center_line(lst.get_selections()[1])
    end
 
@@ -449,7 +449,7 @@ class NamedImageDialog(Dialog)
       return \self.result
    end
 
-   public new(curr)
+   public override new(curr)
       Dialog.new()
       self.curr := curr
       setup()

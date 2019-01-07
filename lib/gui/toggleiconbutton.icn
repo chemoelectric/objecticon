@@ -14,7 +14,7 @@ package gui
 # `IconButton`.
 #
 class ToggleIconButton(IconButton)
-   public new()
+   public override new()
       IconButton.new()
       self.toggles_flag := &yes
       return

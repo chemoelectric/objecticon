@@ -3,16 +3,16 @@ import gui
 class DynComps(Dialog)
    public cont, p
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       p := Panel().set_size(0,0)
       cont.set_inner(p)
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
    public on_add(ev)
@@ -71,7 +71,7 @@ class DynComps(Dialog)
       dispose()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end

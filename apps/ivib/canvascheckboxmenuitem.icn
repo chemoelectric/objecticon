@@ -14,7 +14,7 @@ import gui, lang
 #
 #
 class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
-   public set_parent_check_box_group(x)
+   public override set_parent_check_box_group(x)
       #
       # Set the images to the standard ones
       #  
@@ -29,7 +29,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.paint_mid.gen_code(c)
       (\self.paint_right).gen_code(c)
       CanvasMenuComponent.gen_code(c)
@@ -47,7 +47,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasCheckBoxMenuItem()
       CanvasMenuComponent.dup_fields(c)
@@ -61,7 +61,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       # An abbreviated set... we don't want the left Paint.
       suspend CanvasMenuComponent.get_template() |
           ["Paint mid", "paint_mid"] |
@@ -73,7 +73,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    #
    # Get a label for the menu bar display.
    #
-   public get_string_label()
+   public override get_string_label()
       local s
       s := if is(self.paint_mid, CanvasTextPaint) then
          self.paint_mid.str || "(Check)"
@@ -86,11 +86,11 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
       return s
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasMenuComponent.gen_cos() | self.paint_mid | \self.paint_right
    end
 
-   public new()
+   public override new()
       CanvasTextMenuItem.new()
       CheckBoxMenuItem.new()
       self.class_name := "CheckBoxMenuItem"

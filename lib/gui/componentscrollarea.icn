@@ -16,7 +16,7 @@ class ComponentScrollAreaView(Component)
       inner_w,
       inner_h
 
-   public initially()
+   public override initially()
       \self.inner | runerr("No inner component specified")
       Component.initially()
    end
@@ -26,7 +26,7 @@ class ComponentScrollAreaView(Component)
                   self.y - parent.get_area_y() - inner.y)
    end
 
-   public layout()
+   public override layout()
       inner.x := self.x - parent.get_area_x()
       inner.y := self.y - parent.get_area_y()
       inner.w := inner_w
@@ -74,7 +74,7 @@ class ComponentScrollArea(ScrollArea)
       return self
    end
 
-   public layout()
+   public override layout()
       local i, t1, t2
       every i := 0 to 3 do {
          t1 := self.hsb
@@ -90,31 +90,31 @@ class ComponentScrollArea(ScrollArea)
       }
    end
 
-   public get_default_subject_height(dw)
+   public override get_default_subject_height(dw)
       return view.inner.get_preferred_height(dw)
    end
 
-   public get_default_subject_width()
+   public override get_default_subject_width()
       return view.inner.get_preferred_width()
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       return view.inner_w 
    end
 
-   public calculate_subject_height()
+   public override calculate_subject_height()
       return view.inner_h
    end
 
-   public get_default_vertical_increment()
+   public override get_default_vertical_increment()
       return scale(10)
    end
 
-   public get_default_horizontal_increment()
+   public override get_default_horizontal_increment()
       return scale(10)
    end
 
-   public refresh()
+   public override refresh()
       view.scrolled()
       view.invalidate()
    end
@@ -132,7 +132,7 @@ class ComponentScrollArea(ScrollArea)
    # components, if this scrollarea is consuming wheel events itself.
    # This prevents ugly conflicts with two things scrolling at once.
    #
-   public build_point_chain(l, e)
+   public override build_point_chain(l, e)
       # Only hide events if \e.processing; this means that crossing events, setting the pointer and so on
       # work correctly.
       if \wheel_listeners & \vsb & \e.processing & member(Mouse.WHEEL, e.code) then
@@ -140,7 +140,7 @@ class ComponentScrollArea(ScrollArea)
       ScrollArea.build_point_chain(l, e)
    end
 
-   public create_view()
+   public override create_view()
       return ComponentScrollAreaView()
    end
 end

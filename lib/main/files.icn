@@ -769,7 +769,7 @@ class FilePath(ObjectOutput)
       return from_list(l[1:-1])
    end
 
-   private object_output(oo)
+   private override object_output(oo)
       oo.object_string(self, str())
    end
 
@@ -993,7 +993,7 @@ class Stat()
 end
 
 package class UnixFileSystem(FileSystem)
-   public get_path_list(s)
+   public override get_path_list(s)
       local l, t
       l := []
       s ? {
@@ -1008,7 +1008,7 @@ package class UnixFileSystem(FileSystem)
       return l
    end
 
-   public filepath_str(fp)
+   public override filepath_str(fp)
       local e, s
       s := ""
       every e := !fp.l do {
@@ -1019,11 +1019,11 @@ package class UnixFileSystem(FileSystem)
       return s
    end
 
-   public filepath_is_absolute(fp)
+   public override filepath_is_absolute(fp)
       succeed fp.l[1] == "/"
    end
 
-   public filepath_normal(fp)
+   public override filepath_normal(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1043,39 +1043,39 @@ package class UnixFileSystem(FileSystem)
       return FilePath.from_list(r)
    end
 
-   public filepath_absolute(fp, other)
+   public override filepath_absolute(fp, other)
       return other.append(fp)
    end
 
-   public filepath_standard_case(fp)
+   public override filepath_standard_case(fp)
       return fp
    end
 
-   public standard_case(s)
+   public override standard_case(s)
       return s
    end
 
-   public get_home()
+   public override get_home()
       return env_string("HOME") | System.getpw(System.getuid()).dir | get_temp()
    end
 
-   public get_temp()
+   public override get_temp()
       return env_string("TEMP") | "/tmp"
    end
 
-   public is_hidden(s)
+   public override is_hidden(s)
       succeed any('.', s)
    end
 
-   public is_relative_dir(s)
+   public override is_relative_dir(s)
       succeed s == ("." | "..")
    end
 
-   public get_roots()
+   public override get_roots()
       return "/"
    end
 
-   public split_paths(s)
+   public override split_paths(s)
       local t
       s ? repeat {
          t := tab(upto(':') | 0)
@@ -1086,20 +1086,20 @@ package class UnixFileSystem(FileSystem)
       }
    end
 
-   public get_program_name()
+   public override get_program_name()
       return FilePath(&progname).get(-1)
    end
 
-   public file_to_url(f)
+   public override file_to_url(f)
       return "file://" || URL.percent_encode(f, URL.UNRESERVED ++ '/')
    end
 
-   public url_to_file(u)
+   public override url_to_file(u)
       u.is_local_file() | return error("Can't convert a file: URL from another host")
       return u.get_decoded_path()
    end
 
-   public find_exe(f, n, mode)
+   public override find_exe(f, n, mode)
       local p, s, path
 
       /n := "PATH"
@@ -1126,7 +1126,7 @@ package class UnixFileSystem(FileSystem)
 end
 
 package class WindowsFileSystem(FileSystem)
-   public get_path_list(s)
+   public override get_path_list(s)
       local l, t
       l := []
       s := map(s, "/", "\\")
@@ -1149,7 +1149,7 @@ package class WindowsFileSystem(FileSystem)
       return l
    end
 
-   public filepath_str(fp)
+   public override filepath_str(fp)
       local e, s
       s := ""
       every e := !fp.l do {
@@ -1160,11 +1160,11 @@ package class WindowsFileSystem(FileSystem)
       return s
    end
 
-   public filepath_is_absolute(fp)
+   public override filepath_is_absolute(fp)
       succeed fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
    end
 
-   public filepath_normal(fp)
+   public override filepath_normal(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1184,18 +1184,18 @@ package class WindowsFileSystem(FileSystem)
       return FilePath.from_list(r)
    end
 
-   public filepath_standard_case(fp)
+   public override filepath_standard_case(fp)
       local r
       r := []
       every put(r, map(!fp.l))
       return FilePath.from_list(r)
    end
 
-   public standard_case(s)
+   public override standard_case(s)
       return map(s)
    end
 
-   public filepath_absolute(fp, other)
+   public override filepath_absolute(fp, other)
       local s
       if fp.l[1] == "\\" then {
          return if other.l[1] == "\\\\" & *other.l > 1 then
@@ -1216,25 +1216,25 @@ package class WindowsFileSystem(FileSystem)
 
    private static native getdcwd(d)
 
-   public get_home()
+   public override get_home()
       return env_string("USERPROFILE") | get_temp()
    end
 
-   public get_temp()
+   public override get_temp()
       # Conform with what the Windows function GetTempPath() does.
       return env_string("TMP" | "TEMP" | "USERPROFILE") | "C:\\WINDOWS\\TEMP"
    end
 
-   public is_hidden(s)
+   public override is_hidden(s)
    end
 
-   public is_relative_dir(s)
+   public override is_relative_dir(s)
       succeed s == ("." | "..")
    end
 
-   public native get_roots()
+   public override native get_roots()
 
-   public split_paths(s)
+   public override split_paths(s)
       local t
       s ? repeat {
          t := tab(upto(';') | 0)
@@ -1245,7 +1245,7 @@ package class WindowsFileSystem(FileSystem)
       }
    end
 
-   public get_program_name()
+   public override get_program_name()
       local s
       s := FilePath(&progname).get(-1)
       if map(s[-4:0]) == ".exe" then
@@ -1253,7 +1253,7 @@ package class WindowsFileSystem(FileSystem)
       return s
    end
 
-   public file_to_url(f)
+   public override file_to_url(f)
       local p
       f := need_string(f)
       # See
@@ -1265,7 +1265,7 @@ package class WindowsFileSystem(FileSystem)
       return "file://" || URL.percent_encode(p, URL.UNRESERVED ++ '/:')
    end
 
-   public url_to_file(u)
+   public override url_to_file(u)
       local f
       f := u.get_decoded_path()
       return if f[3:5] == ":/" then
@@ -1280,7 +1280,7 @@ package class WindowsFileSystem(FileSystem)
       suspend s || (".exe" | ".bat" | ".com")
    end
 
-   public find_exe(f, n, mode)
+   public override find_exe(f, n, mode)
       local p, s, path
 
       /n := "PATH"

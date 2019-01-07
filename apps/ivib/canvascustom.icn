@@ -16,7 +16,7 @@ class CanvasCustom(CanvasComponent,Custom)
    # 
    # Duplicate object
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasCustom()
       CanvasComponent.dup_fields(c)
@@ -26,11 +26,11 @@ class CanvasCustom(CanvasComponent,Custom)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasCustomDialog(self)
    end
 
-   public new()
+   public override new()
       Custom.new()
       CanvasComponent.new()
       self.class_name := "Custom"

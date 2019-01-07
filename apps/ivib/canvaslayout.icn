@@ -2,20 +2,20 @@ import gui, ipl.numbers
 
 
 class CanvasLayout(CanvasObject)
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "()")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
    end
 
-   private pre_decode()
+   private override pre_decode()
       new()
    end
 
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend ["Name", "name"] |
               ["Class Name", "class_name"] |
               ["Import Name", "import_name"] |
@@ -39,7 +39,7 @@ end
 class CanvasGridLayout(CanvasLayout,GridLayout)
    public doi_val, dii_val
 
-   public gen_code(c)
+   public override gen_code(c)
       CanvasLayout.gen_code(c)
       c.chain("set_doi(" || c.scalable_dim(\self.doi_val) || ")")
       c.chain("set_dii(" || c.scalable_dim(\self.dii_val) || ")")
@@ -49,7 +49,7 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasGridLayout()
       CanvasObject.dup_fields(c)
@@ -64,29 +64,29 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend ["DII val", "dii_val"] |
               ["DOI val", "doi_val"] |
               ["Extra", "extra"] | CanvasLayout.get_template()
    end
 
-   public post_decode()
+   public override post_decode()
       self.set_doi(\self.doi_val)
       self.set_dii(\self.dii_val)
    end
 
-   public rescale(f)
+   public override rescale(f)
       self.doi_val := round(\self.doi_val * f)
       self.dii_val := round(\self.dii_val * f)
       self.set_doi(\self.doi_val)
       self.set_dii(\self.dii_val)
    end
 
-   public dialog()
+   public override dialog()
       return GridLayoutEdit(self)
    end
 
-   public new()
+   public override new()
       CanvasLayout.new()
       GridLayout.new()
       self.class_name := "GridLayout"

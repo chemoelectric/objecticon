@@ -167,7 +167,7 @@ class Rect(Point,Size)
       return Rect(x - xa, y - ya, w + 2 * xa, h + 2 * ya)
    end
 
-   public new(x, y, w, h)
+   public override new(x, y, w, h)
       self.x := x
       self.y := y
       self.w := w

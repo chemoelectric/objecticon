@@ -35,7 +35,7 @@ class SaveChangesDialog(Dialog)
       self.dispose()
    end
 
-   public new()
+   public override new()
       local l, p, yes, no, cancel
       Dialog.new()
       set_label("Save changes?")

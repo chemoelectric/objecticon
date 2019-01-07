@@ -90,116 +90,116 @@ class GroffOutputter(Outputter)
       return replace(s, "\\", "\\\\")
    end
 
-   protected output_fragment(s)
+   protected override output_fragment(s)
       writes(output_file, esc(s))
    end
 
-   protected output_link(s)
+   protected override output_link(s)
       writes(output_file, esc(s))
    end
 
-   protected begin_code()
+   protected override begin_code()
       writes(output_file, "\\f[HR]")
    end
 
-   protected end_code()
+   protected override end_code()
       writes(output_file, "\\fR")
    end
 
-   protected begin_bold()
+   protected override begin_bold()
       writes(output_file, "\\fB")
    end
 
-   protected end_bold()
+   protected override end_bold()
       writes(output_file, "\\fR")
    end
 
-   protected begin_underline()
+   protected override begin_underline()
       writes(output_file, "\\fB")
    end
 
-   protected end_underline()
+   protected override end_underline()
       writes(output_file, "\\fR")
    end
 
-   protected begin_italic()
+   protected override begin_italic()
       writes(output_file, "\\fI")
    end
 
-   protected end_italic()
+   protected override end_italic()
       writes(output_file, "\\fR")
    end
 
-   protected output_anchor(s)
+   protected override output_anchor(s)
       output_fragment(s)
    end
 
-   protected end_line(fl)
+   protected override end_line(fl)
       write(output_file)
       if \fl then
          write(output_file, ".br")
    end
 
-   protected begin_pre()
+   protected override begin_pre()
       write(output_file, ".nf")
       write(output_file, ".ft C")
    end
 
-   protected output_pre(s)
+   protected override output_pre(s)
       write(output_file, esc(s))
    end
 
-   protected end_pre()
+   protected override end_pre()
       write(output_file, ".ft P")
       write(output_file, ".fi")
    end
 
-   protected begin_ul()
+   protected override begin_ul()
       write(output_file, ".LS_SET b")
    end
 
-   protected end_ul()
+   protected override end_ul()
       write(output_file, ".LS_END")
    end
 
-   protected begin_ol(type)
+   protected override begin_ol(type)
       write(output_file, ".LS_SET ", if type == "1" then "1" else "(a)")
    end
 
-   protected end_ol()
+   protected override end_ol()
       write(output_file, ".LS_END")
    end
 
-   protected begin_li()
+   protected override begin_li()
       write(output_file, ".LS_ITEM")
    end
 
-   protected end_li()
+   protected override end_li()
    end
 
-   protected begin_dt()
+   protected override begin_dt()
       write(output_file, ".P")
    end
 
-   protected end_dt()
+   protected override end_dt()
    end
 
-   protected begin_dl()
+   protected override begin_dl()
       write(output_file, ".LS_SET c")
    end
 
-   protected end_dl()
+   protected override end_dl()
       write(output_file, ".LS_END")
    end
 
-   protected begin_dd()
+   protected override begin_dd()
       write(output_file, ".LS_ITEM")
    end
 
-   protected end_dd()
+   protected override end_dd()
    end
 
-   protected new_para()
+   protected override new_para()
       write(output_file, ".P")
    end
 end

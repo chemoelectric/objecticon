@@ -78,7 +78,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       return .history_start_no
    end
 
-   public get_mode()
+   public override get_mode()
       return READ
    end
 
@@ -231,7 +231,7 @@ $endif
       return parse_terminfo(out.str())
    end
 
-   protected read_line_impl()
+   protected override read_line_impl()
       local s
       if /isatty then {
          FileStream.stdout.writes1(prompt)
@@ -559,7 +559,7 @@ $endif
    #                          TaskStream(FileStream.stdin, task))
    # ~
    #
-   public new(notty, f)
+   public override new(notty, f)
       LineBasedInputStream.new()
 $if _UNIX
       if /notty then {
@@ -590,12 +590,12 @@ abstract class LineEditorEdit(UndoableEdit)
       self.redo_impl()
    end
 
-   public redo()
+   public override redo()
       restore()
       self.redo_impl()
    end
 
-   public undo()
+   public override undo()
       self.undo_impl()
       restore()
    end
@@ -620,7 +620,7 @@ end
 class LineEditorDefaultEdit(LineEditorEdit)
    private s
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, LineEditorDefaultEdit) &
          (other.pos = self.pos + *s) then {
             s ||:= other.s
@@ -628,16 +628,16 @@ class LineEditorDefaultEdit(LineEditorEdit)
       }
    end
 
-   protected redo_impl()
+   protected override redo_impl()
       parent.subj := parent.subj[1:parent.pos] || s || parent.subj[parent.pos:0]
       parent.pos +:= *s
    end
 
-   protected undo_impl()
+   protected override undo_impl()
       parent.subj[self.pos +: *s] := ""
    end
 
-   public new(parent, e)
+   public override new(parent, e)
       LineEditorEdit.new(parent)
       s := e
       return
@@ -647,7 +647,7 @@ end
 class LineEditorDeleteLeftEdit(LineEditorEdit)
    private ch
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, LineEditorDeleteLeftEdit) &
          (pos = other.pos + *ch) then
       {
@@ -656,19 +656,19 @@ class LineEditorDeleteLeftEdit(LineEditorEdit)
       }
    end
 
-   protected redo_impl()
+   protected override redo_impl()
       parent.subj[parent.pos -: *ch] := ""
       parent.pos -:= *ch
    end
 
-   protected undo_impl()
+   protected override undo_impl()
       if pos - *ch > *parent.subj then
          parent.subj ||:= ch
       else
          parent.subj[pos - *ch] := ch || parent.subj[pos - *ch]
    end
 
-   public new(parent)
+   public override new(parent)
       LineEditorEdit.new(parent)
       ch := parent.subj[parent.pos - 1]
       return
@@ -678,7 +678,7 @@ end
 class LineEditorDeleteRightEdit(LineEditorEdit)
    private ch
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, LineEditorDeleteRightEdit) &
          (pos = other.pos) then 
       {
@@ -687,18 +687,18 @@ class LineEditorDeleteRightEdit(LineEditorEdit)
       }
    end
 
-   protected redo_impl()
+   protected override redo_impl()
       parent.subj[parent.pos +: *ch] := ""
    end
 
-   protected undo_impl()
+   protected override undo_impl()
       if pos > *parent.subj then
          parent.subj ||:= ch
       else
          parent.subj[pos] := ch || parent.subj[pos]
    end
 
-   public new(parent)
+   public override new(parent)
       LineEditorEdit.new(parent)
       ch := parent.subj[parent.pos]
       return
@@ -708,12 +708,12 @@ end
 class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
    private del
 
-   protected redo_impl()
+   protected override redo_impl()
       del := parent.subj[parent.pos:0]
       parent.subj[parent.pos:0] := ""
    end
 
-   protected undo_impl()
+   protected override undo_impl()
       parent.subj[self.pos:0] := del
    end
 end
@@ -721,7 +721,7 @@ end
 class LineEditorAssignEdit(LineEditorEdit)
    private s, p, pre, coalesce
 
-   public add_edit(other)
+   public override add_edit(other)
       if \coalesce & is(other, LineEditorAssignEdit) & \other.coalesce then {
          self.s := other.s
          self.p := other.p
@@ -729,17 +729,17 @@ class LineEditorAssignEdit(LineEditorEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       pre := parent.subj
       parent.subj := s
       parent.pos := p
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.subj := pre
    end
 
-   public new(parent, s, p, coalesce)
+   public override new(parent, s, p, coalesce)
       LineEditorEdit.new(parent)
       self.s := s
       self.p := p
@@ -751,16 +751,16 @@ end
 class LineEditorInsertEdit(LineEditorEdit)
    private s
 
-   protected redo_impl()
+   protected override redo_impl()
       parent.subj := parent.subj[1:parent.pos] || s || parent.subj[parent.pos:0]
       parent.pos +:= *s
    end
 
-   protected undo_impl()
+   protected override undo_impl()
       parent.subj[self.pos +: *s] := ""
    end
 
-   public new(parent, e)
+   public override new(parent, e)
       LineEditorEdit.new(parent)
       s := e
       return

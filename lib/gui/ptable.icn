@@ -102,11 +102,11 @@ class PTableColumn(BasePTableColumn)
       return self
    end
 
-   public calculate_line_height(W)
+   public override calculate_line_height(W)
       return W.get_line_height()
    end
 
-   public calculate_column_width(W)
+   public override calculate_column_width(W)
       local w
       if \fixed_width then
          return fixed_width
@@ -115,7 +115,7 @@ class PTableColumn(BasePTableColumn)
       return w
    end
 
-   public draw_cell(W, data, line, col, cx, cy, ch)
+   public override draw_cell(W, data, line, col, cx, cy, ch)
       local x1, y1
       x1 := case align of {
          Align.R : cx + width - W.text_width(data)
@@ -127,7 +127,7 @@ class PTableColumn(BasePTableColumn)
       W.draw_string(x1, y1 + W.get_line_ascent(), data)
    end
 
-   public new()
+   public override new()
       BasePTableColumn.new()
       align := Align.L
       return
@@ -142,14 +142,14 @@ class ItemPaintPTableColumn(BasePTableColumn)
       item_paint,
       item_border
 
-   public initially()
+   public override initially()
       \self.item_paint | runerr("ItemPaint not set")
       BasePTableColumn.initially()
       self.item_paint.initially(ptable)
       self.item_border.initially(ptable)
    end
 
-   public finally()
+   public override finally()
       BasePTableColumn.finally()
       self.item_paint.finally()
       self.item_border.finally()
@@ -183,7 +183,7 @@ class ItemPaintPTableColumn(BasePTableColumn)
       return self
    end
 
-   public calculate_line_height(W)
+   public override calculate_line_height(W)
       local h, bh
       bh := item_border.get_total_height()
       if not(h := item_paint.get_constant_height(W) + bh) then {
@@ -193,7 +193,7 @@ class ItemPaintPTableColumn(BasePTableColumn)
       return h
    end
 
-   public calculate_column_width(W)
+   public override calculate_column_width(W)
       local w
       if \fixed_width then
          return fixed_width
@@ -202,14 +202,14 @@ class ItemPaintPTableColumn(BasePTableColumn)
       return w + item_border.get_total_width()
    end
 
-   public draw_cell(W, data, line, col, cx, cy, ch)
+   public override draw_cell(W, data, line, col, cx, cy, ch)
       local r
       r := Rect(cx, cy, width, ch)
       item_paint.draw_rect(W, data, item_border.float(r, item_paint.get_size(W, data)))
       item_border.draw_rect(W, r)
    end
 
-   public new()
+   public override new()
       BasePTableColumn.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))
@@ -281,19 +281,19 @@ class PTable(SelectableScrollArea)
       return keyof(self.cols, c)
    end
 
-   public initially()
+   public override initially()
       if *cols = 0 then
          runerr("No PTableColumns in PTable")
       SelectableScrollArea.initially()
       every (!cols).initially()
    end
 
-   public finally()
+   public override finally()
       every (!cols).finally()
       SelectableScrollArea.finally()
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       local t, m, h, r, e, i
       t := []
       m := 0
@@ -327,7 +327,7 @@ class PTable(SelectableScrollArea)
       return contents[line, col]
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local mw, c
       mw := (*cols + 1) * inset
       every c := !cols do {
@@ -355,7 +355,7 @@ class PTable(SelectableScrollArea)
       }
    end
 
-   public draw()
+   public override draw()
       local yp, i, j, info, h, lh, r, col, cc, colx, W
 
       r := view.get_cbwin_clip()
@@ -389,10 +389,10 @@ class PTable(SelectableScrollArea)
       SelectableScrollArea.draw()
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
    end
 
-   public set_internal_fields()
+   public override set_internal_fields()
       local extra, tw, c, lc, ta, t
       SelectableScrollArea.set_internal_fields()
       # Distribute any extra width to weighted columns.
@@ -418,7 +418,7 @@ class PTable(SelectableScrollArea)
       }
    end
    
-   public new()
+   public override new()
       SelectableScrollArea.new()
       cols := []
       inset := Gui.TEXT_INSET

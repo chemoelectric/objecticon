@@ -86,7 +86,7 @@ class TabItem(Component)
       return \self.tab_tooltip
    end
 
-   public initially()
+   public override initially()
       \self.paint | runerr("No label specified")
       Component.initially()
       # We are painted on the TabSet's attributes, so init
@@ -95,7 +95,7 @@ class TabItem(Component)
       self.paint.initially(parent, self.accel)
    end
 
-   public finally()
+   public override finally()
       Component.finally()
       paint.finally()
       label_border.finally()
@@ -123,7 +123,7 @@ class TabItem(Component)
          label_border.draw_focus_rect(W, r)
    end
 
-   public new()
+   public override new()
       Component.new()
       self.label_border := EmptyBorder().set_focus_inset(Gui.FINE_WIDTH)
       return

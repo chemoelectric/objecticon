@@ -235,7 +235,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    #
    public native get_references()
 
-   private object_clone()
+   private override object_clone()
       return clone()
    end
 
@@ -261,7 +261,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local s
       s := if /ptr then "closed" else
          get_width() || "x" || get_height() || " " || get_format()
@@ -340,7 +340,7 @@ final class Window(NoCopy, ObjectOutput)
       return
    end
 
-   private object_output(oo)
+   private override object_output(oo)
       local s
       s := if /ptr then "closed" else
          get_width() || "x" || get_height() || " " || get_canvas()

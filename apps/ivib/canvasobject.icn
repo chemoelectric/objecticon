@@ -138,7 +138,7 @@ class CanvasObject(SelectiveObjectCodec)
       coact(self)
    end
 
-   public get_template()
+   public override get_template()
       suspend ["Parent Canvas", "parent_Canvas"] |
               ["Name", "name"] |
               ["Class Name", "class_name"] |

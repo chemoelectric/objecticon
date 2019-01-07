@@ -11,7 +11,7 @@
 #
 #
 class CanvasOverlayItemDialog(CanvasComponentDialog)
-   public validate_input()
+   public override validate_input()
       #
       # We must have a default size if the parent has no absolute size.
       #

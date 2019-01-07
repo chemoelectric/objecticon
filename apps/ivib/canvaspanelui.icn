@@ -8,28 +8,28 @@
 import gui
 
 class CanvasPanelUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasPanel()
       t.set_size(scale(200), scale(150))
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Containers"
    end
 
-   public get_name()
+   public override get_name()
       return "Panel"
    end
 
-   public get_icon()
+   public override get_icon()
       return "ivib.icn20"
    end
 end
 
 class CanvasPanelUI2(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasPanel()
       t.clear_constraints()
@@ -37,15 +37,15 @@ class CanvasPanelUI2(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Containers"
    end
 
-   public get_name()
+   public override get_name()
       return "Panel (no constraints)"
    end
 
-   public get_icon()
+   public override get_icon()
       return "ivib.icn37"
    end
 end

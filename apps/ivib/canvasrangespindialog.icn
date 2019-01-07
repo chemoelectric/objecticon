@@ -22,7 +22,7 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
       lo_flag,
       increment_size
 
-   public validate_input()
+   public override validate_input()
       local hi_val, lo_val, inc_val, init_val
 
       if hi_flag.is_checked() then 
@@ -40,7 +40,7 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       local hi_val, lo_val, inc_val, init_val
 
       CanvasComponentDialog.set_vals()
@@ -69,7 +69,7 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
       lo.toggle_is_shaded()
    end
 
-   public setup()
+   public override setup()
       local l, l2, p
 
       CanvasComponentDialog.setup()

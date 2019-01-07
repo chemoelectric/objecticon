@@ -43,20 +43,20 @@ class GridPaintList(SelectableScrollArea)
       return d
    end
 
-   public finally()
+   public override finally()
       SelectableScrollArea.finally()
       every (!cache).finally()
       cache := cache_k := &null
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       local l
       l := []
       every put(l, get_draw(!self.contents).h)
       return l
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local d, mw
       mw := 0
       every d := get_draw(!self.contents) do
@@ -64,7 +64,7 @@ class GridPaintList(SelectableScrollArea)
       return mw
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       get_draw(contents[i]).draw(view.cbwin, xp, yp)
    end
 end

@@ -752,7 +752,7 @@ class Message(MimeHeaders)
       return get_first_header("Subject")
    end
 
-   public new()
+   public override new()
       MimeHeaders.new()
       content := ""
       return

@@ -7,11 +7,11 @@ package mail
 import util, io, ipl.strings, ipl.pdco
 
 class TextHandler(TypeHandler)
-   public can_handle(ct)
+   public override can_handle(ct)
       succeed map(ct.get_type()) == "text"
    end
    
-   public convert_to_object(m, data)
+   public override convert_to_object(m, data)
       local res
 
       #
@@ -25,7 +25,7 @@ class TextHandler(TypeHandler)
       return res
    end
 
-   public convert_from_object(m, obj)
+   public override convert_from_object(m, obj)
       local res
 
       obj := string(obj) | return error("TextHandler: Couldn't convert object to string: " || image(obj))

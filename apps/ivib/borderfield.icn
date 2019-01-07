@@ -76,7 +76,7 @@ class BorderField(Component)
       self.add(edit_border_button)
    end
 
-   public new()
+   public override new()
       Component.new()
       setup()
       self.set_constraint("x_fill", &yes)

@@ -8,7 +8,7 @@
 import gui
 
 class CanvasOverlaySetUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasOverlaySet()
       t.set_size(scale(200), scale(150))
@@ -16,15 +16,15 @@ class CanvasOverlaySetUI(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Containers"
    end
 
-   public get_name()
+   public override get_name()
       return "OverlaySet"
    end
 
-   public get_icon()
+   public override get_icon()
       return "ivib.icn15"
    end
 end

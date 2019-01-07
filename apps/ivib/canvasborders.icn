@@ -14,7 +14,7 @@ class CanvasABorder(CanvasObject)
    #
    # Copy fields from self to c.
    #
-   public dup_fields(c)
+   public override dup_fields(c)
       CanvasObject.dup_fields(c)
       c.empty_l_inset := self.empty_l_inset
       c.empty_r_inset := self.empty_r_inset
@@ -24,7 +24,7 @@ class CanvasABorder(CanvasObject)
       c.y_align_val := self.y_align_val
    end
 
-   public rescale(f)
+   public override rescale(f)
       self.empty_l_inset := round(\self.empty_l_inset * f)
       self.empty_r_inset := round(\self.empty_r_inset * f)
       self.empty_t_inset := round(\self.empty_t_inset * f)
@@ -34,7 +34,7 @@ class CanvasABorder(CanvasObject)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasObject.get_template() |
          ["Left inset", "empty_l_inset"] |
          ["Right inset", "empty_r_inset"] |
@@ -56,7 +56,7 @@ class CanvasABorder(CanvasObject)
 end
 
 class CanvasEmptyBorder(CanvasABorder)
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "()")
       c.chain("set_l_inset(" || c.scalable_dim(\self.empty_l_inset) || ")")
       c.chain("set_r_inset(" || c.scalable_dim(\self.empty_r_inset) || ")")
@@ -68,7 +68,7 @@ class CanvasEmptyBorder(CanvasABorder)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public create_visual_border()
+   public override create_visual_border()
       local b
       b := EmptyBorder()
       b.set_l_inset(\self.empty_l_inset)
@@ -80,14 +80,14 @@ class CanvasEmptyBorder(CanvasABorder)
       return b
    end
 
-   public dup()
+   public override dup()
       local c
       c := CanvasEmptyBorder()
       self.dup_fields(c)
       return c
    end
 
-   public new()
+   public override new()
       CanvasABorder.new()
       self.class_name := "EmptyBorder"
       return
@@ -95,7 +95,7 @@ class CanvasEmptyBorder(CanvasABorder)
 end
 
 class CanvasNullBorder(CanvasABorder)
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "()")
       c.chain("set_x_align(" || c.align_str(\self.x_align_val) || ")")
       c.chain("set_y_align(" || c.align_str(\self.y_align_val) || ")")
@@ -103,7 +103,7 @@ class CanvasNullBorder(CanvasABorder)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public create_visual_border()
+   public override create_visual_border()
       local b
       b := NullBorder()
       b.set_x_align(\self.x_align_val)
@@ -111,14 +111,14 @@ class CanvasNullBorder(CanvasABorder)
       return b
    end
 
-   public dup()
+   public override dup()
       local c
       c := CanvasNullBorder()
       self.dup_fields(c)
       return c
    end
 
-   public new()
+   public override new()
       CanvasABorder.new()
       self.class_name := "NullBorder"
       return
@@ -130,18 +130,18 @@ class CanvasLineBorder(CanvasABorder)
       line_width_val,
       has_empty
 
-   public get_template()
+   public override get_template()
       suspend CanvasABorder.get_template() |
          [ "Line width", "line_width_val"] |
          [ "Has empty", "has_empty"]
    end
 
-   public rescale(f)
+   public override rescale(f)
       CanvasABorder.rescale(f)
       self.line_width_val := round(\self.line_width_val * f)
    end
 
-   public gen_code(c)
+   public override gen_code(c)
       if \has_empty then {
          c.line(name || " := CompoundBorder()")
          c.chain("set_outer(" || class_name || "()")
@@ -165,13 +165,13 @@ class CanvasLineBorder(CanvasABorder)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public dup_fields(c)
+   public override dup_fields(c)
       CanvasABorder.dup_fields(c)
       c.line_width_val := self.line_width_val
       c.has_empty := self.has_empty
    end
 
-   public create_visual_border()
+   public override create_visual_border()
       local b
       if \has_empty then {
          b := CompoundBorder().set_outer(create_outer_visual_border()).set_inner(EmptyBorder())
@@ -193,18 +193,18 @@ class CanvasLineBorder(CanvasABorder)
 end
 
 class CanvasPlainBorder(CanvasLineBorder)
-   public dup()
+   public override dup()
       local c
       c := CanvasPlainBorder()
       CanvasLineBorder.dup_fields(c)
       return c
    end
 
-   public create_outer_visual_border()
+   public override create_outer_visual_border()
       return PlainBorder()
    end
 
-   public new()
+   public override new()
       CanvasLineBorder.new()
       self.class_name := "PlainBorder"
       return
@@ -212,18 +212,18 @@ class CanvasPlainBorder(CanvasLineBorder)
 end
 
 class CanvasBevelledBorder(CanvasLineBorder)
-   public dup()
+   public override dup()
       local c
       c := CanvasBevelledBorder()
       CanvasLineBorder.dup_fields(c)
       return c
    end
 
-   public create_outer_visual_border()
+   public override create_outer_visual_border()
       return BevelledBorder()
    end
 
-   public new()
+   public override new()
       CanvasLineBorder.new()
       self.class_name := "BevelledBorder"
       return
@@ -231,18 +231,18 @@ class CanvasBevelledBorder(CanvasLineBorder)
 end
 
 class CanvasRaisedBorder(CanvasLineBorder)
-   public dup()
+   public override dup()
       local c
       c := CanvasRaisedBorder()
       CanvasLineBorder.dup_fields(c)
       return c
    end
 
-   public create_outer_visual_border()
+   public override create_outer_visual_border()
       return RaisedBorder()
    end
 
-   public new()
+   public override new()
       CanvasLineBorder.new()
       self.class_name := "RaisedBorder"
       return
@@ -250,18 +250,18 @@ class CanvasRaisedBorder(CanvasLineBorder)
 end
 
 class CanvasSunkenBorder(CanvasLineBorder)
-   public dup()
+   public override dup()
       local c
       c := CanvasSunkenBorder()
       CanvasLineBorder.dup_fields(c)
       return c
    end
 
-   public create_outer_visual_border()
+   public override create_outer_visual_border()
       return SunkenBorder()
    end
 
-   public new()
+   public override new()
       CanvasLineBorder.new()
       self.class_name := "SunkenBorder"
       return

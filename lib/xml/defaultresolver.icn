@@ -75,7 +75,7 @@ class DefaultResolver(Resolver)
       return self
    end
 
-   public resolve(base, external_id)
+   public override resolve(base, external_id)
       local sys_id, sys_url, res, u, t
 
       #

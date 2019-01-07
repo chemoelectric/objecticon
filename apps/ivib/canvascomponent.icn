@@ -33,7 +33,7 @@ class CanvasComponent(CanvasObject)
       default_border,          # The border set in the Component's constructor
       border_opts
 
-   public gen_cos()
+   public override gen_cos()
       suspend \self.border_opts | \self.layout_delegate | \self.tooltip
    end
 
@@ -70,7 +70,7 @@ class CanvasComponent(CanvasObject)
    #
    # Generate the code into the Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local t, e
 
       if \self.layout_delegate then
@@ -166,7 +166,7 @@ class CanvasComponent(CanvasObject)
    #
    # Copy the fields from self to c.
    #
-   public dup_fields(c)
+   public override dup_fields(c)
       CanvasObject.dup_fields(c)
       c.x := self.x
       c.y := self.y
@@ -206,7 +206,7 @@ class CanvasComponent(CanvasObject)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasObject.get_template() |
               ["X Fix", "x_fixed"] |
               ["Y Fix", "y_fixed"] |
@@ -231,14 +231,14 @@ class CanvasComponent(CanvasObject)
               ["Parent Component", "parent"]
    end
 
-   protected pre_encode()
+   protected override pre_encode()
    end
 
-   protected pre_decode()
+   protected override pre_decode()
       new()
    end
 
-   protected post_decode()
+   protected override post_decode()
       set_border_opts(self.border_opts)
    end
 
@@ -284,7 +284,7 @@ class CanvasComponent(CanvasObject)
       }
    end
 
-   public rescale(f)
+   public override rescale(f)
       local c, k
       self.x_spec := rescale_spec(\self.x_spec, f)
       self.y_spec := rescale_spec(\self.y_spec, f)
@@ -699,7 +699,7 @@ class SetConstraintItem(TextMenuItem)
       obj.parent_Canvas.op_set_constraint(obj, name, val)
    end
 
-   public new(obj, name, val)
+   public override new(obj, name, val)
       TextMenuItem.new()
       self.obj := obj
       self.name := name
@@ -719,7 +719,7 @@ class RemoveConstraintItem(TextMenuItem)
       obj.parent_Canvas.op_remove_constraint(obj, name)
    end
 
-   public new(obj, name)
+   public override new(obj, name)
       TextMenuItem.new()
       self.obj := obj
       self.name := name

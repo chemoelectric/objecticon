@@ -14,7 +14,7 @@ import gui
 #
 #
 class CanvasMenuSeparator(CanvasMenuComponent,MenuSeparator)
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "()")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
@@ -23,7 +23,7 @@ class CanvasMenuSeparator(CanvasMenuComponent,MenuSeparator)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasMenuSeparator()
       CanvasMenuComponent.dup_fields(c)
@@ -37,7 +37,7 @@ class CanvasMenuSeparator(CanvasMenuComponent,MenuSeparator)
       return "___(Sep)"
    end
 
-   public new()
+   public override new()
       CanvasMenuComponent.new()
       MenuSeparator.new()
       #class_variable := &yes

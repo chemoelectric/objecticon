@@ -18,12 +18,12 @@ class CanvasBorderDialog(CanvasComponentDialog)
       internal_align,                                
       internal_align_list
 
-   public set_vals()
+   public override set_vals()
       c.set_internal_align(internal_align.object_get_selection())
       CanvasComponentDialog.set_vals()
    end
 
-   public setup()
+   public override setup()
       local p, l
       internal_align_list := ["c", "l", "r"]
 

@@ -54,20 +54,20 @@ end
 class TextPaint(Paint)
    public str, accel
 
-   public initially(c, accel)
+   public override initially(c, accel)
       self.accel := accel
       self.h := c.cbwin.get_line_height()
       self.w := c.cbwin.text_width(str)
    end
 
-   public draw(W, x, y)
+   public override draw(W, x, y)
       draw_string_ex(W, x, y + W.get_line_ascent(), str, accel)
    end
 
    # Create a new instance.
    # :Parameters :
    # :  `s` - The string to draw
-   public new(s)
+   public override new(s)
       self.str := s
       return
    end
@@ -80,20 +80,20 @@ end
 class AbbreviatedTextPaint(Paint)
    public str, accel
 
-   public initially(c, accel)
+   public override initially(c, accel)
       self.accel := accel
       self.h := c.cbwin.get_line_height()
       self.w := c.cbwin.text_width(str)
    end
 
-   public draw(W, x, y, w)
+   public override draw(W, x, y, w)
       draw_string_ex(W, x, y + W.get_line_ascent(), limit_text(W, str, w), accel)
    end
 
    # Create a new instance.
    # :Parameters :
    # :  `s` - The string to draw
-   public new(s)
+   public override new(s)
       self.str := s
       return
    end
@@ -104,18 +104,18 @@ end
 class PixelsPaint(Paint)
    public src, pix
 
-   public initially()
+   public override initially()
       /pix | runerr("initially() called out of sequence")
       pix := src.shared_copy()
       self.w := pix.get_width()
       self.h := pix.get_height()
    end
 
-   public draw(W, x, y)
+   public override draw(W, x, y)
       W.draw_image(x, y, pix)
    end
 
-   public finally()
+   public override finally()
       pix.close()
       pix := &null
    end
@@ -123,7 +123,7 @@ class PixelsPaint(Paint)
    # Create a new instance.
    # :Parameters :
    # :  `src` - The `Pixels` to draw
-   public new(src)
+   public override new(src)
       self.src := src
       return
    end
@@ -132,24 +132,24 @@ end
 # A simple `Paint` instance which has zero size and draws nothing.
 #
 class NullPaint(Paint)
-   public initially()
+   public override initially()
       self.w := self.h := 0
    end
 
-   public draw(W, x, y)
+   public override draw(W, x, y)
    end
 end
 
 # A simple `Paint` instance which has the given size and draws nothing.
 #
 class EmptyPaint(Paint)
-   public initially()
+   public override initially()
    end
 
-   public draw(W, x, y)
+   public override draw(W, x, y)
    end
 
-   public new(w, h)
+   public override new(w, h)
       self.w := w
       self.h := h
       return
@@ -164,19 +164,19 @@ class CompoundPaint(Paint)
    public
       top, bottom
 
-   public initially(c, accel)
+   public override initially(c, accel)
       top.initially(c, accel)
       bottom.initially(c, accel)
       w := max(top.w, bottom.w)
       h := max(top.h, bottom.h)
    end
 
-   public finally()
+   public override finally()
       top.finally()
       bottom.finally()
    end
 
-   public draw(W, x, y, w, h)
+   public override draw(W, x, y, w, h)
       bottom.draw(W, x, y, w, h)
       top.draw(W, x, y, w, h)
    end
@@ -213,11 +213,11 @@ class GridPaint(Paint)
       ii,           # Cell index counter.
       accel
 
-   public draw(W, x, y)
+   public override draw(W, x, y)
       (\win).copy_to(,,,, W, x, y)
    end
 
-   public initially(c, accel)
+   public override initially(c, accel)
       local attribs
 
       /win | runerr("initially() called out of sequence")
@@ -454,7 +454,7 @@ class GridPaint(Paint)
       return
    end
 
-   public finally()
+   public override finally()
       close_win()
    end
 
@@ -488,7 +488,7 @@ class GridPaint(Paint)
    # Create a new instance.
    # :Parameters :
    # :  `s` - The format string
-   public new(s)
+   public override new(s)
       self.fmt := s
       return
    end
@@ -578,7 +578,7 @@ class ImagePaint(Paint)
       return self
    end
 
-   public initially(c)
+   public override initially(c)
       /win | runerr("initially() called out of sequence")
       load_image(c)
       zoom_image()
@@ -589,7 +589,7 @@ class ImagePaint(Paint)
          self.w := self.h := 0
    end
 
-   public finally()
+   public override finally()
       close_image()
    end
 
@@ -658,11 +658,11 @@ class ImagePaint(Paint)
       win := zoom_win
    end
 
-   public draw(W, x, y)
+   public override draw(W, x, y)
       (\win).copy_to(,,,, W, x, y)
    end
 
-   public new()
+   public override new()
       fill_dimensions := 0
       return
    end

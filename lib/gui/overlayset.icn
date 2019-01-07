@@ -28,7 +28,7 @@ class OverlaySet(Component)
       return self
    end
 
-   public display()
+   public override display()
       #
       # Display contents of current tab into buffer
       #
@@ -85,7 +85,7 @@ class OverlaySet(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       if *self.children = 0 then
          runerr("No OverlayItems in OverlaySet")
       /self.which_one := self.children[1]
@@ -93,7 +93,7 @@ class OverlaySet(Component)
       Component.initially()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local c, mw
       mw := 0
       every c := !children do
@@ -101,7 +101,7 @@ class OverlaySet(Component)
       return mw
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       local c, mh
       mh := 0
       every c := !children do
@@ -109,7 +109,7 @@ class OverlaySet(Component)
       return mh
    end
 
-   public layout()
+   public override layout()
       local c
       every c := !self.children do {
          c.x := self.x
@@ -127,7 +127,7 @@ class OverlaySet(Component)
       return self.which_one
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)

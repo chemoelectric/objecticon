@@ -13,18 +13,18 @@ package gui
 # This class displays a list of strings.
 #
 class TextList(SelectableScrollArea)
-   public calculate_line_height()
+   public override calculate_line_height()
       return view.cbwin.get_line_height()
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local mw
       mw := 0
       every mw <:= view.cbwin.text_width(detab(!self.contents))
       return mw + 2 * Gui.TEXT_INSET
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       #
       # Cosmetic - add a little to the left of xp; this looks better 
       # with the cursor, selection and highlight.

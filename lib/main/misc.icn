@@ -345,12 +345,12 @@ end
 class VarState(State)
    private var, t, i
 
-   public begin()
+   public override begin()
       t := !var
       !var := i
    end
 
-   public swap()
+   public override swap()
       !var :=: t
    end
 
@@ -367,14 +367,14 @@ end
 class ScanState(State)
    private is, ip, s, p
 
-   public begin()
+   public override begin()
       s := &subject
       p := &pos
       &subject := is
       &pos := ip
    end
 
-   public swap()
+   public override swap()
       local t
       t := &pos
       &subject :=: s
@@ -396,12 +396,12 @@ end
 class PosState(State)
    private i, p
 
-   public begin()
+   public override begin()
       p := &pos
       &pos := i
    end
 
-   public swap()
+   public override swap()
       &pos :=: p
    end
 
@@ -417,12 +417,12 @@ end
 class CleanupState(State)
    private t
 
-   public begin()
+   public override begin()
       t := cleanup
       cleanup := &null
    end
 
-   public swap()
+   public override swap()
       cleanup :=: t
    end
 end
@@ -432,12 +432,12 @@ end
 class WhyState(State)
    private w, i
 
-   public begin()
+   public override begin()
       w := &why
       &why := i
    end
 
-   public swap()
+   public override swap()
       &why :=: w
    end
 
@@ -453,12 +453,12 @@ end
 class TraceState(State)
    private t, i
 
-   public begin()
+   public override begin()
       t := &trace
       &trace := i
    end
 
-   public swap()
+   public override swap()
       &trace :=: t
    end
 
@@ -474,12 +474,12 @@ end
 class HandlerState(State)
    private h, i
 
-   public begin()
+   public override begin()
       h := &handler
       &handler := i
    end
 
-   public swap()
+   public override swap()
       &handler :=: h
    end
 
@@ -494,11 +494,11 @@ end
 class States(State)
    private l
 
-   public begin()
+   public override begin()
       every (!l).begin()
    end
 
-   public swap()
+   public override swap()
       every (!l).swap()
    end
 

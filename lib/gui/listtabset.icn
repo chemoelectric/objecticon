@@ -1,14 +1,14 @@
 package gui
 
 class ListTabSetList(SelectableScrollArea)
-   public calculate_line_height()
+   public override calculate_line_height()
       local l
       l := []
       every put(l, (!self.contents).get_label_height())
       return l
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local t, mw
       mw := 0
       every t := !self.contents do
@@ -16,7 +16,7 @@ class ListTabSetList(SelectableScrollArea)
       return mw
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       contents[i].draw_label(view.cbwin, 
                              xp, yp,
                              max(subject_width, view.w), lh)
@@ -27,7 +27,7 @@ end
 class ListTabSet(Component)
    public dl, oa
 
-   public initially()
+   public override initially()
       Component.initially()
       self.dl.set_ideal_size(scale(100), scale(200), scale(100), scale(400))
       if *self.dl.get_selections() = 0 then
@@ -61,12 +61,12 @@ class ListTabSet(Component)
       self.oa.set_which_one(self.dl.object_get_selections()[1])
    end
 
-   public handle_accel(e)
+   public override handle_accel(e)
       set_which_one(find_key(e))
       self.parent_dialog.set_focus(dl, e)
    end
  
-   public match_accel(e)
+   public override match_accel(e)
       succeed find_key(e)
    end
 
@@ -81,7 +81,7 @@ class ListTabSet(Component)
       }
    end
 
-   public new()
+   public override new()
       local b
       Component.new()
       self.set_constraint("x_fill", &yes)

@@ -89,19 +89,19 @@ class EditableTextList(LineBasedScrollArea)
       return last_split := TextSplit(sw, l, ll)
   end
 
-   public get_default_subject_height(dw)
+   public override get_default_subject_height(dw)
       local spl
       spl := get_split(dw  - 2 * Gui.TEXT_INSET)
       return get_line_height() * *spl.lines
    end
 
-   public get_default_subject_width()
+   public override get_default_subject_width()
       local spl
       spl := get_split()
       return 2 * Gui.TEXT_INSET + ((\spl.long_line).tw | 0)
    end
 
-   public calculate_line_count()
+   public override calculate_line_count()
       if /view_list then
          create_view_list()
       return *self.view_list
@@ -119,12 +119,12 @@ class EditableTextList(LineBasedScrollArea)
       return self
    end
 
-   public initially()
+   public override initially()
       LineBasedScrollArea.initially()
       cursor_ticker.start()
    end
    
-   public finally()
+   public override finally()
       scroll_ticker.stop()
       cursor_ticker.stop()
       LineBasedScrollArea.finally()
@@ -490,7 +490,7 @@ class EditableTextList(LineBasedScrollArea)
       return self
    end
 
-   public on_vsb(ev)
+   public override on_vsb(ev)
       if \constrain_cursor_on_scroll_flag then {
          start_handle(ev)
          constrain_cursor()
@@ -506,7 +506,7 @@ class EditableTextList(LineBasedScrollArea)
          handle_ldrag(ev)
    end
 
-   public on_hsb(ev)
+   public override on_hsb(ev)
       if \constrain_cursor_on_scroll_flag then {
          start_handle(ev)
          constrain_cursor()
@@ -1127,14 +1127,14 @@ class EditableTextList(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public layout()
+   public override layout()
       if \wrap_mode == "width" then
          clear_view_list()
       ScrollArea.layout()
       self.constrain_line()
    end
 
-   public set_internal_fields()
+   public override set_internal_fields()
       local had_vsb
       had_vsb := self.vsb
       LineBasedScrollArea.set_internal_fields()
@@ -1146,7 +1146,7 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       LineBasedScrollArea.shift(dx, dy)
       self.tx +:= dx
    end
@@ -1167,12 +1167,12 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       if is_live() then
          invalidate_line(get_view_list_index())
    end
 
-   public draw()
+   public override draw()
       local xp, yp, i, info, r
 
       r := view.get_cbwin_clip()
@@ -1190,7 +1190,7 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
 
-   public draw_line(xp, yp, i)
+   public override draw_line(xp, yp, i)
       local si, s, off1, off2, v, r
 
       v := self.view_list[i]
@@ -1243,17 +1243,17 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
    
-   public calculate_line_height()
+   public override calculate_line_height()
       return view.cbwin.get_line_height()
    end
 
-   public keeps(e)
+   public override keeps(e)
       # This component keeps all events if editable, but just the four
       # cursor keys otherwise.
       succeed \is_editable_flag | member(Key.CURSOR, e.code)
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       if /view_list then
          create_view_list()
       return self.long_line.tw + 2 * Gui.TEXT_INSET
@@ -1437,7 +1437,7 @@ class EditableTextList(LineBasedScrollArea)
       return self
    end
 
-   public new()
+   public override new()
       LineBasedScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
@@ -1468,11 +1468,11 @@ end
 class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
-   protected get_text()
+   protected override get_text()
       return cat_lines(\parent.primary)
    end
 
-   public lost_ownership()
+   public override lost_ownership()
       # Since we may retain ownership after having been disposed of.
       if parent.is_live() then {
          parent.start_handle()
@@ -1535,13 +1535,13 @@ abstract class EditableTextListEdit(UndoableEdit)
       parent.changed := &yes
    end
 
-   public redo()
+   public override redo()
       restore()
       self.redo_impl()
       parent.changed := &yes
    end
 
-   public undo()
+   public override undo()
       self.undo_impl()
       restore()
       parent.changed := &yes
@@ -1573,7 +1573,7 @@ end
 class EditableTextListDefaultEdit(EditableTextListEdit)
    public s
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, gui.EditableTextListDefaultEdit) &
          (other.cursor_y = self.cursor_y) &
          (other.cursor_x = self.cursor_x + *s) then {
@@ -1582,7 +1582,7 @@ class EditableTextListDefaultEdit(EditableTextListEdit)
       }
    end
 
-   public redo_impl()      
+   public override redo_impl()      
       parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] ||
                      s || parent.contents[parent.cursor_y][parent.cursor_x:0]
       parent.cursor_x +:= *s
@@ -1590,12 +1590,12 @@ class EditableTextListDefaultEdit(EditableTextListEdit)
       parent.update_view_list(parent.cursor_y, 1, 1)
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents[self.cursor_y][self.cursor_x +: *s] := ""
       parent.update_view_list(self.cursor_y, 1, 1)
    end
 
-   public new(parent, e)
+   public override new(parent, e)
       EditableTextListEdit.new(parent)
       self.s := e
       return
@@ -1603,7 +1603,7 @@ class EditableTextListDefaultEdit(EditableTextListEdit)
 end
 
 class EditableTextListReturnEdit(EditableTextListEdit)
-   public redo_impl()
+   public override redo_impl()
       local s
       s := parent.contents[parent.cursor_y]
       parent.contents[parent.cursor_y] := s[1:parent.cursor_x]
@@ -1613,7 +1613,7 @@ class EditableTextListReturnEdit(EditableTextListEdit)
       parent.cursor_x := 1
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents[self.cursor_y] ||:= parent.contents[self.cursor_y + 1]
       delete(parent.contents, self.cursor_y + 1)
       parent.update_view_list(self.cursor_y, 2, 1)
@@ -1623,7 +1623,7 @@ end
 class EditableTextListDeleteRightEdit(EditableTextListEdit)
    public ch
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, EditableTextListDeleteRightEdit) &
          \ch & \other.ch &
          (cursor_y = other.cursor_y) &
@@ -1633,7 +1633,7 @@ class EditableTextListDeleteRightEdit(EditableTextListEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       if /ch then {
          # We know cursor_y < *contents from the handle method above.
          parent.contents[parent.cursor_y] ||:= parent.contents[parent.cursor_y + 1]
@@ -1647,7 +1647,7 @@ class EditableTextListDeleteRightEdit(EditableTextListEdit)
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       local t
       if /ch then {
          t := parent.contents[cursor_y][cursor_x:0]
@@ -1663,7 +1663,7 @@ class EditableTextListDeleteRightEdit(EditableTextListEdit)
       }
    end
 
-   public new(parent)
+   public override new(parent)
       EditableTextListEdit.new(parent)
       if parent.cursor_x < *parent.contents[parent.cursor_y] + 1 then
          ch := parent.contents[parent.cursor_y][parent.cursor_x]
@@ -1674,7 +1674,7 @@ end
 class EditableTextListDeleteLeftEdit(EditableTextListEdit)
    public ch, cut
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, EditableTextListDeleteLeftEdit) &
          \ch & \other.ch &
          (cursor_y = other.cursor_y) &
@@ -1684,7 +1684,7 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       if /ch then {
          parent.cursor_x := cut
          parent.contents[parent.cursor_y - 1] ||:= parent.contents[parent.cursor_y]
@@ -1700,7 +1700,7 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       local t
       if /ch then {
          t :=  parent.contents[cursor_y - 1][cut:0]
@@ -1716,7 +1716,7 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
       }
    end
 
-   public new(parent)
+   public override new(parent)
       EditableTextListEdit.new(parent)
       if parent.cursor_x = 1 then
          # We know parent.cursor_y > 1 from the handle method
@@ -1730,7 +1730,7 @@ end
 class EditableTextListDeleteLineEdit(EditableTextListEdit)
    public s, last
 
-   public redo_impl()
+   public override redo_impl()
       s := parent.contents[parent.cursor_y]
       if parent.cursor_y = *parent.contents then {
          parent.contents[parent.cursor_y][1:0] := ""
@@ -1744,7 +1744,7 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       if \self.last then {
          parent.contents[self.cursor_y] := s
          parent.update_view_list(self.cursor_y, 1, 1)
@@ -1758,7 +1758,7 @@ end
 class EditableTextListDeleteRegionEdit(EditableTextListEdit)
    public l, pos
 
-   public redo_impl()
+   public override redo_impl()
       l := []
       if parent.mark_y < parent.cursor_y then {
          pos := parent.mark_y
@@ -1793,7 +1793,7 @@ class EditableTextListDeleteRegionEdit(EditableTextListEdit)
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       local n
       n := *l
       delete(parent.contents, pos)
@@ -1805,7 +1805,7 @@ end
 class EditableTextListPasteEdit(EditableTextListEdit)
    public s, pre, n
 
-   public redo_impl()
+   public override redo_impl()
       local t, nl
 
       n := 0
@@ -1832,14 +1832,14 @@ class EditableTextListPasteEdit(EditableTextListEdit)
       parent.update_view_list(self.cursor_y, 1, n + 1)
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents[self.cursor_y] := pre
       every 1 to n do
          delete(parent.contents, self.cursor_y + 1)
       parent.update_view_list(self.cursor_y, n + 1, 1)
    end
 
-   public new(parent, s)
+   public override new(parent, s)
       EditableTextListEdit.new(parent)
       self.s := s
       return
@@ -1860,7 +1860,7 @@ end
 class ColumnLineSplitter(LineSplitter)
    public wrap_col
 
-   public split(s)
+   public override split(s)
       local ch, ds, p
 
       ds := ""
@@ -1889,7 +1889,7 @@ class ColumnLineSplitter(LineSplitter)
       }
    end
 
-   public new(parent, wrap_col)
+   public override new(parent, wrap_col)
       LineSplitter.new(parent)
       self.wrap_col := wrap_col
       return
@@ -1897,13 +1897,13 @@ class ColumnLineSplitter(LineSplitter)
 end
 
 class DefaultLineSplitter(LineSplitter)
-   public split(s)
+   public override split(s)
       return *s + 1
    end
 end
 
 class WidthLineSplitter(LineSplitter)
-   public split(s, width)
+   public override split(s, width)
       local ch, ds, p
       \width | runerr("Need to specify width with 'width' wrap mode")
       ds := ""

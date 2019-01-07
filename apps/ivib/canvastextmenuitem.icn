@@ -17,7 +17,7 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.paint_mid.gen_code(c)
       (\self.paint_left).gen_code(c)
       (\self.paint_right).gen_code(c)
@@ -29,7 +29,7 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
          c.chain("set_paint_right(" || self.paint_right.name || ")")
    end
 
-   public dup_fields(c)
+   public override dup_fields(c)
       CanvasMenuComponent.dup_fields(c)
       c.set_paint_mid(self.paint_mid.dup())
       c.set_paint_left((\self.paint_left).dup())
@@ -39,7 +39,7 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTextMenuItem()
       self.dup_fields(c)
@@ -56,18 +56,18 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
          return Class.get_name(self.paint_mid) || "(Txt)"
    end
 
-   public get_template()
+   public override get_template()
       suspend CanvasMenuComponent.get_template() |
          ["Paint mid", "paint_mid"] |
          ["Paint left", "paint_left"] |
          ["Paint right", "paint_right"]
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasMenuComponent.gen_cos() | self.paint_mid | \self.paint_left | \self.paint_right
    end
 
-   public new()
+   public override new()
       TextMenuItem.new()
       CanvasMenuComponent.new()
       self.class_name := "TextMenuItem"

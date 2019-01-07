@@ -17,7 +17,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local r
       self.paint_mid.gen_code(c)
       (\self.paint_left).gen_code(c)
@@ -42,7 +42,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    #
    # Duplicate object.
    #
-   public dup(mb)
+   public override dup(mb)
       local c
       c := CanvasMenu()
       CanvasTextMenuItem.dup_fields(c)
@@ -53,7 +53,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasTextMenuItem.get_template() | ["Children", "children"]
    end
 
@@ -78,14 +78,14 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    #
    # Get a label for the menu bar display.
    #
-   public get_string_label()
+   public override get_string_label()
       if is(self.paint_mid, CanvasTextPaint) then
          return self.paint_mid.str
       else
          return Class.get_name(self.paint_mid)
    end
 
-   public new()
+   public override new()
       CanvasTextMenuItem.new()
       Menu.new()
       self.class_name := "Menu"

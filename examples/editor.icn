@@ -6,11 +6,11 @@ $load EXIT "rpp.EXIT_24.gif"
 class EditMenu(DynamicMenu)
    private text
 
-   public populate()
+   public override populate()
       move_all(text.create_context_menu())
    end
 
-   public new(text)
+   public override new(text)
       DynamicMenu.new()
       self.text := text
       return
@@ -129,7 +129,7 @@ class Editor(Dialog)
          text.set_split_words(&no)
    end
 
-   public init_dialog()
+   public override init_dialog()
       set_focus(text)
    end
 
@@ -261,7 +261,7 @@ class Editor(Dialog)
       update_grey()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       setup()
       return
@@ -286,7 +286,7 @@ class SaveChangesDialog(Dialog)
       self.dispose()
    end
 
-   public new()
+   public override new()
       local l, p, yes, no, cancel
       Dialog.new()
       self.set_label("Save changes?")

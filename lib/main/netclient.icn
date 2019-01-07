@@ -564,7 +564,7 @@ $endif
       return self
    end
 
-   public new()
+   public override new()
       Connectable.new()
       sbuff := ""
       ssl_verify_flag := &yes

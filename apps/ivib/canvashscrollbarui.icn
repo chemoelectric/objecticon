@@ -8,7 +8,7 @@
 import gui
 
 class CanvasHScrollBarUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasScrollBar()
       t.set_constraint("x_fill", &yes)
@@ -21,11 +21,11 @@ class CanvasHScrollBarUI(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "ScrollBar"
    end
 
-   public get_name()
+   public override get_name()
       return "HScrollBar"
    end
 end

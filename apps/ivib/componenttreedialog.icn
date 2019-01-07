@@ -1,21 +1,21 @@
 import gui, ipl.pdco
 
 class ComponentTree(Tree)
-   public can_drop(drag, e)
+   public override can_drop(drag, e)
       local o
       o := Tree.can_drop(drag, e) | fail
       if ((o === root_node) | o.component.allows_add()) then
          return o
    end
 
-   public perform_drop(drag, drop)
+   public override perform_drop(drag, drop)
       local l
       l := []
       every put(l, (!drag.get_content()).component)
       root_node.component.move_components(l, drop.get_content().component)
    end
 
-   public can_drag(ev)
+   public override can_drag(ev)
       local l, e
       l := Tree.can_drag(ev) | fail
       every e := !l do {
@@ -27,7 +27,7 @@ class ComponentTree(Tree)
       return l
    end
 
-   public new()
+   public override new()
       Tree.new()
       set_allow_drag(&yes)
       set_allow_drop(&yes)
@@ -41,7 +41,7 @@ class ComponentTreeDialog(Dialog)
       tree,
       main
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       tree.set_root_node(CanvasNode())
    end
@@ -84,10 +84,10 @@ class ComponentTreeDialog(Dialog)
       }
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
       # The tree is set up here after the window is open, because synch() may need
       # to call ensure_line_visible() on the selected object, and this needs the open
       # window.
@@ -149,7 +149,7 @@ class ComponentTreeDialog(Dialog)
       self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
    end
 
-   public new(main)
+   public override new(main)
       Dialog.new()
       self.main := main
       return
@@ -200,7 +200,7 @@ class BaseNode(TreeNode)
       }
    end
 
-   public new(c)
+   public override new(c)
       TreeNode.new()
       self.component := c
       self.set_expanded(&yes)
@@ -211,18 +211,18 @@ end
 
 
 class CanvasNode(BaseNode)
-   public get_child_components()
+   public override get_child_components()
       return self.component.children
    end
 
-   public get_name()
+   public override get_name()
       return "Canvas"
    end
 end
 
 
 class CanvasComponentNode(BaseNode)
-   public get_child_components()
+   public override get_child_components()
       local l, e
       l := []
       every e := self.component.gen_cos() do {
@@ -232,7 +232,7 @@ class CanvasComponentNode(BaseNode)
       return l
    end
 
-   public get_name()
+   public override get_name()
       return self.component.class_name || "(" || self.component.name || ")"
    end
 end

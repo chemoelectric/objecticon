@@ -100,7 +100,7 @@ class TTExplorer(Dialog)
               qsort(file_list, Files.name_cmp)]
    end
 
-   public component_setup()
+   public override component_setup()
       local root_node, w, bw, p, d, c
       self.setup()
       tt.set_draggable_columns(&yes)

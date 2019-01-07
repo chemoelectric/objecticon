@@ -240,7 +240,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin tables.
    #
-   private object_equals(other, seen)
+   private override object_equals(other, seen)
       other.size() = self.size() | fail
       equals(other.def, self.def, seen) | fail
       return hash_and_check(other.entry_list(), self.entry_list(), seen)
@@ -249,7 +249,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin tables.
    #
-   private object_hash(depth)
+   private override object_hash(depth)
       local n
       n := size()
       if depth > 1 then {
@@ -262,7 +262,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local pairs, e, sep
       pairs := sort()
       if oo.simple{!!pairs | def} then {
@@ -320,55 +320,55 @@ end
 class UnmodifiableTable(Table)
    private const t
 
-   public member(key)
+   public override member(key)
       return .t.member(key)
    end
 
-   public sort()
+   public override sort()
       return t.sort()
    end
 
-   public key_sort()
+   public override key_sort()
       return t.key_sort()
    end
 
-   public key()
+   public override key()
       suspend t.key()
    end
 
-   public keyval()
+   public override keyval()
       suspend .t.keyval()
    end
 
-   public back_key()
+   public override back_key()
       suspend t.back_key()
    end
 
-   public back_keyval()
+   public override back_keyval()
       suspend .t.back_keyval()
    end
 
-   public rank(key)
+   public override rank(key)
       return t.rank(key)
    end
 
-   public select(i)
+   public override select(i)
       return t.select(i)
    end
 
-   public gen()
+   public override gen()
       suspend .t.gen()
    end
 
-   public back()
+   public override back()
       suspend .t.back()
    end
 
-   public size()
+   public override size()
       return t.size()
    end
 
-   public get_mode()
+   public override get_mode()
       return iand(ORDER, t.get_mode())
    end
 
@@ -385,32 +385,32 @@ end
 class TableKeyList(List)
    private const t
 
-   public at(i)
+   public override at(i)
       return t.select(i)
    end
 
-   public delete(i)
+   public override delete(i)
       return t.delete(t.select(i)) & self
    end
 
-   public gen()
+   public override gen()
       suspend t.key()
    end
 
-   public back()
+   public override back()
       suspend t.back_key()
    end
 
-   public size()
+   public override size()
       return t.size()
    end
 
-   public clear()
+   public override clear()
       t.clear()
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return iand(DELETE, t.get_mode())
    end
 
@@ -442,7 +442,7 @@ class SortTable(Table)
    private root
    public const cmp
 
-   public insert(key, val)
+   public override insert(key, val)
       root := insert1(root, key, val)
       root.is_red_flag := &no
       return self
@@ -475,7 +475,7 @@ class SortTable(Table)
       return n
    end
 
-   public member(key)
+   public override member(key)
       local n, i
       n := root
       while \n do {
@@ -489,7 +489,7 @@ class SortTable(Table)
       }
    end
 
-   public delete(key)
+   public override delete(key)
       member(key) | fail
       if not(is_red(root.l | root.r)) then
          root.is_red_flag := &yes
@@ -617,49 +617,49 @@ class SortTable(Table)
       return if /n then 0 else n.N
    end
 
-   public key()
+   public override key()
       suspend .Seq{traverse(root)}.key
    end
 
-   public keyval()
+   public override keyval()
       local e
       every e := Seq{traverse(root)} do
          suspend .e.key | e.val
    end
 
-   public back_key()
+   public override back_key()
       suspend .Seq{back_traverse(root)}.key
    end
 
-   public back_keyval()
+   public override back_keyval()
       local e
       every e := Seq{back_traverse(root)} do
          suspend .e.key | e.val
    end
 
-   public gen()
+   public override gen()
       suspend Seq{traverse(root)}.val
    end
 
-   public back()
+   public override back()
       suspend Seq{back_traverse(root)}.val
    end
 
-   public clear()
+   public override clear()
       root := &null
       return self
    end
 
-   public size()
+   public override size()
       return size1(root)
    end
 
-   public select(i)
+   public override select(i)
       i := cvpos_item(i, size()) | fail
       return .select1(root, i - 1).key
    end
 
-   public rank(k)
+   public override rank(k)
       return rank1(root, k) + 1
    end
 
@@ -744,7 +744,7 @@ class SortTable(Table)
       return
    end
 
-   public get_mode()
+   public override get_mode()
       return MODIFY + INSERT + DELETE + ORDER
    end
 
@@ -778,12 +778,12 @@ class EqTable(Table)
    private const t
    private sz
 
-   public insert(key, val)
+   public override insert(key, val)
       add(key) := val
       return self
    end
 
-   public add(key)
+   public override add(key)
       local h, l, e, n
       h := hash(key)
       if l := default.member(t, h) then {
@@ -801,7 +801,7 @@ class EqTable(Table)
       return n.val
    end
 
-   public member(key)
+   public override member(key)
       local e
       every e := !default.member(t, hash(key)) do {
          if equals(e.key, key) then
@@ -809,7 +809,7 @@ class EqTable(Table)
       }
    end
 
-   public delete(key)
+   public override delete(key)
       local h, l, e, i
       h := hash(key)
       l := default.member(t, h) | fail
@@ -826,31 +826,31 @@ class EqTable(Table)
       }
    end
 
-   public key()
+   public override key()
       suspend .(!!t).key
    end
 
-   public keyval()
+   public override keyval()
       local e
       every e := !!t do
          suspend .e.key | e.val
    end
 
-   public gen()
+   public override gen()
       suspend (!!t).val
    end
 
-   public size()
+   public override size()
       return .sz
    end
 
-   public clear()
+   public override clear()
       default.clear(t)
       sz := 0
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -876,41 +876,41 @@ end
 class BuiltinTable(Table)
    private const t
 
-   public insert(key, val)
+   public override insert(key, val)
       default.insert(t, key, val)
       return self
    end
 
-   public member(key)
+   public override member(key)
       return default.member(t, key)
    end
 
-   public delete(key)
+   public override delete(key)
       return default.delete(t, key) & self
    end
 
-   public key()
+   public override key()
       suspend default.key(t)
    end
 
-   public keyval()
+   public override keyval()
       suspend default.keyval(t)
    end
 
-   public gen()
+   public override gen()
       suspend !t
    end
 
-   public clear()
+   public override clear()
       default.clear(t)
       return self
    end
 
-   public size()
+   public override size()
       return *t
    end
 
-   public get_mode()
+   public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -930,17 +930,17 @@ class BuiltinTable(Table)
 end
 
 package class EmptyTable(Table, SelfClone)
-   public member(x)
+   public override member(x)
    end
 
-   public key()
+   public override key()
    end
 
-   public size()
+   public override size()
       return 0
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 
@@ -956,12 +956,12 @@ class WeakrefTable(Table)
    private const t
    private sz, last_purge
 
-   public insert(key, val)
+   public override insert(key, val)
       add(key) := val
       return self
    end
 
-   public add(key)
+   public override add(key)
       local h, l, e, n
       maybe_purge()
       h := Internal.hash(key)
@@ -980,7 +980,7 @@ class WeakrefTable(Table)
       return n.val
    end
 
-   public member(key)
+   public override member(key)
       local e
       maybe_purge()
       every e := !default.member(t, Internal.hash(key)) do {
@@ -989,7 +989,7 @@ class WeakrefTable(Table)
       }
    end
 
-   public delete(key)
+   public override delete(key)
       local h, l, e, i
       maybe_purge()
       h := Internal.hash(key)
@@ -1007,30 +1007,30 @@ class WeakrefTable(Table)
       }
    end
 
-   public key()
+   public override key()
       maybe_purge()
       suspend weakrefval((!!t).key)
    end
 
-   public keyval()
+   public override keyval()
       local e
       maybe_purge()
       every e := !!t do
          suspend weakrefval(e.key) | e.val
    end
 
-   public gen()
+   public override gen()
       maybe_purge()
       suspend (!!t).val
    end
 
-   public clear()
+   public override clear()
       default.clear(t)
       sz := 0
       return self
    end
 
-   public size()
+   public override size()
       maybe_purge()
       return .sz
    end
@@ -1061,7 +1061,7 @@ class WeakrefTable(Table)
       }
    end
 
-   public get_mode()
+   public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -1087,27 +1087,27 @@ end
 class UnmodifiableBuiltinTable(Table)
    private const t
 
-   public member(key)
+   public override member(key)
       return .default.member(t, key)
    end
 
-   public key()
+   public override key()
       suspend default.key(t)
    end
 
-   public keyval()
+   public override keyval()
       suspend .default.keyval(t)
    end
 
-   public gen()
+   public override gen()
       suspend .!t
    end
 
-   public size()
+   public override size()
       return *t
    end
 
-   public get_mode()
+   public override get_mode()
       return 0
    end
 

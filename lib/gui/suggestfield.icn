@@ -282,22 +282,22 @@ abstract class SuggestField(TextField, MenuMode)
       fire(Event.POPUP_CLOSED)
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
       return self
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
       return popup
    end
 
-   public allow_nested(c)
+   public override allow_nested(c)
    end
 
-   public close_all()
+   public override close_all()
       keep_closed()
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(popup.in_region(e))
    end
 
@@ -312,13 +312,13 @@ abstract class SuggestField(TextField, MenuMode)
       mod := &null
    end
 
-   public initially()
+   public override initially()
       TextField.initially()
       mod := &null
       req.start()
    end
 
-   public finally()
+   public override finally()
       if \req_doing then
          abort_request()
       else {
@@ -329,7 +329,7 @@ abstract class SuggestField(TextField, MenuMode)
       TextField.finally()
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed e.code === "\t" | member(Key.CURSOR_H, e.code)
    end
 
@@ -337,7 +337,7 @@ abstract class SuggestField(TextField, MenuMode)
       succeed ev === applied_event
    end
 
-   public handle_return(e)
+   public override handle_return(e)
       if \select_using_enter_flag then
          (\popup).fire(Event.KEY_PRESS, e)
       TextField.handle_return(e)
@@ -370,14 +370,14 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   public handle_key_home(e)
+   public override handle_key_home(e)
       if \popup & \forward_home_end_flag then
          popup.fire(Event.KEY_PRESS, e)
       else
          TextField.handle_key_home(e)
    end
 
-   public handle_key_end(e)
+   public override handle_key_end(e)
       if \popup & \forward_home_end_flag then
          popup.fire(Event.KEY_PRESS, e)
       else
@@ -424,7 +424,7 @@ abstract class SuggestField(TextField, MenuMode)
          assign_contents(v, p, applied_event := ev, toggle_flag(select_using_enter_flag))
    end
 
-   public handle_key(e)
+   public override handle_key(e)
       case e.code of {
          "\t" : handle_tab(e)
          "\e" : close_all()
@@ -437,7 +437,7 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   public new()
+   public override new()
       TextField.new()
       connect(on_change, Event.CONTENT_CHANGED)
       req := Dispatcher.new_task{requests()}

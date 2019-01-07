@@ -17,21 +17,21 @@ class CanvasSizer(CanvasComponent,Sizer)
    #
    # Overrides CanvasComponent.min_height()
    #
-   public min_height()
+   public override min_height()
       return 3
    end
 
    #
    # Overrides CanvasComponent.min_width()
    #
-   public min_width()
+   public override min_width()
       return 3
    end
 
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local s
       CanvasComponent.gen_code(c)
       if \self.lo | \self.hi then {
@@ -46,7 +46,7 @@ class CanvasSizer(CanvasComponent,Sizer)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasSizer()
       CanvasComponent.dup_fields(c)
@@ -59,7 +59,7 @@ class CanvasSizer(CanvasComponent,Sizer)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
           ["Lo", "lo"] |
           ["Hi", "hi"] |
@@ -69,19 +69,19 @@ class CanvasSizer(CanvasComponent,Sizer)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasSizerDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return /self.is_horizontal_flag
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return \self.is_horizontal_flag
    end
 
-   public new()
+   public override new()
       Sizer.new()
       CanvasComponent.new()
       self.class_name := "Sizer"

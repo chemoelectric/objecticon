@@ -2,7 +2,7 @@ import gui
 
 class Untitled(Dialog)
    public quit_button, show_root_cb, show_root_handles_cb, tree
-   public component_setup()
+   public override component_setup()
       local n, m, p
       self.setup()
       n := TreeNode().set_label("Root")
@@ -29,10 +29,10 @@ class Untitled(Dialog)
       n.add(m)
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
    public on_quit_button(ev)

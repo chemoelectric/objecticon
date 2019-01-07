@@ -13,18 +13,18 @@ import gui
 # Extends Dialog to enable saving of some fields.
 #
 class CDialog(Dialog,SelectiveObjectCodec)
-   public get_held(e)
+   public override get_held(e)
    end
 
-   private pre_decode()
+   private override pre_decode()
       new()
    end
 
-   public get_template()
+   public override get_template()
       suspend ["WAttribs", "wattribs"]
    end
 
-   public new()
+   public override new()
       Dialog.new()
       self.clear_wattribs()
       return

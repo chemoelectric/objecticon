@@ -16,12 +16,12 @@ package readable global
 class ThrowHandlerState(State)
    private i, th
 
-   public begin()
+   public override begin()
       th := throw_handler
       throw_handler := i
    end
 
-   public swap()
+   public override swap()
       throw_handler :=: th
    end
 

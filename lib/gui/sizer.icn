@@ -70,7 +70,7 @@ class Sizer(Component, HasOrientation)
       return self
    end
 
-   public display()
+   public override display()
       local x1, y1
       x1 := self.x + (self.w - gp.w) / 2
       y1 := self.y + (self.h - gp.h) / 2
@@ -88,7 +88,7 @@ class Sizer(Component, HasOrientation)
       return curr_pos
    end
 
-   public initially()
+   public override initially()
       if \self.is_horizontal_flag then {
          set_pointer("sb v double arrow")
          gp.set_cache("gui.HORIZ_GRID")
@@ -100,17 +100,17 @@ class Sizer(Component, HasOrientation)
       gp.initially(self)
    end
 
-   public finally()
+   public override finally()
       Component.finally()
       gp.finally()
    end
 
-   public get_default_width()
+   public override get_default_width()
       if /self.is_horizontal_flag then
          return DEFAULT_SIZE
    end
 
-   public get_default_height()
+   public override get_default_height()
       if \self.is_horizontal_flag then
          return DEFAULT_SIZE
    end
@@ -165,7 +165,7 @@ class Sizer(Component, HasOrientation)
       fire(Event.SIZER_RELEASE, e)
    end
 
-   public new()
+   public override new()
       Component.new()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
@@ -177,7 +177,7 @@ end
 
 
 class SliderDragComponent(Component)
-   public display()
+   public override display()
       local cw
       use {
          cw := cbwin.clone(),

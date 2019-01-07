@@ -17,7 +17,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local e, wo
       #
       # Extend superclass method
@@ -34,7 +34,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasObject.get_template() | ["Which One", "which_one"]
    end
 
@@ -43,7 +43,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    #
    # Setting of which_one is duplicated in the Canvas.dup() method.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasCheckBoxGroup()
       CanvasObject.dup_fields(c)
@@ -61,7 +61,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
       return l
    end
 
-   public new()
+   public override new()
       CheckBoxGroup.new()
       self.class_name := "CheckBoxGroup"
       self.import_name := "gui"

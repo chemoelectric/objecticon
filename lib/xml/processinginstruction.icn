@@ -46,7 +46,7 @@ class ProcessingInstruction(Node)
       return self
    end
 
-   public new(t, c)
+   public override new(t, c)
       Node.new()
       self.target := t
       self.content := c

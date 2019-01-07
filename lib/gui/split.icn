@@ -62,14 +62,14 @@ class Split(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       \self.first | runerr("Left/top not set")
       \self.second | runerr("Right/bottom not set")
       *self.children = 3 | runerr("Should be exactly 3 children")
       Component.initially()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       if \first.is_hidden_flag then
          return second.get_preferred_width()
@@ -85,7 +85,7 @@ class Split(Component)
       }
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       local t
       if \first.is_hidden_flag then
          return second.get_preferred_height(dw)
@@ -144,7 +144,7 @@ class Split(Component)
       return self
    end
 
-   public layout()
+   public override layout()
       local c, p1, p2, ex
       if /self.sizer.is_horizontal_flag then {
          first.x := self.x
@@ -278,7 +278,7 @@ class Split(Component)
       return self
    end
 
-   public new()
+   public override new()
       Component.new()
       sizer := Sizer()
       add(sizer)

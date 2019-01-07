@@ -21,7 +21,7 @@ class TextButton(Button, BorderWhilstEntered)
       paint,
       paint_down
 
-   public display()
+   public override display()
       local p
 
       p := if /paint_down | (self.is_down === self.is_checked_flag) then
@@ -115,34 +115,34 @@ class TextButton(Button, BorderWhilstEntered)
       return self
    end
 
-   public initially()
+   public override initially()
       \self.paint | runerr("no label specified")
       Button.initially()
       self.paint.initially(self, self.accel)
       (\self.paint_down).initially(self, self.accel)
    end
 
-   public finally()
+   public override finally()
       Button.finally()
       paint.finally()
       (\paint_down).finally()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       t := paint.w
       t <:= (\paint_down).w
       return t + border.get_total_width()
    end
 
-   public get_default_height()
+   public override get_default_height()
       local t
       t := paint.h
       t <:= (\paint_down).h
       return t + border.get_total_height()
    end
 
-   public new()
+   public override new()
       Button.new()
       BorderWhilstEntered.new()
       self.border := CompoundBorder().
@@ -190,7 +190,7 @@ abstract class BorderWhilstEntered(Component)
       handle_exit(e)
    end
 
-   public new()
+   public override new()
       connect(handle_enter, Event.MOUSE_ENTER)
       connect(handle_exit, Event.MOUSE_EXIT)
       connect(handle_interrupted, Event.INTERRUPTED)

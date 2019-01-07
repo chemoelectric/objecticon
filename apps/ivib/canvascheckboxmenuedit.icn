@@ -27,14 +27,14 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       group_list.toggle_is_shaded()
    end
    
-   public validate_input()
+   public override validate_input()
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
       self.paint_field_r.validate_input() | fail
       return MenuComponentEdit.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       MenuComponentEdit.set_vals()
 
       #
@@ -60,7 +60,7 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       c.set_paint_right(paint_field_r.get_contents())
    end
 
-   public setup()
+   public override setup()
       local main_panel
 
       MenuComponentEdit.setup()

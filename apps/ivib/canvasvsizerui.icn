@@ -8,18 +8,18 @@
 import gui
 
 class CanvasVSizerUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasSizer()
       t.set_size(, scale(100))
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Separators"
    end
 
-   public get_name()
+   public override get_name()
       return "VSizer"
    end
 end

@@ -17,7 +17,7 @@ class CanvasTextButton(CanvasButton,TextButton)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.paint.gen_code(c)
       (\self.paint_down).gen_code(c)
       CanvasButton.gen_code(c)
@@ -29,7 +29,7 @@ class CanvasTextButton(CanvasButton,TextButton)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasButton.get_template() |
           ["Paint", "paint"] |
           ["Paint down", "paint_down"]
@@ -38,7 +38,7 @@ class CanvasTextButton(CanvasButton,TextButton)
    # 
    # Duplicate object
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTextButton()
       CanvasButton.dup_fields(c)
@@ -50,15 +50,15 @@ class CanvasTextButton(CanvasButton,TextButton)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTextButtonDialog(self)
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.paint | \self.paint_down
    end
 
-   public new()
+   public override new()
       TextButton.new()
       CanvasButton.new()
       self.class_name := "TextButton"

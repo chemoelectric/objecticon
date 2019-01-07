@@ -150,7 +150,7 @@ class ContentSpec(ObjectOutput)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local s, x
       oo.object_start(self)
       case op of {

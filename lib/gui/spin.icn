@@ -59,25 +59,25 @@ abstract class Spin(Component)
       go_down(ev)
    end
 
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
       display_children()
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       view.invalidate()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return border.get_total_width() + up.get_preferred_width() + view.get_preferred_width()
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       dw -:= border.get_total_width() + up.get_preferred_width()
       return border.get_total_height() + view.get_preferred_height(dw)
    end
 
-   public layout()
+   public override layout()
       local bh, bw
       bw := up.get_preferred_width()
       bh := (self.h - border.get_total_height()) / 2
@@ -107,7 +107,7 @@ abstract class Spin(Component)
       end_change(e)
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_border(SunkenBorder())
       self.up := IconButton().
@@ -144,7 +144,7 @@ abstract class SelectionSpin(SelectionList, Spin)
       return text(o)
    end
 
-   public do_increment(e)
+   public override do_increment(e)
       if *selection_list = 0 then
          fail
       if /self.selection | self.selection = *self.selection_list then
@@ -153,7 +153,7 @@ abstract class SelectionSpin(SelectionList, Spin)
          self.set_selection(self.selection + 1, e)
    end
 
-   public do_decrement(e)
+   public override do_decrement(e)
       if *selection_list = 0 then
          fail
       if /self.selection | (self.selection = 1) then
@@ -168,7 +168,7 @@ abstract class SelectionSpin(SelectionList, Spin)
       end_change(e)
    end
 
-   public initially()
+   public override initially()
       \self.selection_list | runerr("No selection list specified")
       Spin.initially()
    end
@@ -176,7 +176,7 @@ end
 
 
 class SpinTextField(TextField)
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR, e.code)
    end
 
@@ -187,7 +187,7 @@ class SpinTextField(TextField)
       }
    end
 
-   public new()
+   public override new()
       TextField.new()
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
@@ -197,7 +197,7 @@ end
 
 
 class SpinLabel(Label)
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR_V, e.code)
    end
 
@@ -212,7 +212,7 @@ class SpinLabel(Label)
       }
    end
 
-   public new()
+   public override new()
       Label.new()
       self.set_label("")
       self.connect(self.on_key, Event.KEY_PRESS)

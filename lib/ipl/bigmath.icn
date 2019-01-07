@@ -54,12 +54,12 @@ package abstract class SeriesCalculator()
 end
 
 package class SinCalculator(SeriesCalculator)
-   public new()
+   public override new()
       SeriesCalculator.new(&yes)
       return
    end
 
-   public gen_factors()
+   public override gen_factors()
       local factorial2nPlus1, factor, n
       factorial2nPlus1 := Rat(1)
       n := 0
@@ -73,18 +73,18 @@ package class SinCalculator(SeriesCalculator)
       }
    end
 
-   public gen_powers(x, prec)
+   public override gen_powers(x, prec)
       suspend PowerTwoNPlusOneIterator(x, prec)
    end
 end
 
 package class CosCalculator(SeriesCalculator)
-   public new()
+   public override new()
       SeriesCalculator.new(&yes)
       return
    end
 
-   public gen_factors()
+   public override gen_factors()
       local factorial2n, factor, n
       factorial2n := Rat(1)
       n := 0
@@ -98,18 +98,18 @@ package class CosCalculator(SeriesCalculator)
       }
    end
 
-   public gen_powers(x, prec)
+   public override gen_powers(x, prec)
       suspend PowerTwoNIterator(x, prec)
    end
 end
 
 package class SinhCalculator(SeriesCalculator)
-   public new()
+   public override new()
       SeriesCalculator.new(&yes)
       return
    end
 
-   public gen_factors()
+   public override gen_factors()
       local factorial2nPlus1, factor, n
       factorial2nPlus1 := Rat(1)
       n := 0
@@ -121,18 +121,18 @@ package class SinhCalculator(SeriesCalculator)
       }
    end
 
-   public gen_powers(x, prec)
+   public override gen_powers(x, prec)
       suspend PowerTwoNPlusOneIterator(x, prec)
    end
 end
 
 package class CoshCalculator(SeriesCalculator)
-   public new()
+   public override new()
       SeriesCalculator.new(&yes)
       return
    end
 
-   public gen_factors()
+   public override gen_factors()
       local factorial2n, factor, n
       factorial2n := Rat(1)
       n := 0
@@ -144,13 +144,13 @@ package class CoshCalculator(SeriesCalculator)
       }
    end
 
-   public gen_powers(x, prec)
+   public override gen_powers(x, prec)
       suspend PowerTwoNIterator(x, prec)
    end
 end
 
 package class ExpCalculator(SeriesCalculator)
-   public gen_factors()
+   public override gen_factors()
       local oneOverFactorialOfN, n
       oneOverFactorialOfN := Rat(1)
       n := 0
@@ -161,13 +161,13 @@ package class ExpCalculator(SeriesCalculator)
       }
    end
 
-   public gen_powers(x, prec)
+   public override gen_powers(x, prec)
       suspend PowerNIterator(x, prec)
    end
 end
 
 package class AsinCalculator(SeriesCalculator)
-   public gen_factors()
+   public override gen_factors()
       local factorial2n, factorialN, fourPowerN, factor, n
 
       factorial2n := factorialN := fourPowerN := Rat(1)
@@ -182,7 +182,7 @@ package class AsinCalculator(SeriesCalculator)
       }
    end
 
-   public gen_powers(x, prec)
+   public override gen_powers(x, prec)
       suspend PowerTwoNPlusOneIterator(x, prec)
    end
 end

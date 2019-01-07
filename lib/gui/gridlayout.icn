@@ -21,7 +21,7 @@ class GridLayout(Layout)
       DEFAULT_INNER_INSET := env_scale("OI_GRIDLAYOUT_DEFAULT_INNER_INSET") | scale(5)
    end
 
-   public reset()
+   public override reset()
       g := &null
    end
 
@@ -47,7 +47,7 @@ class GridLayout(Layout)
       g.compute_preferred_col_widths()
    end
 
-   public get_preferred_width()
+   public override get_preferred_width()
       ensure_grid()
       return g.get_preferred_width()
    end
@@ -65,14 +65,14 @@ class GridLayout(Layout)
         g.compute_preferred_row_heights()
    end
 
-   public get_preferred_height(pw)
+   public override get_preferred_height(pw)
       ensure_grid()
       g.compute_actual_col_widths(pw)
       compute_preferred_heights()
       return g.get_preferred_height()
    end
 
-   public display()
+   public override display()
       local i, cw
       use {
          cw := GetShadowClone(self.parent.cbwin).set_masked_pattern("gray"),
@@ -90,7 +90,7 @@ class GridLayout(Layout)
       }
    end
 
-   public layout()
+   public override layout()
       local c, i
 
       every c := !parent.children do {

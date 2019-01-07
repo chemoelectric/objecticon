@@ -18,11 +18,11 @@ class RangeSpin(Spin)
       increment_size,
       last_val
 
-   public create_view()
+   public override create_view()
       return SpinTextField()
    end
 
-   public initially()
+   public override initially()
       local f
       f := &digits
       if type(lo | hi | increment_size | last_val) == "real" then
@@ -33,11 +33,11 @@ class RangeSpin(Spin)
       Spin.initially()
    end
 
-   public do_increment(ev)
+   public override do_increment(ev)
       assign_value(last_val + self.increment_size, ev, &yes)
    end
 
-   public do_decrement(ev)
+   public override do_decrement(ev)
       assign_value(last_val - self.increment_size, ev, &yes)
    end
 
@@ -107,7 +107,7 @@ class RangeSpin(Spin)
       return v
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       t := 0
       # Bit difficult if we don't have a maximum...
@@ -115,7 +115,7 @@ class RangeSpin(Spin)
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 
-   public new()
+   public override new()
       Spin.new()
       self.increment_size := 1
       every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)

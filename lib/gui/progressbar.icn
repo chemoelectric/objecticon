@@ -10,11 +10,11 @@ package gui
 class ProgressBar(Component)
    public p
 
-   public get_default_height()
+   public override get_default_height()
       return self.cbwin.get_line_height() + border.get_total_height()
    end
 
-   public display()
+   public override display()
       local s, r, y1
       border.draw_rect(self.cbwin, self)
       r := border.get_inner_rect(self)
@@ -47,7 +47,7 @@ class ProgressBar(Component)
       return self
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_border(CompoundBorder().
                            set_outer(RaisedBorder()).

@@ -87,19 +87,19 @@ end
 # `Paint`.
 #
 class PaintAdapter(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return data.w
    end
 
-   public get_height(W, data)
+   public override get_height(W, data)
       return data.h
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return data
    end
 
-   public draw(W, data, x, y, w, h)
+   public override draw(W, data, x, y, w, h)
       data.draw(W, x, y, w, h)
    end
 end
@@ -107,19 +107,19 @@ end
 # A simple `ItemPaint` in which each piece of data is a string.
 #
 class TextItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return W.text_width(detab(data))
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return W.get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(W.text_width(detab(data)), W.get_line_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       W.draw_string(x, y + W.get_line_ascent(), detab(data))
    end
 end
@@ -129,19 +129,19 @@ end
 # "..." is output.
 #
 class AbbreviatedTextItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return W.text_width(detab(data))
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return W.get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(W.text_width(detab(data)), W.get_line_height())
    end
 
-   public draw(W, data, x, y, w)
+   public override draw(W, data, x, y, w)
       W.draw_string(x, y + W.get_line_ascent(), limit_text(W, detab(data), w))
    end
 end
@@ -177,7 +177,7 @@ abstract class WithCloneItemPaint(ItemPaint)
       return cw
    end
 
-   public finally()
+   public override finally()
       (\cw).close()
       wt := ct := cw := &null
    end
@@ -187,20 +187,20 @@ end
 # subclassed in order to provide the `make_clone` method.
 #
 abstract class AttributedTextItemPaint(WithCloneItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return get_clone(W, &yes).text_width(detab(data))
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return get_clone(W, &yes).get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       W := get_clone(W, &yes)
       return Size(W.text_width(detab(data)), W.get_line_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       W := get_clone(W)
       W.draw_string(x, y + W.get_line_ascent(), detab(data))
    end
@@ -209,19 +209,19 @@ end
 # An `ItemPaint` in which each piece of data is a Pixels instance.
 #
 class PixelsItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return data.get_width()
    end
 
-   public get_height(W, data)
+   public override get_height(W, data)
       return data.get_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(data.get_width(), data.get_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       W.draw_image(x, y, data)
    end
 end
@@ -231,19 +231,19 @@ end
 # the user to initialize and dispose of the windows.
 #
 class ImageWindowItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return data.get_width()
    end
 
-   public get_height(W, data)
+   public override get_height(W, data)
       return data.get_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(data.get_width(), data.get_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       data.copy_to(,,,, W, x, y)
    end
 end
@@ -253,15 +253,15 @@ end
 # destination.
 #
 class ImageCacheItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return ImageCache.get(data, W).get_width() | 0
    end
 
-   public get_height(W, data)
+   public override get_height(W, data)
       return ImageCache.get(data, W).get_height() | 0
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       local i
       return if i := ImageCache.get(data, W) then
          Size(i.get_width(), i.get_height())
@@ -269,7 +269,7 @@ class ImageCacheItemPaint(ItemPaint)
          Size(0, 0)
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       ImageCache.get(data, W).copy_to(,,,, W, x, y)
    end
 end

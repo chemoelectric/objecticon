@@ -22,7 +22,7 @@ class PopupEditor(Component, MenuMode)
       return self
    end
 
-   public layout()
+   public override layout()
       editor.x := self.x
       editor.y := self.y
       editor.w := self.w
@@ -30,20 +30,20 @@ class PopupEditor(Component, MenuMode)
       editor.layout()
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(editor.in_region(e))
    end
 
-   public allow_nested(c)
+   public override allow_nested(c)
       c := c.get_nesting_component()
       succeed c.gen_parents() === editor
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
       return comp
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
       return editor
    end
 
@@ -57,7 +57,7 @@ class PopupEditor(Component, MenuMode)
          parent_dialog.get_focus().fire(type, ev)
    end
 
-   public close_all()
+   public override close_all()
       parent_dialog.set_focus(old_focus)
       invalidate()
       parent_dialog.exit_menu_mode(self)
@@ -65,7 +65,7 @@ class PopupEditor(Component, MenuMode)
       fire(Event.POPUP_CLOSED)
    end
 
-   public new(editor)
+   public override new(editor)
       Component.new()
       self.editor := editor
       editor.connect(close_all, Event.ACTION)

@@ -132,7 +132,7 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       struct.set_contents(c.string_rep())
    end
 
-   public validate_input()
+   public override validate_input()
       # Check any null dimension is allowable - it won't be if we've added
       # a new tab.
       #
@@ -147,7 +147,7 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       # Forces use of a new line_break when the TabSet's layout() is called.  This is
       # necessary to stop it keeping the old line_break if we have only moved a tab.
@@ -157,7 +157,7 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       c.prefer_one_row_flag := prefer_one_row_cb.get_status()
    end
 
-   public setup()
+   public override setup()
       local p, q
 
       CanvasComponentDialog.setup()

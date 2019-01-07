@@ -1123,7 +1123,7 @@ class HttpClient(NetClient)
          request.output_stream.writes1(s) | error_dont_retry("Couldn't write to request output stream: " || &why)
    end
 
-   public new()
+   public override new()
       NetClient.new()
       cookies := table()
       authentications := table()

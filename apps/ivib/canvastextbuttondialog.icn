@@ -11,7 +11,7 @@
 #
 #
 class CanvasTextButtonDialog(CanvasButtonDialog)
-   public setup()
+   public override setup()
       has_label_down := &yes
       CanvasButtonDialog.setup()
    end

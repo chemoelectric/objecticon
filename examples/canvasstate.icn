@@ -12,14 +12,14 @@ class Untitled(Dialog)
       state_label,
       err_label
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       t := Dispatcher.new_task{tick()}
       t.start()
       set_pos(200,200)
    end
 
-   public init_dialog()
+   public override init_dialog()
       other := Window().
          set_pos(500,200).
          set_resize(&yes).
@@ -53,7 +53,7 @@ class Untitled(Dialog)
          err_label.set_fg("red").set(&why).reset()
    end
 
-   public end_dialog()
+   public override end_dialog()
       other.close()
    end
 

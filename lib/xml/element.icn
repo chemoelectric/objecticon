@@ -105,7 +105,7 @@ abstract class Element(Node)
    #
    # Print the structure to the given file
    #
-   public print_structure(f, indent, flags)
+   public override print_structure(f, indent, flags)
       local s, x, i, j, e
       /indent := 0
       i := repl(" ", indent * 5)
@@ -129,7 +129,7 @@ abstract class Element(Node)
       write(f, i, "End of tag : </", self.name, ">")
    end
 
-   public new(n)
+   public override new(n)
       Node.new()
       self.attributes := table()
       self.name := n

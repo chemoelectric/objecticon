@@ -79,7 +79,7 @@ class CheckBox(Button)
       return self
    end
 
-   public initially()
+   public override initially()
       #
       # Set the icons if necessary
       #
@@ -98,35 +98,35 @@ class CheckBox(Button)
       unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
    end
 
-   public finally()
+   public override finally()
       Component.finally()
       paint.finally()
       unchecked_paint.finally()
       checked_paint.finally()
    end
 
-   public get_default_width()
+   public override get_default_width()
       #
       # We give extra border space; this looks better with the focus rectangle.
       #
       return paint.w + self.unchecked_paint.w + Gui.X_INSET + Gui.TEXT_INSET
    end
 
-   public get_default_height()
+   public override get_default_height()
       return max(paint.h, unchecked_paint.h)
    end
 
-   public layout()
+   public override layout()
       self.tx := self.x + self.unchecked_paint.w + Gui.X_INSET
       self.tw := self.w - self.unchecked_paint.w - Gui.X_INSET - Gui.TEXT_INSET
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       Button.shift(dx, dy)
       tx +:= dx
    end
 
-   public visualize_action(e)
+   public override visualize_action(e)
       # For a checkbox, visualizing a keyboard action introduces a
       # slight delay and has no real advantage; so we just call
       # on_action directly.
@@ -134,7 +134,7 @@ class CheckBox(Button)
          on_action(e)
    end
 
-   public display()
+   public override display()
       local i
 
       if \self.is_down then
@@ -154,7 +154,7 @@ class CheckBox(Button)
                                         self.tw + 2 * Gui.TEXT_INSET, self.h)
    end
 
-   public new()
+   public override new()
       Button.new()
       self.toggles_flag := &yes
       self.set_constraint("x_align", Align.L)

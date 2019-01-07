@@ -117,6 +117,10 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Native "
       if iand(f, Class.Final) ~= 0 then
          s ||:= "Final "
+      if iand(f, Class.Override) ~= 0 then
+         s ||:= "Override "
+      if iand(f, Class.Mixin) ~= 0 then
+         s ||:= "Mixin "
       if iand(f, Class.Special) ~= 0 then
          s ||:= "Special "
       if iand(f, Class.Removed) ~= 0 then

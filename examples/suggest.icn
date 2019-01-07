@@ -11,20 +11,20 @@ class Untitled(Dialog)
       panel_1,
       text_button_2
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       image_1.set_image(LOGO)
       image_1.set_size()
       text_field_1.set_contents(u"")
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end

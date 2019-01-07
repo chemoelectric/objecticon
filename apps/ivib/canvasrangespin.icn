@@ -19,7 +19,7 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local s
       CanvasComponent.gen_code(c)
       if \self.lo | \self.hi then {
@@ -35,7 +35,7 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
    #
    # Duplicate object.
    #
-   public dup(pc)
+   public override dup(pc)
       local c
       c := CanvasRangeSpin()
       CanvasComponent.dup_fields(c)
@@ -45,7 +45,7 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
       return c
    end
 
-   public post_decode()
+   public override post_decode()
       CanvasComponent.post_decode()
       set_value(value)
    end
@@ -53,7 +53,7 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
           ["Hi", "hi"] |
           ["Lo", "lo"] |
@@ -64,19 +64,19 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasRangeSpinDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public new()
+   public override new()
       RangeSpin.new()
       CanvasComponent.new()
       self.class_name := "RangeSpin"

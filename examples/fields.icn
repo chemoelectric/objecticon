@@ -16,7 +16,7 @@ class Untitled(Dialog)
       color_field,
       dir_field
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       time_field.set_size().set_format("hh:mm")
       year_field.set_size().set_value(2000)

@@ -157,7 +157,7 @@ class MenuComponentEdit(Dialog)
       c.tooltip := tooltip_field.get_contents()
    end
 
-   public new(c)
+   public override new(c)
       Dialog.new()
       self.c := c
       setup()
