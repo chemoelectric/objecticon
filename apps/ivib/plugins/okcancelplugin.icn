@@ -42,7 +42,7 @@ class OkCancelPlugin(Plugin)
       if h := \obj.config["okay_method"] then {
          c.add_import("gui", "Event")
          c.chain("connect(" || h || ", Event.ACTION)")
-         c.add_method("private", h, ["ev"])
+         c.add_method(["private"], h, ["ev"])
       }
       c.line(obj.name || ".add(" || t || ")")
       c.line(t || " := TextButton()")
@@ -50,7 +50,7 @@ class OkCancelPlugin(Plugin)
       if h := \obj.config["cancel_method"] then {
          c.add_import("gui", "Event")
          c.chain("connect(" || h || ", Event.ACTION)")
-         c.add_method("private", h, ["ev"])
+         c.add_method(["private"], h, ["ev"])
       }
       c.line(obj.name || ".add(" || t || ")")
    end
