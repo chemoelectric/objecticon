@@ -8,7 +8,7 @@
 import gui
 
 class CanvasListSpinUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasListSpin()
       t.set_selection_list([])
@@ -16,11 +16,11 @@ class CanvasListSpinUI(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Spin"
    end
 
-   public get_name()
+   public override get_name()
       return "ListSpin"
    end
 end

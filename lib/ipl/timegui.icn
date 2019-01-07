@@ -23,24 +23,24 @@ class DateField(DropDown)
       close_all()
    end
 
-   public create_popup()
+   public override create_popup()
       return Calendar(last_val).connect(got_date, Event.VALUE_CHANGED)
    end
 
-   public create_view()
+   public override create_view()
       return DropDownTextField()
    end
 
-   public initially()
+   public override initially()
       DropDown.initially()
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
-   public do_increment(ev)
+   public override do_increment(ev)
       assign_value(last_val.set_mday(last_val.mday + 1), ev, &yes)
    end
 
-   public do_decrement(ev)
+   public override do_decrement(ev)
       assign_value(last_val.set_mday(last_val.mday - 1), ev, &yes)
    end
 
@@ -91,7 +91,7 @@ class DateField(DropDown)
    # Create a new instance optionally with the given initial value of
    # the field, as a `Time` instance.
    #
-   public new(val)
+   public override new(val)
       DropDown.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
@@ -110,18 +110,18 @@ class TimeField(Spin)
       format,
       last_val
 
-   public create_view()
+   public override create_view()
       return SpinTextField().set_filter(&digits ++ ':')
    end
 
-   public do_increment(ev)
+   public override do_increment(ev)
       if find("ss", format) then
          assign_value(last_val.set_sec(last_val.sec + 1), ev, &yes)
       else
          assign_value(last_val.set_min(last_val.min + 1), ev, &yes)
    end
 
-   public do_decrement(ev)
+   public override do_decrement(ev)
       if find("ss", format) then
          assign_value(last_val.set_sec(last_val.sec - 1), ev, &yes)
       else
@@ -172,7 +172,7 @@ class TimeField(Spin)
       return self
    end
 
-   public initially()
+   public override initially()
       Spin.initially()
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
@@ -180,7 +180,7 @@ class TimeField(Spin)
    # Create a new instance optionally with the given initial value of
    # the field, as a `Time` instance.
    #
-   public new(val)
+   public override new(val)
       Spin.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
@@ -216,7 +216,7 @@ class TimezoneField(EditList)
       return self
    end
 
-   public on_textfield(ev, src, type)
+   public override on_textfield(ev, src, type)
       if last_val := get_value() then
          view.remove_wattrib(WAttrib.FG).reset()
       else
@@ -227,7 +227,7 @@ class TimezoneField(EditList)
    # Create a new instance optionally with the given initial value of
    # the field, as a `Timezone` instance.
    #
-   public new(val)
+   public override new(val)
       local l
       EditList.new()
       view.set_filter(&digits ++ &ucase ++ '+\-')
@@ -255,24 +255,24 @@ class WeekField(DropDown)
       close_all()
    end
 
-   public create_popup()
+   public override create_popup()
       return Calendar(last_val).set_week_mode(&yes).connect(got_date, Event.VALUE_CHANGED)
    end
 
-   public create_view()
+   public override create_view()
       return DropDownTextField()
    end
 
-   public initially()
+   public override initially()
       DropDown.initially()
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
-   public do_increment(ev)
+   public override do_increment(ev)
       assign_value(last_val.set_mday(last_val.mday + 7), ev, &yes)
    end
 
-   public do_decrement(ev)
+   public override do_decrement(ev)
       assign_value(last_val.set_mday(last_val.mday - 7), ev, &yes)
    end
 
@@ -323,7 +323,7 @@ class WeekField(DropDown)
    # Create a new instance optionally with the given initial value of
    # the field, as a `Time` instance.
    #
-   public new(val)
+   public override new(val)
       DropDown.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
@@ -336,7 +336,7 @@ end
 # A `List` populated with the months of the year.
 #
 class MonthField(List)
-   public new()
+   public override new()
       List.new()
       set_selection_list(Time.LOCAL_MONTHS[1:13])
       return
@@ -346,7 +346,7 @@ end
 # A `RangeSpin` with the range of four-digit years.
 #
 class YearField(RangeSpin)
-   public new()
+   public override new()
       RangeSpin.new()
       set_range(1000, 9999)
       return
@@ -358,7 +358,7 @@ end
 class DayButton(TextButton)
    private readable
       time
-   public new(t)
+   public override new(t)
       TextButton.new()
       self.time := clone(t)
       set_constraint("x_fill", &yes)
@@ -374,7 +374,7 @@ end
 class WeekButton(TextButton)
    private readable
       time
-   public new(t)
+   public override new(t)
       TextButton.new()
       self.time := clone(t)
       set_constraint("x_fill", &yes)
@@ -502,12 +502,12 @@ class Calendar(Component)
       return self
    end
 
-   public display()
+   public override display()
       border.draw(self.cbwin, x, y, w, h)
       self.display_children()
    end
 
-   public new(val)
+   public override new(val)
       local p
       Component.new()
       /val := Time()

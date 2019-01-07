@@ -51,13 +51,13 @@ class Prefs(SelectiveObjectCodec)
       plugin_path,
       named_image_path
 
-   public get_template()
+   public override get_template()
       suspend ["Undo Size", "undo_size"] |
               ["Plugin Path", "plugin_path"] |
               ["Named Image Path", "named_image_path"]
    end
 
-   protected post_decode()
+   protected override post_decode()
       /named_image_path := ["images"]
       /plugin_path := ["plugins"]
    end
@@ -95,7 +95,7 @@ class CustomToolBar(Component)
       }
    end
 
-   public new()
+   public override new()
       Component.new()
       x1 := y1 := 0
       bg := ButtonGroup()
@@ -234,7 +234,7 @@ class Main(Dialog)
       return self
    end      
 
-   public init_dialog()
+   public override init_dialog()
       win.set_min_size(win.get_width(), win.get_height())
    end
 
@@ -1029,7 +1029,7 @@ class Main(Dialog)
       return n
    end
 
-   public new()
+   public override new()
       local mb, file, edit, alignment_sub_menu, copy_sub_menu, group_sub_menu,
          uis, objects_menu, tb, ui, listener, mi, ui_button, p,
          order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext, k
@@ -1420,7 +1420,7 @@ class Preferences(Dialog)
       self.dispose()
    end
 
-   public new(c)
+   public override new(c)
       local tabset, t, oc
       Dialog.new()
       self.c := c
@@ -1554,7 +1554,7 @@ class PathTab(TabItem)
       return contents
    end
 
-   public new(l)
+   public override new(l)
       local p
       TabItem.new()
       contents := ipl.pdco.List{ ucs(!l) }
@@ -1628,14 +1628,14 @@ end
 class IvibClipboardSelectionOwner(SelectionOwner)
    public parent
 
-   public get_content()
+   public override get_content()
       return parent.clipboard
    end
 
-   public lost_ownership()
+   public override lost_ownership()
    end
 
-   public get_targets()
+   public override get_targets()
       return Ivib.IVIB_COMPONENT_TARGET
    end
 

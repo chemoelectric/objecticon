@@ -12,21 +12,21 @@ class HtmlElement(Element)
    #
    # Set the name of the element, which is converted to upper case.
    #
-   public set_name(s) 
+   public override set_name(s) 
       return Element.set_name(map(s, &lcase, &ucase))
    end
 
    #
    # Return the attribute for this element
    #
-   public get_attribute(key)
+   public override get_attribute(key)
       return Element.get_attribute(map(key, &lcase, &ucase))
    end
 
    #
    # Set an attribute for this element.
    #
-   public set_attribute(key, value)
+   public override set_attribute(key, value)
       return Element.set_attribute(map(key, &lcase, &ucase), value)
    end
 
@@ -37,7 +37,7 @@ class HtmlElement(Element)
    # :Parameters :
    # :  `s` - the case-insensitive name of the sub-elements.
    #
-   public search_tree(s)
+   public override search_tree(s)
       s := map(\s, &lcase, &ucase)
       suspend Element.search_tree(s)
    end
@@ -49,7 +49,7 @@ class HtmlElement(Element)
    # :Parameters :
    # :  `s` - the case-insensitive name of the sub-elements.
    #
-   public search_children(s)
+   public override search_children(s)
       s := map(\s, &lcase, &ucase)
       suspend Element.search_children(s)
    end

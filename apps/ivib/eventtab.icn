@@ -79,7 +79,7 @@ class EventTab(TabItem)
       return contents
    end
 
-   public new(l, name_field)
+   public override new(l, name_field)
       local c1, c2, p
       TabItem.new()
       set_label("Events")

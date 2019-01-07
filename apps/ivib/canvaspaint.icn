@@ -5,7 +5,7 @@ class CanvasPaint(CanvasObject)
       return PaintEdit(self)
    end
 
-   private pre_decode()
+   private override pre_decode()
       new()
    end
 
@@ -18,7 +18,7 @@ end
 
 
 class CanvasTextPaint(CanvasPaint,TextPaint)
-   public dup()
+   public override dup()
       local c
       c := CanvasTextPaint()
       CanvasObject.dup_fields(c)
@@ -26,17 +26,17 @@ class CanvasTextPaint(CanvasPaint,TextPaint)
       return c
    end
 
-   public get_template()
+   public override get_template()
       suspend CanvasPaint.get_template() |  [ "Str", "str"]
    end
 
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "(" || image(self.str) || ")")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public new(s)
+   public override new(s)
       TextPaint.new(s)
       CanvasPaint.new()
       self.class_name := "TextPaint"
@@ -46,11 +46,11 @@ end
 
 
 class CanvasImagePaint(CanvasPaint,ImagePaint)
-   public dialog()
+   public override dialog()
       return ImagePaintEdit(self)
    end
 
-   public dup()
+   public override dup()
       local c
       c := CanvasImagePaint()
       CanvasObject.dup_fields(c)
@@ -62,7 +62,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       return c
    end
 
-   public get_template()
+   public override get_template()
       suspend CanvasPaint.get_template() |
          ["Image Str", "image_str"] |
          ["Image Cache", "image_cache"] |
@@ -72,7 +72,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
 
    end
 
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "()")
       c.chain("set_image(" || image(\self.image_str) || ")")
       c.chain("set_cache(" || image(\self.image_cache) || ")")
@@ -83,7 +83,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public new()
+   public override new()
       ImagePaint.new()
       CanvasPaint.new()
       self.class_name := "ImagePaint"
@@ -93,11 +93,11 @@ end
 
 
 class CanvasGridPaint(CanvasPaint,GridPaint)
-   public dialog()
+   public override dialog()
       return GridPaintEdit(self)
    end
 
-   public dup()
+   public override dup()
       local c
       c := CanvasGridPaint()
       CanvasObject.dup_fields(c)
@@ -105,17 +105,17 @@ class CanvasGridPaint(CanvasPaint,GridPaint)
       return c
    end
 
-   public get_template()
+   public override get_template()
       suspend CanvasPaint.get_template() | [ "Fmt", "fmt"]
    end
 
-   public gen_code(c)
+   public override gen_code(c)
       c.line(name || " := " || self.class_name || "(" || image(self.fmt) || ")")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public new(s)
+   public override new(s)
       GridPaint.new(s)
       CanvasPaint.new()
       self.class_name := "GridPaint"

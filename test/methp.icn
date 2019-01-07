@@ -24,7 +24,7 @@ class B(A)
 
    public optional g()
 
-   public f()
+   public override f()
       local t
       t := self.f
       return [ B.h, [self,t], [t,self], [t,t], self.f, self.f2, self.g, 

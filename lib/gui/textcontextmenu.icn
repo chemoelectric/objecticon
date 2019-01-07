@@ -16,7 +16,7 @@ class TextContextMenu(Menu)
       ImageCache.copy_key(key, IconTheme.find_icon_and_cache(icon, Gui.MENU_ICON_SIZE, &yes))
    end
 
-   public new(parent)
+   public override new(parent)
       Menu.new()
       if parent.has_region() then {
          if parent.is_editable() then

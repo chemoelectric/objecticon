@@ -73,11 +73,11 @@ abstract class ScrollArea(Component, HasUseWheel)
       return self
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       return get_default_subject_height(dw -border.get_total_width()) + border.get_total_height()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return get_default_subject_width() + border.get_total_width()
    end
 
@@ -89,7 +89,7 @@ abstract class ScrollArea(Component, HasUseWheel)
       return get_subject_width()
    end
 
-   public layout()
+   public override layout()
       self.set_internal_fields()
    end
 
@@ -451,11 +451,11 @@ abstract class ScrollArea(Component, HasUseWheel)
       view.layout()
    end
 
-   public handle_wheel_up(e)
+   public override handle_wheel_up(e)
       (\vsb).handle_wheel_up(e)
    end
 
-   public handle_wheel_down(e)
+   public override handle_wheel_down(e)
       (\vsb).handle_wheel_down(e)
    end
 
@@ -478,7 +478,7 @@ abstract class ScrollArea(Component, HasUseWheel)
       view.invalidate()
    end
 
-   public display()
+   public override display()
       border.draw_rect(cbwin, self)
       display_children()
       if \default_key_listener & has_focus() & is_unshaded() then
@@ -545,7 +545,7 @@ abstract class ScrollArea(Component, HasUseWheel)
       return self
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed \default_key_listener & member(Key.CURSOR, e.code)
    end
 
@@ -610,7 +610,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public abstract create_view()
 
-   public new()
+   public override new()
       Component.new()
       self.set_border(SunkenBorder())
       set_use_wheel(&yes)

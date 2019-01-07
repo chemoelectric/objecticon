@@ -16,7 +16,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local e
       (\self.layout_delegate).gen_code(c)
       every (!self.children).gen_code(c)
@@ -33,7 +33,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasOverlayItem()
       CanvasComponent.dup_fields(c)
@@ -44,13 +44,13 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Children", "children"] |
          ["Parent OverlaySet", "parent"]
    end
 
-   public display()
+   public override display()
       if in_preview() then
          OverlayItem.display()
       else {
@@ -66,14 +66,14 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasOverlayItemDialog(self)
    end
 
    #
    # Overrides CanvasComponent.is_inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       local e, o
       if c === self then
          fail
@@ -87,7 +87,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local t, o
       every t := back(self.z_children) do
          if o := t.which_cursor_over(e) then
@@ -104,7 +104,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
       parent_Canvas.set_modified()
    end
 
-   public op_delete()
+   public override op_delete()
       local i, c
       if parent.which_one === self then {
          i := parent.get_index(self)
@@ -114,7 +114,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
       parent_Canvas.delete(self)
    end
 
-   public create_menu()
+   public override create_menu()
       local m, i
       m := CanvasComponent.create_menu()
       if self ~=== parent.which_one then {
@@ -125,29 +125,29 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
       return m
    end
 
-   public allows_selection()
+   public override allows_selection()
    end
 
-   public allows_add()
+   public override allows_add()
       return 1
    end
 
-   public allows_positioning()
+   public override allows_positioning()
    end
 
-   public allows_copy()
+   public override allows_copy()
    end
 
-   public allows_delete()
+   public override allows_delete()
       # Can't delete the last item
       return *parent.children > 1
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | !self.children
    end
 
-   public new()
+   public override new()
       OverlayItem.new()
       CanvasComponent.new()
       self.set_show_layout(&yes)

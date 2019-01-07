@@ -149,7 +149,7 @@ class XmlElement(Element)
             suspend n
    end
 
-   public print_structure(f, indent, flags)
+   public override print_structure(f, indent, flags)
       local s, x, i, e, j
 
       if /flags then {
@@ -179,7 +179,7 @@ class XmlElement(Element)
       write(f, i, "End of tag : </", to_string(self.global_name), ">")
    end
 
-   public new(n)
+   public override new(n)
       Element.new(n)
       attributes_global_name := table()
       namespace_declarations := table()

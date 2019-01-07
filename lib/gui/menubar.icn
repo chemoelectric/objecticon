@@ -22,7 +22,7 @@ class MenuBar(Component, MenuSystem)
       which_open,           # Currently open menu
       menus                 # List of menus.
 
-   public close_all()
+   public override close_all()
       set_which_highlight()
    end
 
@@ -36,7 +36,7 @@ class MenuBar(Component, MenuSystem)
    # :Fails :
    # :  If i is out of range
    #
-   public add(c, i)
+   public override add(c, i)
       /i := 0
       insert(self.menus, i, c) | fail
       c.set_component_link(self)
@@ -48,7 +48,7 @@ class MenuBar(Component, MenuSystem)
    #
    # Get the index of the given `Menu`
    #
-   public get_index(c)
+   public override get_index(c)
       return keyof(self.menus, c)
    end
 
@@ -59,7 +59,7 @@ class MenuBar(Component, MenuSystem)
    # :Fails :
    # :  If c is not a child menu of this instance.
    #
-   public remove(c)
+   public override remove(c)
       return remove_index(get_index(c))
    end
 
@@ -70,7 +70,7 @@ class MenuBar(Component, MenuSystem)
    # :Fails :
    # :  If i is out of range
    #
-   public remove_index(i)
+   public override remove_index(i)
       local c
       c := self.menus[i] | fail
       delete(self.menus, i)
@@ -83,7 +83,7 @@ class MenuBar(Component, MenuSystem)
    #
    # Remove all the menus.
    #
-   public remove_all()
+   public override remove_all()
       return remove_list() & self
    end
 
@@ -96,7 +96,7 @@ class MenuBar(Component, MenuSystem)
    # :  If c is not a child of this instance, 
    #             or j is out of range.
    #
-   public reposition(c, j)
+   public override reposition(c, j)
       return reposition_index(get_index(c), j)
    end
 
@@ -108,7 +108,7 @@ class MenuBar(Component, MenuSystem)
    # :Fails :
    # :  If either index is out of range.
    #
-   public reposition_index(i, j)
+   public override reposition_index(i, j)
       lmove(menus, i, j) | fail
       return self
    end
@@ -122,7 +122,7 @@ class MenuBar(Component, MenuSystem)
    # :  If the range is invalid.
    #
    #
-   public remove_list(i, j)
+   public override remove_list(i, j)
       local l
       l := lextract(menus, i, j) | fail
       every (!l).set_component_link(&null)
@@ -139,7 +139,7 @@ class MenuBar(Component, MenuSystem)
    # :Fails :
    # :  If i is out of range
    #
-   public add_list(l, i)
+   public override add_list(l, i)
       linsert(menus, l, i) | fail
       every (!l).set_component_link(self)
       if is_initialized() then
@@ -147,18 +147,18 @@ class MenuBar(Component, MenuSystem)
       return self
    end
 
-   public initially()
+   public override initially()
       Component.initially()
       every (!self.menus).initially()
    end
 
-   public finally()
+   public override finally()
       self.set_which_highlight()
       every (!self.menus).finally()
       Component.finally()
    end
 
-   public display()
+   public override display()
       local m
 
       border.draw_rect(self.cbwin, self)
@@ -249,7 +249,7 @@ class MenuBar(Component, MenuSystem)
       }
    end
 
-   public make_partial()
+   public override make_partial()
       set_which_highlight(self.which_highlight)
    end
 
@@ -258,7 +258,7 @@ class MenuBar(Component, MenuSystem)
          self.set_which_highlight()
    end
 
-   public handle_accel(e)
+   public override handle_accel(e)
       local m
       m := find_key(e.code) | fail
       # The accelerator event will be passed to the menu, which could
@@ -269,15 +269,15 @@ class MenuBar(Component, MenuSystem)
       m.cursor_on()
    end
 
-   public match_accel(e)
+   public override match_accel(e)
       succeed find_key(e)
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(in_region(e))
    end
 
-   public get_tooltip(e)
+   public override get_tooltip(e)
       local m
       if \self.tooltip then
          return self.tooltip
@@ -305,7 +305,7 @@ class MenuBar(Component, MenuSystem)
       }
    end
 
-   public go_right()
+   public override go_right()
       local m, t, first
       every m := !menus do {
          if m.is_unshaded() then {
@@ -327,7 +327,7 @@ class MenuBar(Component, MenuSystem)
       }
    end
 
-   public go_left()
+   public override go_left()
       local m, last
 
       every m := !menus do {
@@ -403,7 +403,7 @@ class MenuBar(Component, MenuSystem)
       }
    end
 
-   public get_default_height()
+   public override get_default_height()
       local mh, m
       mh := 0
       every m := !self.menus do
@@ -411,7 +411,7 @@ class MenuBar(Component, MenuSystem)
       return mh + border.get_total_height()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local tw, m
       tw := 0
       every m := !self.menus do
@@ -419,7 +419,7 @@ class MenuBar(Component, MenuSystem)
       return tw + border.get_total_width()
    end
 
-   public layout()
+   public override layout()
       local px, m
       #
       # Compute x, y for each sub-menu
@@ -434,7 +434,7 @@ class MenuBar(Component, MenuSystem)
       }
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       local m
       Component.shift(dx, dy)
       every m := !self.menus do {
@@ -443,18 +443,18 @@ class MenuBar(Component, MenuSystem)
       }
    end
 
-   public allow_nested(c)
+   public override allow_nested(c)
       succeed is(c, SubMenuProxyComponent) & c.menu.parent_component === self
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
       return self
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_border(RaisedBorder())
       self.menus := []

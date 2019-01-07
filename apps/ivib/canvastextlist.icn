@@ -14,14 +14,14 @@ import gui
 # Class for representing a TextList on the canvas.
 #
 class CanvasTextList(CanvasComponent,TextList)
-   public min_height()
+   public override min_height()
       # need a smart calculation font height + borders + scrollbar
       # for now based on constants in gui.icn, guiconst.icn we go with
       # 14 + 8*2 + 22
       return 52
    end
  
-   public min_width()
+   public override min_width()
       # need a smart calculation font height + borders + scrollbar
       # for now based on constants in gui.icn, guiconst.icn we go with
       # 14 + 5*2 + 22
@@ -31,7 +31,7 @@ class CanvasTextList(CanvasComponent,TextList)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
@@ -41,7 +41,7 @@ class CanvasTextList(CanvasComponent,TextList)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTextList()
       CanvasComponent.dup_fields(c)
@@ -53,7 +53,7 @@ class CanvasTextList(CanvasComponent,TextList)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Select Mode", "select_mode"] |
          ["Contents", "contents"]
@@ -62,19 +62,19 @@ class CanvasTextList(CanvasComponent,TextList)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTextListDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public new()
+   public override new()
       TextList.new()
       CanvasComponent.new()
       self.class_name := "TextList"

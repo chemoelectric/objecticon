@@ -17,19 +17,19 @@ class CanvasLabelDialog(CanvasComponentDialog)
    public 
       paint_field
 
-   public validate_input()
+   public override validate_input()
       CanvasComponentDialog.validate_input() | fail 
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
       return
    end
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_paint(paint_field.get_contents())
    end
 
-   public setup()
+   public override setup()
       local p
       CanvasComponentDialog.setup()
 

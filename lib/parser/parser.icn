@@ -72,7 +72,7 @@ class Parser(Connectable)
       PARSER_ERROR_EVENT := "parser error"
    end
 
-   public new()
+   public override new()
       Connectable.new()
       pp := Preprocessor().connect(pperror)
       lex := Lex().connect(lxerror)

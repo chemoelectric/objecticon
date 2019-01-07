@@ -20,7 +20,7 @@ class UndoManager(CompoundEdit)
       index,
       last
 
-   public redo()
+   public override redo()
       if \closed then
          return CompoundEdit.redo()
       if index <= *l then {
@@ -31,7 +31,7 @@ class UndoManager(CompoundEdit)
       }
    end
 
-   public undo()
+   public override undo()
       if \closed then
          return CompoundEdit.undo()
       if index > 1 then {
@@ -57,7 +57,7 @@ class UndoManager(CompoundEdit)
       return self
    end
 
-   public add_edit(other)
+   public override add_edit(other)
       if \closed then
          return CompoundEdit.add_edit(other)
 
@@ -96,13 +96,13 @@ class UndoManager(CompoundEdit)
          return l[index]
    end
 
-   public clear()
+   public override clear()
       CompoundEdit.clear()
       self.index := 1
       return self
    end
 
-   public new()
+   public override new()
       CompoundEdit.new()
       self.limit := 100
       self.index := 1

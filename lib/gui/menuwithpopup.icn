@@ -18,7 +18,7 @@ abstract class MenuWithPopup(Menu)
    # :  `ev` - the right click event.
    public abstract create_popup(item, ev)
 
-   public set_which_highlight(x)
+   public override set_which_highlight(x)
       #
       # Do nothing if already in desired state.
       #
@@ -42,7 +42,7 @@ abstract class MenuWithPopup(Menu)
       return self
    end
 
-   public handle_press(e)
+   public override handle_press(e)
       local m, p
 
       if m := which_item(e) then {

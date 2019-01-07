@@ -17,7 +17,7 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       every (!self.children).gen_code(c)
       CanvasComponent.gen_code(c)
       every c.chain("add(" || (!self.children).name || ")")
@@ -26,7 +26,7 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    # Duplicate object.
    #
-   public dup(pc)
+   public override dup(pc)
       local c
       c := CanvasPanel()
       CanvasComponent.dup_fields(c)
@@ -37,14 +37,14 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() | ["Children", "children"]
    end
 
    #
    # Overrides CanvasComponent.is_inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       local e, o
       if c === self then
          fail
@@ -58,7 +58,7 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local t, o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
@@ -72,11 +72,11 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasPanelDialog(self)
    end
 
-   public display()
+   public override display()
       if in_preview() then
          Panel.display()
       else {
@@ -86,15 +86,15 @@ class CanvasPanel(CanvasComponent,Panel)
       }
    end
 
-   public allows_add()
+   public override allows_add()
       return 1
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | !self.children
    end
 
-   public new()
+   public override new()
       Panel.new()
       CanvasComponent.new()
       self.set_show_layout(&yes)

@@ -23,12 +23,12 @@ class FileDialogPos()
 end
 
 package class EditListField(FileSuggestField)
-   public on_change(ev)
+   public override on_change(ev)
       # Don't start a suggestion on navigation of the list.
       parent.was_applied(ev) | SuggestField.on_change(ev)
    end
 
-   protected do_request(fg)
+   protected override do_request(fg)
       # Don't popup if an existing file warning is in place, except on
       # tab press (fg is &yes).
       #
@@ -40,7 +40,7 @@ package class EditListField(FileSuggestField)
       return FileSuggestField.do_request(fg)
    end
 
-   public new()
+   public override new()
       FileSuggestField.new()
       set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       return
@@ -48,7 +48,7 @@ package class EditListField(FileSuggestField)
 end
 
 package class FileListWithTooltip(ItemPaintList)
-   public get_tooltip(e)
+   public override get_tooltip(e)
       local t, s
       if t := contents[get_line_under_pointer(e)] then {
          s := item_paint.get_size(view.cbwin, t)
@@ -59,7 +59,7 @@ package class FileListWithTooltip(ItemPaintList)
 end
 
 package class FileEditList(EditList)
-   public layout()
+   public override layout()
       # Hide the button if the init_files list was empty.
       if *selection_list = 0 then {
          view.x := x + border.get_l_inset()
@@ -75,26 +75,26 @@ package class FileEditList(EditList)
          EditList.layout()
    end
 
-   public create_view()
+   public override create_view()
       return EditListField()
    end
 end
 
 package class FavouritesList(ButtonOnlyList)
-   public create_button()
+   public override create_button()
       local b
       b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
       theme_toolbar_button(b, "emblem-favorite")
       return b
    end
 
-   protected open_popup(ev)
+   protected override open_popup(ev)
       set_selection_list(parent_dialog.get_favourites_directories())
       object_set_selection(parent_dialog.loaded_dir_path.ucs()) | set_selection()
       ButtonOnlyList.open_popup(ev)
    end
 
-   public create_popup()
+   public override create_popup()
       return ItemPaintList().
          set_item_paint(StringDirItemPaint()).
          set_item_border(EmptyBorder().
@@ -200,7 +200,7 @@ class FileDialog(Dialog)
       return res
    end
 
-   public component_setup()
+   public override component_setup()
       #
       # Defaults and extra dirs.
       #
@@ -219,7 +219,7 @@ class FileDialog(Dialog)
       res := &null
    end
 
-   public init_dialog()
+   public override init_dialog()
       local s, x
       # Clear any cached directory list in the suggest field
       file.view.refresh()
@@ -282,7 +282,7 @@ class FileDialog(Dialog)
       }
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
    #
@@ -814,7 +814,7 @@ class FileDialog(Dialog)
       goto_dir(ev)
    end
 
-   public new()
+   public override new()
       Dialog.new()
       self.setup()
       tools_menu.set_border_mid(NullBorder())

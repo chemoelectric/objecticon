@@ -149,7 +149,7 @@ class Explorer(Dialog)
       return [dir_list, file_list]
    end
 
-   public component_setup()
+   public override component_setup()
       local root_node, split, w, bw, p, d, c
 
       set_size(scale(900),scale(600)).set_resize(&yes).set_label("Explorer")

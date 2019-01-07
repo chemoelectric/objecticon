@@ -85,7 +85,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       INTER_LINE_WIDTH := env_int("OI_SCROLLAREA_INTER_LINE_WIDTH", 1) | 2 * Gui.FINE_WIDTH
    end
 
-   public calculate_line_count()
+   public override calculate_line_count()
       return *self.contents
    end
 
@@ -731,7 +731,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       } 
    end
 
-   public on_vsb(e)
+   public override on_vsb(e)
       self.refresh()
       #
       # Simulate drag events if appropriate in order to
@@ -854,7 +854,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       }
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR, e.code)
    end
 
@@ -874,7 +874,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          [self.cursor]
    end
 
-   public draw()
+   public override draw()
       local xp, yp, i, info, h, lh, sel, cur, r, hi, ov
 
       r := view.get_cbwin_clip()
@@ -911,7 +911,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       }
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       invalidate_line(\self.cursor)
    end
 
@@ -934,7 +934,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #            highlight, "m" indicates middle highlight, "b" indicates bottom highlight.
    # :  `ov` - If non-null, the line must be drawn as showing the cursor over the line
    #
-   public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
+   public override draw_line(xp, yp, lh, i, sel, cur, hi, ov)
       draw_line_data(xp, yp, lh, i)
       draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi, ov)
    end
@@ -960,7 +960,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    public optional draw_line_data(xp, yp, lh, i)
 
-   public can_drag(ev)
+   public override can_drag(ev)
       if view.is_held(Mouse.LEFT_PRESS) & /self.draggable_cursor_flag & \self.on_a_line then
          return self.object_get_gesture_selections()
    end
@@ -1003,7 +1003,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       }
    end
 
-   public drag_event(drag, e)
+   public override drag_event(drag, e)
       local hold
       start_handle(e)
       # Don't show the over indication during a drag
@@ -1050,23 +1050,23 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       return \hold
    end
 
-   public can_drop(drag, e)
+   public override can_drop(drag, e)
       return self.object_get_highlight() | &null
    end
 
-   public drag_reset(e)
+   public override drag_reset(e)
       start_handle(e)
       self.highlight := self.highlight_part := &null
       scroll_ticker.stop()
       end_handle(e)
    end
 
-   public finally()
+   public override finally()
       scroll_ticker.stop()
       LineBasedScrollArea.finally()
    end
 
-   public new()
+   public override new()
       LineBasedScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       self.set_accepts_focus(&yes)

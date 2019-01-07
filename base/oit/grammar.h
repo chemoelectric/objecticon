@@ -101,6 +101,8 @@ fieldaccess1 : PRIVATE {Modifier1();};
         | CONST {Modifier6();};
         | READABLE {Modifier7();};
         | FINAL {Modifier8();};
+        | OVERRIDE {Modifier12();};
+        | MIXIN {Modifier13();};
 
 global	: optreadable GLOBAL {Global0($2);} idlist  {Global1($1,$2,$3,$4);} ;
 

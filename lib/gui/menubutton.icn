@@ -39,20 +39,20 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
       return self
    end
 
-   public initially()
+   public override initially()
       \self.menu | runerr("No menu set")
       Component.initially()
       self.menu.initially()
    end
 
-   public finally()
+   public override finally()
       if \self.which_open then
          self.close_menu()
       self.menu.finally()
       Component.finally()
    end
 
-   public display()
+   public override display()
       menu.draw_label(self.cbwin, 0, menu.label_w, 0)
       if menu.is_shaded() then
          Gui.style.shade_rectangle(self.cbwin,
@@ -76,18 +76,18 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
       invalidate()
    end
 
-   public close_all()
+   public override close_all()
       close_menu()
    end
 
-   public make_partial()
+   public override make_partial()
       close_menu()
    end
 
-   public go_right()
+   public override go_right()
    end
 
-   public go_left()
+   public override go_left()
    end
 
    public handle_press(e)
@@ -98,7 +98,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
          self.close_menu()
    end
 
-   public handle_accel(e)
+   public override handle_accel(e)
       if /self.which_open then
          self.open_menu()
       self.menu.cursor_on()
@@ -106,52 +106,52 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
       menu.accel_skip := e
    end
 
-   public match_accel(e)
+   public override match_accel(e)
       succeed self.menu.accel === e & menu.is_unshaded()
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(in_region(e))
    end
 
-   public get_tooltip(e)
+   public override get_tooltip(e)
       return \self.tooltip | 
          (menu.in_label_region(e) & menu.get_tooltip(e))
    end
 
-   public get_default_width()
+   public override get_default_width()
       return self.menu.get_label_mid_width() + border.get_total_width()
    end
 
-   public get_default_height()
+   public override get_default_height()
       return self.menu.get_label_mid_height() + border.get_total_height()
    end
 
-   public layout()
+   public override layout()
       self.menu.label_x := self.x + border.get_l_inset()
       self.menu.label_y := self.y + border.get_t_inset()
       self.menu.label_w := self.w - border.get_total_width()
       self.menu.label_h := self.h - border.get_total_height()
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       Component.shift(dx, dy)
       self.menu.label_x +:= dx
       self.menu.label_y +:= dy
    end
 
-   public allow_nested(c)
+   public override allow_nested(c)
       succeed is(c, SubMenuProxyComponent) & c.menu.parent_component === self
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
       return self
    end
 
-   public new()
+   public override new()
       Component.new()
       BorderWhilstEntered.new()
       self.set_border(RaisedBorder())

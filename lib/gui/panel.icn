@@ -13,7 +13,7 @@ package gui
 # A Panel of components.
 #
 class Panel(Component)
-   public new()
+   public override new()
       Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)

@@ -30,7 +30,7 @@ class Comment(Node)
       return self
    end
 
-   public new(s)
+   public override new(s)
       Node.new()
       comment := s
       return

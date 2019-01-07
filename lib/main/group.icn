@@ -38,7 +38,7 @@ class Group(Address)
       return self
    end
 
-   public to_rfc822()
+   public override to_rfc822()
       local tmp
       tmp := String{ (!mailboxes).to_rfc822(), ", " }
       return if *phrase > 0 then
@@ -51,7 +51,7 @@ class Group(Address)
       return RFC822Parser().parse_group(s)
    end   
 
-   public gen_mailboxes()
+   public override gen_mailboxes()
       suspend !mailboxes
    end
 

@@ -28,7 +28,7 @@ end
 class ComponentCmd(TextFlowCmd)
    public const c, align
 
-   public new(c, attr, align)
+   public override new(c, attr, align)
       self.c := c
       self.attr := attr
       self.align := align
@@ -39,7 +39,7 @@ end
 class TextCmd(TextFlowCmd)
    public const s
 
-   public new(s, attr)
+   public override new(s, attr)
       self.s := s
       self.attr := attr
       return
@@ -53,7 +53,7 @@ class NamedAnchorCmd(TextFlowCmd)
    public const
       name
 
-   public new(name, attr)
+   public override new(name, attr)
       self.name := name
       self.attr := attr
       return
@@ -70,7 +70,7 @@ class SubEndCmd(TextFlowCmd) end
 class BreakCmd(TextFlowCmd)
    public const clear
 
-   public new(clear, attr)
+   public override new(clear, attr)
       self.clear := clear
       self.attr := attr
       return
@@ -81,7 +81,7 @@ class TextOut(Rect)
    public const s, attr, ascent, descent
    package l_s     # Cached value of map(s)
 
-   public new(attr, s, ascent, descent, w, h)
+   public override new(attr, s, ascent, descent, w, h)
       self.attr := attr
       self.s := s
       self.ascent := ascent
@@ -102,7 +102,7 @@ class CompOut(Rect)
       return self
    end
 
-   public new(attr, c, align, pw, maxw)
+   public override new(attr, c, align, pw, maxw)
       self.attr := attr
       self.c := c
       self.align := align
@@ -167,7 +167,7 @@ class SearchMatch(Point)
       return r
    end
 
-   public new(textflow, x, y, memb)
+   public override new(textflow, x, y, memb)
       self.textflow := textflow
       self.x := x
       self.y := y
@@ -179,7 +179,7 @@ end
 class OutputRow(Rect)
    public const l
 
-   public new()
+   public override new()
       l := []
       return
    end
@@ -190,7 +190,7 @@ end
 class PointResult(Point)
    public const val
 
-   public new(x, y, val)
+   public override new(x, y, val)
       self.x := x
       self.y := y
       self.val := val
@@ -326,7 +326,7 @@ class TextFlow(Component, HasLastHighlight)
       return self
    end
 
-   public reset_layout()
+   public override reset_layout()
       max_width := def_width := output_rows := output_comps := left_comps :=
          calculated := named_anchors := right_comps := compute_w := &null
       every (!input).blob_width := &null
@@ -337,7 +337,7 @@ class TextFlow(Component, HasLastHighlight)
       return self
    end
 
-   public get_default_width()
+   public override get_default_width()
       if dominant_width === MAX_WIDTH then
          return get_max_width()
       if /calculated then
@@ -353,7 +353,7 @@ class TextFlow(Component, HasLastHighlight)
       return max_width
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       local mh, co
       dw -:= border.get_total_width()
       compute(dw)
@@ -480,7 +480,7 @@ class TextFlow(Component, HasLastHighlight)
       }
    end
 
-   public display()
+   public override display()
       local o, W, font, fg, x1, y1, r, t, ts, or, want_fg
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
@@ -798,7 +798,7 @@ class TextFlow(Component, HasLastHighlight)
       }
    end
 
-   public layout()
+   public override layout()
       local co, c, x1, y1
       compute(self.w - border.get_total_width())
       y_off := case v_align of {
@@ -1467,7 +1467,7 @@ class TextFlow(Component, HasLastHighlight)
       return self
    end
 
-   package save_last_highlight(he)
+   package override save_last_highlight(he)
       local or, o, n, u
       n := 0
       every or := !computed_output_rows do {
@@ -1484,7 +1484,7 @@ class TextFlow(Component, HasLastHighlight)
       }
    end
 
-   package restore_last_highlight(n, url)
+   package override restore_last_highlight(n, url)
       local or, o, u
       every or := !computed_output_rows do {
          every o := !or.l do {
@@ -1500,7 +1500,7 @@ class TextFlow(Component, HasLastHighlight)
       }
    end
 
-   public set_last_highlight(u)
+   public override set_last_highlight(u)
       if u ~=== last_highlight then {
          invalidate_url(\last_highlight)
          last_highlight := u
@@ -1519,7 +1519,7 @@ class TextFlow(Component, HasLastHighlight)
       return self
    end
 
-   public new(browser)
+   public override new(browser)
       Component.new()
       self.browser := browser
       set_border(NullBorder())

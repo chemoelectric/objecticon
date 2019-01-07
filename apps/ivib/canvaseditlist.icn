@@ -21,7 +21,7 @@ class CanvasEditList(CanvasComponent,EditList)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local s, t
       CanvasComponent.gen_code(c)
 
@@ -41,7 +41,7 @@ class CanvasEditList(CanvasComponent,EditList)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c, s, t
       c := CanvasEditList()
       CanvasComponent.dup_fields(c)
@@ -65,7 +65,7 @@ class CanvasEditList(CanvasComponent,EditList)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Contents", "tmp"] |
          ["Selection", "selection"] |
@@ -73,12 +73,12 @@ class CanvasEditList(CanvasComponent,EditList)
          ["Filter String", "filter_str"]
    end
 
-   public pre_encode()
+   public override pre_encode()
       CanvasComponent.pre_encode()
       tmp := get_contents()
    end
 
-   public post_decode()
+   public override post_decode()
       CanvasComponent.post_decode()
       self.view.set_contents(tmp)
    end
@@ -86,19 +86,19 @@ class CanvasEditList(CanvasComponent,EditList)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasEditListDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public new()
+   public override new()
       EditList.new()
       CanvasComponent.new()
       filter_str := ""

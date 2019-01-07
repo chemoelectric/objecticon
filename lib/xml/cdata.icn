@@ -29,7 +29,7 @@ class CData(Node)
       return self
    end
 
-   public new(s)
+   public override new(s)
       Node.new()
       content := s
       return

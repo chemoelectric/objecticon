@@ -16,7 +16,7 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
       contents,
       ucs_cb
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       if *contents.get_contents_str() = 0 then
          c.set_contents([])
@@ -30,7 +30,7 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
       contents.set_contents(convert_text_list(contents.get_contents(), t))
    end
 
-   public setup()
+   public override setup()
       local p
 
       CanvasComponentDialog.setup()

@@ -39,7 +39,7 @@ abstract class BaseTableColumn(TextButton)
          (self.x + self.w - CHANGE_SIZE_BORDER <= e.x < self.x + self.w)
    end
 
-   public handle_lpress(e)
+   public override handle_lpress(e)
       if in_resize_region(e) then {
          self.is_resizing := &yes
          self.parent.parent.no_more_sizing := &yes
@@ -48,7 +48,7 @@ abstract class BaseTableColumn(TextButton)
          TextButton.handle_lpress(e)
    end
 
-   public handle_ldrag(e)
+   public override handle_ldrag(e)
       if \self.is_resizing then {
          self.w_spec := e.x - self.x - drag_offset
          self.w_spec <:= MIN_COLUMN_WIDTH
@@ -60,14 +60,14 @@ abstract class BaseTableColumn(TextButton)
          TextButton.handle_ldrag(e)
    end
 
-   public handle_lrelease(e)
+   public override handle_lrelease(e)
       if \self.is_resizing then {
          self.is_resizing := &no
       } else
          TextButton.handle_lrelease(e)
    end
 
-   public get_pointer(e)
+   public override get_pointer(e)
       if in_resize_region(e) then
          return "sb h double arrow"
    end
@@ -93,7 +93,7 @@ abstract class BaseTableColumn(TextButton)
       return self
    end
 
-   public display()
+   public override display()
       TextButton.display()
       Gui.style.fill_shadow_rectangle(self.cbwin, x + w - Gui.FINE_WIDTH, y, Gui.FINE_WIDTH, h)
       if self === \parent.which_highlight then
@@ -135,12 +135,12 @@ abstract class BaseTableColumn(TextButton)
       suspend get_table_content().slice(get_column_index())
    end
 
-   public layout()
+   public override layout()
       self.tx := self.x + border.get_l_inset()
       self.tw := self.w - border.get_total_width()
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       TextButton.shift(dx, dy)
       self.tx +:= dx
    end
@@ -167,7 +167,7 @@ abstract class BaseTableColumn(TextButton)
    #
    public abstract calculate_line_height(W)
 
-   public new()
+   public override new()
       TextButton.new()
       self.set_accepts_focus(&no)
       self.set_border(EmptyBorder().
@@ -182,7 +182,7 @@ end
 # The basic table column, which displays simple textual data.
 #
 class TableColumn(BaseTableColumn)
-   public draw_cell(W, data, line, col, cy, ch)
+   public override draw_cell(W, data, line, col, cy, ch)
       local x1, y1
       x1 := case border.x_align of {
          Align.R : self.tx + self.tw - W.text_width(data)
@@ -194,7 +194,7 @@ class TableColumn(BaseTableColumn)
       W.draw_string(x1, y1 + W.get_line_ascent(), data)
    end
 
-   public calculate_line_height(W)
+   public override calculate_line_height(W)
       return W.get_line_height()
    end
 end
@@ -208,14 +208,14 @@ class ItemPaintTableColumn(BaseTableColumn)
       item_paint,
       item_border
 
-   public initially()
+   public override initially()
       \self.item_paint | runerr("ItemPaint not set")
       BaseTableColumn.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
-   public finally()
+   public override finally()
       BaseTableColumn.finally()
       self.item_paint.finally()
       self.item_border.finally()
@@ -244,13 +244,13 @@ class ItemPaintTableColumn(BaseTableColumn)
       return self
    end
 
-   public set_column_align(x)
+   public override set_column_align(x)
       BaseTableColumn.set_column_align(x)
       self.item_border.x_align := x
       return self
    end
 
-   public calculate_line_height(W)
+   public override calculate_line_height(W)
       local h, bh
       bh := item_border.get_total_height()
       if not(h := item_paint.get_constant_height(W) + bh) then {
@@ -260,14 +260,14 @@ class ItemPaintTableColumn(BaseTableColumn)
       return h
    end
 
-   public draw_cell(W, data, line, col, cy, ch)
+   public override draw_cell(W, data, line, col, cy, ch)
       local r
       r := Rect(self.x, cy, self.w, ch)
       item_paint.draw_rect(W, data, item_border.float(r, item_paint.get_size(W, data)))
       item_border.draw_rect(W, r)
    end
 
-   public new()
+   public override new()
       BaseTableColumn.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))

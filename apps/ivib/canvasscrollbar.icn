@@ -17,7 +17,7 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_value(" || self.value || ")")
       c.chain("set_increment_size(" || self.increment_size || ")")
@@ -34,7 +34,7 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasScrollBar()
       CanvasComponent.dup_fields(c)
@@ -52,7 +52,7 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
           ["Increment Size", "increment_size"] |
           ["Value", "value"] |
@@ -67,19 +67,19 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasScrollBarDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return /self.is_horizontal_flag
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return \self.is_horizontal_flag
    end
 
-   public new()
+   public override new()
       ScrollBar.new()
       CanvasComponent.new()
       self.class_name := "ScrollBar"

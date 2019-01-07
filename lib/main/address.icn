@@ -14,7 +14,7 @@ abstract class Address(ObjectOutput)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       oo.object_string(self, to_rfc822())
    end
 end

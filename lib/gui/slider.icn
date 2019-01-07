@@ -24,7 +24,7 @@ class SliderArea(Component)
       slider_w,
       slider_h
 
-   public display()
+   public override display()
       Gui.style.draw_sunken_rectangle(self.cbwin, 
                                   self.inner_x, self.inner_y, 
                                   self.inner_w, self.inner_h,
@@ -362,14 +362,14 @@ class Slider(Component, HasOrientation, HasUseWheel)
       end_handle(e)
    end
 
-   public handle_wheel_up(e)
+   public override handle_wheel_up(e)
       start_handle(e)
       move_value(self.value - self.wheel_factor * self.increment_size)
       set_pos_from_value()
       end_handle(e)
    end
 
-   public handle_wheel_down(e)
+   public override handle_wheel_down(e)
       start_handle(e)
       move_value(self.value + self.wheel_factor * self.increment_size)
       set_pos_from_value()
@@ -394,7 +394,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       invalidate()
    end
 
-   public get_default_width()
+   public override get_default_width()
       local w
       if /self.is_horizontal_flag then {
          w := AREA_H + border.get_total_width()
@@ -406,7 +406,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       }
    end
 
-   public get_default_height()
+   public override get_default_height()
       local h
       if \self.is_horizontal_flag then {
          h := AREA_H + border.get_total_height()
@@ -418,7 +418,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       }
    end
 
-   public layout()
+   public override layout()
       self.labels_pos := self.ticks_pos := &null
       if /self.is_horizontal_flag then {
          if \self.labels then
@@ -477,7 +477,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       }
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       Component.shift(dx, dy)
       if /self.is_horizontal_flag then {
          (\labels_pos) +:= dx
@@ -537,7 +537,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       }
    end
 
-   public initially()
+   public override initially()
       \self.value | runerr("Value not set")
       if /(self.lo | self.hi) then
          runerr("Range not set")
@@ -546,7 +546,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       Component.initially()
    end
 
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
 
       if \self.labels then
@@ -561,17 +561,17 @@ class Slider(Component, HasOrientation, HasUseWheel)
          border.draw_focus_rect(self.cbwin, self)
    end
 
-   public finally()
+   public override finally()
       repeat_ticker.stop()
       old_slider_area_pos := old_slider_area_size := &null
       Component.finally()
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed member(if /self.is_horizontal_flag then Key.CURSOR_V else Key.CURSOR_H, e.code)
    end
 
-   public new()
+   public override new()
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       slider_area := SliderArea()

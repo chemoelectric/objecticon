@@ -4,7 +4,7 @@ import
    io, ipl.filegui, xdg, lang, util, ipl.pdco()
 
 package class FavouriteDirectoriesTableContent(TableContent)
-   public perform_drop(drag, drop)
+   public override perform_drop(drag, drop)
       local l
       # Calculate insertion index
       l := self.get_highlight() | fail
@@ -15,7 +15,7 @@ package class FavouriteDirectoriesTableContent(TableContent)
 end
 
 package class FavouriteDirectoriesTable(Table)
-   public create_table_content()
+   public override create_table_content()
       return FavouriteDirectoriesTableContent()
    end
 end
@@ -25,19 +25,19 @@ package class ApplicationItemPaint(ItemPaint)
       return \data | "All"
    end
 
-   public get_width(W, data)
+   public override get_width(W, data)
       return W.text_width(convert(data))
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return W.get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(W.text_width(convert(data)), W.get_line_height())
    end
 
-   public draw(W, data, x, y, w)
+   public override draw(W, data, x, y, w)
       W.draw_string(x, y + W.get_line_ascent(), limit_text(W, convert(data), w))
    end
 end
@@ -98,7 +98,7 @@ class FavouriteDirectoriesDialog(Dialog)
       message_label.set(s)
    end
 
-   public component_setup()
+   public override component_setup()
       entry_table.set_contents(get_pair_list())
       etc := entry_table.table_content
       etc.
@@ -218,7 +218,7 @@ class FavouriteDirectoriesDialog(Dialog)
       msg()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       setup()
       return

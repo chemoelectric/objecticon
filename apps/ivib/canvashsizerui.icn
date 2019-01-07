@@ -8,7 +8,7 @@
 import gui
 
 class CanvasHSizerUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasSizer()
       t.set_size(scale(100))
@@ -16,11 +16,11 @@ class CanvasHSizerUI(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Separators"
    end
 
-   public get_name()
+   public override get_name()
       return "HSizer"
    end
 end

@@ -12,11 +12,11 @@ import
 abstract class GSuggestField(SuggestField)
    protected hc, domain
 
-   protected close_request()
+   protected override close_request()
       hc.close()
    end
 
-   protected abort_request()
+   protected override abort_request()
       req.interrupt()
       hc.abort()
    end
@@ -26,12 +26,12 @@ abstract class GSuggestField(SuggestField)
       return self
    end
 
-   public handle_tab(ev)
+   public override handle_tab(ev)
       # We can't do foreground requests on tab, so just trigger a background request.
       on_change(ev)
    end
 
-   public new()
+   public override new()
       SuggestField.new()
       set_contents(u"")
       domain := "www.google.com"
@@ -59,7 +59,7 @@ class GoogleSuggestField(GSuggestField)
       return s
    end
 
-   protected do_request()
+   protected override do_request()
       local hr, data, jp, v, s, u, hp, t, d, l
       if *contents = 0 then
          return []
@@ -87,7 +87,7 @@ class GoogleSuggestField(GSuggestField)
       return l
    end
 
-   public new()
+   public override new()
       GSuggestField.new()
       set_lang("en")
       set_select_using_enter(&no)
@@ -96,24 +96,24 @@ class GoogleSuggestField(GSuggestField)
 end
 
 class SymbolItemPaint(AttributedTextItemPaint)
-   protected make_clone(W)
+   protected override make_clone(W)
       return W.clone().set_fg("blue")
    end
 end
 
 class TickerSuggestField(GSuggestField)
-   public create_popup()
+   public override create_popup()
       return PTable().
          add_column(ItemPaintPTableColumn().set_item_paint(SymbolItemPaint())).
          add_column(PTableColumn()).
          add_column(PTableColumn().set_weight(1).set_align(Align.R))
    end
 
-   public convert_element(o)
+   public override convert_element(o)
       return o[1]
    end
 
-   protected do_request()
+   protected override do_request()
       local hr, data, jp, v, s, u, e, l
       if *contents = 0 then
          return []

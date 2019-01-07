@@ -72,7 +72,7 @@ class Label(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       local key
       \self.paint | runerr("No label specified")
       Component.initially()
@@ -80,20 +80,20 @@ class Label(Component)
       paint.initially(self, key)
    end
 
-   public finally()
+   public override finally()
       Component.finally()
       paint.finally()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return paint.w + border.get_total_width()
    end
 
-   public get_default_height()
+   public override get_default_height()
       return paint.h + border.get_total_height()
    end
 
-   public display()
+   public override display()
       paint.draw_rect(self.cbwin, border.float(self, paint))
       border.draw_rect(self.cbwin, self)
       if self.has_focus() & self.is_unshaded() then
@@ -119,7 +119,7 @@ class Label(Component)
       }
    end
 
-   public new()
+   public override new()
       Component.new()
       set_constraint("x_align", Align.L)
       set_border(NullBorder().set_align(Align.L, Align.C))

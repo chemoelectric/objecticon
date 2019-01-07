@@ -16,7 +16,7 @@ import gui, io
 class CanvasImageDialog(CanvasComponentDialog)
    public img_field, fill_dim, cache_cb, img
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
 
       c.fill_dimensions := fill_dim.get_value()
@@ -67,7 +67,7 @@ class CanvasImageDialog(CanvasComponentDialog)
       img.set_image(string(img_field.get_contents()))
    end
 
-   public setup() 
+   public override setup() 
       local p, q, s
       CanvasComponentDialog.setup()
 

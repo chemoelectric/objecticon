@@ -4,7 +4,7 @@ import
 $load ROMEDALEN "romedalen.png"
 
 class CairoDisplay(Component)
-   public display()
+   public override display()
       local c
       use { c := Context(cbwin), cairo_display(c) }
    end
@@ -469,7 +469,7 @@ class CairoTest(Dialog)
       selector,
       cairo_display
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       selector.set_selection_list(["arc",
                                    "arc negative",
@@ -494,13 +494,13 @@ class CairoTest(Dialog)
                                    "mesh"])
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end

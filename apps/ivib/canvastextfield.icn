@@ -20,7 +20,7 @@ class CanvasTextField(CanvasComponent,TextField)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_contents(" || image(self.contents) || ")")
       if *\filter_str > 0 then
@@ -34,7 +34,7 @@ class CanvasTextField(CanvasComponent,TextField)
    #
    # Duplicate object.
    #
-   public dup(pc)
+   public override dup(pc)
       local c
       c := CanvasTextField()
       CanvasComponent.dup_fields(c)
@@ -48,7 +48,7 @@ class CanvasTextField(CanvasComponent,TextField)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Contents", "contents"] |
          ["Filter String", "filter_str"] |
@@ -59,19 +59,19 @@ class CanvasTextField(CanvasComponent,TextField)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTextFieldDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public new()
+   public override new()
       TextField.new()
       CanvasComponent.new()
       filter_str := ""

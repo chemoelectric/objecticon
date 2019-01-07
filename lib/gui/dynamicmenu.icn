@@ -1,7 +1,7 @@
 package gui
 
 abstract class DynamicMenu(Menu)
-   public show(x, y, xa, ya)
+   public override show(x, y, xa, ya)
       /self.temp_win | fail
       # Clear current menu contents.
       remove_all()
@@ -9,7 +9,7 @@ abstract class DynamicMenu(Menu)
       Menu.show(x, y, xa, ya)
    end
 
-   public hide()
+   public override hide()
       \self.temp_win | fail
       Menu.hide()
       # It is important to remove the items here (rather than wait for

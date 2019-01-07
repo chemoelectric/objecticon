@@ -56,7 +56,7 @@ abstract class Button(Toggle,Component)
       return self
    end
 
-   public finally()
+   public override finally()
       stop_held()
       Component.finally()
    end
@@ -166,7 +166,7 @@ abstract class Button(Toggle,Component)
       return self
    end
 
-   public handle_accel(e)
+   public override handle_accel(e)
       if /self.no_click_focus_flag then
          grab_focus(e)
       visualize_action(e)
@@ -180,7 +180,7 @@ abstract class Button(Toggle,Component)
    #
    # Set the checked status according to the given flag.
    #
-   public set_is_checked(s)
+   public override set_is_checked(s)
       need_flag(s)
       if s ~=== self.is_checked_flag then {
          Toggle.set_is_checked(s)
@@ -189,7 +189,7 @@ abstract class Button(Toggle,Component)
       return self
    end
 
-   public accepts_focus(e)
+   public override accepts_focus(e)
       if (\e).code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
          fail
       succeed Component.accepts_focus(e)
@@ -210,7 +210,7 @@ abstract class Button(Toggle,Component)
       return self
    end
 
-   public new()
+   public override new()
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.accepts_focus_flag := &yes

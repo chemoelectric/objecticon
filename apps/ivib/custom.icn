@@ -14,7 +14,7 @@ import gui
 # Represents an unknown user defined component
 #
 class Custom(Component)
-   public display()
+   public override display()
       self.cbwin.draw_rectangle(self.x, self.y, self.w, self.h)
       center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<" || self.class_name || ">")
    end

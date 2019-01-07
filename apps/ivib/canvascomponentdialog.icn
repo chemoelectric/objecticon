@@ -430,7 +430,7 @@ class CanvasComponentDialog(Dialog)
          c.constraints := normalize_constraints(constraint_tab.get_table())
    end
 
-   public new(c)
+   public override new(c)
       Dialog.new()
       self.c := c
       setup()

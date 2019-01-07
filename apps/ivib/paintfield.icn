@@ -147,7 +147,7 @@ class PaintField(Border)
       os.add(grid_label)
    end
 
-   public new()
+   public override new()
       Border.new()
       setup()
       self.clear_constraints()

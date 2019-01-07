@@ -88,14 +88,14 @@ end
 class LambdaState(State)
    private ta, tl, i
 
-   public begin()
+   public override begin()
       ta := _a
       tl := _l
       _a := i
       _l := &null
    end
 
-   public swap()
+   public override swap()
       _a :=: ta
       _l :=: tl
    end

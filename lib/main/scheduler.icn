@@ -14,7 +14,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
    private
       other
 
-   public in(n)
+   public override in(n)
       local r
       r := task.poll([other, Poll.IN], timeout) | fail
       return if /r then 
@@ -25,7 +25,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
          error("poll() indicated an I/O error")
    end
 
-   public out(s)
+   public override out(s)
       local r
       r := task.poll([other, Poll.OUT], timeout) | fail
       return if /r then
@@ -36,25 +36,25 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
          error("poll() indicated an I/O error")
    end
 
-   public close()
+   public override close()
       if \close_underlying_flag then
          other.close() | fail
       return self
    end
 
-   public get_mode()
+   public override get_mode()
       return other.get_mode()
    end
 
-   public seek(offset)
+   public override seek(offset)
       return other.seek(offset)
    end
 
-   public tell()
+   public override tell()
       return other.tell()
    end
 
-   public truncate(len)
+   public override truncate(len)
       return other.truncate(len)
    end
 

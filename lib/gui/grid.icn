@@ -32,7 +32,7 @@ class CellInfo(Insets,Align,ObjectOutput)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local t
       t := s || ": "
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||

@@ -18,26 +18,26 @@ class ListSpin(SelectionSpin)
       return view.get_label()
    end
 
-   public create_view()
+   public override create_view()
       return SpinLabel()
    end
 
-   public start_change(e)
+   public override start_change(e)
       self.old_selection := self.selection
    end
 
-   public end_change(e)
+   public override end_change(e)
       if self.old_selection ~=== self.selection then
          fire(Event.SELECTION_CHANGED, e)
    end
 
-   public apply_selection()
+   public override apply_selection()
       local s
       s := convert_element(object_get_selection()) | ""
       self.view.set_label(s)
    end
 
-   public get_default_width()
+   public override get_default_width()
       local t
       t := 0
       every t <:= self.cbwin.text_width(convert_element(!self.selection_list))

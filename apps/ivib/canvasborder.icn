@@ -18,7 +18,7 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       if \self.title then
          self.title.gen_code(c)
       self.content.gen_code(c)
@@ -30,7 +30,7 @@ class CanvasBorder(CanvasComponent,Border)
       c.chain("set_content(" || self.content.name || ")")
    end
 
-   public post_decode()
+   public override post_decode()
       local e, c
       if /self.content then {
          # Fix an old-style Border, where there is no content object.
@@ -67,7 +67,7 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasBorder()
       CanvasComponent.dup_fields(c)
@@ -77,13 +77,13 @@ class CanvasBorder(CanvasComponent,Border)
       return c
    end
 
-   public remove(c)
+   public override remove(c)
       if c === self.title then
          self.title := &null
       return Component.remove(c)
    end
 
-   public place_inside(c)
+   public override place_inside(c)
       if (self.x + self.w - INSIDE_BOX <= c.mx < self.x + self.w) & 
          (self.y + self.h - INSIDE_BOX <= c.my < self.y + self.h) & /title then 
       {
@@ -95,7 +95,7 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Internal Alignment", "internal_align"] |
          ["Children", "children"] |
@@ -106,14 +106,14 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasBorderDialog(self)
    end
 
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
@@ -126,7 +126,7 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Overrides Border.display()
    #
-   public display()
+   public override display()
       local cw
       Border.display()
       if in_ivib() then {
@@ -140,7 +140,7 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Overrides CanvasComponent.inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       local o
       if c === self then
          fail
@@ -152,19 +152,19 @@ class CanvasBorder(CanvasComponent,Border)
          return o
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return self.content.allows_null_width()
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return self.content.allows_null_height()
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.content | \self.title
    end
 
-   public new()
+   public override new()
       Border.new()
       CanvasComponent.new()
       self.class_name := "Border"
@@ -178,7 +178,7 @@ class CanvasBorderContent(CanvasComponent,Component)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       every (!self.children).gen_code(c)
       CanvasComponent.gen_code(c)
       every c.chain("add(" || (!self.children).name || ")")
@@ -187,14 +187,14 @@ class CanvasBorderContent(CanvasComponent,Component)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() | ["Children", "children"]
    end
 
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasBorderContent()
       CanvasComponent.dup_fields(c)
@@ -205,7 +205,7 @@ class CanvasBorderContent(CanvasComponent,Component)
    #
    # Overrides CanvasComponent.is_inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       local e, o
       every e := back(self.z_children) do
          if o := e.is_inside(c) then
@@ -217,41 +217,41 @@ class CanvasBorderContent(CanvasComponent,Component)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local t, o
       every t := back(self.z_children) do
          if o := t.which_cursor_over(e) then
             return o
    end
 
-   public allows_selection()
+   public override allows_selection()
    end
 
-   public allows_positioning()
+   public override allows_positioning()
    end
 
-   public allows_add()
+   public override allows_add()
       return 1
    end
 
-   public allows_copy()
+   public override allows_copy()
    end
 
-   public allows_delete()
+   public override allows_delete()
    end
 
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasBorderContentDialog(self)
    end
 
-   public gen_cos()
+   public override gen_cos()
      suspend CanvasComponent.gen_cos() | !self.children
    end
 
-   public new()
+   public override new()
       Component.new()
       CanvasComponent.new()
       self.set_show_layout(&yes)
@@ -263,7 +263,7 @@ class CanvasBorderContent(CanvasComponent,Component)
 end
 
 class CanvasBorderContentDialog(CanvasComponentDialog)
-   public validate_input()
+   public override validate_input()
       #
       # We must have a default size if the parent has no absolute size.
       #

@@ -16,7 +16,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local e
       self.paint.gen_code(c)
       (\self.layout_delegate).gen_code(c)
@@ -38,7 +38,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTabItem()
       CanvasComponent.dup_fields(c)
@@ -50,7 +50,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Paint", "paint"] |
          ["Children", "children"]
@@ -59,14 +59,14 @@ class CanvasTabItem(CanvasComponent,TabItem)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTabItemDialog(self)
    end
 
    #
    # Overrides CanvasComponent.is_inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       local e, o
       if c === self then
          fail
@@ -82,7 +82,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local t, o
       every t := back(self.z_children) do
          if o := t.which_cursor_over(e) then
@@ -99,7 +99,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
       parent_Canvas.set_modified()
    end
 
-   public op_delete()
+   public override op_delete()
       local i, c
       if parent.which_one === self then {
          i := parent.get_index(self)
@@ -109,7 +109,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
       parent_Canvas.delete(self)
    end
 
-   public create_menu()
+   public override create_menu()
       local m, i
       m := CanvasComponent.create_menu()
       if self ~=== parent.which_one then {
@@ -120,29 +120,29 @@ class CanvasTabItem(CanvasComponent,TabItem)
       return m
    end
 
-   public allows_selection()
+   public override allows_selection()
    end
 
-   public allows_positioning()
+   public override allows_positioning()
    end
 
-   public allows_add()
+   public override allows_add()
       return 1
    end
 
-   public allows_copy()
+   public override allows_copy()
    end
 
-   public allows_delete()
+   public override allows_delete()
       # Can't delete the last item
       return *parent.children > 1
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.paint | !self.children
    end
 
-   public new()
+   public override new()
       TabItem.new()
       CanvasComponent.new()
       self.set_show_layout(&yes)

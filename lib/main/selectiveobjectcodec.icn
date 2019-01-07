@@ -73,7 +73,7 @@ abstract class SelectiveObjectCodec(ObjectCodec)
    private post_decode()
    end
 
-   private object_encode(e)
+   private override object_encode(e)
       local p, m, x
 
       p := load_structs()
@@ -93,7 +93,7 @@ abstract class SelectiveObjectCodec(ObjectCodec)
       post_encode()
    end
 
-   private object_decode(e)
+   private override object_decode(e)
       local p, m, v, f, n, x
 
       p := load_structs()
@@ -162,7 +162,7 @@ abstract class SelectiveObjectCodec(ObjectCodec)
    # template (see above).  By default, the method generates all of
    # the instance fields of self.
    #
-   protected get_template()
+   private get_template()
       suspend Class.get_instance_field_names(self)
    end
 end

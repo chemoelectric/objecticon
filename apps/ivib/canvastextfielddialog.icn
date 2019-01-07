@@ -21,7 +21,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       move_on_rpress_cb,
       ucs_cb
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_contents(contents.get_contents())
       c.filter_str := filter.get_contents()
@@ -36,7 +36,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       filter.set_contents(text_convert(filter.get_contents(), t))
    end
 
-   public setup()
+   public override setup()
       local p, l
 
       CanvasComponentDialog.setup()

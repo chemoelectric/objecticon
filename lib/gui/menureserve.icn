@@ -10,7 +10,7 @@ class MenuReserve(MenuComponent)
       res_w,
       res_h
 
-   public initially()
+   public override initially()
       MenuComponent.initially()
       \comp | runerr("No component set")
       # Make comp inherit the parent component's attribs.
@@ -23,7 +23,7 @@ class MenuReserve(MenuComponent)
       parent_component.parent_dialog.remove(comp)
    end
 
-   public prepare_parent_proxy()
+   public override prepare_parent_proxy()
       local p
       p := parent.temp_win
       comp.set_pos(label_x - parent.x, label_y - parent.y)
@@ -38,30 +38,30 @@ class MenuReserve(MenuComponent)
       return self
    end
 
-   public get_label_mid_width()
+   public override get_label_mid_width()
       return res_w
    end
 
-   public get_label_mid_height()
+   public override get_label_mid_height()
       return res_h
    end
 
-   public get_label_left_width()
+   public override get_label_left_width()
    end
 
-   public get_label_left_height()
+   public override get_label_left_height()
    end
 
-   public get_label_right_width()
+   public override get_label_right_width()
    end
 
-   public get_label_right_height()
+   public override get_label_right_height()
    end
 
-   public draw_label(W, lw, mw, rw)
+   public override draw_label(W, lw, mw, rw)
    end
 
-   public new()
+   public override new()
       MenuComponent.new()
       self.is_decorative_flag := &yes
       return

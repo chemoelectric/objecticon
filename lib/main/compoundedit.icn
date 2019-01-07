@@ -22,7 +22,7 @@ class CompoundEdit(UndoableEdit)
       liberal_flag,
       desc
 
-   public redo()
+   public override redo()
       every (!l).redo()
       return self
    end
@@ -31,14 +31,14 @@ class CompoundEdit(UndoableEdit)
       suspend .!l
    end
 
-   public undo()
+   public override undo()
       local i
       every i := *l to 1 by -1 do
          l[i].undo()
       return self
    end
 
-   public add_edit(other)
+   public override add_edit(other)
       if \closed then
          return \liberal_flag & l[-1].add_edit(other) & self
 
@@ -84,7 +84,7 @@ class CompoundEdit(UndoableEdit)
    #
    # Return a description of the edit.
    #
-   public get_desc()
+   public override get_desc()
       return .desc
    end
 

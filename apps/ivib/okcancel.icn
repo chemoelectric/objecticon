@@ -11,7 +11,7 @@ class OkCancel(Component)
       cancel.connect(obj.on_cancel, Event.ACTION)
    end
 
-   public new()
+   public override new()
       Component.new()
       set_constraint("x_align", "l")
       set_layout(GridLayout().set_doi(0))

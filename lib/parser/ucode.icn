@@ -87,7 +87,7 @@ class UTopLevel(UObject)
    public const
       package_flag
 
-   package new(name, package_flag, file, line)
+   package override new(name, package_flag, file, line)
       UObject.new(name, file, line)
       self.package_flag := package_flag
       return
@@ -116,7 +116,7 @@ class UClass(UTopLevel)
       suspend .!supers
    end
 
-   package new(name, package_flag, file, line, flags)
+   package override new(name, package_flag, file, line, flags)
       UTopLevel.new(name, package_flag, file, line)
       self.flags := flags
       self.supers := []
@@ -129,7 +129,7 @@ class UVariable(UObject)
    public const
       flags
 
-   package new(name, file, line, flags)
+   package override new(name, file, line, flags)
       UObject.new(name, file, line)
       self.flags := flags
       return
@@ -232,7 +232,7 @@ class UMethod(UObject, UFunction)
    public const
       flags
 
-   package new(name, file, line, flags)
+   package override new(name, file, line, flags)
       UObject.new(name, file, line)
       UFunction.new()
       self.flags := flags
@@ -241,7 +241,7 @@ class UMethod(UObject, UFunction)
 end
 
 class UProcedure(UTopLevel, UFunction)
-   package new(name, package_flag, file, line)
+   package override new(name, package_flag, file, line)
       UTopLevel.new(name, package_flag, file, line)
       UFunction.new()
       self.package_flag := package_flag
@@ -261,7 +261,7 @@ class URecord(UTopLevel)
       put(fields, s)
    end
 
-   package new(name, package_flag, file, line)
+   package override new(name, package_flag, file, line)
       UTopLevel.new(name, package_flag, file, line)
       self.fields := []
       return
@@ -272,7 +272,7 @@ class UGlobal(UTopLevel)
    public const
       readable_flag
 
-   package new(name, package_flag, readable_flag, file, line)
+   package override new(name, package_flag, readable_flag, file, line)
       UTopLevel.new(name, package_flag, file, line)
       self.readable_flag := readable_flag
       return

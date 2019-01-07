@@ -33,7 +33,7 @@ class TableCellInfo(Insets, ObjectOutput)
    #
    # Output object
    #
-   private object_output(oo)
+   private override object_output(oo)
       local t
       /s := "?"
       t := s || ": "
@@ -497,7 +497,7 @@ class TableLayout(Layout)
       fix_col1_flag,
       debug
 
-   public reset()
+   public override reset()
       g := &null
    end
 
@@ -527,7 +527,7 @@ class TableLayout(Layout)
       g.compute_in_row()
    end
 
-   public get_preferred_width()
+   public override get_preferred_width()
       ensure_grid()
       return g.get_preferred_width()
    end
@@ -580,7 +580,7 @@ class TableLayout(Layout)
       return
    end
 
-   public get_preferred_height(pw)
+   public override get_preferred_height(pw)
       ensure_grid()
       g.compute_actual_col_widths(pw)
       adjust_preferred_heights()
@@ -592,7 +592,7 @@ class TableLayout(Layout)
       return self
    end
 
-   public display()
+   public override display()
       local i, cw
       ensure_grid()
       use {
@@ -609,7 +609,7 @@ class TableLayout(Layout)
       }
    end
 
-   public layout()
+   public override layout()
       local c, i
       every c := !parent.children do {
          if \c.x_spec then

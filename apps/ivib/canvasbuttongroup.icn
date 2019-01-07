@@ -17,7 +17,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       local e
       #
       # Extend superclass method
@@ -27,7 +27,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
          c.chain("add(" || e.name || ")")
    end
 
-   public dup()
+   public override dup()
       local c
       c := CanvasButtonGroup()
       CanvasObject.dup_fields(c)
@@ -45,7 +45,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
       return l
    end
 
-   public new()
+   public override new()
       ButtonGroup.new()
       self.class_name := "ButtonGroup"
       self.import_name := "gui"

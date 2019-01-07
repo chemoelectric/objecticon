@@ -31,11 +31,11 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
 
    public native shutdown()
 
-   public native in(n)
+   public override native in(n)
 
-   public native out(s)
+   public override native out(s)
 
-   public close()
+   public override close()
       local f
       close_impl() | (f := &why)
       if \close_underlying_flag then
@@ -45,7 +45,7 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
 
    private native close_impl()
 
-   public get_mode()
+   public override get_mode()
       return other.get_mode()
    end
 

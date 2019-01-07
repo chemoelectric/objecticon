@@ -16,7 +16,7 @@ package gui
 # of two states, like a check box.
 #
 class ToggleTextButton(TextButton)
-   public new()
+   public override new()
       TextButton.new()
       self.toggles_flag := &yes
       return

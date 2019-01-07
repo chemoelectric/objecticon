@@ -31,7 +31,7 @@ class ColorField(Component)
       }
    end
 
-   public initially()
+   public override initially()
       Component.initially()
       tf.set_width(cbwin.text_width(if /opaque_flag then "00000,00000,00000,00000 " else "00000,00000,00000 ") + tf.border.get_total_width())
    end
@@ -82,7 +82,7 @@ class ColorField(Component)
    # Create a new instance optionally with the given initial value of
    # the field, as a icon color value.
    #
-   public new(val)
+   public override new(val)
       local p, t
       /val := "black"
       Component.new() 

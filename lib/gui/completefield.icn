@@ -10,7 +10,7 @@ class CompleteElement(Conversion)
    public const
       label
 
-   public new(label, str, pos)
+   public override new(label, str, pos)
       self.label := label
       Conversion.new(str, pos)
       return
@@ -27,19 +27,19 @@ end
 # in their label fields.
 #
 class CompleteElementItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return W.text_width(data.label)
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return W.get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return gui.Size(W.text_width(data.label), W.get_line_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       W.draw_string(x, y + W.get_line_ascent(), data.label)
    end
 end
@@ -50,7 +50,7 @@ end
 # `do_request` should return a list of `CompleteElement` records.
 #
 abstract class CompleteField(SuggestField)
-   public create_popup()
+   public override create_popup()
       return ItemPaintList().
          set_item_paint(CompleteElementItemPaint()).
          set_item_border(EmptyBorder().
@@ -58,11 +58,11 @@ abstract class CompleteField(SuggestField)
                              set_x_align(Align.L))
    end
 
-   public convert_element(o)
+   public override convert_element(o)
       return o
    end
 
-   public get_insertion(l)
+   public override get_insertion(l)
       local e, t, s
       if *l = 1 then
          return l[1]
@@ -76,7 +76,7 @@ abstract class CompleteField(SuggestField)
          return Conversion(contents[1:cursor] || s || contents[cursor:0], cursor + *s)
    end
 
-   public new()
+   public override new()
       SuggestField.new()
       set_popup_on_tab(&yes)
       return

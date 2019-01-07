@@ -12,7 +12,7 @@ class TextMenuItem(MenuComponent)
       border_left,
       border_right
 
-   public initially()
+   public override initially()
       MenuComponent.initially()
       # Note that having no paints is the case for a PopupMenu
       (\paint_mid).initially(parent_component, self.accel)
@@ -23,7 +23,7 @@ class TextMenuItem(MenuComponent)
       border_right.initially(parent_component)
    end
 
-   public finally()
+   public override finally()
       MenuComponent.finally()
       (\paint_mid).finally()
       (\paint_left).finally()
@@ -138,31 +138,31 @@ class TextMenuItem(MenuComponent)
       return self
    end
 
-   public get_label_left_width()
+   public override get_label_left_width()
       return (\paint_left).w + border_left.get_total_width()
    end
 
-   public get_label_left_height()
+   public override get_label_left_height()
       return (\paint_left).h + border_left.get_total_height()
    end
 
-   public get_label_mid_width()
+   public override get_label_mid_width()
       return (\paint_mid).w + border_mid.get_total_width()
    end
 
-   public get_label_mid_height()
+   public override get_label_mid_height()
       return (\paint_mid).h + border_mid.get_total_height()
    end
 
-   public get_label_right_width()
+   public override get_label_right_width()
       return (\paint_right).w + border_right.get_total_width()
    end
 
-   public get_label_right_height()
+   public override get_label_right_height()
       return (\paint_right).h + border_left.get_total_height()
    end
 
-   public draw_label(W, lw, mw, rw)
+   public override draw_label(W, lw, mw, rw)
       local r
 
       r := Rect(label_x, label_y, lw, label_h)
@@ -186,7 +186,7 @@ class TextMenuItem(MenuComponent)
       }
    end
 
-   public new()
+   public override new()
       MenuComponent.new()
       #
       # The three labels use the following X insets by default :-

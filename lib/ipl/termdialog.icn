@@ -8,11 +8,11 @@ $endif
       ipl.io, posix
 
 class TermTextField(CompleteField)
-   public keeps(e)
+   public override keeps(e)
       return
    end
 
-   protected do_request()
+   protected override do_request()
       return (\parent.complete_function)(contents, cursor)
    end
 end
@@ -76,7 +76,7 @@ $else
    end
 $endif
 
-   public link_left_clicked(url)
+   public override link_left_clicked(url)
       local file, line, de
       case string(url.scheme) of {
          "text": input.insert_string(ucs(url.get_decoded_path()))
@@ -89,7 +89,7 @@ $endif
       }
    end
 
-   public link_middle_clicked(url)
+   public override link_middle_clicked(url)
       input.insert_string(get_url_text(url) || u" ")
    end
 
@@ -108,7 +108,7 @@ $endif
       }
    end
 
-   public create_link_menu(url)
+   public override create_link_menu(url)
       local m, s
       m := Menu()
       if s := get_url_text(url) then
@@ -121,7 +121,7 @@ $endif
       return m
    end
 
-   public create_context_menu()
+   public override create_context_menu()
       local m
       m := Menu()
       if text.get_current_text_selection() then {
@@ -143,19 +143,19 @@ $endif
       return m.tidy()
    end
 
-   public quieten_cursor()
+   public override quieten_cursor()
    end
 
-   public send_tty(s)
+   public override send_tty(s)
    end
 
-   public vt_size_changed(cols, rows)
+   public override vt_size_changed(cols, rows)
    end
 
-   public msg(s, n)
+   public override msg(s, n)
    end
 
-   public search_msg(s)
+   public override search_msg(s)
    end
 
    # Clear the log area.
@@ -166,7 +166,7 @@ $endif
       return self
    end
 
-   protected write_line_impl(s)
+   protected override write_line_impl(s)
       is_live() | return error("TermDialog not live")
       if \need_crnl then
          text.input("\r\n")
@@ -267,14 +267,14 @@ $endif
       }
    end
 
-   public component_setup()
+   public override component_setup()
       reset_term()
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
       text.input("\e[?25l")
    end
 
@@ -282,7 +282,7 @@ $endif
       return (text.predict_view_width(text.w, &yes) - 2 * Gui.TEXT_INSET) / text.cbwin.text_width("m")
    end
 
-   public new()
+   public override new()
       Dialog.new()
       LineBasedOutputStream.new()
       hmod := table()

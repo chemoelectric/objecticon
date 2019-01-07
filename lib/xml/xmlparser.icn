@@ -2344,7 +2344,7 @@ class XmlParser(Connectable)
       FATAL_ERROR_EVENT := "Fatal error"
    end
 
-   public new()
+   public override new()
       Connectable.new()
       resolver := DefaultResolver()
       do_namespaces_flag := &yes

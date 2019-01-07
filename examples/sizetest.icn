@@ -22,14 +22,14 @@ class Untitled(Dialog)
       label_6,
       label_8
 
-   public component_setup()
+   public override component_setup()
       self.setup()
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
       ticker := Dispatcher.new_task{tick()}
       ticker.start()
    end

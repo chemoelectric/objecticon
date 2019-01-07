@@ -155,7 +155,7 @@ class CanvasPreferencesDialog(Dialog)
       tabset.add_tab(t)
    end
 
-   public new(c)
+   public override new(c)
       local label, l, code_tab, oc
       Dialog.new()
       self.c := c

@@ -8,7 +8,7 @@
 import gui
 
 class CanvasVSliderUI(CanvasComponentUI)
-   public create_canvas_component(canvas)
+   public override create_canvas_component(canvas)
       local t
       t := CanvasSlider()
       t.set_constraint("y_fill", &yes)
@@ -19,11 +19,11 @@ class CanvasVSliderUI(CanvasComponentUI)
       return t
    end
 
-   public get_category()
+   public override get_category()
       return "Slider"
    end
 
-   public get_name()
+   public override get_name()
       return "VSlider"
    end
 end

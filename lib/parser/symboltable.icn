@@ -33,17 +33,17 @@ end
 abstract class TopLevelSymbol(Symbol)
    public abstract has_package_flag()
 
-   public get_fq_name()
+   public override get_fq_name()
       return (\scanned_file.pack || "." || name) | name
    end
 
-   public get_fq_name_default()
+   public override get_fq_name_default()
       return (\scanned_file.pack || "." || name) | ("default." || name)
    end
 end
 
 class ProcedureSymbol(TopLevelSymbol)
-   public has_package_flag()
+   public override has_package_flag()
       succeed if is(obj, Tree) then
          obj.get_package_flag()
       else
@@ -52,17 +52,17 @@ class ProcedureSymbol(TopLevelSymbol)
 end
 
 class BuiltinSymbol(TopLevelSymbol)
-   public has_package_flag()
+   public override has_package_flag()
    end
 
-   package new(name)
+   package override new(name)
       self.name := name
       return
    end
 end
 
 class RecordSymbol(TopLevelSymbol)
-   public has_package_flag()
+   public override has_package_flag()
       succeed if is(obj, Tree) then
          obj.get_package_flag()
       else
@@ -74,7 +74,7 @@ class GlobalSymbol(TopLevelSymbol)
    public const
       decl_obj
 
-   public has_package_flag()
+   public override has_package_flag()
       # Check the "global" node (rather than the ident node).
       succeed if is(decl_obj, Tree) then
          decl_obj.get_package_flag()
@@ -90,7 +90,7 @@ class GlobalSymbol(TopLevelSymbol)
          \decl_obj.readable_flag
    end
 
-   package new(scanned_file, obj, name, decl_obj)
+   package override new(scanned_file, obj, name, decl_obj)
       Symbol.new(scanned_file, obj, name)
       self.decl_obj := decl_obj
       return
@@ -155,7 +155,7 @@ class ClassSymbol(TopLevelSymbol)
       return self
    end
 
-   public has_package_flag()
+   public override has_package_flag()
       succeed if is(obj, Tree) then
          obj.get_package_flag()
       else
@@ -176,7 +176,7 @@ class ClassSymbol(TopLevelSymbol)
          iand(obj.flags, lang.Class.Abstract) ~= 0
    end
 
-   package new(scanned_file, obj, name)
+   package override new(scanned_file, obj, name)
       Symbol.new(scanned_file, obj, name)
       self.fields := table()
       self.supers := []
@@ -191,15 +191,15 @@ class ClassField(Symbol)
    public const
       defining_class
 
-   public get_fq_name()
+   public override get_fq_name()
       return defining_class.get_fq_name() || "." || name
    end
 
-   public get_fq_name_default()
+   public override get_fq_name_default()
       return defining_class.get_fq_name_default() || "." || name
    end
 
-   package new(defining_class, obj, name)
+   package override new(defining_class, obj, name)
       Symbol.new(defining_class.scanned_file, obj, name)
       self.defining_class := defining_class
       return
@@ -210,7 +210,7 @@ class ClassVariable(ClassField)
    public const
       decl_obj
 
-   package new(defining_class, obj, name, decl_obj)
+   package override new(defining_class, obj, name, decl_obj)
       ClassField.new(defining_class, obj, name)
       self.decl_obj := decl_obj
       return
@@ -791,7 +791,7 @@ class SymbolTable(Connectable)
       return self
    end
 
-   public new()
+   public override new()
       Connectable.new()
       symbol_table := table()
       scanned_files := table()

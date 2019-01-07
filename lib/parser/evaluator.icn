@@ -12,7 +12,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
    private readable
       write_globals_flag
 
-   public get(k, ev)
+   public override get(k, ev)
       return (if \write_globals_flag then glookup(k, ev) else .glookup(k, ev)) | tlookup(k)
    end
 

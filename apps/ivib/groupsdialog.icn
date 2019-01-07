@@ -97,7 +97,7 @@ class GroupsDialog(Dialog)
       update_grey()
    end
 
-   public new(c)
+   public override new(c)
       local b, p, oc
 
       Dialog.new()
@@ -183,7 +183,7 @@ class GroupEdit(Dialog)
       self.dispose()
    end
 
-   public new(c)
+   public override new(c)
       Dialog.new()
       self.c := c
       setup(c)

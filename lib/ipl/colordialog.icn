@@ -6,7 +6,7 @@ import
 class ColorRectangle(Component)
    private readable c
 
-   public display()
+   public override display()
       cbwin.set_fg(c)
       cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
    end
@@ -42,7 +42,7 @@ class ColorDialog(Dialog)
       return self
    end
 
-   public init_dialog()
+   public override init_dialog()
       alpha_panel.set_is_shaded(opaque_flag)
       if \opaque_flag then {
          alpha.set_value(65535)
@@ -63,7 +63,7 @@ class ColorDialog(Dialog)
       pm.popup(self, pm_menu, ev.x, ev.y)
    end
 
-   public new(v)
+   public override new(v)
       local l
       Dialog.new()
       self.setup()

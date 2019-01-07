@@ -46,7 +46,7 @@ class ImmediateRunner(Runner)
    public const
       cmd
 
-   public get_command()
+   public override get_command()
       return cmd
    end
 
@@ -65,11 +65,11 @@ class LaunchRunner(ExternalRunner)
       cmd,
       wd
 
-   public get_working_dir()
+   public override get_working_dir()
       return \wd
    end
 
-   public get_command()
+   public override get_command()
       return cmd
    end
 
@@ -89,11 +89,11 @@ class DesktopRunner(ExternalRunner)
       # The url itself (a URL object).
       url
 
-   public get_working_dir()
+   public override get_working_dir()
       return \desktop_entry.path
    end
 
-   public get_command()
+   public override get_command()
       local line
       if url.scheme == u"file" then
          line := integer(url.extract_cgi_parameters()["line"][1])
@@ -112,7 +112,7 @@ class OpenWithMenu(MenuWithPopup)
    private const
       term
 
-   public create_popup(item)
+   public override create_popup(item)
       return Menu().
          add(TextMenuItem().
                 connect(create term.copy_text(item.runner.get_command()),
@@ -120,7 +120,7 @@ class OpenWithMenu(MenuWithPopup)
                 set_label("Copy command"))
    end
 
-   public new(term)
+   public override new(term)
       MenuWithPopup.new()
       self.term := term
       return
@@ -131,7 +131,7 @@ class OpenWithMenuItem(TextMenuItem)
    public const
       runner
 
-   public new(runner)
+   public override new(runner)
       TextMenuItem.new()
       self.runner := runner
       return
@@ -139,19 +139,19 @@ class OpenWithMenuItem(TextMenuItem)
 end
 
 class TerminalMenu(DynamicMenu)
-   public populate()
+   public override populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_context_menu())
    end
 end
 
 class ColumnsMenu(DynamicMenu)
-   public populate()
+   public override populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_columns_context_menu())
    end
 end
 
 class MiscMenu(DynamicMenu)
-   public populate()
+   public override populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_misc_menu())
    end
 end
@@ -279,7 +279,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       FavouriteDirectoriesDialog().show_modal(self)
    end
 
-   public component_setup()
+   public override component_setup()
       local i, t
       t := \tabs.which_one | tabs.children[1]
       if i := \opts["width"] then {
@@ -330,7 +330,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       tabs.which_one.tab_active()
    end
 
-   public new()
+   public override new()
       local quit_menu_item, file_menu, terminal_menu, columns_menu, 
          new_tab_item, favourite_dirs_item, xdg_refresh_item,
          help_menu, misc_menu, about_item, help_item
@@ -440,14 +440,14 @@ class Columns(LineBasedScrollArea)
       FOCUS_DASHED_WIDTH := \v | Gui.DASHED_WIDTH
    end
 
-   public initially()
+   public override initially()
       \self.item_paint | runerr("ItemPaint not set")
       LineBasedScrollArea.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
-   public finally()
+   public override finally()
       LineBasedScrollArea.finally()
       self.item_paint.finally()
       self.item_border.finally()
@@ -476,7 +476,7 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
-   public get_tooltip(e)
+   public override get_tooltip(e)
       local t, s
       if t := object_get_over() then {
          s := item_paint.get_size(view.cbwin, t)
@@ -485,7 +485,7 @@ class Columns(LineBasedScrollArea)
       }
    end
 
-   public draw_line(xp, yp, lh, i)
+   public override draw_line(xp, yp, lh, i)
       local e, j, r, s, k, W
       every j := 1 to *col_w do {
          k := i + (j - 1) * n_rows
@@ -517,7 +517,7 @@ class Columns(LineBasedScrollArea)
       }
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       do_columnize(predict_view_width(w, vsb))
       return col_w[1]
    end
@@ -527,18 +527,18 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       if is_live() then
          invalidate_line(get_row_for_index(\cursor))
    end
 
-   public layout()
+   public override layout()
       invalidate_subject_width()
       invalidate_line_count()
       ScrollArea.layout()
    end
 
-   public set_internal_fields()
+   public override set_internal_fields()
       local had_vsb
       had_vsb := self.vsb
       ScrollArea.set_internal_fields()
@@ -549,7 +549,7 @@ class Columns(LineBasedScrollArea)
       }
    end
 
-   public get_default_subject_height(dw)
+   public override get_default_subject_height(dw)
       do_columnize(dw)
       return n_rows * get_line_height()
    end
@@ -570,11 +570,11 @@ class Columns(LineBasedScrollArea)
       col_w := cr.width
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       return item_paint.get_constant_height(view.cbwin) + item_border.get_total_height() | runerr("Need a constant height")
    end
 
-   public calculate_line_count()
+   public override calculate_line_count()
       do_columnize(predict_view_width(w, vsb))
       return n_rows
    end
@@ -885,11 +885,11 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR, e.code)
    end
 
-   public new()
+   public override new()
       LineBasedScrollArea.new()
       data := []
       gutter := scale(8)
@@ -916,7 +916,7 @@ procedure mk_file_URL(s)
 end
 
 class FilterEditList(EditList)
-   protected open_popup(ev)
+   protected override open_popup(ev)
       local t
       t := parent.parent
       set_selection_only()
@@ -924,14 +924,14 @@ class FilterEditList(EditList)
       EditList.open_popup(ev)
    end
 
-   public create_view()
+   public override create_view()
       return TextField().
          set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
    end
 end
 
 class FavouritesList(ButtonOnlyList)
-   public create_button()
+   public override create_button()
       local b
       b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
       theme_toolbar_button(b, "emblem-favorite")
@@ -958,7 +958,7 @@ class FavouritesList(ButtonOnlyList)
       close_popup()
    end
 
-   protected open_popup(ev)
+   protected override open_popup(ev)
       local t
       t := parent.parent
       set_selection_list(t.get_favourites_directories())
@@ -966,7 +966,7 @@ class FavouritesList(ButtonOnlyList)
       ButtonOnlyList.open_popup(ev)
    end
 
-   public create_popup()
+   public override create_popup()
       local l
       l := ItemPaintList().
          set_item_paint(StringDirItemPaint()).
@@ -990,13 +990,13 @@ record ShellVar(key, value)
 record HistoryEntry(dir)
 
 class HistoryEntryItemPaint(StringDirItemPaint)
-   public get_string(data)
+   public override get_string(data)
       return data.dir
    end
 end
 
 class HistoryList(ButtonOnlyList)
-   public create_button()
+   public override create_button()
       local b
       b := IconButton().set_paint(ImagePaint().set_cache("rpp.HOURGLASS_24"))
       theme_toolbar_button(b, "view-history")
@@ -1023,7 +1023,7 @@ class HistoryList(ButtonOnlyList)
       close_popup()
    end
 
-   protected open_popup(ev)
+   protected override open_popup(ev)
       local t
       t := parent.parent
       set_selection_list(copy(t.history))
@@ -1031,7 +1031,7 @@ class HistoryList(ButtonOnlyList)
       ButtonOnlyList.open_popup(ev)
    end
 
-   public create_popup()
+   public override create_popup()
       local l
       l := ItemPaintList().
          set_item_paint(HistoryEntryItemPaint()).
@@ -1066,7 +1066,7 @@ class FileTrailListEx(FileTrailList)
       close_popup()
    end
 
-   public create_popup()
+   public override create_popup()
       local l
       l := FileTrailList.create_popup()
       l.view.
@@ -1094,7 +1094,7 @@ class FileTrailButtonEx(FileTrailButton)
       parent.parent.parent.insert_link(button_to_url(), ev)
    end
 
-   public new(p, tt)
+   public override new(p, tt)
       FileTrailButton.new(p, tt)
       connect(on_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
@@ -1103,11 +1103,11 @@ class FileTrailButtonEx(FileTrailButton)
 end
 
 class FileTrailEx(FileTrail)
-   public create_trail_list(p, child)
+   public override create_trail_list(p, child)
       return FileTrailListEx(p, child)
    end
 
-   public create_trail_button(p, tt)
+   public override create_trail_button(p, tt)
       return FileTrailButtonEx(p, tt)
    end
 end
@@ -1233,15 +1233,15 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
-   public get_label_width()
+   public override get_label_width()
       return scale(100)
    end
 
-   public link_left_clicked(url)
+   public override link_left_clicked(url)
       open_link(url)
    end
 
-   public vt_size_changed(cols, rows)
+   public override vt_size_changed(cols, rows)
       if \opts["v"] then
          write("Vt size changed to: ", cols, ",", rows)
       tty.set_size(cols, rows)
@@ -1857,15 +1857,15 @@ class Terminal(TabItem, VtUI)
       split.reorient()
    end
 
-   public link_middle_clicked(url, ev)
+   public override link_middle_clicked(url, ev)
       insert_link(url, ev)
    end
 
-   public quieten_cursor()
+   public override quieten_cursor()
       columns.quieten_cursor()
    end
 
-   public send_tty(s)
+   public override send_tty(s)
       s := need_string(s)
       put(input, s)
       # We may be in the io_task already since some writes to the vt
@@ -1877,7 +1877,7 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
-   public msg(s, n)
+   public override msg(s, n)
       message_label.set(s, n)
    end
 
@@ -2334,7 +2334,7 @@ $endif
       return m
    end
 
-   public create_context_menu()
+   public override create_context_menu()
       local m
       m := Menu()
       if output.get_current_text_selection() then
@@ -2416,7 +2416,7 @@ $endif
          return m
    end
 
-   public create_link_menu(url)
+   public override create_link_menu(url)
       local m, r, udp
       m := Menu()
       if url.scheme == (u"file" | u"text") &
@@ -2464,7 +2464,7 @@ $endif
       pm.popup(parent_dialog, m, e.x, e.y)
    end
 
-   public get_tab_tooltip()
+   public override get_tab_tooltip()
       if tab_w - label_border.get_total_width() < cbwin.text_width(paint.str) then
          return paint.str
    end
@@ -2831,7 +2831,7 @@ $endif
       }
    end
 
-   public new(dir, other, revert_tab)
+   public override new(dir, other, revert_tab)
       local start_dir, c, e
       TabItem.new()
       self.revert_tab := revert_tab
@@ -2972,7 +2972,7 @@ $endif
       return
    end
 
-   public initially()
+   public override initially()
       TabItem.initially()
       setup_shell() | fatalerr("Failed to setup shell: " || &why)
       io_task := Dispatcher.new_task{service_tty()}
@@ -2981,7 +2981,7 @@ $endif
       check_cwd_time_task.start()
    end
 
-   public finally()
+   public override finally()
       TabItem.finally()
       check_cwd_time_task.stop()
       io_task.stop()
@@ -3165,7 +3165,7 @@ $endif
       }
    end
 
-   public search_msg(s)
+   public override search_msg(s)
       /s := ""
       search_label.set_label(s)
    end

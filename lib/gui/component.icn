@@ -1566,7 +1566,7 @@ class Component(Rect,Align,Connectable)
       return set_wattrib(WAttrib.PATTERN, v)
    end
 
-   public new()
+   public override new()
       Connectable.new()
       self.wattribs := table()
       self.children := []

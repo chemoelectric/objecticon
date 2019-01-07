@@ -6,13 +6,13 @@ import
    io
 
 package class DirEditList(EditList)
-   protected open_popup(ev)
+   protected override open_popup(ev)
       set_selection_only()
       synch_set_selection_list(parent_dialog.get_favourites_directories())
       EditList.open_popup(ev)
    end
 
-   public create_popup()
+   public override create_popup()
       return ItemPaintList().
          set_item_paint(StringDirItemPaint()).
          set_item_border(EmptyBorder().
@@ -20,14 +20,14 @@ package class DirEditList(EditList)
                             set_x_align(Align.L))
    end
 
-   public create_view()
+   public override create_view()
       return EditListField().
          set_directories_only(&yes)
    end
 end
 
 package class FileTreeWithTooltip(ItemPaintTree)
-   public get_tooltip(e)
+   public override get_tooltip(e)
       local n, s
       if n := contents[get_line_under_pointer(e)] then {
          s := item_paint.get_size(view.cbwin, n.label)
@@ -80,7 +80,7 @@ class DirectoryDialog(Dialog)
       return self
    end
 
-   public component_setup()
+   public override component_setup()
       local root_node, d
       #
       # Defaults and extra dirs.
@@ -94,7 +94,7 @@ class DirectoryDialog(Dialog)
       dir.set_use_wheel(&no)
    end
 
-   public init_dialog()
+   public override init_dialog()
       res := &null
       # Clear any cached directory list in the suggest field
       dir.view.refresh()
@@ -374,7 +374,7 @@ class DirectoryDialog(Dialog)
       message_label.set(s)
    end
 
-   public new()
+   public override new()
       local p
       Dialog.new()
       self.setup()
@@ -395,7 +395,7 @@ class DirectoryDialog(Dialog)
       return
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
    public get_favourites_directories()

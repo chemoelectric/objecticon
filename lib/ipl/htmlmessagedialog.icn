@@ -53,14 +53,14 @@ class HTMLMessageDialog(Dialog)
       win.set_canvas("normal")
    end
 
-   public component_setup()
+   public override component_setup()
       if \delay_open_flag | \size_precisely_flag then {
          set_canvas("hidden")
          browser.connect_n(on_first_load, SimpleBrowser.PAGE_FULLY_LOADED)
       }
    end
 
-   public new()
+   public override new()
       Dialog.new()
       self.setup()
       return

@@ -17,7 +17,7 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_image(" || image(\self.image_str) || ")")
       c.chain("set_cache(" || image(\self.image_cache) || ")")
@@ -27,7 +27,7 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasImage()
       CanvasComponent.dup_fields(c)
@@ -40,7 +40,7 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Image Str", "image_str"] |
          ["Image Cache", "image_cache"] |
@@ -50,7 +50,7 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Overrides Image.display() 
    #
-   public display()
+   public override display()
       if in_preview() | \self.win then
          Image.display()
       else {
@@ -62,19 +62,19 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasImageDialog(self)
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public new()
+   public override new()
       Image.new()
       CanvasComponent.new()
       self.class_name := "Image"

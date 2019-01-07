@@ -266,7 +266,7 @@ class BorderEdit(Dialog)
       
    end
 
-   public new(c)
+   public override new(c)
       Dialog.new()
       self.c := c
       setup(c)

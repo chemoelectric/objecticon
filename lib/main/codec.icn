@@ -5,19 +5,19 @@ import io, util, exception, ipl.scan
 # A class implements this interface to provide custom encoding/decoding.
 #
 abstract class ObjectCodec()
-   protected abstract object_encode(es)
-   protected abstract object_decode(ds)
+   private abstract object_encode(es)
+   private abstract object_decode(ds)
 end
 
 #
 # Parent class for a class which wishes to prohibit encoding.
 #
 class Unencodable(ObjectCodec)
-   private final object_encode()
+   private final override object_encode()
       throw("Not encodable: " || image(self))
    end
 
-   private final object_decode()
+   private final override object_decode()
       throw("Not decodable: " || image(self))
    end
 end
@@ -150,15 +150,15 @@ class Encode(Stream, HasUnderlyingStream)
       seen[o] := (tag_count +:= 1)
    end
 
-   public out(s)
+   public override out(s)
       return file.out(s) | throw(&why)
    end
 
-   public get_mode()
+   public override get_mode()
       return WRITE
    end
 
-   public close()
+   public override close()
       if \close_underlying_flag then
          file.close() | fail
       return self

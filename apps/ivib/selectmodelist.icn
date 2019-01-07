@@ -18,7 +18,7 @@ class SelectModeList(List)
       }
    end
 
-   public new()
+   public override new()
       List.new()
       set_selection_list(["No selection", "Select one", "Select many"])
       return

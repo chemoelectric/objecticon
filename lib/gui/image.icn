@@ -84,7 +84,7 @@ class Image(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       Component.initially()
       load_image()
    end
@@ -120,13 +120,13 @@ class Image(Component)
       win := zoom_win := &null
    end
 
-   public get_default_width()
+   public override get_default_width()
       local ww
       ww := (\win).get_width() | 0
       return ww + border.get_total_width()
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       local t, wh, ww
       ww := (\win).get_width() | 0
       wh := (\win).get_height() | 0
@@ -137,7 +137,7 @@ class Image(Component)
       return t + border.get_total_height()
    end
 
-   public display()
+   public override display()
       local ir, img_w, img_h,
          asp_r, asp_max, zoom_w, zoom_h, pt
 
@@ -198,12 +198,12 @@ class Image(Component)
       }
    end
 
-   public finally()
+   public override finally()
       Component.finally()
       close_image()
    end
 
-   public new()
+   public override new()
       Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)

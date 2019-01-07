@@ -27,11 +27,11 @@ class ChildDialog(Dialog)
       d.show_modal()
    end
 
-   public end_dialog()
+   public override end_dialog()
       ticker.stop()
    end
 
-   public init_dialog()
+   public override init_dialog()
       ticker := Dispatcher.new_task{tick()}
       ticker.start()
    end
@@ -43,7 +43,7 @@ class ChildDialog(Dialog)
       }
    end
 
-   public component_setup()
+   public override component_setup()
       local p
       self.set_resize(&yes)
       set_layout(GridLayout())

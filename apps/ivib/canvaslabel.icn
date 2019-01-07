@@ -17,14 +17,14 @@ class CanvasLabel(CanvasComponent,Label)
    #
    # Overrides CanvasComponent.min_height()
    #
-   public min_height()
+   public override min_height()
       return 13
    end
 
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.paint.gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_paint(" || self.paint.name || ")")
@@ -33,7 +33,7 @@ class CanvasLabel(CanvasComponent,Label)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasLabel()
       CanvasComponent.dup_fields(c)
@@ -44,30 +44,30 @@ class CanvasLabel(CanvasComponent,Label)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() | ["Paint", "paint"]
    end
 
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasLabelDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.paint
    end
 
-   public new()
+   public override new()
       Label.new()
       CanvasComponent.new()
       self.class_name := "Label"

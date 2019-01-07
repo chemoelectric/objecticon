@@ -17,7 +17,7 @@ class CanvasMenuComponent(CanvasObject)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       if \self.tooltip then
          self.tooltip.gen_code(c)
 
@@ -48,7 +48,7 @@ class CanvasMenuComponent(CanvasObject)
    #
    # Copy fields from self to c.
    #
-   public dup_fields(c)
+   public override dup_fields(c)
       CanvasObject.dup_fields(c)
       c.accel := self.accel
       c.event_method := self.event_method
@@ -60,14 +60,14 @@ class CanvasMenuComponent(CanvasObject)
          c.tooltip := self.tooltip.dup()
    end
 
-   private pre_decode()
+   private override pre_decode()
       new()
    end
 
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend ["Name", "name"] |
               ["Class Name", "class_name"] |
               ["Import Name", "import_name"] |
@@ -80,7 +80,7 @@ class CanvasMenuComponent(CanvasObject)
               ["Parent", "parent"]
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend !self.children
    end
 

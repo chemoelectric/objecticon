@@ -30,7 +30,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
       initially_checked,
       has_label_down
 
-   public validate_input()
+   public override validate_input()
       CanvasComponentDialog.validate_input() | fail
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
@@ -39,7 +39,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
       return
    end
       
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
 
       c.set_paint(paint_field.get_contents())
@@ -85,7 +85,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
       checkbox_group_list.toggle_is_shaded()
    end
 
-   public setup()
+   public override setup()
       CanvasComponentDialog.setup()
 
       tab_basic := TabItem().set_label("General")

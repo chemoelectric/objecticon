@@ -14,7 +14,7 @@ class CheckBoxTableColumn(BaseTableColumn)
       checked_paint,
       mouse_down_listener
 
-   public calculate_line_height()
+   public override calculate_line_height()
       return unchecked_paint.h + 8
    end
 
@@ -68,7 +68,7 @@ class CheckBoxTableColumn(BaseTableColumn)
       fire(Event.VALUE_CHANGED, line)
    end
 
-   public initially()
+   public override initially()
       #
       # Set the icons if necessary
       #
@@ -86,14 +86,14 @@ class CheckBoxTableColumn(BaseTableColumn)
       unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
    end
 
-   public finally()
+   public override finally()
       BaseTableColumn.finally()
       mouse_down_listener.disconnect()
       unchecked_paint.finally()
       checked_paint.finally()
    end
 
-   public draw_cell(W, data, line, col, cy, ch)
+   public override draw_cell(W, data, line, col, cy, ch)
       local x1, y1, i
       x1 := case border.x_align of {
          Align.R : self.tx + self.tw - unchecked_paint.w

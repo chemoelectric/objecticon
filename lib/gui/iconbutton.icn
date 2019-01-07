@@ -29,7 +29,7 @@ package gui
 #   ")
 # ~
 class IconButton(TextButton)
-   public new()
+   public override new()
       TextButton.new()
       self.border := RaisedBorder()
       return

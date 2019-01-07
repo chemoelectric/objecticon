@@ -129,21 +129,21 @@ class TextField(Component)
       return self
    end
 
-   public get_default_height()
+   public override get_default_height()
       return self.cbwin.get_line_height() + border.get_total_height()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return self.cbwin.text_width(get_view()) + border.get_total_width()
    end
 
-   public layout()
+   public override layout()
       self.tx := self.x + border.get_l_inset()
       self.tw := self.w - border.get_total_width()
       constrain_line()
    end
 
-   public shift(dx, dy)
+   public override shift(dx, dy)
       Component.shift(dx, dy)
       self.tx +:= dx
    end
@@ -439,12 +439,12 @@ class TextField(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       Component.initially()
       cursor_ticker.start()
    end
 
-   public finally()
+   public override finally()
       scroll_ticker.stop()
       cursor_ticker.stop()
       Component.finally()
@@ -596,7 +596,7 @@ class TextField(Component)
       return undo_manager.can_redo()
    end
 
-   public keeps(e)
+   public override keeps(e)
       succeed member(Key.CURSOR_H, e.code)
    end
 
@@ -763,7 +763,7 @@ class TextField(Component)
       }
    end
 
-   public display()
+   public override display()
       local fh, s, mp, np, y1, off1, off2, W
 
       fh := self.cbwin.get_font_height()
@@ -807,7 +807,7 @@ class TextField(Component)
       border.draw_rect(self.cbwin, self)
    end
 
-   public new()
+   public override new()
       Component.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
@@ -844,11 +844,11 @@ end
 class TextFieldPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
-   protected get_text()
+   protected override get_text()
       return \parent.primary
    end
 
-   public lost_ownership()
+   public override lost_ownership()
       # Since we may retain ownership after having been disposed of.
       if parent.is_live() then {
          parent.start_handle()
@@ -877,13 +877,13 @@ abstract class TextFieldEdit(UndoableEdit)
       parent.changed := &yes
    end
 
-   public redo()
+   public override redo()
       restore()
       self.redo_impl()
       parent.changed := &yes
    end
 
-   public undo()
+   public override undo()
       self.undo_impl()
       restore()
       parent.changed := &yes
@@ -911,7 +911,7 @@ end
 class TextFieldDeleteRightEdit(TextFieldEdit)
    public ch
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, TextFieldDeleteRightEdit) &
          (cursor = other.cursor) then 
       {
@@ -920,19 +920,19 @@ class TextFieldDeleteRightEdit(TextFieldEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       parent.contents[parent.cursor +: *ch] := ""
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       if cursor > *parent.contents then
          parent.contents ||:= ch
       else
          parent.contents[cursor] := ch || parent.contents[cursor]
    end
 
-   public new(parent)
+   public override new(parent)
       TextFieldEdit.new(parent)
       ch := parent.contents[parent.cursor]
       return
@@ -942,7 +942,7 @@ end
 class TextFieldDeleteLeftEdit(TextFieldEdit)
    public ch
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, TextFieldDeleteLeftEdit) &
          (cursor = other.cursor + *ch) then
       {
@@ -951,20 +951,20 @@ class TextFieldDeleteLeftEdit(TextFieldEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       parent.contents[parent.cursor -: *ch] := ""
       parent.cursor -:= *ch
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       if cursor - *ch > *parent.contents then
          parent.contents ||:= ch
       else
          parent.contents[cursor - *ch] := ch || parent.contents[cursor - *ch]
    end
 
-   public new(parent)
+   public override new(parent)
       TextFieldEdit.new(parent)
       ch := parent.contents[parent.cursor - 1]
       return
@@ -974,7 +974,7 @@ end
 class TextFieldDeleteRegionEdit(TextFieldEdit)
    public pre
 
-   public redo_impl()
+   public override redo_impl()
       if parent.mark < parent.cursor then {
          pre := parent.contents[parent.mark:parent.cursor]
          parent.contents[parent.mark:parent.cursor] := ""
@@ -986,7 +986,7 @@ class TextFieldDeleteRegionEdit(TextFieldEdit)
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       if self.mark < self.cursor then
          parent.contents := parent.contents[1:self.mark] || pre || parent.contents[self.mark:0]
       else
@@ -997,16 +997,16 @@ end
 class TextFieldPasteEdit(TextFieldEdit)
    public s
 
-   public redo_impl()
+   public override redo_impl()
       parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
       parent.cursor +:= *s
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents[self.cursor +: *s] := ""
    end
 
-   public new(parent, s)
+   public override new(parent, s)
       TextFieldEdit.new(parent)
       self.s := s
       return
@@ -1016,7 +1016,7 @@ end
 class TextFieldDefaultEdit(TextFieldEdit)
    public s
 
-   public add_edit(other)
+   public override add_edit(other)
       if is(other, gui.TextFieldDefaultEdit) &
          (other.cursor = self.cursor + *s) then {
             s ||:= other.s
@@ -1024,17 +1024,17 @@ class TextFieldDefaultEdit(TextFieldEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
       parent.cursor +:= *s
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents[self.cursor +: *s] := ""
    end
 
-   public new(parent, e)
+   public override new(parent, e)
       TextFieldEdit.new(parent)
       s := e
       return
@@ -1044,14 +1044,14 @@ end
 class TextFieldDeleteLineEdit(TextFieldEdit)
    public pre
 
-   public redo_impl()
+   public override redo_impl()
       pre := parent.contents
       parent.contents[1:0] := ""     # Preserves text type of contents
       parent.cursor := 1
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents := pre
    end
 end
@@ -1059,7 +1059,7 @@ end
 class TextFieldAssignEdit(TextFieldEdit)
    public s, pos, pre, coalesce
 
-   public add_edit(other)
+   public override add_edit(other)
       if \coalesce & is(other, gui.TextFieldAssignEdit) & \other.coalesce then {
          self.s := other.s
          self.pos := other.pos
@@ -1067,18 +1067,18 @@ class TextFieldAssignEdit(TextFieldEdit)
       }
    end
 
-   public redo_impl()
+   public override redo_impl()
       pre := parent.contents
       parent.contents := s
       parent.cursor := pos
       parent.clear_mark()
    end
 
-   public undo_impl()
+   public override undo_impl()
       parent.contents := pre
    end
 
-   public new(parent, s, pos, coalesce)
+   public override new(parent, s, pos, coalesce)
       TextFieldEdit.new(parent)
       self.s := s
       self.pos := pos

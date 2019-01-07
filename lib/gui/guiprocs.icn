@@ -444,7 +444,7 @@ end
 # A `Component` for providing empty effective wattribs.
 #
 package class EmptyWAttribAncestor(Component)
-   public get_effective_wattribs()
+   public override get_effective_wattribs()
       return table()
    end
 end
@@ -829,7 +829,7 @@ class GetSelection(Dialog)
       dispose()
    end
 
-   public show()
+   public override show()
       Dialog.show()
       # Now we have an underlying window, we can request the selection.
       request_selection(sel,
@@ -838,7 +838,7 @@ class GetSelection(Dialog)
       return self
    end
 
-   public new(sel)
+   public override new(sel)
       Dialog.new()
       set_canvas("withdrawn")
       set_size(100, 100)

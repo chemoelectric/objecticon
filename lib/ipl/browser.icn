@@ -103,7 +103,7 @@ class CacheAlias(CacheEntry)
    public const
       dest
 
-   public is_valid(now)
+   public override is_valid(now)
       return hasnt_expired(now)
    end
 
@@ -119,7 +119,7 @@ class CacheData(CacheEntry, StaticData)
    public const
       last_modified, etag
 
-   public is_valid(now)
+   public override is_valid(now)
       return hasnt_expired(now) | may_revalidate()
    end
 
@@ -127,7 +127,7 @@ class CacheData(CacheEntry, StaticData)
       succeed \ (last_modified | etag)
    end
 
-   public new(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
+   public override new(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
       self.url := url
       self.data := data
       self.fname := fname
@@ -146,11 +146,11 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    private readable
       cache_entry
 
-   public get_authentication(httpc, dom, realm)
+   public override get_authentication(httpc, dom, realm)
       return worker.pool.owner.get_authentication(httpc, dom, realm)
    end
 
-   public modify_redirect(httpc, hreq, hresp)
+   public override modify_redirect(httpc, hreq, hresp)
       local ce
       #write("modify redirect? ", hreq.url.str())
       # Just in case we have made an if-modified request that's been
@@ -343,14 +343,14 @@ class ProgSubWorker(SubWorker)
    private 
       data
 
-   public cancel() end
-   public get_length() end
+   public override cancel() end
+   public override get_length() end
 
-   public get_read()
+   public override get_read()
       return data.tell() - 1
    end
 
-   public get_data(worker)
+   public override get_data(worker)
       local ts, f, d, ps
       if (\worker.req.referer).scheme == (u"http" | u"https") then
          return error("Can't run a prog from an http page")
@@ -384,10 +384,10 @@ class FileSubWorker(SubWorker)
    private 
       data
 
-   public cancel() end
-   public get_length() end
+   public override cancel() end
+   public override get_length() end
 
-   public get_read()
+   public override get_read()
       return data.tell() - 1
    end
 
@@ -399,7 +399,7 @@ class FileSubWorker(SubWorker)
       return System.getpw(uid).name | uid
    end
 
-   public get_data(worker)
+   public override get_data(worker)
       local f, g, e, l, t, path, rs, now, tf, gcache, ucache
 $if ~ _MS_WIN32
       local ts
@@ -465,7 +465,7 @@ class HttpSubWorker(SubWorker)
    private 
       httpc, tmp_file
 
-   public cancel()
+   public override cancel()
       httpc.abort()
       rm_tmp()
    end
@@ -477,11 +477,11 @@ class HttpSubWorker(SubWorker)
       }
    end
 
-   public get_length()
+   public override get_length()
       return httpc.get_length()
    end
 
-   public get_read()
+   public override get_read()
       return httpc.get_read()
    end
 
@@ -557,7 +557,7 @@ class HttpSubWorker(SubWorker)
       update_aliases(pool, hres.get_previous_response(), hres.url)
    end
 
-   public get_data(worker)
+   public override get_data(worker)
       local req, s, data, hreq, hres, fname, ct, cd, ce, sc, req_url_no_frag, helper
       httpc := worker.httpc
       req := worker.req
@@ -1130,7 +1130,7 @@ class TblContent(Component)
    private
       hrules, vrules
 
-   public whose_point(ex, ey)
+   public override whose_point(ex, ey)
       local c
       every c := layout_delegate.computed_g.cells_in_range(ey - y, 1).obj do {
          if c.is_unhidden() & c.inside(ex, ey) then
@@ -1138,7 +1138,7 @@ class TblContent(Component)
       }
    end
 
-   public display()
+   public override display()
       local ci, r, g, t
       r := get_cbwin_clip()
       g := layout_delegate.computed_g
@@ -1171,7 +1171,7 @@ class TblContent(Component)
 end
 
 class Tbl(Border, HasMaxWidth)
-   public get_max_width()
+   public override get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width() + border.get_total_width()
       return if \title then
@@ -1180,7 +1180,7 @@ class Tbl(Border, HasMaxWidth)
          w1
    end
 
-   public new()
+   public override new()
       Border.new()
       set_content(TblContent(). 
                     set_layout(TableLayout()))
@@ -1332,7 +1332,7 @@ class Img(Image, HasLastHighlight)
       return self
    end
 
-   public set_last_highlight(u)
+   public override set_last_highlight(u)
       if u ~=== last_highlight then {
          last_highlight := u
          invalidate()
@@ -1340,7 +1340,7 @@ class Img(Image, HasLastHighlight)
       return self
    end
 
-   package save_last_highlight(he)
+   package override save_last_highlight(he)
       local a, u, n
       n := 0
       every a := gen_areas() do {
@@ -1355,7 +1355,7 @@ class Img(Image, HasLastHighlight)
       }
    end
 
-   package restore_last_highlight(n, url)
+   package override restore_last_highlight(n, url)
       local a, u
       every a := gen_areas() do {
          if u := \a.url then {
@@ -1420,7 +1420,7 @@ class Img(Image, HasLastHighlight)
       return not is(border, NullBorder | EmptyBorder)
    end
 
-   public display()
+   public override display()
       local W
       Image.display()
       if browser.is_banded(self) then
@@ -1436,7 +1436,7 @@ class Img(Image, HasLastHighlight)
       }
    end
 
-   public new(browser, context, img_url, alt, form, map_id)
+   public override new(browser, context, img_url, alt, form, map_id)
       Image.new()
       clear_constraints()
       self.browser := browser
@@ -1489,24 +1489,24 @@ class FormToggle(ToggleTextButton, FormEntry)
       value,
       init_checked
 
-   public reset_form()
+   public override reset_form()
       set_is_checked(init_checked)
    end
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       if is_checked() then 
          return value
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_status()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_is_checked(val)
    end
 
-   public new(value, init_checked)
+   public override new(value, init_checked)
       ToggleTextButton.new()
       self.value := value
       self.init_checked := init_checked
@@ -1519,16 +1519,16 @@ class FormButton(TextButton, FormEntry, HasAscent)
    private const
       value
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       if src === self then
          return value
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
-   public new(value)
+   public override new(value)
       TextButton.new()
       self.value := value
       set_label(value)
@@ -1540,7 +1540,7 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public const
       tf, value, form, type
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       if src === self then
          return value
    end
@@ -1552,7 +1552,7 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
       }
    end
 
-   public display()
+   public override display()
       display_children()
       if \self.is_down then {
          Gui.style.fill_down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
@@ -1565,26 +1565,26 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
    #
    # Prevent children from getting in the point chain.
    #
-   public build_point_chain()
+   public override build_point_chain()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return tf.get_preferred_width()
    end
 
-   public get_max_width()
+   public override get_max_width()
       return tf.get_max_width()
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       return tf.get_preferred_height(dw)
    end
 
-   public get_ascent(dw)
+   public override get_ascent(dw)
       return tf.get_ascent(dw)
    end
 
-   public layout()
+   public override layout()
       tf.x := x
       tf.y := y
       tf.w := w
@@ -1592,7 +1592,7 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
       tf.layout()
    end
 
-   public new(form, value, type)
+   public override new(form, value, type)
       Button.new()
       tf := TextFlow(form.browser).
          set_border(CompoundBorder().
@@ -1611,7 +1611,7 @@ class Hidden(FormEntry)
    private const
       value
 
-   public get_form_value()
+   public override get_form_value()
       return value
    end
 
@@ -1640,7 +1640,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
       tf,
       browser
 
-   public get_form_value(ev, src, multipart_flag)
+   public override get_form_value(ev, src, multipart_flag)
       local s
       s := tf.get_contents()
       if *s = 0 then
@@ -1651,7 +1651,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
          Files.file_to_string(s)
    end
 
-   public validate_form()
+   public override validate_form()
       local s
       s := tf.get_contents()
       if *s = 0 then
@@ -1663,19 +1663,19 @@ class FormBrowse(Component, FormEntry, HasAscent)
       return FilePath(tf.get_contents()).get(-1) | u""
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + tf.border.get_t_inset()
    end
 
-   public reset_form()
+   public override reset_form()
       tf.set_contents(u"")
    end
 
-   public get_save_value()
+   public override get_save_value()
       return tf.get_contents()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       tf.set_contents(val)
    end
 
@@ -1683,7 +1683,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
       tf.assign_contents(ucs(browser.browse_for_file(tf.get_contents())),, ev)
    end
 
-   public new(browser, tf_size)
+   public override new(browser, tf_size)
       Component.new()
       self.browser := browser
       set_layout(GridLayout().set_doi(0).set_dii(0))
@@ -1698,7 +1698,7 @@ class FormImgX(FormEntry)
    private const
       img
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       if src === img then
          return round((ev.x - img.x) / Gui.SCALE)
    end
@@ -1713,7 +1713,7 @@ class FormImgY(FormEntry)
    private const
       img
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       if src === img then
          return round((ev.y - img.y) / Gui.SCALE)
    end
@@ -1730,35 +1730,35 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
       init_val,
       datalist_id
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
-   public reset_form()
+   public override reset_form()
       set_contents(init_val)
    end
 
-   public get_form_value()
+   public override get_form_value()
       return get_contents()
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_contents()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_contents(val)
    end
 
-   public create_popup()
+   public override create_popup()
       return FormOptionList()
    end
 
-   public convert_element(o)
+   public override convert_element(o)
       return o.value
    end
 
-   protected do_request()
+   protected override do_request()
       local l, t, e, s
       l := browser.get_datalist(\datalist_id) | fail
       s := map(contents)
@@ -1770,14 +1770,14 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
       return t
    end
 
-   public handle_return(e)
+   public override handle_return(e)
       if \popup then
          keep_closed()
       else
          TextField.handle_return(e)
    end
 
-   public new(browser, init_val, datalist_id)
+   public override new(browser, init_val, datalist_id)
       SuggestField.new()
       self.browser := browser
       self.init_val := init_val
@@ -1791,31 +1791,31 @@ class FormURLField(TextField, FormEntry, HasAscent)
    private const
       init_val
 
-   public get_ascent()
+   public override get_ascent()
       return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
-   public reset_form()
+   public override reset_form()
       set_contents(init_val)
    end
 
-   public get_form_value()
+   public override get_form_value()
       return get_contents()
    end
 
-   public validate_form()
+   public override validate_form()
       return URL(get_contents()) | error("Bad URL")
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_contents()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_contents(val)
    end
 
-   public new(init_val)
+   public override new(init_val)
       TextField.new()
       self.init_val := init_val
       set_contents(init_val)
@@ -1827,31 +1827,31 @@ class FormDateField(DateField, FormEntry, HasAscent)
    private const
       init_val
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Bad date format")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return get_value().format("yyyy-MM-dd")
    end
 
-   public get_save_value()
+   public override get_save_value()
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public new(init_val)
+   public override new(init_val)
       DateField.new(init_val)
       self.init_val := init_val
       return
@@ -1862,19 +1862,19 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
    private const
       init_val
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Bad week format")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return get_value().format("vvvv'-W'ww")
    end
 
@@ -1891,15 +1891,15 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
       return Time.get_week_of_year(y, w)
    end
 
-   public get_save_value()
+   public override get_save_value()
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public new(init_val)
+   public override new(init_val)
       WeekField.new(init_val)
       self.init_val := init_val
       return
@@ -1910,27 +1910,27 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Bad time format")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return get_value().format("HH':'mm':'ss")
    end
 
-   public get_save_value()
+   public override get_save_value()
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
@@ -1939,7 +1939,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
       return Time.parse(s, "HH':'mm':'ssx")
    end
 
-   public new(init_val)
+   public override new(init_val)
       TimeField.new(init_val)
       self.init_val := init_val
       return
@@ -1951,16 +1951,16 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
       date,
       time
 
-   public get_ascent() 
+   public override get_ascent() 
       return date.get_ascent()
    end
 
-   public reset_form()
+   public override reset_form()
       date.reset_form()
       time.reset_form()
    end
 
-   public validate_form()
+   public override validate_form()
       return date.validate_form() & time.validate_form()
    end
 
@@ -1969,20 +1969,20 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
       return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return date.get_form_value() || "T" || time.get_form_value()
    end
 
-   public get_save_value()
+   public override get_save_value()
       return [date.get_save_value(), time.get_save_value()]
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       date.restore_value(val[1])
       time.restore_value(val[2])
    end
 
-   public new(init_val)
+   public override new(init_val)
       Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       add(date := FormDateField(init_val))
@@ -1995,15 +1995,15 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Bad timezone format")
    end
 
-   public get_form_value()
+   public override get_form_value()
       local zone
       zone := get_value() | fail
       return if zone.offset = 0 then
@@ -2013,19 +2013,19 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
          right((abs(zone.offset) % 3600) / 60, 2, "0")
    end
 
-   public get_save_value()
+   public override get_save_value()
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
-   public new(init_val)
+   public override new(init_val)
       TimezoneField.new(init_val)
       self.init_val := init_val
       return
@@ -2036,31 +2036,31 @@ class FormYearField(YearField, FormEntry, HasAscent)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Bad timezone format")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return string(get_value())
    end
 
-   public get_save_value()
+   public override get_save_value()
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
-   public new(init_val)
+   public override new(init_val)
       YearField.new()
       set_value(init_val)
       self.init_val := init_val
@@ -2072,27 +2072,27 @@ class FormMonthField(MonthField, FormEntry, HasAscent)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_selection(init_val)
    end
 
-   public get_form_value()
+   public override get_form_value()
       return string(get_selection())
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_selection()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_selection(val)
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
-   public new(init_val)
+   public override new(init_val)
       MonthField.new()
       set_selection(init_val)
       self.init_val := init_val
@@ -2106,17 +2106,17 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
       time,
       zone
 
-   public get_ascent() 
+   public override get_ascent() 
       return date.get_ascent()
    end
 
-   public reset_form()
+   public override reset_form()
       date.reset_form()
       time.reset_form()
       zone.reset_form()
    end
 
-   public validate_form()
+   public override validate_form()
       return date.validate_form() & time.validate_form() & zone.validate_form()
    end
 
@@ -2131,21 +2131,21 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
       return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return date.get_form_value() || "T" || time.get_form_value() || zone.get_form_value()
    end
 
-   public get_save_value()
+   public override get_save_value()
       return [date.get_save_value(), time.get_save_value(), zone.get_save_value()]
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       date.restore_value(val[1])
       time.restore_value(val[2])
       zone.restore_value(val[3])
    end
 
-   public new(init_val)
+   public override new(init_val)
       Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       add(date := FormDateField(init_val))
@@ -2161,16 +2161,16 @@ class FormMonthYearField(Component, FormEntry, HasAscent)
       year,
       init_val
 
-   public get_ascent() 
+   public override get_ascent() 
       return month.get_ascent()
    end
 
-   public reset_form()
+   public override reset_form()
       month.reset_form()
       year.reset_form()
    end
 
-   public validate_form()
+   public override validate_form()
       return year.validate_form()
    end
 
@@ -2187,20 +2187,20 @@ class FormMonthYearField(Component, FormEntry, HasAscent)
       return Time(y, m)
    end
 
-   public get_form_value()
+   public override get_form_value()
       return year.get_form_value() || "-" || month.get_form_value()
    end
 
-   public get_save_value()
+   public override get_save_value()
       return [year.get_save_value(), month.get_save_value()]
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       year.restore_value(val[1])
       month.restore_value(val[2])
    end
 
-   public new(init_val)
+   public override new(init_val)
       Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       add(month := FormMonthField(init_val.month))
@@ -2213,23 +2213,23 @@ class FormRange(Slider, FormEntry)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public get_form_value()
+   public override get_form_value()
       return get_value()
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_value()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public new(init_val)
+   public override new(init_val)
       Slider.new()
       set_value(init_val)
       self.init_val := init_val
@@ -2241,31 +2241,31 @@ class FormNumberField(RangeSpin, FormEntry, HasAscent)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Invalid number")
    end
 
-   public get_form_value()
+   public override get_form_value()
       return string(get_value())
    end
 
-   public get_save_value()
+   public override get_save_value()
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
-   public new(init_val)
+   public override new(init_val)
       RangeSpin.new()
       set_value(init_val)
       self.init_val := init_val
@@ -2277,15 +2277,15 @@ class FormColorField(ColorField, FormEntry, HasAscent)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_value(init_val)
    end
 
-   public validate_form()
+   public override validate_form()
       return get_value() | error("Bad color format")
    end
 
-   public get_form_value()
+   public override get_form_value()
       local l, s
       l := Window.parse_color(get_value()) | fail
       s := "#"
@@ -2293,15 +2293,15 @@ class FormColorField(ColorField, FormEntry, HasAscent)
       return s
    end
 
-   public get_save_value() 
+   public override get_save_value() 
       return last_val
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_value(val)
    end
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + b.border.get_t_inset()
    end
 
@@ -2309,7 +2309,7 @@ class FormColorField(ColorField, FormEntry, HasAscent)
       return Window.color_value(s)
    end
 
-   public new(init_val)
+   public override new(init_val)
       ColorField.new(init_val)
       self.init_val := init_val
       set_opaque(&yes)
@@ -2321,24 +2321,24 @@ class FormEditableTextList(EditableTextList, FormEntry)
    private const
       init_val
 
-   public reset_form()
+   public override reset_form()
       set_contents_str(init_val)
       set_cursor(1, 1)
    end
 
-   public get_form_value()
+   public override get_form_value()
       return list2str(contents, "\r\n")
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_contents()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_contents(val)
    end
 
-   public new(init_val)
+   public override new(init_val)
       EditableTextList.new()
       self.init_val := init_val
       set_contents_str(init_val)
@@ -2365,7 +2365,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
    private const
       init_val
 
-   public end_handle(e)
+   public override end_handle(e)
       local i
       every i := !selections do {
          if /contents[i].value then
@@ -2374,27 +2374,27 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       SelectableScrollArea.end_handle(e)
    end
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       suspend \contents[!selections].value
    end
 
-   public reset_form()
+   public override reset_form()
       set_selections(init_val)
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_selections()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_selections(val)
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       return view.cbwin.get_line_height()
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local mw, o
       mw := 0
       every o := !contents do
@@ -2402,7 +2402,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       return mw + 2 * Gui.TEXT_INSET
    end
 
-   public draw_line_data(xp, yp, lh, i)
+   public override draw_line_data(xp, yp, lh, i)
       local o, W
       o := contents[i]
       if \o.disabled then {
@@ -2415,7 +2415,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
          view.cbwin.draw_string(xp + Gui.TEXT_INSET, yp + view.cbwin.get_line_ascent(), o.txt)
    end
 
-   public new(init_val)
+   public override new(init_val)
       SelectableScrollArea.new()
       self.init_val := init_val
       return
@@ -2426,7 +2426,7 @@ class FormList(gui.List, FormEntry, HasAscent)
    private const
       init_val
 
-   public get_ascent() 
+   public override get_ascent() 
       return cbwin.get_font_ascent() + view.border.get_t_inset() + border.get_t_inset()
    end
 
@@ -2442,45 +2442,45 @@ class FormList(gui.List, FormEntry, HasAscent)
       }
    end
 
-   public do_increment(e)
+   public override do_increment(e)
       if /selection then
          find_value(create *selection_list to 1 by -1, e)
       else
          find_value(create (selection - 1 to 1 by -1) | (*selection_list to selection + 1 by -1), e)
    end
 
-   public do_decrement(e)
+   public override do_decrement(e)
       if /selection then
          find_value(create 1 to *selection_list, e)
       else
          find_value(create (1 + selection to *selection_list) | (1 to selection - 1), e)
    end
 
-   public reset_form()
+   public override reset_form()
       set_selection(init_val)
    end
 
-   public get_form_value(ev, src)
+   public override get_form_value(ev, src)
       return \object_get_selection().value
    end
 
-   public get_save_value()
+   public override get_save_value()
       return get_selection()
    end
 
-   public restore_value(val)
+   public override restore_value(val)
       set_selection(val)
    end
 
-   public create_popup()
+   public override create_popup()
       return FormOptionList()
    end
 
-   public convert_element(o)
+   public override convert_element(o)
       return o.label
    end
 
-   public get_default_width()
+   public override get_default_width()
       local mw, o
       mw := 0
       every o := !selection_list do
@@ -2489,7 +2489,7 @@ class FormList(gui.List, FormEntry, HasAscent)
       return border.get_total_width() + b.get_preferred_width() + mw + view.border.get_total_width()
    end
 
-   public new(init_val)
+   public override new(init_val)
       gui.List.new()
       self.init_val := init_val
       return
@@ -2790,11 +2790,11 @@ end
 package class BrowserPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
-   protected get_text()
+   protected override get_text()
       return \parent.primary
    end
 
-   public lost_ownership()
+   public override lost_ownership()
       parent.on_lost_primary_ownership()
    end
 
@@ -3054,7 +3054,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
    end
 
-   public traverse_tab_order()
+   public override traverse_tab_order()
       coact(self)
       every (!self.form_tab_children).traverse_tab_order()
    end
@@ -3151,7 +3151,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   public get_authentication(httpc, dom, realm)
+   public override get_authentication(httpc, dom, realm)
       local d
       parent_dialog.exit_menu_mode()
       d := AuthenticationDialog(dom, realm)
@@ -3218,7 +3218,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return gui.limit_text(default_font_clone, s, n)
    end
 
-   public initially()
+   public override initially()
       ComponentScrollArea.initially()
       if /shared_worker_pool_flag then
          worker_pool.initially()
@@ -3227,7 +3227,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       do_update_grey()
    end
 
-   public finally()
+   public override finally()
       ComponentScrollArea.finally()
       if /shared_worker_pool_flag then
          worker_pool.finally()
@@ -5153,7 +5153,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return Rect(view.inner.x + x1, view.inner.y + y1, x2 - x1, y2 - y1)
    end
 
-   public layout()
+   public override layout()
       ComponentScrollArea.layout()
       clear_mark()
       clear_selections()
@@ -5161,7 +5161,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       scroll_ticker.stop()
    end
 
-   public display()
+   public override display()
       local W, r
       ComponentScrollArea.display()
       if \draw_band & r := get_band_rect() then {
@@ -5578,14 +5578,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   public handle_wheel_up(e)
+   public override handle_wheel_up(e)
       if /e.ctrl then
          (\vsb).handle_wheel_up(e)
       else
          do_increase_font()
    end
 
-   public handle_wheel_down(e)
+   public override handle_wheel_down(e)
       if /e.ctrl then
          (\vsb).handle_wheel_down(e)
       else
@@ -5605,7 +5605,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   public new()
+   public override new()
       ComponentScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       tidy_cache_task := Dispatcher.new_task{tidy_cache()}
@@ -5641,23 +5641,23 @@ end
 class SimpleBrowserUI(BrowserUI)
    public const browser
 
-   public msg(s, n) end
+   public override msg(s, n) end
 
-   public page_loaded()
+   public override page_loaded()
       browser.fire(SimpleBrowser.PAGE_LOADED)
    end
 
-   public page_fully_loaded()  
+   public override page_fully_loaded()  
       browser.fire(SimpleBrowser.PAGE_FULLY_LOADED)
    end
 
-   public update_grey(gs) end
+   public override update_grey(gs) end
 
-   public link_left_clicked(url)
+   public override link_left_clicked(url)
       browser.fire(SimpleBrowser.LINK_LEFT_CLICKED, url)
    end
 
-   public link_middle_clicked(url)
+   public override link_middle_clicked(url)
       browser.fire(SimpleBrowser.LINK_MIDDLE_CLICKED, url)
    end
 
@@ -5687,14 +5687,14 @@ class SimpleBrowserUI(BrowserUI)
       return not(url.scheme == (u"page" | u"img"))
    end
 
-   public create_link_menu(url)
+   public override create_link_menu(url)
       local m
       m := Menu()
       populate_link_menu(url, m)
       return m
    end
 
-   public create_page_menu()
+   public override create_page_menu()
       local m, s, l, u, i
       m := Menu()
       if u := \browser.page_url & is_external(u) then {
@@ -5726,7 +5726,7 @@ class SimpleBrowserUI(BrowserUI)
          return m
    end
 
-   public create_image_menu(img)
+   public override create_image_menu(img)
       local m, url
       url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
       m := Menu()
@@ -5740,12 +5740,12 @@ class SimpleBrowserUI(BrowserUI)
          return m
    end
 
-   public browse_for_file(s) end
-   public is_visited(url) end
-   public display_search() end
-   public display_externally(res) end
-   public goto_externally(url) end
-   public save_attachment(file, res) end
+   public override browse_for_file(s) end
+   public override is_visited(url) end
+   public override display_search() end
+   public override display_externally(res) end
+   public override goto_externally(url) end
+   public override save_attachment(file, res) end
 
    public new(browser)
       self.browser := browser
@@ -5797,7 +5797,7 @@ class SimpleBrowser(Browser)
       return ImageCache.get_named_image(n) | error("Unknown image")
    end
 
-   public new()
+   public override new()
       Browser.new()
       set_ui(SimpleBrowserUI(self))
       worker_pool.

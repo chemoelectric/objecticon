@@ -158,7 +158,7 @@ class XmlDocument(Document)
       return id_attribute_values
    end
 
-   public new()
+   public override new()
       Document.new()
       parameter_entities := table()
       general_entities := table()

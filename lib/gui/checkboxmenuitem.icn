@@ -34,7 +34,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       return self
    end
 
-   public initially()
+   public override initially()
       #
       # Set the icons if necessary
       #
@@ -51,7 +51,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
    #
    # Set the checked status according to the given flag.
    #
-   public set_is_checked(s)
+   public override set_is_checked(s)
       need_flag(s)
       if s ~=== self.is_checked_flag then {
          Toggle.set_is_checked(s)
@@ -60,7 +60,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       return self
    end
 
-   public draw_label(cw, lw, mw, rw)
+   public override draw_label(cw, lw, mw, rw)
       synch_left_image()
       TextMenuItem.draw_label(cw, lw, mw, rw)
    end
@@ -78,7 +78,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
          set_paint_left(curr_paint := i)
    end
 
-   public selected(e)
+   public override selected(e)
       toggle_action(e)
       TextMenuItem.selected(e)
    end

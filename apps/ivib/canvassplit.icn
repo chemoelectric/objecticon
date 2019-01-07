@@ -12,7 +12,7 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       self.first.gen_code(c)
       self.second.gen_code(c)
       CanvasComponent.gen_code(c)
@@ -34,7 +34,7 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasSplit()
       CanvasComponent.dup_fields(c)
@@ -52,7 +52,7 @@ class CanvasSplit(CanvasComponent,Split)
       return c
    end
 
-   public rescale(f)
+   public override rescale(f)
       self.min_first := round(min_first * f)
       self.min_second := round(min_second * f)
    end
@@ -60,7 +60,7 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Sizer is horizontal flag", "sizer_is_horizontal_flag"] |
          ["Sizer show inter flag", "sizer_show_inter_flag"] |
@@ -71,14 +71,14 @@ class CanvasSplit(CanvasComponent,Split)
          ["Second", "second"]
    end
 
-   public pre_encode()
+   public override pre_encode()
       CanvasComponent.pre_encode()
       # Because we don't save the sizer...
       self.sizer_is_horizontal_flag := self.sizer.is_horizontal_flag
       self.sizer_show_inter_flag := self.sizer.show_inter_flag
    end
 
-   public post_decode()
+   public override post_decode()
       CanvasComponent.post_decode()
       if /self.sizer_is_horizontal_flag then {
          self.set_left(first)
@@ -94,7 +94,7 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Overrides CanvasComponent.inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       if c === self then
          fail
       return first.is_inside(c) | second.is_inside(c)
@@ -103,7 +103,7 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
@@ -113,7 +113,7 @@ class CanvasSplit(CanvasComponent,Split)
       return self
    end
 
-   public display()
+   public override display()
       if in_preview() then
          Split.display()
       else {
@@ -130,23 +130,23 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasSplitDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return 1
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return 1
    end
 
-   public gen_cos()
+   public override gen_cos()
       suspend CanvasComponent.gen_cos() | self.first | self.second
    end
 
-   public new()
+   public override new()
       Split.new()
       CanvasComponent.new()
       self.class_name := "Split"
@@ -161,7 +161,7 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       every (!self.children).gen_code(c)
       CanvasComponent.gen_code(c)
       every c.chain("add(" || (!self.children).name || ")")
@@ -170,14 +170,14 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() | ["Children", "children"]
    end
 
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasSplitContent()
       CanvasComponent.dup_fields(c)
@@ -188,7 +188,7 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Overrides CanvasComponent.is_inside()
    #
-   public is_inside(c)
+   public override is_inside(c)
       local e, o
       if c === self then
          fail
@@ -202,27 +202,27 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over(e)
+   public override which_cursor_over(e)
       local t, o
       every t := back(self.z_children) do
          if o := t.which_cursor_over(e) then
             return o
    end
 
-   public allows_selection()
+   public override allows_selection()
    end
 
-   public allows_add()
+   public override allows_add()
       return 1
    end
 
-   public allows_delete()
+   public override allows_delete()
    end
 
-   public allows_copy()
+   public override allows_copy()
    end
 
-   public display()
+   public override display()
       if in_preview() then
          Component.display()
       else {
@@ -235,15 +235,15 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasComponentDialog(self)
    end
 
-   public gen_cos()
+   public override gen_cos()
      suspend CanvasComponent.gen_cos() | !self.children
    end
 
-   public new()
+   public override new()
       Component.new()
       CanvasComponent.new()
       self.set_show_layout(&yes)

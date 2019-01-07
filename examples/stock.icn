@@ -115,7 +115,7 @@ class StockDialog(Dialog)
       }
    end
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       stockp := Component().set_layout(GridLayout())
       stocks.set_inner(stockp)
@@ -178,15 +178,15 @@ class StockDialog(Dialog)
       }
    end
 
-   public end_dialog()
+   public override end_dialog()
       ticker.stop()
    end
 
-   public init_dialog()
+   public override init_dialog()
       ticker.start()
    end
 
-   public new(a)
+   public override new(a)
       Dialog.new()
       init_syms := a
       slist := []

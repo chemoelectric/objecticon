@@ -19,7 +19,7 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       move_on_rpress_cb,
       ucs_cb
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_contents(contents.get_contents())
       c.is_editable_flag := is_editable_cb.get_status()
@@ -32,7 +32,7 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       contents.set_contents(convert_text_list(contents.get_contents(), t))
    end
 
-   public setup()
+   public override setup()
       local p
 
       CanvasComponentDialog.setup()

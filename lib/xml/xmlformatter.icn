@@ -61,7 +61,7 @@ class XmlFormatter(Formatter)
       return self
    end
 
-   protected format_document(n)
+   protected override format_document(n)
       local c
       every c := !n.children do {
          format_node(c)
@@ -69,11 +69,11 @@ class XmlFormatter(Formatter)
       }
    end
 
-   protected format_content(s)
+   protected override format_content(s)
       writes1(s)
    end
 
-   protected format_doctype(n)
+   protected override format_doctype(n)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -88,11 +88,11 @@ class XmlFormatter(Formatter)
       writes1(s)
    end
 
-   protected format_comment(n)
+   protected override format_comment(n)
       writes("<!--", n.comment, "-->")
    end
 
-   protected format_pi(n)
+   protected override format_pi(n)
       local s
       s := "<?" || n.target
       if \n.content then
@@ -101,7 +101,7 @@ class XmlFormatter(Formatter)
       writes1(s)
    end
 
-   protected format_element(n)
+   protected override format_element(n)
       local s, istr1, istr2, x, l, e
 
       if \indent then {
@@ -153,11 +153,11 @@ class XmlFormatter(Formatter)
       return el.children
    end
 
-   protected format_cdata(n)
+   protected override format_cdata(n)
       writes("<![CDATA[", n.content, "]]>")
    end
 
-   protected format_xmldecl(n)
+   protected override format_xmldecl(n)
       local s
       s := "<?xml "
       if \n.version then

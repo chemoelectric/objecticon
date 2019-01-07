@@ -35,9 +35,9 @@ abstract class BaseTree(SelectableScrollArea)
       ImageCache.copy_key_with_resize("tree.FILE", "gui.FILE_16")
    end
    
-   public abstract calculate_line_height()
+   public override abstract calculate_line_height()
 
-   public abstract calculate_subject_width()
+   public override abstract calculate_subject_width()
 
    public abstract get_node_data_width(n)
 
@@ -49,7 +49,7 @@ abstract class BaseTree(SelectableScrollArea)
       return self
    end
 
-   public initially()
+   public override initially()
       # Ensure we start off with an up-to-date representation.
       tree_structure_changed()
       SelectableScrollArea.initially()
@@ -60,7 +60,7 @@ abstract class BaseTree(SelectableScrollArea)
       every (!default_icon_paint).initially(self)
    end
 
-   public finally()
+   public override finally()
       SelectableScrollArea.finally()
       self.plus.finally()
       self.minus.finally()
@@ -239,7 +239,7 @@ abstract class BaseTree(SelectableScrollArea)
       }
    end
 
-   public handle_lpress(e)
+   public override handle_lpress(e)
       local l, l_off, N, curr_sel, curr_cursor, yp, xp
       if l := get_line_under_pointer(e) then {
          l_off := get_cum_line_height(l) - get_area_y()
@@ -278,7 +278,7 @@ abstract class BaseTree(SelectableScrollArea)
       return self.last_expanded
    end
 
-   public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
+   public override draw_line(xp, yp, lh, i, sel, cur, hi, ov)
       local N, dashed, lp, j, icon_paint, img, little, y0, thick, thick2
 
       y0 := yp + lh / 2
@@ -336,7 +336,7 @@ abstract class BaseTree(SelectableScrollArea)
       }
    end
 
-   public new()
+   public override new()
       SelectableScrollArea.new()
       set_handle_paint(ImagePaint().set_cache("gui.PLUS"),
                        ImagePaint().set_cache("gui.MINUS"))
@@ -352,7 +352,7 @@ end
 # The basic tree, which displays simple textual node data.
 #
 class Tree(BaseTree)
-   public calculate_line_height()
+   public override calculate_line_height()
       local res
       if /col_w then
          compute_img_wh()
@@ -365,7 +365,7 @@ class Tree(BaseTree)
       return res
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local mw, n
       mw := 0
       if /fixed_col_w then {
@@ -379,11 +379,11 @@ class Tree(BaseTree)
       return mw + 2 * Gui.TEXT_INSET
    end
 
-   public get_node_data_width(n)
+   public override get_node_data_width(n)
       return view.cbwin.text_width(n.label) + 2 * Gui.TEXT_INSET
    end
 
-   public draw_node_data(n, xp, yp)
+   public override draw_node_data(n, xp, yp)
       local W
       W := view.cbwin
       W.draw_string(xp + Gui.TEXT_INSET,
@@ -401,14 +401,14 @@ class ItemPaintTree(BaseTree)
       item_paint,
       item_border
 
-   public initially()
+   public override initially()
       \self.item_paint | runerr("ItemPaint not set")
       BaseTree.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
-   public finally()
+   public override finally()
       BaseTree.finally()
       self.item_paint.finally()
       self.item_border.finally()
@@ -437,7 +437,7 @@ class ItemPaintTree(BaseTree)
       return self
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       local h, h1, bh
       if /col_w then
          compute_img_wh()
@@ -458,7 +458,7 @@ class ItemPaintTree(BaseTree)
       return h
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       local cw, mw, n
       mw := 0
       if /fixed_col_w then {
@@ -482,12 +482,12 @@ class ItemPaintTree(BaseTree)
       return mw + item_border.get_total_width()
    end
 
-   public get_node_data_width(n)
+   public override get_node_data_width(n)
       return (item_paint.get_constant_width(self.cbwin) | 
               item_paint.get_width(view.cbwin, n.label)) + item_border.get_total_width()
    end
 
-   public draw_node_data(n, xp, yp, lh)
+   public override draw_node_data(n, xp, yp, lh)
       local r, s
       s := item_paint.get_size(view.cbwin, n.label)
       r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
@@ -495,7 +495,7 @@ class ItemPaintTree(BaseTree)
       item_border.draw_rect(view.cbwin, r)
    end
 
-   public draw_line_sel_cur(x, y, w, h, sel, cur, hi, ov)
+   public override draw_line_sel_cur(x, y, w, h, sel, cur, hi, ov)
       if \sel then
          Gui.style.fill_selection_rectangle(view.cbwin, x, y, w, h)
       case \cur of {
@@ -511,7 +511,7 @@ class ItemPaintTree(BaseTree)
          Gui.style.fill_over_rectangle(view.cbwin, x, y, w, h)
    end
 
-   public new()
+   public override new()
       BaseTree.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))

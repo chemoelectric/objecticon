@@ -233,7 +233,7 @@ class TableDir9P(Dir9P)
    private
       ent
 
-   public add_child(x)
+   public override add_child(x)
       if member(ent, x.name) then
          rthrow("Can't add child named " || x.name || " - already exists", x)
       insert(ent, x.name, x)
@@ -241,16 +241,16 @@ class TableDir9P(Dir9P)
       return self
    end
 
-   public remove_child(x)
+   public override remove_child(x)
       delete(ent, x.name)
       return self
    end
 
-   public get_child(x)
+   public override get_child(x)
       return .member(ent, x)
    end
 
-   public gen_children()
+   public override gen_children()
       suspend .!ent
    end
 
@@ -262,11 +262,11 @@ class TableDir9P(Dir9P)
       return self
    end
 
-   public is_empty()
+   public override is_empty()
       succeed *ent = 0
    end
 
-   package rename_child(x, s)
+   package override rename_child(x, s)
       if ent[x.name] === x & x.name ~== s then {
          if member(ent, s) then
             rthrow("Can't change name to " || s || " - already exists", self)
@@ -292,7 +292,7 @@ class TableDir9P(Dir9P)
          set_perm(perm)
    end
 
-   public create_child(name, uid, perm)
+   public override create_child(name, uid, perm)
       local n
       n := if iand(perm, Mode9.DMDIR) = 0 then
          new_regular_child(name, uid, perm)
@@ -302,7 +302,7 @@ class TableDir9P(Dir9P)
       return n
    end
 
-   public new(n)
+   public override new(n)
       Dir9P.new(n)
       ent := table()
       return
@@ -313,7 +313,7 @@ end
 # This is just a `TableDir9P` named "/"
 #
 class Root9P(TableDir9P)
-   public new()
+   public override new()
       TableDir9P.new("/")
       return
    end
@@ -334,7 +334,7 @@ class StringFile9P(Regular9P)
    private readable
       data
 
-   public set_length(len)
+   public override set_length(len)
       if len > *data then
          data ||:= repl("\0", len - *data)
       else
@@ -342,7 +342,7 @@ class StringFile9P(Regular9P)
       return self
    end
 
-   public write(s, pos)
+   public override write(s, pos)
       if iand(self.perm, Mode9.DMAPPEND) = 0 then {
          if pos > *data then
             data ||:= repl("\0", pos - *data - 1) || s
@@ -353,14 +353,14 @@ class StringFile9P(Regular9P)
       return *s
    end
 
-   public read(pos, count)
+   public override read(pos, count)
       if pos > *data then
          return
       else
          return data[pos:min(pos + count, *data + 1)]
    end
 
-   public get_length()
+   public override get_length()
       return *data
    end
 
@@ -370,7 +370,7 @@ class StringFile9P(Regular9P)
       return self
    end
 
-   public new(n)
+   public override new(n)
       Regular9P.new(n)
       data := ""
       return
@@ -385,7 +385,7 @@ class FifoFile9P(Regular9P)
    private readable
       data
 
-   public set_length(len)
+   public override set_length(len)
       if len > *data then
          data ||:= repl("\0", len - *data)
       else
@@ -393,12 +393,12 @@ class FifoFile9P(Regular9P)
       return self
    end
 
-   public write(s, pos)
+   public override write(s, pos)
       data ||:= s
       return *s
    end
 
-   public read(pos, count)
+   public override read(pos, count)
       local s
       data ? {
          s := move(count) | tab(0)
@@ -407,7 +407,7 @@ class FifoFile9P(Regular9P)
       return s
    end
 
-   public get_length()
+   public override get_length()
       return *data
    end
 
@@ -423,7 +423,7 @@ class FifoFile9P(Regular9P)
       return self
    end
 
-   public new(n)
+   public override new(n)
       Regular9P.new(n)
       data := ""
       return
@@ -441,12 +441,12 @@ class QueueFile9P(Regular9P)
    private readable
       len
 
-   public write(s, pos)
+   public override write(s, pos)
       add(s)
       return *s
    end
 
-   public read(pos, count)
+   public override read(pos, count)
       local s
       if *q = 0 then
          return
@@ -461,7 +461,7 @@ class QueueFile9P(Regular9P)
       return s
    end
 
-   public set_length(n)
+   public override set_length(n)
       local s
       if n <= 0 then
          clear()
@@ -481,7 +481,7 @@ class QueueFile9P(Regular9P)
       return self
    end
 
-   public get_length()
+   public override get_length()
       return .len
    end
 
@@ -520,7 +520,7 @@ class QueueFile9P(Regular9P)
       }
    end
 
-   public new(n)
+   public override new(n)
       Regular9P.new(n)
       clear()
       return
@@ -935,11 +935,11 @@ end
 # Simple default Users database
 #
 class DefaultUsers(Users)
-   public is_member(group, user)
+   public override is_member(group, user)
       succeed group == user
    end
 
-   public is_leader(group, user)
+   public override is_leader(group, user)
       succeed group == user
    end
 end
@@ -972,13 +972,13 @@ class AdmUsers(Users)
       return self
    end
 
-   public is_member(group, user)
+   public override is_member(group, user)
       local g
       if g := member(groups, group) then
          succeed member(g.members, user)
    end
 
-   public is_leader(group, user)
+   public override is_leader(group, user)
       local g
       if g := member(groups, group) then {
          # If there is no specific leader then any member is a leader.
@@ -1092,67 +1092,67 @@ end
 # subclasses to provide the root of the tree for each mount.
 #
 abstract class FileData9P(Data9P)
-   public get_parent(p)
+   public override get_parent(p)
       return p.get_parent()
    end
 
-   public get_child(p, name)
+   public override get_child(p, name)
       return p.get_child(name)
    end
 
-   public gen_children(p)
+   public override gen_children(p)
       suspend p.gen_children()
    end
 
-   public remove_child(p1, p2)
+   public override remove_child(p1, p2)
       return p1.remove_child(p2) & self
    end
 
-   public create_child(p, name, uid, perm)
+   public override create_child(p, name, uid, perm)
       return p.create_child(name, uid, perm)
    end
 
-   public is_empty(p)
+   public override is_empty(p)
       return p.is_empty()
    end
    
-   public modified(p, uid)
+   public override modified(p, uid)
       return p.modified(uid) & self
    end
 
-   public open(p, mode)
+   public override open(p, mode)
       return p.open(mode)
    end
 
-   public write(p, s, pos)
+   public override write(p, s, pos)
       return p.write(s, pos)
    end
 
-   public read(p, pos, count)
+   public override read(p, pos, count)
       return p.read(pos, count)
    end
 
-   public close(p)
+   public override close(p)
       return p.close() & self
    end
 
-   public get_info(p)
+   public override get_info(p)
       return p.get_info()
    end
 
-   public set_info(p, x)
+   public override set_info(p, x)
       return p.set_info(x) & self
    end
 
-   public get_qid(p)
+   public override get_qid(p)
       return p.get_qid()
    end
 
-   public get_file_key(p)
+   public override get_file_key(p)
       return p.get_file_key()
    end
 
-   public path_unreferenced(p)
+   public override path_unreferenced(p)
       return p.path_unreferenced() & self
    end
 end
@@ -1165,7 +1165,7 @@ class TreeData9P(FileData9P)
    private readable
       root
 
-   public get_root(aname)
+   public override get_root(aname)
       return root
    end
 

@@ -16,7 +16,7 @@ record Path(cost, dist, hops, last_hop, prev_routes, curr_routes)
 class Route(SelectiveObjectCodec)
    public number, stops, direction, colour, reverse
 
-   private get_template()
+   private override get_template()
       suspend "number" | "stops" | "reverse"
    end
 
@@ -30,7 +30,7 @@ end
 class Stop(SelectiveObjectCodec)
    public loc, code, arcs, ptrs, routes, matches, name, letter, scale_times_east, scale_times_south, px, py, deleted, label_weight
 
-   private get_template()
+   private override get_template()
       suspend "loc" | "code" | "name" | "matches" | "letter"
    end
 
@@ -61,20 +61,20 @@ end
 class MapSearchField(SuggestField)
    private map
 
-   public create_popup()
+   public override create_popup()
       return PTable().
          add_column(PTableColumn()).
          add_column(PTableColumn().set_weight(1).set_align(Align.R))
    end
 
-   public convert_element(o)
+   public override convert_element(o)
       local s
       s := o[1]
       s ||:= " {" || o[2] || "}"
       return s
    end
 
-   protected do_request()
+   protected override do_request()
       return map.search_match(contents)
    end
 
@@ -139,7 +139,7 @@ class Map(Panel)
       return isort(l, 1)
    end
 
-   public finally()
+   public override finally()
       Component.finally()
       close_win()
    end
@@ -151,7 +151,7 @@ class Map(Panel)
       }
    end
 
-   public display()
+   public override display()
       if /I | (I.get_height() ~= h) | (I.get_width() ~= w) then {
          close_win()
          I := Window().set_size(w, h)
@@ -1753,7 +1753,7 @@ class Map(Panel)
       }
    end
 
-   public new()
+   public override new()
       Panel.new()
       connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
@@ -1794,22 +1794,22 @@ class BusView(Dialog)
       route_label.set_label("")
    end
 
-   public component_setup()
+   public override component_setup()
       self.setup()
       search_field.set_map(csa)
    end
 
-   public end_dialog()
+   public override end_dialog()
    end
 
-   public init_dialog()
+   public override init_dialog()
    end
 
    public on_quit(ev)
       dispose()
    end
 
-   public new()
+   public override new()
       Dialog.new()
       return
    end

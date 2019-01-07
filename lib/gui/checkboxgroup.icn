@@ -80,7 +80,7 @@ class CheckBoxGroup(Connectable)
       return self
    end
 
-   public new()
+   public override new()
       Connectable.new()
       self.checkboxes := set()
       return

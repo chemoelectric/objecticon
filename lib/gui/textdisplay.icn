@@ -55,19 +55,19 @@ class TextDisplay(LineBasedScrollArea)
       return last_split := TextSplit(sw, l, ll)
   end
 
-   public get_default_subject_height(dw)
+   public override get_default_subject_height(dw)
       local spl
       spl := get_split(dw  - 2 * Gui.TEXT_INSET)
       return get_line_height() * *spl.lines
    end
 
-   public get_default_subject_width()
+   public override get_default_subject_width()
       local spl
       spl := get_split()
       return 2 * Gui.TEXT_INSET + ((\spl.long_line).tw | 0)
    end
 
-   public calculate_line_count()
+   public override calculate_line_count()
       if /view_list then
          create_view_list()
       return *self.view_list
@@ -101,7 +101,7 @@ class TextDisplay(LineBasedScrollArea)
       return self
    end
 
-   public finally()
+   public override finally()
       LineBasedScrollArea.finally()
       # In case the component changes the contents and is then re-inited.
       clear_split_list()
@@ -262,18 +262,18 @@ class TextDisplay(LineBasedScrollArea)
       return self.contents
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       return view.cbwin.get_line_height()
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       if /view_list then
          create_view_list()
       # self.long_line will be null if contents is the empty list.
       return 2 * Gui.TEXT_INSET + ((\self.long_line).tw | 0)
    end
 
-   public draw_line(xp, yp, lh, i)
+   public override draw_line(xp, yp, lh, i)
       view.cbwin.draw_string(xp + Gui.TEXT_INSET, yp + view.cbwin.get_line_ascent(), detab(view_list[i].str, self.tab_width + 1))
    end
 
@@ -308,7 +308,7 @@ class TextDisplay(LineBasedScrollArea)
       }
    end
 
-   public set_internal_fields()
+   public override set_internal_fields()
       local had_vsb
       had_vsb := self.vsb
       LineBasedScrollArea.set_internal_fields()
@@ -330,7 +330,7 @@ class TextDisplay(LineBasedScrollArea)
       return self
    end
 
-   public layout()
+   public override layout()
       if \wrap_mode == "width" then
          clear_view_list()
       ScrollArea.layout()
@@ -377,7 +377,7 @@ class TextDisplay(LineBasedScrollArea)
       return self
    end
 
-   public new()
+   public override new()
       LineBasedScrollArea.new()
       tab_width := Gui.TAB_WIDTH
       set_contents([])

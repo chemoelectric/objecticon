@@ -42,7 +42,7 @@ class CodeTab(TabItem)
       return
    end
 
-   public new(c)
+   public override new(c)
       local l, p
       TabItem.new()
       set_label("Code")

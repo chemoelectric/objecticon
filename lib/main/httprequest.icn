@@ -125,7 +125,7 @@ class HttpRequest(MimeHeaders)
       return self
    end
 
-   public new()
+   public override new()
       MimeHeaders.new()
       method := "GET"
       return

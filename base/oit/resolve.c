@@ -6,6 +6,8 @@
 #include "tmain.h"
 
 static void merge(struct lclass *cl, struct lclass *super);
+static void check_override1(struct lclass *cl);
+static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f);
 
 /*
  * Names of builtin functions.
@@ -399,6 +401,37 @@ static void compute_impl(struct lclass *cl)
                 queue = queue_last = u;
         }
     }
+    check_override1(cl);
+}
+
+static void check_override1(struct lclass *cl)
+{
+    struct lclass_field *f;
+    for (f = cl->fields; f; f = f->next) {
+        if (f->flag & M_Override && !f->overrode)
+            lfatal(f->class->global->defined,
+                   &f->pos,
+                   "Method %s in class %s marked override, but didn't override another method",
+                   f->name,
+                   f->class->global->name);
+    }
+}
+
+static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f)
+{
+    if (fr->flag & (M_Mixin | M_Override)) {
+        fr->overrode = 1;
+        return;
+    }
+    lfatal2(fr->class->global->defined,
+            &fr->pos, &f->pos, ") without setting override modifier",
+            "Method %s in class %s overrides a method in class %s (",
+            f->name,
+            fr->class->global->name,
+            f->class->global->name
+        );
+    if (fr->class != cl)
+        print_see_also(cl);
 }
 
 static void merge(struct lclass *cl, struct lclass *super)
@@ -455,6 +488,11 @@ static void merge(struct lclass *cl, struct lclass *super)
                     );
                 if (fr->field->class != cl)
                     print_see_also(cl);
+            }
+            if (((fr->field->flag & (M_Method | M_Static)) == M_Method) 
+                     && ((f->flag & (M_Method | M_Static)) == M_Method)) 
+            {
+                check_override2(cl, fr->field, f);
             }
         } else {
             /* Not found, so add it */

@@ -19,7 +19,7 @@ class CanvasTreeDialog(CanvasComponentDialog)
       show_root_handles,
       select_group
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_select_mode(select_group.get_select_mode())
       c.show_root_flag := show_root.get_status()
@@ -27,7 +27,7 @@ class CanvasTreeDialog(CanvasComponentDialog)
       c.tree_structure_changed()
    end
 
-   public setup()
+   public override setup()
       local p
       CanvasComponentDialog.setup()
 

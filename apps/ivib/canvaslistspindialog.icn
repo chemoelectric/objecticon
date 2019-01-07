@@ -22,7 +22,7 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       default_setting,
       ucs_cb
 
-   public validate_input()
+   public override validate_input()
       #
       # Validate
       #
@@ -31,7 +31,7 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       return CanvasComponentDialog.validate_input()
    end
 
-   public set_vals()
+   public override set_vals()
       CanvasComponentDialog.set_vals()
       c.set_selection_list(selection_list.get_contents())
       case group.get_which_one() of {
@@ -55,7 +55,7 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       selection.set_is_shaded(&yes)
    end
 
-   public setup()
+   public override setup()
       local p,q
 
       CanvasComponentDialog.setup()

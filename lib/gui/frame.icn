@@ -15,7 +15,7 @@ class Frame(Component)
       RSW := env_scale("OI_FRAME_RSW") | scale(12)
    end
 
-   public can_drag(e)
+   public override can_drag(e)
       return bar.can_drag(e)
    end
 
@@ -41,7 +41,7 @@ class Frame(Component)
            (self.y + self.h - RSW <= e.y < self.y + self.h)))
    end
 
-   public display()
+   public override display()
       border.draw_rect(self.cbwin, self)
       self.display_children()
    end
@@ -53,12 +53,12 @@ class Frame(Component)
       return self
    end
 
-   public initially()
+   public override initially()
       \self.content | runerr("No content component specified")
       Component.initially()
    end
 
-   public layout()
+   public override layout()
       bar.x := self.x + border.get_l_inset()
       bar.y := self.y + border.get_t_inset()
       bar.w := self.w - border.get_total_width()
@@ -70,16 +70,16 @@ class Frame(Component)
       every (!children).layout()
    end
 
-   public get_default_width()
+   public override get_default_width()
       return border.get_total_width() + max(bar.get_preferred_width(), content.get_preferred_width())
    end
 
-   public get_default_height(dw)
+   public override get_default_height(dw)
       dw -:= border.get_total_width()
       return border.get_total_height() + bar.get_preferred_height(dw) + content.get_preferred_height(dw)
    end
 
-   public get_pointer(e)
+   public override get_pointer(e)
       if in_resize_corner(e) then
          return "bottom right corner"
    end
@@ -142,7 +142,7 @@ class Frame(Component)
       self.held_flag := &null
    end
 
-   public new()
+   public override new()
       Component.new()
       set_border(RaisedBorder())
       setup()
@@ -170,7 +170,7 @@ class FrameBar(Component)
       return self
    end
 
-   public can_drag(e)
+   public override can_drag(e)
       return lab.in_region(e)
    end
 
@@ -193,7 +193,7 @@ class FrameBar(Component)
       self.add(b)
    end
 
-   public new()
+   public override new()
       Component.new()
       setup()
       return

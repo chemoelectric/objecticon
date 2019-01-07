@@ -13,11 +13,11 @@ package xml
 # is used for testing purposes.
 #
 class CanonicalXmlFormatter(XmlFormatter)
-   protected format_cdata(n)
+   protected override format_cdata(n)
       writes1(xml_escape(n.content, '\n\r\t&<>\"'))
    end
 
-   protected format_document(n)
+   protected override format_document(n)
       local el
       every el := !n.children do {
          if is(el, DocType | ProcessingInstruction | Element) then
@@ -25,7 +25,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       }
    end
 
-   protected format_doctype(n)
+   protected override format_doctype(n)
       local s, x
 
       if *n.parent.notation_declarations = 0 then
@@ -49,7 +49,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       writes1(s)
    end
 
-   protected format_element(n)
+   protected override format_element(n)
       local s, x, e
 
       s := "<" || n.name
@@ -72,7 +72,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       writes("</", n.name, ">")
    end
 
-   protected format_pi(n)
+   protected override format_pi(n)
       local s
       s := "<?" || n.target || " "
       if \n.content then

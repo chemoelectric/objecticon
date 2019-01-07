@@ -61,7 +61,7 @@ class LayoutField(Component)
       self.add(edit_layout_button)
    end
 
-   public new()
+   public override new()
       Component.new()
       setup()
       self.set_constraint("x_fill", &yes)

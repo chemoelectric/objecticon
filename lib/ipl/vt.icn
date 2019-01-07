@@ -23,19 +23,19 @@ package record PopupElement(label, str)
 package record Locn(x, y)
 
 package class PopupElementItemPaint(ItemPaint)
-   public get_width(W, data)
+   public override get_width(W, data)
       return W.text_width(data.label)
    end
 
-   public get_constant_height(W)
+   public override get_constant_height(W)
       return W.get_line_height()
    end
 
-   public get_size(W, data)
+   public override get_size(W, data)
       return Size(W.text_width(data.label), W.get_line_height())
    end
 
-   public draw(W, data, x, y)
+   public override draw(W, data, x, y)
       W.draw_string(x, y + W.get_line_ascent(), data.label)
    end
 end
@@ -183,11 +183,11 @@ end
 package class VtPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
-   protected get_text()
+   protected override get_text()
       return \parent.primary
    end
 
-   public lost_ownership()
+   public override lost_ownership()
       parent.on_lost_primary_ownership()
    end
 
@@ -209,7 +209,7 @@ package class Charset()
 end
 
 package class VtView(DrawScrollAreaView)
-   public initially()
+   public override initially()
       parent.synch_view_colours()
       DrawScrollAreaView.initially()
    end
@@ -413,11 +413,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       clear_mark()
    end
 
-   public create_view()
+   public override create_view()
       return VtView()
    end
 
-   public layout()
+   public override layout()
       check_changed_size()
       LineBasedScrollArea.layout()
    end
@@ -440,11 +440,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   public get_default_width()
+   public override get_default_width()
       return predict_total_width(integer(vt_width * char_w) + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
    end
 
-   public get_default_height()
+   public override get_default_height()
       return predict_total_height(vt_height * get_line_height())
    end
 
@@ -620,7 +620,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       bottom_margin := rows
    end
 
-   public initially()
+   public override initially()
       local s, l
       s := get_wattrib(WAttrib.FONT)
       l := check_font(s) | runerr(&why, self)
@@ -688,7 +688,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   public finally()
+   public override finally()
       close_popup()
       scroll_ticker.stop()
       cursor_ticker.stop()
@@ -1932,32 +1932,32 @@ class Vt(LineBasedScrollArea, MenuMode)
       reset_blink()
    end
 
-   public keeps(e)
+   public override keeps(e)
       return
    end
 
-   public set_internal_fields()
+   public override set_internal_fields()
       local bf
       bf := if at_bottom() then &yes
       LineBasedScrollArea.set_internal_fields()
       if \bf then goto_bottom()
    end
 
-   public calculate_line_count()
+   public override calculate_line_count()
       return *contents
    end
 
-   public calculate_line_height()
+   public override calculate_line_height()
       return view.cbwin.get_line_height()
    end
 
-   public calculate_subject_width()
+   public override calculate_subject_width()
       return 0
    end
 
-   public optional draw_line()
+   public override optional draw_line()
 
-   public draw()
+   public override draw()
       local n, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
          default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i,
          cursor_i, leading
@@ -2523,7 +2523,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       invalidate_line(cy_to_index())
    end
 
-   public focus_changed(e) 
+   public override focus_changed(e) 
       if is_live() then
          invalidate_cursor()
    end
@@ -2675,21 +2675,21 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   public should_close(e)
+   public override should_close(e)
       succeed member(Mouse.PRESS, e.code) & not(popup.in_region(e))
    end
 
-   public gen_popup_components()
+   public override gen_popup_components()
       return popup
    end
 
-   public get_nesting_component()
+   public override get_nesting_component()
    end
 
-   public allow_nested(c)
+   public override allow_nested(c)
    end
 
-   public close_all()
+   public override close_all()
       close_popup()
    end
 
@@ -2891,7 +2891,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       search_increment_flag := &no
    end
 
-   public new()
+   public override new()
       LineBasedScrollArea.new()
       reset_custom_keys()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}

@@ -17,7 +17,7 @@ class CanvasSlider(CanvasComponent,Slider)
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_range(" || self.lo || ", " || self.hi || ")")
       c.chain("set_value(" || self.value || ")")
@@ -32,7 +32,7 @@ class CanvasSlider(CanvasComponent,Slider)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasSlider()
       CanvasComponent.dup_fields(c)
@@ -49,7 +49,7 @@ class CanvasSlider(CanvasComponent,Slider)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
           ["Hi", "hi"] |
           ["Lo", "lo"] |
@@ -64,19 +64,19 @@ class CanvasSlider(CanvasComponent,Slider)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasSliderDialog(self)
    end
 
-   public allows_null_width()
+   public override allows_null_width()
       return /self.is_horizontal_flag
    end
 
-   public allows_null_height()
+   public override allows_null_height()
       return \self.is_horizontal_flag
    end
 
-   public new()
+   public override new()
       Slider.new()
       CanvasComponent.new()
       self.class_name := "Slider"

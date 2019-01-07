@@ -17,21 +17,21 @@ class CanvasTree(CanvasComponent,Tree)
    #
    # Default minimum width for the object
    #
-   public min_width()
+   public override min_width()
       return 65
    end
 
    #
    # Default minimum height for the object
    #
-   public min_height()
+   public override min_height()
       return 65
    end
 
    #
    # Generate code into Code object c.
    #
-   public gen_code(c)
+   public override gen_code(c)
       CanvasComponent.gen_code(c)
       c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
@@ -41,7 +41,7 @@ class CanvasTree(CanvasComponent,Tree)
          c.chain("set_show_root_handles(&no)")
    end
 
-   public post_decode()
+   public override post_decode()
       CanvasComponent.post_decode()
       tree_structure_changed()
    end
@@ -49,7 +49,7 @@ class CanvasTree(CanvasComponent,Tree)
    #
    # Duplicate object.
    #
-   public dup()
+   public override dup()
       local c
       c := CanvasTree()
       CanvasComponent.dup_fields(c)
@@ -63,7 +63,7 @@ class CanvasTree(CanvasComponent,Tree)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public override get_template()
       suspend CanvasComponent.get_template() |
          ["Select Mode", "select_mode"] |
          ["Show Root Handles", "show_root_handles_flag"] |
@@ -73,11 +73,11 @@ class CanvasTree(CanvasComponent,Tree)
    #
    # Open the configuration dialog box.
    #
-   public dialog()
+   public override dialog()
       return CanvasTreeDialog(self)
    end
 
-   public new()
+   public override new()
       local m, n, p
       Tree.new()
       CanvasComponent.new()

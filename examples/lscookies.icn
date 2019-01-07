@@ -22,7 +22,7 @@ procedure main(a)
          if member(t, k) then {
             write("Deleted key: ", k)
             delete(t, k)
-            mod := 1
+            mod := &yes
          } else
             write("No such entry: ",k)
       }
@@ -38,7 +38,7 @@ procedure main(a)
    if \opts["x"] then {
       t := Cookie.expire_cookies(t)
       write("Removed expired cookies")
-      mod := 1
+      mod := &yes
    }
 
    # No options, so print whole table.

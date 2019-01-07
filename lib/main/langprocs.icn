@@ -58,28 +58,28 @@ end
 # for an ObjectOutputStream
 #
 abstract class ObjectOutput()
-   protected abstract object_output(oos)
+   private abstract object_output(oos)
 end
 
 # A class implements this interface to provide a custom implementation
 # for the `clone` procedure.
 #
 abstract class ObjectClone()
-   protected abstract object_clone(seen)
+   private abstract object_clone(seen)
 end
 
 # A class implements this interface to provide a custom implementation
 # for the `hash` procedure.
 #
 abstract class ObjectHash()
-   protected abstract object_hash(depth)
+   private abstract object_hash(depth)
 end
 
 # A class implements this interface to provide a custom implementation
 # for the `equals` procedure.
 #
 abstract class ObjectEquals()
-   protected abstract object_equals(other, seen)
+   private abstract object_equals(other, seen)
 end
 
 #
@@ -129,12 +129,12 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       }
    end
 
-   public out(s)
+   public override out(s)
       stuff := &yes
       return file.out(s) | throw(&why)
    end
 
-   public get_mode()
+   public override get_mode()
       return WRITE
    end
 
@@ -508,7 +508,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       return self
    end
 
-   public close()
+   public override close()
       if \close_underlying_flag then
          file.close() | fail
       return self
@@ -795,7 +795,7 @@ end
 # immutable classes).
 #
 class SelfClone(ObjectClone)
-   private final object_clone()
+   private final override object_clone()
       return self
    end
 end
@@ -813,7 +813,7 @@ end
 # such as "object mypackage.MyObject#3()"
 #
 class MinimalObjectOutput(ObjectOutput)
-   protected object_output(oo)
+   private override object_output(oo)
       oo.object_string(self)
    end
 end

@@ -10,7 +10,7 @@ package gui
 
 
 class DrawScrollAreaView(Component)
-   public display()
+   public override display()
       parent.draw()
    end
 end
@@ -28,7 +28,7 @@ abstract class DrawScrollArea(ScrollArea)
    #
    public abstract draw()
 
-   public create_view()
+   public override create_view()
       return DrawScrollAreaView()
    end
 end
