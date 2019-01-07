@@ -2183,9 +2183,9 @@ class WinsockStream(Stream, NoCopy)
       return
    end
 
-   public native in(n)
+   public override native in(n)
 
-   public native out(s)
+   public override native out(s)
 
    #
    # Connect a socket to the given address.  The address is a string
@@ -2195,7 +2195,7 @@ class WinsockStream(Stream, NoCopy)
    #
    public native connect(addr)
 
-   public get_mode()
+   public override get_mode()
       return READ_WRITE
    end
 
@@ -2265,7 +2265,7 @@ class WinsockStream(Stream, NoCopy)
 
    private native accept_impl()
 
-   public native close()
+   public override native close()
 
    private static native new_impl(domain, typ)
 end
