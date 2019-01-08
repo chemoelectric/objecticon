@@ -1983,26 +1983,27 @@ static void gentables()
         report("  Script          %7ld", scriptsize);
         tsize += scriptsize;
         report("  Header          %7ld", (long)sizeof(hdr));
-        report("  Procedures      %7ld", (long)hdr.ClassStatics);
-        report("  Class statics   %7ld", (long)(hdr.ClassMethods - hdr.ClassStatics));
-        report("  Class methods   %7ld", (long)(hdr.ClassFields - hdr.ClassMethods));
-        report("  Class fields    %7ld", (long)(hdr.ClassFieldLocs - hdr.ClassFields));
-        report("  Class field locs%7ld", (long)(hdr.Classes - hdr.ClassFieldLocs));
-        report("  Classes         %7ld", (long)(hdr.Records - hdr.Classes));
-        report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));
-        report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
-        report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
-        report("  Global names    %7ld", (long)(hdr.Gflags - hdr.Gnames));
-        report("  Global flags    %7ld", (long)(hdr.Glocs - hdr.Gflags));
-        report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
-        report("  Statics         %7ld", (long)(hdr.Snames - hdr.Statics));
-        report("  Static names    %7ld", (long)(hdr.TCaseTables - hdr.Snames));
-        report("  TCaseTables     %7ld", (long)(hdr.Filenms - hdr.TCaseTables));
-        report("  Filenms         %7ld", (long)(hdr.Linenums - hdr.Filenms));
-        report("  Linenums        %7ld", (long)(hdr.Constants - hdr.Linenums));
-        report("  Constants       %7ld", (long)(hdr.Strcons - hdr.Constants));
-        report("  Strings         %7ld", (long)(hdr.IcodeSize - hdr.Strcons));
-        report("  Total           %7ld", (long)tsize);
+        report("  Procedures      %7" WordFmtCh, (hdr.ClassStatics - hdr.Base));
+        report("  Class statics   %7" WordFmtCh, (hdr.ClassMethods - hdr.ClassStatics));
+        report("  Class methods   %7" WordFmtCh, (hdr.ClassFields - hdr.ClassMethods));
+        report("  Class fields    %7" WordFmtCh, (hdr.ClassFieldLocs - hdr.ClassFields));
+        report("  Class field locs%7" WordFmtCh, (hdr.Classes - hdr.ClassFieldLocs));
+        report("  Classes         %7" WordFmtCh, (hdr.Records - hdr.Classes));
+        report("  Records         %7" WordFmtCh, (hdr.Fnames - hdr.Records));
+        report("  Field names     %7" WordFmtCh, (hdr.Globals - hdr.Fnames));
+        report("  Globals         %7" WordFmtCh, (hdr.Gnames  - hdr.Globals));
+        report("  Global names    %7" WordFmtCh, (hdr.Gflags - hdr.Gnames));
+        report("  Global flags    %7" WordFmtCh, (hdr.Glocs - hdr.Gflags));
+        report("  Global locs     %7" WordFmtCh, (hdr.Statics - hdr.Glocs));
+        report("  Statics         %7" WordFmtCh, (hdr.Snames - hdr.Statics));
+        report("  Static names    %7" WordFmtCh, (hdr.TCaseTables - hdr.Snames));
+        report("  TCaseTables     %7" WordFmtCh, (hdr.Filenms - hdr.TCaseTables));
+        report("  Filenms         %7" WordFmtCh, (hdr.Linenums - hdr.Filenms));
+        report("  Linenums        %7" WordFmtCh, (hdr.Constants - hdr.Linenums));
+        report("  Constants       %7" WordFmtCh, (hdr.Strcons - hdr.Constants));
+        report("  Strings         %7" WordFmtCh, (hdr.AsciiStrcons - hdr.Strcons));
+        report("  Ascii strings   %7" WordFmtCh, (hdr.IcodeSize + hdr.Base - hdr.AsciiStrcons));
+        report("  Total           %7" WordFmtCh, tsize);
     }
 }
 
