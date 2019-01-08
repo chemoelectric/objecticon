@@ -111,6 +111,7 @@ static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
 static int numeric_via_string(struct literal *src);
+static int permit_access(struct lclass_field *f);
 
 static struct str_buf opt_sbuf;
 
@@ -651,7 +652,7 @@ static int visit_init_assign(struct lnode *n)
     f = lookup_field(vclass, y->fname);
     if (!f)
         return 1;
-    if (f->flag != (M_Public | M_Static | M_Const))
+    if ((f->flag & (M_Static | M_Const)) != (M_Static | M_Const))
         return 1;
 
     if (x->child2->op == Uop_Const) {
@@ -710,7 +711,7 @@ static int visit_init_method(struct lnode *n)
 static void compute_class_consts(void)
 {
     if (verbose > 3)
-        fprintf(stderr, "Public static constant analysis:\n\n");
+        fprintf(stderr, "Static constant analysis:\n\n");
     for (vclass = lclasses; vclass; vclass = vclass->next) {
         struct lclass_field *f = lookup_field(vclass, init_string);
         if (f) {
@@ -721,8 +722,8 @@ static void compute_class_consts(void)
             struct lclass_field *cf;
             fprintf(stderr, "Class %s\n", vclass->global->name);
             for (cf = vclass->fields; cf; cf = cf->next) {
-                if (cf->flag == (M_Public | M_Static | M_Const)) {
-                    fprintf(stderr, "\tPublic static constant %s: ", cf->name);
+                if ((cf->flag & (M_Static | M_Const)) == (M_Static | M_Const)) {
+                    fprintf(stderr, "\tStatic constant %s: ", cf->name);
                     switch (cf->const_flag) {
                         case NOT_SEEN: fprintf(stderr, "NOT_SEEN\n"); break;
                         case SET_NULL: fprintf(stderr, "SET_NULL\n"); break;
@@ -2779,6 +2780,31 @@ static void fold_number(struct lnode *n)
     free_literal(&l);
 }
 
+static int permit_access(struct lclass_field *f)
+{
+    if (f->flag & M_Public)
+        return 1;
+
+    if (f->flag & M_Package)
+        return (curr_vfunc->defined->package_id == f->class->global->defined->package_id);
+
+    if (!curr_vfunc->method)
+        return 0;
+
+    if (f->flag & M_Private)
+        return (curr_vfunc->method->class == f->class);
+
+    if (f->flag & M_Protected) {
+        struct lclass_ref *cr;
+        for (cr = curr_vfunc->method->class->implemented_classes; cr; cr = cr->next) {
+            if (cr->class == f->class)
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
 static void fold_field(struct lnode *n)
 {
     struct lnode_field *x = (struct lnode_field *)n;
@@ -2807,6 +2833,12 @@ static void fold_field(struct lnode *n)
 
     f = lookup_implemented_field(y->global->class, x->fname);
     if (!f)
+        return;
+
+    if ((f->flag & (M_Static | M_Const)) != (M_Static | M_Const))
+        return;
+
+    if (!permit_access(f))
         return;
 
     switch (f->const_flag) {
