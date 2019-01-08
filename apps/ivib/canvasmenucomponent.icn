@@ -37,7 +37,7 @@ class CanvasMenuComponent(CanvasObject)
 
       if \self.event_method then {
          c.chain("connect(" || self.event_method || ", Event.ACTION)")
-         c.add_method("private", self.event_method, ["ev"])
+         c.add_method(["private"], self.event_method, ["ev"])
          c.add_import("gui", "Event")
       }
 

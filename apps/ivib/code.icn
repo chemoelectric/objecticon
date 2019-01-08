@@ -145,7 +145,7 @@ class Code()
       local e
       every e := !t do {
          chain("connect(self." || e[2] || ", " || e[1] || ")")
-         add_method("private", e[2], ["ev"])
+         add_method(["private"], e[2], ["ev"])
          if match("Event.", e[1]) then
             add_import("gui", "Event")
       }
@@ -155,7 +155,7 @@ class Code()
       local e
       every e := !t do {
          line("self.connect(self." || e[2] || ", " || e[1] || ")")
-         add_method("private", e[2], ["ev"])
+         add_method(["private"], e[2], ["ev"])
          if match("Event.", e[1]) then
             add_import("gui", "Event")
       }
@@ -366,12 +366,12 @@ class Code()
       local body
 
       if /self.parent_Canvas.is_component & \self.parent_Canvas.gen_init_dialog then {
-         add_method("public", "init_dialog")
-         add_method("public", "end_dialog")
+         add_method(["public", "override"], "init_dialog")
+         add_method(["public", "override"], "end_dialog")
       }
 
       if \self.parent_Canvas.gen_component_setup then 
-         add_method("public", "component_setup", [], ["self.setup()"])
+         add_method(["public", "override"], "component_setup", [], ["self.setup()"])
 
       if \self.parent_Canvas.gen_constructor then {
          body := [self.parent_Canvas.superclass_name || ".new()"]
@@ -385,7 +385,7 @@ class Code()
                put(body, "self.component_setup()")
          }
          put(body, "return")
-         add_method("public", "new", [], body)
+         add_method(["public", "override"], "new", [], body)
       }
       self.methods_out(cl)
       self.setup_out(cl)
@@ -425,11 +425,11 @@ class Code()
       every rec := (!sort(methods))[2] do {
          # The method handle_v2_events is a special case...
          if rec.name == "handle_v2_events" then {
-            t := Factory.new_method(nice_pad(cl), [rec.access], 
+            t := Factory.new_method(nice_pad(cl), rec.access,
                                     rec.name, ["ev", "src", "type"], indent1)
             t.set_body(indent2 || "dialog_event(V2TOV1(ev, src, type))")
          } else {
-            t := Factory.new_method(nice_pad(cl), [rec.access], 
+            t := Factory.new_method(nice_pad(cl), rec.access,
                                     rec.name, rec.params, indent1)
             s := ""
             every s ||:= indent2 || !rec.body
