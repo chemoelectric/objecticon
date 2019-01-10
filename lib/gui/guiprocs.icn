@@ -791,7 +791,7 @@ end
 # Helpful mixin-style class for a `Component` which has an optional
 # wheel capability.
 #
-abstract class HasUseWheel()
+abstract class HasUseWheel(Connectable)
    public
       wheel_listeners
 
@@ -805,8 +805,8 @@ abstract class HasUseWheel()
       wheel_listeners := if /s then
          &null
       else
-         [self.connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener,
-          self.connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener]
+         [connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener,
+          connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener]
       return self
    end
 end
