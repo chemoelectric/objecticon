@@ -419,7 +419,7 @@ static void check_override1(struct lclass *cl)
 
 static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f)
 {
-    if (fr->flag & (M_Mixin | M_Override)) {
+    if (fr->flag & M_Override) {
         fr->overrode = 1;
         return;
     }

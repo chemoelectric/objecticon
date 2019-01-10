@@ -37,9 +37,7 @@ final abstract class Class()
       # Integer flag for a removed method.
       Removed,
       # Integer flag for an override method.
-      Override,
-      # Integer flag for a mixin method.
-      Mixin
+      Override
 
    private static init()
       Method := 8r01
@@ -57,7 +55,6 @@ final abstract class Class()
       Native := 8r010000
       Removed := 8r020000
       Override := 8r040000
-      Mixin := 8r0100000
    end
 
    # This method creates a new instance of the class from which the

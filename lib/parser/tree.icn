@@ -668,7 +668,6 @@ class Factory()
          "native": YY.NATIVE
          "optional": YY.OPTIONAL
          "override": YY.OVERRIDE
-         "mixin": YY.MIXIN
          default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))

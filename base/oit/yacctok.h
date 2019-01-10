@@ -36,7 +36,6 @@
 %token	INITIAL     /* initial   */
 %token	INVOCABLE   /* invocable */
 %token	LOCAL       /* local     */
-%token	MIXIN       /* mixin     */
 %token	NATIVE      /* native    */
 %token	NEXT        /* next      */
 %token	NOT         /* not       */
