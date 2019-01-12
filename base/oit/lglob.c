@@ -19,7 +19,7 @@
 
 static void reference(struct gentry *gp);
 static void rebuild_lists(void);
-static struct gentry *gmain;
+static void clear_refs(void);
 
 struct package_id {
     char *name;
@@ -186,6 +186,8 @@ void readglob(struct lfile *lf)
                     f = F_Proc;
                     if (uop->opcode == Uop_PkProcdecl) f |= F_Package;
                     gp = putglobal(name, f, lf, &pos);
+                    if (name == main_string)
+                        gmain = gp;
                 }
                 curr_func = gp->func = Alloc(struct lfunction);
                 curr_func->defined = lf;
@@ -295,27 +297,12 @@ void resolve_locals()
  */
 void scanrefs()
 {
-    struct gentry *gp;
     struct linvocable *inv;
-    struct lfile *lf;
 
     /*
-     * Mark every global as unreferenced; search for main.
+     * Mark every global and file as unreferenced.
      */
-    gmain = 0;
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        gp->ref = 0;
-        if (gp->name == main_string)
-            gmain = gp;
-    }
-
-    if (!gmain) {
-        lfatal(0, 0, "No main procedure found");
-        return;
-    }
-
-    for (lf = lfiles; lf; lf = lf->next)
-        lf->ref = 0;
+    clear_refs();
 
     /*
      * Set the ref flag for referenced globals, starting with main()
@@ -718,22 +705,15 @@ static void reference2(struct gentry *gp)
 
 void scanrefs2()
 {
-    struct gentry *gp;
     struct linvocable *inv;
-    struct lfile *lf;
     struct lclass *cp;
     struct lclass_field *lm;
     struct lclass_field_ref *lr;
 
     /*
-     * Mark every global as unreferenced.
+     * Mark every global and file as unreferenced.
      */
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        gp->ref = 0;
-    }
-
-    for (lf = lfiles; lf; lf = lf->next)
-        lf->ref = 0;
+    clear_refs();
 
     /*
      * "new" and "init" are always used.
@@ -742,8 +722,7 @@ void scanrefs2()
     note_seen_field(init_string);
 
     /*
-     * Start scanninng with main.  gmain has been set by scanrefs()
-     * previously.
+     * Start scanning with main.
      */
     reference2(gmain);
 
@@ -805,4 +784,19 @@ void scanrefs2()
             }
         }
     }
+}
+
+/*
+ * Mark every global and file as unreferenced.
+ */
+static void clear_refs()
+{
+    struct gentry *gp;
+    struct lfile *lf;
+
+    for (gp = lgfirst; gp; gp = gp->g_next)
+        gp->ref = 0;
+
+    for (lf = lfiles; lf; lf = lf->next)
+        lf->ref = 0;
 }
