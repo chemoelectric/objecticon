@@ -772,10 +772,10 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         self_class = ObjectBlk(*self).class;
 
         /* 
-         * Check the access makes sense, ie it is to a class the object (self)
-         * implements 
+         * Check the invocation makes sense, ie the method is in a
+         * class the object (self) implements
          */
-        if (!class_is(self_class, class0))
+        if (!class_is(self_class, cf->defining_class))
             AccessErr(607);
 
         /* Can't access new except whilst initializing */
@@ -999,7 +999,7 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
          * Check the invocation makes sense, ie the method is in a
          * class the object (self) implements
          */
-        if (!class_is(self_class, class0))
+        if (!class_is(self_class, cf->defining_class))
             InvokefErr(607);
 
         /* Can't access new except whilst initializing */
