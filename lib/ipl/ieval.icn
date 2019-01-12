@@ -53,9 +53,75 @@ class Ieval(MinimalObjectOutput)
          write("load(s)     Load the given prog, and set its error handler.").
          write("gg(s,p)     Get the given global from the the given prog (shorthand for").
          write("            Prog.get_global).").
+         write("c3(c)       Show the C3 linearizaton algorithm for class c.").
          write("oos         The ObjectOutputStream used to output results.").
          write("out         The OutputStream of the terminal.")
          write("vars        The environment (as shown by !env), as a table.")
+   end
+
+   private do_c3(c)
+      linearize_c3(c, set(), table(), 0)
+   end
+
+   private linearize_c3(c, seen, cache, depth)
+      local t, e, v, sl, spc
+      spc := repl(" ", depth * 3)
+      output.writes(spc, "C3: ", text_link(Class.get_name(c)), "(", supers_string(c), ")")
+      if v := member(cache, c) then {
+         output.write(" (Cached)")
+         output.write(spc, "Result: ", comma_string{ Class.get_name(!v) })
+         return v
+      }
+      if member(seen, c) then {
+         error.write("Circular inheritance: " || Class.get_name(c))
+         fail
+      }
+      sl := List{ Class.get_supers(c) }
+      if *sl = 0 then {
+         output.write(" = ", Class.get_name(c) )
+         return [c]
+      }
+      output.write()
+      insert(seen, c)
+      t := []
+      every e := !sl do
+         put(t, copy(linearize_c3(e, seen, cache, depth + 1))) | fail
+      delete(seen, c)
+      put(t, sl)
+      output.write(spc, "   Added ", Class.get_name(c))
+      v := push(merge_c3(t, depth + 1), c) | fail
+      output.write(spc, "Result: ", comma_string{ Class.get_name(!v) })
+      cache[c] := v
+      return v
+   end
+
+   private static in_tail(l, h)
+      succeed keyof(!l, h) > 1
+   end
+
+   private merge1_c3(l, r, depth)
+      local h, e
+      every h := (!l)[1] do {
+         in_tail(l, h) | {
+            put(r, h)
+            output.write(repl(" ", depth * 3), "Added ", Class.get_name(h))
+            # Pop h off any of the lists
+            every e := !l do {
+               if e[1] === h then
+                  pop(e)
+            }
+            return
+         }
+      }
+      error.write("Inheritance hierarchy cannot be linearized")
+   end
+
+   private merge_c3(l, depth)
+      local r
+      r := []
+      while !!l do
+         merge1_c3(l, r, depth) | fail
+      return r
    end
 
    private get_screen_width()
@@ -119,8 +185,6 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Final "
       if iand(f, Class.Override) ~= 0 then
          s ||:= "Override "
-      if iand(f, Class.Mixin) ~= 0 then
-         s ||:= "Mixin "
       if iand(f, Class.Special) ~= 0 then
          s ||:= "Special "
       if iand(f, Class.Removed) ~= 0 then
@@ -458,6 +522,7 @@ class Ieval(MinimalObjectOutput)
       consts["elim"] := set_elim
       consts["hlim"] := set_hlim
       consts["llim"] := set_llim
+      consts["c3"] := do_c3
       consts["load"] := load
       consts["gg"] := Prog.get_global
       consts["traceback"] := create traceback()

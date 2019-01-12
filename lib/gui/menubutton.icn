@@ -15,7 +15,7 @@ import graphics
 # drop-down menu, rather than several.  It may be placed anywhere on
 # the dialog, whereas a `MenuBar` would invariably be placed along the top.
 #
-class MenuButton(Component, BorderWhilstEntered, MenuSystem)
+class MenuButton(BorderWhilstEntered, MenuSystem, Component)
    public 
       menu, 
       which_open

@@ -69,3 +69,14 @@ void mb_free(struct membuff *mb)
     }
     mb->curr = mb->first = mb->last = 0;
 }
+
+void mb_show(struct membuff *mb)
+{
+    struct membuff_block *t = mb->first;
+    fprintf(stderr, "Membuff %p, init_size=%ld curr=%p\n", mb, (long)mb->init_size, mb->curr);
+    while (t) {
+        fprintf(stderr, "\tBlock %p mem=%p size=%ld free=%ld\n", t, t->mem,
+                (long)t->size, (long)(t->size - ((char *)t->free - (char *)t->mem)));
+        t = t->next;
+    }
+}

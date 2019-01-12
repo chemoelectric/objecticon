@@ -10,6 +10,7 @@
 #include "resolve.h"
 #include "tmain.h"
 #include "ltree.h"
+#include "membuff.h"
 
 #include "../h/opdefs.h"
 
@@ -19,7 +20,13 @@
 
 static void reference(struct gentry *gp);
 static void rebuild_lists(void);
-static struct gentry *gmain;
+static void clear_refs(void);
+static void reference2(struct gentry *gp);
+static void freference(struct lfunction *lf);
+static int have_seen_field(char *name);
+static void note_seen_field(char *name);
+static int note_seen_method(struct lnode_field *x);
+static int add_seen_field(struct lnode *n);
 
 struct package_id {
     char *name;
@@ -186,6 +193,8 @@ void readglob(struct lfile *lf)
                     f = F_Proc;
                     if (uop->opcode == Uop_PkProcdecl) f |= F_Package;
                     gp = putglobal(name, f, lf, &pos);
+                    if (name == main_string)
+                        gmain = gp;
                 }
                 curr_func = gp->func = Alloc(struct lfunction);
                 curr_func->defined = lf;
@@ -295,27 +304,12 @@ void resolve_locals()
  */
 void scanrefs()
 {
-    struct gentry *gp;
     struct linvocable *inv;
-    struct lfile *lf;
 
     /*
-     * Mark every global as unreferenced; search for main.
+     * Mark every global and file as unreferenced.
      */
-    gmain = 0;
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        gp->ref = 0;
-        if (gp->name == main_string)
-            gmain = gp;
-    }
-
-    if (!gmain) {
-        lfatal(0, 0, "No main procedure found");
-        return;
-    }
-
-    for (lf = lfiles; lf; lf = lf->next)
-        lf->ref = 0;
+    clear_refs();
 
     /*
      * Set the ref flag for referenced globals, starting with main()
@@ -613,15 +607,12 @@ void resolve_native_methods()
     }
 }
 
-static int changed;
-static void reference2(struct gentry *gp);
-static void freference(struct lfunction *lf);
-
 /*
  * Structure and methods for a simple set of field names.
  */
 
 static struct seen_field *seen_fields[500];
+static struct membuff ref2_mb = {"reference2() function membuff", 64000, 0,0,0 };
 
 struct seen_field {
     char *name;
@@ -651,12 +642,35 @@ static void note_seen_field(char *name)
     while (x && x->name != name)
         x = x->next;
     if (!x) {
-        x = Alloc(struct seen_field);
+        x = mb_alloc(&ref2_mb, sizeof(struct seen_field));
         x->name = name;
         x->next = seen_fields[i];
         seen_fields[i] = x;
-        changed = 1;
     }
+}
+
+static int note_seen_method(struct lnode_field *x)
+{
+    struct lnode_global *y;
+    struct lclass_field *f;
+    if (x->child->op != Uop_Global)
+        return 0;
+    y = (struct lnode_global *)x->child;
+    if (!y->global->class)
+        return 0;
+    f = lookup_implemented_field(y->global->class, x->fname);
+    /* If not found, note the field as a general one. */
+    if (!f)
+        return 0;
+    /* If it's a method, mark it as statically referenced; it will be
+     * scanned on the next loop if needed. Otherwise, it is a
+     * variable, so return 1 and just ignore it.  Note that f may be
+     * an instance method, being a reference to an overridden method
+     * in a superclass (eg "Dialog.new()").
+     */
+    if (f->func)
+        f->func->sref = 1;
+    return 1;
 }
 
 static int add_seen_field(struct lnode *n)
@@ -664,7 +678,9 @@ static int add_seen_field(struct lnode *n)
     switch (n->op) {
         case Uop_Field: {
             struct lnode_field *x = (struct lnode_field *)n;
-            note_seen_field(x->fname);
+            /* Either note a particular static method, or a more general field name */
+            if (!note_seen_method(x))
+                note_seen_field(x->fname);
             break;
         }
     }
@@ -677,7 +693,6 @@ static void freference(struct lfunction *lf)
     if (lf->ref)
         return;
     lf->ref = 1;
-    changed = 1;
 
     /*
      * Mark all the globals used as referenced.
@@ -699,9 +714,8 @@ static void reference2(struct gentry *gp)
 
     if (gp->ref)
         return;
-
     gp->ref = 1;
-    changed = 1;
+
     if (gp->func) {
         /*
          * Top level procedure.
@@ -718,22 +732,16 @@ static void reference2(struct gentry *gp)
 
 void scanrefs2()
 {
-    struct gentry *gp;
     struct linvocable *inv;
-    struct lfile *lf;
     struct lclass *cp;
     struct lclass_field *lm;
     struct lclass_field_ref *lr;
+    int changed;
 
     /*
-     * Mark every global as unreferenced.
+     * Reset memory.
      */
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        gp->ref = 0;
-    }
-
-    for (lf = lfiles; lf; lf = lf->next)
-        lf->ref = 0;
+    clear_refs();
 
     /*
      * "new" and "init" are always used.
@@ -742,8 +750,7 @@ void scanrefs2()
     note_seen_field(init_string);
 
     /*
-     * Start scanninng with main.  gmain has been set by scanrefs()
-     * previously.
+     * Start scanning with main.
      */
     reference2(gmain);
 
@@ -769,7 +776,7 @@ void scanrefs2()
     /*
      * Loop until no changes are made.
      */
-    for(;;) {
+    do {
         changed = 0;
         /*
          * For each referenced class, ensure we have referenced all
@@ -778,14 +785,16 @@ void scanrefs2()
         for (cp = lclasses; cp; cp = cp->next) {
             if (cp->global->ref) {
                 for (lm = cp->fields; lm; lm = lm->next) {
-                    if (lm->func && !lm->func->ref && have_seen_field(lm->name))
+                    if (lm->func && !lm->func->ref && (lm->func->sref || have_seen_field(lm->name))) {
                         freference(lm->func);
+                        ++changed;
+                    }
                 }
             }
         }
-        if (!changed)
-            break;
-    }
+        if (verbose > 3)
+            report("Discard loop made %d changes", changed);
+    } while (changed);
 
     /*
      * Rebuild global lists.
@@ -805,4 +814,37 @@ void scanrefs2()
             }
         }
     }
+
+    /*
+     * Free memory used in the field name table.
+     */
+    mb_free(&ref2_mb);
+    ArrClear(seen_fields);
+}
+
+/*
+ * Mark every global and file as unreferenced.
+ */
+static void clear_refs()
+{
+    struct gentry *gp;
+    struct lclass *cp;
+    struct lclass_field *lm;
+    struct lfile *lf;
+
+    for (gp = lgfirst; gp; gp = gp->g_next) {
+        gp->ref = 0;
+        if (gp->func)
+            gp->func->ref = gp->func->sref = 0;
+    }
+
+    for (cp = lclasses; cp; cp = cp->next) {
+        for (lm = cp->fields; lm; lm = lm->next) {
+            if (lm->func)
+                lm->func->ref = lm->func->sref = 0;
+        }
+    }
+
+    for (lf = lfiles; lf; lf = lf->next)
+        lf->ref = 0;
 }

@@ -4,10 +4,23 @@
 #include "lmem.h"
 #include "resolve.h"
 #include "tmain.h"
+#include "membuff.h"
+
+struct lclass_ref_list
+{
+    struct lclass_ref *first, *last;
+};
 
 static void merge(struct lclass *cl, struct lclass *super);
 static void check_override1(struct lclass *cl);
 static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f);
+static void add_lclass_ref(struct lclass_ref_list *l, struct lclass *c);
+static int is_empty(struct lclass_ref_list **arg);
+static void check_head_del(struct lclass_ref_list *l, struct lclass *v);
+static int tail_search(struct lclass_ref_list **arg, struct lclass *h);
+static int merge1_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg);
+static int merge_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg);
+static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *cl);
 
 /*
  * Names of builtin functions.
@@ -353,57 +366,6 @@ void resolve_supers()
     }
 }
 
-static void compute_impl(struct lclass *cl)
-{
-    struct lclass_ref *queue = 0, *queue_last = 0, *t, *u;
-    struct lclass *x;
-    static int seen_no = 0;
-
-    /* Flag value for checking if a class has been seen.  Doing it this way saves
-     * setting all flags to zero each time.  */
-    ++seen_no;
-
-    /* Init the queue with the class to resolve */
-    queue_last = queue = Alloc(struct lclass_ref);
-    queue->class = cl;
-
-    /* Carry out a breadth first traversal of the class hierarchy */
-    /* When the queue is empty, we've finished */
-    while (queue) {
-        /* Pop one of the front */
-        t = queue;
-        x = queue->class;
-        queue = queue->next;
-        if (!queue)
-            queue_last = 0;
-        free(t);
-        
-        /* If we've seen it, just go round again */
-        if (x->seen == seen_no)
-            continue;
-
-        /* We have an implemented superclass, so merge methods etc into our
-         * class.
-         */
-        x->seen = seen_no;
-        merge(cl, x);
-
-        /* And add all its unseen supers to the queue */
-        for (t = x->resolved_supers; t; t = t->next) {
-            if (t->class->seen == seen_no)
-                continue;
-            u = Alloc(struct lclass_ref);
-            u->class = t->class;
-            if (queue_last) {
-                queue_last->next = u;
-                queue_last = u;
-            } else
-                queue = queue_last = u;
-        }
-    }
-    check_override1(cl);
-}
-
 static void check_override1(struct lclass *cl)
 {
     struct lclass_field *f;
@@ -419,7 +381,7 @@ static void check_override1(struct lclass *cl)
 
 static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f)
 {
-    if (fr->flag & (M_Mixin | M_Override)) {
+    if (fr->flag & M_Override) {
         fr->overrode = 1;
         return;
     }
@@ -436,8 +398,8 @@ static void check_override2(struct lclass *cl, struct lclass_field *fr, struct l
 
 static void merge(struct lclass *cl, struct lclass *super)
 {
-    struct lclass_ref *cr;
     struct lclass_field *f;
+    struct lclass_ref *cr;
 
     /* Add a reference to super into the implemented_classes list. */
     cr = Alloc(struct lclass_ref);
@@ -524,11 +486,156 @@ static void merge(struct lclass *cl, struct lclass *super)
     }
 }
 
+static int seen_no = 0;
+static struct membuff c3_mb = {"C3 calculation membuff", 64000, 0,0,0 };
+#define C3Alloc(type)   mb_alloc(&c3_mb, sizeof(type))
+
 void compute_inheritance()
 {
     struct lclass *cl;
-    for (cl = lclasses; cl; cl = cl->next) 
-        compute_impl(cl);
+    for (cl = lclasses; cl; cl = cl->next) {
+        if (!cl->implemented_classes) {
+            /* Flag value for checking if a class has been seen.  Doing it this way saves
+             * setting all flags to zero each time.  */
+            ++seen_no;
+            linearize_c3(cl, cl);
+            mb_clear(&c3_mb);
+        }
+        check_override1(cl);
+    }
+    mb_free(&c3_mb);
+}
+
+/*
+ * Add a class to the end of the given list.
+ */
+static void add_lclass_ref(struct lclass_ref_list *l, struct lclass *c)
+{
+    struct lclass_ref *v = C3Alloc(struct lclass_ref);
+    v->class = c;
+    if (l->last) {
+        l->last->next = v;
+        l->last = v;
+    } else
+        l->first = l->last = v;
+}
+
+/*
+ * Check if all of the lists in the given array of lists are empty.
+ */
+static int is_empty(struct lclass_ref_list **arg)
+{
+    for (; *arg; ++arg) {
+        if ((*arg)->first)
+            return 0;
+    }
+    return 1;
+}
+
+/*
+ * Delete v from l, if it is the first element.
+ */
+static void check_head_del(struct lclass_ref_list *l, struct lclass *v)
+{
+    if (l->first && l->first->class == v) {
+        if (l->first == l->last)
+            l->first = l->last = 0;
+        else
+            l->first = l->first->next;
+    }
+}
+
+/*
+ * Check if class h is in the tail of any lists in the array arg.
+ */
+static int tail_search(struct lclass_ref_list **arg, struct lclass *h)
+{
+    for (; *arg; ++arg) {
+        if ((*arg)->first) {
+            struct lclass_ref *x;
+            for (x = (*arg)->first->next; x; x = x->next)
+                if (x->class == h)
+                    return 1;
+        }
+    }
+    return 0;
+}
+
+static int merge1_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg)
+{
+    for (struct lclass_ref_list **a = arg; *a; ++a) {
+        if ((*a)->first) {
+            struct lclass *h = (*a)->first->class;
+            if (!tail_search(arg, h)) {
+                add_lclass_ref(res, h);
+                for (a = arg; *a; ++a)
+                    check_head_del(*a, h);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int merge_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg)
+{
+    while (!is_empty(arg)) {
+        if (!merge1_c3(res, arg))
+            return 0;
+    }
+    return 1;
+}
+
+static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *cl)
+{
+    struct lclass_ref_list *res, **arg;
+    struct lclass_ref *sup, *p;
+    int i, narg;
+
+    res = C3Alloc(struct lclass_ref_list);
+    if (cl->implemented_classes) {
+        for (p = cl->implemented_classes; p; p = p->next)
+            add_lclass_ref(res, p->class);
+        return res;
+    }
+
+    add_lclass_ref(res, cl);
+    if (cl->seen == seen_no) {
+        lfatal(cl->global->defined, &cl->global->pos,
+               "Failed to compute inheritance list (circular inheritance on class %s)", cl->global->name);
+        if (base != cl)
+            print_see_also(base);
+    } else {
+        /* The recursive result of the supers plus this class's list of supers plus a null terminator. */
+        narg = cl->n_supers + 2;
+        arg = mb_alloc(&c3_mb, narg * sizeof(struct lclass_ref_list));
+
+        i = 0;
+        cl->seen = seen_no;
+        for (sup = cl->resolved_supers; sup; sup = sup->next)
+            arg[i++] = linearize_c3(base, sup->class);
+        cl->seen = 0;
+
+        arg[i] = C3Alloc(struct lclass_ref_list);
+        for (sup = cl->resolved_supers; sup; sup = sup->next)
+            add_lclass_ref(arg[i], sup->class);
+        ++i;
+        arg[i++] = 0;
+        if (i != narg)
+            quit("I got my supers counting wrong.");
+
+        if (!merge_c3(res, arg)) {
+            lfatal(cl->global->defined, &cl->global->pos,
+                   "Failed to compute inheritance list for class %s", cl->global->name);
+            if (base != cl)
+                print_see_also(base);
+        }
+    }
+
+    for (p = res->first; p; p = p->next)
+        merge(cl, p->class);
+
+    return res;
 }
 
 static struct gentry *resolve_invocable(struct linvocable *inv)

@@ -140,10 +140,6 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A static method cannot be marked override: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & (M_Static | M_Mixin)) == (M_Static | M_Mixin))
-            tfatal_at(n, "A static method cannot be marked mixin: method %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
         if ((flag & M_Final) && (curr_class->flag & M_Final))
             tfatal_at(n, "A method cannot be final in a class marked final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
@@ -174,10 +170,6 @@ void check_flags(int flag, struct node *n)
     } else {
         if (flag & M_Override)
             tfatal_at(n, "A class variable cannot be marked override: field %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
-        if (flag & M_Mixin)
-            tfatal_at(n, "A class variable cannot be marked mixin: field %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if (flag & M_Final)

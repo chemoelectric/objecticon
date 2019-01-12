@@ -28,6 +28,7 @@ FILE *dbgfile;                          /* debug file */
 static char *dbgname;                   /* debug file name */
 
 char *inname;                           /* input file name */
+struct gentry *gmain;
 
 static int lfatals = 0;                                /* number of errors encountered */
 static int lwarnings = 0;                      /* number of warnings encountered */
@@ -92,26 +93,21 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
 
     /* Resolve identifiers encountered in procedures and methods */
     resolve_locals();
+    check_unused_imports();
+    if (!gmain)
+        lfatal(0, 0, "No main procedure found");
 
     if (lfatals > 0) {
         *warnings = lwarnings;
         *fatals = lfatals;
         return;
     }
-    check_unused_imports();
 
     /* Phase II:  suppress unreferenced procs, unless "invocable all". */
     if (strinv)
         add_functions();
-    else {
+    else
         scanrefs();
-        if (lfatals > 0) {
-            *warnings = lwarnings;
-            *fatals = lfatals;
-            return;
-        }
-    }
-
 
     loadtrees();
 
@@ -322,6 +318,7 @@ char *f_flag2str(int flag)
     if (flag & F_Dynamic) strcat(buff, "F_Dynamic ");
     if (flag & F_Static) strcat(buff, "F_Static ");
     if (flag & F_Builtin) strcat(buff, "F_Builtin ");
+    if (flag & F_Vararg) strcat(buff, "F_Vararg ");
     if (flag & F_Argument) strcat(buff, "F_Argument ");
     if (flag & F_IntLit) strcat(buff, "F_IntLit ");
     if (flag & F_RealLit) strcat(buff, "F_RealLit ");
@@ -333,6 +330,8 @@ char *f_flag2str(int flag)
     if (flag & F_LrgintLit) strcat(buff, "F_LrgintLit ");
     if (flag & F_Method) strcat(buff, "F_Method ");
     if (flag & F_UcsLit) strcat(buff, "F_UcsLit ");
+    if (flag & F_Package) strcat(buff, "F_Package ");
+    if (flag & F_Readable) strcat(buff, "F_Readable ");
     if (*buff)
         buff[strlen(buff) - 1] = 0;
     return buff;
@@ -356,6 +355,7 @@ char *m_flag2str(int flag)
     if (flag & M_Abstract) strcat(buff, "M_Abstract ");
     if (flag & M_Native) strcat(buff, "M_Native ");
     if (flag & M_Removed) strcat(buff, "M_Removed ");
+    if (flag & M_Override) strcat(buff, "M_Override ");
     if (*buff)
         buff[strlen(buff) - 1] = 0;
     return buff;

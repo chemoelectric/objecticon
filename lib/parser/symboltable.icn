@@ -135,11 +135,13 @@ class ClassSymbol(TopLevelSymbol)
       suspend .!self.implemented_classes
    end
 
-   package add_implemented_class(c)
+   package set_implemented_classes(l)
       local f
-      put(self.implemented_classes, c)
-      every f := !c.fields do
+      implemented_classes := l
+      implemented_fields := table()
+      every f := !(!implemented_classes).fields do 
          member(implemented_fields, f.name) | insert(implemented_fields, f.name, f)
+      return self
    end
 
    public get_field(n)
@@ -181,8 +183,6 @@ class ClassSymbol(TopLevelSymbol)
       self.fields := table()
       self.supers := []
       self.resolved_supers := []
-      self.implemented_fields := table()
-      self.implemented_classes := []
       return
    end
 end
@@ -766,19 +766,56 @@ class SymbolTable(Connectable)
    end
 
    private compute_inheritance()
-      local c, queue, seen, x
-      every c := gen_type(ClassSymbol) do {
-         seen := set()
-         queue := [c]
-         while x := pop(queue) do {
-            if member(seen, x) then
-               next
-            insert(seen, x)
-            c.add_implemented_class(x)
-            every put(queue, !x.resolved_supers)
+      local c
+      every c := gen_type(ClassSymbol) do
+         linearize_c3(c) | return error("Couldn't linearize " || c.name || ": " || &why)
+      return
+   end
+
+   private static linearize_c3(c, seen)
+      local t, e, l
+      if l := \c.implemented_classes then
+         return l
+      /seen := set()
+      if member(seen, c) then
+         return error("Circular inheritance: " || c.name)
+      insert(seen, c)
+      t := []
+      every e := !c.resolved_supers do
+         put(t, copy(linearize_c3(e, seen))) | fail
+      delete(seen, c)
+      put(t, copy(c.resolved_supers))
+      l := push(merge_c3(t), c) | fail
+      c.set_implemented_classes(l)
+      return l
+   end
+
+   private static in_tail(l, h)
+      succeed keyof(!l, h) > 1
+   end
+
+   private static merge1_c3(l, r)
+      local h, e
+      every h := (!l)[1] do {
+         in_tail(l, h) | {
+            put(r, h)
+            # Pop h off any of the lists
+            every e := !l do {
+               if e[1] === h then
+                  pop(e)
+            }
+            return
          }
       }
-      return
+      error("Inheritance hierarchy cannot be linearized")
+   end
+
+   private static merge_c3(l)
+      local r
+      r := []
+      while !!l do
+         merge1_c3(l, r) | fail
+      return r
    end
 
    public set_file_mode(s)

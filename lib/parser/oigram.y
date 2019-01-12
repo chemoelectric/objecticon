@@ -31,7 +31,6 @@
 %token  INITIAL     /* initial   */
 %token  INVOCABLE   /* invocable */
 %token  LOCAL       /* local     */
-%token	MIXIN       /* mixin     */
 %token  NATIVE      /* native    */
 %token  NEXT        /* next      */
 %token  NOT         /* not       */
@@ -246,7 +245,6 @@ fieldaccess1 : PRIVATE
         | READABLE
         | FINAL
         | OVERRIDE
-        | MIXIN
 
 global  : optreadable GLOBAL idlist { $$ := Node("global", $1,$2,$3) } ;
 
