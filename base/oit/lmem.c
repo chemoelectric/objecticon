@@ -19,11 +19,11 @@ struct gentry *lghash[LGHASH_SIZE];	/* hash area for global table */
 struct fentry *lfhash[LFHASH_SIZE];	/* hash area for field table */
 
 /* files to link, and a hash table for them */
-struct lfile *lfile_hash[LFILE_HASH_SIZE], *lfiles = 0, *lfiles_last = 0;
+struct lfile *lfile_hash[LFILE_HASH_SIZE], *lfiles, *lfiles_last;
 struct lpackage *lpackage_hash[LPACKAGE_HASH_SIZE];
-struct lclass *lclasses = 0, *lclass_last = 0;
-struct lrecord *lrecords = 0, *lrecord_last = 0;
-struct linvocable *linvocables = 0, *last_linvocable = 0;
+struct lclass *lclasses, *lclass_last;
+struct lrecord *lrecords, *lrecord_last;
+struct linvocable *linvocables, *last_linvocable;
 
 struct fentry *lffirst;		/* first field table entry */
 struct fentry *lflast;		/* last field table entry */
@@ -38,24 +38,6 @@ void linit()
 {
     init_package_db();
     load_package_db_from_ipath();
-
-    lfiles = lfiles_last = 0;		/* Zero queue of files to link. */
-    ArrClear(lfile_hash);
-
-    ArrClear(lpackage_hash);
-
-    lffirst = lflast = 0;
-    lgfirst = lglast = 0;
-
-    lclasses = lclass_last = 0;
-    lrecords = lrecord_last = 0;
-
-    /*
-     * Zero out the hash tables.
-     */
-    ArrClear(lghash);
-    ArrClear(lfhash);
-
     /*
      * Ensure "lang" is package id number 1.
      */
