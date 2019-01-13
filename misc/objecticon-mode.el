@@ -126,10 +126,11 @@ regardless of where in the line point is when the TAB command is used.")
    (cons
     (concat 
      "\\_<" 
-     (regexp-opt '("abstract" "break" "by" "case" "class" "const" "create" "default" "defer" "do"
+     (regexp-opt '("abstract" "break" "by" "case" "class" "const" "create" "default" "do"
                    "else" "end" "every" "fail" "final" "global" "if" "import" "initial"
-                   "invocable" "local" "native" "next" "not" "of" "package" "private" "procedure" "protected"
-                   "public" "readable" "record" "repeat" "return" "static" "suspend" "then" "to"
+                   "invocable" "local" "native" "next" "not" "of" "optional" "override"
+                   "package" "private" "procedure" "protected" "public" "readable" "record"
+                   "repeat" "return" "static" "succeed" "suspend" "then" "to"
                    "until" "while"))
      "\\_>")
     'font-lock-keyword-face)
@@ -137,9 +138,9 @@ regardless of where in the line point is when the TAB command is used.")
    ;; Fontify all icon keywords.
    (cons
     (regexp-opt
-     '("&ascii" "&clock" "&cset" "&current" "&date" "&dateline"
-       "&digits" "&dump" "&error" "&errornumber" "&errortext" "&errorvalue"
-       "&fail" "&features" "&file" "&host" "&lcase" "&letters"
+     '("&ascii" "&break" "&clock" "&cset" "&current" "&date" "&dateline"
+       "&digits" "&dump" "&errorcoexpr" "&errornumber" "&errortext" "&errorvalue"
+       "&fail" "&features" "&file" "&handler" "&host" "&lcase" "&letters"
        "&level" "&line" "&main" "&maxlevel" "&no" "&null"
        "&pos" "&progname" "&random" "&source" "&subject" "&time"
        "&trace" "&ucase" "&uset" "&version" "&why" "&yes") t)
@@ -149,7 +150,7 @@ regardless of where in the line point is when the TAB command is used.")
    (cons
     (concat "^"
             (regexp-opt
-             '("$define" "$undef" "$ifdef" "$ifndef" "$else" "$endif"
+             '("$define" "$undef" "$if" "$elsif" "$else" "$endif" "$load" "$uload"
                "$include" "$line" "$error" "$encoding") t))
     'font-lock-preprocessor-face))
   "Gaudy level highlighting for Objecticon mode.")
@@ -355,7 +356,7 @@ Return the amount the indentation changed by."
               (point)
               (save-excursion (skip-syntax-forward "w_") (point)))))
 
-(defconst objecticon-field-starters "\\(public\\|private\\|package\\|protected\\|readable\\|const\\|final\\s-public\\|final\\s-private\\|final\\s-package\\|final\\s-protected\\|final\\s-readable\\|final\\s-static\\|final\\s-const\\|static\\s-public\\|static\\s-private\\|static\\s-package\\|static\\s-protected\\|static\\s-readable\\|static\\s-const\\)")
+(defconst objecticon-field-starters "\\(public\\|private\\|package\\|protected\\|readable\\|const\\|final\\s-public\\|final\\s-private\\|final\\s-package\\|final\\s-protected\\|static\\s-public\\|static\\s-private\\|static\\s-package\\|static\\s-protected\\|static\\s-readable\\|static\\s-const\\)")
 
 (defconst objecticon-class-starters "\\(\\(final\\s-\\|abstract\\s-\\|package\\s-\\)*class\\)")
 
@@ -564,7 +565,7 @@ Returns nil if line starts inside a string, t if in a comment."
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))
 
-         ((looking-at (concat objecticon-field-starters ".*\\s-\\(defer\\|native\\|abstract\\)\\s-"))
+         ((looking-at (concat objecticon-field-starters ".*\\s-\\(optional\\|native\\|abstract\\)\\s-"))
           (setq objecticon-extra-indent (current-column))
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))
