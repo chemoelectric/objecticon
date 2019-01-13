@@ -736,13 +736,13 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 
         dp = cf->field_descriptor;
         ac = check_access(cf, 0);
-
         if (ac == Succeeded &&
-            !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
+            !(cf->flags & M_Method) &&           /* Don't return a ref to a static method */
             (!(cf->flags & M_Const) ||
              (class0->init_state == Initializing &&
-              ic &&                      /* No Class.get(..) := ... */
-              class0->init_field &&       /* .. and must be in init() method */
+              ic &&                              /* No Class.get(..) := ... */
+              class0 == cf->defining_class &&    /* No initializing a superclass's field */
+              class0->init_field &&              /* .. and must be in init() method */
               (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
         {
             if (lhs)
@@ -787,7 +787,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
             AccessErr(0);
 
         /*
-         * Instance method.  Return a method pointer.
+         * Return a method pointer.
          */
         if (lhs) {
             struct b_methp *mp;  /* Doesn't need to be tended */
