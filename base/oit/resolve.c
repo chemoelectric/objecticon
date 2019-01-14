@@ -419,11 +419,11 @@ static void merge(struct lclass *cl, struct lclass *super)
         while (fr && fr->field->name != f->name)
             fr = fr->b_next;
         if (fr) {
-            /* Found, check consistency.  The new field (f) must be
-             * static, OR both old and new fields must be instance
-             * methods (ie classic method overriding).
+            /* Found, check consistency.  Both old (fr) and new field
+             * (f) must be static, OR both old and new fields must be
+             * instance methods (ie classic method overriding).
              */
-            if (!(f->flag & M_Static) &&
+            if (!( (f->flag & M_Static) && (fr->field->flag & M_Static)) &&
                 !(((fr->field->flag & (M_Method | M_Static)) == M_Method) 
                   && ((f->flag & (M_Method | M_Static)) == M_Method))) {
                 lfatal2(fr->field->class->global->defined,
