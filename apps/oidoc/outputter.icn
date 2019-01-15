@@ -175,6 +175,8 @@ abstract class Outputter()
             s ||:= "const "
          if iand(obj.flags, Class.Readable) ~= 0 then
             s ||:= "readable "
+         if iand(obj.flags, Class.Override) ~= 0 then
+            s ||:= "override "
          if iand(obj.flags, Class.Abstract) ~= 0 then
             s ||:= "abstract "
          if iand(obj.flags, Class.Native) ~= 0 then
