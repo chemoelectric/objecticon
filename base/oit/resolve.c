@@ -275,7 +275,15 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
                 lfatal(func->defined, &lp->pos,
                        "Can't implicitly reference a non-static field '%s' from static %s", 
                        cfr->field->name, function_name(func));
-            else {
+
+            else if (cfr->static_redef && func->method->class != cfr->field->class) {
+                lfatal2(func->defined, &lp->pos, &cfr->field->pos, ") and must be explicitly referenced",
+                       "Static field '%s' was redefined in %s (", 
+                        cfr->field->name,
+                        cfr->field->class->global->name
+                        );
+                print_see_also(cfr->static_redef->class);
+            } else {
                 lp->l_flag |= F_Field;
                 lp->l_val.field = cfr->field;
             }
@@ -381,19 +389,19 @@ static void check_override1(struct lclass *cl)
 
 static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f)
 {
-    if (fr->flag & M_Override) {
+    if (fr->flag & M_Override)
         fr->overrode = 1;
-        return;
+    else {
+        lfatal2(fr->class->global->defined,
+                &fr->pos, &f->pos, ") without setting override modifier",
+                "Method %s in class %s overrides a method in class %s (",
+                f->name,
+                fr->class->global->name,
+                f->class->global->name
+            );
+        if (fr->class != cl)
+            print_see_also(cl);
     }
-    lfatal2(fr->class->global->defined,
-            &fr->pos, &f->pos, ") without setting override modifier",
-            "Method %s in class %s overrides a method in class %s (",
-            f->name,
-            fr->class->global->name,
-            f->class->global->name
-        );
-    if (fr->class != cl)
-        print_see_also(cl);
 }
 
 static void merge(struct lclass *cl, struct lclass *super)
@@ -451,8 +459,24 @@ static void merge(struct lclass *cl, struct lclass *super)
                 if (fr->field->class != cl)
                     print_see_also(cl);
             }
-            if (((fr->field->flag & (M_Method | M_Static)) == M_Method) 
-                     && ((f->flag & (M_Method | M_Static)) == M_Method)) 
+
+            /*
+             * Set the static_redef field of the existing field
+             * reference if we have overridden a static, so that later
+             * implicit uses of the field are reported as errors.
+             */
+            if ( (f->flag & M_Static) && (fr->field->flag & M_Static) &&
+                 /* On errors, note the first redefinition */
+                !fr->static_redef)
+            {
+                fr->static_redef = f;
+            }
+
+            /*
+             * Check override flags for an overridden instance method.
+             */
+            if (((fr->field->flag & (M_Method | M_Static)) == M_Method) &&
+                ((f->flag & (M_Method | M_Static)) == M_Method)) 
             {
                 check_override2(cl, fr->field, f);
             }
