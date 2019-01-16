@@ -278,7 +278,7 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
 
             else if (cfr->static_redef && func->method->class != cfr->field->class) {
                 lfatal2(func->defined, &lp->pos, &cfr->field->pos, ") and must be explicitly referenced",
-                       "Static field '%s' was redefined in %s (", 
+                       "Static field '%s' was overridden in %s (", 
                         cfr->field->name,
                         cfr->field->class->global->name
                         );
