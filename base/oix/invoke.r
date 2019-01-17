@@ -1244,12 +1244,16 @@ function lang_Class_ensure_initialized(c)
        runerr(603, c)
     body {
       struct p_frame *pf;
+      struct descrip ret;
+      /* Return class Class */
+      MakeDesc(D_Class, curr_cf->proc->field->defining_class, &ret);
       /* Avoid creating a frame if we don't need to */
       if (ClassBlk(c).init_state != Uninitialized)
-          return nulldesc;
+          return ret;
       MemProtect(pf = alc_p_frame(&Blang_Class_ensure_initialized_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = c;
+      pf->tmp[1] = ret;
       tail_invoke_frame((struct frame *)pf);
       return;
    }
