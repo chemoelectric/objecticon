@@ -924,7 +924,7 @@ function lang_Class_implements(c, target)
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         if (class_is(class0, &ClassBlk(target)))
-            return target;
+            return nulldesc;
         else
             fail;
     }
