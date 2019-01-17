@@ -83,6 +83,12 @@
 #enddef
 
 /*
+ * Used from a static native method, return the class the method is
+ * defined in.  Useful for method chaining.
+ */
+#define ReturnDefiningClass return class(curr_cf->proc->field->defining_class)
+
+/*
  * Protection macro.
  */
 #define Protect(notnull,orelse) do {if (!(notnull)) orelse;} while(0)

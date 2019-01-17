@@ -166,21 +166,13 @@ final abstract class Prog()
    #
    # Set the given program's event mask
    #
-   public static set_event_mask(cs, P)
-      return set_event_mask_impl(cs, P) & Prog
-   end
-
-   private static native set_event_mask_impl(cs, P)
+   public static native set_event_mask(cs, P)
 
    #
    # Set the given program's timer interval, for use with the E_Timer
    # event.
    #
-   public static set_timer_interval(i, P)
-      return set_timer_interval_impl(i, P) & Prog
-   end
-
-   private static native set_timer_interval_impl(i, P)
+   public static native set_timer_interval(i, P)
 
    #
    # Get the timer interval for program P.
