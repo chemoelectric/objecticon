@@ -1246,7 +1246,7 @@ function lang_Class_ensure_initialized(c)
       struct p_frame *pf;
       /* Avoid creating a frame if we don't need to */
       if (ClassBlk(c).init_state != Uninitialized)
-          return c;
+          return nulldesc;
       MemProtect(pf = alc_p_frame(&Blang_Class_ensure_initialized_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = c;
