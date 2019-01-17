@@ -187,7 +187,7 @@ class HtmlOutputter(Outputter)
 
    # Output one class description
    private output_class(c)
-      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x
+      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, acc
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
          doctype(f)
@@ -266,9 +266,9 @@ class HtmlOutputter(Outputter)
             every m := !meths do {
                write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "(", get_param_string(m.obj) ,")</h3>")
-               write(f, get_access_string(m.obj), "<p/>")
+               write(f, acc := get_access_string(m.obj), "<p/>")
                write(f, "<dl>")
-               if member(overrides, m.name) then {
+               if not find("static", acc) & member(overrides, m.name) then {
                   o := overrides[m.name]
                   mm := o.get_field(m.name) | syserr("get_field() failed")
                   write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || 
