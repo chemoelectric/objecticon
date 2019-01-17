@@ -137,6 +137,24 @@ final abstract class Direction()
    end
 end
 
+# Alignment constants
+final abstract class Align()
+   public static const 
+      L,
+      C,
+      R,
+      T,
+      B
+
+   private static init()
+      L := "l"
+      C := "c"
+      R := "r"
+      T := "t"
+      B := "b"
+   end
+end
+
 final abstract class WAttrib()
    public static const
       BG,

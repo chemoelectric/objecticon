@@ -1,13 +1,12 @@
 package gui
 
 import 
-   util, 
    lang,
    ipl.sort,
    io,
    ipl.numbers
 
-class CellInfo(Insets,Align,ObjectOutput)
+class CellInfo(Insets,XYAlign,ObjectOutput)
    public 
       obj,            # An arbitrary object 
       ax,             # Actual computed pixel location and size,
@@ -116,7 +115,7 @@ class Grid()
    public static validate_flag(t, key)
       local val
       if val := member(t, key) then
-         return need_flag(val) | runerr("Expected flag-valued grid constraint", val)
+         return (val === (&yes | &no)) | runerr("Expected flag-valued grid constraint", val)
       else
          return &no
    end

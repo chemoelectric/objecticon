@@ -28,7 +28,6 @@ class Point()
    end
 end
 
-
 class Size()
    public w, h
 
@@ -50,7 +49,6 @@ class Size()
       return
    end
 end
-
 
 class Rect(Point,Size)
    public str()
@@ -176,7 +174,6 @@ class Rect(Point,Size)
    end
 end
 
-
 class Insets()
    public 
       l_inset, 
@@ -216,23 +213,7 @@ class Insets()
    end
 end
 
-
-class Align()
-   public static const 
-      L,      # Alignments
-      C,
-      R,
-      T,
-      B
-
-   private static init()
-      L := "l"
-      C := "c"
-      R := "r"
-      T := "t"
-      B := "b"
-   end
-
+class XYAlign()
    public x_align,
           y_align
 
@@ -244,5 +225,3 @@ class Align()
       return y_align
    end
 end
-
-
