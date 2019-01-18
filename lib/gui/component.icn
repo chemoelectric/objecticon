@@ -18,7 +18,7 @@ import
 # This is the parent class of all the GUI components.  All of
 # its methods and variables therefore apply to its sub-classes.
 #
-class Component(Rect,Align,Connectable)
+class Component(Rect,XYAlign,Connectable)
    public 
       #
       # x position as specified by `set_pos()`, eg "50%"

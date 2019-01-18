@@ -160,9 +160,9 @@ static word lang_Class_ensure_initialized_impl_code[] = {
    0,
    Op_CReturn,
    Op_Tmp,
-   0,
+   1,
 };
-#passthru CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,0,0,0,0,1,0,0,"lang_Class_ensure_initialized_impl")
+#passthru CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,0,0,0,0,2,0,0,"lang_Class_ensure_initialized_impl")
 static word lang_Class_create_raw_instance_of_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,

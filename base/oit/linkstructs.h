@@ -136,6 +136,7 @@ struct lclass_ref {
  */
 struct lclass_field_ref {
     struct lclass_field *field;
+    struct lclass_field *static_redef;       /* For checking unambiguous implicit static access (resolve.c) */
     struct lclass_field_ref *next, *b_next;
 };
 

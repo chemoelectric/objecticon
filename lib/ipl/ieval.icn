@@ -68,8 +68,8 @@ class Ieval(MinimalObjectOutput)
       spc := repl(" ", depth * 3)
       output.writes(spc, "C3: ", text_link(Class.get_name(c)), "(", supers_string(c), ")")
       if v := member(cache, c) then {
-         output.write(" (Cached)")
-         output.write(spc, "Result: ", comma_string{ Class.get_name(!v) })
+         output.write()
+         output.write(spc, "Result: ", *v, " classes (see above)")
          return v
       }
       if member(seen, c) then {
@@ -88,9 +88,9 @@ class Ieval(MinimalObjectOutput)
          put(t, copy(linearize_c3(e, seen, cache, depth + 1))) | fail
       delete(seen, c)
       put(t, sl)
-      output.write(spc, "   Added ", Class.get_name(c))
+      output.write(spc, "   Added: ", Class.get_name(c))
       v := push(merge_c3(t, depth + 1), c) | fail
-      output.write(spc, "Result: ", comma_string{ Class.get_name(!v) })
+      output.write(spc, "Result: ", *v, " classes")
       cache[c] := v
       return v
    end
@@ -104,7 +104,7 @@ class Ieval(MinimalObjectOutput)
       every h := (!l)[1] do {
          in_tail(l, h) | {
             put(r, h)
-            output.write(repl(" ", depth * 3), "Added ", Class.get_name(h))
+            output.write(repl(" ", depth * 3), "Added: ", Class.get_name(h))
             # Pop h off any of the lists
             every e := !l do {
                if e[1] === h then

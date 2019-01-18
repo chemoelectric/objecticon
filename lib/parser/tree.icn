@@ -640,7 +640,7 @@ final abstract class Util()
    end
 end
 
-class Factory()
+final abstract class Factory()
    public static new_id(pad, s)
       /pad := ""
       return Id(Token(YY.IDENT, s, pad || s),

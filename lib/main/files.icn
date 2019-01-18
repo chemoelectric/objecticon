@@ -996,8 +996,7 @@ class FilePath(ObjectOutput)
    # `str()` values.
    #
    public static equiv(x, y)
-      if x.str() == y.str() then
-         return
+      succeed x.str() == y.str()
    end
 
    #

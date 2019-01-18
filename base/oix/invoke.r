@@ -736,13 +736,13 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 
         dp = cf->field_descriptor;
         ac = check_access(cf, 0);
-
         if (ac == Succeeded &&
-            !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
+            !(cf->flags & M_Method) &&           /* Don't return a ref to a static method */
             (!(cf->flags & M_Const) ||
              (class0->init_state == Initializing &&
-              ic &&                      /* No Class.get(..) := ... */
-              class0->init_field &&       /* .. and must be in init() method */
+              ic &&                              /* No Class.get(..) := ... */
+              class0 == cf->defining_class &&    /* No initializing a superclass's field */
+              class0->init_field &&              /* .. and must be in init() method */
               (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
         {
             if (lhs)
@@ -772,10 +772,10 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         self_class = ObjectBlk(*self).class;
 
         /* 
-         * Check the access makes sense, ie it is to a class the object (self)
-         * implements 
+         * Check the invocation makes sense, ie the method is in a
+         * class the object (self) implements
          */
-        if (!class_is(self_class, class0))
+        if (!class_is(self_class, cf->defining_class))
             AccessErr(607);
 
         /* Can't access new except whilst initializing */
@@ -787,7 +787,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
             AccessErr(0);
 
         /*
-         * Instance method.  Return a method pointer.
+         * Return a method pointer.
          */
         if (lhs) {
             struct b_methp *mp;  /* Doesn't need to be tended */
@@ -999,7 +999,7 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
          * Check the invocation makes sense, ie the method is in a
          * class the object (self) implements
          */
-        if (!class_is(self_class, class0))
+        if (!class_is(self_class, cf->defining_class))
             InvokefErr(607);
 
         /* Can't access new except whilst initializing */
@@ -1244,12 +1244,16 @@ function lang_Class_ensure_initialized(c)
        runerr(603, c)
     body {
       struct p_frame *pf;
+      struct descrip ret;
+      /* Return class Class */
+      MakeDesc(D_Class, curr_cf->proc->field->defining_class, &ret);
       /* Avoid creating a frame if we don't need to */
       if (ClassBlk(c).init_state != Uninitialized)
-          return c;
+          return ret;
       MemProtect(pf = alc_p_frame(&Blang_Class_ensure_initialized_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = c;
+      pf->tmp[1] = ret;
       tail_invoke_frame((struct frame *)pf);
       return;
    }

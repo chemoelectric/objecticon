@@ -327,6 +327,8 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
  * latter test efficient and if used the same name must always be
  * passed with the same cache.  Returns non-zero if x is an object and
  * implements the class; 0 otherwise.
+ * 
+ * It must be called from within a native method.
  */
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 {
@@ -337,6 +339,12 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
         return 0;
 
     class0 = ObjectBlk(*x).class;
+
+    if (!curr_cf || !curr_cf->proc->field)
+        syserr("c_is() can only be called from within a native method");
+
+    if (class0->program != curr_cf->proc->field->defining_class->program)
+        return 0;
 
     if (ic) {
         if (class0->program == ic->program)

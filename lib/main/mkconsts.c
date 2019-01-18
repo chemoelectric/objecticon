@@ -53,7 +53,7 @@ void scan_file(char *path)
 
 void start_class(char *s, char *a, int t1, int t2)
 {
-    fprintf(out, "class %s()\n", s);
+    fprintf(out, "final abstract class %s()\n", s);
     abbr = a;
     n_entries = 0;
     tab_flag = t1;

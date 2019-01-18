@@ -6,11 +6,11 @@ package gui
 # the four edges of its border.  Given a rectangle, it also draws the
 # border on a Window.
 #
-# An `ABorder` also subclasses `Align`.  This lets it position a
+# An `ABorder` also subclasses `XYAlign`.  This lets it position a
 # `Size` within a `Rect` by "floating" it within the bordered inner
 # area according to the alignment.
 #
-abstract class ABorder(Insets,Align)
+abstract class ABorder(Insets,XYAlign)
    public abstract initially(c)
    public abstract draw(W, x, y, w, h)
 

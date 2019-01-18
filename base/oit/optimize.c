@@ -2821,9 +2821,6 @@ static void fold_field(struct lnode *n)
         free_literal(&l);
     }
 
-    if (curr_vfunc->method && curr_vfunc->method->name == init_string)
-        return;
-
     if (x->child->op != Uop_Global)
         return;
 
@@ -2836,6 +2833,10 @@ static void fold_field(struct lnode *n)
         return;
 
     if ((f->flag & (M_Static | M_Const)) != (M_Static | M_Const))
+        return;
+
+    if (curr_vfunc->method &&
+        curr_vfunc->method->name == init_string && curr_vfunc->method->class == f->class)
         return;
 
     if (!permit_access(f))

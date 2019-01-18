@@ -205,7 +205,7 @@ function lang_Prog_get_event_mask(ce)
    }
 end
 
-function lang_Prog_set_event_mask_impl(cs, ce)
+function lang_Prog_set_event_mask(cs, ce)
    if !cnv:cset(cs) then 
       runerr(104,cs)
    body {
@@ -213,11 +213,11 @@ function lang_Prog_set_event_mask_impl(cs, ce)
        if (!(prog = get_program_for(&ce)))
           runerr(0);
        set_event_mask(prog, &CsetBlk(cs));
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
-function lang_Prog_set_timer_interval_impl(i, ce)
+function lang_Prog_set_timer_interval(i, ce)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
@@ -225,7 +225,7 @@ function lang_Prog_set_timer_interval_impl(i, ce)
        if (!(prog = get_program_for(&ce)))
           runerr(0);
        prog->timer_interval = i;
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -951,7 +951,7 @@ function lang_Class_implements(c, target)
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         if (class_is(class0, &ClassBlk(target)))
-            return target;
+            return nulldesc;
         else
             fail;
     }
