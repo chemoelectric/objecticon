@@ -328,7 +328,12 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
  * passed with the same cache.  Returns non-zero if x is an object and
  * implements the class; 0 otherwise.
  * 
- * It must be called from within a native method.
+ * Note that cname is looked up in curpstate, so if x is from another
+ * program, no match will be found.
+ * 
+ * If c_is() is called from a native method, then note that curpstate
+ * will have been set to the method's defining class's program (see
+ * interp.r).
  */
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 {
@@ -340,22 +345,19 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 
     class0 = ObjectBlk(*x).class;
 
-    if (!curr_cf || !curr_cf->proc->field)
-        syserr("c_is() can only be called from within a native method");
-
-    if (class0->program != curr_cf->proc->field->defining_class->program)
+    if (class0->program != curpstate)
         return 0;
 
     if (ic) {
-        if (class0->program == ic->program)
+        if (curpstate == ic->program)
             p = ic->global;
         else {
-            p = lookup_named_global(cname, 1, class0->program);
-            ic->program = class0->program;
+            p = lookup_named_global(cname, 1, curpstate);
+            ic->program = curpstate;
             ic->global = p;
         }
     } else
-        p = lookup_named_global(cname, 1, class0->program);
+        p = lookup_named_global(cname, 1, curpstate);
 
     return p && is:class(*p) && class_is(class0, &ClassBlk(*p));
 }
