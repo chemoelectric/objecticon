@@ -345,9 +345,6 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 
     class0 = ObjectBlk(*x).class;
 
-    if (class0->program != curpstate)
-        return 0;
-
     if (ic) {
         if (curpstate == ic->program)
             p = ic->global;
