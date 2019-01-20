@@ -291,13 +291,6 @@ class Task()
       return self
    end
 
-   # This is called once just before the `Task` is activated for the
-   # first time.  It invokes `begin()` on the xstate member (if set).
-   #
-   package xstate_begin()
-      (\xstate).begin()
-   end
-
    # This method swaps the values of external state previously saved,
    # by invoking the `swap()` on the xstate member (if set).
    #
@@ -433,13 +426,11 @@ class Scheduler()
       t.coex := &null
       # Don't specify an activator unless we have to (ie if this is a
       # new co-expression).
-      if Coexpression.get_activator(te) then {
-         t.xstate_swap()
+      t.xstate_swap()
+      if Coexpression.get_activator(te) then
          coact(, te)
-      } else {
-         t.xstate_begin()
+      else
          @te
-      }
       t.xstate_swap()
       \t.coex | runerr("Incorrect reversion to scheduler, task co-expression not set", t)
       coex === &current | syserr("Scheduler co-expression not &current")

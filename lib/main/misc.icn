@@ -329,10 +329,6 @@ end
 # This class is used to save and restore some arbitrary global state.
 #
 abstract class State()
-   # Called once to initialize the saved state from the global state,
-   # and perhaps to initialize the global state.
-   public abstract begin()
-
    # Called several times to swap the saved state with the global state
    public abstract swap()
 end
@@ -343,12 +339,7 @@ end
 # value may also be specified.
 #
 class VarState(State)
-   private var, t, i
-
-   public override begin()
-      t := !var
-      !var := i
-   end
+   private var, t
 
    public override swap()
       !var :=: t
@@ -356,7 +347,7 @@ class VarState(State)
 
    public new(var, i)
       self.var := var
-      self.i := i
+      self.t := i
       return
    end
 end
@@ -365,14 +356,7 @@ end
 # and &pos may optionally be specified.
 #
 class ScanState(State)
-   private is, ip, s, p
-
-   public override begin()
-      s := &subject
-      p := &pos
-      &subject := is
-      &pos := ip
-   end
+   private s, p
 
    public override swap()
       local t
@@ -385,8 +369,8 @@ class ScanState(State)
    public new(is, ip)
       /is := ""
       /ip := 1
-      self.is := is
-      self.ip := ip
+      self.s := is
+      self.p := ip
       return
    end
 end
@@ -394,12 +378,7 @@ end
 # A `State` which saves &pos.  An initial value may be specified.
 #
 class PosState(State)
-   private i, p
-
-   public override begin()
-      p := &pos
-      &pos := i
-   end
+   private p
 
    public override swap()
       &pos :=: p
@@ -407,7 +386,7 @@ class PosState(State)
 
    public new(i)
       /i := 1
-      self.i := i
+      self.p := i
       return
    end
 end
@@ -417,11 +396,6 @@ end
 class CleanupState(State)
    private t
 
-   public override begin()
-      t := cleanup
-      cleanup := &null
-   end
-
    public override swap()
       cleanup :=: t
    end
@@ -430,12 +404,7 @@ end
 # A `State` to save `&why`.
 #
 class WhyState(State)
-   private w, i
-
-   public override begin()
-      w := &why
-      &why := i
-   end
+   private w
 
    public override swap()
       &why :=: w
@@ -443,7 +412,7 @@ class WhyState(State)
 
    public new(i)
       /i := ""
-      self.i := i
+      self.w := i
       return
    end
 end
@@ -451,12 +420,7 @@ end
 # A `State` to save `&trace`.
 #
 class TraceState(State)
-   private t, i
-
-   public override begin()
-      t := &trace
-      &trace := i
-   end
+   private t
 
    public override swap()
       &trace :=: t
@@ -464,7 +428,7 @@ class TraceState(State)
 
    public new(i)
       /i := 0
-      self.i := i
+      self.t := i
       return
    end
 end
@@ -472,19 +436,14 @@ end
 # A `State` to save `&handler`.  An initial value may be specified.
 #
 class HandlerState(State)
-   private h, i
-
-   public override begin()
-      h := &handler
-      &handler := i
-   end
+   private h
 
    public override swap()
       &handler :=: h
    end
 
    public new(i)
-      self.i := i
+      self.h := i
       return
    end
 end
@@ -493,10 +452,6 @@ end
 #
 class States(State)
    private l
-
-   public override begin()
-      every (!l).begin()
-   end
 
    public override swap()
       every (!l).swap()
@@ -513,7 +468,7 @@ end
 # state.
 #
 procedure save_state(e, state)
-   state.begin()
+   state.swap()
    suspend 1(|@e, { state.swap() ; &null} ) do
       state.swap()
    state.swap()
