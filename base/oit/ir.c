@@ -3243,14 +3243,14 @@ static void print_chunk(struct chunk *chunk)
                 struct ir_suspend *x = (struct ir_suspend *)ir;
                 indentf("\tIr_Suspend ");
                 print_ir_var(x->val);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_Return: {
                 struct ir_return *x = (struct ir_return *)ir;
                 indentf("\tIr_Return ");
                 print_ir_var(x->val);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_Mark: {
@@ -3269,7 +3269,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->lhs);
                 fprintf(stderr, " <- ");
                 print_ir_var(x->rhs);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_Deref: {
@@ -3278,7 +3278,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->lhs);
                 fprintf(stderr, " <- ");
                 print_ir_var(x->rhs);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_MoveLabel: {
@@ -3292,7 +3292,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->tmp_subject);
                 fprintf(stderr, ", tmp_pos=");
                 print_ir_var(x->tmp_pos);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_ScanRestore: {
@@ -3301,7 +3301,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->tmp_subject);
                 fprintf(stderr, ", tmp_pos=");
                 print_ir_var(x->tmp_pos);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_ScanSave: {
@@ -3312,6 +3312,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->tmp_subject);
                 fprintf(stderr, ", tmp_pos=");
                 print_ir_var(x->tmp_pos);
+                fputc('\n', stderr);
                 break;
             }
             case Ir_Op: {
@@ -3448,6 +3449,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->lhs);
                 fprintf(stderr, " <- ");
                 print_ir_var(x->expr);
+                fputc('\n', stderr);
                 break;
             }
             case Ir_Resume: {
@@ -3481,7 +3483,7 @@ static void print_chunk(struct chunk *chunk)
                 struct ir_coret *x = (struct ir_coret *)ir;
                 indentf("\tIr_Coret ");
                 print_ir_var(x->value);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
             case Ir_Cofail: {
@@ -3492,13 +3494,14 @@ static void print_chunk(struct chunk *chunk)
                 struct ir_limit *x = (struct ir_limit *)ir;
                 indentf("\tIr_Limit ");
                 print_ir_var(x->limit);
+                fputc('\n', stderr);
                 break;
             }
 
             case Ir_TCaseInit: {
                 struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
                 indentf("\tIr_TCaseInit def=%d", x->def);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
 
@@ -3521,7 +3524,7 @@ static void print_chunk(struct chunk *chunk)
                 for (i = 0; i < x->tblc; ++i) {
                     fprintf(stderr, "%d ", x->tbl[i]);
                 }
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
 
@@ -3535,7 +3538,7 @@ static void print_chunk(struct chunk *chunk)
                 for (i = 0; i < x->tblc; ++i) {
                     fprintf(stderr, "%d ", x->tbl[i]);
                 }
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
                 break;
             }
 

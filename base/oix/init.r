@@ -521,9 +521,9 @@ void syserr(char *fmt, ...)
     else
         fprintf(stderr, " in startup code");
 
-    fprintf(stderr, "\n");
+    fputc('\n', stderr);
     vfprintf(stderr, fmt, ap);
-    fprintf(stderr,"\n");
+    fputc('\n', stderr);
     fflush(stderr);
     va_end(ap);
 

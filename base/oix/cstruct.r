@@ -52,7 +52,7 @@ static void listdump(dptr d, int all)
                     j -= e->nslots;
                 fprintf(stderr, "\t\tSlot " WordFmt " = ", j);
                 print_desc(stderr, &e->lslots[j]);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
             }
         }
     }
@@ -75,7 +75,7 @@ static void setdump(dptr d)
                 while (BlkType(elem) == T_Selem) {
                     fprintf(stderr, "\t\t\tselem %p hash=" UWordFmt " clink=%p mem=", elem, elem->hashnum, elem->clink);
                     print_desc(stderr, &elem->setmem);
-                    fprintf(stderr, "\n");
+                    fputc('\n', stderr);
                     elem = (struct b_selem *)elem->clink;
                 }
             }
@@ -104,7 +104,7 @@ static void tabledump(dptr d)
                     print_desc(stderr, &telem->tref);
                     fprintf(stderr, "->");
                     print_desc(stderr, &telem->tval);
-                    fprintf(stderr, "\n");
+                    fputc('\n', stderr);
                     elem = telem->clink;
                 }
             }

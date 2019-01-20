@@ -440,7 +440,7 @@ void dumpstate()
                 fprintf(stderr, "val=");
                 for (i = 0; i < ce->length; ++i)
                     putc(ce->data[i], stderr);
-                fprintf(stderr, "\n");
+                fputc('\n', stderr);
             }
         }
         if (gl->class) {
@@ -494,7 +494,7 @@ void dumpstate()
                         fprintf(stderr, "val=");
                         for (i = 0; i < ce->length; ++i)
                             putc(ce->data[i], stderr);
-                        fprintf(stderr, "\n");
+                        fputc('\n', stderr);
                     }
                 }
             }
