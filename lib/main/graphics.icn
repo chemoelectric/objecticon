@@ -902,8 +902,8 @@ final class Window(NoCopy, ObjectOutput)
    # Draw a polygon defined by the points `(x1,y1,...xN,yN)`.
    #
    public draw_polygon(a[])
-      put(a, a[1])
-      put(a, a[2])
+      if *a > 1 then
+         every put(a, a[1 | 2])
       return draw_line!a
    end
 
