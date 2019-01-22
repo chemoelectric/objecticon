@@ -68,7 +68,9 @@ class Process(HasTask, HasBgProc)
       local s, n
       s := sock.read() | fail
       n := integer(s) | return error("Expected integer size, got: " || s)
-      return decode(sock.reads(n))
+      s := sock.reads(n) | fail
+      (*s = n) | return error("Failed to read expected number of bytes")
+      return decode(s)
    end
 
    #
@@ -144,4 +146,3 @@ class Process(HasTask, HasBgProc)
       return
    end
 end
-
