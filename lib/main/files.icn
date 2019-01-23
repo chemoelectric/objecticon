@@ -284,10 +284,8 @@ $endif
    # :  `s2` - the target filename
    #
    public static move(s1, s2)
-      if rename(s1, s2) then
-         return
-      copy(s1, s2) | fail
-      return remove(s1)
+      return rename(s1, s2) |
+         (copy(s1, s2) & remove(s1))
    end
 
    #
@@ -456,7 +454,7 @@ $endif
    #
    public static copy(s1, s2)
       local f1, f2
-      return use {
+      succeed use {
          f1 := FileStream(s1),
          use {
             f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
@@ -473,7 +471,7 @@ $endif
    #
    public static append(s1, s2)
       local f1, f2
-      return use {
+      succeed use {
          f1 := FileStream(s1),
          use {
             f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)),
