@@ -683,7 +683,7 @@ package procedure equals_impl(x, y, seen)
             # x has an object_equals method, so y must inherit the
             # same object_equals method as x.
             mp := x.object_equals
-            return (Proc.get_defining_class(mp) === Class.get_field_defining_class(y, "object_equals")) &
+            succeed (Proc.get_defining_class(mp) === Class.get_field_defining_class(y, "object_equals")) &
                mp(y, seen)
          }
          classof(x) === classof(y) | fail

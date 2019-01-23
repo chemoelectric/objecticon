@@ -650,7 +650,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
    end
 
    private override object_equals(x)
-      return i = x.i & e = x.e
+      succeed i = x.i & e = x.e
    end
 
    private override object_hash()
