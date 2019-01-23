@@ -25,7 +25,7 @@ ICNTAGS=--lang=none \
 	--regex='/[ \t]*\(package[ \t]+\(readable[ \t]+\)?\)?global[ \t]+\([a-zA-Z0-9_, \t]+\)/\3/' \
 	--regex='/[ \t]*\(package[ \t]+\)?\(procedure\|record\)[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\3/' \
 	--regex='/[ \t]*\(\(package\|final\|abstract\)[ \t]+\)*class[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\3/' \
-	--regex='/[ \t]*\(\(public\|private\|package\|protected\|final\|static\|defer\|abstract\|native\)[ \t]+\)+\([a-zA-Z0-9_]+\)[ \t]*(/\3/'
+	--regex='/[ \t]*\(\(public\|private\|package\|protected\|final\|static\|optional\|override\|abstract\|native\)[ \t]+\)+\([a-zA-Z0-9_]+\)[ \t]*(/\3/'
 
 RTLTAGS=--lang=c \
 	--regex='/[ \t]*\#begdef[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\1/'
