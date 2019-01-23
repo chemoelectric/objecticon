@@ -525,8 +525,7 @@ $endif
    # Succeed iff the connection is currently open.
    #
    protected is_connected()
-      if \self.connection then
-         return
+      succeed \self.connection
    end
 
    #
