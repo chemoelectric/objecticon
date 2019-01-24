@@ -14,19 +14,14 @@ package readable global
 # optional initial value may be specified.
 #
 class ThrowHandlerState(State)
-   private i, th
-
-   public override begin()
-      th := throw_handler
-      throw_handler := i
-   end
+   private th
 
    public override swap()
       throw_handler :=: th
    end
 
    public new(i)
-      self.i := i
+      self.th := i
       return
    end
 end

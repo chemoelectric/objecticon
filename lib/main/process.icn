@@ -82,7 +82,7 @@ $endif
       # length in advance lets us potentially get all the encoded data
       # in one low-level socket read, which is much faster.
       s := encode(obj, &yes) | fail
-      return sock.writes(*s, "\n", s)
+      return sock.writes(*s, "\n", s) & self
    end
 
    #
@@ -92,7 +92,9 @@ $endif
       local s, n
       s := sock.read() | fail
       n := integer(s) | return error("Expected integer size, got: " || s)
-      return decode(sock.reads(n))
+      s := sock.reads(n) | fail
+      (*s = n) | return error("Failed to read expected number of bytes")
+      return decode(s)
    end
 
    #
@@ -176,4 +178,3 @@ $endif
       return
    end
 end
-

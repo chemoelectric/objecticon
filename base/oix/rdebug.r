@@ -909,7 +909,7 @@ void print_vword(FILE *f, dptr d) {
 
             case D_Yes :
             case D_Null : {
-                fputs("0", f); 
+                fputc('0', f); 
                 break;
             }
 
@@ -985,7 +985,7 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
-            default : fputs("?", f); 
+            default : fputc('?', f); 
         }
     }
 }
@@ -1031,7 +1031,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Weakref : fputs("D_Weakref", f); break;
             case D_Ucs : fputs("D_Ucs", f); break;
             case D_Kywdhandler: fputs("D_Kywdhandler", f); break;
-            default : fputs("?", f);
+            default : fputc('?', f);
         }
     }
 }

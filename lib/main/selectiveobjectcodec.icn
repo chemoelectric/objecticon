@@ -74,12 +74,11 @@ abstract class SelectiveObjectCodec(ObjectCodec)
    end
 
    private override object_encode(e)
-      local p, m, x
+      local p, x
 
       p := load_structs()
 
       pre_encode()
-      m := p.fnum_map
       e.encode(*p.template_els)
       if /e.fast_flag then {
          every x := !p.template_els do {
@@ -99,9 +98,9 @@ abstract class SelectiveObjectCodec(ObjectCodec)
       p := load_structs()
 
       pre_decode()
-      m := p.fnum_map
       n := integer(e.decode()) | throw("Integer expected")
       if /e.fast_flag then {
+         m := p.fnum_map
          every 1 to n do {
             f := e.decode()
             v := e.decode()

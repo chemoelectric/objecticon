@@ -156,7 +156,7 @@ abstract class SuggestField(TextField, MenuMode)
    public on_change(ev)
       if \popup_on_tab_flag then {
          if \select_using_enter_flag | not member(Key.NAVIGATE, ev.code) then
-            close_all()
+            keep_closed()
       } else if applied_event === ev then
          mod := 2
       else if *contents = 0 & ev.code ~=== "\t" then
@@ -394,11 +394,15 @@ abstract class SuggestField(TextField, MenuMode)
    public handle_tab(ev)
       local l, o
       if \popup then {
-         if \select_using_enter_flag & o := popup.object_get_cursor() then
+         if \select_using_enter_flag & o := popup.object_get_cursor() then {
             apply_value(o, ev)
-         else {
+            if /changed then
+               keep_closed()
+         } else {
             if o := get_insertion(list_data) then
                apply_value(o, ev)
+            else
+               keep_closed()
          }
       } else {
          l := do_request(&yes) | fail
@@ -427,7 +431,7 @@ abstract class SuggestField(TextField, MenuMode)
    public override handle_key(e)
       case e.code of {
          "\t" : handle_tab(e)
-         "\e" : close_all()
+         "\e" : keep_closed()
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)
          Key.PGUP : handle_key_page_up(e)

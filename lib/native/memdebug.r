@@ -499,7 +499,7 @@ static void progout(struct progstate *p)
 {
     fputs("(prog=", out);
     outblock((union block *)p->K_main);
-    fputs(")", out);
+    fputc(')', out);
 }
 
 static void kywdout(dptr d)
@@ -754,11 +754,11 @@ static void outimagey(dptr d, struct frame *frame)
             fprintf(out, "methp#" UWordFmt, MethpBlk(*d).id);
             if (flowterm)
                 end_linkx();
-            fputs("(", out);
+            fputc('(', out);
             outblock((union block *)MethpBlk(*d).object);
-            fputs(",", out);
+            fputc(',', out);
             outblock((union block *)MethpBlk(*d).proc);
-            fputs(")", out);
+            fputc(')', out);
         }
       weakref: {
             if (flowterm)

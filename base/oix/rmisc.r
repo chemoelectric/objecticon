@@ -660,10 +660,10 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              fprintf(f, "methp#" UWordFmt "(", MethpBlk(*dp).id);
              MakeDesc(D_Object, MethpBlk(*dp).object, &tdp);
              outimage1(f, &tdp, noimage, stringlimit, listlimit);
-             fprintf(f, ",");
+             putc(',', f);
              MakeDesc(D_Proc, MethpBlk(*dp).proc, &tdp);
              outimage1(f, &tdp, noimage, stringlimit, listlimit);
-             fprintf(f, ")");
+             putc(')', f);
      }
 
      object: {
@@ -775,7 +775,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  }
                  if (i > stringlimit)
                      fprintf(f, "...");
-                 fprintf(f, "\"");
+                 putc('"', f);
              }
              string: {
                  tended struct descrip q;

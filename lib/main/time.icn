@@ -394,14 +394,14 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Succeed if date is after d
    #
    public after(d)
-      return self.seconds > d.seconds
+      succeed self.seconds > d.seconds
    end
 
    #
    # Succeed if date is before d
    #
    public before(d)
-      return self.seconds < d.seconds
+      succeed self.seconds < d.seconds
    end
 
    #
@@ -409,7 +409,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # for comparison.
    #
    private override object_equals(d)
-      return self.seconds = d.seconds
+      succeed self.seconds = d.seconds
    end
 
    #

@@ -326,8 +326,6 @@ $endif
 
    public get_insertion(l)
       local e, t, s
-      if *l = 1 then
-         return l[1]
       t := []
       every e := !l do {
          (subj[1:pos] == e.str[1:pos] &

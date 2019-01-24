@@ -86,14 +86,7 @@ end
 # initial value for `_a` may be optionally specified.
 #
 class LambdaState(State)
-   private ta, tl, i
-
-   public override begin()
-      ta := _a
-      tl := _l
-      _a := i
-      _l := &null
-   end
+   private ta, tl
 
    public override swap()
       _a :=: ta
@@ -101,7 +94,7 @@ class LambdaState(State)
    end
 
    public new(i)
-      self.i := i
+      self.ta := i
       return
    end
 end

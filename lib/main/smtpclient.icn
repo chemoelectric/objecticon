@@ -107,7 +107,7 @@ class SmtpClient(NetClient)
       s := read_response() | fail
 
       rc := integer(s[1:4]) | return error("Couldn't get return code")
-      return (rc = reply) | error("Server responded " || s)
+      succeed (rc = reply) | error("Server responded " || s)
    end
 
    private read_response()

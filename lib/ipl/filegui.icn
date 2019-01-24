@@ -417,6 +417,8 @@ class FileSuggestField(SuggestField)
             else
                o.name
             assign_contents(t,, e)
+            if /changed then
+               keep_closed()
          } else {
             # Calculate the string we could insert.  If not
             # directories-only, and we have a single directory, append
@@ -441,7 +443,8 @@ class FileSuggestField(SuggestField)
                   on_change(e)
                else
                   assign_contents(contents || Files.PATH_SEPARATOR,, e)
-            }
+            } else
+               keep_closed()
          }
       } else {
          # As above, calculate the string we could insert.
@@ -457,9 +460,11 @@ class FileSuggestField(SuggestField)
          # unambiguous directory; in this case append a /, which will
          # show its contents.  Eg "/home" + tab -> set to "/home/" and
          # list contents.
-         if *contents < *t then
+         if *contents < *t then {
             assign_contents(t,, e)
-         else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+            if *l > 1 then
+               open_popup(l)
+         } else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             assign_contents(t || Files.PATH_SEPARATOR,, e)
          else
             open_popup(l)

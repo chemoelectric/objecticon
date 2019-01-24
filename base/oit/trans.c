@@ -76,7 +76,7 @@ void tfatal_at(struct node *n, char *fmt, ...)
     }
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
-    fprintf(stderr, "\n");
+    fputc('\n', stderr);
     va_end(argp);
     tfatals++;
 }
@@ -103,7 +103,7 @@ void twarn_at(struct node *n, char *fmt, ...)
     fprintf(stderr, "Warning: ");
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
-    fprintf(stderr, "\n");
+    fputc('\n', stderr);
     va_end(argp);
     twarnings++;
 }

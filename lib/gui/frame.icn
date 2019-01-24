@@ -136,6 +136,7 @@ class Frame(Component)
    public close()
       self.invalidate()
       self.parent.remove(self)
+      return self
    end
 
    public handle_lrelease(e)

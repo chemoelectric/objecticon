@@ -64,8 +64,6 @@ abstract class CompleteField(SuggestField)
 
    public override get_insertion(l)
       local e, t, s
-      if *l = 1 then
-         return l[1]
       t := []
       every e := !l do {
          (contents[1:cursor] == e.str[1:cursor] &

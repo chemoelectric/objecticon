@@ -661,7 +661,7 @@ void quit(char *fmt, ...)
     va_start(argp, fmt);
     fprintf(stderr,"%s: ",progname);
     vfprintf(stderr, fmt, argp);
-    fprintf(stderr,"\n");
+    fputc('\n', stderr);
     fflush(stderr);
     va_end(argp);
     remove_intermediate_files();
