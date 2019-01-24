@@ -58,7 +58,7 @@ class Process(HasTask, HasBgProc)
       # length in advance lets us potentially get all the encoded data
       # in one low-level socket read, which is much faster.
       s := encode(obj, &yes) | fail
-      return sock.writes(*s, "\n", s)
+      return sock.writes(*s, "\n", s) & self
    end
 
    #
