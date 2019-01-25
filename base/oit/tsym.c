@@ -634,6 +634,21 @@ static void nodegen(nodeptr t)
             break;
         }
 
+        case N_Link: {
+            if (in_create || !curr_func->field)
+                tfatal_at(t, "Invalid context for link");
+            uout_op(Uop_Link);
+            break;
+        }
+
+        case N_Linkexpr: {
+            if (in_create || !curr_func->field)
+                tfatal_at(t, "Invalid context for link");
+            uout_op(Uop_Linkexpr);
+            nodegen(Tree1(t));
+            break;
+        }
+
         case N_Alt: {
             uout_op(Uop_Alt);
             nodegen(Tree0(t));

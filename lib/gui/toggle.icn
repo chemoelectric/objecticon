@@ -28,7 +28,7 @@ abstract class Toggle()
    public set_parent_check_box_group(x)
       self.parent_check_box_group := x
       synch_cbg()
-      return self
+      link
    end
 
    #
@@ -66,7 +66,7 @@ abstract class Toggle()
    public set_is_checked(s)
       self.is_checked_flag := need_flag(s)
       synch_cbg()
-      return self
+      link
    end
 
    public toggle_action(e)

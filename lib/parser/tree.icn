@@ -16,7 +16,7 @@ final class Token()
 
    public set_chunk(chunk)
       self.chunk := chunk
-      return self
+      link
    end
 
    public get_pad()
@@ -73,9 +73,16 @@ class Node()
       suspend .!children
    end
 
+   #
+   # Get the index of the given child element
+   #
+   public get_index(c)
+      return keyof(self.children, c)
+   end
+
    public set(i, x)
       self.children[i] := x
-      return self
+      link
    end
 
    public size()
@@ -135,7 +142,7 @@ abstract class List()
 
    public clear()
       lpos.set(index, Node.EMPTY)
-      return self
+      link
    end
 
    public gen()
@@ -155,7 +162,7 @@ abstract class List()
       l := flatten()
       l[i] := o
       unflatten(l)
-      return self
+      link
    end
 
    public insert(i, o)
@@ -163,7 +170,7 @@ abstract class List()
       l := flatten()
       default.insert(l, i, o)
       unflatten(l)
-      return self
+      link
    end
 
    public delete(i)
@@ -171,7 +178,7 @@ abstract class List()
       l := flatten()
       default.delete(l, i)
       unflatten(l)
-      return self
+      link
    end
 
    package new(lpos, index)
@@ -188,7 +195,7 @@ abstract class LList(List)
    package override unflatten(l)
       clear()
       every put(!l)
-      return self
+      link
    end
 
    public override push(o)
@@ -196,7 +203,7 @@ abstract class LList(List)
       l := flatten()
       default.push(l, o)
       unflatten(l)
-      return self
+      link
    end
 end
 
@@ -207,7 +214,7 @@ abstract class RList(List)
    package override unflatten(l)
       clear()
       every push(back(l))
-      return self
+      link
    end
 
    public override put(s)
@@ -215,7 +222,7 @@ abstract class RList(List)
       l := flatten()
       default.put(l, s)
       unflatten(l)
-      return self
+      link
    end
 end
 
@@ -292,7 +299,7 @@ abstract class IdList(LList)
                               lpos.child(index),
                               s.comma,
                               s.pos))
-      return self
+      link
    end
 
    package override new(lpos, index, lab)
@@ -353,7 +360,7 @@ class AccessList(SimpleLList)
          lpos.set(index, Node(lab,
                               lpos.child(index),
                               x.pos))
-      return self
+      link
    end
 
    package override new(lpos, index, lab)
@@ -381,7 +388,7 @@ class LocalsList(SimpleLList)
                            lpos.child(index),
                            x.pos.child(2),
                            x.pos.child(3)))
-      return self
+      link
    end
 end
 
@@ -414,7 +421,7 @@ class Invocable(SimpleLList)
                               lpos.child(index),
                               x.comma,
                               x.pos))
-      return self
+      link
    end
 
    package override new(pos)
@@ -459,7 +466,7 @@ class Import(SimpleLList)
                               lpos.child(index),
                               x.comma,
                               x.pos))
-      return self
+      link
    end
 
    package override new(pos)
@@ -484,7 +491,7 @@ class Imports(SimpleLList)
       pos.set(index, Node("importdecls", 
                           pos.child(index),
                           x.pos))
-      return self
+      link
    end
 end
 
@@ -518,7 +525,7 @@ class Body(SimpleLList)
       lpos.set(index, Node("bodydecls", 
                            lpos.child(index),
                            x.pos))
-      return self
+      link
    end
 end
 
@@ -531,12 +538,12 @@ class Prog(Tree)
 
    public set_package(x)
       decls.set(1, x.pos)
-      return self
+      link
    end
 
    public clear_package(x)
       decls.set(1, Node.EMPTY)
-      return self
+      link
    end
 
    public get_imports()
@@ -907,7 +914,7 @@ class ClassMembers(SimpleLList)
                            lpos.child(index),
                            x.pos.child(2),
                            x.pos.child(3)))
-      return self
+      link
    end
 end
 
@@ -923,7 +930,7 @@ abstract class TopLevel(Tree)
          pos.set(1, Node.EMPTY)
       else
          pos.set(1, x.pos)
-      return self
+      link
    end
 end
 
@@ -938,7 +945,7 @@ class Class(TopLevel)
 
    public set_name(x)
       pos.child(2).set(3, x.pos)
-      return self
+      link
    end
 
    public get_supers()
@@ -967,7 +974,7 @@ abstract class Function()
 
    public set_name(x)
       fpos.set(name_index, x.pos)
-      return self
+      link
    end
 
    public has_varargs()
@@ -988,7 +995,7 @@ abstract class Function()
          if has_varargs() then
             fpos.set(arglist_index, fpos.child(arglist_index).child(1))
       }
-      return self
+      link
    end
 
    public get_args()
@@ -1014,12 +1021,12 @@ abstract class Function()
 
    public set_initial(s)
       fpos.set(\locals_index + 1, Token(YY.STRINGLIT, s, s))
-      return self
+      link
    end
 
    public set_body(s)
       fpos.set(\locals_index + 3, Token(YY.STRINGLIT, s, s))
-      return self
+      link
    end
 
    public get_initial_node()
@@ -1054,7 +1061,7 @@ class Local(SimpleIdList)
 
    public set_retention(s)
       pos.set(2, s.pos)
-      return self
+      link
    end
 
    package override new(pos)
@@ -1109,7 +1116,7 @@ class DeferredMethod(Tree, Function)
 
    public set_defer_type(s)
       fpos.set(1, s.pos)
-      return self
+      link
    end
 
    package override new(pos)
@@ -1146,7 +1153,7 @@ class Record(TopLevel)
 
    public set_name(x)
       pos.child(2).set(2, x.pos)
-      return self
+      link
    end
 end
 
@@ -1169,7 +1176,7 @@ class Global(TopLevel, IdList)
          gpos.set(1, Node.EMPTY)
       else
          gpos.set(1, x.pos)
-      return self
+      link
    end
 
    package override new(pos)
@@ -1191,7 +1198,7 @@ class Package(Tree)
 
    public set_name(x)
       pos.set(2, x.pos)
-      return self
+      link
    end
 end
 
@@ -1245,7 +1252,7 @@ class ExprList(SimpleLList)
                               lpos.child(index),
                               s.comma,
                               s.pos))
-      return self
+      link
    end
 
    public override new(pos, index)
@@ -1302,7 +1309,7 @@ class Compound(SimpleRList)
                               s.pos,
                               s.semi,
                               lpos.child(index)))
-      return self
+      link
    end
 
    public override new(pos, index)
@@ -1357,7 +1364,7 @@ class CaseList(SimpleLList)
                               lpos.child(index),
                               s.semi,
                               s.pos))
-      return self
+      link
    end
 
    public override new(pos, index)
@@ -1412,7 +1419,7 @@ class DottedIdentList(SimpleLList)
                               lpos.child(index),
                               s.dot,
                               s.pos))
-      return self
+      link
    end
 
    public override new(pos, index)

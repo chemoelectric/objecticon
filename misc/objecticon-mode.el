@@ -128,7 +128,7 @@ regardless of where in the line point is when the TAB command is used.")
      "\\_<" 
      (regexp-opt '("abstract" "break" "by" "case" "class" "const" "create" "default" "do"
                    "else" "end" "every" "fail" "final" "global" "if" "import" "initial"
-                   "invocable" "local" "native" "next" "not" "of" "optional" "override"
+                   "invocable" "link" "local" "native" "next" "not" "of" "optional" "override"
                    "package" "private" "procedure" "protected" "public" "readable" "record"
                    "repeat" "return" "static" "succeed" "suspend" "then" "to"
                    "until" "while"))

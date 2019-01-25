@@ -44,7 +44,7 @@ abstract class Button(Toggle,Component)
 
    public set_parent_button_group(x)
       self.parent_button_group := x
-      return self
+      link
    end
 
    #
@@ -53,7 +53,7 @@ abstract class Button(Toggle,Component)
    #
    public set_no_click_focus(s)
       self.no_click_focus_flag := need_flag(s)
-      return self
+      link
    end
 
    public override finally()
@@ -129,7 +129,7 @@ abstract class Button(Toggle,Component)
          stop_held()
          invalidate()
       }
-      return self
+      link
    end
 
    public on_action(e)
@@ -163,7 +163,7 @@ abstract class Button(Toggle,Component)
          }}
          t.start()
       }
-      return self
+      link
    end
 
    public override handle_accel(e)
@@ -186,7 +186,7 @@ abstract class Button(Toggle,Component)
          Toggle.set_is_checked(s)
          self.invalidate()
       }
-      return self
+      link
    end
 
    public override accepts_focus(e)
@@ -207,7 +207,7 @@ abstract class Button(Toggle,Component)
    #
    public set_toggles(s)
       self.toggles_flag := need_flag(s)
-      return self
+      link
    end
 
    public override new()

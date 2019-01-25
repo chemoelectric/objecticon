@@ -39,7 +39,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          other.close() | fail
-      return self
+      link
    end
 
    public override get_mode()
@@ -62,7 +62,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
    #
    public set_timeout(timeout)
       self.timeout := timeout
-      return self
+      link
    end
 
    public new(other, task, timeout)
@@ -102,7 +102,7 @@ class Task()
       \coex | runerr("change_time() called on a currently active task")
       if is_sleeping() | is_polling() then
          time_until := (time_from + \n) | &null
-      return self
+      link
    end
 
    # This is like `change_time()`, but the time is set to `n`
@@ -116,7 +116,7 @@ class Task()
       \coex | runerr("change_time_from_now() called on a currently active task")
       if is_sleeping() | is_polling() then
          time_until := (Prog.get_runtime_millis() + \n) | &null
-      return self
+      link
    end
 
    # Succeed iff the task is currently active.
@@ -234,7 +234,7 @@ class Task()
    public interrupt(why)
       \coex | runerr("interrupt() called on a currently active task")
       scheduler.interrupt(self, why)
-      return self
+      link
    end
 
    # If the task is sleeping or polling, then place it immediately
@@ -244,7 +244,7 @@ class Task()
    public notify()
       \coex | runerr("notify() called on a currently active task")
       scheduler.notify(self)
-      return self
+      link
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -254,7 +254,7 @@ class Task()
       self === scheduler.curr_task | runerr("yield() called on task which is not current")
       self.coex := &current
       scheduler.now_yield(self)
-      return self
+      link
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -267,7 +267,7 @@ class Task()
       self === scheduler.curr_task | runerr("revert() called on task which is not current")
       self.coex := &current
       scheduler.now_revert()
-      return self
+      link
    end
 
    # Start the task, which may not be currently active.  If the task
@@ -277,7 +277,7 @@ class Task()
    public start()
       \coex | runerr("start() called on a currently active task")
       scheduler.start(self)
-      return self
+      link
    end
 
    # Stop the task, which may not be currently active.  This prevents
@@ -288,7 +288,7 @@ class Task()
    public stop()
       \coex | runerr("stop() called on a currently active task")
       scheduler.stop(self)
-      return self
+      link
    end
 
    # This method swaps the values of external state previously saved,
@@ -336,7 +336,7 @@ class Scheduler()
 
    public set_poll_timeout(n)
       poll_timeout := n
-      return self
+      link
    end
 
    package start(t)

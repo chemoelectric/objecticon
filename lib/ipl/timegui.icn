@@ -50,7 +50,7 @@ class DateField(DropDown)
    public set_format(f)
       self.format := f
       set_value(last_val)
-      return self
+      link
    end
 
    # Return the value (as a `Time`), or fail if the input is not
@@ -69,14 +69,14 @@ class DateField(DropDown)
       if is_live() then
          view.remove_wattrib(WAttrib.FG).reset()
       last_val := clone(x)
-      return self
+      link
    end
 
    # Set the value from the given `Time` instance, firing events
    #
    public assign_value(x, ev, coalesce)
       view.assign_contents(x.format(format),, ev, coalesce)
-      return self
+      link
    end
 
    public on_textfield(ev, src, type)
@@ -144,14 +144,14 @@ class TimeField(Spin)
       if is_live() then
          view.remove_wattrib(WAttrib.FG).reset()
       last_val := clone(x)
-      return self
+      link
    end
 
    # Set the value from the given `Time` instance, firing events.
    #
    public assign_value(x, ev, coalesce)
       view.assign_contents(x.format(format),, ev, coalesce)
-      return self
+      link
    end
 
    public on_textfield(ev, src, type)
@@ -169,7 +169,7 @@ class TimeField(Spin)
    public set_format(f)
       self.format := f
       set_value(last_val)
-      return self
+      link
    end
 
    public override initially()
@@ -213,7 +213,7 @@ class TimezoneField(EditList)
       if is_live() then
          view.remove_wattrib(WAttrib.FG).reset()
       last_val := x
-      return self
+      link
    end
 
    public override on_textfield(ev, src, type)
@@ -301,14 +301,14 @@ class WeekField(DropDown)
       if is_live() then
          view.remove_wattrib(WAttrib.FG).reset()
       last_val := clone(x)
-      return self
+      link
    end
 
    # Set the value from the given `Time` instance, firing events.
    #
    public assign_value(x, ev, coalesce)
       view.assign_contents(x.format(format),, ev, coalesce)
-      return self
+      link
    end
 
    public on_textfield(ev, src, type)
@@ -499,7 +499,7 @@ class Calendar(Component)
    public set_week_mode(s)
       self.week_mode_flag := need_flag(s)
       update()
-      return self
+      link
    end
 
    public override display()

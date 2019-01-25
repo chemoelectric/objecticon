@@ -43,12 +43,12 @@ abstract class Formatter(Stream, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          file.close() | fail
-      return self
+      link
    end
 
    public format(n)
       self.level := -1
-      return try1{ format_node(n) } & self
+      link try1{ format_node(n) }
    end
 
    protected format_node(n)

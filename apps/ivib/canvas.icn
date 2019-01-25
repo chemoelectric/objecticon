@@ -222,7 +222,7 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public set_name(x)
       self.name := x
-      return self
+      link
    end
 
    #
@@ -322,7 +322,7 @@ class Canvas(Component,SelectiveObjectCodec)
       selected := l[1] | &null
       synch_tree()
       invalidate()
-      return self
+      link
    end
 
    #
@@ -965,7 +965,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public set_filename(s)
       self.filename := s
       self.parent_dialog.set_filename_label()
-      return self
+      link
    end
    
    public override get_template()
@@ -1596,7 +1596,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Not in any other item, therefore in Canvas itself.
       #
-      return self
+      link
    end
 
    #

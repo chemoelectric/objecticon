@@ -28,7 +28,7 @@ class SmtpClient(NetClient)
    #
    public set_hostname(s)
       hostname := s
-      return self
+      link
    end
 
    public open()
@@ -43,7 +43,7 @@ class SmtpClient(NetClient)
          close_connection()
          return error("Failed to get initial 220: " || s)
       }
-      return self
+      link
    end
 
    public override close()
@@ -93,7 +93,7 @@ class SmtpClient(NetClient)
       write_line(s) | fail
       send_command(".", 250) | fail
 
-      return self
+      link
    end
 
    private smtp_address(mb)

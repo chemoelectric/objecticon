@@ -27,7 +27,7 @@ class Comment(Node)
    #
    public set_comment(comment)
       self.comment := comment
-      return self
+      link
    end
 
    public override new(s)

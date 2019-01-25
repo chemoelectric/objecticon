@@ -45,7 +45,7 @@ class DefaultResolver(Resolver)
    #
    public set_public_mapping(pub_id, uri)
       insert(public_mapping, pub_id, uri)
-      return self
+      link
    end
 
    #
@@ -54,7 +54,7 @@ class DefaultResolver(Resolver)
    #
    public set_cache_uris(s)
       self.cache_uris_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -63,7 +63,7 @@ class DefaultResolver(Resolver)
    #
    public set_http_client(hc)
       self.http_client := hc
-      return self
+      link
    end
 
    #
@@ -72,7 +72,7 @@ class DefaultResolver(Resolver)
    public cache_uri(sys_id, val)
       val := need_string(val)
       insert(uri_cache, sys_id, val)
-      return self
+      link
    end
 
    public override resolve(base, external_id)

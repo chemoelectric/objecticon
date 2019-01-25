@@ -111,7 +111,7 @@ class ClassSymbol(TopLevelSymbol)
 
    public add_super(s)
       put(supers, s)
-      return self
+      link
    end
 
    public get_resolved_supers()
@@ -120,7 +120,7 @@ class ClassSymbol(TopLevelSymbol)
 
    package add_resolved_super(c)
       put(self.resolved_supers, c)
-      return self
+      link
    end
 
    public get_implemented_fields()
@@ -141,7 +141,7 @@ class ClassSymbol(TopLevelSymbol)
       implemented_fields := table()
       every f := !(!implemented_classes).fields do 
          member(implemented_fields, f.name) | insert(implemented_fields, f.name, f)
-      return self
+      link
    end
 
    public get_field(n)
@@ -154,7 +154,7 @@ class ClassSymbol(TopLevelSymbol)
 
    package add_field(f)
       insert(fields, f.name, f)
-      return self
+      link
    end
 
    public override has_package_flag()
@@ -240,17 +240,17 @@ class ScannedFile()
 
    package set_obj(obj)
       self.obj := obj
-      return self
+      link
    end
 
    package set_package(pack)
       self.pack := pack
-      return self
+      link
    end
       
    package add_symbol(sym)
       insert(symbols, sym.name, sym)
-      return self
+      link
    end
 
    public get_symbol(name)
@@ -263,7 +263,7 @@ class ScannedFile()
 
    package add_import(i)
       insert(imports, i.name, i)
-      return self
+      link
    end
 
    public get_import(name)
@@ -280,7 +280,7 @@ class ScannedFile()
 
    package add_resolved_invocable(sym)
       put(resolved_invocables, sym)
-      return self
+      link
    end
 
    public get_invocables()
@@ -289,17 +289,17 @@ class ScannedFile()
 
    package add_invocable(sym)
       put(invocables, sym)
-      return self
+      link
    end
 
    package set_strinv(v)
       self.strinv := need_flag(v)
-      return self
+      link
    end
 
    package set_methinv(v)
       self.methinv := need_flag(v)
-      return self
+      link
    end
 
    public convert_dottedidentexpr(n)
@@ -410,7 +410,7 @@ class SymbolTable(Connectable)
          return error("Symbol " || k || " already defined in " || symbol_table[k].scanned_file.filename)
       symbol_table[k] := sym
       sym.scanned_file.add_symbol(sym)
-      return self
+      link
    end
 
    private get_stem(f)
@@ -454,7 +454,7 @@ class SymbolTable(Connectable)
       # Standardize by getting rid of the extension
       f := get_stem(f)
       if member(scanned_files, f) then
-         return self
+         link
       g := match_stem(f) | return error("No .icn or .u file at " || f)
       fire(SCANNING_EVENT, g)
       sf := ScannedFile(g)
@@ -468,7 +468,7 @@ class SymbolTable(Connectable)
       every i := sf.get_imports() do
          scan_package(i.name) | fail
 
-      return self
+      link
    end
 
    private scan_src(sf)
@@ -629,7 +629,7 @@ class SymbolTable(Connectable)
    public scan_package(p)
       local d, fs, seen, f
       if member(scanned_packages, p) then
-         return self
+         link
       insert(scanned_packages, p)
       ensure_package_db() | fail
       every d := key(package_db) do {
@@ -643,7 +643,7 @@ class SymbolTable(Connectable)
       }
       if /seen then
          return error("Cannot resolve package " || p)
-      return self
+      link
    end
 
    public gen_symbol_names()
@@ -658,7 +658,7 @@ class SymbolTable(Connectable)
       local x
       every x := !BUILTINS do
          insert(symbol_table, x, BuiltinSymbol(x))
-      return self
+      link
    end
 
    public gb_locate(name)
@@ -730,7 +730,7 @@ class SymbolTable(Connectable)
       resolve_invocables() | fail
       resolve_supers() | fail
       compute_inheritance() | fail
-      return self
+      link
    end
 
    public gen_type(c)
@@ -820,12 +820,12 @@ class SymbolTable(Connectable)
 
    public set_file_mode(s)
       self.file_mode := s
-      return self
+      link
    end
 
    public set_pp_defs(t)
       self.pp_defs := t
-      return self
+      link
    end
 
    public override new()

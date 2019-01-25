@@ -48,7 +48,7 @@ abstract class Node()
       insert(children, pos, obj) | fail
       if not text(obj) then
          obj.parent := self
-      return self
+      link
    end
 
    #
@@ -72,7 +72,7 @@ abstract class Node()
          children[pos] := s || children[pos]
       else
          insert(children, pos, s) | fail
-      return self
+      link
    end
 
    #
@@ -128,7 +128,7 @@ abstract class Node()
    #
    public remove_whitespace_children()
       self.children := get_children_no_whitespace()
-      return self
+      link
    end
 
    #

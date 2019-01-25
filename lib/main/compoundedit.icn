@@ -24,7 +24,7 @@ class CompoundEdit(UndoableEdit)
 
    public override redo()
       every (!l).redo()
-      return self
+      link
    end
 
    public gen()
@@ -35,15 +35,15 @@ class CompoundEdit(UndoableEdit)
       local i
       every i := *l to 1 by -1 do
          l[i].undo()
-      return self
+      link
    end
 
    public override add_edit(other)
       if \closed then
-         return \liberal_flag & l[-1].add_edit(other) & self
+         link \liberal_flag & l[-1].add_edit(other)
 
       l[-1].add_edit(other) | put(l, other)
-      return self
+      link
    end
 
    #
@@ -52,7 +52,7 @@ class CompoundEdit(UndoableEdit)
    #
    public close()
       self.closed := 1
-      return self
+      link
    end
 
    #
@@ -60,7 +60,7 @@ class CompoundEdit(UndoableEdit)
    #
    public clear()
       default.clear(l)
-      return self
+      link
    end
 
    #
@@ -70,7 +70,7 @@ class CompoundEdit(UndoableEdit)
    #
    public set_liberal(s)
       self.liberal_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -78,7 +78,7 @@ class CompoundEdit(UndoableEdit)
    #
    public set_desc(s)
       self.desc := s
-      return self
+      link
    end
 
    #

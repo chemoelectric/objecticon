@@ -87,7 +87,7 @@ class TextDisplay(LineBasedScrollArea)
    #
    public set_contents_str(s)
       set_contents(break_lines(s))
-      return self
+      link
    end
 
    #
@@ -98,7 +98,7 @@ class TextDisplay(LineBasedScrollArea)
    public set_contents(x)
       self.contents := x
       contents_changed()
-      return self
+      link
    end
 
    public override finally()
@@ -114,7 +114,7 @@ class TextDisplay(LineBasedScrollArea)
    public contents_changed()
       clear_split_list()
       compute_and_invalidate()
-      return self
+      link
    end
 
    #
@@ -224,7 +224,7 @@ class TextDisplay(LineBasedScrollArea)
          while *self.contents > \max do
             pop(self.contents)
       }
-      return self
+      link
    end
 
    public log_str(s, max)
@@ -252,7 +252,7 @@ class TextDisplay(LineBasedScrollArea)
          while *self.contents > \max do
             pop(self.contents)
       }
-      return self
+      link
    end
 
    #
@@ -327,7 +327,7 @@ class TextDisplay(LineBasedScrollArea)
          clear_split_list()
          compute_and_invalidate()
       }
-      return self
+      link
    end
 
    public override layout()
@@ -362,7 +362,7 @@ class TextDisplay(LineBasedScrollArea)
          clear_split_list()
          compute_and_invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -374,7 +374,7 @@ class TextDisplay(LineBasedScrollArea)
          clear_split_list()
          compute_and_invalidate()
       }
-      return self
+      link
    end
 
    public override new()

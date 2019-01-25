@@ -45,7 +45,7 @@ abstract class ArchiveListerStream(LineBasedGeneratorStream)
 
    public override close()
       bf.close() | fail
-      return self
+      link
    end
 
    protected next_line()

@@ -35,6 +35,7 @@
 %token	IMPORT      /* import    */
 %token	INITIAL     /* initial   */
 %token	INVOCABLE   /* invocable */
+%token	LINK        /* link      */
 %token	LOCAL       /* local     */
 %token	NATIVE      /* native    */
 %token	NEXT        /* next      */

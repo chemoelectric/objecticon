@@ -31,7 +31,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       self.unchecked_paint := x
       self.checked_paint := y
       synch_left_image()
-      return self
+      link
    end
 
    public override initially()
@@ -57,7 +57,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
          Toggle.set_is_checked(s)
          synch_left_image()
       }
-      return self
+      link
    end
 
    public override draw_label(cw, lw, mw, rw)

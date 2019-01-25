@@ -116,7 +116,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_undo_manager(u)
       undo_manager := u
-      return self
+      link
    end
 
    public override initially()
@@ -146,7 +146,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_contents_str(s)
       set_contents(break_lines(s))
-      return self
+      link
    end
 
    #
@@ -158,7 +158,7 @@ class EditableTextList(LineBasedScrollArea)
    public set_contents(x)
       self.contents := x
       contents_changed()
-      return self
+      link
    end
 
    #
@@ -189,7 +189,7 @@ class EditableTextList(LineBasedScrollArea)
          constrain_line()
          undo_manager.clear()
       }
-      return self
+      link
    end
    
    public ensure_valid_cursor()
@@ -222,7 +222,7 @@ class EditableTextList(LineBasedScrollArea)
          self.cursor_x := x
       }
       end_handle(e)
-      return self
+      link
    end
 
    #
@@ -273,7 +273,7 @@ class EditableTextList(LineBasedScrollArea)
                pop(self.contents)
          }
       }
-      return self
+      link
    end
 
    # Similar to `log()`, but log a string, rather than a list of
@@ -316,7 +316,7 @@ class EditableTextList(LineBasedScrollArea)
          while *self.contents > \max do
             pop(self.contents)
       }
-      return self
+      link
    end
 
    #
@@ -360,7 +360,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_is_editable(s)
       self.is_editable_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -368,7 +368,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -376,7 +376,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_menu_on_rpress(s)
       self.menu_on_rpress_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -385,7 +385,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_constrain_cursor_on_scroll(s)
       self.constrain_cursor_on_scroll_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -487,7 +487,7 @@ class EditableTextList(LineBasedScrollArea)
       ce.close()
       undo_manager.add_edit(ce)
       end_handle(e)
-      return self
+      link
    end
 
    public override on_vsb(ev)
@@ -644,19 +644,19 @@ class EditableTextList(LineBasedScrollArea)
 
    public clear_mark()
       mark_x := mark_y := &null
-      return self
+      link
    end
 
    public set_mark(mx, my)
       self.mark_x := mx
       self.mark_y := my
-      return self
+      link
    end
 
    public set_cursor(cx, cy)
       self.cursor_x := cx
       self.cursor_y := cy
-      return self
+      link
    end
 
    public has_region()
@@ -1408,7 +1408,7 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          constrain_line()
       }
-      return self
+      link
    end
 
    #
@@ -1421,7 +1421,7 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          constrain_line()
       }
-      return self
+      link
    end
 
    #
@@ -1434,7 +1434,7 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          constrain_line()
       }
-      return self
+      link
    end
 
    public override new()

@@ -58,7 +58,7 @@ class TextMenuItem(MenuComponent)
          possibly_invalidate()
       } else
          self.paint_mid := p
-      return self
+      link
    end
 
    #
@@ -76,7 +76,7 @@ class TextMenuItem(MenuComponent)
          possibly_invalidate()
       } else
          self.paint_left := p
-      return self
+      link
    end
 
    #
@@ -94,7 +94,7 @@ class TextMenuItem(MenuComponent)
          possibly_invalidate()
       } else
          self.paint_right := p
-      return self
+      link
    end
 
    public set_image_left(x)
@@ -113,7 +113,7 @@ class TextMenuItem(MenuComponent)
          possibly_invalidate()
       } else
          self.border_left := x
-      return self
+      link
    end
 
    public set_border_right(x)
@@ -124,7 +124,7 @@ class TextMenuItem(MenuComponent)
          possibly_invalidate()
       } else
          self.border_right := x
-      return self
+      link
    end
 
    public set_border_mid(x)
@@ -135,7 +135,7 @@ class TextMenuItem(MenuComponent)
          possibly_invalidate()
       } else
          self.border_mid := x
-      return self
+      link
    end
 
    public override get_label_left_width()

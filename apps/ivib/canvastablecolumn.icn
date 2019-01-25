@@ -47,7 +47,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    public override set_column_align(x)
       self.column_align := x
       TableColumn.set_column_align(x)
-      return self
+      link
    end
 
    public override rescale(f)

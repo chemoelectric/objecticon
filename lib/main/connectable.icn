@@ -23,7 +23,7 @@ class Listener()
       obj.disconnect_impl(self)
       obj := &null
       proc := 1
-      return self
+      link
    end
 
    package new(obj, proc, type)
@@ -57,7 +57,7 @@ class Connectable()
       \type | runerr("Null type to fire")
       every e := !member(listeners, type | &null) do
          e.proc(param, self, type)
-      return self
+      link
    end
 
    #
@@ -79,7 +79,7 @@ class Connectable()
       l := copy(member(listeners, type)) | []
       insert(l, pos, last_listener <- Listener(self, proc, type)) | fail
       insert(listeners, type, l)
-      return self
+      link
    end
 
    #
@@ -100,7 +100,7 @@ class Connectable()
             x.disconnect()
       }}, type, pos) | fail
       x := last_listener
-      return self
+      link
    end
 
    #
@@ -119,7 +119,7 @@ class Connectable()
          insert(listeners, e.type, t)
       else
          delete(listeners, e.type)
-      return self
+      link
    end
 
    #

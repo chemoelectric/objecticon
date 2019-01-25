@@ -139,7 +139,7 @@ class Dialog(Component)
          win.restore(r.x, r.y, r.w, r.h)
       }
 
-      return self
+      link
    end
 
    public invalidate_rect(r)
@@ -148,11 +148,11 @@ class Dialog(Component)
       every t := invalid_rects[i := 1 to *invalid_rects] do {
          if t.touches(r) then {
             invalid_rects[i] := t.union(r)
-            return self
+            link
          }
       }
       put(invalid_rects, r)
-      return self
+      link
    end
 
    public is_blocked()
@@ -211,7 +211,7 @@ class Dialog(Component)
          every c := Seq{traverse_postorder()} do
             c.fire(e)
       }
-      return self
+      link
    end
 
    public on_interrupted()
@@ -239,21 +239,21 @@ class Dialog(Component)
    # Raise the window
    #
    public raise_win()
-      return win.raise() & self
+      link win.raise()
    end
 
    #
    # Lower the window
    #
    public lower_win()
-      return win.lower() & self
+      link win.lower()
    end
 
    #
    # Focus the window
    #
    public focus_win()
-      return win.focus() & self
+      link win.focus()
    end
 
    #
@@ -286,7 +286,7 @@ class Dialog(Component)
          /s := POINTER
          (curr_pointer === s) | win.set_pointer(curr_pointer := s)
       }
-      return self
+      link
    end
 
    #
@@ -306,7 +306,7 @@ class Dialog(Component)
       every (!l).set_is_blocked(&yes)
       Dispatcher.message_loop(self)
       every (!l).set_is_blocked(&no)
-      return self
+      link
    end
 
    #
@@ -322,7 +322,7 @@ class Dialog(Component)
       show(d)
       while \win do
          task.sleep()
-      return self
+      link
    end
 
    #
@@ -338,7 +338,7 @@ class Dialog(Component)
    #
    public set_remember_size(s)
       self.remember_size_flag := need_flag(s)
-      return self
+      link
    end
 
    # Resize the dialog to the given dimensions.  No events are
@@ -347,7 +347,7 @@ class Dialog(Component)
    public resize_win(w, h)
       win.set_size(w, h)
       resize_win_impl()
-      return self
+      link
    end
 
    public override initially()
@@ -451,7 +451,7 @@ class Dialog(Component)
          }
          self.menu_mode := c
       }
-      return self
+      link
    end
 
    # Exit the menu mode formerly begun with `MenuMode` instance `c`.
@@ -472,7 +472,7 @@ class Dialog(Component)
             menu_mode := popups := &null
          }
       }
-      return self
+      link
    end
 
    public add_popup(d)
@@ -483,7 +483,7 @@ class Dialog(Component)
          d.popup_manager := self
          push(popups, d)
       }
-      return self
+      link
    end
 
    public remove_popup(d)
@@ -494,7 +494,7 @@ class Dialog(Component)
          d.popup_manager := d
          ldel(popups, d)
       }
-      return self
+      link
    end
 
    #
@@ -516,7 +516,7 @@ class Dialog(Component)
          self.focus := c
          (\self.focus).got_focus(e)
       }
-      return self
+      link
    end
 
    #
@@ -569,7 +569,7 @@ class Dialog(Component)
       self.tooltip_init()
       self.init_dialog()
       Dispatcher.add_dialog(self)
-      return self
+      link
    end
 
    public dispose()
@@ -596,7 +596,7 @@ class Dialog(Component)
          self.selections := self.selection_requests := 
          self.click_count := self.entered := &null
       fire(Event.DIALOG_DISPOSED)
-      return self
+      link
    end
 
    # Refresh the point chain and pointer, using point_chain_source.
@@ -613,7 +613,7 @@ class Dialog(Component)
          generate_crossing_events(point_chain_source) 
          synch_pointer(point_chain_source)
       }
-      return self
+      link
    end
 
    private create_point_chain(e)
@@ -720,13 +720,13 @@ class Dialog(Component)
          obj.reset_timestamp()
          win.own_selection(selection)
       }
-      return self
+      link
    end
 
    public request_selection(selection, target_types, proc, user_data)
       insert(selection_requests, selection, SelectionRequest(target_types, proc, user_data))
       win.request_selection(selection, target_types[1])
-      return self
+      link
    end
 
    private check_entered(e)
@@ -880,7 +880,7 @@ class Dialog(Component)
          held[ec] := copy(member(held, ec)) | fail
          put(held[ec], c)
       }
-      return self
+      link
    end
 
    #
@@ -896,7 +896,7 @@ class Dialog(Component)
          held[ec] := copy(member(held, ec)) | fail
          ldel(held[ec], c)
       }
-      return self
+      link
    end
 
    #
@@ -1193,7 +1193,7 @@ class Dialog(Component)
          # ptr may now be null, in which case it defaults to POINTER
          change_pointer(ptr)
       }
-      return self
+      link
    end
 
    #
@@ -1281,7 +1281,7 @@ class Dialog(Component)
             curr_drop := &null
          }
       }
-      return self
+      link
    end
 
    #
@@ -1410,7 +1410,7 @@ class Dialog(Component)
    #
    public invoke_later(coex)
       self.win.pending(Window.INVOKE_LATER, coex)
-      return self
+      link
    end
 
    #
@@ -1659,7 +1659,7 @@ abstract class SelectionOwner()
 
    public reset_timestamp()
       timestamp := &null
-      return self
+      link
    end
 
    public abstract get_content(target)
@@ -1692,7 +1692,7 @@ class StaticTextSelectionOwner(TextSelectionOwner)
 
    public set_text(s)
       self.s := s
-      return self
+      link
    end
 
    public override lost_ownership()

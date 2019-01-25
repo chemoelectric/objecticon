@@ -801,7 +801,7 @@ abstract class HasOrientation()
    #
    public set_is_horizontal(s)
       self.is_horizontal_flag := need_flag(s)
-      return self
+      link
    end
 end
 
@@ -825,7 +825,7 @@ abstract class HasUseWheel(Connectable)
       else
          [connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener,
           connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener]
-      return self
+      link
    end
 end
 
@@ -853,7 +853,7 @@ class GetSelection(Dialog)
       request_selection(sel,
                         [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
                         respond)
-      return self
+      link
    end
 
    public override new(sel)

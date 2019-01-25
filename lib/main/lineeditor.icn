@@ -32,7 +32,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    public set_history_limit(n)
       self.history_limit := n
       limit_history()
-      return self
+      link
    end
 
    # Set the history list.
@@ -41,7 +41,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       self.history := l
       self.history_start_no := 1
       limit_history()
-      return self
+      link
    end
 
    # Set a function to generate completions when the tab key is
@@ -50,14 +50,14 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    #
    public set_complete_function(f)
       self.complete_function := f
-      return self
+      link
    end
 
    # Set the prompt to display.
    #
    public set_prompt(s)
       self.prompt := s
-      return self
+      link
    end
 
    # Return the history list.
@@ -306,7 +306,7 @@ $endif
          ed.doit()
          undo_manager.add_edit(ed)
       }
-      return self
+      link
    end
 
    public assign_contents(x, pos, coalesce)
@@ -321,7 +321,7 @@ $endif
          ed.doit()
          undo_manager.add_edit(ed)
       }
-      return self
+      link
    end
 
    public get_insertion(l)

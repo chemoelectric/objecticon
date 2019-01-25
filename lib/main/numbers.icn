@@ -436,7 +436,7 @@ class Rat(RealNumber)
 
    # Returns self
    public override rational()
-      return self
+      link
    end
 
    # Returns the integer whole number part of this rational.
@@ -965,7 +965,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          # No shift needed, ie the number has less digits than the
          # round indicates.
          if /chop then
-            return self
+            link
          # We chopped off some digits (in a previous division), so
          # adjustment may be necessary.  For example, dividing
          # 23267.7217 by 79727.39 (=0.2918410059579...), would give
@@ -976,7 +976,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
          j := rnd.round_dig(0, i)
          # Nothing to add, so result stays the same
          if j = 0 then
-            return self
+            link
          i1 := i * p10(-n) + j
       } else {
          # We need to shift right n places.  Firstly shift right n-1
@@ -1103,7 +1103,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
 
    # Returns self
    public override decimal()
-      return self
+      link
    end
 
    # Convert to an integer, truncating any fractional part.
@@ -1116,7 +1116,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
 
    # Returns self
    public override reduce()
-      return self
+      link
    end
 
    private parse(x)

@@ -7,7 +7,7 @@ class SelectModeList(List)
          Select.ONE : set_selection(2)
          Select.MANY : set_selection(3)
       }
-      return self
+      link
    end
 
    public get_select_mode()

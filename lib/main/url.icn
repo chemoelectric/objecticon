@@ -61,7 +61,7 @@ class URL(ObjectOutput)
    #
    public set_scheme(x)
       self.scheme := map(x)
-      return self
+      link
    end
 
    #
@@ -76,7 +76,7 @@ class URL(ObjectOutput)
    #
    public set_port(x)
       self.port := x
-      return self
+      link
    end
 
    #
@@ -91,7 +91,7 @@ class URL(ObjectOutput)
    #
    public set_userinfo(x)
       self.userinfo := x
-      return self
+      link
    end
 
    #
@@ -145,7 +145,7 @@ class URL(ObjectOutput)
    #
    public set_path(x)
       self.path := x
-      return self
+      link
    end
 
    #
@@ -167,7 +167,7 @@ class URL(ObjectOutput)
    #
    public set_query(x)
       self.query := x
-      return self
+      link
    end
 
    #
@@ -175,7 +175,7 @@ class URL(ObjectOutput)
    #
    public set_fragment(x)
       self.fragment := x
-      return self
+      link
    end
 
    #
@@ -197,7 +197,7 @@ class URL(ObjectOutput)
    #
    public set_host(x)
       self.host := x
-      return self
+      link
    end
 
    #
@@ -289,7 +289,7 @@ class URL(ObjectOutput)
    #
    public set_cgi_parameters(cgi)
       self.query := make_cgi_string(cgi)
-      return self
+      link
    end
 
    #

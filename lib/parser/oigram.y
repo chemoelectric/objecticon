@@ -30,6 +30,7 @@
 %token  IMPORT      /* import    */
 %token  INITIAL     /* initial   */
 %token  INVOCABLE   /* invocable */
+%token  LINK        /* link      */
 %token  LOCAL       /* local     */
 %token  NATIVE      /* native    */
 %token  NEXT        /* next      */
@@ -433,6 +434,8 @@ return  : FAIL { $$ := Node("fail", $1);} ;
         | SUSPEND expr DO expr { $$ := Node("suspendexprdo", $1,$2,$3,$4);};
         | SUCCEED { $$ := Node("succeed", $1);} ;
         | SUCCEED expr { $$ := Node("succeedexpr", $1, $2);} ;
+        | LINK { $$ := Node("link", $1);} ;
+        | LINK expr { $$ := Node("linkexpr", $1, $2);} ;
 
 if      : IF expr THEN expr { $$ := Node("if", $1,$2,$3,$4);} ;
         | IF expr THEN expr ELSE expr { $$ := Node("ifelse", $1,$2,$3,$4,$5,$6);} ;

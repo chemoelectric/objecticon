@@ -118,7 +118,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          total_size := x
          reconfigure()
       }
-      return self
+      link
    end
 
    #
@@ -140,7 +140,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          page_size := x
          reconfigure()
       }
-      return self
+      link
    end
 
    #
@@ -173,7 +173,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          } else
             value := x
       }
-      return self
+      link
    end
 
    #
@@ -184,7 +184,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    #
    public set_increment_size(x)
       self.increment_size := x
-      return self
+      link
    end
 
    #
@@ -203,7 +203,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          self.hi := hi
          reconfigure()
       }
-      return self
+      link
    end
 
    #
@@ -212,7 +212,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
-      return self
+      link
    end
 
    #

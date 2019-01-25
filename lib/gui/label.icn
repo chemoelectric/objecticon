@@ -27,7 +27,7 @@ class Label(Component)
    #
    public set_label(x)
       set_paint(paint_for_string(x))
-      return self
+      link
    end
 
    #
@@ -37,7 +37,7 @@ class Label(Component)
    #
    public set_image(x)
       set_paint(ImagePaint().set_image(x))
-      return self
+      link
    end
 
    public set_paint(p)
@@ -50,7 +50,7 @@ class Label(Component)
          self.invalidate()
       } else
          self.paint := p
-      return self
+      link
    end
 
    #
@@ -59,7 +59,7 @@ class Label(Component)
    #
    public set_linked_accel(c)
       self.linked_accel := c
-      return self
+      link
    end
 
    #
@@ -69,7 +69,7 @@ class Label(Component)
    #
    public set_menu_on_rpress(s)
       self.menu_on_rpress_flag := need_flag(s)
-      return self
+      link
    end
 
    public override initially()

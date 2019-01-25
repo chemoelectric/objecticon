@@ -23,7 +23,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
       else
          self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
       CheckBox.set_parent_check_box_group(x)
-      return self
+      link
    end
 
    #

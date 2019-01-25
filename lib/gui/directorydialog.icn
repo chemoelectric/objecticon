@@ -77,7 +77,7 @@ class DirectoryDialog(Dialog)
 
    public set_existing_file_mode(s)
       existing_file_mode := s
-      return self
+      link
    end
 
    public override component_setup()
@@ -123,7 +123,7 @@ class DirectoryDialog(Dialog)
             i +:= 1
          }
          while n.remove_index(i)
-         return self
+         link
       } else {
          n.clear_children()
          fail
@@ -218,7 +218,7 @@ class DirectoryDialog(Dialog)
    #
    public set_directory(s)
       self.init_dirs := [s]
-      return self
+      link
    end
 
    #
@@ -227,7 +227,7 @@ class DirectoryDialog(Dialog)
    #
    public set_directories(l)
       self.init_dirs := l
-      return self
+      link
    end
 
    #
@@ -275,7 +275,7 @@ class DirectoryDialog(Dialog)
          check_existing()
       else
          msg("Not a directory: " || p.ucs())
-      return self
+      link
    end
 
    public find_child(n, s)
@@ -331,7 +331,7 @@ class DirectoryDialog(Dialog)
    public set_show_hidden_files(s)
       show_hidden_menu_item.set_is_checked(s)
       on_show_hidden_menu_item()
-      return self
+      link
    end
 
    public on_show_hidden_menu_item(ev)

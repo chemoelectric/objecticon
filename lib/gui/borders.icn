@@ -73,18 +73,18 @@ abstract class ABorder(Insets,XYAlign)
 
    public set_x_align(x)
       self.x_align := x
-      return self
+      link
    end
       
    public set_y_align(y)
       self.y_align := y
-      return self
+      link
    end
       
    public set_align(x, y)
       set_x_align(x)
       set_y_align(y)
-      return self
+      link
    end
 
    public new()
@@ -112,27 +112,27 @@ class EmptyBorder(ABorder)
       set_r_inset(r)
       set_t_inset(t)
       set_b_inset(b)
-      return self
+      link
    end
 
    public set_l_inset(n)
       self.l_inset := n
-      return self
+      link
    end
 
    public set_r_inset(n)
       self.r_inset := n
-      return self
+      link
    end
 
    public set_t_inset(n)
       self.t_inset := n
-      return self
+      link
    end
 
    public set_b_inset(n)
       self.b_inset := n
-      return self
+      link
    end
 
    # Set the inset between the notional edge of the border and any
@@ -140,7 +140,7 @@ class EmptyBorder(ABorder)
    #
    public set_focus_inset(n)
       self.focus_inset := n
-      return self
+      link
    end
 
    public override draw_focus(W, x, y, w, h, t)
@@ -223,7 +223,7 @@ abstract class LineBorder(ABorder)
    # Set the line width of this border; each of the four insets has this width.
    public set_line_width(n)
       self.line_width := n
-      return self
+      link
    end
 
    # Set the inset between the line border and any drawn focus, dashed
@@ -231,7 +231,7 @@ abstract class LineBorder(ABorder)
    #
    public set_focus_inset(n)
       self.focus_inset := n
-      return self
+      link
    end
 
    public override new()
@@ -334,11 +334,11 @@ class CompoundBorder(ABorder)
 
    public set_inner(inner)
       self.inner := inner
-      return self
+      link
    end
 
    public set_outer(outer)
       self.outer := outer
-      return self
+      link
    end
 end

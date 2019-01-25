@@ -21,7 +21,7 @@ class Mailbox(Address)
 
    public set_local_part(x)
       local_part := x
-      return self
+      link
    end
 
    public get_domain()
@@ -30,7 +30,7 @@ class Mailbox(Address)
    
    public set_domain(x)
       domain := x
-      return self
+      link
    end
 
    public get_phrase() 
@@ -39,7 +39,7 @@ class Mailbox(Address)
 
    public set_phrase(x)
       phrase := x
-      return self
+      link
    end
 
    public get_route() 
@@ -48,7 +48,7 @@ class Mailbox(Address)
 
    public set_route(x)
       route := x
-      return self
+      link
    end
 
    public override to_rfc822()
@@ -75,7 +75,7 @@ class Mailbox(Address)
    end   
 
    public override gen_mailboxes()
-      return self
+      link
    end
 
    public static mailbox_list_to_string(l)

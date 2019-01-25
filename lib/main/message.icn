@@ -18,7 +18,7 @@ class Message(MimeHeaders)
    #
    public set_content(s)
       self.content := need_string(s)
-      return self
+      link
    end
 
    #
@@ -63,7 +63,7 @@ class Message(MimeHeaders)
       # Use the handler to convert the data.
       #
       content := h.encode_data(self, s)
-      return self
+      link
    end
 
    #
@@ -170,7 +170,7 @@ class Message(MimeHeaders)
             f.writes(fold(h.key || ": " || t), "\r\n") | fail
       }
       f.writes("\r\n", content) | fail
-      return self
+      link
    end
 
    #

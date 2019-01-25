@@ -43,17 +43,17 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
 
    public set_vars(t)
       self.vars := t
-      return self
+      link
    end
 
    public set_consts(t)
       self.consts := t
-      return self
+      link
    end
 
    public set_write_globals(f)
       write_globals_flag := need_flag(f)
-      return self
+      link
    end
 
    public new(v, c)
@@ -111,7 +111,7 @@ class Evaluator()
    end
 
    private cdo_exit(n, loop, scan)
-      throw("suspend/return/succeed/fail not allowed")
+      throw("suspend/return/succeed/link/fail not allowed")
    end
 
    private cdo_scan(n, loop, scan)
@@ -502,7 +502,7 @@ class Evaluator()
 
    public set_env(env)
       self.env := env
-      return self
+      link
    end
 
    public set_node(n)
@@ -513,12 +513,12 @@ class Evaluator()
          node := loops := scans := &null
          fail
       }
-      return self
+      link
    end
 
    public set_imports(t)
       self.imports := t
-      return self
+      link
    end
 
    public get_imports()
@@ -537,7 +537,8 @@ class Evaluator()
       cdispatch["break"] := cdo_break
       cdispatch["breakexpr"] := cdo_breakexpr
       cdispatch["next"] := cdo_next
-      every cdispatch["fail"|"return"|"returnexpr"|"succeed"|"succeedexpr"|"suspend"|"suspendexpr"|"suspendexprdo"] := cdo_exit
+      every cdispatch["fail"|"return"|"returnexpr"|"succeed"|"succeedexpr"|"link"|
+                      "linkexpr"|"suspend"|"suspendexpr"|"suspendexprdo"] := cdo_exit
       every cdispatch["augqmark"|"Bqmark"] := cdo_scan
       return
    end

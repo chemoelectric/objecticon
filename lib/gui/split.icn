@@ -28,7 +28,7 @@ class Split(Component)
       self.first := c
       add(self.first, 1)
       self.sizer.set_is_horizontal(&no)
-      return self
+      link
    end
 
    #
@@ -39,7 +39,7 @@ class Split(Component)
       self.first := c
       add(self.first, 1)
       self.sizer.set_is_horizontal(&yes)
-      return self
+      link
    end
 
    #
@@ -49,7 +49,7 @@ class Split(Component)
       remove(\self.second)
       self.second := c
       add(self.second)
-      return self
+      link
    end
 
    #
@@ -59,7 +59,7 @@ class Split(Component)
       remove(\self.second)
       self.second := c
       add(self.second)
-      return self
+      link
    end
 
    public override initially()
@@ -112,7 +112,7 @@ class Split(Component)
          if is_live() then
             do_layout().invalidate()
       }
-      return self
+      link
    end
 
    # Hide the second component (and the sizer), so that the first
@@ -126,7 +126,7 @@ class Split(Component)
          if is_live() then
             do_layout().invalidate()
       }
-      return self
+      link
    end
 
    # After a call to `hide_first()` or a `hide_second()`, reset the
@@ -141,7 +141,7 @@ class Split(Component)
          if is_live() then
             do_layout().invalidate()
       }
-      return self
+      link
    end
 
    public override layout()
@@ -205,7 +205,7 @@ class Split(Component)
    public set_min(f, s)
       self.min_first := f
       self.min_second := s
-      return self
+      link
    end
 
    #
@@ -215,7 +215,7 @@ class Split(Component)
    #
    public set_weight(w)
       self.weight := w
-      return self
+      link
    end
 
    #
@@ -225,7 +225,7 @@ class Split(Component)
    #
    public set_show_inter(s)
       sizer.set_show_inter(s)
-      return self
+      link
    end
 
    public on_sizer_press(ev)
@@ -275,7 +275,7 @@ class Split(Component)
          layout()
          invalidate()
       }
-      return self
+      link
    end
 
    public override new()

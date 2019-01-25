@@ -21,7 +21,7 @@ class HTMLMessageDialog(Dialog)
    #
    public set_delay_open(s)
       self.delay_open_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -34,7 +34,7 @@ class HTMLMessageDialog(Dialog)
    #
    public set_size_precisely(s)
       self.size_precisely_flag := need_flag(s)
-      return self
+      link
    end
 
    private on_first_load()

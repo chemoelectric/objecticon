@@ -255,6 +255,7 @@ static int fold_consts(struct lnode *n)
             break;
         }
 
+        case Uop_Linkexpr: 
         case Uop_Succeedexpr: 
         case Uop_Returnexpr: {
             fold_return(n);
@@ -580,7 +581,6 @@ static int changes(struct lnode *n)
             case Uop_Breakexpr: 
             case Uop_Create: 
             case Uop_Suspendexpr: 
-            case Uop_Succeedexpr: 
             case Uop_Returnexpr: {
                 /* x->child should = n */
                 return 1;
@@ -688,7 +688,7 @@ static int visit_init_field(struct lnode *n)
     struct lnode_field *x = (struct lnode_field *)n;
     struct lclass_field *f;
     f = lookup_field(vclass, x->fname);
-    if (f && f->flag == (M_Public | M_Static | M_Const)) {
+    if (f && ((f->flag & (M_Static | M_Const)) == (M_Static | M_Const))) {
         if (changes(n))
             f->const_flag = OTHER;
     }
@@ -1296,6 +1296,7 @@ static int is_repeatable(struct lnode *n)
         case Uop_Suspendexpr: 
         case Uop_Suspenddo: 
         case Uop_Succeedexpr: 
+        case Uop_Linkexpr: 
         case Uop_Returnexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
@@ -1307,6 +1308,7 @@ static int is_repeatable(struct lnode *n)
         case Uop_Break:
         case Uop_Suspend:
         case Uop_Return:
+        case Uop_Link:
         case Uop_Fail:
         case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke:                       /* e(x1, x2.., xn) */

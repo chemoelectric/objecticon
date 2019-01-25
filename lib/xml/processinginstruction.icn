@@ -28,7 +28,7 @@ class ProcessingInstruction(Node)
    #
    public set_target(target)
       self.target := target
-      return self
+      link
    end
 
    #
@@ -43,7 +43,7 @@ class ProcessingInstruction(Node)
    #
    public set_content(content)
       self.content := content
-      return self
+      link
    end
 
    public override new(t, c)

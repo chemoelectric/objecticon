@@ -53,7 +53,7 @@ class List(SelectionDropDown)
    public set_constant_label(x)
       self.constant_label := x
       apply_selection()
-      return self
+      link
    end
 
    public override create_view()
@@ -103,7 +103,7 @@ abstract class ButtonOnlyList(List)
       self.selection_list := x
       constrain_selection()
       apply_selection()
-      return self
+      link
    end
 
    public override new()

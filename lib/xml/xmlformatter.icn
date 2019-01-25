@@ -29,7 +29,7 @@ class XmlFormatter(Formatter)
    #
    public set_indent(n)
       self.indent := n
-      return self
+      link
    end
 
    #
@@ -38,7 +38,7 @@ class XmlFormatter(Formatter)
    #
    public set_no_whitespace(s)
       self.no_whitespace_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -48,7 +48,7 @@ class XmlFormatter(Formatter)
    #
    public set_text_trim(s)
       self.text_trim_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -58,7 +58,7 @@ class XmlFormatter(Formatter)
    #
    public set_as_read(s)
       as_read_flag := need_flag(s)
-      return self
+      link
    end
 
    protected override format_document(n)

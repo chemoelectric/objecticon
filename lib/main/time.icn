@@ -436,7 +436,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    # Compute seconds past base date based on broken down fields.
    #
-   public compute_seconds()
+   private compute_seconds()
       local days, year_diff, n, block_days
 
       #
@@ -518,13 +518,13 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          (year_diff + 399) / 400 + self.yday - 1
       self.wday := 1 + (6 + block_days) % 7
       days +:= block_days
-      return self.seconds :=  86400 * days + 3600 * self.hour + 60 * self.min + self.sec - self.zone.get_offset()
+      self.seconds :=  86400 * days + 3600 * self.hour + 60 * self.min + self.sec - self.zone.get_offset()
    end
 
    #
    # Compute broken down fields based on seconds past base date
    #
-   public compute_broken_down_fields()
+   private compute_broken_down_fields()
       local n, year, flag, i, hms
       n := self.seconds + self.zone.get_offset()
       hms := n % 86400
@@ -610,7 +610,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       self.seconds := n
       self.zone := \zone | Timezone.get_timezone_at(get_unix_seconds())
       self.compute_broken_down_fields()
-      return self
+      link
    end
 
    #
@@ -619,7 +619,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_year(n)
       self.year := n
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -631,7 +631,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       if self.mday > 28 then
          self.mday := default.min(self.mday, get_mdays(self.year, self.month))
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -640,7 +640,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_month(n)
       self.month := n
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -657,7 +657,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          self.mday := default.min(t, get_mdays(self.year, self.month))
       }
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -666,7 +666,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_mday(n)
       self.mday := n
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -675,7 +675,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_hour(n)
       self.hour := n
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -684,7 +684,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_min(n)
       self.min := n
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -693,7 +693,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_sec(n)
       self.sec := n
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -705,7 +705,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public set_zone(z)
       self.zone := z
       self.compute_seconds()
-      return self
+      link
    end
 
    #
@@ -903,7 +903,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public normalize_zone()
       if self.zone ~===:= Timezone.get_timezone_at(get_unix_seconds()) then
          compute_seconds()
-      return self
+      link
    end
 
    #
@@ -923,7 +923,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       compute_seconds()
       if /zone then
          normalize_zone()
-      return self
+      link
    end
 
    #
@@ -939,7 +939,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       self.sec := \sec
       self.zone := \zone
       compute_seconds()
-      return self
+      link
    end
 
    #

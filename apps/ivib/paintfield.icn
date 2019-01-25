@@ -86,7 +86,7 @@ class PaintField(Border)
          paint_tbl[paints.get_selection()] := c
          os.set_which_one(os.children[paints.get_selection()])
       }
-      return self
+      link
    end
 
    public get_contents()

@@ -37,7 +37,7 @@ class TabItem(Component)
    #
    public set_remembered_focus(c)
       remembered_focus := c
-      return self
+      link
    end
 
    #
@@ -45,7 +45,7 @@ class TabItem(Component)
    #
    public set_label(x)
       set_paint(paint_for_string(x))
-      return self
+      link
    end
 
    public set_label_border(b)
@@ -56,7 +56,7 @@ class TabItem(Component)
          self.parent.invalidate_tab_region()
       } else
          self.label_border := b
-      return self
+      link
    end
 
    public set_paint(p)
@@ -67,7 +67,7 @@ class TabItem(Component)
          self.parent.invalidate_tab_region()
       } else
          self.paint := p
-      return self
+      link
    end
 
    #
@@ -76,7 +76,7 @@ class TabItem(Component)
    #
    public set_tab_tooltip(x)
       self.tab_tooltip := x
-      return self
+      link
    end
 
    #

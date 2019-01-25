@@ -103,7 +103,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public clear()
       while size() > 0 do
          delete(gen())
-      return self
+      link
    end
 
    #
@@ -217,7 +217,7 @@ class TableSet(Set)
 
    public override insert(x)
       t.insert(x, t.def)
-      return self
+      link
    end
 
    public override member(x)
@@ -226,7 +226,7 @@ class TableSet(Set)
    end
 
    public override delete(x)
-      return t.delete(x) & self
+      link t.delete(x)
    end
 
    public override sort()
@@ -255,7 +255,7 @@ class TableSet(Set)
 
    public override clear()
       t.clear()
-      return self
+      link
    end
 
    public override get_mode()
@@ -308,7 +308,7 @@ class BuiltinSet(Set)
 
    public override insert(x)
       default.insert(s, x)
-      return self
+      link
    end
 
    public override member(x)
@@ -316,7 +316,7 @@ class BuiltinSet(Set)
    end
 
    public override delete(x)
-      return default.delete(s, x) & self
+      link default.delete(s, x)
    end
 
    public override sort()
@@ -333,7 +333,7 @@ class BuiltinSet(Set)
 
    public override clear()
       default.clear(s)
-      return self
+      link
    end
 
    public override get_mode()

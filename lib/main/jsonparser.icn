@@ -27,7 +27,7 @@ class JSONParser()
    #
    public set_true(x)
       self.true := x
-      return self
+      link
    end
 
    #
@@ -35,7 +35,7 @@ class JSONParser()
    #
    public set_false(x)
       self.false := x
-      return self
+      link
    end
 
    #
@@ -43,7 +43,7 @@ class JSONParser()
    #
    public set_null(x)
       self.null := x
-      return self
+      link
    end
 
    private parse_number()

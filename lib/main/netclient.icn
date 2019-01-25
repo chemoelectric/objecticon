@@ -78,7 +78,7 @@ abstract class NetClient(Connectable, HasTask)
    #
    public static avoid_addr(addr)
       insert(avoid, addr, Prog.get_runtime_millis() + AVOID_TIMEOUT)
-      return NetClient
+      link
    end
 
    # Given a list of addresses, choose the first which we are not
@@ -107,7 +107,7 @@ abstract class NetClient(Connectable, HasTask)
    #
    public set_ip_version(ver)
       self.ip_version := ver
-      return self
+      link
    end
 
    # Set the timeout in ms to use.  If `&null`, then no timeout will
@@ -115,7 +115,7 @@ abstract class NetClient(Connectable, HasTask)
    #
    public set_timeout(timeout)
       self.timeout := timeout
-      return self
+      link
    end
 
    private do_poll(for)
@@ -211,7 +211,7 @@ $elsif _MS_WIN32
       }
       sbuff := ""
       fire(CONNECTED_EVENT, addr)
-      return self
+      link
    end
 $else
    private dns_query_impl()
@@ -327,7 +327,7 @@ $else
 
       sbuff := ""
       fire(CONNECTED_EVENT, addr)
-      return self
+      link
    end
 $endif
 
@@ -388,7 +388,7 @@ $endif
    #
    public set_path(s)
       path := s
-      return self
+      link
    end
 
    #
@@ -396,7 +396,7 @@ $endif
    #
    public set_server(s)
       server := s
-      return self
+      link
    end
 
    #
@@ -404,7 +404,7 @@ $endif
    #
    public set_port(n)
       port := n
-      return self
+      link
    end
 
    #
@@ -429,7 +429,7 @@ $endif
             s := s[i+1 : 0]
          }
       }
-      return self
+      link
    end
 
    #
@@ -564,7 +564,7 @@ $endif
    #
    public set_ssl(s)
       self.ssl_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -573,7 +573,7 @@ $endif
    #
    public set_ssl_verify(s)
       self.ssl_verify_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -590,7 +590,7 @@ $endif
    #
    protected reset_dont_retry()
       dont_retry_flag := &null
-      return self
+      link
    end
 
    public override new()

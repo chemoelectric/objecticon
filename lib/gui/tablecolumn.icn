@@ -81,7 +81,7 @@ abstract class BaseTableColumn(TextButton)
    #
    public set_column_width(x)
       self.column_width := x
-      return self
+      link
    end
 
    #
@@ -90,7 +90,7 @@ abstract class BaseTableColumn(TextButton)
    # :  `x` - A constant from `Align`
    public set_column_align(x)
       self.border.x_align := x
-      return self
+      link
    end
 
    public override display()
@@ -228,7 +228,7 @@ class ItemPaintTableColumn(BaseTableColumn)
          self.item_paint.initially(self)
       } else
          self.item_paint := r
-      return self
+      link
    end
 
    #
@@ -241,13 +241,13 @@ class ItemPaintTableColumn(BaseTableColumn)
          self.item_border.initially(self)
       } else
          self.item_border := b
-      return self
+      link
    end
 
    public override set_column_align(x)
       BaseTableColumn.set_column_align(x)
       self.item_border.x_align := x
-      return self
+      link
    end
 
    public override calculate_line_height(W)

@@ -70,7 +70,7 @@ abstract class ScrollArea(Component, HasUseWheel)
       is_live() | fail
       self.set_internal_fields()
       self.invalidate()
-      return self
+      link
    end
 
    public override get_default_height(dw)
@@ -111,7 +111,7 @@ abstract class ScrollArea(Component, HasUseWheel)
          if hsb.value ~= t then
             self.refresh()
       }
-      return self
+      link
    end
 
    #
@@ -124,7 +124,7 @@ abstract class ScrollArea(Component, HasUseWheel)
          if vsb.value ~= t then
             self.refresh()
       }
-      return self
+      link
    end
 
    #
@@ -134,7 +134,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
-      return self
+      link
    end
 
    #
@@ -151,7 +151,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public set_vertical_increment(n)
       self.vertical_increment := n
-      return self
+      link
    end
 
    public get_vertical_increment()
@@ -165,7 +165,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public set_horizontal_increment(n)
       self.horizontal_increment := n
-      return self
+      link
    end
 
    public get_horizontal_increment()
@@ -217,7 +217,7 @@ abstract class ScrollArea(Component, HasUseWheel)
       else if r.x < get_area_x() then
          set_area_x(r.x)
 
-      return self
+      link
    end
 
    # Center the given region (in area co-ordinates) vertically.
@@ -299,7 +299,7 @@ abstract class ScrollArea(Component, HasUseWheel)
 
       w_spec <:= \min_w
       h_spec <:= \min_h
-      return self
+      link
    end
 
    #
@@ -462,13 +462,13 @@ abstract class ScrollArea(Component, HasUseWheel)
    public remove_hsb()
       remove(\hsb)
       hsb := &null
-      return self
+      link
    end
 
    public remove_vsb()
       remove(\vsb)
       vsb := &null
-      return self
+      link
    end
 
    #
@@ -500,7 +500,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public goto_bottom()
       set_area_y((\self.vsb).total_size)
-      return self
+      link
    end
 
    #
@@ -542,7 +542,7 @@ abstract class ScrollArea(Component, HasUseWheel)
          set_accepts_focus(&yes)
          default_key_listener := connect(on_default_key, Event.KEY_PRESS).last_listener
       }
-      return self
+      link
    end
 
    public override keeps(e)
@@ -569,7 +569,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public invalidate_subject_width()
       self.subject_width := &null
-      return self
+      link
    end
 
    #
@@ -592,7 +592,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public invalidate_subject_height()
       self.subject_height := &null
-      return self
+      link
    end
 
    #

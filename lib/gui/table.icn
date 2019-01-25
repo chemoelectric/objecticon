@@ -141,7 +141,7 @@ class TableHeader(Component)
    #
    public set_draggable_columns(s)
       allow_drop_flag := allow_drag_flag := need_flag(s)
-      return self
+      link
    end
 
    public override get_default_height()
@@ -264,7 +264,7 @@ class TableHeader(Component)
          which_highlight := x
          (\which_highlight).invalidate()
       }
-      return self
+      link
    end
 
    public synch_with_content()
@@ -326,7 +326,7 @@ class Table(Component)
 
    public set_checked(l)
       self.table_content.set_checked(l)
-      return self
+      link
    end
 
    public get_checked()
@@ -359,7 +359,7 @@ class Table(Component)
    #
    public set_contents(x)
       self.table_content.set_contents(x)
-      return self
+      link
    end
 
    #
@@ -368,32 +368,32 @@ class Table(Component)
    #
    public contents_changed()
       self.table_content.contents_changed()
-      return self
+      link
    end
 
    public clear_selections()
       self.table_content.clear_selections()
-      return self
+      link
    end
 
    public set_draggable_cursor(s)
       self.table_content.set_draggable_cursor(s)
-      return self
+      link
    end
 
    public set_motion_cursor(s)
       self.table_content.set_motion_cursor(s)
-      return self
+      link
    end
 
    public set_selection_on_key_moves(s)
       self.table_content.set_selection_on_key_moves(s)
-      return self
+      link
    end
 
    public set_show_over(s)
       self.table_content.set_show_over(s)
-      return self
+      link
    end
 
    #
@@ -413,7 +413,7 @@ class Table(Component)
    #
    public set_selections(l)
       self.table_content.set_selections(l)
-      return self
+      link
    end
 
    #
@@ -421,7 +421,7 @@ class Table(Component)
    #
    public set_cursor(line)
       self.table_content.set_cursor(line)
-      return self
+      link
    end
 
    #
@@ -463,7 +463,7 @@ class Table(Component)
 
    public set_draggable_columns(s)
       table_header.set_draggable_columns(s)
-      return self
+      link
    end
 
    #
@@ -475,7 +475,7 @@ class Table(Component)
    #
    public add_column(c, i)
       table_header.add(c, i)
-      return self
+      link
    end
 
    #
@@ -491,7 +491,7 @@ class Table(Component)
    # :  `m` - a constant from `Select`
    public set_select_mode(m)
       self.table_content.set_select_mode(m)
-      return self
+      link
    end
 
    #

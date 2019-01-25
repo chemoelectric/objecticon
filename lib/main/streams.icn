@@ -94,7 +94,7 @@ abstract class Stream(HasMode)
    # `&why`; returns `self` on success.
    #
    public close()
-      return self
+      link
    end
 
    #
@@ -189,7 +189,7 @@ abstract class Stream(HasMode)
          n := out(s) | fail
          s := s[n + 1:0]
       }
-      return self
+      link
    end
 
    #
@@ -199,7 +199,7 @@ abstract class Stream(HasMode)
       local e
       every e := s | Files.EOL do
          writes1(e) | fail
-      return self
+      link
    end
 
    #
@@ -211,7 +211,7 @@ abstract class Stream(HasMode)
       local e
       every e := !a do
          writes1(e) | fail
-      return self
+      link
    end
 
    #
@@ -222,7 +222,7 @@ abstract class Stream(HasMode)
       local e
       every e := !a | Files.EOL do
          writes1(e) | fail
-      return self
+      link
    end
 
    #
@@ -249,7 +249,7 @@ abstract class Stream(HasMode)
       repeat {
          s := in(1048576) | fail
          if /s then
-            return self
+            link
          f.writes1(s) | fail
       }
    end
@@ -267,7 +267,7 @@ abstract class HasUnderlyingStream()
    #
    public set_close_underlying(s)
       self.close_underlying_flag := need_flag(s)
-      return self
+      link
    end
 end
 
@@ -349,7 +349,7 @@ class StringStream(Stream)
          subj := subj[1:len + 1]
       else
          return error("Negative truncate length")
-      return self
+      link
    end
 
    public str()
@@ -397,7 +397,7 @@ class NullStream(Stream)
    end
 
    public override truncate(len)
-      return self
+      link
    end
 end
 
@@ -428,7 +428,7 @@ class ZeroStream(Stream)
    end
 
    public override truncate(len)
-      return self
+      link
    end
 end
 
@@ -452,7 +452,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    #
    public set_flush_on_nl(s)
       self.flush_on_nl_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -460,7 +460,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    #
    public set_buff_size(n)
       self.buff_size := n
-      return self
+      link
    end
 
    #
@@ -470,7 +470,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       s := need_string(s)
       unbuff() | fail
       rbuff := s || rbuff
-      return self
+      link
    end
 
    #
@@ -560,12 +560,12 @@ class BufferStream(Stream, HasUnderlyingStream)
       local s
       \wbuff | runerr(219, self)
       if *wbuff = 0 then
-         return self
+         link
       s := ""
       every s ||:= !wbuff
       clear(wbuff)
       wbuff_len := 0
-      return other.writes1(s) & self
+      link other.writes1(s)
    end
 
    #
@@ -581,7 +581,7 @@ class BufferStream(Stream, HasUnderlyingStream)
          rbuff := ""
          rpos := &null
       }
-      return self
+      link
    end
 
    #
@@ -590,7 +590,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    public synch()
       unbuff() | fail
       flush() | fail
-      return self
+      link
    end
 
    public override close()
@@ -614,7 +614,7 @@ class BufferStream(Stream, HasUnderlyingStream)
 
    public override truncate(len)
       synch() | fail
-      return other.truncate(len) & self
+      link other.truncate(len)
    end
 
    public override get_mode()
@@ -784,7 +784,7 @@ $endif
    public dup2(other)
       dup2_impl(other) | fail
       other.mode := self.mode
-      return self
+      link
    end
 
    private native dup2_impl()
@@ -838,7 +838,7 @@ $endif
    protected setup(fd, mode)
       self.fd := fd
       self.mode := mode
-      return self
+      link
    end
 end
 
@@ -1191,7 +1191,7 @@ $else
          if save_why{tell()} then
             mode := ior(mode, SEEK)
       }
-      return self
+      link
    end
 
    private static native new_impl(path, flags, perm)
@@ -1602,7 +1602,7 @@ abstract class HasTask()
    #
    public set_task(t)
       self.task := t
-      return self
+      link
    end
 
    #
@@ -1902,7 +1902,7 @@ class ProgInputStream(SocketStream, HasBgProc)
       shutdown(Shut.RD)
       SocketStream.close()
       do_wait()
-      return self
+      link
    end
 
    # Open a new readable `Stream` based on the given command.  The
@@ -1961,7 +1961,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
       shutdown(Shut.WR)
       SocketStream.close()
       do_wait()
-      return self
+      link
    end
 
    # Open a new writeable `Stream` based on the given command. The
@@ -2017,7 +2017,7 @@ class ProgInputOutputStream(SocketStream, HasBgProc)
       shutdown(Shut.RDWR)
       SocketStream.close()
       do_wait()
-      return self
+      link
    end
 
    # Open a new readable and writeable `Stream` based on the given
@@ -2349,7 +2349,7 @@ class FilterInputStream(FilterStreamBase)
    #
    public swap_outputs()
       cin :=: cerr
-      return self
+      link
    end
 
    private flush_cerr()
@@ -3129,7 +3129,7 @@ class SequenceStream(Stream, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          lclose(ac) | fail
-      return self
+      link
    end
 
    public new(a[])

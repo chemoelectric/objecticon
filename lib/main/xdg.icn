@@ -424,7 +424,7 @@ final abstract class IconTheme()
       get_theme_index(s) | fail
       theme := s
       clear(FIND_ICON_CACHE)
-      return IconTheme
+      link
    end
 
    private static dir_set1(f)
@@ -1025,7 +1025,7 @@ package class Globs()
          if /x | (weight > x.weight) then
             insert(literal, p, GlobMatch(weight, mime_type))
       }
-      return self
+      link
    end
 
    public new()

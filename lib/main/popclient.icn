@@ -18,7 +18,7 @@ class PopClient(NetClient)
    #
    public dele(n)
       send_command("DELE " || n) | fail
-      return self
+      link
    end
 
    #
@@ -26,7 +26,7 @@ class PopClient(NetClient)
    #
    public set_username(s)
       username := s
-      return self
+      link
    end
 
    #
@@ -34,7 +34,7 @@ class PopClient(NetClient)
    #
    public set_password(s)
       password := s
-      return self
+      link
    end
 
    #
@@ -46,7 +46,7 @@ class PopClient(NetClient)
          close_connection()
          fail
       }
-      return self
+      link
    end
 
    #
@@ -55,7 +55,7 @@ class PopClient(NetClient)
    public login()
       send_command("USER " || username) | fail
       send_command("PASS " || password) | fail
-      return self
+      link
    end
 
    #
@@ -73,7 +73,7 @@ class PopClient(NetClient)
    #
    public rset()
       send_command("RSET") | fail
-      return self
+      link
    end
 
    #

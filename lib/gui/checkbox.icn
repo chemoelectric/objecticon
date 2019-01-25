@@ -56,7 +56,7 @@ class CheckBox(Button)
          self.unchecked_paint := x
          self.checked_paint := y
       }
-      return self
+      link
    end
 
    #
@@ -76,7 +76,7 @@ class CheckBox(Button)
          self.invalidate()
       } else
          self.paint := p
-      return self
+      link
    end
 
    public override initially()

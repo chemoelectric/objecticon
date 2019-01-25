@@ -42,7 +42,7 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_direction(s)
       self.direction := s
-      return self
+      link
    end
 
    #
@@ -50,7 +50,7 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_forward_home_end(s)
       self.forward_home_end_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -58,7 +58,7 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_popup_on_tab(s)
       self.popup_on_tab_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -67,7 +67,7 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_select_using_enter(s)
       self.select_using_enter_flag := need_flag(s)
-      return self
+      link
    end
 
    public create_popup()
@@ -80,7 +80,7 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_max_height(n)
       self.max_height := n
-      return self
+      link
    end
 
    #
@@ -89,7 +89,7 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_max_width(n)
       self.max_width := n
-      return self
+      link
    end
 
    public on_popup_selection(e)
@@ -283,7 +283,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public override get_nesting_component()
-      return self
+      link
    end
 
    public override gen_popup_components()

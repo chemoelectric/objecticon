@@ -55,7 +55,7 @@ class Opt()
    #
    public set_multiple(multi) 
       self.multiple_flag := need_flag(multi)
-      return self
+      link
    end
 
    # Set an error string describing the type of parameter (for error
@@ -67,7 +67,7 @@ class Opt()
    #
    public set_param_err(err)
       self.param_err := err
-      return self
+      link
    end
 
    # Create a new Opt instance.

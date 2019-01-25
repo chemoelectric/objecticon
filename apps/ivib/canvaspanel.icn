@@ -52,7 +52,7 @@ class CanvasPanel(CanvasComponent,Panel)
          if o := e.is_inside(c) then
             return o
       if (self.x <= c.mx < self.x + self.w) & (self.y <= c.my < self.y + self.h) then
-         return self
+         link
    end
 
    #
@@ -62,11 +62,11 @@ class CanvasPanel(CanvasComponent,Panel)
       local t, o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
-         return self
+         link
       every t := back(self.z_children) do
          if o := t.which_cursor_over(e) then
             return o
-      return self
+      link
    end
 
    #

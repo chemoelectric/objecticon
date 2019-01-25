@@ -187,7 +187,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public clear()
       while size() > 0 do
          delete(key())
-      return self
+      link
    end
 
    #
@@ -390,7 +390,7 @@ class TableKeyList(List)
    end
 
    public override delete(i)
-      return t.delete(t.select(i)) & self
+      link t.delete(t.select(i))
    end
 
    public override gen()
@@ -407,7 +407,7 @@ class TableKeyList(List)
 
    public override clear()
       t.clear()
-      return self
+      link
    end
 
    public override get_mode()
@@ -445,7 +445,7 @@ class SortTable(Table)
    public override insert(key, val)
       root := insert1(root, key, val)
       root.is_red_flag := &no
-      return self
+      link
    end
 
    private insert1(n, key, val)
@@ -495,7 +495,7 @@ class SortTable(Table)
          root.is_red_flag := &yes
       root := delete1(root, key)
       (\root).is_red_flag := &no
-      return self
+      link
    end
 
    private delete1(n, key)
@@ -592,7 +592,7 @@ class SortTable(Table)
       n.is_red_flag := toggle_flag(n.is_red_flag)
       n.l.is_red_flag := toggle_flag(n.l.is_red_flag)
       n.r.is_red_flag := toggle_flag(n.r.is_red_flag)
-      return self
+      link
    end
 
    private traverse(n)
@@ -647,7 +647,7 @@ class SortTable(Table)
 
    public override clear()
       root := &null
-      return self
+      link
    end
 
    public override size()
@@ -695,7 +695,7 @@ class SortTable(Table)
       is_rank_consistent(root)  | return error("Ranks not consistent")
       is_23(root) | return error("Not a 2-3 tree")
       is_balanced() | return error("Not balanced")
-      return self
+      link
    end
 
    private is_balanced()
@@ -780,7 +780,7 @@ class EqTable(Table)
 
    public override insert(key, val)
       add(key) := val
-      return self
+      link
    end
 
    public override add(key)
@@ -820,7 +820,7 @@ class EqTable(Table)
             if *l = 0 then
                default.delete(t, h)
             sz -:= 1
-            return self
+            link
          }
          i +:= 1
       }
@@ -847,7 +847,7 @@ class EqTable(Table)
    public override clear()
       default.clear(t)
       sz := 0
-      return self
+      link
    end
 
    public override get_mode()
@@ -878,7 +878,7 @@ class BuiltinTable(Table)
 
    public override insert(key, val)
       default.insert(t, key, val)
-      return self
+      link
    end
 
    public override member(key)
@@ -886,7 +886,7 @@ class BuiltinTable(Table)
    end
 
    public override delete(key)
-      return default.delete(t, key) & self
+      link default.delete(t, key)
    end
 
    public override key()
@@ -903,7 +903,7 @@ class BuiltinTable(Table)
 
    public override clear()
       default.clear(t)
-      return self
+      link
    end
 
    public override size()
@@ -958,7 +958,7 @@ class WeakrefTable(Table)
 
    public override insert(key, val)
       add(key) := val
-      return self
+      link
    end
 
    public override add(key)
@@ -1001,7 +1001,7 @@ class WeakrefTable(Table)
             if *l = 0 then
                default.delete(t, h)
             sz -:= 1
-            return self
+            link
          }
          i +:= 1
       }
@@ -1027,7 +1027,7 @@ class WeakrefTable(Table)
    public override clear()
       default.clear(t)
       sz := 0
-      return self
+      link
    end
 
    public override size()
@@ -1040,7 +1040,7 @@ class WeakrefTable(Table)
          last_purge := Prog.get_global_collection_count()
          purge()
       }
-      return self
+      link
    end
 
    private purge()

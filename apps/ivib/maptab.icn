@@ -80,7 +80,7 @@ class MapTab(TabItem)
    public set_table(t)
       self.contents := sort(t)
       tbl.set_contents(contents)
-      return self
+      link
    end
 
    public get_table()

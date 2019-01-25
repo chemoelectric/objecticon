@@ -69,7 +69,7 @@ abstract class MenuComponent(Rect,Connectable)
       c.set_parent(self)
       if is_initialized() then
          c.initially()
-      return self
+      link
    end
 
    #
@@ -104,14 +104,14 @@ abstract class MenuComponent(Rect,Connectable)
       c.set_parent(&null)
       if is_initialized() then
          c.finally()
-      return self
+      link
    end
 
    #
    # Remove all the children.
    #
    public remove_all()
-      return remove_list() & self
+      link remove_list()
    end
 
    #
@@ -136,8 +136,7 @@ abstract class MenuComponent(Rect,Connectable)
    # :  If either index is out of range.
    #
    public reposition_index(i, j)
-      lmove(children, i, j) | fail
-      return self
+      link lmove(children, i, j)
    end
 
    # Remove the children in the range `i:j`, returning the
@@ -171,7 +170,7 @@ abstract class MenuComponent(Rect,Connectable)
       every (!l).set_parent(self)
       if is_initialized() then
          every (!l).initially()
-      return self
+      link
    end
 
    # Move all the children of `MenuComponent` `other`, to this
@@ -216,7 +215,7 @@ abstract class MenuComponent(Rect,Connectable)
 
    public set_parent(x)
       self.parent := x
-      return self
+      link
    end
 
    #
@@ -247,7 +246,7 @@ abstract class MenuComponent(Rect,Connectable)
    public toggle_is_shaded()
       self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
       possibly_invalidate()
-      return self
+      link
    end
 
    #
@@ -259,7 +258,7 @@ abstract class MenuComponent(Rect,Connectable)
          self.is_shaded_flag := s
          possibly_invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -271,7 +270,7 @@ abstract class MenuComponent(Rect,Connectable)
          (\self.parent_component).invalidate()
       else
          (\parent.temp_win).invalidate(get_label_rect())
-      return self
+      link
    end
 
    #
@@ -290,7 +289,7 @@ abstract class MenuComponent(Rect,Connectable)
 
    public set_parent_component(x)
       self.parent_component := x
-      return self
+      link
    end
 
    #
@@ -300,7 +299,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public set_component_link(x)
       self.component_link := x
-      return self
+      link
    end
 
    public is_sub_menu()
@@ -309,7 +308,7 @@ abstract class MenuComponent(Rect,Connectable)
 
    public set_is_decorative(s)
       self.is_decorative_flag := need_flag(s)
-      return self
+      link
    end
 
    public is_decorative()
@@ -326,7 +325,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public set_tooltip(x)
       self.tooltip := x
-      return self
+      link
    end
 
    #
@@ -342,7 +341,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public set_accel(k)
       self.accel := k
-      return self
+      link
    end
 
    #
@@ -358,7 +357,7 @@ abstract class MenuComponent(Rect,Connectable)
    public set_label_pos(x, y)
       self.label_x := x
       self.label_y := y
-      return self
+      link
    end
 
    #
@@ -375,7 +374,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public set_keep_open_on_shift(s)
       self.keep_open_on_shift_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -466,7 +465,7 @@ abstract class MenuComponent(Rect,Connectable)
          self.border.initially(self.parent_component)
       } else
          self.border := b
-      return self
+      link
    end
 
    protected create_proxy()
@@ -598,11 +597,11 @@ class SubMenuProxyComponent(Component, MenuMode)
    end
 
    public override gen_popup_components()
-      return self
+      link
    end
 
    public override get_nesting_component()
-      return self
+      link
    end
 
    public override allow_nested(c) 

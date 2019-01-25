@@ -33,7 +33,7 @@ class CheckBoxGroup(Connectable)
    #
    public set_allow_none_checked(s)
       self.allow_none_checked_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -51,7 +51,7 @@ class CheckBoxGroup(Connectable)
    public add(c)
       insert(self.checkboxes, c)
       c.set_parent_check_box_group(self)
-      return self
+      link
    end
 
    #
@@ -64,7 +64,7 @@ class CheckBoxGroup(Connectable)
          set_which_one()
       delete(self.checkboxes, c)
       c.set_parent_check_box_group()
-      return self
+      link
    end
 
    #
@@ -77,7 +77,7 @@ class CheckBoxGroup(Connectable)
          (\which_one).set_is_checked(&no)
       else
          x.set_is_checked(&yes)
-      return self
+      link
    end
 
    public override new()

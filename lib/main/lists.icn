@@ -114,7 +114,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    public clear()
       while delete(1)
-      return self
+      link
    end
 
    #
@@ -242,11 +242,11 @@ class BuiltinList(List)
    private const l
 
    public override insert(i, x)
-      return default.insert(l, i, x) & self
+      link default.insert(l, i, x)
    end
 
    public override delete(i)
-      return default.delete(l, i) & self
+      link default.delete(l, i)
    end
 
    public override at(i)
@@ -263,12 +263,12 @@ class BuiltinList(List)
 
    public override push(x)
       default.push(l, x)
-      return self
+      link
    end
 
    public override put(x)
       default.put(l, x)
-      return self
+      link
    end
 
    public override keyof(x)
@@ -293,7 +293,7 @@ class BuiltinList(List)
 
    public override clear()
       default.clear(l)
-      return self
+      link
    end
 
    public override get_mode()
@@ -366,7 +366,7 @@ class LinkedList(List)
             n.nxt := LinkedListNode(n.nxt, x)
          }
       }
-      return self
+      link
    end
 
    public override delete(i)
@@ -379,7 +379,7 @@ class LinkedList(List)
          n := node_at(i - 1) | fail
          n.nxt := (\n.nxt).nxt | fail
       }
-      return self
+      link
    end
 
    public override at(i)
@@ -460,7 +460,7 @@ class LinkedList(List)
 
    public override clear()
       nhead := &null
-      return self
+      link
    end
 
    public override get_mode()
@@ -479,7 +479,7 @@ class LinkedList(List)
    # list is empty.
    #
    public set_head(x)
-      return ((\nhead).val := x) & self
+      link ((\nhead).val := x)
    end
 
    #
@@ -494,7 +494,7 @@ class LinkedList(List)
    # `other`, or fail if this list is empty.
    #
    public set_tail(other)
-      return ((\nhead).nxt := other.nhead) & self
+      link ((\nhead).nxt := other.nhead)
    end
 
    #
@@ -502,7 +502,7 @@ class LinkedList(List)
    # element), or fail if this list is empty.
    #
    public clear_tail()
-      return ((\nhead).nxt := &null) & self
+      link ((\nhead).nxt := &null)
    end
 
    #
@@ -510,7 +510,7 @@ class LinkedList(List)
    #
    public set_list(other)
       nhead := other.nhead
-      return self
+      link
    end
 
    #

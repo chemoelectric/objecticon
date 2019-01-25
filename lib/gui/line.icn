@@ -17,7 +17,7 @@ class Line(Component, HasOrientation)
 
    public override set_line_width(n)
       self.line_width := n
-      return self
+      link
    end
 
    public override get_default_width()

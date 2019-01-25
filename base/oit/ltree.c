@@ -198,6 +198,7 @@ static struct lnode *buildtree(void)
         case Uop_End:
         case Uop_Return:
         case Uop_Suspend:
+        case Uop_Link:
         case Uop_Break:
         case Uop_Fail:
         case Uop_Next:
@@ -318,6 +319,7 @@ static struct lnode *buildtree(void)
         case Uop_Until: 
         case Uop_Returnexpr: 
         case Uop_Succeedexpr: 
+        case Uop_Linkexpr: 
         case Uop_Breakexpr: {
             struct loc t = curr_loc;
             struct lnode *c = buildtree();
@@ -561,6 +563,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Empty:
         case Uop_End:
         case Uop_Return:
+        case Uop_Link:
         case Uop_Break:
         case Uop_Suspend:
         case Uop_Fail:
@@ -594,6 +597,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
         case Uop_Succeedexpr: 
+        case Uop_Linkexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
@@ -749,6 +753,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Break:
         case Uop_Suspend:
         case Uop_Return:
+        case Uop_Link:
         case Uop_Fail:
             break;
 
@@ -780,6 +785,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
         case Uop_Succeedexpr: 
+        case Uop_Linkexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
@@ -1009,6 +1015,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Break:
         case Uop_Suspend:
         case Uop_Return:
+        case Uop_Link:
         case Uop_Fail:
             break;
 
@@ -1044,6 +1051,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
         case Uop_Succeedexpr: 
+        case Uop_Linkexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 

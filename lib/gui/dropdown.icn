@@ -45,7 +45,7 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
    end
 
    public override get_nesting_component()
-      return self
+      link
    end
 
    public override gen_popup_components()
@@ -162,7 +162,7 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
    #
    public set_direction(s)
       self.direction := s
-      return self
+      link
    end
 
    public override layout()
@@ -306,7 +306,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
    #
    public set_max_height(n)
       self.max_height := n
-      return self
+      link
    end
 
    #
@@ -315,7 +315,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
    #
    public set_max_width(n)
       self.max_width := n
-      return self
+      link
    end
 
    public override do_increment(e)

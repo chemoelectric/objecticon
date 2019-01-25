@@ -595,7 +595,7 @@ class Download()
    public enqueue()
       parent.parent_dialog.pool.enqueue(req)
       status := "Queued"
-      return self
+      link
    end
 
    private log(s)
@@ -1638,7 +1638,7 @@ class BrowserTab(TabItem, BrowserUI)
       /s := "Browser"
       set_paint(TabHeaderPaint(fill_title(s), icon))
       title_tt := &null
-      return self
+      link
    end
 
    # Simple fill function for the potentially multi-line title.

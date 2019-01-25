@@ -19,7 +19,7 @@ class PopupEditor(Component, MenuMode)
       editor.grab_focus()
       parent_dialog.enter_menu_mode(self)
       invalidate()
-      return self
+      link
    end
 
    public override layout()

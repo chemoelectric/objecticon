@@ -20,7 +20,7 @@ class AnnotatedListEntryWithIcon(ListEntryWithIcon)
 
    public annotate_name()
       annotation := name
-      return self
+      link
    end
 
    public annotate_date(now)
@@ -32,7 +32,7 @@ class AnnotatedListEntryWithIcon(ListEntryWithIcon)
       else
          Time(t + Time.SYSTEM_BASE_OFFSET).format("NNN d HH:mm")
       annotation := name || " (" || tf || ")"
-      return self
+      link
    end
 
    public annotate_size()
@@ -45,7 +45,7 @@ class AnnotatedListEntryWithIcon(ListEntryWithIcon)
       else
          Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
       annotation := name || " (" || zf || ")"
-      return self
+      link
    end
 end
 
@@ -278,12 +278,12 @@ class FileSuggestField(SuggestField)
 
    public set_directories_only(s)
       self.directories_only_flag := need_flag(s)
-      return self
+      link
    end
 
    public set_show_hidden_files(s)
       self.show_hidden_files_flag := need_flag(s)
-      return self
+      link
    end
 
    # Set the "cwd" from which relative paths are resolved.  May be
@@ -294,7 +294,7 @@ class FileSuggestField(SuggestField)
    #
    public set_cwd(d)
       self.cwd := need_FilePath(\d).absolute() | &null
-      return self
+      link
    end
 
    # Return an absolute `FilePath` (based on `cwd`) representing the
@@ -310,14 +310,14 @@ class FileSuggestField(SuggestField)
    #
    public set_patterns(l)
       pats := l
-      return self
+      link
    end
 
    # Clear any cached values of the directory list.
    #
    public refresh()
       dir_list := dir_list_name := &null
-      return self
+      link
    end
 
    private match_entry(e)
@@ -658,7 +658,7 @@ class FileTrail(Component)
    #
    public set_show_hidden_files(s)
       self.show_hidden_files_flag := need_flag(s)
-      return self
+      link
    end
 
    public override layout()
@@ -752,7 +752,7 @@ class FileTrail(Component)
          layout()
          invalidate()
       }
-      return self
+      link
    end
 
    public override new()

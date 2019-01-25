@@ -170,12 +170,12 @@ class FileDialog(Dialog)
 
    public set_existing_file_mode(s)
       existing_file_mode := s
-      return self
+      link
    end
 
    public set_multiple_files(s)
       self.multiple_files_flag := need_flag(s)
-      return self
+      link
    end
 
    public static ucs_list(l)
@@ -339,7 +339,7 @@ class FileDialog(Dialog)
    #
    public set_directory(s)
       self.init_dirs := [s]
-      return self
+      link
    end
 
    #
@@ -348,7 +348,7 @@ class FileDialog(Dialog)
    #
    public set_directories(l)
       self.init_dirs := l
-      return self
+      link
    end
 
    #
@@ -356,7 +356,7 @@ class FileDialog(Dialog)
    #
    public set_file(s)
       self.init_files := [s]
-      return self
+      link
    end
 
    #
@@ -364,7 +364,7 @@ class FileDialog(Dialog)
    #
    public set_files(l)
       self.init_files := l
-      return self
+      link
    end
 
    #
@@ -372,7 +372,7 @@ class FileDialog(Dialog)
    #
    public set_filters(l)
       self.init_filters := l
-      return self
+      link
    end
 
    #
@@ -386,7 +386,7 @@ class FileDialog(Dialog)
       l := need_FilePath(s).canonical()
       self.init_dirs := [l.parent().str()]
       self.init_files := [l.get(-1)]
-      return self
+      link
    end
 
    #
@@ -520,7 +520,7 @@ class FileDialog(Dialog)
    public set_show_hidden_files(s)
       show_hidden_menu_item.set_is_checked(s)
       on_show_hidden_menu_item()
-      return self
+      link
    end
 
    public on_show_hidden_menu_item(ev)
@@ -694,7 +694,7 @@ class FileDialog(Dialog)
             update_grey()
          }
       }
-      return self
+      link
    end
 
    
@@ -791,7 +791,7 @@ class FileDialog(Dialog)
             set_min(scale(250), scale(130))
          centre_panel.add(split)
       }
-      return self
+      link
    end
 
    #
@@ -807,7 +807,7 @@ class FileDialog(Dialog)
          centre_panel.remove_index(1).add(split.first)
          img := img_label := &null
       }
-      return self
+      link
    end
 
    private on_trail(ev)

@@ -36,7 +36,7 @@ class ItemPaintList(SelectableScrollArea)
          self.item_border.initially(self)
       } else
          self.item_border := b
-      return self
+      link
    end
 
    public set_item_paint(r)
@@ -46,7 +46,7 @@ class ItemPaintList(SelectableScrollArea)
          self.item_paint.initially(self)
       } else
          self.item_paint := r
-      return self
+      link
    end
 
    public override calculate_line_height()

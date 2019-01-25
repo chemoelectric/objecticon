@@ -42,7 +42,7 @@ class EditListSpin(SelectionSpin)
    #
    public set_filter(c)
       self.view.set_filter(c)
-      return self
+      link
    end
 
    #
@@ -65,7 +65,7 @@ class EditListSpin(SelectionSpin)
    public set_contents(x)
       self.view.set_contents(x)
       synch_selection()
-      return self
+      link
    end
 
    # Set the list selection items to the list x, but then synchronize
@@ -80,7 +80,7 @@ class EditListSpin(SelectionSpin)
       /self.selection := 1
       constrain_selection()
       synch_selection()
-      return self
+      link
    end
 
    public synch_selection()
