@@ -6,15 +6,15 @@ record Loc(str, file, line)
 
 procedure try_url(s)
    if match("http://" | "https://" | "file://", s) then
-      return link(s, URL(s))
+      return do_link(s, URL(s))
 end
 
 procedure try_file(x)
    if Files.access(x.file) then
-      return link(x.str, FilePath(x.file).canonical().str(), x.line)
+      return do_link(x.str, FilePath(x.file).canonical().str(), x.line)
 end
 
-procedure link(x, y, line)
+procedure do_link(x, y, line)
    return Files.begin_link(y, line) || x || Files.end_link()
 end
 

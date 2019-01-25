@@ -255,6 +255,7 @@ static int fold_consts(struct lnode *n)
             break;
         }
 
+        case Uop_Linkexpr: 
         case Uop_Succeedexpr: 
         case Uop_Returnexpr: {
             fold_return(n);
@@ -1295,6 +1296,7 @@ static int is_repeatable(struct lnode *n)
         case Uop_Suspendexpr: 
         case Uop_Suspenddo: 
         case Uop_Succeedexpr: 
+        case Uop_Linkexpr: 
         case Uop_Returnexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
@@ -1306,6 +1308,7 @@ static int is_repeatable(struct lnode *n)
         case Uop_Break:
         case Uop_Suspend:
         case Uop_Return:
+        case Uop_Link:
         case Uop_Fail:
         case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke:                       /* e(x1, x2.., xn) */

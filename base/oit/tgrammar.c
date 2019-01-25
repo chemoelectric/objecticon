@@ -210,6 +210,8 @@ int globalflag;
 #define Return1(x1,x2)		$$ = tree4(N_Returnexpr,x1,x1,x2) 
 #define Succeed0(x1)		$$ = tree3(N_Succeed,x1,x1) 
 #define Succeed1(x1,x2)		$$ = tree4(N_Succeedexpr,x1,x1,x2) 
+#define Link0(x1)		$$ = tree3(N_Link,x1,x1) 
+#define Link1(x1,x2)		$$ = tree4(N_Linkexpr,x1,x1,x2) 
 #define Rliter(x)		Val0(x) = putlit(Str0(x),F_RealLit,(int)Val1(x))
 #define Section(x1,x2,x3,x4,x5,x6) $$ = tree6(N_Sect,x4,x4,x1,x3,x5) 
 #define Sliter(x)		Val0(x) = putlit(Str0(x),F_StrLit,(int)Val1(x))

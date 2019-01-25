@@ -671,6 +671,20 @@ static struct ir_var *make_word(word w)
     return v;
 }
 
+static struct ir_var *make_self(void)
+{
+    struct ir_var *v = IRAlloc(struct ir_var);
+    if (curr_lfunc->method->flag & M_Static) {
+        v->type = GLOBAL;
+        v->global = curr_lfunc->method->class->global;
+    } else {
+        /* "self" is the first in the locals list */
+        v->type = LOCAL;
+        v->local = curr_lfunc->locals;
+    }
+    return v;
+}
+
 static struct ir_var *make_knull(void)
 {
     struct ir_var *v = IRAlloc(struct ir_var);
@@ -2086,7 +2100,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_Link:                          /* link */
         case Uop_Return: {                      /* return */
+            struct ir_var *v;
+
+            v = (n->op == Uop_Link ? make_self() : make_knull());
+
             if (!bounded)
                 chunk1(res->resume, ir_syserr(n));
 
@@ -2097,10 +2116,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     t = t->scan->next;
                 chunk2(res->start, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_return(n, make_knull()));
+                       ir_return(n, v));
             } else {
                 chunk1(res->start, 
-                       ir_return(n, make_knull()));
+                       ir_return(n, v));
             }
 
             break;
@@ -2148,9 +2167,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_Linkexpr:                           /* link expression */
         case Uop_Succeedexpr: {                      /* succeed expression */
             struct lnode_1 *x = (struct lnode_1 *)n;
+            struct ir_var *v;
             struct ir_info *expr;
+
+            v = (n->op == Uop_Linkexpr ? make_self() : make_knull());
 
             expr = ir_traverse(x->child, branch_stack(st), 0, 1, 0);
 
@@ -2171,13 +2194,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     t = t->scan->next;
                 chunk2(expr->success, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_return(n, make_knull()));
+                       ir_return(n, v));
                 chunk2(expr->failure, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_fail(n));
             } else {
                 chunk1(expr->success, 
-                       ir_return(n, make_knull()));
+                       ir_return(n, v));
                 chunk1(expr->failure, 
                        ir_fail(n));
             }
