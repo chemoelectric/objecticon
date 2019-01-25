@@ -436,7 +436,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    # Compute seconds past base date based on broken down fields.
    #
-   public compute_seconds()
+   private compute_seconds()
       local days, year_diff, n, block_days
 
       #
@@ -518,13 +518,13 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          (year_diff + 399) / 400 + self.yday - 1
       self.wday := 1 + (6 + block_days) % 7
       days +:= block_days
-      return self.seconds :=  86400 * days + 3600 * self.hour + 60 * self.min + self.sec - self.zone.get_offset()
+      self.seconds :=  86400 * days + 3600 * self.hour + 60 * self.min + self.sec - self.zone.get_offset()
    end
 
    #
    # Compute broken down fields based on seconds past base date
    #
-   public compute_broken_down_fields()
+   private compute_broken_down_fields()
       local n, year, flag, i, hms
       n := self.seconds + self.zone.get_offset()
       hms := n % 86400
