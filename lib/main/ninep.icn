@@ -67,30 +67,30 @@ abstract class File9P()
    end
 
    public set_length(len)
-      return self
+      link
    end
 
    public modified(uid)
       self.qversion +:= 1
       self.muid := uid
       self.mtime := Time.get_system_seconds()
-      return self
+      link
    end
 
    public open(mode)
-      return self
+      link
    end
 
    public close()
-      return self
+      link
    end
 
    public get_file_key()
-      return self
+      link
    end
 
    public path_unreferenced()
-      return self
+      link
    end
 
    # Return the parent, or fail if this is the root directory.
@@ -117,7 +117,7 @@ abstract class File9P()
       set_name(\x.name)
       set_length(\x.length)
       set_gid(\x.gid)
-      return self
+      link
    end
 
    # Note that normally `set_parent` should not be called; rather
@@ -128,7 +128,7 @@ abstract class File9P()
    #
    public set_parent(x)
       self.parent := x
-      return self
+      link
    end
 
    public set_name(x)
@@ -136,7 +136,7 @@ abstract class File9P()
       x := need_string(x)
       (\parent).rename_child(self, x)
       self.name := x
-      return self
+      link
    end
 
    # Shorthand for `set_perm(x, &yes)`
@@ -160,37 +160,37 @@ abstract class File9P()
          iand(x, Mode9.DMDIR) = 0 | rthrow("Cannot set DMDIR in a regular file", self)
       self.perm := x
       self.fixed := y
-      return self
+      link
    end
 
    public set_qversion(x)
       self.qversion := x
-      return self
+      link
    end
 
    public set_mtime(x)
       self.mtime := x
-      return self
+      link
    end
 
    public set_atime(x)
       self.atime := x
-      return self
+      link
    end
 
    public set_uid(x)
       self.uid := x
-      return self
+      link
    end
 
    public set_gid(x)
       self.gid := x
-      return self
+      link
    end
 
    public set_muid(x)
       self.muid := x
-      return self
+      link
    end
 
    public get_qid()
@@ -238,12 +238,12 @@ class TableDir9P(Dir9P)
          rthrow("Can't add child named " || x.name || " - already exists", x)
       insert(ent, x.name, x)
       x.set_parent(self)
-      return self
+      link
    end
 
    public override remove_child(x)
       delete(ent, x.name)
-      return self
+      link
    end
 
    public override get_child(x)
@@ -259,7 +259,7 @@ class TableDir9P(Dir9P)
    #
    public clear()
       default.clear(ent)
-      return self
+      link
    end
 
    public override is_empty()
@@ -273,7 +273,7 @@ class TableDir9P(Dir9P)
          delete(ent, x.name)
          insert(ent, s, x)
       }
-      return self
+      link
    end
 
    protected new_dir_child(name, uid, perm)
@@ -339,7 +339,7 @@ class StringFile9P(Regular9P)
          data ||:= repl("\0", len - *data)
       else
          data := data[1+:len]
-      return self
+      link
    end
 
    public override write(s, pos)
@@ -367,7 +367,7 @@ class StringFile9P(Regular9P)
    public set_data(s)
       s := need_string(s)
       data := s
-      return self
+      link
    end
 
    public override new(n)
@@ -390,7 +390,7 @@ class FifoFile9P(Regular9P)
          data ||:= repl("\0", len - *data)
       else
          data := data[1+:len]
-      return self
+      link
    end
 
    public override write(s, pos)
@@ -414,13 +414,13 @@ class FifoFile9P(Regular9P)
    public set_data(s)
       s := need_string(s)
       data := s
-      return self
+      link
    end
 
    public add(s)
       s := need_string(s)
       write(s)
-      return self
+      link
    end
 
    public override new(n)
@@ -478,7 +478,7 @@ class QueueFile9P(Regular9P)
             len := n
          }
       }
-      return self
+      link
    end
 
    public override get_length()
@@ -488,7 +488,7 @@ class QueueFile9P(Regular9P)
    public clear()
       q := []
       len := 0
-      return self
+      link
    end
 
    public get_queue_length()
@@ -508,7 +508,7 @@ class QueueFile9P(Regular9P)
          len +:= *s
          put(q, s)
       }
-      return self
+      link
    end
 
    public remove()
@@ -969,7 +969,7 @@ class AdmUsers(Users)
       groups := table()
       every g := parse(separate_lines(s)) do
          insert(groups, g.name, g)
-      return self
+      link
    end
 
    public override is_member(group, user)
@@ -1076,7 +1076,7 @@ abstract class Data9P()
    # session's `track_refs` flags is set.
    #
    public path_unreferenced(p)
-      return self
+      link
    end
 
    # This method is used to create the asynchronous `Task` state.  By default
@@ -1105,7 +1105,7 @@ abstract class FileData9P(Data9P)
    end
 
    public override remove_child(p1, p2)
-      return p1.remove_child(p2) & self
+      link p1.remove_child(p2)
    end
 
    public override create_child(p, name, uid, perm)
@@ -1117,7 +1117,7 @@ abstract class FileData9P(Data9P)
    end
    
    public override modified(p, uid)
-      return p.modified(uid) & self
+      link p.modified(uid)
    end
 
    public override open(p, mode)
@@ -1133,7 +1133,7 @@ abstract class FileData9P(Data9P)
    end
 
    public override close(p)
-      return p.close() & self
+      link p.close()
    end
 
    public override get_info(p)
@@ -1141,7 +1141,7 @@ abstract class FileData9P(Data9P)
    end
 
    public override set_info(p, x)
-      return p.set_info(x) & self
+      link p.set_info(x)
    end
 
    public override get_qid(p)
@@ -1153,7 +1153,7 @@ abstract class FileData9P(Data9P)
    end
 
    public override path_unreferenced(p)
-      return p.path_unreferenced() & self
+      link p.path_unreferenced()
    end
 end
 
@@ -1689,22 +1689,22 @@ class Session9P()
 
    public set_data(d)
       data := d
-      return self
+      link
    end
 
    public set_users(u)
       users := u
-      return self
+      link
    end
 
    public set_verbose(x)
       self.verbose := need_flag(x)
-      return self
+      link
    end
 
    public set_track_refs(x)
       self.track_refs := need_flag(x)
-      return self
+      link
    end
 
    # Create a new instance.  `d` should be an instance of `Data9P` and

@@ -1108,7 +1108,7 @@ $if _PLAN9
             mode := ior(mode, TRUNCATE)
          mode := ior(mode, SEEK)
       }
-      return self
+      link
    end
 
    #
@@ -1626,7 +1626,7 @@ class ProgInputStream(PipeStream, HasBgProc)
    public override close()
       FileStream.close()
       do_wait()
-      return self
+      link
    end
 
    # Open a new readable `Stream` based on the given command.  The
@@ -1684,7 +1684,7 @@ class ProgOutputStream(PipeStream, HasBgProc)
    public override close()
       FileStream.close()
       do_wait()
-      return self
+      link
    end
 
    # Open a new writeable `Stream` based on the given command. The
@@ -1737,7 +1737,7 @@ class ProgInputOutputStream(PipeStream, HasBgProc)
    public override close()
       FileStream.close()
       do_wait()
-      return self
+      link
    end
 
    # Open a new readable and writeable `Stream` based on the given
@@ -2610,7 +2610,7 @@ class NetStream(FileStream)
          return error("Data stream already open")
       fd := open_subfile("data", FileOpt.RDWR).get_fd() |
          return error("Couldn't open data stream: " || &why)
-      return self
+      link
    end
 
    # Connect to the given address, which should be in the form returned by cs_query, eg
@@ -2744,7 +2744,7 @@ class NetStream(FileStream)
    public reject(cause)
       # May fail, so ignore errors
       save_why{write_ctrl("reject " || dir.get(-1) || " " || cause)}
-      return self
+      link
    end
 
    # Return the directory of the stream (eg "/net/tcp/6"), as a `FilePath` object.
@@ -2763,7 +2763,7 @@ class NetStream(FileStream)
       if \fd  then
          FileStream.close()
       ctrl.close()
-      return self
+      link
    end
 
    private override new(ctrl, dir)
@@ -2877,7 +2877,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    public flush_out()
       \writer | return error("Stream not open for writing")
       writer.await() | fail
-      return self
+      link
    end
 
    # This setting configures what happens to data remaining in the
@@ -2896,7 +2896,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    #
    public set_write_on_close(x)
       self.write_on_close := x
-      return self
+      link
    end
 
    public override get_mode()

@@ -145,7 +145,7 @@ $if _PLAN9
          set_write_on_close(NonBlockStream.DISCARD)
       sbuff := ""
       fire(CONNECTED_EVENT, cs)
-      return self
+      link
    end
 $elsif _MS_WIN32
    private dns_query()
