@@ -73,6 +73,13 @@ class Node()
       suspend .!children
    end
 
+   #
+   # Get the index of the given child element
+   #
+   public get_index(c)
+      return keyof(self.children, c)
+   end
+
    public set(i, x)
       self.children[i] := x
       return self
