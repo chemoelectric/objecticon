@@ -242,11 +242,11 @@ class BuiltinList(List)
    private const l
 
    public override insert(i, x)
-      return default.insert(l, i, x) & self
+      link default.insert(l, i, x)
    end
 
    public override delete(i)
-      return default.delete(l, i) & self
+      link default.delete(l, i)
    end
 
    public override at(i)
@@ -479,7 +479,7 @@ class LinkedList(List)
    # list is empty.
    #
    public set_head(x)
-      return ((\nhead).val := x) & self
+      link ((\nhead).val := x)
    end
 
    #
@@ -494,7 +494,7 @@ class LinkedList(List)
    # `other`, or fail if this list is empty.
    #
    public set_tail(other)
-      return ((\nhead).nxt := other.nhead) & self
+      link ((\nhead).nxt := other.nhead)
    end
 
    #
@@ -502,7 +502,7 @@ class LinkedList(List)
    # element), or fail if this list is empty.
    #
    public clear_tail()
-      return ((\nhead).nxt := &null) & self
+      link ((\nhead).nxt := &null)
    end
 
    #

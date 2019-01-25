@@ -390,7 +390,7 @@ class TableKeyList(List)
    end
 
    public override delete(i)
-      return t.delete(t.select(i)) & self
+      link t.delete(t.select(i))
    end
 
    public override gen()
@@ -886,7 +886,7 @@ class BuiltinTable(Table)
    end
 
    public override delete(key)
-      return default.delete(t, key) & self
+      link default.delete(t, key)
    end
 
    public override key()

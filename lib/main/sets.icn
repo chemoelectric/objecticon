@@ -226,7 +226,7 @@ class TableSet(Set)
    end
 
    public override delete(x)
-      return t.delete(x) & self
+      link t.delete(x)
    end
 
    public override sort()
@@ -316,7 +316,7 @@ class BuiltinSet(Set)
    end
 
    public override delete(x)
-      return default.delete(s, x) & self
+      link default.delete(s, x)
    end
 
    public override sort()

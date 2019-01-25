@@ -239,21 +239,21 @@ class Dialog(Component)
    # Raise the window
    #
    public raise_win()
-      return win.raise() & self
+      link win.raise()
    end
 
    #
    # Lower the window
    #
    public lower_win()
-      return win.lower() & self
+      link win.lower()
    end
 
    #
    # Focus the window
    #
    public focus_win()
-      return win.focus() & self
+      link win.focus()
    end
 
    #

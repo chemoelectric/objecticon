@@ -560,7 +560,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       every s ||:= !wbuff
       clear(wbuff)
       wbuff_len := 0
-      return other.writes1(s) & self
+      link other.writes1(s)
    end
 
    #
@@ -609,7 +609,7 @@ class BufferStream(Stream, HasUnderlyingStream)
 
    public override truncate(len)
       synch() | fail
-      return other.truncate(len) & self
+      link other.truncate(len)
    end
 
    public override get_mode()

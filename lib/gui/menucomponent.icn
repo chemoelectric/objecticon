@@ -111,7 +111,7 @@ abstract class MenuComponent(Rect,Connectable)
    # Remove all the children.
    #
    public remove_all()
-      return remove_list() & self
+      link remove_list()
    end
 
    #
@@ -136,8 +136,7 @@ abstract class MenuComponent(Rect,Connectable)
    # :  If either index is out of range.
    #
    public reposition_index(i, j)
-      lmove(children, i, j) | fail
-      link
+      link lmove(children, i, j)
    end
 
    # Remove the children in the range `i:j`, returning the

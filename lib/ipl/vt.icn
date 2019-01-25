@@ -2323,11 +2323,11 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public add_custom_key(code, bits, mask, func, data)
-      return custom_keys.add(code, bits, mask, func, data) & self
+      link custom_keys.add(code, bits, mask, func, data)
    end
 
    public remove_custom_key(code, bits, mask)
-      return custom_keys.remove(code, bits, mask) & self
+      link custom_keys.remove(code, bits, mask)
    end
 
    public reset_custom_keys()

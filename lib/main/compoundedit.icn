@@ -40,7 +40,7 @@ class CompoundEdit(UndoableEdit)
 
    public override add_edit(other)
       if \closed then
-         return \liberal_flag & l[-1].add_edit(other) & self
+         link \liberal_flag & l[-1].add_edit(other)
 
       l[-1].add_edit(other) | put(l, other)
       link

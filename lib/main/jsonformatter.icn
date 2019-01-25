@@ -76,7 +76,7 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    #
    public format(x)
       self.level := 0
-      return try1{ format1(x) } & self
+      link try1{ format1(x) }
    end
 
    private format1(x)

@@ -398,7 +398,7 @@ class Component(Rect,XYAlign,Connectable)
    # :  `e` - the causing event, if any.
    #
    public grab_focus(e)
-      return (\parent_dialog).set_focus(find_focus(e), e) & self
+      link (\parent_dialog).set_focus(find_focus(e), e)
    end
 
    #
@@ -1260,7 +1260,7 @@ class Component(Rect,XYAlign,Connectable)
    # Remove all the children.
    #
    public remove_all()
-      return remove_list() & self
+      link remove_list()
    end
 
    #
