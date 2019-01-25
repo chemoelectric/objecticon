@@ -337,13 +337,13 @@ class Pattern()
    public set_ordered(f)
       check_open()
       Re_Ordered := need_flag(f)
-      return self
+      link
    end
 
    public set_leftmost_shortest(f)
       check_open()
       Re_LeftmostShortest := need_flag(f)
-      return self
+      link
    end
 
    public set_case_dependent(f)
@@ -359,46 +359,46 @@ class Pattern()
          Re__upto := upto
          Re__tabmatch := Prog.get_operator("=",1)
       }
-      return self
+      link
    end
 
    public set_filter(p)
       check_open()
       Re_Filter := p
-      return self
+      link
    end
 
    public set_word_chars(c)
       check_open()
       Re_WordChars := need_cset(c)
       Re_NonWordChars := ~Re_WordChars
-      return self
+      link
    end
 
    public set_space_chars(c)
       check_open()
       Re_Space := need_cset(c)
       Re_NonSpace := ~Re_Space
-      return self
+      link
    end
 
    public set_digit_chars(c)
       check_open()
       Re_Digits := need_cset(c)
       Re_NonDigits := ~Re_Digits
-      return self
+      link
    end
 
    public set_arb_string(s)
       check_open()
       Re_ArbString := need_string(s)
-      return self
+      link
    end
 
    public set_any_string(s)
       check_open()
       Re_AnyString := need_string(s)
-      return self
+      link
    end
 
 
@@ -473,7 +473,7 @@ class Pattern()
       #                                            parenthesis group <digit>
       #
       s ? (plist := Re_pat1(0)) | fail
-      return self
+      link
    end
 
 

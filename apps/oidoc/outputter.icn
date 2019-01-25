@@ -255,7 +255,7 @@ abstract class Outputter()
       }
       # Two or more spaces at the end of a line indicate a line break.
       end_line(Yes{s[-2:0] == "  "})
-      return self
+      link
    end
 
    private toggle_font(kind)

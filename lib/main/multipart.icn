@@ -25,7 +25,7 @@ class Multipart()
    #
    public set_preamble(s)
       preamble := s
-      return self
+      link
    end
 
    #
@@ -40,7 +40,7 @@ class Multipart()
    #
    public set_epilogue(s)
       epilogue := s
-      return self
+      link
    end
 
    #
@@ -55,7 +55,7 @@ class Multipart()
    #
    public add_part(m)
       put(parts, m)
-      return self
+      link
    end
 
    public new()

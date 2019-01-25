@@ -25,7 +25,7 @@ class CheckBoxTableColumn(BaseTableColumn)
    #
    public set_single_selection(s)
       self.single_selection_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -50,7 +50,7 @@ class CheckBoxTableColumn(BaseTableColumn)
          self.unchecked_paint := x
          self.checked_paint := y
       }
-      return self
+      link
    end
 
    public mouse_down(e)

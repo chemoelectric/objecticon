@@ -97,7 +97,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    public set_contents(x)
       self.contents := x
       contents_changed()
-      return self
+      link
    end
 
    #
@@ -121,7 +121,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       invalidate_line_height()
       invalidate_line_count()
       compute_and_invalidate()
-      return self
+      link
    end
 
    #
@@ -150,7 +150,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_draggable_cursor(s)
       self.draggable_cursor_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -158,7 +158,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_motion_cursor(s)
       self.motion_cursor_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -166,7 +166,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_show_over(s)
       self.show_over_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -175,7 +175,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_always_show_focus_cursor(s)
       self.always_show_focus_cursor_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -184,7 +184,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_selection_on_key_moves(s)
       self.selection_on_key_moves_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -194,7 +194,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_select_mode(s)
       self.select_mode := s
-      return self
+      link
    end
 
    #
@@ -208,7 +208,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_dnd_mode(s)
       self.dnd_mode := s
-      return self
+      link
    end
 
    #
@@ -301,7 +301,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          self.selections := elementset(l)
          constrain_selections()
       }
-      return self
+      link
    end
 
    #
@@ -312,7 +312,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          insert(self.selections, i)
          invalidate_line(i)
       }
-      return self
+      link
    end
 
    #
@@ -323,7 +323,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          delete(self.selections, i)
          invalidate_line(i)
       }
-      return self
+      link
    end
 
    #
@@ -345,7 +345,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             break
          }
       }
-      return self
+      link
    end
 
    #
@@ -396,7 +396,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          constrain_cursor()
          invalidate_line(\self.cursor)
       }
-      return self
+      link
    end
 
    #
@@ -441,7 +441,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          invalidate_line_count()
          compute_and_invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -460,7 +460,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          invalidate_line_height()
          compute_and_invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -488,7 +488,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          invalidate_line_count()
          compute_and_invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -526,7 +526,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          self.selections ++:= s
          set_cursor(tc)
       }
-      return self
+      link
    end
 
    private select_range(from)

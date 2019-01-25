@@ -44,7 +44,7 @@ class ProgressBar(Component)
       p >:= 100
       self.p := p
       self.invalidate()
-      return self
+      link
    end
 
    public override new()

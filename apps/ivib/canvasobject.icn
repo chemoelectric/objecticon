@@ -13,7 +13,7 @@ class CanvasObject(SelectiveObjectCodec)
    #
    public set_name(x)
       self.name := x
-      return self
+      link
    end
 
    #
@@ -28,7 +28,7 @@ class CanvasObject(SelectiveObjectCodec)
    #
    public set_class_name(x)
       self.class_name := x
-      return self
+      link
    end
 
    #
@@ -43,7 +43,7 @@ class CanvasObject(SelectiveObjectCodec)
    #
    public set_import_name(x)
       self.import_name := x
-      return self
+      link
    end
 
    #
@@ -58,7 +58,7 @@ class CanvasObject(SelectiveObjectCodec)
    #
    public set_class_variable(s)
       self.class_variable := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -73,7 +73,7 @@ class CanvasObject(SelectiveObjectCodec)
    #
    public set_parent_Canvas(p)
       self.parent_Canvas := p
-      return self
+      link
    end
 
    public gen_code(c)

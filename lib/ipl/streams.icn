@@ -31,7 +31,7 @@ class IntersperseStream(LineBasedGeneratorStream, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          lclose(a) | fail
-      return self
+      link
    end
 
    public override new(a[])

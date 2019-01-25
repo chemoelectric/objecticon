@@ -161,7 +161,7 @@ class Encode(Stream, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          file.close() | fail
-      return self
+      link
    end
 
    private static encode_string(s)
@@ -230,7 +230,7 @@ class Encode(Stream, HasUnderlyingStream)
 
       if i := member(seen, o) then {
          writes(Codec.REF_CODE, i)
-         return self
+         link
       }
 
       ty := type(o)
@@ -367,7 +367,7 @@ class Encode(Stream, HasUnderlyingStream)
          default : 
             throw("Type not encodable: " || ty)
       }
-      return self
+      link
    end
 
    private line_out(s)
@@ -382,7 +382,7 @@ class Encode(Stream, HasUnderlyingStream)
    #
    public set_fast(s)
       self.fast_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -391,7 +391,7 @@ class Encode(Stream, HasUnderlyingStream)
    #
    public set_allow_binary(s)
       self.allow_binary_flag := need_flag(s)
-      return self
+      link
    end
 
    public new(file)

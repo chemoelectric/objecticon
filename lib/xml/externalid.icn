@@ -28,7 +28,7 @@ class ExternalID()
    #
    public set_public_id(s)
       public_id := s
-      return self
+      link
    end
 
    #
@@ -43,7 +43,7 @@ class ExternalID()
    #
    public set_system_id(s)
       system_id := s
-      return self
+      link
    end
 
    public new(system_id, public_id)

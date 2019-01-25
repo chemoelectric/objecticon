@@ -90,7 +90,7 @@ class TextButton(Button, BorderWhilstEntered)
    public set_images(x, y)
       set_image(x)
       set_image_down(y)
-      return self
+      link
    end
 
    public set_paint(p)
@@ -101,7 +101,7 @@ class TextButton(Button, BorderWhilstEntered)
          self.invalidate()
       } else
          self.paint := p
-      return self
+      link
    end
 
    public set_paint_down(p)
@@ -112,7 +112,7 @@ class TextButton(Button, BorderWhilstEntered)
          self.invalidate()
       } else
          self.paint_down := p
-      return self
+      link
    end
 
    public override initially()
@@ -171,7 +171,7 @@ abstract class BorderWhilstEntered(Component)
          border_whilst_entered_flag := s
          invalidate()
       }
-      return self
+      link
    end
 
    public handle_enter(e)

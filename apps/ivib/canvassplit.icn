@@ -107,10 +107,10 @@ class CanvasSplit(CanvasComponent,Split)
       local o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
-         return self
+         link
       if o := (self.first | self.second).which_cursor_over(e) then
          return o
-      return self
+      link
    end
 
    public override display()
@@ -196,7 +196,7 @@ class CanvasSplitContent(CanvasComponent,Component)
          if o := e.is_inside(c) then
             return o
       if (self.x <= c.mx < self.x + self.w) & (self.y <= c.my < self.y + self.h) then
-         return self
+         link
    end
 
    #

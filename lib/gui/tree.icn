@@ -46,7 +46,7 @@ abstract class BaseTree(SelectableScrollArea)
    public invalidate_node_images()
       col_w := img_w := img_h := &null
       invalidate_line_height()
-      return self
+      link
    end
 
    public override initially()
@@ -76,7 +76,7 @@ abstract class BaseTree(SelectableScrollArea)
          root_node.expand(force)
          tree_structure_changed()
       }
-      return self
+      link
    end
 
    #
@@ -92,7 +92,7 @@ abstract class BaseTree(SelectableScrollArea)
          compute_and_invalidate()
       } else
          self.default_icon_paint := [i1, i2, i3]
-      return self
+      link
    end
 
    # Set the handle `Paint`s (ie the little + and - icons).  The two
@@ -111,7 +111,7 @@ abstract class BaseTree(SelectableScrollArea)
          self.plus := p
          self.minus := m
       }
-      return self
+      link
    end
 
    #
@@ -127,7 +127,7 @@ abstract class BaseTree(SelectableScrollArea)
          set_contents(flatten())
          set_selections([])
       }
-      return self
+      link
    end
 
    #
@@ -144,7 +144,7 @@ abstract class BaseTree(SelectableScrollArea)
          set_contents(flatten())
          object_set_selections(sels)
       }
-      return self
+      link
    end
 
    #
@@ -153,7 +153,7 @@ abstract class BaseTree(SelectableScrollArea)
    public set_show_root_handles(s)
       self.show_root_handles_flag := need_flag(s)
       self.tree_structure_changed()
-      return self
+      link
    end
 
    #
@@ -162,7 +162,7 @@ abstract class BaseTree(SelectableScrollArea)
    public set_show_root(s)
       self.show_root_flag := need_flag(s)
       self.tree_structure_changed()
-      return self
+      link
    end
 
    #
@@ -170,7 +170,7 @@ abstract class BaseTree(SelectableScrollArea)
    #
    public set_fixed_col_w(w)
       self.fixed_col_w := w
-      return self
+      link
    end
 
    public compute_img_wh()
@@ -421,7 +421,7 @@ class ItemPaintTree(BaseTree)
          self.item_paint.initially(self)
       } else
          self.item_paint := r
-      return self
+      link
    end
 
    #
@@ -434,7 +434,7 @@ class ItemPaintTree(BaseTree)
          self.item_border.initially(self)
       } else
          self.item_border := b
-      return self
+      link
    end
 
    public override calculate_line_height()

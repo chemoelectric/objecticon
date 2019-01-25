@@ -190,7 +190,7 @@ class FlowTermDialog(Dialog)
          }
       }
       done_tab_cmds(t)
-      return self
+      link
    end
 
    public done_tab_cmds(t)
@@ -463,7 +463,7 @@ class Columns(LineBasedScrollArea)
          self.item_border.initially(self)
       } else
          self.item_border := b
-      return self
+      link
    end
 
    public set_item_paint(r)
@@ -473,7 +473,7 @@ class Columns(LineBasedScrollArea)
          self.item_paint.initially(self)
       } else
          self.item_paint := r
-      return self
+      link
    end
 
    public override get_tooltip(e)
@@ -524,7 +524,7 @@ class Columns(LineBasedScrollArea)
 
    private invalidate_columnize()
       data_w := prev_columnize_dw := &null
-      return self
+      link
    end
 
    public override focus_changed(e) 
@@ -648,7 +648,7 @@ class Columns(LineBasedScrollArea)
          view.set_pointer(if /over then &null else "hand1")
          fire("over-changed")
       }
-      return self
+      link
    end
 
    public handle_lmdrag(e)
@@ -694,7 +694,7 @@ class Columns(LineBasedScrollArea)
          constrain_cursor()
          invalidate_line(get_row_for_index(\cursor))
       }
-      return self
+      link
    end
 
    public set_highlight(n)
@@ -705,7 +705,7 @@ class Columns(LineBasedScrollArea)
          ensure_line_visible(get_row_for_index(\highlight)) 
          invalidate_line(get_row_for_index(\highlight))
       }
-      return self
+      link
    end
 
    public get_highlight()
@@ -855,7 +855,7 @@ class Columns(LineBasedScrollArea)
 
    public set_held(d)
       self.held := d
-      return self
+      link
    end
 
    public data_changed()
@@ -871,18 +871,18 @@ class Columns(LineBasedScrollArea)
       invalidate_line_count()
       compute_and_invalidate()
       constrain_cursor()
-      return self
+      link
    end
 
    public set_data(l)
       self.data := l
       data_changed()
-      return self
+      link
    end
 
    public set_gutter(n)
       self.gutter := n
-      return self
+      link
    end
 
    public override keeps(e)
@@ -1197,27 +1197,27 @@ class Terminal(TabItem, VtUI)
 
    public set_select(f)
       self.select_flag := need_flag(f)
-      return self
+      link
    end
 
    public set_adjacent(f)
       self.adjacent_flag := need_flag(f)
-      return self
+      link
    end
 
    public set_auto_close(f)
       self.auto_close_flag := need_flag(f)
-      return self
+      link
    end
 
    public set_shell(s)
       self.shell := s
-      return self
+      link
    end
 
    public add_shell_arg(s)
       put(shell_args, string(s))
-      return self
+      link
    end
 
    public add_shell_var(s)
@@ -1230,7 +1230,7 @@ class Terminal(TabItem, VtUI)
             k := tab(0)
       }
       put(shell_vars, ShellVar(k, v))
-      return self
+      link
    end
 
    public override get_label_width()
@@ -1250,7 +1250,7 @@ class Terminal(TabItem, VtUI)
    public set_title(s)
       self.title := s
       update_title()
-      return self
+      link
    end
 
    public set_list_width(n)
@@ -1259,7 +1259,7 @@ class Terminal(TabItem, VtUI)
          split.first.set_width().reset_layout()
          split.do_layout().invalidate()
       }
-      return self
+      link
    end
 
    public set_list_height(n)
@@ -1268,7 +1268,7 @@ class Terminal(TabItem, VtUI)
          split.first.set_height().reset_layout()
          split.do_layout().invalidate()
       }
-      return self
+      link
    end
 
    private check_live(s)
@@ -1684,7 +1684,7 @@ class Terminal(TabItem, VtUI)
          }
          default: return error("Invalid command: " || s)
       }
-      return self
+      link
    end
 
    private do_change_vt_font_size(s)
@@ -1694,7 +1694,7 @@ class Terminal(TabItem, VtUI)
          n +:= output.font_size
       n <:= 1.0
       output.set_vt_font(output.font_family || "," || n)
-      return self
+      link
    end
 
    private next_index_right()
@@ -1766,7 +1766,7 @@ class Terminal(TabItem, VtUI)
             }
          }
       }
-      return self
+      link
    end
 
    private remove_menu_command(list, label)
@@ -1796,7 +1796,7 @@ class Terminal(TabItem, VtUI)
             add_menu_command(list, label, verb)
          }
       }
-      return self
+      link
    end
 
    private static find_menu_child(m, s)
@@ -1874,7 +1874,7 @@ class Terminal(TabItem, VtUI)
       # must be sleeping in poll().  Interrupt it so it goes round
       # its loop again, and polls for both input and output.
       /io_task | (Dispatcher.get_curr_task() === io_task) | io_task.interrupt()
-      return self
+      link
    end
 
    public override msg(s, n)
@@ -2104,7 +2104,7 @@ $endif
       }
       parent_dialog.done_tab_cmds(t)
       finish_clone(t)
-      return self
+      link
    end
 
    private static get_ucs_decoded_path(url)
@@ -2803,7 +2803,7 @@ $endif
          update_grey()
       }
       update_title()
-      return self
+      link
    end
 
    public get_favourites_directories()

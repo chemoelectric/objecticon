@@ -66,7 +66,7 @@ class TextField(Component)
    #
    public set_displaychar(c)
       displaychar := c
-      return self
+      link
    end
 
    #
@@ -74,7 +74,7 @@ class TextField(Component)
    #
    public set_placeholder(s)
       placeholder := s
-      return self
+      link
    end
 
    #
@@ -87,7 +87,7 @@ class TextField(Component)
    # :  `c` - The cset of permissible characters.
    public set_filter(c)
       self.filter := c ** Gui.PRINTABLE_1
-      return self
+      link
    end
 
    #
@@ -95,7 +95,7 @@ class TextField(Component)
    #
    public set_is_editable(s)
       self.is_editable_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -103,7 +103,7 @@ class TextField(Component)
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -111,7 +111,7 @@ class TextField(Component)
    #
    public set_menu_on_rpress(s)
       self.menu_on_rpress_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -126,7 +126,7 @@ class TextField(Component)
    #
    public set_undo_manager(u)
       undo_manager := u
-      return self
+      link
    end
 
    public override get_default_height()
@@ -165,7 +165,7 @@ class TextField(Component)
          constrain_line()
          undo_manager.clear()
       }
-      return self
+      link
    end
 
    #
@@ -194,7 +194,7 @@ class TextField(Component)
          undo_manager.add_edit(ed)
       }
       end_handle(e)
-      return self
+      link
    end
 
    public start_handle(e)
@@ -249,7 +249,7 @@ class TextField(Component)
       self.cursor := x
 
       end_handle(e)
-      return self
+      link
    end
 
    public handle_lpress(e)
@@ -426,17 +426,17 @@ class TextField(Component)
 
    public clear_mark()
       self.mark := &null
-      return self
+      link
    end
 
    public set_mark(m)
       self.mark := m
-      return self
+      link
    end
 
    public set_cursor(c)
       self.cursor := c
-      return self
+      link
    end
 
    public override initially()
@@ -645,7 +645,7 @@ class TextField(Component)
       ce.close()
       undo_manager.add_edit(ce)
       end_handle(e)
-      return self
+      link
    end
 
    public handle_default(e)

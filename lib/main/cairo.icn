@@ -234,7 +234,7 @@ abstract class Pattern(NoCopy)
 
    package set_ptr(ptr)
       self.ptr := ptr
-      return self
+      link
    end
 
    package static create_for_ptr(ptr)
@@ -605,7 +605,7 @@ abstract class Surface(NoCopy)
 
    package set_ptr(ptr)
       self.ptr := ptr
-      return self
+      link
    end
 
    package static create_for_ptr(ptr)

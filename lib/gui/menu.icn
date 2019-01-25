@@ -106,14 +106,14 @@ class Menu(TextMenuItem)
       # Do nothing if x presently open
       #
       if self.which_open === x then
-         return self
+         link
 
       set_which_highlight(x)
       self.which_open := x
       self.which_open.show(self.x + self.w, 
                            self.which_open.label_y - self.which_open.border.get_t_inset(),
                            self.x)
-      return self
+      link
    end
 
    #
@@ -124,7 +124,7 @@ class Menu(TextMenuItem)
       # Do nothing if already in desired state.
       #
       if (self.which_highlight === x) & /self.which_open then
-         return self
+         link
 
       (\self.which_open).hide()
       # Just invalidate the bits that have changed.
@@ -132,7 +132,7 @@ class Menu(TextMenuItem)
       self.which_highlight := x
       self.temp_win.invalidate((\self.which_highlight).get_label_rect())
       self.which_open := &null
-      return self
+      link
    end
 
    public handle_key_up(e)
@@ -357,7 +357,7 @@ class Menu(TextMenuItem)
                remove_index(i)
          }
       }
-      return self
+      link
    end
 
    public override new()

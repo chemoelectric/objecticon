@@ -85,7 +85,7 @@ class PopupMenu(Component, MenuSystem)
       self.menu.set_component_link(self)         
       self.menu.initially()
       self.menu.show(x, y, xa, ya)
-      return self
+      link
    end
 
    public override new()

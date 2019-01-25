@@ -21,7 +21,7 @@ class Group(Address)
 
    public set_phrase(x)
       phrase := x
-      return self
+      link
    end
 
    public get_mailboxes() 
@@ -30,12 +30,12 @@ class Group(Address)
 
    public set_mailboxes(x)
       mailboxes := x
-      return self
+      link
    end
 
    public add_mailbox(x)
       put(mailboxes, x)
-      return self
+      link
    end
 
    public override to_rfc822()

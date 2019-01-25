@@ -117,10 +117,10 @@ class CanvasBorder(CanvasComponent,Border)
       local o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
-         return self
+         link
       if o := (\self.title | self.content).which_cursor_over(e) then
          return o
-      return self
+      link
    end
 
    #
@@ -147,7 +147,7 @@ class CanvasBorder(CanvasComponent,Border)
       if o := (\self.title).is_inside(c) then
          return o
       if ((self.x + self.w - INSIDE_BOX <= c.mx < self.x + self.w) & (self.y + self.h - INSIDE_BOX <= c.my < self.y + self.h) & /title) then
-         return self
+         link
       if o := self.content.is_inside(c) then
          return o
    end
@@ -211,7 +211,7 @@ class CanvasBorderContent(CanvasComponent,Component)
          if o := e.is_inside(c) then
             return o
       if (self.x <= c.mx < self.x + self.w) & (self.y <= c.my < self.y + self.h) then
-         return self
+         link
    end
 
    #

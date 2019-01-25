@@ -99,7 +99,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    #
    public set_snaps(n)
       self.snaps := n
-      return self
+      link
    end
 
    #
@@ -107,7 +107,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    #
    public set_ticks(n)
       self.ticks := n
-      return self
+      link
    end
 
    #
@@ -115,7 +115,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    #
    public set_labels(n)
       self.labels := n
-      return self
+      link
    end
 
    #
@@ -126,7 +126,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    public set_increment_size(x)
       self.increment_size := x
       self.invalidate()
-      return self
+      link
    end
 
    #
@@ -142,7 +142,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
-      return self
+      link
    end
 
    #
@@ -163,7 +163,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
          } else 
             self.value := x
       }
-      return self
+      link
    end
 
    private move_value(x)
@@ -236,7 +236,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
          discrete_vals := Yes{ type(self.hi) == type(self.lo) == "integer" }
          reconfigure()
       }
-      return self
+      link
    end
 
    public handle_lpress(e)

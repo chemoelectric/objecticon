@@ -231,7 +231,7 @@ class Main(Dialog)
       if \self.canvas.modified then
          s ||:= " *"
       self.filename_label.set_label(FilePath(s).get(-1))
-      return self
+      link
    end      
 
    public override init_dialog()

@@ -42,7 +42,7 @@ class MenuBar(Component, MenuSystem)
       c.set_component_link(self)
       if is_initialized() then
          c.initially()
-      return self
+      link
    end
 
    #
@@ -77,7 +77,7 @@ class MenuBar(Component, MenuSystem)
       c.set_component_link(&null)
       if is_initialized() then
          c.finally()
-      return self
+      link
    end
 
    #
@@ -110,7 +110,7 @@ class MenuBar(Component, MenuSystem)
    #
    public override reposition_index(i, j)
       lmove(menus, i, j) | fail
-      return self
+      link
    end
 
    # Remove the menus in the range `i:j`, returning the
@@ -144,7 +144,7 @@ class MenuBar(Component, MenuSystem)
       every (!l).set_component_link(self)
       if is_initialized() then
          every (!l).initially()
-      return self
+      link
    end
 
    public override initially()
@@ -195,13 +195,13 @@ class MenuBar(Component, MenuSystem)
       # Do nothing if x presently open
       #
       if self.which_open === x then
-         return self
+         link
 
       set_which_highlight(x)
       self.which_open := x
       self.which_open.show(self.which_open.label_x -self.which_open.border.get_l_inset(),
                            self.y + self.h,, self.y)
-      return self
+      link
    end
 
    #
@@ -212,7 +212,7 @@ class MenuBar(Component, MenuSystem)
       # Do nothing if already in desired state.
       #
       if (self.which_highlight === x) & /self.which_open then
-         return self
+         link
 
       if /self.which_highlight then
          self.parent_dialog.enter_menu_mode(self)
@@ -229,7 +229,7 @@ class MenuBar(Component, MenuSystem)
 
       if /self.which_highlight then
          self.parent_dialog.exit_menu_mode(self)
-      return self
+      link
    end
 
    public handle_key_left(e)
@@ -451,7 +451,7 @@ class MenuBar(Component, MenuSystem)
    end
 
    public override get_nesting_component()
-      return self
+      link
    end
 
    public override new()

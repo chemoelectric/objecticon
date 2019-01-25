@@ -80,7 +80,7 @@ class MapSearchField(SuggestField)
 
    public set_map(m)
       map := m
-      return self
+      link
    end
 end
 
@@ -618,7 +618,7 @@ class Map(Panel)
       arc_width := ARC_WIDTHS[scale]
       stop_size := integer(arc_width)
       precalc()
-      return self
+      link
    end
 
    private change_scale(e, fac)
@@ -1501,14 +1501,14 @@ class Map(Panel)
       filter := copy(routes)
       invalidate()
       draw_all()
-      return self
+      link
    end
 
    private set_highlight(stops)
       highlight := copy(stops)
       invalidate()
       draw_all()
-      return self
+      link
    end
 
    private centre_stop(st)

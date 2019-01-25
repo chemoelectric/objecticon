@@ -144,17 +144,17 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          writes(repl(" ", indent * ilevel))
          stuff := &null
       }
-      return self
+      link
    end
 
    public iplus()
       ilevel +:= 1
-      return self
+      link
    end
 
    public iminus()
       ilevel -:= 1
-      return self
+      link
    end
 
    public traverse(o)
@@ -407,7 +407,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       }
 
       level -:= 1
-      return self
+      link
    end
    
    public object_start(o)
@@ -422,7 +422,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       object_start(o)
       writes1(\s)
       object_end(o)
-      return self
+      link
    end
 
    public object_selected(o, fields[])
@@ -452,7 +452,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          nl()
          object_end(o)
       }
-      return self
+      link
    end
 
    public simple(x)
@@ -478,7 +478,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    #
    public set_indent(i)
       self.indent := i
-      return self
+      link
    end
 
    # The maximum depth into which strucutures are recursed; if null
@@ -486,7 +486,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    #
    public set_depth(i)
       self.depth := i
-      return self
+      link
    end
 
    # If set, then any custom `object_output` methods in objects are
@@ -494,7 +494,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    #
    public set_ignore_object_output(s)
       self.ignore_object_output_flag := need_flag(s)
-      return self
+      link
    end
 
    # When indent is set (ie output is over many lines and indented to
@@ -505,13 +505,13 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    #
    public set_always_structure(s)
       self.always_structure_flag := need_flag(s)
-      return self
+      link
    end
 
    public override close()
       if \close_underlying_flag then
          file.close() | fail
-      return self
+      link
    end
 
    public new(file)
@@ -796,7 +796,7 @@ end
 #
 class SelfClone(ObjectClone)
    private final override object_clone()
-      return self
+      link
    end
 end
 

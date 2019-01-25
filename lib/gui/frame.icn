@@ -30,7 +30,7 @@ class Frame(Component)
 
    public set_title(s)
       bar.set_title(s)
-      return self
+      link
    end
 
    public in_resize_corner(e)
@@ -50,7 +50,7 @@ class Frame(Component)
       remove(\self.content)
       self.content := c
       add(c)
-      return self
+      link
    end
 
    public override initially()
@@ -136,7 +136,7 @@ class Frame(Component)
    public close()
       self.invalidate()
       self.parent.remove(self)
-      return self
+      link
    end
 
    public handle_lrelease(e)
@@ -168,7 +168,7 @@ class FrameBar(Component)
 
    public set_title(s)
       lab.set_label(s)
-      return self
+      link
    end
 
    public override can_drag(e)

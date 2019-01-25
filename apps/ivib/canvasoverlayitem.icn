@@ -81,7 +81,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
          if o := e.is_inside(c) then
             return o
       if (self.x <= c.mx < self.x + self.w) & (self.y <= c.my < self.y + self.h) then
-         return self
+         link
    end
 
    #

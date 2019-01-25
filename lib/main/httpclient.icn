@@ -149,7 +149,7 @@ class HttpClient(NetClient)
    #
    public set_http_version(s)
       http_version := s
-      return self
+      link
    end
 
    #
@@ -157,7 +157,7 @@ class HttpClient(NetClient)
    #
    public set_user_agent(s)
       self.user_agent := s
-      return self
+      link
    end
 
    #
@@ -166,7 +166,7 @@ class HttpClient(NetClient)
    #
    public set_keep_alive(s)
       self.keep_alive_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -175,7 +175,7 @@ class HttpClient(NetClient)
    #
    public set_retry_while_data(s)
       self.retry_while_data_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -183,7 +183,7 @@ class HttpClient(NetClient)
    #
    public set_cookies(m)
       self.cookies := m
-      return self
+      link
    end
 
    #
@@ -198,7 +198,7 @@ class HttpClient(NetClient)
    #
    public set_authentications(m)
       self.authentications := m
-      return self
+      link
    end
 
    #
@@ -213,7 +213,7 @@ class HttpClient(NetClient)
    #
    public set_gzip(s)
       self.gzip_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -263,7 +263,7 @@ class HttpClient(NetClient)
    #
    public set_retries(retries)
       self.retries := retries
-      return self
+      link
    end
 
    #
@@ -763,7 +763,7 @@ class HttpClient(NetClient)
    #
    public reset_progress_counters()
       self.read := self.length := &null
-      return self
+      link
    end
 
    #

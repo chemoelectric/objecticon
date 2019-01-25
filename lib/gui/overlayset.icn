@@ -25,7 +25,7 @@ class OverlaySet(Component)
    #
    public set_remember_focus(s)
       self.remember_focus_flag := need_flag(s)
-      return self
+      link
    end
 
    public override display()
@@ -61,7 +61,7 @@ class OverlaySet(Component)
    #
    public set_which_one(x, dont_restore_flag)
       if which_one === x then
-         return self
+         link
       if is_initialized() then {
          maybe_remember_focus()
          which_one := x
@@ -71,7 +71,7 @@ class OverlaySet(Component)
          invalidate()
       } else
          which_one := x
-      return self
+      link
    end
 
    public set_hidden_flags()
@@ -82,7 +82,7 @@ class OverlaySet(Component)
          else
             c.set_is_hidden(&yes)
       }
-      return self
+      link
    end
 
    public override initially()

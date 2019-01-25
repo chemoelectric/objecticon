@@ -71,7 +71,7 @@ class Rect(Point,Size)
       local ux, uw, uy, uh
 
       if r === self then
-         return self
+         link
 
       ux := min(self.x, r.x)
       uw := max(self.x + self.w, r.x + r.w) - ux
@@ -86,7 +86,7 @@ class Rect(Point,Size)
       local ix, iw, iy, ih
 
       if r === self then
-         return self
+         link
 
       ix := max(self.x, r.x)
       iw := min(self.x + self.w, r.x + r.w) - ix

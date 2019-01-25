@@ -19,7 +19,7 @@ class ContentDisposition()
    #
    public set_type(t)
       self.type := t
-      return self
+      link
    end
 
    #
@@ -45,7 +45,7 @@ class ContentDisposition()
    # :  `value` - the value
    public set_parameter(key, value)
       parameters.insert(key, value)
-      return self
+      link
    end
 
    private parameter_error(h, s)
@@ -64,7 +64,7 @@ class ContentDisposition()
    #
    public set_filename(v)
       set_parameter("filename", v)
-      return self
+      link
    end
 
    #

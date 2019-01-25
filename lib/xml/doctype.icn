@@ -28,7 +28,7 @@ class DocType(Node)
    #
    public set_name(s)
       name := s
-      return self
+      link
    end
 
    #
@@ -43,7 +43,7 @@ class DocType(Node)
    #
    public set_external_id(x)
       external_id := x
-      return self
+      link
    end
 
    public override new(n, i)

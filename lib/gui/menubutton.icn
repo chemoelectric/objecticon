@@ -36,7 +36,7 @@ class MenuButton(BorderWhilstEntered, MenuSystem, Component)
          self.menu := c
          c.set_component_link(self)         
       }
-      return self
+      link
    end
 
    public override initially()
@@ -148,7 +148,7 @@ class MenuButton(BorderWhilstEntered, MenuSystem, Component)
    end
 
    public override get_nesting_component()
-      return self
+      link
    end
 
    public override new()

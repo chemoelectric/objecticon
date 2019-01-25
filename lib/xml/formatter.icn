@@ -43,7 +43,7 @@ abstract class Formatter(Stream, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          file.close() | fail
-      return self
+      link
    end
 
    public format(n)

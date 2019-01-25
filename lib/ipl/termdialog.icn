@@ -135,7 +135,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    public clear_text()
       text.input("\e[9J\e[2J\e[H")
       need_crnl := &no
-      return self
+      link
    end
 
    protected override write_line_impl(s)
@@ -153,7 +153,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    #
    public set_log_limit(n)
       text.set_history_size(n)
-      return self
+      link
    end
 
    # Set a function to generate completions when the tab key is
@@ -162,7 +162,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    #
    public set_complete_function(f)
       self.complete_function := f
-      return self
+      link
    end
 
    # Set the limit in lines for the command history.
@@ -171,7 +171,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       self.history_limit := n
       limit_history()
       reset_term()
-      return self
+      link
    end
 
    # Set the history list.
@@ -181,12 +181,12 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       self.history_start_no := 1
       limit_history()
       reset_term()
-      return self
+      link
    end
 
    public set_popup_on_tab(s)
       input.set_popup_on_tab(need_flag(s))
-      return self
+      link
    end
 
    # Return the history list.

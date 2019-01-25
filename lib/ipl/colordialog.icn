@@ -14,7 +14,7 @@ class ColorRectangle(Component)
    public set_color(c)
       self.c := c
       invalidate()
-      return self
+      link
    end
 end
 
@@ -39,7 +39,7 @@ class ColorDialog(Dialog)
 
    public set_opaque(s)
       self.opaque_flag := need_flag(s)
-      return self
+      link
    end
 
    public override init_dialog()

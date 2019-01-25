@@ -23,7 +23,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
       else
          self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
       CheckBoxMenuItem.set_parent_check_box_group(x)
-      return self
+      link
    end
 
    #

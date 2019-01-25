@@ -360,7 +360,7 @@ class CanvasComponent(CanvasObject)
    #
    public which_cursor_over(e)
       if ((self.x <= e.x < self.x + self.w) & (self.y  <= e.y < self.y + self.h)) then
-         return self
+         link
    end
 
    #

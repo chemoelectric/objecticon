@@ -43,7 +43,7 @@ class ComponentScrollAreaView(Component)
       remove(\self.inner)
       self.inner := inner
       add(inner)
-      return self
+      link
    end
 end
 
@@ -59,7 +59,7 @@ class ComponentScrollArea(ScrollArea)
       
    public set_inner(inner)
       view.set_inner(inner)
-      return self
+      link
    end
 
    # This resets the layouts when the view's `size_inner` is called by
@@ -71,7 +71,7 @@ class ComponentScrollArea(ScrollArea)
    #
    public set_reset_layouts_on_size_inner(s)
       self.reset_layouts_on_size_inner_flag := need_flag(s)
-      return self
+      link
    end
 
    public override layout()

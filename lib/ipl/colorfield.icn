@@ -18,7 +18,7 @@ class ColorField(Component)
    #
    public set_opaque(s)
       self.opaque_flag := need_flag(s)
-      return self
+      link
    end
 
    public on_textfield(ev, src, type)
@@ -59,7 +59,7 @@ class ColorField(Component)
       cr.set_color(last_val)
       if is_live() then
          tf.remove_wattrib(WAttrib.FG).reset()
-      return self
+      link
    end
 
    # Set the value as above, but firing events.
@@ -69,7 +69,7 @@ class ColorField(Component)
       if \opaque_flag & Window.parse_color(s).alpha ~= 65535 then
          fail
       tf.assign_contents(s,, ev, coalesce)
-      return self
+      link
    end
 
    private on_choose(ev)

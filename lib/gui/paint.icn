@@ -183,12 +183,12 @@ class CompoundPaint(Paint)
 
    public set_top(top)
       self.top := top
-      return self
+      link
    end
 
    public set_bottom(bottom)
       self.bottom := bottom
-      return self
+      link
    end
 end
 
@@ -513,7 +513,7 @@ class ImagePaint(Paint)
    #
    public set_cache(x)
       self.image_cache := x
-      return self
+      link
    end
 
    #
@@ -522,7 +522,7 @@ class ImagePaint(Paint)
    #
    public set_image(x)
       self.image_str := x
-      return self
+      link
    end
 
    #
@@ -530,7 +530,7 @@ class ImagePaint(Paint)
    #
    public set_window(x)
       self.image_window := x
-      return self
+      link
    end
 
    #
@@ -538,7 +538,7 @@ class ImagePaint(Paint)
    #
    public set_max_w(w)
       self.max_w := w
-      return self
+      link
    end
 
    #
@@ -546,7 +546,7 @@ class ImagePaint(Paint)
    #
    public set_max_h(h)
       self.max_h := h
-      return self
+      link
    end
 
    #
@@ -555,7 +555,7 @@ class ImagePaint(Paint)
    public set_max_size(w, h)
       self.max_w := w
       self.max_h := h
-      return self
+      link
    end
    
    # This setting controls how the image will be expanded if its size
@@ -575,7 +575,7 @@ class ImagePaint(Paint)
    #
    public set_fill_dimensions(n)
       self.fill_dimensions := n
-      return self
+      link
    end
 
    public override initially(c)

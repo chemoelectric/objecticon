@@ -31,7 +31,7 @@ class AttList()
       insert(attribute_defs, name, def)
       if \def.def_type == "ID" then
          has_id := &yes
-      return self
+      link
    end
 
    public new()

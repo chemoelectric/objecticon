@@ -76,7 +76,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
       # Include the parent's tab area as a drop zone
       if (self.parent.x <= c.mx < self.parent.x + self.parent.w) & 
          (self.parent.y <= c.my < self.parent.y + self.parent.h) then
-         return self
+         link
    end
 
    #

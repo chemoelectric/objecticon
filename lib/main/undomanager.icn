@@ -27,7 +27,7 @@ class UndoManager(CompoundEdit)
          last := l[index]
          l[index].redo()
          index +:= 1
-         return self
+         link
       }
    end
 
@@ -38,7 +38,7 @@ class UndoManager(CompoundEdit)
          index -:= 1
          last := l[index]
          l[index].undo()
-         return self
+         link
       }
    end
 
@@ -54,7 +54,7 @@ class UndoManager(CompoundEdit)
 
    public set_limit(limit)
       self.limit := limit
-      return self
+      link
    end
 
    public override add_edit(other)
@@ -75,7 +75,7 @@ class UndoManager(CompoundEdit)
          index -:= 1
          pop(l)
       }
-      return self
+      link
    end
 
    #
@@ -99,7 +99,7 @@ class UndoManager(CompoundEdit)
    public override clear()
       CompoundEdit.clear()
       self.index := 1
-      return self
+      link
    end
 
    public override new()

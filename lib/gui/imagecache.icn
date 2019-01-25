@@ -111,7 +111,7 @@ final abstract class ImageCache()
       if member(names, name) then
          runerr("ImageCache duplicate name key", name)
       insert(names, name, data)
-      return ImageCache
+      link
    end
 
    #
@@ -140,7 +140,7 @@ final abstract class ImageCache()
       if member(imap, key) then
          runerr("ImageCache duplicate image key", key)
       insert(imap, key, win)
-      return ImageCache
+      link
    end
 
    #

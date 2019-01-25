@@ -16,7 +16,7 @@ abstract class SelectionList()
       /self.selection := 1
       constrain_selection()
       apply_selection()
-      return self
+      link
    end
 
    #
@@ -28,7 +28,7 @@ abstract class SelectionList()
       self.selection := x
       constrain_selection()
       apply_selection(ev)
-      return self
+      link
    end
 
    #
@@ -41,7 +41,7 @@ abstract class SelectionList()
          self.selection <:= 1
          self.selection >:= *self.selection_list
       }
-      return self
+      link
    end
 
    #
@@ -81,7 +81,7 @@ abstract class SelectionList()
    public set_selection_list_only(x)
       self.selection_list := x
       constrain_selection()
-      return self
+      link
    end
 
    #
@@ -94,7 +94,7 @@ abstract class SelectionList()
    public set_selection_only(x)
       self.selection := x
       constrain_selection()
-      return self
+      link
    end
 
    public abstract apply_selection(ev)

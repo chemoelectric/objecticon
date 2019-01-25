@@ -43,7 +43,7 @@ class Sizer(Component, HasOrientation)
    public set_range(lo, hi)
       self.lo := lo
       self.hi := hi
-      return self
+      link
    end
 
    #
@@ -67,7 +67,7 @@ class Sizer(Component, HasOrientation)
    #
    public set_show_inter(s)
       self.show_inter_flag := need_flag(s)
-      return self
+      link
    end
 
    public override display()

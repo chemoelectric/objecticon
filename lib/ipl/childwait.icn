@@ -23,7 +23,7 @@ final abstract class ChildWait()
    #
    public static add_pid(pid, on_exit)
       insert(waiting, Waiting(pid, on_exit))
-      return ChildWait
+      link
    end
 
    private static child_cleanup()

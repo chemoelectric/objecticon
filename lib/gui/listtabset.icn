@@ -38,19 +38,19 @@ class ListTabSet(Component)
       self.dl.object_set_selections([x])
       self.dl.object_set_cursor(x)
       synch()
-      return self
+      link
    end
 
    public add_tab(t, i)
       self.oa.add(t, i)
       self.dl.contents_changed()
-      return self
+      link
    end
 
    public remove_tab(t)
       self.oa.remove(t)
       self.dl.contents_changed()
-      return self
+      link
    end
 
    public on_sel_change(e)

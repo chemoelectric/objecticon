@@ -26,7 +26,7 @@ class HttpRequest(MimeHeaders)
    #
    public set_url(url)
       self.url := need_URL(url)
-      return self
+      link
    end
 
    #
@@ -36,7 +36,7 @@ class HttpRequest(MimeHeaders)
    public set_range(s, e)
       self.range_start := s
       self.range_end := e
-      return self
+      link
    end
 
    #
@@ -48,7 +48,7 @@ class HttpRequest(MimeHeaders)
       set_input_stream(StringStream(URL.make_cgi_string(t)))
       set_method("POST")
       set_content_type("application/x-www-form-urlencoded")
-      return self
+      link
    end
 
    #
@@ -67,7 +67,7 @@ class HttpRequest(MimeHeaders)
       set_input_stream(StringStream(s))
       set_method("POST")
       set_content_type(m.get_first_header("Content-Type"))
-      return self
+      link
    end
 
    #
@@ -79,7 +79,7 @@ class HttpRequest(MimeHeaders)
       if is(content_type, ContentType) then
          content_type := content_type.to_rfc2616()
       self.content_type := content_type
-      return self
+      link
    end
 
    #
@@ -88,7 +88,7 @@ class HttpRequest(MimeHeaders)
    #
    public set_method(method)
       self.method := method
-      return self
+      link
    end
 
    #
@@ -96,7 +96,7 @@ class HttpRequest(MimeHeaders)
    #
    public set_referer(s)
       self.referer := s
-      return self
+      link
    end
 
    #
@@ -104,7 +104,7 @@ class HttpRequest(MimeHeaders)
    #
    public set_input_stream(f)
       self.input_stream := f
-      return self
+      link
    end
 
    #
@@ -113,7 +113,7 @@ class HttpRequest(MimeHeaders)
    #
    public set_output_stream(f)
       self.output_stream := f
-      return self
+      link
    end
 
    #
@@ -122,7 +122,7 @@ class HttpRequest(MimeHeaders)
    #
    public set_helper(x)
       self.helper := x
-      return self
+      link
    end
 
    public override new()

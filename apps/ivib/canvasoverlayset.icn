@@ -63,10 +63,10 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
       local o
       CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
-         return self
+         link
       if o := self.which_one.which_cursor_over(e) then
          return o
-      return self
+      link
    end
 
    #

@@ -92,7 +92,7 @@ class MimeHeaders()
    #
    public add_header(key, val)
       put(headers.member(key), val) | headers.insert(key, [val])
-      return self
+      link
    end
 
    #
@@ -101,7 +101,7 @@ class MimeHeaders()
    #
    public set_header(key, val)
       headers.insert(key, [val])
-      return self
+      link
    end
 
    #
@@ -109,7 +109,7 @@ class MimeHeaders()
    #
    public unset_header(key)
       headers.delete(key)
-      return self
+      link
    end
 
    #

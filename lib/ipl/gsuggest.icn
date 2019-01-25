@@ -23,7 +23,7 @@ abstract class GSuggestField(SuggestField)
 
    public set_domain(s)
       domain := s
-      return self
+      link
    end
 
    public override handle_tab(ev)
@@ -48,7 +48,7 @@ class GoogleSuggestField(GSuggestField)
    # Set the language, by default "en"
    public set_lang(s)
       lang := s
-      return self
+      link
    end
 
    private textify(n)

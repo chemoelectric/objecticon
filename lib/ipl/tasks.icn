@@ -24,7 +24,7 @@ class Semaphore()
             # Interrupted/timeout
             fail
       }
-      return self
+      link
    end
 
    # Perform a signal on the semaphore.
@@ -34,7 +34,7 @@ class Semaphore()
          t.notify()
       else
          n +:= 1
-      return self
+      link
    end
 
    # Create a new semaphore with initial value `n`, default 0.

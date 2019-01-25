@@ -99,7 +99,7 @@ package class KeyTable()
       } else
          insert(t, code, l := [])
       put(l, KeyEntry(bits, mask, val, data))
-      return self
+      link
    end
 
    # Remove a specific bits/mask entry for code or, with just one
@@ -120,7 +120,7 @@ package class KeyTable()
             }
          }
       }
-      return self
+      link
    end
 
    public lookup(code, i)
@@ -428,7 +428,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    public set_vt_width(n)
       n := need_integer(n, 1)
       self.vt_width := n
-      return self
+      link
    end
 
    # Set the height of the vt in lines.  The default is 25.  Only used
@@ -437,7 +437,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    public set_vt_height(n)
       n := need_integer(n, 1)
       self.vt_height := n
-      return self
+      link
    end
 
    public override get_default_width()
@@ -685,7 +685,7 @@ class Vt(LineBasedScrollArea, MenuMode)
                synch_font(seg.attr)
          }
       }
-      return self
+      link
    end
 
    public override finally()
@@ -701,7 +701,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    public input(s)
       got := need_string(s)
       @input_handler_coex
-      return self
+      link
    end
 
    private static is_partial_utf8(s)
@@ -1115,7 +1115,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_verbose(f)
       self.verbose_flag := need_flag(f)
-      return self
+      link
    end
 
    #
@@ -1123,7 +1123,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_dont_quieten(f)
       self.dont_quieten_flag := need_flag(f)
-      return self
+      link
    end
 
    # Set the fg colour to use in reverse mode.
@@ -1134,7 +1134,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          if is_live() then
             view.reset()
       }
-      return self
+      link
    end
 
    #
@@ -1146,7 +1146,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          if is_live() then
             view.reset()
       }
-      return self
+      link
    end
 
    # Set the fg colour to use in normal (non-reverse) mode.
@@ -1157,7 +1157,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          if is_live() then
             view.reset()
       }
-      return self
+      link
    end
 
    #
@@ -1169,7 +1169,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          if is_live() then
             view.reset()
       }
-      return self
+      link
    end
 
    #
@@ -1185,7 +1185,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             compute_and_invalidate()
          }
       }
-      return self
+      link
    end
 
    #
@@ -2095,7 +2095,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private clear_mark()
       reset_search()
       text_selection := mark_x := mark_y := &null
-      return self
+      link
    end
 
    private static line_len(l)
@@ -2245,7 +2245,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          quieten_cursor_and_clear_msg()
          goto_bottom()
       }
-      return self
+      link
    end
 
    private handle_default_key(e)
@@ -2332,7 +2332,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public reset_custom_keys()
       custom_keys := KeyTable()
-      return self
+      link
    end
 
    private invalidate_link(l)
@@ -2351,7 +2351,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          last_highlight := l
          invalidate_link(\last_highlight)
       }
-      return self
+      link
    end
 
    private set_highlight(l)
@@ -2361,7 +2361,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          highlight := l
          invalidate_link(\highlight)
       }
-      return self
+      link
    end
 
    private col_for_x(x)
@@ -2672,7 +2672,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_ui(ui)
       self.ui := ui
-      return self
+      link
    end
 
    public override should_close(e)
@@ -2806,7 +2806,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          search_term := map(s)
          do_search_prev()
       }
-      return self
+      link
    end
 
    public do_search_prev()
@@ -2830,7 +2830,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       if /prev := \last then
          matching := num
       done_search(prev, matching, num)
-      return self
+      link
    end
 
    public do_search_next()
@@ -2855,7 +2855,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       if /nxt := \first then
          matching := 1
       done_search(nxt, matching, num)
-      return self
+      link
    end
 
    private done_search(pos, matching, num)

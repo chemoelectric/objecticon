@@ -593,12 +593,12 @@ class Scan()
       s := need_text(s)
       ksubject := s
       kpos := 1
-      return self
+      link
    end
 
    public set_pos(i)
       kpos := cvpos(i) | fail
-      return self
+      link
    end
 
    private cvpos(i)

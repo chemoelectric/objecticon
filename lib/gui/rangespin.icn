@@ -52,7 +52,7 @@ class RangeSpin(Spin)
    public set_range(lo, hi)
       self.lo := lo
       self.hi := hi
-      return self
+      link
    end
 
    #
@@ -65,7 +65,7 @@ class RangeSpin(Spin)
       if is_live() then
          view.remove_wattrib(WAttrib.FG).reset()
       last_val := x
-      return self
+      link
    end
 
    #
@@ -75,7 +75,7 @@ class RangeSpin(Spin)
       x <:= \self.lo
       x >:= \self.hi
       view.assign_contents(x,, ev, coalesce)
-      return self
+      link
    end
 
    #
@@ -83,7 +83,7 @@ class RangeSpin(Spin)
    #
    public set_increment_size(x)
       self.increment_size := x
-      return self
+      link
    end
 
    public on_textfield(ev, src, type)

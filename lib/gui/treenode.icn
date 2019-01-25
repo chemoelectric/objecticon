@@ -71,7 +71,7 @@ class TreeNode()
       every n := Seq{traverse_all_postorder()} do
          if \force | *n.children > 0 then
             n.is_expanded_flag := &yes
-      return self
+      link
    end
 
    #
@@ -84,7 +84,7 @@ class TreeNode()
       n := self
       while n := n.get_parent() do
          n.set_expanded(&yes)
-      return self
+      link
    end
 
    #
@@ -92,7 +92,7 @@ class TreeNode()
    #
    public set_label(x)
       self.label := x
-      return self
+      link
    end
 
    #
@@ -114,7 +114,7 @@ class TreeNode()
    #
    public set_icon_paint(i1, i2, i3)
       self.icon_paint := [i1, i2, i3]
-      return self
+      link
    end
 
    #
@@ -130,7 +130,7 @@ class TreeNode()
       /i := 0
       insert(self.children, i, n) | fail
       n.parent := self
-      return self
+      link
    end
 
    #
@@ -161,7 +161,7 @@ class TreeNode()
       c := self.children[i] | fail
       delete(self.children, i)
       c.parent := &null
-      return self
+      link
    end
 
    #
@@ -194,7 +194,7 @@ class TreeNode()
    #
    public reposition_index(i, j)
       lmove(children, i, j) | fail
-      return self
+      link
    end
 
    # Remove the children in the range `i:j`, returning the
@@ -224,7 +224,7 @@ class TreeNode()
    public add_list(l, i)
       linsert(children, l, i) | fail
       every (!l).parent := self
-      return self
+      link
    end
 
    # Move all the children of `TreeNode` `other`, to this
@@ -261,7 +261,7 @@ class TreeNode()
    #
    public set_always_expandable(s)
       self.always_expandable_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -270,7 +270,7 @@ class TreeNode()
    #
    public set_expanded(s)
       self.is_expanded_flag := need_flag(s)
-      return self
+      link
    end
       
    #
@@ -279,7 +279,7 @@ class TreeNode()
    #
    public toggle_expanded()
       self.is_expanded_flag := toggle_flag(self.is_expanded_flag)
-      return self
+      link
    end
 
    #
@@ -295,7 +295,7 @@ class TreeNode()
    public clear_children()
       every (!children).parent := &null
       clear(children)
-      return self
+      link
    end
 
    public new()

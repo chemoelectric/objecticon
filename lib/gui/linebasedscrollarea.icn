@@ -156,7 +156,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    public goto_pos(line, horiz)
       goto_first(\line)
       set_area_x(\horiz)
-      return self
+      link
    end
 
    #
@@ -164,7 +164,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    public goto_first(line)
       set_area_y(get_cum_line_height(line))
-      return self
+      link
    end
 
    #
@@ -172,7 +172,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    public goto_last(line)
       set_area_y(get_cum_line_height(line + 1) - view.h)
-      return self
+      link
    end
 
    #
@@ -187,7 +187,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
          goto_first(line)
       else if line >= i.last then
          goto_last(line)
-      return self
+      link
    end
 
    #
@@ -196,7 +196,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    public center_line(line)
       set_area_y(get_cum_line_height(line) + get_height_for_line(line) / 2 - view.h / 2)
-      return self
+      link
    end
 
    #
@@ -207,7 +207,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       /i := get_line_info()
       if \i & (i.first <= line <= i.last) then
          view.invalidate(get_line_rect(line))
-      return self
+      link
    end
 
    #
@@ -219,7 +219,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       /i := get_line_info()
       if \i & t := range(line1, line2, i.first, i.last) then
          view.invalidate(get_line_rect(t.lo).union(get_line_rect(t.hi)))
-      return self
+      link
    end
 
    # Return a `Rect` (in dialog-based coordinates) indicating the area
@@ -336,7 +336,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    public invalidate_line_height()
       self.subject_height := self.line_height := self.cum_line_height := &null
-      return self
+      link
    end
 
    #
@@ -374,7 +374,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    public invalidate_line_count()
       self.subject_height := self.line_count := &null
-      return self
+      link
    end
 
    public override calculate_subject_height()

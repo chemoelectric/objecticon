@@ -20,7 +20,7 @@ class ContentType()
    #
    public set_type(t)
       self.type := t
-      return self
+      link
    end
 
    #
@@ -35,7 +35,7 @@ class ContentType()
    #
    public set_subtype(s)
       self.subtype := s
-      return self
+      link
    end
 
    #
@@ -62,7 +62,7 @@ class ContentType()
    #
    public set_parameter(key, value)
       parameters.insert(key, value)
-      return self
+      link
    end
 
    public static parse_rfc2616(s)

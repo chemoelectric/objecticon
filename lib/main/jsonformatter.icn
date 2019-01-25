@@ -35,7 +35,7 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    #
    public set_true(x)
       self.true := x
-      return self
+      link
    end
 
    #
@@ -43,7 +43,7 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    #
    public set_false(x)
       self.false := x
-      return self
+      link
    end
 
    #
@@ -54,7 +54,7 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    #
    public set_null(x)
       self.null := x
-      return self
+      link
    end
 
    public override out(s)
@@ -68,7 +68,7 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    public override close()
       if \close_underlying_flag then
          file.close() | fail
-      return self
+      link
    end
 
    #
@@ -163,7 +163,7 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    #
    public set_indent(n)
       self.indent := n
-      return self
+      link
    end
 end
 

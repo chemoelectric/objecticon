@@ -23,7 +23,7 @@ abstract class Element(Node)
    #
    public set_name(s)
       name := s
-      return self
+      link
    end
 
    #
@@ -45,7 +45,7 @@ abstract class Element(Node)
    #
    public set_attribute(key, value)
       insert(attributes, key, value)
-      return self
+      link
    end
 
    #

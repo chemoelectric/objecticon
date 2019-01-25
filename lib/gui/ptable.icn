@@ -26,7 +26,7 @@ abstract class BasePTableColumn()
    #
    public set_weight(w)
       self.weight := w
-      return self
+      link
    end
 
    #
@@ -37,7 +37,7 @@ abstract class BasePTableColumn()
    #
    public set_fixed_width(x)
       self.fixed_width := x
-      return self
+      link
    end
 
    #
@@ -99,7 +99,7 @@ class PTableColumn(BasePTableColumn)
    # :  `x` - A constant from `Align`
    public set_align(x)
       self.align := x
-      return self
+      link
    end
 
    public override calculate_line_height(W)
@@ -162,7 +162,7 @@ class ItemPaintPTableColumn(BasePTableColumn)
          self.item_paint.initially(ptable)
       } else
          self.item_paint := r
-      return self
+      link
    end
 
    #
@@ -175,12 +175,12 @@ class ItemPaintPTableColumn(BasePTableColumn)
          self.item_border.initially(ptable)
       } else
          self.item_border := b
-      return self
+      link
    end
 
    public set_align(x)
       self.item_border.x_align := x
-      return self
+      link
    end
 
    public override calculate_line_height(W)
@@ -231,7 +231,7 @@ class PTable(SelectableScrollArea)
    #
    public set_inset(n)
       self.inset := n
-      return self
+      link
    end
 
    #
@@ -247,7 +247,7 @@ class PTable(SelectableScrollArea)
       c.ptable := self
       if is_initialized() then
          c.initially()
-      return self
+      link
    end
 
    #
@@ -257,7 +257,7 @@ class PTable(SelectableScrollArea)
    #
    public remove_column(c)
       remove_column_index(get_column_index(c))
-      return self
+      link
    end
 
    #
@@ -271,7 +271,7 @@ class PTable(SelectableScrollArea)
       delete(cols, i)
       if is_initialized() then
          c.finally()
-      return self
+      link
    end
 
    #

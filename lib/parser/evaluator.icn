@@ -43,17 +43,17 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
 
    public set_vars(t)
       self.vars := t
-      return self
+      link
    end
 
    public set_consts(t)
       self.consts := t
-      return self
+      link
    end
 
    public set_write_globals(f)
       write_globals_flag := need_flag(f)
-      return self
+      link
    end
 
    public new(v, c)
@@ -502,7 +502,7 @@ class Evaluator()
 
    public set_env(env)
       self.env := env
-      return self
+      link
    end
 
    public set_node(n)
@@ -513,12 +513,12 @@ class Evaluator()
          node := loops := scans := &null
          fail
       }
-      return self
+      link
    end
 
    public set_imports(t)
       self.imports := t
-      return self
+      link
    end
 
    public get_imports()

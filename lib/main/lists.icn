@@ -114,7 +114,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    public clear()
       while delete(1)
-      return self
+      link
    end
 
    #
@@ -263,12 +263,12 @@ class BuiltinList(List)
 
    public override push(x)
       default.push(l, x)
-      return self
+      link
    end
 
    public override put(x)
       default.put(l, x)
-      return self
+      link
    end
 
    public override keyof(x)
@@ -293,7 +293,7 @@ class BuiltinList(List)
 
    public override clear()
       default.clear(l)
-      return self
+      link
    end
 
    public override get_mode()
@@ -366,7 +366,7 @@ class LinkedList(List)
             n.nxt := LinkedListNode(n.nxt, x)
          }
       }
-      return self
+      link
    end
 
    public override delete(i)
@@ -379,7 +379,7 @@ class LinkedList(List)
          n := node_at(i - 1) | fail
          n.nxt := (\n.nxt).nxt | fail
       }
-      return self
+      link
    end
 
    public override at(i)
@@ -460,7 +460,7 @@ class LinkedList(List)
 
    public override clear()
       nhead := &null
-      return self
+      link
    end
 
    public override get_mode()
@@ -510,7 +510,7 @@ class LinkedList(List)
    #
    public set_list(other)
       nhead := other.nhead
-      return self
+      link
    end
 
    #

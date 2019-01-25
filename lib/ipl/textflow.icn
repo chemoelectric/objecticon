@@ -99,7 +99,7 @@ class CompOut(Rect)
    public set_height_from_width()
       h := c.get_preferred_height(w)
       h <:= integer(c.get_constraint("fix_h"))
-      return self
+      link
    end
 
    public override new(attr, c, align, pw, maxw)
@@ -318,12 +318,12 @@ class TextFlow(Component, HasLastHighlight)
 
    public set_trim(s)
       self.trim_flag := need_flag(s)
-      return self
+      link
    end
 
    public set_v_align(v)
       self.v_align := v
-      return self
+      link
    end
 
    public override reset_layout()
@@ -334,7 +334,7 @@ class TextFlow(Component, HasLastHighlight)
 
    public set_dominant_width(x)
       self.dominant_width := x
-      return self
+      link
    end
 
    public override get_default_width()
@@ -976,7 +976,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    package is_top_level()
-      return self === browser.view.inner
+      succeed self === browser.view.inner
    end
 
    private compute_component(W, cmd)
@@ -1464,7 +1464,7 @@ class TextFlow(Component, HasLastHighlight)
             set_pointer("hand1")
          }
       }
-      return self
+      link
    end
 
    package override save_last_highlight(he)
@@ -1477,7 +1477,7 @@ class TextFlow(Component, HasLastHighlight)
                if last_highlight === u then {
                   he.last_highlight_index := n
                   he.last_highlight := u
-                  return self
+                  link
                }
             }
          }
@@ -1493,7 +1493,7 @@ class TextFlow(Component, HasLastHighlight)
                if n = 0 then {
                   URL.equiv(url, u) | fail
                   last_highlight := u
-                  return self
+                  link
                }
             }
          }
@@ -1506,7 +1506,7 @@ class TextFlow(Component, HasLastHighlight)
          last_highlight := u
          invalidate_url(\last_highlight)
       }
-      return self
+      link
    end
 
    private set_highlight(u)
@@ -1516,7 +1516,7 @@ class TextFlow(Component, HasLastHighlight)
          highlight := u
          invalidate_url(\highlight)
       }
-      return self
+      link
    end
 
    public override new(browser)

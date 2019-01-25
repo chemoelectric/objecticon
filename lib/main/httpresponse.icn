@@ -24,7 +24,7 @@ class HttpResponse(MimeHeaders)
    #
    public set_url(url)
       self.url := need_URL(url)
-      return self
+      link
    end
 
    #
@@ -54,7 +54,7 @@ class HttpResponse(MimeHeaders)
    #
    public set_status(s)
       self.status := s
-      return self
+      link
    end
 
    #
@@ -93,6 +93,6 @@ class HttpResponse(MimeHeaders)
    #
    public set_previous_response(other)
       self.previous_response := other
-      return self
+      link
    end
 end

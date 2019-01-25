@@ -145,7 +145,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_tooltip(x)
       self.tooltip := x
-      return self
+      link
    end
 
    #
@@ -160,7 +160,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_tooltip_start_delay(x)
       self.tooltip_start_delay := x
-      return self
+      link
    end
 
    #
@@ -176,7 +176,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_tooltip_end_delay(x)
       self.tooltip_end_delay := x
-      return self
+      link
    end
 
    #
@@ -209,7 +209,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_pointer(x)
       self.pointer := x
-      return self
+      link
    end
 
    #
@@ -230,7 +230,7 @@ class Component(Rect,XYAlign,Connectable)
          self.invalidate()
       } else
          self.border := b
-      return self
+      link
    end
 
    #
@@ -299,7 +299,7 @@ class Component(Rect,XYAlign,Connectable)
          hidden_change()
          invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -353,7 +353,7 @@ class Component(Rect,XYAlign,Connectable)
       need_flag(s)
       if draw_own_shading_flag ~===:= s then
          invalidate()
-      return self
+      link
    end
 
    #
@@ -363,7 +363,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_preferred_focus(c)
       self.preferred_focus := c
-      return self
+      link
    end
 
    #
@@ -408,7 +408,7 @@ class Component(Rect,XYAlign,Connectable)
       is_shaded_flag := toggle_flag(is_shaded_flag)
       shaded_change()
       invalidate()
-      return self
+      link
    end
 
    #
@@ -420,7 +420,7 @@ class Component(Rect,XYAlign,Connectable)
          shaded_change()
          invalidate()
       }
-      return self
+      link
    end
 
    #
@@ -428,7 +428,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_accepts_focus(s)
       self.accepts_focus_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -468,7 +468,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_wattrib(attr, val)
       insert(self.wattribs, attr, val)
-      return self
+      link
    end
 
    #
@@ -476,7 +476,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public remove_wattrib(attr)
       delete(self.wattribs, attr)
-      return self
+      link
    end
 
    #
@@ -492,7 +492,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public clear_wattribs()
       clear(self.wattribs)
-      return self
+      link
    end
 
    #
@@ -500,7 +500,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_all_wattribs(t)
       self.wattribs := copy(t)
-      return self
+      link
    end
 
    #
@@ -514,7 +514,7 @@ class Component(Rect,XYAlign,Connectable)
          set_wattrib(attr, val)
       else
          remove_wattrib(attr)
-      return self
+      link
    end
 
    #
@@ -522,7 +522,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_constraint(key, val)
       insert(self.constraints, key, val)
-      return self
+      link
    end
 
    #
@@ -530,7 +530,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public remove_constraint(key)
       delete(self.constraints, key)
-      return self
+      link
    end
 
    #
@@ -545,7 +545,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public clear_constraints()
       clear(self.constraints)
-      return self
+      link
    end      
 
    #
@@ -560,7 +560,7 @@ class Component(Rect,XYAlign,Connectable)
       self.initially()
       self.layout()
       self.invalidate()
-      return self
+      link
    end
 
    #
@@ -674,7 +674,7 @@ class Component(Rect,XYAlign,Connectable)
    public set_pos(x_spec, y_spec)
       self.x_spec := x_spec
       self.y_spec := y_spec
-      return self
+      link
    end
 
    #
@@ -684,7 +684,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_x(x_spec)
       self.x_spec := x_spec
-      return self
+      link
    end
 
    #
@@ -694,7 +694,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_y(y_spec)
       self.y_spec := y_spec
-      return self
+      link
    end
 
    #
@@ -704,7 +704,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_z(z)
       self.z := z
-      return self
+      link
    end
 
    #
@@ -717,7 +717,7 @@ class Component(Rect,XYAlign,Connectable)
    public set_size(w_spec, h_spec)
       self.w_spec := w_spec
       self.h_spec := h_spec
-      return self
+      link
    end
 
    #
@@ -727,7 +727,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_width(w_spec)
       self.w_spec := w_spec
-      return self
+      link
    end
 
    #
@@ -737,7 +737,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_height(h_spec)
       self.h_spec := h_spec
-      return self
+      link
    end
 
    # Set the alignment of the component.  Options for `x_align` are
@@ -753,7 +753,7 @@ class Component(Rect,XYAlign,Connectable)
    public set_align(x_align, y_align)
       self.x_align := x_align
       self.y_align := y_align
-      return self
+      link
    end
 
    #
@@ -763,7 +763,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_x_align(x_align)
       self.x_align := x_align
-      return self
+      link
    end
 
    #
@@ -773,7 +773,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_y_align(y_align)
       self.y_align := y_align
-      return self
+      link
    end
 
    #
@@ -787,7 +787,7 @@ class Component(Rect,XYAlign,Connectable)
       self.y_spec := y_spec
       self.w_spec := w_spec
       self.h_spec := h_spec
-      return self
+      link
    end
 
    #
@@ -795,7 +795,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_tab_ord(x)
       self.tab_ord := x
-      return self
+      link
    end
 
    #
@@ -804,7 +804,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_accel(k)
       self.accel := k
-      return self
+      link
    end
 
    #
@@ -826,7 +826,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_parent(c)
       self.parent := c
-      return self
+      link
    end
 
    # Generate the chain of components starting with this component and
@@ -886,7 +886,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_parent_dialog(c)
       self.parent_dialog := c
-      return self
+      link
    end
 
    #
@@ -947,7 +947,7 @@ class Component(Rect,XYAlign,Connectable)
    public resize()
       compute_absolutes()
       layout()
-      return self
+      link
    end
 
    public get_default_width()
@@ -962,7 +962,7 @@ class Component(Rect,XYAlign,Connectable)
    public set_layout(l)
       self.layout_delegate := l
       (\l).set_parent(self)
-      return self
+      link
    end
 
    #
@@ -994,7 +994,7 @@ class Component(Rect,XYAlign,Connectable)
    public reset_all_layouts()
       reset_layout()
       every (!self.children).reset_all_layouts()
-      return self
+      link
    end
 
    #
@@ -1002,7 +1002,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public reset_layout()
       (\layout_delegate).reset()
-      return self
+      link
    end
 
    #
@@ -1011,7 +1011,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public reset_layout_chain()
       every gen_parents().reset_layout()
-      return self
+      link
    end
 
    #
@@ -1104,7 +1104,7 @@ class Component(Rect,XYAlign,Connectable)
          # wants to handle its tabs' accelerator keys.
 
          if match_accel(e) then
-            return self
+            link
 
          every c := !self.children do {
             if f := c.find_accel(e) then
@@ -1148,14 +1148,14 @@ class Component(Rect,XYAlign,Connectable)
       if self.is_live() & self.is_unhidden() then
          parent_dialog.invalidate_rect(if /r then get_clip_rect()
                                        else r.intersect(get_clip_rect()))
-      return self
+      link
    end
 
    # Invoke layout() and return self.
    #
    public do_layout()
       layout()
-      return self
+      link
    end
 
    #
@@ -1215,7 +1215,7 @@ class Component(Rect,XYAlign,Connectable)
          compute_tab_order()
          c.initially()
       }
-      return self
+      link
    end
 
    #
@@ -1253,7 +1253,7 @@ class Component(Rect,XYAlign,Connectable)
          compute_tab_order()
          c.finally()
       }
-      return self
+      link
    end
 
    #
@@ -1290,7 +1290,7 @@ class Component(Rect,XYAlign,Connectable)
          compute_z_order()
          compute_tab_order()
       }
-      return self
+      link
    end
 
    #
@@ -1338,7 +1338,7 @@ class Component(Rect,XYAlign,Connectable)
          compute_tab_order()
          every (!l).initially()
       }
-      return self
+      link
    end
 
    # Move all the children of `other`, to this `Component`, adding
@@ -1480,7 +1480,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_allow_drag(s)
       self.allow_drag_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -1488,7 +1488,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_allow_drop(s)
       self.allow_drop_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -1499,7 +1499,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_wattrib_ancestor(c)
       self.wattrib_ancestor := c
-      return self
+      link
    end
 
    #
@@ -1507,7 +1507,7 @@ class Component(Rect,XYAlign,Connectable)
    #
    public set_show_layout(s)
       self.show_layout_flag := need_flag(s)
-      return self
+      link
    end
 
    #

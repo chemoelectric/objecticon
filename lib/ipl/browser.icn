@@ -86,7 +86,7 @@ abstract class CacheEntry()
 
    public set_expiry(exp)
       self.expiry := exp
-      return self
+      link
    end
 
    public hasnt_expired(now)
@@ -201,7 +201,7 @@ class Cache()
 
    public set_size(x)
       self.size := x
-      return self
+      link
    end
 
    public tidy()
@@ -223,7 +223,7 @@ class Cache()
          if is(ce, CacheData) then
             total -:= *ce.data
       }
-      return self
+      link
    end
 
    public get(url)
@@ -239,24 +239,24 @@ class Cache()
 
    public clear()
       default.clear(t)
-      return self
+      link
    end
 
    public update_expiry(url, exp)
       local ce
       ce := member(t, url.str()) | fail
       ce.set_expiry(exp)
-      return self
+      link
    end
 
    public add_data(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
       insert(t, url.str(), CacheData(url, expiry, data, fname, content_type, content_disposition, last_modified, etag))
-      return self
+      link
    end
 
    public add_alias(url, expiry, dest)
       insert(t, url.str(), CacheAlias(url, expiry, dest))
-      return self
+      link
    end
 
    public create_url(expiry, data, fname, content_type, content_disposition)
@@ -900,7 +900,7 @@ class WorkerPool()
 
    public set_log_http(s)
       self.log_http_flag := need_flag(s)
-      return self
+      link
    end
 
    public initially()
@@ -921,7 +921,7 @@ class WorkerPool()
       every w := !workers do 
          if (\w.req).client === client then
             w.cancel()
-      return self
+      link
    end
 
    # Cancel an individual request
@@ -932,12 +932,12 @@ class WorkerPool()
             delete(l, i)
             if *l = 0 then
                delete(queue, req.client)
-            return self
+            link
          }
       }
       # Not found in queue, so look in the workers.
       get_worker(req).cancel()
-      return self
+      link
    end
 
    public get_worker(req)
@@ -958,7 +958,7 @@ class WorkerPool()
             w.task.notify()
             break
          }
-      return self
+      link
    end
 
    public queue_size()
@@ -1013,27 +1013,27 @@ class WorkerPool()
 
    public set_cookies(cookies)
       self.cookies := cookies
-      return self
+      link
    end
 
    public set_authentications(m)
       self.authentications := m
-      return self
+      link
    end
 
    public set_cache(c)
       self.cache := c
-      return self
+      link
    end
 
    public set_scheme_handlers(m)
       self.scheme_handlers := m
-      return self
+      link
    end
 
    public add_scheme_handler(scheme, func)
       insert(scheme_handlers, scheme, func)
-      return self
+      link
    end
 
    #
@@ -1041,7 +1041,7 @@ class WorkerPool()
    #
    public set_user_agent(s)
       self.user_agent := s
-      return self
+      link
    end
 
    public get_status()
@@ -1130,12 +1130,12 @@ class TblContent(Component)
 
    public set_hrules(r)
       self.hrules := r
-      return self
+      link
    end
 
    public set_vrules(r)
       self.vrules := r
-      return self
+      link
    end
 end
 
@@ -1298,7 +1298,7 @@ class Img(Image, HasLastHighlight)
          else
             browser.msg(over.str())
       }
-      return self
+      link
    end
 
    public override set_last_highlight(u)
@@ -1306,7 +1306,7 @@ class Img(Image, HasLastHighlight)
          last_highlight := u
          invalidate()
       }
-      return self
+      link
    end
 
    package override save_last_highlight(he)
@@ -1318,7 +1318,7 @@ class Img(Image, HasLastHighlight)
             if last_highlight === u then {
                he.last_highlight_index := n
                he.last_highlight := u
-               return self
+               link
             }
          }
       }
@@ -1332,7 +1332,7 @@ class Img(Image, HasLastHighlight)
             if n = 0 then {
                URL.equiv(url, u) | fail
                last_highlight := u
-               return self
+               link
             }
          }
       }
@@ -1348,7 +1348,7 @@ class Img(Image, HasLastHighlight)
          }
          highlight := u
       }
-      return self
+      link
    end
 
    private handle_lmdrag(e)
@@ -2716,7 +2716,7 @@ class Map()
 
    public add_area(area)
       put(l, area)
-      return self
+      link
    end
 
    public new()
@@ -3010,7 +3010,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          last_highlight_component.set_last_highlight()
       last_highlight_component := c
       last_highlight_component.set_last_highlight(u)
-      return self
+      link
    end
 
    private convert_color(el, name)
@@ -3076,12 +3076,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public link_left_clicked(url)
       (\ui).link_left_clicked(url)
-      return self
+      link
    end
 
    public link_middle_clicked(url)
       (\ui).link_middle_clicked(url)
-      return self
+      link
    end
 
    public create_link_menu(url)
@@ -3102,22 +3102,22 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public set_ui(ui)
       self.ui := ui
-      return self
+      link
    end
 
    public msg(s, n)
       (\ui).msg(s, n)
-      return self
+      link
    end
 
    public page_loaded()
       (\ui).page_loaded()
-      return self
+      link
    end
 
    public update_grey(gs)
       (\ui).update_grey(gs)
-      return self
+      link
    end
 
    public override get_authentication(httpc, dom, realm)
@@ -3138,7 +3138,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                             Yes{ running === 0 },
                             Yes{ /text_selection },
                             Yes{ /links_selection }))
-      return self
+      link
    end
 
    private page_fully_loaded()
@@ -3214,7 +3214,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       he := history[history_pos -:= 1] 
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
-      return self
+      link
    end
 
    public do_prev()
@@ -3223,14 +3223,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       he := history[history_pos +:= 1] 
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
-      return self
+      link
    end
 
    public do_jump(he)
       history_pos := keyof(history, he) | fail
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
-      return self
+      link
    end
 
    private redo_search()
@@ -3262,7 +3262,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       } else
          clear_searched()
       refresh()
-      return self
+      link
    end
 
    private clear_searched()
@@ -3277,13 +3277,13 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       highlighted_searched := t
       highlighted_searched.textflow.invalidate(highlighted_searched.get_bounds())
       ensure_region_visible(convert_to_area(highlighted_searched.get_bounds()).pad(scale(10), scale(30)))
-      return self
+      link
    end
 
    private reset_history_pos()
       if history_pos ~=:= keyof(history, curr_history_entry) then
          do_update_grey()
-      return self
+      link
    end
 
    public do_stop()
@@ -3291,14 +3291,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       # Since we may have done a navigate, then stopped it, we may as
       # well reset the history pos back to the thing we're viewing.
       reset_history_pos()
-      return self
+      link
    end
 
    public do_refresh()
       \curr_history_entry | fail
       goto(curr_history_entry.url, curr_history_entry.referer, 
            curr_history_entry.form_data, Worker.REFRESH)
-      return self
+      link
    end
 
    public browse_for_file(s)
@@ -3319,7 +3319,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public cancel()
       worker_pool.cancel_all(self)
-      return self
+      link
    end
 
    private enqueue(req)
@@ -3474,7 +3474,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    #
    public set_outermost_border(b)
       self.outermost_border := b
-      return self
+      link
    end
 
    # Convert string s to ucs based on charset cs.  If cs is utf-8, or
@@ -5022,12 +5022,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public set_worker_pool(worker_pool)
       self.worker_pool := worker_pool
       self.shared_worker_pool_flag := &yes
-      return self
+      link
    end
 
    public set_shared_worker_pool(s)
       self.shared_worker_pool_flag := need_flag(s)
-      return self
+      link
    end
 
    public goto(url, referer, form_data, kind)
@@ -5038,7 +5038,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          reset_history_pos()
       goto_externally(url) |
          enqueue(Req(self, url, referer, set_top_data, kind, form_data))
-      return self
+      link
    end
 
    private handle_lpress(e)
@@ -5507,7 +5507,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       view.reset()
       layout()
       invalidate()
-      return self
+      link
    end
 
    # Increase the fonts by 5%
@@ -5536,7 +5536,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    #
    public set_font_factor(n)
       self.font_factor := n
-      return self
+      link
    end
 
    #
@@ -5544,7 +5544,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    #
    public set_history_size(n)
       self.history_size := n
-      return self
+      link
    end
 
    public override handle_wheel_up(e)
@@ -5571,7 +5571,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       do_update_grey()
       he := history[history_pos]
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
-      return self
+      link
    end
 
    public override new()
@@ -5753,7 +5753,7 @@ class SimpleBrowser(Browser)
    public set_page(page)
       self.page := page
       goto(URL("page:"))
-      return self
+      link
    end
 
    private page_handler(worker)

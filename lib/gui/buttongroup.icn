@@ -38,7 +38,7 @@ class ButtonGroup()
    public add(c)
       insert(self.buttons, c)
       c.set_parent_button_group(self)
-      return self
+      link
    end
 
    #
@@ -49,7 +49,7 @@ class ButtonGroup()
    public remove(c)
       delete(self.buttons, c)
       c.set_parent_button_group()
-      return self
+      link
    end
 
    public new()

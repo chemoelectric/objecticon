@@ -71,7 +71,7 @@ class TabSet(Component)
    #
    public set_tabs_at_bottom(s)
       self.tabs_at_bottom_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -82,7 +82,7 @@ class TabSet(Component)
    #
    public set_remember_focus(s)
       self.remember_focus_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -91,7 +91,7 @@ class TabSet(Component)
    #
    public set_no_click_focus(s)
       self.no_click_focus_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -99,7 +99,7 @@ class TabSet(Component)
    #
    public set_draggable_tabs(s)
       allow_drop_flag := allow_drag_flag := need_flag(s)
-      return self
+      link
    end
 
    #
@@ -108,7 +108,7 @@ class TabSet(Component)
    #
    public set_prefer_one_row(s)
       self.prefer_one_row_flag := need_flag(s)
-      return self
+      link
    end
 
    public override keeps(e)
@@ -350,7 +350,7 @@ class TabSet(Component)
    #
    public set_which_one(x, dont_restore_flag)
       if which_one === x then
-         return self
+         link
       if is_initialized() then {
          maybe_remember_focus()
          which_one := x
@@ -361,7 +361,7 @@ class TabSet(Component)
          invalidate()
       } else
          which_one := x
-      return self
+      link
    end
 
    public set_which_highlight(x)
@@ -369,7 +369,7 @@ class TabSet(Component)
          self.which_highlight := x
          invalidate_tab_region()
       }
-      return self
+      link
    end
    
    public set_hidden_flags()
@@ -380,7 +380,7 @@ class TabSet(Component)
          else
             c.set_is_hidden(&yes)
       }
-      return self
+      link
    end
 
    #
@@ -490,7 +490,7 @@ class TabSet(Component)
 
    public invalidate_line_break()
       line_break := &null
-      return self
+      link
    end
 
    public override drag_reset(e)
