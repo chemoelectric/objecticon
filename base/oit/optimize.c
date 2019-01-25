@@ -580,7 +580,6 @@ static int changes(struct lnode *n)
             case Uop_Breakexpr: 
             case Uop_Create: 
             case Uop_Suspendexpr: 
-            case Uop_Succeedexpr: 
             case Uop_Returnexpr: {
                 /* x->child should = n */
                 return 1;
@@ -688,7 +687,7 @@ static int visit_init_field(struct lnode *n)
     struct lnode_field *x = (struct lnode_field *)n;
     struct lclass_field *f;
     f = lookup_field(vclass, x->fname);
-    if (f && f->flag == (M_Public | M_Static | M_Const)) {
+    if (f && ((f->flag & (M_Static | M_Const)) == (M_Static | M_Const))) {
         if (changes(n))
             f->const_flag = OTHER;
     }
