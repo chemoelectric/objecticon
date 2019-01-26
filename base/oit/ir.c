@@ -31,6 +31,7 @@ static int make_tmploc(struct ir_stack *st);
 static int make_mark(struct ir_stack *st);
 static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
+static int asgn_lhs_kpos(struct lnode *n, int);
 
 static int traverse_level;
 
@@ -653,6 +654,43 @@ static struct ir_tcasechoose *ir_tcasechoose(struct lnode *n, struct ir_tcaseini
     return res;
 }
 
+/*
+ * Return an op or mgop to do an assignment op.  The simpler mgop
+ * (without a failure case) is generated if the given node n
+ * guarantees that failure cannot occur (ie: &pos cannot be produced
+ * as a variable).
+ */
+static struct ir *ir_asgn(struct lnode *n,
+                          struct ir_var *lhs,
+                          struct ir_var *arg1,
+                          struct ir_var *arg2,
+                          int rval,
+                          int fail_label) 
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    if (asgn_lhs_kpos(x->child1, 0))
+        return (struct ir *)ir_op(n, lhs, Uop_Asgn, arg1, arg2, 0, rval, fail_label);
+    else
+        return (struct ir *)ir_mgop(n, lhs, Uop_Asgn1, arg1, arg2, rval);
+}
+
+/*
+ * Similar to ir_asgn above, but for the swap operation instead.
+ */
+static struct ir *ir_swap(struct lnode *n,
+                          struct ir_var *lhs,
+                          struct ir_var *arg1,
+                          struct ir_var *arg2,
+                          int rval,
+                          int fail_label) 
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    if (asgn_lhs_kpos(x->child1, 1) || asgn_lhs_kpos(x->child2, 1))
+        return (struct ir *)ir_op(n, lhs, Uop_Swap, arg1, arg2, 0, rval, fail_label);
+    else
+        return (struct ir *)ir_mgop(n, lhs, Uop_Swap1, arg1, arg2, rval);
+}
+
 static struct ir_var *make_tmp(struct ir_stack *st)
 {
     struct ir_var *v = IRAlloc(struct ir_var);
@@ -1054,7 +1092,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_goto(n, res->success));
             else
                 chunk3(body->success,
-                       ir_op(n, target, Uop_Asgn, lv, rv, 0, rval, body->resume),
+                       ir_asgn(n, target, lv, rv, rval, body->resume),
                        bounded ?
                        (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
                        (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
@@ -1204,7 +1242,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (aaop) {
                 chunk3(right->success, 
                        ir_mgop(n, tmp, aaop, lv, rv, 1),
-                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume),
+                       ir_asgn(n, target, lv, tmp, rval, right->resume),
                        ir_goto(n, res->success));
 
             } else {
@@ -1372,9 +1410,17 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (aaop) {
                 chunk3(right->success, 
                        ir_op(n, tmp, aaop, lv, rv, 0, 1, right->resume),
-                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume),
+                       ir_asgn(n, target, lv, tmp, rval, right->resume),
                        ir_goto(n, res->success));
 
+            } else if (n->op == Uop_Asgn) {
+                chunk2(right->success, 
+                       ir_asgn(n, target, lv, rv, rval, right->resume),
+                       ir_goto(n, res->success));
+            } else if (n->op == Uop_Swap) {
+                chunk2(right->success, 
+                       ir_swap(n, target, lv, rv, rval, right->resume),
+                       ir_goto(n, res->success));
             } else {
                 chunk2(right->success, 
                        ir_op(n, target, n->op, lv, rv, 0, rval, right->resume),
@@ -1482,7 +1528,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_goto(n, xc));
 
                 chunk2(xc, 
-                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, res->resume),
+                       ir_asgn(n, target, lv, tmp, rval, res->resume),
                        ir_goto(n, res->success));
             }
 
@@ -4178,4 +4224,63 @@ static void renumber_ir()
             }
         }
     }
+}
+
+/*
+ * Check whether the given node n might generate a variable which
+ * might cause an assign or swap to fail.  The second parameter
+ * indicates whether we are considering the swap case, which is more
+ * stringent.  For assign, we just need to decide whether &pos can be
+ * produced as a variable.  For swap we also need to exclude any
+ * subscript variables, since overlapping strings can cause a swap to
+ * fail (see oasgn.r).
+ * 
+ * Returns 1 if n may be failure-inducing, 0 if not.  Exotic cases
+ * aren't worth checking, so 1 is returned for many cases which aren't
+ * in fact failure-inducing.
+ */
+static int asgn_lhs_kpos(struct lnode *n, int swap)
+{
+    switch (n->op) {
+        case Uop_Keyword: {
+            int k = ((struct lnode_keyword *)n)->num;
+            switch (k) {
+                case K_POS:
+                    return 1;
+                default:
+                    return 0;
+            }
+        }
+
+        case Uop_Empty:
+        case Uop_Local: 
+        case Uop_Global:
+        case Uop_Const: 
+        case Uop_Field:
+            return 0;
+
+        case Uop_Bang:
+        case Uop_Random:
+        case Uop_Subsc:
+        case Uop_Sect:
+        case Uop_Sectp:
+        case Uop_Sectm:
+            return swap;
+
+        case Uop_Nonnull:
+        case Uop_Null: {	
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            return asgn_lhs_kpos(x->child, swap);
+        }
+
+        case Uop_Alt: {               /* Alternation */
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return asgn_lhs_kpos(x->child1, swap) || asgn_lhs_kpos(x->child2, swap);
+        }
+
+        default:
+            return 1;
+    }
+    /* Not reached */
+    return 1;
 }

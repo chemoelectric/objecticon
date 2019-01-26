@@ -1,5 +1,6 @@
 #include "rtt.h"
 #include "../h/version.h"
+#include "../h/opdefs.h"
 
 #define NotId 0  /* declarator is not simple identifier */
 #define IsId  1  /* declarator is simple identifier */
@@ -3322,9 +3323,29 @@ struct node *n;
        }
        if (has_rval)
            fprintf(out_file, "   _rval = GetWord;\n");
-       if (!monogenic)
-           fprintf(out_file, "   _failure_label = GetAddr;\n");
-    
+
+
+       if (!monogenic) {
+           /*
+            * Output special code for asgn and swap as they have
+            * additional versions of their instructions (asgn1 and
+            * swap1) which don't have failure labels.
+            */
+           if (strcmp(name, "asgn") == 0) {
+               fprintf(out_file, "   if (curr_op == %d)\n", Op_Asgn);
+               fprintf(out_file, "      _failure_label = GetAddr;\n");
+               fprintf(out_file, "   else\n");
+               fprintf(out_file, "      _failure_label = 0;\n");
+           } else if (strcmp(name, "swap") == 0) {
+               fprintf(out_file, "   if (curr_op == %d)\n", Op_Swap);
+               fprintf(out_file, "      _failure_label = GetAddr;\n");
+               fprintf(out_file, "   else\n");
+               fprintf(out_file, "      _failure_label = 0;\n");
+           }
+           else
+               fprintf(out_file, "   _failure_label = GetAddr;\n");
+       }    
+
        if (has_underef) {
            sym = params;
            /*
@@ -3371,7 +3392,6 @@ struct node *n;
 
        in_quick = 0;
        fprintf(out_file, "\n}\n");
-   } else {
    }
 }
 

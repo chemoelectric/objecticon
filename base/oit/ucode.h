@@ -83,6 +83,12 @@ extern struct ucode_op ucode_op_table[];
  * Ucode opcodes.
  */
 
+/*
+ * Values just used by ir.c and lcode.c; not valid in .u files.
+ */
+#define Uop_Asgn1       10
+#define Uop_Swap1       11
+
 
 /*
  * Binary ops
