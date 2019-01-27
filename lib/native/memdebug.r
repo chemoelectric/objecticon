@@ -864,7 +864,7 @@ static void outimagey(dptr d, struct frame *frame)
                     outimagex(&tmp);
                     /* Print the element key */
                     putc('[', out);
-                    tmp = TvtblBlk(*d).tref;
+                    tmp = TelemBlk(*d).tref;
                     outimagex(&tmp);
                     putc(']', out);
                     break;

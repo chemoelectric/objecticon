@@ -834,7 +834,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  /* Print the element key */
                  putc('[', f);
-                 tdp = TvtblBlk(*dp).tref;
+                 tdp = TelemBlk(*dp).tref;
                  outimage1(f, &tdp, noimage, stringlimit, listlimit);
                  putc(']', f);
                  break;
