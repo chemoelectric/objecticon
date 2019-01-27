@@ -31,7 +31,7 @@ static int make_tmploc(struct ir_stack *st);
 static int make_mark(struct ir_stack *st);
 static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
-static int asgn_lhs_kpos(struct lnode *n, int);
+static int asgn_may_fail(struct lnode *n, int);
 
 static int traverse_level;
 
@@ -668,7 +668,7 @@ static struct ir *ir_asgn(struct lnode *n,
                           int fail_label) 
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
-    if (asgn_lhs_kpos(x->child1, 0))
+    if (asgn_may_fail(x->child1, 0))
         return (struct ir *)ir_op(n, lhs, Uop_Asgn, arg1, arg2, 0, rval, fail_label);
     else
         return (struct ir *)ir_mgop(n, lhs, Uop_Asgn1, arg1, arg2, rval);
@@ -685,7 +685,7 @@ static struct ir *ir_swap(struct lnode *n,
                           int fail_label) 
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
-    if (asgn_lhs_kpos(x->child1, 1) || asgn_lhs_kpos(x->child2, 1))
+    if (asgn_may_fail(x->child1, 1) || asgn_may_fail(x->child2, 1))
         return (struct ir *)ir_op(n, lhs, Uop_Swap, arg1, arg2, 0, rval, fail_label);
     else
         return (struct ir *)ir_mgop(n, lhs, Uop_Swap1, arg1, arg2, rval);
@@ -4239,17 +4239,12 @@ static void renumber_ir()
  * aren't worth checking, so 1 is returned for many cases which aren't
  * in fact failure-inducing.
  */
-static int asgn_lhs_kpos(struct lnode *n, int swap)
+static int asgn_may_fail(struct lnode *n, int swap)
 {
     switch (n->op) {
         case Uop_Keyword: {
             int k = ((struct lnode_keyword *)n)->num;
-            switch (k) {
-                case K_POS:
-                    return 1;
-                default:
-                    return 0;
-            }
+            return k == K_POS;
         }
 
         case Uop_Empty:
@@ -4270,12 +4265,12 @@ static int asgn_lhs_kpos(struct lnode *n, int swap)
         case Uop_Nonnull:
         case Uop_Null: {	
             struct lnode_1 *x = (struct lnode_1 *)n;
-            return asgn_lhs_kpos(x->child, swap);
+            return asgn_may_fail(x->child, swap);
         }
 
         case Uop_Alt: {               /* Alternation */
             struct lnode_2 *x = (struct lnode_2 *)n;
-            return asgn_lhs_kpos(x->child1, swap) || asgn_lhs_kpos(x->child2, swap);
+            return asgn_may_fail(x->child1, swap) || asgn_may_fail(x->child2, swap);
         }
 
         default:
