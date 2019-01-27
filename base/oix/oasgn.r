@@ -444,47 +444,11 @@ static int subs_asgn(dptr dest, dptr src)
  */
 static void tvtbl_asgn(dptr dest, dptr src)
    {
-   struct b_telem *te;
-   union block **slot;
-   struct b_table *tp;
-   int res;
+   tended struct descrip tbl, key;
 
-   /*
-    * Allocate te now (even if we may not need it)
-    * because slot cannot be tended.
-    */
-   MemProtect(te = alctelem());
-
-   /*
-    * First see if reference is in the table; if it is, just update
-    *  the value.  Otherwise, allocate a new table entry.
-    */
-   slot = memb(TvtblBlk(*dest).clink, &TvtblBlk(*dest).tref, TvtblBlk(*dest).hashnum, &res);
-
-   if (res) {
-      /*
-       * Do not need new te, just update existing entry.
-       */
-      dealcblk((union block *) te);
-      (*slot)->telem.tval = *src;
-      }
-   else {
-      /*
-       * Link te into table, fill in entry.
-       */
-      tp = (struct b_table *) TvtblBlk(*dest).clink;
-      tp->size++;
-
-      te->clink = *slot;
-      *slot = (union block *) te;
-
-      te->hashnum = TvtblBlk(*dest).hashnum;
-      te->tref = TvtblBlk(*dest).tref;
-      te->tval = *src;
-      
-      if (TooCrowded(tp))		/* grow hash table if now too full */
-         hgrow((union block *)tp);
-      }
+   MakeDesc(D_Table, TvtblBlk(*dest).clink, &tbl);
+   key = TvtblBlk(*dest).tref;
+   table_insert(&tbl, &key, src, 1);
    }
 
 /*
