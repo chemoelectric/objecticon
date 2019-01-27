@@ -107,7 +107,7 @@ int firstd[] = {
      3*WordSize,              /* T_Selem (11), set element block */
      (4+HSegs)*WordSize,      /* T_Table (12), table header block */
      3*WordSize,              /* T_Telem (13), table element block */
-     3*WordSize,              /* T_Tvtbl (14), table element trapped variable */
+     2*WordSize,              /* T_Tvtbl (14), table element trapped variable */
      0,                       /* T_Slots (15), set/table hash block */
      3*WordSize,              /* T_Tvsubs (16), substring trapped variable */
      0,                       /* T_Methp (17), methp */

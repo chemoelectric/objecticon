@@ -510,12 +510,10 @@ operator [] subsc(underef x -> dx,y)
        }
 
       table: {
-            uword hn;
 
             EVValD(&dx, E_Tref);
             EVValD(&y, E_Tsub);
 
-            hn = hash(&y);
             if (_rval) {
                 int res;
                 union block **p;
@@ -524,7 +522,7 @@ operator [] subsc(underef x -> dx,y)
                  * Rval, so lookup now and return element or default
                  * value.
                  */
-                p = memb(BlkLoc(dx), &y, hn, &res);
+                p = memb(BlkLoc(dx), &y, hash(&y), &res);
                 if (res) {
                     bp = *p;
                     return struct_var(&bp->telem.tval, bp);
@@ -538,7 +536,6 @@ operator [] subsc(underef x -> dx,y)
                  * later.
                  */
                 MemProtect(tp = alctvtbl());
-                tp->hashnum = hn;
                 tp->clink = BlkLoc(dx);
                 tp->tref = y;
                 return tvtbl(tp);

@@ -1545,7 +1545,8 @@ struct progstate *find_procedure_static(dptr s)
 }
 
 /*
- * keyref(bp,dp) -- print name of subscripted table
+ * keyref() -- print name of subscripted table.  dp1 is either a tvtbl
+ * or a telem.
  */
 static void keyref(dptr dp1, dptr dp2)
 {
@@ -1554,15 +1555,17 @@ static void keyref(dptr dp1, dptr dp2)
     char sbuf[64];
     int len;
 
-    bp = BlkLoc(*dp1);
-    if (BlkType(bp) == T_Tvtbl)
-        bp = bp->tvtbl.clink;
-    else
+    if (is:tvtbl(*dp1)) {
+        tr = TvtblBlk(*dp1).tref;
+        bp = TvtblBlk(*dp1).clink;
+    } else {
+        tr = TelemBlk(*dp1).tref;
+        bp = BlkLoc(*dp1);
         while(BlkType(bp) == T_Telem)
             bp = bp->telem.clink;
+    }
     sprintf(sbuf, "table#" UWordFmt "[", bp->table.id);
 
-    tr = TelemBlk(*dp1).tref;
     getimage(&tr, &td);
 
     len = strlen(sbuf) + StrLen(td) + 1;
