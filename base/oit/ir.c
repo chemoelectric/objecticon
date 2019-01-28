@@ -32,6 +32,8 @@ static int make_mark(struct ir_stack *st);
 static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
 static int asgn_may_fail(struct lnode *n, int);
+static void move_chunk(int old, int new);
+static void unref(struct chunk *chunk);
 
 static int traverse_level;
 
@@ -3748,29 +3750,17 @@ static int augop(int n)
     return opcode;
 }
 
-static void optimize_goto_chain(int *lab)
+static void unref(struct chunk *chunk)
 {
-    static int marker = 0;
-    struct chunk *chunk;
-    int start = *lab;
-    if (*lab < 0)
-        return;
-    ++marker;
-    while (1) {
-        chunk = chunks[*lab];
-        if (!chunk || chunk->n_inst == 0)
-            quit("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
-        if (chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
-            break;
-        *lab = ((struct ir_goto *)chunk->inst[0])->dest;
-        chunk->circle = marker;        
-    }
+    if (--chunk->seen == 0)
+        quit("Unexpected 0 seen count after goto elimination (chunk %d)", chunk->id);
 }
 
 static void optimize_goto()
 {
-    int i;
-    struct chunk *last;
+    int i, j;
+    struct chunk *last, *chunk, *other;
+
     optimize_goto1(0);
 
     /* Eliminate unseen ones */
@@ -3779,7 +3769,7 @@ static void optimize_goto()
         chunk = chunks[i];
         if (chunk && !chunk->seen) {
             if (Iflag)
-                fprintf(stderr, "Elminating untraversed chunk %d (line %d)\n", i, chunk->line);
+                fprintf(stderr, "Eliminating untraversed chunk %d (line %d)\n", i, chunk->line);
             chunks[i] = 0;
         }
     }
@@ -3787,8 +3777,6 @@ static void optimize_goto()
     /* Merge chunks where possible */
     i = 0;
     while (i <= hi_chunk) {
-        struct chunk *chunk, *other;
-        int j;
         chunk = chunks[i];
         /*
          * If we have
@@ -3830,31 +3818,120 @@ static void optimize_goto()
             ++i;
     }
 
-    /* Eliminate redundant trailing gotos */
+    /* Move chunks to eliminate gotos */
+    chunks[0]->fixed = 1;
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk = chunks[i];
+        /*
+         * Look for :-
+         *    chunk i: A
+         *             goto j
+         *    ...
+         *    chunk j: B
+         *             T
+         * 
+         *  Unlike the previous optimisation, we don't mind if there
+         *  are other references to chunk j elsewhere.
+         */
+        if (chunk &&
+            chunk->n_inst > 0 && 
+            chunk->inst[chunk->n_inst - 1]->op == Ir_Goto &&
+            (other = chunks[j = ((struct ir_goto *)(chunk->inst[chunk->n_inst - 1]))->dest]) &&
+            i != j)
+        {
+            /*
+             * Now try one of two moves.  Firstly :-
+             *    chunk   i: A
+             *    chunk i+1: B
+             *               T
+             *    ...
+             *    chunk j:   deleted
+             * 
+             * OR
+             *    chunk i:   deleted
+             *    ...
+             *    chunk j-1: A
+             *    chunk   j: B
+             *               T
+             * 
+             * After the move both blocks are marked, so that they are
+             * not moved again, since moving either one would leave
+             * the end of the first block "dangling".
+             * 
+             */
+            if (!other->fixed && i < hi_chunk && !chunks[i + 1]) {
+                if (Iflag)
+                    fprintf(stderr, "Move chunk %d to %d\n", j, i + 1);
+                move_chunk(j, i + 1);
+                --chunk->n_inst;                   /* Remove the trailing goto */
+                other->fixed = chunk->fixed = 1;   /* Mark both blocks */
+                unref(other);
+            } else if (!chunk->fixed && j > 0 && !chunks[j - 1]) {
+                if (Iflag)
+                    fprintf(stderr, "Move chunk %d to %d\n", i, j - 1);
+                move_chunk(i, j - 1);
+                --chunk->n_inst;
+                other->fixed = chunk->fixed = 1;
+                unref(other);
+            }
+        }
+    }
+
+    /*
+     * Eliminate redundant trailing gotos.  We could have :-
+     * 
+     *    chunk   i: A
+     *               goto j
+     * 
+     *      ... null chunk slots ...
+     * 
+     *    chunk j: B
+     * 
+     * One way this could have arisen is by moving an intervening
+     * chunk, thus making chunks i and j notionally adjacent, or if i
+     * and j were adjacent (i = j+1) before the previous optimization.
+     */
     last = 0;
     for (i = 0; i <= hi_chunk; ++i) {
-        struct chunk *chunk;
         chunk = chunks[i];
         if (chunk) {
             if (last && last->n_inst > 0 && 
                 last->inst[last->n_inst - 1]->op == Ir_Goto &&
                 ((struct ir_goto *)(last->inst[last->n_inst - 1]))->dest == i) 
             {
+                if (Iflag)
+                    fprintf(stderr, "Removing trailing goto from chunk %d\n", last->id);
                 --last->n_inst;
+                unref(chunk);
             }
-
             last = chunk;
         }
     }
-    
+}
+
+static void optimize_goto_chain(int *lab)
+{
+    static int marker = 0;
+    struct chunk *chunk;
+    int start = *lab;
+    ++marker;
+    while (1) {
+        if (*lab < 0)
+            quit("Negative label");
+        chunk = chunks[*lab];
+        if (!chunk || chunk->n_inst == 0)
+            quit("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
+        if (chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
+            break;
+        *lab = ((struct ir_goto *)chunk->inst[0])->dest;
+        chunk->circle = marker;        
+    }
 }
 
 static void optimize_goto1(int i)
 {
     int j;
     struct chunk *chunk;
-    if (i < 0)
-        return;
     chunk = chunks[i];
     if (!chunk)
         return;
@@ -4278,4 +4355,101 @@ static int asgn_may_fail(struct lnode *n, int swap)
     }
     /* Not reached */
     return 1;
+}
+
+#define CHECK(x) if (x == old) x = new;
+
+static void move_chunk(int old, int new)
+{
+    int i, j;
+    for (i = 0; i <= hi_chunk; ++i) {
+        struct chunk *chunk;
+        chunk = chunks[i];
+        if (!chunk)
+            continue;
+        for (j = 0; j < chunk->n_inst; ++j) {
+            struct ir *ir = chunk->inst[j];
+            switch (ir->op) {
+                case Ir_Goto: {
+                    struct ir_goto *x = (struct ir_goto *)ir;
+                    CHECK(x->dest);
+                    break;
+                }
+                case Ir_EnterInit: {
+                    struct ir_enterinit *x = (struct ir_enterinit *)ir;
+                    CHECK(x->dest);
+                    break;
+                }
+                case Ir_MoveLabel: {
+                    struct ir_movelabel *x = (struct ir_movelabel *)ir;
+                    CHECK(x->lab);
+                    break;
+                }
+                case Ir_Op: {
+                    struct ir_op *x = (struct ir_op *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_OpClo: {
+                    struct ir_opclo *x = (struct ir_opclo *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_KeyOp: {
+                    struct ir_keyop *x = (struct ir_keyop *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_KeyClo: {
+                    struct ir_keyclo *x = (struct ir_keyclo *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Invoke: {
+                    struct ir_invoke *x = (struct ir_invoke *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Apply: {
+                    struct ir_apply *x = (struct ir_apply *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Invokef: {
+                    struct ir_invokef *x = (struct ir_invokef *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Applyf: {
+                    struct ir_applyf *x = (struct ir_applyf *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Create: {
+                    struct ir_create *x = (struct ir_create *)ir;
+                    CHECK(x->start_label);
+                    break;
+                }
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    int i;
+                    for (i = 0; i < x->tblc; ++i) {
+                        CHECK(x->tbl[i]);
+                    }
+                    break;
+                }
+                case Ir_TCaseChoosex: {
+                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                    int i;
+                    for (i = 0; i < x->tblc; ++i) {
+                        CHECK(x->tbl[i]);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    chunks[new] = chunks[old];
+    chunks[new]->id = new;
+    chunks[old] = 0;
 }

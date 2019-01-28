@@ -323,8 +323,9 @@ struct chunk {
     char *desc;  /* description, for debugging */
     int line;    /* source line, for debugging */
     int n_inst;
-    int circle;
-    int seen;
+    int circle;  /* goto circle check marker */
+    int seen;    /* no. of references, used during optimization */
+    int fixed;   /* flag used during optimization */
     word pc;     /* pc of chunk */
     word refs;   /* Chain of usage (gotos etc) in code */
     struct ir *inst[1];
