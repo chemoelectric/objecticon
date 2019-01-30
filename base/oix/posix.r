@@ -28,9 +28,9 @@ function posix_System_kill(pid, signal)
          errno2why();
          fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
-     Unsupported;
+      Unsupported;
 #endif
       }
 end
@@ -273,7 +273,7 @@ function posix_System_unsetenv(name)
 #else
        unsetenv(name);
 #endif
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -289,7 +289,7 @@ function posix_System_setenv(name, value)
          errno2why();
          fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
@@ -543,7 +543,7 @@ function posix_System_setuid(uid)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
 #else
        Unsupported;
 #endif
@@ -562,7 +562,7 @@ function posix_System_setgid(gid)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
 #else
        Unsupported;
 #endif
@@ -623,7 +623,7 @@ function posix_System_setpgid(pid, pgid)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
 #else
        Unsupported;
 #endif
