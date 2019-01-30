@@ -454,7 +454,7 @@ $endif
    #
    public static copy(s1, s2)
       local f1, f2
-      succeed use {
+      link use {
          f1 := FileStream(s1),
          use {
             f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
@@ -471,7 +471,7 @@ $endif
    #
    public static append(s1, s2)
       local f1, f2
-      succeed use {
+      link use {
          f1 := FileStream(s1),
          use {
             f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)),

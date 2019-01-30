@@ -32,7 +32,7 @@ function io_Files_chdir(s)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 

@@ -1692,7 +1692,7 @@ function io_FileStream_chdir(self)
        }
        return self;
 #else
-     Unsupported;
+       Unsupported;
 #endif
    }
 end
@@ -2884,7 +2884,7 @@ function io_Files_rename(s1, s2)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -2899,9 +2899,9 @@ function io_Files_hardlink(s1, s2)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
-     Unsupported;
+      Unsupported;
 #endif
    }
 end
@@ -2917,9 +2917,9 @@ function io_Files_symlink(s1, s2)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
-     Unsupported;
+      Unsupported;
 #endif
    }
 end
@@ -2951,7 +2951,7 @@ function io_Files_readlink(s)
            buff_size *= 2;
        }
 #else
-     Unsupported;
+      Unsupported;
 #endif
       }
 end
@@ -2972,7 +2972,7 @@ function io_Files_realpath(s)
        free(r);
        return result;
 #else
-     Unsupported;
+       Unsupported;
 #endif
       }
 end
@@ -2991,7 +2991,7 @@ function io_Files_mkdir(s, mode)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 #else
@@ -3003,7 +3003,7 @@ function io_Files_mkdir(s, mode)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 #endif
@@ -3016,7 +3016,7 @@ function io_Files_remove(s)
           errno2why();
           fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
@@ -3028,7 +3028,7 @@ function io_Files_rmdir(s)
           errno2why();
           fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
@@ -3046,7 +3046,7 @@ function io_Files_truncate(s, len)
           errno2why();
           fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
       int fd;
       off_t c_len;
@@ -3063,7 +3063,7 @@ function io_Files_truncate(s, len)
            fail;
       }
       close(fd);
-      return nulldesc;
+      ReturnDefiningClass;
 #endif
    }
 end
@@ -3357,9 +3357,9 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
 #endif
        }
 
-       return nulldesc;
+       ReturnDefiningClass;
 #else
-        Unsupported;
+       Unsupported;
 #endif
    }
 end
@@ -3393,7 +3393,7 @@ function io_Files_bulk_close(gap, start)
            ++start;
        }
 
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
