@@ -286,7 +286,6 @@ struct b_tvsubs {		/* substring trapped variable block */
 struct b_tvtbl {		/* table element trapped variable block */
     word title;			/*   T_Tvtbl */
     union block *clink;		/*   pointer to table header block */
-    uword hashnum;		/*   hash number */
     struct descrip tref;	/*   entry value */
 };
 

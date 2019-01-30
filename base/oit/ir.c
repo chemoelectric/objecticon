@@ -31,6 +31,10 @@ static int make_tmploc(struct ir_stack *st);
 static int make_mark(struct ir_stack *st);
 static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
+static int asgn_may_fail(struct lnode *n, int);
+static void move_chunk(int old, int new);
+static void unref(struct chunk *chunk);
+static int last_invoke_arg_rval(struct lnode_invoke *x);
 
 static int traverse_level;
 
@@ -800,6 +804,7 @@ static int is_rval(int op, int arg, int parent)
     switch (op) {
 
         case Uop_Asgn:
+        case Uop_Bactivate:
         case Uop_Augactivate:
         case Uop_Augapply:
         case Uop_Augpower:
@@ -827,20 +832,63 @@ static int is_rval(int op, int arg, int parent)
         case Uop_Rasgn:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunion: {
+        case Uop_Augunion:
+
+        case Uop_To:
+        case Uop_Eqv:
+        case Uop_Lexeq:
+        case Uop_Lexge:
+        case Uop_Lexgt:
+        case Uop_Lexle:
+        case Uop_Lexlt:
+        case Uop_Lexne:
+        case Uop_Neqv:
+        case Uop_Numeq:
+        case Uop_Numge:
+        case Uop_Numgt:
+        case Uop_Numle:
+        case Uop_Numlt:
+        case Uop_Numne:
+
+        case Uop_Cat:
+        case Uop_Diff:
+        case Uop_Div:
+        case Uop_Inter:
+        case Uop_Lconcat:
+        case Uop_Minus:
+        case Uop_Mod:
+        case Uop_Mult:
+        case Uop_Plus:
+        case Uop_Power:
+        case Uop_Union:
+
+        case Uop_Subsc: {
             return (arg == 2);
         }
+
+        case Uop_Toby:
+        case Uop_Sect:
+        case Uop_Sectp:
+        case Uop_Sectm: {
+            return (arg == 3);
+        }
+
 
         case Uop_Rswap:
         case Uop_Swap: {
             return 0;
         }
 
-        case Uop_Subsc: {
-            if (arg == 1)
-                return parent;
-            break;
-        }
+        /* Unary monogenic operators */
+        case Uop_Value:		/* unary . operator */
+        case Uop_Size:		/* unary * operator */
+        case Uop_Refresh:	/* unary ^ operator */
+        case Uop_Number:	/* unary + operator */
+        case Uop_Compl:		/* unary ~ operator (cset compl) */
+        case Uop_Neg:		/* unary - operator */
+
+        case Uop_Tabmat:	/* unary = operator */
+            return 1;
 
         case Uop_Bang:
         case Uop_Random:
@@ -848,8 +896,12 @@ static int is_rval(int op, int arg, int parent)
         case Uop_Nonnull: {
             return parent;
         }
+
+        default:
+            quit("Invalid opcode to is_rval %d", op);
     }
-    return 1;
+    /* Not reached */
+    return 0;
 }
 
 static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct ir_var *target, int bounded, int rval)
@@ -1020,13 +1072,18 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_info *expr, *body;
             struct ir_var *lv, *rv;
+            int av, af;
 
             init_scan(res, st);
             lv = get_var(x->child1, st);
             rv = make_tmp(st);
+
+            av = is_assignable_var(x->child1);
+            af = asgn_may_fail(x->child1, 0);
+
             expr = ir_traverse(x->child1, st, lv, 0, 0);
             push_scan(res);
-            body = ir_traverse(x->child2, st, rv, 0, rval);
+            body = ir_traverse(x->child2, st, rv, bounded && (av || !af), rval);
             pop_scan();
 
             chunk1(res->start, ir_goto(n, expr->start));
@@ -1044,20 +1101,21 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                    ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos),
                    ir_goto(n, expr->resume));
             /* Use deref, move instead of assign if possible */
-            if (is_assignable_var(x->child1))
+            if (av)
                 chunk4(body->success,
                        ir_deref(n, lv, rv),
                        ir_move(n, target, lv),
                        bounded ?
-                       (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
-                       (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
+                            (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
+                            (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
                        ir_goto(n, res->success));
             else
                 chunk3(body->success,
-                       ir_op(n, target, Uop_Asgn, lv, rv, 0, rval, body->resume),
+                       af ? (struct ir *)ir_op(n, target, Uop_Asgn, lv, rv, 0, rval, body->resume) :
+                            (struct ir *)ir_mgop(n, target, Uop_Asgn1, lv, rv, rval),
                        bounded ?
-                       (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
-                       (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
+                            (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
+                            (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
                        ir_goto(n, res->success));
 
             res->uses_stack = (expr->uses_stack || body->uses_stack);
@@ -1074,9 +1132,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             tv = get_var(x->child2, st);
             bv = get_var(x->child3, st);
 
-            from = ir_traverse(x->child1, st, fv, 0, 1);
-            to = ir_traverse(x->child2, st, tv, 0, 1);
-            by = ir_traverse(x->child3, st, bv, 0, 1);
+            from = ir_traverse(x->child1, st, fv, 0, is_rval(n->op, 1, rval));
+            to = ir_traverse(x->child2, st, tv, 0, is_rval(n->op, 2, rval));
+            by = ir_traverse(x->child3, st, bv, 0, is_rval(n->op, 3, rval));
 
             clo = make_closure(st);
 
@@ -1112,8 +1170,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             tv = get_var(x->child2, st);
             one = make_word(1);
 
-            from = ir_traverse(x->child1, st, fv, 0, 1);
-            to = ir_traverse(x->child2, st, tv, 0, 1);
+            from = ir_traverse(x->child1, st, fv, 0, is_rval(n->op, 1, rval));
+            to = ir_traverse(x->child2, st, tv, 0, is_rval(n->op, 2, rval));
 
             clo = make_closure(st);
 
@@ -1146,22 +1204,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Augmult:
         case Uop_Augplus:
         case Uop_Augpower:
-        case Uop_Augunion:
-        case Uop_Cat:
-        case Uop_Diff:
-        case Uop_Div:
-        case Uop_Inter:
-        case Uop_Lconcat:
-        case Uop_Minus:
-        case Uop_Mod:
-        case Uop_Mult:
-        case Uop_Plus:
-        case Uop_Power:
-        case Uop_Union: {
+        case Uop_Augunion: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_var *lv, *rv, *tmp = 0;
             struct ir_info *left, *right;
-            int aaop;
+            int aaop, af;
 
             aaop = augop(n->op);
             lv = get_var(x->child1, st);
@@ -1169,11 +1216,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             /*
              * Optimisation v op:= expr, where v is local or global,
-             * and op doesn't return a variable, just put the result
-             * of v op expr straight into v.
+             * just put the result of v op expr straight into v.
              */
-            if (aaop &&
-                is_assignable_var(x->child1)) {
+            if (is_assignable_var(x->child1)) {
                 right = ir_traverse(x->child2, st, rv, bounded, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
@@ -1188,11 +1233,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 break;
             }
 
-            if (aaop)
-                tmp = make_tmp(st);
+            tmp = make_tmp(st);
+
+            af = asgn_may_fail(x->child1, 0);
 
             left = ir_traverse(x->child1, st, lv, 0, is_rval(n->op, 1, rval));
-            right = ir_traverse(x->child2, st, rv, bounded && !aaop, is_rval(n->op, 2, rval));
+            right = ir_traverse(x->child2, st, rv, bounded && !af, is_rval(n->op, 2, rval));
             chunk1(res->start, ir_goto(n, left->start));
             chunk1(left->success, ir_goto(n, right->start));
             chunk1(left->failure, ir_goto(n, res->failure));
@@ -1201,23 +1247,52 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, right->resume));
 
-            if (aaop) {
-                chunk3(right->success, 
-                       ir_mgop(n, tmp, aaop, lv, rv, 1),
-                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume),
-                       ir_goto(n, res->success));
-
-            } else {
-                chunk2(right->success, 
-                       ir_mgop(n, target, n->op, lv, rv, rval),
-                       ir_goto(n, res->success));
-            }
+            chunk3(right->success, 
+                   ir_mgop(n, tmp, aaop, lv, rv, 1),
+                   af ? (struct ir *)ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume) :
+                        (struct ir *)ir_mgop(n, target, Uop_Asgn1, lv, tmp, rval),
+                   ir_goto(n, res->success));
 
             res->uses_stack = (left->uses_stack || right->uses_stack);
             break;
         }
 
-        case Uop_Asgn:
+        case Uop_Cat:
+        case Uop_Diff:
+        case Uop_Div:
+        case Uop_Inter:
+        case Uop_Lconcat:
+        case Uop_Minus:
+        case Uop_Mod:
+        case Uop_Mult:
+        case Uop_Plus:
+        case Uop_Power:
+        case Uop_Union: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_var *lv, *rv;
+            struct ir_info *left, *right;
+
+            lv = get_var(x->child1, st);
+            rv = get_var(x->child2, st);
+
+            left = ir_traverse(x->child1, st, lv, 0, is_rval(n->op, 1, rval));
+            right = ir_traverse(x->child2, st, rv, bounded, is_rval(n->op, 2, rval));
+            chunk1(res->start, ir_goto(n, left->start));
+            chunk1(left->success, ir_goto(n, right->start));
+            chunk1(left->failure, ir_goto(n, res->failure));
+            chunk1(right->failure, ir_goto(n, left->resume));
+
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, right->resume));
+
+            chunk2(right->success, 
+                   ir_mgop(n, target, n->op, lv, rv, rval),
+                   ir_goto(n, res->success));
+
+            res->uses_stack = (left->uses_stack || right->uses_stack);
+            break;
+        }
+
         case Uop_Augactivate:
         case Uop_Augeqv:
         case Uop_Auglexeq:
@@ -1232,36 +1307,73 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Augnumgt:
         case Uop_Augnumle:
         case Uop_Augnumlt:
-        case Uop_Augnumne:
-        case Uop_Bactivate:
-        case Uop_Eqv:
-        case Uop_Subsc:
-        case Uop_Lexeq:
-        case Uop_Lexge:
-        case Uop_Lexgt:
-        case Uop_Lexle:
-        case Uop_Lexlt:
-        case Uop_Lexne:
-        case Uop_Neqv:
-        case Uop_Numeq:
-        case Uop_Numge:
-        case Uop_Numgt:
-        case Uop_Numle:
-        case Uop_Numlt:
-        case Uop_Numne: 
-        case Uop_Swap: {
+        case Uop_Augnumne: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_var *lv, *rv, *tmp = 0;
             struct ir_info *left, *right;
-            int aaop;
+            int aaop, af;
+
+            lv = get_var(x->child1, st);
+            rv = get_var(x->child2, st);
+
+            aaop = augop(n->op);
+
+            /*
+             * Optimisation v op:= expr, where v is local or global,
+             * and op doesn't return a variable, just put the result
+             * of v op expr straight into v.
+             */
+            if (n->op != Uop_Augactivate &&
+                is_assignable_var(x->child1)) {
+                right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
+                chunk1(res->start, ir_goto(n, right->start));
+                if (!bounded)
+                    chunk1(res->resume, ir_goto(n, right->resume));
+                chunk1(right->success, ir_goto(n, res->success));
+                chunk1(right->failure, ir_goto(n, res->failure));
+                chunk3(right->success, 
+                       ir_op(n, lv, aaop, lv, rv, 0, 1, right->resume),
+                       ir_move(n, target, lv),
+                       ir_goto(n, res->success));
+                res->uses_stack = right->uses_stack;
+                break;
+            }
+
+            tmp = make_tmp(st);
+            af = asgn_may_fail(x->child1, 0);
+
+            left = ir_traverse(x->child1, st, lv, 0, is_rval(n->op, 1, rval));
+            right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
+            chunk1(res->start, ir_goto(n, left->start));
+            chunk1(left->success, ir_goto(n, right->start));
+            chunk1(left->failure, ir_goto(n, res->failure));
+            chunk1(right->failure, ir_goto(n, left->resume));
+
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, right->resume));
+
+            chunk3(right->success, 
+                   ir_op(n, tmp, aaop, lv, rv, 0, 1, right->resume),
+                   af ? (struct ir *)ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume) :
+                        (struct ir *)ir_mgop(n, target, Uop_Asgn1, lv, tmp, rval),
+                   ir_goto(n, res->success));
+
+            res->uses_stack = (left->uses_stack || right->uses_stack);
+            break;
+        }
+
+        case Uop_Asgn: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_var *lv, *rv;
+            struct ir_info *left, *right;
+            int af;
 
             /*
              * Optimisation: v := e1 op e2, where v is local or global,
              * and op is something that doesn't return a variable.  We
              * just put the result of op straight into v.
              */
-            if (n->op == Uop_Asgn &&
-                is_assignable_var(x->child1) &&
+            if (is_assignable_var(x->child1) &&
                 (
                     x->child2->op == Uop_Const ||
                     x->child2->op == Uop_Cat ||
@@ -1297,7 +1409,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     x->child2->op == Uop_Numne))
              {
                 lv = get_var(x->child1, st);
-                right = ir_traverse(x->child2, st, lv, bounded, is_rval(n->op, 2, rval));
+                right = ir_traverse(x->child2, st, lv, bounded, 1);
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
                     chunk1(res->resume, ir_goto(n, right->resume));
@@ -1316,10 +1428,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              * Optimisation: v := expr, where v is local or global.
              * Just use deref to put the result of expr into v.
              */
-            if (n->op == Uop_Asgn &&
-                is_assignable_var(x->child1))
+            if (is_assignable_var(x->child1))
             {
-                right = ir_traverse(x->child2, st, rv, bounded, is_rval(n->op, 2, rval));
+                right = ir_traverse(x->child2, st, rv, bounded, 1);
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
                     chunk1(res->resume, ir_goto(n, right->resume));
@@ -1332,32 +1443,79 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 break;
             }
 
-            aaop = augop(n->op);
+            af = asgn_may_fail(x->child1, 0);
 
-            /*
-             * Optimisation v op:= expr, where v is local or global,
-             * and op doesn't return a variable, just put the result
-             * of v op expr straight into v.
-             */
-            if (aaop &&
-                n->op != Uop_Augactivate &&
-                is_assignable_var(x->child1)) {
-                right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
-                chunk1(res->start, ir_goto(n, right->start));
-                if (!bounded)
-                    chunk1(res->resume, ir_goto(n, right->resume));
-                chunk1(right->success, ir_goto(n, res->success));
-                chunk1(right->failure, ir_goto(n, res->failure));
-                chunk3(right->success, 
-                       ir_op(n, lv, aaop, lv, rv, 0, 1, right->resume),
-                       ir_move(n, target, lv),
-                       ir_goto(n, res->success));
-                res->uses_stack = right->uses_stack;
-                break;
-            }
+            left = ir_traverse(x->child1, st, lv, 0, 0);
+            right = ir_traverse(x->child2, st, rv, bounded && !af, 1);
+            chunk1(res->start, ir_goto(n, left->start));
+            chunk1(left->success, ir_goto(n, right->start));
+            chunk1(left->failure, ir_goto(n, res->failure));
+            chunk1(right->failure, ir_goto(n, left->resume));
 
-            if (aaop)
-                tmp = make_tmp(st);
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, right->resume));
+
+            chunk2(right->success, 
+                   af ? (struct ir *)ir_op(n, target, Uop_Asgn, lv, rv, 0, rval, right->resume) :
+                        (struct ir *)ir_mgop(n, target, Uop_Asgn1, lv, rv, rval),
+                   ir_goto(n, res->success));
+
+            res->uses_stack = (left->uses_stack || right->uses_stack);
+            break;
+        }
+
+        case Uop_Swap: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_var *lv, *rv;
+            struct ir_info *left, *right;
+            int af;
+
+            lv = get_var(x->child1, st);
+            rv = get_var(x->child2, st);
+
+            af = (asgn_may_fail(x->child1, 1) || asgn_may_fail(x->child2, 1));
+
+            left = ir_traverse(x->child1, st, lv, 0, 0);
+            right = ir_traverse(x->child2, st, rv, bounded && !af, 0);
+            chunk1(res->start, ir_goto(n, left->start));
+            chunk1(left->success, ir_goto(n, right->start));
+            chunk1(left->failure, ir_goto(n, res->failure));
+            chunk1(right->failure, ir_goto(n, left->resume));
+
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, right->resume));
+
+            chunk2(right->success, 
+                   af ? (struct ir *)ir_op(n, target, Uop_Swap, lv, rv, 0, rval, right->resume) :
+                        (struct ir *)ir_mgop(n, target, Uop_Swap1, lv, rv, rval),
+                   ir_goto(n, res->success));
+
+            res->uses_stack = (left->uses_stack || right->uses_stack);
+            break;
+        }
+
+        case Uop_Bactivate:
+        case Uop_Eqv:
+        case Uop_Subsc:
+        case Uop_Lexeq:
+        case Uop_Lexge:
+        case Uop_Lexgt:
+        case Uop_Lexle:
+        case Uop_Lexlt:
+        case Uop_Lexne:
+        case Uop_Neqv:
+        case Uop_Numeq:
+        case Uop_Numge:
+        case Uop_Numgt:
+        case Uop_Numle:
+        case Uop_Numlt:
+        case Uop_Numne: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_var *lv, *rv;
+            struct ir_info *left, *right;
+
+            lv = get_var(x->child1, st);
+            rv = get_var(x->child2, st);
 
             left = ir_traverse(x->child1, st, lv, 0, is_rval(n->op, 1, rval));
             right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
@@ -1369,17 +1527,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, right->resume));
 
-            if (aaop) {
-                chunk3(right->success, 
-                       ir_op(n, tmp, aaop, lv, rv, 0, 1, right->resume),
-                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume),
-                       ir_goto(n, res->success));
-
-            } else {
-                chunk2(right->success, 
-                       ir_op(n, target, n->op, lv, rv, 0, rval, right->resume),
-                       ir_goto(n, res->success));
-            }
+            chunk2(right->success, 
+                   ir_op(n, target, n->op, lv, rv, 0, rval, right->resume),
+                   ir_goto(n, res->success));
 
             res->uses_stack = (left->uses_stack || right->uses_stack);
             break;
@@ -1397,12 +1547,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 struct lnode_field *y = (struct lnode_field *)x->child1;
                 lv = get_var(y->child, st);
                 rv = get_var(x->child2, st);
-                left = ir_traverse(y->child, st, lv, 0, 1);
+                left = ir_traverse(y->child, st, lv, 0, 0);
                 ftab_entry = y->ftab_entry;
             } else {
                 lv = get_var(x->child1, st);
                 rv = get_var(x->child2, st);
-                left = ir_traverse(x->child1, st, lv, 0, 1);
+                left = ir_traverse(x->child1, st, lv, 0, 0);
             }
             right = ir_traverse(x->child2, st, rv, 0, 1);
 
@@ -1434,12 +1584,15 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_var *lv, *rv, *tmp;
             struct ir_info *left, *right;
-            int clo, xc;
+            int clo, xc, av, af;
 
             clo = make_closure(st);
             lv = get_var(x->child1, st);
             rv = get_var(x->child2, st);
             tmp = make_tmp(st);
+
+            av = is_assignable_var(x->child1);
+            af = asgn_may_fail(x->child1, 0);
 
             left = ir_traverse(x->child1, st, lv, 0, 0);
             right = ir_traverse(x->child2, st, rv, 0, 1);
@@ -1457,7 +1610,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              * procedure being applied may return a variable, which we
              * must dereference.
              */
-            if (is_assignable_var(x->child1)) {
+            if (av) {
                 if (!bounded)
                     chunk2(res->resume, 
                            ir_resume(n, clo),
@@ -1472,17 +1625,19 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_move(n, target, lv),
                        ir_goto(n, res->success));
             } else {
-                /* Always needed, regardless of bounded */
-                chunk2(res->resume, 
-                       ir_resume(n, clo),
-                       ir_goto(n, xc));
+                /* Needed regardless of bounded, if := can fail */
+                if (!bounded || af)
+                    chunk2(res->resume, 
+                           ir_resume(n, clo),
+                           ir_goto(n, xc));
 
                 chunk2(right->success, 
                        ir_apply(n, clo, tmp, lv, rv, 1, right->resume),
                        ir_goto(n, xc));
 
                 chunk2(xc, 
-                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, res->resume),
+                       af ? (struct ir *)ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, res->resume) :
+                            (struct ir *)ir_mgop(n, target, Uop_Asgn1, lv, tmp, rval),
                        ir_goto(n, res->success));
             }
 
@@ -1534,9 +1689,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             v3 = get_var(x->child3, st);
             tmp = make_tmp(st);
 
-            e1 = ir_traverse(x->child1, st, v1, 0, 0);
-            e2 = ir_traverse(x->child2, st, v2, 0, 1);
-            e3 = ir_traverse(x->child3, st, v3, 0, 1);
+            e1 = ir_traverse(x->child1, st, v1, 0, is_rval(n->op, 1, rval));
+            e2 = ir_traverse(x->child2, st, v2, 0, is_rval(n->op, 2, rval));
+            e3 = ir_traverse(x->child3, st, v3, 0, is_rval(n->op, 3, rval));
 
             chunk1(res->start, ir_goto(n, e1->start));
             if (!bounded)
@@ -1572,9 +1727,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             v2 = get_var(x->child2, st);
             v3 = get_var(x->child3, st);
 
-            e1 = ir_traverse(x->child1, st, v1, 0, 0);
-            e2 = ir_traverse(x->child2, st, v2, 0, 1);
-            e3 = ir_traverse(x->child3, st, v3, 0, 1);
+            e1 = ir_traverse(x->child1, st, v1, 0, is_rval(n->op, 1, rval));
+            e2 = ir_traverse(x->child2, st, v2, 0, is_rval(n->op, 1, rval));
+            e3 = ir_traverse(x->child3, st, v3, 0, is_rval(n->op, 1, rval));
 
             chunk1(res->start, ir_goto(n, e1->start));
             if (!bounded)
@@ -2448,10 +2603,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             struct ir_var *fn, **args;
             struct ir_info *expr, **info;
-            int i;
+            int i, arv, clo;
             struct fentry *ftab_entry = 0;
 
-            int clo = make_closure(st);
+            arv = last_invoke_arg_rval(x);
+            clo = make_closure(st);
             args = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
             info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             if (x->expr->op == Uop_Field) {
@@ -2459,16 +2615,16 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 fn = get_var(y->child, st);
                 for (i = 0; i < x->n; ++i)
                     args[i] = get_var(x->child[i], st);
-                expr = ir_traverse(y->child, st, fn, 0, 1);
+                expr = ir_traverse(y->child, st, fn, 0, 0);
                 ftab_entry = y->ftab_entry;
             } else {
                 fn = get_var(x->expr, st);
                 for (i = 0; i < x->n; ++i)
                     args[i] = get_var(x->child[i], st);
-                expr = ir_traverse(x->expr, st, fn, 0, 1);
+                expr = ir_traverse(x->expr, st, fn, 0, 0);
             }
             for (i = 0; i < x->n; ++i) 
-                info[i] = ir_traverse(x->child[i], st, args[i], 0, 0);
+                info[i] = ir_traverse(x->child[i], st, args[i], 0, arv && (i == x->n - 1));
 
             chunk1(res->start, ir_goto(n, expr->start));
             chunk1(expr->failure, ir_goto(n, res->failure));
@@ -2599,7 +2755,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 args[i] = get_var(x->child[i], st);
 
             for (i = 0; i < x->n; ++i) {
-                info[i] = ir_traverse(x->child[i], st, args[i], 0, 1);
+                info[i] = ir_traverse(x->child[i], st, args[i], 0, i == x->n - 1);
                 if (info[i]->uses_stack)
                     res->uses_stack = 1;
             }
@@ -3591,140 +3747,103 @@ void dump_ir()
 
 static int augop(int n)
 {
-    int opcode = 0;
-
     switch (n) {
         case Uop_Augactivate:
-            opcode = Uop_Bactivate;
-            break;
+            return Uop_Bactivate;
 
         case Uop_Augpower:
-            opcode = Uop_Power;
-            break;
+            return Uop_Power;
 
         case Uop_Augcat:
-            opcode = Uop_Cat;
-            break;
+            return Uop_Cat;
 
         case Uop_Augdiff:
-            opcode = Uop_Diff;
-            break;
+            return Uop_Diff;
 
         case Uop_Augeqv:
-            opcode = Uop_Eqv;
-            break;
+            return Uop_Eqv;
 
         case Uop_Auginter:
-            opcode = Uop_Inter;
-            break;
+            return Uop_Inter;
 
         case Uop_Auglconcat:
-            opcode = Uop_Lconcat;
-            break;
+            return Uop_Lconcat;
 
         case Uop_Auglexeq:
-            opcode = Uop_Lexeq;
-            break;
+            return Uop_Lexeq;
 
         case Uop_Auglexge:
-            opcode = Uop_Lexge;
-            break;
+            return Uop_Lexge;
 
         case Uop_Auglexgt:
-            opcode = Uop_Lexgt;
-            break;
+            return Uop_Lexgt;
 
         case Uop_Auglexle:
-            opcode = Uop_Lexle;
-            break;
+            return Uop_Lexle;
 
         case Uop_Auglexlt:
-            opcode = Uop_Lexlt;
-            break;
+            return Uop_Lexlt;
 
         case Uop_Auglexne:
-            opcode = Uop_Lexne;
-            break;
+            return Uop_Lexne;
 
         case Uop_Augminus:
-            opcode = Uop_Minus;
-            break;
+            return Uop_Minus;
 
         case Uop_Augmod:
-            opcode = Uop_Mod;
-            break;
+            return Uop_Mod;
 
         case Uop_Augneqv:
-            opcode = Uop_Neqv;
-            break;
+            return Uop_Neqv;
 
         case Uop_Augnumeq:
-            opcode = Uop_Numeq;
-            break;
+            return Uop_Numeq;
 
         case Uop_Augnumge:
-            opcode = Uop_Numge;
-            break;
+            return Uop_Numge;
 
         case Uop_Augnumgt:
-            opcode = Uop_Numgt;
-            break;
+            return Uop_Numgt;
 
         case Uop_Augnumle:
-            opcode = Uop_Numle;
-            break;
+            return Uop_Numle;
 
         case Uop_Augnumlt:
-            opcode = Uop_Numlt;
-            break;
+            return Uop_Numlt;
 
         case Uop_Augnumne:
-            opcode = Uop_Numne;
-            break;
+            return Uop_Numne;
 
         case Uop_Augplus:
-            opcode = Uop_Plus;
-            break;
+            return Uop_Plus;
 
         case Uop_Augdiv:
-            opcode = Uop_Div;
-            break;
+            return Uop_Div;
 
         case Uop_Augmult:
-            opcode = Uop_Mult;
-            break;
+            return Uop_Mult;
 
         case Uop_Augunion:
-            opcode = Uop_Union;
-            break;
-    }
+            return Uop_Union;
 
-    return opcode;
+        default:
+            quit("Invalid opcode to augop");
+    }
+    /* Not reached */
+    return 0;
 }
 
-static void optimize_goto_chain(int *lab)
+static void unref(struct chunk *chunk)
 {
-    static int marker = 0;
-    struct chunk *chunk;
-    int start = *lab;
-    if (*lab < 0)
-        return;
-    ++marker;
-    while (1) {
-        chunk = chunks[*lab];
-        if (!chunk || chunk->n_inst == 0)
-            quit("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
-        if (chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
-            break;
-        *lab = ((struct ir_goto *)chunk->inst[0])->dest;
-        chunk->circle = marker;        
-    }
+    if (--chunk->seen == 0)
+        quit("Unexpected 0 seen count after goto elimination (chunk %d)", chunk->id);
 }
 
 static void optimize_goto()
 {
-    int i;
-    struct chunk *last;
+    int i, j;
+    struct chunk *last, *chunk, *other;
+
     optimize_goto1(0);
 
     /* Eliminate unseen ones */
@@ -3733,7 +3852,7 @@ static void optimize_goto()
         chunk = chunks[i];
         if (chunk && !chunk->seen) {
             if (Iflag)
-                fprintf(stderr, "Elminating untraversed chunk %d (line %d)\n", i, chunk->line);
+                fprintf(stderr, "Eliminating untraversed chunk %d (line %d)\n", i, chunk->line);
             chunks[i] = 0;
         }
     }
@@ -3741,8 +3860,6 @@ static void optimize_goto()
     /* Merge chunks where possible */
     i = 0;
     while (i <= hi_chunk) {
-        struct chunk *chunk, *other;
-        int j;
         chunk = chunks[i];
         /*
          * If we have
@@ -3784,31 +3901,120 @@ static void optimize_goto()
             ++i;
     }
 
-    /* Eliminate redundant trailing gotos */
+    /* Move chunks to eliminate gotos */
+    chunks[0]->fixed = 1;
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk = chunks[i];
+        /*
+         * Look for :-
+         *    chunk i: A
+         *             goto j
+         *    ...
+         *    chunk j: B
+         *             T
+         * 
+         *  Unlike the previous optimisation, we don't mind if there
+         *  are other references to chunk j elsewhere.
+         */
+        if (chunk &&
+            chunk->n_inst > 0 && 
+            chunk->inst[chunk->n_inst - 1]->op == Ir_Goto &&
+            (other = chunks[j = ((struct ir_goto *)(chunk->inst[chunk->n_inst - 1]))->dest]) &&
+            i != j)
+        {
+            /*
+             * Now try one of two moves.  Firstly :-
+             *    chunk   i: A
+             *    chunk i+1: B
+             *               T
+             *    ...
+             *    chunk j:   deleted
+             * 
+             * OR
+             *    chunk i:   deleted
+             *    ...
+             *    chunk j-1: A
+             *    chunk   j: B
+             *               T
+             * 
+             * After the move both blocks are marked, so that they are
+             * not moved again, since moving either one would leave
+             * the end of the first block "dangling".
+             * 
+             */
+            if (!other->fixed && i < hi_chunk && !chunks[i + 1]) {
+                if (Iflag)
+                    fprintf(stderr, "Move chunk %d to %d\n", j, i + 1);
+                move_chunk(j, i + 1);
+                --chunk->n_inst;                   /* Remove the trailing goto */
+                other->fixed = chunk->fixed = 1;   /* Mark both blocks */
+                unref(other);
+            } else if (!chunk->fixed && j > 0 && !chunks[j - 1]) {
+                if (Iflag)
+                    fprintf(stderr, "Move chunk %d to %d\n", i, j - 1);
+                move_chunk(i, j - 1);
+                --chunk->n_inst;
+                other->fixed = chunk->fixed = 1;
+                unref(other);
+            }
+        }
+    }
+
+    /*
+     * Eliminate redundant trailing gotos.  We could have :-
+     * 
+     *    chunk   i: A
+     *               goto j
+     * 
+     *      ... null chunk slots ...
+     * 
+     *    chunk j: B
+     * 
+     * One way this could have arisen is by moving an intervening
+     * chunk, thus making chunks i and j notionally adjacent, or if i
+     * and j were adjacent (i = j+1) before the previous optimization.
+     */
     last = 0;
     for (i = 0; i <= hi_chunk; ++i) {
-        struct chunk *chunk;
         chunk = chunks[i];
         if (chunk) {
             if (last && last->n_inst > 0 && 
                 last->inst[last->n_inst - 1]->op == Ir_Goto &&
                 ((struct ir_goto *)(last->inst[last->n_inst - 1]))->dest == i) 
             {
+                if (Iflag)
+                    fprintf(stderr, "Removing trailing goto from chunk %d\n", last->id);
                 --last->n_inst;
+                unref(chunk);
             }
-
             last = chunk;
         }
     }
-    
+}
+
+static void optimize_goto_chain(int *lab)
+{
+    static int marker = 0;
+    struct chunk *chunk;
+    int start = *lab;
+    ++marker;
+    while (1) {
+        if (*lab < 0)
+            quit("Negative label");
+        chunk = chunks[*lab];
+        if (!chunk || chunk->n_inst == 0)
+            quit("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
+        if (chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
+            break;
+        *lab = ((struct ir_goto *)chunk->inst[0])->dest;
+        chunk->circle = marker;        
+    }
 }
 
 static void optimize_goto1(int i)
 {
     int j;
     struct chunk *chunk;
-    if (i < 0)
-        return;
     chunk = chunks[i];
     if (!chunk)
         return;
@@ -4172,10 +4378,214 @@ static void renumber_ir()
                 }
 
                 default: {
-                    quit("renumber: Illegal ir opcode(%d)\n", ir->op);
+                    quit("renumber: Illegal ir opcode(%d)", ir->op);
                     break;
                 }
             }
         }
     }
+}
+
+/*
+ * Check whether the given node n might generate a variable which
+ * might cause an assign or swap to fail.  The second parameter
+ * indicates whether we are considering the swap case, which is more
+ * stringent.  For assign, we just need to decide whether &pos can be
+ * produced as a variable.  For swap we also need to exclude any
+ * subscript variables, since overlapping strings can cause a swap to
+ * fail (see oasgn.r).
+ * 
+ * Returns 1 if n may be failure-inducing, 0 if not.  Exotic cases
+ * aren't worth checking, so 1 is returned for many cases which aren't
+ * in fact failure-inducing.
+ */
+static int asgn_may_fail(struct lnode *n, int swap)
+{
+    switch (n->op) {
+        case Uop_Keyword: {
+            int k = ((struct lnode_keyword *)n)->num;
+            return k == K_POS;
+        }
+
+        case Uop_Empty:
+        case Uop_Local: 
+        case Uop_Global:
+        case Uop_Const: 
+        case Uop_Field:
+            return 0;
+
+        case Uop_Bang:
+        case Uop_Random:
+        case Uop_Subsc:
+        case Uop_Sect:
+        case Uop_Sectp:
+        case Uop_Sectm:
+            return swap;
+
+        case Uop_Nonnull:
+        case Uop_Null: {	
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            return asgn_may_fail(x->child, swap);
+        }
+
+        case Uop_Alt: {               /* Alternation */
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return asgn_may_fail(x->child1, swap) || asgn_may_fail(x->child2, swap);
+        }
+
+        default:
+            return 1;
+    }
+    /* Not reached */
+    return 1;
+}
+
+#define CHECK(x) if (x == old) x = new;
+
+static void move_chunk(int old, int new)
+{
+    int i, j;
+    for (i = 0; i <= hi_chunk; ++i) {
+        struct chunk *chunk;
+        chunk = chunks[i];
+        if (!chunk)
+            continue;
+        for (j = 0; j < chunk->n_inst; ++j) {
+            struct ir *ir = chunk->inst[j];
+            switch (ir->op) {
+                case Ir_Goto: {
+                    struct ir_goto *x = (struct ir_goto *)ir;
+                    CHECK(x->dest);
+                    break;
+                }
+                case Ir_EnterInit: {
+                    struct ir_enterinit *x = (struct ir_enterinit *)ir;
+                    CHECK(x->dest);
+                    break;
+                }
+                case Ir_MoveLabel: {
+                    struct ir_movelabel *x = (struct ir_movelabel *)ir;
+                    CHECK(x->lab);
+                    break;
+                }
+                case Ir_Op: {
+                    struct ir_op *x = (struct ir_op *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_OpClo: {
+                    struct ir_opclo *x = (struct ir_opclo *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_KeyOp: {
+                    struct ir_keyop *x = (struct ir_keyop *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_KeyClo: {
+                    struct ir_keyclo *x = (struct ir_keyclo *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Invoke: {
+                    struct ir_invoke *x = (struct ir_invoke *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Apply: {
+                    struct ir_apply *x = (struct ir_apply *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Invokef: {
+                    struct ir_invokef *x = (struct ir_invokef *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Applyf: {
+                    struct ir_applyf *x = (struct ir_applyf *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Create: {
+                    struct ir_create *x = (struct ir_create *)ir;
+                    CHECK(x->start_label);
+                    break;
+                }
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    int i;
+                    for (i = 0; i < x->tblc; ++i) {
+                        CHECK(x->tbl[i]);
+                    }
+                    break;
+                }
+                case Ir_TCaseChoosex: {
+                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                    int i;
+                    for (i = 0; i < x->tblc; ++i) {
+                        CHECK(x->tbl[i]);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    chunks[new] = chunks[old];
+    chunks[new]->id = new;
+    chunks[old] = 0;
+}
+
+/*
+ * Calculate whether this invocation is one in which the last argument
+ * may have rval=1 set.
+ */
+static int last_invoke_arg_rval(struct lnode_invoke *x)
+{
+    struct lnode_global *y;
+    struct lnode *n;
+
+    n = x->expr;
+    if (n->op == Uop_Field) {
+        struct lnode_field *x = (struct lnode_field *)n;
+        struct lclass_field *f;
+
+        if (x->child->op != Uop_Global)
+            return 0;
+        y = (struct lnode_global *)x->child;
+        if (!y->global->class)
+            return 0;
+
+        f = lookup_implemented_field(y->global->class, x->fname);
+        if (!f)
+            return 0;
+        if ((f->flag & (M_Static | M_Method | M_Removed | M_Optional | M_Abstract | M_Native)) != (M_Static | M_Method))
+            return 0;
+
+        /* Static method (with body) */
+        return 1;
+    }
+
+    if (n->op != Uop_Global)
+        return 0;
+    y = (struct lnode_global *)n;
+
+    /* Constructor invocation */
+    if (y->global->class)
+        return 1;
+
+    /* Builtin function, not using underef. */
+    if (y->global->g_flag & F_Builtin) {
+        if (strcmp(y->global->name, "coact") == 0 ||
+            strcmp(y->global->name, "back") == 0)
+            return 0;
+        return 1;
+    }
+
+    /* User procedure */
+    if (y->global->g_flag & F_Proc)
+        return 1;
+
+    return 0;
 }

@@ -1,6 +1,6 @@
 #SRC: JCON
 
-import io, lang
+import io, lang, ipl.test
 
 record message(who,gap,what)
 
@@ -62,6 +62,10 @@ procedure main()
 
    every write(image(nullsuspend()))
 
+   assignments()
+   transmit_var()
+   rvals()
+
    write("done")
    exit()
    write("oops!")
@@ -107,4 +111,108 @@ end
 procedure nullsuspend()
    suspend
    suspend
+end
+
+procedure f(x)
+   return x
+end
+
+procedure ce()
+   coact() := "z"
+   coact()
+end
+
+procedure assignments()
+   local x, s
+   # Test some assignment/swaps that can fail
+   &subject := "the quick brown fox"
+   try{ "&pos := 100", &pos := 100 }
+   try{ "&pos := funcs...", &pos := f(100) | f(1) | f(2) }
+   x := 50
+   try{ "&pos :=: x(50)", &pos :=: x }
+   x := 5
+   try{ "&pos :=: x(5)", &pos :=: x }
+
+   # Test some same-substring swaps
+   s := "amphibious"
+   try{ "s[1] :=: s[-1]", s[1] :=: s[-1] }
+   write("\ts=", image(s))
+   s := "amphibious"
+   try{ "s[1:8] :=: s[-8:0]", s[1:8] :=: s[-8:0] }
+   write("\ts=", image(s))
+
+   # Same, but list element var
+   s := ["amphibious"]
+   try{ "s[1,1] :=: s[1,-1]", s[1,1] :=: s[1,-1] }
+   write("\ts[1]=", image(s[1]))
+   s := ["amphibious"]
+   try{ "s[1][1:8] :=: s[1][-8:0]", s[1][1:8] :=: s[1][-8:0] }
+   write("\ts[1]=", image(s[1]))
+
+   # Same, but table element var
+   s := table(,1,"amphibious")
+   try{ "s[1,1] :=: s[1,-1]", s[1,1] :=: s[1,-1] }
+   write("\ts[1]=", image(s[1]))
+   s := table(,1,"amphibious")
+   try{ "s[1][1:8] :=: s[1][-8:0]", s[1][1:8] :=: s[1][-8:0] }
+   write("\ts[1]=", image(s[1]))
+end
+
+procedure transmit_var()
+   static g
+   local e
+   # Test transmission of variables to a coexpression.
+   g := "amphibious"
+   e := create ce()
+   @e
+   (g[3])@e
+   write("g=", image(g))
+end
+
+procedure f2(x, y)
+   return x||y
+end
+
+# Test of correct production of variables -vs- values
+procedure rvals()
+   local x, s
+
+   x := 1
+   s := (x + (x := 2))
+   write("Simple: ", s)
+
+   x := [1]
+   s := (x[1] + (x[1] := 2))
+   write("List element: ", s)
+
+   x := table(1)
+   x[1] := 1
+   s := (x[1] + (x[1] := 2))
+   write("Table subscript: ", s)
+
+   s := (x[2] + (x[2] := 2))
+   write("Table default: ", s)
+
+   x := "quick brown fox"
+   s := x[1:5] || (x := "lazy dog")
+   write("Substring: ", s)
+
+   x := "quick brown fox"
+   s := "||"(x[1:5], (x := "lazy dog"))
+   write("Invoke ||: ", s)
+
+   x := "quick brown fox"
+   s := f2(x[1:5], (x := "lazy dog"))
+   write("Invoke proc: ", s)
+
+   x := table(1)
+   every write("To: ", x[2] to (x[2] := 5))
+
+   x := "quick brown fox"
+   s := x[1:5][(x := "lazy dog", 1)]
+   write("Subscript: ", s)
+
+   x := "quick brown fox"
+   s := [ x[1:5], x := "lazy dog" ]
+   write("List: ", s[1])
 end

@@ -654,7 +654,7 @@ function lang_Coexpression_print_stack(ce)
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
        showstack(stderr, b);
-       fail;
+       ReturnDefiningClass;
     }
 end
 
@@ -1275,7 +1275,7 @@ function lang_Class_load_library(lib)
             }
         }
 
-        return nulldesc;
+        ReturnDefiningClass;
    }
 end
 
@@ -1431,7 +1431,7 @@ function lang_Class_load_library(lib)
             }
         }
 
-        return nulldesc;
+        ReturnDefiningClass;
    }
 end
 
@@ -1802,7 +1802,7 @@ function io_FileStream_chdir(self)
        }
        return self;
 #else
-     Unsupported;
+       Unsupported;
 #endif
    }
 end
@@ -3176,7 +3176,7 @@ function io_Files_rename(s1, s2)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -3191,9 +3191,9 @@ function io_Files_hardlink(s1, s2)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
-     Unsupported;
+      Unsupported;
 #endif
    }
 end
@@ -3209,9 +3209,9 @@ function io_Files_symlink(s1, s2)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
-     Unsupported;
+      Unsupported;
 #endif
    }
 end
@@ -3243,7 +3243,7 @@ function io_Files_readlink(s)
            buff_size *= 2;
        }
 #else
-     Unsupported;
+      Unsupported;
 #endif
       }
 end
@@ -3264,7 +3264,7 @@ function io_Files_realpath(s)
        free(r);
        return result;
 #else
-     Unsupported;
+       Unsupported;
 #endif
       }
 end
@@ -3283,7 +3283,7 @@ function io_Files_mkdir(s, mode)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 #elif PLAN9
@@ -3300,7 +3300,7 @@ function io_Files_mkdir(s, mode)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 #else
@@ -3312,7 +3312,7 @@ function io_Files_mkdir(s, mode)
 	 errno2why();
 	 fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 #endif
@@ -3325,7 +3325,7 @@ function io_Files_remove(s)
           errno2why();
           fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
@@ -3337,7 +3337,7 @@ function io_Files_rmdir(s)
           errno2why();
           fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
@@ -3356,7 +3356,7 @@ function io_Files_truncate(s, len)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
 #elif HAVE_TRUNCATE
       off_t c_len;
       if (!convert_to_off_t(&len, &c_len))
@@ -3365,7 +3365,7 @@ function io_Files_truncate(s, len)
           errno2why();
           fail;
       }
-      return nulldesc;
+      ReturnDefiningClass;
 #else
       int fd;
       off_t c_len;
@@ -3382,7 +3382,7 @@ function io_Files_truncate(s, len)
            fail;
       }
       close(fd);
-      return nulldesc;
+      ReturnDefiningClass;
 #endif
    }
 end
@@ -3687,7 +3687,7 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime, length, name)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 #else
@@ -3802,9 +3802,9 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
 #endif
        }
 
-       return nulldesc;
+       ReturnDefiningClass;
 #else
-        Unsupported;
+       Unsupported;
 #endif
    }
 end
@@ -3839,7 +3839,7 @@ function io_Files_bulk_close(gap, start)
            ++start;
        }
 
-      return nulldesc;
+      ReturnDefiningClass;
    }
 end
 
@@ -4568,7 +4568,7 @@ function lang_Coexpression_traceback(ce, act_chain)
        if (!is_flag(&act_chain))
           runerr(171, act_chain);
        traceback(b, 0, !is:null(act_chain));
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -4637,7 +4637,7 @@ function io_Files_bind(name, old, flag)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -4662,7 +4662,7 @@ function io_Files_mount(f, af, old, flag, aname)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -4681,7 +4681,7 @@ function io_Files_unmount(name, old)
            errno2why();
            fail;
        }
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -5299,7 +5299,7 @@ function io_PttyStream_prepare_slave(f)
            fail;
        }
 #endif
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 

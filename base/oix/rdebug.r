@@ -526,12 +526,32 @@ static void xtrace()
         case Op_Numle: 
         case Op_Numlt: 
         case Op_Numne:  
-        case Op_Asgn: 
-        case Op_Swap: 
             if (xarg1 && xarg2) {
                 fputs("   {", stderr);
                 outimage(stderr, xarg1, 0);
                 fprintf(stderr, " %.*s ", StrF(*opblks[curr_op]->name));
+                outimage(stderr, xarg2, 0);
+                putc('}', stderr);
+            }
+            break;
+
+        case Op_Asgn: 
+        case Op_Asgn1:
+            if (xarg1 && xarg2) {
+                fputs("   {", stderr);
+                outimage(stderr, xarg1, 0);
+                fprintf(stderr, " := ");
+                outimage(stderr, xarg2, 0);
+                putc('}', stderr);
+            }
+            break;
+
+        case Op_Swap: 
+        case Op_Swap1:
+            if (xarg1 && xarg2) {
+                fputs("   {", stderr);
+                outimage(stderr, xarg1, 0);
+                fprintf(stderr, " :=: ");
                 outimage(stderr, xarg2, 0);
                 putc('}', stderr);
             }

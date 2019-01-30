@@ -110,3 +110,5 @@
 #define Op_GlobalVal     98
 #define Op_Self          99
 #define Op_Kyes         100
+#define Op_Asgn1        101
+#define Op_Swap1	102

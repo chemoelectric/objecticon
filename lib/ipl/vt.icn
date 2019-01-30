@@ -2488,6 +2488,13 @@ class Vt(LineBasedScrollArea, MenuMode)
    public handle_select_all(e)
       mark_x := mark_y := 1
       cursor_y := *contents
+      # Chop off blank lines at the end.
+      while line_len(contents[1 < cursor_y].l) = 0 do
+         cursor_y -:= 1
+      # ...but always leave a selection (cursor_y > 1), and try to
+      # leave a newline at the end.
+      if cursor_y < *contents then
+         cursor_y +:= 1
       cursor_x := *contents_str(cursor_y) + 1
       reset_search()
       own_primary()

@@ -526,7 +526,7 @@ static void deref_tvtbl(dptr s, dptr d)
      * Look up the element in the table.
      */
     bp = &TvtblBlk(*s);
-    ep = memb(bp->clink, &bp->tref, bp->hashnum, &res);
+    ep = memb(bp->clink, &bp->tref, hash(&bp->tref), &res);
     if (res)
         *d = (*ep)->telem.tval;			/* found; use value */
     else

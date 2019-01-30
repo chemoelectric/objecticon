@@ -4,6 +4,7 @@
 
 static void tvtbl_asgn	(dptr dest, dptr src);
 static int subs_asgn	(dptr dest, dptr src);
+static int same_string  (dptr x, dptr y);
 static int overlap      (struct b_tvsubs *tv1, struct b_tvsubs *tv2);
 
 
@@ -131,7 +132,7 @@ operator <-> rswap(underef x -> dx, underef y -> dy)
       runerr(111, y)
 
    body {
-      if (is:tvsubs(x) && is:tvsubs(y) && EqlDesc(TvsubsBlk(x).ssvar, TvsubsBlk(y).ssvar)) {
+      if (same_string(&x, &y)) {
          word adj;
          /*
           * See comments in :=: below.
@@ -194,7 +195,7 @@ operator :=: swap(underef x -> dx, underef y -> dy)
       runerr(111, y)
 
    body {
-      if (is:tvsubs(x) && is:tvsubs(y) && EqlDesc(TvsubsBlk(x).ssvar, TvsubsBlk(y).ssvar)) {
+      if (same_string(&x, &y)) {
          word adj;
          /*
           * x and y are both substrings of the same string, check
@@ -443,47 +444,11 @@ static int subs_asgn(dptr dest, dptr src)
  */
 static void tvtbl_asgn(dptr dest, dptr src)
    {
-   struct b_telem *te;
-   union block **slot;
-   struct b_table *tp;
-   int res;
+   tended struct descrip tbl, key;
 
-   /*
-    * Allocate te now (even if we may not need it)
-    * because slot cannot be tended.
-    */
-   MemProtect(te = alctelem());
-
-   /*
-    * First see if reference is in the table; if it is, just update
-    *  the value.  Otherwise, allocate a new table entry.
-    */
-   slot = memb(TvtblBlk(*dest).clink, &TvtblBlk(*dest).tref, TvtblBlk(*dest).hashnum, &res);
-
-   if (res) {
-      /*
-       * Do not need new te, just update existing entry.
-       */
-      dealcblk((union block *) te);
-      (*slot)->telem.tval = *src;
-      }
-   else {
-      /*
-       * Link te into table, fill in entry.
-       */
-      tp = (struct b_table *) TvtblBlk(*dest).clink;
-      tp->size++;
-
-      te->clink = *slot;
-      *slot = (union block *) te;
-
-      te->hashnum = TvtblBlk(*dest).hashnum;
-      te->tref = TvtblBlk(*dest).tref;
-      te->tval = *src;
-      
-      if (TooCrowded(tp))		/* grow hash table if now too full */
-         hgrow((union block *)tp);
-      }
+   MakeDesc(D_Table, TvtblBlk(*dest).clink, &tbl);
+   key = TvtblBlk(*dest).tref;
+   table_insert(&tbl, &key, src, 1);
    }
 
 /*
@@ -499,3 +464,34 @@ static int overlap(struct b_tvsubs *tv1, struct b_tvsubs *tv2)
         return (tv1->sslen > 0 && tv2->sslen > 0);
 }
 
+/*
+ * Return true if both x and y are tvsubs, and their contained
+ * variable refer to the same string.
+ */
+static int same_string(dptr x, dptr y)
+{
+    struct b_tvtbl *tx, *ty;
+
+    if (!is:tvsubs(*x) || !is:tvsubs(*y))
+        return 0;
+
+    /* Caters for any type of var other than tvsubs */
+    if (EqlDesc(TvsubsBlk(*x).ssvar, TvsubsBlk(*y).ssvar))
+        return 1;
+
+    if (!is:tvtbl(TvsubsBlk(*x).ssvar) || !is:tvtbl(TvsubsBlk(*y).ssvar))
+        return 0;
+
+    tx = &TvtblBlk(TvsubsBlk(*x).ssvar);
+    ty = &TvtblBlk(TvsubsBlk(*y).ssvar);
+
+    /*
+     * The two tvtbls must refer to the same table and have an
+     * equivalent (===) key.
+     */
+
+    if (tx->clink != ty->clink)
+        return 0;
+
+    return equiv(&tx->tref, &ty->tref);
+}

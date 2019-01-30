@@ -2239,6 +2239,10 @@ static word cnv_op(int n)
             opcode = Op_Asgn;
             break;
 
+        case Uop_Asgn1:
+            opcode = Op_Asgn1;
+            break;
+
         case Uop_Power:
             opcode = Op_Power;
             break;
@@ -2349,6 +2353,10 @@ static word cnv_op(int n)
 
         case Uop_Swap:
             opcode = Op_Swap;
+            break;
+
+        case Uop_Swap1:
+            opcode = Op_Swap1;
             break;
 
         case Uop_Union:

@@ -1570,6 +1570,8 @@ static void relocate_code(struct progstate *ps, word *c)
             }
 
             /* Monogenic binary ops */
+            case Op_Asgn1: 
+            case Op_Swap1:
             case Op_Cat: 
             case Op_Diff:
             case Op_Div:

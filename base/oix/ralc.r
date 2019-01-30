@@ -616,7 +616,6 @@ struct b_tvtbl *f()
     struct b_tvtbl *blk;
     AlcFixBlk(blk, b_tvtbl, T_Tvtbl, e_tvtbl)
     blk->clink = NULL;
-    blk->hashnum = 0;
     blk->tref = nulldesc;
     return blk;
 }

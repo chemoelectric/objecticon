@@ -70,4 +70,31 @@ wqwerty
 88
 &null
 &null
+&pos := 100: Failed
+&pos := funcs...: Succeeded with 1
+&pos :=: x(50): Failed
+&pos :=: x(5): Succeeded with 5
+s[1] :=: s[-1]: Succeeded with "s"
+	s="smphibioua"
+s[1:8] :=: s[-8:0]: Failed
+	s="amphibious"
+s[1,1] :=: s[1,-1]: Succeeded with "s"
+	s[1]="smphibioua"
+s[1][1:8] :=: s[1][-8:0]: Failed
+	s[1]="amphibious"
+s[1,1] :=: s[1,-1]: Succeeded with "s"
+	s[1]="smphibioua"
+s[1][1:8] :=: s[1][-8:0]: Failed
+	s[1]="amphibious"
+g="amzhibious"
+Simple: 4
+List element: 4
+Table subscript: 4
+Table default: 4
+Substring: lazylazy dog
+Invoke ||: lazylazy dog
+Invoke proc: lazylazy dog
+To: 5
+Subscript: l
+List: lazy
 done

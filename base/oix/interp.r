@@ -1144,11 +1144,13 @@ void interp()
                 do_op_numne();
                 break;
             }
-            case Op_Asgn: {
+            case Op_Asgn:
+            case Op_Asgn1: {
                 do_op_asgn();
                 break;
             }
-            case Op_Swap: {
+            case Op_Swap:
+            case Op_Swap1: {
                 do_op_swap();
                 break;
             }
