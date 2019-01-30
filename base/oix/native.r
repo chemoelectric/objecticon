@@ -627,7 +627,7 @@ function lang_Coexpression_print_stack(ce)
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
        showstack(stderr, b);
-       fail;
+       ReturnDefiningClass;
     }
 end
 
@@ -1248,7 +1248,7 @@ function lang_Class_load_library(lib)
             }
         }
 
-        return nulldesc;
+        ReturnDefiningClass;
    }
 end
 
@@ -1404,7 +1404,7 @@ function lang_Class_load_library(lib)
             }
         }
 
-        return nulldesc;
+        ReturnDefiningClass;
    }
 end
 
@@ -4072,7 +4072,7 @@ function lang_Coexpression_traceback(ce, act_chain)
        if (!is_flag(&act_chain))
           runerr(171, act_chain);
        traceback(b, 0, !is:null(act_chain));
-       return nulldesc;
+       ReturnDefiningClass;
    }
 end
 
@@ -4222,7 +4222,7 @@ function io_PttyStream_prepare_slave(f)
            fail;
        }
 #endif
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
