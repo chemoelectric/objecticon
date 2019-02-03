@@ -1840,7 +1840,7 @@ function MemDebug_globals()
     body {
        int i;
        for (i = 0; i < prog->NGlobals; ++i) {
-           if (!prog->Gflags[i] & G_Const)
+           if (!(prog->Gflags[i] & G_Const))
                output_global(i);
        }
        output_keywords();
