@@ -99,6 +99,45 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
 }
 
 /*
+ * This function wraps check_access(), and uses the given
+ * inline_field_cache to avoid calls to that function if possible.
+ * There are two cases :-
+ * 
+ * 1.  if instance_class == 0, then the following are prerequisites
+ *        cf must be static, ie cf->flags & M_Static == M_Static, and
+ *        ic->class->fields[ic->index] == cf
+ *     it follows that check_access(cf, instance_class) is equivalent to
+ *                     check_access(ic->class->fields[ic->index], 0)
+ * 
+ * 2.  if instance_class != 0, then the following are prerequisites
+ *        cf must be non-static, ie cf->flags & M_Static == 0, and
+ *        ic->class->fields[ic->index] == cf, and
+ *        ic->class == instance_class
+ *     it follows that check_access(cf, instance_class) is equivalent to
+ *                     check_access(ic->class->fields[ic->index], ic->class)
+ * 
+ * In either case, a former non-Error result can be cached in ic,
+ * since the check_access call just depends on the fields of ic.
+ * Error returns aren't cached, since they set t_errornumber.
+ * 
+ * It is important of course that ic->access is reset to 0 whenever
+ * the other fields are set.
+ */
+int check_access_ic(struct class_field *cf, struct b_class *instance_class, struct inline_field_cache *ic)
+{
+    if (ic) {
+        int ac;
+        if (ic->access)
+            return ic->access;
+        ac = check_access(cf, instance_class);
+        if (ac != Error)
+            ic->access = ac;
+        return ac;
+    } else
+        return check_access(cf, instance_class);
+}
+
+/*
  * Do a binary search look up of a field name in the given class.
  * Returns the index into the class's field array, or -1 if not found.
  */
