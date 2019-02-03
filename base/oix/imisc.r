@@ -32,8 +32,9 @@ struct progstate *get_current_program_of(struct b_coexpr *ce)
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is
  * null for a static access).  Returns Succeeded if it does have
- * access, or an Error if it doesn't, setting the appropriate error
- * number, which can then be used to produce a runtime error message.
+ * access, Readable if it doesn't but the M_Readable flag is set, or
+ * an Error, setting the appropriate error number, which can then be
+ * used to produce a runtime error message.
  */
 int check_access(struct class_field *cf, struct b_class *instance_class)
 {
@@ -49,10 +50,12 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
         return Succeeded;
 
     caller_field = caller_proc->field;
-    switch (cf->flags & (M_Private|M_Protected|M_Package)) {
+    switch (cf->flags & (M_Private | M_Protected | M_Package)) {
         case M_Private: {
             if (caller_field && caller_field->defining_class == cf->defining_class)
                 return Succeeded;
+            if (cf->flags & M_Readable)
+                return Readable;
             ReturnErrNum(608, Error);
         }
 
@@ -62,12 +65,16 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
                 if (caller_field && class_is(instance_class, 
                                              caller_field->defining_class))
                     return Succeeded;
+                if (cf->flags & M_Readable)
+                    return Readable;
                 ReturnErrNum(609, Error);
             } else {
                 /* Static access, definition must be in caller's implemented classes */
                 if (caller_field && class_is(caller_field->defining_class, 
                                              cf->defining_class))
                     return Succeeded;
+                if (cf->flags & M_Readable)
+                    return Readable;
                 ReturnErrNum(610, Error);
             }
         }
@@ -79,6 +86,8 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
             if ((caller_proc->program == cf->defining_class->program &&
                  caller_proc->package_id == cf->defining_class->package_id))
                 return Succeeded;
+            if (cf->flags & M_Readable)
+                return Readable;
             ReturnErrNum(611, Error);
         }
 
@@ -178,6 +187,7 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
          */
         ic->class = (union block *)class;
         ic->index = index;
+        ic->access = 0;
 
         return index;
     } else {
@@ -262,6 +272,7 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
 
         ic->class = (union block *)recdef;
         ic->index = index;
+        ic->access = 0;
 
         return index;
     } else {
@@ -311,6 +322,7 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
             i = lookup_class_field_by_name(class0, fname);
             ic->class = (union block *)class0;
             ic->index = i;
+            ic->access = 0;
         }
     } else
         i = lookup_class_field_by_name(class0, fname);

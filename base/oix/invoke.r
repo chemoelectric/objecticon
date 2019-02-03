@@ -15,6 +15,7 @@ static void for_class_supers(void);
 static void set_object_state(void);
 static void invoke_class_init(void);
 static void ensure_class_initialized(void);
+static int check_access_ic(struct class_field *cf, struct b_class *instance_class, struct inline_field_cache *ic);
 
 
 #include "invokeiasm.ri"
@@ -174,7 +175,6 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
         }
     }
 }
-
 
 void do_applyf()
 {
@@ -370,6 +370,45 @@ static void ensure_class_initialized()
     pf->tmp[0] = *d;
     pf->failure_label = ipc;
     tail_invoke_frame((struct frame *)pf);
+}
+
+/*
+ * This function wraps check_access(), and uses the given
+ * inline_field_cache to avoid calls to that function if possible.
+ * There are two cases :-
+ * 
+ * 1.  if instance_class == 0, then the following are prerequisites
+ *        cf must be static, ie cf->flags & M_Static == M_Static, and
+ *        ic->class->fields[ic->index] == cf
+ *     it follows that check_access(cf, instance_class) is equivalent to
+ *                     check_access(ic->class->fields[ic->index], 0)
+ * 
+ * 2.  if instance_class != 0, then the following are prerequisites
+ *        cf must be non-static, ie cf->flags & M_Static == 0, and
+ *        ic->class->fields[ic->index] == cf, and
+ *        ic->class == instance_class
+ *     it follows that check_access(cf, instance_class) is equivalent to
+ *                     check_access(ic->class->fields[ic->index], ic->class)
+ * 
+ * In either case, a former non-Error result can be cached in ic,
+ * since the check_access call just depends on the fields of ic.
+ * Error returns aren't cached, since they set t_errornumber.
+ * 
+ * It is important of course that ic->access is reset to 0 whenever
+ * the other fields are set.
+ */
+static int check_access_ic(struct class_field *cf, struct b_class *instance_class, struct inline_field_cache *ic)
+{
+    int ac;
+    if (ic) {
+        if (ic->access)
+            return ic->access;
+        ac = check_access(cf, instance_class);
+        if (ac != Error)
+            ic->access = ac;
+        return ac;
+    } else
+        return check_access(cf, instance_class);
 }
 
 #begdef invoke_macro(general_call,invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,e_objectcreate,e_rcreate)
@@ -660,9 +699,17 @@ void do_field()
            }
            ipc = failure_label;
        } else {
-           xexpr = expr;
-           xargp = 0;
-           xfield = query;
+           /* Non-null ic means we have an Op_Field, rather than
+            * Class.get(), which comes here via an Op_Custom
+            * instruction, for which the x* fields are ignored anyway;
+            * but it is tidier to leave them as null rather than set
+            * them to nonsense values.
+            */
+           if (ic) {
+               xexpr = expr;
+               xargp = 0;
+               xfield = query;
+           }
            err_msg(err_num, expr);
        }
        return;
@@ -696,9 +743,12 @@ void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *
             instance_access(lhs, expr, query, ic, failure_label);
       }
       default: {
-          xexpr = expr;
-          xargp = 0;
-          xfield = query;
+          /* See comment in AccessErr above. */
+          if (ic) {
+              xexpr = expr;
+              xargp = 0;
+              xfield = query;
+          }
           err_msg(624, expr);
           return;
       }
@@ -735,7 +785,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
             AccessErr(621);
 
         dp = cf->field_descriptor;
-        ac = check_access(cf, 0);
+        ac = check_access_ic(cf, 0, ic);
         if (ac == Succeeded &&
             !(cf->flags & M_Method) &&           /* Don't return a ref to a static method */
             (!(cf->flags & M_Const) ||
@@ -747,11 +797,12 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         {
             if (lhs)
                 MakeVarDesc(D_NamedVar, dp, lhs);
-        } else if (ac == Succeeded || (cf->flags & M_Readable)) {
+        } else if (ac == Error)
+            AccessErr(0);
+        else {
             if (lhs)
                 *lhs = *dp;
-        } else 
-            AccessErr(0);
+        } 
     } else {
         dptr self;
         struct b_class *self_class;
@@ -826,7 +877,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
         if ((cf->flags & M_Special) && ObjectBlk(*expr).init_state != Initializing) 
             AccessErr(622);
 
-        ac = check_access(cf, class0);
+        ac = check_access_ic(cf, class0, ic);
         if (ac == Error) 
             AccessErr(0);
 
@@ -841,7 +892,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
             MakeDesc(D_Methp, mp, lhs);
         }
     } else {
-        ac = check_access(cf, class0);
+        ac = check_access_ic(cf, class0, ic);
         if (ac == Succeeded &&
             (!(cf->flags & M_Const) || ObjectBlk(*expr).init_state == Initializing))
         {
@@ -851,11 +902,12 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
                     ((word *)(&ObjectBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
                 BlkLoc(*lhs) = BlkLoc(*expr);
             }
-        } else if (ac == Succeeded || (cf->flags & M_Readable)) {
+        } else if (ac == Error)
+            AccessErr(0);
+        else {
             if (lhs)
                 *lhs = ObjectBlk(*expr).fields[i];
-        } else 
-            AccessErr(0);
+        } 
     }
 
     EVValD(expr, e_objectref);
@@ -958,16 +1010,12 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
     cf = class0->fields[i];
 
     if (cf->flags & M_Static) {
-        /* Can only access a static field (var or meth) via the class */
-        if (!(cf->flags & M_Static)) 
-            InvokefErr(600);
-
         /* Can't access static init method via a field */
         if (cf->flags & M_Special) 
             InvokefErr(621);
 
-        ac = check_access(cf, 0);
-        if (!(ac == Succeeded || (cf->flags & M_Readable))) 
+        ac = check_access_ic(cf, 0, ic);
+        if (ac == Error)
             InvokefErr(0);
 
         EVValD(expr, e_classref);
@@ -1070,7 +1118,7 @@ static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct i
         if ((cf->flags & M_Special) && ObjectBlk(*expr).init_state != Initializing) 
             InvokefErr(622);
 
-        ac = check_access(cf, class0);
+        ac = check_access_ic(cf, class0, ic);
         if (ac == Error) 
             InvokefErr(0);
 
@@ -1087,8 +1135,8 @@ static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct i
         f->rval = rval;
         tail_invoke_frame(f);
     } else {
-        ac = check_access(cf, class0);
-        if (!(ac == Succeeded || (cf->flags & M_Readable))) 
+        ac = check_access_ic(cf, class0, ic);
+        if (ac == Error)
             InvokefErr(0);
 
         EVValD(expr, e_objectref);
