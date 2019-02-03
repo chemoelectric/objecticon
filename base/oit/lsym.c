@@ -101,16 +101,20 @@ struct lclass_field *lookup_field(struct lclass *class, char *fname)
     return cf;
 }
 
-struct lclass_field *lookup_implemented_field(struct lclass *class, char *fname)
+struct lclass_field_ref *lookup_implemented_field_ref(struct lclass *class, char *fname)
 {
     int i = hasher(fname, class->implemented_field_hash);
     struct lclass_field_ref *cf = class->implemented_field_hash[i];
     while (cf && cf->field->name != fname)
         cf = cf->b_next;
+    return cf;
+}
+
+struct lclass_field *lookup_implemented_field(struct lclass *class, char *fname)
+{
+    struct lclass_field_ref *cf = lookup_implemented_field_ref(class, fname);
     if (cf)
         return cf->field;
     else
         return 0;
 }
-
-

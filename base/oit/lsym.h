@@ -9,6 +9,7 @@ struct lentry *add_local(struct lfunction *func, char *name, int flags, struct l
 struct centry *add_constant(struct lfunction *func, int flags, char *data, int len);
 struct fentry *flocate(char *name);
 struct lclass_field *lookup_field(struct lclass *class, char *fname);
+struct lclass_field_ref *lookup_implemented_field_ref(struct lclass *class, char *fname);
 struct lclass_field *lookup_implemented_field(struct lclass *class, char *fname);
 
 

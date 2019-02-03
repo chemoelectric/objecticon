@@ -1240,3 +1240,50 @@ void replace_node(struct lnode *old, struct lnode *new)
 
     quit("replace_child: Old child node not found in parent node");
 }
+
+int get_class_field_ref(struct lnode_field *x, struct lclass **class, struct lclass_field_ref **field)
+{
+    struct lnode_global *y;
+    struct lclass_field_ref *f;
+    if (x->child->op != Uop_Global)
+        return 0;
+    y = (struct lnode_global *)x->child;
+    if (!y->global->class)
+        return 0;
+    if (!(f = x->ref)) {
+        f = lookup_implemented_field_ref(y->global->class, x->fname);
+        if (!f)
+            return 0;
+        x->ref = f;
+    }
+    if (class)
+        *class = y->global->class;
+    if (field)
+        *field = f;
+    return 1;
+}
+
+int check_access(struct lfunction *func, struct lclass_field *f)
+{
+    if (f->flag & M_Public)
+        return 1;
+
+    if (f->flag & M_Package)
+        return (func->defined->package_id == f->class->global->defined->package_id);
+
+    if (!func->method)
+        return 0;
+
+    if (f->flag & M_Private)
+        return (func->method->class == f->class);
+
+    if (f->flag & M_Protected) {
+        struct lclass_ref *cr;
+        for (cr = func->method->class->implemented_classes; cr; cr = cr->next) {
+            if (cr->class == f->class)
+                return 1;
+        }
+    }
+
+    return 0;
+}

@@ -3628,6 +3628,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->lhs);
                 fprintf(stderr, " <- ");
                 print_ir_var(x->expr);
+                fprintf(stderr, " . %s", x->ftab_entry->name);
                 fputc('\n', stderr);
                 break;
             }
@@ -4549,18 +4550,12 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
     n = x->expr;
     if (n->op == Uop_Field) {
         struct lnode_field *x = (struct lnode_field *)n;
-        struct lclass_field *f;
+        struct lclass_field_ref *ref;
 
-        if (x->child->op != Uop_Global)
-            return 0;
-        y = (struct lnode_global *)x->child;
-        if (!y->global->class)
+        if (!get_class_field_ref(x, 0, &ref))
             return 0;
 
-        f = lookup_implemented_field(y->global->class, x->fname);
-        if (!f)
-            return 0;
-        if ((f->flag & (M_Static | M_Method | M_Removed | M_Optional | M_Abstract | M_Native)) != (M_Static | M_Method))
+        if ((ref->field->flag & (M_Static | M_Method | M_Removed | M_Optional | M_Abstract | M_Native)) != (M_Static | M_Method))
             return 0;
 
         /* Static method (with body) */
