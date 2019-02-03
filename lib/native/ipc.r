@@ -415,10 +415,9 @@ end
 function ipc_Sem_get_value(self)
    body {
        int ret;
-       semun arg;
        GetSelfId();
 
-       ret = semctl(self_id, 0, GETVAL, arg);
+       ret = semctl(self_id, 0, GETVAL);
        if (ret == -1)
            aborted("Couldn't do semctl");
        return C_integer ret;
