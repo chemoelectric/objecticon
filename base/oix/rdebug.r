@@ -370,8 +370,11 @@ static void xtrace()
                 /* Error to do with the type of expr */
                 fprintf(stderr, "   ");
                 outimage(stderr, xexpr, 0);
-                fprintf(stderr, " . ");
-                outfield();
+                /* We won't have a field if called from general_call() */
+                if (xfield) {
+                    fprintf(stderr, " . ");
+                    outfield();
+                }
                 fprintf(stderr," ( .. )");
             }
             break;
@@ -384,13 +387,16 @@ static void xtrace()
                 /* Error to do with the type of expr */
                 fprintf(stderr, "   ");
                 outimage(stderr, xexpr, 0);
-                fprintf(stderr, " . ");
-                outfield();
+                /* We won't have a field if called from general_call() */
+                if (xfield) {
+                    fprintf(stderr, " . ");
+                    outfield();
+                }
                 fprintf(stderr, " ! ");
                 if (xargp)
                     outimage(stderr, xargp, 0);
                 else
-                    fprintf(stderr, " [ .. ]");
+                    fprintf(stderr, "[ .. ]");
             }
             break;
 
@@ -406,7 +412,7 @@ static void xtrace()
                 if (xargp)
                     outimage(stderr, xargp, 0);
                 else
-                    fprintf(stderr, " [ .. ]");
+                    fprintf(stderr, "[ .. ]");
             }
             break;
 

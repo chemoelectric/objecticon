@@ -1003,7 +1003,6 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
         EVValD(expr, e_classref);
         EVVal(i + 1, e_classsub);
 
-        curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
         general_call(clo, lhs, cf->field_descriptor, argc, args, rval, failure_label);
     } else {
         struct frame *f;
@@ -1069,7 +1068,6 @@ static void record_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inl
 
     /* Copy field to a tended descriptor */
     tmp = RecordBlk(*expr).fields[i];
-    curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
     general_call(clo, lhs, &tmp, argc, args, rval, failure_label);
 }
 
@@ -1126,7 +1124,6 @@ static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct i
 
         /* Copy field to a tended descriptor */
         tmp = ObjectBlk(*expr).fields[i];
-        curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
         general_call(clo, lhs, &tmp, argc, args, rval, failure_label);
     }
 }
