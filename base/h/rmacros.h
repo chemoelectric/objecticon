@@ -42,6 +42,7 @@
 #define Defaulted	-6
 #define Succeeded	-7
 #define Error		-8
+#define Readable	-9
 
 #define GlobalName	0
 #define StaticName	1

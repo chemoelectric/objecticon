@@ -273,7 +273,7 @@ dptr get_dptr()
         }
 
         default: {
-            syserr("Invalid opcode in get_dptr: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in get_dptr: %d (%s)", op, op_names[op]);
             return 0;
         }
     }
@@ -326,7 +326,7 @@ void get_deref(dptr dest)
         }
 
         default: {
-            syserr("Invalid opcode in get_deref: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in get_deref: %d (%s)", op, op_names[op]);
         }
     }
 }
@@ -381,7 +381,7 @@ void get_variable(dptr dest)
         }
 
         default: {
-            syserr("Invalid opcode in get_variable: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in get_variable: %d (%s)", op, op_names[op]);
         }
     }
 }
@@ -412,7 +412,7 @@ void skip_descrip()
             break;
         }
         default: {
-            syserr("Invalid opcode in skip_descrip: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in skip_descrip: %d (%s)", op, op_names[op]);
         }
     }
 }
@@ -1511,7 +1511,7 @@ void interp()
             }
 
             default: {
-                syserr("Unimplemented opcode %d (%s)\n", (int)curr_op, op_names[curr_op]);
+                syserr("Unimplemented opcode %d (%s)", (int)curr_op, op_names[curr_op]);
                 break; /* Not reached */
             }
         }

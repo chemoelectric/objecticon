@@ -1534,7 +1534,7 @@ static void conv_var()
         }
 
         default: {
-            syserr("Invalid opcode in conv_var: %d\n", (int)pc[-1]);
+            syserr("Invalid opcode in conv_var: %d", (int)pc[-1]);
             break;
         }
     }
@@ -1893,7 +1893,7 @@ static void relocate_code(struct progstate *ps, word *c)
             }
 
             default: {
-                syserr("relocate_code: Unimplemented opcode %d (%s)\n", (int)pc[-1], op_names[pc[-1]]);
+                syserr("relocate_code: Unimplemented opcode %d (%s)", (int)pc[-1], op_names[pc[-1]]);
                 break; /* Not reached */
             }
         }

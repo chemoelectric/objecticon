@@ -111,7 +111,6 @@ static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
 static int numeric_via_string(struct literal *src);
-static int permit_access(struct lclass_field *f);
 
 static struct str_buf opt_sbuf;
 
@@ -1248,17 +1247,10 @@ static int is_repeatable(struct lnode *n)
 
         case Uop_Field: { 			/* field reference */
             struct lnode_field *x = (struct lnode_field *)n;
-            struct lnode_global *y;
-            struct lclass_field *f;
-            if (x->child->op != Uop_Global)
+            struct lclass_field_ref *ref;
+            if (!get_class_field_ref(x, 0, &ref))
                 return 0;
-            y = (struct lnode_global *)x->child;
-            if (!y->global->class)
-                return 0;
-            f = lookup_implemented_field(y->global->class, x->fname);
-            if (!f)
-                return 0;
-            return (f->flag & M_Static) && (f->flag & (M_Method | M_Const));
+            return (ref->field->flag & M_Static) && (ref->field->flag & (M_Method | M_Const));
         }
 
         case Uop_Asgn:
@@ -2782,36 +2774,11 @@ static void fold_number(struct lnode *n)
     free_literal(&l);
 }
 
-static int permit_access(struct lclass_field *f)
-{
-    if (f->flag & M_Public)
-        return 1;
-
-    if (f->flag & M_Package)
-        return (curr_vfunc->defined->package_id == f->class->global->defined->package_id);
-
-    if (!curr_vfunc->method)
-        return 0;
-
-    if (f->flag & M_Private)
-        return (curr_vfunc->method->class == f->class);
-
-    if (f->flag & M_Protected) {
-        struct lclass_ref *cr;
-        for (cr = curr_vfunc->method->class->implemented_classes; cr; cr = cr->next) {
-            if (cr->class == f->class)
-                return 1;
-        }
-    }
-
-    return 0;
-}
-
 static void fold_field(struct lnode *n)
 {
     struct lnode_field *x = (struct lnode_field *)n;
-    struct lnode_global *y;
     struct lclass_field *f;
+    struct lclass_field_ref *ref;
     struct literal l;
 
     if (get_literal(x->child, &l)) {
@@ -2823,16 +2790,9 @@ static void fold_field(struct lnode *n)
         free_literal(&l);
     }
 
-    if (x->child->op != Uop_Global)
+    if (!get_class_field_ref(x, 0, &ref))
         return;
-
-    y = (struct lnode_global *)x->child;
-    if (!y->global->class)
-        return;
-
-    f = lookup_implemented_field(y->global->class, x->fname);
-    if (!f)
-        return;
+    f = ref->field;
 
     if ((f->flag & (M_Static | M_Const)) != (M_Static | M_Const))
         return;
@@ -2841,7 +2801,7 @@ static void fold_field(struct lnode *n)
         curr_vfunc->method->name == init_string && curr_vfunc->method->class == f->class)
         return;
 
-    if (!permit_access(f))
+    if (!check_access(curr_vfunc, f))
         return;
 
     switch (f->const_flag) {

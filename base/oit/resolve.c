@@ -587,7 +587,8 @@ static int tail_search(struct lclass_ref_list **arg, struct lclass *h)
 
 static int merge1_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg)
 {
-    for (struct lclass_ref_list **a = arg; *a; ++a) {
+    struct lclass_ref_list **a;
+    for (a = arg; *a; ++a) {
         if ((*a)->first) {
             struct lclass *h = (*a)->first->class;
             if (!tail_search(arg, h)) {

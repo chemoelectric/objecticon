@@ -35,6 +35,7 @@ struct lnode_field {
     char *fname;
     struct fentry *ftab_entry;
     struct lnode *child;
+    struct lclass_field_ref *ref;       /* Cached lookup for a node where child is a class */
 };
 
 struct lnode_invoke {
@@ -112,5 +113,7 @@ void visit_pre(visitf v);
 void visit_post(visitf v);
 
 void replace_node(struct lnode *old, struct lnode *new);
+int get_class_field_ref(struct lnode_field *x, struct lclass **class, struct lclass_field_ref **field);
+int check_access(struct lfunction *func, struct lclass_field *f);
 
 #endif

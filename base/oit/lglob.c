@@ -651,17 +651,14 @@ static void note_seen_field(char *name)
 
 static int note_seen_method(struct lnode_field *x)
 {
-    struct lnode_global *y;
+    struct lclass_field_ref *ref;
     struct lclass_field *f;
-    if (x->child->op != Uop_Global)
+
+    /* If not a class access field, note the field as a general one. */
+    if (!get_class_field_ref(x, 0, &ref))
         return 0;
-    y = (struct lnode_global *)x->child;
-    if (!y->global->class)
-        return 0;
-    f = lookup_implemented_field(y->global->class, x->fname);
-    /* If not found, note the field as a general one. */
-    if (!f)
-        return 0;
+    f = ref->field;
+
     /* If it's a method, mark it as statically referenced; it will be
      * scanned on the next loop if needed. Otherwise, it is a
      * variable, so return 1 and just ignore it.  Note that f may be
