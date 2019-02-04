@@ -112,7 +112,6 @@ extern word curr_op;
 extern dptr xexpr;
 extern dptr xfield;
 extern dptr xargp;
-extern int xnargs;
 extern dptr xarg1, xarg2, xarg3;   /* Operator args */
 
 /*

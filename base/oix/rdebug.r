@@ -11,10 +11,15 @@
 static void showline(struct p_frame *pf);
 static void showlevel (int n);
 static void outfield(void);
+static void show_curr_cf(void);
+static void show_curr_cf_op(void);
+static void show_args(dptr args, int nargs);
 static void xtrace	(void);
 static void procname(FILE *f, struct b_proc *p);
 static void trace_at(struct p_frame *pf);
+static void trace_from(struct p_frame *pf);
 static void trace_frame(struct p_frame *pf);
+static void trace_line(struct p_frame *pf, char *msg, int xdef);
 
 #define LIMIT 100
 
@@ -25,7 +30,6 @@ static void trace_frame(struct p_frame *pf);
 dptr xexpr;
 dptr xfield;
 dptr xargp;
-int xnargs;
 dptr xarg1, xarg2, xarg3;   /* Operator args */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf)
@@ -156,7 +160,7 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
     fflush(stderr);
 }
 
-static void trace_at(struct p_frame *pf)
+static void trace_line(struct p_frame *pf, char *msg, int pdef)
 {
     struct ipc_line *pline;
     struct ipc_fname *pfile;
@@ -165,44 +169,31 @@ static void trace_at(struct p_frame *pf)
     if (pfile && pline) {
         struct descrip t;
         abbr_fname(pfile->fname, &t);
-        fputs("   at ", stderr);
+        fputs(msg, stderr);
         begin_link(stderr, pfile->fname, pline->line);
         fprintf(stderr, "line " WordFmt " in %.*s", pline->line, StrF(t));
         end_link(stderr);
-    } else
-        fprintf(stderr, "   at ?");
+    } else if (pdef)
+        fprintf(stderr, "%s?", msg);
     putc('\n', stderr);
+}
+
+static void trace_at(struct p_frame *pf)
+{
+    trace_line(pf, "   at ", 1);
+}
+
+static void trace_from(struct p_frame *pf)
+{
+    trace_line(pf, " from ", 1);
 }
 
 static void trace_frame(struct p_frame *pf)
 {
-    dptr arg;
-    word nargs = pf->proc->nparam;
-    struct ipc_line *pline;
-    struct ipc_fname *pfile;
-
-    arg = pf->fvars->desc;
     fprintf(stderr, "   ");
     procname(stderr, (struct b_proc *)pf->proc);
-    putc('(', stderr);
-    while (nargs--) {
-        outimage(stderr, arg++, 0);
-        if (nargs)
-            putc(',', stderr);
-    }
-    putc(')', stderr);
-    
-    pline = frame_ipc_line(pf->caller);
-    pfile = frame_ipc_fname(pf->caller);
-    if (pline && pfile) {
-        struct descrip t;
-        abbr_fname(pfile->fname, &t);
-        fputs(" from ", stderr);
-        begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line " WordFmt " in %.*s", pline->line, StrF(t));
-        end_link(stderr);
-    }
-    putc('\n', stderr);
+    show_args(pf->fvars->desc, pf->proc->nparam);
+    trace_line(pf->caller, " from ", 0);
 }
 
 static void cotrace_line(struct b_coexpr *from)
@@ -280,18 +271,14 @@ static void showline(struct p_frame *pf)
  */
 static void showlevel(int n)
 {
-    while (n-- > 0) {
-        putc('|', stderr);
-        putc(' ', stderr);
-    }
+    while (n-- > 0)
+        fputs("| ", stderr);
 }
 
 
-#include "../h/opdefs.h"
-
 static void outfield()
 {
-    if (0 <= IntVal(*xfield) && IntVal(*xfield) < efnames - fnames)
+    if (xfield && 0 <= IntVal(*xfield) && IntVal(*xfield) < efnames - fnames)
         putstr(stderr, fnames[IntVal(*xfield)]);
     else
         fprintf(stderr, "field");
@@ -311,13 +298,61 @@ static int is_op(struct c_proc *bp)
 }
 
 /*
+ * Show a simple argument list.
+ */
+static void show_args(dptr args, int nargs)
+{
+    putc('(', stderr);
+    while (nargs--) {
+        outimage(stderr, args++, 0);
+        if (nargs)
+            putc(',', stderr);
+    }
+    putc(')', stderr);
+}
+
+/*
+ * Show the current C frame's name and arguments.
+ */
+static void show_curr_cf()
+{
+    fprintf(stderr, "   ");
+    procname(stderr, (struct b_proc *)curr_cf->proc);
+    show_args(curr_cf->args, curr_cf->nargs);
+}
+
+/*
+ * Show the current C frame's name and arguments, in operator (0-2
+ * args) format.
+ */
+static void show_curr_cf_op()
+{
+    int nargs;
+    dptr args;
+    nargs = curr_cf->nargs;
+    args = curr_cf->args;
+    fprintf(stderr, "   {");
+    if (nargs == 0)
+        putstr(stderr, curr_cf->proc->name);
+    else if (nargs == 1) {
+        putstr(stderr, curr_cf->proc->name);
+        putc(' ', stderr);
+        outimage(stderr, args, 0);
+    } else {
+        outimage(stderr, args++, 0);
+        putc(' ', stderr);
+        putstr(stderr, curr_cf->proc->name);
+        putc(' ', stderr);
+        outimage(stderr, args, 0);
+    }
+    putc('}', stderr);
+}
+
+/*
  * xtrace - show offending expression.
  */
 static void xtrace()
 {
-    struct ipc_line *pline;
-    struct ipc_fname *pfile;
-
     if (curr_op == 0)
         return;
 
@@ -330,17 +365,7 @@ static void xtrace()
         case Op_Invokef:
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                fprintf(stderr, "   ");
-                procname(stderr, (struct b_proc *)curr_cf->proc);
-                xnargs = curr_cf->nargs;
-                xargp = curr_cf->args;
-                putc('(', stderr);
-                while (xnargs--) {
-                    outimage(stderr, xargp++, 0);
-                    if (xnargs)
-                        putc(',', stderr);
-                }
-                putc(')', stderr);
+                show_curr_cf();
             } else if (xexpr) {
                 /* Error to do with the type of expr */
                 fprintf(stderr, "   ");
@@ -354,17 +379,7 @@ static void xtrace()
         case Op_Applyf:
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                fprintf(stderr, "   ");
-                procname(stderr, (struct b_proc *)curr_cf->proc);
-                xnargs = curr_cf->nargs;
-                xargp = curr_cf->args;
-                fprintf(stderr," ! [ ");
-                while (xnargs--) {
-                    outimage(stderr, xargp++, 0);
-                    if (xnargs)
-                        putc(',', stderr);
-                }
-                fprintf(stderr," ]");
+                show_curr_cf();
             } else if (xexpr) {
                 /* Error to do with the type of expr */
                 fprintf(stderr, "   ");
@@ -382,17 +397,7 @@ static void xtrace()
         case Op_Apply:
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                fprintf(stderr, "   ");
-                procname(stderr, (struct b_proc *)curr_cf->proc);
-                xnargs = curr_cf->nargs;
-                xargp = curr_cf->args;
-                fprintf(stderr," ! [ ");
-                while (xnargs--) {
-                    outimage(stderr, xargp++, 0);
-                    if (xnargs)
-                        putc(',', stderr);
-                }
-                fprintf(stderr," ]");
+                show_curr_cf();
             } else if (xexpr) {
                 /* Error to do with the type of expr */
                 fprintf(stderr, "   ");
@@ -408,17 +413,7 @@ static void xtrace()
         case Op_Invoke:
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                fprintf(stderr, "   ");
-                procname(stderr, (struct b_proc *)curr_cf->proc);
-                xnargs = curr_cf->nargs;
-                xargp = curr_cf->args;
-                putc('(', stderr);
-                while (xnargs--) {
-                    outimage(stderr, xargp++, 0);
-                    if (xnargs)
-                        putc(',', stderr);
-                }
-                putc(')', stderr);
+                show_curr_cf();
             } else if (xexpr) {
                 /* Error to do with the type of expr */
                 fprintf(stderr, "   ");
@@ -573,9 +568,7 @@ static void xtrace()
             }
             break;
 
-        default: {
-            struct c_proc *bp;
-
+        default:
             /*
              * Have we come here from a C operator/function?
              */
@@ -584,59 +577,18 @@ static void xtrace()
                 return;
             }
 
-            bp = curr_cf->proc;
-
             /* 
-             * It may be an operator (0-2 args) or a function.
+             * It may be an operator (0-2 args) or perhaps a function being resumed.
              */
-            if (is_op(bp)) {
-                xnargs = curr_cf->nargs;
-                xargp = curr_cf->args;
-                fprintf(stderr, "   {");
-                if (xnargs == 0)
-                    putstr(stderr, bp->name);
-                else if (xnargs == 1) {
-                    putstr(stderr, bp->name);
-                    putc(' ', stderr);
-                    outimage(stderr, xargp, 0);
-                } else {
-                    outimage(stderr, xargp++, 0);
-                    putc(' ', stderr);
-                    putstr(stderr, bp->name);
-                    putc(' ', stderr);
-                    outimage(stderr, xargp, 0);
-                }
-                putc('}', stderr);
-            } else {
-                /* Not an operator, perhaps a function being resumed. */
-                fprintf(stderr, "   ");
-                procname(stderr, (struct b_proc *)bp);
-                xnargs = curr_cf->nargs;
-                xargp = curr_cf->args;
-                putc('(', stderr);
-                while (xnargs--) {
-                    outimage(stderr, xargp++, 0);
-                    if (xnargs)
-                        putc(',', stderr);
-                }
-                putc(')', stderr);
-            }
-        }
-    }
-	 
-    pline = frame_ipc_line(curr_pf);
-    pfile = frame_ipc_fname(curr_pf);
-    if (pfile && pline) {
-        struct descrip t;
-        abbr_fname(pfile->fname, &t);
-        fputs(" from ", stderr);
-        begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line " WordFmt " in %.*s", pline->line, StrF(t));
-        end_link(stderr);
-    } else
-        fprintf(stderr, " from ?");
+            if (is_op(curr_cf->proc))
+                show_curr_cf_op();
+            else
+                show_curr_cf();
 
-    putc('\n', stderr);
+            break;
+    }
+
+    trace_from(curr_pf);
 }
 
 
@@ -645,26 +597,15 @@ static void xtrace()
  */
 void call_trace(struct p_frame *pf)
 {
-    int nargs;
-    dptr args;
-
     showline(pf->caller);
     showlevel(k_level);
 
     procname(stderr, (struct b_proc *)pf->proc);
-    if (pf->curr_inst) {
-        fprintf(stderr, " resumed\n");
-    } else {
-        putc('(', stderr);
-        nargs = pf->proc->nparam;
-        args = pf->fvars->desc;
-        while (nargs--) {
-            outimage(stderr, args++, 0);
-            if (nargs)
-                putc(',', stderr);
-        }
-        fprintf(stderr, ")\n");
-    }
+    if (pf->curr_inst)
+        fprintf(stderr, " resumed");
+    else
+        show_args(pf->fvars->desc, pf->proc->nparam);
+    putc('\n', stderr);
     fflush(stderr);
 }
 
@@ -717,26 +658,15 @@ void return_trace(struct p_frame *pf, dptr val)
 
 void c_call_trace(struct c_frame *cf)
 {
-    int nargs;
-    dptr args;
-
     showline(curr_pf);
     showlevel(k_level);
 
     procname(stderr, (struct b_proc *)cf->proc);
     if (cf->pc)
-        fprintf(stderr, " resumed\n");
-    else {
-        putc('(', stderr);
-        nargs = cf->nargs;
-        args = cf->args;
-        while (nargs--) {
-            outimage(stderr, args++, 0);
-            if (nargs)
-                putc(',', stderr);
-        }
-        fprintf(stderr, ")\n");
-    }
+        fprintf(stderr, " resumed");
+    else
+        show_args(cf->args, cf->nargs);
+    putc('\n', stderr);
     fflush(stderr);
 }
 
