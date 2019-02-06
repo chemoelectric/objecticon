@@ -72,23 +72,26 @@ procedure main(args)
    mask := MonitorCodeSet.AllocMask ++ MonitorCode.Timer ++ MonitorCode.Exit
    Prog.set_event_mask(mask, prog).set_timer_interval(2000, prog)
    while e := Prog.get_event(prog) do {
-      if e.code == MonitorCode.Timer then {
-         print_stats(prog)
-      } else if \u_flag then {
-         proact[e.code] +:= 1
-         totals[e.code] +:= integer(e.value)
-      } else case e.code of {
+      # The clumsy table insertion code is to avoid allocating huge
+      # numbers of tvtbl blocks.  This is harmless, but would cause
+      # regular collections, and hence disturb the stack allocation
+      # figure in the monitored program.
+      case e.code of {
+         MonitorCode.Timer: print_stats(prog)
          MonitorCode.Exit:{}
+         MonitorCode.StrDeAlc |
          MonitorCode.BlkDeAlc: {
-            proact[prev_code] -:= 1
-            totals[prev_code] +:= integer(e.value)
-         }
-         MonitorCode.StrDeAlc: {
-            totals[prev_code] +:= integer(e.value)
+            if \u_flag then {
+               (member(proact, e.code) | proact[e.code]) +:= 1
+               (member(totals, e.code) | totals[e.code]) +:= e.value
+            } else {
+               (member(proact, prev_code) | proact[prev_code]) -:= 1
+               (member(totals, prev_code) | totals[prev_code]) +:= e.value
+            }
          }
          default: {
-            proact[e.code] +:= 1
-            totals[e.code] +:= integer(e.value)
+            (member(proact, e.code) | proact[e.code]) +:= 1
+            (member(totals, e.code) | totals[e.code]) +:= e.value
             prev_code := e.code
          }
       }
