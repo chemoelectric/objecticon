@@ -73,9 +73,9 @@ static void dbg(char *fmt, ...);
 
 static wsp grabwin;
 
-static int mouse_debug = 0;
-static int key_debug = 0;
-static int cursor_debug = 0;
+static const int mouse_debug = 0;
+static const int key_debug = 0;
+static const int cursor_debug = 0;
 
 static struct SharedColor *black, *white;
 
