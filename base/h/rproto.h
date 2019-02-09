@@ -517,7 +517,6 @@ void *safe_calloc(size_t m, size_t n);
 void *safe_zalloc(size_t size);
 void *safe_malloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
-void *padded_malloc(size_t size);
 void *icode_alloc(void *base, size_t size);
 
 void do_op_cat(void);
