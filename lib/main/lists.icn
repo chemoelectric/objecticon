@@ -347,24 +347,13 @@ class LinkedList(List)
 
    public override insert(i, x)
       local n
-      if i = 0 then {
-         if /nhead then
-            nhead := LinkedListNode(, x)
-         else {
-            n := nhead
-            while \n.nxt do
-               n := n.nxt
-            n.nxt := LinkedListNode(, x)
-         }
-      } else {
-         if i < 0 then
-            i := cvpos(i, size()) | fail
-         if i = 1 then
-            nhead := LinkedListNode(nhead, x)
-         else {
-            n := node_at(i - 1) | fail
-            n.nxt := LinkedListNode(n.nxt, x)
-         }
+      if i <= 0 then
+         i := cvpos(i, size()) | fail
+      if i = 1 then
+         nhead := LinkedListNode(nhead, x)
+      else {
+         n := node_at(i - 1) | fail
+         n.nxt := LinkedListNode(n.nxt, x)
       }
       link
    end
