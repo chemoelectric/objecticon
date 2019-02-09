@@ -1473,3 +1473,160 @@ word neg(word a)
    return -a;
 }
 #endif					/* AsmOver */
+
+/*
+ * Allocate with malloc, but pad beginning and end with an extra
+ * unused 8 bytes.  This ensures that no other allocation will exactly
+ * adjoin the (inner) region returned.
+ */
+void *padded_malloc(size_t size)
+{
+    char *p = malloc(size + 16);
+    if (p)
+        p += 8;
+    return p;
+}
+
+/*
+ * The following are simple wrappers around malloc and free which
+ * cache allocations returned via small_free() for recycling by
+ * future small_alloc() calls.  Only allocations of small sizes are
+ * cached (< 1K on 64-bit, 512KB on 32-bit); sizes larger than this
+ * just use malloc/free as usual.
+ */
+
+
+/* Stats for dump output */
+static uint64_t sa_total_req, sa_n_alloc, sa_too_big;
+
+/*
+ * The range of sizes contained in one row of the cache.  The values
+ * don't have to be powers of 2, but it is faster if they are.
+ */
+#if WordBits == 64
+#define Step 128
+#elif WordBits == 32
+#define Step 64
+#endif
+
+/*
+ * Structure for one row of the cache.
+ */
+struct sa_row {
+    void *cache[50];        /* Cache of pointers to previously malloced data */
+    int n_cached;           /* Number in above array*/
+    uint64_t n_alloc, n_free, alloc_hit, free_hit;      /* Stats for dump output */
+};
+
+/*
+ * The cache itself has 8 rows.  At a step size of 128 bytes per row
+ * this means allocs < 1KB are subject to being cached; at 64 bytes,
+ * the limit is 512KB.
+ */
+static struct sa_row sa_rows[8];
+
+static const int sa_debug = 0;
+
+static void sa_dump(void)
+{
+    static struct timeval tp1, tp2;
+    gettimeofday(&tp1, 0);
+    if (sa_n_alloc && tp1.tv_sec != tp2.tv_sec) {
+        int i, n_cached;
+        uint64_t n_alloc, n_free, alloc_hit, free_hit;
+
+        tp2 = tp1;
+
+        fprintf(stderr, "Avg req: %d   Too big: %ld/%ld (%d%%)\n",
+                (int)(sa_total_req / sa_n_alloc), (long)sa_too_big, (long)sa_n_alloc, (int)((100*sa_too_big) / sa_n_alloc));
+
+        n_cached = n_alloc = n_free = alloc_hit = free_hit = 0;
+        for (i = 0; i < ElemCount(sa_rows); ++i) {
+            struct sa_row *q = &sa_rows[i];
+            fprintf(stderr, "\tRow: %d  (Allocs %d-%d) Cached: %d  Allocs: Hit: %ld/%ld (%d%%)   Frees: Hit: %ld/%ld (%d%%)\n",
+                    i, i*Step, (i + 1)*Step - 1, q->n_cached, 
+                    (long)q->alloc_hit, (long)q->n_alloc, q->n_alloc ? (int)((100*q->alloc_hit) / q->n_alloc) : 0,
+                    (long)q->free_hit, (long)q->n_free, q->n_free ? (int)((100*q->free_hit) / q->n_free ) :0  );
+            n_cached += q->n_cached;
+            n_alloc += q->n_alloc;
+            n_free += q->n_free;
+            alloc_hit += q->alloc_hit;
+            free_hit += q->free_hit;
+        }
+        fprintf(stderr, "\tTotals: Cached: %d  Allocs: Hit: %ld/%ld (%d%%)   Frees: Hit: %ld/%ld (%d%%)\n", n_cached, 
+                (long)alloc_hit, (long)n_alloc, n_alloc ? (int)((100*alloc_hit) / n_alloc) : 0,
+                (long)free_hit, (long)n_free, n_free ? (int)((100*free_hit) / n_free ) :0  );
+    }
+}
+
+void *small_alloc(size_t size)
+{
+    char *p;
+    int row;
+
+    if (sa_debug) {
+        sa_dump();
+        sa_total_req += size;
+        sa_n_alloc++;
+    }
+
+    row = size / Step;
+    if (row >= ElemCount(sa_rows)) {
+        /* Request too big. */
+        if (sa_debug) sa_too_big++;
+        row = -1;
+    } else {
+        if (sa_debug) ++sa_rows[row].n_alloc;
+
+        if (sa_rows[row].n_cached > 0) {
+            /* Return one from the cache. */
+            if (sa_debug) ++sa_rows[row].alloc_hit;
+            return sa_rows[row].cache[--sa_rows[row].n_cached];
+        }
+
+        /*
+         * Round the requested size upwards.  Note that since
+         *  row = size/Step, and
+         *  Step*(size/Step) = size - r for some remainder r < Step,
+         *           "       > size - Step, so
+         *  Step * (row + 1) - 1 =
+         *  Step*(size/Step) + Step - 1 > size - Step + Step - 1
+         *              "               > size - 1
+         *              "               >= size
+         */
+        size = Step * (row + 1) - 1;
+    }
+
+    /* Cache empty or too big, so use malloc. */
+    p = malloc(size + 8);
+    if (!p)
+        return 0;
+    /* Save the row (or -1 if it was too big). */
+    *((int *)p) = row;
+    return p + 8;
+}
+
+void small_free(void *p)
+{
+    int row;
+    char *q = ((char *)p - 8);
+
+    /* Retrieve hidden row number */
+    row = *((int *)q);
+    
+    if (row >= 0) {
+        if (sa_debug) ++sa_rows[row].n_free;
+        if (sa_rows[row].n_cached < ElemCount(sa_rows[row].cache)) {
+            /* Room in cache, so save for recycling and return. */
+            if (sa_debug) ++sa_rows[row].free_hit;
+            sa_rows[row].cache[sa_rows[row].n_cached++] = p;
+            return;
+        }
+    }
+
+    /*
+     * No room in cache to save, or orig alloc was too big, so just
+     * free 
+     */
+    free(q);
+}

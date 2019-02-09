@@ -104,6 +104,9 @@ void ssexpand(struct staticstr *ss, size_t n);
 char *sscpy(struct staticstr *ss, char *val);
 char *sscat(struct staticstr *ss, char *val);
 void ssdbg(struct staticstr *ss);
+void *padded_malloc(size_t size);
+void *small_alloc(size_t size);
+void small_free(void *p);
 
 int oi_toupper(int c);
 int oi_tolower(int c);

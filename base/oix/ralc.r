@@ -866,9 +866,9 @@ struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
     ndesc = pb->ndynam + pb->nparam;
     lsize = sizeof(struct frame_vars) + (ndesc - 1) * sizeof(struct descrip);
     if (!fvars && !pb->creates && ndesc)
-        p = malloc(size + lsize);
+        p = small_alloc(size + lsize);
     else
-        p = malloc(size);
+        p = small_alloc(size);
     if (!p)
         return 0;
     p->size = size;
@@ -916,9 +916,9 @@ struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
         ++fvars->refcnt;
     else if (ndesc) {
         if (pb->creates) {
-            fvars = malloc(lsize);
+            fvars = small_alloc(lsize);
             if (!fvars) {
-                free(p);
+                small_free(p);
                 return 0;
             }
         } else  /* !fvars && ndesc && !pb->creates => frame_vars allocated above */
@@ -944,7 +944,7 @@ struct c_frame *alc_c_frame(struct c_proc *pb, int nargs)
     char *t;
     int size, i;
     size = pb->framesize + (nargs + pb->ntend) * sizeof(struct descrip);
-    p = malloc(size);
+    p = small_alloc(size);
     if (!p)
         return 0;
     curpstate->stackcurr += size;
@@ -981,7 +981,7 @@ void free_frame(struct frame *f)
     switch (f->type) {
         case C_Frame: {
             f->creator->stackcurr -= f->size;
-            free(f);
+            small_free(f);
             break;
         }
         case P_Frame: {
@@ -992,7 +992,7 @@ void free_frame(struct frame *f)
                     --l->refcnt;
                     if (l->refcnt == 0) {
                         l->creator->stackcurr -= l->size;
-                        free(l);
+                        small_free(l);
                     }
                 } else {
                     if (l->refcnt != 1)
@@ -1000,25 +1000,12 @@ void free_frame(struct frame *f)
                     l->creator->stackcurr -= l->size;
                 }
             }
-            free(f);
+            small_free(f);
             break;
         }
         default:
             syserr("Unknown frame type");
     }
-}
-
-/*
- * Allocate with malloc, but pad beginning and end with an extra
- * unused 8 bytes.  This ensures that no other allocation will exactly
- * adjoin the (inner) region returned.
- */
-void *padded_malloc(size_t size)
-{
-    char *p = malloc(size + 16);
-    if (p)
-        p += 8;
-    return p;
 }
 
 /*
