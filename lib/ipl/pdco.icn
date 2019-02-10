@@ -1163,7 +1163,11 @@ procedure Each(n, e[])
    }
 end
 
-# Generate the results of e between the elements i to j inclusive.
+#
+# Generate the results of e between the elements i to j.  If j is
+# &null, then there is no upper limit.  Otherwise, Icon slice index
+# semantics are used (like l[i:j]), so (j - i) elements at most are
+# generated.
 #
 procedure Subseq(e, i, j)
    i := ce_param(i) | fail
@@ -1174,7 +1178,7 @@ procedure Subseq(e, i, j)
       i :=: j
    every 2 to i do
       @e | fail
-   suspend if /j then |@e else |@e \ (j - i + 1)
+   suspend if /j then |@e else |@e \ (j - i)
 end
 
 #
