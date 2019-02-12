@@ -93,6 +93,39 @@ procedure test_set()
    cmp_seq{"size", *s, b.size()}
 end
 
+procedure test_list_a(c)
+   local l1, l2, u, s
+   write(image(c))
+   l1 := c()
+   l2 := c()
+   every l1.put(1 to 5)
+   l2.put(4)
+   l2.put(5)
+   l2.push(2)
+   l2.push(1)
+   l2.insert(3,99)
+   l2.delete(3,99)
+   l2.insert(3,3)
+   yes_no{"l1=l2", equals(l1, l2)}
+   cmp_seq{"l1.gen()", l1.gen(), 1 to 5}
+   cmp_seq{"l1.back()", l1.back(), 5 to 1 by -1}
+   cmp_seq{"l1.gen_from(3)", l1.gen_from(3), 3 to 5}
+   cmp_seq{"l1.back_from(3)", l1.back_from(3), 2 | 1}
+   u := UnmodifiableList(l1)
+   cmp_seq{"u.gen()", l1.gen(), u.gen() }
+   try{"u.at(1) := 2", u.at(1) := 2 }
+   s := SubList(l1, 2, 4)
+   cmp_seq{"s.gen()", s.gen(), 2|3}
+   cmp_seq{"s.back()", s.back(), 3|2}
+end
+
+procedure test_list()
+   write(">>>test_list()")
+   test_list_a(LinkedList)
+   test_list_a(DoublyLinkedList)
+   test_list_a(BuiltinList)
+end
+
 procedure main()
    test_ord(EqTable(0),EqTable(0))
    test_ord(SortTable(0),SortTable(0))
@@ -100,4 +133,5 @@ procedure main()
    test_cl()
    test_eq()
    test_set()
+   test_list()
 end
