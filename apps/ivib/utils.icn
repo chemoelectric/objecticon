@@ -262,7 +262,7 @@ end
 # Is an identifier valid?
 #
 procedure valid_id(s)
-   return *s > 0 &
+   succeed *s > 0 &
       any(&letters ++ '_', s) &
       not(upto(~(&letters ++ &digits ++ '_'), s))
 end
@@ -271,7 +271,7 @@ end
 # Is an identifier valid?
 #
 procedure valid_dotted_id(s)
-   return *s > 0 &
+   succeed *s > 0 &
       any(&letters ++ '_', s) &
       not(upto(~(&letters ++ &digits ++ '_.'), s))
 end

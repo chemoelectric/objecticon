@@ -1453,7 +1453,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private static has_data(file, data)
-      return Files.stat(file).size = *data & Files.file_to_string(file) == data
+      succeed Files.stat(file).size = *data & Files.file_to_string(file) == data
    end
 
    private make_display_file(res)

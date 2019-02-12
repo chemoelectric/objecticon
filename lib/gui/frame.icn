@@ -34,7 +34,7 @@ class Frame(Component)
    end
 
    public in_resize_corner(e)
-      return in_region(e) & 
+      succeed in_region(e) & 
          (((self.x + self.w - RSW <= e.x < self.x + self.w) & 
           (self.y + self.h - border.get_b_inset() <= e.y < self.y + self.h)) | 
           ((self.x + self.w - border.get_r_inset() <= e.x < self.x + self.w) & 

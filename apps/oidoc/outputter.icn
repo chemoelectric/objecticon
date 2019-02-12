@@ -47,7 +47,7 @@ abstract class Outputter()
    end
 
    protected should_print_package(p)
-      return (p == "default") | /opts["r"] | member(arg_packs, p)
+      succeed (p == "default") | /opts["r"] | member(arg_packs, p)
    end
 
    protected get_symbols_in(p)

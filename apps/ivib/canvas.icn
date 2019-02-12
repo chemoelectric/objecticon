@@ -105,7 +105,7 @@ class BorderOfCanvas(Component)
    # Return whether the pointer is on the resize corner in the bottom right hand corner.
    #
    public in_resize_corner(e)
-      return ((self.x + self.w - Canvas.EDGE <= e.x < self.x + self.w) & 
+      succeed ((self.x + self.w - Canvas.EDGE <= e.x < self.x + self.w) & 
               (self.y + self.h - Canvas.RSW <= e.y < self.y + self.h)) | 
          ((self.x + self.w - Canvas.RSW <= e.x < self.x + self.w) & 
           (self.y + self.h - Canvas.EDGE <= e.y < self.y + self.h)) 

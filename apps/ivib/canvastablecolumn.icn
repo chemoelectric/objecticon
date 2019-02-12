@@ -86,7 +86,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
 
    public override allows_delete()
       # Can't delete the last item
-      return *parent.children > 1
+      succeed *parent.children > 1
    end
 
    public override op_delete()

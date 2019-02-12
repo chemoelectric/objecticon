@@ -689,7 +689,7 @@ abstract class DescStream(Stream, NoCopy)
       v := iand(v, icom(Poll.OUT))
       # Succeed if either IN or HUP is set, but no other.
       x := iand(v, ior(Poll.IN,Poll.HUP))
-      return x ~= 0 & x = v
+      succeed x ~= 0 & x = v
    end
 
    #
@@ -700,7 +700,7 @@ abstract class DescStream(Stream, NoCopy)
       # Ignore IN
       v := iand(v, icom(Poll.IN))
       # Succeed if OUT is set, but no other.
-      return v = Poll.OUT
+      succeed v = Poll.OUT
    end
 
    #

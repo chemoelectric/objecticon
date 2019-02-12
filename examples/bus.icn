@@ -696,7 +696,7 @@ class Map(Panel)
       local t1, t2
       t1 := l1.loc.east - l2.loc.east
       t2 := l1.loc.south - l2.loc.south
-      return t1*t1 + t2*t2 < m*m
+      succeed t1*t1 + t2*t2 < m*m
    end
 
    private static join_letters(x, y)
@@ -1558,9 +1558,9 @@ class Map(Panel)
    private want_route(rt)
       local t
       if t := \opts["r"] then
-         return rt == !t
+         succeed rt == !t
       if rt[1] == "N" then
-         return \opts["n"]
+         succeed \opts["n"]
       else if \opts["n"] then
          fail
       if rt[1] == ("6"|"9") & many(&digits, rt) = 4 then

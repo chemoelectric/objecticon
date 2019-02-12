@@ -181,13 +181,13 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       t := select_rec.owner
       case select_rec.depth of {
          1 : # Top-level, parent is c
-            return c.get_index(t) > 1
+            succeed c.get_index(t) > 1
          2 : {
             i := t.parent.get_index(t)
             if i > 1 then
                return
             # Can we move to top?
-            return is(c, CanvasMenuBar) & 
+            succeed is(c, CanvasMenuBar) & 
                (is(t, CanvasMenu) | c.get_index(t.parent) > 1)
          }
          default :
@@ -200,13 +200,13 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       t := select_rec.owner
       case select_rec.depth of {
          1 : # Top-level, parent is c
-            return c.get_index(t) < *c.menus
+            succeed c.get_index(t) < *c.menus
          2 : {
             i := t.parent.get_index(t)
             if i < *t.parent.children then
                return
             # Can we move to top?
-            return is(c, CanvasMenuBar) & 
+            succeed is(c, CanvasMenuBar) & 
                (is(t, CanvasMenu) | c.get_index(t.parent) < *c.menus)
          }
          default :

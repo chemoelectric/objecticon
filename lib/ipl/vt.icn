@@ -705,7 +705,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private static is_partial_utf8(s)
-      return *s < (5 > Text.get_utf8_seq_len(s[1]))
+      succeed *s < (5 > Text.get_utf8_seq_len(s[1]))
    end
 
    private wait_for_buff()

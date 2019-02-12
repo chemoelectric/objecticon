@@ -498,12 +498,12 @@ class CanvasComponent(CanvasObject)
 
    # Can it be positioned? - default yes
    public allows_positioning()
-      return 1
+      return
    end
 
    # Can it be copied? - default yes
    public allows_copy()
-      return 1
+      return
    end
 
    # Can we set a default (null) width? - default yes if has a layout
@@ -517,7 +517,7 @@ class CanvasComponent(CanvasObject)
    end
 
    public allows_delete()
-      return 1
+      return
    end
 
    public create_menu()

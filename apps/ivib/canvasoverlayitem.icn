@@ -129,7 +129,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    end
 
    public override allows_add()
-      return 1
+      return
    end
 
    public override allows_positioning()
@@ -140,7 +140,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
 
    public override allows_delete()
       # Can't delete the last item
-      return *parent.children > 1
+      succeed *parent.children > 1
    end
 
    public override gen_cos()
