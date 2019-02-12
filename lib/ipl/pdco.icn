@@ -92,7 +92,7 @@ procedure Compare(e1, e2)
 
    while x1 := @e1 do
       (x1 === @e2) | fail
-   if @e2 then fail else return
+   return not @e2
 
 end
 
