@@ -123,11 +123,11 @@ struct char_src *cs;
     * See if we are at white space or a comment.
     */
    c1 = *next_char;
-   if (!IsWhSp(c1) && (c1 != '/' || next_char[1] != '*'))
+   if (!IsWhSp(c1) && (c1 != '/' || (next_char[1] != '*' && next_char[1] != '/')))
       return NULL;
 
    /*
-    * Fine the line number of the current character in the line number
+    * Find the line number of the current character in the line number
     *  buffer, and correct it if we have encountered any #line directives.
     */
    line = cs->line_buf[next_char - first_char] + cs->line_adj;
@@ -194,6 +194,46 @@ struct char_src *cs;
             AppChar(tknize_sbuf, ' ');
          AdvChar();
          AdvChar();
+         }
+      else if (c1 == '/' && next_char[1] == '/') {
+         /*
+          * Start of // comment. If we are retaining the image of comments,
+          *  copy the characters into the string buffer.
+          */
+         if (whsp_image == FullImage) {
+            AppChar(tknize_sbuf, '/');
+            AppChar(tknize_sbuf, '/');
+            }
+         AdvChar();
+         AdvChar();
+
+         /*
+          * Look for the end of the comment.
+          */
+         c1 = *next_char;
+         while (c1 != '\n' && c1 != EOF) {
+            AdvChar();
+            if (whsp_image == FullImage)
+               AppChar(tknize_sbuf, c1);
+            c1 = *next_char;
+            }
+
+         if (c1 == '\n') {
+             /*
+              * Determine if we are retaining the image of a comment, replacing
+              *  a comment by one space character, or ignoring comments.
+              */
+             if (whsp_image == FullImage)
+                 AppChar(tknize_sbuf, '\n');
+             else if (whsp_image == NoComment)
+                 AppChar(tknize_sbuf, ' ');
+             AdvChar();
+             }
+         else {
+             /* c1 == EOF */
+             if (whsp_image == NoComment)
+                 AppChar(tknize_sbuf, ' ');
+             }
          }
       else
          break;         /* end of white space */
