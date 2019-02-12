@@ -928,11 +928,11 @@ class TextFlow(Component, HasLastHighlight)
    # would fit.
    #
    private fits_in_row_lr(w)
-      return have_max() | (row_x + w + max(row_blob, row_width) <= right_margin)
+      succeed have_max() | (row_x + w + max(row_blob, row_width) <= right_margin)
    end
 
    private fits_in_row(w)
-      return have_max() | (row_x + w + row_width <= right_margin)
+      succeed have_max() | (row_x + w + row_width <= right_margin)
    end
 
    private do_deferred(co)
@@ -1130,7 +1130,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    private have_max()
-      return *row = 0 & row_x = 0 & right_margin = compute_w
+      succeed *row = 0 & row_x = 0 & right_margin = compute_w
    end
 
    private make_pad(W, attr)

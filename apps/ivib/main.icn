@@ -970,7 +970,7 @@ class Main(Dialog)
       # They shouldn't be identical....
       if x === y then
          fail
-      return Class.get_name(x) == Class.get_name(y) &
+      succeed Class.get_name(x) == Class.get_name(y) &
          x.get_name() == y.get_name()
    end
 

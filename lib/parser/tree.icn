@@ -980,7 +980,7 @@ abstract class Function()
    public has_varargs()
       local l
       l := fpos.child(arglist_index)
-      return is(l, Node) & l.label == "arglist"
+      succeed is(l, Node) & l.label == "arglist"
    end
 
    public set_varargs(f)

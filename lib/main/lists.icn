@@ -4,7 +4,7 @@
 
 package datastruct
 
-import lang, util, ipl.pdco(Positions)
+import lang, util, ipl.pdco-(List)
 
 #
 # This is a common superclass for a list-like data structure.
@@ -81,11 +81,22 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # variables are generated, otherwise values are generated.
    #
    public gen()
-      local i
-      i := 1
-      while i <= size() do {
+      suspend gen_from(1)
+   end
+
+   #
+   # Generate the members, starting with the element at index `i`.
+   # If the list has MODIFY capability, variables are generated,
+   # otherwise values are generated.
+   #
+   public gen_from(i)
+      i := cvpos_item(i, size()) | fail
+      repeat {
          suspend at(i)
-         i +:= 1
+         if i < size() then
+            i +:= 1
+         else
+            fail
       }
    end
 
@@ -95,8 +106,17 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # generated.
    #
    public back()
-      local i
-      i := size()
+      suspend back_from(0)
+   end
+
+   #
+   # Generate the members in reverse order, starting with the element
+   # before index `i` (thus generating the elements in the range 1:i).
+   # If the list has MODIFY capability, variables are generated,
+   # otherwise values are generated.
+   #
+   public back_from(i)
+      i := cvpos_item(i - 1, size()) | fail
       while i > 0 do {
          suspend at(i)
          i := min(i - 1, size())
@@ -137,7 +157,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public slice(i, j)
       local s
       s := cvslice(i, j, size()) | fail
-      return ipl.pdco.List{at(s.lo to s.hi - 1)}
+      return ipl.pdco.List{ gen_from(s.lo) \ (s.hi - s.lo) }
    end
 
    #
@@ -151,11 +171,12 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Custom equals mirrors the `equals()` behaviour for builtin lists.
    #
    private override object_equals(other, seen)
-      local i
+      local e, x
       other.size() = size() | fail
-      every i := 1 to size() do
-         equals(at(i), other.at(i), seen) | fail
-      return
+      e := create other.gen()
+      every x := gen() do
+         equals(x, @e, seen) | fail
+      return not @e
    end
 
    #
@@ -202,6 +223,9 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 end
 
+#
+# This list wraps another list to provide an unmodifiable view of it.
+#
 class UnmodifiableList(List)
    private const l
 
@@ -209,20 +233,16 @@ class UnmodifiableList(List)
       return .l.at(i)
    end
 
-   public override gen()
-      suspend .l.gen()
+   public override gen_from(i)
+      suspend .l.gen_from(i)
    end
 
-   public override back()
-      suspend .l.back()
+   public override back_from(i)
+      suspend .l.back_from(i)
    end
 
    public override size()
       return l.size()
-   end
-
-   public override keyof(x)
-      suspend l.keyof(x)
    end
 
    public override get_mode()
@@ -330,6 +350,7 @@ end
 package class LinkedListNode()
    public
       nxt, val
+
    public new(nxt, val)
       self.nxt := nxt
       self.val := val
@@ -347,24 +368,13 @@ class LinkedList(List)
 
    public override insert(i, x)
       local n
-      if i = 0 then {
-         if /nhead then
-            nhead := LinkedListNode(, x)
-         else {
-            n := nhead
-            while \n.nxt do
-               n := n.nxt
-            n.nxt := LinkedListNode(, x)
-         }
-      } else {
-         if i < 0 then
-            i := cvpos(i, size()) | fail
-         if i = 1 then
-            nhead := LinkedListNode(nhead, x)
-         else {
-            n := node_at(i - 1) | fail
-            n.nxt := LinkedListNode(n.nxt, x)
-         }
+      if i <= 0 then
+         i := cvpos(i, size()) | fail
+      if i = 1 then
+         nhead := LinkedListNode(nhead, x)
+      else {
+         n := node_at(i - 1) | fail
+         n.nxt := LinkedListNode(n.nxt, x)
       }
       link
    end
@@ -386,13 +396,6 @@ class LinkedList(List)
       return node_at(i).val
    end
 
-   public override get()
-      local v
-      v := (\nhead).val | fail
-      nhead := nhead.nxt
-      return v
-   end
-
    public override pull()
       local v, n
       \nhead | fail
@@ -409,42 +412,32 @@ class LinkedList(List)
       return v
    end
 
-   public override gen()
+   public override gen_from(i)
       local n
-      n := nhead
+      n := node_at(i) | fail
       while \n do {
          suspend n.val
          n := n.nxt
       }
    end
 
-   public override keyof(x)
-      local i, n
-      i := 1
-      n := nhead
-      while \n do {
-         if n.val === x then
-            suspend i
-         n := n.nxt
-         i +:= 1
+   public override back_from(i)
+      local n
+      n := node_at(i - 1) | fail
+      repeat {
+         suspend n.val
+         n := before(n) | fail
       }
    end
 
-   public override back()
-      local l, n
-      l := []
-      n := nhead
-      while \n do {
-         default.put(l, n)
-         n := n.nxt
+   private before(n)
+      local t
+      t := nhead
+      while \t do {
+         if t.nxt === n then
+            return t
+         t := t.nxt
       }
-      suspend default.back(l).val
-   end
-
-   public override slice(i, j)
-      local s
-      s := cvslice(i, j, size()) | fail
-      return ipl.pdco.List{from(s.lo).gen() \ (s.hi - s.lo)}
    end
 
    public override size()
@@ -525,8 +518,7 @@ class LinkedList(List)
    # Succeed iff this list shares the same elements as list `other`.
    #
    public same(other)
-      if nhead === other.nhead then
-         return
+      succeed nhead === other.nhead
    end
 
    #
@@ -560,6 +552,139 @@ class LinkedList(List)
    #
    public new(entries[])
       every nhead := LinkedListNode(nhead, default.back(entries))
+      return
+   end
+end
+
+#
+# A node in a `DoublyLinkedList`.
+#
+package class DoublyLinkedListNode()
+   public
+      nxt, prev, val
+
+   public new(prev, nxt, val)
+      self.prev := prev
+      self.nxt := nxt
+      self.val := val
+      return
+   end
+end
+
+#
+# A `List` implementation based on a doubly linked list.  Note some of
+# the operations which suspend values may behave differently from the
+# builtin list if the list is concurrently modified.
+#
+class DoublyLinkedList(List)
+   private nhead, ntail, sz
+
+   public override insert(i, x)
+      local m, n
+      i := cvpos(i, sz) | fail
+      if i = 1 then {
+         if /nhead then
+            nhead := ntail := DoublyLinkedListNode(,, x)
+         else {
+            n := DoublyLinkedListNode(, nhead, x)
+            nhead.prev := n
+            nhead := n
+         }
+      } else {
+         m := node_at(i - 1) | fail
+         n := DoublyLinkedListNode(m, m.nxt, x)
+         m.nxt := n
+         if m === ntail then
+            ntail := n
+         else
+            n.nxt.prev := n
+      }
+      sz +:= 1
+      link
+   end
+
+   public override delete(i)
+      local n
+      n := node_at(cvpos_item(i, sz)) | fail
+      if /n.prev then
+         nhead := n.nxt
+      else
+         n.prev.nxt := n.nxt
+      if /n.nxt then
+         ntail := n.prev
+      else
+         n.nxt.prev := n.prev
+      n.prev := n.nxt := &null
+      sz -:= 1
+      link
+   end
+
+   public override at(i)
+      return node_at(i).val
+   end
+
+   public override size()
+      return .sz
+   end
+
+   public override gen_from(i)
+      local n
+      n := node_at(i) | fail
+      while \n do {
+         suspend n.val
+         n := n.nxt
+      }
+   end
+
+   public override back_from(i)
+      local n
+      n := node_at(i - 1) | fail
+      while \n do {
+         suspend n.val
+         n := n.prev
+      }
+   end
+
+   public override clear()
+      nhead := ntail := &null
+      sz := 0
+      link
+   end
+
+   public override get_mode()
+      return MODIFY + INSERT + DELETE
+   end
+
+   #
+   # Return the node containing element `i`, or fail if `i` is out of
+   # range.
+   #
+   private node_at(i)
+      local n
+      i := cvpos_item(i, sz) | fail
+      if i < sz / 2 then {
+         n := nhead
+         while \n & i > 1 do {
+            n := n.nxt
+            i -:= 1
+         }
+      } else {
+         n := ntail
+         i := sz - i + 1
+         while \n & i > 1 do {
+            n := n.prev
+            i -:= 1
+         }
+      }
+      return \n
+   end
+
+   #
+   # Create an instance and add each of the given entries.
+   #
+   public new(entries[])
+      sz := 0
+      every insert(1, default.back(entries))
       return
    end
 end
@@ -600,6 +725,93 @@ class UnmodifiableBuiltinList(List)
 
    public new(l)
       self.l := l
+      return
+   end
+end
+
+#
+# This class provides a view of a sublist of another `List`.  No data is
+# stored directly in this list.
+#
+# The indices specified in the constructor use Icon list slice
+# semantics, and may be zero or negative.  The indices remain
+# constant, and the actual range into the underlying list is
+# calculated dynamically.  Should this become out-of-range, then the
+# sub-list's size is zero, and insert and delete operations fail.
+#
+# Example :-
+# ~
+#   ll := LinkedList(1,2,3,4,5)
+#   # A view of the elements 3:0 of ll (3, 4, 5)
+#   s := SubList(ll, 3, 0)
+#   # After this s is (3, 4, 5, 99); note how the length is now 4.
+#   s.put(99)
+# ~
+#
+class SubList(List)
+   private const other, lo, hi
+
+   public override insert(i, x)
+      local s
+      s := cvslice() | fail
+      i := cvpos(i, s.hi - s.lo) | fail
+      link other.insert(i + s.lo - 1, x)
+   end
+
+   public override delete(i)
+      local s
+      s := cvslice() | fail
+      i := cvpos_item(i, s.hi - s.lo) | fail
+      link other.delete(i + s.lo - 1)
+   end
+
+   public override at(i)
+      local s
+      s := cvslice() | fail
+      i := cvpos_item(i, s.hi - s.lo) | fail
+      return other.at(i + s.lo - 1)
+   end
+
+   public override size()
+      local s
+      return if s := cvslice() then
+         s.hi - s.lo
+      else
+         0
+   end
+
+   public override gen_from(i)
+      local s
+      s := cvslice() | fail
+      i := cvpos_item(i, s.hi - s.lo) | fail
+      i +:= s.lo - 1
+      suspend other.gen_from(i) \ (s.hi - i)
+   end
+
+   public override back_from(i)
+      local s
+      s := cvslice() | fail
+      i := cvpos(i, s.hi - s.lo) | fail
+      i +:= s.lo - 1
+      suspend other.back_from(i) \ (i - s.lo)
+   end
+
+   private cvslice()
+      return util.cvslice(lo, hi, other.size())
+   end
+
+   public override get_mode()
+      return other.mode()
+   end
+
+   #
+   # Create a new instance using `other` as the underlying list, and
+   # `lo` and `hi` as the slice to view.
+   #
+   public new(other, lo, hi)
+      self.other := other
+      self.lo := lo
+      self.hi := hi
       return
    end
 end

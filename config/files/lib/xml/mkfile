@@ -10,7 +10,7 @@ LIBSRC=attlist.icn attributedef.icn canonicalxmlformatter.icn cdata.icn \
 
 LIBU=${LIBSRC:%.icn=%.u}
 
-PROGS=testhtml testxml testpatterns testvalid testwf \
+PROGS=testhtml testxml testvalid testwf \
 	testnotwf testinvalid globaldemo createdemo
 PROGSRC=${PROGS:%=%.icn}
 PROGU=${PROGSRC:%.icn=%.u}

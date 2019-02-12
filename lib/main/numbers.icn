@@ -116,7 +116,7 @@ class Round()
             t := map(tab(many(&letters ++ '\-'))) | fail
             mode := case t of {
                UP | "u" : UP
-               DOWN | "d" | "t" | "trunc" : DOWN
+               DOWN | "d" | "t" | "trunc" | "truncate" : DOWN
                CEILING | "ceil" | "c": CEILING
                FLOOR | "f" : FLOOR
                HALF_UP | "hu" : HALF_UP
@@ -1101,9 +1101,14 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       return default.real(round(REAL_DIGS).str('e'))
    end
 
-   # Returns self
-   public override decimal()
-      link
+   # If `rnd` is given return this instance so rounded, otherwise
+   # return self.
+   #
+   # :Parameters :
+   # :  `rnd` - null, or something convertible to a `Round`.
+   #
+   public override decimal(rnd)
+      return if /rnd then self else round(rnd)
    end
 
    # Convert to an integer, truncating any fractional part.
@@ -1278,7 +1283,8 @@ procedure need_Number(x)
 end
 
 #
-# Helper procedure to signal a runerr if `to_Number` fails, or a `Cpx`
+# Helper procedure to signal a runerr if `to_Number` fails, or results
+# in a `Cpx`.
 #
 # :Parameters :
 # :  `x` - something convertible to `Dec` or `Rat`

@@ -127,7 +127,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    end
 
    public override allows_add()
-      return 1
+      return
    end
 
    public override allows_copy()
@@ -135,7 +135,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
 
    public override allows_delete()
       # Can't delete the last item
-      return *parent.children > 1
+      succeed *parent.children > 1
    end
 
    public override gen_cos()

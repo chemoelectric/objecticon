@@ -7,7 +7,7 @@
 
 using namespace Gdiplus;
 
-static int draw_debug = 0;
+static const int draw_debug = 0;
 
 static void dbg(char *fmt, ...);
 

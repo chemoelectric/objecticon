@@ -2690,11 +2690,11 @@ class MapArea()
    end
 
    private check_rect(x, y)
-      return (coords[1] <= x <= coords[3]) & (coords[2] <= y <= coords[4])
+      succeed (coords[1] <= x <= coords[3]) & (coords[2] <= y <= coords[4])
    end
 
    private check_circle(x, y)
-      return (x - coords[1]) ^ 2 + (y - coords[2]) ^ 2 <= coords[3] ^ 2
+      succeed (x - coords[1]) ^ 2 + (y - coords[2]) ^ 2 <= coords[3] ^ 2
    end
 
    # Adapted from :-
@@ -2717,7 +2717,7 @@ class MapArea()
             c +:= 1
          j := i
       }
-      return c % 2 = 1
+      succeed c % 2 = 1
    end
 
    public new(shape, coords, url, title)
