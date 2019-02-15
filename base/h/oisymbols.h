@@ -117,7 +117,6 @@ struct oisymbols {
     void (*why)(char *s);
     void (*whyf)(char *fmt, ...);
     void (*cstr2string)(char *s, dptr d);
-    int (*string2ucs)(dptr str, dptr res);
     void (*bytes2string)(char *s, word len, dptr d);
     void (*cstrs2string)(char **s, char *delim, dptr d);
     void (*env_int)(char *name, int *variable, int min, int max);
