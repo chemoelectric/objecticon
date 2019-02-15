@@ -1252,7 +1252,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
 
 /*
  * Given a ucs block, this function returns (in res) the utf8
- * substring corresponding to the slice pos:len.  No allocation is
+ * substring of the given length, starting at pos.  No allocation is
  * done.  pos,len must be a valid range for the string.  NB pos is
  * one-based.
  */
@@ -1703,7 +1703,7 @@ end
 function lang_Text_is_ascii_string(s)
    body {
     if (is_ascii_string(&s))
-        return s;
+        return nulldesc;
     else
         fail;
   }
