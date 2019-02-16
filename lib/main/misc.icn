@@ -210,8 +210,10 @@ end
 procedure similar_string_type(s1, s2)
    return if type(s2) == "string" then
       need_string(s1)
+   else if Text.is_ascii_string(s1) then
+      s1
    else
-      Text.is_ascii_string(s1) | need_ucs(s1)
+      need_ucs(s1)
 end
 
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.
