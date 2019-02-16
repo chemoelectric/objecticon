@@ -1,6 +1,6 @@
 package util
 
-import lang(Class),
+import lang(Class, Text),
    ipl.lists(ldel1),
    posix(System)
 
@@ -190,6 +190,28 @@ end
 procedure need_table(x)
    type(x) == "table" | runerr(124, x)
    return x
+end
+
+# Convert and return `s1` so that it has the same type as `s2`, which
+# is assumed to be string or ucs, giving a runerr if conversion is not
+# possible.
+#
+procedure same_string_type(s1, s2)
+   return if type(s2) == "string" then
+      need_string(s1)
+   else
+      need_ucs(s1)
+end
+
+# This is like `same_string_type`, but if `s2` is a `ucs` and `s1` is
+# an ascii string, then `s1` is returned as-is, rather than converted
+# to a `ucs`.
+#
+procedure similar_string_type(s1, s2)
+   return if type(s2) == "string" then
+      need_string(s1)
+   else
+      Text.is_ascii_string(s1) | need_ucs(s1)
 end
 
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.

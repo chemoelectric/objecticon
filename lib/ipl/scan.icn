@@ -48,9 +48,8 @@ package ipl.scan
 
 import
    io(write, writes),
-   util(save_state, PosState, need_string, need_ucs, need_cset,
-        need_integer, need_text, ce_param),
-   lang(Text)
+   util(save_state, PosState, need_cset,
+        need_integer, need_text, ce_param, similar_string_type)
 
 # `bal()` with escape processing
 procedure slashbal(c1, c2, c3, s, i, j)	
@@ -537,7 +536,7 @@ procedure past(s1, s2, i, j)
    # change the type of s1 (and hence *s1).
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := similar_type(s1, s2)
+   s1 := similar_string_type(s1, s2)
    suspend find(s1, s2, i, j) + *s1
 end
 
@@ -830,36 +829,13 @@ procedure begin_rev_analysis(s, i, j)
 end
 
 #
-# Convert and return `s1` so that it has the same type as `s2`, which is
-# assumed to be string or ucs, giving a runerr if conversion is not
-# possible.
-#
-procedure same_type(s1, s2)
-   return if type(s2) == "string" then
-      need_string(s1)
-   else
-      need_ucs(s1)
-end
-
-#
-# This is like `same_type`, but if `s2` is a `ucs` and `s1` is an ascii string,
-# then `s1` is returned as-is, rather than converted to a `ucs`.
-#
-procedure similar_type(s1, s2)
-   return if type(s2) == "string" then
-      need_string(s1)
-   else
-      Text.is_ascii_string(s1) | need_ucs(s1)
-end
-
-#
 # Caseless version of `match()`
 #
 procedure caseless_match(s1, s2, i, j)
    local a, t
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := similar_type(s1, s2)
+   s1 := similar_string_type(s1, s2)
    t := i + *s1
    if j >= t & map(s1) == map(s2[i:t]) then
       return t
@@ -872,7 +848,7 @@ procedure caseless_find(s1, s2, i, j)
    local c, p, a, t
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := similar_type(s1, s2)
+   s1 := similar_string_type(s1, s2)
    # Special case if s1 empty
    if *s1 = 0 then {
       suspend i to j
@@ -997,7 +973,7 @@ procedure rev_find(s1, s2, i, j)
    local c, p, a, t
    a := begin_rev_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := similar_type(s1, s2)
+   s1 := similar_string_type(s1, s2)
    # Special case if s1 empty
    if *s1 = 0 then {
       suspend j to i by -1
@@ -1020,7 +996,7 @@ procedure rev_match(s1, s2, i, j)
    local a, t
    a := begin_rev_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
-   s1 := similar_type(s1, s2)
+   s1 := similar_string_type(s1, s2)
    t := j - *s1
    if t >= i & match(s1, s2, t, j) then
       return t

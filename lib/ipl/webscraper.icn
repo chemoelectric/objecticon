@@ -115,8 +115,8 @@ class WebScraper()
 
       d := HtmlParser().parse(data)
 
-      ak := same_type(u"ANCHORID", data)
-      sk := same_type(u"SCRAPEID", data)
+      ak := same_string_type(u"ANCHORID", data)
+      sk := same_string_type(u"SCRAPEID", data)
 
       anchors := create_anchors(d, ak, sk) | fail
 
