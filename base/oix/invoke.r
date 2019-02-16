@@ -393,6 +393,15 @@ static void ensure_class_initialized()
    } while (0)
 #enddef
 
+#begdef QLookupRecordField(var, recdef, query, ic)
+   do {
+    if (ic && ic->class == (union block *)recdef)
+        var = ic->index;
+    else
+        var = lookup_record_field(recdef, query, ic);
+   } while (0)
+#enddef
+
 #begdef invoke_macro(general_call,invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,e_objectcreate,e_rcreate)
 
 static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
@@ -900,8 +909,9 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
                           word *failure_label)
 {
     struct b_constructor *recdef = RecordBlk(*expr).constructor;
+    int i;
 
-    int i = lookup_record_field(recdef, query, ic);
+    QLookupRecordField(i, recdef, query, ic);
     if (i < 0) 
         AccessErr(207);
 
@@ -1059,7 +1069,7 @@ static void record_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inl
     tended struct descrip tmp;
     int i;
 
-    i = lookup_record_field(recdef, query, ic);
+    QLookupRecordField(i, recdef, query, ic);
     if (i < 0) 
         InvokefErr(207);
 
