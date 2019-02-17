@@ -23,4 +23,4 @@ mkconsts:	mkconsts.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ mkconsts.o ../../base/common/mlocal.o ../../base/common/alloc.o $(LIBS)
 
 $(LIBU): %.u: %.icn
-	oit -snc $(LIBSRC)
+	oit -sncW $(LIBSRC)

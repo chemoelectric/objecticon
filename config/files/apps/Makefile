@@ -19,4 +19,4 @@ etags :
 	$(MAKE) -C oidoc etags
 
 ../bin/%: 	%.icn
-	oit -s -o $@ $<
+	oit -sW -o $@ $<

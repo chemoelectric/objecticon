@@ -25,6 +25,7 @@ int Iflag       =0;     /* -I: produce listing of raw and optimized intermediate
 int neweronly	=0;	/* -n: only translate .icn if newer than .u */
 int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
+int Wflag	=0;	/* -W: exit with error result on warning */
 int Bflag       =0;     /* -B: bundle iconx in output file */
 int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace info (default), 
                          *       2 = trace & symbol info */
@@ -202,8 +203,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBfgmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
-    while ((c = oi_getopt(argc,argv, "?cBfgmno:sv:ELIZTVl:O:D:b:")) != EOF) {
+#define Usage "[-cBfgmnsELIZWTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
+    while ((c = oi_getopt(argc,argv, "?cBfgmno:sv:ELIZWTVl:O:D:b:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -277,6 +278,10 @@ int main(int argc, char **argv)
                 Zflag = 1;
                 break;
 
+            case 'W':
+                Wflag = 1;
+                break;
+
             case 'D':
                 add_pp_def(oi_optarg);
                 break;
@@ -330,7 +335,7 @@ int main(int argc, char **argv)
             report("Translating:");
         trans(trans_files, pp_defs, &errors, &warnings);
         report_errors(1);
-        if (errors > 0)	{		/* exit if errors seen */
+        if (errors > 0 || (Wflag && warnings > 0))	{		/* exit if errors seen */
             remove_intermediate_files();
             exit(EXIT_FAILURE);
         }
@@ -386,7 +391,7 @@ int main(int argc, char **argv)
 
     report_errors(0);
 
-    if (errors > 0) {			/* exit if linker errors seen */
+    if (errors > 0 || (Wflag && warnings > 0)) {			/* exit if linker errors seen */
         remove(ofile);
         exit(EXIT_FAILURE);
     }
@@ -619,6 +624,7 @@ static void usage()
                    "-B        Bundle the oix executable in the output\n"
                    "-m        Preprocess using m4\n"
                    "-Z        Use zlib compression on the icode file\n"
+                   "-W        Exit with an error status if there were warnings\n"
                    "-c        Stop after producing ucode files\n"
                    "-f        Enable full string invocation by preserving unreferenced globals and methods\n"
                    "          during linking (equivalent to 'invocable all' in a source file)\n"

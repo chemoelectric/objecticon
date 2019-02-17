@@ -15,5 +15,5 @@ clean:
 	$(RM) *.u packages.txt
 
 $(LIBU): %.u: %.icn
-	oit -snc $(LIBSRC)
+	oit -sncW $(LIBSRC)
 

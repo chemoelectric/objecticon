@@ -26,10 +26,7 @@ clean:
 	$(RM) $(PROGS) *.u packages.txt
 
 $(LIBU): %.u: %.icn
-	oit -snc $(LIBSRC)
+	oit -sncW $(LIBSRC)
 
 %: 	%.icn
-	oit -s $<
-
-%: %.u $(LIBU)
-	oit -so $@ $@.u
+	oit -sW $<

@@ -14,4 +14,4 @@ clean :
 	$(MAKE) -C oidoc clean
 
 ../bin/%: 	%.icn
-	oit -s -o $@ $<
+	oit -sW -o $@ $<
