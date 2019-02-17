@@ -18,16 +18,16 @@ mkconsts:       mkconsts.$O
 	$LD -o mkconsts mkconsts.$O ../../base/common/plan9.$O ../../base/common/alloc.$O ../../base/common/mlocal.$O
 
 %.u:Q: %.icn
-       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+       test $stem.u -nt $stem.icn || oit -sncW $LIBSRC
 
 posixconsts.u: posixconsts.icn
-	oit -c -s posixconsts.icn
+	oit -csW posixconsts.icn
 
 ioconsts.u: ioconsts.icn
-	oit -c -s ioconsts.icn
+	oit -csW ioconsts.icn
 
 evmonconsts.u: evmonconsts.icn
-	oit -c -s evmonconsts.icn
+	oit -csW evmonconsts.icn
 
 ucodeconsts.u: ucodeconsts.icn
-	oit -c -s ucodeconsts.icn
+	oit -csW ucodeconsts.icn

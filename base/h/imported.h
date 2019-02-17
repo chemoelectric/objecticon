@@ -121,7 +121,6 @@
 #define why (*(imported->why))
 #define whyf (*(imported->whyf))
 #define cstr2string (*(imported->cstr2string))
-#define string2ucs (*(imported->string2ucs))
 #define bytes2string (*(imported->bytes2string))
 #define cstrs2string (*(imported->cstrs2string))
 #define env_int (*(imported->env_int))

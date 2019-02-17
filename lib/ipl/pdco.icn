@@ -21,11 +21,10 @@ import
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
-   ipl.scan(same_type),
    numbers(Rat),
    lang(Internal),
    util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
-        need_text)
+        need_text, same_string_type)
 
 # Adds tabby to treadling sequence
 procedure AddTabby(e, i)	
@@ -576,10 +575,10 @@ procedure String(e, sep)
    sep := ce_param(sep) | fail
    sep := need_text(\sep) | ","
    # Ensure result is same type as sep, even if the sequence is empty.
-   s := same_type("", sep)
+   s := same_string_type("", sep)
    while s ||:= @e || sep
    # Ensure that -*sep below is correct
-   sep := same_type(sep, s)
+   sep := same_string_type(sep, s)
    s[-*sep:0] := ""
    return s
 end

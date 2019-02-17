@@ -15,4 +15,4 @@ clean:V:
 	@{ cd oidoc ; mk clean }
 
 ../bin/%: %.icn
-	oit -s -o $target $stem.icn
+	oit -sW -o $target $stem.icn

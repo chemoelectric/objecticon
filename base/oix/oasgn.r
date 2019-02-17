@@ -286,7 +286,7 @@ static int subs_asgn(dptr dest, dptr src)
                MakeDesc(D_Ucs, make_ucs_block(&utf8_new, 
                                               UcsBlk(deststr).length - tvsub->sslen), &rsltstr);
            } else if (prelen == 0 && postlen == 0) {
-               MakeDesc(D_Ucs, make_ucs_block(src, StrLen(srcstr)), &rsltstr);
+               MakeDesc(D_Ucs, make_ucs_block(&srcstr, StrLen(srcstr)), &rsltstr);
            } else {
                /*
                 * Form the result string.

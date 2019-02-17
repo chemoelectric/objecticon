@@ -998,17 +998,17 @@ function left(s1,n,s2)
               return s1;
 
           /*
-           * The padding string is null; make it a blank.
-           */
-          if (UcsBlk(s2).length == 0)
-              MakeDesc(D_Ucs, blank_ucs, &s2);
-
-          /*
            * If we are extracting the left part of a large string (not padding)
            * just construct a substring.
            */
           if (UcsBlk(s1).length > n) 
               return ucs(make_ucs_substring(&UcsBlk(s1), 1, n));
+
+          /*
+           * The padding string is null; make it a blank.
+           */
+          if (UcsBlk(s2).length == 0)
+              MakeDesc(D_Ucs, blank_ucs, &s2);
 
           whole_len = (n - UcsBlk(s1).length) / UcsBlk(s2).length;
           odd_len = (n - UcsBlk(s1).length) % UcsBlk(s2).length;
@@ -1048,18 +1048,17 @@ function left(s1,n,s2)
               runerr(103, s2);
 
           /*
+           * If we are extracting the left part of a large string (not padding),
+           * just construct a descriptor.
+           */
+          if (n <= StrLen(s1))
+              return string(n, StrLoc(s1));
+
+          /*
            * The padding string is null; make it a blank.
            */
           if (StrLen(s2) == 0)
               s2 = blank;
-
-          /*
-           * If we are extracting the left part of a large string (not padding),
-           * just construct a descriptor.
-           */
-          if (n <= StrLen(s1)) {
-              return string(n, StrLoc(s1));
-          }
 
           /*
            * Get n bytes of string space.  Start at the right end of the new
@@ -1078,13 +1077,11 @@ function left(s1,n,s2)
           }
 
           /*
-           * Copy up to n bytes of s1 into the new string, starting at the left end
+           * Copy s1 (length < n) into the new string, starting at the left end
            */
           s = sbuf;
           slen = StrLen(s1);
           st = StrLoc(s1);
-          if (slen > n)
-              slen = n;
           while (slen-- > 0)
               *s++ = *st++;
 
@@ -1093,7 +1090,6 @@ function left(s1,n,s2)
            */
           return string(n, sbuf);
       }
-
     }
 end
 
@@ -1130,12 +1126,6 @@ function right(s1,n,s2)
               return s1;
 
           /*
-           * The padding string is null; make it a blank.
-           */
-          if (UcsBlk(s2).length == 0)
-              MakeDesc(D_Ucs, blank_ucs, &s2);
-
-          /*
            * If we are extracting the right part of a large string (not padding)
            * just construct a substring.
            */
@@ -1143,6 +1133,12 @@ function right(s1,n,s2)
               return ucs(make_ucs_substring(&UcsBlk(s1), 
                                             UcsBlk(s1).length + 1 - n,
                                             n));
+
+          /*
+           * The padding string is null; make it a blank.
+           */
+          if (UcsBlk(s2).length == 0)
+              MakeDesc(D_Ucs, blank_ucs, &s2);
 
           whole_len = (n - UcsBlk(s1).length) / UcsBlk(s2).length;
           odd_len = (n - UcsBlk(s1).length) % UcsBlk(s2).length;
@@ -1182,18 +1178,17 @@ function right(s1,n,s2)
               runerr(103, s2);
 
           /*
+           * If we are extracting the right part of a large string (not padding),
+           * just construct a descriptor.
+           */
+          if (n <= StrLen(s1))
+              return string(n, StrLoc(s1) + StrLen(s1) - n);
+
+          /*
            * The padding string is null; make it a blank.
            */
           if (StrLen(s2) == 0)
               s2 = blank;
-
-          /*
-           * If we are extracting the right part of a large string (not padding),
-           * just construct a descriptor.
-           */
-          if (n <= StrLen(s1)) {
-              return string(n, StrLoc(s1) + StrLen(s1) - n);
-          }
 
           /*
            * Get n bytes of string space.  Start at the left end of the new
@@ -1212,13 +1207,11 @@ function right(s1,n,s2)
 
           /*
            * Copy s1 into the new string, starting at the right end and copying
-           * s2 from right to left.  If *s1 > n, only copy n bytes.
+           * s2 from right to left.
            */
           s = sbuf + n;
-          slen = StrLen(s1);
+          slen = StrLen(s1);     /* slen < n */
           st = StrLoc(s1) + slen;
-          if (slen > n)
-              slen = n;
           while (slen-- > 0)
               *--s = *--st;
 
@@ -1263,15 +1256,9 @@ function center(s1,n,s2)
               return s1;
 
           /*
-           * The padding string is null; make it a blank.
-           */
-          if (UcsBlk(s2).length == 0)
-              MakeDesc(D_Ucs, blank_ucs, &s2);
-
-          /*
            * If we are extracting the center of a large string (not padding),
            * just construct a substring of length n at pos = 1 + (len-n+1)/2.
-           * This is a valid substring since len>n, so len-n+1>1, so pos>2.  Also
+           * This is a valid substring since len>n, so len-n+1>1, so pos>1.  Also
            * since len-n+1>1, (len-n+1)/2<(len-n+1), so pos<=(len-n+1),
            * which is a valid start point for a substring of length n.
            */
@@ -1279,6 +1266,11 @@ function center(s1,n,s2)
               return ucs(make_ucs_substring(&UcsBlk(s1), 
                                             1 + (UcsBlk(s1).length - n + 1) / 2,
                                             n));
+          /*
+           * The padding string is null; make it a blank.
+           */
+          if (UcsBlk(s2).length == 0)
+              MakeDesc(D_Ucs, blank_ucs, &s2);
 
           left = (n - UcsBlk(s1).length) / 2;
           right = n - UcsBlk(s1).length - left;
@@ -1319,7 +1311,7 @@ function center(s1,n,s2)
 
           /*
            * The result must have n chars since 
-           *  UcsBlk(s1).length + (whole_right_len * + UcsBlk(s2).length + odd_right_len) +
+           *  UcsBlk(s1).length + (whole_right_len * UcsBlk(s2).length + odd_right_len) +
            *                           (whole_left_len * UcsBlk(s2).length + odd_left_len) 
            *  = UcsBlk(s1).length + right + left (by mod calcs above)
            *  = n  (since right = n - UcsBlk(s1).length - left by assignment above.)
@@ -1336,18 +1328,17 @@ function center(s1,n,s2)
               runerr(103, s2);
 
           /*
+           * If we are extracting the center of a large string (not padding),
+           * just construct a descriptor.
+           */
+          if (n <= StrLen(s1))
+              return string(n, StrLoc(s1) + ((StrLen(s1)-n+1)>>1));
+
+          /*
            * The padding string is null; make it a blank.
            */
           if (StrLen(s2) == 0)
               s2 = blank;
-
-          /*
-           * If we are extracting the center of a large string (not padding),
-           * just construct a descriptor.
-           */
-          if (n <= StrLen(s1)) {
-              return string(n, StrLoc(s1) + ((StrLen(s1)-n+1)>>1));
-          }
 
           /*
            * Get space for the new string.  Start at the right
@@ -1379,29 +1370,18 @@ function center(s1,n,s2)
           }
 
           slen = StrLen(s1);
-          if (n < slen) {
-              /*
-               * s1 is larger than the field to center it in.  The source for the
-               *  copy starts at the appropriate point in s1 and the destination
-               *  starts at the left end of of the new string.
-               */
-              s = sbuf;
-              st = StrLoc(s1) + slen/2 - hcnt + (~n&slen&1);
-          }
-          else {
-              /*
-               * s1 is smaller than the field to center it in.  The source for the
-               *  copy starts at the left end of s1 and the destination starts at
-               *  the appropriate point in the new string.
-               */
-              s = sbuf + hcnt - slen/2 - (~n&slen&1);
-              st = StrLoc(s1);
-          }
           /*
-           * Perform the copy, moving min(*s1,n) bytes from st to s.
+           * s1 is smaller than the field to center it in (slen < n).
+           *  The source for the copy starts at the left end of s1 and
+           *  the destination starts at the appropriate point in the
+           *  new string.
            */
-          if (slen > n)
-              slen = n;
+          s = sbuf + hcnt - slen/2 - (~n&slen&1);
+          st = StrLoc(s1);
+
+          /*
+           * Perform the copy, moving slen (<n) bytes from st to s.
+           */
           while (slen-- > 0)
               *s++ = *st++;
 

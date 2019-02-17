@@ -22,5 +22,5 @@ mkconsts:	mkconsts.obj
 	$(LIBS) /OUT:mkconsts.exe 
 
 $(LIBU): %.u: %.icn
-	oit -snc $(LIBSRC)
+	oit -sncW $(LIBSRC)
 

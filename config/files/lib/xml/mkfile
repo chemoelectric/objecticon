@@ -21,7 +21,7 @@ clean:V:
 	rm -f $PROGS *.u packages.txt
 
 %.u:Q: %.icn
-       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+       test $stem.u -nt $stem.icn || oit -sncW $LIBSRC
 
 %: %.icn
-	oit -so $stem $stem.icn
+	oit -sW $stem.icn

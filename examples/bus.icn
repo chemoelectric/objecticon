@@ -1563,7 +1563,7 @@ class Map(Panel)
          succeed \opts["n"]
       else if \opts["n"] then
          fail
-      if rt[1] == ("6"|"9") & many(&digits, rt) = 4 then
+      if rt ~== "607" & rt[1] == ("6"|"9") & many(&digits, rt) = 4 then
          fail
       return
    end

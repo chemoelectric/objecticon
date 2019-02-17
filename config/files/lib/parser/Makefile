@@ -15,7 +15,7 @@ clean:
 	$(RM) *.u oigram.icn packages.txt
 
 $(LIBU): %.u: %.icn oigram.icn
-	oit -ncs $(LIBSRC)
+	oit -ncsW $(LIBSRC)
 
 oigram.icn : oigram.y
 	iyacc -k parser oigram.y

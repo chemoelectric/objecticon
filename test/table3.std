@@ -61,3 +61,34 @@ m2: same
 gen: same
 sort=: yes
 size: same
+>>>test_list()
+class datastruct.LinkedList
+l1=l2: yes
+l1.gen(): same
+l1.back(): same
+l1.gen_from(3): same
+l1.back_from(3): same
+u.gen(): same
+u.at(1) := 2: Error 111
+s.gen(): same
+s.back(): same
+class datastruct.DoublyLinkedList
+l1=l2: yes
+l1.gen(): same
+l1.back(): same
+l1.gen_from(3): same
+l1.back_from(3): same
+u.gen(): same
+u.at(1) := 2: Error 111
+s.gen(): same
+s.back(): same
+class datastruct.BuiltinList
+l1=l2: yes
+l1.gen(): same
+l1.back(): same
+l1.gen_from(3): same
+l1.back_from(3): same
+u.gen(): same
+u.at(1) := 2: Error 111
+s.gen(): same
+s.back(): same

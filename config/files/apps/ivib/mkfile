@@ -58,7 +58,7 @@ clean:V:
 	@{ cd plugins ; mk clean }
 
 $PROG:  $UFILES
-	oit -sn -o $target $UFILES
+	oit -snW -o $target $UFILES
 
 %.u:Q: %.icn
-	test $stem.u -nt $stem.icn || oit -snc $SRC plugin.icn
+	test $stem.u -nt $stem.icn || oit -sncW $SRC plugin.icn

@@ -12,7 +12,7 @@ clean:
 	rm -f *.u packages.txt $(PROGS)
 
 $(PROGU): %.u: %.icn
-	oit -snc $(PROGSRC)
+	oit -sncW $(PROGSRC)
 
 %:      %.u
-	oit -s -b2 -o $@ $@.u
+	oit -sW -b2 -o $@ $@.u

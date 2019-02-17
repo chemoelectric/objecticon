@@ -15,7 +15,7 @@ clean:
 	$(RM) *.u packages.txt $(PROG)
 
 %.u: %.icn
-	oit -snc $(SRC)
+	oit -sncW $(SRC)
 
 $(PROG):	$(UFILES)
-	oit -s -o $@ $(UFILES)
+	oit -sW -o $@ $(UFILES)

@@ -12,7 +12,7 @@ clean:V:
 $LIBU: oigram.icn
 
 %.u:Q: %.icn
-       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+       test $stem.u -nt $stem.icn || oit -sncW $LIBSRC
 
 oigram.icn : oigram.y
 	iyacc -k parser oigram.y

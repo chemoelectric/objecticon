@@ -2517,7 +2517,7 @@ function cairo_SVG_get_title(self)
         if (!s)
             fail;
         cstr2string(s, &str);
-        if (!string2ucs(&str, &result))
+        if (!cnv:ucs(str, result))
             fail;
         return result;
     }
@@ -2532,7 +2532,7 @@ function cairo_SVG_get_desc(self)
         if (!s)
             fail;
         cstr2string(s, &str);
-        if (!string2ucs(&str, &result))
+        if (!cnv:ucs(str, result))
             fail;
         return result;
     }
@@ -2547,7 +2547,7 @@ function cairo_SVG_get_metadata(self)
         if (!s)
             fail;
         cstr2string(s, &str);
-        if (!string2ucs(&str, &result))
+        if (!cnv:ucs(str, result))
             fail;
         return result;
     }

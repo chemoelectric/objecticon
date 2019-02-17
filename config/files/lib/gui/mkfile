@@ -10,4 +10,4 @@ clean:V:
 	rm -f *.u packages.txt
 
 %.u:Q: %.icn
-       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+       test $stem.u -nt $stem.icn || oit -sncW $LIBSRC

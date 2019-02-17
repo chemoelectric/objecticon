@@ -22,7 +22,7 @@ clean:
 	$(RM) $(PROGEXE) *.u packages.txt
 
 $(LIBU) $(PROGU): %.u: %.icn
-	oit -snc $(LIBSRC) $(PROGSRC)
+	oit -sncW $(LIBSRC) $(PROGSRC)
 
-%: %.u $(LIBU)
-	oit -so $@ $@.u
+%: 	%.icn
+	oit -sW $<

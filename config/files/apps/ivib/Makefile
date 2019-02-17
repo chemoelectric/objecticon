@@ -63,7 +63,7 @@ clean:
 	$(MAKE) -C plugins clean
 
 %.u: %.icn
-	oit -snc $(SRC) plugin.icn
+	oit -sncW $(SRC) plugin.icn
 
 $(PROG):	$(UFILES)
-	oit -s -o $@ $(UFILES)
+	oit -sW -o $@ $(UFILES)

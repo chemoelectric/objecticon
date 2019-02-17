@@ -16,4 +16,4 @@ clean:V:
 	rm -f *.u packages.txt bin/*
 
 bin/%: %.icn
-	oit -s -o $target $stem.icn
+	oit -sW -o $target $stem.icn

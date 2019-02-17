@@ -426,7 +426,6 @@ struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem 
 struct b_lelem *lglast(struct b_list *lb, struct lgstate *state);
 struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem *le);
 void cstr2string(char *s, dptr d);
-int string2ucs(dptr str, dptr res);
 void bytes2string(char *s, word len, dptr d);
 void cstrs2string(char **s, char *delim, dptr d);
 int eq(dptr d1, dptr d2);
