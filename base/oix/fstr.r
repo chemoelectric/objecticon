@@ -3,6 +3,7 @@
  */
 
 static void nxttab(word *col, dptr *tablst, dptr endlst, word *last, word *interval);
+static void alcstr_repl(dptr s, word n);
 
 
 "detab(s,i,...) - replace tabs with spaces, with stops at columns indicated."
@@ -823,6 +824,26 @@ function map(s1,s2,s3)
 end
 
 
+/*
+ * Helper function to alcstr and fill n copies of s.  It is assumed
+ * that sufficient space has been reserved beforehand.
+ */
+static void alcstr_repl(dptr s, word n)
+{
+    char *t;
+    t = alcstr(NULL, n * StrLen(*s));
+    if (StrLen(*s) == 1)
+        memset(t, *StrLoc(*s), n);
+    else {
+        while (n-- > 0) {
+            memcpy(t, StrLoc(*s), StrLen(*s));
+            t += StrLen(*s);
+        }
+    }
+}
+
+
+
 "repl(s,i) - concatenate i copies of string s."
 
 function repl(s,n)
@@ -833,21 +854,17 @@ function repl(s,n)
       runerr(101,n)
 
    body {
-      word slen;
-
       if (n < 0)
          Irunerr(205,n);
 
-
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          word utf8_size, i;
+          word utf8_size;
 
-          slen = UcsBlk(s).length;
           /*
            * Return an empty string if n is 0 or if s is the empty string.
            */
-          if ((n == 0) || (slen==0))
+          if (n == 0 || UcsBlk(s).length == 0)
               return ucs(emptystr_ucs);
 
           /*
@@ -865,49 +882,35 @@ function repl(s,n)
           /*
            * Fill the allocated area with copies of s.
            */
-          for (i = 0; i < n; ++i)
-              alcstr(StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
+          alcstr_repl(&UcsBlk(s).utf8, n);
 
-          return ucs(make_ucs_block(&utf8, n * slen));
+          return ucs(make_ucs_block(&utf8, n * UcsBlk(s).length));
       } else {
-          word cnt, size;
-          char * resloc, * sloc, *floc;
           tended struct descrip result;
+          word size;
 
-          slen = StrLen(s);
           /*
            * Return an empty string if n is 0 or if s is the empty string.
            */
-          if ((n == 0) || (slen==0))
+          if (n == 0 || StrLen(s) == 0)
               return emptystr;
 
           /*
            * Make sure the resulting string will not be too long.
            */
-          size = mul(n, slen);
+          size = mul(n, StrLen(s));
           if (over_flow)
               Irunerr(205,n);
 
           /*
            * Make result a descriptor for the replicated string.
            */
-          MemProtect(resloc = alcstr(NULL, size));
-          MakeStr(resloc, size, &result);
+          MakeStrMemProtect(reserve(Strings, size), size, &result);
 
           /*
            * Fill the allocated area with copies of s.
            */
-          sloc = StrLoc(s);
-          if (slen == 1)
-              memset(resloc, *sloc, size);
-          else {
-              while (--n >= 0) {
-                  floc = sloc;
-                  cnt = slen;
-                  while (--cnt >= 0)
-                      *resloc++ = *floc++;
-              }
-          }
+          alcstr_repl(&s, n);
 
           return result;
       }
@@ -981,11 +984,13 @@ function left(s1,n,s2)
       runerr(101, n)
 
    body {
+      word odd_len, whole_len;
+
       if (n < 0)
          Irunerr(205,n);
 
       if (is:ucs(s1)) {
-          word odd_len, whole_len, utf8_size, i;
+          word utf8_size;
           tended struct descrip utf8, odd_utf8;
 
           if (!def:ucs(s2, *blank_ucs, s2))
@@ -1028,8 +1033,7 @@ function left(s1,n,s2)
           MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
           alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
-          for (i = 0; i < whole_len; ++i)
-              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
+          alcstr_repl(&UcsBlk(s2).utf8, whole_len);
 
           /*
            * The result must have n chars since 
@@ -1040,9 +1044,7 @@ function left(s1,n,s2)
 
           return ucs(make_ucs_block(&utf8, n));
       } else {
-          char *s, *st;
-          word slen;
-          char *sbuf, *s3;
+          tended struct descrip result;
 
           if (!def:string(s2, blank, s2))
               runerr(103, s2);
@@ -1060,35 +1062,15 @@ function left(s1,n,s2)
           if (StrLen(s2) == 0)
               s2 = blank;
 
-          /*
-           * Get n bytes of string space.  Start at the right end of the new
-           *  string and copy s2 into the new string as many times as it fits.
-           *  Note that s2 is copied from right to left.
-           */
-          MemProtect(sbuf = alcstr(NULL, n));
+          whole_len = (n - StrLen(s1)) / StrLen(s2);
+          odd_len = (n - StrLen(s1)) % StrLen(s2);
 
-          slen = StrLen(s2);
-          s3 = StrLoc(s2);
-          s = sbuf + n;
-          while (s > sbuf) {
-              st = s3 + slen;
-              while (st > s3 && s > sbuf)
-                  *--s = *--st;
-          }
+          MakeStrMemProtect(reserve(Strings, n), n, &result);
+          alcstr(StrLoc(s1), StrLen(s1));
+          alcstr(StrLoc(s2) + StrLen(s2) - odd_len, odd_len);
+          alcstr_repl(&s2, whole_len);
 
-          /*
-           * Copy s1 (length < n) into the new string, starting at the left end
-           */
-          s = sbuf;
-          slen = StrLen(s1);
-          st = StrLoc(s1);
-          while (slen-- > 0)
-              *s++ = *st++;
-
-          /*
-           * Return the new string.
-           */
-          return string(n, sbuf);
+          return result;
       }
     }
 end
@@ -1109,11 +1091,13 @@ function right(s1,n,s2)
       runerr(101, n)
 
    body {
+      word odd_len, whole_len;
+
       if (n < 0)
          Irunerr(205,n);
 
       if (is:ucs(s1)) {
-          word odd_len, whole_len, utf8_size, i;
+          word utf8_size;
           tended struct descrip utf8, odd_utf8;
 
           if (!def:ucs(s2, *blank_ucs, s2))
@@ -1156,8 +1140,7 @@ function right(s1,n,s2)
            * Make a descriptor for the result's utf8 string.
            */
           MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
-          for (i = 0; i < whole_len; ++i)
-              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
+          alcstr_repl(&UcsBlk(s2).utf8, whole_len);
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
           alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
 
@@ -1170,9 +1153,7 @@ function right(s1,n,s2)
 
           return ucs(make_ucs_block(&utf8, n));
       } else {
-          char *s, *st;
-          word slen;
-          char *sbuf, *s3;
+          tended struct descrip result;
 
           if (!def:string(s2, blank, s2))
               runerr(103, s2);
@@ -1190,35 +1171,15 @@ function right(s1,n,s2)
           if (StrLen(s2) == 0)
               s2 = blank;
 
-          /*
-           * Get n bytes of string space.  Start at the left end of the new
-           *  string and copy s2 into the new string as many times as it fits.
-           */
-          MemProtect(sbuf = alcstr(NULL, n));
+          whole_len = (n - StrLen(s1)) / StrLen(s2);
+          odd_len = (n - StrLen(s1)) % StrLen(s2);
 
-          slen = StrLen(s2);
-          s3 = StrLoc(s2);
-          s = sbuf;
-          while (s < sbuf + n) {
-              st = s3;
-              while (st < s3 + slen && s < sbuf + n)
-                  *s++ = *st++;
-          }
+          MakeStrMemProtect(reserve(Strings, n), n, &result);
+          alcstr_repl(&s2, whole_len);
+          alcstr(StrLoc(s2), odd_len);
+          alcstr(StrLoc(s1), StrLen(s1));
 
-          /*
-           * Copy s1 into the new string, starting at the right end and copying
-           * s2 from right to left.
-           */
-          s = sbuf + n;
-          slen = StrLen(s1);     /* slen < n */
-          st = StrLoc(s1) + slen;
-          while (slen-- > 0)
-              *--s = *--st;
-
-          /*
-           * Return the new string.
-           */
-          return string(n, sbuf);
+          return result;
       }
     }
 end
@@ -1238,12 +1199,13 @@ function center(s1,n,s2)
       runerr(101, n)
 
    body {
+      word left, right, whole_left_len, odd_left_len,
+           whole_right_len, odd_right_len;
       if (n < 0)
          Irunerr(205,n);
 
       if (is:ucs(s1)) {
-          word left, right, whole_left_len, odd_left_len,
-              whole_right_len, odd_right_len, utf8_size, i;
+          word utf8_size;
           tended struct descrip utf8, odd_left_utf8, odd_right_utf8;
 
           if (!def:ucs(s2, *blank_ucs, s2))
@@ -1301,13 +1263,11 @@ function center(s1,n,s2)
            */
           MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
 
-          for (i = 0; i < whole_left_len; ++i)
-              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
+          alcstr_repl(&UcsBlk(s2).utf8, whole_left_len);
           alcstr(StrLoc(odd_left_utf8), StrLen(odd_left_utf8));
           alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
           alcstr(StrLoc(odd_right_utf8), StrLen(odd_right_utf8));
-          for (i = 0; i < whole_right_len; ++i)
-              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
+          alcstr_repl(&UcsBlk(s2).utf8, whole_right_len);
 
           /*
            * The result must have n chars since 
@@ -1319,10 +1279,7 @@ function center(s1,n,s2)
 
           return ucs(make_ucs_block(&utf8, n));
       } else {
-          char *s, *st;
-          word slen;
-          char *sbuf, *s3;
-          word hcnt;
+          tended struct descrip result;
 
           if (!def:string(s2,blank,s2))
               runerr(103, s2);
@@ -1332,7 +1289,7 @@ function center(s1,n,s2)
            * just construct a descriptor.
            */
           if (n <= StrLen(s1))
-              return string(n, StrLoc(s1) + ((StrLen(s1)-n+1)>>1));
+              return string(n, StrLoc(s1) + (StrLen(s1) - n + 1) / 2);
 
           /*
            * The padding string is null; make it a blank.
@@ -1340,55 +1297,21 @@ function center(s1,n,s2)
           if (StrLen(s2) == 0)
               s2 = blank;
 
-          /*
-           * Get space for the new string.  Start at the right
-           *  of the new string and copy s2 into it from right to left as
-           *  many times as will fit in the right half of the new string.
-           */
-          MemProtect(sbuf = alcstr(NULL, n));
+          left = (n - StrLen(s1)) / 2;
+          right = n - StrLen(s1) - left;
+          whole_left_len = left / StrLen(s2);
+          odd_left_len = left % StrLen(s2);
+          whole_right_len = right / StrLen(s2);
+          odd_right_len = right % StrLen(s2);
 
-          slen = StrLen(s2);
-          s3 = StrLoc(s2);
-          hcnt = n / 2;
-          s = sbuf + n;
-          while (s > sbuf + hcnt) {
-              st = s3 + slen;
-              while (st > s3 && s > sbuf + hcnt)
-                  *--s = *--st;
-          }
+          MakeStrMemProtect(reserve(Strings, n), n, &result);
+          alcstr_repl(&s2, whole_left_len);
+          alcstr(StrLoc(s2), odd_left_len);
+          alcstr(StrLoc(s1), StrLen(s1));
+          alcstr(StrLoc(s2) + StrLen(s2) - odd_right_len, odd_right_len);
+          alcstr_repl(&s2, whole_right_len);
 
-          /*
-           * Start at the left end of the new string and copy s1 into it from
-           *  left to right as many time as will fit in the left half of the
-           *  new string.
-           */
-          s = sbuf;
-          while (s < sbuf + hcnt) {
-              st = s3;
-              while (st < s3 + slen && s < sbuf + hcnt)
-                  *s++ = *st++;
-          }
-
-          slen = StrLen(s1);
-          /*
-           * s1 is smaller than the field to center it in (slen < n).
-           *  The source for the copy starts at the left end of s1 and
-           *  the destination starts at the appropriate point in the
-           *  new string.
-           */
-          s = sbuf + hcnt - slen/2 - (~n&slen&1);
-          st = StrLoc(s1);
-
-          /*
-           * Perform the copy, moving slen (<n) bytes from st to s.
-           */
-          while (slen-- > 0)
-              *s++ = *st++;
-
-          /*
-           * Return the new string.
-           */
-          return string(n, sbuf);
+          return result;
       }
  }
 end
