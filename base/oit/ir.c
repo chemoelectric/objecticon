@@ -16,19 +16,25 @@ static int chunk_id_seq;
 struct chunk **chunks;
 int hi_chunk;
 static int hi_clo, hi_tmp, hi_lab, hi_mark;
+static int mark_id_seq;
 
 static struct ir_info *scan_stack;
 static struct ir_info *loop_stack;
 
 static int augop(int n);
 static void print_ir_var(struct ir_var *v);
+static void delete_ir(struct chunk *chunk, int i);
+static void change_unmark_ids(int old, int new);
 static void optimize_goto(void);
+static int peephole1(void);
+static void peephole_optimizations(void);
+static void mark_check(void);
 static void optimize_goto1(int i);
 static void renumber_ir(void);
 static int get_extra_chunk(void);
 static struct ir_var *make_tmp(struct ir_stack *st);
 static int make_tmploc(struct ir_stack *st);
-static int make_mark(struct ir_stack *st);
+static struct mark_pair *make_mark(struct ir_stack *st);
 static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
 static int asgn_may_fail(struct lnode *n, int);
@@ -331,21 +337,23 @@ static struct ir *ir_cofail(struct lnode *n)
     return res;
 }
 
-static struct ir_mark *ir_mark(struct lnode *n, int no)
+static struct ir_mark *ir_mark(struct lnode *n, struct mark_pair *mp)
 {
     struct ir_mark *res = IRAlloc(struct ir_mark);
     res->node = n;
     res->op = Ir_Mark;
-    res->no = no;
+    res->no = mp->no;
+    res->id = mp->id;
     return res;
 }
 
-static struct ir_unmark *ir_unmark(struct lnode *n, int no)
+static struct ir_unmark *ir_unmark(struct lnode *n, struct mark_pair *mp)
 {
     struct ir_unmark *res = IRAlloc(struct ir_unmark);
     res->node = n;
     res->op = Ir_Unmark;
-    res->no = no;
+    res->no = mp->no;
+    res->id = mp->id;
     return res;
 }
 
@@ -711,12 +719,15 @@ static int make_tmploc(struct ir_stack *st)
     return i;
 }
 
-static int make_mark(struct ir_stack *st)
+static struct mark_pair *make_mark(struct ir_stack *st)
 {
+    struct mark_pair *m = IRAlloc(struct mark_pair);
     int i = st->mark++;
     if (i > hi_mark)
         hi_mark = i;
-    return i;
+    m->no = i;
+    m->id = mark_id_seq++;
+    return m;
 }
 
 static int make_closure(struct ir_stack *st)
@@ -1781,7 +1792,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_stack *body_expr_st;
             struct ir_info *expr, *body;
-            int body_mk;
+            struct mark_pair * body_mk;
 
             init_loop(res, st, target, bounded, rval);
             push_loop(res);
@@ -1958,7 +1969,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_stack *body_expr_st;
             struct ir_info *expr, *body;
             struct ir_var *v;
-            int body_mk;
+            struct mark_pair * body_mk;
 
             init_loop(res, st, target, bounded, rval);
             push_loop(res);
@@ -2486,7 +2497,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int i;
             struct ir_info **info;
             struct ir_stack *list_st;
-            int need_mark, mk;
+            int need_mark;
+            struct mark_pair *mk;
 
             if (x->n < 2)
                 quit("Got slist with < 2 elements");
@@ -2804,7 +2816,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_If: {
             struct lnode_2 *x = (struct lnode_2 *)n;
-            int expr_mk;
+            struct mark_pair *expr_mk;
             struct ir_stack *expr_st, *then_st;
             struct ir_info *expr, *then;
 
@@ -2836,7 +2848,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_Ifelse: {
             struct lnode_3 *x = (struct lnode_3 *)n;
-            int expr_mk;
+            struct mark_pair *expr_mk;
             struct ir_stack *expr_st, *then_st, *else_st;
             struct ir_info *expr, *then, *els;
             int tl;
@@ -2884,7 +2896,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_var *e, **var;
             struct ir_info *expr, *def = 0, **selector, **clause;
             struct ir_stack *case_st, *clause_st, *expr_st;
-            int i, j, mk, tl, *tbl, xc, need_mark;
+            int i, j, tl, *tbl, xc, need_mark;
+            struct mark_pair *mk;
 
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
@@ -3114,7 +3127,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
             struct ir_stack *not_st;
-            int mk;
+            struct mark_pair *mk;
 
             not_st = branch_stack(st);
             mk = make_mark(not_st);
@@ -3138,7 +3151,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_info *expr, *limit;
             struct ir_var *t;
-            int mk;
+            struct mark_pair *mk;
 
             /* Generate nicer code for the common case expr \ 1 */
             if (x->child1->op == Uop_Const &&
@@ -3278,13 +3291,14 @@ void generate_ir()
 {
     struct ir_info *init = 0, *body = 0, *end;
     struct lnode *n;
-    int init_mk = -1;
+    struct mark_pair *init_mk = 0;
 
     hi_chunk = -1;
     chunk_id_seq = 1;
     memset(chunks, 0, n_chunks_alloc * sizeof(struct chunk *));
     mb_clear(&ir_func_mb);
     hi_clo = hi_tmp = hi_lab = hi_mark = -1;
+    mark_id_seq = 0;
 
     if (Iflag) {
         if (curr_lfunc->method)
@@ -3338,6 +3352,7 @@ void generate_ir()
     }
 
     optimize_goto();
+    peephole_optimizations();
     renumber_ir();
     if (Iflag) {
         fprintf(stderr, "** Optimized code\n");
@@ -3395,7 +3410,7 @@ static void print_ir_var(struct ir_var *v)
 static void print_chunk(struct chunk *chunk)
 {
     int j;
-    indentf("Chunk %d %s (line %d)\n", chunk->id, chunk->desc, chunk->line);
+    indentf("Chunk %d %s (line %d) seen=%d, fixed=%d\n", chunk->id, chunk->desc, chunk->line, chunk->seen, chunk->fixed);
     for (j = 0; j < chunk->n_inst; ++j) {
         struct ir *ir = chunk->inst[j];
         switch (ir->op) {
@@ -3434,12 +3449,12 @@ static void print_chunk(struct chunk *chunk)
             }
             case Ir_Mark: {
                 struct ir_mark *x = (struct ir_mark *)ir;
-                indentf("\tIr_Mark %d\n", x->no);
+                indentf("\tIr_Mark %d (id %d)\n", x->no, x->id);
                 break;
             }
             case Ir_Unmark: {
                 struct ir_unmark *x = (struct ir_unmark *)ir;
-                indentf("\tIr_Unmark %d\n", x->no);
+                indentf("\tIr_Unmark %d (id %d)\n", x->no, x->id);
                 break;
             }
             case Ir_Move: {
@@ -3838,6 +3853,189 @@ static void unref(struct chunk *chunk)
 {
     if (--chunk->seen == 0)
         quit("Unexpected 0 seen count after goto elimination (chunk %d)", chunk->id);
+}
+
+static void delete_ir(struct chunk *chunk, int i)
+{
+    while (i < chunk->n_inst - 1) {
+        chunk->inst[i] = chunk->inst[i + 1];
+        ++i;
+    }
+    --chunk->n_inst;
+}
+
+static void change_unmark_ids(int old, int new)
+{
+    int i, j;
+    struct chunk *chunk;
+    struct ir *ir;
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk = chunks[i];
+        if (chunk) {
+            for (j = 0; j < chunk->n_inst; ++j) {
+                ir = chunk->inst[j];
+                if (ir->op == Ir_Unmark) {
+                    struct ir_unmark *x = (struct ir_unmark *)ir;
+                    if (x->id == old)
+                        x->id = new;
+                }
+            }
+        }
+    }
+}
+
+static int peephole1()
+{
+    int i, j1, j2;
+    struct chunk *chunk1, *chunk2;
+    struct ir *ir1, *ir2;
+
+    ir1 = 0;
+    chunk1 = 0;
+    j1 = 0;
+
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk2 = chunks[i];
+        if (chunk2) {
+            for (j2 = 0; j2 < chunk2->n_inst; ++j2) {
+                ir2 = chunk2->inst[j2];
+                if (ir1) {
+                    /*
+                     * Transform  unmark x   to   unmark y
+                     *            unmark y
+                     * 
+                     *            unmark x   to   return
+                     *            return
+                     * 
+                     *            unmark x   to   fail
+                     *            fail
+                     */
+                    if (ir1->op == Ir_Unmark &&
+                        (ir2->op == Ir_Unmark || ir2->op == Ir_Return || ir2->op == Ir_Fail))
+                    {
+                        if (Iflag)
+                            fprintf(stderr, "Delete redundant unmark from chunk %d\n", chunk1->id);
+                        delete_ir(chunk1, j1);
+                        return 1;
+                    }
+
+
+                    /*
+                     * Transform  unmark x   to   unmark x
+                     *            mark x
+                     * 
+                     * Both instructions must be in the same chunk (so
+                     * there is no jump to the second).
+                     */
+                    if (ir1->op == Ir_Unmark && ir2->op == Ir_Mark && chunk1 == chunk2 &&
+                        ((struct ir_unmark *)ir1)->no == ((struct ir_mark *)ir2)->no)
+                    {
+                        if (Iflag)
+                            fprintf(stderr, "Delete redundant mark from chunk %d\n", chunk2->id);
+                        delete_ir(chunk2, j2);
+                        /*
+                         * Since we have removed a mark instruction,
+                         * its corresponding unmarks are "orphaned";
+                         * so they are adopted by the unmark
+                         * instruction's mark.  This prevents any
+                         * theoretical risk of deleting the unmark,
+                         * then deleting its mark (if it only had one
+                         * corresponding unmark), leaving the orphaned
+                         * unmarks dangling.
+                         */
+                        change_unmark_ids(((struct ir_mark *)ir2)->id, ((struct ir_unmark *)ir1)->id);
+                        return 1;
+                    }
+                }
+                ir1 = ir2;
+                chunk1 = chunk2;
+                j1 = j2;
+            }
+        }
+    }
+    return 0;
+}
+
+static void peephole_optimizations()
+{
+    while (peephole1())
+        ;
+    mark_check();
+}
+
+/*
+ * Eliminate unwanted mark instructions, namely those with no matching
+ * unmark.  First, a table of id numbers is set up, and each unmark
+ * instruction is noted.  A second pass eliminates those mark
+ * instructions for which no matching unmark was seen.
+ * 
+ * We also check for errors: duplicate marks and orphaned unmarks.
+ */
+static void mark_check()
+{
+    int i, j, k;
+    struct chunk *chunk;
+    struct ir *ir;
+    int *t;
+    t = mb_alloc(&ir_func_mb, sizeof(int) * mark_id_seq);
+    
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk = chunks[i];
+        if (chunk) {
+            for (j = 0; j < chunk->n_inst; ++j) {
+                ir = chunk->inst[j];
+                if (ir->op == Ir_Unmark) {
+                    struct ir_unmark *x = (struct ir_unmark *)ir;
+                    t[x->id] = 1;
+                }
+            }
+        }
+    }
+
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk = chunks[i];
+        if (chunk) {
+            j = 0;
+            while (j < chunk->n_inst) {
+                ir = chunk->inst[j];
+                if (ir->op == Ir_Mark) {
+                    struct ir_mark *x = (struct ir_mark *)ir;
+                    switch (t[x->id]) {
+                        case 0: {
+                            /* Mark with no corresponding unmark */
+                            if (Iflag)
+                                fprintf(stderr, "Delete redundant mark from chunk %d\n", chunk->id);
+                            delete_ir(chunk, j);
+                            /* Still check for a duplicate mark. */
+                            t[x->id] = 2;
+                            /* Repeat loop with same j. */
+                            continue;
+                        }
+                        case 1: {
+                            /* Mark with a corresponding unmark; set to 2 to note a match and check for
+                             * duplicates. */
+                            t[x->id] = 2;
+                            break;
+                        }
+                        case 2: {
+                            quit("Duplicate mark instruction, id=%d", x->id);
+                            break;
+                        }
+                    }
+                }
+                ++j;
+            }
+        }
+    }
+
+    /*
+     * If any entry in the table is still 1, then it means we've seen
+     * an unmark, but no corresponding mark.
+     */
+    for (k = 0; k < mark_id_seq; ++k) {
+        if (t[k] == 1)
+            quit("Orphaned unmark instruction detected, id=%d", k);
+    }
 }
 
 static void optimize_goto()
