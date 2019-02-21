@@ -25,10 +25,10 @@ static int augop(int n);
 static void print_ir_var(struct ir_var *v);
 static void delete_ir(struct chunk *chunk, int i);
 static void change_unmark_ids(int old, int new);
-static void optimize_goto(void);
+static int optimize_goto(void);
 static int peephole1(void);
-static void peephole_optimizations(void);
-static void mark_check(void);
+static int peephole_optimizations(void);
+static int mark_check(void);
 static void optimize_goto1(int i);
 static void renumber_ir(void);
 static int get_extra_chunk(void);
@@ -41,6 +41,12 @@ static int asgn_may_fail(struct lnode *n, int);
 static void move_chunk(int old, int new);
 static void unref(struct chunk *chunk);
 static int last_invoke_arg_rval(struct lnode_invoke *x);
+static void optimize(void);
+static void edit_labels(int old, int new);
+static int is_an_exit(struct ir *ir);
+static void remove_unseen_chunks(void);
+static void sanity_check(void);
+static void sum_seen(int *res);
 
 static int traverse_level;
 
@@ -3351,13 +3357,36 @@ void generate_ir()
             chunk1(0, ir_goto(n, end->start));
     }
 
-    optimize_goto();
-    peephole_optimizations();
+    optimize();
+    sanity_check();
     renumber_ir();
     if (Iflag) {
         fprintf(stderr, "** Optimized code\n");
         dump_ir();
         fprintf(stderr, "** End of optimized code\n");
+        fprintf(stderr, "Memory usage\n");
+        mb_show(&ir_func_mb);
+    }
+}
+
+static void optimize()
+{
+    int i, mod;
+    optimize_goto1(0);
+    remove_unseen_chunks();
+    chunks[0]->joined_above = 1;
+    for (i = 1;; ++i) {
+        if (Iflag)
+            fprintf(stderr, "Optimization pass %d\n", i);
+        mod = 0;
+        if (optimize_goto())
+            ++mod;
+        if (peephole_optimizations())
+            ++mod;
+        if (mark_check())
+            ++mod;
+        if (mod <= 1)
+            break;
     }
 }
 
@@ -3410,7 +3439,8 @@ static void print_ir_var(struct ir_var *v)
 static void print_chunk(struct chunk *chunk)
 {
     int j;
-    indentf("Chunk %d %s (line %d) seen=%d, fixed=%d\n", chunk->id, chunk->desc, chunk->line, chunk->seen, chunk->fixed);
+    indentf("Chunk %d %s (line %d) seen=%d, joined above=%d, below=%d\n", chunk->id, chunk->desc,
+            chunk->line, chunk->seen, chunk->joined_above, chunk->joined_below);
     for (j = 0; j < chunk->n_inst; ++j) {
         struct ir *ir = chunk->inst[j];
         switch (ir->op) {
@@ -3755,9 +3785,8 @@ void dump_ir()
     for (i = 0; i <= hi_chunk; ++i) {
         struct chunk *chunk;
         chunk = chunks[i];
-        if (!chunk)
-            continue;
-        print_chunk(chunk);
+        if (chunk)
+            print_chunk(chunk);
     }
 }
 
@@ -3851,8 +3880,8 @@ static int augop(int n)
 
 static void unref(struct chunk *chunk)
 {
-    if (--chunk->seen == 0)
-        quit("Unexpected 0 seen count after goto elimination (chunk %d)", chunk->id);
+    if (--chunk->seen < 0)
+        quit("Unexpected -ve seen count after unref (chunk %d)", chunk->id);
 }
 
 static void delete_ir(struct chunk *chunk, int i)
@@ -3884,6 +3913,75 @@ static void change_unmark_ids(int old, int new)
     }
 }
 
+/*
+ * Test if ir is a return or fail, or goes to a one-instruction chunk
+ * which is a return or a fail.
+ */
+static int is_an_exit(struct ir *ir)
+{
+    struct chunk *chunk;
+    if (ir->op == Ir_Return || ir->op == Ir_Fail)
+        return 1;
+    if (ir->op != Ir_Goto)
+        return 0;
+    chunk = chunks[((struct ir_goto *)ir)->dest];
+    return (chunk->n_inst == 1 &&
+            (chunk->inst[0]->op == Ir_Return || chunk->inst[0]->op == Ir_Fail));
+}
+
+static void sanity_check()
+{
+    int i, *a;
+    struct chunk *chunk1, *chunk2;
+
+    a = mb_alloc(&ir_func_mb, sizeof(int) * (hi_chunk + 1));
+    a[0] = 1;
+    sum_seen(a);
+
+    chunk1 = 0;
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk2 = chunks[i];
+        if (i == 0) {
+            if (!chunk2)
+                quit("Chunk 0 null");
+            if (!chunk2->joined_above)
+                quit("Chunk 0 joined above not set");
+        }
+
+        if (chunk2) {
+            if (chunk2->id != i)
+                quit("Wrong chunk id: %d", i);
+
+            if (chunk2->seen != a[i])
+                quit("Seen count wrong chunk %d (should be %d)", i, a[i]);
+
+            if (chunk2->seen == 0 && !chunk2->joined_above)
+                quit("Unreachable chunk");
+
+            if (chunk1) {
+                if (chunk2->joined_above != chunk1->joined_below)
+                    quit("joined flags wrong");
+                if (chunk2->n_inst > 0) {
+                    int op;
+                    op = chunk2->inst[chunk2->n_inst - 1]->op;
+                    if (op == Ir_Goto || op == Ir_IGoto || op == Ir_Fail ||
+                        op == Ir_Return || op == Ir_TCaseChoose || op == Ir_TCaseChoosex ||
+                        op == Ir_SysErr) {
+                        if (chunk2->joined_below)
+                            quit("joined below flag wrong");
+                    } else
+                        if (!chunk2->joined_below)
+                            quit("joined below flag wrong");
+                }
+            }
+            chunk1 = chunk2;
+        } else {
+            if (a[i] != 0)
+                quit("Null chunk with seen %d", i);
+        }
+    }
+}
+
 static int peephole1()
 {
     int i, j1, j2;
@@ -3892,75 +3990,206 @@ static int peephole1()
 
     ir1 = 0;
     chunk1 = 0;
-    j1 = 0;
+    j1 = -1;
 
     for (i = 0; i <= hi_chunk; ++i) {
         chunk2 = chunks[i];
-        if (chunk2) {
-            for (j2 = 0; j2 < chunk2->n_inst; ++j2) {
-                ir2 = chunk2->inst[j2];
-                if (ir1) {
-                    /*
-                     * Transform  unmark x   to   unmark y
-                     *            unmark y
-                     * 
-                     *            unmark x   to   return
-                     *            return
-                     * 
-                     *            unmark x   to   fail
-                     *            fail
-                     */
-                    if (ir1->op == Ir_Unmark &&
-                        (ir2->op == Ir_Unmark || ir2->op == Ir_Return || ir2->op == Ir_Fail))
-                    {
-                        if (Iflag)
-                            fprintf(stderr, "Delete redundant unmark from chunk %d\n", chunk1->id);
-                        delete_ir(chunk1, j1);
-                        return 1;
-                    }
+        if (!chunk2)
+            continue;
 
+        /*
+         * Delete empty chunks.  This keeps things tidy, and makes the
+         * trailing goto optimisation below possible (it would need a
+         * separate loop otherwise).
+         * 
+         * It may also allow further optimisations (eg if the chunk
+         * after the empty one were fail or return, a goto to it would
+         * be noted by is_an_exit above after the deletion).
+         */
+        if (chunk2->n_inst == 0) {
+            int k;
+            /*
+             * Look for next chunk after the empty one.
+             */
+            k = i + 1;
+            while (k <= hi_chunk && !chunks[k])
+                ++k;
+            if (k > hi_chunk || !chunk2->joined_below || !chunks[k]->joined_above)
+                quit("Strange empty chunk %d", i);
 
-                    /*
-                     * Transform  unmark x   to   unmark x
-                     *            mark x
-                     * 
-                     * Both instructions must be in the same chunk (so
-                     * there is no jump to the second).
-                     */
-                    if (ir1->op == Ir_Unmark && ir2->op == Ir_Mark && chunk1 == chunk2 &&
-                        ((struct ir_unmark *)ir1)->no == ((struct ir_mark *)ir2)->no)
-                    {
-                        if (Iflag)
-                            fprintf(stderr, "Delete redundant mark from chunk %d\n", chunk2->id);
-                        delete_ir(chunk2, j2);
-                        /*
-                         * Since we have removed a mark instruction,
-                         * its corresponding unmarks are "orphaned";
-                         * so they are adopted by the unmark
-                         * instruction's mark.  This prevents any
-                         * theoretical risk of deleting the unmark,
-                         * then deleting its mark (if it only had one
-                         * corresponding unmark), leaving the orphaned
-                         * unmarks dangling.
-                         */
-                        change_unmark_ids(((struct ir_mark *)ir2)->id, ((struct ir_unmark *)ir1)->id);
-                        return 1;
-                    }
-                }
-                ir1 = ir2;
-                chunk1 = chunk2;
-                j1 = j2;
+            if (i == 0) {
+                /*
+                 * chunk2 is the first chunk; this slot must not be
+                 * empty, so move k to 0.
+                 */
+                if (Iflag)
+                    fprintf(stderr, "Replace empty chunk 0 with %d\n", k);
+
+                move_chunk(k, 0);
+                chunks[0]->seen += chunk2->seen;
+                /* The first chunk is always joined above. */
+                chunks[0]->joined_above = 1;
+            } else {
+                /*
+                 * chunk2 is not the first chunk, so references to
+                 * chunk2 are changed to chunk k, and chunk2 is
+                 * deleted.
+                 */
+                if (Iflag)
+                    fprintf(stderr, "Edit references and remove empty chunk %d (to %d)\n", i, k);
+
+                edit_labels(i, k);
+                chunks[k]->seen += chunk2->seen;
+
+                /* This may change from 1 to 0, since chunk2 wasn't
+                 * necessarily joined_above before. */
+                chunks[k]->joined_above = chunk2->joined_above;
+                chunks[i] = 0;
             }
+
+            return 1;
+        }
+
+        if (i > 0 &&
+            chunk2->n_inst == 1 &&
+            chunk2->inst[0]->op == Ir_Goto &&
+            chunk2->seen > 0) 
+        {
+            /*
+             * This chunk is a lone goto with label references.
+             *
+             * Redirect the references to the goto's target, ie
+             * 
+             *           chunk i     goto X
+             *           ...
+             *           chunk j     ...
+             *                       goto i   ->  goto X
+             * 
+             * If chunk i is not joined above, it can then be deleted.
+             * 
+             */
+            int dest = ((struct ir_goto *)chunk2->inst[0])->dest;
+            if (dest != i) {       /* Check for a looping chunk. */
+                if (chunk2->joined_below)
+                    quit("Odd lone goto");
+
+                if (Iflag)
+                    fprintf(stderr, "Edit references to lone goto block %d (to %d)\n", i, dest);
+                edit_labels(i, dest);
+                chunks[dest]->seen += chunk2->seen;
+                if (chunk2->joined_above)
+                    chunk2->seen = 0;
+                else {
+                    if (Iflag)
+                        fprintf(stderr, "Delete lone goto block %d\n", i);
+                    /* Unref, since we're deleting this goto, which is a reference to dest */
+                    unref(chunks[dest]);
+                    chunks[i] = 0;
+                }
+                return 1;
+            }
+        }
+
+        for (j2 = 0; j2 < chunk2->n_inst; ++j2) {
+            ir2 = chunk2->inst[j2];
+            if (ir1) {
+                /*
+                 * Eliminate redundant trailing goto :-
+                 * 
+                 *    chunk1  : A
+                 *              goto chunk2
+                 * 
+                 *      ... null slots ...
+                 * 
+                 *    chunk2: B
+                 * 
+                 * We just delete the redundant trailing goto from
+                 * chunk1.
+                 * 
+                 * We know that there are no empty chunks in between,
+                 * since these are removed by an optimization above.
+                 * This is important, since if there were an
+                 * intermediate empty chunk, the following would leave
+                 * its joined_above flag wrong (0 instead of 1).
+                 * 
+                 */
+                if (ir1->op == Ir_Goto &&
+                    ((struct ir_goto *)ir1)->dest == i) {
+                    if (! (j1 == chunk1->n_inst - 1 ) || chunk1->joined_below || chunk2->joined_above)
+                        quit("Odd goto");
+
+                    if (Iflag)
+                        fprintf(stderr, "Removing trailing goto from chunk %d\n", chunk1->id);
+
+                    --chunk1->n_inst;
+                    unref(chunk2);
+                    chunk1->joined_below = chunk2->joined_above = 1;
+                    return 1;
+                }
+
+
+                /*
+                 * Transform  unmark x   to   unmark y
+                 *            unmark y
+                 * 
+                 *            unmark x   to   return
+                 *            return
+                 * 
+                 *            unmark x   to   fail
+                 *            fail
+                 */
+                if (ir1->op == Ir_Unmark &&
+                    (ir2->op == Ir_Unmark || is_an_exit(ir2)))
+                {
+                    if (Iflag)
+                        fprintf(stderr, "Delete redundant unmark from chunk %d\n", chunk1->id);
+                    delete_ir(chunk1, j1);
+                    return 1;
+                }
+
+
+                /*
+                 * Transform  unmark x   to   unmark x
+                 *            mark x
+                 * 
+                 * Both instructions must be in the same chunk (so
+                 * there is no jump to the second).
+                 */
+                if (ir1->op == Ir_Unmark && ir2->op == Ir_Mark && chunk1 == chunk2 &&
+                    ((struct ir_unmark *)ir1)->no == ((struct ir_mark *)ir2)->no)
+                {
+                    if (Iflag)
+                        fprintf(stderr, "Delete redundant mark from chunk %d\n", chunk2->id);
+                    delete_ir(chunk2, j2);
+                    /*
+                     * Since we have removed a mark instruction,
+                     * its corresponding unmarks are "orphaned";
+                     * so they are adopted by the unmark
+                     * instruction's mark.  This prevents any
+                     * theoretical risk of deleting the unmark,
+                     * then deleting its mark (if it only had one
+                     * corresponding unmark), leaving the orphaned
+                     * unmarks dangling.
+                     */
+                    change_unmark_ids(((struct ir_mark *)ir2)->id, ((struct ir_unmark *)ir1)->id);
+                    return 1;
+                }
+            }
+            ir1 = ir2;
+            chunk1 = chunk2;
+            j1 = j2;
         }
     }
     return 0;
 }
 
-static void peephole_optimizations()
+static int peephole_optimizations()
 {
+    int mod;
+    mod = 0;
     while (peephole1())
-        ;
-    mark_check();
+        mod = 1;
+    return mod;
 }
 
 /*
@@ -3971,14 +4200,15 @@ static void peephole_optimizations()
  * 
  * We also check for errors: duplicate marks and orphaned unmarks.
  */
-static void mark_check()
+static int mark_check()
 {
-    int i, j, k;
+    int i, j, k, mod, *t;
     struct chunk *chunk;
     struct ir *ir;
-    int *t;
+
     t = mb_alloc(&ir_func_mb, sizeof(int) * mark_id_seq);
-    
+    mod = 0;
+
     for (i = 0; i <= hi_chunk; ++i) {
         chunk = chunks[i];
         if (chunk) {
@@ -4005,6 +4235,7 @@ static void mark_check()
                             /* Mark with no corresponding unmark */
                             if (Iflag)
                                 fprintf(stderr, "Delete redundant mark from chunk %d\n", chunk->id);
+                            mod = 1;
                             delete_ir(chunk, j);
                             /* Still check for a duplicate mark. */
                             t[x->id] = 2;
@@ -4036,15 +4267,13 @@ static void mark_check()
         if (t[k] == 1)
             quit("Orphaned unmark instruction detected, id=%d", k);
     }
+
+    return mod;
 }
 
-static void optimize_goto()
+static void remove_unseen_chunks()
 {
-    int i, j;
-    struct chunk *last, *chunk, *other;
-
-    optimize_goto1(0);
-
+    int i;
     /* Eliminate unseen ones */
     for (i = 0; i <= hi_chunk; ++i) {
         struct chunk *chunk;
@@ -4055,7 +4284,14 @@ static void optimize_goto()
             chunks[i] = 0;
         }
     }
+}
 
+static int optimize_goto()
+{
+    int i, j, mod;
+    struct chunk *chunk, *other;
+
+    mod = 0;
     /* Merge chunks where possible */
     i = 0;
     while (i <= hi_chunk) {
@@ -4067,7 +4303,7 @@ static void optimize_goto()
          *    ...
          *    chunk j: B
          *             T
-         * and j is only referenced once (by chunk i), delete chunk j and 
+         * and j is movable and only referenced once (by chunk i), delete chunk j and 
          * transform chunk i to :-
          *    chunk i: A
          *             B
@@ -4080,11 +4316,14 @@ static void optimize_goto()
             (other = chunks[j = ((struct ir_goto *)(chunk->inst[chunk->n_inst - 1]))->dest]) &&
             other->seen == 1 &&
             i != j &&
+            !other->joined_above && !other->joined_below &&
             other->n_inst > 0)
         {
             struct chunk *new;
             if (Iflag)
                 fprintf(stderr, "Merge chunk %d into %d\n", j, i);
+            if (chunk->joined_below)
+                quit("Unexpected joined_below");
             new = mb_alloc(&ir_func_mb, sizeof(struct chunk) + 
                            (chunk->n_inst + other->n_inst - 2) * sizeof(struct ir *));
             new->id = chunk->id;
@@ -4092,16 +4331,18 @@ static void optimize_goto()
             new->line = chunk->line;
             new->n_inst = chunk->n_inst - 1 + other->n_inst;
             new->seen = chunk->seen;
+            new->joined_above = chunk->joined_above;
+            new->joined_below = 0;  /* Since other isn't joined below */
             memcpy(new->inst, chunk->inst, (chunk->n_inst - 1) * sizeof(struct ir *));
             memcpy(new->inst + chunk->n_inst - 1, other->inst, other->n_inst * sizeof(struct ir *));
             chunks[j] = 0;
             chunks[i] = new;
+            mod = 1;
         } else
             ++i;
     }
 
     /* Move chunks to eliminate gotos */
-    chunks[0]->fixed = 1;
     for (i = 0; i <= hi_chunk; ++i) {
         chunk = chunks[i];
         /*
@@ -4112,83 +4353,66 @@ static void optimize_goto()
          *    chunk j: B
          *             T
          * 
-         *  Unlike the previous optimisation, we don't mind if there
-         *  are other references to chunk j elsewhere.
+         *  With j not joined above.  Unlike the previous
+         *  optimisation, we don't mind if there are other references
+         *  to chunk j elsewhere.
          */
         if (chunk &&
             chunk->n_inst > 0 && 
             chunk->inst[chunk->n_inst - 1]->op == Ir_Goto &&
             (other = chunks[j = ((struct ir_goto *)(chunk->inst[chunk->n_inst - 1]))->dest]) &&
-            i != j)
+            i != j &&
+            !other->joined_above)
         {
             /*
-             * Now try one of two moves.  Firstly :-
+             * Now try one of two moves.  Firstly, if chunk j is
+             * movable, and slot i+1 is free, move j to i+1 :-
+             * 
              *    chunk   i: A
              *    chunk i+1: B
              *               T
              *    ...
              *    chunk j:   deleted
              * 
-             * OR
+             * OR, if chunk i is movable, and j-1 is free, move i to
+             * j-1 :-
+             * 
              *    chunk i:   deleted
              *    ...
              *    chunk j-1: A
              *    chunk   j: B
              *               T
              * 
-             * After the move both blocks are marked, so that they are
-             * not moved again, since moving either one would leave
-             * the end of the first block "dangling".
-             * 
+             * After the move both blocks are joined.
              */
-            if (!other->fixed && i < hi_chunk && !chunks[i + 1]) {
+            if (chunk->joined_below)
+                quit("Unexpected joined_below");
+
+            /*
+             * Now !other->joined_above && !chunk->joined_below.
+             */
+
+            if (!other->joined_below && i < hi_chunk && !chunks[i + 1]) {
                 if (Iflag)
                     fprintf(stderr, "Move chunk %d to %d\n", j, i + 1);
                 move_chunk(j, i + 1);
                 --chunk->n_inst;                   /* Remove the trailing goto */
-                other->fixed = chunk->fixed = 1;   /* Mark both blocks */
+                other->joined_above = chunk->joined_below = 1;   /* Join both blocks */
                 unref(other);
-            } else if (!chunk->fixed && j > 0 && !chunks[j - 1]) {
+                mod = 1;
+            } else if (!chunk->joined_above && j > 0 && !chunks[j - 1]) {
                 if (Iflag)
                     fprintf(stderr, "Move chunk %d to %d\n", i, j - 1);
                 move_chunk(i, j - 1);
                 --chunk->n_inst;
-                other->fixed = chunk->fixed = 1;
+                other->joined_above = chunk->joined_below = 1;
                 unref(other);
+                mod = 1;
             }
         }
     }
 
-    /*
-     * Eliminate redundant trailing gotos.  We could have :-
-     * 
-     *    chunk   i: A
-     *               goto j
-     * 
-     *      ... null chunk slots ...
-     * 
-     *    chunk j: B
-     * 
-     * One way this could have arisen is by moving an intervening
-     * chunk, thus making chunks i and j notionally adjacent, or if i
-     * and j were adjacent (i = j+1) before the previous optimization.
-     */
-    last = 0;
-    for (i = 0; i <= hi_chunk; ++i) {
-        chunk = chunks[i];
-        if (chunk) {
-            if (last && last->n_inst > 0 && 
-                last->inst[last->n_inst - 1]->op == Ir_Goto &&
-                ((struct ir_goto *)(last->inst[last->n_inst - 1]))->dest == i) 
-            {
-                if (Iflag)
-                    fprintf(stderr, "Removing trailing goto from chunk %d\n", last->id);
-                --last->n_inst;
-                unref(chunk);
-            }
-            last = chunk;
-        }
-    }
+    return mod;
 }
 
 static void optimize_goto_chain(int *lab)
@@ -4639,9 +4863,12 @@ static int asgn_may_fail(struct lnode *n, int swap)
     return 1;
 }
 
-#define CHECK(x) if (x == old) x = new;
+/*
+ * Change all uses of label old to new.
+ */
 
-static void move_chunk(int old, int new)
+#define CHECK(x) if (x == old) x = new;
+static void edit_labels(int old, int new)
 {
     int i, j;
     for (i = 0; i <= hi_chunk; ++i) {
@@ -4731,6 +4958,11 @@ static void move_chunk(int old, int new)
             }
         }
     }
+}
+
+static void move_chunk(int old, int new)
+{
+    edit_labels(old, new);
     chunks[new] = chunks[old];
     chunks[new]->id = new;
     chunks[old] = 0;
@@ -4781,4 +5013,98 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
         return 1;
 
     return 0;
+}
+
+#undef CHECK
+#define CHECK(x) res[x]++;
+static void sum_seen(int *res)
+{
+    int i, j;
+    for (i = 0; i <= hi_chunk; ++i) {
+        struct chunk *chunk;
+        chunk = chunks[i];
+        if (!chunk)
+            continue;
+        for (j = 0; j < chunk->n_inst; ++j) {
+            struct ir *ir = chunk->inst[j];
+            switch (ir->op) {
+                case Ir_Goto: {
+                    struct ir_goto *x = (struct ir_goto *)ir;
+                    CHECK(x->dest);
+                    break;
+                }
+                case Ir_EnterInit: {
+                    struct ir_enterinit *x = (struct ir_enterinit *)ir;
+                    CHECK(x->dest);
+                    break;
+                }
+                case Ir_MoveLabel: {
+                    struct ir_movelabel *x = (struct ir_movelabel *)ir;
+                    CHECK(x->lab);
+                    break;
+                }
+                case Ir_Op: {
+                    struct ir_op *x = (struct ir_op *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_OpClo: {
+                    struct ir_opclo *x = (struct ir_opclo *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_KeyOp: {
+                    struct ir_keyop *x = (struct ir_keyop *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_KeyClo: {
+                    struct ir_keyclo *x = (struct ir_keyclo *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Invoke: {
+                    struct ir_invoke *x = (struct ir_invoke *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Apply: {
+                    struct ir_apply *x = (struct ir_apply *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Invokef: {
+                    struct ir_invokef *x = (struct ir_invokef *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Applyf: {
+                    struct ir_applyf *x = (struct ir_applyf *)ir;
+                    CHECK(x->fail_label);
+                    break;
+                }
+                case Ir_Create: {
+                    struct ir_create *x = (struct ir_create *)ir;
+                    CHECK(x->start_label);
+                    break;
+                }
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    int i;
+                    for (i = 0; i < x->tblc; ++i) {
+                        CHECK(x->tbl[i]);
+                    }
+                    break;
+                }
+                case Ir_TCaseChoosex: {
+                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                    int i;
+                    for (i = 0; i < x->tblc; ++i) {
+                        CHECK(x->tbl[i]);
+                    }
+                    break;
+                }
+            }
+        }
+    }
 }

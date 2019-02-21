@@ -331,7 +331,8 @@ struct chunk {
     int n_inst;
     int circle;  /* goto circle check marker */
     int seen;    /* no. of references, used during optimization */
-    int fixed;   /* flag used during optimization */
+    int joined_above;   /* is the chunk joined to the chunk above (does control flow from it) */
+    int joined_below;   /* is the chunk joined to the one below (does control flow to it) */
     word pc;     /* pc of chunk */
     word refs;   /* Chain of usage (gotos etc) in code */
     struct ir *inst[1];
