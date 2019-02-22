@@ -9,6 +9,14 @@ void mb_init(struct membuff *mb, size_t n, char *name)
     mb->first = mb->last = mb->curr = 0;
 }
 
+void *mb_zalloc(struct membuff *mb, size_t n)
+{
+    void *t;
+    t = mb_alloc(mb, n);
+    memset(t, 0, n);
+    return t;
+}
+
 void *mb_alloc(struct membuff *mb, size_t n)
 {
     void *t;
@@ -20,7 +28,6 @@ void *mb_alloc(struct membuff *mb, size_t n)
         if (n <= b->size - ((char *)b->free - (char *)b->mem)) {
             t = b->free;
             b->free = (char *)b->free + n;
-            memset(t, 0, n);
             return t;
         }
         mb->curr = b->next;
@@ -44,7 +51,6 @@ void *mb_alloc(struct membuff *mb, size_t n)
         mb->first = nb;
     mb->curr = mb->last = nb;
 
-    memset(t, 0, n);
     return t;
 }
 

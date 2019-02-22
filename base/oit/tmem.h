@@ -5,7 +5,7 @@
 #include "transtructs.h"
 #include "membuff.h"
 
-#define FAlloc(type)   mb_alloc(&file_mb, sizeof(type))
+#define FAlloc(type)   mb_zalloc(&file_mb, sizeof(type))
 extern struct membuff file_mb;
 
 void tminit(void);

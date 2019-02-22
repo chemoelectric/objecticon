@@ -14,6 +14,7 @@ struct membuff {
 };
 
 void mb_init(struct membuff *mb, size_t n, char *name);
+void *mb_zalloc(struct membuff *mb, size_t n);
 void *mb_alloc(struct membuff *mb, size_t n);
 void mb_clear(struct membuff *mb);
 void mb_free(struct membuff *mb);
