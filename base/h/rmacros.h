@@ -122,21 +122,6 @@
 #define IsLrgint(d)      ((d).dword == D_Lrgint)
 #define IsCInteger(d)    ((d).dword == D_Integer)
 
-/*
- *  Important note:  The code that follows is not strictly legal C.
- *   It tests to see if pointer p2 is between p1 and p3. This may
- *   involve the comparison of pointers in different arrays, which
- *   is not well-defined.  The casts of these pointers to unsigned "words"
- *   (longs or ints, depending) works with all C compilers and architectures
- *   on which Icon has been implemented.  However, it is possible it will
- *   not work on some system.  If it doesn't, there may be a "false
- *   positive" test, which is likely to cause a memory violation or a
- *   loop. It is not practical to implement Icon on a system on which this
- *   happens.
- */
-
-#define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
-
 #define MemProtect(notnull) do {if (!(notnull)) fatalerr(309,NULL);} while(0)
 
 /*
@@ -255,8 +240,6 @@
  * Set &why to a string literal.
  */
 #define LitWhy(s) LitStr(s,&kywd_why)
-
-#define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
 
 /*
  * Csets
