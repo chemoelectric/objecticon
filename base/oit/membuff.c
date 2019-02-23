@@ -9,18 +9,28 @@ void mb_init(struct membuff *mb, size_t n, char *name)
     mb->first = mb->last = mb->curr = 0;
 }
 
-void *mb_alloc(struct membuff *mb, size_t n)
+void *mb_zalloc(struct membuff *mb, size_t n)
 {
     void *t;
+    t = mb_alloc(mb, n);
+    memset(t, 0, n);
+    return t;
+}
+
+void *mb_alloc(struct membuff *mb, size_t n)
+{
+    char *t;
     struct membuff_block *nb;
     int new_size;
 
+    /* Ensure all allocations are word aligned */
+    n = WordRound(n);
+
     while (mb->curr) {
         struct membuff_block *b = mb->curr;
-        if (n <= b->size - ((char *)b->free - (char *)b->mem)) {
+        if (n <= b->size - DiffPtrs(b->free, b->mem)) {
             t = b->free;
-            b->free = (char *)b->free + n;
-            memset(t, 0, n);
+            b->free += n;
             return t;
         }
         mb->curr = b->next;
@@ -34,17 +44,17 @@ void *mb_alloc(struct membuff *mb, size_t n)
     if (n > new_size)
         quit("Request too big for membuff %s", mb->name);
 
-    nb = Alloc(struct membuff_block);
+    nb = Alloc1(struct membuff_block);
     nb->size = new_size;
-    t = nb->mem = safe_malloc(new_size);
-    nb->free = (char *)t + n;
+    nb->mem = t = safe_malloc(new_size);
+    nb->free = t + n;
+    nb->next = 0;
     if (mb->last)
         mb->last->next = nb;
     else
         mb->first = nb;
     mb->curr = mb->last = nb;
 
-    memset(t, 0, n);
     return t;
 }
 

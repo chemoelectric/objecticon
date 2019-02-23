@@ -575,7 +575,7 @@ procedure String(e, sep)
    sep := ce_param(sep) | fail
    sep := need_text(\sep) | ","
    # Ensure result is same type as sep, even if the sequence is empty.
-   s := same_string_type("", sep)
+   s := sep[1:1]
    while s ||:= @e || sep
    # Ensure that -*sep below is correct
    sep := same_string_type(sep, s)

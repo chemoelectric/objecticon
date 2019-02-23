@@ -47,7 +47,7 @@ struct loop_info {
     int next_chunk;
     int continue_tmploc;
     struct ir_stack *st, *loop_st;
-    int loop_mk;
+    struct mark_pair *loop_mk;
     struct ir_var *target;
     int bounded, rval;
     struct ir_info *next;
@@ -67,6 +67,10 @@ struct ir_stack {
     int clo, tmp, lab, mark;
 };
 
+struct mark_pair {
+    int no;    /* Mark number in frame */
+    int id;    /* Unique id, for pairing mark/unmark during optimisation. */
+};
 
 enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, WORD, KNULL, KYES };
 
@@ -237,12 +241,14 @@ struct ir_makelist {
 
 struct ir_mark {
     IR_SUB
-    int no;
+    int no;     /* Mark number in frame */
+    int id;     /* Unique id for pairing with unmark */
 };
 
 struct ir_unmark {
     IR_SUB
-    int no;
+    int no;     /* Mark number in frame */
+    int id;     /* Unique id for pairing with mark */
 };
 
 struct ir_suspend {
@@ -325,7 +331,8 @@ struct chunk {
     int n_inst;
     int circle;  /* goto circle check marker */
     int seen;    /* no. of references, used during optimization */
-    int fixed;   /* flag used during optimization */
+    int joined_above;   /* is the chunk joined to the chunk above (does control flow from it) */
+    int joined_below;   /* is the chunk joined to the one below (does control flow to it) */
     word pc;     /* pc of chunk */
     word refs;   /* Chain of usage (gotos etc) in code */
     struct ir *inst[1];

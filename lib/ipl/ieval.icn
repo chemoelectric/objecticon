@@ -549,6 +549,11 @@ class Ieval(MinimalObjectOutput)
             break
          }
       }
+
+      # History is set here (rather than when input is created), so
+      # that history is not truncated to the default length (hlim may
+      # be set in the initialization files).
+      input.set_history(history)
    end
 
    private body(s)
@@ -733,8 +738,7 @@ class Ieval(MinimalObjectOutput)
          set_label("ieval").
          set_icon(IEVAL_LOGO).
          set_history_limit(hlim).
-         set_log_limit(llim).
-         set_history(history)
+         set_log_limit(llim)
 
       if \opts["a"] then
          input.set_popup_on_tab(&no)
@@ -772,8 +776,7 @@ class Ieval(MinimalObjectOutput)
       local s, t, prompt
       input := LineEditorStream(opts["s"]).
          set_complete_function(complete).
-         set_history_limit(hlim).
-         set_history(history) | stop("Failed to create LineEditorStream: ", &why)
+         set_history_limit(hlim) | stop("Failed to create LineEditorStream: ", &why)
 
       do_nothing()
 

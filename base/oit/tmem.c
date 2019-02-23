@@ -95,8 +95,9 @@ void next_super(char *name, struct node *n)
         twarn_at(n, "Duplicate superclass: %s", name);
     if (curr_class->global->g_name == name)
         twarn_at(n, "Class has self as super: %s", name);
-    cs = FAlloc(struct tclass_super);
+    cs = FAlloc1(struct tclass_super);
     cs->b_next = curr_class->super_hash[i];
+    cs->next = 0;
     curr_class->super_hash[i] = cs;
     cs->name = name;
     cs->pos = n;
@@ -190,8 +191,9 @@ void next_field(char *name, int flag, struct node *n)
         cv = cv->b_next;
     if (cv)
         tfatal_at(n, "Duplicate class field: %s", name);
-    cv = FAlloc(struct tclass_field);
+    cv = FAlloc1(struct tclass_field);
     cv->b_next = curr_class->field_hash[i];
+    cv->next = 0;
     curr_class->field_hash[i] = cv;
     cv->name = name;
     /*
@@ -208,6 +210,7 @@ void next_field(char *name, int flag, struct node *n)
     }
     cv->flag = flag;
     cv->pos = n;
+    cv->f = 0;
     cv->class = curr_class;
     if (curr_class->curr_field) {
         curr_class->curr_field->next = cv;
@@ -298,8 +301,9 @@ void add_import_symbol(char *s, struct node *n)
         x = x->b_next;
     if (x)
         tfatal_at(n, "Duplicate imported symbol: %s", s);
-    x = FAlloc(struct timport_symbol);
+    x = FAlloc1(struct timport_symbol);
     x->b_next = curr_import->symbol_hash[i];
+    x->next = 0;
     curr_import->symbol_hash[i] = x;
     x->name = s;
     x->pos = n;
@@ -325,9 +329,10 @@ void add_invocable(char *name, int x, struct node *n)
     if (x == 1 && name == methods_string)
         name = "1";			/* "1" represents "methods" */
 
-    p = FAlloc(struct tinvocable);
+    p = FAlloc1(struct tinvocable);
     p->name = name;
     p->pos = n;
+    p->next = 0;
     if (last_tinvocable) {
         last_tinvocable->next = p;
         last_tinvocable = p;

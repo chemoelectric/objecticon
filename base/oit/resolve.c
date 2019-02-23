@@ -512,7 +512,8 @@ static void merge(struct lclass *cl, struct lclass *super)
 
 static int seen_no = 0;
 static struct membuff c3_mb = {"C3 calculation membuff", 64000, 0,0,0 };
-#define C3Alloc(type)   mb_alloc(&c3_mb, sizeof(type))
+#define C3Alloc(type)   mb_zalloc(&c3_mb, sizeof(type))
+#define C3Alloc1(type)   mb_alloc(&c3_mb, sizeof(type))
 
 void compute_inheritance()
 {
@@ -535,8 +536,9 @@ void compute_inheritance()
  */
 static void add_lclass_ref(struct lclass_ref_list *l, struct lclass *c)
 {
-    struct lclass_ref *v = C3Alloc(struct lclass_ref);
+    struct lclass_ref *v = C3Alloc1(struct lclass_ref);
     v->class = c;
+    v->next = 0;
     if (l->last) {
         l->last->next = v;
         l->last = v;
@@ -633,7 +635,7 @@ static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *
     } else {
         /* The recursive result of the supers plus this class's list of supers plus a null terminator. */
         narg = cl->n_supers + 2;
-        arg = mb_alloc(&c3_mb, narg * sizeof(struct lclass_ref_list));
+        arg = mb_zalloc(&c3_mb, narg * sizeof(struct lclass_ref_list));
 
         i = 0;
         cl->seen = seen_no;

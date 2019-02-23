@@ -420,7 +420,7 @@ void generate_code()
      */
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
-    codep = codeb = safe_zalloc(maxcode);
+    codep = codeb = safe_malloc(maxcode);
 
     if (baseopt)
 #if WordBits == 32
@@ -741,7 +741,8 @@ static void lemitcon(struct centry *ce)
 
         /* This mirrors the loop in fmisc.r (get_ucs_off) */
         if (index_step > 0) {
-            off = safe_malloc(n_off_words * WordSize);
+            /* zalloc, since the loop below may not set all of the index bytes */
+            off = safe_zalloc(n_off_words * WordSize);
             p = ce->data;
             i = j = 0;
             while (i < length - 1) {
@@ -2539,7 +2540,7 @@ struct b_bignum * bigradix(char *input, int input_len)
 
     /* See ralc.r : MemProtect(b = alcbignum(len)); */
     size = sizeof(struct b_bignum) + ((len - 1) * sizeof(DIGIT));
-    size = (size + WordSize - 1) & -WordSize;
+    size = WordRound(size);
 
     /* zalloc since the structure contains "holes" which aren't initialized below. */
     b = safe_zalloc(size);

@@ -87,9 +87,36 @@ struct str_buf {
 #define StructClear(obj) (memset(&obj, 0, sizeof(obj)))
 
 /*
- * Allocate an object
+ * Allocate an object and zero memory.
  */
 #define Alloc(type)   safe_zalloc(sizeof(type))
+
+/*
+ * Allocate an object, but don't zero memory.
+ */
+#define Alloc1(type)   safe_malloc(sizeof(type))
+
+/*
+ *  Important note:  The code that follows is not strictly legal C.
+ *   It tests to see if pointer p2 is between p1 and p3. This may
+ *   involve the comparison of pointers in different arrays, which
+ *   is not well-defined.  The casts of these pointers to unsigned "words"
+ *   (longs or ints, depending) works with all C compilers and architectures
+ *   on which Icon has been implemented.  However, it is possible it will
+ *   not work on some system.  If it doesn't, there may be a "false
+ *   positive" test, which is likely to cause a memory violation or a
+ *   loop. It is not practical to implement Icon on a system on which this
+ *   happens.
+ */
+
+#define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
+
+#define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
+
+/*
+ * Return x rounded up to the next multiple of WordSize.
+ */
+#define WordRound(x) (((x) + WordSize - 1) & -WordSize)
 
 /*
  * Miscellaneous definitions

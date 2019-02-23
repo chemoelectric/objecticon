@@ -14,16 +14,18 @@ struct lfunction *curr_vfunc;
 
 struct lnode *lnode_0(int op, struct loc *loc)
 {
-    struct lnode *n = Alloc(struct lnode);
+    struct lnode *n = Alloc1(struct lnode);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     return n;
 }
 
 struct lnode_1 *lnode_1(int op, struct loc *loc, struct lnode *c)
 {
-    struct lnode_1 *n = Alloc(struct lnode_1);
+    struct lnode_1 *n = Alloc1(struct lnode_1);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     n->child = c;
     c->parent = (struct lnode *)n;
@@ -32,8 +34,9 @@ struct lnode_1 *lnode_1(int op, struct loc *loc, struct lnode *c)
 
 struct lnode_2 *lnode_2(int op, struct loc *loc, struct lnode *c1, struct lnode *c2)
 {
-    struct lnode_2 *n = Alloc(struct lnode_2);
+    struct lnode_2 *n = Alloc1(struct lnode_2);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     n->child1 = c1;
     c1->parent = (struct lnode *)n;
@@ -44,8 +47,9 @@ struct lnode_2 *lnode_2(int op, struct loc *loc, struct lnode *c1, struct lnode 
 
 struct lnode_3 *lnode_3(int op, struct loc *loc, struct lnode *c1, struct lnode *c2, struct lnode *c3)
 {
-    struct lnode_3 *n = Alloc(struct lnode_3);
+    struct lnode_3 *n = Alloc1(struct lnode_3);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     n->child1 = c1;
     c1->parent = (struct lnode *)n;
@@ -58,8 +62,9 @@ struct lnode_3 *lnode_3(int op, struct loc *loc, struct lnode *c1, struct lnode 
 
 struct lnode_n *lnode_n(int op, struct loc *loc, int x)
 {
-    struct lnode_n *n = Alloc(struct lnode_n);
+    struct lnode_n *n = Alloc1(struct lnode_n);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     n->n = x;
     n->child = safe_zalloc(x * sizeof(struct lnode *));
@@ -68,19 +73,23 @@ struct lnode_n *lnode_n(int op, struct loc *loc, int x)
 
 struct lnode_field *lnode_field(struct loc *loc, struct lnode *c, char *fname)
 {
-    struct lnode_field *n = Alloc(struct lnode_field);
+    struct lnode_field *n = Alloc1(struct lnode_field);
     n->op = Uop_Field;
+    n->parent = 0;
     n->loc = *loc;
     n->child = c;
     c->parent = (struct lnode *)n;
     n->fname = fname;
+    n->ftab_entry = 0;
+    n->ref = 0;
     return n;
 }
 
 struct lnode_invoke *lnode_invoke(int op, struct loc *loc, struct lnode *expr, int x)
 {
-    struct lnode_invoke *n = Alloc(struct lnode_invoke);
+    struct lnode_invoke *n = Alloc1(struct lnode_invoke);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     n->n = x;
     n->expr = expr;
@@ -91,8 +100,9 @@ struct lnode_invoke *lnode_invoke(int op, struct loc *loc, struct lnode *expr, i
 
 struct lnode_apply *lnode_apply(struct loc *loc, struct lnode *expr, struct lnode *args)
 {
-    struct lnode_apply *n = Alloc(struct lnode_apply);
+    struct lnode_apply *n = Alloc1(struct lnode_apply);
     n->op = Uop_Apply;
+    n->parent = 0;
     n->loc = *loc;
     n->expr = expr;
     n->expr->parent = (struct lnode *)n;
@@ -103,8 +113,9 @@ struct lnode_apply *lnode_apply(struct loc *loc, struct lnode *expr, struct lnod
 
 struct lnode_keyword *lnode_keyword(struct loc *loc, int num)
 {
-    struct lnode_keyword *n = Alloc(struct lnode_keyword);
+    struct lnode_keyword *n = Alloc1(struct lnode_keyword);
     n->op = Uop_Keyword;
+    n->parent = 0;
     n->loc = *loc;
     n->num = num;
     return n;
@@ -112,8 +123,9 @@ struct lnode_keyword *lnode_keyword(struct loc *loc, int num)
 
 struct lnode_local *lnode_local(struct loc *loc, struct lentry *local)
 {
-    struct lnode_local *n = Alloc(struct lnode_local);
+    struct lnode_local *n = Alloc1(struct lnode_local);
     n->op = Uop_Local;
+    n->parent = 0;
     n->loc = *loc;
     n->local = local;
     return n;
@@ -121,8 +133,9 @@ struct lnode_local *lnode_local(struct loc *loc, struct lentry *local)
 
 struct lnode_const *lnode_const(struct loc *loc, struct centry *con)
 {
-    struct lnode_const *n = Alloc(struct lnode_const);
+    struct lnode_const *n = Alloc1(struct lnode_const);
     n->op = Uop_Const;
+    n->parent = 0;
     n->loc = *loc;
     n->con = con;
     return n;
@@ -130,8 +143,9 @@ struct lnode_const *lnode_const(struct loc *loc, struct centry *con)
 
 struct lnode_global *lnode_global(struct loc *loc, struct gentry *global, struct lentry *local)
 {
-    struct lnode_global *n = Alloc(struct lnode_global);
+    struct lnode_global *n = Alloc1(struct lnode_global);
     n->op = Uop_Global;
+    n->parent = 0;
     n->loc = *loc;
     n->global = global;
     n->local = local;
@@ -140,14 +154,17 @@ struct lnode_global *lnode_global(struct loc *loc, struct gentry *global, struct
 
 struct lnode_case *lnode_case(int op, struct loc *loc, struct lnode *expr, int x)
 {
-    struct lnode_case *n = Alloc(struct lnode_case);
+    struct lnode_case *n = Alloc1(struct lnode_case);
     n->op = op;
+    n->parent = 0;
     n->loc = *loc;
     n->expr = expr;
     n->expr->parent = (struct lnode *)n;
     n->n = x;
     n->selector = safe_zalloc(x * sizeof(struct lnode *));
     n->clause = safe_zalloc(x * sizeof(struct lnode *));
+    n->use_tcase = 0;
+    n->def = 0;
     return n;
 }
 
