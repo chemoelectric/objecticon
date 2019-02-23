@@ -87,9 +87,14 @@ struct str_buf {
 #define StructClear(obj) (memset(&obj, 0, sizeof(obj)))
 
 /*
- * Allocate an object
+ * Allocate an object and zero memory.
  */
 #define Alloc(type)   safe_zalloc(sizeof(type))
+
+/*
+ * Allocate an object, but don't zero memory.
+ */
+#define Alloc1(type)   safe_malloc(sizeof(type))
 
 /*
  *  Important note:  The code that follows is not strictly legal C.
