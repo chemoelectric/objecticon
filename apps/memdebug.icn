@@ -383,7 +383,6 @@ procedure do_gui()
       set_label("memdebug").
       set_log_limit(llim).
       set_history_limit(hlim).
-      set_history(history).
       connect(gui_line, Event.ACTION).
       connect(monitor_exit, Event.DIALOG_DISPOSED)
 
@@ -443,7 +442,6 @@ procedure do_line_editor()
    input := LineEditorStream(opts["s"], f).
       set_complete_function(complete).
       set_history_limit(hlim).
-      set_history(history).
       set_prompt("? ").
       set_task(task)
    output := FileStream.stdout
@@ -479,6 +477,11 @@ procedure prelim()
 
    every fn := !\opts["f"] do
       do_file(fn)
+
+   # History is set here (rather than when input is created), so that
+   # history is not truncated to the default length (hlim may be set
+   # in the initialization files).
+   input.set_history(history)
 end
 
 procedure next_event()
