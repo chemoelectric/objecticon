@@ -97,7 +97,7 @@ struct b_bignum *f(word n)
 
    size = sizeof(struct b_bignum) + ((n - 1) * sizeof(DIGIT));
    /* ensure whole number of words allocated */
-   size = (size + WordSize - 1) & -WordSize;
+   size = WordRound(size);
 
    AlcBlk(blk, b_bignum, T_Lrgint, size, e_lrgint);
    blk->blksize = size;

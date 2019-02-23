@@ -114,6 +114,11 @@ struct str_buf {
 #define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
 
 /*
+ * Return x rounded up to the next multiple of WordSize.
+ */
+#define WordRound(x) (((x) + WordSize - 1) & -WordSize)
+
+/*
  * Miscellaneous definitions
  */
 

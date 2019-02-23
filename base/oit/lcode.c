@@ -2528,7 +2528,7 @@ struct b_bignum * bigradix(char *input, int input_len)
 
     /* See ralc.r : MemProtect(b = alcbignum(len)); */
     size = sizeof(struct b_bignum) + ((len - 1) * sizeof(DIGIT));
-    size = (size + WordSize - 1) & -WordSize;
+    size = WordRound(size);
 
     /* zalloc since the structure contains "holes" which aren't initialized below. */
     b = safe_zalloc(size);
