@@ -2,7 +2,7 @@
 #define _TMEMBUFF_H 1
 
 struct membuff_block {
-    void *mem, *free;
+    char *mem, *free;
     size_t size;
     struct membuff_block *next;
 };
