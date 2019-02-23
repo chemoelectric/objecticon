@@ -86,7 +86,6 @@ enum relocation_kind { NTH_STATIC, NTH_GLOBAL, NTH_CONST, NTH_TCASE, NTH_FIELDIN
  * Prototypes.
  */
 
-static int      nalign(int n);
 static void	align		(void);
 static void labout(int i, char *desc);
 static void	flushcode	(void);
@@ -1374,7 +1373,7 @@ static void genclass(struct lclass *cl)
     ap += n_fields * WordSize;
     outwordz(ap, "   Pointer to field sort array");
     ap += n_fields * sizeof(uint16_t);
-    ap += nalign(ap);
+    ap = WordRound(ap);
 
     /*
      * Superclass array.
@@ -1511,7 +1510,7 @@ static void genclasses(void)
                                n_fields) + 
             sizeof(uint16_t) * n_fields;
 
-        cl->size += nalign(cl->size);
+        cl->size = WordRound(cl->size);
         x += cl->size;
     }
 
@@ -1611,7 +1610,7 @@ static void gentables()
         size = 9 * WordSize + rec->nfields * (WordSize + sizeof(uint16_t));
         if (loclevel > 1)
             size += rec->nfields * 2 * WordSize;
-        size += nalign(size);
+        size = WordRound(size);
 
         if (Dflag)
             fprintf(dbgfile, "\n# constructor %s\n", s);
@@ -1636,7 +1635,7 @@ static void gentables()
             outwordz_nullable(0, "   Pointer to field_locs array");
         outwordz(ap, "   Pointer to field sort array");
         ap += rec->nfields * sizeof(uint16_t);
-        ap += nalign(ap);
+        ap = WordRound(ap);
 
         /*
          * Field nums
@@ -2013,11 +2012,12 @@ static void gentables()
  */
 static void align()
 {
-    int i, n = pc % WordSize;
+    int i, n;
+
+    n = WordRound(pc) - pc;
     if (n == 0)
         return;
 
-    n = WordSize - n;
     if (Dflag) {
         for (i = 0; i < n; ++i)
             fprintf(dbgfile, PadWordFmt ":   " PadByteFmt "    # Padding byte\n", pc + i, (long)0);
@@ -2026,17 +2026,6 @@ static void align()
     for (i = 0; i < n; ++i)
         *codep++ = 0;
     pc += n;
-}
-
-/*
- * How many bytes would align() output, with the given location
- */
-static int nalign(int n)
-{
-    if (n % WordSize != 0)
-        return WordSize - (n % WordSize);
-    else
-        return 0;
 }
 
 static void outstr(struct strconst *sp, char *fmt, ...)
