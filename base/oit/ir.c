@@ -52,6 +52,7 @@ static int traverse_level;
 
 struct membuff ir_func_mb = {"Per func IR membuff", 64000, 0,0,0 };
 #define IRAlloc(type)   mb_zalloc(&ir_func_mb, sizeof(type))
+#define IRAlloc1(type)   mb_alloc(&ir_func_mb, sizeof(type))
 
 #define chunk1(lab, I1) chunk(__LINE__, #lab, lab, 1, I1)
 #define chunk2(lab, I1, I2) chunk(__LINE__, #lab, lab, 2, I1, I2)
@@ -78,7 +79,7 @@ struct ir_stack *new_stack(void)
 
 struct ir_stack *branch_stack(struct ir_stack *st)
 {
-    struct ir_stack *res = IRAlloc(struct ir_stack);
+    struct ir_stack *res = IRAlloc1(struct ir_stack);
     *res = *st;
     return res;
 }
@@ -100,7 +101,7 @@ static void union_stack(struct ir_stack *x, struct ir_stack *y)
 
 static void init_loop(struct ir_info *info, struct ir_stack *st, struct ir_var *target, int bounded, int rval)
 {
-    struct loop_info *l = IRAlloc(struct loop_info);
+    struct loop_info *l = IRAlloc1(struct loop_info);
     info->loop = l;
     l->continue_tmploc = make_tmploc(st);
     l->next_chunk = get_extra_chunk();
@@ -111,14 +112,17 @@ static void init_loop(struct ir_info *info, struct ir_stack *st, struct ir_var *
     l->bounded = bounded;
     l->rval = rval;
     l->scan_stack = scan_stack;
+    l->next = 0;
+    l->has_break = l->has_next = l->next_fails_flag = 0;
 }
 
 static void init_scan(struct ir_info *info, struct ir_stack *st)
 {
-    struct scan_info *l = IRAlloc(struct scan_info);
+    struct scan_info *l = IRAlloc1(struct scan_info);
     info->scan = l;
     l->old_subject = make_tmp(st);
     l->old_pos = make_tmp(st);
+    l->next = 0;
 }
 
 static void push_scan(struct ir_info *info)
@@ -196,12 +200,16 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
 
 static struct ir_info *ir_info(struct lnode *node)
 {
-    struct ir_info *res = IRAlloc(struct ir_info);
+    struct ir_info *res = IRAlloc1(struct ir_info);
+    res->desc = 0;
     res->start = chunk_id_seq++;
     res->success = chunk_id_seq++;
     res->resume = chunk_id_seq++;
     res->failure = chunk_id_seq++;
     res->node = node;
+    res->uses_stack = 0;
+    res->scan = 0;
+    res->loop = 0;
     return res;
 }
 
@@ -212,7 +220,7 @@ static int get_extra_chunk()
 
 static struct ir_goto *ir_goto(struct lnode *n, int dest)
 {
-    struct ir_goto *res = IRAlloc(struct ir_goto);
+    struct ir_goto *res = IRAlloc1(struct ir_goto);
     res->node = n;
     res->op = Ir_Goto;
     res->dest = dest;
@@ -221,7 +229,7 @@ static struct ir_goto *ir_goto(struct lnode *n, int dest)
 
 static struct ir_igoto *ir_igoto(struct lnode *n, int no)
 {
-    struct ir_igoto *res = IRAlloc(struct ir_igoto);
+    struct ir_igoto *res = IRAlloc1(struct ir_igoto);
     res->node = n;
     res->op = Ir_IGoto;
     res->no = no;
@@ -230,7 +238,7 @@ static struct ir_igoto *ir_igoto(struct lnode *n, int no)
 
 static struct ir_scanswap *ir_scanswap(struct lnode *n, struct ir_var *tmp_subject, struct ir_var *tmp_pos)
 {
-    struct ir_scanswap *res = IRAlloc(struct ir_scanswap);
+    struct ir_scanswap *res = IRAlloc1(struct ir_scanswap);
     res->node = n;
     res->op = Ir_ScanSwap;
     res->tmp_subject = tmp_subject;
@@ -241,7 +249,7 @@ static struct ir_scanswap *ir_scanswap(struct lnode *n, struct ir_var *tmp_subje
 static struct ir_scansave *ir_scansave(struct lnode *n, struct ir_var *new_subject,
                                        struct ir_var *tmp_subject, struct ir_var *tmp_pos)
 {
-    struct ir_scansave *res = IRAlloc(struct ir_scansave);
+    struct ir_scansave *res = IRAlloc1(struct ir_scansave);
     res->node = n;
     res->op = Ir_ScanSave;
     res->new_subject = new_subject;
@@ -252,7 +260,7 @@ static struct ir_scansave *ir_scansave(struct lnode *n, struct ir_var *new_subje
 
 static struct ir_scanrestore *ir_scanrestore(struct lnode *n, struct ir_var *tmp_subject, struct ir_var *tmp_pos)
 {
-    struct ir_scanrestore *res = IRAlloc(struct ir_scanrestore);
+    struct ir_scanrestore *res = IRAlloc1(struct ir_scanrestore);
     res->node = n;
     res->op = Ir_ScanRestore;
     res->tmp_subject = tmp_subject;
@@ -265,7 +273,7 @@ static struct ir_move *ir_move(struct lnode *n, struct ir_var *lhs, struct ir_va
     struct ir_move *res;
     if (!lhs)
         return 0;
-    res = IRAlloc(struct ir_move);
+    res = IRAlloc1(struct ir_move);
     res->node = n;
     res->op = Ir_Move;
     res->lhs = lhs;
@@ -278,7 +286,7 @@ static struct ir_deref *ir_deref(struct lnode *n, struct ir_var *lhs, struct ir_
     struct ir_deref *res;
     if (!lhs)
         return 0;
-    res = IRAlloc(struct ir_deref);
+    res = IRAlloc1(struct ir_deref);
     res->node = n;
     res->op = Ir_Deref;
     res->lhs = lhs;
@@ -288,7 +296,7 @@ static struct ir_deref *ir_deref(struct lnode *n, struct ir_var *lhs, struct ir_
 
 static struct ir_movelabel *ir_movelabel(struct lnode *n, int destno, int lab)
 {
-    struct ir_movelabel *res = IRAlloc(struct ir_movelabel);
+    struct ir_movelabel *res = IRAlloc1(struct ir_movelabel);
     res->node = n;
     res->op = Ir_MoveLabel;
     res->lab = lab;
@@ -307,7 +315,7 @@ static struct ir_makelist *ir_makelist(struct lnode *n, struct ir_var *lhs, int 
      */
     if (!lhs && argc == 0)
         return 0;
-    res = IRAlloc(struct ir_makelist);
+    res = IRAlloc1(struct ir_makelist);
     res->node = n;
     res->op = Ir_MakeList;
     res->lhs = lhs;
@@ -318,7 +326,7 @@ static struct ir_makelist *ir_makelist(struct lnode *n, struct ir_var *lhs, int 
 
 static struct ir_create *ir_create(struct lnode *n, struct ir_var *lhs, int start_label)
 {
-    struct ir_create *res = IRAlloc(struct ir_create);
+    struct ir_create *res = IRAlloc1(struct ir_create);
     res->node = n;
     res->op = Ir_Create;
     res->lhs = lhs;
@@ -328,7 +336,7 @@ static struct ir_create *ir_create(struct lnode *n, struct ir_var *lhs, int star
 
 static struct ir_coret *ir_coret(struct lnode *n, struct ir_var *value)
 {
-    struct ir_coret *res = IRAlloc(struct ir_coret);
+    struct ir_coret *res = IRAlloc1(struct ir_coret);
     res->node = n;
     res->op = Ir_Coret;
     res->value = value;
@@ -337,7 +345,7 @@ static struct ir_coret *ir_coret(struct lnode *n, struct ir_var *value)
 
 static struct ir *ir_cofail(struct lnode *n)
 {
-    struct ir *res = IRAlloc(struct ir);
+    struct ir *res = IRAlloc1(struct ir);
     res->node = n;
     res->op = Ir_Cofail;
     return res;
@@ -345,7 +353,7 @@ static struct ir *ir_cofail(struct lnode *n)
 
 static struct ir_mark *ir_mark(struct lnode *n, struct mark_pair *mp)
 {
-    struct ir_mark *res = IRAlloc(struct ir_mark);
+    struct ir_mark *res = IRAlloc1(struct ir_mark);
     res->node = n;
     res->op = Ir_Mark;
     res->no = mp->no;
@@ -355,7 +363,7 @@ static struct ir_mark *ir_mark(struct lnode *n, struct mark_pair *mp)
 
 static struct ir_unmark *ir_unmark(struct lnode *n, struct mark_pair *mp)
 {
-    struct ir_unmark *res = IRAlloc(struct ir_unmark);
+    struct ir_unmark *res = IRAlloc1(struct ir_unmark);
     res->node = n;
     res->op = Ir_Unmark;
     res->no = mp->no;
@@ -365,7 +373,7 @@ static struct ir_unmark *ir_unmark(struct lnode *n, struct mark_pair *mp)
 
 static struct ir_enterinit *ir_enterinit(struct lnode *n, int dest)
 {
-    struct ir_enterinit *res = IRAlloc(struct ir_enterinit);
+    struct ir_enterinit *res = IRAlloc1(struct ir_enterinit);
     res->node = n;
     res->op = Ir_EnterInit;
     res->dest = dest;
@@ -374,7 +382,7 @@ static struct ir_enterinit *ir_enterinit(struct lnode *n, int dest)
 
 static struct ir *ir_fail(struct lnode *n)
 {
-    struct ir *res = IRAlloc(struct ir);
+    struct ir *res = IRAlloc1(struct ir);
     res->node = n;
     res->op = Ir_Fail;
     return res;
@@ -382,7 +390,7 @@ static struct ir *ir_fail(struct lnode *n)
 
 static struct ir *ir_syserr(struct lnode *n)
 {
-    struct ir *res = IRAlloc(struct ir);
+    struct ir *res = IRAlloc1(struct ir);
     res->node = n;
     res->op = Ir_SysErr;
     return res;
@@ -390,7 +398,7 @@ static struct ir *ir_syserr(struct lnode *n)
 
 static struct ir_suspend *ir_suspend(struct lnode *n, struct ir_var *val)
 {
-    struct ir_suspend *res = IRAlloc(struct ir_suspend);
+    struct ir_suspend *res = IRAlloc1(struct ir_suspend);
     res->node = n;
     res->val = val;
     res->op = Ir_Suspend;
@@ -399,7 +407,7 @@ static struct ir_suspend *ir_suspend(struct lnode *n, struct ir_var *val)
 
 static struct ir_return *ir_return(struct lnode *n, struct ir_var *val)
 {
-    struct ir_return *res = IRAlloc(struct ir_return);
+    struct ir_return *res = IRAlloc1(struct ir_return);
     res->node = n;
     res->val = val;
     res->op = Ir_Return;
@@ -415,7 +423,7 @@ static struct ir_op *ir_op(struct lnode *n,
                            int rval,
                            int fail_label) 
 {
-    struct ir_op *res = IRAlloc(struct ir_op);
+    struct ir_op *res = IRAlloc1(struct ir_op);
     res->node = n;
     res->op = Ir_Op;
     res->lhs = lhs;
@@ -435,7 +443,7 @@ static struct ir_mgop *ir_mgop(struct lnode *n,
                                struct ir_var *arg2,
                                int rval)
 {
-    struct ir_mgop *res = IRAlloc(struct ir_mgop);
+    struct ir_mgop *res = IRAlloc1(struct ir_mgop);
     res->node = n;
     res->op = Ir_MgOp;
     res->lhs = lhs;
@@ -452,7 +460,7 @@ static struct ir_keyop *ir_keyop(struct lnode *n,
                                  int rval,
                                  int fail_label) 
 {
-    struct ir_keyop *res = IRAlloc(struct ir_keyop);
+    struct ir_keyop *res = IRAlloc1(struct ir_keyop);
     res->node = n;
     res->op = Ir_KeyOp;
     res->lhs = lhs;
@@ -472,7 +480,7 @@ static struct ir_opclo *ir_opclo(struct lnode *n,
                                  int rval,
                                  int fail_label) 
 {
-    struct ir_opclo *res = IRAlloc(struct ir_opclo);
+    struct ir_opclo *res = IRAlloc1(struct ir_opclo);
     res->node = n;
     res->op = Ir_OpClo;
     res->clo = clo;
@@ -493,7 +501,7 @@ static struct ir_keyclo *ir_keyclo(struct lnode *n,
                                    int rval,
                                    int fail_label) 
 {
-    struct ir_keyclo *res = IRAlloc(struct ir_keyclo);
+    struct ir_keyclo *res = IRAlloc1(struct ir_keyclo);
     res->node = n;
     res->op = Ir_KeyClo;
     res->clo = clo;
@@ -513,7 +521,7 @@ static struct ir_invoke *ir_invoke(struct lnode *n,
                                    int rval,
                                    int fail_label) 
 {
-    struct ir_invoke *res = IRAlloc(struct ir_invoke);
+    struct ir_invoke *res = IRAlloc1(struct ir_invoke);
     res->node = n;
     res->op = Ir_Invoke;
     res->clo = clo;
@@ -534,7 +542,7 @@ static struct ir_apply *ir_apply(struct lnode *n,
                                  int rval,
                                  int fail_label) 
 {
-    struct ir_apply *res = IRAlloc(struct ir_apply);
+    struct ir_apply *res = IRAlloc1(struct ir_apply);
     res->node = n;
     res->op = Ir_Apply;
     res->clo = clo;
@@ -556,7 +564,7 @@ static struct ir_invokef *ir_invokef(struct lnode *n,
                                      int rval,
                                      int fail_label) 
 {
-    struct ir_invokef *res = IRAlloc(struct ir_invokef);
+    struct ir_invokef *res = IRAlloc1(struct ir_invokef);
     res->node = n;
     res->op = Ir_Invokef;
     res->clo = clo;
@@ -579,7 +587,7 @@ static struct ir_applyf *ir_applyf(struct lnode *n,
                                    int rval,
                                    int fail_label) 
 {
-    struct ir_applyf *res = IRAlloc(struct ir_applyf);
+    struct ir_applyf *res = IRAlloc1(struct ir_applyf);
     res->node = n;
     res->op = Ir_Applyf;
     res->clo = clo;
@@ -597,7 +605,7 @@ static struct ir_field *ir_field(struct lnode *n,
                                  struct ir_var *expr,
                                  struct fentry *ftab_entry)
 {
-    struct ir_field *res = IRAlloc(struct ir_field);
+    struct ir_field *res = IRAlloc1(struct ir_field);
     res->node = n;
     res->op = Ir_Field;
     res->lhs = lhs;
@@ -609,7 +617,7 @@ static struct ir_field *ir_field(struct lnode *n,
 static struct ir_resume *ir_resume(struct lnode *n,
                                    int clo)
 {
-    struct ir_resume *res = IRAlloc(struct ir_resume);
+    struct ir_resume *res = IRAlloc1(struct ir_resume);
     res->node = n;
     res->op = Ir_Resume;
     res->clo = clo;
@@ -618,7 +626,7 @@ static struct ir_resume *ir_resume(struct lnode *n,
 
 static struct ir_limit *ir_limit(struct lnode *n, struct ir_var *limit)
 {
-    struct ir_limit *res = IRAlloc(struct ir_limit);
+    struct ir_limit *res = IRAlloc1(struct ir_limit);
     res->node = n;
     res->op = Ir_Limit;
     res->limit = limit;
@@ -627,7 +635,7 @@ static struct ir_limit *ir_limit(struct lnode *n, struct ir_var *limit)
 
 static struct ir_tcaseinit *ir_tcaseinit(struct lnode *n, int def)
 {
-    struct ir_tcaseinit *res = IRAlloc(struct ir_tcaseinit);
+    struct ir_tcaseinit *res = IRAlloc1(struct ir_tcaseinit);
     res->node = n;
     res->op = Ir_TCaseInit;
     res->def = def;
@@ -637,7 +645,7 @@ static struct ir_tcaseinit *ir_tcaseinit(struct lnode *n, int def)
 
 static struct ir_tcaseinsert *ir_tcaseinsert(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int entry)
 {
-    struct ir_tcaseinsert *res = IRAlloc(struct ir_tcaseinsert);
+    struct ir_tcaseinsert *res = IRAlloc1(struct ir_tcaseinsert);
     res->node = n;
     res->op = Ir_TCaseInsert;
     res->tci = tci;
@@ -648,7 +656,7 @@ static struct ir_tcaseinsert *ir_tcaseinsert(struct lnode *n, struct ir_tcaseini
 
 static struct ir_tcasechoosex *ir_tcasechoosex(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int labno, int tblc, int *tbl)
 {
-    struct ir_tcasechoosex *res = IRAlloc(struct ir_tcasechoosex);
+    struct ir_tcasechoosex *res = IRAlloc1(struct ir_tcasechoosex);
     res->node = n;
     res->op = Ir_TCaseChoosex;
     res->tci = tci;
@@ -661,7 +669,7 @@ static struct ir_tcasechoosex *ir_tcasechoosex(struct lnode *n, struct ir_tcasei
 
 static struct ir_tcasechoose *ir_tcasechoose(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int tblc, int *tbl)
 {
-    struct ir_tcasechoose *res = IRAlloc(struct ir_tcasechoose);
+    struct ir_tcasechoose *res = IRAlloc1(struct ir_tcasechoose);
     res->node = n;
     res->op = Ir_TCaseChoose;
     res->tci = tci;
@@ -727,7 +735,7 @@ static int make_tmploc(struct ir_stack *st)
 
 static struct mark_pair *make_mark(struct ir_stack *st)
 {
-    struct mark_pair *m = IRAlloc(struct mark_pair);
+    struct mark_pair *m = IRAlloc1(struct mark_pair);
     int i = st->mark++;
     if (i > hi_mark)
         hi_mark = i;
