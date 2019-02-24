@@ -3839,10 +3839,13 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse_form(e, p, context)
-      local m, c, t, url, id, save_key
+      local m, c, t, v, url, id, save_key
       m := map(string(e.get_attribute(u"METHOD"))) | "get"
       t := string(e.get_attribute(u"ENCTYPE")) | "application/x-www-form-urlencoded"
-      url := mk_link(e.get_attribute(u"ACTION"))
+      # The default action is empty string, which resolves to the
+      # current page.
+      v := e.get_attribute(u"ACTION") | u""
+      url := mk_link(v)
       id := e.get_attribute(u"ID" | u"NAME")
       save_key :=  (\id | (\url).ucs() | u"?") || u":" || (*forms + 1)
       c := copy(context)
