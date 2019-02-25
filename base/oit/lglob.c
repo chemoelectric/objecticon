@@ -642,7 +642,7 @@ static void note_seen_field(char *name)
     while (x && x->name != name)
         x = x->next;
     if (!x) {
-        x = mb_zalloc(&ref2_mb, sizeof(struct seen_field));
+        x = mb_alloc(&ref2_mb, sizeof(struct seen_field));
         x->name = name;
         x->next = seen_fields[i];
         seen_fields[i] = x;

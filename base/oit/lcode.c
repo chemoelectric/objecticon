@@ -185,7 +185,7 @@ static int get_tcaseno(struct ir_tcaseinit *x)
 static void add_relocation(word pc, int kind, word param)
 {
     struct relocation *r;
-    r = Alloc(struct relocation);
+    r = Alloc1(struct relocation);
     r->pc = pc;
     r->kind = kind;
     r->param = param;
@@ -361,8 +361,9 @@ static struct strconst *inst_strconst(char *s, int len)
                 quit("Attempted to insert non-ascii string into strconst table at wrong time");
         }
 
-        p = Alloc(struct strconst);
+        p = Alloc1(struct strconst);
         p->b_next = strconst_hash[i];
+        p->next = 0;
         strconst_hash[i] = p;
         p->s = s;
         p->len = len;
@@ -725,9 +726,10 @@ static void lemitcon(struct centry *ce)
         /* Add a patch entry to the list - we need to come back later
          * and fill in the utf8 string offset
          */
-        patch = Alloc(struct utf8_patch);
+        patch = Alloc1(struct utf8_patch);
         patch->pc = pc;
         patch->ce = ce;
+        patch->sc = 0;
         patch->next = utf8_patch_list;
         utf8_patch_list = patch;
 

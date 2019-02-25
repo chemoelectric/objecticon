@@ -7,7 +7,7 @@
 #include "tmem.h"
 #include "membuff.h"
 
-#define NewNode(size) mb_zalloc(&file_mb, sizeof(struct node) + (size-1) * sizeof(union field))
+#define NewNode(size) mb_alloc(&file_mb, sizeof(struct node) + (size-1) * sizeof(union field))
 
 /*
  *  tree[1-6] construct parse tree nodes with specified values.

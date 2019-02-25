@@ -163,13 +163,14 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
     }
     if (id > hi_chunk)
         hi_chunk = id;
-    chunk = mb_zalloc(&ir_func_mb, sizeof(struct chunk) + (n - 1) * sizeof(struct ir *));
+    chunk = mb_alloc(&ir_func_mb, sizeof(struct chunk) + (n - 1) * sizeof(struct ir *));
     chunks[id] = chunk;
     chunk->id = id;
     chunk->line = line;
     chunk->desc = desc;
+    chunk->joined_above = chunk->joined_below = chunk->seen =
+        chunk->n_inst = chunk->circle = chunk->pc = chunk->refs = 0;
     va_start(argp, n);
-    chunk->n_inst = 0;
     for (i = 0; i < n; ++i) {
         struct ir *inst = va_arg(argp, struct ir *);
         if (inst)
@@ -2422,7 +2423,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 n1 = ((struct lnode_2 *)n1)->child2;
             }
 
-            info = mb_zalloc(&ir_func_mb, count * sizeof(struct ir_info *));
+            info = mb_alloc(&ir_func_mb, count * sizeof(struct ir_info *));
             expr_st = branch_stack(st);
 
             /* Traverse elements 1..count-1 */
@@ -2519,7 +2520,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             list_st = branch_stack(st);
             mk = make_mark(list_st);
-            info = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             need_mark = 0;  /* Set to 1 if any of child[0]...[n-2] uses stack */
             for (i = 0; i < x->n - 1; ++i) {
                 info[i] = ir_traverse(x->child[i], branch_stack(list_st), 0, 1, 1);
@@ -2634,8 +2635,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             arv = last_invoke_arg_rval(x);
             clo = make_closure(st);
-            args = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
-            info = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            args = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
+            info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             if (x->expr->op == Uop_Field) {
                 struct lnode_field *y = (struct lnode_field *)x->expr;
                 fn = get_var(y->child, st);
@@ -2734,7 +2735,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (x->n < 2)
                 quit("Got mutual with < 2 elements");
 
-            info = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             for (i = 0; i < x->n - 1; ++i) {
                 info[i] = ir_traverse(x->child[i], st, 0, 0, 1);
                 if (info[i]->uses_stack)
@@ -2774,8 +2775,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_info **info;
             int i;
 
-            args = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
-            info = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            args = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
+            info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
 
             for (i = 0; i < x->n; ++i)
                 args[i] = get_var(x->child[i], st);
@@ -2913,12 +2914,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int i, j, tl, *tbl, xc, need_mark;
             struct mark_pair *mk;
 
-            selector = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
-            clause = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
-            var = mb_zalloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
+            selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            var = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
 
             if (x->use_tcase) {
-                tbl = mb_zalloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
+                tbl = mb_alloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
 
                 xc = get_extra_chunk();
                 tl = make_tmploc(st);
@@ -4332,7 +4333,7 @@ static int optimize_goto()
                 fprintf(stderr, "Merge chunk %d into %d\n", j, i);
             if (chunk->joined_below)
                 quit("Unexpected joined_below");
-            new = mb_zalloc(&ir_func_mb, sizeof(struct chunk) + 
+            new = mb_alloc(&ir_func_mb, sizeof(struct chunk) + 
                            (chunk->n_inst + other->n_inst - 2) * sizeof(struct ir *));
             new->id = chunk->id;
             new->desc = chunk->desc;
@@ -4341,6 +4342,7 @@ static int optimize_goto()
             new->seen = chunk->seen;
             new->joined_above = chunk->joined_above;
             new->joined_below = 0;  /* Since other isn't joined below */
+            new->circle = new->pc = new->refs = 0;
             memcpy(new->inst, chunk->inst, (chunk->n_inst - 1) * sizeof(struct ir *));
             memcpy(new->inst + chunk->n_inst - 1, other->inst, other->n_inst * sizeof(struct ir *));
             chunks[j] = 0;
@@ -4596,16 +4598,16 @@ static void renumber_ir()
     int i, j;
 
     n_clo = n_tmp = n_lab = n_mark = 0;
-    m_clo = mb_zalloc(&ir_func_mb, sizeof(int) * (hi_clo + 1));
+    m_clo = mb_alloc(&ir_func_mb, sizeof(int) * (hi_clo + 1));
     memset(m_clo, -1, sizeof(int) * (hi_clo + 1));
 
-    m_tmp = mb_zalloc(&ir_func_mb, sizeof(int) * (hi_tmp + 1));
+    m_tmp = mb_alloc(&ir_func_mb, sizeof(int) * (hi_tmp + 1));
     memset(m_tmp, -1, sizeof(int) * (hi_tmp + 1));
 
-    m_lab = mb_zalloc(&ir_func_mb, sizeof(int) * (hi_lab + 1));
+    m_lab = mb_alloc(&ir_func_mb, sizeof(int) * (hi_lab + 1));
     memset(m_lab, -1, sizeof(int) * (hi_lab + 1));
 
-    m_mark = mb_zalloc(&ir_func_mb, sizeof(int) * (hi_mark + 1));
+    m_mark = mb_alloc(&ir_func_mb, sizeof(int) * (hi_mark + 1));
     memset(m_mark, -1, sizeof(int) * (hi_mark + 1));
 
     for (i = 0; i <= hi_chunk; ++i) {

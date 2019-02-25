@@ -116,7 +116,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
     /* No, so note it as done, and use the package db to scan all the
      * files in the package, and add them to the lfiles list.
      */
-    x = Alloc(struct lpackage);
+    x = Alloc1(struct lpackage);
     x->b_next = lpackage_hash[i];
     lpackage_hash[i] = x;
     x->name = package;
@@ -206,9 +206,10 @@ void lmfree()
 void add_super(struct lclass *x, char *name, struct loc *pos)
 {
     struct lclass_super *cs;
-    cs = Alloc(struct lclass_super);
+    cs = Alloc1(struct lclass_super);
     cs->name = name;
     cs->pos = *pos;
+    cs->next = 0;
     if (x->last_super) {
         x->last_super->next = cs;
         x->last_super = cs;
