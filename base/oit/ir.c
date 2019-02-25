@@ -214,6 +214,17 @@ static struct ir_info *ir_info(struct lnode *node)
     return res;
 }
 
+static struct ir_var *ir_var(int type)
+{
+    struct ir_var *v = IRAlloc1(struct ir_var);
+    v->type = type;
+    v->index = v->w = v->renumbered = 0;
+    v->con = 0;
+    v->local = 0;
+    v->global = 0;
+    return v;
+}
+
 static int get_extra_chunk()
 {
     return chunk_id_seq++;
@@ -682,8 +693,7 @@ static struct ir_tcasechoose *ir_tcasechoose(struct lnode *n, struct ir_tcaseini
 
 static struct ir_var *make_tmp(struct ir_stack *st)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = TMP;
+    struct ir_var *v = ir_var(TMP);
     v->index = st->tmp++;
     if (v->index > hi_tmp)
         hi_tmp = v->index;
@@ -692,21 +702,20 @@ static struct ir_var *make_tmp(struct ir_stack *st)
 
 static struct ir_var *make_word(word w)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = WORD;
+    struct ir_var *v = ir_var(WORD);
     v->w = w;
     return v;
 }
 
 static struct ir_var *make_self(void)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
+    struct ir_var *v;
     if (curr_lfunc->method->flag & M_Static) {
-        v->type = GLOBAL;
+        v = ir_var(GLOBAL);
         v->global = curr_lfunc->method->class->global;
     } else {
         /* "self" is the first in the locals list */
-        v->type = LOCAL;
+        v = ir_var(LOCAL);
         v->local = curr_lfunc->locals;
     }
     return v;
@@ -714,16 +723,12 @@ static struct ir_var *make_self(void)
 
 static struct ir_var *make_knull(void)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = KNULL;
-    return v;
+    return ir_var(KNULL);
 }
 
 static struct ir_var *make_kyes(void)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = KYES;
-    return v;
+    return ir_var(KYES);
 }
 
 static int make_tmploc(struct ir_stack *st)
@@ -755,24 +760,21 @@ static int make_closure(struct ir_stack *st)
 
 static struct ir_var *make_const(struct lnode *n)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = CONST;
+    struct ir_var *v = ir_var(CONST);
     v->con = ((struct lnode_const *)n)->con;
     return v;
 }
 
 static struct ir_var *make_local(struct lnode *n)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = LOCAL;
+    struct ir_var *v = ir_var(LOCAL);
     v->local = ((struct lnode_local *)n)->local;
     return v;
 }
 
 static struct ir_var *make_global(struct lnode *n)
 {
-    struct ir_var *v = IRAlloc(struct ir_var);
-    v->type = GLOBAL;
+    struct ir_var *v = ir_var(GLOBAL);
     v->global = ((struct lnode_global *)n)->global;
     v->local = ((struct lnode_global *)n)->local;
     return v;
