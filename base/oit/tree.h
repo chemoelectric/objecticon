@@ -9,7 +9,7 @@ typedef	struct node	*nodeptr;
 #define YYSTYPE nodeptr
 
 union field {
-   long n_val;		/* integer-valued fields */
+   int n_val;		/* integer-valued fields */
    char *n_str;		/* string-valued fields */
    nodeptr n_ptr;	/* subtree pointers */
    };
