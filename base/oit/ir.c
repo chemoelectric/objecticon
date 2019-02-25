@@ -2529,13 +2529,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 if (info[i]->uses_stack)
                     need_mark = 1;
             }
-            info[x->n - 1] = ir_traverse(x->child[x->n - 1], st, target, bounded, rval);
-
+            /* i == x->n - 1 */
+            info[i] = ir_traverse(x->child[i], st, target, bounded, rval);
             chunk2(res->start, 
                    OptIns(need_mark, ir_mark(n, mk)), 
                    ir_goto(n, info[0]->start));
             if (!bounded) 
-                chunk1(res->resume, ir_goto(n, info[x->n - 1]->resume));
+                chunk1(res->resume, ir_goto(n, info[i]->resume));
 
             for (i = 0; i < x->n - 1; ++i) {
                 chunk2(info[i]->success,
@@ -2544,8 +2544,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(info[i]->failure,
                       ir_goto(n, info[i + 1]->start));
             }
-
-            i = x->n - 1;
+            /* i == x->n - 1 */
             chunk1(info[i]->success, ir_goto(n, res->success));
             chunk1(info[i]->failure, ir_goto(n, res->failure));
             res->uses_stack = info[i]->uses_stack;
@@ -2711,15 +2710,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                            ir_goto(n, info[i - 1]->resume));
                 }
 
-                /* Last one */
-                i = x->n - 1;
+                /* Last one, i == x->n - 1 */
                 if (ftab_entry)
                     chunk2(info[i]->success,
-                           ir_invokef(n, clo, target, fn, ftab_entry, x->n, args, rval, info[x->n - 1]->resume),
+                           ir_invokef(n, clo, target, fn, ftab_entry, x->n, args, rval, info[i]->resume),
                            ir_goto(n, res->success));
                 else
                     chunk2(info[i]->success,
-                           ir_invoke(n, clo, target, fn, x->n, args, rval, info[x->n - 1]->resume),
+                           ir_invoke(n, clo, target, fn, x->n, args, rval, info[i]->resume),
                            ir_goto(n, res->success));
                 chunk1(info[i]->failure,
                        ir_goto(n, info[i - 1]->resume));
@@ -2750,7 +2748,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             chunk1(res->start, ir_goto(n, info[0]->start));
             if (!bounded)
-                chunk1(res->resume, ir_goto(n, info[x->n - 1]->resume));
+                chunk1(res->resume, ir_goto(n, info[i]->resume));
 
             /* First one */
             chunk1(info[0]->success,
