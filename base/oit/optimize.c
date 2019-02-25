@@ -1140,7 +1140,19 @@ static void fold_toby(struct lnode *n)
     free_literal(&l);
 }
 
-static int is_repeatable(struct lnode *n)
+/*
+ * Decide if part of a case selector is repeatable.  top is used to
+ * help decide if a field reference is repeatable, since even static
+ * const fields (which may be mutable structures) aren't repeatable if
+ * they are the operand of !, ||| etc.
+ * 
+ * If top is 1 then a field at this location won't be used in a
+ * structure op (eg an if condition); a value of 0 means it may (eg
+ * the operand of !).  Some operators (eg alternation) depend on what
+ * is above, so pass the value of top downward (consider !(X|Y) vs if
+ * (X|Y) then).
+ */
+static int is_repeatable(struct lnode *n, int top)
 {
     switch (n->op) {
         case Uop_Keyword: {
@@ -1162,13 +1174,22 @@ static int is_repeatable(struct lnode *n)
             return (x->global->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) != 0;
         }
 
-        case Uop_List: 
         case Uop_Mutual:
         case Uop_Slist: {
             struct lnode_n *x = (struct lnode_n *)n;
             int i;
             for (i = 0; i < x->n; ++i) {
-                if (!is_repeatable(x->child[i]))
+                if (!is_repeatable(x->child[i], i == x->n - 1 ? top : 1))
+                    return 0;
+            }
+            return 1;
+        }
+
+        case Uop_List: {
+            struct lnode_n *x = (struct lnode_n *)n;
+            int i;
+            for (i = 0; i < x->n; ++i) {
+                if (!is_repeatable(x->child[i], 1))
                     return 0;
             }
             return 1;
@@ -1177,33 +1198,30 @@ static int is_repeatable(struct lnode *n)
         case Uop_Random:
             return 0;
 
-        case Uop_Value:
-        case Uop_Nonnull:
-        case Uop_Bang:
-        case Uop_Refresh:
         case Uop_Number:
         case Uop_Compl:
         case Uop_Neg:
         case Uop_Tabmat:
-        case Uop_Size:
-        case Uop_Repeat: 
-        case Uop_While: 
-        case Uop_Null: 
-        case Uop_Until: 
-        case Uop_Every: 
-        case Uop_Rptalt: 
         case Uop_Not: {		
             struct lnode_1 *x = (struct lnode_1 *)n;
-            return is_repeatable(x->child);
+            return is_repeatable(x->child, 1);
+        }
+
+        case Uop_Value:
+        case Uop_Nonnull:
+        case Uop_Null: {		
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            return is_repeatable(x->child, top);
+        }
+
+        case Uop_Size:
+        case Uop_Bang: {
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            return is_repeatable(x->child, 0);
         }
 
         case Uop_Power:
         case Uop_Cat:
-        case Uop_Diff:
-        case Uop_Eqv:
-        case Uop_Inter:
-        case Uop_Subsc:
-        case Uop_Lconcat:
         case Uop_Lexeq:
         case Uop_Lexge:
         case Uop_Lexgt:
@@ -1212,7 +1230,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Lexne:
         case Uop_Minus:
         case Uop_Mod:
-        case Uop_Neqv:
         case Uop_Numeq:
         case Uop_Numge:
         case Uop_Numgt:
@@ -1222,37 +1239,82 @@ static int is_repeatable(struct lnode *n)
         case Uop_Plus:
         case Uop_Div:
         case Uop_Mult:
-        case Uop_Union:
-        case Uop_Conj: 
-        case Uop_If: 
-        case Uop_Whiledo: 
-        case Uop_Alt: 
-        case Uop_Untildo: 
-        case Uop_Everydo: 
         case Uop_Limit:
-        case Uop_To: 
-        case Uop_Scan: {
+        case Uop_To: {
             struct lnode_2 *x = (struct lnode_2 *)n;
-            return is_repeatable(x->child1) && is_repeatable(x->child2);
+            return is_repeatable(x->child1, 1) && is_repeatable(x->child2, 1);
         }
 
-        case Uop_Toby: 
-        case Uop_Sect:
-        case Uop_Sectp:
-        case Uop_Sectm:
+        case Uop_If: 
+        case Uop_Conj: 
+        case Uop_Neqv:
+        case Uop_Eqv:
+        case Uop_Scan: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return is_repeatable(x->child1, 1) && is_repeatable(x->child2, top);
+        }
+
+        case Uop_Alt: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return is_repeatable(x->child1, top) && is_repeatable(x->child2, top);
+        }
+
+        case Uop_Union:
+        case Uop_Diff:
+        case Uop_Inter:
+        case Uop_Lconcat: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return is_repeatable(x->child1, 0) && is_repeatable(x->child2, 0);
+        }
+
+        case Uop_Subsc: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return is_repeatable(x->child1, 0) && is_repeatable(x->child2, 1);
+        }
+
+        case Uop_Toby: {
+            struct lnode_3 *x = (struct lnode_3 *)n;
+            return is_repeatable(x->child1, 1) && is_repeatable(x->child2, 1) && is_repeatable(x->child3, 1);
+        }
+
         case Uop_Ifelse: {
             struct lnode_3 *x = (struct lnode_3 *)n;
-            return is_repeatable(x->child1) && is_repeatable(x->child2) && is_repeatable(x->child3);
+            return is_repeatable(x->child1, 1) && is_repeatable(x->child2, top) && is_repeatable(x->child3, top);
+        }
+
+        case Uop_Sect:
+        case Uop_Sectp:
+        case Uop_Sectm: {
+            struct lnode_3 *x = (struct lnode_3 *)n;
+            return is_repeatable(x->child1, 0) && is_repeatable(x->child2, 1) && is_repeatable(x->child3, 1);
         }
 
         case Uop_Field: { 			/* field reference */
             struct lnode_field *x = (struct lnode_field *)n;
+            struct lclass_field *f;
             struct lclass_field_ref *ref;
             if (!get_class_field_ref(x, 0, &ref))
                 return 0;
-            return (ref->field->flag & M_Static) && (ref->field->flag & (M_Method | M_Const));
+            f = ref->field;
+            if (!(f->flag & M_Static))
+                return 0;
+            if (f->flag & M_Method)
+                return 1;
+            if (curr_vfunc->method &&
+                curr_vfunc->method->name == init_string && curr_vfunc->method->class == f->class)
+                return 0;
+            return (top == 1 && f->flag & M_Const);
         }
 
+        case Uop_Refresh:
+        case Uop_Rptalt: 
+        case Uop_Repeat: 
+        case Uop_While: 
+        case Uop_Until: 
+        case Uop_Every: 
+        case Uop_Whiledo: 
+        case Uop_Untildo: 
+        case Uop_Everydo: 
         case Uop_Asgn:
         case Uop_Rasgn:
         case Uop_Rswap:
@@ -1320,7 +1382,7 @@ static int is_repeatable_case(struct lnode_case *x)
 {
     int i;
     for (i = 0; i < x->n; ++i) {
-        if (!is_repeatable(x->selector[i]))
+        if (!is_repeatable(x->selector[i], 1))
             return 0;
     }
     return 1;
