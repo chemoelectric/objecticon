@@ -1239,12 +1239,12 @@ static int is_repeatable(struct lnode *n, int top)
         case Uop_Plus:
         case Uop_Div:
         case Uop_Mult:
-        case Uop_Limit:
         case Uop_To: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             return is_repeatable(x->child1, 1) && is_repeatable(x->child2, 1);
         }
 
+        case Uop_Limit:            /* expr\lim, lim is child1, expr child2 */
         case Uop_If: 
         case Uop_Conj: 
         case Uop_Neqv:
@@ -3314,7 +3314,7 @@ static int get_literal(struct lnode *n, struct literal *l)
             return 1;
         }
         if (ce->c_flag == F_CsetLit) {
-            struct range *pair = safe_zalloc(ce->length);
+            struct range *pair = safe_malloc(ce->length);
             int i, npair = ce->length / sizeof(struct range);
             memcpy(pair, ce->data, ce->length);
             l->type = CSET;
