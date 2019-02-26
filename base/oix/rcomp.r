@@ -51,7 +51,7 @@ int anycmp(dptr dp1, dptr dp2)
          return uwordcmp(CoexprBlk(*dp1).id, CoexprBlk(*dp2).id);
 
       cset: {
-          int i = 0, j = 0;
+          word i = 0, j = 0;
           while (i < CsetBlk(*dp1).n_ranges &&
                  j < CsetBlk(*dp2).n_ranges) {
               int from1 = CsetBlk(*dp1).range[i].from;

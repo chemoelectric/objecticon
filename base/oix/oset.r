@@ -300,7 +300,7 @@ operator ++ union(x,y)
       body {
           struct rangeset *rs;
           struct b_cset *blk;
-          int i;
+          word i;
           rs = init_rangeset();
           for (i = 0; i < CsetBlk(x).n_ranges; ++i) 
               add_range(rs, CsetBlk(x).range[i].from, CsetBlk(x).range[i].to);

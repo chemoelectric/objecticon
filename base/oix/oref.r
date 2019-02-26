@@ -100,7 +100,7 @@ operator ! bang(underef x -> dx)
 
       cset: {
             for (i = 0; i < CsetBlk(dx).n_ranges; i++) {
-               int from, to;
+               word from, to;
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = from; j <= to; ++j) {
@@ -726,7 +726,7 @@ function back(underef x -> dx)
 
       cset: {
             for (i = CsetBlk(dx).n_ranges - 1; i >= 0; i--) {
-               int from, to;
+               word from, to;
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = to; j >= from; --j) {

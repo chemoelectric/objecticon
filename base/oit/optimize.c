@@ -1036,7 +1036,7 @@ static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
 static struct rangeset *rangeset_union(struct rangeset *x, struct rangeset *y)
 {
     struct rangeset *rs;
-    int i;
+    word i;
     rs = init_rangeset();
     for (i = 0; i < x->n_ranges; ++i) 
         add_range(rs, x->range[i].from, x->range[i].to);
@@ -3061,8 +3061,8 @@ static void fold_sect(struct lnode *n, int op)
             break;
         }
         case CSET: {
-            int k, ch, count, len = cset_size(l1.u.rs), type;
-            word last, from, to, m, out_len;
+            int ch, count, len = cset_size(l1.u.rs), type;
+            word k, last, from, to, m, out_len;
             if (!cvslice(&i, &j, len)) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
@@ -3280,7 +3280,7 @@ static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)
 
 static int cset_size(struct rangeset *rs)
 {
-    int i, len = 0;
+    word i, len = 0;
     for (i = 0; i < rs->n_ranges; ++i)
         len += rs->range[i].to - rs->range[i].from + 1;
     return len;
@@ -3407,7 +3407,7 @@ static int equiv(struct literal *x, struct literal *y)
         case NUL:
             return 1;
         case CSET: {
-            int i;
+            word i;
             if (x->u.rs->n_ranges != y->u.rs->n_ranges)
                 return 0;
             for (i = 0; i < x->u.rs->n_ranges; ++i)

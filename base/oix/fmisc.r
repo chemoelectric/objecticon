@@ -1342,7 +1342,7 @@ int str_mem_eq(dptr s, char *t)
 struct b_cset *rangeset_to_block(struct rangeset *rs)
 {
     struct b_cset *blk;
-    int i, j;
+    word i, j;
 
     MemProtect(blk = alccset(rs->n_ranges));
     blk->n_ranges = rs->n_ranges;
@@ -1478,8 +1478,7 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
  */
 void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
 {
-    int i;
-    word j, from, to, out_len;
+    word i, j, from, to, out_len;
     char c[256];
 
     if (len == 0) {
@@ -1642,7 +1641,7 @@ function lang_Text_get_ord_range(c)
    if !cnv:cset(c) then
       runerr(120, c)
    body {
-       int i;
+       word i;
        for (i = 0; i < CsetBlk(c).n_ranges; ++i) {
            suspend C_integer CsetBlk(c).range[i].from;
            suspend C_integer CsetBlk(c).range[i].to;
@@ -1674,7 +1673,7 @@ function lang_Text_slice(c, i, j)
 
        rs = init_rangeset();
        if (len > 0) {
-           int a, pos, from, to, l0;
+           word a, pos, from, to, l0;
            a = cset_range_of_pos(&CsetBlk(c), i);    /* First range of interest */
            pos = i - 1 - CsetBlk(c).range[a].index;  /* Offset into that range */
            for (; len > 0 && a < CsetBlk(c).n_ranges; ++a) {
@@ -1751,7 +1750,7 @@ function ord(x, i, j)
 
        type_case x of {
          cset: {
-            int a, b, pos, from, to;
+            word a, b, pos, from, to;
 
             if (!cvslice(&i, &j, CsetBlk(x).size))
                 fail;

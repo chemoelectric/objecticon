@@ -604,7 +604,7 @@ static int has_range(struct rangeset *rs, int from, int to)
 
 void add_range(struct rangeset *rs, int from, int to)
 {
-    int i, n;
+    word i, n;
     struct range new;
     struct range *t;
     if (from < 0 || from > MAX_CODE_POINT || to < 0 || to > MAX_CODE_POINT) {
