@@ -3,7 +3,7 @@ import io, lang, util, net, ipl.options, gui, ipl.termdialog,
 
 global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
    curr_file, tmp_out, tmp_out_name, cmd_out, exited, opts, hlim, llim,
-   history, hfile, slim, addrs, is_flowterm, kbreak
+   history, hfile, slim, addrs, is_flowterm, kbreak, cmds
 
 class MemDebug()
    public static native list(obj)
@@ -272,9 +272,7 @@ procedure do_settings()
 end
 
 procedure do_line(s)
-   local a, redir, mode, pipe, p
-
-   s := string(s)
+   local a, redir, mode, pipe, p, cmd, proc
 
    s ? {
       if s := tab(upto('|')) then {
@@ -313,37 +311,15 @@ procedure do_line(s)
       cmd_out := tmp_out
    }
 
-   MemDebug.set_flowterm(if \ (pipe | redir) then &no else is_flowterm)
-   MemDebug.set_output(cmd_out)
+   MemDebug.
+      set_flowterm(if \ (pipe | redir) then &no else is_flowterm).
+      set_output(cmd_out)
 
-   case string(pop(a)) of {
-      "stop":  do_stop()
-      "start":  do_start()
-      "exit": do_exit()
-      "regions":  do_regions()
-      "list":  do_list(a)
-      "refs":  do_refs(a)
-      "dump":  do_dump()
-      "globals":  do_globals()
-      "nglobals":  do_nglobals()
-      "prog":  do_prog(a)
-      "progs":  do_progs()
-      "statics":  do_statics(a)
-      "breakproc" :  do_breakproc(a)
-      "breakpoint" :  do_breakpoint(a)
-      "settings": do_settings()
-      "hlim" :  do_hlim(a)
-      "llim" :  do_llim(a)
-      "hist" :  do_hist(a)
-      "slim" :  do_slim(a)
-      "addrs" :  do_addrs(a)
-      "cls" :  do_cls()
-      "echo" :  do_echo(a)
-      "help": do_help()
-      "kbreak": do_kbreak(a)
-      default: {
-         output.write("Unknown command: ", s)
-      }
+   if cmd := pop(a) then {
+      if proc := member(cmds, cmd) then
+         proc(a)
+      else
+         output.write("Unknown command: ", cmd)
    }
 
    if \redir then
@@ -371,7 +347,7 @@ end
 
 procedure gui_line()
    local s
-   s := input.line
+   s := string(input.line)
    output.write("? ", s)
    do_line(s)
 end
@@ -408,11 +384,7 @@ procedure complete(subj, pos)
    local l, e, s
    l := []
    s := subj[1:pos]
-   every e := u"addrs" | u"breakpoint" | u"breakproc" | u"cls" | u"cmd" | u"dump" |
-      u"echo" | u"exit" | u"globals" | u"help" | u"hist" | u"hlim" | u"list" |
-      u"llim" | u"nglobals" | u"prog" | u"progs" | u"refs" | u"regions" |
-      u"settings" | u"slim" | u"start" | u"statics" | u"stop" do
-   {
+   every e := key(cmds) do {
       e ? if =s then
          put(l, CompleteElement(e, e || u" "))
    }
@@ -555,6 +527,33 @@ procedure main(args)
 
    Class.ensure_initialized(MemDebug)
 
+   cmds := table(,
+                 "stop",  do_stop,
+                 "start",  do_start,
+                 "exit", do_exit,
+                 "regions",  do_regions,
+                 "list",  do_list,
+                 "refs",  do_refs,
+                 "dump",  do_dump,
+                 "globals",  do_globals,
+                 "nglobals",  do_nglobals,
+                 "prog",  do_prog,
+                 "progs",  do_progs,
+                 "statics",  do_statics,
+                 "breakproc" ,  do_breakproc,
+                 "breakpoint" ,  do_breakpoint,
+                 "settings", do_settings,
+                 "hlim" ,  do_hlim,
+                 "llim" ,  do_llim,
+                 "hist" ,  do_hist,
+                 "slim" ,  do_slim,
+                 "addrs" ,  do_addrs,
+                 "cls" ,  do_cls,
+                 "echo" ,  do_echo,
+                 "help", do_help,
+                 "kbreak", do_kbreak
+      )
+
    a := []
    while args[1][1] == "-" do {
       put(a, pop(args))
@@ -582,9 +581,9 @@ procedure main(args)
    kbreak := Yes{ /opts["nk"] }
 
    prog := Prog.load(Files.find_exe(args[1]), args[2:0]) | stop(&why)
-   MemDebug.set_program(prog)
-   MemDebug.set_slim(slim)
-   MemDebug.set_addrs(addrs)
+   MemDebug.set_program(prog).
+      set_slim(slim).
+      set_addrs(addrs)
    is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
    Prog.set_timer_interval(100, prog)
 
