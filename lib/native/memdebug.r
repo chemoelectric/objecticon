@@ -1671,7 +1671,7 @@ function MemDebug_list(s, flag)
        verbose = 0;
        all_flag = is:yes(flag);
        traverse(ListMode);
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -1816,7 +1816,7 @@ function MemDebug_dump()
        fprintf(out, "\nRegion dump\n===========\n");
        verbose = 0;
        traverse(DumpMode);
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -1832,7 +1832,7 @@ function MemDebug_refs(s)
        }
        verbose = 0;
        traverse(RefsMode);
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -1844,7 +1844,7 @@ function MemDebug_globals()
                output_global(i);
        }
        output_keywords();
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -1932,7 +1932,7 @@ function MemDebug_statics(s)
             if (ProcBlk(*field->field_descriptor).type == P_Proc)
                 proc_statics("\t", (struct p_proc *)&ProcBlk(*field->field_descriptor));
         }
-        return nulldesc;
+        ReturnDefiningClass;
     }
 end
 
@@ -1948,7 +1948,7 @@ function MemDebug_progs()
            outblock((union block *)p->K_main);
            fputc('\n', out);
        }
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -1975,7 +1975,7 @@ function MemDebug_prog(s)
        prog = p;
        fprintf(out, "prog set to %p\n", prog);
 
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -1983,7 +1983,7 @@ function MemDebug_set_program(c)
     body {
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -2000,7 +2000,7 @@ function MemDebug_set_output(f)
        if (out)
            fclose(out);
        out = t;
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -2009,7 +2009,7 @@ function MemDebug_set_slim(val)
        runerr(101, val)
     body {
        slim = val;
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -2018,7 +2018,7 @@ function MemDebug_set_addrs(val)
        runerr(101, val)
     body {
        addrs = val;
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -2027,7 +2027,7 @@ function MemDebug_set_flowterm(flag)
        if (!is_flag(&flag))
           runerr(171, flag);
        flowterm = !is:null(flag);
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -2040,7 +2040,7 @@ function MemDebug_nglobals()
                fputc('\n',out);
            }
        }
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
 
@@ -2077,6 +2077,6 @@ function MemDebug_regions()
        fprintf(out, "Total string allocations=%'llu\n", (ulonglong)prog->stringtotal);
        fprintf(out, "Total block allocations=%'llu\n", (ulonglong)prog->blocktotal);
 
-       return nulldesc;
+       ReturnDefiningClass;
     }
 end
