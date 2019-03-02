@@ -280,6 +280,18 @@ class TableSet(Set)
    end
 end
 
+#
+# Convenient subclass of `TableSet`, which uses an `EqTable`, to
+# provide a set with membership based on `equals()`.
+#
+class EqSet(TableSet)
+   public override new(entries[])
+      push(entries, EqTable)
+      TableSet.new!entries
+      return
+   end
+end
+
 package class EmptySet(Set, SelfClone)
    public override member(x)
    end
