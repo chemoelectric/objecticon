@@ -78,6 +78,14 @@ end
 # A class implements this interface to provide a custom implementation
 # for the `equals` procedure.
 #
+# It is advisable when implementing this interface to also implement
+# `ObjectHash`, so that the following relationship holds :-
+# ~
+#        equals(x, y)   =>    hash(x) = hash(y)
+# ~
+# This ensures that classes such as `datastruct.EqTable` work
+# correctly.
+#
 abstract class ObjectEquals()
    private abstract object_equals(other, seen)
 end
