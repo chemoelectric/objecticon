@@ -386,7 +386,7 @@ procedure complete(subj, pos)
    s := subj[1:pos]
    every e := key(cmds) do {
       e ? if =s then
-         put(l, CompleteElement(e, e || u" "))
+         put(l, CompleteElement(e, e || " " || subj[pos:0], *e + 2))
    }
    return l
 end
