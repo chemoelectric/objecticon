@@ -1214,7 +1214,7 @@ void getimage(dptr dp1, dptr dp2)
          }
 
       cset: {
-         int j, from, to;
+         word j, from, to;
          char *csn;
          /*
 	  * Check for the value of a predefined cset; use keyword name if found.

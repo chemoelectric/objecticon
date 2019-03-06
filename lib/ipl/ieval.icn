@@ -747,7 +747,7 @@ class Ieval(MinimalObjectOutput)
       s := ""
       prompt := "> "
       input.connect(create {
-         t := input.line
+         t := string(input.line)
          output.write(prompt, t)
          s ||:= t
          if s[-1] == "\\" then {

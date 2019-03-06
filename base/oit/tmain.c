@@ -802,7 +802,7 @@ static int ldbg(int argc, char **argv)
                 break;
             }
             case N_Int:
-                printf("%ld ", Val0(yylval));
+                printf("%d ", Val0(yylval));
                 break;
             case N_Real:
                 printf("%s ", Str0(yylval));

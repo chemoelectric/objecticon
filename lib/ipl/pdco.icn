@@ -21,6 +21,7 @@ import
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
+   datastruct(EqSet),
    numbers(Rat),
    lang(Internal),
    util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
@@ -1043,6 +1044,24 @@ procedure Unique(e)
          }
 
 end
+
+# This is like `Unique` above, but uses `lang.equals()`, as opposed to
+# `===`, to determine whether or not a result has been previously
+# seen.
+#
+procedure UniqueEq(e)	
+   local done, x
+
+   done := EqSet()
+
+   while x := @e do
+      if not done.member(x) then {
+         done.insert(x)
+         suspend x
+         }
+
+end
+
 
 # Upper sequence trimming
 procedure UpperTrim(e)	
