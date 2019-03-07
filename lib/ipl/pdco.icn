@@ -23,7 +23,7 @@ import
    ipl.periodic(repeater),
    datastruct(EqSet),
    numbers(Rat),
-   lang(Internal),
+   lang(equals, Internal),
    util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
         need_text, same_string_type)
 
@@ -95,6 +95,19 @@ procedure Compare(e1, e2)
    return not @e2
 
 end
+
+# This is like `Compare` above, but uses `lang.equals()`, as opposed to
+# `===`, for comparison.
+#
+procedure CompareEq(e1, e2)	
+   local x1
+
+   while x1 := @e1 do
+      equals(x1,  @e2) | fail
+   return not @e2
+
+end
+
 
 # PDCO to generate integers not in sequence
 procedure Complint(e)	
