@@ -163,6 +163,7 @@ static void report_errors(int f)
 
 static int ldbg(int argc, char **argv);
 static void init_strings(void);
+static void print_wflag_message(void);
 
 static void remove_intermediate_files()
 {
@@ -170,6 +171,12 @@ static void remove_intermediate_files()
     /* delete intermediate files */
     for (rptr = remove_files; rptr; rptr = rptr->next)
         remove(rptr->name);
+}
+
+static void print_wflag_message()
+{
+    if (errors == 0)
+        fputs("Exiting on warning (-W flag)\n", stderr);
 }
 
 /*
@@ -336,6 +343,7 @@ int main(int argc, char **argv)
         trans(trans_files, pp_defs, &errors, &warnings);
         report_errors(1);
         if (errors > 0 || (Wflag && warnings > 0))	{		/* exit if errors seen */
+            print_wflag_message();
             remove_intermediate_files();
             exit(EXIT_FAILURE);
         }
@@ -392,6 +400,7 @@ int main(int argc, char **argv)
     report_errors(0);
 
     if (errors > 0 || (Wflag && warnings > 0)) {			/* exit if linker errors seen */
+        print_wflag_message();
         remove(ofile);
         exit(EXIT_FAILURE);
     }
