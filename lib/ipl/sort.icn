@@ -16,7 +16,9 @@
 
 package ipl.sort
 
-import lang(Class,Prog,Internal), util(cvslice_def), datastruct(Entry)
+import lang(Class,Prog,Internal), util(cvslice_def),
+   datastruct(Entry), ipl.tables(inserts)
+
 
 #
 #  Customizable sort procedure for inclusion in Icon programs.
@@ -47,7 +49,7 @@ procedure isort(x,keyproc,y)
    items := table()
    every item := !x do {
       key := keyproc(item,y)
-      put(member(items, key), item) | insert(items, key, [item])
+      inserts(items, key, item)
       }
    items := sort(items,3)
    result := []

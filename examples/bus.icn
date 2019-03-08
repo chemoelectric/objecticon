@@ -1127,7 +1127,7 @@ class Map(Panel)
       t := table()
       every st := !stops do {
          n := normal_name(st.name)
-         put(member(t, n), st) | insert(t, n, [st])
+         inserts(t, n, st)
       }
 
       every l := !t do {

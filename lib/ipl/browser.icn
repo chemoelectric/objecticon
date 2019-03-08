@@ -14,6 +14,7 @@ import
    xdg,
    ipl.childwait,
    ipl.lists,
+   ipl.tables,
    ipl.pdco,
    ipl.io,
    ipl.sort,
@@ -2486,7 +2487,7 @@ class Form()
       every c := !items do {
          if k := \c.form_name then {
             every v := c.get_form_value(ev, src) do
-               put(member(t, k), v) | insert(t, k, [v])
+               inserts(t, k, v)
          }
       }
       return t

@@ -11,6 +11,7 @@ import
    parser, 
    ipl.sort,
    ipl.scan,
+   ipl.tables,
    io,
    util
 
@@ -313,9 +314,9 @@ class HtmlOutputter(Outputter)
       tv := table()
       every x := c.get_implemented_fields() do {
          if is(x, ClassVariable) then
-            put(member(tv, x.defining_class), x) | insert(tv, x.defining_class, [x])
+            inserts(tv, x.defining_class, x)
          else
-            put(member(tm, x.defining_class), x) | insert(tm, x.defining_class, [x])
+            inserts(tm, x.defining_class, x)
       }
 
       every d := !l do {

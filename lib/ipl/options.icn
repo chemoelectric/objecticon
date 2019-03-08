@@ -23,7 +23,7 @@
 package ipl.options
 
 import
-   io, lang, util, ipl.scan, ipl.lists, ipl.pdco
+   io, lang, util, ipl.scan, ipl.lists, ipl.pdco, ipl.tables(inserts)
 
 # The result of the `Opt.format` method.
 record OptFormat(names, help)
@@ -360,7 +360,7 @@ procedure options(arg, opts, usage, errproc)
                   if /opt.multiple_flag then
                      insert(option, k, v)
                   else
-                     put(member(option, k), v) | insert(option, k, [v]) 
+                     inserts(option, k, v)
                }
             } else {
                tab(0) ? until pos(0) do {
@@ -385,7 +385,7 @@ procedure options(arg, opts, usage, errproc)
                   if /opt.multiple_flag then
                      insert(option, k, v)
                   else
-                     put(member(option, k), v) | insert(option, k, [v]) 
+                     inserts(option, k, v)
                }
             }
          }
