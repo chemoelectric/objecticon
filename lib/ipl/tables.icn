@@ -224,3 +224,12 @@ procedure randomkey(t)
          return k
    syserr("randkomkey unreachable")
 end
+
+#  inserts() -- Inserts values into a table in which the same key can
+#  have more than one value (i.e., duplicate keys).  The value of each
+#  element is a list of inserted values.
+#
+procedure inserts(t, k, v)
+   put(member(t, k), v) | insert(t, k, [v])
+   return t
+end
