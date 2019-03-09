@@ -160,6 +160,28 @@ procedure Sum(e)
    return i
 end
 
+# PDCO to produce product
+procedure Product(e)		
+   local i
+
+   i := 1
+
+   while i *:= @e
+
+   return i
+end
+
+# PDCO to generate the cumulative product of the terms of e
+procedure Cumproduct(e)		
+   local i
+
+   i := 1
+
+   while i *:= @e do
+      suspend i
+
+end
+
 # Parallel evaluation with shorter sequences re-evaluated
 procedure Cyclepar(L[])	
    local i, L1, done
