@@ -5,7 +5,8 @@ import
    util,
    net,
    graphics(Key),
-   ipl.strings
+   ipl.strings,
+   ipl.tables(inserts)
 
 abstract class HasAscent()
    public abstract get_ascent(dw, dh)
@@ -668,7 +669,7 @@ class TextFlow(Component, HasLastHighlight)
                                                W.text_width(o.s[1:k]),
                                                W.text_width(o.s[k+:*s]))
 
-                           put(member(searched, o), ts) | insert(searched, o, [ts])
+                           inserts(searched, o, ts)
                            # Note we use or.y as the y sort co-ordinate so that all matches in the same row             
                            # compare on their x position.                                                               
                            sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set(ts))
@@ -682,7 +683,7 @@ class TextFlow(Component, HasLastHighlight)
                                                   e.i, e.j,
                                                   W.text_width(o1.s[1:e.i]),
                                                   W.text_width(o1.s[e.i:e.j]))
-                              put(member(searched, o1), ts) | insert(searched, o1, [ts])
+                              inserts(searched, o1, ts)
                               /sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set())
                               insert(sp.memb, ts)
                            }

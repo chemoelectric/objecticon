@@ -1,6 +1,6 @@
 package cgi
 
-import io, net, mail, util(error), posix(System)
+import io, net, mail, util(error), posix(System), ipl.tables(inserts)
 
 class CgiParams()
    private readable
@@ -35,7 +35,7 @@ class CgiParams()
                every p := !multi.parts do {
                   cd := p.get_content_disposition() | return error("No Content-Disposition")
                   key := cd.get_parameter("name")
-                  put(member(params, key), p) | insert(params, key, [p])
+                  inserts(params, key, p)
                }
             } else 
                params := table()

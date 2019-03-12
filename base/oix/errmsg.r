@@ -76,6 +76,7 @@ struct errtab errtab[] = {
     {176, "exec() requires at least one argument for the program"},
     {177, "Even number of elements expected"},
     {178, "Odd number of elements expected"},
+    {179, "List or set expected"},
 
     {201, "Division by zero"},
     {202, "Remaindering by zero"},

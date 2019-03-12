@@ -11,7 +11,8 @@ package net
 import 
    lang,
    util,
-   ipl.scan
+   ipl.scan,
+   ipl.tables
 
 #
 # This class encapsulates a URL
@@ -465,7 +466,7 @@ class URL(ObjectOutput)
          else
             val := ""
          ="&"
-         put(member(cgi, key), val) | insert(cgi, key, [val])
+         inserts(cgi, key, val)
       }
       return cgi
    end

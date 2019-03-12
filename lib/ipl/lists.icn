@@ -927,3 +927,125 @@ procedure lsplice(L, l, i, j)
    linsert(L, \l, i)
    return L
 end
+
+package record itemsplit_rec(item, rest)
+
+# Generate the elements of x (a list or a set), together with
+# the other elements of x.  So for [1,2,3] we generate 1,[2,3];
+# 2,[1,3]; and 3,[1,2].
+#
+# An `itemsplit_rec` record is generated with each result; note that
+# the same record instance and contained structure is suspended each
+# time.
+#
+procedure itemsplit(x)
+   local res, i, e
+   case type(x) of {
+      "list": {
+         res := itemsplit_rec(, copy(x))
+         every i := 1 to *x do {
+            res.item := x[i]
+            delete(res.rest, i)
+            suspend res
+            insert(res.rest, i, res.item)
+         }
+      }
+      "set": {
+         res := itemsplit_rec(, copy(x))
+         every e := !x do {
+            res.item := e
+            delete(res.rest, e)
+            suspend res
+            insert(res.rest, e)
+         }
+      }
+      default: runerr(179, x)
+   }
+end
+
+package record powersplit_rec(items, rest)
+
+# Generate all possible 2^(*x) splits into two parts of x (a list or a
+# set).  For example, given x=[1,2] we generate four pairs :-
+# [1,2],[]; [1],[2]; [2],[1]; and [],[1,2].
+#
+# A `powersplit_rec` record is generated with each result; note that
+# the same record instance and contained structures is suspended each
+# time, although these are distinct from x.
+#
+procedure powersplit(x)
+   case type(x) of {
+      "list": {
+         suspend listpowersplit(copy(x))
+      }
+      "set": {
+         suspend setpowersplit(copy(x))
+      }
+      default: runerr(179, x)
+   }
+end
+
+package procedure listpowersplit(l)
+   local t, v
+   if t := get(l) then {
+      every v := listpowersplit(l) do {
+         push(v.items, t)
+         suspend v
+         pop(v.items)
+         push(v.rest, t)
+         suspend v
+         pop(v.rest)
+      }
+   } else
+      return powersplit_rec(l, [])
+end
+
+package procedure setpowersplit(s)
+   local t, v
+   if t := !s then {
+      delete(s, t)
+      every v := setpowersplit(s) do {
+         insert(v.items, t)
+         suspend v
+         delete(v.items, t)
+         insert(v.rest, t)
+         suspend v
+         delete(v.rest, t)
+      }
+   } else
+      return powersplit_rec(s, set())
+end
+
+# Given a list l and a table (int->list) of alternative elements,
+# generate all possible modified lists.  For example, given l=[1,2,3]
+# and t={1->a,b 3->c,d} we generate :-
+#
+#    [a,2,c],[a,2,d],[a,2,3],[b,2,c],[b,2,d],[b,2,3],[1,2,c],[1,2,d]
+#
+# Note that the original list l is not generated, only modifications.
+# The same list is returned each time.
+#
+# The no. of results generated is :-
+#   (product of (*!alts + 1)) - 1
+# For the example above, (2+1)*(2+1) - 1 = 8.
+#
+procedure altlists(l, alts)
+   if *alts = 0 then
+      fail
+   suspend altlists1(l, alts, 1, list(*l))
+end
+
+package procedure altlists1(l, alts, i, res, mod)
+   local a
+
+   if i > *l then
+      return if \mod then res
+
+   every a := !member(alts, i) do {
+      res[i] := a
+      suspend altlists1(l, alts, i+1, res, &yes)
+   }
+
+   res[i] := l[i]
+   suspend altlists1(l, alts, i+1, res, mod)
+end

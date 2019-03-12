@@ -749,7 +749,7 @@ procedure hash_and_check(s1, s2, seen)
    t := table()
    every e := !s1 do {
       i := hash(e)
-      put(member(t, i), e) | insert(t, i, [e])
+      inserts(t, i, e)
    }
    every e := !s2 do
       in_bucket(e, member(t, hash(e)), seen) | fail
