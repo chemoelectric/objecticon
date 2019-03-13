@@ -102,11 +102,6 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
             break;
     }
 
-    if (depth == 0) {
-        fflush(stderr);
-        return;
-    }
-
     for (ae = head; ae;) {
         struct act_chain *t;
         if (depth - LIMIT >= ae->nframes) {
