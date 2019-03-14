@@ -9,7 +9,6 @@
 #include "tmain.h"
 #include "trans.h"
 #include "package.h"
-#include "membuff.h"
 
 struct tgentry *ghash[GHASH_SIZE];	/* hash area for global table */
 struct tgentry *gfirst;		/* first global table entry */

@@ -1,6 +1,4 @@
-#include "icont.h"
-#include "tmain.h"
-#include "membuff.h"
+#include "../h/gsupport.h"
 
 void mb_init(struct membuff *mb, size_t n, char *name)
 {
@@ -41,8 +39,10 @@ void *mb_alloc(struct membuff *mb, size_t n)
     else
         new_size = mb->init_size;
 
-    if (n > new_size)
-        quit("Request too big for membuff %s", mb->name);
+    if (n > new_size) {
+        fprintf(stderr, "Request too big for membuff %s", mb->name);
+        exit(EXIT_FAILURE);
+    }
 
     nb = Alloc1(struct membuff_block);
     nb->size = new_size;

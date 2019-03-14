@@ -3,7 +3,6 @@
 
 #include "tree.h"
 #include "transtructs.h"
-#include "membuff.h"
 
 #define FAlloc(type)   mb_zalloc(&file_mb, sizeof(type))
 #define FAlloc1(type)   mb_alloc(&file_mb, sizeof(type))

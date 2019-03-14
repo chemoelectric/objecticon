@@ -3,11 +3,11 @@ include ../../Makedefs
 CWARN = -Wall
 
 OITOBJS=	trans.obj tlex.obj tparse.obj tsym.obj tmem.obj \
-		tree.obj ucode.obj ipp.obj membuff.obj ir.obj \
+		tree.obj ucode.obj ipp.obj ir.obj \
 		package.obj resolve.obj tmain.obj \
 		link.obj lglob.obj lcode.obj lmem.obj lsym.obj ltree.obj optimize.obj
 
-COBJS=		../common/getopt.obj ../common/alloc.obj \
+COBJS=		../common/getopt.obj ../common/alloc.obj ../common/membuff.obj \
 		../common/strtbl.obj ../common/mlocal.obj \
                 ../common/win32.obj
 

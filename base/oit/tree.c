@@ -5,7 +5,6 @@
 #include "icont.h"
 #include "tree.h"
 #include "tmem.h"
-#include "membuff.h"
 
 #define NewNode(size) mb_alloc(&file_mb, sizeof(struct node) + (size-1) * sizeof(union field))
 

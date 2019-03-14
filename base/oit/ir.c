@@ -9,7 +9,6 @@
 #include "lglob.h"
 #include "ltree.h"
 #include "ir.h"
-#include "membuff.h"
 
 static int n_chunks_alloc;
 static int chunk_id_seq;
