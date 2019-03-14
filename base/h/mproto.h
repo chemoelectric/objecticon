@@ -117,6 +117,13 @@ void *padded_malloc(size_t size);
 void *small_alloc(size_t size);
 void small_free(void *p);
 
+void mb_init(struct membuff *mb, size_t n, char *name);
+void *mb_zalloc(struct membuff *mb, size_t n);
+void *mb_alloc(struct membuff *mb, size_t n);
+void mb_clear(struct membuff *mb);
+void mb_free(struct membuff *mb);
+void mb_show(struct membuff *mb);
+
 int oi_toupper(int c);
 int oi_tolower(int c);
 

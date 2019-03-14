@@ -1,11 +1,11 @@
 < ../../mkdefs
 
 OITOBJS=	trans.$O tlex.$O tparse_mod.$O tsym.$O tmem.$O \
-		tree.$O ucode.$O ipp.$O membuff.$O ir.$O \
+		tree.$O ucode.$O ipp.$O ir.$O \
 		package.$O resolve.$O tmain.$O \
 		link.$O lglob.$O lcode.$O lmem.$O lsym.$O ltree.$O optimize.$O
 
-COBJS=		../common/getopt.$O ../common/alloc.$O \
+COBJS=		../common/getopt.$O ../common/alloc.$O ../common/membuff.$O \
 		../common/strtbl.$O ../common/mlocal.$O ../common/plan9.$O
 
 OBJS=		$OITOBJS $COBJS

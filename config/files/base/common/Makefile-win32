@@ -2,7 +2,7 @@ include ../../Makedefs
 
 CWARN = -Wall
 
-OBJS=	getopt.obj strtbl.obj win32.obj \
+OBJS=	getopt.obj strtbl.obj membuff.obj win32.obj \
 	mlocal.obj alloc.obj gdip.obj
 
 all:		$(OBJS)

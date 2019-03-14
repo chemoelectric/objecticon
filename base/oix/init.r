@@ -575,7 +575,7 @@ void checkfatalrecurse(void)
 {
     static int in_fatal = 0;
     if (in_fatal) {
-        fprintf(stderr, "recursive fatal errors - exiting.\n");
+        fprintf(stderr, "Recursive fatal errors - exiting.\n");
         c_exit(EXIT_FAILURE);
     }
     in_fatal = 1;

@@ -10,7 +10,6 @@
 #include "resolve.h"
 #include "tmain.h"
 #include "ltree.h"
-#include "membuff.h"
 
 #include "../h/opdefs.h"
 

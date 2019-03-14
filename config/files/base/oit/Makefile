@@ -1,11 +1,11 @@
 include ../../Makedefs
 
 OITOBJS=	trans.o tlex.o tparse.o tsym.o tmem.o \
-		tree.o ucode.o ipp.o membuff.o ir.o \
+		tree.o ucode.o ipp.o ir.o \
 		package.o resolve.o tmain.o \
 		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o
 
-COBJS=		../common/getopt.o ../common/alloc.o \
+COBJS=		../common/getopt.o ../common/alloc.o ../common/membuff.o \
 		../common/strtbl.o ../common/mlocal.o
 
 OBJS=		$(OITOBJS) $(COBJS)

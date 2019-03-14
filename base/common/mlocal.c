@@ -315,7 +315,7 @@ static char *getcachedcwd()
             }
 #else
             if (errno != ERANGE) {
-                fprintf(stderr, "unable to getcwd() (errno=%d)", errno);
+                fprintf(stderr, "Unable to getcwd() (errno=%d)", errno);
                 exit(EXIT_FAILURE);
             }
 #endif
@@ -640,7 +640,7 @@ void add_range(struct rangeset *rs, int from, int to)
     struct range new;
     struct range *t;
     if (from < 0 || from > MAX_CODE_POINT || to < 0 || to > MAX_CODE_POINT) {
-        fprintf(stderr, "tried to add invalid code point to range set\n");
+        fprintf(stderr, "Tried to add invalid code point to range set\n");
         exit(EXIT_FAILURE);
     }
     if (from > to)

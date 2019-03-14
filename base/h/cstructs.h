@@ -22,6 +22,22 @@ struct staticstr {
 };
 
 /*
+ * Structures for the mb_ functions, which allow multiple allocations
+ * from a single structure, which can then be freed all at once.
+ */
+struct membuff_block {
+    char *mem, *free;
+    size_t size;
+    struct membuff_block *next;
+};
+
+struct membuff {
+    char *name;
+    size_t init_size;
+    struct membuff_block *first, *last, *curr;
+};
+
+/*
  * str_buf references a string buffer. Strings are built a character
  *  at a time. When a buffer "fragment" is filled, another is allocated
  *  and the the current string copied to it.

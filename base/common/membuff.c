@@ -1,6 +1,4 @@
-#include "icont.h"
-#include "tmain.h"
-#include "membuff.h"
+#include "../h/gsupport.h"
 
 void mb_init(struct membuff *mb, size_t n, char *name)
 {
@@ -21,7 +19,7 @@ void *mb_alloc(struct membuff *mb, size_t n)
 {
     char *t;
     struct membuff_block *nb;
-    int new_size;
+    size_t new_size;
 
     /* Ensure all allocations are word aligned */
     n = WordRound(n);
@@ -37,12 +35,12 @@ void *mb_alloc(struct membuff *mb, size_t n)
     }
 
     if (mb->last)
-        new_size = 2 * mb->last->size;
+        new_size = Min(4 * mb->init_size, 2 * mb->last->size);
     else
         new_size = mb->init_size;
 
     if (n > new_size)
-        quit("Request too big for membuff %s", mb->name);
+        new_size = n;
 
     nb = Alloc1(struct membuff_block);
     nb->size = new_size;
@@ -86,7 +84,7 @@ void mb_show(struct membuff *mb)
     fprintf(stderr, "Membuff %p, init_size=%ld curr=%p\n", mb, (long)mb->init_size, mb->curr);
     while (t) {
         fprintf(stderr, "\tBlock %p mem=%p size=%ld free=%ld\n", t, t->mem,
-                (long)t->size, (long)(t->size - ((char *)t->free - (char *)t->mem)));
+                (long)t->size, (long)(t->size - DiffPtrs(t->free, t->mem)));
         t = t->next;
     }
 }

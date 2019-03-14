@@ -4,7 +4,6 @@
 #include "lmem.h"
 #include "resolve.h"
 #include "tmain.h"
-#include "membuff.h"
 
 struct lclass_ref_list
 {
