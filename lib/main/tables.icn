@@ -954,7 +954,23 @@ end
 #
 class WeakrefTable(Table)
    private const t
-   private sz, last_purge
+   private sz, last_purge, repeat_collect_flag
+
+   # This flag can be set to force repeated collections during a
+   # purge, whilst this reduces the size of the table.  This can be
+   # useful in the case that the values in the table hold references
+   # to objects that are also referenced as keys.  Unlike those keys,
+   # these references count as non-weak.  What happens therefore is
+   # that a single collect (and purge) will delete just those keys
+   # that don't have references via values.  As those keys and values
+   # are purged, the next level of references can be removed with
+   # another collect and purge, and so on.  This flag causes such a
+   # loop to be executed by each purge.
+   #
+   public set_repeat_collect(s)
+      self.repeat_collect_flag := need_flag(s)
+      link
+   end
 
    public override insert(key, val)
       add(key) := val
@@ -1036,9 +1052,16 @@ class WeakrefTable(Table)
    end
 
    public maybe_purge()
+      local old_sz
       if last_purge ~=== Prog.get_global_collection_count() then {
-         last_purge := Prog.get_global_collection_count()
-         purge()
+         repeat {
+            old_sz := sz
+            last_purge := Prog.get_global_collection_count()
+            purge()
+            if /repeat_collect_flag | (old_sz = sz) then
+               break
+            collect()
+         }
       }
       link
    end
