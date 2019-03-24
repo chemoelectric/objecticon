@@ -3,24 +3,33 @@
 bm()
 {
     name=$1
+    unset name1
     shift
     echo $name
     echo "----------------------"
     oit -s $name.icn post.icn
     ./$name "$@"
+    if [ -x "$BM_ICONT" -o -x "$BM_ICONC" -o -x "$BM_JCONT"  ] ; then
+        name1=${name}1
+        oit -s -E -D_OBJECT_ICON post.icn >post1.icn
+        oit -s -E -D_OBJECT_ICON ${name}.icn >${name1}.icn
+    fi
     if [ -x "$BM_ICONT" ] ; then
-        $BM_ICONT -s $name.icn post.icn
-        ./$name "$@"
+        $BM_ICONT -s ${name1}.icn post1.icn
+        ./${name1} "$@"
     fi
     if [ -x "$BM_ICONC" ] ; then
-        $BM_ICONC -s $name.icn post.icn
-        ./$name "$@"
+        $BM_ICONC -s ${name1}.icn post1.icn
+        ./${name1} "$@"
     fi
     if [ -x "$BM_JCONT" ] ; then
-        $BM_JCONT -s $name.icn post.icn
-        ./$name "$@"
+        $BM_JCONT -s ${name1}.icn post1.icn
+        ./${name1} "$@"
     fi
     rm -f $name
+    if [ -n "$name1" ] ; then
+        rm -f ${name1} ${name1}.icn post1.icn
+    fi
     echo
     echo
 }
