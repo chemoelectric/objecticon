@@ -15,7 +15,7 @@ static int chunk_id_seq;
 struct chunk **chunks;
 int hi_chunk;
 static int hi_clo, hi_tmp, hi_lab, hi_mark;
-static int mark_id_seq;
+static int tcaseinit_id_seq, mark_id_seq, tmp_id_seq;
 
 static struct ir_info *scan_stack;
 static struct ir_info *loop_stack;
@@ -23,11 +23,12 @@ static struct ir_info *loop_stack;
 static int augop(int n);
 static void print_ir_var(struct ir_var *v);
 static void delete_ir(struct chunk *chunk, int i);
-static void change_unmark_ids(int old, int new);
+static void edit_marks(int old, int new, int no);
 static int optimize_goto(void);
 static int peephole1(void);
 static int peephole_optimizations(void);
 static int mark_check(void);
+static int fold_tmps(void);
 static void optimize_goto1(int i);
 static void renumber_ir(void);
 static int get_extra_chunk(void);
@@ -48,6 +49,9 @@ static void sanity_check(void);
 static void sum_seen(int *res);
 
 static int traverse_level;
+
+typedef void (*visit_vars_func)(struct chunk *chunk, struct ir *ir, struct ir_var *v, int lhs);
+static void visit_vars(visit_vars_func v);
 
 struct membuff ir_func_mb = {"Per func IR membuff", 64000, 0,0,0 };
 #define IRAlloc(type)   mb_zalloc(&ir_func_mb, sizeof(type))
@@ -651,6 +655,7 @@ static struct ir_tcaseinit *ir_tcaseinit(struct lnode *n, int def)
     res->op = Ir_TCaseInit;
     res->def = def;
     res->no = -1;
+    res->id = tcaseinit_id_seq++;
     return res;
 }
 
@@ -694,6 +699,7 @@ static struct ir_var *make_tmp(struct ir_stack *st)
 {
     struct ir_var *v = ir_var(TMP);
     v->index = st->tmp++;
+    v->tmp_id = tmp_id_seq++;
     if (v->index > hi_tmp)
         hi_tmp = v->index;
     return v;
@@ -779,25 +785,39 @@ static struct ir_var *make_global(struct lnode *n)
     return v;
 }
 
+/*
+ * Return true if the given global is a package readable which is
+ * readonly (ie we are in another package, and not lang).
+ */
+int is_readable_global(struct gentry *ge)
+{
+    return (ge->g_flag & F_Readable) &&
+            curr_lfunc->defined->package_id != 1 &&
+            ge->defined->package_id != curr_lfunc->defined->package_id;
+}
+
+/*
+ * Return true if the given local is the class instance self variable.
+ */
+int is_self(struct lentry *le)
+{
+    return curr_lfunc->method &&
+           !(curr_lfunc->method->flag & M_Static) &&
+           (le->l_flag & F_Argument) && le->l_val.index == 0;
+}
+
 static int is_assignable_var(struct lnode *n)
 {
     switch (n->op) {
         case Uop_Local: {
             struct lentry *le = ((struct lnode_local *)n)->local;
-            if (curr_lfunc->method && !(curr_lfunc->method->flag & M_Static) && (le->l_flag & F_Argument) && le->l_val.index == 0)
-                return 0;
-            return 1;
+            return !is_self(le);
         }
         case Uop_Global: {
             struct gentry *ge = ((struct lnode_global *)n)->global;
-            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0) {
-                if ((ge->g_flag & F_Readable) &&
-                    curr_lfunc->defined->package_id != 1 &&
-                    ge->defined->package_id != curr_lfunc->defined->package_id)
-                    return 0;
-                else 
-                    return 1;
-            } else
+            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0)
+                return !is_readable_global(ge);
+            else
                 return 0;
         }
     }
@@ -821,7 +841,10 @@ static struct ir_var *get_var(struct lnode *n, struct ir_stack *st)
         case Uop_Local:
             return make_local(n);
         case Uop_Global:
-            return make_global(n);
+            /* Package readable globals must use a temp, since they
+             * are dereferenced on a move, but may change (see notes). */
+            if (!is_readable_global(((struct lnode_global *)n)->global))
+                return make_global(n);
     }
     return make_tmp(st);
 }
@@ -3312,14 +3335,15 @@ void generate_ir()
     memset(chunks, 0, n_chunks_alloc * sizeof(struct chunk *));
     mb_clear(&ir_func_mb);
     hi_clo = hi_tmp = hi_lab = hi_mark = -1;
-    mark_id_seq = 0;
+    tcaseinit_id_seq = tmp_id_seq = mark_id_seq = 0;
 
     if (Iflag) {
+        fprintf(stderr, "\nGenerating ir tree for ");
         if (curr_lfunc->method)
-            fprintf(stderr, "\nGenerating ir tree for method %s.%s\n", 
+            fprintf(stderr, "method %s.%s\n", 
                     curr_lfunc->method->class->global->name, curr_lfunc->method->name);
         else
-            fprintf(stderr, "\nGenerating ir tree for procedure %s\n",  curr_lfunc->proc->name);
+            fprintf(stderr, "procedure %s\n",  curr_lfunc->proc->name);
     }
 
 
@@ -3369,11 +3393,14 @@ void generate_ir()
     sanity_check();
     renumber_ir();
     if (Iflag) {
-        fprintf(stderr, "** Optimized code\n");
+        fprintf(stderr, "** Optimized code for ");
+        if (curr_lfunc->method)
+            fprintf(stderr, "method %s.%s\n", 
+                    curr_lfunc->method->class->global->name, curr_lfunc->method->name);
+        else
+            fprintf(stderr, "procedure %s\n",  curr_lfunc->proc->name);
         dump_ir();
         fprintf(stderr, "** End of optimized code\n");
-        fprintf(stderr, "Memory usage\n");
-        mb_show(&ir_func_mb);
     }
 }
 
@@ -3388,6 +3415,8 @@ static void optimize()
             fprintf(stderr, "Optimization pass %d\n", i);
         mod = 0;
         if (optimize_goto())
+            ++mod;
+        if (fold_tmps())
             ++mod;
         if (peephole_optimizations())
             ++mod;
@@ -3434,7 +3463,7 @@ static void print_ir_var(struct ir_var *v)
             break;
         }
         case TMP: {
-            fprintf(stderr, "{tmp %d}", v->index);
+            fprintf(stderr, "{tmp %d (id %d)}", v->index, v->tmp_id);
             break;
         }
         default: {
@@ -3740,7 +3769,7 @@ static void print_chunk(struct chunk *chunk)
 
             case Ir_TCaseInsert: {
                 struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
-                indentf("\tIr_TCaseInsert tci=%p", x->tci);
+                indentf("\tIr_TCaseInsert tci=%d", x->tci->id);
                 fprintf(stderr, " val=");
                 print_ir_var(x->val);
                 fprintf(stderr, ", entry=%d\n", x->entry);
@@ -3750,7 +3779,7 @@ static void print_chunk(struct chunk *chunk)
             case Ir_TCaseChoose: {
                 struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
                 int i;
-                indentf("\tIr_TCaseChoose tci=%p", x->tci);
+                indentf("\tIr_TCaseChoose tci=%d", x->tci->id);
                 fprintf(stderr, " val=");
                 print_ir_var(x->val);
                 fprintf(stderr, ", tblc=%d tbl=", x->tblc);
@@ -3764,7 +3793,7 @@ static void print_chunk(struct chunk *chunk)
             case Ir_TCaseChoosex: {
                 struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
                 int i;
-                indentf("\tIr_TCaseChoosex tci=%p", x->tci);
+                indentf("\tIr_TCaseChoosex tci=%d", x->tci->id);
                 fprintf(stderr, " val=");
                 print_ir_var(x->val);
                 fprintf(stderr, ", labno=%d tblc=%d tbl=", x->labno, x->tblc);
@@ -3901,7 +3930,11 @@ static void delete_ir(struct chunk *chunk, int i)
     --chunk->n_inst;
 }
 
-static void change_unmark_ids(int old, int new)
+/*
+ * Change all marks and unmarks with ID old, setting ID to new and
+ * index number to no.
+ */
+static void edit_marks(int old, int new, int no)
 {
     int i, j;
     struct chunk *chunk;
@@ -3913,8 +3946,17 @@ static void change_unmark_ids(int old, int new)
                 ir = chunk->inst[j];
                 if (ir->op == Ir_Unmark) {
                     struct ir_unmark *x = (struct ir_unmark *)ir;
-                    if (x->id == old)
+                    if (x->id == old) {
                         x->id = new;
+                        x->no = no;
+                    }
+                }
+                else if (ir->op == Ir_Mark) {
+                    struct ir_mark *x = (struct ir_mark *)ir;
+                    if (x->id == old) {
+                        x->id = new;
+                        x->no = no;
+                    }
                 }
             }
         }
@@ -4155,31 +4197,58 @@ static int peephole1()
                     return 1;
                 }
 
-
                 /*
                  * Transform  unmark x   to   unmark x
                  *            mark x
                  * 
+                 *            unmark x   to   unmark z
+                 *            mark y
+                 * 
                  * Both instructions must be in the same chunk (so
-                 * there is no jump to the second).
+                 * there is no jump to the second).  If the two
+                 * instructions have different numbers then a new one
+                 * is allocated.
                  */
-                if (ir1->op == Ir_Unmark && ir2->op == Ir_Mark && chunk1 == chunk2 &&
-                    ((struct ir_unmark *)ir1)->no == ((struct ir_mark *)ir2)->no)
+                if (ir1->op == Ir_Unmark && ir2->op == Ir_Mark && chunk1 == chunk2)
                 {
+                    struct ir_unmark *u1 = (struct ir_unmark *)ir1;
+                    struct ir_mark *u2 = (struct ir_mark *)ir2;
                     if (Iflag)
                         fprintf(stderr, "Delete redundant mark from chunk %d\n", chunk2->id);
+                    if (u1->no == u2->no) {
+                        delete_ir(chunk2, j2);
+                        edit_marks(u2->id, u1->id, u1->no);
+                        return 1;
+                    } else {
+                        int new = ++hi_mark;
+                        delete_ir(chunk2, j2);
+                        edit_marks(u1->id, u1->id, new);
+                        edit_marks(u2->id, u1->id, new);
+                        return 1;
+                    }
+                }
+
+                /*
+                 * Transform  mark x   to   mark z
+                 *            mark y
+                 * 
+                 * Both instructions must be in the same chunk (so
+                 * there is no jump to the second).
+                 * 
+                 * A new mark number, z, is allocated, and all
+                 * relevant instructions are merged into that number,
+                 * with x's ID.
+                 */
+                if (ir1->op == Ir_Mark && ir2->op == Ir_Mark && chunk1 == chunk2)
+                {
+                    struct ir_mark *u1 = (struct ir_mark *)ir1;
+                    struct ir_mark *u2 = (struct ir_mark *)ir2;
+                    int new = ++hi_mark;
+                    if (Iflag)
+                        fprintf(stderr, "Delete duplicate mark from chunk %d\n", chunk2->id);
                     delete_ir(chunk2, j2);
-                    /*
-                     * Since we have removed a mark instruction,
-                     * its corresponding unmarks are "orphaned";
-                     * so they are adopted by the unmark
-                     * instruction's mark.  This prevents any
-                     * theoretical risk of deleting the unmark,
-                     * then deleting its mark (if it only had one
-                     * corresponding unmark), leaving the orphaned
-                     * unmarks dangling.
-                     */
-                    change_unmark_ids(((struct ir_mark *)ir2)->id, ((struct ir_unmark *)ir1)->id);
+                    edit_marks(u1->id, u1->id, new);
+                    edit_marks(u2->id, u1->id, new);
                     return 1;
                 }
             }
@@ -4277,6 +4346,289 @@ static int mark_check()
     }
 
     return mod;
+}
+
+/*
+ * Visitor funcs for fold_tmps()
+ */
+
+static int search_id, search_count;
+
+static void search_tmp_lhs(struct chunk *chunk, struct ir *ir, struct ir_var *v, int lhs)
+{
+    if (v->type == TMP && v->tmp_id == search_id && lhs)
+        search_count++;
+}
+
+static struct ir_var *search_repl;
+
+static void replace_tmp_rhs(struct chunk *chunk, struct ir *ir, struct ir_var *v, int lhs)
+{
+    if (v->type == TMP && v->tmp_id == search_id) {
+        if (Iflag)
+            fprintf(stderr, "Replacing tmp usage in chunk %d\n", chunk->id);
+        *v = *search_repl;
+    }
+}
+
+static int tmp_foldable(struct ir_var *v)
+{
+    if (v->type == TMP)
+        return 0;
+
+    if (v->type != GLOBAL)
+        return 1;
+
+    return !is_readable_global(v->global);
+}
+
+/*
+ * Search for ir_vars which are frame temp vars, and can be folded.
+ * These will be assigned to once only, with a move instruction.
+ */
+static int fold_tmps()
+{
+    int i, j, mod;
+    struct chunk *chunk;
+    struct ir *ir;
+    mod = 0;
+    for (i = 0; i <= hi_chunk; ++i) {
+        chunk = chunks[i];
+        if (chunk) {
+            for (j = 0; j < chunk->n_inst; ++j) {
+                ir = chunk->inst[j];
+                if (ir->op == Ir_Move) {
+                    struct ir_move *x = (struct ir_move *)ir;
+                    /*
+                     * Any move with a temp on the lhs and not a temp
+                     * on the rhs (in fact tmp <- tmp never seems to
+                     * arise anyway).
+                     */
+                    if (x->lhs->type == TMP && tmp_foldable(x->rhs)) {
+                        /*
+                         * Now search for how often this lhs appears
+                         * as a lhs anywhere.
+                         */
+                        search_id = x->lhs->tmp_id;
+                        search_count = 0;
+                        visit_vars(search_tmp_lhs);
+                        if (search_count == 0)
+                            quit("Couldn't find tmp_id lhs");
+                        if (search_count == 1) {
+                            /*
+                             * The lhs count is one (ie this move
+                             * instruction).  So the temporary can be
+                             * replaced with this instruction's rhs
+                             * wherever it is used.
+                             */
+                            search_repl = x->rhs;
+                            if (Iflag) {
+                                fprintf(stderr, "Delete unwanted tmp (id %d) in chunk %d with ", search_id, i);
+                                print_ir_var(search_repl);
+                                fputc('\n', stderr);
+                            }
+                            delete_ir(chunk, j);
+                            visit_vars(replace_tmp_rhs);
+                            /* Decrement j so we see the next instruction after deleting this one. */
+                            --j;
+                            mod = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return mod;
+}
+
+/*
+ * Visitor function for ir_vars.
+ */
+#undef CHECK
+#define CHECK(a, b) if (a) v(chunk, ir, a, b)
+
+static void visit_vars(visit_vars_func v)
+{
+    int i, j;
+    for (i = 0; i <= hi_chunk; ++i) {
+        struct chunk *chunk;
+        chunk = chunks[i];
+        if (!chunk)
+            continue;
+        for (j = 0; j < chunk->n_inst; ++j) {
+            struct ir *ir = chunk->inst[j];
+            switch (ir->op) {
+                case Ir_Mark:
+                case Ir_Unmark:
+                case Ir_IGoto:
+                case Ir_Goto:
+                case Ir_SysErr:
+                case Ir_EnterInit:
+                case Ir_Fail:
+                case Ir_Cofail:
+                case Ir_TCaseInit:
+                case Ir_MoveLabel:
+                case Ir_Resume:
+                    break;
+
+                case Ir_Suspend: {
+                    struct ir_suspend *x = (struct ir_suspend *)ir;
+                    CHECK(x->val, 0);
+                    break;
+                }
+                case Ir_Return: {
+                    struct ir_return *x = (struct ir_return *)ir;
+                    CHECK(x->val, 0);
+                    break;
+                }
+                case Ir_Move: {
+                    struct ir_move *x = (struct ir_move *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->rhs, 0);
+                    break;
+                }
+                case Ir_Deref: {
+                    struct ir_deref *x = (struct ir_deref *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->rhs, 0);
+                    break;
+                }
+                case Ir_Op: {
+                    struct ir_op *x = (struct ir_op *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->arg1, 0);
+                    CHECK(x->arg2, 0);
+                    CHECK(x->arg3, 0);
+                    break;
+                }
+                case Ir_MgOp: {
+                    struct ir_mgop *x = (struct ir_mgop *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->arg1, 0);
+                    CHECK(x->arg2, 0);
+                    break;
+                }
+                case Ir_OpClo: {
+                    struct ir_opclo *x = (struct ir_opclo *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->arg1, 0);
+                    CHECK(x->arg2, 0);
+                    CHECK(x->arg3, 0);
+                    break;
+                }
+                case Ir_KeyOp: {
+                    struct ir_keyop *x = (struct ir_keyop *)ir;
+                    CHECK(x->lhs, 1);
+                    break;
+                }
+                case Ir_KeyClo: {
+                    struct ir_keyclo *x = (struct ir_keyclo *)ir;
+                    CHECK(x->lhs, 1);
+                    break;
+                }
+                case Ir_ScanSwap: {
+                    struct ir_scanswap *x = (struct ir_scanswap *)ir;
+                    CHECK(x->tmp_subject, 1);
+                    CHECK(x->tmp_pos, 1);
+                    break;
+                }
+                case Ir_ScanSave: {
+                    struct ir_scansave *x = (struct ir_scansave *)ir;
+                    CHECK(x->new_subject, 1);
+                    CHECK(x->tmp_subject, 1);
+                    CHECK(x->tmp_pos, 1);
+                    break;
+                }
+                case Ir_ScanRestore: {
+                    struct ir_scanrestore *x = (struct ir_scanrestore *)ir;
+                    CHECK(x->tmp_subject, 0);
+                    CHECK(x->tmp_pos, 0);
+                    break;
+                }
+                case Ir_Invoke: {
+                    struct ir_invoke *x = (struct ir_invoke *)ir;
+                    int i;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->expr, 0);
+                    for (i = 0; i < x->argc; ++i)
+                        CHECK(x->args[i], 0);
+                    break;
+                }
+                case Ir_Apply: {
+                    struct ir_apply *x = (struct ir_apply *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->arg1, 0);
+                    CHECK(x->arg2, 0);
+                    break;
+                }
+                case Ir_Invokef: {
+                    struct ir_invokef *x = (struct ir_invokef *)ir;
+                    int i;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->expr, 0);
+                    for (i = 0; i < x->argc; ++i)
+                        CHECK(x->args[i], 0);
+                    break;
+                }
+                case Ir_Applyf: {
+                    struct ir_applyf *x = (struct ir_applyf *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->arg1, 0);
+                    CHECK(x->arg2, 0);
+                    break;
+                }
+                case Ir_Field: {
+                    struct ir_field *x = (struct ir_field *)ir;
+                    CHECK(x->lhs, 1);
+                    CHECK(x->expr, 0);
+                    break;
+                }
+                case Ir_MakeList: {
+                    struct ir_makelist *x = (struct ir_makelist *)ir;
+                    int i;
+                    CHECK(x->lhs, 1);
+                    for (i = 0; i < x->argc; ++i)
+                        CHECK(x->args[i], 0);
+                    break;
+                }
+                case Ir_Create: {
+                    struct ir_create *x = (struct ir_create *)ir;
+                    CHECK(x->lhs, 1);
+                    break;
+                }
+                case Ir_Coret: {
+                    struct ir_coret *x = (struct ir_coret *)ir;
+                    CHECK(x->value, 0);
+                    break;
+                }
+                case Ir_Limit: {
+                    struct ir_limit *x = (struct ir_limit *)ir;
+                    CHECK(x->limit, 1);
+                    break;
+                }
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
+                    CHECK(x->val, 0);
+                    break;
+                }
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    CHECK(x->val, 0);
+                    break;
+                }
+                case Ir_TCaseChoosex: {
+                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                    CHECK(x->val, 0);
+                    break;
+                }
+
+                default: {
+                    quit("visit_vars: Illegal ir opcode(%d)", ir->op);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 static void remove_unseen_chunks()
@@ -4876,6 +5228,7 @@ static int asgn_may_fail(struct lnode *n, int swap)
  * Change all uses of label old to new.
  */
 
+#undef CHECK
 #define CHECK(x) if (x == old) x = new;
 static void edit_labels(int old, int new)
 {
