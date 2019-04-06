@@ -269,9 +269,9 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 add_relocation(pc, NTH_STATIC, le->l_val.index);
                 outword(0);
             } else if (le->l_flag & F_Argument) {
-                if (curr_lfunc->method && !(curr_lfunc->method->flag & M_Static) && (le->l_flag & F_Argument) && le->l_val.index == 0) {
+                if (is_self(le))
                     outwordx(Op_Self, "   %s=self", desc);
-                } else {
+                else {
                     outwordx(Op_FrameVar, "   %s=framevar", desc);
                     outwordx(le->l_val.index, "      %d (%s)", le->l_val.index, le->name);
                 }
@@ -285,9 +285,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         case GLOBAL: {
             struct gentry *ge = v->global;
             if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0) {
-                if ((ge->g_flag & F_Readable) &&
-                    curr_lfunc->defined->package_id != 1 &&
-                    ge->defined->package_id != curr_lfunc->defined->package_id)
+                if (is_readable_global(ge))
                     outwordx(Op_GlobalVal, "   %s=globalval", desc);
                 else 
                     outwordx(Op_Global, "   %s=global", desc);

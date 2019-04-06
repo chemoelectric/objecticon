@@ -79,6 +79,7 @@ struct ir_var {
     int index;
     word w;
     int renumbered;
+    int tmp_id;     /* For type TMP, a unique id used during optimisation */
     struct centry *con;
     struct lentry *local;
     struct gentry *global;
@@ -297,7 +298,8 @@ struct ir_limit {
 struct ir_tcaseinit {
     IR_SUB
     int def;
-    int no;
+    int no;         /* Sequence number used during code generation */
+    int id;         /* Unique id used for -I output only */
 };
 
 struct ir_tcaseinsert {
@@ -345,5 +347,7 @@ extern int n_clo, n_tmp, n_lab, n_mark;
 
 void generate_ir(void);
 void dump_ir(void);
+int is_readable_global(struct gentry *ge);
+int is_self(struct lentry *le);
 
 #endif

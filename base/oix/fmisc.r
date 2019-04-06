@@ -1036,6 +1036,15 @@ static void ensure_ucs_slot(struct b_ucs *b, word d)
      * nd is the ucs index corresponding to slot d.  Note it is a
      * multiple of b->index_step, so we will fill it in on the
      * last iteration of the while loops below, when i == nd.
+     * 
+     * This assignment leaves nd < b->length, since
+     *       d < n_slots
+     * so    d + 1 <= n_slots
+     *       (d + 1) * b->index_step <= n_slots * b->index_step
+     *       (d + 1) * b->index_step <= ((b->length - 1) / b->index_step) * b->index_step
+     *       (d + 1) * b->index_step <= b->length - 1
+     *       (d + 1) * b->index_step < b->length
+     *       nd < b->length
      */
     nd = (d + 1) * b->index_step;
 
@@ -1050,13 +1059,69 @@ static void ensure_ucs_slot(struct b_ucs *b, word d)
         if (b->n_off_r_indexed > 0) {
             p += get_ucs_slot(b, n_slots - b->n_off_r_indexed);
             i = (n_slots - b->n_off_r_indexed + 1) * b->index_step;
+            /*
+             * now i < b->length, since
+             *    b->n_off_r_indexed > 0
+             *    n_slots - b->n_off_r_indexed < n_slots
+             *    n_slots - b->n_off_r_indexed + 1 <= n_slots
+             *   (n_slots - b->n_off_r_indexed + 1) * b->index_step <= n_slots * b->index_step
+             * ie    i <= n_slots * b->index_step
+             * but the rhs =  ((b->length - 1) / b->index_step) * b->index_step
+             *                <= b->length - 1 < b->length,
+             * so i < b->length
+             */   
         } else {
             p += StrLen(b->utf8);
             i = b->length;
         }
+
+        /*
+         * The loop invariant is: (i - 1) / b->index_step = n_slots - b->n_off_r_indexed.
+         * 
+         * This is established above if b->n_off_r_indexed = 0 and i = b->length, since
+         *     n_slots = (b->length - 1) / b->index_step
+         * Otherwise, if i = (n_slots - b->n_off_r_indexed + 1) * b->index_step, then by
+         * applying the general rule a = b * c => (a - 1) / b = (c - 1)
+         *     (i - 1) / b->index_step = (n_slots - b->n_off_r_indexed + 1) - 1
+         *                             = n_slots - b->n_off_r_indexed
+         */
         while (i > nd) {
             utf8_rev_iter0(&p);
             --i;
+
+            /* 
+             * Now i / b->index_step == n_slots - b->n_off_r_indexed.  
+             * Since i < b->length, 
+             *       i <= b->length - 1
+             *       i / b->index_step <= (b->length - 1) / b->index_step = n_slots
+             * so    n_slots - b->n_off_r_indexed <= n_slots
+             * ie    b->n_off_r_indexed >= 0
+             * 
+             * Also  i >= nd
+             * But since nd = (d + 1) * b->index_step, and d >= 0,
+             *     nd > b->index_step.
+             * So  i > b->index_step
+             * so  i / b->index_step > 0
+             *     n_slots - b->n_off_r_indexed > 0
+             * ie  b->n_off_r_indexed < n_slots
+             * 
+             * So 0 <= b->n_off_r_indexed < n_slots
+             * So, after the pre-increment below, we will have
+             *    0 <= b->n_off_r_indexed - 1 < n_slots
+             *    0 < b->n_off_r_indexed <= n_slots
+             *    0 <= n_slots - b->n_off_r_indexed < n_slots
+             * ie a valid index for set_ucs_slot().
+             * 
+             * Also since i <= b->length is another loop invariant, and i > nd at the
+             * top of the loop,
+             *         nd < i + 1 <= b->length
+             *         nd <= i < b->length
+             * and since nd > 0,
+             *         0 <= i < b->length
+             * 
+             * Hence i points to a valid ucs char, and p - StrLoc(b->utf8) points to
+             * the corresponding valid utf8 char.
+             */        
             if (i % b->index_step == 0)
                 set_ucs_slot(b, n_slots - ++b->n_off_r_indexed, p - StrLoc(b->utf8));
         }
@@ -1070,9 +1135,38 @@ static void ensure_ucs_slot(struct b_ucs *b, word d)
             i = b->n_off_l_indexed * b->index_step;
         } else
             i = 0;
+
+        /* 
+         * Invariant: i / b->index_step = b->n_off_l_indexed 
+         * 
+         */
         while (i < nd) {
             p += UTF8_SEQ_LEN(*p);
             ++i;
+
+            /*
+             * Now (i - 1) / b->index_step = b->n_off_l_indexed
+             * But (i - 1) < nd < b->length, so
+             *    i <= nd < b->length
+             *    i - 1 < b->length - 1
+             *    ((i - 1) / b->index_step) < ((b->length - 1) / b->index_step)
+             * the rhs is n_slots, the lhs b->n_off_l_indexed, so
+             *  b->n_off_l_indexed < n_slots.
+             * 
+             * Also, i > 0, so (i - 1) / b->index_step >= 0, ie
+             *  b->n_off_l_indexed >= 0
+             * 
+             * So 0 <= b->n_off_l_indexed < n_slots.
+             * 
+             * Since i >= 0 is a loop invariant, now
+             *   i - 1 >= 0, i >= 1.
+             * Also at the top of the loop i < nd.  Now
+             *   i -1 < nd,
+             *   i <= nd.  But nd < b->length, so
+             * 
+             * 0 <= i < b->length as required.
+             * 
+             */
             if (i % b->index_step == 0)
                 set_ucs_slot(b, b->n_off_l_indexed++, p - StrLoc(b->utf8));
         }
