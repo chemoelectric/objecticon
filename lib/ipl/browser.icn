@@ -5483,6 +5483,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
+   public handle_copy_links(e)
+      local l
+      if l := \links_selection then
+         parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
+   end
+
    private static scale_font(s, f)
       return s ? tab(backto(',',, 0)) || real(tab(0)) * f
    end
@@ -5638,22 +5644,10 @@ class SimpleBrowserUI(BrowserUI)
       browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
-   protected copy_links(urls)
-      browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
-   end
-
-   protected copy_text(s)
-      browser.parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
-   end
-
    protected populate_link_menu(url, m)
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
-   end
-
-   protected on_select_all(e)
-      browser.handle_select_all(e)
    end
 
    protected is_external(url)
@@ -5668,7 +5662,7 @@ class SimpleBrowserUI(BrowserUI)
    end
 
    public override create_page_menu()
-      local m, s, l, u, i
+      local m, u, i
       m := Menu()
       if u := \browser.page_url & is_external(u) then {
          m.add(TextMenuItem().
@@ -5678,23 +5672,23 @@ class SimpleBrowserUI(BrowserUI)
       if \browser.page_data then {
          i := TextMenuItem().
                set_label("Select all").
-               connect(on_select_all, Event.ACTION)
+               connect(browser.handle_select_all, Event.ACTION)
          if browser.accepts_focus() then
             i.set_label_right("^A")
          m.add(i)
       }
-      if s := browser.get_current_text_selection() then {
+      if browser.get_current_text_selection() then {
          i := TextMenuItem().
                set_label("Copy text").
-               connect(create copy_text(s), Event.ACTION)
+               connect(browser.handle_copy, Event.ACTION)
          if browser.accepts_focus() then
             i.set_label_right("^C")
          m.add(i)
       }
-      if l := browser.get_current_links_selection() then
+      if browser.get_current_links_selection() then
          m.add(TextMenuItem().
                set_label("Copy links").
-               connect(create copy_links(l), Event.ACTION))
+               connect(browser.handle_copy_links, Event.ACTION))
       if *m.children > 0 then
          return m
    end
