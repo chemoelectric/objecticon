@@ -14,6 +14,7 @@ import
    ipl.sets,
    ipl.lists,
    ipl.pdco,
+   io(Files),
    util
 
 #
@@ -1717,13 +1718,13 @@ class URLSelectionOwner(SelectionOwner)
          }
          Selection.STRING_TARGET : {
             s := ""
-            every s ||:= (!urls).str() || "\n"
+            every s ||:= (!urls).str() || Files.EOL
             s[-1] := ""
             return text_guess_convert(s, "string")
          }
          Selection.UTF8_STRING_TARGET: {
             s := ""
-            every s ||:= (!urls).str() || "\n"
+            every s ||:= (!urls).str() || Files.EOL
             s[-1] := ""
             return text_guess_convert(s, "ucs")
          }
