@@ -566,7 +566,7 @@ class Download()
    end
 
    private log(s)
-      dialog.text.log([&clock || u": " || Text.liberal_ucs(s)], 500)
+      dialog.text.log([&clock || ": " || Text.liberal_ucs(s)], 500)
    end
 
    private on_status(ev, src, type)

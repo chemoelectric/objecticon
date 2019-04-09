@@ -2147,7 +2147,7 @@ $endif
                es := if /ev.shift & url.is_local_file() & cwd ~== "/" then {
                   if cwd == s then
                      u"./"
-                  else if match(cwd || u"/", s) then
+                  else if match(cwd || "/", s) then
                      u"./" || s[*cwd + 2:0]
                   else
                      s
@@ -2156,21 +2156,21 @@ $endif
                es := Format.shell_escape(es)
                if url.is_local_file() & Files.is_directory(s) then {
                   if es[-1] ~== "/" then
-                     es ||:= u"/"
+                     es ||:= "/"
                }
-               send_tty(es || u" ")
+               send_tty(es || " ")
             } else
                info_msg(&why)
          }
-         "text": send_tty(get_ucs_decoded_path(url) || u" ") | info_msg(&why)
+         "text": send_tty(get_ucs_decoded_path(url) || " ") | info_msg(&why)
          "run" | "launch": {
             if r := get_runners(url) then
-               send_tty(r.get_command() || u" ")
+               send_tty(r.get_command() || " ")
             else
                info_msg(&why)
          }
          default:
-            send_tty(url.ucs() || u" ")
+            send_tty(url.ucs() || " ")
       }
    end
 
@@ -2194,7 +2194,7 @@ $endif
             url.is_local_file() | return error("Can't run a file on another host (" || url.host || ")")
             s := get_ucs_decoded_path(url) | fail
             if Files.is_directory(s) then
-               return ImmediateRunner(u"cd " || Format.shell_escape(s))
+               return ImmediateRunner("cd " || Format.shell_escape(s))
             # Get a DesktopEntry based on the content-type if available, or the filename.
             every de := get_possible_desktop_entries(s) do {
                fl := &yes
@@ -2284,7 +2284,7 @@ $endif
 
    private start_log(dest)
       local d, dl, fl, s
-      /log | return info_msg(u"Already logging to " || log_file.ucs())
+      /log | return info_msg("Already logging to " || log_file.ucs())
       if /dest then {
          d := parent_dialog.file_dialog
          dl := [cwd]
@@ -2307,9 +2307,9 @@ $endif
       s := dest.ucs() | return info_msg(u"Log file not UTF-8")
       parent_dialog.last_log_file := log_file := dest
       if log := open(s, "w") then
-         info_msg(u"Logging to file " || s)
+         info_msg("Logging to file " || s)
       else
-         info_msg(u"Failed to open " || s || u": " || ucs(&why))
+         info_msg("Failed to open " || s || ": " || ucs(&why))
    end
 
    private close_log()
@@ -2321,7 +2321,7 @@ $endif
    private on_end_log()
       \log | return info_msg("Not logging")
       close_log()
-      info_msg(u"Closed log file " || log_file.ucs())
+      info_msg("Closed log file " || log_file.ucs())
    end
 
    private add_custom_menus(m, list)
@@ -2394,7 +2394,7 @@ $endif
       local r
       r := src.runner
       if ev.code === Mouse.MIDDLE_RELEASE then
-         send_tty(r.get_command() || u" ")
+         send_tty(r.get_command() || " ")
       else
          launch_prog(r)
    end
@@ -2580,12 +2580,12 @@ $endif
    end
 
    private run_prog(s)
-      send_tty(s || u"\r")
+      send_tty(s || "\r")
    end
 
    public goto_dir(d)
       d := ucs(d) | fail
-      run_prog(u"cd " || Format.shell_escape(d))
+      run_prog("cd " || Format.shell_escape(d))
    end
 
    private synch_paints_and_resort()
@@ -2759,7 +2759,7 @@ $endif
       }
       l := [u"*"]
       every e := back(sort(ex, 2)) do
-         put(l, u"*." || e[1])
+         put(l, "*." || e[1])
       return l
    end
 
