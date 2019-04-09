@@ -3501,7 +3501,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private static get_meta_charset(doc)
       local meta, cs, ct
       every meta := doc.get_root_element().search_tree(u"META") do
-         if (map(meta.get_attribute(u"HTTP-EQUIV")) == u"content-type" &
+         if (map(meta.get_attribute(u"HTTP-EQUIV")) == "content-type" &
                  ct := ContentType.parse_rfc2616(string(meta.get_attribute(u"CONTENT"))) & 
                  cs := ct.get_parameter("charset")) |
              (cs := string(meta.get_attribute(u"CHARSET"))) then 
@@ -3910,7 +3910,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_img(e, p, context)
       local q, url, border, align, map, s, alt, hspace, vspace
       url := mk_link(e.get_attribute(u"SRC")) | fail
-      if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
+      if (s := e.get_attribute(u"USEMAP")) & (s[1] == "#") then
          map := default.map(string(s[2:0]))
       alt := e.get_attribute(u"ALT")
       q := Img(self, context, url, alt,, map)
@@ -4180,7 +4180,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "range": {
             min := numeric(e.get_attribute(u"MIN")) | 0
             v := e.get_attribute(u"STEP")
-            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            step := if /v then 1 else if map(v) == "any" then 1.0 else (0 < numeric(v)) | 1
             # If min and step are both integer, then the values must be too.
             if type(min) == type(step) == "integer" then {
                max := integer(e.get_attribute(u"MAX")) | (min + 10)
@@ -4201,7 +4201,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "number": {
             min := numeric(e.get_attribute(u"MIN"))
             v := e.get_attribute(u"STEP")
-            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            step := if /v then 1 else if map(v) == "any" then 1.0 else (0 < numeric(v)) | 1
             # If min is null or integer, and step is integer, then the values must be integer too.
             if (/min | type(min) == "integer") & (type(step) == "integer") then {
                max := integer(e.get_attribute(u"MAX"))
@@ -4380,7 +4380,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
       text(e.children[-1]) ? {
          tab(0)
-         if (move(-2) == u"\r\n") | (move(-1) == u"\n") then {
+         if (move(-2) == "\r\n") | (move(-1) == "\n") then {
             s := tab(1)
             if *s = 0 then
                delete(e.children, -1)
@@ -4711,7 +4711,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       if e.get_attribute(u"NOWRAP") then
          c.nowrap := &yes
-      if e.name == u"TH" then {
+      if e.name == "TH" then {
          c.bold := &yes
          c.size := min(c.size + 1, 7)
          synch_font(c)
@@ -4744,7 +4744,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       lc := \context.list | fail
       row := TextFlow(self).set_v_align("baseline")
       type := e.get_attribute(u"TYPE") | lc.type
-      if lc.kind == u"OL" then {
+      if lc.kind == "OL" then {
          val := integer(e.get_attribute(u"VALUE")) | lc.index
          if val > 0 then {
             val := case string(type) of {
@@ -4940,7 +4940,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_link(e, p, context)
       if map(e.get_attribute(u"REL")) == (u"icon" | u"shortcut icon") then {
          # Favour png file if available
-         if /page_favicon_url | (map(e.get_attribute(u"TYPE")) == u"image/png") then
+         if /page_favicon_url | (map(e.get_attribute(u"TYPE")) == "image/png") then
             page_favicon_url := mk_link(e.get_attribute(u"HREF"))
       }
    end
@@ -5707,7 +5707,7 @@ class SimpleBrowserUI(BrowserUI)
 
    public override create_image_menu(img)
       local m, url
-      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
+      url := if img.img_url.scheme == "cache" then browser.page_url else img.img_url
       m := Menu()
       if is_external(url) then
          m.add(TextMenuItem().

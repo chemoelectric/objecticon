@@ -95,7 +95,7 @@ class DesktopRunner(ExternalRunner)
 
    public override get_command()
       local line
-      if url.scheme == u"file" then
+      if url.scheme == "file" then
          line := integer(url.extract_cgi_parameters()["line"][1])
       return desktop_entry.subst_file(Format.shell_escape(subst), line)
    end
@@ -1787,7 +1787,7 @@ class Terminal(TabItem, VtUI)
       local label, verb
       param ? {
          label := tab(upto(',') | 0)
-         if label == u"-" | endswith(label, u"/-") then
+         if label == "-" | endswith(label, "/-") then
             # Separator
             add_menu_command(list, label)
          else if pos(0) then {
@@ -1814,7 +1814,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private create_custom_menu_item(s, c)
-      return if s == u"-" then
+      return if s == "-" then
          MenuSeparator()
       else
          TextMenuItem().set_label(s).connect(create custom_key_func(c.verb), Event.ACTION)
@@ -2144,7 +2144,7 @@ $endif
       case string(url.scheme) of {
          "file": {
             if s := get_ucs_decoded_path(url) then {
-               es := if /ev.shift & url.is_local_file() & cwd ~== u"/" then {
+               es := if /ev.shift & url.is_local_file() & cwd ~== "/" then {
                   if cwd == s then
                      u"./"
                   else if match(cwd || u"/", s) then
@@ -2155,7 +2155,7 @@ $endif
                   s
                es := Format.shell_escape(es)
                if url.is_local_file() & Files.is_directory(s) then {
-                  if es[-1] ~== u"/" then
+                  if es[-1] ~== "/" then
                      es ||:= u"/"
                }
                send_tty(es || u" ")
@@ -2423,7 +2423,7 @@ $endif
    public override create_link_menu(url)
       local m, r, udp
       m := Menu()
-      if url.scheme == (u"file" | u"text") &
+      if url.scheme == ("file" | "text") &
          udp := get_ucs_decoded_path(url) then
       {
          m.add(TextMenuItem().
@@ -2437,7 +2437,7 @@ $endif
          m.add(TextMenuItem().
             set_label("Copy command").
             connect(create copy_text(r.get_command()), Event.ACTION))
-      if url.scheme == u"file" then {
+      if url.scheme == "file" then {
          if url.is_local_file() & \udp then {
             if Files.is_directory(udp) then {
                m.add(TextMenuItem().

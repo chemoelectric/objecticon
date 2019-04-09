@@ -1304,7 +1304,7 @@ class TextFlow(Component, HasLastHighlight)
          # no, since that starts a new row.  Otherwise start a new
          # blob, unless we have just one line and an existing blob (to
          # which the single line will have just been added).
-         if cmd.s[-1] == u"\n" then
+         if cmd.s[-1] == "\n" then
             blob_start := &null
          else if (*l > 1) | /blob_start then {
             blob_start := cmd

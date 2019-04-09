@@ -827,7 +827,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             while any(&digits, peek_ch()) do
                t ||:= get_chs(&digits)
             put(l, integer(t))
-         } else if c == u"\"" then {
+         } else if c == "\"" then {
             get_ch()  # opening "
             t := u""
             repeat {
@@ -838,15 +838,15 @@ class Vt(LineBasedScrollArea, MenuMode)
                if any('\r\n', peek_ch()) then
                   break
                c := get_chs(~'\r\n\"')
-               if c == u"\"" then
+               if c == "\"" then
                   break
                t ||:= c
             }
             put(l, t)
-         } else if c == u";" then
+         } else if c == ";" then
             # Empty param
             put(l)
-         if peek_ch() ~== u";" then
+         if peek_ch() ~== ";" then
             break
          get_ch()  # skip ;
       }
@@ -1597,9 +1597,9 @@ class Vt(LineBasedScrollArea, MenuMode)
          if any('\r\n', peek_ch()) then
             break
          c := get_chs(OSC_CHAR -- '\r\n\e')
-         if c == u"\e" then {
+         if c == "\e" then {
             # ESC-\ terminates, as does ESC on its own.
-            if peek_ch() == u"\\" then
+            if peek_ch() == "\\" then
                get_ch()
             break
          }
@@ -1621,9 +1621,9 @@ class Vt(LineBasedScrollArea, MenuMode)
          if any('\r\n', peek_ch()) then
             break
          c := get_chs(~'\r\n\e')
-         if c == u"\e" then {
+         if c == "\e" then {
             # Only ESC-\ terminates.
-            if peek_ch() == u"\\" then {
+            if peek_ch() == "\\" then {
                get_ch()
                break
             }

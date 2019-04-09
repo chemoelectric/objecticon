@@ -1362,7 +1362,7 @@ class BrowserTab(TabItem, BrowserUI)
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
       m1 := Menu().set_label("Open with")
-      if url.scheme == u"file" then {
+      if url.scheme == "file" then {
          if f := ucs(Files.url_to_file(url)) &
             Files.access(f) &
             not Files.is_directory(f) 
@@ -1398,7 +1398,7 @@ class BrowserTab(TabItem, BrowserUI)
 
    public override create_image_menu(img)
       local m, url
-      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
+      url := if img.img_url.scheme == "cache" then browser.page_url else img.img_url
       m := Menu()
       m.add(TextMenuItem().
             set_label("Copy image").
