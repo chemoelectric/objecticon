@@ -2755,6 +2755,10 @@ abstract class BrowserUI()
    public abstract display_externally(res)
    public abstract goto_externally(url)
    public abstract save_attachment(file, res)
+
+   public info_msg(s)
+      return msg(s, 3000)
+   end
 end
 
 package class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -3047,7 +3051,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          i := worker_pool.count(self)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
-               msg("Done", 1500)
+               info_msg("Done")
                # This flag will be &null if we haven't called
                # set_top_data; this may happen if we cancel a
                # request before downloading the top page data; in
@@ -3103,6 +3107,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public set_ui(ui)
       self.ui := ui
+      link
+   end
+
+   public info_msg(s)
+      (\ui).info_msg(s)
       link
    end
 
@@ -5485,8 +5494,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public handle_copy_links(e)
       local l
-      if l := \links_selection then
+      if l := \links_selection then {
          parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
+         info_msg(*l || " link(s) copied")
+      } else
+         info_msg("No links in selection")
    end
 
    private static scale_font(s, f)

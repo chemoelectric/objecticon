@@ -234,7 +234,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    private on_xdg_refresh(ev)
       IconTheme.refresh()
       Mime.refresh()
-      tabs.which_one.msg("XDG database reloaded", 3000)
+      tabs.which_one.info_msg("XDG database reloaded")
    end
 
    private list_visited()
@@ -1436,7 +1436,7 @@ class BrowserTab(TabItem, BrowserUI)
       if u := URL(s) then
          browser.goto(u)
       else
-         browser.msg("Invalid url: " || &why)
+         msg("Invalid url: " || &why)
    end
 
    public override msg(s, n)
@@ -1534,9 +1534,9 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
          if Files.string_to_file(s, data) then
-            browser.msg("Saved OK", 3000)
+            info_msg("Saved OK")
          else
-            browser.msg(&why, 3000)
+            info_msg(&why)
       }
    end
 
