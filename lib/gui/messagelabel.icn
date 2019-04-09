@@ -7,7 +7,7 @@ import graphics(Selection), lang(Class)
 #
 class MessageLabel(Label)
    private
-      want, keep, message, message_tt
+      want_s, want_n, keep, message, message_tt
 
    private set_impl(s)
       local p
@@ -27,19 +27,27 @@ class MessageLabel(Label)
    #
    public set(s, n)
       local t
-      want := s
       if /keep then {
          set_impl(s)
          if \n then {
-            keep := 1
+            keep := &yes
             t := Dispatcher.new_task{{
-               t.sleep(n)
+               repeat {
+                  t.sleep(n)
+                  set_impl(\want_s)
+                  n := want_n
+                  want_s := want_n := &null
+                  if /n then
+                     break
+               }
                keep := &null
-               set_impl(\want)
                t.revert()
             }}
             t.start()
          }
+      } else if /want_n then {
+          want_s := s
+          want_n := n
       }
       link
    end
