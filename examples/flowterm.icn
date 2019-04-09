@@ -1573,6 +1573,10 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             output.handle_copy()
          }
+         "copy-urls": {
+            check_live(s) | fail
+            output.handle_copy_links()
+         }
          "paste": {
             check_live(s) | fail
             output.handle_paste()
@@ -2175,10 +2179,6 @@ $endif
       info_msg(s)
    end
 
-   public info_msg(s)
-      msg(s, 3000)
-   end
-
    private static get_possible_desktop_entries(s)
       suspend Mime.gen_desktop_entries_for_file(FilePath(s).get(-1))
    end
@@ -2341,6 +2341,10 @@ $endif
          m.add(TextMenuItem().
                set_label("Copy text").
                connect(output.handle_copy, Event.ACTION))
+      if output.get_current_links_selection() then
+         m.add(TextMenuItem().
+               set_label("Copy URLs").
+               connect(output.handle_copy_links, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Paste").
             connect(output.handle_paste, Event.ACTION))
@@ -3520,6 +3524,7 @@ procedure usage(opts)
    help_line(":url=URL", "Activate a URL as though clicked by the user")
    help_line(":copy-cwd", "Copy the current directory to the clipboard")
    help_line(":copy", "Copy the current selection to the clipboard")
+   help_line(":copy-urls", "Copy any URLs in the current selection to the clipboard")
    help_line(":paste", "Paste from the clipboard")
    help_line(":paste-escaped", "Paste from the clipboard, with shell escaping")
    help_line(":pgup", "Go up one page")
