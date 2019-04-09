@@ -838,29 +838,55 @@ end
 # ~
 class GetSelection(Dialog)
    private readable
-      result
+      # The data result, which may be &null, indicating failure.
+      result,
+      # The type of the result.
+      type
    private
-      sel
+      selection,
+      target_types
+
+   # Set the target types (a list), which by default is :-
+   # ~
+   #   [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET]
+   # ~
+   public set_target_types(l)
+      self.target_types := l
+      link
+   end
+
+   # Set the target selection.  The default is Selection.CLIPBOARD.
+   #
+   public set_selection(sel)
+      self.selection := sel
+      link
+   end
 
    private respond(target_type, data, e)
       result := data
+      type := target_type
       dispose()
    end
 
    public override show()
       Dialog.show()
       # Now we have an underlying window, we can request the selection.
-      request_selection(sel,
-                        [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+      request_selection(selection,
+                        target_types,
                         respond)
       link
    end
 
-   public override new(sel)
+   # Create an instance, optionally specifying selection and target types.
+   #
+   public override new(selection, target_types)
       Dialog.new()
       set_canvas("withdrawn")
       set_size(100, 100)
-      self.sel := sel
+      /selection := Selection.CLIPBOARD
+      /target_types := [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET]
+      set_selection(selection)
+      set_target_types(target_types)
       return
    end
 end
