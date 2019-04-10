@@ -33,7 +33,7 @@ procedure need_pair(a)
 end
 
 procedure usage(opts)
-   write("Usage: lsxdg [OPTIONS] CMD [ARGS]")
+   write("Usage: lsxdg CMD [ARGS]")
    write("Query the xdg database")
    options_help(opts)
    write("Possible values of CMD :-")
@@ -142,6 +142,6 @@ procedure main(a)
       }
 
       default:
-         help_stop("Unknown query command ", c)
+         help_stop("Unknown query command: ", c)
    }
 end
