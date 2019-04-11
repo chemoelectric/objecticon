@@ -2786,6 +2786,10 @@ abstract class BrowserUI()
    public abstract display_externally(res)
    public abstract goto_externally(url)
    public abstract save_attachment(file, res)
+
+   public info_msg(s)
+      return msg(s, 3000)
+   end
 end
 
 package class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -3078,7 +3082,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          i := worker_pool.count(self)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
-               msg("Done", 1500)
+               info_msg("Done")
                # This flag will be &null if we haven't called
                # set_top_data; this may happen if we cancel a
                # request before downloading the top page data; in
@@ -3134,6 +3138,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public set_ui(ui)
       self.ui := ui
+      link
+   end
+
+   public info_msg(s)
+      (\ui).info_msg(s)
       link
    end
 
@@ -3523,7 +3532,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private static get_meta_charset(doc)
       local meta, cs, ct
       every meta := doc.get_root_element().search_tree(u"META") do
-         if (map(meta.get_attribute(u"HTTP-EQUIV")) == u"content-type" &
+         if (map(meta.get_attribute(u"HTTP-EQUIV")) == "content-type" &
                  ct := ContentType.parse_rfc2616(string(meta.get_attribute(u"CONTENT"))) & 
                  cs := ct.get_parameter("charset")) |
              (cs := string(meta.get_attribute(u"CHARSET"))) then 
@@ -3932,7 +3941,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_img(e, p, context)
       local q, url, border, align, map, s, alt, hspace, vspace
       url := mk_link(e.get_attribute(u"SRC")) | fail
-      if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
+      if (s := e.get_attribute(u"USEMAP")) & (s[1] == "#") then
          map := default.map(string(s[2:0]))
       alt := e.get_attribute(u"ALT")
       q := Img(self, context, url, alt,, map)
@@ -4202,7 +4211,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "range": {
             min := numeric(e.get_attribute(u"MIN")) | 0
             v := e.get_attribute(u"STEP")
-            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            step := if /v then 1 else if map(v) == "any" then 1.0 else (0 < numeric(v)) | 1
             # If min and step are both integer, then the values must be too.
             if type(min) == type(step) == "integer" then {
                max := integer(e.get_attribute(u"MAX")) | (min + 10)
@@ -4223,7 +4232,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "number": {
             min := numeric(e.get_attribute(u"MIN"))
             v := e.get_attribute(u"STEP")
-            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            step := if /v then 1 else if map(v) == "any" then 1.0 else (0 < numeric(v)) | 1
             # If min is null or integer, and step is integer, then the values must be integer too.
             if (/min | type(min) == "integer") & (type(step) == "integer") then {
                max := integer(e.get_attribute(u"MAX"))
@@ -4402,7 +4411,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
       text(e.children[-1]) ? {
          tab(0)
-         if (move(-2) == u"\r\n") | (move(-1) == u"\n") then {
+         if (move(-2) == "\r\n") | (move(-1) == "\n") then {
             s := tab(1)
             if *s = 0 then
                delete(e.children, -1)
@@ -4733,7 +4742,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       if e.get_attribute(u"NOWRAP") then
          c.nowrap := &yes
-      if e.name == u"TH" then {
+      if e.name == "TH" then {
          c.bold := &yes
          c.size := min(c.size + 1, 7)
          synch_font(c)
@@ -4766,7 +4775,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       lc := \context.list | fail
       row := TextFlow(self).set_v_align("baseline")
       type := e.get_attribute(u"TYPE") | lc.type
-      if lc.kind == u"OL" then {
+      if lc.kind == "OL" then {
          val := integer(e.get_attribute(u"VALUE")) | lc.index
          if val > 0 then {
             val := case string(type) of {
@@ -4962,7 +4971,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_link(e, p, context)
       if map(e.get_attribute(u"REL")) == (u"icon" | u"shortcut icon") then {
          # Favour png file if available
-         if /page_favicon_url | (map(e.get_attribute(u"TYPE")) == u"image/png") then
+         if /page_favicon_url | (map(e.get_attribute(u"TYPE")) == "image/png") then
             page_favicon_url := mk_link(e.get_attribute(u"HREF"))
       }
    end
@@ -5514,6 +5523,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
+   public handle_copy_links(e)
+      local l
+      if l := \links_selection then {
+         parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
+         info_msg(*l || " link(s) copied")
+      } else
+         info_msg("No links in selection")
+   end
+
    private static scale_font(s, f)
       return s ? tab(backto(',',, 0)) || real(tab(0)) * f
    end
@@ -5669,22 +5687,10 @@ class SimpleBrowserUI(BrowserUI)
       browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
-   protected copy_links(urls)
-      browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
-   end
-
-   protected copy_text(s)
-      browser.parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
-   end
-
    protected populate_link_menu(url, m)
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
-   end
-
-   protected on_select_all(e)
-      browser.handle_select_all(e)
    end
 
    protected is_external(url)
@@ -5699,7 +5705,7 @@ class SimpleBrowserUI(BrowserUI)
    end
 
    public override create_page_menu()
-      local m, s, l, u, i
+      local m, u, i
       m := Menu()
       if u := \browser.page_url & is_external(u) then {
          m.add(TextMenuItem().
@@ -5709,30 +5715,30 @@ class SimpleBrowserUI(BrowserUI)
       if \browser.page_data then {
          i := TextMenuItem().
                set_label("Select all").
-               connect(on_select_all, Event.ACTION)
+               connect(browser.handle_select_all, Event.ACTION)
          if browser.accepts_focus() then
             i.set_label_right("^A")
          m.add(i)
       }
-      if s := browser.get_current_text_selection() then {
+      if browser.get_current_text_selection() then {
          i := TextMenuItem().
                set_label("Copy text").
-               connect(create copy_text(s), Event.ACTION)
+               connect(browser.handle_copy, Event.ACTION)
          if browser.accepts_focus() then
             i.set_label_right("^C")
          m.add(i)
       }
-      if l := browser.get_current_links_selection() then
+      if browser.get_current_links_selection() then
          m.add(TextMenuItem().
                set_label("Copy links").
-               connect(create copy_links(l), Event.ACTION))
+               connect(browser.handle_copy_links, Event.ACTION))
       if *m.children > 0 then
          return m
    end
 
    public override create_image_menu(img)
       local m, url
-      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
+      url := if img.img_url.scheme == "cache" then browser.page_url else img.img_url
       m := Menu()
       if is_external(url) then
          m.add(TextMenuItem().

@@ -14,6 +14,7 @@ import
    ipl.sets,
    ipl.lists,
    ipl.pdco,
+   io(Files),
    util
 
 #
@@ -724,7 +725,8 @@ class Dialog(Component)
    end
 
    public request_selection(selection, target_types, proc, user_data)
-      insert(selection_requests, selection, SelectionRequest(target_types, proc, user_data))
+      # We copy target_types since process_selection_response() may edit that list.
+      insert(selection_requests, selection, SelectionRequest(copy(target_types), proc, user_data))
       win.request_selection(selection, target_types[1])
       link
    end
@@ -1717,13 +1719,13 @@ class URLSelectionOwner(SelectionOwner)
          }
          Selection.STRING_TARGET : {
             s := ""
-            every s ||:= (!urls).str() || "\n"
+            every s ||:= (!urls).str() || Files.EOL
             s[-1] := ""
             return text_guess_convert(s, "string")
          }
          Selection.UTF8_STRING_TARGET: {
             s := ""
-            every s ||:= (!urls).str() || "\n"
+            every s ||:= (!urls).str() || Files.EOL
             s[-1] := ""
             return text_guess_convert(s, "ucs")
          }

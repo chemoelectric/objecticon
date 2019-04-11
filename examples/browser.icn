@@ -267,7 +267,7 @@ $endif
    private on_xdg_refresh(ev)
       IconTheme.refresh()
       Mime.refresh()
-      tabs.which_one.msg("XDG database reloaded", 3000)
+      tabs.which_one.info_msg("XDG database reloaded")
    end
 
    private list_visited()
@@ -599,7 +599,7 @@ class Download()
    end
 
    private log(s)
-      dialog.text.log([&clock || u": " || Text.liberal_ucs(s)], 500)
+      dialog.text.log([&clock || ": " || Text.liberal_ucs(s)], 500)
    end
 
    private on_status(ev, src, type)
@@ -1226,25 +1226,20 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
-   private copy_links(urls)
-      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
+   private download_links()
+      local l
+      l := browser.get_current_links_selection() | fail
+      every parent_dialog.downloads.download(!l, browser.page_url)
    end
 
-   private download_links(urls, referer)
-      every parent_dialog.downloads.download(!urls, referer)
-   end
-
-   private download_links_to_dir(urls, referer)
-      local d, f
+   private download_links_to_dir()
+      local d, f, l
+      l := browser.get_current_links_selection() | fail
       d := parent_dialog.directory_dialog
       d.set_directory(parent_dialog.last_download_dir).set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
       f := d.get_result() | fail
       parent_dialog.last_download_dir := d.get_result()
-      every parent_dialog.downloads.download(!urls, referer, f)
-   end
-
-   private copy_text(s)
-      parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+      every parent_dialog.downloads.download(!l, browser.page_url, f)
    end
 
    private download(url, referer)
@@ -1351,12 +1346,8 @@ class BrowserTab(TabItem, BrowserUI)
       update_search_state()
    end
 
-   private on_select_all(e)
-      browser.handle_select_all(e)
-   end
-
    public override create_page_menu()
-      local m, s, l
+      local m
       m := Menu()
       if \browser.page_url then {
          m.add(TextMenuItem().
@@ -1375,28 +1366,28 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Select all").
                set_label_right("^A").
-               connect(on_select_all, Event.ACTION))
+               connect(browser.handle_select_all, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Page info").
                connect(page_info, Event.ACTION))
       }
 
-      if s := browser.get_current_text_selection() then {
+      if browser.get_current_text_selection() then {
          m.add(TextMenuItem().
                set_label("Copy text").
                set_label_right("^C").
-               connect(create copy_text(s), Event.ACTION))
+               connect(browser.handle_copy, Event.ACTION))
       }
-      if l := browser.get_current_links_selection() then {
+      if browser.get_current_links_selection() then {
          m.add(TextMenuItem().
                set_label("Copy links").
-               connect(create copy_links(l), Event.ACTION))
+               connect(browser.handle_copy_links, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Download links").
-               connect(create download_links(l, browser.page_url), Event.ACTION))
+               connect(download_links, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Download links to dir...").
-               connect(create download_links_to_dir(l, browser.page_url), Event.ACTION))
+               connect(download_links_to_dir, Event.ACTION))
       }
 
       if *m.children > 0 then
@@ -1409,7 +1400,7 @@ class BrowserTab(TabItem, BrowserUI)
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
       m1 := Menu().set_label("Open with")
-      if url.scheme == u"file" then {
+      if url.scheme == "file" then {
          if f := ucs(Files.url_to_file(url)) &
             Files.access(f) &
             not Files.is_directory(f) 
@@ -1445,7 +1436,7 @@ class BrowserTab(TabItem, BrowserUI)
 
    public override create_image_menu(img)
       local m, url
-      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
+      url := if img.img_url.scheme == "cache" then browser.page_url else img.img_url
       m := Menu()
       m.add(TextMenuItem().
             set_label("Copy image").
@@ -1483,7 +1474,7 @@ class BrowserTab(TabItem, BrowserUI)
       if u := URL(s) then
          browser.goto(u)
       else
-         browser.msg("Invalid url: " || &why)
+         msg("Invalid url: " || &why)
    end
 
    public override msg(s, n)
@@ -1581,9 +1572,9 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
          if Files.string_to_file(s, data) then
-            browser.msg("Saved OK", 3000)
+            info_msg("Saved OK")
          else
-            browser.msg(&why, 3000)
+            info_msg(&why)
       }
    end
 

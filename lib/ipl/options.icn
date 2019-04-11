@@ -105,13 +105,15 @@ end
 # :  `opts` - a list of `Opt`s
 procedure options_help(opts)
    local o, t
-   write("Options :-")
-   every o := !opts do {
-      if is(o, Opt) then {
-         t := o.format()
-         help_line(t.names, t.help)
-      } else
-         help_line(o)
+   if *opts > 0 then {
+      write("Options :-")
+      every o := !opts do {
+         if is(o, Opt) then {
+            t := o.format()
+            help_line(t.names, t.help)
+         } else
+            help_line(o)
+      }
    }
 end
 

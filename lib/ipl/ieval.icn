@@ -630,7 +630,7 @@ class Ieval(MinimalObjectOutput)
 
    private gen_package_global_names(h)
       local e
-      if h == u"default" then {
+      if h == "default" then {
          every e := get_accessible_global_names() do
             upto('.', e) | suspend "default." || e
          suspend "default." || key(consts | vars)

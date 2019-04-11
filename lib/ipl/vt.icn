@@ -178,6 +178,10 @@ abstract class VtUI()
    public abstract vt_size_changed(cols, rows)
    public abstract msg(s, n)
    public abstract search_msg(s)
+
+   public info_msg(s)
+      return msg(s, 3000)
+   end
 end
 
 package class VtPrimarySelectionOwner(TextSelectionOwner)
@@ -269,6 +273,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       application_cursor_mode,
       hide_cursor_mode,
       text_selection,             # Current text selection, or null
+      links_selection,            # Current links selection (a list of URLs), or null
       font_family,                # Font details
       font_size,
       primary,                    # Primary selection string, or null
@@ -822,7 +827,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             while any(&digits, peek_ch()) do
                t ||:= get_chs(&digits)
             put(l, integer(t))
-         } else if c == u"\"" then {
+         } else if c == "\"" then {
             get_ch()  # opening "
             t := u""
             repeat {
@@ -833,15 +838,15 @@ class Vt(LineBasedScrollArea, MenuMode)
                if any('\r\n', peek_ch()) then
                   break
                c := get_chs(~'\r\n\"')
-               if c == u"\"" then
+               if c == "\"" then
                   break
                t ||:= c
             }
             put(l, t)
-         } else if c == u";" then
+         } else if c == ";" then
             # Empty param
             put(l)
-         if peek_ch() ~== u";" then
+         if peek_ch() ~== ";" then
             break
          get_ch()  # skip ;
       }
@@ -1592,9 +1597,9 @@ class Vt(LineBasedScrollArea, MenuMode)
          if any('\r\n', peek_ch()) then
             break
          c := get_chs(OSC_CHAR -- '\r\n\e')
-         if c == u"\e" then {
+         if c == "\e" then {
             # ESC-\ terminates, as does ESC on its own.
-            if peek_ch() == u"\\" then
+            if peek_ch() == "\\" then
                get_ch()
             break
          }
@@ -1616,9 +1621,9 @@ class Vt(LineBasedScrollArea, MenuMode)
          if any('\r\n', peek_ch()) then
             break
          c := get_chs(~'\r\n\e')
-         if c == u"\e" then {
+         if c == "\e" then {
             # Only ESC-\ terminates.
-            if peek_ch() == u"\\" then {
+            if peek_ch() == "\\" then {
                get_ch()
                break
             }
@@ -2094,7 +2099,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private clear_mark()
       reset_search()
-      text_selection := mark_x := mark_y := &null
+      links_selection := text_selection := mark_x := mark_y := &null
       link
    end
 
@@ -2236,6 +2241,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       local s
       if s := \text_selection then
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   public handle_copy_links(e)
+      local l
+      if l := \links_selection then {
+         parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
+         ui.info_msg(*l || " URL(s) copied")
+      } else
+         ui.info_msg("No URLs in selection")
    end
 
    # Put a string as though typed by the user.
@@ -2428,6 +2442,47 @@ class Vt(LineBasedScrollArea, MenuMode)
          r[-1] ||:= s
    end
 
+   private segments_in_range(row, i, j)
+      local seg, c
+      c := 1
+      /i := 1
+      /j := line_len(row.l) + 1
+      every seg := !row.l do {
+         if range1(c, *seg.s + c, i, j) then
+            suspend seg
+         c +:= *seg.s
+      }
+   end
+
+   public get_current_links_selection()
+      return \.links_selection
+   end
+
+   private ls_add(seg, l)
+      put(l, \seg.attr.url)
+   end
+
+   private calculate_links_selection()
+      local l
+      links_selection := &null
+      l := []
+      \mark_y | fail
+      if mark_y < cursor_y then
+         every ls_add(segments_in_range(contents[mark_y], mark_x) |
+                      !contents[mark_y + 1 to cursor_y - 1].l |
+                      segments_in_range(contents[cursor_y],, cursor_x), l)
+      else if mark_y > cursor_y then
+         every ls_add(segments_in_range(contents[cursor_y], cursor_x) |
+                      !contents[cursor_y + 1 to mark_y - 1].l |
+                      segments_in_range(contents[mark_y],, mark_x), l)
+      else
+         # mark_y = cursor_y
+         every ls_add(segments_in_range(contents[cursor_y], cursor_x, mark_x), l)
+      l := lunique(l)
+      if *l > 0 then
+         links_selection := l
+   end
+
    private calculate_text_selection()
       local r, s, t, a, fl
       text_selection := &null
@@ -2481,6 +2536,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private own_primary()
       calculate_text_selection()
+      calculate_links_selection()
       if primary := \text_selection then
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
    end

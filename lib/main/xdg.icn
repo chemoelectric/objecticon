@@ -817,7 +817,7 @@ final abstract class Mime()
       local name, icon, exec, path, terminal, try_exec, 
          initial_preference, exec_line
       dm := member(dm, u"Desktop Entry") | fail
-      member(dm, u"Type") == u"Application" | fail
+      member(dm, u"Type") == "Application" | fail
       name := member(dm, u"Name") | fail
 
       # A TryExec entry means testing if such an exe is on the path;
@@ -829,7 +829,7 @@ final abstract class Mime()
       exec := member(dm, u"Exec") | fail
       exec_line := member(dm, u"ExecLine")
       path := member(dm, u"Path")
-      terminal := if map(member(dm, u"Terminal")) == u"true" then &yes
+      terminal := if map(member(dm, u"Terminal")) == "true" then &yes
       initial_preference := integer(member(dm, u"InitialPreference"))
       return DesktopEntry(name, icon, src, exec, exec_line, path, terminal, initial_preference)
    end
@@ -1003,7 +1003,7 @@ package class Globs()
    #
    public add(p, weight, mime_type)
       local x, t, k
-      if p == u"__NOGLOBS__" then {
+      if p == "__NOGLOBS__" then {
          every t := literal | simple | other do {
             every k := key(t) do {
                if Text.caseless_compare(t[k].mime_type, mime_type) = 0 then

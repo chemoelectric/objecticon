@@ -95,7 +95,7 @@ class DesktopRunner(ExternalRunner)
 
    public override get_command()
       local line
-      if url.scheme == u"file" then
+      if url.scheme == "file" then
          line := integer(url.extract_cgi_parameters()["line"][1])
       return desktop_entry.subst_file(Format.shell_escape(subst), line)
    end
@@ -1573,6 +1573,10 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             output.handle_copy()
          }
+         "copy-urls": {
+            check_live(s) | fail
+            output.handle_copy_links()
+         }
          "paste": {
             check_live(s) | fail
             output.handle_paste()
@@ -1783,7 +1787,7 @@ class Terminal(TabItem, VtUI)
       local label, verb
       param ? {
          label := tab(upto(',') | 0)
-         if label == u"-" | endswith(label, u"/-") then
+         if label == "-" | endswith(label, "/-") then
             # Separator
             add_menu_command(list, label)
          else if pos(0) then {
@@ -1810,7 +1814,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private create_custom_menu_item(s, c)
-      return if s == u"-" then
+      return if s == "-" then
          MenuSeparator()
       else
          TextMenuItem().set_label(s).connect(create custom_key_func(c.verb), Event.ACTION)
@@ -2140,10 +2144,10 @@ $endif
       case string(url.scheme) of {
          "file": {
             if s := get_ucs_decoded_path(url) then {
-               es := if /ev.shift & url.is_local_file() & cwd ~== u"/" then {
+               es := if /ev.shift & url.is_local_file() & cwd ~== "/" then {
                   if cwd == s then
                      u"./"
-                  else if match(cwd || u"/", s) then
+                  else if match(cwd || "/", s) then
                      u"./" || s[*cwd + 2:0]
                   else
                      s
@@ -2151,32 +2155,28 @@ $endif
                   s
                es := Format.shell_escape(es)
                if url.is_local_file() & Files.is_directory(s) then {
-                  if es[-1] ~== u"/" then
-                     es ||:= u"/"
+                  if es[-1] ~== "/" then
+                     es ||:= "/"
                }
-               send_tty(es || u" ")
+               send_tty(es || " ")
             } else
                info_msg(&why)
          }
-         "text": send_tty(get_ucs_decoded_path(url) || u" ") | info_msg(&why)
+         "text": send_tty(get_ucs_decoded_path(url) || " ") | info_msg(&why)
          "run" | "launch": {
             if r := get_runners(url) then
-               send_tty(r.get_command() || u" ")
+               send_tty(r.get_command() || " ")
             else
                info_msg(&why)
          }
          default:
-            send_tty(url.ucs() || u" ")
+            send_tty(url.ucs() || " ")
       }
    end
 
    public err_msg(s)
       send_vt("\n\e[31m(Message from terminal:) " || s || "\e[m")
       info_msg(s)
-   end
-
-   public info_msg(s)
-      msg(s, 3000)
    end
 
    private static get_possible_desktop_entries(s)
@@ -2194,7 +2194,7 @@ $endif
             url.is_local_file() | return error("Can't run a file on another host (" || url.host || ")")
             s := get_ucs_decoded_path(url) | fail
             if Files.is_directory(s) then
-               return ImmediateRunner(u"cd " || Format.shell_escape(s))
+               return ImmediateRunner("cd " || Format.shell_escape(s))
             # Get a DesktopEntry based on the content-type if available, or the filename.
             every de := get_possible_desktop_entries(s) do {
                fl := &yes
@@ -2284,7 +2284,7 @@ $endif
 
    private start_log(dest)
       local d, dl, fl, s
-      /log | return info_msg(u"Already logging to " || log_file.ucs())
+      /log | return info_msg("Already logging to " || log_file.ucs())
       if /dest then {
          d := parent_dialog.file_dialog
          dl := [cwd]
@@ -2307,9 +2307,9 @@ $endif
       s := dest.ucs() | return info_msg(u"Log file not UTF-8")
       parent_dialog.last_log_file := log_file := dest
       if log := open(s, "w") then
-         info_msg(u"Logging to file " || s)
+         info_msg("Logging to file " || s)
       else
-         info_msg(u"Failed to open " || s || u": " || ucs(&why))
+         info_msg("Failed to open " || s || ": " || ucs(&why))
    end
 
    private close_log()
@@ -2321,7 +2321,7 @@ $endif
    private on_end_log()
       \log | return info_msg("Not logging")
       close_log()
-      info_msg(u"Closed log file " || log_file.ucs())
+      info_msg("Closed log file " || log_file.ucs())
    end
 
    private add_custom_menus(m, list)
@@ -2341,6 +2341,10 @@ $endif
          m.add(TextMenuItem().
                set_label("Copy text").
                connect(output.handle_copy, Event.ACTION))
+      if output.get_current_links_selection() then
+         m.add(TextMenuItem().
+               set_label("Copy URLs").
+               connect(output.handle_copy_links, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Paste").
             connect(output.handle_paste, Event.ACTION))
@@ -2390,7 +2394,7 @@ $endif
       local r
       r := src.runner
       if ev.code === Mouse.MIDDLE_RELEASE then
-         send_tty(r.get_command() || u" ")
+         send_tty(r.get_command() || " ")
       else
          launch_prog(r)
    end
@@ -2419,7 +2423,7 @@ $endif
    public override create_link_menu(url)
       local m, r, udp
       m := Menu()
-      if url.scheme == (u"file" | u"text") &
+      if url.scheme == ("file" | "text") &
          udp := get_ucs_decoded_path(url) then
       {
          m.add(TextMenuItem().
@@ -2433,7 +2437,7 @@ $endif
          m.add(TextMenuItem().
             set_label("Copy command").
             connect(create copy_text(r.get_command()), Event.ACTION))
-      if url.scheme == u"file" then {
+      if url.scheme == "file" then {
          if url.is_local_file() & \udp then {
             if Files.is_directory(udp) then {
                m.add(TextMenuItem().
@@ -2576,12 +2580,12 @@ $endif
    end
 
    private run_prog(s)
-      send_tty(s || u"\r")
+      send_tty(s || "\r")
    end
 
    public goto_dir(d)
       d := ucs(d) | fail
-      run_prog(u"cd " || Format.shell_escape(d))
+      run_prog("cd " || Format.shell_escape(d))
    end
 
    private synch_paints_and_resort()
@@ -2755,7 +2759,7 @@ $endif
       }
       l := [u"*"]
       every e := back(sort(ex, 2)) do
-         put(l, u"*." || e[1])
+         put(l, "*." || e[1])
       return l
    end
 
@@ -3520,6 +3524,7 @@ procedure usage(opts)
    help_line(":url=URL", "Activate a URL as though clicked by the user")
    help_line(":copy-cwd", "Copy the current directory to the clipboard")
    help_line(":copy", "Copy the current selection to the clipboard")
+   help_line(":copy-urls", "Copy any URLs in the current selection to the clipboard")
    help_line(":paste", "Paste from the clipboard")
    help_line(":paste-escaped", "Paste from the clipboard, with shell escaping")
    help_line(":pgup", "Go up one page")
