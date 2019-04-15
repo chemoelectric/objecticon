@@ -329,6 +329,19 @@ end
 # ~
 #     [1, 1.2, 1.5, 2, 4, 4.0]
 # ~
+#
+# Tip: If cnv is an expensive function, consider using
+# `ipl.functional.memoize1` so that it is only called once
+# for each item; for example :-
+# ~
+# procedure expensive_key(x)
+#   return ... expensive computation on x
+# end
+#
+# ...
+#       qsort(big_list, convert_cmp(memoize1(expensive_key)))
+# 
+# ~
 procedure convert_cmp(cnv, f)
    return ConvertCmp(cnv, f).call
 end
