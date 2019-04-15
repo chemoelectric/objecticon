@@ -5,7 +5,7 @@ import
    ipl.callable(callable),
    ipl.lists(lreverse_mod),
    ipl.pdco(List,Parallel),
-   datastruct(EqTable)
+   datastruct(EqTable,BuiltinTable)
 
 #
 # Implementation class for `partial`
@@ -258,7 +258,7 @@ procedure revargs(f)
    return Func(f).all
 end
 
-# Implementation class for `memoize`.
+# Implementation class for `memoize` and `memoize1`
 package class Memoize()
    private f, t
 
@@ -268,45 +268,51 @@ package class Memoize()
       suspend .!l
    end
 
-   public new(f)
+   public call1(a)
+      local l
+      (l := t.member(a)) | t.insert(a, l := f(a)) | fail
+      return l
+   end
+
+   public new(f, t)
       self.f := f
-      self.t := EqTable()
+      self.t := t
       return
    end
 end
 
 # This procedure returns a function which memoizes the passed
 # function.  Subsequent arguments to and results from this function
-# are cached in an `EqTable` so that the underlying function is only
-# called for parameters that haven't been seen before.
+# are cached in a `datastruct.Table` so that the underlying function
+# is only called for parameters that haven't been seen before.
 #
-procedure memoize(f)
-   return Memoize(f).call
-end
-
-# Implementation class for `memoize1`.
-package class Memoize1()
-   private f, t
-
-   public call(a)
-      local l
-      (l := member(t, a)) | insert(t, a, l := f(a)) | fail
-      return l
-   end
-
-   public new(f)
-      self.f := f
-      self.t := table()
-      return
-   end
+# :Parameters :
+# :  `f` - the function to memoize
+# :  `t` - the `Table` to use to cache results; by default an
+#          `EqTable`.  Note that the keys of this table will
+#          always be distinct lists, so using, for example,
+#           a `BuiltinTable` makes no sense.
+#
+procedure memoize(f, t)
+   /t := EqTable()
+   return Memoize(f, t).call
 end
 
 # This is a simpler (but faster) version of `memoize()`.  Only a
 # single parameter is passed to the given function, and only a single
-# result is cached.
+# result is cached.  Further, by default a `BuiltinTable` is used to
+# cache results, rather than an `EqTable`.
 #
-procedure memoize1(f)
-   return Memoize1(f).call
+# :Parameters :
+# :  `f` - the function to memoize
+# :  `t` - the `Table` to use to cache results; by default an
+#          `BuiltinTable`.  An `EqTable` could be used if the cost
+#          of evaluating `f` were large compared to the cost of
+#          `lang.hash` and `lang.equals`.
+#
+procedure memoize1(f, t)
+   /t := BuiltinTable()
+   return Memoize(f, t).call1
 end
 
 # Implementation class for `adjoin`.
@@ -335,4 +341,3 @@ end
 procedure adjoin(f[])
    return Adjoin(f).call
 end
-
