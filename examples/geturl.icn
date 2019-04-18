@@ -576,6 +576,9 @@ procedure expand_braces(s)
             l := *s1
             l <:= *s2
             suspend right(integer(s1) to integer(s2) by integer(s3), l, "0")
+         } else if (any(&lcase, s1) & any(&lcase, s2)) |
+                   (any(&ucase, s1) & any(&ucase, s2)) then {
+            suspend char(ord(s1[1]) to ord(s2[1]) by integer(s3))
          } else
             suspend string(integer(s1) to integer(s2) by integer(s3))
       } else
