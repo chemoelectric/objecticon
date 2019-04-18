@@ -475,18 +475,9 @@ class Ieval(MinimalObjectOutput)
       ev := Evaluator().
          set_env(ee).
          set_imports(imports)
-      if hlim := \opts["hlim"] then
-         (10 <= hlim) | help_stop("Invalid value of hlim")
-      else
-         hlim := 500
-      if llim := \opts["llim"] then
-         (0 <= llim) | help_stop("Invalid value of llim")
-      else
-         llim := 600
-      if elim := \opts["elim"] then
-         (10 <= elim) | help_stop("Invalid value of elim")
-      else
-         elim := 35
+      hlim := \opts["hlim"] | 500
+      llim := \opts["llim"] | 600
+      elim := \opts["elim"] | 35
       return
    end
 
