@@ -23,7 +23,8 @@
 package ipl.options
 
 import
-   io, lang, util, ipl.scan, ipl.lists, ipl.pdco, ipl.tables(inserts)
+   io, lang, util, ipl.scan, ipl.lists, ipl.pdco, ipl.tables(inserts),
+   ipl.functional
 
 # The result of the `Opt.format` method.
 record OptFormat(names, help)
@@ -422,4 +423,32 @@ procedure options(arg, opts, usage, errproc)
    }
 
    return option
+end
+
+package procedure integer_range_impl(min, max, x)
+   x := integer(x) | fail
+   if x < \min | x > \max then
+      fail
+   return x
+end
+
+# Useful function for use as a converter; it returns another function
+# which converts to integer within the given min-max range.
+#
+procedure integer_range(min, max)
+   return lpartial(integer_range_impl, min, max)
+end
+
+package procedure real_range_impl(min, max, x)
+   x := real(x) | fail
+   if x < \min | x > \max then
+      fail
+   return x
+end
+
+# Useful function for use as a converter; it returns another function
+# which converts to real within the given min-max range.
+#
+procedure real_range(min, max)
+   return lpartial(real_range_impl, min, max)
 end
