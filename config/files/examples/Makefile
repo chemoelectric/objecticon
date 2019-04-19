@@ -6,7 +6,7 @@ PROGS=browser canvasstate colors cursors directorydialogtest \
 	multi selection sieve sizetest \
 	sliders stock suggest tooltip treetest \
 	ttexplorer fields flowterm bus lscookies \
-	showtemplate cairotest lsxdg fl
+	showtemplate cairotest lsxdg fl note
 
 BIN=$(addprefix bin/, $(PROGS))
 
