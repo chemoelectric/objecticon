@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, lang, ipl.options, ipl.lists, io, xdg, ipl.strings, ipl.functional
+import util, http, net, lang, ipl.options, ipl.lists, io, xdg, ipl.strings
 
 global total, ok, err, failed, invalid, opts, skipped, sched, cookies, urls, workers
 
@@ -161,7 +161,7 @@ class Worker()
       total +:= 1
 
       (url := URL(a) & url.scheme == ("http" | "https")) | {
-         ewrite("Invalid url: ", a, ": ", &why)
+         write("Invalid url: ", a, ": ", &why)
          put(invalid, a)
          fail
       }
@@ -171,7 +171,7 @@ class Worker()
          if check_skip() then
             fail
          if /opts["q"] then
-            ewrite("Saving URL ", pp_url(url))
+            write("Saving URL ", pp_url(url))
       }
 
       hr := HttpRequest().
@@ -274,7 +274,7 @@ class Worker()
                }
 
                if /opts["q"] then
-                  ewrite(msg)
+                  write(msg)
             }
             rm_tmp()
          }
@@ -289,7 +289,7 @@ class Worker()
             if s := hc.get_http_error() then {
                put(err, url)
                if /opts["q"] then
-                  ewrite("HTTP Error: ", s, " - no data output")
+                  write("HTTP Error: ", s, " - no data output")
             } else {
                put(default.failed, url)
             }
@@ -334,7 +334,7 @@ class Worker()
       \opts["skip"] | fail
       Files.access(out) | fail
       if /opts["q"] then
-         ewrite("Skipping existing file ", pp_out())
+         write("Skipping existing file ", pp_out())
       skipped +:= 1
       return
    end
@@ -347,7 +347,6 @@ class Worker()
 
    private run()
       local x
-      hc.set_task(task)
       while x := @urls do
          process_one(x)
       hc.close()
@@ -355,18 +354,20 @@ class Worker()
    end
 
    public run_sched()
-      task := Task(sched, create run())
-      task.start()
+      task := Task(sched, create run()).start()
+      create_client()
+      hc.set_task(task)
    end
 
    public run_alone()
       local x
+      create_client()
       while x := @urls do
          process_one(x)
       hc.close()
    end
 
-   public new()
+   private create_client()
       hc := HttpClient()
       hc.set_timeout(\opts["t"] * 1000)
       hc.set_retries(\opts["r"])
@@ -406,8 +407,6 @@ class Worker()
       }
 
       hc.connect(got_headers, "Headers")
-
-      return
    end
 end
 
@@ -425,16 +424,11 @@ procedure usage(opts)
 end
 
 procedure ip_version(s)
-   return integer(s) = (4 | 6 | 46 | 64 | 0)
+   return integer(s) = (4 | 6 | 46 | 64 | 0) | error("IP version expected")
 end
 
 procedure gen_urls(args)
    suspend expand_arg(if *args = 0 then |read() else !args)
-end
-
-procedure string_with(ch, s)
-   if upto(ch, s) then
-      return s
 end
 
 procedure main(args)
@@ -443,17 +437,17 @@ procedure main(args)
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
                           Opt("is",string, "STRING#Input string for a POST request; multiple uses will be concatenated and separated with EOL", &yes),
-                          Opt("form",lpartial(string_with, '='), "K=V#Post an HTTP form with entry K=V; multiple uses allowed", &yes, "string with ="),
+                          Opt("form",string_with('='), "K=V#Post an HTTP form with entry K=V; multiple uses allowed", &yes),
                           Opt("type",string, "TYPE#Content type for a POST request"),
                           Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("q",, "Quiet mode"),
-                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)",, "positive integer"),
-                          Opt("r",integer_range(0), "RETRIES#Number of retries",, "integer >= 0"),
-                          Opt("w",integer_range(1),"WORKERS#Number of workers",, "positive integer"),
+                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
+                          Opt("r",integer_range(0), "RETRIES#Number of retries"),
+                          Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
-                          Opt("a",lpartial(string_with, ':'), "USER:PASS#Specify authorization",, "string with :"),
+                          Opt("a",string_with(':'), "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("l",, "Show HTTP headers and data flow"),
                           Opt("n",string, "FILE#Append to the given partial file"),
@@ -466,8 +460,8 @@ procedure main(args)
                           Opt("agent",string, "Set user agent field"),
                           Opt("while",, "Set the retry-while-data flag"),
                           Opt("close",, "Use Connection: Close"),
-                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0",, "IP version"),
-                          Opt("x",lpartial(string_with, ':'),"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes, "string with :"),
+                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0"),
+                          Opt("x",string_with(':'),"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0")],
                           usage)
@@ -500,9 +494,6 @@ procedure main(args)
    urls := create gen_urls(args)
 
    nw := \opts["w"] | 1
-   if nw > 1 then
-      opts["npro"] := &yes
-
    workers := []
    every 1 to nw do
       put(workers, Worker())
@@ -510,7 +501,8 @@ procedure main(args)
    if nw = 1 then
       workers[1].run_alone()
    else {
-      sched := Scheduler(50)
+      opts["npro"] := &yes
+      sched := Scheduler(200)
       every (!workers).run_sched()
       until sched.empty() do
          sched.work()

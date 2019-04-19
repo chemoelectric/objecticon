@@ -565,10 +565,10 @@ procedure main(args)
                        Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
                        Opt("s",, "Don't use console line editing (implicit on non-Unix platforms)"),
                        Opt("f",string,"FILE#Perform commands from file at startup", &yes),
-                       Opt("hlim",integer_range(10),"LIM#Set the history limit for the line editor (default is 500, minimum is 10)",, "integer >= 10"),
-                       Opt("llim",integer_range(0),"LIM#Set the gui interface's log area line limit (default is 600)",, "integer >= 0"),
-                       Opt("slim",integer_range(0),"LIM#Set the string display limit (default is 64)",, "integer >= 0"), 
-                       Opt("addrs",integer_range(0,2),"MODE#Set the address display mode (default is 1)",, "integer 0, 1 or 2"),
+                       Opt("hlim",integer_range(10),"LIM#Set the history limit for the line editor (default is 500, minimum is 10)"),
+                       Opt("llim",integer_range(0),"LIM#Set the gui interface's log area line limit (default is 600)"),
+                       Opt("slim",integer_range(0),"LIM#Set the string display limit (default is 64)"), 
+                       Opt("addrs",integer_range(0,2),"MODE#Set the address display mode (default is 1)"),
                        Opt("nk",,"Set kbreak off initially (default is on)")],
                        usage)
    if *args = 0 then

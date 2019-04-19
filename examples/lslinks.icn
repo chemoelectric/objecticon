@@ -4,7 +4,6 @@ import
    net(URL),
    xml(HtmlParser),
    ipl.scan(past),
-   ipl.functional,
    ipl.options,
    ipl.charset,
    xdg,
@@ -40,23 +39,18 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    end
 end
 
-procedure string_with(ch, s)
-   if upto(ch, s) then
-      return s
-end
-
 procedure main(args)
    local t, cookies
-   opts := options(args, [Opt("a",lpartial(string_with, ':'), "USER:PASS#Specify authorization",, "string with :"),
+   opts := options(args, [Opt("a",string_with(':'), "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("agent",string, "Set user agent field"),
                           Opt("A",, "Print URLs of any scheme, rather than http, https and file"),
-                          Opt("I",integer, "N#Assume data is encoded in ISO 8859-N"),
+                          Opt("I",integer_range(1,16), "N#Assume data is encoded in ISO 8859-N"),
                           Opt("i",, "Search for IMG links"),
                           Opt("b",, "Search for IMG and A links"),
                           Opt("tee",string,"FILE#Redirect retrieved page to FILE"),
-                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)",, "positive integer"),
-                          Opt("r",integer_range(0), "RETRIES#Number of retries",, "integer >= 0"),
+                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
+                          Opt("r",integer_range(0), "RETRIES#Number of retries"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("text",,"Do text search for tags rather than search parsed document")],
                           "Usage: lslinks [URL]... [OPTIONS]" || Files.EOL ||

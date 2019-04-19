@@ -3566,8 +3566,8 @@ procedure main(a)
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
                        Opt("lfw",real,"REAL#Use the given width in unscaled pixels for the focus rectangle in the file list"),
-                       Opt("width",integer_range(1),"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab",, "positive integer"),
-                       Opt("height",integer_range(1),"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab",, "positive integer"),
+                       Opt("width",integer_range(1),"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab"),
+                       Opt("height",integer_range(1),"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab"),
                        Opt("t",string,"The window title, by default \"FlowTerm\"")],
                        usage)
    ImageCache.
