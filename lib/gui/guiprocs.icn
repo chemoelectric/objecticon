@@ -881,7 +881,11 @@ class GetSelection(Dialog)
    #
    public override new(selection, target_types)
       Dialog.new()
+$if _PLAN9
+      set_canvas("iconic")
+$else
       set_canvas("withdrawn")
+$endif
       set_size(100, 100)
       /selection := Selection.CLIPBOARD
       /target_types := [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET]

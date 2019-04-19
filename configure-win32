@@ -49,11 +49,11 @@ w=$(cygpath -w "$x")
 v=$(echo $w | sed -e "s/\\\/\\\\\\\\/g")
 # /Od disables optimzation, /Zi for debugging
 if [ -z $r_opt ]; then
-    CFLAGS="/Od /Zi /utf-8"
-    LDFLAGS="/DEBUG:FULL"
+    CFLAGS="/Od /Zi /utf-8 /WX"
+    LDFLAGS="/DEBUG:FULL /WX"
 else
-    CFLAGS="/O2 /utf-8"
-    LDFLAGS=""
+    CFLAGS="/O2 /utf-8 /WX"
+    LDFLAGS="/WX"
 fi
 sed -e "s:@CONFIG_DIR@:$x:"  \
     -e "s%@CFLAGS@%$CFLAGS%" \

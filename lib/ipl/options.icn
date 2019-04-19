@@ -23,16 +23,43 @@
 package ipl.options
 
 import
-   io, lang, util, ipl.scan, ipl.lists, ipl.pdco, ipl.tables(inserts)
+   io, lang, util, ipl.scan, ipl.lists, ipl.pdco, ipl.tables(inserts),
+   ipl.functional
 
 # The result of the `Opt.format` method.
-record OptFormat(names, help)
+package record OptFormat(names, help)
 
+# This class encapsulates a single option.
 class Opt()
    public const
-      names, convert, help
-   private readable
-      multiple_flag, param_err
+      # A list of the names of this option.
+      names,
+      # The conversion procedure; this should be one of the built-in
+      # conversion functions (`integer`, `string`, etc), `util.flag`,
+      # or another procedure which converts the string parameter, and
+      # sets `&why` on failure.  If this field is null, then the
+      # option takes no value.
+      convert,
+      # The descriptive help string produced when "-?" is used.  This
+      # may be split into two parts, separated by a `#` character; the
+      # part to the left is the string used to describe the option
+      # parameter in the help output.  For example :-
+      # ~
+      #    Opt("f", string, "FILE#Load values from FILE")
+      # ~
+      # Would produce a help string :-
+      # ~
+      #    -f FILE             Load values from FILE
+      # ~
+      help,
+      # A flag value; if set then multiple uses of the option are
+      # allowed.  The resulting entry in the options table will then
+      # be a list.
+      multiple_flag,
+      # An optional error string produced on an invalid flag value.
+      # If set, it overrides any value of `&why` set by the convert
+      # procedure.
+      param_err
 
    # A utility function to help format an option string.
    public format()
@@ -44,43 +71,40 @@ class Opt()
             if ph := tab(upto('#')) then
                h := (move(1), tab(0))
             else
-               ph := map(Proc.get_name(convert), &lcase, &ucase)
+               ph := case convert of {
+                  real|integer|numeric|ucs|text|string|cset :
+                     map(Proc.get_name(convert), &lcase, &ucase)
+                  flag: "FLAG"
+                  default: "VALUE"
+               }
          }
          ns ||:= " " || ph
       }
       return OptFormat(ns, h)
    end
 
-   # Set whether multiple uses of the option are allowed.
-   #
-   public set_multiple(multi) 
-      self.multiple_flag := need_flag(multi)
-      link
-   end
-
-   # Set an error string describing the type of parameter (for error
-   # output); by default the name of the `convert` procedure.  For
-   # example, if the `convert` procedure converted the parameter's
-   # argument to an IP address, then this could be set to "an IP
-   # address" to give the error output "-x needs an IP address
-   # parameter" if the parameter were omitted or erroneous.
-   #
-   public set_param_err(err)
-      self.param_err := err
-      link
+   package build_param_err()
+      local s
+      if s := \param_err then
+         return s
+      return case convert of {
+         real|integer|numeric|ucs|text|string|cset :
+            capitalize_cnv(convert) || " expected"
+         flag:
+            "Flag expected"
+         default:
+            &why
+      }
    end
 
    # Create a new Opt instance.
    # :Parameters :
    # :  `s` - the name of the option; may be a list of several synonymous names 
-   # :  `convert` - the conversion function to apply (eg `integer`,
-   #         `real`, `string`, etc) to the option value; if omitted then the
-   #          option takes no value.
-   # :  `help` - a descriptive help string
+   # :  `convert` - the conversion function to apply; see `Opt.convert`
+   # :  `help` - a descriptive help string; see `Opt.help`
    # :  `multiple` - a flag value, set if multiple uses of the option are 
-   #          allowed; see `set_multi()`.
-   # :  `param_err` - a string describing the type of parameter (for error output);
-   #           see `set_param_err()`.
+   #          allowed
+   # :  `param_err` - a string describing the type of parameter (for error output)
    #
    public new(s, convert, help, multiple, param_err)
       names := if type(s) == "list" then
@@ -89,11 +113,8 @@ class Opt()
          [s]
       self.convert := convert
       self.help := help
-      set_multiple(multiple)
-      if \convert then {
-         /param_err := Proc.get_name(convert)
-         set_param_err(param_err)
-      }
+      self.multiple_flag := need_flag(multiple)
+      self.param_err := param_err
       return
    end
 end
@@ -165,10 +186,6 @@ procedure help_stop(a[])
    push(a, Files.get_program_name() || ": ")
    put(a, Files.EOL || "Use the -? option for more information")
    stop!a
-end
-
-package procedure article(s)
-   return (if any('aeiouAEIOU', s) then "an " else "a ") || s
 end
 
 #
@@ -261,15 +278,11 @@ end
 #  each option.
 #
 #     Using an `Opt` also allows other conversion procedures to be
-#  specified.  For example, a yes/no option might be specified as:
+#  specified.  For example, an integer option might be specified as:
 #  ~~~
-#     import util(flag)
-#
-#      ...
-#
-#         Opt("f", flag, "Overwrite any existing files")
+#         Opt("t", integer, "Timeout in seconds")
 #  ~~~
-#  This would allow `-f yes`, `--f=no`, etc.
+#  This would allow `-t 3`, `--t=4`, etc.
 #
 #     The list of `Opt`s may also contain strings; these are interspersed
 #  with the formatted option output when help is produced with the `-help`
@@ -355,7 +368,7 @@ procedure options(arg, opts, usage, errproc)
                         get(arg)
                      else
                         return errproc("No parameter following --" || optname)
-                     v := opt.convert(p) | return errproc("--" || optname || " needs " ||  article(opt.param_err) || " parameter")
+                     v := opt.convert(p) | return errproc("--" || optname || ": " || opt.build_param_err())
                   }
 
                   k := opt.names[1]
@@ -380,7 +393,7 @@ procedure options(arg, opts, usage, errproc)
                         get(arg)
                      else
                         return errproc("No parameter following -" || optname)
-                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  article(opt.param_err) || " parameter")
+                     v := opt.convert(p) | return errproc("-" || optname || ": " || opt.build_param_err())
                   }
                   
                   k := opt.names[1]
@@ -422,4 +435,53 @@ procedure options(arg, opts, usage, errproc)
    }
 
    return option
+end
+
+# Return the given builtin converter function's name, with its first
+# letter capitalized (eg integer->"Integer").
+package procedure capitalize_cnv(f)
+   local s
+   s := Proc.get_name(f)
+   s[1] := map(s[1], &lcase, &ucase)
+   return s
+end
+
+package procedure range_impl(cnv, min, max, x)
+   x := cnv(x) | return error(capitalize_cnv(cnv) || " expected")
+   if x < \min | x > \max then
+      return error(capitalize_cnv(cnv) || " value out of valid range " || range_string(min, max))
+   return x
+end
+
+# Converter function for an integer which must lie within the given
+# min-max range.
+#
+procedure integer_range(min, max)
+   return lpartial(range_impl, integer, min, max)
+end
+
+# Converter function for a real which must lie within the given
+# min-max range.
+#
+procedure real_range(min, max)
+   return lpartial(range_impl, real, min, max)
+end
+
+package procedure text_with_impl(cnv, q, s)
+   s := cnv(s) | return error(capitalize_cnv(cnv) || " expected")
+   return if (type(q) == "cset" & upto(q, s)) | find(q, s) then
+      s
+   else
+      error(capitalize_cnv(cnv) || " containing " || image(q) || " expected")
+end
+
+# Converter function for a string option which must contain a char in
+# `q` (if q is a cset), or the substring `q`, otherwise.
+procedure string_with(q)
+   return lpartial(text_with_impl, string, q)
+end
+
+# Same as `string_with`, but returns a ucs.
+procedure ucs_with(q)
+   return lpartial(text_with_impl, ucs, q)
 end

@@ -30,7 +30,7 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    public new()
       local u, p
       \opts["a"] ? {
-         u := tab(upto(':')) | help_stop("Bad -a option")
+         u := tab(upto(':')) | syserr("Bad -a option")
          move(1)
          p := tab(0)
          auth := Authentication(u, p)
@@ -41,16 +41,16 @@ end
 
 procedure main(args)
    local t, cookies
-   opts := options(args, [Opt("a",string, "USER:PASS#Specify authorization"),
+   opts := options(args, [Opt("a",string_with(':'), "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("agent",string, "Set user agent field"),
                           Opt("A",, "Print URLs of any scheme, rather than http, https and file"),
-                          Opt("I",integer, "N#Assume data is encoded in ISO 8859-N"),
+                          Opt("I",integer_range(1,16), "N#Assume data is encoded in ISO 8859-N"),
                           Opt("i",, "Search for IMG links"),
                           Opt("b",, "Search for IMG and A links"),
                           Opt("tee",string,"FILE#Redirect retrieved page to FILE"),
-                          Opt("t",integer,"TIMEOUT#Specify timeout (in seconds) to use"),
-                          Opt("r",integer, "RETRIES#Specify number of retries to use"),
+                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
+                          Opt("r",integer_range(0), "RETRIES#Number of retries"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("text",,"Do text search for tags rather than search parsed document")],
                           "Usage: lslinks [URL]... [OPTIONS]" || Files.EOL ||
@@ -78,7 +78,7 @@ procedure do_one(a)
    if f := Files.url_to_file(url) then
       src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
    else {
-      url.scheme == (u"http" | u"https") | stop("Unknown url scheme: " || url.scheme)
+      url.scheme == ("http" | "https") | stop("Unknown url scheme: " || url.scheme)
       src := use {
          rs := RamStream(),
          {
@@ -120,7 +120,7 @@ end
 procedure print(pfx, s, base)
    local url
    url := URL(s) | base.get_relative(s)
-   \opts["A"] | (url.scheme == (u"http" | u"https" | u"file")) | fail
+   \opts["A"] | (url.scheme == ("http" | "https" | "file")) | fail
 
    if FileStream.stdout.is_flowterm_tty() then
       write(pfx, Files.begin_link(url), url.str(), Files.end_link())

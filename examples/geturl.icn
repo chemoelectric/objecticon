@@ -4,94 +4,7 @@
 
 import util, http, net, lang, ipl.options, ipl.lists, io, xdg, ipl.strings
 
-global total, ok, err, failed, hc, opts, skipped, out
-
-class Monitor()
-   private last_progress, prev_len
-
-   private writes(a[])
-      local t
-      t := 0
-      every t +:= *!a
-      push(a, repl("\b \b", \prev_len))
-      FileStream.stderr.writes!a
-      prev_len := t
-   end
-
-   private write(a[])
-      push(a, repl("\b \b", \prev_len))
-      FileStream.stderr.write!a
-      prev_len := &null
-   end
-
-   public progress()
-      local len, read, now
-      len := hc.get_length()
-      read := hc.get_read()
-      # Check to avoid printing huge number of progress messages very quickly.
-      now := Prog.get_runtime_millis()
-      if now - \last_progress < 250 then
-         return
-      last_progress := now
-      if \len then
-         writes(Format.numeric_to_string(read, 0, ','), " bytes of ", Format.numeric_to_string(len, 0, ','), " (", (read * 100) / len, "%)")
-      else
-         writes(Format.numeric_to_string(read, 0, ','), " bytes read")
-   end
-
-   public complete()
-      writes()
-   end
-
-   public writing_line(ev)
-      write("Sent: ", ev)
-   end
-
-   public read_line(ev)
-      write("Got : ", ev)
-   end
-
-   public read_string(ev)
-      write("Got : data - 0x", Format.int_to_string(*ev, 16), " bytes")
-   end
-
-   public writing_string(ev)
-      write("Sent: data - 0x", Format.int_to_string(*ev, 16), " bytes")
-   end
-
-   public failed(ev)
-      write("Failed: ", &why)
-   end
-
-   public retrying(ev)
-      write("Retrying: ", &why)
-   end
-
-   public connecting(ev, src, type)
-      write("Connecting to ", URL.bracket_host(src.server), ":", src.port)
-   end
-
-   public connected(ev)
-      write("Connected to ", ev)
-   end
-
-   public other(ev, src, type)
-      write(type)
-   end
-
-   public got_headers()
-      local fname
-
-      if \opts["head"|"c"] then
-         fail
-
-      if fname := hc.get_response().get_filename() & *fname > 0 then {
-         get_out(fname)
-         if check_skip() then
-            hc.abort()
-      }
-   end
-end
+global total, ok, err, failed, invalid, opts, skipped, sched, cookies, urls, workers
 
 class HttpRequestHelperImpl(HttpRequestHelper)
    private auth
@@ -111,13 +24,395 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    public new()
       local u, p
       \opts["a"] ? {
-         u := tab(upto(':')) | help_stop("Bad -a option")
+         u := tab(upto(':')) | syserr("Bad -a option")
          move(1)
          p := tab(0)
          auth := Authentication(u, p)
       }
       return
    end
+end
+
+class Worker()
+   private
+      task,
+      hc,
+      out,
+      tmp_file,
+      input_stream,
+      output_stream,
+      last_progress,
+      prev_len
+
+   private writes(a[])
+      local t
+      t := 0
+      every t +:= *!a
+      push(a, repl("\b \b", \prev_len))
+      FileStream.stderr.writes!a
+      prev_len := t
+   end
+
+   private write(a[])
+      if *workers > 1 then
+         push(a, "[" || serial(self) || "] ")
+      push(a, repl("\b \b", \prev_len))
+      FileStream.stderr.write!a
+      prev_len := &null
+   end
+
+   private progress()
+      local len, read, now
+      len := hc.get_length()
+      read := hc.get_read()
+      # Check to avoid printing huge number of progress messages very quickly.
+      now := Prog.get_runtime_millis()
+      if now - \last_progress < 250 then
+         return
+      last_progress := now
+      if \len then
+         writes(Format.numeric_to_string(read, 0, ','), " bytes of ", Format.numeric_to_string(len, 0, ','), " (", (read * 100) / len, "%)")
+      else
+         writes(Format.numeric_to_string(read, 0, ','), " bytes read")
+   end
+
+   private complete()
+      writes()
+   end
+
+   private writing_line(ev)
+      write("Sent: ", ev)
+   end
+
+   private read_line(ev)
+      write("Got : ", ev)
+   end
+
+   private read_string(ev)
+      write("Got : data - 0x", Format.int_to_string(*ev, 16), " bytes")
+   end
+
+   private writing_string(ev)
+      write("Sent: data - 0x", Format.int_to_string(*ev, 16), " bytes")
+   end
+
+   private failed(ev)
+      write("Failed: ", &why)
+   end
+
+   private retrying(ev)
+      write("Retrying: ", &why)
+   end
+
+   private connecting(ev, src, type)
+      write("Connecting to ", URL.bracket_host(src.server), ":", src.port)
+   end
+
+   private connected(ev)
+      write("Connected to ", ev)
+   end
+
+   private other(ev, src, type)
+      write(type)
+   end
+
+   private got_headers()
+      local fname
+
+      if \opts["head"|"c"] then
+         fail
+
+      if fname := hc.get_response().get_filename() & *fname > 0 then {
+         get_out(fname)
+         if check_skip() then
+            hc.abort()
+      }
+   end
+
+   private close_output_stream()
+      local f
+      if \output_stream then {
+         output_stream.close() | (f := &yes)
+         output_stream := &null
+      }
+      return /f
+   end
+
+   private close_input_stream()
+      local f
+      if \input_stream then {
+         input_stream.close() | (f := &yes)
+         input_stream := &null
+      }
+      return /f
+   end
+
+   private rm_tmp()
+      if \tmp_file then {
+         Files.remove(tmp_file)
+         tmp_file := &null
+      }
+   end
+
+   private process_one(a)
+      local hr, url, start_t, res, end_t, kbps, s, msg,
+         content_type, t, k, v, p, f, n, l
+
+      total +:= 1
+
+      (url := URL(a) & url.scheme == ("http" | "https")) | {
+         write("Invalid url: ", a, ": ", &why)
+         put(invalid, a)
+         fail
+      }
+
+      if /opts["head"] & /opts["c"] then {
+         get_out(url.get_path_last())
+         if check_skip() then
+            fail
+         if /opts["q"] then
+            write("Saving URL ", pp_url(url))
+      }
+
+      hr := HttpRequest().
+         set_url(url).
+         set_helper(HttpRequestHelperImpl())
+
+      if \opts["head"] then 
+         hr.set_method("HEAD")
+
+      hr.set_referer(\opts["e"])
+
+      every s := !\opts["x"] do {
+         s ? {
+            k := tab(upto(':')) | syserr("Bad -x option")
+            move(1)
+            tab(many(' \t'))
+            v := tab(0)
+            hr.add_header(k, v)
+         }
+      }
+
+      if n := \opts["n"] then {
+         p := Files.stat(n) | clean_stop("Couldn't stat ", n, ": ", &why)
+         hr.set_range(p.size)
+      }
+
+      if \opts["i" | "is"] then {
+         input_stream := if n := \opts["i"] then
+            FileStream(n, FileOpt.RDONLY) | clean_stop("Couldn't open ", n, ": ", &why)
+         else
+            StringStream(cat_lines(opts["is"]))
+         hr.set_input_stream(input_stream)
+         hr.set_method(if \opts["put"] then "PUT" else "POST")
+         content_type := \opts["type"] | "application/x-www-form-urlencoded"
+         hr.set_content_type(content_type)
+      }
+
+      if l := \opts["form"] then {
+         t := table()
+         every s := !l do {
+            s ? {
+               k := tab(upto('=')) | syserr("Bad -form option")
+               move(1)
+               v := tab(0)
+               t[k] := v
+            }
+         }
+         hr.set_html_form_data(t)
+      }
+
+      if /opts["head"] then {
+         tmp_file := Files.make_temp_filename("http_geturl.", ".bin") | clean_stop("Couldn't create temp file: ", &why)
+         output_stream := BufferStream(FileStream(tmp_file, 
+                                                  ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
+            set_buff_size(8192) | clean_stop("Couldn't open ", tmp_file, ": ", &why)
+         hr.set_output_stream(output_stream)
+      }
+
+      start_t := Prog.get_runtime_millis()
+      if res := hc.retrieve(hr) then {
+         if /opts["head"] then {
+            close_input_stream() | clean_stop("Couldn't close input_stream: ", &why)
+            close_output_stream() | clean_stop("Couldn't close output_stream: ", &why)
+            if \opts["c"] then {
+               use {
+                  f := FileStream(tmp_file),
+                  f.copy_to(FileStream.stdout)
+               } | {
+                  clean_stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
+               }
+            } else {
+               end_t := Prog.get_runtime_millis()
+               kbps := Format.numeric_to_string((hc.get_read() / 1024.0) / ((end_t - start_t) / 1000.0), 1, ',')
+               msg := Format.numeric_to_string(hc.get_read(), 0, ',') || " bytes OK (" || kbps  || " kB/s)"
+
+               if out == Files.NULL_FILE then {
+                  msg ||:= " -> " || out
+               } else if \opts["n"] then {
+                  Files.append(tmp_file, out) | {
+                     clean_stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
+                  }
+                  msg ||:= " ->> " || pp_out()
+               } else if \opts["over"] then {
+                  Files.move(tmp_file, out) | {
+                     save_why{ Files.remove(out) }
+                     clean_stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+                  }
+                  msg ||:= " -> " || pp_out()
+                  tmp_file := &null
+               } else if Files.equal_files(tmp_file, out) then {
+                  msg ||:= " : Existing file " || pp_out() || " is identical."
+               } else {
+                  out := Files.ensure_unique_filename(out)
+                  Files.move(tmp_file, out) | {
+                     save_why{ Files.remove(out) }
+                     clean_stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+                  }
+                  msg ||:= " -> " || pp_out()
+                  tmp_file := &null
+               }
+
+               if /opts["q"] then
+                  write(msg)
+            }
+            rm_tmp()
+         }
+         ok +:= 1
+      } else {
+         if /opts["head"] then {
+            close_input_stream() | clean_stop("Couldn't close input_stream: ", &why)
+            close_output_stream() | clean_stop("Couldn't close output_stream: ", &why)
+            rm_tmp()
+         }
+         if /hc.abort_flag then {
+            if s := hc.get_http_error() then {
+               put(err, url)
+               if /opts["q"] then
+                  write("HTTP Error: ", s, " - no data output")
+            } else {
+               put(default.failed, url)
+            }
+         }
+      }
+   end
+
+   private get_out(fname)
+      if \opts["n"] then {
+         out := opts["n"]
+         fail
+      }
+
+      if *fname = 0 then
+         fname := "geturl.out"
+
+      # Ensure illegal path chars (/ and NULL) are removed from fname
+      fname := map(fname, "/\0", "--")
+
+      fname := \opts["p"] || fname
+      fname := fname || \opts["d"]
+
+      if out := \opts["o"] then {
+         if Files.is_directory(out) then
+            out := FilePath(out).child(fname).str()
+      } else
+         out := fname
+   end
+
+   private pp_out()
+      local s
+      return if FileStream.stderr.is_flowterm_tty() & 
+         s := FilePath(out).canonical().ucs() then
+         Files.begin_link(s) || out || Files.end_link()
+      else
+         out
+   end
+
+   private check_skip()
+      /opts["n"] | fail
+      /opts["over"] | fail
+      \opts["skip"] | fail
+      Files.access(out) | fail
+      if /opts["q"] then
+         write("Skipping existing file ", pp_out())
+      skipped +:= 1
+      return
+   end
+
+   public cleanup()
+      close_input_stream()
+      close_output_stream()
+      rm_tmp()
+   end
+
+   private run()
+      local x
+      while x := @urls do
+         process_one(x)
+      hc.close()
+      task.revert()
+   end
+
+   public run_sched()
+      task := Task(sched, create run()).start()
+      create_client()
+      hc.set_task(task)
+   end
+
+   public run_alone()
+      local x
+      create_client()
+      while x := @urls do
+         process_one(x)
+      hc.close()
+   end
+
+   private create_client()
+      hc := HttpClient()
+      hc.set_timeout(\opts["t"] * 1000)
+      hc.set_retries(\opts["r"])
+      hc.set_user_agent(\opts["agent"])
+      hc.set_ip_version(\opts["ip"])
+      if \opts["nsslv"] then
+         hc.set_ssl_verify(&no)
+      if \opts["nz"] then
+         hc.set_gzip(&no)
+
+      if \opts["close"] then
+         hc.set_keep_alive(&no)
+
+      if \opts["v1"] then
+         hc.set_http_version("1.0")
+
+      if \opts["while"] then
+         hc.set_retry_while_data(&yes)
+
+      hc.set_cookies(cookies)
+
+      if /opts["q"] then {
+         hc.connect(failed, HttpClient.FAILED_EVENT)
+         hc.connect(retrying, HttpClient.RETRYING_EVENT)
+         if \opts["l"] then {
+            hc.connect(read_line, NetClient.READ_LINE_EVENT)
+            hc.connect(read_string, NetClient.READ_STRING_EVENT)
+            hc.connect(writing_line, NetClient.WRITING_LINE_EVENT)
+            hc.connect(writing_string, NetClient.WRITING_STRING_EVENT)
+            hc.connect(connecting, NetClient.CONNECTING_EVENT)
+            hc.connect(connected, NetClient.CONNECTED_EVENT)
+            hc.connect(other, NetClient.CLOSED_EVENT)
+         } else if /opts["npro"] then {
+            hc.connect(progress, HttpClient.PROGRESS_EVENT)
+            hc.connect(complete, HttpClient.COMPLETE_EVENT)
+         }
+      }
+
+      hc.connect(got_headers, "Headers")
+   end
+end
+
+procedure clean_stop(a[])
+   every (!workers).cleanup()
+   stop!a
 end
 
 procedure usage(opts)
@@ -129,26 +424,30 @@ procedure usage(opts)
 end
 
 procedure ip_version(s)
-   return integer(s) = (4 | 6 | 46 | 64 | 0)
+   return integer(s) = (4 | 6 | 46 | 64 | 0) | error("IP version expected")
+end
+
+procedure gen_urls(args)
+   suspend expand_arg(if *args = 0 then |read() else !args)
 end
 
 procedure main(args)
-   local l, f, t, s, cookies, k
+   local t, cookie_file, k, nw
 
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
                           Opt("is",string, "STRING#Input string for a POST request; multiple uses will be concatenated and separated with EOL", &yes),
-                          Opt("form",string, "K=V#Post an HTTP form with entry K=V; multiple uses allowed", &yes),
+                          Opt("form",string_with('='), "K=V#Post an HTTP form with entry K=V; multiple uses allowed", &yes),
                           Opt("type",string, "TYPE#Content type for a POST request"),
                           Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("q",, "Quiet mode"),
-                          Opt("t",integer,"TIMEOUT#Specify timeout (in seconds) to use"),
-                          Opt("r",integer, "RETRIES#Specify number of retries to use"),
+                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
+                          Opt("r",integer_range(0), "RETRIES#Number of retries"),
+                          Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
-                          Opt("a",string, "USER:PASS#Specify authorization"),
-                          Opt("f",string, "FILE#Read URLs from file"),
+                          Opt("a",string_with(':'), "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("l",, "Show HTTP headers and data flow"),
                           Opt("n",string, "FILE#Append to the given partial file"),
@@ -161,8 +460,8 @@ procedure main(args)
                           Opt("agent",string, "Set user agent field"),
                           Opt("while",, "Set the retry-while-data flag"),
                           Opt("close",, "Use Connection: Close"),
-                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0",, "IP version"),
-                          Opt("x",string,"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
+                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0"),
+                          Opt("x",string_with(':'),"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0")],
                           usage)
@@ -181,14 +480,7 @@ procedure main(args)
    total := ok := skipped := 0
    err := []
    failed := []
-
-   hc := HttpClient()
-   hc.set_timeout(\opts["t"] * 1000)
-   hc.set_retries(\opts["r"])
-   hc.set_user_agent(\opts["agent"])
-   hc.set_ip_version(\opts["ip"])
-   if \opts["nsslv"] then
-      hc.set_ssl_verify(&no)
+   invalid := []
 
    if \opts["c"] then
       opts["q"] := &yes
@@ -196,86 +488,51 @@ procedure main(args)
    if \opts["head"] then 
       opts["l"] := &yes
 
-   if \opts["nz"] then
-      hc.set_gzip(&no)
+   cookie_file := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
+   cookies := decode_from_file(cookie_file) | table()
 
-   if \opts["close"] then
-      hc.set_keep_alive(&no)
+   urls := create gen_urls(args)
 
-   if \opts["v1"] then
-      hc.set_http_version("1.0")
+   nw := \opts["w"] | 1
+   workers := []
+   every 1 to nw do
+      put(workers, Worker())
 
-   if \opts["while"] then
-      hc.set_retry_while_data(&yes)
-
-   cookies := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
-   t := decode_from_file(cookies) | table()
-   hc.set_cookies(t)
-
-   l := Monitor()
-   if /opts["q"] then {
-      hc.connect(l.failed, HttpClient.FAILED_EVENT)
-      hc.connect(l.retrying, HttpClient.RETRYING_EVENT)
-      if \opts["l"] then {
-         hc.connect(l.read_line, NetClient.READ_LINE_EVENT)
-         hc.connect(l.read_string, NetClient.READ_STRING_EVENT)
-         hc.connect(l.writing_line, NetClient.WRITING_LINE_EVENT)
-         hc.connect(l.writing_string, NetClient.WRITING_STRING_EVENT)
-         hc.connect(l.connecting, NetClient.CONNECTING_EVENT)
-         hc.connect(l.connected, NetClient.CONNECTED_EVENT)
-         hc.connect(l.other, NetClient.CLOSED_EVENT)
-      } else if /opts["npro"] then {
-         hc.connect(l.progress, HttpClient.PROGRESS_EVENT)
-         hc.connect(l.complete, HttpClient.COMPLETE_EVENT)
-      }
+   if nw = 1 then
+      workers[1].run_alone()
+   else {
+      opts["npro"] := &yes
+      sched := Scheduler(200)
+      every (!workers).run_sched()
+      until sched.empty() do
+         sched.work()
    }
-
-   hc.connect(l.got_headers, "Headers")
-
-   if s := \opts["f"] then {
-      use {
-         f := open(s) | stop("Couldn't open ", s, ": ", &why),
-         every process_one(expand_arg(|read(f)))
-      }
-   } else if *args = 0 then
-      every process_one(expand_arg(|read()))
-   else
-      every process_one(expand_arg(!args))
-
-   hc.close()
 
    if /opts["q"] then {
       ewrite("Summary: Total ", total, ", Okay ", ok, ", Skipped ", skipped, 
-            ", HTTP error ", *err, ", Failed ", *failed)
+            ", HTTP error ", *err, ", Failed ", *failed, ", Invalid ", *invalid)
       if *err > 0 then
          every ewrite("HTTP errors on:" | pp_url(!err))
       if *failed > 0 then
          every ewrite("Failed on:" | pp_url(!failed))
+      if *invalid > 0 then
+         every ewrite("Invalid URL:" | !invalid)
    }
 
    # Save cookies
-   t := cookies || ".bak"
-   encode_to_file(t, Cookie.expire_cookies(hc.get_cookies())) | 
+   t := cookie_file || ".bak"
+   encode_to_file(t, Cookie.expire_cookies(cookies)) | 
       stop("Couldn't encode to temp cookie file ", t, ": ", &why)
 $if _MS_WIN32
-   Files.remove(cookies)
+   Files.remove(cookie_file)
 $endif
    # Use rename not move to ensure it's atomic
-   Files.rename(t, cookies) | stop("Couldn't rename cookie file ", t, ": ", &why)
+   Files.rename(t, cookie_file) | stop("Couldn't rename cookie file ", t, ": ", &why)
 
-   if *err = *failed = 0 then
+   if *err = *failed = *invalid = 0 then
       exit(0)
    else
       exit(1)
-end
-
-procedure pp_out()
-   local s
-   return if FileStream.stderr.is_flowterm_tty() & 
-      s := FilePath(out).canonical().ucs() then
-      Files.begin_link(s) || out || Files.end_link()
-   else
-      out
 end
 
 procedure pp_url(url)
@@ -283,184 +540,6 @@ procedure pp_url(url)
       Files.begin_link(url) || url.str() || Files.end_link()
    else
       url.str()
-end
-
-procedure process_one(a)
-   local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
-      input_stream, content_type, t, k, v, p, f, n, l
-
-   total +:= 1
-
-   url := URL(a) | stop("Invalid url: ", a, ": ", &why)
-   url.scheme == ("http" | "https") | stop("Unknown url scheme: ", url.scheme)
-
-   if /opts["head"] & /opts["c"] then {
-      get_out(url.get_path_last())
-      if check_skip() then
-         fail
-      if /opts["q"] then
-         ewrite("Saving URL ", pp_url(url))
-   }
-
-   hr := HttpRequest().
-      set_url(url).
-      set_helper(HttpRequestHelperImpl())
-
-   if \opts["head"] then 
-      hr.set_method("HEAD")
-
-   hr.set_referer(\opts["e"])
-
-   every s := !\opts["x"] do {
-      s ? {
-         k := tab(upto(':')) | help_stop("Bad -x option")
-         move(1)
-         tab(many(' \t'))
-         v := tab(0)
-         hr.add_header(k, v)
-      }
-   }
-
-   if n := \opts["n"] then {
-      p := Files.stat(n) | stop("Couldn't stat ", n, ": ", &why)
-      hr.set_range(p.size)
-   }
-
-   if \opts["i" | "is"] then {
-      input_stream := if n := \opts["i"] then
-         FileStream(n, FileOpt.RDONLY) | stop("Couldn't open ", n, ": ", &why)
-      else
-         StringStream(cat_lines(opts["is"]))
-      hr.set_input_stream(input_stream)
-      hr.set_method(if \opts["put"] then "PUT" else "POST")
-      content_type := \opts["type"] | "application/x-www-form-urlencoded"
-      hr.set_content_type(content_type)
-   }
-
-   if l := \opts["form"] then {
-      t := table()
-      every s := !l do {
-         s ? {
-            k := tab(upto('=')) | help_stop("Bad -form option")
-            move(1)
-            v := tab(0)
-            t[k] := v
-         }
-      }
-      hr.set_html_form_data(t)
-   }
-
-   if /opts["head"] then {
-      tmp_file := Files.make_temp_filename("http_geturl.", ".bin") | stop("Couldn't create temp file: ", &why)
-      output_stream := BufferStream(FileStream(tmp_file, 
-                                               ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
-                         set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
-      hr.set_output_stream(output_stream)
-   }
-
-   start_t := Prog.get_runtime_millis()
-   if res := hc.retrieve(hr) then {
-      if /opts["head"] then {
-         if \input_stream then
-            input_stream.close() | stop("Couldn't close input_stream: ", &why)
-         output_stream.close() | stop("Couldn't close output_stream: ", &why)
-         if \opts["c"] then {
-            use {
-               f := FileStream(tmp_file),
-               f.copy_to(FileStream.stdout)
-            } | {
-               save_why{Files.remove(tmp_file)}
-               stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
-            }
-            Files.remove(tmp_file)
-         } else {
-            end_t := Prog.get_runtime_millis()
-            kbps := Format.numeric_to_string((hc.get_read() / 1024.0) / ((end_t - start_t) / 1000.0), 1, ',')
-            msg := Format.numeric_to_string(hc.get_read(), 0, ',') || " bytes OK (" || kbps  || " kB/s)"
-
-            if out == Files.NULL_FILE then {
-               Files.remove(tmp_file)
-               msg ||:= " -> " || out
-            } else if \opts["n"] then {
-               Files.append(tmp_file, out) | {
-                  save_why{Files.remove(tmp_file)}
-                  stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
-               }
-               Files.remove(tmp_file)
-               msg ||:= " ->> " || pp_out()
-            } else if \opts["over"] then {
-               Files.move(tmp_file, out) | {
-                  save_why{every Files.remove(tmp_file | out)}
-                  stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
-               }
-               msg ||:= " -> " || pp_out()
-            } else if Files.equal_files(tmp_file, out) then {
-               msg ||:= " : Existing file " || pp_out() || " is identical."
-               Files.remove(tmp_file)
-            } else {
-               out := Files.ensure_unique_filename(out)
-               Files.move(tmp_file, out)  | {
-                  save_why{every Files.remove(tmp_file | out)}
-                  stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
-               }
-               msg ||:= " -> " || pp_out()
-            }
-
-            if /opts["q"] then
-               ewrite(msg)
-         }
-      }
-      ok +:= 1
-   } else {
-      if /opts["head"] then {
-         if \input_stream then
-            input_stream.close() | stop("Couldn't close input_stream: ", &why)
-         output_stream.close() | stop("Couldn't close output_stream: ", &why)
-         Files.remove(tmp_file)
-      }
-      if /hc.abort_flag then {
-         if s := hc.get_http_error() then {
-            put(err, url)
-            if /opts["q"] then
-               ewrite("HTTP Error: ", s, " - no data output")
-         } else {
-            put(failed, url)
-         }
-      }
-   }
-end
-
-procedure get_out(fname)
-   if \opts["n"] then {
-      out := opts["n"]
-      fail
-   }
-
-   if *fname = 0 then
-      fname := "geturl.out"
-
-   # Ensure illegal path chars (/ and NULL) are removed from fname
-   fname := map(fname, "/\0", "--")
-
-   fname := \opts["p"] || fname
-   fname := fname || \opts["d"]
-
-   if out := \opts["o"] then {
-      if Files.is_directory(out) then
-         out := FilePath(out).child(fname).str()
-   } else
-      out := fname
-end
-
-procedure check_skip()
-   /opts["n"] | fail
-   /opts["over"] | fail
-   \opts["skip"] | fail
-   Files.access(out) | fail
-   if /opts["q"] then
-      ewrite("Skipping existing file ", pp_out())
-   skipped +:= 1
-   return
 end
 
 procedure expand_arg(s)
@@ -489,6 +568,9 @@ procedure expand_braces(s)
             l := *s1
             l <:= *s2
             suspend right(integer(s1) to integer(s2) by integer(s3), l, "0")
+         } else if (any(&lcase, s1) & any(&lcase, s2)) |
+                   (any(&ucase, s1) & any(&ucase, s2)) then {
+            suspend char(ord(s1[1]) to ord(s2[1]) by integer(s3))
          } else
             suspend string(integer(s1) to integer(s2) by integer(s3))
       } else
