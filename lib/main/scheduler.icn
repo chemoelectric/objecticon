@@ -83,9 +83,11 @@ class Task()
       poll_req
    private const
       xstate
-   package readable
+   package
       coex,
       state,
+      old_state
+   package readable
       poll_err,
       poll_res,
       interrupt_why,
@@ -138,24 +140,24 @@ class Task()
 
    # Succeed iff the task is currently sleeping
    public is_sleeping()
-      succeed scheduler.is_sleeping(self)
+      succeed state === scheduler.sleeping
    end
 
    # Succeed iff the task is currently polling
    public is_polling()
-      succeed scheduler.is_polling(self)
+      succeed state === scheduler.polling
    end
 
    # Succeed iff the task is currently in the ready state
    public is_ready()
-      succeed scheduler.is_ready(self)
+      succeed state === scheduler.ready
    end
 
    # Succeed iff the task is dormant, meaning it is not active, and is
    # not sleeping, polling or ready, meaning it won't be scheduled by
    # the scheduler, at least until `start` is called on it.
    public is_dormant()
-      succeed scheduler.is_dormant(self)
+      succeed \coex & /state
    end
 
    # Suspend this task, which must be the currently scheduled task, in
@@ -181,7 +183,7 @@ class Task()
    # :  `timeout` - The optional timeout
    #
    public poll(l, timeout)
-      self === scheduler.curr_task | runerr("poll() called on task which is not current")
+      is_current() | runerr("poll() called on task which is not current")
       coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \timeout) | &null
@@ -216,7 +218,7 @@ class Task()
    # :  `self` when the task awakes; fails on interrupt
    #
    public sleep(n)
-      self === scheduler.curr_task | runerr("sleep() called on task which is not current")
+      is_current() | runerr("sleep() called on task which is not current")
       coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \n) | &null
@@ -251,7 +253,7 @@ class Task()
    # placing it immediately into the ready state in the scheduler.
    #
    public yield()
-      self === scheduler.curr_task | runerr("yield() called on task which is not current")
+      is_current() | runerr("yield() called on task which is not current")
       self.coex := &current
       scheduler.now_yield(self)
       link
@@ -264,7 +266,7 @@ class Task()
    # the task's co-expression, `revert` must be used.
    #
    public revert()
-      self === scheduler.curr_task | runerr("revert() called on task which is not current")
+      is_current() | runerr("revert() called on task which is not current")
       self.coex := &current
       scheduler.now_revert()
       link
@@ -321,7 +323,7 @@ class Scheduler()
       poll_timeout,
       coex,
       curr_task
-   private
+   package const
       ready,
       sleeping,
       polling
@@ -340,28 +342,19 @@ class Scheduler()
    end
 
    package start(t)
-      /t.state := ready
-      insert(t.state, t)
+      if /t.state then {
+         t.state := \t.old_state | ready
+         t.old_state := &null
+         insert(t.state, t)
+      }
    end
 
    package stop(t)
-      delete(\t.state, t)
-   end
-
-   package is_sleeping(t)
-      succeed member(sleeping, t)
-   end
-
-   package is_polling(t)
-      succeed member(polling, t)
-   end
-
-   package is_ready(t)
-      succeed member(ready, t)
-   end
-
-   package is_dormant(t)
-      succeed \t.coex & not member(ready | polling | sleeping, t)
+      if \t.state then {
+         t.old_state := t.state
+         delete(t.state, t)
+         t.state := &null
+      }
    end
 
    private set_state(t, x)
@@ -371,14 +364,14 @@ class Scheduler()
    end
 
    package interrupt(t, why)
-      if member(sleeping | polling, t) then {
+      if t.state === (sleeping | polling) then {
          t.interrupt_why := \why | "Interrupted"
          set_state(t, ready)
       }
    end
 
    package notify(t)
-      if member(sleeping | polling, t) then {
+      if t.state === (sleeping | polling) then {
          t.notify_flag := &yes
          set_state(t, ready)
       }
