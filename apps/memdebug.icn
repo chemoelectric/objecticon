@@ -522,9 +522,12 @@ procedure usage(opts)
    exit(0)
 end
 
-procedure main(args)
-   local a
+# Used with options to ignore options after first non-flag argument
+procedure non_flag(x)
+   succeed any(~'\-@', x)
+end
 
+procedure main(args)
    Class.ensure_initialized(MemDebug)
 
    cmds := table(,
@@ -554,23 +557,17 @@ procedure main(args)
                  "kbreak", do_kbreak
       )
 
-   a := []
-   while args[1][1] == "-" do {
-      put(a, pop(args))
-      if a[-1] == ("-hlim" | "-llim" | "-slim" | "-addrs" | "-f") then
-         put(a, pop(args))
-   }
-   opts := options(a, [Opt("m",, "Loaded program is initially stopped"),
-                       Opt("g",, "Use a gui interface rather than the console"),
-                       Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
-                       Opt("s",, "Don't use console line editing (implicit on non-Unix platforms)"),
-                       Opt("f",string,"FILE#Perform commands from file at startup", &yes),
-                       Opt("hlim",integer_range(10),"LIM#Set the history limit for the line editor (default is 500, minimum is 10)"),
-                       Opt("llim",integer_range(0),"LIM#Set the gui interface's log area line limit (default is 600)"),
-                       Opt("slim",integer_range(0),"LIM#Set the string display limit (default is 64)"), 
-                       Opt("addrs",integer_range(0,2),"MODE#Set the address display mode (default is 1)"),
-                       Opt("nk",,"Set kbreak off initially (default is on)")],
-                       usage)
+   opts := options(args, [Opt("m",, "Loaded program is initially stopped"),
+                          Opt("g",, "Use a gui interface rather than the console"),
+                          Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
+                          Opt("s",, "Don't use console line editing (implicit on non-Unix platforms)"),
+                          Opt("f",string,"FILE#Perform commands from file at startup", &yes),
+                          Opt("hlim",integer_range(10),"LIM#Set the history limit for the line editor (default is 500, minimum is 10)"),
+                          Opt("llim",integer_range(0),"LIM#Set the gui interface's log area line limit (default is 600)"),
+                          Opt("slim",integer_range(0),"LIM#Set the string display limit (default is 64)"), 
+                          Opt("addrs",integer_range(0,2),"MODE#Set the address display mode (default is 1)"),
+                          Opt("nk",,"Set kbreak off initially (default is on)")],
+                          usage,, ignore_after(non_flag))
    if *args = 0 then
       help_stop("Program and optional arguments expected.")
 

@@ -86,6 +86,13 @@ procedure msg(a[])
       write!a
 end
 
+procedure add_from_stdin()
+   local i
+   i := 0
+   every add_note(|read()) do i +:= 1
+   msg(i, " note(s) added")
+end
+
 procedure add_from_clipboard()
    local i, d
    d := GetSelection(Selection.CLIPBOARD, [Selection.URI_LIST_TARGET, Selection.UTF8_STRING_TARGET]).show_modal()
@@ -95,7 +102,7 @@ procedure add_from_clipboard()
       if d.type == Selection.URI_LIST_TARGET then {
          i := 0
          every add_note(URL(separate_lines(d.result))) do i +:= 1
-         msg(i, " URL(s) added")
+         msg(i, " note(s) added")
       } else {  # String result
          add_note(d.result)
          msg("Note added")
@@ -169,6 +176,11 @@ procedure pop_some(a)
       suspend s
 end
 
+# Used with options, to ignore options after a "run" command.
+procedure run_arg(x)
+   succeed x == "run"
+end
+
 procedure usage(opts)
    write("Usage: note [OPTIONS] CMD ...")
    write("Manage a list of URLs")
@@ -182,6 +194,7 @@ procedure usage(opts)
    help_line("run CMD ARG ...", "Run command substituting notes for {}")
    help_line("save F", "Save notes to file")
    help_line("u", "Add URLs from clipboard")
+   help_line("i", "Add URLs from standard input")
    help_line("uniq", "Trim notes to eliminate duplicates")
    help_line("sort", "Sort notes")
    help_line("x", "Clear all notes") 
@@ -191,17 +204,12 @@ procedure usage(opts)
 end
 
 procedure main(a)
-   local c, a1
-
-   # Be careful not to process options from any "run" command.
-   a1 := []
-   while any(~&letters, a[1]) do
-      put(a1, pop(a))
-
-   opts := options(a1, [Opt("u",, "(Run) Substitute file:// URLs rather than paths"),
-                        Opt("s",, "Silent mode"),
-                        Opt("k",, "Never modify existing notes file"),
-                        Opt("i",, "Ignore existing notes file (implies -k)")], usage)
+   local c
+   opts := options(a, [Opt("u",, "(Run) Substitute file:// URLs rather than paths"),
+                       Opt("s",, "Silent mode"),
+                       Opt("k",, "Never modify existing notes file"),
+                       Opt("i",, "Ignore existing notes file (implies -k)")],
+                       usage,, ignore_after(run_arg))
 
    if /opts["i"] then
       load_notes()
@@ -232,6 +240,9 @@ procedure main(a)
          }
          "u": {
             add_from_clipboard()
+         }
+         "i": {
+            add_from_stdin()
          }
          "save": {
             save_to(pop_one(a))
