@@ -4938,7 +4938,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse_link(e, p, context)
-      if map(e.get_attribute(u"REL")) == (u"icon" | u"shortcut icon") then {
+      if map(e.get_attribute(u"REL")) == ("icon" | "shortcut icon") then {
          # Favour png file if available
          if /page_favicon_url | (map(e.get_attribute(u"TYPE")) == "image/png") then
             page_favicon_url := mk_link(e.get_attribute(u"HREF"))
@@ -5663,7 +5663,7 @@ class SimpleBrowserUI(BrowserUI)
    end
 
    protected is_external(url)
-      return not(url.scheme == (u"page" | u"img"))
+      return not(url.scheme == ("page" | "img"))
    end
 
    public override create_link_menu(url)

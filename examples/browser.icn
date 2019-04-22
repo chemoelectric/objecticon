@@ -213,7 +213,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
 
    public update_visited(url, title)
       local e, i
-      if url.scheme == (u"cache" | u"config") then
+      if url.scheme == ("cache" | "config") then
          fail
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
