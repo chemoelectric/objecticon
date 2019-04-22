@@ -84,8 +84,9 @@ end
 
 class ClipboardHandler()
    private
-      worker, req
-   private readable
+      dialog,
+      worker,
+      req,
       result
 
    private handle_paste_response(target_type, data)
@@ -105,15 +106,20 @@ class ClipboardHandler()
       }
    end
 
-   public new(dialog, worker)
-      self.worker := worker
-      self.req := worker.req
+   public act()
       dialog.request_selection(Selection.CLIPBOARD, 
                                [Selection.URI_LIST_TARGET, Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
                                handle_paste_response)
-      return
+      worker.task.sleep()
+      return result
    end
 
+   public new(dialog, worker)
+      self.dialog := dialog
+      self.worker := worker
+      self.req := worker.req
+      return
+   end
 end
 
 class BrowserDialog(Dialog, WorkerPoolOwner)
@@ -438,10 +444,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    private clipboard_handler(worker)
-      local h
-      h := ClipboardHandler(self, worker)
-      worker.task.sleep()
-      return h.result
+      return ClipboardHandler(self, worker).act()
    end
 
    private config_handler(worker)
