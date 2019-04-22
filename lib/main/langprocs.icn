@@ -847,7 +847,11 @@ end
 # ~
 class New()
    public new(a[])
-      every Class.get(self, 1 to Class.get_n_instance_fields(self)) := pop(a)
+      local i, v
+      every i := 1 to Class.get_n_instance_fields(self) do {
+         v := pop(a) | break
+         Class.get(self, i) := v
+      }
       return
    end
 end
