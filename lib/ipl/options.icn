@@ -490,10 +490,14 @@ procedure ucs_with(q)
    return lpartial(text_with_impl, ucs, q)
 end
 
-package procedure ignore_after_impl(d, x, t)
-   if /d[1] & d[2](x, t) then
-      d[1] := &yes
-   succeed \d[1]
+package class IgnoreAfterImpl(New)
+   private f, fl
+
+   public call(x, t)
+      if /fl & f(x, t) then
+         fl := &yes
+      succeed \fl
+   end
 end
 
 # A helpful procedure to use as an ignoreproc to `option`.  The
@@ -501,5 +505,5 @@ end
 # then option processing ceases, and all further arguments are treated
 # as-is.
 procedure ignore_after(f)
-   return lpartial(ignore_after_impl, [&no, f])
+   return IgnoreAfterImpl(f).call
 end
