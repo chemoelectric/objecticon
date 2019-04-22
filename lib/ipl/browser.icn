@@ -351,7 +351,7 @@ class ProgSubWorker(SubWorker)
 
    public override get_data(worker)
       local ts, f, d, ps
-      if (\worker.req.referer).scheme == (u"http" | u"https") then
+      if (\worker.req.referer).scheme == ("http" | "https") then
          return error("Can't run a prog from an http page")
       f := worker.req.url.get_decoded_path()
       d := use {
@@ -562,7 +562,7 @@ class HttpSubWorker(SubWorker)
          hreq := HttpRequest().
             set_helper(helper).
             set_header("accept-charset", "UTF-8, ISO-8859-1")
-         if (\req.referer).scheme == (u"http" | u"https") then
+         if (\req.referer).scheme == ("http" | "https") then
             hreq.set_referer(req.referer)
 
          if req.kind === Worker.DOWNLOAD then {
@@ -692,7 +692,7 @@ class Worker()
    end
 
    public cancel()
-      if \req then {
+      if \req & /cancelled then {
          cancelled := &yes
          task.interrupt()
          (\sub_worker).cancel()
@@ -785,7 +785,7 @@ class Worker()
 
    private handle_launch_req()
       local pid, f
-      if (\req.referer).scheme == (u"http" | u"https") then
+      if (\req.referer).scheme == ("http" | "https") then
          return error("Can't launch a prog from an http page")
       f := req.url.get_decoded_path()
       pid := System.fork() | fail
@@ -4931,7 +4931,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private get_favicon()
       if /page_favicon_url then {
-         page_url.scheme == (u"http" | u"https") | fail
+         page_url.scheme == ("http" | "https") | fail
          page_favicon_url := clone(page_url).set_path(u"/favicon.ico")
       }
       enqueue(Req(self, page_favicon_url, page_url, got_favicon, page_resp.req.kind))
@@ -5433,7 +5433,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          s ||:= "Title: " || to_content(page_title) || "<p>"
       if ct := \page_resp.content_type then
          s ||:= "Content-type: " || to_content(ct.to_rfc2616()) || "<p>"
-      if l := \page_resp.req.referer & (l.scheme == (u"http" | u"https")) then
+      if l := \page_resp.req.referer & (l.scheme == ("http" | "https")) then
          s ||:= "Referer: " || mk_anchor(l) || "<p>"
       if e := \page_resp.err then
          s ||:= "Error: " || to_content(e) || "<p>"
