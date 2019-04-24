@@ -833,3 +833,25 @@ procedure extract_package(s)
    s ? if tab(backto('.',, 0) - 1) then
       return tab(1)
 end
+
+# This class just provides a simple constructor which initializes the
+# instance fields in the order they were defined in the class, from
+# the given parameters.  In other words, rather like a record
+# constructor.
+#
+# Example :-
+# ~
+#    class Abc(New) public const a, b, c end
+#    ...
+#    x := Abc(1,2,3)  # Sets a,b,c to 1,2,3 respectively
+# ~
+class New()
+   public new(a[])
+      local i, v
+      every i := 1 to Class.get_n_instance_fields(self) do {
+         v := pop(a) | break
+         Class.get(self, i) := v
+      }
+      return
+   end
+end

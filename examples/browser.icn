@@ -84,6 +84,46 @@ class PageMenu(DynamicMenu)
    end
 end
 
+class ClipboardHandler()
+   private
+      dialog,
+      worker,
+      req,
+      result
+
+   private handle_paste_response(target_type, data)
+      local u
+      # Check that the request wasn't cancelled
+      if worker.req === req then {
+         worker.task.notify()
+         result := "<html><title>Clipboard</title>"
+         if /data then
+            result ||:= "No selection available"
+         else if target_type == Selection.URI_LIST_TARGET then {
+            every u := URL(separate_lines(data)) do
+               result ||:= Browser.mk_anchor(u) || "<br>"
+         } else
+            result ||:= "<pre>" || Browser.to_content(data) || "</pre>"
+         result ||:= "</html>"
+      }
+   end
+
+   public act()
+      dialog.request_selection(Selection.CLIPBOARD, 
+                               [Selection.URI_LIST_TARGET, Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                               handle_paste_response)
+      worker.task.sleep()
+      return result
+   end
+
+   public new(dialog, worker)
+      self.dialog := dialog
+      self.worker := worker
+      self.req := worker.req
+      return
+   end
+end
+
 class BrowserDialog(Dialog, WorkerPoolOwner)
    private readable
       settings,
@@ -212,7 +252,7 @@ $endif
 
    public update_visited(url, title)
       local e, i
-      if url.scheme == (u"cache" | u"config") then
+      if url.scheme == ("cache" | "config" | "clipboard") then
          fail
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
@@ -436,6 +476,10 @@ $endif
       return ImageCache.get_named_image(n) | return error("Unknown image")
    end
 
+   private clipboard_handler(worker)
+      return ClipboardHandler(self, worker).act()
+   end
+
    private config_handler(worker)
       local req
       req := worker.req
@@ -493,7 +537,8 @@ $endif
       every insert(visited_set, (!settings.visited).url.str())
       pool := WorkerPool(self, settings.pool_size).
          set_cookies(cookies).
-         add_scheme_handler("config", config_handler)
+         add_scheme_handler("config", config_handler).
+         add_scheme_handler("clipboard", clipboard_handler)
       pool.set_authentications(\settings.authentications)
       pool.set_cache(\settings.cache)
       pool.cache.set_size(settings.cache_size_mb * 1024*1024)
@@ -735,7 +780,7 @@ class DownloadTab(TabItem)
          msg("Not a valid URL: " || &why)
    end
 
-   private handle_paste_response(target_type, data, e)
+   private handle_paste_response(target_type, data)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
@@ -744,9 +789,8 @@ class DownloadTab(TabItem)
 
    private on_paste_url(ev)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
-                                      ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_paste_response, 
-                                      ev)
+                                      [Selection.URI_LIST_TARGET, Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response)
    end
 
    private on_copy_urls(ev)
@@ -1411,7 +1455,7 @@ class BrowserTab(TabItem, BrowserUI)
       } else {
          every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
             m1.add(BrowserDialog.create_open_with_menu_item(de, url.ucs()))
-         if url.scheme == (u"http" | u"https") then {
+         if url.scheme == ("http" | "https") then {
             m.add(TextMenuItem().
                   set_label("Download").
                   connect(create download(url, browser.page_url), Event.ACTION))
@@ -1659,7 +1703,7 @@ class BrowserTab(TabItem, BrowserUI)
       browser.goto(parent_dialog.settings.home_url)
    end
 
-   private handle_paste_response(target_type, data, e)
+   private handle_paste_response(target_type, data)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
@@ -1668,9 +1712,8 @@ class BrowserTab(TabItem, BrowserUI)
 
    private on_paste_url(ev)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
-                                      ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_paste_response, 
-                                      ev)
+                                      [Selection.URI_LIST_TARGET, Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response)
    end
 
    private on_refresh(ev)

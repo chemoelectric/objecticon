@@ -272,6 +272,10 @@ end
 #                   Already processed arguments will have been removed
 #                   from `arg`.  If `errproc` is omitted, stop() is
 #                   called if an error is detected.
+#
+#   :   `ignoreproc` - a procedure invoked for every argument, if it
+#                   succeeds then the argument is added to the argument
+#                   result list without option processing.
 #  `
 #     Instead of an option string, a list of `Opt` objects may be given
 #  instead.  This allows a descriptive help string to be given for
@@ -298,7 +302,7 @@ end
 #     Upon return, the option arguments are removed from arg, leaving
 #  only the non-option arguments.
 #
-procedure options(arg, opts, usage, errproc)
+procedure options(arg, opts, usage, errproc, ignoreproc)
    local fList, fileArg, fn, ignore, optname, opttable, x,
       option, k, v, p, opt, opttype, convert
    #
@@ -346,7 +350,7 @@ procedure options(arg, opts, usage, errproc)
    #
    while x := get(arg) do {
       if /x then ignore := &null     # if end of args from file, stop ignoring
-      else if \ignore then
+      else if \ignore | (\ignoreproc)(x, option) then
          put(fList,x)
       else x ? {
          if ="-" & not pos(0) then {
@@ -484,4 +488,22 @@ end
 # Same as `string_with`, but returns a ucs.
 procedure ucs_with(q)
    return lpartial(text_with_impl, ucs, q)
+end
+
+package class IgnoreAfterImpl(New)
+   private f, fl
+
+   public call(x, t)
+      if /fl & f(x, t) then
+         fl := &yes
+      succeed \fl
+   end
+end
+
+# A helpful procedure to use as an ignoreproc to `option`.  The
+# given function `f` is used to test each argument; when it succeeds
+# then option processing ceases, and all further arguments are treated
+# as-is.
+procedure ignore_after(f)
+   return IgnoreAfterImpl(f).call
 end

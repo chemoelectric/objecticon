@@ -2209,11 +2209,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       goto_bottom()
       parent_dialog.request_selection(Selection.CLIPBOARD, 
                                       [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_paste_response, 
-                                      e)
+                                      handle_paste_response)
    end
 
-   private handle_paste_response(target_type, data, e)
+   private handle_paste_response(target_type, data)
       send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
    end
 
@@ -2221,11 +2220,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       goto_bottom()
       parent_dialog.request_selection(Selection.CLIPBOARD, 
                                       [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_paste_escaped_response, 
-                                      e)
+                                      handle_paste_escaped_response)
    end
 
-   private handle_paste_escaped_response(target_type, data, e)
+   private handle_paste_escaped_response(target_type, data)
       send(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
@@ -2410,7 +2408,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private handle_mpress_response(target_type, data, e)
+   private handle_mpress_response(target_type, data)
       send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
    end
 
@@ -2423,8 +2421,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          goto_bottom()
          parent_dialog.request_selection(Selection.PRIMARY, 
                                          [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                         handle_mpress_response, 
-                                         e)
+                                         handle_mpress_response)
       }
    end
 

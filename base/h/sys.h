@@ -210,6 +210,10 @@
    #include <sys/sysctl.h>
    #include <libproc.h>
    #endif
+   /* Some systems define MAP_ANON instead of MAP_ANONYMOUS */
+   #ifndef MAP_ANONYMOUS
+   #define MAP_ANONYMOUS MAP_ANON
+   #endif
    /* Avoid name clash with symbol in glib math.h */
    #define canonicalize oi_canonicalize
 #endif					/* UNIX */
