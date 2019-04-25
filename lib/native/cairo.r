@@ -315,7 +315,7 @@ function cairo_Context_set_font(self, val)
            wdp wd = ws->display;
            wfp tmp = loadfont(wd, buffstr(&val));
            if (!tmp) {
-               LitWhy("No matching font in system");
+               LitWhy("Invalid or unavailable font");
                fail;
            }
            fontdesc = pango_fc_font_description_from_pattern(tmp->fsp->pattern, TRUE);
