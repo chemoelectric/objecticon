@@ -120,3 +120,6 @@
 #undef OS_BSD
 #undef OS_DARWIN
 #undef OS_CYGWIN
+
+/* System type */
+#define UNIX 1

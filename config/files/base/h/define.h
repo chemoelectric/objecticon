@@ -1,5 +1,4 @@
 /*  
- * Icon configuration file for Unix, built using GNU autoconf.
+ * Custom settings may be added here, to override those in config.h.
+ * This file is not overwritten by configure, if it already exists.
  */
-
-#define UNIX 1
