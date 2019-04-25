@@ -4842,7 +4842,7 @@ void wchar_to_ucs(WCHAR *src, dptr res)
     tended struct descrip utf8;
     wchar_to_utf8_string(src, &utf8);
     if (!cnv:ucs(utf8, *res))
-        syserr("invalid utf-8 returned by wchar_to_utf8_string");
+        syserr("Invalid utf-8 returned by wchar_to_utf8_string");
 }
 
 void wchar_to_utf8_string(WCHAR *src, dptr res)

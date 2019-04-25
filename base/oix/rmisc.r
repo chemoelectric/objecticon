@@ -1623,10 +1623,10 @@ int getname(dptr dp1, dptr dp2)
               }
           }
           if (!prog)
-            syserr("name: unknown integer keyword variable");
+            syserr("name: Unknown integer keyword variable");
         }            
       kywdany:
-        syserr("name: unknown keyword variable");
+        syserr("name: Unknown keyword variable");
 
       kywdhandler: {
         LitStr("&handler", dp2);
@@ -1642,7 +1642,7 @@ int getname(dptr dp1, dptr dp2)
               }
           }
           if (!prog)
-              syserr("name: unknown string keyword variable");
+              syserr("name: Unknown string keyword variable");
         }
       kywdpos: {
         LitStr("&pos", dp2);

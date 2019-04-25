@@ -1592,7 +1592,7 @@ void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
                 c[out_len++] = (char)j;
                 --len;
             } else
-                syserr("attempt to convert cset_to_string with chars > 255");
+                syserr("Attempt to convert cset_to_string with chars > 255");
         }
         pos = 0;
     }
@@ -1865,7 +1865,7 @@ function ord(x, i, j)
                 pos = 0;
             }
             if (len)
-                syserr("ords inconsistent parameters");
+                syserr("ord inconsistent parameters");
             fail;
          }
 
