@@ -257,7 +257,7 @@ typedef struct _wfont {
   int           descent;
   int           maxwidth;               /* max width of one char */
 #if XWindows
-  XftFont     * fsp;
+  PangoLayout  *pangolayout;
 #elif MSWIN32
   gb_Font	*font;
 #endif
@@ -281,6 +281,7 @@ typedef struct _wdisplay {
   struct SharedColor *black, *white, *transparent;
   wfp		fonts[FONTHASH_SIZE], defaultfont;
   XRenderPictFormat *pixfmt, *winfmt, *maskfmt;
+  PangoContext *pangoctx;
   struct wcursor *cursors[CURSORHASH_SIZE];
   Atom          atoms[NUMATOMS];      /* interned atoms */
   struct _wdisplay *previous, *next;

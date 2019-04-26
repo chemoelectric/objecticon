@@ -128,6 +128,8 @@
    #include <X11/Xft/Xft.h>
    #include <fontconfig/fontconfig.h>
    #include <X11/extensions/Xrender.h>
+   #include <pango/pangoxft.h>
+   #include <pango/pangofc-fontmap.h>
 #endif					/* XWindows */
 
 /*

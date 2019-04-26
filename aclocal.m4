@@ -548,7 +548,7 @@ AC_DEFUN([AX_CHECK_X11],
 )
 
     if test "$with_X11" != "no"; then
-           X11_CONFIG="x11 >= 1.5 xrender >= 0.9.7 xft >= 2.3.1 fontconfig >= 2.8.0 freetype2 >= 14.1.8"
+           X11_CONFIG="x11 >= 1.5 xrender >= 0.9.7 xft >= 2.3.1 fontconfig >= 2.8.0 freetype2 >= 14.1.8 pangoxft >= 1.0.0"
            AC_MSG_CHECKING([for $X11_CONFIG])
            if pkg-config $X11_CONFIG; then
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $X11_CONFIG`"

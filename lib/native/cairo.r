@@ -306,7 +306,6 @@ function cairo_Context_set_font(self, val)
    if !cnv:string(val) then
       runerr(103, val)
     body {
-       PangoFontDescription *fontdesc;
        wbp w;
        GetSelfCr();
        w = getwindow(self_cr);
@@ -318,8 +317,10 @@ function cairo_Context_set_font(self, val)
                LitWhy("Invalid or unavailable font");
                fail;
            }
-           fontdesc = pango_fc_font_description_from_pattern(tmp->fsp->pattern, TRUE);
+           pango_layout_set_font_description(getpangolayout(self_cr),
+                                             pango_layout_get_font_description(tmp->pangolayout));
        } else {
+           PangoFontDescription *fontdesc;
            FcPattern *pat, *mat;
            FcResult result;
            char *ps = tofcpatternstr(buffstr(&val));
@@ -334,9 +335,9 @@ function cairo_Context_set_font(self, val)
            fontdesc = pango_fc_font_description_from_pattern(mat, TRUE);
            FcPatternDestroy(pat);
            FcPatternDestroy(mat);
+           pango_layout_set_font_description(getpangolayout(self_cr), fontdesc);
+           pango_font_description_free(fontdesc);
        }
-       pango_layout_set_font_description(getpangolayout(self_cr), fontdesc);
-       pango_font_description_free(fontdesc);
        return self;
     }
 end
@@ -417,7 +418,6 @@ function cairo_Context_new_impl(sur)
        w = getwindow(cr);
        if (w) {
            cairo_matrix_t matrix;
-           PangoFontDescription *fontdesc;
            PangoLayout *layout;
            PangoContext *pc;
            double dpi;
@@ -459,10 +459,10 @@ function cairo_Context_new_impl(sur)
                                      wc->fg->color.alpha / 65535.0);
            }
 
-           fontdesc = pango_fc_font_description_from_pattern(wc->font->fsp->pattern, TRUE);
            layout = getpangolayout(cr);
-           pango_layout_set_font_description(layout, fontdesc);
-           pango_font_description_free(fontdesc);
+           pango_layout_set_font_description(layout,
+                                             pango_layout_get_font_description(wc->font->pangolayout));
+
            /* 
             * Set the resolution (dpi).  Otherwise, fonts won't be converted
             * from point size to pixels properly (a default 96dpi would be

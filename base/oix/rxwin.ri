@@ -81,7 +81,7 @@ static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
 static void synch_pos(wsp ws);
-static int limit_strlen(word n);
+static void prepare_pango(wfp font, dptr str);
 static char *get_atom_name(wdp wd, Atom a);
 static char *resource_name, *resource_class, *display;
 
@@ -3333,35 +3333,14 @@ int walert(wbp w, int volume)
     XFlush(wd->display);
     return Succeeded;
 }
-/* Xft can't handle very long strings, and drawing very long ones can
- * cause an X error.  So the length of strings is limited when
- * calculating length or drawing. 
- */
-static int limit_strlen(word n)
-{
-    return Min(n, 1500);
-}
 
 int textwidth(wbp w, dptr str)
 {
-    XGlyphInfo	extents; 
-    if (is:string(*str))
-        XftTextExtents8(w->window->display->display,
-                        w->context->font->fsp,
-                        (FcChar8 *)StrLoc(*str),
-                        limit_strlen(StrLen(*str)),
-                        &extents);
-    else
-        XftTextExtentsUtf8(w->window->display->display,
-                           w->context->font->fsp,
-                           (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
-                           limit_strlen(StrLen(UcsBlk(*str).utf8)),
-                           &extents);
-    
-    /* xOff is a short; on long strings it wraps round at 32k, so
-     * anding with 0xffff doubles the range of sensible result
-     * values. */
-    return extents.xOff & 0xffff;
+    int width;
+    wfp font = w->context->font;
+    prepare_pango(font, str);
+    pango_layout_get_size(font->pangolayout, &width, NULL);
+    return PANGO_PIXELS(width);
 }
 
 static void prepare_xft(wbp w)
@@ -3384,35 +3363,54 @@ static void prepare_xft(wbp w)
         XftDrawSetClip(ws->pxft, 0);
 }
 
+static void prepare_pango(wfp font, dptr str)
+{
+    PangoLayout *pl;
+    pl = font->pangolayout;
+    if (is:string(*str)) {
+        if (is_ascii_string(str))
+            pango_layout_set_text(pl, StrLoc(*str), StrLen(*str));
+        else {
+            char *s, *t, *u;
+            word len, i, n;
+            s = StrLoc(*str);
+            len = StrLen(*str);
+            n = 0;
+            for (i = 0; i < len; ++i)
+                n += utf8_seq((unsigned char)s[i], 0);
+            u = t = safe_malloc(n);
+            for (i = 0; i < len; ++i)
+                u += utf8_seq((unsigned char)s[i], u);
+            pango_layout_set_text(pl, t, n);
+            free(t);
+        }
+    } else
+        pango_layout_set_text(pl, StrLoc(UcsBlk(*str).utf8), StrLen(UcsBlk(*str).utf8));
+}
+
 void drawstring(wbp w, int x, int y, dptr str)
 {
     XftColor color;
     wcp wc = w->context;
     wsp ws = w->window;
+    wfp font = wc->font;
+    int width, height;
     prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;
-    if (is:string(*str))
-        XftDrawString8(ws->pxft,
-                       &color,
-                       wc->font->fsp,
-                       x,
-                       y,
-                       (FcChar8 *)StrLoc(*str),
-                       limit_strlen(StrLen(*str)));
-    else
-        XftDrawStringUtf8(ws->pxft,
-                          &color,
-                          wc->font->fsp,
-                          x,
-                          y,
-                          (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
-                          limit_strlen(StrLen(UcsBlk(*str).utf8)));
+    prepare_pango(font, str);
+    pango_xft_render_layout(ws->pxft,
+                            &color,
+                            font->pangolayout,
+                            x * PANGO_SCALE,
+                            (y - font->ascent) * PANGO_SCALE);
+    pango_layout_get_size(font->pangolayout, &width, &height);
     clip(w);
     pix_to_win(ws, 
-               x, y - wc->font->ascent, 
-               textwidth(w, str),
-               wc->font->ascent + wc->font->descent);
+               x, y - font->ascent, 
+               PANGO_PIXELS(width), PANGO_PIXELS(height));
+
+    //printf("pango height %d vs %d\n", PANGO_PIXELS(height), wc->font->ascent + wc->font->descent);
 }
 
 /* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
@@ -3531,9 +3529,12 @@ static wdp alcdisplay(char *s)
     wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
     wd->maskfmt = XRenderFindStandardFormat(wd->display, PictStandardA8);
     wd->winfmt = XRenderFindVisualFormat(wd->display, GetVisual(wd));
+    wd->pangoctx = pango_font_map_create_context(pango_xft_get_font_map(wd->display, DefaultScreen(wd->display)));
+    pango_context_set_base_dir(wd->pangoctx, PANGO_DIRECTION_LTR);
     wd->defaultfont = loadfont(wd, defaultfont);
     if (wd->defaultfont == NULL) {
         LitWhy("Couldn't load default font");
+        g_object_unref(wd->pangoctx);
         XCloseDisplay(wd->display);
         free(wd);
         return NULL;
@@ -3692,10 +3693,12 @@ static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
     XGlyphInfo	extents; 
+    XftFont     *fsp;
+    PangoFontDescription *pangofd;
 
     rv = safe_zalloc(sizeof(struct _wfont));
-    rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
-    if (!rv->fsp){
+    fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
+    if (!fsp){
         free(rv);
         return 0;
     }
@@ -3710,13 +3713,17 @@ static wfp newfont(wdp wd, char *s)
      * of the sample and the font's reported values.
      */
     XftTextExtents8 (wd->display,
-                     rv->fsp,
+                     fsp,
                      (FcChar8 *)allchars,
                      256,
                      &extents);
-    rv->ascent = Max(rv->fsp->ascent, extents.y);
-    rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
-    rv->maxwidth = rv->fsp->max_advance_width;
+    rv->ascent = Max(fsp->ascent, extents.y);
+    rv->descent = Max(fsp->descent, extents.height - extents.y);
+    rv->maxwidth = fsp->max_advance_width;
+    pangofd = pango_fc_font_description_from_pattern(fsp->pattern, TRUE);
+    rv->pangolayout = pango_layout_new(wd->pangoctx);
+    pango_layout_set_single_paragraph_mode(rv->pangolayout, TRUE);
+    pango_layout_set_font_description(rv->pangolayout, pangofd);
     return rv;
 }
 
