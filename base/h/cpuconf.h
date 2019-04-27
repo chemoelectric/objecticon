@@ -24,13 +24,11 @@
    #define F_Var	0x4000000000000000	/* set if variable */
    #define F_Ptr	0x1000000000000000	/* set if value field is ptr */
    #define F_Typecode   0x2000000000000000	/* set if dword incls typecode*/
-#endif					/* WordBits == 64 */
-
+#elif WordBits == 32
 /*
  * 32-bit words.
  */
 
-#if WordBits == 32
    #define LogWordBits	        5		/* log of WordBits */
    #define MaxUWord  ((uword)0xffffffff)   /* largest uword */
    #define MaxWord  ((word)0x7fffffff)   /* largest word */
@@ -40,7 +38,9 @@
    #define F_Var	0x40000000	/* set if variable */
    #define F_Ptr	0x10000000	/* set if value field is pointer */
    #define F_Typecode	0x20000000	/* set if dword includes type code */
-#endif					/* WordBits == 32 */
+#else
+   #error "WordBits must equal either 32 or 64"
+#endif
 
 #ifndef Big
    #define Big 9007199254740992.	/* larger than 2^53 lose precision */
@@ -99,8 +99,9 @@
  * conversion from large integer to string because of its quadratic
  * complexity).
  */
-#define MaxDigits	30
-
+#ifndef MaxDigits
+   #define MaxDigits	30
+#endif
 
 /*
  * What follows is default memory sizing. Implementations with special
