@@ -11,7 +11,7 @@ clean:
 		rm -f *.obj
 
 $(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
-	  ../h/typedefs.h ../h/cpuconf.h
+	  ../h/typedefs.h
 
 identify.obj: ../h/version.h
 

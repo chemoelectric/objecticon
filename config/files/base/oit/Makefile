@@ -25,7 +25,7 @@ etags:
 $(PROG):	$(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(OBJS):	../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
+$(OBJS):	../h/define.h ../h/config.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
 
 $(COBJS):	../h/mproto.h

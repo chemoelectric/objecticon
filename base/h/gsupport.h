@@ -9,4 +9,3 @@
 #include "../h/typedefs.h"
 #include "../h/cstructs.h"
 #include "../h/mproto.h"
-#include "../h/cpuconf.h"
