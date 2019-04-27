@@ -1105,17 +1105,13 @@ static Rune *iso8859_to_runes(dptr str)
     word i, len;
     char *s;
     Rune *r;
-    s = StrLoc(*str);
-    len = StrLen(*str);
 
-    /* Search for non-ascii chars; if none found, return null. */
-    i = 0;
-    while (i < len && (unsigned char)s[i] <= 127)
-        ++i;
-    if (i == len)
+    if (is_ascii_string(str))
         return 0;
 
     /* Convert to Rune array. */
+    s = StrLoc(*str);
+    len = StrLen(*str);
     r = safe_malloc(len * sizeof(Rune));
     for (i = 0; i < len; ++i)
         r[i] = (unsigned char)s[i];

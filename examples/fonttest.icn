@@ -457,6 +457,11 @@ end
 
 class Viewer(DrawScrollArea)
    public font, text
+   public static const MARGIN
+
+   private static init() 
+      MARGIN := scale(10)
+   end
 
    public override set_font(f)
       self.font := f
@@ -483,26 +488,26 @@ class Viewer(DrawScrollArea)
 
    public override calculate_subject_width()
       local cw,sw
-      cw := get_clone() | return 50
+      cw := get_clone() | return scale(50)
       sw := cw.text_width(self.text)
       cw.close()
-      return sw + 20
+      return sw + 2 * MARGIN
    end
 
    public override calculate_subject_height()
       local cw,fh
-      cw := get_clone() | return 50
+      cw := get_clone() | return scale(50)
       fh := cw.get_font_height()
       cw.close()
-      return fh + 20
+      return fh + 2 * MARGIN
    end
 
    public override get_default_vertical_increment()
-      return 10
+      return scale(10)
    end
 
    public override get_default_horizontal_increment()
-      return 10
+      return scale(10)
    end
 
    public override draw(r)
@@ -510,16 +515,16 @@ class Viewer(DrawScrollArea)
 
       cw := get_clone() | fail
 
-      px := view.x - get_area_x() + 10
-      py := view.y - get_area_y() + 10
+      px := view.x - get_area_x() + MARGIN
+      py := view.y - get_area_y() + MARGIN
 
       fh := cw.get_font_height()
       ah := cw.get_font_ascent()
       dh := cw.get_font_descent()
       cw.set_fg("dark green")
-      cw.draw_rectangle(px, py, get_subject_width()-20 , ah)
+      cw.draw_rectangle(px, py, get_subject_width() - 2 * MARGIN , ah)
       cw.set_fg("red")
-      cw.draw_rectangle(px, py+ah, get_subject_width()-20, dh)
+      cw.draw_rectangle(px, py + ah, get_subject_width() - 2 * MARGIN, dh)
       cw.set_fg("black")
       cw.draw_string(px, py + cw.get_font_ascent(), self.text)
 

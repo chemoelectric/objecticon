@@ -315,7 +315,7 @@ function cairo_Context_set_font(self, val)
            wdp wd = ws->display;
            wfp tmp = loadfont(wd, buffstr(&val));
            if (!tmp) {
-               LitWhy("No matching font in system");
+               LitWhy("Invalid or unavailable font");
                fail;
            }
            fontdesc = pango_fc_font_description_from_pattern(tmp->fsp->pattern, TRUE);
@@ -1658,7 +1658,7 @@ function cairo_Pattern_get_type(ptr)
            case CAIRO_PATTERN_TYPE_LINEAR : return C_integer 3;
            case CAIRO_PATTERN_TYPE_RADIAL : return C_integer 4;
            case CAIRO_PATTERN_TYPE_MESH : return C_integer 5;
-           default: { syserr("unexpected pattern type"); fail; }
+           default: { syserr("Unexpected pattern type"); fail; }
        }
     }
 end
@@ -1936,7 +1936,7 @@ function cairo_Surface_get_type(ptr)
            case CAIRO_SURFACE_TYPE_PS : return C_integer 4;
            case CAIRO_SURFACE_TYPE_PDF : return C_integer 5;
            case CAIRO_SURFACE_TYPE_RECORDING : return C_integer 6;
-           default: { syserr("unexpected surface type"); fail; }
+           default: { syserr("Unexpected surface type"); fail; }
        }
     }
 end

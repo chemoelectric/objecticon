@@ -16,7 +16,7 @@ class IevalTermDialog(TermDialog, MinimalObjectOutput)
 end
 
 class Ieval(MinimalObjectOutput)
-   private 
+   private
       input, output, error, vars, ev, quiet_flag, par, consts,
       oos, trace_flag, parse_flag, last_runerr, ee, hlim,
       elim, llim, imports, files, opts, history, is_flowterm
@@ -55,7 +55,7 @@ class Ieval(MinimalObjectOutput)
          write("            Prog.get_global).").
          write("c3(c)       Show the C3 linearizaton algorithm for class c.").
          write("oos         The ObjectOutputStream used to output results.").
-         write("out         The OutputStream of the terminal.")
+         write("out         The OutputStream of the terminal.").
          write("vars        The environment (as shown by !env), as a table.")
    end
 

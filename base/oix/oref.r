@@ -261,7 +261,7 @@ operator ? random(underef x -> dx)
 
             le = get_lelem_for_index(&ListBlk(dx), i, &j);
             if (!le)
-                syserr("list reference out of bounds in random");
+                syserr("List reference out of bounds in random");
             /* j is the logical index in the element block; convert to
              * the actual position. */
             j += le->first;
@@ -302,7 +302,7 @@ operator ? random(underef x -> dx)
                      if (--n <= 0) {
                         return struct_var(&ep->telem.tval, ep);
 			}
-            syserr("table reference out of bounds in random");
+            syserr("Table reference out of bounds in random");
          }
 
       set: {
@@ -332,7 +332,7 @@ operator ? random(underef x -> dx)
                   for (ep = seg->hslots[j]; BlkType(ep) == T_Selem; ep = ep->telem.clink)
                      if (--n <= 0)
                         return ep->selem.setmem;
-            syserr("set reference out of bounds in random");
+            syserr("Set reference out of bounds in random");
          }
 
       record: {

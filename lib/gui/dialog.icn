@@ -764,7 +764,7 @@ class Dialog(Component)
          Window.MOVE: process_move(l)
          Window.STATE: process_state(l)
          default: {
-            (popup_manager === self) | syserr("shouldn't get a mouse/key event in a popup")
+            (popup_manager === self) | syserr("Shouldn't get a mouse/key event in a popup")
             e := WinEvent!l
             check_entered(e)
             check_click_count(e)
@@ -1071,7 +1071,7 @@ class Dialog(Component)
    private process_tooltip_tick()
       local t
       repeat {
-         (popup_manager === self) | syserr("shouldn't have a tooltip ticker in a popup")
+         (popup_manager === self) | syserr("Shouldn't have a tooltip ticker in a popup")
 
          if \is_blocked_flag then
             # See notes as to why this is better than just hiding & setting state to 0.
