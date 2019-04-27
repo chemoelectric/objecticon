@@ -198,51 +198,6 @@
 
 #define IcodeDelim "[executable Icon binary follows]"
 
-/*
- * Other sizeof macros:
- *
- *  Wsizeof(x)	-- Size of x in words.
- *  Vwsizeof(x) -- Size of x in words, minus the size of a descriptor.	Used
- *   when structures have a potentially null list of descriptors
- *   at their end.
- */
-
-#define Wsizeof(x)	((sizeof(x) + sizeof(word) - 1) / sizeof(word))
-#define Vwsizeof(x)	((sizeof(x) - sizeof(struct descrip) +\
-			   sizeof(word) - 1) / sizeof(word))
-
-/*
- * 64-bit words.
- */
-
-#if WordBits == 64
-   #define LogWordBits	6			/* log of WordBits */
-   #define MaxUWord  ((uword)0xffffffffffffffff) /* largest uword */
-   #define MaxWord  ((word)0x7fffffffffffffff) /* largest word */
-   #define MinWord  ((word)0x8000000000000000) /* smallest word */
-
-   #define F_Nqual      0x8000000000000000	/* set if NOT string qualifier*/
-   #define F_Var	0x4000000000000000	/* set if variable */
-   #define F_Ptr	0x1000000000000000	/* set if value field is ptr */
-   #define F_Typecode   0x2000000000000000	/* set if dword incls typecode*/
-#elif WordBits == 32
-/*
- * 32-bit words.
- */
-
-   #define LogWordBits	        5		/* log of WordBits */
-   #define MaxUWord  ((uword)0xffffffff)   /* largest uword */
-   #define MaxWord  ((word)0x7fffffff)   /* largest word */
-   #define MinWord  ((word)0x80000000)   /* smallest word */
-   
-   #define F_Nqual	0x80000000	/* set if NOT string qualifier */
-   #define F_Var	0x40000000	/* set if variable */
-   #define F_Ptr	0x10000000	/* set if value field is pointer */
-   #define F_Typecode	0x20000000	/* set if dword includes type code */
-#else
-   #error "WordBits must equal either 32 or 64"
-#endif
-
 #ifndef Big
    #define Big 9007199254740992.	/* larger than 2^53 lose precision */
 #endif					/* Big */

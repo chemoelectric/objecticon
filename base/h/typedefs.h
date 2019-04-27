@@ -5,6 +5,30 @@
  * integer type so that sizeof(word)==sizeof(void*)==8*WordBits.
  */
 
+#if WordBits == 64
+   #define LogWordBits	6			/* log of WordBits */
+   #define MaxUWord  ((uword)0xffffffffffffffff) /* largest uword */
+   #define MaxWord  ((word)0x7fffffffffffffff) /* largest word */
+   #define MinWord  ((word)0x8000000000000000) /* smallest word */
+
+   #define F_Nqual      0x8000000000000000	/* set if NOT string qualifier*/
+   #define F_Var	0x4000000000000000	/* set if variable */
+   #define F_Ptr	0x1000000000000000	/* set if value field is ptr */
+   #define F_Typecode   0x2000000000000000	/* set if dword incls typecode*/
+#elif WordBits == 32
+   #define LogWordBits	        5		/* log of WordBits */
+   #define MaxUWord  ((uword)0xffffffff)   /* largest uword */
+   #define MaxWord  ((word)0x7fffffff)   /* largest word */
+   #define MinWord  ((word)0x80000000)   /* smallest word */
+   
+   #define F_Nqual	0x80000000	/* set if NOT string qualifier */
+   #define F_Var	0x40000000	/* set if variable */
+   #define F_Ptr	0x10000000	/* set if value field is pointer */
+   #define F_Typecode	0x20000000	/* set if dword includes type code */
+#else
+   #error "WordBits must equal either 32 or 64"
+#endif
+
 #if IntBits == WordBits
    typedef int word;
    typedef unsigned int uword;
