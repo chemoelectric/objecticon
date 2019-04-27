@@ -33,7 +33,7 @@ $(HDR):		win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win3
                    win32header.obj ../common/mlocal.obj ../common/alloc.obj \
                    ../common/win32.obj $(LIBS) /OUT:$(HDR)
 
-$(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
+$(OBJS):   ../h/define.h ../h/config.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
 
 $(COBJS):	../h/mproto.h

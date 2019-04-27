@@ -12,7 +12,6 @@
 #include "../h/typedefs.h"
 #include "../h/cstructs.h"
 #include "../h/mproto.h"
-#include "../h/cpuconf.h"
 #include "../h/monitor.h"
 #include "../h/rmacros.h"
 #include "../h/rstructs.h"

@@ -3,7 +3,7 @@
 OBJS=   getopt.$O strtbl.$O membuff.$O \
 	mlocal.$O alloc.$O plan9.$O
 
-$OBJS: ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h ../h/typedefs.h ../h/cpuconf.h
+$OBJS: ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h ../h/typedefs.h
 
 clean:V:
 	rm -f *.[$OS] [$OS].out

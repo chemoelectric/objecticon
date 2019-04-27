@@ -30,11 +30,11 @@ $(PROG):	$(OBJS)
 
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \
-	        ../h/cstructs.h ../h/cpuconf.h
+	        ../h/cstructs.h
 
 rttdb.o: ../h/version.h
 rttparse.o : ../h/gsupport.h ../h/config.h ../h/cstructs.h \
-	../h/typedefs.h ../h/cpuconf.h ../h/define.h
+	../h/typedefs.h ../h/define.h
 
 
 #  The following section is commented out because it does not need to be
