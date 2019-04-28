@@ -1211,15 +1211,14 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->format = &imgdataformat_MSBGRA32;
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
 {
     gb_Bitmap *bm;
     gb_Draw d;
     mk_Draw(w, &d);
     bm = imgdata_to_bitmap(imd);
-    gb_draw_Bitmap(&d, x, y, bm);
+    gb_draw_Bitmap(&d, x, y, bm, copy);
     gb_free_Bitmap(bm);
-
 }
 
 struct imgdataformat *getimgdataformat(wbp w)
