@@ -1332,7 +1332,7 @@ static Image *imgdata_to_Image(struct imgdata *imd)
     return im;
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
 {
     wcp wc = w->context;
     wsp ws = w->window;
@@ -1345,7 +1345,7 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
               MkRect(x, y, imd->width, imd->height),
               im, ZP, 
               0, ZP, 
-              wc->drawop->i);
+              copy ? S : wc->drawop->i);
     pix_to_win(ws, x, y, imd->width, imd->height);
     freeimage(im);
     flushimage(display, 1);

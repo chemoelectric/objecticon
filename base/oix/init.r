@@ -204,10 +204,10 @@ long starttime;                         /* used with millisec() for calculating 
 char *currend = NULL;			/* current end of memory region */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
-double defaultfontsize = 12.0;
-char *defaultfont = "fixed";
-double defaultleading = 0.075;
-word defaultipver = 4;                  /* default ip version for dns lookup */
+double defaultfontsize = DefaultFontSize;
+char *defaultfont = DefaultFont;
+double defaultleading = DefaultLeading;
+word defaultipver = DefaultIPVer;                  /* default ip version for dns lookup */
 
 word dodump = 1;			/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)

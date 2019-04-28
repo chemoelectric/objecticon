@@ -989,12 +989,12 @@ class Main(Dialog)
       self.prefs := Prefs()
       Files.access(config_file_name) | return
       self.prefs := decode_from_file(config_file_name) |
-         alert_error(self, ["Problem reading config file " || config_file_name || ":", &why])
+         alert_error(self, ["Problem reading config file " || config_file_name || ": ", &why])
    end
 
    public save_config_file()
       return encode_to_file(config_file_name, prefs) | 
-         alert_error(self, ["Couldn't save to config file " || config_file_name || ":", &why])
+         alert_error(self, ["Couldn't save to config file " || config_file_name || ": ", &why])
    end
 
    public synch_named_images()
@@ -1257,7 +1257,7 @@ class Main(Dialog)
          every f := !Files.list(pp.str()) do {
             if find("plugin", f.name) & f.stat.mode_str[1] == "-" & upto('x', f.stat.mode_str) then {
                fn := pp.child(f.name).str()
-               ce := Prog.load(fn,, 0, 0) | stop("Failed to load plugin:", fn)
+               ce := Prog.load(fn,, 0, 0) | stop("Failed to load plugin: ", fn)
                plugin := Prog.get_global("main", ce)(self) | stop("Plugin ", fn, " didn't return a Plugin from main")
                if member(plugins, plugin.get_unique_id()) then
                   stop("Plugin ", fn, " already found on path")
