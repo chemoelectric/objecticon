@@ -295,3 +295,21 @@
 #ifndef StackCushion
    #define StackCushion 150		/* % limit factor to avoid thrashing*/
 #endif					
+
+#ifndef DefaultFontSize
+   #define DefaultFontSize 12.0
+#endif					
+
+#ifndef DefaultFont
+   #define DefaultFont "fixed"
+#endif					
+
+#ifndef DefaultLeading
+   #define DefaultLeading 0.075
+#endif					
+
+#ifndef DefaultIPVer
+   #define DefaultIPVer 4
+#endif					
+
+
