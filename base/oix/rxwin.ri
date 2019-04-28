@@ -59,7 +59,6 @@ static void synch_state1(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
-static void pic2(wbp w, Picture src, int x, int y, int width, int height);
 static void pat1(wbp w, int x, int y, int width, int height);
 static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
@@ -3038,23 +3037,6 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
     pix_to_win(ws, x, y, width, height);
 }
 
-static void pic2(wbp w, Picture src, int x, int y, int width, int height)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    wdp wd = ws->display;
-    XRenderComposite(wd->display,
-                     wc->drawop->i,
-                     src,          /* src */
-                     None,         /* mask */
-                     ws->ppic,     /* dest */
-                     0,0,          /* src x,y */
-                     0,0,          /* mask x,y */
-                     x, y,         /* dst x,y */
-                     width, height);
-    pix_to_win(ws, x, y, width, height);
-}
-
 static void pat1(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
@@ -3237,18 +3219,28 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
 {
     wsp ws = w->window;
+    wcp wc = w->context;
     wdp wd = ws->display;
     Pixmap pix;
     Picture pic;
     pix = imgdata_to_Pixmap(wd, imd);
     pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, 0, 0);
     clip(w);
-    pic2(w,
-         pic,
-         x, y, imd->width, imd->height);
+
+    XRenderComposite(wd->display,
+                     copy ? PictOpSrc : wc->drawop->i,      /* op */
+                     pic,          /* src */
+                     None,         /* mask */
+                     ws->ppic,     /* dest */
+                     0,0,          /* src x,y */
+                     0,0,          /* mask x,y */
+                     x, y,         /* dst x,y */
+                     imd->width, imd->height);
+    pix_to_win(ws, x, y, imd->width, imd->height);
+
     XFreePixmap(wd->display, pix);
     XRenderFreePicture(wd->display, pic);
 }

@@ -308,7 +308,7 @@ function graphics_Window_draw_image_impl(self, x0, y0, d)
           runerr(0);
       {
       PixelsStaticParam(d, id);
-      drawimgdata(self_w, x, y, id);
+      drawimgdata(self_w, x, y, id, 0);
       }
       return self;
    }
@@ -715,7 +715,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           filter[i].f(&filter[i]);
       }
 
-      drawimgdata(self_w, x, y, imd);
+      drawimgdata(self_w, x, y, imd, 1);
       unlinkimgdata(imd);
       free(filter);
 

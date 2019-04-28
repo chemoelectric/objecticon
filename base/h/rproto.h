@@ -239,7 +239,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int interpimage(dptr d,  struct imgdata *imd);
    int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
    void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
-   void drawimgdata(wbp w, int x, int y, struct imgdata *imd);
+   void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy);
    struct imgdataformat *getimgdataformat(wbp w);
    int is_png(dptr data);
    int is_jpeg(dptr data);
