@@ -66,6 +66,7 @@ static void synch_state(wsp ws, int new_state);
 static void init_geom(wsp ws);
 static void synch_pos(wsp ws, int newx, int newy);
 static void synch_size(wsp ws, int neww, int newh);
+static void ensure_inited(void);
 
 static void show_keystate(char *name, int k);
 static void show_keyevent(UINT msg, WPARAM wp, LPARAM lp);
@@ -196,15 +197,20 @@ void freewbinding(wbp w)
     free(w);
 }
 
+static void ensure_inited(void)
+{
+    if (!inited) {
+        init_window_system();
+        inited = 1;
+    }
+}
+
 wbp wopen(char *display)
 {
     wbp w;
     wsp ws;
 
-    if (!inited) {
-        init_window_system();
-        inited = 1;
-    }
+    ensure_inited();
 
     /*
      * allocate a binding, a window state, and a context
@@ -1569,6 +1575,13 @@ int warppointer(wbp w, int x, int y)
 int readimagefileimpl(char *filename, struct imgdata *imd) 
 {
     gb_Bitmap *bm;
+
+    /* 
+     * We might have to init gdip here, since we can be called from
+     * the Pixels constructor before a Window is created.
+     */
+    ensure_inited();
+
     bm = gb_load_Bitmap(filename);
     if (!bm)
         return NoCvt;
