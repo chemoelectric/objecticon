@@ -17,3 +17,12 @@ clean :
 
 bin/%: 	%.icn
 	oit -sW -o $@ $<
+
+#
+# This is just a hack to stop "Windows Defender" detecting the
+# resulting file as a trojan.  This seems to be triggered by the
+# string "explorer" in the file names table, so the easy solution is
+# just to build it without that table (-l0).
+#
+bin/explorer: 	explorer.icn
+	oit -sW -o $@ -l0 $<
