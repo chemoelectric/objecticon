@@ -1272,9 +1272,11 @@ package class WindowsFileSystem(FileSystem)
    end
 
    private executables(s)
+      local x
       if Files.get_extension(s) then
          return s
-      suspend s || (".exe" | ".bat" | ".com")
+      x := env_string("PATHEXT") | ".COM;.EXE;.BAT"
+      suspend s || Files.split_paths(x)
    end
 
    public override find_exe(f, n, mode)
