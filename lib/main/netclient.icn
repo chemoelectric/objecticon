@@ -151,14 +151,14 @@ $if _MS_WIN32
 
       connection := WinsockStream(domain)
       connection.set_blocking_mode(&no) | {
-         save_why{ close_connection() }
+         quietly_close_connection()
          return error_dont_retry("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
          if errno() = WSAError.EWOULDBLOCK then {
             r := do_poll(Poll.OUT) | {
-               save_why{ close_connection() }
+               quietly_close_connection()
                avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
@@ -173,7 +173,7 @@ $if _MS_WIN32
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
-            save_why{ close_connection() }
+            quietly_close_connection()
             avoid_addr(addr)
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
@@ -247,14 +247,14 @@ $else
 
       connection := SocketStream(domain)
       connection.flag(FileOpt.NONBLOCK) | {
-         save_why{ close_connection() }
+         quietly_close_connection()
          return error_dont_retry("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
             r := do_poll(Poll.OUT) | {
-               save_why{ close_connection() }
+               quietly_close_connection()
                avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
@@ -269,7 +269,7 @@ $else
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
-            save_why{ close_connection() }
+            quietly_close_connection()
             avoid_addr(addr)
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
@@ -277,18 +277,18 @@ $else
       if \ssl_flag then {
          ssl_available() | return error_dont_retry(&why)
          ssl_connection := SslStream(connection, server) | {
-            save_why{ close_connection() }
+            quietly_close_connection()
             return error("Couldn't create SslStream: " || &why)
          }
          until ssl_connection.connect() do {
             ssl_maybe_poll() | {
-               save_why{ close_connection() }
+               quietly_close_connection()
                return error("Couldn't perform SSL connection: " || &why)
             }
          }
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
-               save_why{ close_connection() }
+               quietly_close_connection()
                return error_dont_retry("Couldn't verify SSL connection: " || &why)
             }
          }
@@ -326,6 +326,13 @@ $endif
             return
          }
       }
+   end
+
+   #
+   # Call `close_connection`, saving &why.
+   #
+   protected quietly_close_connection()
+      return save_why{ close_connection() }
    end
 
    #
