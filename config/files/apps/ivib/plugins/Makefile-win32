@@ -10,7 +10,7 @@ PROGEXE=$(PROGS:=.exe)
 all:    $(PROGS)
 
 clean:
-	rm -f *.u packages.txt $(PROGEXE)
+	$(RM) *.u packages.txt $(PROGEXE)
 
 $(PROGU): %.u: %.icn
 	oit -sncW $(PROGSRC)

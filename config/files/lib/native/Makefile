@@ -58,7 +58,7 @@ memdebug.o : memdebug.r
 	$(RM) memdebug.c
 
 clean :
-	rm -f *.u *.o *.so *.a mysql.c ipc.c cairo.c ssl.c
+	$(RM) *.u *.o *.so *.a mysql.c ipc.c cairo.c ssl.c
 
 etags:
 	$(ETAGS) $(RTLTAGS) *.r *.h

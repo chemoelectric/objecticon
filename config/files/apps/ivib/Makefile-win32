@@ -59,7 +59,7 @@ etags:
 	$(ETAGS) $(ICNTAGS) $(SRC) plugin.icn
 
 clean:
-	rm -f *.u packages.txt $(PROG)
+	$(RM) *.u packages.txt $(PROG)
 	$(MAKE) -C plugins clean
 
 %.u: %.icn
