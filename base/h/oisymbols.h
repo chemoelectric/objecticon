@@ -33,6 +33,9 @@ struct oisymbols {
     struct descrip *billiondesc;
     struct descrip *csetdesc;
     struct descrip *rzerodesc;
+    struct sdescrip *fdf;
+    struct sdescrip *ptrf;
+    struct sdescrip *dsclassname;
     struct descrip *defaultwindowlabel;
     double *defaultfontsize;
     char **defaultfont;
