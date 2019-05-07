@@ -9,6 +9,7 @@ import
    util, 
    io,
    lang,
+   ssl,
    ipl.pdco,
    ipl.scan
 $else
@@ -136,8 +137,6 @@ $if _MS_WIN32
 
       close_connection()
       fire(CONNECTING_EVENT)
-      if \ssl_flag then
-         return error_dont_retry("SSL not supported")
       if \path then
          return error_dont_retry("UNIX domain not supported")
       l := dns_query() | return error("Couldn't translate address: " || &why)
@@ -178,6 +177,27 @@ $if _MS_WIN32
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
+
+      if \ssl_flag then {
+         ssl_available() | return error_dont_retry(&why)
+         ssl_connection := SslStream(connection, server) | {
+            quietly_close_connection()
+            return error("Couldn't create SslStream: " || &why)
+         }
+         until ssl_connection.connect() do {
+            ssl_maybe_poll() | {
+               quietly_close_connection()
+               return error("Couldn't perform SSL connection: " || &why)
+            }
+         }
+         if \ssl_verify_flag then {
+            ssl_connection.verify() | {
+               quietly_close_connection()
+               return error_dont_retry("Couldn't verify SSL connection: " || &why)
+            }
+         }
+      }
+
       sbuff := ""
       fire(CONNECTED_EVENT, addr)
       link

@@ -54,7 +54,11 @@ function ssl_SslStream_new_impl(other, host)
        SSL_CTX *ctx;
        SSL *ssl;
        BIO *sbio;
+#if MSWIN32
+       SocketStaticParam(other, fd);
+#else
        FdStaticParam(other, fd);
+#endif
 
        SSL_library_init();
        SSL_load_error_strings();
@@ -147,10 +151,12 @@ function ssl_SslStream_verify(self)
        X509 *peer;
        GetSelfSsl();
 
+#if !MSWIN32
        if ((l = SSL_get_verify_result(self_ssl->ssl)) != X509_V_OK) {
            whyf("Certificate doesn't verify: %s", X509_verify_cert_error_string(l));
            fail;
        }
+#endif
 
        peer = SSL_get_peer_certificate(self_ssl->ssl);
        if (!match_common_name(peer, self_ssl->host) && !match_alt_names(peer, self_ssl->host)) {

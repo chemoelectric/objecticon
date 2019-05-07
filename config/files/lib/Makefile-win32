@@ -6,6 +6,7 @@ all :
 	make -C gui all
 	make -C xml all
 	make -C parser all
+	make -C native all
 
 clean :
 	make -C incl clean
@@ -15,3 +16,4 @@ clean :
 	make -C gui clean
 	make -C xml clean
 	make -C parser clean
+	make -C native clean
