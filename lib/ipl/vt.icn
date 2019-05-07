@@ -293,7 +293,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       EMPTY_ATTR,
       KEY_TABLE,
       C, S, M, M4, M5, K, U, CSM,
-      CHARSET
+      CHARSET,
+      COLORS
 
    public static const
       DEFAULT_HISTORY_SIZE,
@@ -321,6 +322,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       DEFAULT_VT_WIDTH := env_int("OI_VT_DEFAULT_VT_WIDTH", 20) | 80
       DEFAULT_VT_HEIGHT := env_int("OI_VT_DEFAULT_VT_HEIGHT", 5) | 25
       DEFAULT_FONT := env_font("OI_VT_DEFAULT_FONT") | "fixed"
+      COLORS :=  ["black", "dark red", "dark green", "dark yellow", "blue",
+                  "purple", "dark cyan", "pale gray"]
    end
 
    private static setup_charsets()
@@ -1532,24 +1535,9 @@ class Vt(LineBasedScrollArea, MenuMode)
             27 : attr.inverse := &no
             28 : attr.invisible := &no
             29 : attr.crossed := &no
-            30: attr.fg := "black"
-            31: attr.fg := "dark red"
-            32: attr.fg := "dark green"
-            33: attr.fg := "dark yellow"
-            34: attr.fg := "blue"
-            35: attr.fg := "purple"
-            36: attr.fg := "dark cyan"
-            37: attr.fg := "pale gray"
+            30 to 37 : attr.fg := COLORS[n - 29]
             39: attr.fg := &null
-
-            40: attr.bg := "black"
-            41: attr.bg := "dark red"
-            42: attr.bg := "dark green"
-            43: attr.bg := "dark yellow"
-            44: attr.bg := "blue"
-            45: attr.bg := "purple"
-            46: attr.bg := "dark cyan"
-            47: attr.bg := "pale gray"
+            40 to 47 : attr.bg := COLORS[n - 39]
             49: attr.bg := &null
          }
       }
