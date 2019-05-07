@@ -175,6 +175,8 @@ struct oisymbols {
     char * (*salloc)(char *s);
     void * (*padded_malloc)(size_t size);
 #if MSWIN32
+    struct sdescrip *socketf;
+    struct sdescrip *wsclassname;
     WCHAR * (*ucs_to_wchar)(dptr str, int nullterm, word *len);
     void (*wchar_to_utf8_string)(WCHAR *src, dptr res);
     void (*wchar_to_ucs)(WCHAR *src, dptr res);

@@ -179,6 +179,8 @@
 #define salloc (*(imported->salloc))
 #define padded_malloc (*(imported->padded_malloc))
 #if MSWIN32
+#define socketf (*(imported->socketf))
+#define wsclassname (*(imported->wsclassname))
 #define ucs_to_wchar (*(imported->ucs_to_wchar))
 #define wchar_to_utf8_string (*(imported->wchar_to_utf8_string))
 #define wchar_to_ucs (*(imported->wchar_to_ucs))

@@ -4262,23 +4262,6 @@ if (is:null(*self_socket_dptr))
 self_socket = (SOCKET)IntVal(*self_socket_dptr);
 #enddef
 
-#begdef SocketStaticParam(p, m)
-SOCKET m;
-dptr m##_dptr;
-static struct inline_field_cache m##_ic;
-static struct inline_global_cache m##_igc;
-if (!c_is(&p, (dptr)&wsclassname, &m##_igc)) {
-   CMakeStr("io.WinsockStream expected", &t_errortext);
-   runerr(-1, p);
-}
-m##_dptr = c_get_instance_data(&p, (dptr)&socketf, &m##_ic);
-if (!m##_dptr)
-    syserr("Missing socket field");
-if (is:null(*m##_dptr))
-    runerr(219, p);
-(m) = (SOCKET)IntVal(*m##_dptr);
-#enddef
-
 function io_WinsockStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
