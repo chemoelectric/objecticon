@@ -344,7 +344,7 @@ char *canonicalize(char *path)
  *  NB: this buffer is the same as that returned by findexe and
  *  makename.
  * 
- *  cd is the current directory; may be NULL, meaning the "real" cd
+ *  cd is the notional current directory to test before the path
  *  path is the search path value, or NULL if unset.
  *  name is the file name.
  *  extn is the file extension (.icn or .u) to be appended, or NULL if none.
@@ -363,8 +363,6 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
     if (*name_dir) {
         char *tmp;
         int len;
-        if (!cd)
-            return tryfile(0, name, extn);
         len = strlen(cd) + strlen(name_dir) + 1;
         tmp = safe_malloc(len);
         snprintf(tmp, len, "%s%s", cd, name_dir);
