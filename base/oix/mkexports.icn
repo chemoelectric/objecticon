@@ -16,7 +16,7 @@ procedure rev_id()
    return tab(rev_many(&letters ++ &digits ++ '_'))
 end
 
-procedure one_line(s)
+procedure one_line(s, x_only)
    local id, typ, arr, params, i
    s ? {
       fwdspace()
@@ -36,6 +36,7 @@ procedure one_line(s)
          id := rev_id() | stopf("No identifier in line '%s'", s)
          typ := tab(i) || arr
       } else {
+         /x_only | fail
          tab(upto(';')) | stopf("No ; in line '%s'", s)
          tab(backto(')')) | stopf("No ) in line '%s'", s)
          params := tab(backto('(') - 1)
@@ -57,14 +58,14 @@ procedure incomplete(s)
    }
 end
 
-procedure traverse_header(f)
+procedure traverse_header(f, x_only)
    local s, l
    f := open_header(f)
    s := ""
    while l := f.read() do {
       s ||:= l
       incomplete(s) | {
-         one_line(s)
+         one_line(s, x_only)
          s := ""
       }
    }
@@ -134,7 +135,9 @@ procedure main(a)
    opts := options(a, [Opt("t",, "Test mode")])
    home := FilePath(env_string("OI_HOME")) | stop("OI_HOME not set")
    syms := table()
-   every traverse_header("rproto.h" | "rexterns.h" | "mproto.h")
+
+   every traverse_header("graphics.h" | "rexterns.h", &yes)
+   every traverse_header("rproto.h" | "mproto.h")
    if \opts["t"] then {
       write("Symbols:\n\n", to_string(syms, 3))
       every (o1 | o2 | o3) := StringStream()

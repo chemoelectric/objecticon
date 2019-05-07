@@ -36,10 +36,31 @@ struct oisymbols {
     struct sdescrip *fdf;
     struct sdescrip *ptrf;
     struct sdescrip *dsclassname;
+    struct sdescrip *pixclassname;
+#if Graphics
+    struct sdescrip *wclassname;
+#endif
     struct descrip *defaultwindowlabel;
     double *defaultfontsize;
     char **defaultfont;
     double *defaultleading;
+    struct imgdataformat *imgdataformat_A8;
+    struct imgdataformat *imgdataformat_A16;
+    struct imgdataformat *imgdataformat_RGB24;
+    struct imgdataformat *imgdataformat_BGR24;
+    struct imgdataformat *imgdataformat_RGBA32;
+    struct imgdataformat *imgdataformat_ABGR32;
+    struct imgdataformat *imgdataformat_RGB48;
+    struct imgdataformat *imgdataformat_RGBA64;
+    struct imgdataformat *imgdataformat_G8;
+    struct imgdataformat *imgdataformat_GA16;
+    struct imgdataformat *imgdataformat_AG16;
+    struct imgdataformat *imgdataformat_G16;
+    struct imgdataformat *imgdataformat_GA32;
+    struct imgdataformat *imgdataformat_PALETTE1;
+    struct imgdataformat *imgdataformat_PALETTE2;
+    struct imgdataformat *imgdataformat_PALETTE4;
+    struct imgdataformat *imgdataformat_PALETTE8;
     int (*eq)(dptr d1, dptr d2);
     int (*ceq)(dptr dp, char *s);
     int (*anycmp)(dptr dp1,dptr dp2);
