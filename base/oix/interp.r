@@ -16,10 +16,11 @@ static void do_create(void);
 static void do_coret(void);
 static void do_limit(void);
 static void do_scansave(void);
-static void do_tcaseinit(void);
+static void do_tcaseinit2(void);
 static void do_tcaseinsert(void);
-static void do_tcasechoose(void);
-static void do_tcasechoosex(void);
+static void do_tcasechoose2(void);
+static void do_tcaseinit1(void);
+static void do_tcasechoose1(void);
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
 static void fatalerr_139(void);
 static void check_timer(void);
@@ -871,7 +872,7 @@ static void do_scansave()
     EVValD(&new_subject, E_Scan);
 }
 
-static void do_tcaseinit(void)
+static void do_tcaseinit2(void)
 {
     dptr tbl = (dptr)GetAddr;
     word d = GetWord;
@@ -885,30 +886,15 @@ static void do_tcaseinsert(void)
     dptr tbl = (dptr)GetAddr;
     struct descrip entry;
     get_deref(&val);
+    /*
+     * The next word is an address or an offset, depending on whether
+     * this is a tcaseinsert1 or tcaseinsert2 instruction.
+     */
     MakeInt(GetWord, &entry);
     table_insert(tbl, &val, &entry, 0);
 }
 
-static void do_tcasechoose(void)
-{
-    tended struct descrip val;
-    uword hn;
-    word off;
-    int res;
-    union block **dp1;
-    dptr tbl = (dptr)GetAddr;
-    get_deref(&val);
-    ++ipc;            /* tblc */
-    hn = hash(&val);
-    dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
-    if (res)
-        off = IntVal((*dp1)->telem.tval);
-    else
-        off = IntVal(TableBlk(*tbl).defvalue);
-    ipc = (word *)ipc[off];
-}
-
-static void do_tcasechoosex(void)
+static void do_tcasechoose2(void)
 {
     tended struct descrip val;
     uword hn;
@@ -927,6 +913,32 @@ static void do_tcasechoosex(void)
         off = IntVal(TableBlk(*tbl).defvalue);
     curr_pf->lab[labno] = (word *)ipc[2 * off + 1];
     ipc = (word *)ipc[2 * off];
+}
+
+static void do_tcaseinit1(void)
+{
+    dptr tbl = (dptr)GetAddr;
+    word size = GetWord;
+    word d = GetWord;   /* An address */
+    create_table(0, size, tbl);
+    MakeInt(d, &TableBlk(*tbl).defvalue);
+}
+
+static void do_tcasechoose1(void)
+{
+    tended struct descrip val;
+    uword hn;
+    int res;
+    union block **dp1;
+    dptr tbl = (dptr)GetAddr;
+    get_deref(&val);
+    ++ipc;            /* tblc */
+    hn = hash(&val);
+    dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
+    if (res)
+        ipc = (word *)IntVal((*dp1)->telem.tval);
+    else
+        ipc = (word *)IntVal(TableBlk(*tbl).defvalue);
 }
 
 static void check_timer(void)
@@ -1485,23 +1497,33 @@ void interp()
                 break;
             }
 
-            case Op_TCaseInit: {
-                do_tcaseinit();
+            case Op_TCaseInit2: {
+                do_tcaseinit2();
                 break;
             }
 
-            case Op_TCaseInsert: {
+            case Op_TCaseInsert2: {
                 do_tcaseinsert();
                 break;
             }
 
-            case Op_TCaseChoose: {
-                do_tcasechoose();
+            case Op_TCaseChoose2: {
+                do_tcasechoose2();
                 break;
             }
 
-            case Op_TCaseChoosex: {
-                do_tcasechoosex();
+            case Op_TCaseInit1: {
+                do_tcaseinit1();
+                break;
+            }
+
+            case Op_TCaseInsert1: {
+                do_tcaseinsert();
+                break;
+            }
+
+            case Op_TCaseChoose1: {
+                do_tcasechoose1();
                 break;
             }
 

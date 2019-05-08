@@ -1832,30 +1832,20 @@ static void relocate_code(struct progstate *ps, word *c)
                 break;
             }
 
-            case Op_TCaseInit: {
+            case Op_TCaseInit2: {
                 conv_addr();
                 ++pc;        /* def */
                 break;
             }
 
-            case Op_TCaseInsert: {
+            case Op_TCaseInsert2: {
                 conv_addr();
                 conv_var();  /* val */
                 ++pc;        /* entry */
                 break;
             }
 
-            case Op_TCaseChoose: {
-                int n;
-                conv_addr();
-                conv_var();  /* val */
-                n = *pc++;   /* tblc */
-                while (n--)
-                    conv_addr(); /* dest */
-                break;
-            }
-
-            case Op_TCaseChoosex: {
+            case Op_TCaseChoose2: {
                 int n;
                 conv_addr();
                 conv_var();  /* val */
@@ -1863,6 +1853,26 @@ static void relocate_code(struct progstate *ps, word *c)
                 n = *pc++;   /* tblc */
                 while (n--)
                     conv_addr(); /* dest */
+                break;
+            }
+
+            case Op_TCaseInit1: {
+                conv_addr();
+                ++pc;          /* size */
+                conv_addr();   /* def */
+                break;
+            }
+
+            case Op_TCaseInsert1: {
+                conv_addr();
+                conv_var();  /* val */
+                conv_addr();   /* entry */
+                break;
+            }
+
+            case Op_TCaseChoose1: {
+                conv_addr();
+                conv_var();  /* val */
                 break;
             }
 
