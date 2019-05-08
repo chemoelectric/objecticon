@@ -32,12 +32,9 @@
 #define Ir_Limit       32
 #define Ir_Return      33
 #define Ir_MgOp        34
-#define Ir_TCaseInit2  35
-#define Ir_TCaseInsert2 36
-#define Ir_TCaseChoose1 37
-#define Ir_TCaseChoose2 38
-#define Ir_TCaseInit1   39
-#define Ir_TCaseInsert1 40
+#define Ir_TCaseChoose 35
+#define Ir_TCaseInit   36
+#define Ir_TCaseInsert 37
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -297,30 +294,7 @@ struct ir_limit {
     struct ir_var *limit;
 };
 
-struct ir_tcaseinit2 {
-    IR_SUB
-    int def;
-    int no;         /* Sequence number used during code generation */
-    int id;         /* Unique id used for -I output only */
-};
-
-struct ir_tcaseinsert2 {
-    IR_SUB
-    struct ir_tcaseinit2 *tci;
-    struct ir_var *val;
-    int entry;
-};
-
-struct ir_tcasechoose2 {
-    IR_SUB
-    struct ir_tcaseinit2 *tci;
-    struct ir_var *val;
-    int labno;
-    int tblc;
-    int *tbl;
-};
-
-struct ir_tcaseinit1 {
+struct ir_tcaseinit {
     IR_SUB
     int def;
     int no;         /* Sequence number used during code generation */
@@ -328,16 +302,16 @@ struct ir_tcaseinit1 {
     int size;
 };
 
-struct ir_tcaseinsert1 {
+struct ir_tcaseinsert {
     IR_SUB
-    struct ir_tcaseinit1 *tci;
+    struct ir_tcaseinit *tci;
     struct ir_var *val;
     int entry;
 };
 
-struct ir_tcasechoose1 {
+struct ir_tcasechoose {
     IR_SUB
-    struct ir_tcaseinit1 *tci;
+    struct ir_tcaseinit *tci;
     struct ir_var *val;
 };
 

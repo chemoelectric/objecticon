@@ -190,8 +190,7 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
         case Ir_IGoto:
         case Ir_Fail:
         case Ir_Return:
-        case Ir_TCaseChoose1:
-        case Ir_TCaseChoose2:
+        case Ir_TCaseChoose:
         case Ir_SysErr:
             break;
         default:
@@ -648,22 +647,11 @@ static struct ir_limit *ir_limit(struct lnode *n, struct ir_var *limit)
     return res;
 }
 
-static struct ir_tcaseinit2 *ir_tcaseinit2(struct lnode *n, int def)
+static struct ir_tcaseinit *ir_tcaseinit(struct lnode *n, int size, int def)
 {
-    struct ir_tcaseinit2 *res = IRAlloc1(struct ir_tcaseinit2);
+    struct ir_tcaseinit *res = IRAlloc1(struct ir_tcaseinit);
     res->node = n;
-    res->op = Ir_TCaseInit2;
-    res->def = def;
-    res->no = -1;
-    res->id = tcaseinit_id_seq++;
-    return res;
-}
-
-static struct ir_tcaseinit1 *ir_tcaseinit1(struct lnode *n, int size, int def)
-{
-    struct ir_tcaseinit1 *res = IRAlloc1(struct ir_tcaseinit1);
-    res->node = n;
-    res->op = Ir_TCaseInit1;
+    res->op = Ir_TCaseInit;
     res->size = size;
     res->def = def;
     res->no = -1;
@@ -671,46 +659,22 @@ static struct ir_tcaseinit1 *ir_tcaseinit1(struct lnode *n, int size, int def)
     return res;
 }
 
-static struct ir_tcaseinsert2 *ir_tcaseinsert2(struct lnode *n, struct ir_tcaseinit2 *tci, struct ir_var *val, int entry)
+static struct ir_tcaseinsert *ir_tcaseinsert(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int entry)
 {
-    struct ir_tcaseinsert2 *res = IRAlloc1(struct ir_tcaseinsert2);
+    struct ir_tcaseinsert *res = IRAlloc1(struct ir_tcaseinsert);
     res->node = n;
-    res->op = Ir_TCaseInsert2;
+    res->op = Ir_TCaseInsert;
     res->tci = tci;
     res->val = val;
     res->entry = entry;
     return res;
 }
 
-static struct ir_tcaseinsert1 *ir_tcaseinsert1(struct lnode *n, struct ir_tcaseinit1 *tci, struct ir_var *val, int entry)
+static struct ir_tcasechoose *ir_tcasechoose(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val)
 {
-    struct ir_tcaseinsert1 *res = IRAlloc1(struct ir_tcaseinsert1);
+    struct ir_tcasechoose *res = IRAlloc1(struct ir_tcasechoose);
     res->node = n;
-    res->op = Ir_TCaseInsert1;
-    res->tci = tci;
-    res->val = val;
-    res->entry = entry;
-    return res;
-}
-
-static struct ir_tcasechoose2 *ir_tcasechoose2(struct lnode *n, struct ir_tcaseinit2 *tci, struct ir_var *val, int labno, int tblc, int *tbl)
-{
-    struct ir_tcasechoose2 *res = IRAlloc1(struct ir_tcasechoose2);
-    res->node = n;
-    res->op = Ir_TCaseChoose2;
-    res->tci = tci;
-    res->val = val;
-    res->labno = labno;
-    res->tblc = tblc;
-    res->tbl = tbl;
-    return res;
-}
-
-static struct ir_tcasechoose1 *ir_tcasechoose1(struct lnode *n, struct ir_tcaseinit1 *tci, struct ir_var *val)
-{
-    struct ir_tcasechoose1 *res = IRAlloc1(struct ir_tcasechoose1);
-    res->node = n;
-    res->op = Ir_TCaseChoose1;
+    res->op = Ir_TCaseChoose;
     res->tci = tci;
     res->val = val;
     return res;
@@ -2954,16 +2918,16 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_var *e, **var;
             struct ir_info *expr, *def = 0, **selector, **clause;
             struct ir_stack *case_st, *clause_st, *expr_st;
-            int i, j, tl, xc, need_mark;
+            int i, tl, xc, need_mark;
             struct mark_pair *mk;
 
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             var = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
+            tl = make_tmploc(st);
 
             if (x->use_tcase) {
                 xc = get_extra_chunk();
-                tl = make_tmploc(st);
 
                 /* Stack for the expression and selectors */
                 case_st = branch_stack(st);
@@ -3012,11 +2976,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                            ir_goto(n, def->start));
                 } else {
                     if (bounded) {
-                        struct ir_tcaseinit1 *ci;
+                        struct ir_tcaseinit *ci;
                         if (def)
-                            ci = ir_tcaseinit1(n, x->n, def->start);
+                            ci = ir_tcaseinit(n, x->n, def->start);
                         else
-                            ci = ir_tcaseinit1(n, x->n, res->failure);
+                            ci = ir_tcaseinit(n, x->n, res->failure);
                         chunk4(expr->success,
                                OptIns(expr->uses_stack, ir_unmark(n, mk)),
                                ir_enterinit(n, xc), 
@@ -3025,7 +2989,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
                         for (i = 0; i < x->n; ++i) {
                             chunk2(selector[i]->success,
-                                   ir_tcaseinsert1(n, ci, var[i], clause[i]->start),
+                                   ir_tcaseinsert(n, ci, var[i], clause[i]->start),
                                    ir_goto(n, selector[i]->resume));
 
                             if (i < x->n - 1)
@@ -3041,11 +3005,27 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                                    ir_goto(n, res->failure));
                         }
                         chunk1(xc,
-                               ir_tcasechoose1(n, ci, e));
+                               ir_tcasechoose(n, ci, e));
 
                     } else {
-                        struct ir_tcaseinit2 *ci = ir_tcaseinit2(n, x->n);
-                        int *tbl = mb_alloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
+                        struct ir_tcaseinit *ci;
+                        int *tbl = mb_alloc(&ir_func_mb, x->n * sizeof(int));
+
+                        for (i = 0; i < x->n; ++i) {
+                            tbl[i] = get_extra_chunk();
+                            chunk2(tbl[i],
+                                   ir_movelabel(n, tl, clause[i]->resume),
+                                   ir_goto(n, clause[i]->start));
+                        }
+
+                        if (def) {
+                            int def2 = get_extra_chunk();
+                            chunk2(def2,
+                                   ir_movelabel(n, tl, def->resume),
+                                   ir_goto(n, def->start));
+                            ci = ir_tcaseinit(n, x->n, def2);
+                        } else
+                            ci = ir_tcaseinit(n, x->n, res->failure);
 
                         chunk4(expr->success,
                                OptIns(expr->uses_stack, ir_unmark(n, mk)),
@@ -3053,10 +3033,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                                ci,
                                ir_goto(n, selector[0]->start));
 
-                        j = 0;
                         for (i = 0; i < x->n; ++i) {
                             chunk2(selector[i]->success,
-                                   ir_tcaseinsert2(n, ci, var[i], i),
+                                   ir_tcaseinsert(n, ci, var[i], tbl[i]),
                                    ir_goto(n, selector[i]->resume));
 
                             if (i < x->n - 1)
@@ -3070,18 +3049,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                                    ir_goto(n, res->success));
                             chunk1(clause[i]->failure,
                                    ir_goto(n, res->failure));
-                            tbl[j++] = clause[i]->start;
-                            tbl[j++] = clause[i]->resume;
-                        }
-                        if (def) {
-                            tbl[j++] = def->start;
-                            tbl[j++] = def->resume;
-                        } else {
-                            tbl[j++] = res->failure;
-                            tbl[j++] = res->failure;
                         }
                         chunk1(xc,
-                               ir_tcasechoose2(n, ci, e, tl, 2*(x->n + 1), tbl));
+                               ir_tcasechoose(n, ci, e));
                     }
                 }
                 if (def) {
@@ -3091,8 +3061,6 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                            ir_goto(n, res->failure));
                 }
             } else {
-                tl = make_tmploc(st);
-
                 /* Stack for the expression and selectors */
                 case_st = branch_stack(st);
 
@@ -3807,50 +3775,23 @@ static void print_chunk(struct chunk *chunk)
                 fputc('\n', stderr);
                 break;
             }
-            case Ir_TCaseInit2: {
-                struct ir_tcaseinit2 *x = (struct ir_tcaseinit2 *)ir;
-                indentf("\tIr_TCaseInit2 def=%d", x->def);
+            case Ir_TCaseInit: {
+                struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
+                indentf("\tIr_TCaseInit size=%d def=%d", x->size, x->def);
                 fputc('\n', stderr);
                 break;
             }
-            case Ir_TCaseInsert2: {
-                struct ir_tcaseinsert2 *x = (struct ir_tcaseinsert2 *)ir;
-                indentf("\tIr_TCaseInsert2 tci=%d", x->tci->id);
+            case Ir_TCaseInsert: {
+                struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
+                indentf("\tIr_TCaseInsert tci=%d", x->tci->id);
                 fprintf(stderr, " val=");
                 print_ir_var(x->val);
                 fprintf(stderr, ", entry=%d\n", x->entry);
                 break;
             }
-            case Ir_TCaseChoose2: {
-                struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                int i;
-                indentf("\tIr_TCaseChoose2 tci=%d", x->tci->id);
-                fprintf(stderr, " val=");
-                print_ir_var(x->val);
-                fprintf(stderr, ", labno=%d tblc=%d tbl=", x->labno, x->tblc);
-                for (i = 0; i < x->tblc; ++i) {
-                    fprintf(stderr, "%d ", x->tbl[i]);
-                }
-                fputc('\n', stderr);
-                break;
-            }
-            case Ir_TCaseInit1: {
-                struct ir_tcaseinit1 *x = (struct ir_tcaseinit1 *)ir;
-                indentf("\tIr_TCaseInit1 size=%d def=%d", x->size, x->def);
-                fputc('\n', stderr);
-                break;
-            }
-            case Ir_TCaseInsert1: {
-                struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
-                indentf("\tIr_TCaseInsert1 tci=%d", x->tci->id);
-                fprintf(stderr, " val=");
-                print_ir_var(x->val);
-                fprintf(stderr, ", entry=%d\n", x->entry);
-                break;
-            }
-            case Ir_TCaseChoose1: {
-                struct ir_tcasechoose1 *x = (struct ir_tcasechoose1 *)ir;
-                indentf("\tIr_TCaseChoose1 tci=%d", x->tci->id);
+            case Ir_TCaseChoose: {
+                struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                indentf("\tIr_TCaseChoose tci=%d", x->tci->id);
                 fprintf(stderr, " val=");
                 print_ir_var(x->val);
                 fputc('\n', stderr);
@@ -4067,7 +4008,7 @@ static void sanity_check()
                     int op;
                     op = chunk2->inst[chunk2->n_inst - 1]->op;
                     if (op == Ir_Goto || op == Ir_IGoto || op == Ir_Fail ||
-                        op == Ir_Return || op == Ir_TCaseChoose1 || op == Ir_TCaseChoose2 ||
+                        op == Ir_Return || op == Ir_TCaseChoose ||
                         op == Ir_SysErr) {
                         if (chunk2->joined_below)
                             quit("joined below flag wrong");
@@ -4518,8 +4459,7 @@ static void visit_vars(visit_vars_func v)
                 case Ir_EnterInit:
                 case Ir_Fail:
                 case Ir_Cofail:
-                case Ir_TCaseInit1:
-                case Ir_TCaseInit2:
+                case Ir_TCaseInit:
                 case Ir_MoveLabel:
                 case Ir_Resume:
                     break;
@@ -4659,23 +4599,13 @@ static void visit_vars(visit_vars_func v)
                     CHECK(x->limit, 1);
                     break;
                 }
-                case Ir_TCaseInsert2: {
-                    struct ir_tcaseinsert2 *x = (struct ir_tcaseinsert2 *)ir;
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
                     CHECK(x->val, 0);
                     break;
                 }
-                case Ir_TCaseChoose2: {
-                    struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                    CHECK(x->val, 0);
-                    break;
-                }
-                case Ir_TCaseInsert1: {
-                    struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
-                    CHECK(x->val, 0);
-                    break;
-                }
-                case Ir_TCaseChoose1: {
-                    struct ir_tcasechoose1 *x = (struct ir_tcasechoose1 *)ir;
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
                     CHECK(x->val, 0);
                     break;
                 }
@@ -4940,25 +4870,16 @@ static void optimize_goto1(int i)
                 optimize_goto1(x->start_label);
                 break;
             }
-            case Ir_TCaseInit1: {
-                struct ir_tcaseinit1 *x = (struct ir_tcaseinit1 *)ir;
+            case Ir_TCaseInit: {
+                struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
                 optimize_goto_chain(&x->def);
                 optimize_goto1(x->def);
                 break;
             }
-            case Ir_TCaseInsert1: {
-                struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
+            case Ir_TCaseInsert: {
+                struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
                 optimize_goto_chain(&x->entry);
                 optimize_goto1(x->entry);
-                break;
-            }
-            case Ir_TCaseChoose2: {
-                struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                int i;
-                for (i = 0; i < x->tblc; ++i) {
-                    optimize_goto_chain(&x->tbl[i]);
-                    optimize_goto1(x->tbl[i]);
-                }
                 break;
             }
         }
@@ -5041,8 +4962,7 @@ static void renumber_ir()
                 case Ir_EnterInit:
                 case Ir_Fail:
                 case Ir_Cofail:
-                case Ir_TCaseInit1:
-                case Ir_TCaseInit2:
+                case Ir_TCaseInit:
                     break;
 
                 case Ir_Mark: {
@@ -5206,24 +5126,13 @@ static void renumber_ir()
                     renumber_var(x->limit);
                     break;
                 }
-                case Ir_TCaseInsert2: {
-                    struct ir_tcaseinsert2 *x = (struct ir_tcaseinsert2 *)ir;
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
                     renumber_var(x->val);
                     break;
                 }
-                case Ir_TCaseChoose2: {
-                    struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                    renumber_var(x->val);
-                    renumber_lab(&x->labno);
-                    break;
-                }
-                case Ir_TCaseInsert1: {
-                    struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
-                    renumber_var(x->val);
-                    break;
-                }
-                case Ir_TCaseChoose1: {
-                    struct ir_tcasechoose1 *x = (struct ir_tcasechoose1 *)ir;
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
                     renumber_var(x->val);
                     break;
                 }
@@ -5368,21 +5277,13 @@ static void edit_labels(int old, int new)
                     CHECK(x->start_label);
                     break;
                 }
-                case Ir_TCaseChoose2: {
-                    struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                    int i;
-                    for (i = 0; i < x->tblc; ++i) {
-                        CHECK(x->tbl[i]);
-                    }
-                    break;
-                }
-                case Ir_TCaseInit1: {
-                    struct ir_tcaseinit1 *x = (struct ir_tcaseinit1 *)ir;
+                case Ir_TCaseInit: {
+                    struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
                     CHECK(x->def);
                     break;
                 }
-                case Ir_TCaseInsert1: {
-                    struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
                     CHECK(x->entry);
                     break;
                 }
@@ -5519,21 +5420,13 @@ static void sum_seen(int *res)
                     CHECK(x->start_label);
                     break;
                 }
-                case Ir_TCaseChoose2: {
-                    struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                    int i;
-                    for (i = 0; i < x->tblc; ++i) {
-                        CHECK(x->tbl[i]);
-                    }
-                    break;
-                }
-                case Ir_TCaseInit1: {
-                    struct ir_tcaseinit1 *x = (struct ir_tcaseinit1 *)ir;
+                case Ir_TCaseInit: {
+                    struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
                     CHECK(x->def);
                     break;
                 }
-                case Ir_TCaseInsert1: {
-                    struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
                     CHECK(x->entry);
                     break;
                 }

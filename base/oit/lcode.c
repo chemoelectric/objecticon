@@ -160,8 +160,7 @@ static void outwordz(word oword, char *fmt, ...);
 static void outstr(struct strconst *sp, char *fmt, ...);
 static void outdptr(struct centry *ce, char *fmt, ...);
 static void outwordz_nullable(word oword, char *fmt, ...);
-static void tcase_field1(struct ir_tcaseinit1 *x);
-static void tcase_field2(struct ir_tcaseinit2 *x);
+static void tcase_field(struct ir_tcaseinit *x);
 
 #if WordBits == 32
 #define PadWordFmt "%08"XWordFmtCh
@@ -199,32 +198,16 @@ static void word_field(word w, char *desc)
     outword(w);
 }
 
-static int get_tcaseno2(struct ir_tcaseinit2 *x)
+static int get_tcaseno(struct ir_tcaseinit *x)
 {
     if (x->no < 0)
         x->no = ntcase++;
     return x->no;
 }
 
-static void tcase_field2(struct ir_tcaseinit2 *x)
+static void tcase_field(struct ir_tcaseinit *x)
 {
-    int i = get_tcaseno2(x);
-    if (Dflag)
-        fprintf(dbgfile, PadWordFmt ": T[" PadWordFmt "]   #    no=%d\n", pc, (word)i, i);
-    add_relocation(pc, NTH_TCASE, i);
-    outword(0);
-}
-
-static int get_tcaseno1(struct ir_tcaseinit1 *x)
-{
-    if (x->no < 0)
-        x->no = ntcase++;
-    return x->no;
-}
-
-static void tcase_field1(struct ir_tcaseinit1 *x)
-{
-    int i = get_tcaseno1(x);
+    int i = get_tcaseno(x);
     if (Dflag)
         fprintf(dbgfile, PadWordFmt ": T[" PadWordFmt "]   #    no=%d\n", pc, (word)i, i);
     add_relocation(pc, NTH_TCASE, i);
@@ -1090,53 +1073,26 @@ static void lemitcode()
                     emit_ir_var(x->limit, "limit");
                     break;
                 }
-                case Ir_TCaseInit2: {
-                    struct ir_tcaseinit2 *x = (struct ir_tcaseinit2 *)ir;
-                    out_op(Op_TCaseInit2);
-                    tcase_field2(x);
-                    word_field(x->def, "def");
-                    break;
-                }
-                case Ir_TCaseInsert2: {
-                    struct ir_tcaseinsert2 *x = (struct ir_tcaseinsert2 *)ir;
-                    out_op(Op_TCaseInsert2);
-                    tcase_field2(x->tci);
-                    emit_ir_var(x->val, "val");
-                    word_field(x->entry, "entry");
-                    break;
-                }
-                case Ir_TCaseChoose2: {
-                    struct ir_tcasechoose2 *x = (struct ir_tcasechoose2 *)ir;
-                    int i;
-                    out_op(Op_TCaseChoose2);
-                    tcase_field2(x->tci);
-                    emit_ir_var(x->val, "val");
-                    word_field(x->labno, "labno");
-                    word_field(x->tblc, "tblc");
-                    for (i = 0; i < x->tblc; ++i)
-                        labout(x->tbl[i], "dest");
-                    break;
-                }
-                case Ir_TCaseInit1: {
-                    struct ir_tcaseinit1 *x = (struct ir_tcaseinit1 *)ir;
-                    out_op(Op_TCaseInit1);
-                    tcase_field1(x);
+                case Ir_TCaseInit: {
+                    struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
+                    out_op(Op_TCaseInit);
+                    tcase_field(x);
                     word_field(x->size, "size");
                     labout(x->def, "def");
                     break;
                 }
-                case Ir_TCaseInsert1: {
-                    struct ir_tcaseinsert1 *x = (struct ir_tcaseinsert1 *)ir;
-                    out_op(Op_TCaseInsert1);
-                    tcase_field1(x->tci);
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
+                    out_op(Op_TCaseInsert);
+                    tcase_field(x->tci);
                     emit_ir_var(x->val, "val");
                     labout(x->entry, "entry");
                     break;
                 }
-                case Ir_TCaseChoose1: {
-                    struct ir_tcasechoose1 *x = (struct ir_tcasechoose1 *)ir;
-                    out_op(Op_TCaseChoose1);
-                    tcase_field1(x->tci);
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    out_op(Op_TCaseChoose);
+                    tcase_field(x->tci);
                     emit_ir_var(x->val, "val");
                     break;
                 }
