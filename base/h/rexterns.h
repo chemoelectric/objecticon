@@ -81,6 +81,10 @@ extern struct descrip rzerodesc;	/* real 0.0 descriptor */
 extern struct sdescrip fdf;             /* string "fd" */
 extern struct sdescrip ptrf;            /* string "ptr" */
 extern struct sdescrip dsclassname;     /* string "io.DescStream" */
+#if MSWIN32
+extern struct sdescrip socketf;
+extern struct sdescrip wsclassname;
+#endif
 
 
 /*

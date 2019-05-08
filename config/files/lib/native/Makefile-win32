@@ -1,0 +1,20 @@
+include ../../Makedefs
+
+TARGET=
+
+ifneq (@OPENSSL_DIR@,)
+  TARGET:=$(TARGET) objecticonssllib.dll
+endif
+
+all : $(TARGET)
+
+objecticonssllib.dll : ssl.r
+	$(RTT) -x -h gssl.h ssl.r
+	$(CC) $(CFLAGS) /LD /I "@OPENSSL_DIR@\include" ssl.c \
+		"@OPENSSL_DIR@\lib\libssl.lib" \
+		"@OPENSSL_DIR@\lib\libcrypto.lib" \
+		/link /incremental:no /out:$@
+	$(RM) ssl.c
+
+clean :
+	$(RM) *.u *.obj *.lib *.exp *.pdb *.dll mysql.c ipc.c cairo.c ssl.c

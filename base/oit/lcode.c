@@ -175,13 +175,6 @@ static void tcase_field(struct ir_tcaseinit *x);
 
 static struct header hdr;
 
-static int get_tcaseno(struct ir_tcaseinit *x)
-{
-    if (x->no < 0)
-        x->no = ntcase++;
-    return x->no;
-}
-
 static void add_relocation(word pc, int kind, word param)
 {
     struct relocation *r;
@@ -203,6 +196,13 @@ static void word_field(word w, char *desc)
     if (Dflag)
         fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    #    %s=" WordFmt "\n", pc, w, desc, w);
     outword(w);
+}
+
+static int get_tcaseno(struct ir_tcaseinit *x)
+{
+    if (x->no < 0)
+        x->no = ntcase++;
+    return x->no;
 }
 
 static void tcase_field(struct ir_tcaseinit *x)
@@ -1077,7 +1077,8 @@ static void lemitcode()
                     struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
                     out_op(Op_TCaseInit);
                     tcase_field(x);
-                    word_field(x->def, "def");
+                    word_field(x->size, "size");
+                    labout(x->def, "def");
                     break;
                 }
                 case Ir_TCaseInsert: {
@@ -1085,30 +1086,14 @@ static void lemitcode()
                     out_op(Op_TCaseInsert);
                     tcase_field(x->tci);
                     emit_ir_var(x->val, "val");
-                    word_field(x->entry, "entry");
+                    labout(x->entry, "entry");
                     break;
                 }
                 case Ir_TCaseChoose: {
                     struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
-                    int i;
                     out_op(Op_TCaseChoose);
                     tcase_field(x->tci);
                     emit_ir_var(x->val, "val");
-                    word_field(x->tblc, "tblc");
-                    for (i = 0; i < x->tblc; ++i)
-                        labout(x->tbl[i], "dest");
-                    break;
-                }
-                case Ir_TCaseChoosex: {
-                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
-                    int i;
-                    out_op(Op_TCaseChoosex);
-                    tcase_field(x->tci);
-                    emit_ir_var(x->val, "val");
-                    word_field(x->labno, "labno");
-                    word_field(x->tblc, "tblc");
-                    for (i = 0; i < x->tblc; ++i)
-                        labout(x->tbl[i], "dest");
                     break;
                 }
                 default: {

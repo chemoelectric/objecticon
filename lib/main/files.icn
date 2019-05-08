@@ -609,13 +609,15 @@ $endif
    #
    # This procedure searches for a file on a environment-defined path.
    # It follows the same logic as the C function pathfind() in
-   # mlocal.c
+   # mlocal.c, except that the cd check is optional.
    #
    # :Parameters :
    # :  `f` - the file to look for
    # :  `n` - the name of the environment variable holding the path;
    #          if &null then no path is searched
-   # :  `cd` - the current directory; if &null then the "real" cd
+   # :  `cd` - the notional current directory to check before the path;
+   #          may be &null, in which case no current directory
+   #          test is done
    # :  `mode` - the access mode to check for; by default `Access.F_OK`
    #
    public static path_find(f, n, cd, mode)
@@ -632,21 +634,13 @@ $endif
             fail
       }
 
-      # Also don't search if we have a relative name; it is relative to
-      # the cd
-      if p.size() > 1 then {
-         # Prepend cd if given
-         s := FilePath(\cd).append(p).str() | p.str()
-         if access(s, mode) then
-            return s
-         else
-            fail
-      }
-
-      # Neither absolute nor relative.  Try current directory first
-      s := FilePath(\cd).append(p).str() | p.str()
-      if access(s, mode) then
+      # Try current directory first, if given
+      if s := FilePath(\cd).append(p).str() & access(s, mode) then
          return s
+
+      # Don't search the path if we have a relative name
+      if p.size() > 1 then
+         fail
 
       # Search all the elements in the path
       every s := FilePath(split_paths(env_string(\n))).append(p).str() do {
@@ -680,7 +674,7 @@ $endif
          seen := table()
       if t := member(seen, f) then
          return t
-      if t := find_exe(f || LIB_SUFFIX, "OI_NATIVE") then {
+      if t := path_find(f || LIB_SUFFIX, "OI_NATIVE",, Access.X_OK) then {
          insert(seen, f, t)
          return t
       }
@@ -1492,9 +1486,11 @@ package class WindowsFileSystem(FileSystem)
    end
 
    private executables(s)
+      local x
       if Files.get_extension(s) then
          return s
-      suspend s || (".exe" | ".bat" | ".com")
+      x := env_string("PATHEXT") | ".COM;.EXE;.BAT"
+      suspend s || Files.split_paths(x)
    end
 
    public override find_exe(f, n, mode)

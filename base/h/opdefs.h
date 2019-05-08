@@ -106,7 +106,6 @@
 #define Op_TCaseInit     94
 #define Op_TCaseInsert   95
 #define Op_TCaseChoose   96
-#define Op_TCaseChoosex  97
 #define Op_GlobalVal     98
 #define Op_Self          99
 #define Op_Kyes         100
