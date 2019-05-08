@@ -699,7 +699,7 @@ $if _PLAN9
             res := f.get_poll(ev)
             put(r, res)
             if res ~= 0 then
-               done := 1
+               done := &yes
          }
          if \done then
             return r
