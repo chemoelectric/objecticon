@@ -103,7 +103,7 @@ procedure server_main(attach, sess, sched, ff)
    local p, pid, fl, s, mp
    p := FileStream.pipe() | stop(&why)
    /ff := 0
-   ff := ior(ff, ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNOTEG)
+   ff := ior(ff, ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNOTEG, ForkOpt.RFREND)
    pid := System.fork(ff) | stop(&why)
    if pid = 0 then {
       p[1].close()
