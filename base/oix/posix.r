@@ -43,8 +43,14 @@ function posix_System_fork(flag)
       runerr(101, flag)
    body {
       int pid;
-      if (flag & RFMEM)
-          Irunerr(205, flag);
+      /*
+       * Disallow some harmful options; RFMEM for obvious reasons,
+       * and, if RFPROC, disallow RFREND=0.  This is so that the use
+       * of Rendez in FileWorker doesn't clash between processes.
+       */
+      flag &= ~RFMEM;
+      if (flag & RFPROC)
+          flag |= RFREND;
       if ((pid = rfork(flag)) < 0) {
 	 errno2why();
 	 fail;
