@@ -2790,9 +2790,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       WRITING, 
       COMPLETE, 
       ERROR,
-      EOF
-
-   public static const
+      EOF,
       DISCARD,
       FOREGROUND_FLUSH,
       BACKGROUND_FLUSH
@@ -2802,8 +2800,11 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       reader,
       rbuff,
       writer,
-      other,
-      write_on_close
+      other
+
+   private readable
+      write_on_close,
+      blocking_mode_flag
 
    private static init()
       INVALID := 0
@@ -2840,7 +2841,9 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    public override in(n)
       local t, rc
       n := need_integer(n, 1)
-      \reader | return error("Stream not open for reading")
+      \reader | return error("Not open for reading")
+      if /blocking_mode_flag & reader.is_running() then
+         return error("Would block")
       rc := reader.await() | fail
       if rc = 0 then
          return      # eof
@@ -2875,7 +2878,9 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    # call to `out` will not block.
    #
    public flush_out()
-      \writer | return error("Stream not open for writing")
+      \writer | return error("Not open for writing")
+      if /blocking_mode_flag & writer.is_running() then
+         return error("Would block")
       writer.await() | fail
       link
    end
@@ -2896,6 +2901,18 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    #
    public set_write_on_close(x)
       self.write_on_close := x
+      link
+   end
+
+   #
+   # If set to `&no`, then the `in`, `out` and `close` methods will
+   # never block; but will fail instead, setting `&why` to "Would
+   # block".
+   #
+   # By default this is set to `&yes`.
+   #
+   public set_blocking_mode(f)
+      self.blocking_mode_flag := need_flag(f)
       link
    end
 
@@ -3000,7 +3017,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       if can(WRITE) then
          self.writer := FileWorker(other, wbuff_size) | fatalerr("Couldn't create writer FileWorker: " || &why)
       self.other := other
-      self.close_underlying_flag := &yes
+      self.blocking_mode_flag := self.close_underlying_flag := &yes
       self.write_on_close := FOREGROUND_FLUSH
       return
    end
