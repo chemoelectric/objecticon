@@ -11,8 +11,8 @@ all : $(TARGET)
 objecticonssllib.dll : ssl.r
 	$(RTT) -x -h gssl.h ssl.r
 	$(CC) $(CFLAGS) /LD /I "@OPENSSL_DIR@\include" ssl.c \
-		"@OPENSSL_DIR@\lib\libssl.lib" \
-		"@OPENSSL_DIR@\lib\libcrypto.lib" \
+		"@OPENSSL_DIR@\lib\libeay32.lib" \
+		"@OPENSSL_DIR@\lib\ssleay32.lib" \
 		/link /incremental:no /out:$@
 	$(RM) ssl.c
 
