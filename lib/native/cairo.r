@@ -499,10 +499,15 @@ static void ensure(cairo_t *cr)
         return;
     surface = cairo_get_target(cr);
     ws = w->window;
-    if (cairo_xlib_surface_get_drawable(surface) != ws->pix)
-        cairo_xlib_surface_set_drawable(surface,
-                                        ws->pix,
-                                        ws->pixwidth, ws->pixheight);
+    /*
+     * We don't put a check in here to compare the surface's current
+     * drawable against ws->pix (and do nothing if they are equal),
+     * since there is a small chance that ws->pix has been deallocated
+     * and reallocated at the same address, but with a different size.
+     */
+    cairo_xlib_surface_set_drawable(surface,
+                                    ws->pix,
+                                    ws->pixwidth, ws->pixheight);
 }
 
 static void pix_to_win(cairo_t *cr, double x1, double y1, double x2, double y2)
