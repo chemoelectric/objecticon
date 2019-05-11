@@ -1,4 +1,5 @@
 #passthru #undef column
+#passthru #undef list_push
 #passthru #include "mysql.h"
 
 static void field_to_list(MYSQL_FIELD *field, dptr res);

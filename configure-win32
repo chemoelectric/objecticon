@@ -1,10 +1,11 @@
 #!/bin/sh
-unset r_opt s_opt
+unset r_opt s_opt q_opt
 OPTIND=1
-while getopts "s:r" options; do
+while getopts "s:q:r" options; do
     case $options in
         r) r_opt=1 ;;                 # Release mode
         s) s_opt="$OPTARG" ;;
+        q) q_opt="$OPTARG" ;;
         [?]) exit 1 ;;
     esac
 done
@@ -42,7 +43,9 @@ cp config/files/apps/ivib/plugins/Makefile-win32 apps/ivib/plugins/Makefile
 cp config/files/apps/Makefile-win32 apps/Makefile
 cp config/files/apps/oidoc/Makefile-win32 apps/oidoc/Makefile
 cp config/files/examples/Makefile-win32 examples/Makefile
-sed -e "s/@OPENSSL_DIR@/$s_opt/" <config/files/lib/native/Makefile-win32 >lib/native/Makefile
+sed -e "s/@OPENSSL_DIR@/$s_opt/" \
+    -e "s/@MYSQL_DIR@/$q_opt/" \
+    <config/files/lib/native/Makefile-win32 >lib/native/Makefile
 mkdir -p bin examples/bin
 echo creating Makedefs
 x=$(pwd)
