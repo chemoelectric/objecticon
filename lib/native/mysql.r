@@ -351,7 +351,7 @@ end
 
 function mysql_MySql_set_autocommit(self, flag)
    body {
-      my_bool t;
+      int t;
       GetSelfMySql();
       if (!is_flag(&flag))
           runerr(171, flag);
