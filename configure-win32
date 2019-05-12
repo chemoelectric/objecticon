@@ -1,4 +1,11 @@
 #!/bin/sh
+
+# Transform \ to \\
+function double_bs()
+{
+    echo $1 | sed -e "s/\\\/\\\\\\\\/g"
+}
+
 unset r_opt s_opt q_opt
 OPTIND=1
 while getopts "s:q:r" options; do
@@ -43,6 +50,9 @@ cp config/files/apps/ivib/plugins/Makefile-win32 apps/ivib/plugins/Makefile
 cp config/files/apps/Makefile-win32 apps/Makefile
 cp config/files/apps/oidoc/Makefile-win32 apps/oidoc/Makefile
 cp config/files/examples/Makefile-win32 examples/Makefile
+# Transform \ into \\, in both path variables.
+s_opt=$(double_bs "$s_opt")
+q_opt=$(double_bs "$q_opt")
 sed -e "s/@OPENSSL_DIR@/$s_opt/" \
     -e "s/@MYSQL_DIR@/$q_opt/" \
     <config/files/lib/native/Makefile-win32 >lib/native/Makefile
@@ -51,9 +61,9 @@ echo creating Makedefs
 x=$(pwd)
 # The cwd in windows format, eg c:\home\rpp
 w=$(cygpath -w "$x")
-# Transform \s into \\s, eg c:\\home\\rpp
-v=$(echo $w | sed -e "s/\\\/\\\\\\\\/g")
-# /Od disables optimzation, /Zi for debugging
+# Transform \ into \\, eg c:\\home\\rpp
+v=$(double_bs "$w")
+# /Od disables optimization, /Zi for debugging
 if [ -z $r_opt ]; then
     CFLAGS="/Od /Zi /utf-8 /WX"
     LDFLAGS="/DEBUG:FULL /WX"
