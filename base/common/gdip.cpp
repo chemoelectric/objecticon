@@ -506,7 +506,7 @@ void gb_get_metrics(HDC dc, gb_Font *fin, int *ascent, int *descent, int *maxwid
 
     if (draw_debug) {
         char *t = wchar_to_utf8(familyName);
-        dbg("f=%p family name: %s\n",ff,t);
+        dbg("f=%p family name: %s\n",f,t);
         delete[] t;
         dbg("\tsize = %f points\n",f->GetSize());
         dbg("\t     = %d design units\n", (int)ff.GetEmHeight(f->GetStyle()));
