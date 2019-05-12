@@ -165,6 +165,9 @@ struct oisymbols {
     struct b_ucs * (*make_ucs_substring)(struct b_ucs *b, word pos, word len);
     int (*cset_range_of_pos)(struct b_cset *b, word pos);
     int (*need_ucs)(dptr s);
+    int (*stringint_str2int)(stringint * sip, char *s);
+    char * (*stringint_int2str)(stringint * sip, int i);
+    stringint * (*stringint_lookup)(stringint *sip, char *s);
     int (*utf8_check)(char **p, char *end);
     int (*utf8_iter)(char **p);
     int (*utf8_rev_iter)(char **p);
