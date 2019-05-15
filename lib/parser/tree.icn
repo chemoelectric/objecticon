@@ -329,13 +329,15 @@ abstract class IdList(LList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node(lab, 
-                              lpos.child(index),
-                              s.comma,
-                              s.pos))
+         Node(lab, 
+              lpos.child(index),
+              s.comma,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -391,12 +393,14 @@ class AccessList(SimpleLList)
    end
 
    public override put(x)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, x.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         x.pos
       else
-         lpos.set(index, Node(lab,
-                              lpos.child(index),
-                              x.pos))
+         Node(lab,
+              lpos.child(index),
+              x.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -451,13 +455,15 @@ class Invocable(SimpleLList)
    end
 
    public override put(x)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, x.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         x.pos
       else
-         lpos.set(index, Node("invoclist",
-                              lpos.child(index),
-                              x.comma,
-                              x.pos))
+         Node("invoclist",
+              lpos.child(index),
+              x.comma,
+              x.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -496,13 +502,15 @@ class Import(SimpleLList)
    end
 
    public override put(x)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, x.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         x.pos
       else
-         lpos.set(index, Node("importlist",
-                              lpos.child(index),
-                              x.comma,
-                              x.pos))
+         Node("importlist",
+              lpos.child(index),
+              x.comma,
+              x.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -957,10 +965,7 @@ abstract class TopLevel(Tree)
    end
 
    public set_package_flag(x)
-      if /x then
-         pos.set(1, Node.EMPTY)
-      else
-         pos.set(1, x.pos)
+      pos.set(1, if /x then Node.EMPTY else x.pos)
       link
    end
 end
@@ -1203,10 +1208,7 @@ class Global(TopLevel, IdList)
    end
 
    public set_readable_flag(x)
-      if /x then
-         gpos.set(1, Node.EMPTY)
-      else
-         gpos.set(1, x.pos)
+      gpos.set(1,  if /x then Node.EMPTY else x.pos)
       link
    end
 
@@ -1276,13 +1278,15 @@ class ExprList(SimpleLList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("exprlist",
-                              lpos.child(index),
-                              s.comma,
-                              s.pos))
+         Node("exprlist",
+              lpos.child(index),
+              s.comma,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -1331,15 +1335,15 @@ class Compound(SimpleRList)
    end
 
    public override push(s)
-      local n
-      n := lpos.child(index)
-      if n === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("compound",
-                              s.pos,
-                              s.semi,
-                              lpos.child(index)))
+         Node("compound",
+              s.pos,
+              s.semi,
+              lpos.child(index))
+      lpos.set(index, v)
       link
    end
 
@@ -1388,13 +1392,15 @@ class CaseList(SimpleLList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("caselist",
-                              lpos.child(index),
-                              s.semi,
-                              s.pos))
+         Node("caselist",
+              lpos.child(index),
+              s.semi,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -1443,13 +1449,15 @@ class DottedIdentList(SimpleLList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("dottedident",
-                              lpos.child(index),
-                              s.dot,
-                              s.pos))
+         Node("dottedident",
+              lpos.child(index),
+              s.dot,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
