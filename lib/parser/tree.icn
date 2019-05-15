@@ -37,6 +37,18 @@ final class Token()
       return f.writes1(chunk)
    end
 
+   public traverse_all_preorder()
+      coact(self)
+   end
+
+   public traverse_all_postorder()
+      coact(self)
+   end
+
+   public traverse_tokens()
+      coact(self)
+   end
+
    public new(tok, s, chunk, val, line, column, filename)
       self.tok := tok
       self.s := s
@@ -87,6 +99,31 @@ class Node()
 
    public size()
       return *children
+   end
+
+   #
+   # Traverse all the `Node`s and `Token`s in this subtree, including this
+   # `Node`, in preorder ordering.
+   #
+   public traverse_all_preorder()
+      coact(self)
+      every (!children).traverse_all_preorder()
+   end
+
+   #
+   # Traverse all the `Node`s and `Token`s in this subtree, including this
+   # `Node`, in postorder ordering.
+   #
+   public traverse_all_postorder()
+      every (!children).traverse_all_postorder()
+      coact(self)
+   end
+
+   #
+   # Traverse all the `Token`s in this subtree.
+   #
+   public traverse_tokens()
+      every (!children).traverse_tokens()
    end
 
    #
