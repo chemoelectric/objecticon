@@ -1,6 +1,6 @@
 package parser
 
-import util, io
+import util, io, ipl.pdco(Seq)
 
 final class Token()
    public const
@@ -657,13 +657,7 @@ final abstract class Util()
    end
 
    public static first_token(n)
-      local c, t
-      if is(n, Token) then
-         return n
-      every c := n.gen() do {
-         if t := first_token(c) then
-            return t
-      }
+      return Seq{ n.traverse_tokens() }
    end
 
    public static dump(n, l)
