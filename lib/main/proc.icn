@@ -2,6 +2,15 @@ package lang
 
 import util(need_flag, error)
 
+#
+# This class allows information about procedures, functions, etc, to
+# be obtained.  The parameters named `p` to the methods may be any
+# function or procedure or method pointer.  Additionally, a
+# two-element list may be provided.  The first element should be a
+# class, the second a field name or number referencing a method.  This
+# enables information about instance, special or private methods to be
+# obtained.
+#
 final abstract class Proc()
    public static const
       Procedure,

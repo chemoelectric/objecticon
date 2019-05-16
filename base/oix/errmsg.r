@@ -131,13 +131,14 @@ struct errtab errtab[] = {
     {628, "Method removed by translator"},
     {629, "Unresolved native method"},
     {630, "Weakref expected"},
-    {631, "Procedure or methp expected"},
+    {631, "Procedure, methp or 2-element list expected"},
     {632, "Co-expression which is a program's &main expected"},
     {633, "Given program not a child of this program"},
     {634, "Class or constructor expected"},
     {635, "Class, object, constructor or record expected"},
     {636, "Invalid program monitoring sequence"},
     {637, "Keyword expected"},
+    {638, "List not convertible to class method"},
    };
 
 

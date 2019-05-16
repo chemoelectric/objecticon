@@ -46,6 +46,42 @@ struct b_proc *get_proc_for(dptr x)
       methp: 
             return MethpBlk(*x).proc;
         
+      list: {
+            dptr t;
+            tended struct descrip class0, field;
+            word y;
+            int i;
+            struct class_field *cf;
+
+            /* Get the class */
+            t = get_element(x, 1);
+            if (!t)
+                ReturnErrVal(631, *x, 0);
+            class0 = *t;
+            if (!is:class(class0))
+                ReturnErrVal(603, class0, 0);
+
+            /* Get the field */
+            t = get_element(x, 2);
+            if (!t)
+                ReturnErrVal(631, *x, 0);
+            field = *t;
+            /* See CheckField() */
+            if (cnv:C_integer(field, y))
+                MakeInt(y, &field);
+            else if (!cnv:string(field,field))
+                ReturnErrVal(170, field, 0);
+
+            /* Lookup the field, ensure it's a method. */
+            i = lookup_class_field(&ClassBlk(class0), &field, 0);
+            if (i < 0)
+                ReturnErrVal(638, *x, 0);
+            cf = ClassBlk(class0).fields[i];
+            if (!cf->flags & M_Method)
+                ReturnErrVal(638, *x, 0);
+
+            return &ProcBlk(*cf->field_descriptor);
+            }
      default: 
             ReturnErrVal(631, *x, 0);
     }
