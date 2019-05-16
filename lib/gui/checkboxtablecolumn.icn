@@ -15,7 +15,7 @@ class CheckBoxTableColumn(BaseTableColumn)
       mouse_down_listener
 
    public override calculate_line_height()
-      return unchecked_paint.h + 8
+      return unchecked_paint.h + scale(8)
    end
 
    #
