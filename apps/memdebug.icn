@@ -522,11 +522,6 @@ procedure usage(opts)
    exit(0)
 end
 
-# Used with options to ignore options after first non-flag argument
-procedure non_flag(x)
-   succeed any(~'\-@', x)
-end
-
 procedure main(args)
    Class.ensure_initialized(MemDebug)
 
