@@ -1215,6 +1215,8 @@ static void *get_handle(char *filename)
     int i;
     void *handle;
     struct oisymbols **imported;
+    int *version;
+
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1227,9 +1229,23 @@ static void *get_handle(char *filename)
         why(dlerror());
         return 0;
     }
+
+    /* Check version number */
+    version = (int *)dlsym(handle, "oix_version");
+    if (!version) {
+        LitWhy("Symbol 'oix_version' not found");
+        return 0;
+    }
+    if (*version != OixVersion) {
+        whyf("Version mismatch (%d -vs- %d)", *version, OixVersion);
+        return 0;
+    }
+
+    /* Set imported variable if present */
     imported = (struct oisymbols **)dlsym(handle, "imported");
     if (imported)
         *imported = &oiexported;
+
     x = safe_zalloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
@@ -1365,6 +1381,8 @@ static HMODULE get_handle(char *filename)
     HMODULE handle;
     WCHAR *wfilename;
     struct oisymbols **imported;
+    int *version;
+
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1379,6 +1397,19 @@ static HMODULE get_handle(char *filename)
         win32error2why();
         return 0;
     }
+
+    /* Check version number */
+    version = (int *)GetProcAddress(handle, "oix_version");
+    if (!version) {
+        LitWhy("Symbol 'oix_version' not found");
+        return 0;
+    }
+    if (*version != OixVersion) {
+        whyf("Version mismatch (%d -vs- %d)", *version, OixVersion);
+        return 0;
+    }
+
+    /* Set imported variable */
     imported = (struct oisymbols **)GetProcAddress(handle, "imported");
     if (!imported) {
         whyf("Symbol 'imported' not found in dll %s", filename);
@@ -1386,6 +1417,7 @@ static HMODULE get_handle(char *filename)
         return 0;
     }
     *imported = &oiexported;
+
     x = safe_zalloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
