@@ -12,7 +12,7 @@ record ColorStop(offset, color)
 # it isn't.
 #
 procedure cairo_available()
-   succeed \Context.LOADED | error("Cairo not supported")
+   succeed \Context.LOADED | error(Context.WHY)
 end
 
 package procedure to_cairo_color(col)
@@ -871,12 +871,17 @@ end
 final class Context(NoCopy)
    private ptr
 
-   public static const LOADED
+   public static const LOADED, WHY
 
    private static init()
       local t
-      if Class.load_library(t := Files.find_native_lib("objecticoncairolib")) then
-         LOADED := t
+      if t := Files.find_native_lib("objecticoncairolib") then {
+         if Class.load_library(t) then
+            LOADED := t
+         else
+            WHY := "Failed to load cairo library: " || &why
+      } else
+         WHY := "Cairo library not found on OI_NATIVE path"
    end
 
    # Begin a new sub-path. After this call the current point will be

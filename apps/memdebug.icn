@@ -22,7 +22,9 @@ class MemDebug()
    public static native set_flowterm(flag)
 
    private static init() 
-      Class.load_library(Files.find_native_lib("objecticonmemdebug")) | stop("Native library not available") 
+      local t
+      t := Files.find_native_lib("objecticonmemdebug") | stop("Native library not found on OI_NATIVE path")
+      Class.load_library(t) | stop("Native library not available: " || &why) 
    end
 end
 

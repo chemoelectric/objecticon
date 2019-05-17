@@ -6,7 +6,7 @@ import io, lang, util
 # it isn't.
 #
 procedure ssl_available()
-   succeed \SslStream.LOADED | error("SSL not supported")
+   succeed \SslStream.LOADED | error(SslStream.WHY)
 end
 
 #
@@ -17,12 +17,17 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
       ptr,
       other
 
-   public static const LOADED
+   public static const LOADED, WHY
 
    private static init()
       local t
-      if Class.load_library(t := Files.find_native_lib("objecticonssllib")) then
-         LOADED := t
+      if t := Files.find_native_lib("objecticonssllib") then {
+         if Class.load_library(t) then
+            LOADED := t
+         else
+            WHY := "Failed to load ssl library: " || &why
+      } else
+         WHY := "Ssl library not found on OI_NATIVE path"
    end
 
    public native connect()

@@ -6,18 +6,23 @@ import lang, io, util
 # it isn't.
 #
 procedure ipc_available()
-   succeed \Ipc.LOADED | error("Sys-V IPC not supported")
+   succeed \Ipc.LOADED | error(Ipc.WHY)
 end
 
 # This class is just used to check whether the IPC facilities are
 # supported or not.
 #
 final abstract class Ipc()
-   public static const LOADED
+   public static const LOADED, WHY
 
    private static init()
       local t
-      if Class.load_library(t := Files.find_native_lib("objecticonipclib")) then
-         LOADED := t
+      if t := Files.find_native_lib("objecticonipclib") then {
+         if Class.load_library(t) then
+            LOADED := t
+         else
+            WHY := "Failed to load Sys-V IPC library: " || &why
+      } else
+         WHY := "Sys-V IPC library not found on OI_NATIVE path"
    end
 end

@@ -1,5 +1,5 @@
 import
-   gui, cairo, util
+   gui, cairo, util, io
 
 $load ROMEDALEN "romedalen.png"
 
@@ -570,6 +570,7 @@ end
 
 procedure main()
    local d
+   cairo_available() | stop(&why)
    ImageCache.name_image("ROMEDALEN", ROMEDALEN)
    d := CairoTest()
    d.show_modal()
