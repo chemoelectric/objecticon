@@ -1859,7 +1859,7 @@ static int sicmp(char *s, stringint *sip)
 }
 
 /*
- * string-integer lookup function: given a string, return its integer
+ * string-integer lookup function: given a string, return its integer, or -1 if not found.
  */
 int stringint_str2int(stringint *sip, char *s)
 {
@@ -1880,6 +1880,9 @@ char *stringint_int2str(stringint *sip, int i)
     return NULL;
 }
 
+/*
+ * stringint lookup of the string key, returning the entry, or NULL if not found
+ */
 stringint *stringint_lookup(stringint *sip, char *s)
 {
     return (stringint *)bsearch(s, sip + 1, sip[0].i, sizeof(stringint), (BSearchFncCast)sicmp);

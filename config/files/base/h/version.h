@@ -2,13 +2,8 @@
  * version.h -- version identification
  */
 
-#undef Version
-#undef UVersion
-#undef IVersion
-
 /*
- *  Icon version number and date.
- *  These are the only two entries that change any more.
+ *  Object Icon version number and date.
  */
 #define VersionNumber "@PACKAGE_VERSION@"
 #define VersionDate "@CONFIG_DATE@"
@@ -25,3 +20,10 @@
    
 #define UVersion "U2.0.142"
 #define IVersion "I2.0.142"
+
+
+/*
+ * This version number is used to ensure compatibility between the oix
+ * executable and any dynamically loaded object files (.so or .dll).
+ */
+#define OixVersion 100

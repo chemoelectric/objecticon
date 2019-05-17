@@ -39,7 +39,7 @@ $(PROG):	$(OBJS)
 	$(CC) $(CFLAGS) $(DYNAMIC_EXPORT_LDFLAGS) $(LDFLAGS) -o $(PROG) $(OBJS) $(LIBS)
 
 %.o: %.r $(HDRS)
-	$(RTT) $<
+	$(RTT) -z $<
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 	$(RM) $*.c
 

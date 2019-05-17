@@ -40,6 +40,7 @@ extern int enable_out;     /* enable output of C code */
 extern int importing;       /* input file is to form a library module using
                             * imported oisymbols structure */
 extern int subsid;         /* file is susbidiary to a main -x file */
+extern int oix;            /* file is part of oix executable */
 
 /*
  * The symbol table is used by the lexical analyser to decide whether an

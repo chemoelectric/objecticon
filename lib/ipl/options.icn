@@ -507,3 +507,8 @@ end
 procedure ignore_after(f)
    return IgnoreAfterImpl(f).call
 end
+
+# Used with ignore_after to ignore options after first non-flag argument
+procedure non_flag(x)
+   succeed any(~'\-@', x)
+end

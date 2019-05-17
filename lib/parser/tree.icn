@@ -1,6 +1,6 @@
 package parser
 
-import util, io
+import util, io, ipl.pdco(Seq)
 
 final class Token()
    public const
@@ -35,6 +35,18 @@ final class Token()
    #
    public output(f)
       return f.writes1(chunk)
+   end
+
+   public traverse_all_preorder()
+      coact(self)
+   end
+
+   public traverse_all_postorder()
+      coact(self)
+   end
+
+   public traverse_tokens()
+      coact(self)
    end
 
    public new(tok, s, chunk, val, line, column, filename)
@@ -87,6 +99,31 @@ class Node()
 
    public size()
       return *children
+   end
+
+   #
+   # Traverse all the `Node`s and `Token`s in this subtree, including this
+   # `Node`, in preorder ordering.
+   #
+   public traverse_all_preorder()
+      coact(self)
+      every (!children).traverse_all_preorder()
+   end
+
+   #
+   # Traverse all the `Node`s and `Token`s in this subtree, including this
+   # `Node`, in postorder ordering.
+   #
+   public traverse_all_postorder()
+      every (!children).traverse_all_postorder()
+      coact(self)
+   end
+
+   #
+   # Traverse all the `Token`s in this subtree.
+   #
+   public traverse_tokens()
+      every (!children).traverse_tokens()
    end
 
    #
@@ -292,13 +329,15 @@ abstract class IdList(LList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node(lab, 
-                              lpos.child(index),
-                              s.comma,
-                              s.pos))
+         Node(lab, 
+              lpos.child(index),
+              s.comma,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -354,12 +393,14 @@ class AccessList(SimpleLList)
    end
 
    public override put(x)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, x.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         x.pos
       else
-         lpos.set(index, Node(lab,
-                              lpos.child(index),
-                              x.pos))
+         Node(lab,
+              lpos.child(index),
+              x.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -414,13 +455,15 @@ class Invocable(SimpleLList)
    end
 
    public override put(x)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, x.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         x.pos
       else
-         lpos.set(index, Node("invoclist",
-                              lpos.child(index),
-                              x.comma,
-                              x.pos))
+         Node("invoclist",
+              lpos.child(index),
+              x.comma,
+              x.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -459,13 +502,15 @@ class Import(SimpleLList)
    end
 
    public override put(x)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, x.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         x.pos
       else
-         lpos.set(index, Node("importlist",
-                              lpos.child(index),
-                              x.comma,
-                              x.pos))
+         Node("importlist",
+              lpos.child(index),
+              x.comma,
+              x.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -620,13 +665,7 @@ final abstract class Util()
    end
 
    public static first_token(n)
-      local c, t
-      if is(n, Token) then
-         return n
-      every c := n.gen() do {
-         if t := first_token(c) then
-            return t
-      }
+      return Seq{ n.traverse_tokens() }
    end
 
    public static dump(n, l)
@@ -926,10 +965,7 @@ abstract class TopLevel(Tree)
    end
 
    public set_package_flag(x)
-      if /x then
-         pos.set(1, Node.EMPTY)
-      else
-         pos.set(1, x.pos)
+      pos.set(1, if /x then Node.EMPTY else x.pos)
       link
    end
 end
@@ -1172,10 +1208,7 @@ class Global(TopLevel, IdList)
    end
 
    public set_readable_flag(x)
-      if /x then
-         gpos.set(1, Node.EMPTY)
-      else
-         gpos.set(1, x.pos)
+      gpos.set(1,  if /x then Node.EMPTY else x.pos)
       link
    end
 
@@ -1245,13 +1278,15 @@ class ExprList(SimpleLList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("exprlist",
-                              lpos.child(index),
-                              s.comma,
-                              s.pos))
+         Node("exprlist",
+              lpos.child(index),
+              s.comma,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -1300,15 +1335,15 @@ class Compound(SimpleRList)
    end
 
    public override push(s)
-      local n
-      n := lpos.child(index)
-      if n === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("compound",
-                              s.pos,
-                              s.semi,
-                              lpos.child(index)))
+         Node("compound",
+              s.pos,
+              s.semi,
+              lpos.child(index))
+      lpos.set(index, v)
       link
    end
 
@@ -1357,13 +1392,15 @@ class CaseList(SimpleLList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("caselist",
-                              lpos.child(index),
-                              s.semi,
-                              s.pos))
+         Node("caselist",
+              lpos.child(index),
+              s.semi,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 
@@ -1412,13 +1449,15 @@ class DottedIdentList(SimpleLList)
    end
 
    public override put(s)
-      if lpos.child(index) === Node.EMPTY then
-         lpos.set(index, s.pos)
+      local v
+      v := if lpos.child(index) === Node.EMPTY then
+         s.pos
       else
-         lpos.set(index, Node("dottedident",
-                              lpos.child(index),
-                              s.dot,
-                              s.pos))
+         Node("dottedident",
+              lpos.child(index),
+              s.dot,
+              s.pos)
+      lpos.set(index, v)
       link
    end
 

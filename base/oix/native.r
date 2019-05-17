@@ -55,6 +55,37 @@ struct b_proc *get_proc_for(dptr x)
       methp: 
             return MethpBlk(*x).proc;
         
+      list: {
+            tended struct descrip class0, field;
+            word y;
+            int i;
+            struct class_field *cf;
+
+            /* Extract elements */
+            if (ListBlk(*x).size != 2)
+                ReturnErrVal(631, *x, 0);
+            class0 = *get_element(x, 1);
+            field = *get_element(x, 2);
+
+            if (!is:class(class0))
+                ReturnErrVal(603, class0, 0);
+
+            /* See CheckField() */
+            if (cnv:C_integer(field, y))
+                MakeInt(y, &field);
+            else if (!cnv:string(field, field))
+                ReturnErrVal(170, field, 0);
+
+            /* Lookup the field, ensure it's a method. */
+            i = lookup_class_field(&ClassBlk(class0), &field, 0);
+            if (i < 0)
+                ReturnErrVal(638, *x, 0);
+            cf = ClassBlk(class0).fields[i];
+            if (!cf->flags & M_Method)
+                ReturnErrVal(638, *x, 0);
+
+            return &ProcBlk(*cf->field_descriptor);
+         }
      default: 
             ReturnErrVal(631, *x, 0);
     }
@@ -1211,6 +1242,8 @@ static void *get_handle(char *filename)
     int i;
     void *handle;
     struct oisymbols **imported;
+    int *version;
+
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1223,9 +1256,23 @@ static void *get_handle(char *filename)
         why(dlerror());
         return 0;
     }
+
+    /* Check version number */
+    version = (int *)dlsym(handle, "oix_version");
+    if (!version) {
+        LitWhy("Symbol 'oix_version' not found");
+        return 0;
+    }
+    if (*version != OixVersion) {
+        whyf("Version mismatch (%d -vs- %d)", *version, OixVersion);
+        return 0;
+    }
+
+    /* Set imported variable if present */
     imported = (struct oisymbols **)dlsym(handle, "imported");
     if (imported)
         *imported = &oiexported;
+
     x = safe_zalloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
@@ -1361,6 +1408,8 @@ static HMODULE get_handle(char *filename)
     HMODULE handle;
     WCHAR *wfilename;
     struct oisymbols **imported;
+    int *version;
+
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1375,6 +1424,19 @@ static HMODULE get_handle(char *filename)
         win32error2why();
         return 0;
     }
+
+    /* Check version number */
+    version = (int *)GetProcAddress(handle, "oix_version");
+    if (!version) {
+        LitWhy("Symbol 'oix_version' not found");
+        return 0;
+    }
+    if (*version != OixVersion) {
+        whyf("Version mismatch (%d -vs- %d)", *version, OixVersion);
+        return 0;
+    }
+
+    /* Set imported variable */
     imported = (struct oisymbols **)GetProcAddress(handle, "imported");
     if (!imported) {
         whyf("Symbol 'imported' not found in dll %s", filename);
@@ -1382,6 +1444,7 @@ static HMODULE get_handle(char *filename)
         return 0;
     }
     *imported = &oiexported;
+
     x = safe_zalloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;

@@ -3451,6 +3451,13 @@ void prologue()
            fprintf(out_file, "struct oisymbols *imported;\n\n");
        }
    }
+   if (!subsid && !oix) {
+       fprintf(out_file, "/* Value of OixVersion for compatibility checking. */\n");
+#if MSWIN32
+       fprintf(out_file, "__declspec(dllexport)\n");
+#endif
+       fprintf(out_file, "int oix_version = %d;\n\n", OixVersion);
+   }
 }
 
 /*

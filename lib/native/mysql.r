@@ -1,4 +1,5 @@
 #passthru #undef column
+#passthru #undef list_push
 #passthru #include "mysql.h"
 
 static void field_to_list(MYSQL_FIELD *field, dptr res);
@@ -351,7 +352,7 @@ end
 
 function mysql_MySql_set_autocommit(self, flag)
    body {
-      my_bool t;
+      int t;
       GetSelfMySql();
       if (!is_flag(&flag))
           runerr(171, flag);

@@ -5,14 +5,24 @@ TARGET=
 ifneq (@OPENSSL_DIR@,)
   TARGET:=$(TARGET) objecticonssllib.dll
 endif
+ifneq (@MYSQL_DIR@,)
+  TARGET:=$(TARGET) objecticonmysqllib.dll
+endif
 
 all : $(TARGET)
+
+objecticonmysqllib.dll : mysql.r
+	$(RTT) -x -h gmysql.h mysql.r
+	$(CC) $(CFLAGS) /LD /I "@MYSQL_DIR@\include\mysql" mysql.c \
+		"@MYSQL_DIR@\lib\libmysql.lib" \
+		/link /incremental:no /out:$@
+	$(RM) mysql.c
 
 objecticonssllib.dll : ssl.r
 	$(RTT) -x -h gssl.h ssl.r
 	$(CC) $(CFLAGS) /LD /I "@OPENSSL_DIR@\include" ssl.c \
-		"@OPENSSL_DIR@\lib\libssl.lib" \
-		"@OPENSSL_DIR@\lib\libcrypto.lib" \
+		"@OPENSSL_DIR@\lib\libeay32.lib" \
+		"@OPENSSL_DIR@\lib\ssleay32.lib" \
 		/link /incremental:no /out:$@
 	$(RM) ssl.c
 

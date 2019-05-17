@@ -14,7 +14,7 @@ import lang, io, util
 # it isn't.
 #
 procedure mysql_available()
-   succeed \MySql.LOADED | error("MySql not supported")
+   succeed \MySql.LOADED | error(MySql.WHY)
 end
 
 #
@@ -144,7 +144,8 @@ final class MySql(NoCopy)
       CR_AUTH_PLUGIN_ERR,
       CR_INSECURE_API_ERR,
       CR_ERROR_LAST,
-      LOADED
+      LOADED,
+      WHY
 
    private 
       ptr
@@ -567,8 +568,13 @@ final class MySql(NoCopy)
       CR_INSECURE_API_ERR :=                     2062
       CR_ERROR_LAST :=                           2062
 
-      if Class.load_library(t := Files.find_native_lib("objecticonmysqllib")) then
-         LOADED := t
+      if t := Files.find_native_lib("objecticonmysqllib") then {
+         if Class.load_library(t) then
+            LOADED := t
+         else
+            WHY := "Failed to load MySql library: " || &why
+      } else
+         WHY := "MySql library not found on OI_NATIVE path"
    end
 
    public new()

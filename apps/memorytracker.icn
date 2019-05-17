@@ -54,14 +54,12 @@ procedure usage(opts)
 end
 
 procedure main(args)
-   local opts, proact, e, mask, prog, totals, t, prev_code, u_flag, a
+   local opts, proact, e, mask, prog, totals, t, prev_code, u_flag
 
-   a := []
-   while args[1][1] == "-" do
-      put(a, pop(args))
-   opts := options(a, [Opt("u",,"Show block/string deallocations separately.")], usage)
+   opts := options(args, [Opt("u",,"Show block/string deallocations separately.")],
+                   usage,, ignore_after(non_flag))
    if *args = 0 then
-      stop("Program and optional arguments expected.")
+      help_stop("Program and optional arguments expected.")
 
    u_flag := opts["u"]
 

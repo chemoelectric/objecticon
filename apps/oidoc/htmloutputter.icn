@@ -366,26 +366,30 @@ class HtmlOutputter(Outputter)
    end
 
    private output_comment(f, c)
-      local t, n
+      local x, n
       self.output_file := f
       self.output_sym := c
-      markdown(c)
-      t := get_comment_token(c)
-      # Calculate the number of lines to show before the actual symbol
-      t.get_pad() ? {
-         n := 0
-         # Go to the first comment which is not a pp directive.
-         if tab(upto('#')) & not match("#line") then {
-            every upto('\n') do
-               n +:= 1
+      x := get_comment(c)
+      markdown(x.string)
+      # Don't output a source file reference for the cases where
+      # the symbol's comment was included from another file.
+      if x.token.filename == c.scanned_file.filename then {
+         # Calculate the number of lines to show before the actual symbol
+         x.string ? {
+            n := 0
+            # Go to the first comment which is not a pp directive.
+            if tab(upto('#')) & not match("#line") then {
+               every upto('\n') do
+                  n +:= 1
+            }
          }
+         write(f, "<p/><a href=\"", 
+               get_id(c.scanned_file) || ".html#", 
+               x.token.line - n,
+               "\" target=\"displayFrame\">Source - ", 
+               FilePath(c.scanned_file.filename).get(-1),
+               " </a>")
       }
-      write(f, "<p/><a href=\"", 
-            get_id(c.scanned_file) || ".html#", 
-            t.line - n,
-            "\" target=\"displayFrame\">Source - ", 
-            FilePath(t.filename).get(-1),
-            " </a>")
    end
 
    private esc(s)
@@ -568,7 +572,7 @@ class HtmlOutputter(Outputter)
    private output_a_file(c)
       local f, fname, line_no, g, s, filename
 
-      filename := c.obj.get_first_token().filename
+      filename := c.scanned_file.filename
       if member(done_files, filename) then
          return
       insert(done_files, filename)

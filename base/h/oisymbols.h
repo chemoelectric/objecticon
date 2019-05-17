@@ -118,6 +118,11 @@ struct oisymbols {
     int (*def_int)(dptr s, word df, dptr d);
     int (*def_real)(dptr s, double df, dptr d);
     int (*def_str)(dptr s, dptr df, dptr d);
+    struct b_class * (*get_class_for)(dptr x);
+    struct b_constructor * (*get_constructor_for)(dptr x);
+    struct b_proc * (*get_proc_for)(dptr x);
+    struct progstate * (*get_program_for)(dptr x);
+    struct b_coexpr * (*get_coexpr_for)(dptr x);
     void (*bigadd)(dptr da, dptr db, dptr dx);
     void (*bigsub)(dptr da, dptr db, dptr dx);
     void (*bigmul)(dptr da, dptr db, dptr dx);
@@ -165,6 +170,9 @@ struct oisymbols {
     struct b_ucs * (*make_ucs_substring)(struct b_ucs *b, word pos, word len);
     int (*cset_range_of_pos)(struct b_cset *b, word pos);
     int (*need_ucs)(dptr s);
+    int (*stringint_str2int)(stringint * sip, char *s);
+    char * (*stringint_int2str)(stringint * sip, int i);
+    stringint * (*stringint_lookup)(stringint *sip, char *s);
     int (*utf8_check)(char **p, char *end);
     int (*utf8_iter)(char **p);
     int (*utf8_rev_iter)(char **p);

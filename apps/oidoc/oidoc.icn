@@ -36,6 +36,9 @@ end
 procedure main(a)
    local s, o, symbol_table, pp_defs
 
+   # Traversing raw parse trees can take a lot of recursion.
+   &maxlevel := 50000
+
    opts := options(a, [Opt("groff",, "Generate groff output"),
                        Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
                        Opt("cs",string,"CHARSET#Charset for html output, default UTF-8"),

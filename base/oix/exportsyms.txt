@@ -4,7 +4,9 @@
 # base/h/imported.h
 #
 # After editing this file, run "make EXPORTS=Y" in base/oix to update
-# the above three files.
+# the above three files.  The constant OixVersion in version.h should
+# also be incremented to avoid mismatched versions of the oisymbols
+# structure.
 #
 # Variables and constants
 curpstate
@@ -128,6 +130,11 @@ def_eint
 def_int
 def_real
 def_str
+get_class_for
+get_constructor_for
+get_proc_for
+get_program_for
+get_coexpr_for
 # Big integers
 bigadd
 bigsub
@@ -180,6 +187,10 @@ cset_to_string
 make_ucs_substring
 cset_range_of_pos
 need_ucs
+# stringint tables
+stringint_str2int
+stringint_int2str
+stringint_lookup
 # utf8 processing
 utf8_check
 utf8_iter

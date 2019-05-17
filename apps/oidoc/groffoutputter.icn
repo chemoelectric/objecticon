@@ -38,7 +38,7 @@ class GroffOutputter(Outputter)
          u := "\\f[HR]" || u || "\\f[R]"
          write(output_file, ".HEAD \"", get_top_level_type(c), " ", c.name, "\" \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
          if is(c.obj, Tree) then
-            markdown(c)
+            markdown1(c)
 
          meths := []
          vars := []
@@ -54,13 +54,13 @@ class GroffOutputter(Outputter)
          every m := !meths do {
             write(output_file, ".FUNC_START \"", get_access_string(m.obj), " ", m.name, "(", get_param_string(m.obj) ,")\"")
             if is(m.obj, Tree) then
-               markdown(m)
+               markdown1(m)
             write(output_file, ".FUNC_END")
          }
          every m := !vars do {
             write(output_file, ".FUNC_START \"", get_access_string(m.decl_obj), " ", m.name, "\"")
             if is(m.obj, Tree) then
-               markdown(m)
+               markdown1(m)
             write(output_file, ".FUNC_END")
          }
       }
@@ -79,11 +79,15 @@ class GroffOutputter(Outputter)
          write(output_file, ".HEAD \"", get_top_level_type(c), " ", c.name, "\" \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
          write(output_file, ".FUNC_START \"", fullname ,"\"")
          if is(c.obj, Tree) then
-            markdown(c)
+            markdown1(c)
          write(output_file, ".FUNC_END")
       }
 
       (\output_file).close()
+   end
+
+   private markdown1(sym)
+      markdown(get_comment(sym).string)
    end
 
    private esc(s)

@@ -1,13 +1,15 @@
 import
    lang(Class, Text),
    parser(ClassSymbol, ClassVariable, DeferredMethod, Tree, ULocal,
-          UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol),
-   ipl.pdco(String),
+          UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol, YY),
+   ipl.pdco(String,Seq),
    ipl.sort(qsort),
    datastruct(SortTable),
    util(Yes)
 
 record Item(kind, indent)
+
+record Comment(token, string)
 
 abstract class Outputter()
    public static const
@@ -15,6 +17,7 @@ abstract class Outputter()
       ID_CHAR
 
    protected const
+      next_token_map_table,
       symbol_table,
       opts
 
@@ -190,39 +193,123 @@ abstract class Outputter()
       return s
    end
 
-   protected get_comment_token(sym)
-      return if is(sym, ClassVariable | GlobalSymbol) & sym.decl_obj.size() = 1 then
-         sym.decl_obj.get_first_token()
-      else
-         sym.obj.get_first_token()
+   # Is a comment string a one-liner comment, ie one which
+   # begins on the same line as the previous token?
+   #
+   private static one_liner(s)
+      succeed s ? (tab(upto('#\n\r'))\1 & any('#'))
    end
 
-   private get_comment_list(sym)
-      local comment, l
-      comment := []
-      get_comment_token(sym).get_pad() ? {
+   # Get a table of Token->Token, which maps identifier tokens to the
+   # following token, excluding commas.  For example, given
+   #
+   #    x1,     # Comment 1
+   #    x2
+   #
+   #   the token for identifier x1 would map to the token for x2.
+   #
+   # To save space, only tokens which have one-liner comments are
+   # placed in the table as values, since no other mappings are of
+   # interest.
+   #
+   private next_token_map(sf)
+      local x, x1, m
+
+      if m := member(next_token_map_table, sf) then
+         return m
+
+      m := table()
+      every x := Seq{ sf.obj.pos.traverse_tokens() } do {
+         if \x1 & one_liner(x.get_pad()) then
+            m[x1] := x
+         if x.tok = YY.IDENT then
+            x1 := x
+         else if x.tok ~= YY.COMMA then
+            x1 := &null
+      }
+
+      next_token_map_table[sf] :=  m
+
+      return m
+   end
+
+   # Get the comment info for the given symbol.  A Comment record is
+   # returned with two elements :-
+   #
+   #   token - the Token to display for the symbol; either the first
+   #     Token of the symbol itself, or perhaps its enclosing
+   #     declaration structure.
+   #
+   #   string - the comment string
+   #
+   protected get_comment(sym) 
+      local tok, str, obj
+
+      obj := sym.obj
+
+      if is(sym, ClassVariable | GlobalSymbol) then {
+         # Check whether it has a "one-liner" comment, such as :-
+         #     global x      # comment about x
+         # or
+         #     private
+         #            x,     # comment about x
+         #            y      # comment about y
+         #
+         if tok := member(next_token_map(sym.scanned_file), obj.get_first_token()) then {
+            # Reduce the token string to one line.
+            str := tok.get_pad()
+            str ?:= tab(upto('\r\n'))
+            return Comment(obj.get_first_token(), str)
+         }
+         # No one-liner, so check if this is a single variable declaration, eg
+         #     private x
+         # rather than
+         #     private
+         #        x,
+         #        y
+         # If so, take the token associated with "private" rather than the symbol,
+         # and fall through.
+         if sym.decl_obj.size() = 1 then
+            obj := sym.decl_obj
+      }
+
+      # Default; take the first token
+      tok := obj.get_first_token()
+      str := tok.get_pad()
+      # Adjust one-liners by dropping the first line.
+      if one_liner(str) then
+         str ?:= (tab(upto('\r\n')) & tab(0))
+
+      return Comment(tok, str)
+   end
+
+   # Given a comment string, turn it into a list of lines.
+   private get_comment_list(s)
+      local res, l
+      res := []
+      s ? {
          while tab(upto('#')) do {
             move(1)
             l := tab(upto('\n\r') | 0)
             # Omit pre-processor generated comments, (in the form #line ...)
-            match("line ", l) | put(comment, l)
+            match("line ", l) | put(res, l)
          }
       }
       #
       # Strip off any empty lines at the front and beginning of
       # the comment.
       #
-      while *comment[1] = 0 do
-         pop(comment)
-      while *comment[-1] = 0 do
-         pull(comment)
+      while *res[1] = 0 do
+         pop(res)
+      while *res[-1] = 0 do
+         pull(res)
 
-      return comment
+      return res
    end
 
-   private markdown_line(s)
+   private markdown_line(cs)
       local t
-      s ? {
+      cs ? {
          while t := tab(upto('/`*_~<')) do {
             output_fragment(t)
             if ="`" then {
@@ -254,7 +341,7 @@ abstract class Outputter()
          output_fragment(t)
       }
       # Two or more spaces at the end of a line indicate a line break.
-      end_line(Yes{s[-2:0] == "  "})
+      end_line(Yes{cs[-2:0] == "  "})
       link
    end
 
@@ -353,9 +440,10 @@ abstract class Outputter()
       markdown_line(tab(0))
    end
 
-   protected markdown(sym)
+   # Given a comment string, transform to markdown.
+   protected markdown(cs)
       local pre_mark, s, indent, l, t, item
-      l := get_comment_list(sym)
+      l := get_comment_list(cs)
       stk := []
       every !l ? {
          if t := stk[1] & t.kind == "pre" then {
@@ -433,6 +521,7 @@ abstract class Outputter()
    public new(opts, symbol_table)
       self.opts := opts
       self.symbol_table := symbol_table
+      self.next_token_map_table := table()
       return
    end
 end
