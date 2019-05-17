@@ -118,6 +118,11 @@ struct oisymbols {
     int (*def_int)(dptr s, word df, dptr d);
     int (*def_real)(dptr s, double df, dptr d);
     int (*def_str)(dptr s, dptr df, dptr d);
+    struct b_class * (*get_class_for)(dptr x);
+    struct b_constructor * (*get_constructor_for)(dptr x);
+    struct b_proc * (*get_proc_for)(dptr x);
+    struct progstate * (*get_program_for)(dptr x);
+    struct b_coexpr * (*get_coexpr_for)(dptr x);
     void (*bigadd)(dptr da, dptr db, dptr dx);
     void (*bigsub)(dptr da, dptr db, dptr dx);
     void (*bigmul)(dptr da, dptr db, dptr dx);
