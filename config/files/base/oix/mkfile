@@ -40,6 +40,6 @@ clean:V:
 	rm -f $RTTC *.[$OS] [$OS].out $PROG
 
 %.$O: %.r
-	rtt -z $stem.r
+	rtt -y $stem.r
 	$CC $CFLAGS $stem.c
 	rm $stem.c

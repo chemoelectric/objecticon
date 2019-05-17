@@ -13,7 +13,7 @@ char *refpath = 0;
 #define RT_H "rt.h"
 #define IMPORTED_H "imported.h"
 
-static char *ostr = "xyzEWPD:I:U:r:t:h:";
+static char *ostr = "xyEWPD:I:U:r:t:h:";
 
 static char *options =
    "[-E] [-W] [-P] [-x|-y] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
@@ -36,7 +36,6 @@ int def_fnd;
 int enable_out = 0;
 int subsid;
 int importing;
-int oix;
 
 static char *cur_src;
 
@@ -116,12 +115,9 @@ int main(argc, argv)
             case 't':  /* -t ident : treat ident as a typedef name */
                 add_tdef(oi_optarg);
                 break;
-            case 'z':   /* -z : file is part of oix */
-                oix = 1;
-                break;
-            case 'y':   /* -y : -x, but file is susbidiary to a main -x file */
+            case 'y':   /* -y : file is susbidiary to another library or main executable */
                 subsid = 1;
-                /* fall through */
+                break;
             case 'x':   /* -x : input file is to form a library module using
                          * imported oisymbols structure */
                 importing = 1;
