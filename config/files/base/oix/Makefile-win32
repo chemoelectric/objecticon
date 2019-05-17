@@ -44,7 +44,7 @@ $(PROG):	$(OBJS)
 		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
 
 %.obj: %.r $(HDRS)
-	rtt -z $<
+	rtt -y $<
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 	$(RM) $*.c
 
