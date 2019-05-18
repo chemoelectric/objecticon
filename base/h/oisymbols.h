@@ -156,6 +156,7 @@ struct oisymbols {
     dptr (*c_get_instance_data)(dptr x, dptr fname, struct inline_field_cache *ic);
     int (*c_is)(dptr x, dptr cname, struct inline_global_cache *ic);
     int (*class_is)(struct b_class *class1, struct b_class *class2);
+    int (*get_proc_kind)(struct b_proc *bp);
     int (*mem_eq)(char *s1, char *s2, word n);
     int (*str_mem_eq)(dptr s, char *t);
     struct b_cset * (*rangeset_to_block)(struct rangeset *rs);

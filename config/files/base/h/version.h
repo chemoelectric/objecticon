@@ -26,4 +26,4 @@
  * This version number is used to ensure compatibility between the oix
  * executable and any dynamically loaded object files (.so or .dll).
  */
-#define OixVersion 100
+#define OixVersion 101
