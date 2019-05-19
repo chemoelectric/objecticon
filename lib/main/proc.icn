@@ -5,24 +5,36 @@ import util(error)
 #
 # This class allows information about procedures, functions, etc, to
 # be obtained.  The parameters named `p` to the methods may be any
-# function or procedure or method pointer.  Additionally, a
-# two-element list may be provided.  The first element should be a
-# class, the second a field name or number referencing a method.  This
-# enables information about instance, special or private methods to be
-# obtained.  In order to ensure consistency in information about
-# native methods, passing a class in this way will cause it to be
-# initialized if it is isn't already.
+# function or procedure or method pointer.
+#
+# Additionally, `p` may be a two-element list.  The first element
+# should be a class, the second a field name or number referencing a
+# method.  This enables information about instance, special or private
+# methods to be obtained.  In order to ensure consistency in
+# information about native methods, passing a class in this way will
+# cause it to be initialized if it is isn't already.
+#
+# Note that methods which are resolved to stub functions may not
+# behave as expected.  These stub functions are used as placeholders
+# for optional, abstract and (unresolved) native methods.  They are
+# also used to replace methods which `oit` deems unreferenced
+# ("removed methods").
+#
+# Since these stub functions are shared by many methods, they do not
+# link back to a particular class and field.  Thus, the `get_name`
+# method, for example, will return the stub function's name rather
+# than the name which one might otherwise expect.
 #
 final abstract class Proc()
    public static const
-      Procedure,
-      Function,
-      Keyword,
-      Operator,
-      Internal,
-      Argument,
-      Dynamic,
-      Static
+      Procedure,      # Value from `get_kind` indicating an icon procedure
+      Function,       # Value from `get_kind` indicating a native function or method
+      Keyword,        # Value from `get_kind` indicating a keyword function
+      Operator,       # Value from `get_kind` indicating an operator
+      Internal,       # Value from `get_kind` indicating an internal block of VM instructions
+      Argument,       # Value from `get_local_kind` indicating an argument
+      Dynamic,        # Value from `get_local_kind` indicating a dynamic variable
+      Static          # Value from `get_local_kind` indicating a static variable
 
    private static init()
       # Kinds of procedure
@@ -229,7 +241,9 @@ final abstract class Proc()
 
    #
    # Return the type of the given local, which is one of the constants
-   # `Argument`, `Dynamic` or `Static`.
+   # * `Argument`,
+   # * `Dynamic` (ie, a variable declared "local") or
+   # * `Static`.
    #
    public static get_local_kind(p, id)
       return get_local_kind_impl(arg(p), id)

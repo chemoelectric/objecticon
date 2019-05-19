@@ -8,36 +8,21 @@ import util(need_string)
 #
 final abstract class Class()
    public static const 
-      # Integer flag for a method
-      Method,
-      # Integer flag for a private field
-      Private,
-      # Integer flag for a public field
-      Public,
-      # Integer flag for a protected field
-      Protected,
-      # Integer flag for a package field
-      Package,
-      # Integer flag for a static field
-      Static,
-      # Integer flag for a constant field
-      Const,
-      # Integer flag for a readable field
-      Readable,
-      # Integer flag for an optional method
-      Optional, 
-      # Integer flag for a final method or class
-      Final,
-      # Integer flag for a special method, ie init or new.
-      Special,
-      # Integer flag for an abstract class/method.
-      Abstract,
-      # Integer flag for a native method.
-      Native,
-      # Integer flag for a removed method.
-      Removed,
-      # Integer flag for an override method.
-      Override
+      Method,        # Integer flag for a method
+      Private,       # Integer flag for a private field
+      Public,        # Integer flag for a public field
+      Protected,     # Integer flag for a protected field
+      Package,       # Integer flag for a package field
+      Static,        # Integer flag for a static field
+      Const,         # Integer flag for a constant field
+      Readable,      # Integer flag for a readable field
+      Optional,      # Integer flag for an optional method
+      Final,         # Integer flag for a final method or class
+      Special,       # Integer flag for a special method, ie init or new.
+      Abstract,      # Integer flag for an abstract class/method.
+      Native,        # Integer flag for a native method.
+      Removed,       # Integer flag for a removed method.
+      Override       # Integer flag for an override method.
 
    private static init()
       Method := 8r01
