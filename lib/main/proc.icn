@@ -1,6 +1,6 @@
 package lang
 
-import util(need_flag, error)
+import util(error)
 
 #
 # This class allows information about procedures, functions, etc, to
@@ -9,7 +9,9 @@ import util(need_flag, error)
 # two-element list may be provided.  The first element should be a
 # class, the second a field name or number referencing a method.  This
 # enables information about instance, special or private methods to be
-# obtained.
+# obtained.  In order to ensure consistency in information about
+# native methods, passing a class in this way will cause it to be
+# initialized if it is isn't already.
 #
 final abstract class Proc()
    public static const
@@ -35,106 +37,228 @@ final abstract class Proc()
       Static := 2
    end
       
-   # Return the name of the proc
+   # Return the name of the proc.  For a method, the name is
+   # return in the form `class.method`.
    #
-   public static native get_name(p, flag)
-
-   # Return the program this proc resides in.  The program's &main
-   # co-expression is returned.
+   # For example :-
+   # ~
+   #    get_name(FileStream.pipe)` -> "io.FileStream.pipe"
+   # ~
    #
-   public static native get_program(p, flag)
-
-   # Return the name of the package in which this proc resides; fails
-   # if the proc is not in a package.
+   # Stub methods always return their stub name (since they
+   # aren't recognised as fields) :-
+   # ~
+   #    # Optional method
+   #    get_name([Stream, "in"]) -> "optional_method_stub"
+   # ~
    #
-   public static get_package(p, flag)
-      local cl
-      need_flag(flag)
-      if /flag & cl := get_defining_class(p) then
-         return Class.get_package(cl)
-      if get_kind(p) = Procedure then
-         return extract_package(get_name(p, &yes))
+   public static get_name(p)
+      return get_name_impl(arg(p))
    end
 
-   # Return the source location of the proc.  For a native method, `flag`
-   # indicates whether to return the location of the native method
-   # declaration, or to fail.
+   # Return the program this proc resides in, or fail if it is not in
+   # a program.  The program's &main co-expression is returned.  For a
+   # method (including resolved native methods), the declaring class's
+   # program is returned.
+   #
+   # For example :-
+   # ~
+   #    get_program(DescStream.poll)` -> co-expression#123
+   # ~
+   #
+   # Note that stub methods will always fail :-
+   # ~
+   #    # Optional method
+   #    get_program([Stream, "in"])` -> fails
+   # ~
+   #
+   public static get_program(p)
+      return get_program_impl(arg(p))
+   end
+
+   # Return the name of the package in which this proc resides; fails
+   # if the proc is not in a package.  For a method, the package of
+   # the declaring class is returned.
+   #
+   # For example :-
+   # ~
+   #    get_package(FileStream.pipe)` -> "io"
+   # ~
+   #
+   # Note that stub methods will always fail :-
+   # ~
+   #    # Optional method
+   #    get_package([Stream, "in"])` -> fails
+   # ~
+   #
+   public static get_package(p)
+      local cl
+      p := arg(p)
+      if cl := get_defining_class_impl(p) then
+         return Class.get_package(cl)
+      if get_kind_impl(p) = Procedure then
+         return extract_package(get_name_impl(p))
+   end
+
+   # Return the source location of the proc.  For a method, the
+   # location of the method declaration is returned.
+   #
+   # For example :-
+   # ~
+   #    # Native method
+   #    get_location(DescStream.poll)` -> Location#1(...)
+   # ~
+   #
+   # Note that stub methods will always fail :-
+   # ~
+   #    # Optional method
+   #    get_location([Stream, "in"])` -> fails
+   # ~
+   #
    # :Returns :
    # :  a `Location` instance
    #
-   public static get_location(p, flag)
+   public static get_location(p)
       local cl, i, prog
-      need_flag(flag)
-      return if prog := get_program(p, &yes) then {
-         # Note that we ignore flag in this case since we don't want
-         # to lookup (if flag is 1), a method's name in the global
-         # table.  Otherwise, for example, if we had a procedure abc
-         # and also a method Xyz.abc, then get_location(Xyz.abc, 1)
-         # would erroneously return the location of procedure abc.
-         if cl := get_defining_class(p) &
-            i := get_field_index(p) then
-            Class.get_field_location(cl, i)
-         else
-            Prog.get_global_location(get_name(p, &yes), prog)
-      } else {
-         if cl := get_defining_class(p) &
-            i := get_field_index(p) &
-            /flag then
-            Class.get_field_location(cl, i)
-         else
-            error("Proc not a procedure, has no location")
-      }
+      p := arg(p)
+      return if cl := get_defining_class_impl(p) &
+         i := get_field_index_impl(p) then
+         Class.get_field_location(cl, i)
+      else if prog := get_program_impl(p) then
+         Prog.get_global_location(get_name_impl(p), prog)
+      else
+         # Set &why for consistency, since it is set by
+         # Class.get_field_location & Prog.get_global_location
+         error("Proc not a procedure, has no location")
    end
 
-   # Return the class in which this method is defined; fails if this is not a method.
+   # Return the class in which this method is defined; fails if this
+   # is not a method.
    #
-   public static native get_defining_class(p)
+   public static get_defining_class(p)
+      return get_defining_class_impl(arg(p))
+   end
 
-   # Return the field name of the method; fails if this is not a method.
+   # Return the field name of the method; fails if this is not a
+   # method.
    #
-   public static native get_field_name(p)
+   public static get_field_name(p)
+      return get_field_name_impl(arg(p))
+   end
 
-   # Return the field index of the method; fails if this is not a method.
+   # Return the field index of the method; fails if this is not a
+   # method.
    #
-   public static native get_field_index(p)
+   public static get_field_index(p)
+      return get_field_index_impl(arg(p))
+   end
 
    #
    # Return the kind of this procedure, which is one of the constants :-
-   #  `Procedure` for a procedure or method defined in an icon source file
-   #  `Function` a builtin function like `upto`, or a native method
-   #  `Keyword` a keyword function, obtained via `Prog.get_keyword()`
-   #  `Operator` an operator function, obtained via `Prog.get_operator()`
-   #  `Internal` an internally used block of VM instructions.
+   # * `Procedure` for a procedure or method defined in an icon source file
+   # * `Function` a builtin function like `upto`, or a native method
+   # * `Keyword` a keyword function, obtained via `Prog.get_keyword()`
+   # * `Operator` an operator function, obtained via `Prog.get_operator()`
+   # * `Internal` an internally used block of VM instructions.
    #
-   public static native get_kind(p)
+   public static get_kind(p)
+      return get_kind_impl(arg(p))
+   end
 
+   # Return the number of locals (arguments, dynamic locals and
+   # statics) of the proc; fails if this is not an procedure.
+   #
    public static get_n_locals(p)
-      return get_n_arguments(p) + get_n_dynamics(p) + get_n_statics(p)
+      p := arg(p)
+      return get_n_arguments_impl(p) + get_n_dynamics_impl(p) + get_n_statics_impl(p)
    end
 
-   public static native get_n_arguments(p)
-   public static native has_varargs(p)
-   public static native get_n_dynamics(p)
-   public static native get_n_statics(p)
-   public static native get_local_index(p, id)
+   # Return the number of arguments of the proc; fails if this is not
+   # an procedure.
+   #
+   public static get_n_arguments(p)
+      return get_n_arguments_impl(arg(p))
+   end
 
+   # Succeeds if this is a procedure with variable args.
+   #
+   public static has_varargs(p)
+      return has_varargs_impl(arg(p))
+   end
+
+   # Return the number of dynamic locals of the proc; fails if this is
+   # not an procedure.
+   #
+   public static get_n_dynamics(p)
+      return get_n_dynamics_impl(arg(p))
+   end
+
+   # Return the number of static variables in the proc; fails if this
+   # is not an procedure.
+   #
+   public static get_n_statics(p)
+      return get_n_statics_impl(arg(p))
+   end
+
+   # Return the local name with the given id (name or index number).
+   #
+   public static get_local_index(p, id)
+      return get_local_index_impl(arg(p), id)
+   end
+
+   # Generate the local names of the procedure.
+   #
    public static get_local_names(p)
-      suspend get_local_name(p, 1 to get_n_locals(p))
+      p := arg(p)
+      suspend get_local_name_impl(p, 1 to get_n_locals(p))
    end
 
+   # Return the location of the local variable with the given id (name
+   # or index number).
+   #
    public static get_local_location(p, id)
-      return Location!get_local_location_impl(p, id)
+      return Location!get_local_location_impl(arg(p), id)
    end
 
-   private static native get_local_location_impl(p, id)
-
-   public static native get_local_name(p, id)
+   # Return the name of the local variable with the given id (name or
+   # index number).
+   #
+   public static get_local_name(p, id)
+      return get_local_name_impl(arg(p), id)
+   end
 
    #
    # Return the type of the given local, which is one of the constants
    # `Argument`, `Dynamic` or `Static`.
    #
-   public static native get_local_kind(p, id)
+   public static get_local_kind(p, id)
+      return get_local_kind_impl(arg(p), id)
+   end
+
+   private static arg(p)
+      if type(p) == "list" then {
+         *p = 2 | runerr("Two-element list expected", p)
+         Class.ensure_initialized(p[1])
+         p := get_proc_field!p | runerr("Class field invalid or not a method", p[2])
+      }
+      return p
+   end
+
+   private static native get_name_impl(p)
+   private static native get_program_impl(p)
+   private static native get_defining_class_impl(p)
+   private static native get_field_name_impl(p)
+   private static native get_field_index_impl(p)
+   private static native get_kind_impl(p)
+   private static native get_n_arguments_impl(p)
+   private static native has_varargs_impl(p)
+   private static native get_n_dynamics_impl(p)
+   private static native get_n_statics_impl(p)
+   private static native get_local_index_impl(p, id)
+   private static native get_local_location_impl(p, id)
+   private static native get_local_name_impl(p, id)
+   private static native get_local_kind_impl(p, id)
+   private static native get_proc_field(c, field)
 
    # load C function dynamically.
    public static native load(filename, funcname)
