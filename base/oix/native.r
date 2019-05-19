@@ -3990,14 +3990,12 @@ function lang_Proc_get_local_kind_impl(c, id)
      }
 end
 
-function lang_Proc_get_name_impl(c, flag)
+function lang_Proc_get_name_impl(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-        if (!is_flag(&flag))
-           runerr(171, flag);
-        if (proc0->field && is:null(flag)) {
+        if (proc0->field) {
             tended struct descrip result;
             int len;
             struct b_class *class0 = proc0->field->defining_class;
@@ -4013,15 +4011,13 @@ function lang_Proc_get_name_impl(c, flag)
      }
 end
 
-function lang_Proc_get_program_impl(c, flag)
+function lang_Proc_get_program_impl(c)
     body {
         struct b_proc *proc0;
         struct progstate *prog;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (!is_flag(&flag))
-           runerr(171, flag);
-        if (proc0->field && is:null(flag))
+        if (proc0->field)
             prog = proc0->field->defining_class->program;
         else {
             struct p_proc *pp;
