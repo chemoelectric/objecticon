@@ -55,37 +55,6 @@ struct b_proc *get_proc_for(dptr x)
       methp: 
             return MethpBlk(*x).proc;
         
-      list: {
-            tended struct descrip class0, field;
-            word y;
-            int i;
-            struct class_field *cf;
-
-            /* Extract elements */
-            if (ListBlk(*x).size != 2)
-                ReturnErrVal(631, *x, 0);
-            class0 = *get_element(x, 1);
-            field = *get_element(x, 2);
-
-            if (!is:class(class0))
-                ReturnErrVal(603, class0, 0);
-
-            /* See CheckField() */
-            if (cnv:C_integer(field, y))
-                MakeInt(y, &field);
-            else if (!cnv:string(field, field))
-                ReturnErrVal(170, field, 0);
-
-            /* Lookup the field, ensure it's a method. */
-            i = lookup_class_field(&ClassBlk(class0), &field, 0);
-            if (i < 0)
-                ReturnErrVal(638, *x, 0);
-            cf = ClassBlk(class0).fields[i];
-            if (!cf->flags & M_Method)
-                ReturnErrVal(638, *x, 0);
-
-            return &ProcBlk(*cf->field_descriptor);
-         }
      default: 
             ReturnErrVal(631, *x, 0);
     }
@@ -4390,7 +4359,7 @@ static struct p_proc *get_procedure(struct b_proc *bp)
     return pp;
 }
 
-function lang_Proc_get_n_arguments(c)
+function lang_Proc_get_n_arguments_impl(c)
    body {
       struct b_proc *proc0;
       if (!(proc0 = get_proc_for(&c)))
@@ -4399,7 +4368,7 @@ function lang_Proc_get_n_arguments(c)
    }
 end
 
-function lang_Proc_has_varargs(c)
+function lang_Proc_has_varargs_impl(c)
    body {
       struct b_proc *proc0;
       if (!(proc0 = get_proc_for(&c)))
@@ -4411,7 +4380,7 @@ function lang_Proc_has_varargs(c)
    }
 end
 
-function lang_Proc_get_n_dynamics(c)
+function lang_Proc_get_n_dynamics_impl(c)
    body {
        struct b_proc *proc0;
        struct p_proc *pp;
@@ -4423,7 +4392,7 @@ function lang_Proc_get_n_dynamics(c)
      }
 end
 
-function lang_Proc_get_n_statics(c)
+function lang_Proc_get_n_statics_impl(c)
    body {
        struct b_proc *proc0;
        struct p_proc *pp;
@@ -4435,7 +4404,7 @@ function lang_Proc_get_n_statics(c)
      }
 end
 
-function lang_Proc_get_local_index(c, id)
+function lang_Proc_get_local_index_impl(c, id)
    body {
         struct b_proc *proc0;
         struct p_proc *pp;
@@ -4479,7 +4448,7 @@ function lang_Proc_get_local_location_impl(c, id)
      }
 end
 
-function lang_Proc_get_local_name(c, id)
+function lang_Proc_get_local_name_impl(c, id)
    body {
         struct b_proc *proc0;
         struct p_proc *pp;
@@ -4496,7 +4465,7 @@ function lang_Proc_get_local_name(c, id)
      }
 end
 
-function lang_Proc_get_local_kind(c, id)
+function lang_Proc_get_local_kind_impl(c, id)
    body {
         struct b_proc *proc0;
         struct p_proc *pp;
@@ -4517,14 +4486,12 @@ function lang_Proc_get_local_kind(c, id)
      }
 end
 
-function lang_Proc_get_name(c, flag)
+function lang_Proc_get_name_impl(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-        if (!is_flag(&flag))
-           runerr(171, flag);
-        if (proc0->field && is:null(flag)) {
+        if (proc0->field) {
             tended struct descrip result;
             int len;
             struct b_class *class0 = proc0->field->defining_class;
@@ -4540,15 +4507,13 @@ function lang_Proc_get_name(c, flag)
      }
 end
 
-function lang_Proc_get_program(c, flag)
+function lang_Proc_get_program_impl(c)
     body {
         struct b_proc *proc0;
         struct progstate *prog;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (!is_flag(&flag))
-           runerr(171, flag);
-        if (proc0->field && is:null(flag))
+        if (proc0->field)
             prog = proc0->field->defining_class->program;
         else {
             struct p_proc *pp;
@@ -4560,7 +4525,7 @@ function lang_Proc_get_program(c, flag)
     }
 end
 
-function lang_Proc_get_kind(c)
+function lang_Proc_get_kind_impl(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -4569,7 +4534,7 @@ function lang_Proc_get_kind(c)
      }
 end
 
-function lang_Proc_get_defining_class(c)
+function lang_Proc_get_defining_class_impl(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -4581,7 +4546,7 @@ function lang_Proc_get_defining_class(c)
      }
 end
 
-function lang_Proc_get_field_name(c)
+function lang_Proc_get_field_name_impl(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -4593,7 +4558,7 @@ function lang_Proc_get_field_name(c)
      }
 end
 
-function lang_Proc_get_field_index(c)
+function lang_Proc_get_field_index_impl(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -4602,6 +4567,24 @@ function lang_Proc_get_field_index(c)
             return C_integer 1 + lookup_class_field_by_fnum(proc0->field->defining_class, proc0->field->fnum);
         else
             fail;
+     }
+end
+
+function lang_Proc_get_proc_field(c, field)
+   body {
+        struct b_class *class0;
+        struct class_field *cf;
+        int i;
+        if (!(class0 = get_class_for(&c)))
+            runerr(0);
+        CheckField(field);
+        i = lookup_class_field(class0, &field, 0);
+        if (i < 0)
+            fail;
+        cf = class0->fields[i];
+        if (!cf->flags & M_Method)
+            fail;
+        return *cf->field_descriptor;
      }
 end
 

@@ -160,6 +160,7 @@
 #define c_get_instance_data (*(imported->c_get_instance_data))
 #define c_is (*(imported->c_is))
 #define class_is (*(imported->class_is))
+#define get_proc_kind (*(imported->get_proc_kind))
 #define mem_eq (*(imported->mem_eq))
 #define str_mem_eq (*(imported->str_mem_eq))
 #define rangeset_to_block (*(imported->rangeset_to_block))

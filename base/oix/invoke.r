@@ -15,6 +15,7 @@ static void for_class_supers(void);
 static void set_object_state(void);
 static void invoke_class_init(void);
 static void ensure_class_initialized(void);
+static void push_initialize_class_and_repeat(struct b_class *class0);
 
 #include "invokeiasm.ri"
 
@@ -754,11 +755,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
     int i, ac;
 
     if (class0->init_state == Uninitialized) {
-        struct p_frame *pf;
-        MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
-        push_frame((struct frame *)pf);
-        pf->tmp[0] = *expr;
-        tail_invoke_frame((struct frame *)pf);
+        push_initialize_class_and_repeat(class0);
         return;
     }
 
@@ -987,11 +984,7 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
     int i, ac;
 
     if (class0->init_state == Uninitialized) {
-        struct p_frame *pf;
-        MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
-        push_frame((struct frame *)pf);
-        pf->tmp[0] = *expr;
-        tail_invoke_frame((struct frame *)pf);
+        push_initialize_class_and_repeat(class0);
         return;
     }
 
@@ -1315,3 +1308,12 @@ operator ! apply(fun, args)
         fail;
     }
 end
+
+static void push_initialize_class_and_repeat(struct b_class *class0)
+{
+    struct p_frame *pf;
+    MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
+    push_frame((struct frame *)pf);
+    MakeDesc(D_Class, class0, &pf->tmp[0]);
+    tail_invoke_frame((struct frame *)pf);
+}

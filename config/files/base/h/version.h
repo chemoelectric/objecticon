@@ -18,12 +18,12 @@
  * and icode is compatible with the run-time system.
  */
    
-#define UVersion "U2.0.142"
-#define IVersion "I2.0.142"
+#define UVersion "U2.0.143"
+#define IVersion "I2.0.143"
 
 
 /*
  * This version number is used to ensure compatibility between the oix
  * executable and any dynamically loaded object files (.so or .dll).
  */
-#define OixVersion 100
+#define OixVersion 103
