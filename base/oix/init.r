@@ -1288,12 +1288,20 @@ int main(int argc, char **argv)
     double d;
 
 #if MSWIN32
+    int hide_console = 0;
     WSADATA cData;
     WSAStartup(MAKEWORD(2, 2), &cData);
     /* Set binary mode on stdin, stdout and stderr */
     _setmode(0, _O_BINARY);
     _setmode(1, _O_BINARY);
     _setmode(2, _O_BINARY);
+    env_int("OI_HIDE_CONSOLE", &hide_console, 0, 1);
+    if (hide_console) {
+        HWND w;
+        w = GetConsoleWindow();
+        if (w)
+            ShowWindow(w, SW_HIDE);
+    }
 #endif
 
     fp = fparse(argv[0]);
