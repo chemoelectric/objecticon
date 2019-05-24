@@ -1371,6 +1371,7 @@ static wcp clonecontext(wcp src)
     wc->cliph = src->cliph;
     wc->dx = src->dx;
     wc->dy = src->dy;
+    wc->leading = src->leading;
     wc->fg = link_sharedcolor(src->fg);
     wc->bg = link_sharedcolor(src->bg);
     if (src->pattern)
