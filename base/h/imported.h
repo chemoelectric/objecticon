@@ -7,6 +7,8 @@
 */
 #define curpstate (*(imported->curpstate))
 #define k_current (*(imported->k_current))
+#define curr_pf (*(imported->curr_pf))
+#define curr_cf (*(imported->curr_cf))
 #define progs (*(imported->progs))
 #define tendedlist (*(imported->tendedlist))
 #define emptycs (*(imported->emptycs))
