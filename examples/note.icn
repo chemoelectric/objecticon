@@ -32,6 +32,16 @@ procedure do_uniq()
    mod := &yes
 end
 
+procedure do_sf()
+   local u
+   every u := !notes do {
+      if u.scheme == "file" then {
+         u.set_host("localhost").set_query()
+         mod := &yes
+      }
+   }
+end
+
 procedure url_key(x)
    return x.str()
 end
@@ -197,6 +207,7 @@ procedure usage(opts)
    help_line("i", "Add URLs from standard input")
    help_line("uniq", "Trim notes to eliminate duplicates")
    help_line("sort", "Sort notes")
+   help_line("sf", "Simplify file:// notes, removing query and setting host to localhost")
    help_line("x", "Clear all notes") 
    help_line(u"Commands may be combined in one invocation, eg “note u l”.")
    help_line(u"  - multiple parameters (except for run) may be ended with a single “.” - eg “note add one two . save res.txt”.")
@@ -228,6 +239,9 @@ procedure main(a)
          }
          "rm": {
             every do_remove(pop_some(a))
+         }
+         "sf": {
+            do_sf()
          }
          "uniq": {
             do_uniq()
