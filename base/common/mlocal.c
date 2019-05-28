@@ -1631,10 +1631,16 @@ void small_free(void *p)
 
 /*
  * Return true if the (null-terminated) string s has the icode
- * delimiter as an initial string.
+ * delimiter as an initial string, followed by \n.
  */
 int match_delim(char *s)
 {
-    return strncmp(s, IcodeDelim, sizeof(IcodeDelim) - 1) == 0;
+    /*
+     * Splitting the test into two parts avoids creating a string
+     * constant of IcodeDelim followed by \n in oix (which we will
+     * search through if it was bundled with -B, so we want to lessen
+     * the chance of a false match).
+     */
+    return strncmp(s, IcodeDelim, sizeof(IcodeDelim) - 1) == 0 && s[sizeof(IcodeDelim) - 1] == '\n';
 }
 
