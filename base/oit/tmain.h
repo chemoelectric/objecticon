@@ -24,6 +24,7 @@ extern int neweronly;	/* -n: only translate .icn if newer than .u */
 extern int Dflag;       /* -L: link debug */
 extern int Iflag;       /* -I: ir code dump */
 extern int Zflag;	/* -Z: icode-gz compression */
+extern int Bflag;       /* -B: bundle iconx in output file */
 extern int loclevel;    /* -l n: location info */
 extern int Olevel;      /* -O n: optimisation */
 extern int nolink;
