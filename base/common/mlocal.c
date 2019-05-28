@@ -1628,3 +1628,13 @@ void small_free(void *p)
      */
     free(q);
 }
+
+/*
+ * Return true if the (null-terminated) string s has the icode
+ * delimiter as an initial string.
+ */
+int match_delim(char *s)
+{
+    return strncmp(s, IcodeDelim, sizeof(IcodeDelim) - 1) == 0;
+}
+
