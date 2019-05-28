@@ -697,7 +697,7 @@ class Preprocessor(Connectable)
          return Yes{ member(sym_table, x) }
       if c := move(1) then {
          case c of {
-            "~" : return toggle_flag(expr1())
+            "~" : return toggle_flag(expr3())
             "(" : {
                x := expr1() | fail
                scan_space()

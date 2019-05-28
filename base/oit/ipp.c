@@ -1459,7 +1459,7 @@ static char *evalexpr3(char **ss, int *val)
         ++*ss;
         switch (c) {
             case '~' : {
-                if ((r = evalexpr1(ss, &v)))
+                if ((r = evalexpr3(ss, &v)))
                     return r;
                 *val = !v;
                 break;
