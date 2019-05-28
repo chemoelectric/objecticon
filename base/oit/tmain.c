@@ -523,12 +523,32 @@ static void bundle_iconx()
 
 #if HAVE_LIBZ
 
+/*
+ * Read from file f upto end of file or a \n.  Similar to fgets, but
+ * returns the number of chars read.
+ */
+static int freadln(char *buf, int len, FILE *f)
+{
+    int c, n;
+    n = 0;
+    while (n < len - 1) {
+        c = fgetc(f);
+        if (c == EOF)
+            break;
+        buf[n++] = c;
+        if (c == '\n')
+            break;
+    }
+    buf[n] = 0;
+    return n;
+}
+
 static void file_comp() 
 {
     gzFile f; 
     FILE *finput, *foutput;
     struct header *hdr;
-    int n, c;
+    int r, c;
     char buf[200], *tmp = intern(makename(0, ofile, TmpSuffix));
   
     hdr = safe_zalloc(sizeof(struct header));
@@ -541,12 +561,13 @@ static void file_comp()
     if (!(foutput = fopen(tmp, WriteBinary)))
         equit("Can't open the temp compression file: %s", tmp);
 
-    n = strlen(IcodeDelim);
     for (;;) {
-        if (fgets(buf, sizeof(buf), finput) == NULL)
-            equit("Compression - Reading Error: Check if the file is executable Icon");
-        fputs(buf, foutput);
-        if (strncmp(buf, IcodeDelim, n) == 0)
+        r = freadln(buf, sizeof(buf), finput);
+        if (r == 0)
+            equit("Compression - Error while reading file %s", ofile);
+        if (fwrite(buf, sizeof(char), r, foutput) != r)
+            equit("Compression - Error while writing file %s", tmp);
+        if (match_delim(buf))
             break;
     }
 
@@ -559,13 +580,13 @@ static void file_comp()
     /* write the modified header into a new file */
     
     if (fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput) != sizeof(*hdr))
-        equit("Failed to write header to temp compression file");
+        equit("Failed to write header to file %s", tmp);
     
     /* close the new file */
   
     fflush(foutput);
     if (ferror(foutput) != 0)
-        equit("Compression failed to write to tmp output file %s", tmp);
+        equit("Compression - Error while writing file %s", tmp);
 
     fclose(foutput);
     
@@ -583,7 +604,7 @@ static void file_comp()
         gzputc(f, c);
 
     if (ferror(finput))
-        equit("Compression - Error occurs while reading file %s", ofile);
+        equit("Compression - Error while reading file %s", ofile);
    
     /* close both files */
     fclose(finput);
