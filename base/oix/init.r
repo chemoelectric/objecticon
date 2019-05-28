@@ -257,7 +257,6 @@ static int check_version(struct header *hdr)
 static FILE *readhdr_strict(char *name, struct header *hdr)
 {
     FILE *ifile;
-    int n = strlen(IcodeDelim);
     char buf[200];
 
     ifile = fopen(name, ReadBinary);
@@ -267,7 +266,7 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
     for (;;) {
         if (fgets(buf, sizeof(buf), ifile) == NULL)
             ffatalerr("Can't find header marker in interpreter file %s", name);
-        if (strncmp(buf, IcodeDelim, n) == 0)
+        if (match_delim(buf))
             break;
     }
 
@@ -291,7 +290,6 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
 static FILE *readhdr_liberal(char *name, struct header *hdr)
 {
     FILE *ifile;
-    int n = strlen(IcodeDelim);
     char buf[200];
 
     ifile = fopen(name, ReadBinary);
@@ -306,7 +304,7 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
             fclose(ifile);
             return NULL;
         }
-        if (strncmp(buf, IcodeDelim, n) == 0)
+        if (match_delim(buf))
             break;
     }
 
@@ -331,7 +329,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
 #if HAVE_LIBZ
     if (strchr((char *)(hdr->Config), 'Z')) { /* to decompress */
         gzFile zfd;
-        int tmp = open(name, O_RDONLY);
+        int tmp = open(name, O_RDONLY, 0);
         lseek(tmp,ftell(ifile),SEEK_SET);
         zfd = gzdopen(tmp, "r");
         if ((cbread = gzread(zfd, codeptr, hdr->IcodeSize)) != hdr->IcodeSize) {
