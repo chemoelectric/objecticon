@@ -2,29 +2,34 @@ include ../../Makedefs
 
 TARGET=
 
-ifneq (@OPENSSL_DIR@,)
+ifneq (@OPENSSL@,)
   TARGET:=$(TARGET) objecticonssllib.dll
 endif
-ifneq (@MYSQL_DIR@,)
+ifneq (@MYSQL@,)
   TARGET:=$(TARGET) objecticonmysqllib.dll
 endif
 
 all : $(TARGET)
 
-objecticonmysqllib.dll : mysql.r
+mysql.obj : mysql.r
 	$(RTT) -x -h gmysql.h mysql.r
-	$(CC) $(CFLAGS) /LD /I "@MYSQL_DIR@\include\mysql" mysql.c \
-		"@MYSQL_DIR@\lib\libmysql.lib" \
-		/link /incremental:no /out:$@
+	$(CC) $(CFLAGS) /LD /I @MYSQL_INCLUDE_DIR@ /c mysql.c
 	$(RM) mysql.c
 
-objecticonssllib.dll : ssl.r
+objecticonmysqllib.dll : mysql.obj
+	$(LD) $(LDFLAGS) /DLL mysql.obj \
+	      @MYSQL_LIBS@ \
+              /OUT:$@
+
+ssl.obj : ssl.r
 	$(RTT) -x -h gssl.h ssl.r
-	$(CC) $(CFLAGS) /LD /I "@OPENSSL_DIR@\include" ssl.c \
-		"@OPENSSL_DIR@\lib\libeay32.lib" \
-		"@OPENSSL_DIR@\lib\ssleay32.lib" \
-		/link /incremental:no /out:$@
+	$(CC) $(CFLAGS) /I @OPENSSL_INCLUDE_DIR@ /c ssl.c
 	$(RM) ssl.c
+
+objecticonssllib.dll : ssl.obj
+	$(LD) $(LDFLAGS) /DLL ssl.obj \
+	      @OPENSSL_LIBS@ \
+              /OUT:$@
 
 clean :
 	$(RM) *.u *.obj *.lib *.exp *.pdb *.dll mysql.c ipc.c cairo.c ssl.c

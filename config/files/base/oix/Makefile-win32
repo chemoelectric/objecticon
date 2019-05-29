@@ -28,7 +28,7 @@ COBJS=	../common/mlocal.obj ../common/win32.obj ../common/gdip.obj
 
 OBJS=	$(XOBJS) $(COBJS)
 
-LIBS=	winmm.lib wsock32.lib odbc32.lib shell32.lib libcmt.lib oldnames.lib kernel32.lib \
+LIBS=	winmm.lib wsock32.lib odbc32.lib shell32.lib oldnames.lib kernel32.lib \
 	ws2_32.lib mswsock.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib \
 	msimg32.lib gdiplus.lib
 
@@ -40,12 +40,12 @@ oref.obj: orefiasm.ri
 
 $(PROG):	$(OBJS)
 	$(RM) $(PROG)
-	$(LD) $(LDFLAGS) /STACK:16000000 /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
+	$(LD) $(LDFLAGS) /STACK:16000000 /ENTRY:wmainCRTStartup \
 		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
 
 %.obj: %.r $(HDRS)
 	rtt -y $<
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) /c $*.c
 	$(RM) $*.c
 
 clean:		

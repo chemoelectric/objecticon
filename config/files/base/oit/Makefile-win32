@@ -25,7 +25,7 @@ clean:
 			$(HDR) $(HDR:.exe=.pdb) mkkwd fixgram mktoktab
 
 $(PROG):		$(OBJS)
-		$(LD) $(LDFLAGS) /STACK:16000000 /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
+		$(LD) $(LDFLAGS) /STACK:16000000 /ENTRY:wmainCRTStartup \
                       /SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
 
 $(HDR):		win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj

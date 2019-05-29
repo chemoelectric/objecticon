@@ -6,13 +6,14 @@ function double_bs()
     echo $1 | sed -e "s/\\\/\\\\\\\\/g"
 }
 
-unset r_opt s_opt q_opt
+unset r_opt s_opt q_opt z_opt
 OPTIND=1
-while getopts "s:q:r" options; do
+while getopts "s:q:z:r" options; do
     case $options in
         r) r_opt=1 ;;                 # Release mode
         s) s_opt="$OPTARG" ;;
         q) q_opt="$OPTARG" ;;
+        z) z_opt="$OPTARG" ;;
         [?]) exit 1 ;;
     esac
 done
@@ -53,8 +54,26 @@ cp config/files/examples/Makefile-win32 examples/Makefile
 # Transform \ into \\, in both path variables.
 s_opt=$(double_bs "$s_opt")
 q_opt=$(double_bs "$q_opt")
-sed -e "s/@OPENSSL_DIR@/$s_opt/" \
-    -e "s/@MYSQL_DIR@/$q_opt/" \
+z_opt=$(double_bs "$z_opt")
+
+if [ -z "$r_opt" ]; then
+    zpkg_lib=debug\\\\lib
+else
+    zpkg_lib=lib
+fi
+unset s_yn q_yn
+if [ -n "$s_opt" ]; then
+    s_yn=y
+fi
+if [ -n "$q_opt" ]; then
+    q_yn=y
+fi
+sed -e "s/@OPENSSL@/$s_yn/" \
+    -e "s/@OPENSSL_INCLUDE_DIR@/\"$s_opt\\\\include\"/" \
+    -e "s/@OPENSSL_LIBS@/\"$s_opt\\\\$zpkg_lib\\\\libeay32.lib\" \"$s_opt\\\\$zpkg_lib\\\\ssleay32.lib\"/" \
+    -e "s/@MYSQL@/$q_yn/" \
+    -e "s/@MYSQL_INCLUDE_DIR@/\"$q_opt\\\\include\\\\mysql\"/" \
+    -e "s/@MYSQL_LIBS@/\"$q_opt\\\\$zpkg_lib\\\\libmysql.lib\"/" \
     <config/files/lib/native/Makefile-win32 >lib/native/Makefile
 mkdir -p bin examples/bin
 echo creating Makedefs
@@ -64,12 +83,20 @@ w=$(cygpath -w "$x")
 # Transform \ into \\, eg c:\\home\\rpp
 v=$(double_bs "$w")
 # /Od disables optimization, /Zi for debugging
-if [ -z $r_opt ]; then
-    CFLAGS="/Od /Zi /utf-8 /WX"
-    LDFLAGS="/DEBUG:FULL /WX"
+if [ -z "$r_opt" ]; then
+    CFLAGS="/Od /Zi /utf-8 /WX /MDd"
+    LDFLAGS="/DEBUG:FULL /INCREMENTAL:NO /WX"
 else
-    CFLAGS="/O2 /utf-8 /WX"
-    LDFLAGS="/WX"
+    CFLAGS="/O2 /utf-8 /WX /MD"
+    LDFLAGS="/INCREMENTAL:NO /WX"
+fi
+if [ -n "$z_opt" ] ; then
+    CFLAGS="$CFLAGS /I \"$z_opt\\\\include\""
+    if [ -z "$r_opt" ]; then
+        LDFLAGS="$LDFLAGS \"$z_opt\\\\debug\\\\lib\\\\zlibd.lib\""
+    else
+        LDFLAGS="$LDFLAGS \"$z_opt\\\\lib\\\\zlib.lib\""
+    fi
 fi
 sed -e "s:@CONFIG_DIR@:$x:"  \
     -e "s%@CFLAGS@%$CFLAGS%" \
@@ -129,6 +156,12 @@ cat >base/h/auto.h <<EOF
 /* System type */
 #define MSWIN32 1
 EOF
+if [ -n "$z_opt" ] ; then
+cat >>base/h/auto.h <<EOF
+/* zlib library */
+#define HAVE_LIBZ 1
+EOF
+fi
 echo creating test/custom.sh
 cat >test/custom.sh <<EOF
 cmp()
