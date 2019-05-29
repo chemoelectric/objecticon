@@ -284,11 +284,6 @@ extern short final_state;
 extern int actions[1024];
 extern int nactions;
 
-/* system variables */
-
-extern int errno;
-
-
 /************************
 ## PROTOTYPES
 ************************/
