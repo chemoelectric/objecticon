@@ -11,7 +11,7 @@ clean:
 		rm -f *.o
 
 etags:
-		$(ETAGS) $(CSRC)
+		$(ETAGS) $(CSRC) gdip.cpp win32.c
 
 $(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
 	  ../h/typedefs.h

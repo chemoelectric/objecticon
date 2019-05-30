@@ -117,6 +117,7 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
 
 
 static void writescript(void);
+static void writescript1(void);
 static word cnv_op(int n);
 static void genstaticnames(struct lfunction *lf);
 static void gentables(void);
@@ -2402,6 +2403,18 @@ static word cnv_op(int n)
 }
 
 static void writescript()
+{
+    if (Bflag) {
+        char *script =  "\n" IcodeDelim "\n";
+        scriptsize = strlen(script);
+        /* write header */
+        if (fwrite(script, scriptsize, 1, outfile) != 1)
+            equit("Cannot write header to icode file");
+    } else
+        writescript1();
+}
+
+static void writescript1()
 {
 #if UNIX
     char script[2048];

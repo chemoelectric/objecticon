@@ -3,6 +3,8 @@
 struct oisymbols {
     struct progstate **curpstate;
     struct b_coexpr **k_current;
+    struct p_frame **curr_pf;
+    struct c_frame **curr_cf;
     struct progstate **progs;
     struct tend_desc **tendedlist;
     struct b_cset **emptycs;

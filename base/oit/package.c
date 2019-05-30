@@ -316,13 +316,13 @@ static void load_path_impl(char *dir)
  */
 void load_package_db_from_ipath()
 {
-    char *s = getenv_nn(OI_PATH);
+    char *s = getenv_nn("OI_PATH");
 
     /* Load anything in the CD.  The empty string passed to canonicalize will
      * return the CD with a trailing separator. */
     load_path_impl("");
     
-    /* And anything on the IPATH */
+    /* And anything on the OI_PATH */
     if (!s)
         return;
     for (;;) {

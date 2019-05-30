@@ -988,9 +988,9 @@ procedure run_convert(stdin, args)
    local p, r
    static ok
    initial {
-      ok := has_feature("PNG images") & 
-         has_feature("UNIX") &
-         Files.find_exe("convert")
+$if _PNG & _UNIX & ~_CYGWIN
+      ok := Yes{ Files.find_exe("convert") }
+$endif
    }
    if /ok then
       return error("Convert not available")

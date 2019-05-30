@@ -45,6 +45,8 @@ char *findoiexe(char *name);
 char *oihomewalk(char *e, ...);
 void normalize(char *path);
 char *canonicalize(char *path);
+int match_delim(char *s);
+
 void *safe_calloc(size_t m, size_t n);
 void *safe_zalloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);

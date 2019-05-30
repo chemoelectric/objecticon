@@ -3,68 +3,10 @@
  */
 
 /*
- * Names for standard environment variables.
- * The standard names are used unless they are overridden.
+ * Name for the trace environment variable.
  */
-
 #ifndef TRACE
    #define TRACE "TRACE"
-#endif
-
-#ifndef OI_MAX_LEVEL
-   #define OI_MAX_LEVEL "OI_MAX_LEVEL"
-#endif
-
-#ifndef OI_STRING_SIZE
-   #define OI_STRING_SIZE "OI_STRING_SIZE"
-#endif
-
-#ifndef OI_BLOCK_SIZE
-   #define OI_BLOCK_SIZE "OI_BLOCK_SIZE"
-#endif
-
-#ifndef OI_MEM_GROWTH
-   #define OI_MEM_GROWTH "OI_MEM_GROWTH"
-#endif
-
-#ifndef OI_MEM_CUSHION
-   #define OI_MEM_CUSHION "OI_MEM_CUSHION"
-#endif
-
-#ifndef OI_CORE
-   #define OI_CORE "OI_CORE"
-#endif
-
-#ifndef OI_PATH
-   #define OI_PATH "OI_PATH"
-#endif
-
-#ifndef OI_INCL
-   #define OI_INCL "OI_INCL"
-#endif
-
-#ifndef OI_FONT
-   #define OI_FONT "OI_FONT"
-#endif
-
-#ifndef OI_FONT_SIZE
-   #define OI_FONT_SIZE "OI_FONT_SIZE"
-#endif
-
-#ifndef OI_LEADING
-   #define OI_LEADING "OI_LEADING"
-#endif
-
-#ifndef OI_IP_VERSION
-   #define OI_IP_VERSION "OI_IP_VERSION"
-#endif
-
-#ifndef OI_STACK_LIMIT
-   #define OI_STACK_LIMIT "OI_STACK_LIMIT"
-#endif
-
-#ifndef OI_STACK_CUSHION
-   #define OI_STACK_CUSHION "OI_STACK_CUSHION"
 #endif
 
 #if MSWIN32

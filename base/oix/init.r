@@ -257,7 +257,6 @@ static int check_version(struct header *hdr)
 static FILE *readhdr_strict(char *name, struct header *hdr)
 {
     FILE *ifile;
-    int n = strlen(IcodeDelim);
     char buf[200];
 
     ifile = fopen(name, ReadBinary);
@@ -267,7 +266,7 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
     for (;;) {
         if (fgets(buf, sizeof(buf), ifile) == NULL)
             ffatalerr("Can't find header marker in interpreter file %s", name);
-        if (strncmp(buf, IcodeDelim, n) == 0)
+        if (match_delim(buf))
             break;
     }
 
@@ -291,7 +290,6 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
 static FILE *readhdr_liberal(char *name, struct header *hdr)
 {
     FILE *ifile;
-    int n = strlen(IcodeDelim);
     char buf[200];
 
     ifile = fopen(name, ReadBinary);
@@ -306,7 +304,7 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
             fclose(ifile);
             return NULL;
         }
-        if (strncmp(buf, IcodeDelim, n) == 0)
+        if (match_delim(buf))
             break;
     }
 
@@ -331,8 +329,12 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
 #if HAVE_LIBZ
     if (strchr((char *)(hdr->Config), 'Z')) { /* to decompress */
         gzFile zfd;
+#if MSWIN32
+        int tmp = open(name, O_RDONLY | O_BINARY, 0);
+#else
         int tmp = open(name, O_RDONLY);
-        lseek(tmp,ftell(ifile),SEEK_SET);
+#endif
+        lseek(tmp, ftell(ifile), SEEK_SET);
         zfd = gzdopen(tmp, "r");
         if ((cbread = gzread(zfd, codeptr, hdr->IcodeSize)) != hdr->IcodeSize) {
             fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
@@ -1301,12 +1303,20 @@ int main(int argc, char **argv)
     double d;
 
 #if MSWIN32
+    int hide_console = 0;
     WSADATA cData;
     WSAStartup(MAKEWORD(2, 2), &cData);
     /* Set binary mode on stdin, stdout and stderr */
     _setmode(0, _O_BINARY);
     _setmode(1, _O_BINARY);
     _setmode(2, _O_BINARY);
+    env_int("OI_HIDE_CONSOLE", &hide_console, 0, 1);
+    if (hide_console) {
+        HWND w;
+        w = GetConsoleWindow();
+        if (w)
+            ShowWindow(w, SW_HIDE);
+    }
 #endif
 
 #if PLAN9
@@ -1407,21 +1417,21 @@ int main(int argc, char **argv)
      * Examine the environment and make appropriate settings.    [[I?]]
      */
     env_word(TRACE, &k_trace, MinWord, MaxWord);
-    env_word(OI_MAX_LEVEL, &k_maxlevel, 16, MaxWord);
-    env_uword(OI_STRING_SIZE, &rootstring.size, 1024, MaxUWord);
-    env_uword(OI_BLOCK_SIZE, &rootblock.size, 1024, MaxUWord); 
-    env_word(OI_MEM_CUSHION, &memcushion, 0, 100);   /* max 100 % */
-    env_word(OI_MEM_GROWTH, &memgrowth, 0, 10000);   /* max 100x growth */
-    env_word(OI_CORE, &dodump, 0, 2);
+    env_word("OI_MAX_LEVEL", &k_maxlevel, 16, MaxWord);
+    env_uword("OI_STRING_SIZE", &rootstring.size, 1024, MaxUWord);
+    env_uword("OI_BLOCK_SIZE", &rootblock.size, 1024, MaxUWord); 
+    env_word("OI_MEM_CUSHION", &memcushion, 0, 100);   /* max 100 % */
+    env_word("OI_MEM_GROWTH", &memgrowth, 0, 10000);   /* max 100x growth */
+    env_word("OI_CORE", &dodump, 0, 2);
     stacklim = rootblock.size / 2;
-    env_uword(OI_STACK_LIMIT, &stacklim, 1024, MaxUWord);
-    env_word(OI_STACK_CUSHION, &stackcushion, 0, 10000);
-    env_double(OI_FONT_SIZE, &defaultfontsize, MIN_FONT_SIZE, 1e32);
-    env_double(OI_LEADING, &defaultleading, 0.0, 1e32);
-    env_word(OI_IP_VERSION, &defaultipver, 0, 64);
+    env_uword("OI_STACK_LIMIT", &stacklim, 1024, MaxUWord);
+    env_word("OI_STACK_CUSHION", &stackcushion, 0, 10000);
+    env_double("OI_FONT_SIZE", &defaultfontsize, MIN_FONT_SIZE, 1e32);
+    env_double("OI_LEADING", &defaultleading, 0.0, 1e32);
+    env_word("OI_IP_VERSION", &defaultipver, 0, 64);
     if (!(defaultipver == 4 || defaultipver == 6 || defaultipver == 46 || defaultipver == 64 || defaultipver == 0))
-        ffatalerr("Environment variable has invalid value: %s=" WordFmt, OI_IP_VERSION, defaultipver);
-    env_string(OI_FONT, &defaultfont);
+        ffatalerr("Environment variable has invalid value: OI_IP_VERSION=" WordFmt, defaultipver);
+    env_string("OI_FONT", &defaultfont);
 
     Protect(rootpstate.Code = icode_alloc((void *)hdr.Base, hdr.IcodeSize), fatalerr(315, NULL));
 

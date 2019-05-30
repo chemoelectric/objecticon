@@ -179,17 +179,17 @@ class DesktopEntry()
          r ||:= tab(upto('%') | 0)
          move(1) | break
          r ||:= case ch := string(move(1)) of {
-            "%": u"%"
-            "i": u"--icon " || \icon
+            "%": "%"
+            "i": "--icon " || \icon
             "c": name
             "k": ucs(source)
-            !"uUfF": (fl := 1, \f)
+            !"uUfF": (fl := &yes, \f)
             "L": \line
          }
       }
       # If file not substituted, then add to the end.
       if /fl then
-         r ||:= u" " || \f
+         r ||:= " " || \f
       return r
    end
 
@@ -313,11 +313,11 @@ package final abstract class Util()
       s ? repeat {
          t ||:= tab(upto('\\') | 0)
          ch := (move(1), move(1)) | break
-         t ||:= case ch of {
-            u"s": u" "
-            u"t": u"\t"
-            u"n": u"\n"
-            u"r": u"\r"
+         t ||:= case string(ch) of {
+            "s": " "
+            "t": "\t"
+            "n": "\n"
+            "r": "\r"
             default: ch
          }
       }
@@ -331,12 +331,12 @@ package final abstract class Util()
    private static parse_key_val(group)
       local key, val, enc, t
       key := trim(tab(upto('[='))) | fail
-      if =u"[" then {
+      if ="[" then {
          enc := string(tab(upto(']'))) | fail
          move(1)
          tab(many(' '))
       }
-      =u"=" | fail
+      ="=" | fail
       tab(many(' '))
       val := unescape(tab(0))
       (t := member(group, key)) | insert(group, key, t := table())
@@ -360,9 +360,9 @@ package final abstract class Util()
       local group, groups, gn
       groups := table()
       every separate_lines(s) ? {
-         if pos(0) | match(u"#") then
+         if pos(0) | match("#") then
             next
-         if =u"[" & gn := tab(upto(']')) then {
+         if ="[" & gn := tab(upto(']')) then {
             group := table()
             insert(groups, gn, group)
          } else
@@ -844,8 +844,8 @@ final abstract class Mime()
       every e := !l do {
          if not(Files.is_hidden(e.name)) then {
             if e.stat.mode_str[1] == "d" then {
-               scan_application_dir(p.child(e.name), prefix || e.name || u"-", t, u)
-            } else if endswith(e.name, u".desktop") then {
+               scan_application_dir(p.child(e.name), prefix || e.name || "-", t, u)
+            } else if endswith(e.name, ".desktop") then {
                key := prefix || e.name
                if (not member(t, key)) & 
                   src := p.child(e.name).str() &
@@ -1011,7 +1011,7 @@ package class Globs()
             }
          }
       } else if upto('*?[', p) then {
-         if match(u"*.", p) & not upto('*?[', p[3:0]) then {
+         if match("*.", p) & not upto('*?[', p[3:0]) then {
             p := p[3:0]
             x := member(simple, p)
             if /x | (weight > x.weight) then

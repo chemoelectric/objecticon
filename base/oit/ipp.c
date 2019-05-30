@@ -169,7 +169,7 @@ int ppinit(char *fname, int m4)
    /*
     * initialize variables and open source file 
     */
-   lpath = getenv_nn(OI_INCL);
+   lpath = getenv_nn("OI_INCL");
    curfile = &nofile;			/* init file struct pointer */
    last_line_file = last_line_encoding = 0;
    quoting = 0;
@@ -1459,7 +1459,7 @@ static char *evalexpr3(char **ss, int *val)
         ++*ss;
         switch (c) {
             case '~' : {
-                if ((r = evalexpr1(ss, &v)))
+                if ((r = evalexpr3(ss, &v)))
                     return r;
                 *val = !v;
                 break;

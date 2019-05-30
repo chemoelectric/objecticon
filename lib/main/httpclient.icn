@@ -108,10 +108,9 @@ class HttpClient(NetClient)
       RETRYING_EVENT := "Retrying"
       HEADERS_EVENT := "Headers"
       PROGRESS_EVENT := "Progress"
-      if has_feature("UNIX" | "PLAN9") &
-         not(has_feature("Cygwin")) &
-         Files.find_exe("gunzip") then
-         FOUND_GZIP := &yes
+$if (_UNIX | _PLAN9) & ~_CYGWIN
+      FOUND_GZIP := Yes{ Files.find_exe("gunzip") }
+$endif
    end
 
    private readable 
