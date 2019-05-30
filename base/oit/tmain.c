@@ -486,7 +486,8 @@ static void bundle_iconx()
     FILE *f, *f2;
     int c;
     char *tmp = intern(makename(0, ofile, ".tmp"));
-    rename(ofile, tmp);
+    if (rename(ofile, tmp))
+        equit("Tried to rename output file %s to %s before bundling, but couldn't", ofile, tmp);
 
     if (!(f = fopen(oixloc, ReadBinary)))
         equit("Tried to open oix to build .exe, but couldn't");
