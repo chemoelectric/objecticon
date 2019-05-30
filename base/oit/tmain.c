@@ -519,7 +519,8 @@ static void bundle_iconx()
 
     fclose(f2);
     setexe(ofile);
-    unlink(tmp);
+    if (unlink(tmp))
+        equit("Failed to remove temporary file %s", tmp);
 }
 
 #if HAVE_LIBZ
