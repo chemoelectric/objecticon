@@ -124,6 +124,16 @@ int remove_utf8(char *path)
     return v;
 }
 
+int unlink_utf8(char *path)
+{
+    WCHAR *wpath;
+    int v;
+    wpath = utf8_to_wchar(path);
+    v = _wunlink(wpath);
+    free(wpath);
+    return v;
+}
+
 int rmdir_utf8(char *path)
 {
     WCHAR *wpath;
@@ -234,6 +244,18 @@ int system_utf8(char *cmd)
     free(wcmd);
     return res;
 }
+
+#if HAVE_LIBZ
+gzFile gzopen_utf8(char *path, char *mode)
+{
+    WCHAR *wpath;
+    gzFile res;
+    wpath = utf8_to_wchar(path);
+    res = gzopen_w(wpath, mode);
+    free(wpath);
+    return res;
+}
+#endif
 
 int wmain(int argc, WCHAR *wargv[])
 {

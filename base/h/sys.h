@@ -55,6 +55,7 @@
    #define rename(x, y) rename_utf8(x, y)
    #define mkdir(x) mkdir_utf8(x)
    #define remove(x) remove_utf8(x)
+   #define unlink(x) unlink_utf8(x)
    #define rmdir(x) rmdir_utf8(x)
    #define access(x, y) access_utf8(x, y)
    #define stat(x, y) stat_utf8(x, y)
@@ -66,6 +67,7 @@
    #define system(x) system_utf8(x)
    #define chdir(x) chdir_utf8(x)
    #define getcwd(x, y) getcwd_utf8(x, y)
+   #define gzopen(x, y) gzopen_utf8(x, y)
 #endif					/* MSWIN32 */
 
 

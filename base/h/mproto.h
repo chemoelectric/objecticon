@@ -80,6 +80,7 @@ int open_utf8(char *path, int oflag, int pmode);
 int rename_utf8(char *path1, char *path2);
 int mkdir_utf8(char *path);
 int remove_utf8(char *path);
+int unlink_utf8(char *path);
 int rmdir_utf8(char *path);
 int access_utf8(char *path, int mode);
 int chdir_utf8(char *path);
@@ -88,6 +89,10 @@ char *getenv_utf8(char *var);
 int setenv_utf8(char *var, char *value);
 FILE *fopen_utf8(char *path, char *mode);
 int system_utf8(char *cmd);
+#if HAVE_LIBZ
+gzFile gzopen_utf8(char *path, char *mode);
+#endif
+
 #endif
 
 char *double2cstr(double n);
