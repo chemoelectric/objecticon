@@ -329,8 +329,12 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
 #if HAVE_LIBZ
     if (strchr((char *)(hdr->Config), 'Z')) { /* to decompress */
         gzFile zfd;
-        int tmp = open(name, O_RDONLY, 0);
-        lseek(tmp,ftell(ifile),SEEK_SET);
+#if MSWIN32
+        int tmp = open(name, O_RDONLY | O_BINARY, 0);
+#else
+        int tmp = open(name, O_RDONLY);
+#endif
+        lseek(tmp, ftell(ifile), SEEK_SET);
         zfd = gzdopen(tmp, "r");
         if ((cbread = gzread(zfd, codeptr, hdr->IcodeSize)) != hdr->IcodeSize) {
             fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
