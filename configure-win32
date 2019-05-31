@@ -83,10 +83,11 @@ x=$(pwd)
 w=$(cygpath -w "$x")
 # Transform \ into \\, eg c:\\home\\rpp
 v=$(double_bs "$w")
-# /Od disables optimization, /Zi for debugging
-CFLAGS="/Od /Zi /utf-8 /WX"
+CFLAGS="/utf-8 /WX"
 LDFLAGS="/INCREMENTAL:NO /WX"
 if [ -z "$r_opt" ]; then
+    # /Od disables optimization, /Zi for debugging
+    CFLAGS="$CFLAGS /Od /Zi"
     if [ -z "$D_opt" ] ; then
         CFLAGS="$CFLAGS /MTd"
     else
@@ -94,6 +95,8 @@ if [ -z "$r_opt" ]; then
     fi
     LDFLAGS="/DEBUG:FULL $LDFLAGS"
 else
+    # /O2 means maximize speed
+    CFLAGS="$CFLAGS /O2"
     if [ -z "$D_opt" ] ; then
         CFLAGS="$CFLAGS /MT"
     else
