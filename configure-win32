@@ -6,14 +6,15 @@ function double_bs()
     echo $1 | sed -e "s/\\\/\\\\\\\\/g"
 }
 
-unset r_opt s_opt q_opt z_opt D_opt
+unset r_opt s_opt q_opt z_opt v_opt D_opt v_lib v_incl
 OPTIND=1
-while getopts "s:q:z:rD" options; do
+while getopts "v:sqzrD" options; do
     case $options in
         r) r_opt=1 ;;                 # Release mode
-        s) s_opt="$OPTARG" ;;
-        q) q_opt="$OPTARG" ;;
-        z) z_opt="$OPTARG" ;;
+        v) v_opt="$OPTARG" ;;
+        s) s_opt=1 ;;
+        q) q_opt=1 ;;
+        z) z_opt=1 ;;
         D) D_opt=1 ;;
         [?]) exit 1 ;;
     esac
@@ -52,29 +53,8 @@ cp config/files/apps/ivib/plugins/Makefile-win32 apps/ivib/plugins/Makefile
 cp config/files/apps/Makefile-win32 apps/Makefile
 cp config/files/apps/oidoc/Makefile-win32 apps/oidoc/Makefile
 cp config/files/examples/Makefile-win32 examples/Makefile
-# Transform \ into \\, in both path variables.
-s_opt=$(double_bs "$s_opt")
-q_opt=$(double_bs "$q_opt")
-z_opt=$(double_bs "$z_opt")
-
-if [ -z "$r_opt" ]; then
-    vcpkg_lib=debug\\\\lib
-else
-    vcpkg_lib=lib
-fi
-unset s_yn q_yn
-if [ -n "$s_opt" ]; then
-    s_yn=y
-fi
-if [ -n "$q_opt" ]; then
-    q_yn=y
-fi
-sed -e "s/@OPENSSL@/$s_yn/" \
-    -e "s/@OPENSSL_INCLUDE_DIR@/\"$s_opt\\\\include\"/" \
-    -e "s/@OPENSSL_LIBS@/\"$s_opt\\\\$vcpkg_lib\\\\libeay32.lib\" \"$s_opt\\\\$vcpkg_lib\\\\ssleay32.lib\"/" \
-    -e "s/@MYSQL@/$q_yn/" \
-    -e "s/@MYSQL_INCLUDE_DIR@/\"$q_opt\\\\include\\\\mysql\"/" \
-    -e "s/@MYSQL_LIBS@/\"$q_opt\\\\$vcpkg_lib\\\\libmysql.lib\"/" \
+sed -e "s/@OPENSSL@/$s_opt/" \
+    -e "s/@MYSQL@/$q_opt/" \
     <config/files/lib/native/Makefile-win32 >lib/native/Makefile
 mkdir -p bin examples/bin
 echo creating Makedefs
@@ -103,18 +83,30 @@ else
         CFLAGS="$CFLAGS /MD"
     fi
 fi
-if [ -n "$z_opt" ] ; then
-    CFLAGS="$CFLAGS /I \"$z_opt\\\\include\""
+if [ -n "$v_opt" ] ; then
+    # Transform \ into \\, in vcpkg path.
+    v_opt=$(double_bs "$v_opt")
     if [ -z "$r_opt" ]; then
-        ZLIB="\"$z_opt\\\\debug\\\\lib\\\\zlibd.lib\""
+        v_lib="$v_opt\\\\debug\\\\lib"
     else
-        ZLIB="\"$z_opt\\\\lib\\\\zlib.lib\""
+        v_lib="$v_opt\\\\lib"
+    fi
+    v_incl="$v_opt\\\\include"
+    CFLAGS="$CFLAGS /I \"\$(VCPKG_INCL)\""
+fi
+if [ -n "$z_opt" ] ; then
+    if [ -z "$r_opt" ]; then
+        ZLIB="\"\$(VCPKG_LIB)\\\\zlibd.lib\""
+    else
+        ZLIB="\"\$(VCPKG_LIB)\\\\zlib.lib\""
     fi
 fi
 sed -e "s:@CONFIG_DIR@:$x:"  \
     -e "s%@CFLAGS@%$CFLAGS%" \
     -e "s%@LDFLAGS@%$LDFLAGS%" \
     -e "s%@ZLIB@%$ZLIB%" \
+    -e "s%@VCPKG_INCL@%$v_incl%" \
+    -e "s%@VCPKG_LIB@%$v_lib%" \
     -e "s/@WCONFIG_DIR@/$v/" \
    <./config/files/Makedefs-win32 >Makedefs
 echo creating paths.bat
