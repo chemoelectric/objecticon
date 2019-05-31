@@ -89,7 +89,6 @@ char *getenv_utf8(char *var);
 int setenv_utf8(char *var, char *value);
 FILE *fopen_utf8(char *path, char *mode);
 int system_utf8(char *cmd);
-
 #endif
 
 char *double2cstr(double n);
