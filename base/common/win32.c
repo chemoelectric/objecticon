@@ -245,18 +245,6 @@ int system_utf8(char *cmd)
     return res;
 }
 
-#if HAVE_LIBZ
-gzFile gzopen_utf8(char *path, char *mode)
-{
-    WCHAR *wpath;
-    gzFile res;
-    wpath = utf8_to_wchar(path);
-    res = gzopen_w(wpath, mode);
-    free(wpath);
-    return res;
-}
-#endif
-
 int wmain(int argc, WCHAR *wargv[])
 {
     char **argv;

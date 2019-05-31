@@ -26,10 +26,10 @@ clean:
 
 $(PROG):		$(OBJS)
 		$(LD) $(LDFLAGS) /STACK:16000000 /ENTRY:wmainCRTStartup \
-                      /SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
+                      /SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) $(ZLIB) /OUT:$(PROG)
 
 $(HDR):		win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj
-		$(LD) $(LDFLAGS) /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE \
+		$(LD) /INCREMENTAL:NO /WX /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE \
                    win32header.obj ../common/mlocal.obj ../common/alloc.obj \
                    ../common/win32.obj $(LIBS) /OUT:$(HDR)
 

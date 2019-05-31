@@ -178,6 +178,20 @@ static void print_wflag_message()
         fputs("Exiting on warning (-W flag)\n", stderr);
 }
 
+#if MSWIN32 && HAVE_LIBZ
+static gzFile gzopen_utf8(char *path, char *mode)
+{
+    WCHAR *wpath;
+    gzFile res;
+    wpath = utf8_to_wchar(path);
+    res = gzopen_w(wpath, mode);
+    free(wpath);
+    return res;
+}
+
+#define gzopen(x, y) gzopen_utf8(x, y)
+#endif
+
 /*
  *  main program
  */

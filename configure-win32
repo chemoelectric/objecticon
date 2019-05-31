@@ -57,9 +57,9 @@ q_opt=$(double_bs "$q_opt")
 z_opt=$(double_bs "$z_opt")
 
 if [ -z "$r_opt" ]; then
-    zpkg_lib=debug\\\\lib
+    vcpkg_lib=debug\\\\lib
 else
-    zpkg_lib=lib
+    vcpkg_lib=lib
 fi
 unset s_yn q_yn
 if [ -n "$s_opt" ]; then
@@ -70,10 +70,10 @@ if [ -n "$q_opt" ]; then
 fi
 sed -e "s/@OPENSSL@/$s_yn/" \
     -e "s/@OPENSSL_INCLUDE_DIR@/\"$s_opt\\\\include\"/" \
-    -e "s/@OPENSSL_LIBS@/\"$s_opt\\\\$zpkg_lib\\\\libeay32.lib\" \"$s_opt\\\\$zpkg_lib\\\\ssleay32.lib\"/" \
+    -e "s/@OPENSSL_LIBS@/\"$s_opt\\\\$vcpkg_lib\\\\libeay32.lib\" \"$s_opt\\\\$vcpkg_lib\\\\ssleay32.lib\"/" \
     -e "s/@MYSQL@/$q_yn/" \
     -e "s/@MYSQL_INCLUDE_DIR@/\"$q_opt\\\\include\\\\mysql\"/" \
-    -e "s/@MYSQL_LIBS@/\"$q_opt\\\\$zpkg_lib\\\\libmysql.lib\"/" \
+    -e "s/@MYSQL_LIBS@/\"$q_opt\\\\$vcpkg_lib\\\\libmysql.lib\"/" \
     <config/files/lib/native/Makefile-win32 >lib/native/Makefile
 mkdir -p bin examples/bin
 echo creating Makedefs
@@ -84,23 +84,24 @@ w=$(cygpath -w "$x")
 v=$(double_bs "$w")
 # /Od disables optimization, /Zi for debugging
 if [ -z "$r_opt" ]; then
-    CFLAGS="/Od /Zi /utf-8 /WX /MDd"
+    CFLAGS="/Od /Zi /utf-8 /WX /MTd"
     LDFLAGS="/DEBUG:FULL /INCREMENTAL:NO /WX"
 else
-    CFLAGS="/O2 /utf-8 /WX /MD"
+    CFLAGS="/O2 /utf-8 /WX /MT"
     LDFLAGS="/INCREMENTAL:NO /WX"
 fi
 if [ -n "$z_opt" ] ; then
     CFLAGS="$CFLAGS /I \"$z_opt\\\\include\""
     if [ -z "$r_opt" ]; then
-        LDFLAGS="$LDFLAGS \"$z_opt\\\\debug\\\\lib\\\\zlibd.lib\""
+        ZLIB="\"$z_opt\\\\debug\\\\lib\\\\zlibd.lib\""
     else
-        LDFLAGS="$LDFLAGS \"$z_opt\\\\lib\\\\zlib.lib\""
+        ZLIB="\"$z_opt\\\\lib\\\\zlib.lib\""
     fi
 fi
 sed -e "s:@CONFIG_DIR@:$x:"  \
     -e "s%@CFLAGS@%$CFLAGS%" \
     -e "s%@LDFLAGS@%$LDFLAGS%" \
+    -e "s%@ZLIB@%$ZLIB%" \
     -e "s/@WCONFIG_DIR@/$v/" \
    <./config/files/Makedefs-win32 >Makedefs
 echo creating paths.bat

@@ -41,7 +41,7 @@ oref.obj: orefiasm.ri
 $(PROG):	$(OBJS)
 	$(RM) $(PROG)
 	$(LD) $(LDFLAGS) /STACK:16000000 /ENTRY:wmainCRTStartup \
-		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
+		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) $(ZLIB) /OUT:$(PROG)
 
 %.obj: %.r $(HDRS)
 	rtt -y $<

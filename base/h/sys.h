@@ -67,7 +67,6 @@
    #define system(x) system_utf8(x)
    #define chdir(x) chdir_utf8(x)
    #define getcwd(x, y) getcwd_utf8(x, y)
-   #define gzopen(x, y) gzopen_utf8(x, y)
 #endif					/* MSWIN32 */
 
 
