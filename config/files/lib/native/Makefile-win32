@@ -13,7 +13,7 @@ all : $(TARGET)
 
 mysql.obj : mysql.r
 	$(RTT) -x -h gmysql.h mysql.r
-	$(CC) $(CFLAGS) /LD /I "$(VCPKG_INCL)\mysql" /c mysql.c
+	$(CC) $(CFLAGS) /I "$(VCPKG_INCL)\mysql" /c mysql.c
 	$(RM) mysql.c
 
 # These libraries are only needed for a static linking build, but seem to have no
