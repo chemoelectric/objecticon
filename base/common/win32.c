@@ -124,6 +124,16 @@ int remove_utf8(char *path)
     return v;
 }
 
+int unlink_utf8(char *path)
+{
+    WCHAR *wpath;
+    int v;
+    wpath = utf8_to_wchar(path);
+    v = _wunlink(wpath);
+    free(wpath);
+    return v;
+}
+
 int rmdir_utf8(char *path)
 {
     WCHAR *wpath;

@@ -83,6 +83,7 @@ int open_utf8(char *path, int oflag, int pmode);
 int rename_utf8(char *path1, char *path2);
 int mkdir_utf8(char *path);
 int remove_utf8(char *path);
+int unlink_utf8(char *path);
 int rmdir_utf8(char *path);
 int access_utf8(char *path, int mode);
 int chdir_utf8(char *path);

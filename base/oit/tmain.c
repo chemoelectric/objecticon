@@ -178,6 +178,20 @@ static void print_wflag_message()
         fputs("Exiting on warning (-W flag)\n", stderr);
 }
 
+#if MSWIN32 && HAVE_LIBZ
+static gzFile gzopen_utf8(char *path, char *mode)
+{
+    WCHAR *wpath;
+    gzFile res;
+    wpath = utf8_to_wchar(path);
+    res = gzopen_w(wpath, mode);
+    free(wpath);
+    return res;
+}
+
+#define gzopen(x, y) gzopen_utf8(x, y)
+#endif
+
 /*
  *  main program
  */
@@ -490,7 +504,8 @@ static void bundle_iconx()
     FILE *f, *f2;
     int c;
     char *tmp = intern(makename(0, ofile, ".tmp"));
-    rename(ofile, tmp);
+    if (rename(ofile, tmp))
+        equit("Tried to rename output file %s to %s before bundling, but couldn't", ofile, tmp);
 
     if (!(f = fopen(oixloc, ReadBinary)))
         equit("Tried to open oix to build .exe, but couldn't");
@@ -522,7 +537,8 @@ static void bundle_iconx()
 
     fclose(f2);
     setexe(ofile);
-    unlink(tmp);
+    if (unlink(tmp))
+        equit("Failed to remove temporary file %s", tmp);
 }
 
 #if HAVE_LIBZ
@@ -576,7 +592,7 @@ static void file_comp()
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), finput) != sizeof(*hdr))
-        equit("gz compressor can't read the header, compression");
+        equit("Compression - Error reading the header");
     
     /* Turn on the Z flag */
     strcat((char *)hdr->Config,"Z");
@@ -584,7 +600,7 @@ static void file_comp()
     /* write the modified header into a new file */
     
     if (fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput) != sizeof(*hdr))
-        equit("Failed to write header to file %s", tmp);
+        equit("Compression - Failed to write header to file %s", tmp);
     
     /* close the new file */
   
@@ -594,10 +610,10 @@ static void file_comp()
 
     fclose(foutput);
     
-    /* use gzopen() to open the new file */
+    /* use gzopen() to open the new file in append mode */
     
-    if (!(f = gzopen(tmp, AppendBinary)))
-        equit("Compression Error: can not open output file %s", tmp);
+    if (!(f = gzopen(tmp, "a")))
+        quit("Compression - Can't open output file %s", tmp);
     
     /*
      * read the rest of the target file and write the compressed data into
@@ -612,8 +628,9 @@ static void file_comp()
    
     /* close both files */
     fclose(finput);
-    gzclose(f);
-    
+    if ((gzclose(f) != Z_OK))
+        quit("Compression - gzclose indicated an error");
+
     if (unlink(ofile))
         equit("Can't remove old %s, compressed version left in %s",
               ofile, tmp);

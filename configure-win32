@@ -6,14 +6,16 @@ function double_bs()
     echo $1 | sed -e "s/\\\/\\\\\\\\/g"
 }
 
-unset r_opt s_opt q_opt z_opt
+unset r_opt s_opt q_opt z_opt v_opt D_opt v_lib v_incl
 OPTIND=1
-while getopts "s:q:z:r" options; do
+while getopts "v:sqzrD" options; do
     case $options in
         r) r_opt=1 ;;                 # Release mode
-        s) s_opt="$OPTARG" ;;
-        q) q_opt="$OPTARG" ;;
-        z) z_opt="$OPTARG" ;;
+        v) v_opt="$OPTARG" ;;
+        s) s_opt=1 ;;
+        q) q_opt=1 ;;
+        z) z_opt=1 ;;
+        D) D_opt=1 ;;
         [?]) exit 1 ;;
     esac
 done
@@ -51,29 +53,8 @@ cp config/files/apps/ivib/plugins/Makefile-win32 apps/ivib/plugins/Makefile
 cp config/files/apps/Makefile-win32 apps/Makefile
 cp config/files/apps/oidoc/Makefile-win32 apps/oidoc/Makefile
 cp config/files/examples/Makefile-win32 examples/Makefile
-# Transform \ into \\, in both path variables.
-s_opt=$(double_bs "$s_opt")
-q_opt=$(double_bs "$q_opt")
-z_opt=$(double_bs "$z_opt")
-
-if [ -z "$r_opt" ]; then
-    zpkg_lib=debug\\\\lib
-else
-    zpkg_lib=lib
-fi
-unset s_yn q_yn
-if [ -n "$s_opt" ]; then
-    s_yn=y
-fi
-if [ -n "$q_opt" ]; then
-    q_yn=y
-fi
-sed -e "s/@OPENSSL@/$s_yn/" \
-    -e "s/@OPENSSL_INCLUDE_DIR@/\"$s_opt\\\\include\"/" \
-    -e "s/@OPENSSL_LIBS@/\"$s_opt\\\\$zpkg_lib\\\\libeay32.lib\" \"$s_opt\\\\$zpkg_lib\\\\ssleay32.lib\"/" \
-    -e "s/@MYSQL@/$q_yn/" \
-    -e "s/@MYSQL_INCLUDE_DIR@/\"$q_opt\\\\include\\\\mysql\"/" \
-    -e "s/@MYSQL_LIBS@/\"$q_opt\\\\$zpkg_lib\\\\libmysql.lib\"/" \
+sed -e "s/@OPENSSL@/$s_opt/" \
+    -e "s/@MYSQL@/$q_opt/" \
     <config/files/lib/native/Makefile-win32 >lib/native/Makefile
 mkdir -p bin examples/bin
 echo creating Makedefs
@@ -82,25 +63,50 @@ x=$(pwd)
 w=$(cygpath -w "$x")
 # Transform \ into \\, eg c:\\home\\rpp
 v=$(double_bs "$w")
-# /Od disables optimization, /Zi for debugging
+CFLAGS="/utf-8 /WX"
+LDFLAGS="/INCREMENTAL:NO /WX"
 if [ -z "$r_opt" ]; then
-    CFLAGS="/Od /Zi /utf-8 /WX /MDd"
-    LDFLAGS="/DEBUG:FULL /INCREMENTAL:NO /WX"
+    # /Od disables optimization, /Zi for debugging
+    CFLAGS="$CFLAGS /Od /Zi"
+    if [ -z "$D_opt" ] ; then
+        CFLAGS="$CFLAGS /MTd"
+    else
+        CFLAGS="$CFLAGS /MDd"
+    fi
+    LDFLAGS="/DEBUG:FULL $LDFLAGS"
 else
-    CFLAGS="/O2 /utf-8 /WX /MD"
-    LDFLAGS="/INCREMENTAL:NO /WX"
+    # /O2 means maximize speed
+    CFLAGS="$CFLAGS /O2"
+    if [ -z "$D_opt" ] ; then
+        CFLAGS="$CFLAGS /MT"
+    else
+        CFLAGS="$CFLAGS /MD"
+    fi
+fi
+if [ -n "$v_opt" ] ; then
+    # Transform \ into \\, in vcpkg path.
+    v_opt=$(double_bs "$v_opt")
+    if [ -z "$r_opt" ]; then
+        v_lib="$v_opt\\\\debug\\\\lib"
+    else
+        v_lib="$v_opt\\\\lib"
+    fi
+    v_incl="$v_opt\\\\include"
+    CFLAGS="$CFLAGS /I \"\$(VCPKG_INCL)\""
 fi
 if [ -n "$z_opt" ] ; then
-    CFLAGS="$CFLAGS /I \"$z_opt\\\\include\""
     if [ -z "$r_opt" ]; then
-        LDFLAGS="$LDFLAGS \"$z_opt\\\\debug\\\\lib\\\\zlibd.lib\""
+        ZLIB="\"\$(VCPKG_LIB)\\\\zlibd.lib\""
     else
-        LDFLAGS="$LDFLAGS \"$z_opt\\\\lib\\\\zlib.lib\""
+        ZLIB="\"\$(VCPKG_LIB)\\\\zlib.lib\""
     fi
 fi
 sed -e "s:@CONFIG_DIR@:$x:"  \
     -e "s%@CFLAGS@%$CFLAGS%" \
     -e "s%@LDFLAGS@%$LDFLAGS%" \
+    -e "s%@ZLIB@%$ZLIB%" \
+    -e "s%@VCPKG_INCL@%$v_incl%" \
+    -e "s%@VCPKG_LIB@%$v_lib%" \
     -e "s/@WCONFIG_DIR@/$v/" \
    <./config/files/Makedefs-win32 >Makedefs
 echo creating paths.bat
