@@ -417,8 +417,8 @@ void generate_code()
     /*
      * Initialize some dynamically-sized tables.
      */
-    lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
-    fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
+    lnfree = lntable = safe_malloc(nsize * sizeof(struct ipc_line));
+    fnmfree = fnmtbl = safe_malloc(fnmsize * sizeof(struct ipc_fname));
     codep = codeb = safe_malloc(maxcode);
 
     if (baseopt)
@@ -1246,7 +1246,7 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
 {
     struct lclass_field_ref *fr;
     int n = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
-    struct field_sort_item *a = safe_calloc(n, sizeof(struct field_sort_item));
+    struct field_sort_item *a = safe_malloc(n * sizeof(struct field_sort_item));
     int i = 0;
     for (fr = cl->implemented_instance_fields; fr; fr = fr->next, ++i) {
         a[i].n = i;
@@ -1263,7 +1263,7 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
 static struct field_sort_item *sorted_record_fields(struct lrecord *cl)
 {
     struct lfield *lf;
-    struct field_sort_item *a = safe_calloc(cl->nfields, sizeof(struct field_sort_item));
+    struct field_sort_item *a = safe_malloc(cl->nfields * sizeof(struct field_sort_item));
     int i = 0;
     for (lf = cl->fields; lf; lf = lf->next, ++i) {
         a[i].n = i;
@@ -1281,7 +1281,7 @@ static int implemented_classes_sort_compare(struct lclass **p1, struct lclass **
 static struct lclass **sorted_implemented_classes(struct lclass *cl)
 {
     struct lclass_ref *cr;
-    struct lclass **a = safe_calloc(cl->n_implemented_classes, sizeof(struct lclass *));
+    struct lclass **a = safe_malloc(cl->n_implemented_classes * sizeof(struct lclass *));
     int i = 0;
     for (cr = cl->implemented_classes; cr; cr = cr->next, ++i)
         a[i] = cr->class;
@@ -2169,20 +2169,18 @@ static void labout(int i, char *desc)
 
 
 /*
- * expand_table - realloc a table making it half again larger and zero the
- *   new part of the table.
+ * expand_table - realloc a table making it half again larger.
  */
 static void * expand_table(void * table,      /* table to be realloc()ed */
-                    void * tblfree,    /* reference to table free pointer if there is one */
-                    size_t *size,      /* size of table */
-                    int unit_size,      /* number of bytes in a unit of the table */
-                    int min_units,      /* the minimum number of units that must be allocated. */
-                    char *tbl_name)     /* name of the table */
+                           void * tblfree,    /* reference to table free pointer if there is one */
+                           size_t *size,      /* size of table */
+                           int unit_size,      /* number of bytes in a unit of the table */
+                           int min_units,      /* the minimum number of units that must be allocated. */
+                           char *tbl_name)     /* name of the table */
 {
     size_t new_size;
     size_t num_bytes;
     size_t free_offset = 0;
-    size_t i;
     char *new_tbl;
     new_size = *size * 2;
     if (new_size - *size < min_units)
@@ -2194,9 +2192,6 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
 
     if ((new_tbl = realloc(table, num_bytes)) == 0)
         quit("Out of memory for %s", tbl_name);
-
-    for (i = *size * unit_size; i < num_bytes; ++i)
-        new_tbl[i] = 0;
 
     *size = new_size;
     if (tblfree != NULL)
