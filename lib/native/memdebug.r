@@ -1198,13 +1198,13 @@ static void traverse_tended()
 
 static void traverse_others()
 {
-    struct other_global *og;
+    struct dptr_list *dl;
     int i, j;
     /* Mark any other global descriptors which have been noted. */
     j = 0;
     for (i = 0; i < ElemCount(og_hash); ++i)
-        for (og = og_hash[i]; og; og = og->next) {
-            stk_add_desc(0, "Other global", j, og->dp);
+        for (dl = og_hash[i]; dl; dl = dl->next) {
+            stk_add_desc(0, "Other global", j, dl->dp);
             ++j;
         }
 }

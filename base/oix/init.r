@@ -21,6 +21,7 @@ static void conv_var(void);
 static struct b_cset *make_static_cset_block(int n_ranges, ...);
 static struct b_ucs *make_static_ucs_block(char *utf8);
 static void resolve(struct progstate *p);
+static void note_global_var(struct progstate *p, dptr q);
 static void quick_resolve(struct progstate *p);
 static void slow_resolve(struct progstate *p);
 
@@ -1079,7 +1080,6 @@ static void slow_resolve(struct progstate *p)
                 Relocate(cb->sorted_fields);
                 break;
             }
-
             case D_Constructor: {
                 struct b_constructor *c;
                 Relocate(BlkLoc(p->Globals[j]));
@@ -1155,6 +1155,14 @@ static void slow_resolve(struct progstate *p)
                 }
                 break;
             }
+            case D_Null: {
+                note_global_var(p, &p->Globals[j]);
+                break;
+            }
+            default: {
+                ffatalerr("Invalid descriptor in global table");
+                break;
+            }
         }
     }
 
@@ -1171,6 +1179,15 @@ static void slow_resolve(struct progstate *p)
      */
     for (lineptr = p->Ilines; lineptr < p->Elines; ++lineptr)
         Relocate(lineptr->ipc);
+}
+
+static void note_global_var(struct progstate *p, dptr q)
+{
+    struct dptr_list *dl;
+    dl = safe_malloc(sizeof(struct dptr_list));
+    dl->dp = q;
+    dl->next = p->global_vars;
+    p->global_vars = dl;
 }
 
 /*
@@ -1237,7 +1254,6 @@ static void quick_resolve(struct progstate *p)
                 ClassBlk(p->Globals[j]).program = p;
                 break;
             }
-
             case D_Constructor: {
                 ConstructorBlk(p->Globals[j]).program = p;
                 break;
@@ -1271,6 +1287,14 @@ static void quick_resolve(struct progstate *p)
 
                     pp->program = p;
                 }
+                break;
+            }
+            case D_Null: {
+                note_global_var(p, &p->Globals[j]);
+                break;
+            }
+            default: {
+                ffatalerr("Invalid descriptor in global table");
                 break;
             }
         }

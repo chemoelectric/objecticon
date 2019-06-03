@@ -376,12 +376,11 @@ struct ipc_line {
 };
 
 /*
- * Structure for holding an additional descriptor which is then
- * traversed during garbage collection.
+ * Structure for holding a list of descriptor pointers.
  */
-struct other_global {
+struct dptr_list {
     dptr dp;
-    struct other_global *next;
+    struct dptr_list *next;
 };
 
 struct prog_event {
@@ -455,6 +454,8 @@ struct progstate {
     int collected_block;                /* number of block collect requests */
     int collected_stack;                /* number of stack collect requests */
 
+    struct dptr_list *global_vars;      /* list of pointers to global variables to make */
+                                        /* garbage collection quicker */
     struct region *stringregion;
     struct region *blockregion;
 
