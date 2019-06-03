@@ -1155,7 +1155,7 @@ static void slow_resolve(struct progstate *p)
                 break;
             }
             case D_Null: {
-                dptr_list_push(&p->global_vars, &p->Globals[j]);
+                dptr_list_add(&p->global_vars, &p->Globals[j]);
                 break;
             }
             default: {
@@ -1280,7 +1280,7 @@ static void quick_resolve(struct progstate *p)
                 break;
             }
             case D_Null: {
-                dptr_list_push(&p->global_vars, &p->Globals[j]);
+                dptr_list_add(&p->global_vars, &p->Globals[j]);
                 break;
             }
             default: {

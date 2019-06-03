@@ -329,7 +329,7 @@ static void dump_gc_global()
 }
 #endif
 
-void dptr_list_push(struct dptr_list **head, dptr d)
+void dptr_list_add(struct dptr_list **head, dptr d)
 {
     struct dptr_list *dl;
     dl = safe_malloc(sizeof(struct dptr_list));
@@ -338,23 +338,27 @@ void dptr_list_push(struct dptr_list **head, dptr d)
     *head = dl;
 }
 
+void dptr_list_rm(struct dptr_list **head, dptr d)
+{
+    struct dptr_list *dl;
+    while ((dl = *head) && dl->dp != d)
+        head = &dl->next;
+    if (!dl)
+        syserr("dptr_list_rm: dptr not found in list");
+    *head = dl->next;
+    free(dl);
+}
+
 void add_gc_global(dptr d)
 {
     int i = ptrhasher(d, og_hash);
-    dptr_list_push(&og_hash[i], d);
+    dptr_list_add(&og_hash[i], d);
 }
 
 void del_gc_global(dptr d)
 {
     int i = ptrhasher(d, og_hash);
-    struct dptr_list **dlp, *dl;
-    dlp = &og_hash[i];
-    while ((dl = *dlp) && dl->dp != d)
-        dlp = &dl->next;
-    if (!dl)
-        syserr("del_gc_global: dptr not found in list");
-    *dlp = dl->next;
-    free(dl);
+    dptr_list_rm(&og_hash[i], d);
 }
 
 static void mark_others()
