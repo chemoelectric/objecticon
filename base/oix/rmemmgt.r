@@ -329,14 +329,19 @@ static void dump_gc_global()
 }
 #endif
 
-void add_gc_global(dptr d)
+void dptr_list_push(struct dptr_list **head, dptr d)
 {
-    int i = ptrhasher(d, og_hash);
     struct dptr_list *dl;
     dl = safe_malloc(sizeof(struct dptr_list));
     dl->dp = d;
-    dl->next = og_hash[i];
-    og_hash[i] = dl;
+    dl->next = *head;
+    *head = dl;
+}
+
+void add_gc_global(dptr d)
+{
+    int i = ptrhasher(d, og_hash);
+    dptr_list_push(&og_hash[i], d);
 }
 
 void del_gc_global(dptr d)
