@@ -503,7 +503,7 @@ void build_fieldtable()
     /*
      * Now create a sorted index of the field table.
      */
-    a = safe_calloc(nfields, sizeof(struct fentry *));
+    a = safe_malloc(nfields * sizeof(struct fentry *));
     for (fp = lffirst; fp; fp = fp->next)
         a[i++] = fp;
     qsort(a, nfields, sizeof(struct fentry *), (QSortFncCast)fieldtable_sort_compare);
@@ -538,7 +538,7 @@ void sort_global_table()
     int i = 0, n = 0;
     for (gp = lgfirst; gp; gp = gp->g_next)
         ++n;
-    a = safe_calloc(n, sizeof(struct gentry *));
+    a = safe_malloc(n * sizeof(struct gentry *));
     for (gp = lgfirst; gp; gp = gp->g_next)
         a[i++] = gp;
     qsort(a, n, sizeof(struct gentry *), (QSortFncCast)global_sort_compare);

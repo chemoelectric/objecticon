@@ -1092,7 +1092,6 @@ static void slow_resolve(struct progstate *p)
                 Relocate(cb->sorted_fields);
                 break;
             }
-
             case D_Constructor: {
                 struct b_constructor *c;
                 Relocate(BlkLoc(p->Globals[j]));
@@ -1166,6 +1165,14 @@ static void slow_resolve(struct progstate *p)
 
                     pp->program = p;
                 }
+                break;
+            }
+            case D_Null: {
+                dptr_list_add(&p->global_vars, &p->Globals[j]);
+                break;
+            }
+            default: {
+                ffatalerr("Invalid descriptor in global table");
                 break;
             }
         }
@@ -1250,7 +1257,6 @@ static void quick_resolve(struct progstate *p)
                 ClassBlk(p->Globals[j]).program = p;
                 break;
             }
-
             case D_Constructor: {
                 ConstructorBlk(p->Globals[j]).program = p;
                 break;
@@ -1284,6 +1290,14 @@ static void quick_resolve(struct progstate *p)
 
                     pp->program = p;
                 }
+                break;
+            }
+            case D_Null: {
+                dptr_list_add(&p->global_vars, &p->Globals[j]);
+                break;
+            }
+            default: {
+                ffatalerr("Invalid descriptor in global table");
                 break;
             }
         }

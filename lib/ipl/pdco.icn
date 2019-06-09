@@ -1166,7 +1166,7 @@ procedure If(a[])
          put(x, i)
 
    if *x = 0 then
-      runerr("If : no guard succeeded")
+      runerr("No guard in If succeeded")
 
    i := ?x + 1
    suspend |@a[i]

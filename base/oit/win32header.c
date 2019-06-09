@@ -8,7 +8,7 @@ static char *find_oixloc(void)
 {
     char *s;
 
-    s = getenv("OIX");
+    s = getenv_nn("OIX");
     if (s && !access(s, 0))
         return s;
 

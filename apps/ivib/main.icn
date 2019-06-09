@@ -7,7 +7,7 @@
 #
 
 import lang, gui, io, util, graphics(Selection,Mouse), 
-   posix, ipl.pdco, xdg, ipl.filegui
+   ipl.pdco, xdg, ipl.filegui
 
 $include "version.icn"
 
@@ -1252,7 +1252,7 @@ class Main(Dialog)
       
       every pp := FilePath(!FileDialog.unique_ucs_list{
                       FilePath(!prefs.plugin_path | 
-                               FilePath(System.getenv("OI_HOME")).walk("apps", "ivib", "plugins")).
+                               FilePath(env_string("OI_HOME")).walk("apps", "ivib", "plugins")).
                                canonical().ucs() }) do {
          every f := !Files.list(pp.str()) do {
             if find("plugin", f.name) & f.stat.mode_str[1] == "-" & upto('x', f.stat.mode_str) then {
@@ -1272,7 +1272,7 @@ class Main(Dialog)
 
       every fp := FilePath(!FileDialog.unique_ucs_list{
          FilePath(!prefs.named_image_path |
-                  FilePath(System.getenv("OI_HOME")).walk("lib", "gui", "images")).
+                  FilePath(env_string("OI_HOME")).walk("lib", "gui", "images")).
                   canonical().ucs() }) do {
          every f := !Files.list(fp.str()) do {
             if ext := is_image_file(f.name) then {

@@ -305,18 +305,23 @@ uword segsize[] = {
    else if (Pointer(d))\
       stk_add(&BlkLoc(d));
 
-struct other_global *og_hash[OGHASH_SIZE];
+
+ /*
+  * A table of additional descriptors which are traversed during
+  * garbage collection.
+  */
+struct dptr_list *og_hash[OGHASH_SIZE];
 
 #if 0
 static void dump_gc_global()
 {
     int i;
-    struct other_global *og;
+    struct dptr_list *dl;
     for (i = 0; i < ElemCount(og_hash); ++i) {
         printf("Bucket %d\n", i);
-        for (og = og_hash[i]; og; og = og->next) {
-            printf("\tEntry %p = ", og->dp);
-            print_desc(stdout, og->dp);
+        for (dl = og_hash[i]; dl; dl = dl->next) {
+            printf("\tEntry %p = ", dl->dp);
+            print_desc(stdout, dl->dp);
             printf("\n");
         }
     }
@@ -324,36 +329,45 @@ static void dump_gc_global()
 }
 #endif
 
+void dptr_list_add(struct dptr_list **head, dptr d)
+{
+    struct dptr_list *dl;
+    dl = safe_malloc(sizeof(struct dptr_list));
+    dl->dp = d;
+    dl->next = *head;
+    *head = dl;
+}
+
+void dptr_list_rm(struct dptr_list **head, dptr d)
+{
+    struct dptr_list *dl;
+    while ((dl = *head) && dl->dp != d)
+        head = &dl->next;
+    if (!dl)
+        syserr("dptr_list_rm: dptr not found in list");
+    *head = dl->next;
+    free(dl);
+}
+
 void add_gc_global(dptr d)
 {
     int i = ptrhasher(d, og_hash);
-    struct other_global *og;
-    og = safe_malloc(sizeof(struct other_global));
-    og->dp = d;
-    og->next = og_hash[i];
-    og_hash[i] = og;
+    dptr_list_add(&og_hash[i], d);
 }
 
 void del_gc_global(dptr d)
 {
     int i = ptrhasher(d, og_hash);
-    struct other_global **ogp, *og;
-    ogp = &og_hash[i];
-    while ((og = *ogp) && og->dp != d)
-        ogp = &og->next;
-    if (!og)
-        syserr("del_gc_global: dptr not found in list");
-    *ogp = og->next;
-    free(og);
+    dptr_list_rm(&og_hash[i], d);
 }
 
 static void mark_others()
 {
-   struct other_global *og;
+   struct dptr_list *dl;
    int i;
    for (i = 0; i < ElemCount(og_hash); ++i)
-       for (og = og_hash[i]; og; og = og->next)
-           PostDescrip(*og->dp);
+       for (dl = og_hash[i]; dl; dl = dl->next)
+           PostDescrip(*dl->dp);
 }
 
 /*
@@ -478,6 +492,7 @@ static void mark_program(struct progstate *pstate)
 {
     struct descrip *dp;
     struct prog_event *pe;
+    struct dptr_list *dl;
 
     stk_add((union block **)&pstate->eventmask);
     for (pe = pstate->event_queue_head; pe; pe = pe->next) {
@@ -497,8 +512,8 @@ static void mark_program(struct progstate *pstate)
     /*
      * Mark the globals and the statics.
      */
-    for (dp = pstate->Globals; dp < pstate->Eglobals; dp++)
-        PostDescrip(*dp);
+    for (dl = pstate->global_vars; dl; dl = dl->next)
+        PostDescrip(*dl->dp);
 
     for (dp = pstate->Statics; dp < pstate->Estatics; dp++)
         PostDescrip(*dp);

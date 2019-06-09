@@ -391,6 +391,9 @@ void    print_location  (FILE *f, struct p_frame *pf);
 void    hgrow           (union block *bp);
 void    hshrink         (union block *bp);
 int     order           (dptr dp);
+
+void dptr_list_add(struct dptr_list **head, dptr d);
+void dptr_list_rm(struct dptr_list **head, dptr d);
 void add_gc_global(dptr d);
 void del_gc_global(dptr d);
 
