@@ -153,6 +153,7 @@
 #define ffatalerr (*(imported->ffatalerr))
 #define syserr (*(imported->syserr))
 #define err_msg (*(imported->err_msg))
+#define set_errno (*(imported->set_errno))
 #define get_system_error (*(imported->get_system_error))
 #define errno2why (*(imported->errno2why))
 #define why (*(imported->why))

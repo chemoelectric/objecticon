@@ -149,6 +149,7 @@ struct oisymbols {
     void (*ffatalerr)(char *fmt, ...);
     void (*syserr)(char *fmt, ...);
     void (*err_msg)(int n, dptr v);
+    void (*set_errno)(int n);
     char    * (*get_system_error)(void);
     void (*errno2why)(void);
     void (*why)(char *s);
