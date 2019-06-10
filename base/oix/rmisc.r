@@ -1889,6 +1889,17 @@ stringint *stringint_lookup(stringint *sip, char *s)
 }
 
 /*
+ * This function can be used to set errno in oix from a native library
+ * dll, which has linked statically to the C runtime, and thus has a
+ * distinct errno.  After this, errno2why() can be used with correct
+ * results.
+ */
+void set_errno(int n)
+{
+    errno = n;
+}
+
+/*
  * Set &why to an error message based on errno.
  */
 void errno2why()
