@@ -137,6 +137,11 @@ get_constructor_for
 get_proc_for
 get_program_for
 get_coexpr_for
+cstr2string
+bytes2string
+cstrs2string
+double2cstr
+word2cstr
 # Big integers
 bigadd
 bigsub
@@ -158,12 +163,10 @@ fatalerr
 ffatalerr
 syserr
 err_msg
+get_system_error
 errno2why
 why
 whyf
-cstr2string
-bytes2string
-cstrs2string
 # Environment vars
 env_int
 env_word
@@ -212,6 +215,7 @@ is_flag
 is_ascii_string
 hashcstr
 get_hostname
+maketemp
 is_flowterm_tty
 begin_link
 end_link
