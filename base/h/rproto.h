@@ -443,6 +443,7 @@ int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
 char *lookup_err_msg(int n);
+void set_errno(int n);
 void errno2why(void);
 dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic);
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic);
