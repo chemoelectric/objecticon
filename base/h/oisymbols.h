@@ -125,6 +125,11 @@ struct oisymbols {
     struct b_proc * (*get_proc_for)(dptr x);
     struct progstate * (*get_program_for)(dptr x);
     struct b_coexpr * (*get_coexpr_for)(dptr x);
+    void (*cstr2string)(char *s, dptr d);
+    void (*bytes2string)(char *s, word len, dptr d);
+    void (*cstrs2string)(char **s, char *delim, dptr d);
+    char * (*double2cstr)(double n);
+    char * (*word2cstr)(word n);
     void (*bigadd)(dptr da, dptr db, dptr dx);
     void (*bigsub)(dptr da, dptr db, dptr dx);
     void (*bigmul)(dptr da, dptr db, dptr dx);
@@ -144,12 +149,11 @@ struct oisymbols {
     void (*ffatalerr)(char *fmt, ...);
     void (*syserr)(char *fmt, ...);
     void (*err_msg)(int n, dptr v);
+    void (*set_errno)(int n);
+    char    * (*get_system_error)(void);
     void (*errno2why)(void);
     void (*why)(char *s);
     void (*whyf)(char *fmt, ...);
-    void (*cstr2string)(char *s, dptr d);
-    void (*bytes2string)(char *s, word len, dptr d);
-    void (*cstrs2string)(char **s, char *delim, dptr d);
     void (*env_int)(char *name, int *variable, int min, int max);
     void (*env_word)(char *name, word *variable, word min, word max);
     void (*env_uword)(char *name, uword *variable, uword min, uword max);
@@ -190,6 +194,7 @@ struct oisymbols {
     int (*is_ascii_string)(dptr d);
     unsigned int (*hashcstr)(char *s);
     char * (*get_hostname)(void);
+    char    * (*maketemp)(char *fn);
     int (*is_flowterm_tty)(FILE *f);
     void (*begin_link)(FILE *f, dptr fname, word line);
     void (*end_link)(FILE *f);
