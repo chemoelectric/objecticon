@@ -299,6 +299,9 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
            *darwin* )
                     DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
                     ;;
+           *aix* )
+                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G"
+                    ;;
            *)
                     DYNAMIC_LIB_LDFLAGS="-shared"
                     ;;
@@ -312,6 +315,9 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                     ;;
            *darwin* )
                     dnl No flag needed
+                    ;;
+           *aix* )
+                    DYNAMIC_EXPORT_LDFLAGS="-Wl,-brtl -Wl,-bexpall "
                     ;;
            *)
                     DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
