@@ -299,11 +299,14 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
            *darwin* )
                     DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
                     ;;
+           *solaris* )
+                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bdirect"
+                    ;;
            *aix* )
-                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G"
+                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G -Wl,-bsymbolic"
                     ;;
            *)
-                    DYNAMIC_LIB_LDFLAGS="-shared"
+                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bsymbolic"
                     ;;
         esac
      fi
@@ -330,7 +333,10 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
      rm -f ./dloadtest.so ./conftest.o
      AC_LANG_CONFTEST(
         [AC_LANG_SOURCE([[extern int func1(int); 
-                          int func2(int x) { return 2*x*func1(3); }]])]
+                          extern int var1;
+                          int func2() { return 5; }
+                          int var2 = 7;
+                          int func3(int x) { return 2*x*var1*var2*func2()*func1(20); }]])]
       )
      $ac_ct_CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
      $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
@@ -342,15 +348,18 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
      AC_RUN_IFELSE(
         [AC_LANG_SOURCE([[#include <dlfcn.h>
                           #include <stdlib.h>
-                          int func1(int x) { return 3*x; }
+                          int func1(int x) { return 3+x; }
+                          int func2() { return 19; }
+                          int var1 = 11;
+                          int var2 = 13;
                           int main() {
                               void *handle;
-                              int (*func2)(int);
+                              int (*func3)(int);
                               handle = dlopen("./dloadtest.so", RTLD_LAZY);
                               if (!handle) exit(1);
-                              *(void **)(&func2) = dlsym(handle, "func2");
-                              if (!func2) exit(1);
-                              if (func2(13) != 234) exit(1);
+                              *(void **)(&func3) = dlsym(handle, "func3");
+                              if (!func3) exit(1);
+                              if (func3(17) != 301070) exit(1);
                               exit(0);
                           }
                           ]])],
