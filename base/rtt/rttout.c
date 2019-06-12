@@ -3446,6 +3446,19 @@ void prologue()
 #endif
            fprintf(out_file, "struct oisymbols *imported;\n\n");
        }
+#if MSWIN32
+       fprintf(out_file, "/* Fix for win32 duplicate errno problem. */\n");
+       fprintf(out_file, "#undef errno2why\n");
+       fprintf(out_file, "#undef get_system_error\n");
+       fprintf(out_file, "static void errno2why(void) {\n");
+       fprintf(out_file, "   set_errno(errno);\n");
+       fprintf(out_file, "   (*(imported->errno2why))();\n");
+       fprintf(out_file, "}\n");
+       fprintf(out_file, "static char* get_system_error(void) {\n");
+       fprintf(out_file, "   set_errno(errno);\n");
+       fprintf(out_file, "   return (*(imported->get_system_error))();\n");
+       fprintf(out_file, "}\n\n");
+#endif
    }
    if (!subsid) {
        fprintf(out_file, "/* Value of OixVersion for compatibility checking. */\n");
