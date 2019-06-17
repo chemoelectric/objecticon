@@ -22,9 +22,6 @@ static void rebuild_lists(void);
 static void clear_refs(void);
 static void reference2(struct gentry *gp);
 static void freference(struct lfunction *lf);
-static int have_seen_field(char *name);
-static void note_seen_field(char *name);
-static int note_seen_method(struct lnode_field *x);
 static int add_seen_field(struct lnode *n);
 
 struct package_id {
@@ -607,77 +604,108 @@ void resolve_native_methods()
 }
 
 /*
- * Structure and methods for a simple set of field names.
+ * Structure and methods for a table of method lists, indexed by method name.
  */
-
-static struct seen_field *seen_fields[500];
 static struct membuff ref2_mb = {"reference2() function membuff", 64000, 0,0,0 };
 
-struct seen_field {
+static struct method1 *methods[500];
+
+struct method1 {
     char *name;
-    struct seen_field *next;
+    struct method2 *list;      /* List of methods called name */
+    struct method1 *next;
 };
 
-/*
- * Have we seen the given field?
- */
-static int have_seen_field(char *name)
-{
-    int i = hasher(name, seen_fields);
-    struct seen_field *x = seen_fields[i];
-    while (x && x->name != name)
-        x = x->next;
-    return x != 0;
-}
+struct method2 {
+    struct lclass_field *field;
+    struct method2 *next;
+};
 
-/*
- * Note that we have seen the given field, adding it to the set if
- * necessary.
- */
-static void note_seen_field(char *name)
+static void put_method(struct lclass_field *field)
 {
-    int i = hasher(name, seen_fields);
-    struct seen_field *x = seen_fields[i];
-    while (x && x->name != name)
+    int i = hasher(field->name, methods);
+    struct method1 *x = methods[i]; 
+    struct method2 *y;
+    while (x && x->name != field->name)
         x = x->next;
     if (!x) {
-        x = mb_alloc(&ref2_mb, sizeof(struct seen_field));
-        x->name = name;
-        x->next = seen_fields[i];
-        seen_fields[i] = x;
+        x = mb_alloc(&ref2_mb, sizeof(struct method1));
+        x->name = field->name;
+        x->next = methods[i];
+        x->list = 0;
+        methods[i] = x;
     }
+    y = mb_alloc(&ref2_mb, sizeof(struct method2));
+    y->field = field;
+    y->next = x->list;
+    x->list = y;
 }
 
-static int note_seen_method(struct lnode_field *x)
+static struct method2 *get_methods_named(char *name)
 {
-    struct lclass_field_ref *ref;
-    struct lclass_field *f;
-
-    /* If not a class access field, note the field as a general one. */
-    if (!get_class_field_ref(x, 0, &ref))
+    int i = hasher(name, methods);
+    struct method1 *x = methods[i]; 
+    while (x && x->name != name)
+        x = x->next;
+    if (x)
+        return x->list;
+    else
         return 0;
-    f = ref->field;
+}
 
-    /* If it's a method, mark it as statically referenced; it will be
-     * scanned on the next loop if needed. Otherwise, it is a
-     * variable, so return 1 and just ignore it.  Note that f may be
-     * an instance method, being a reference to an overridden method
-     * in a superclass (eg "Dialog.new()").
-     */
-    if (f->func)
-        f->func->sref = 1;
-    return 1;
+static void mark_all_methods_named(char *name)
+{
+    struct method2 *y = get_methods_named(name);
+    while (y) {
+        if (verbose > 4) fprintf(stderr, "Marking method %s (%s:%d)\n", y->field->name, y->field->pos.file, y->field->pos.line);
+        y->field->func->sref = 1;
+        y = y->next;
+    }
 }
 
 static int add_seen_field(struct lnode *n)
 {
-    switch (n->op) {
-        case Uop_Field: {
-            struct lnode_field *x = (struct lnode_field *)n;
-            /* Either note a particular static method, or a more general field name */
-            if (!note_seen_method(x))
-                note_seen_field(x->fname);
-            break;
+    if (n->op == Uop_Field) {
+        struct lnode_field *x = (struct lnode_field *)n;
+        struct lclass_field_ref *ref;
+        struct lclass_field *f;
+
+        /* Check for the lhs of the field being an explicit class */
+        if (get_class_field_ref(x, 0, &ref)) {
+            f = ref->field;
+            /* If it's a method, mark it as referenced; it will be
+             * scanned on the next loop if needed. Otherwise, it
+             * is a variable, so just ignore it.  Note that f may
+             * be an instance method, being a reference to an
+             * overridden method in a superclass (eg
+             * "Dialog.new()").
+             */
+            if (f->func)
+                f->func->sref = 1;
+        } else {
+            /* Something else, so check for all methods with that
+             * field name that are accessible from here.
+             */
+            struct method2 *y = get_methods_named(x->fname);
+            while (y) {
+                f = y->field;
+                if (!f->func->sref) {
+                    if (check_access(curr_vfunc, f)) {
+                        f->func->sref = 1;
+                        if (verbose > 4) {
+                            fprintf(stderr, "Marking method %s (%s:%d) accessible from ",
+                                    f->name, f->pos.file, f->pos.line);
+                            if (curr_vfunc->proc)
+                                fprintf(stderr, "procedure %s ", curr_vfunc->proc->name);
+                            else
+                                fprintf(stderr, "method %s.%s ",
+                                        curr_vfunc->method->class->global->name, curr_vfunc->method->name);
+                            fprintf(stderr, "(%s:%d)\n", n->loc.file, n->loc.line);
+                        }
+                    }
+                }
+                y = y->next;
+            }
         }
     }
     return 1;
@@ -740,10 +768,21 @@ void scanrefs2()
     clear_refs();
 
     /*
+     * Note all methods in a table indexed by method name.
+     */
+    for (cp = lclasses; cp; cp = cp->next) {
+        struct lclass_field *lm;
+        for (lm = cp->fields; lm; lm = lm->next) {
+            if (lm->func && !(lm->flag & (M_Optional | M_Abstract | M_Native)))
+                put_method(lm);
+        }
+    }
+
+    /*
      * "new" and "init" are always used.
      */
-    note_seen_field(new_string);
-    note_seen_field(init_string);
+    mark_all_methods_named(new_string);
+    mark_all_methods_named(init_string);
 
     /*
      * Start scanning with main.
@@ -756,14 +795,14 @@ void scanrefs2()
     for (inv = linvocables; inv; inv = inv->iv_link) {
         if (*inv->iv_name == '.')
             /* A field name */
-            note_seen_field(intern(inv->iv_name + 1));
+            mark_all_methods_named(intern(inv->iv_name + 1));
         else {
             /* A global; if a class reference all its methods (inherited ones too). */
             reference2(inv->resolved);
             if (inv->resolved->class) {
                 for (lr = inv->resolved->class->implemented_class_fields; lr; lr = lr->next) {
                     if (lr->field->func)
-                        freference(lr->field->func);
+                        lr->field->func->sref = 1;
                 }
             }
         }
@@ -781,7 +820,7 @@ void scanrefs2()
         for (cp = lclasses; cp; cp = cp->next) {
             if (cp->global->ref) {
                 for (lm = cp->fields; lm; lm = lm->next) {
-                    if (lm->func && !lm->func->ref && (lm->func->sref || have_seen_field(lm->name))) {
+                    if (lm->func && !lm->func->ref && lm->func->sref) {
                         freference(lm->func);
                         ++changed;
                     }
@@ -812,10 +851,10 @@ void scanrefs2()
     }
 
     /*
-     * Free memory used in the field name table.
+     * Free memory used in the method table.
      */
     mb_free(&ref2_mb);
-    ArrClear(seen_fields);
+    ArrClear(methods);
 }
 
 /*

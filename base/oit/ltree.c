@@ -1285,6 +1285,9 @@ int check_access(struct lfunction *func, struct lclass_field *f)
     if (f->flag & M_Public)
         return 1;
 
+    if (func->defined->package_id == 1)
+        return 1;
+
     if (f->flag & M_Package)
         return (func->defined->package_id == f->class->global->defined->package_id);
 
@@ -1295,11 +1298,14 @@ int check_access(struct lfunction *func, struct lclass_field *f)
         return (func->method->class == f->class);
 
     if (f->flag & M_Protected) {
-        struct lclass_ref *cr;
-        for (cr = func->method->class->implemented_classes; cr; cr = cr->next) {
-            if (cr->class == f->class)
-                return 1;
-        }
+        if (f->flag & M_Static) {
+            struct lclass_ref *cr;
+            for (cr = func->method->class->implemented_classes; cr; cr = cr->next) {
+                if (cr->class == f->class)
+                    return 1;
+            }
+        } else
+            return 1;
     }
 
     return 0;
