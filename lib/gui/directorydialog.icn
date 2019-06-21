@@ -3,7 +3,8 @@ package gui
 import 
    ipl.sort,
    ipl.filegui,
-   io
+   io,
+   lang
 
 package class DirEditList(EditList)
    protected override open_popup(ev)
@@ -114,9 +115,9 @@ class DirectoryDialog(Dialog)
       if l := list_directory(s) then {
          i := 1
          every e := !l do {
-            while n.children[i].label.name << e.name do
+            while Text.consistent_compare(n.children[i].label.name, e.name) < 0 do
                n.remove_index(i)
-            if n.children[i].label.name == e.name then
+            if Text.consistent_compare(n.children[i].label.name, e.name) = 0 then
                n.children[i].set_label(e)
             else
                n.add(TreeNode().set_label(e).set_always_expandable(&yes), i)
