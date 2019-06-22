@@ -1,6 +1,6 @@
 AC_INIT([Object Icon],
         m4_esyscmd_s([svnversion | tr : -]),
-        [r.parlett@gmail.com],
+        [2rparlett@gmail.com],
         [objecticon])
 
 AC_GNU_SOURCE
