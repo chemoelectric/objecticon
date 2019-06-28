@@ -602,20 +602,25 @@ end
 
 #
 # Build a string from the results of the co-expression `e`, separated
-# by the string `sep` (default ",").  If `sep` is ucs, or any of the
+# by the string `sep` (default "").  If `sep` is ucs, or any of the
 # results of `e` are `ucs`, then the result is `ucs`, otherwise it is
 # a string.
 #
 procedure String(e, sep)
    local s
    sep := ce_param(sep) | fail
-   sep := need_text(\sep) | ","
-   # Ensure result is same type as sep, even if the sequence is empty.
-   s := sep[1:1]
-   while s ||:= @e || sep
-   # Ensure that -*sep below is correct
-   sep := same_string_type(sep, s)
-   s[-*sep:0] := ""
+   if /sep then {
+      s := ""
+      while s ||:= @e
+   } else {
+      sep := need_text(sep)
+      # Ensure result is same type as sep, even if the sequence is empty.
+      s := sep[1:1]
+      while s ||:= @e || sep
+      # Ensure that -*sep below is correct
+      sep := same_string_type(sep, s)
+      s[-*sep:0] := ""
+   }
    return s
 end
 

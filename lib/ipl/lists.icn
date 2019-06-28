@@ -834,6 +834,7 @@ end
 # :  `sep` - the separator char, default ","
 #
 procedure list2str(l, sep)
+   /sep := ","
    return String{!l, sep}
 end
 
