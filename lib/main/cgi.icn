@@ -6,7 +6,12 @@ class CgiParams()
    private readable
       stdin,
       stdin_limit,
-      params
+      params,
+      query_params
+
+   private static env(k)
+      return System.getenv(k) | error("Missing environment variable " || k)
+   end
 
    public process()
       local rm, ct, msg, p, cd, key, multi, s
@@ -15,14 +20,18 @@ class CgiParams()
       if *stdin > \stdin_limit then
          return error("Too much data read from stdin")
 
-      rm := System.getenv("REQUEST_METHOD")
+      # Get the URL query parameters
+      s := env("QUERY_STRING") | fail
+      query_params := URL.make_cgi_table(s)
+
+      rm := env("REQUEST_METHOD") | fail
       case rm of {
          "GET": {
-            params := URL.make_cgi_table(System.getenv("QUERY_STRING"))
+            params := query_params
          }
          "POST": {
             p := RFC822Parser()
-            s := System.getenv("CONTENT_TYPE")
+            s := env("CONTENT_TYPE") | fail
             ct := p.parse_content_type(s) | return error("Couldn't parse CONTENT_TYPE param: " || &why)
             if ct.type == "application" & ct.subtype == "x-www-form-urlencoded" then {
                params := URL.make_cgi_table(stdin)
@@ -53,6 +62,14 @@ class CgiParams()
 
    public get_first_param(key)
       return get_params(key)[1]
+   end
+
+   public get_query_params(key)
+      return member(query_params, key)
+   end
+
+   public get_first_query_param(key)
+      return get_query_params(key)[1]
    end
 
    public set_stdin_limit(n)
