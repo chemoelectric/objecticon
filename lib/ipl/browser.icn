@@ -3340,9 +3340,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private static is_image(ct, s)
       if map((\ct).type) == "image" then
          return
-      return match("\x89PNG\x0D\x0A\x1A\x0A" |
-                   "\xFF\xD8" |
-                   "GIF87a" | "GIF89a", s)
+      succeed match("\x89PNG\x0D\x0A\x1A\x0A" |
+                    "\xFF\xD8" |
+                    "GIF87a" | "GIF89a", s)
    end
 
    private static is_text(ct, s)
