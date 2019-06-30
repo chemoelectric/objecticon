@@ -1202,16 +1202,15 @@ class Img(Image, HasLastHighlight)
                else 
                   set_height(ih + border.get_total_height())
             }
-            # If neither set (/w_spec should imply /h_spec), ensure a
-            # scaled image with the true ratio.
-            if /w_spec then
-               set_width(scale(win.get_width()) + border.get_total_width())
-
             img_name := res.fname
             img_data := res.data
-            set_fill_dimensions(2)
          }
       }
+      # If neither set (/w_spec should imply /h_spec), ensure a
+      # scaled image with the true ratio.
+      if /w_spec then
+         set_width(scale(win.get_width()) + border.get_total_width())
+      set_fill_dimensions(2)
    end
 
    private handle_rpress(e)
