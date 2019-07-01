@@ -8,6 +8,7 @@ import util,
    lang,
    net,
    io,
+   datastruct(SortTable),
    ipl.base64,
    ipl.strings,
    ipl.scan
@@ -372,7 +373,7 @@ $endif
          return on_http_error("No WWW-Authenticate in a 401 response")
       t := parse_generic_header(s)
 
-      realm := member(t, "realm") | 
+      realm := t.member("realm") | 
          return on_http_error("No realm in WWW-Authenticate header in a 401 response")
       dom := string(response.url.host)
       k := realm || " at " || dom
@@ -395,11 +396,11 @@ $endif
             return on_http_error("Failed to authenticate - correct username, password")
       }
 
-      if member(t, "Basic") then {
+      if t.member("Basic") then {
          auth_scheme := "Basic"
          return setup_basic_authentication()
       }
-      if member(t, "Digest") then {
+      if t.member("Digest") then {
          auth_scheme := "Digest"
          return setup_digest_authentication(t)
       }
@@ -500,7 +501,7 @@ $endif
    public static parse_generic_header(s)
       local t, k, v
 
-      t := table()
+      t := SortTable(, Text.caseless_compare)
       s ? repeat {
          tab(upto(TOKEN_CHAR)) | break
          k := tab(many(TOKEN_CHAR))
@@ -511,7 +512,7 @@ $endif
                v := tab(many(TOKEN_CHAR)) | ""
          } else
             v := &null
-         insert(t, k, v)
+         t.insert(k, v)
       }
       return t
    end

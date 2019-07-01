@@ -477,7 +477,7 @@ class HttpSubWorker(SubWorker)
       local s, t, now, exp, lm, etag, ma
       now := Time.get_system_seconds()
       if t := HttpClient.parse_generic_header(hres.get_first_header("Cache-Control")) then {
-         ma := integer(member(t, "max-age"))
+         ma := integer(t.member("max-age"))
          lm := hres.get_first_header("Last-modified")
          etag := hres.get_first_header("Etag")
          exp := now + \ma
@@ -487,7 +487,7 @@ class HttpSubWorker(SubWorker)
             }
          if \ (lm | etag) then
             return CacheControl(exp, lm, etag)
-         if member(t, "no-cache") then
+         if t.member("no-cache") then
             fail
          if \ma then
             return CacheControl(now + (0 < ma))
