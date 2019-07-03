@@ -2113,7 +2113,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
 static double calc_pt(double *x, double *y, double rx, double ry, double th)
 {
     double r;
-    /* Get the polar coordiantes radius relative to center */
+    /* Get the polar coordinates radius relative to center */
     if (rx == ry)    /* Easy case if a circle */
         r = rx;
     else
