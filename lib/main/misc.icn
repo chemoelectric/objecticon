@@ -217,8 +217,10 @@ package global cleanup
 # ~
 procedure use(e1, e2, e3)
    local x, v, f
-   x := @e1 | fail
-   /e3 := create x.close()
+   if \e1 then {
+      x := @e1 | fail
+      /e3 := create x.close()
+   }
    push(\cleanup, e3)
    /e2 | (v := @e2) | (f := &why)
    ldel1(\cleanup, e3)
@@ -234,8 +236,10 @@ end
 #
 procedure use_seq(e1, e2, e3)
    local x
-   x := @e1 | fail
-   /e3 := create x.close()
+   if \e1 then {
+      x := @e1 | fail
+      /e3 := create x.close()
+   }
    push(\cleanup, e3)
    suspend |@\e2
    ldel1(\cleanup, e3)
