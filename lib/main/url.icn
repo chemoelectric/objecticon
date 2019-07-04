@@ -293,6 +293,14 @@ class URL(ObjectOutput)
       link
    end
 
+   private path_check(s)
+      if *path = 0 then
+         path := "/"
+      else
+         (path[1] == "/") | return error("Path should start with /")
+      return
+   end
+
    #
    # Create a URL by parsing the given string.  Returns a new `URL` if okay,
    # or sets &why on failure.
@@ -312,19 +320,21 @@ class URL(ObjectOutput)
                else
                   return error("No host")
             }
-            port := if =":" then
-               integer(tab(many(&digits))) | return error("Bad port")
-            else 
-               get_default_port(scheme)
+            if =":" then
+               # The port can be empty
+               port := integer(tab(many(&digits)))
+            /port := get_default_port(scheme)
             path := tab(upto('#?') | 0)
-            if *path = 0 then
-               path := "/"
-            else
-               (path[1] == "/") | return error("Path should start with /")
+            path_check() | fail
          } else {
-            if scheme == ("http" | "https" | "file") then
+            if scheme == ("http" | "https") then
                return error("// expected")
             path := tab(upto('#?') | 0)
+            # Allow file URLs with no authority (see rfc8089 appendix B).
+            if scheme == "file" then {
+               host := "localhost"
+               path_check() | fail
+            }
          }
          if ="?" then
             query := tab(upto('#') | 0)
@@ -540,8 +550,7 @@ class URL(ObjectOutput)
    # `str()` values.
    #
    public static equiv(x, y)
-      if x.str() == y.str() then
-         return
+      succeed string(x.path) == string(y.path) & x.str() == y.str()
    end
 end
 
