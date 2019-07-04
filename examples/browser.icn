@@ -500,8 +500,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          xdg_refresh_item
       Dialog.new()
       self.settings := settings
-      self.visited_set := set()
-      every insert(visited_set, (!settings.visited).url.str())
+      self.visited_set := Set{ (!settings.visited).url.str() }
       pool := WorkerPool(self, settings.pool_size).
          set_cookies(cookies).
          add_scheme_handler("config", config_handler).
