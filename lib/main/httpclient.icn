@@ -118,7 +118,6 @@ $endif
       request,
       response,
       previous_response,
-      open_url,
       retries,
       retry_while_data_flag,
       length,
@@ -742,18 +741,16 @@ $endif
    #
    # 
    private maybe_open_connection()
-      if not(is_connected()) | /open_url | open_url.get_decoded_host() ~== request.url.get_decoded_host() |
-         open_url.get_port() ~= request.url.get_port() then 
-      {
+      local s, p, f
+      s := request.url.get_decoded_host()
+      p := request.url.get_port()
+      f := Yes{ request.url.get_scheme() == "https" }
+      if not(is_connected()) | server ~== s | port ~= p | ssl_flag ~=== f then {
          close_connection()
-         set_server(request.url.get_decoded_host())
-         set_port(request.url.get_port())
-         if request.url.get_scheme() == "https" then
-            set_ssl(&yes)
-         else
-            set_ssl(&no)
+         set_server(s)
+         set_port(p)
+         set_ssl(f)
          open_connection() | fail
-         open_url := clone(request.url)
       }
       return
    end
