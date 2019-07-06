@@ -500,7 +500,7 @@ class URL(ObjectOutput)
       s ? repeat {
          res ||:= tab(upto('%') | 0)
          move(1) | break
-         res ||:= char(integer("16r" || move(2)))
+         res ||:= char(integer("16r" || move(2))) | "%"
       }
       return res
    end
@@ -514,10 +514,16 @@ class URL(ObjectOutput)
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
-         ch := ord(move(1)) | break
-         res ||:= "%" || Format.int_to_string(ch,,2)
+         ch := move(1) | break
+         res ||:= percent(ch)
       }
       return res
+   end
+
+   # Percent encode a single character, ch.
+   #
+   public static percent(ch)
+      return "%" || Format.int_to_string(ord(ch),, 2)
    end
 
    private static rmdir(s, i)
@@ -543,6 +549,70 @@ class URL(ObjectOutput)
             break
       }
       return s
+   end
+
+   #
+   # Modify the percent encoding in the given string `s`.
+   #
+   # For currently unencoded characters, those in `c1` are left as-is,
+   # others are percent-encoded.
+   #
+   # For currently encoded characters, those in `c2` are decoded, and
+   # others are left percent-encoded.
+   #
+   # `c1` and `c2` both default to `UNRESERVED`.
+   #
+   # To work properly, `c1` should not include `%`.  For consistency
+   # (meaning a further application would produce the same result),
+   # `c2` should be a subset of `c1`.
+   #
+   # Example :- turn a URL with utf-8 characters into a string for
+   # display, showing the utf-8 characters unescaped :-
+   # ~
+   #     URL.re_encode(url.str(), ~'%', URL.UNRESERVED ++ ~&ascii) 
+   # ~
+   #
+   public static re_encode(s, c1, c2)
+      local res, ch
+      s := need_string(s)
+      /c1 := UNRESERVED
+      /c2 := UNRESERVED
+      res := ""
+      s ? repeat {
+         res ||:= tab(many(c1))
+         if pos(0) then
+            break
+         res ||:= if any('%') then {
+            move(1)
+            if ch := char(integer("16r" || move(2))) then {
+               if any(c2, ch) then
+                  ch
+               else
+                  percent(ch)
+            } else "%"
+         } else
+            percent(move(1))
+      }
+      return res
+   end
+
+   # Return a normalized version of this URL.  All percent encodings
+   # are normalized, (see `re_encode` above).  Host case is lowered.
+   # Dotted dirs are compacted.  All parts are of string type.  See
+   # <https://en.wikipedia.org/wiki/URL_normalization>.
+   #
+   public normal()
+      local s, u, h, p, q, f
+      s := string(scheme)
+      if \host then {
+         u := re_encode(\userinfo)
+         h := re_encode(map(host))
+         p := re_encode(strip_dot_dirs(path), UNRESERVED ++ '/')
+      } else
+         p := re_encode(path, UNRESERVED ++ '/')
+      q := re_encode(\query, UNRESERVED ++ '=&')
+      f := re_encode(\fragment)
+      return from_parts(s, u, h, port, p, q, f)
    end
 
    #
