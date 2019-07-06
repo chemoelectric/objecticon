@@ -362,7 +362,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    private edit_settings(req)
       local t, home, cn, vn, pn, mcd, ff
       (t := req.url.extract_cgi_parameters() &
-       home := URL(ucs(member(t, "home")[1])) &
+       home := URL(ucs(member(t, "home")[1])).normal() &
        cn := integer(member(t, "cache")[1]) &
        vn := integer(member(t, "vsize")[1]) &
        pn := integer(member(t, "psize")[1]) &
@@ -740,7 +740,7 @@ class DownloadTab(TabItem)
       s := url_field.get_contents()
       if *s = 0 then
          fail
-      if u := URL(s) then
+      if u := URL(s).normal() then
          download(u)
       else
          msg("Not a valid URL: " || &why)
@@ -1476,7 +1476,7 @@ class BrowserTab(TabItem, BrowserUI)
       s := url_field.get_contents()
       if *s = 0 then
          fail
-      if u := URL(s) then
+      if u := URL(s).normal() then
          browser.goto(u)
       else
          msg("Invalid url: " || &why)
@@ -1923,7 +1923,7 @@ procedure main(a)
    else {
       every s := !a do {
          s := ucs(s) | stop("Argument not UTF-8")
-         url := URL(s) | stop("Invalid url: ", s, ": ", &why)
+         url := URL(s).normal() | stop("Invalid url: ", s, ": ", &why)
          d.new_tab(url)
       }
    }

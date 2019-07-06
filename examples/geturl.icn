@@ -160,7 +160,7 @@ class Worker()
 
       total +:= 1
 
-      (url := URL(a) & url.scheme == ("http" | "https")) | {
+      (url := URL(a).normal() & url.scheme == ("http" | "https")) | {
          write("Invalid url: ", a, ": ", &why)
          put(invalid, a)
          fail
