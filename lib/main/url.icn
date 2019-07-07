@@ -569,7 +569,7 @@ class URL(ObjectOutput)
    # Example :- turn a URL with utf-8 characters into a string for
    # display, showing the utf-8 characters unescaped :-
    # ~
-   #     URL.re_encode(url.str(), ~'%', URL.UNRESERVED ++ ~&ascii) 
+   #     URL.re_encode(url.str(), ~'%', ~&ascii) 
    # ~
    #
    public static re_encode(s, c1, c2)
