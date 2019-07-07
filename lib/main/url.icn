@@ -603,14 +603,14 @@ class URL(ObjectOutput)
    #
    public normal()
       local s, u, h, p, q, f
-      s := string(scheme)
+      s := string(map(scheme))
       if \host then {
          u := re_encode(\userinfo)
          h := re_encode(map(host))
-         p := re_encode(strip_dot_dirs(path), UNRESERVED ++ '/')
+         p := strip_dot_dirs(re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/'))
       } else
-         p := re_encode(path, UNRESERVED ++ '/')
-      q := re_encode(\query, UNRESERVED ++ '=&')
+         p := re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/')
+      q := map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
       f := re_encode(\fragment)
       return from_parts(s, u, h, port, p, q, f)
    end
