@@ -2113,7 +2113,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
 static double calc_pt(double *x, double *y, double rx, double ry, double th)
 {
     double r;
-    /* Get the polar coordiantes radius relative to center */
+    /* Get the polar coordinates radius relative to center */
     if (rx == ry)    /* Easy case if a circle */
         r = rx;
     else
@@ -2478,6 +2478,7 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
 {
     int i;
     double x1, x2, y1, y2;
+    x1 = x2 = y1 = y2 = 0.0;
     for (i = 0; i < n; ++i) {
         struct lineinfo *li = &lis[i]; 
         if (i == 0) {

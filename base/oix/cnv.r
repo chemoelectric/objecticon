@@ -590,9 +590,9 @@ static int numeric_via_string(dptr src, dptr result)
    char *s, *end_s, *ep;
    char msign = '+';    /* sign of mantissa */
    word lresult = 0;	/* integer result */
-   char *ssave;         /* holds original ptr for bigradix */
-   int digits = 0;	/* number of digits seen */
+   char *dig_s;         /* pointer to start of digits */
    double d;
+   int c, r;
 
    if (!cnv_str_impl(src, &str))
        return 0;
@@ -612,7 +612,7 @@ static int numeric_via_string(dptr src, dptr result)
    if (s < end_s && (*s == '+' || *s == '-'))
       msign = *s++;
 
-   ssave = s;   /* set pointer to beginning of digits in case it's needed */
+   dig_s = s;   /* set pointer to beginning of digits */
 
    /*
     * Get integer part
@@ -624,7 +624,6 @@ static int numeric_via_string(dptr src, dptr result)
            if (!over_flow)
                lresult = add(lresult, *s - '0');
        }
-       ++digits;
        ++s;
    }
 
@@ -635,21 +634,48 @@ static int numeric_via_string(dptr src, dptr result)
       if (over_flow || lresult < 2 || lresult > 36)
 	 return 0;
       ++s; /* move over R */
-      MakeStr(s, end_s - s, &str);
-      return bigradix(msign, lresult, &str, result);
+      dig_s = s;   /* reset pointer to beginning of digits */
+      r = lresult;
+      lresult = 0;
+      while (s < end_s && oi_isalnum(*s)) {
+          c = oi_isdigit(*s) ? (*s)-'0' : 10+(((*s)|(040))-'a');
+          if (c >= r)
+              return 0;
+          if (!over_flow) {
+              lresult = mul(lresult, r);
+              if (!over_flow)
+                  lresult = add(lresult, c);
+          }
+          ++s;
+      }
+      while (s < end_s && oi_isspace(*s))
+          ++s;
+
+      if (s == end_s && s != dig_s) {
+          /* Syntax ok, just check for overflow. */
+          if (over_flow) {
+              MakeStr(dig_s, end_s - dig_s, &str);
+              return bigradix(msign, r, &str, result);
+          } else {
+              MakeInt(msign == '+' ? lresult : -lresult, result);
+              return 1;
+          }
       }
 
+      /* No digits, or extraneous chars. */
+      return 0;
+   }
 
    while (s < end_s && oi_isspace(*s))
        ++s;
 
    if (s == end_s) {
        /* Check we had some digits */
-       if (!digits)
+       if (s == dig_s)
            return 0;
        /* Base 10 integer or large integer */
        if (over_flow) {
-           MakeStr(ssave, end_s - ssave, &str);
+           MakeStr(dig_s, end_s - dig_s, &str);
            return bigradix(msign, 10, &str, result);
        } else {
            MakeInt(msign == '+' ? lresult : -lresult, result);

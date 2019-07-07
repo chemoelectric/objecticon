@@ -148,14 +148,13 @@ $endif
    end
 
    private static run_stty(params[])
-      local f, ss                   
-      ss := StringStream()          
-      use {                         
+      local f, s
+      s := use {                         
          f := ProgInputStream("stty", params,,, get_null()),
-         f.copy_to(ss)                                      
+         f.read_all()
       } | fail                                              
       return if f.get_exit_info().succeeded() then
-         ss.str()                                           
+         s
       else                                                  
          error("stty failed: " || &why)
    end                                                      

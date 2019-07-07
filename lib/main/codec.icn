@@ -97,9 +97,9 @@ end
 #
 procedure encode_to_file(fn, o, fast, bin)
    local f
-   return use {
+   succeed use {
       f := open(fn, "w"),
-      Encode(f).set_fast(fast).set_allow_binary(bin).begin(o) & o
+      Encode(f).set_fast(fast).set_allow_binary(bin).begin(o)
    }
 end
 

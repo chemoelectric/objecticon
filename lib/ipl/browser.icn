@@ -490,7 +490,7 @@ class HttpSubWorker(SubWorker)
       local s, t, now, exp, lm, etag, ma
       now := Time.get_system_seconds()
       if t := HttpClient.parse_generic_header(hres.get_first_header("Cache-Control")) then {
-         ma := integer(member(t, "max-age"))
+         ma := integer(t.member("max-age"))
          lm := hres.get_first_header("Last-modified")
          etag := hres.get_first_header("Etag")
          exp := now + \ma
@@ -500,7 +500,7 @@ class HttpSubWorker(SubWorker)
             }
          if \ (lm | etag) then
             return CacheControl(exp, lm, etag)
-         if member(t, "no-cache") then
+         if t.member("no-cache") then
             fail
          if \ma then
             return CacheControl(now + (0 < ma))
@@ -1233,16 +1233,15 @@ class Img(Image, HasLastHighlight)
                else 
                   set_height(ih + border.get_total_height())
             }
-            # If neither set (/w_spec should imply /h_spec), ensure a
-            # scaled image with the true ratio.
-            if /w_spec then
-               set_width(scale(win.get_width()) + border.get_total_width())
-
             img_name := res.fname
             img_data := res.data
-            set_fill_dimensions(2)
          }
       }
+      # If neither set (/w_spec should imply /h_spec), ensure a
+      # scaled image with the true ratio.
+      if /w_spec then
+         set_width(scale(win.get_width()) + border.get_total_width())
+      set_fill_dimensions(2)
    end
 
    private handle_rpress(e)
@@ -3371,9 +3370,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private static is_image(ct, s)
       if map((\ct).type) == "image" then
          return
-      return match("\x89PNG\x0D\x0A\x1A\x0A" |
-                   "\xFF\xD8" |
-                   "GIF87a" | "GIF89a", s)
+      succeed match("\x89PNG\x0D\x0A\x1A\x0A" |
+                    "\xFF\xD8" |
+                    "GIF87a" | "GIF89a", s)
    end
 
    private static is_text(ct, s)

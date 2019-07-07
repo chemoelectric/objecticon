@@ -293,6 +293,14 @@ class URL(ObjectOutput)
       link
    end
 
+   private path_check(s)
+      if *path = 0 then
+         path := "/"
+      else
+         (path[1] == "/") | return error("Path should start with /")
+      return
+   end
+
    #
    # Create a URL by parsing the given string.  Returns a new `URL` if okay,
    # or sets &why on failure.
@@ -312,19 +320,21 @@ class URL(ObjectOutput)
                else
                   return error("No host")
             }
-            port := if =":" then
-               integer(tab(many(&digits))) | return error("Bad port")
-            else 
-               get_default_port(scheme)
+            if =":" then
+               # The port can be empty
+               port := integer(tab(many(&digits)))
+            /port := get_default_port(scheme)
             path := tab(upto('#?') | 0)
-            if *path = 0 then
-               path := "/"
-            else
-               (path[1] == "/") | return error("Path should start with /")
+            path_check() | fail
          } else {
-            if scheme == ("http" | "https" | "file") then
+            if scheme == ("http" | "https") then
                return error("// expected")
             path := tab(upto('#?') | 0)
+            # Allow file URLs with no authority (see rfc8089 appendix B).
+            if scheme == "file" then {
+               host := "localhost"
+               path_check() | fail
+            }
          }
          if ="?" then
             query := tab(upto('#') | 0)
@@ -490,7 +500,7 @@ class URL(ObjectOutput)
       s ? repeat {
          res ||:= tab(upto('%') | 0)
          move(1) | break
-         res ||:= char(integer("16r" || move(2)))
+         res ||:= char(integer("16r" || move(2))) | "%"
       }
       return res
    end
@@ -504,10 +514,16 @@ class URL(ObjectOutput)
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
-         ch := ord(move(1)) | break
-         res ||:= "%" || Format.int_to_string(ch,,2)
+         ch := move(1) | break
+         res ||:= percent(ch)
       }
       return res
+   end
+
+   # Percent encode a single character, ch.
+   #
+   public static percent(ch)
+      return "%" || Format.int_to_string(ord(ch),, 2)
    end
 
    private static rmdir(s, i)
@@ -536,12 +552,75 @@ class URL(ObjectOutput)
    end
 
    #
+   # Modify the percent encoding in the given string `s`.
+   #
+   # For currently unencoded characters, those in `c1` are left as-is,
+   # others are percent-encoded.
+   #
+   # For currently encoded characters, those in `c2` are decoded, and
+   # others are left percent-encoded.
+   #
+   # `c1` and `c2` both default to `UNRESERVED`.
+   #
+   # To work properly, `c1` should not include `%`.  For consistency
+   # (meaning a further application would produce the same result),
+   # `c2` should be a subset of `c1`.
+   #
+   # Example :- turn a URL with utf-8 characters into a string for
+   # display, showing the utf-8 characters unescaped :-
+   # ~
+   #     URL.re_encode(url.str(), ~'%', URL.UNRESERVED ++ ~&ascii) 
+   # ~
+   #
+   public static re_encode(s, c1, c2)
+      local res, ch
+      s := need_string(s)
+      /c1 := UNRESERVED
+      /c2 := UNRESERVED
+      res := ""
+      s ? repeat {
+         res ||:= tab(many(c1))
+         if pos(0) then
+            break
+         res ||:= if any('%') then {
+            move(1)
+            if ch := char(integer("16r" || move(2))) then {
+               if any(c2, ch) then
+                  ch
+               else
+                  percent(ch)
+            } else "%"
+         } else
+            percent(move(1))
+      }
+      return res
+   end
+
+   # Return a normalized version of this URL.  All percent encodings
+   # are normalized, (see `re_encode` above).  Host case is lowered.
+   # Dotted dirs are compacted.  All parts are of string type.  See
+   # <https://en.wikipedia.org/wiki/URL_normalization>.
+   #
+   public normal()
+      local s, u, h, p, q, f
+      s := string(map(scheme))
+      if \host then {
+         u := re_encode(\userinfo)
+         h := re_encode(map(host))
+         p := strip_dot_dirs(re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/'))
+      } else
+         p := re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/')
+      q := map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
+      f := re_encode(\fragment)
+      return from_parts(s, u, h, port, p, q, f)
+   end
+
+   #
    # Succeed iff two URLs represent the same URL, based on their
    # `str()` values.
    #
    public static equiv(x, y)
-      if x.str() == y.str() then
-         return
+      succeed string(x.path) == string(y.path) & x.str() == y.str()
    end
 end
 
