@@ -82,7 +82,7 @@ procedure add_note(s)
    local u
    if is(s, URL) then
       u := s
-   else if match("http://" | "https://" | "file://", s) then
+   else if match("http://" | "https://" | "file:/", s) then
       u := URL(s)
    if /u then
       u := URL("text:" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
