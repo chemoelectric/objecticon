@@ -223,16 +223,22 @@ class URL(ObjectOutput)
    end
 
    #
+   # Helper to caseless compare x with string s
+   #
+   private static cl_eq(x, s)
+      succeed Text.caseless_compare(string(x), s) = 0
+   end
+
+   #
    # Convert to string representation.  The result is always a string, never ucs.
    #
    public str()
       local s
       s := string(scheme) || ":"
-      if \host then {
+      if \host & not(scheme == "file" & cl_eq(host, "localhost")) then {
          s ||:= "//"
          s ||:= string(\userinfo) || "@"
-         if not(scheme == "file" & host == "localhost") then
-            s ||:= bracket_host(string(host))
+         s ||:= bracket_host(string(host))
          if \port & not(port = get_default_port(scheme)) then
             s ||:= ":" || port
       }
@@ -260,7 +266,7 @@ class URL(ObjectOutput)
    # Succeed iff this URL represents a local file.
    #
    public is_local_file()
-      succeed scheme == "file" & host == ("localhost" | &host)
+      succeed scheme == "file" & cl_eq(host, "localhost" | &host)
    end
 
    # Extract the cgi parameters from the `file` field.  Fails if there
@@ -307,7 +313,7 @@ class URL(ObjectOutput)
    #
    public new(s)
       s ? {
-         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =":") | return error("Scheme required")
+         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+\-.'))), =":") | return error("Scheme required")
          if ="//" then {
             userinfo := 1(tab(upto('@')), move(1))
             host := if ="[" then
