@@ -471,12 +471,12 @@ class URL(ObjectOutput)
       cgi := table()
       s ? until pos(0) do {
          key := cgi_decode(tab(upto('&=') | 0))
-         if ="=" then
-            val := cgi_decode(tab(upto('&') | 0))
+         val := if ="=" then
+            cgi_decode(tab(upto('&') | 0))
          else
-            val := ""
-         ="&"
+            ""
          inserts(cgi, key, val)
+         move(1)
       }
       return cgi
    end
