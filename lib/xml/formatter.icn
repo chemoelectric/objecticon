@@ -97,7 +97,6 @@ end
 #
 procedure xml_escape(s, c)
    local ch, r
-
    r := ""
    s ? repeat {
       r ||:= tab(upto(c) | 0)
@@ -106,6 +105,7 @@ procedure xml_escape(s, c)
          "&" : "&amp;"
          "<" : "&lt;"
          ">" : "&gt;"
+         "'" : "&apos;"
          "\"" : "&quot;"
          default : "&#" || ord(ch) || ";"
       }
