@@ -28,12 +28,18 @@ class URL(ObjectOutput)
       port
 
    public static const
-      RESERVED, UNRESERVED, CGI_UNRESERVED
+      RESERVED, UNRESERVED, SUB_DELIMS, CGI_UNRESERVED, PATH_CHAR, USERINFO_CHAR, SCHEME_CHAR, HOST_CHAR, QUERY_CHAR, FRAGMENT_CHAR
 
    private static init()
       RESERVED := ':/?#[]@!$&\'()*+,;='
       UNRESERVED := &letters ++ &digits ++ '_.\-~'
+      SUB_DELIMS := '!$&\'()*+,;='
       CGI_UNRESERVED := &letters ++ &digits ++ '_.\- '
+      SCHEME_CHAR := &letters ++ &digits ++ '+\-.'
+      USERINFO_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':'
+      HOST_CHAR := UNRESERVED ++ SUB_DELIMS
+      PATH_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/'
+      FRAGMENT_CHAR := QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
    end
 
    #
@@ -313,9 +319,9 @@ class URL(ObjectOutput)
    #
    public new(s)
       s ? {
-         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+\-.'))), =":") | return error("Scheme required")
+         scheme := 1(map(tab(many(SCHEME_CHAR))), =":") | return error("Scheme required")
          if ="//" then {
-            userinfo := 1(tab(upto('@')), move(1))
+            userinfo := 1(tab(upto('@/?#')\1), ="@")
             host := if ="[" then
                1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
             else
@@ -566,7 +572,7 @@ class URL(ObjectOutput)
    # For currently encoded characters, those in `c2` are decoded, and
    # others are left percent-encoded.
    #
-   # `c1` and `c2` both default to `UNRESERVED`.
+   # `c1` defaults to `UNRESERVED`, and `c2` defaults to `c1`.
    #
    # To work properly, `c1` should not include `%`.  For consistency
    # (meaning a further application would produce the same result),
@@ -582,7 +588,7 @@ class URL(ObjectOutput)
       local res, ch
       s := need_string(s)
       /c1 := UNRESERVED
-      /c2 := UNRESERVED
+      /c2 := c1
       res := ""
       s ? repeat {
          res ||:= tab(many(c1))
@@ -611,13 +617,16 @@ class URL(ObjectOutput)
       local s, u, h, p, q, f
       s := string(map(scheme))
       if \host then {
-         u := re_encode(\userinfo)
-         h := re_encode(map(host))
-         p := strip_dot_dirs(re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/'))
+         u := re_encode(\userinfo, USERINFO_CHAR)
+         h := if upto(':', host) then map(host) else re_encode(map(host), HOST_CHAR)
+         p := strip_dot_dirs(re_encode(path, PATH_CHAR))
       } else
-         p := re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/')
-      q := map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
-      f := re_encode(\fragment)
+         p := re_encode(path, PATH_CHAR)
+      q := if s == ("http" | "https") then
+         map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
+      else
+         map(re_encode(\query, QUERY_CHAR ++ ' ', QUERY_CHAR ++ ' ' -- '=&+'), " ", "+")
+      f := re_encode(\fragment, FRAGMENT_CHAR)
       return from_parts(s, u, h, port, p, q, f)
    end
 
