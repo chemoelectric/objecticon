@@ -151,22 +151,22 @@ class XmlParser(Connectable)
       s := need_text(s)
       doc := XmlDocument()
 
+      utf8_flag := Yes{ type(s) == "ucs" }
+
       # The predefined entities.  Note that the values are in each case valid content.
       # The chars "&" and "<" on their own would not be valid content.
-      if type(s) == "ucs" then {
+      if \utf8_flag then {
          insert(doc.general_entities, u"lt", EntityDef(u"&#60;"))
          insert(doc.general_entities, u"gt", EntityDef(u">"))
          insert(doc.general_entities, u"amp", EntityDef(u"&#38;"))
          insert(doc.general_entities, u"apos", EntityDef(u"\'"))
          insert(doc.general_entities, u"quot", EntityDef(u"\""))
-         utf8_flag := &yes
       } else {
          insert(doc.general_entities, "lt", EntityDef("&#60;"))
          insert(doc.general_entities, "gt", EntityDef(">"))
          insert(doc.general_entities, "amp", EntityDef("&#38;"))
          insert(doc.general_entities, "apos", EntityDef("\'"))
          insert(doc.general_entities, "quot", EntityDef("\""))
-         utf8_flag := &null
       }
 
       dtd_insert_shown_error := &null
