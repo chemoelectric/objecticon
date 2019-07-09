@@ -421,7 +421,7 @@ $endif
                   g := path.child(e.name).canonical().to_url()
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || ucache(t.uid) || "&nbsp;</td><td>" || gcache(t.gid) ||
                          "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || string(tf) || "&nbsp;</td>" ||
-                         "<td nowrap><a href=\"" || g || "\">" || 
+                         "<td nowrap><a href=\"" || Browser.to_attr(g) || "\">" || 
                                  Browser.to_content(e.name) || "</a></td></tr>\n")
                }
                rs.out("</table></html>")
@@ -3400,32 +3400,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public static to_content(s)
-      local t, ch
-      t := ""
-      string(s) ? repeat {
-         t ||:= tab(upto('<&') | 0)
-         ch := move(1) | break
-         t ||:= case ch of {
-            "<": "&lt;"
-            "&": "&amp;"
-         }
-      }
-      return t
+      return xml_escape(string(s), '<&')
    end
 
    public static to_attr(s)
-      local t, ch
-      t := ""
-      string(s) ? repeat {
-         t ||:= tab(upto('\"\'&') | 0)
-         ch := move(1) | break
-         t ||:= case ch of {
-            "\"": "&quot;"
-            "\'": "&apos;"
-            "&": "&amp;"
-         }
-      }
-      return t
+      return xml_escape(string(s), '\"\'&')
    end
 
    public static mk_anchor(url, lim)
