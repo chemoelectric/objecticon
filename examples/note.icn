@@ -85,7 +85,7 @@ procedure add_note(s)
    else if match("http://" | "https://" | "file:/", s) then
       u := URL(s)
    if /u then
-      u := URL("text:" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
+      u := URL("text:" || URL.percent_encode(s, URL.PATH_CHAR))
    put(notes, u)
    mod := &yes
    return
