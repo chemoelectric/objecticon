@@ -2,7 +2,6 @@ import
    gui, 
    io,
    util,
-   xml,
    graphics,
    lang,
    mail,
@@ -399,7 +398,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
-                   <tr><td>Home page:</td><td><input type=url name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></td></tr>_
+                   <tr><td>Home page:</td><td><input type=url name=home value=\"" || Browser.to_attr(settings.home_url.str()) || "\" size=50 /></td></tr>_
                    <tr><td>Cache size (MB):</td><td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></td></tr>_
                    <tr><td>Visited list size:</td><td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></td></tr>_
                    <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
