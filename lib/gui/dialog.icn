@@ -1677,10 +1677,10 @@ abstract class TextSelectionOwner(SelectionOwner)
    end
 
    public override get_content(target)
-      case target of {
-         Selection.STRING_TARGET: return text_convert(get_text(), "string")
-         Selection.UTF8_STRING_TARGET: return text_convert(get_text(), "ucs")
-         Selection.TIMESTAMP_TARGET: return get_timestamp()
+      return case target of {
+         Selection.STRING_TARGET: text_convert(get_text(), "string")
+         Selection.UTF8_STRING_TARGET: text_convert(get_text(), "ucs")
+         Selection.TIMESTAMP_TARGET: get_timestamp()
       }
    end
 end
@@ -1710,27 +1710,15 @@ class URLSelectionOwner(SelectionOwner)
    private urls
 
    public override get_content(target)
-      local s
-      case target of {
-         Selection.URI_LIST_TARGET : {
-            s := ""
-            every s ||:= (!urls).str() || "\r\n"
-            return text_guess_convert(s, "ucs")
-         }
-         Selection.STRING_TARGET : {
-            s := ""
-            every s ||:= (!urls).str() || Files.EOL
-            s[-1] := ""
-            return text_guess_convert(s, "string")
-         }
-         Selection.UTF8_STRING_TARGET: {
-            s := ""
-            every s ||:= (!urls).str() || Files.EOL
-            s[-1] := ""
-            return text_guess_convert(s, "ucs")
-         }
+      return case target of {
+         Selection.URI_LIST_TARGET :
+            text_guess_convert(String{ (!urls).str() || "\r\n" }, "ucs")
+         Selection.STRING_TARGET :
+            text_guess_convert(String{ (!urls).str(), Files.EOL }, "string")
+         Selection.UTF8_STRING_TARGET:
+            text_guess_convert(String{ (!urls).str(), Files.EOL }, "ucs")
          Selection.TIMESTAMP_TARGET:
-            return get_timestamp()
+            get_timestamp()
       }
    end
 
