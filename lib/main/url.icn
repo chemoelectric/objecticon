@@ -517,12 +517,15 @@ class URL(ObjectOutput)
       return res
    end
 
-   # Convert a string `s` by encoding any chars not in `c` to %xx format.
-   # The result is always a string, never ucs.
+   #
+   # Convert a string `s` by encoding any chars not in `c` to %xx
+   # format.  The result is always a string, never ucs.  `c` defaults
+   # to `UNRESERVED`.
    #
    public static percent_encode(s, c)
       local res, ch
       s := need_string(s)
+      /c := UNRESERVED
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
