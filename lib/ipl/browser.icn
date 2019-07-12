@@ -5549,14 +5549,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public override handle_wheel_up(e)
       if /e.ctrl then
-         (\vsb).handle_wheel_up(e)
+         ComponentScrollArea.handle_wheel_up(e)
       else
          do_increase_font()
    end
 
    public override handle_wheel_down(e)
       if /e.ctrl then
-         (\vsb).handle_wheel_down(e)
+         ComponentScrollArea.handle_wheel_down(e)
       else
          do_decrease_font()
    end
