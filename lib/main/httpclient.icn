@@ -93,8 +93,11 @@ end
 class HttpClient(NetClient)
    public static const
       TOKEN_CHAR,
+      BEGIN_EVENT,
       COMPLETE_EVENT,
       FAILED_EVENT,
+      HTTP_SUCCESS_EVENT,
+      HTTP_ERROR_EVENT,
       ABORTED_EVENT,
       RETRYING_EVENT,
       HEADERS_EVENT,
@@ -103,8 +106,11 @@ class HttpClient(NetClient)
 
    private static init()
       TOKEN_CHAR := &ascii[33:128] -- '()<>@,;:\\\"/[]?={} \t'
+      BEGIN_EVENT := "Begin"
       COMPLETE_EVENT := "Complete"
       FAILED_EVENT := "Failed"
+      HTTP_ERROR_EVENT := "HTTP Error"
+      HTTP_SUCCESS_EVENT := "HTTP Success"
       ABORTED_EVENT := "Aborted"
       RETRYING_EVENT := "Retrying"
       HEADERS_EVENT := "Headers"
@@ -310,8 +316,10 @@ $endif
 
          retrieve_page() | fail
          sc := response.get_status_code() | return on_http_error("Invalid status code in response")
-         if sc = (200 | 206) then
+         if sc = (200 | 206) then {
+            fire(HTTP_SUCCESS_EVENT)
             return response
+         }
 
          if sc = 401 then
             handle_authentication() | fail
@@ -726,6 +734,7 @@ $endif
 
    private on_http_error(s)
       &why := http_error := s
+      fire(HTTP_ERROR_EVENT)
    end
 
    #
@@ -774,6 +783,7 @@ $endif
       reset_dont_retry()
       reset_progress_counters()
 
+      fire(BEGIN_EVENT)
       repeat {
          prev_read := self.read
          if tryone() then {
