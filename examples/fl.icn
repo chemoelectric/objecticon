@@ -5,7 +5,7 @@ global fl, opts, non_ws
 record Loc(str, file, line)
 
 procedure try_url(s)
-   if match("http://" | "https://" | "file://", s) then
+   if match("http://" | "https://" | "file:/", s) then
       return do_link(s, URL(s))
 end
 

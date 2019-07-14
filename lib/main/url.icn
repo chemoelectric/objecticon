@@ -28,12 +28,18 @@ class URL(ObjectOutput)
       port
 
    public static const
-      RESERVED, UNRESERVED, CGI_UNRESERVED
+      RESERVED, UNRESERVED, SUB_DELIMS, CGI_UNRESERVED, PATH_CHAR, USERINFO_CHAR, SCHEME_CHAR, HOST_CHAR, QUERY_CHAR, FRAGMENT_CHAR
 
    private static init()
       RESERVED := ':/?#[]@!$&\'()*+,;='
       UNRESERVED := &letters ++ &digits ++ '_.\-~'
+      SUB_DELIMS := '!$&\'()*+,;='
       CGI_UNRESERVED := &letters ++ &digits ++ '_.\- '
+      SCHEME_CHAR := &letters ++ &digits ++ '+\-.'
+      USERINFO_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':'
+      HOST_CHAR := UNRESERVED ++ SUB_DELIMS
+      PATH_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/'
+      FRAGMENT_CHAR := QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
    end
 
    #
@@ -223,16 +229,22 @@ class URL(ObjectOutput)
    end
 
    #
+   # Helper to caseless compare x with string s
+   #
+   private static cl_eq(x, s)
+      succeed Text.caseless_compare(string(x), s) = 0
+   end
+
+   #
    # Convert to string representation.  The result is always a string, never ucs.
    #
    public str()
       local s
       s := string(scheme) || ":"
-      if \host then {
+      if \host & not(scheme == "file" & cl_eq(host, "localhost")) then {
          s ||:= "//"
          s ||:= string(\userinfo) || "@"
-         if not(scheme == "file" & host == "localhost") then
-            s ||:= bracket_host(string(host))
+         s ||:= bracket_host(string(host))
          if \port & not(port = get_default_port(scheme)) then
             s ||:= ":" || port
       }
@@ -260,7 +272,7 @@ class URL(ObjectOutput)
    # Succeed iff this URL represents a local file.
    #
    public is_local_file()
-      succeed scheme == "file" & host == ("localhost" | &host)
+      succeed scheme == "file" & cl_eq(host, "localhost" | &host)
    end
 
    # Extract the cgi parameters from the `file` field.  Fails if there
@@ -307,9 +319,9 @@ class URL(ObjectOutput)
    #
    public new(s)
       s ? {
-         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =":") | return error("Scheme required")
+         scheme := 1(map(tab(many(SCHEME_CHAR))), =":") | return error("Scheme required")
          if ="//" then {
-            userinfo := 1(tab(upto('@')), move(1))
+            userinfo := 1(tab(upto('@/?#')\1), ="@")
             host := if ="[" then
                1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
             else
@@ -471,12 +483,12 @@ class URL(ObjectOutput)
       cgi := table()
       s ? until pos(0) do {
          key := cgi_decode(tab(upto('&=') | 0))
-         if ="=" then
-            val := cgi_decode(tab(upto('&') | 0))
+         val := if ="=" then
+            cgi_decode(tab(upto('&') | 0))
          else
-            val := ""
-         ="&"
+            ""
          inserts(cgi, key, val)
+         move(1)
       }
       return cgi
    end
@@ -505,12 +517,15 @@ class URL(ObjectOutput)
       return res
    end
 
-   # Convert a string `s` by encoding any chars not in `c` to %xx format.
-   # The result is always a string, never ucs.
+   #
+   # Convert a string `s` by encoding any chars not in `c` to %xx
+   # format.  The result is always a string, never ucs.  `c` defaults
+   # to `UNRESERVED`.
    #
    public static percent_encode(s, c)
       local res, ch
       s := need_string(s)
+      /c := UNRESERVED
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
@@ -560,7 +575,7 @@ class URL(ObjectOutput)
    # For currently encoded characters, those in `c2` are decoded, and
    # others are left percent-encoded.
    #
-   # `c1` and `c2` both default to `UNRESERVED`.
+   # `c1` defaults to `UNRESERVED`, and `c2` defaults to `c1`.
    #
    # To work properly, `c1` should not include `%`.  For consistency
    # (meaning a further application would produce the same result),
@@ -569,14 +584,14 @@ class URL(ObjectOutput)
    # Example :- turn a URL with utf-8 characters into a string for
    # display, showing the utf-8 characters unescaped :-
    # ~
-   #     URL.re_encode(url.str(), ~'%', URL.UNRESERVED ++ ~&ascii) 
+   #     URL.re_encode(url.str(), ~'%', ~&ascii) 
    # ~
    #
    public static re_encode(s, c1, c2)
       local res, ch
       s := need_string(s)
       /c1 := UNRESERVED
-      /c2 := UNRESERVED
+      /c2 := c1
       res := ""
       s ? repeat {
          res ||:= tab(many(c1))
@@ -605,13 +620,16 @@ class URL(ObjectOutput)
       local s, u, h, p, q, f
       s := string(map(scheme))
       if \host then {
-         u := re_encode(\userinfo)
-         h := re_encode(map(host))
-         p := strip_dot_dirs(re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/'))
+         u := re_encode(\userinfo, USERINFO_CHAR)
+         h := if upto(':', host) then map(host) else re_encode(map(host), HOST_CHAR)
+         p := strip_dot_dirs(re_encode(path, PATH_CHAR))
       } else
-         p := re_encode(path, UNRESERVED ++ '/', UNRESERVED ++ '/')
-      q := map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
-      f := re_encode(\fragment)
+         p := re_encode(path, PATH_CHAR)
+      q := if s == ("http" | "https") then
+         map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
+      else
+         map(re_encode(\query, QUERY_CHAR ++ ' ', QUERY_CHAR ++ ' ' -- '=&+'), " ", "+")
+      f := re_encode(\fragment, FRAGMENT_CHAR)
       return from_parts(s, u, h, port, p, q, f)
    end
 

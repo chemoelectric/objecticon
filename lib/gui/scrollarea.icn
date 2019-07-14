@@ -452,11 +452,15 @@ abstract class ScrollArea(Component, HasUseWheel)
    end
 
    public override handle_wheel_up(e)
-      (\vsb).handle_wheel_up(e)
+      local c
+      c := if /e.shift then vsb else hsb
+      (\c).handle_wheel_up(e)
    end
 
    public override handle_wheel_down(e)
-      (\vsb).handle_wheel_down(e)
+      local c
+      c := if /e.shift then vsb else hsb
+      (\c).handle_wheel_down(e)
    end
 
    public remove_hsb()

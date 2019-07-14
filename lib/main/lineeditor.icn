@@ -351,10 +351,10 @@ $endif
          every e := !l do {
             if \fl then
                tty.writes1(";")
-            cmd := "\e[\"" || URL.percent_encode(e.str, URL.UNRESERVED) || "\";\"" || e.pos || "\"Q"
+            cmd := "\e[\"" || URL.percent_encode(e.str) || "\";\"" || e.pos || "\"Q"
             tty.writes("\"", 
-                       URL.percent_encode(e.label, URL.UNRESERVED), "\";\"", 
-                       URL.percent_encode(cmd, URL.UNRESERVED), "\"")
+                       URL.percent_encode(e.label), "\";\"", 
+                       URL.percent_encode(cmd), "\"")
             fl := &yes
          }
          tty.writes1("P")

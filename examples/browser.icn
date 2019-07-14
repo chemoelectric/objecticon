@@ -2,7 +2,6 @@ import
    gui, 
    io,
    util,
-   xml,
    graphics,
    lang,
    mail,
@@ -161,8 +160,8 @@ $if _PLAN9
    public static launch_prog(de, file)
       local pid, cmd
       if \opts["v"] then {
-         write("Desktop entry: ", to_string(de, 3, &yes))
-         write("File: ", image(file))
+         ewrite("Desktop entry: ", to_string(de, 3, &yes))
+         ewrite("File: ", image(file))
       }
       pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
@@ -181,7 +180,7 @@ $if _PLAN9
       # Get the command to run.
       cmd := de.subst_file(Format.rc_escape(file))
       if \opts["v"] then 
-         write("Command: ", image(cmd))
+         ewrite("Command: ", image(cmd))
       null_stdio()
       System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
@@ -190,8 +189,8 @@ $else
    public static launch_prog(de, file)
       local pid, cmd, s
       if \opts["v"] then {
-         write("Desktop entry: ", to_string(de, 3, &yes))
-         write("File: ", image(file))
+         ewrite("Desktop entry: ", to_string(de, 3, &yes))
+         ewrite("File: ", image(file))
       }
       pid := System.fork() | fail
       if pid > 0 then {
@@ -204,7 +203,7 @@ $else
       # Get the command to run.
       cmd := de.subst_file(Format.shell_escape(file))
       if \opts["v"] then 
-         write("Command: ", image(cmd))
+         ewrite("Command: ", image(cmd))
       System.setpgid()
       null_stdio()
       Files.bulk_close(100)
@@ -214,7 +213,7 @@ $else
 
    private static on_prog_exit(r)
       if \opts["v"] then
-         write("Child application exited: ", to_string(r))
+         ewrite("Child application exited: ", to_string(r))
    end
 $endif
 
@@ -432,7 +431,7 @@ $endif
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
-                   <tr><td>Home page:</td><td><input type=url name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></td></tr>_
+                   <tr><td>Home page:</td><td><input type=url name=home value=\"" || Browser.to_attr(settings.home_url.str()) || "\" size=50 /></td></tr>_
                    <tr><td>Cache size (MB):</td><td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></td></tr>_
                    <tr><td>Visited list size:</td><td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></td></tr>_
                    <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
@@ -543,7 +542,7 @@ $endif
       pool.cache.set_size(settings.cache_size_mb * 1024*1024)
       pool.set_user_agent(\opts["agent"])
       if \opts["l"] then
-         pool.set_log_http(&yes)
+         pool.set_log_file(FileStream.stderr)
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
       last_file_dir := last_download_dir := Files.getcwd()
@@ -650,6 +649,7 @@ class Download()
       local s
       s := type
       case type of {
+         HttpClient.BEGIN_EVENT:  s ||:= " " || src.request.url.str()
          HttpClient.RETRYING_EVENT:  s ||:= ": " || &why
          NetClient.CONNECTING_EVENT: s ||:= " to " || URL.bracket_host(src.server) || ":" || src.port
          NetClient.CONNECTED_EVENT: s ||:= " to " || ev

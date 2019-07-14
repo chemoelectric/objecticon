@@ -430,7 +430,7 @@ $endif
                   g := path.child(e.name).canonical().to_url()
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || ucache(t.uid) || "&nbsp;</td><td>" || gcache(t.gid) ||
                          "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || string(tf) || "&nbsp;</td>" ||
-                         "<td nowrap><a href=\"" || g || "\">" || 
+                         "<td nowrap><a href=\"" || Browser.to_attr(g) || "\">" || 
                                  Browser.to_content(e.name) || "</a></td></tr>\n")
                }
                rs.out("</table></html>")
@@ -721,8 +721,8 @@ class Worker()
    end
 
    private dwrite(a[])
-      writes("[", serial(self), "] ")
-      write!a
+      a := [ "[", serial(self), "] " ] ||| a
+      pool.log_file.write!a
    end
 
    private writing_line(ev)
@@ -757,6 +757,10 @@ class Worker()
       dwrite("Retrying: ", &why)
    end
 
+   private http_error(ev)
+      dwrite("HTTP Error: ", &why)
+   end
+
    private other(ev, src, type)
       dwrite(type)
    end
@@ -777,13 +781,20 @@ class Worker()
                           NetClient.CONNECTING_EVENT |
                           NetClient.CONNECTED_EVENT |
                           NetClient.CLOSED_EVENT |
+                          HttpClient.BEGIN_EVENT |
                           HttpClient.COMPLETE_EVENT |
                           HttpClient.FAILED_EVENT |
+                          HttpClient.HTTP_ERROR_EVENT |
+                          HttpClient.HTTP_SUCCESS_EVENT |
                           HttpClient.ABORTED_EVENT |
                           HttpClient.RETRYING_EVENT) 
 
-      if \pool.log_http_flag then {
+      if \pool.log_file then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
+            connect(http_error, HttpClient.HTTP_ERROR_EVENT).
+            connect(other, HttpClient.HTTP_SUCCESS_EVENT).
+            connect(other, HttpClient.BEGIN_EVENT).
+            connect(other, HttpClient.ABORTED_EVENT).
             connect(retrying, HttpClient.RETRYING_EVENT).
             connect(read_line, NetClient.READ_LINE_EVENT).
             connect(read_string, NetClient.READ_STRING_EVENT).
@@ -923,15 +934,15 @@ class WorkerPool()
    private readable
       owner,
       active,
-      log_http_flag,
+      log_file,
       cookies,
       user_agent,
       cache,
       authentications,
       scheme_handlers
 
-   public set_log_http(s)
-      self.log_http_flag := need_flag(s)
+   public set_log_file(f)
+      self.log_file := f
       link
    end
 
@@ -3431,32 +3442,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public static to_content(s)
-      local t, ch
-      t := ""
-      string(s) ? repeat {
-         t ||:= tab(upto('<&') | 0)
-         ch := move(1) | break
-         t ||:= case ch of {
-            "<": "&lt;"
-            "&": "&amp;"
-         }
-      }
-      return t
+      return xml_escape(string(s), '<&')
    end
 
    public static to_attr(s)
-      local t, ch
-      t := ""
-      string(s) ? repeat {
-         t ||:= tab(upto('\"\'&') | 0)
-         ch := move(1) | break
-         t ||:= case ch of {
-            "\"": "&quot;"
-            "\'": "&apos;"
-            "&": "&amp;"
-         }
-      }
-      return t
+      return xml_escape(string(s), '\"\'&')
    end
 
    public static mk_anchor(url, lim)
@@ -5601,14 +5591,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public override handle_wheel_up(e)
       if /e.ctrl then
-         (\vsb).handle_wheel_up(e)
+         ComponentScrollArea.handle_wheel_up(e)
       else
          do_increase_font()
    end
 
    public override handle_wheel_down(e)
       if /e.ctrl then
-         (\vsb).handle_wheel_down(e)
+         ComponentScrollArea.handle_wheel_down(e)
       else
          do_decrease_font()
    end

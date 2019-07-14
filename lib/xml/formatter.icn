@@ -93,11 +93,12 @@ abstract class Formatter(Stream, HasUnderlyingStream)
 end
 
 #
-# Convert `s` by escaping any characters in cset `c`.
+# Convert `s` by escaping any characters in cset `c`, which defaults
+# to `'&<>"\''`
 #
 procedure xml_escape(s, c)
    local ch, r
-
+   /c := '&<>"\''
    r := ""
    s ? repeat {
       r ||:= tab(upto(c) | 0)
@@ -106,6 +107,7 @@ procedure xml_escape(s, c)
          "&" : "&amp;"
          "<" : "&lt;"
          ">" : "&gt;"
+         "'" : "&apos;"
          "\"" : "&quot;"
          default : "&#" || ord(ch) || ";"
       }

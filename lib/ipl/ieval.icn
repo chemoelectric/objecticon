@@ -211,7 +211,7 @@ class Ieval(MinimalObjectOutput)
 
    private text_link(s)
       return if /is_flowterm then s else 
-         "\e[!\"text:" || URL.percent_encode(s, URL.UNRESERVED) || "\"L" || s || "\e[!L" 
+         "\e[!\"text:" || URL.percent_encode(s, URL.PATH_CHAR) || "\"L" || s || "\e[!L" 
    end
 
    private locn_string(l)
