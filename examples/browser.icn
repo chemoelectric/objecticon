@@ -157,8 +157,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    public static launch_prog(de, file)
       local pid, cmd
       if \opts["v"] then {
-         write("Desktop entry: ", to_string(de, 3, &yes))
-         write("File: ", image(file))
+         ewrite("Desktop entry: ", to_string(de, 3, &yes))
+         ewrite("File: ", image(file))
       }
       pid := System.fork() | fail
       if pid > 0 then {
@@ -171,7 +171,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       # Get the command to run.
       cmd := de.subst_file(Format.shell_escape(file))
       if \opts["v"] then 
-         write("Command: ", image(cmd))
+         ewrite("Command: ", image(cmd))
       System.setpgid()
       null_stdio()
       Files.bulk_close(100)
@@ -186,7 +186,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
 
    private static on_prog_exit(r)
       if \opts["v"] then
-         write("Child application exited: ", to_string(r))
+         ewrite("Child application exited: ", to_string(r))
    end
 
    public goto_tab(t)
@@ -509,7 +509,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       pool.cache.set_size(settings.cache_size_mb * 1024*1024)
       pool.set_user_agent(\opts["agent"])
       if \opts["l"] then
-         pool.set_log_http(&yes)
+         pool.set_log_file(FileStream.stderr)
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
       last_file_dir := last_download_dir := Files.getcwd()
