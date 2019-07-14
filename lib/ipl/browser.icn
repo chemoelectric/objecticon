@@ -744,6 +744,10 @@ class Worker()
       dwrite("Retrying: ", &why)
    end
 
+   private http_error(ev)
+      dwrite("HTTP Error: ", &why)
+   end
+
    private other(ev, src, type)
       dwrite(type)
    end
@@ -764,13 +768,20 @@ class Worker()
                           NetClient.CONNECTING_EVENT |
                           NetClient.CONNECTED_EVENT |
                           NetClient.CLOSED_EVENT |
+                          HttpClient.BEGIN_EVENT |
                           HttpClient.COMPLETE_EVENT |
                           HttpClient.FAILED_EVENT |
+                          HttpClient.HTTP_ERROR_EVENT |
+                          HttpClient.HTTP_SUCCESS_EVENT |
                           HttpClient.ABORTED_EVENT |
                           HttpClient.RETRYING_EVENT) 
 
       if \pool.log_file then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
+            connect(http_error, HttpClient.HTTP_ERROR_EVENT).
+            connect(other, HttpClient.HTTP_SUCCESS_EVENT).
+            connect(other, HttpClient.BEGIN_EVENT).
+            connect(other, HttpClient.ABORTED_EVENT).
             connect(retrying, HttpClient.RETRYING_EVENT).
             connect(read_line, NetClient.READ_LINE_EVENT).
             connect(read_string, NetClient.READ_STRING_EVENT).
