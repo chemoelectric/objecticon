@@ -708,8 +708,8 @@ class Worker()
    end
 
    private dwrite(a[])
-      writes("[", serial(self), "] ")
-      write!a
+      a := [ "[", serial(self), "] " ] ||| a
+      pool.log_file.write!a
    end
 
    private writing_line(ev)
@@ -769,7 +769,7 @@ class Worker()
                           HttpClient.ABORTED_EVENT |
                           HttpClient.RETRYING_EVENT) 
 
-      if \pool.log_http_flag then {
+      if \pool.log_file then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
             connect(retrying, HttpClient.RETRYING_EVENT).
             connect(read_line, NetClient.READ_LINE_EVENT).
@@ -892,15 +892,15 @@ class WorkerPool()
    private readable
       owner,
       active,
-      log_http_flag,
+      log_file,
       cookies,
       user_agent,
       cache,
       authentications,
       scheme_handlers
 
-   public set_log_http(s)
-      self.log_http_flag := need_flag(s)
+   public set_log_file(f)
+      self.log_file := f
       link
    end
 
