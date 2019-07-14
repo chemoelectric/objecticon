@@ -616,6 +616,7 @@ class Download()
       local s
       s := type
       case type of {
+         HttpClient.BEGIN_EVENT:  s ||:= " " || src.request.url.str()
          HttpClient.RETRYING_EVENT:  s ||:= ": " || &why
          NetClient.CONNECTING_EVENT: s ||:= " to " || URL.bracket_host(src.server) || ":" || src.port
          NetClient.CONNECTED_EVENT: s ||:= " to " || ev
