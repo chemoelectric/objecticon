@@ -3,7 +3,7 @@ import parser, ipl.options, io, util, ipl.strings
 global symbol_table, scanned_file, need, pp_defs, opts
 
 procedure note(s)
-   write("Scanning ", s)
+   ewrite("Scanning ", s)
 end
 
 procedure usage(opts)
