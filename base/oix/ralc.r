@@ -264,7 +264,7 @@ if (nslots >= (OffsetMask - sizeof(struct b_lelem) / WordSize) / 2)
  * the caller, who promises to initialize first n==size slots w/o allocating.
  */
 
-struct b_list *f(uword size, uword nslots)
+struct b_list *f(word size, word nslots)
    {
    uword i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    struct b_list *blk;
@@ -298,7 +298,7 @@ alclist_raw_macro(alclist_raw_1,E_List,E_Lelem)
 
 #begdef alclist_macro(f,e_list,e_lelem)
 
-struct b_list *f(uword size, uword nslots)
+struct b_list *f(word size, word nslots)
 {
    uword i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    struct b_list *blk;
@@ -335,7 +335,7 @@ alclist_macro(alclist_1,E_List,E_Lelem)
  * alclstb - allocate a list element block in the block region.
  */
 
-struct b_lelem *f(uword nslots)
+struct b_lelem *f(word nslots)
    {
    struct b_lelem *blk;
    word i;
@@ -482,7 +482,7 @@ alcweakref_macro(alcweakref_1,E_Weakref)
  * alcucs - allocate a ucs value in the block region.
  */
 
-struct b_ucs *f(int n)
+struct b_ucs *f(word n)
    {
    struct b_ucs *blk;
    uword size;
