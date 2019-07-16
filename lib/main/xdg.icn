@@ -170,15 +170,15 @@ class DesktopEntry()
    # Exec command, returning a command string.
    #
    public subst_file(f, line)
-      local r, ch, s, fl
+      local r, s, fl
       s := exec
       if \line then
          s := \exec_line
-      r := u""
+      r := ""
       s ? repeat {
          r ||:= tab(upto('%') | 0)
          move(1) | break
-         r ||:= case ch := string(move(1)) of {
+         r ||:= case string(move(1)) of {
             "%": "%"
             "i": "--icon " || \icon
             "c": name
@@ -309,19 +309,20 @@ package final abstract class Util()
 
    private static unescape(s)
       local t, ch
-      t := u""
-      s ? repeat {
-         t ||:= tab(upto('\\') | 0)
-         ch := (move(1), move(1)) | break
-         t ||:= case string(ch) of {
-            "s": " "
-            "t": "\t"
-            "n": "\n"
-            "r": "\r"
-            default: ch
+      t := ""
+      s ? {
+         while t ||:= string(tab(upto('\\'))) do {
+            move(1)
+            t ||:= case ch := string(move(1)) of {
+               "s": " "
+               "t": "\t"
+               "n": "\n"
+               "r": "\r"
+               default: ch
+            }
          }
+         return t || tab(0)
       }
-      return t
    end
 
    # Note that this is more liberal than the desktop entry spec
