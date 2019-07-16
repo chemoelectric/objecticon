@@ -215,30 +215,30 @@ final abstract class Format()
    end
 
    #
-   # Remove escape sequences from the subject.
+   # Remove escape sequences from `s`.
    #
-   public static unescape(subject)
+   public static unescape(s)
       local rs, res
-      subject ? {
+      s ? {
          # Shortcut for common case
-         upto('\\') | return .&subject
+         upto('\\') | return s
          res := use {
             rs := RamStream(),
             unescape1(rs)
          } | fail
-         return if type(&subject) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
+         return if type(s) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
       }
    end
 
    #
-   # Remove escape sequences from the subject, but return the corresponding cset rather than
+   # Remove escape sequences from `s`, but return the corresponding cset rather than
    # a string.
    #
-   public static cset_unescape(subject)
+   public static cset_unescape(s)
       local l, state, c, prev, esc_flag
       state := 0
       l := []
-      subject ? until pos(0) do {
+      s ? until pos(0) do {
          if any('\\') then {
             esc_flag := &yes
             move(1)
@@ -296,23 +296,23 @@ final abstract class Format()
    public static shell_escape(s)
       local t, ch
       t := ""
-      s ? repeat {
-         t ||:= tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>~[]{}!$`\'\" ') | 0)
-         ch := move(1) | break
-         t ||:= case string(ch) of {
-            "\x07": "$'\\a'"
-            "\b" : "$'\\b'"
-            "\e" : "$'\\e'"
-            "\f" : "$'\\f'"
-            "\n" : "$'\\n'"
-            "\r" : "$'\\r'"
-            "\t" : "$'\\t'"
-            "\v" : "$'\\v'"
-            !'\0-\x1f\x7f' : "$'\\x" || int_to_string(ord(ch),,2) || "'"
-            default : "\\" || ch
+      s ? {
+         while t ||:= string(tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>~[]{}!$`\'\" '))) do {
+            t ||:= case ch := string(move(1)) of {
+               "\x07": "$'\\a'"
+               "\b" : "$'\\b'"
+               "\e" : "$'\\e'"
+               "\f" : "$'\\f'"
+               "\n" : "$'\\n'"
+               "\r" : "$'\\r'"
+               "\t" : "$'\\t'"
+               "\v" : "$'\\v'"
+               !'\0-\x1f\x7f' : "$'\\x" || int_to_string(ord(ch),,2) || "'"
+               default : "\\" || ch
+            }
          }
+         return t || tab(0)
       }
-      return t
    end
 
    #
