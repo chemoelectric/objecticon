@@ -16,7 +16,7 @@
 
 package ipl.strings
 
-import lang(Prog,Text), util(need_text)
+import lang(Prog,Text), util
 
 # Concatenates an arbitrary number of strings.
 procedure cat(args[])			
@@ -94,13 +94,13 @@ end
 procedure compress(s, c)		
    local result, s1
 
-   /c := &cset
+   /c := &uset
 
    result := ""
 
    s ? {
-      while result ||:= tab(upto(c)) do {
-         result ||:= (s1 := move(1))
+      while result ||:= string(tab(upto(c))) do {
+         result ||:= string(s1 := move(1))
          tab(many(s1))
          }
       return result || tab(0)
@@ -176,16 +176,7 @@ end
 
 # Deletes occurrences of characters in `c` from `s`.
 procedure deletec(s, c)			
-   local result
-
-   result := ""
-
-   s ? {
-      while result ||:= tab(upto(c)) do
-         tab(many(c))
-      return result || tab(0)
-      }
-
+   return replacec(s, c, "")
 end
 
 # Deletes all characters of `s` at positions specified in `L`.
@@ -202,17 +193,7 @@ end
 # Deletes occurrences of `s2` in `s1`.
 #
 procedure deletes(s1, s2)		
-   local result, i
-
-   result := ""
-   i := *s2
-
-   s1 ? {
-      while result ||:= tab(find(s2)) do
-         move(i)
-      return result || tab(0)
-      }
-         
+   return replace(s1, s2, "")
 end
 
 # Returns count of the number of different characters in `s`.
@@ -446,17 +427,23 @@ procedure reflect(s1, i, s2)
 
 end
 
-# Replaces all occurrences of `s2` in `s1` by `s3`; fails if `s2` is
-# null.
+# Replaces all occurrences of `s2` in `s1` by `s3`; `s2` may not be
+# the empty string.
+#
+# The result type is the type of `s1`.
+#
 procedure replace(s1, s2, s3)		
    local result, i
 
-   result := ""
+   s1 := need_text(s1)
+   # s1 and s2 must be the same type so that i (=*s2) is correct
+   s2 := same_string_type(s2, s1)
+   s3 := need_string(s3)
    i := *s2
-   if i = 0 then fail			# would loop on empty string
-
+   if i = 0 then runerr("Empty string given to replace", s2)    # would loop on empty string
+   result := ""
    s1 ? {
-      while result ||:= tab(find(s2)) do {
+      while result ||:= string(tab(find(s2))) do {
          result ||:= s3
          move(i)
          }
@@ -478,6 +465,32 @@ procedure replacem(s, pairs[])
    while s := replace(s, get(pairs), get(pairs))
 
    return s
+
+end
+
+# Replace each occurence in string `s` of a character in cset `c` by
+# the string `t` (which may be of any length).  For example :-
+# ~
+#     replacec("The sum is $2000.00", &digits, "*")
+#     gives "The sum is $****.**"
+# ~
+#
+# If `t` is the empty string, then this is equivalent to `deletec`.
+#
+# The result type is the type of `s`.
+#
+procedure replacec(s, c, t)
+   local result
+
+   s := need_text(s)
+   c := need_cset(c)
+   t := need_string(t)
+   result := ""
+   s ? {
+      while result ||:= string(tab(upto(c))) do
+         result ||:= repl(t, *tab(many(c)))
+      return result || tab(0)
+    }
 
 end
 
