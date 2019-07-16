@@ -642,11 +642,15 @@ end
 procedure transpose(s1, s2, s3)		
    local n, result
 
+   s1 := need_text(s1)
+   s2 := same_string_type(s2, s1)
+   s3 := same_string_type(s3, s1)
+
    n := *s2
    result := ""
 
    s1 ? {
-      while result ||:= map(s3, s2, move(n))
+      while result ||:= string(map(s3, s2, move(n)))
       return result || tab(0)
       }
 
