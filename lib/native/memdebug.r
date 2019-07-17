@@ -2047,7 +2047,7 @@ end
 static void print_region(char *type, struct region *rp)
 {
     uword used;
-    used = DiffPtrs(rp->free,rp->base);
+    used = UDiffPtrs(rp->free,rp->base);
     fprintf(out, "%s region %p", type, rp);
     if (rp == prog->stringregion || rp == prog->blockregion)
         fputs(" (current)", out);

@@ -111,7 +111,7 @@ static void set_ucs_slot(word *off, word offset_bits, word i, word n);
 static word pc = 0;		/* simulated program counter */
 
 
-#define CodeCheck(n) if (DiffPtrsBytes(codep, codeb) + n > maxcode) \
+#define CodeCheck(n) if (n > maxcode - UDiffPtrsBytes(codep, codeb)) \
 codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
                           (n), "code buffer");
 
@@ -2147,7 +2147,7 @@ static void outword(word oword)
  */
 static void flushcode()
 {
-    size_t n = DiffPtrs(codep,codeb);
+    size_t n = UDiffPtrs(codep,codeb);
     if (fwrite(codeb, 1, n, outfile) != n)
         equit("Cannot write icode file");
     free(codeb);
@@ -2188,7 +2188,7 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
     num_bytes = new_size * unit_size;
 
     if (tblfree != NULL)
-        free_offset = DiffPtrs(*(char **)tblfree,  (char *)table);
+        free_offset = UDiffPtrs(*(char **)tblfree,  (char *)table);
 
     if ((new_tbl = realloc(table, num_bytes)) == 0)
         quit("Out of memory for %s", tbl_name);

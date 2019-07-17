@@ -742,7 +742,7 @@ function lang_Prog_get_region_info_impl(c)
        list_put(&result, &l);
        for (rp = prog->stringregion; rp->prev; rp = rp->prev);
        for (; rp; rp = rp->next) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(UDiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(rp->size, &tmp);
            list_put(&l, &tmp);
@@ -754,7 +754,7 @@ function lang_Prog_get_region_info_impl(c)
        list_put(&result, &l);
        for (rp = prog->blockregion; rp->prev; rp = rp->prev);
        for (; rp; rp = rp->next) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(UDiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(rp->size, &tmp);
            list_put(&l, &tmp);
