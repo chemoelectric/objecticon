@@ -893,6 +893,7 @@ static void scollect()
     char *source, *dest;
     dptr *qptr;
     char *cend;
+    uword size;
 
     ++curstring->compacted;
 
@@ -927,8 +928,10 @@ static void scollect()
              *  The last clump is moved, and source and cend are set for
              *  the next clump.
              */
-            while (source < cend)
-                *dest++ = *source++;
+            size = UDiffPtrs(cend, source);
+            if (source != dest)
+                memmove(dest, source, size);
+            dest += size;
             source = cend = StrLoc(**qptr);
         }
         if ((StrLoc(**qptr) + StrLen(**qptr)) > cend)
@@ -940,14 +943,17 @@ static void scollect()
         /*
          * Relocate the string qualifier.
          */
-        StrLoc(**qptr) = StrLoc(**qptr) + DiffPtrs(dest,source);
+        StrLoc(**qptr) += DiffPtrs(dest,source);
     }
 
     /*
      * Move the last clump.
      */
-    while (source < cend)
-        *dest++ = *source++;
+    size = UDiffPtrs(cend, source);
+    if (source != dest)
+        memmove(dest, source, size);
+    dest += size;
+
     strfree = dest;
 }
 
