@@ -438,7 +438,7 @@ procedure replace(s1, s2, s3)
    s1 := need_text(s1)
    # s1 and s2 must be the same type so that i (=*s2) is correct
    s2 := same_string_type(s2, s1)
-   s3 := need_string(s3)
+   s3 := string(same_string_type(s3, s1))
    i := *s2
    if i = 0 then runerr("Empty string given to replace", s2)    # would loop on empty string
    result := ""
@@ -484,7 +484,7 @@ procedure replacec(s, c, t)
 
    s := need_text(s)
    c := need_cset(c)
-   t := need_string(t)
+   t := string(same_string_type(t, s))
    result := ""
    s ? {
       while result ||:= string(tab(upto(c))) do
