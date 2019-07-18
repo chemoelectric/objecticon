@@ -5,6 +5,8 @@
 #include "icont.h"
 #include "linkstructs.h"
 
+#define CvtFail        -2
+
 extern FILE *infile;		/* current input file */
 extern FILE *outfile;		/* linker output file */
 extern FILE *dbgfile;		/* debug file */
@@ -21,5 +23,8 @@ void setexe(char *fname);
 char *f_flag2str(int flag);
 char *m_flag2str(int flag);
 void dumpstate(void);
+word cvpos(word pos, word len);
+word cvpos_item(word pos, word len);
+int cvslice(word *i, word *j, word len);
 
 #endif
