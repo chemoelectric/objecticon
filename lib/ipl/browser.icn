@@ -5304,7 +5304,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       s := u""
       every e := !l do {
          if *s > 0 then
-            s ||:= if e.y > y1 then u"\n" else u" "
+            s ||:= if e.y > y1 then Files.EOL else " "
          s ||:= e.val
          y1 := e.y
       }
