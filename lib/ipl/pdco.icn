@@ -17,6 +17,7 @@
 package ipl.pdco
 
 import
+   io(RamStream),
    ipl.callable(need_callable),
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
@@ -25,7 +26,7 @@ import
    numbers(Rat),
    lang(equals, Internal),
    util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
-        need_text, same_string_type)
+        need_ucs, use, need_text, same_string_type)
 
 # Adds tabby to treadling sequence
 procedure AddTabby(e, i)	
@@ -606,6 +607,9 @@ end
 # results of `e` are `ucs`, then the result is `ucs`, otherwise it is
 # a string.
 #
+# Note that for some use cases, `String2` below may be much faster
+# than this procedure.
+#
 procedure String(e, sep)
    local s
    sep := ce_param(sep) | fail
@@ -622,6 +626,52 @@ procedure String(e, sep)
       s[-*sep:0] := ""
    }
    return s
+end
+
+#
+# This is an alternative to `String`, which may be preferable in one
+# of two situations.  Firstly, if any of the elements (or the
+# separator) are `ucs` strings, or secondly if generating the elements
+# involves separate string allocations.  Both can lead to excessive
+# allocations, and hence garbage collections.  This procedure avoids
+# those allocations by using an intermediate `RamStream` buffer to
+# generate the result.
+#
+# Note that any csets in the elements may be treated differently
+# compared to `String`, since each element is converted to string,
+# rather than being passed to the more sophisticated catenation
+# operator.  (thus a non-8-bit cset will give a runtime error, and a
+# non-ascii cset will make a string result obligatory).  Other than
+# this, the result should always be the same as `String`.
+#
+procedure String2(e, sep)
+   local t, f, rs, s
+   sep := ce_param(sep) | fail
+   use {
+      rs := RamStream(),
+      {
+         if /sep then {
+            while t := @e do {
+               if /f & type(t) == "ucs" then f := &yes
+               rs.out(t)
+            }
+            s := rs.str()
+         } else {
+            sep := need_text(sep)
+            if type(sep) == "ucs" then {
+               f := &yes
+               sep := string(sep)
+            }
+            while t := @e do {
+               if /f & type(t) == "ucs" then f := &yes
+               rs.out(t); rs.out(sep)
+            }
+            s := rs.str()
+            s[-*sep:0] := ""
+         }
+      }
+   }
+   return if /f then s else need_ucs(s)
 end
 
 # Lower trimming
