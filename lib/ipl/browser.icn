@@ -5301,15 +5301,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             c.get_selected_text(br, l)
       }
       qsort(l, Point.cmp_yx)
-      s := u""
+      s := ""
       every e := !l do {
          if *s > 0 then
             s ||:= if e.y > y1 then Files.EOL else " "
-         s ||:= e.val
+         s ||:= string(e.val)
          y1 := e.y
       }
       if *s > 0 then
-         text_selection := s
+         text_selection := ucs(s)
    end
 
    public get_current_links_selection()
