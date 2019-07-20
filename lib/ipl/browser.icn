@@ -4359,7 +4359,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private static strip_newlines(e)
       local s
       text(e.children[1]) ? {
-         if =(u"\n" | u"\r\n") then {
+         if =("\n" | "\r\n") then {
             s := tab(0)
             if *s = 0 then
                delete(e.children, 1)
