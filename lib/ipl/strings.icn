@@ -713,7 +713,7 @@ procedure separate_lines(s)
    local t
    s ? {
       while t := tab(upto('\n')) do {
-         if t[-1] == "\r" then
+         if any('\r', t, -1) then
             t[-1] := ""
          suspend t
          move(1)
