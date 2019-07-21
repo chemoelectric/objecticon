@@ -26,7 +26,7 @@ void *mb_alloc(struct membuff *mb, size_t n)
 
     while (mb->curr) {
         struct membuff_block *b = mb->curr;
-        if (n <= b->size - DiffPtrs(b->free, b->mem)) {
+        if (n <= b->size - UDiffPtrs(b->free, b->mem)) {
             t = b->free;
             b->free += n;
             return t;
@@ -84,7 +84,7 @@ void mb_show(struct membuff *mb)
     fprintf(stderr, "Membuff %p, init_size=%ld curr=%p\n", mb, (long)mb->init_size, mb->curr);
     while (t) {
         fprintf(stderr, "\tBlock %p mem=%p size=%ld free=%ld\n", t, t->mem,
-                (long)t->size, (long)(t->size - DiffPtrs(t->free, t->mem)));
+                (long)t->size, (long)(t->size - UDiffPtrs(t->free, t->mem)));
         t = t->next;
     }
 }

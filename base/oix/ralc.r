@@ -19,7 +19,7 @@ static void check_stack_usage(void);
    /*
     * Ensure that there is enough room in the block region.
     */
-   if (DiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
+   if (UDiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
       return NULL;
 
    /*
@@ -72,7 +72,7 @@ static void check_stack_usage(void);
    /*
     * Ensure that there is enough room in the block region.
     */
-   if (DiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
+   if (UDiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
       return NULL;
 
    blktotal += nbytes;
@@ -264,7 +264,7 @@ if (nslots >= (OffsetMask - sizeof(struct b_lelem) / WordSize) / 2)
  * the caller, who promises to initialize first n==size slots w/o allocating.
  */
 
-struct b_list *f(uword size, uword nslots)
+struct b_list *f(word size, word nslots)
    {
    uword i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    struct b_list *blk;
@@ -298,7 +298,7 @@ alclist_raw_macro(alclist_raw_1,E_List,E_Lelem)
 
 #begdef alclist_macro(f,e_list,e_lelem)
 
-struct b_list *f(uword size, uword nslots)
+struct b_list *f(word size, word nslots)
 {
    uword i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    struct b_list *blk;
@@ -335,7 +335,7 @@ alclist_macro(alclist_1,E_List,E_Lelem)
  * alclstb - allocate a list element block in the block region.
  */
 
-struct b_lelem *f(uword nslots)
+struct b_lelem *f(word nslots)
    {
    struct b_lelem *blk;
    word i;
@@ -482,7 +482,7 @@ alcweakref_macro(alcweakref_1,E_Weakref)
  * alcucs - allocate a ucs value in the block region.
  */
 
-struct b_ucs *f(int n)
+struct b_ucs *f(word n)
    {
    struct b_ucs *blk;
    uword size;
@@ -526,7 +526,6 @@ alcselem_macro(alcselem_1,E_Selem)
 char *f(char *s, word slen)
    {
    tended struct descrip ts;
-   char *d;
    char *ofree;
 
 #if e_string
@@ -536,7 +535,7 @@ char *f(char *s, word slen)
    /*
     * Make sure there is enough room in the string space.
     */
-   if (DiffPtrs(strend,strfree) < slen) {
+   if (UDiffPtrs(strend,strfree) < slen) {
       if (s) MakeStr(s, slen, &ts);
       if (!reserve(Strings, slen))
          return NULL;
@@ -550,15 +549,11 @@ char *f(char *s, word slen)
     *  beginning.  Note that s may be null, in which case the space
     *  is still to be allocated but nothing is to be copied into it.
     */
-   ofree = d = strfree;
-   if (s) {
-      while (slen-- > 0)
-         *d++ = *s++;
-      }
-   else
-      d += slen;
+   ofree = strfree;
+   if (s)
+       memcpy(strfree, s, slen);
+   strfree += slen;
 
-   strfree = d;
    return ofree;
    }
 #enddef
@@ -655,14 +650,14 @@ dealcblk_macro(dealcblk_1,E_BlkDeAlc)
  */
 void f (char *p)
 {
-    word nbytes;
+    uword nbytes;
     /*
      * We allow p == strfree; in other words deallocating zero bytes
      * (which is of course a no-op).
      */
     if (!InRange(strbase, p, strfree + 1))
         syserr("Attempt to dealcstr, but pointer not in current string region");
-    nbytes = DiffPtrs(strfree, p);
+    nbytes = UDiffPtrs(strfree, p);
     strtotal -= nbytes;
     strfree = p;
     EVVal(-nbytes, E_StrDeAlc);
@@ -692,7 +687,7 @@ char *f(int region, uword nbytes)
    /*
     * Check for space available now.
     */
-   if (DiffPtrs(curr->end, curr->free) >= nbytes)
+   if (UDiffPtrs(curr->end, curr->free) >= nbytes)
       return curr->free;		/* quick return: current region is OK */
 
    /*
@@ -705,7 +700,7 @@ char *f(int region, uword nbytes)
     * Check all regions for availability of nbytes.
     */
    for (rp = curr; rp; rp = rp->prev) {
-       if (DiffPtrs(rp->end, rp->free) >= nbytes) {
+       if (UDiffPtrs(rp->end, rp->free) >= nbytes) {
            *pcurr = rp;			/* switch regions */
            return rp->free;
        }
@@ -724,7 +719,7 @@ char *f(int region, uword nbytes)
       if (rp->size >= want) {	/* if large enough to possibly succeed */
          *pcurr = rp;
          collect(region);
-         if (DiffPtrs(rp->end, rp->free) >= want)
+         if (UDiffPtrs(rp->end, rp->free) >= want)
             return rp->free;
       }
    }
@@ -756,7 +751,7 @@ char *f(int region, uword nbytes)
     * Allocation failed.  Try to continue by satisfying the original request of nbytes.
     */
    for (rp = curr; rp; rp = rp->prev) {
-       if (DiffPtrs(rp->end, rp->free) >= nbytes) {
+       if (UDiffPtrs(rp->end, rp->free) >= nbytes) {
            *pcurr = rp;
            return rp->free;
        }
@@ -766,7 +761,7 @@ char *f(int region, uword nbytes)
        if (rp->size < want && rp->size >= nbytes) {
            *pcurr = rp;
            collect(region);
-           if (DiffPtrs(rp->end, rp->free) >= nbytes)
+           if (UDiffPtrs(rp->end, rp->free) >= nbytes)
                return rp->free;
        }
    }

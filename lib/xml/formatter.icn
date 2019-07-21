@@ -100,18 +100,19 @@ procedure xml_escape(s, c)
    local ch, r
    /c := '&<>"\''
    r := ""
-   s ? repeat {
-      r ||:= tab(upto(c) | 0)
-      ch := move(1) | break
-      r ||:= case string(ch) of {
-         "&" : "&amp;"
-         "<" : "&lt;"
-         ">" : "&gt;"
-         "'" : "&apos;"
-         "\"" : "&quot;"
-         default : "&#" || ord(ch) || ";"
+   s ? {
+      while r ||:= string(tab(upto(c))) do {
+         ch := move(1)
+         r ||:= case string(ch) of {
+            "&" : "&amp;"
+            "<" : "&lt;"
+            ">" : "&gt;"
+            "'" : "&apos;"
+            "\"" : "&quot;"
+            default : "&#" || ord(ch) || ";"
+         }
       }
+      return r || tab(0)
    }
-   return r
 end
 

@@ -1329,6 +1329,7 @@ class BrowserTab(TabItem, BrowserUI)
 
    public override display_search()
       search_panel.is_live() | open_search_panel()
+      parent_dialog.set_focus(search_field)
    end
 
    private open_search_panel()
@@ -1337,7 +1338,6 @@ class BrowserTab(TabItem, BrowserUI)
       layout()
       invalidate()
       update_search_state()
-      parent_dialog.set_focus(search_field)
    end
 
    private close_search_panel()
@@ -1405,7 +1405,7 @@ class BrowserTab(TabItem, BrowserUI)
             m.add(TextMenuItem().
                   set_label("Search").
                   set_label_right("^F").
-                  connect(open_search_panel, Event.ACTION))
+                  connect(display_search, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Select all").
                set_label_right("^A").

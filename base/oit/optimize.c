@@ -23,17 +23,12 @@ struct literal {
     } u;
 };
 
-
-#define CvtFail        -2
 #define Less           -1
 #define Equal           0
 #define Greater         1
 #define Failed		-5
 #define Succeeded	-7
 
-static word cvpos(word pos, word len);
-static word cvpos_item(word pos, word len);
-static int cvslice(word *i, word *j, word len);
 static int changes(struct lnode *n);
 static int lexcmp(struct literal *x, struct literal *y);
 static int equiv(struct literal *x, struct literal *y);
@@ -3206,57 +3201,6 @@ static void fold_neqv(struct lnode *n)
 
     free_literal(&l1);
     free_literal(&l2);
-}
-
-static word cvpos(word pos, word len)
-{
-    /*
-     * Make sure the position is within range.
-     */
-    if (pos < -len || pos > len + 1)
-        return CvtFail;
-    /*
-     * If the position is greater than zero, just return it.  Otherwise,
-     *  convert the zero/negative position.
-     */
-    if (pos > 0)
-        return pos;
-    return (len + pos + 1);
-}
-
-static word cvpos_item(word pos, word len)
-{
-   /*
-    * Make sure the position is within range.
-    */
-   if (pos < -len || pos > len || pos == 0)
-      return CvtFail;
-   /*
-    * If the position is greater than zero, just return it.  Otherwise,
-    *  convert the negative position.
-    */
-   if (pos > 0)
-      return pos;
-   return (len + pos + 1);
-}
-
-static int cvslice(word *i, word *j, word len)
-{
-    word p1, p2;
-    p1 = cvpos(*i, len);
-    if (p1 == CvtFail)
-        return 0;
-    p2 = cvpos(*j, len);
-    if (p2 == CvtFail)
-        return 0;
-    if (p1 > p2) {
-        *i = p2;
-        *j = p1;
-    } else {
-        *i = p1;
-        *j = p2;
-    }
-    return 1;
 }
 
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)

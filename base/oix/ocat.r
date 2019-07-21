@@ -37,7 +37,7 @@ operator || cat(x, y)
               *  result is pointed to the start of x.
               */
              else if ((StrLoc(x) + StrLen(x) == strfree) &&
-                      (DiffPtrs(strend,strfree) > StrLen(utf8_y))) {
+                      (UDiffPtrs(strend,strfree) > StrLen(utf8_y))) {
                  /*
                   * Append y to the end of the string space.
                   */
@@ -85,7 +85,7 @@ operator || cat(x, y)
               *  result is pointed to the start of x.
               */
              else if ((StrLoc(utf8_x) + StrLen(utf8_x) == strfree) &&
-                      (DiffPtrs(strend,strfree) > StrLen(y))) {
+                      (UDiffPtrs(strend,strfree) > StrLen(y))) {
                  /*
                   * Append y to the end of the string space.
                   */
@@ -136,7 +136,7 @@ operator || cat(x, y)
               *  result is pointed to the start of x.
               */
              else if ((StrLoc(utf8_x) + StrLen(utf8_x) == strfree) &&
-                      (DiffPtrs(strend,strfree) > StrLen(utf8_y))) {
+                      (UDiffPtrs(strend,strfree) > StrLen(utf8_y))) {
                  /*
                   * Append y to the end of the string space.
                   */
@@ -189,7 +189,7 @@ operator || cat(x, y)
           *  result is pointed to the start of x.
           */
          if ((StrLoc(x) + StrLen(x) == strfree) &&
-             (DiffPtrs(strend,strfree) > StrLen(y))) {
+             (UDiffPtrs(strend,strfree) > StrLen(y))) {
              /*
               * Append y to the end of the string space.
               */

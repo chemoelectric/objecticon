@@ -525,6 +525,8 @@ procedure usage(opts)
 end
 
 procedure main(args)
+   local cmd
+
    Class.ensure_initialized(MemDebug)
 
    cmds := table(,
@@ -574,7 +576,9 @@ procedure main(args)
    addrs := \opts["addrs"] | 1
    kbreak := Yes{ /opts["nk"] }
 
-   prog := Prog.load(Files.find_exe(args[1]), args[2:0]) | stop(&why)
+   cmd := args[1]
+   cmd := Files.find_exe(cmd) | stop("Command not found: ", cmd)
+   prog := Prog.load(cmd, args[2:0]) | stop("Couldn't load ", cmd, ": ", &why)
    MemDebug.set_program(prog).
       set_slim(slim).
       set_addrs(addrs)

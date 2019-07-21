@@ -2641,6 +2641,56 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int i, arv, clo;
             struct fentry *ftab_entry = 0;
 
+            /*
+             * Generate special code for the case N(a1, a2, ....) where N is an integer literal.
+             */
+            if (x->expr->op == Uop_Const && x->n > 1 && ((struct lnode_const *)x->expr)->con->c_flag == F_IntLit) {
+                word w;
+                memcpy(&w, ((struct lnode_const *)x->expr)->con->data, sizeof(word));
+                w = cvpos_item(w, x->n);
+                info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+                for (i = 0; i < x->n - 1; ++i) {
+                    if (i + 1 == w)
+                        info[i] = ir_traverse(x->child[i], st, target, 0, 0);
+                    else
+                        info[i] = ir_traverse(x->child[i], st, 0, 0, 1);
+                    if (info[i]->uses_stack)
+                        res->uses_stack = 1;
+                }
+                /* i == x->n - 1 */
+                if (i + 1 == w)
+                    info[i] = ir_traverse(x->child[i], st, target, bounded, rval);
+                else
+                    info[i] = ir_traverse(x->child[i], st, 0, bounded, 1);
+                if (info[i]->uses_stack)
+                    res->uses_stack = 1;
+
+                chunk1(res->start, ir_goto(n, info[0]->start));
+                if (!bounded)
+                    chunk1(res->resume, ir_goto(n, info[i]->resume));
+
+                /* First one */
+                chunk1(info[0]->success,
+                       ir_goto(n, info[1]->start));
+                chunk1(info[0]->failure,
+                       ir_goto(n, res->failure));
+
+                /* Middle ones */
+                for (i = 1; i < x->n - 1; ++i) {
+                    chunk1(info[i]->success, ir_goto(n, info[i + 1]->start));
+                    chunk1(info[i]->failure, ir_goto(n, info[i - 1]->resume));
+                }
+
+                /* Last one, i == x->n - 1 */
+                if (w == CvtFail)
+                    chunk1(info[i]->success,  ir_goto(n, info[i]->resume));
+                else
+                    chunk1(info[i]->success, ir_goto(n, res->success));
+                chunk1(info[i]->failure, ir_goto(n, info[i - 1]->resume));
+
+                break;
+            }
+
             arv = last_invoke_arg_rval(x);
             clo = make_closure(st);
             args = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));

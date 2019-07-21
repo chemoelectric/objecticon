@@ -300,7 +300,7 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
 
     for (;;) {
         if (fgets(buf, sizeof(buf), ifile) == NULL) {
-            whyf("Can't find header marker in interpreter file %s", name);
+            LitWhy("Can't find header marker");
             fclose(ifile);
             return NULL;
         }
@@ -309,13 +309,13 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr)) {
-        whyf("Can't read interpreter file header in file %s", name);
+        LitWhy("Can't read interpreter file header");
         fclose(ifile);
         return NULL;
     }
 
     if (!check_version(hdr)) {
-        whyf("Version mismatch (%s -vs- %s) in file %s", (char *)hdr->Config, IVersion, name);
+        whyf("Version mismatch (%s -vs- %s)", (char *)hdr->Config, IVersion);
         fclose(ifile);
         return NULL;
     }

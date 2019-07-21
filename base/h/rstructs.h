@@ -482,9 +482,9 @@ struct progstate {
     struct b_cset * (*Alccset)(word);
     union block * (*Alchash)(int);
     struct b_slots * (*Alcsegment)(word);
-    struct b_list *(*Alclist_raw)(uword,uword);
-    struct b_list *(*Alclist)(uword,uword);
-    struct b_lelem *(*Alclstb)(uword);
+    struct b_list *(*Alclist_raw)(word,word);
+    struct b_list *(*Alclist)(word,word);
+    struct b_lelem *(*Alclstb)(word);
 #if !RealInDesc
     struct b_real *(*Alcreal)(double);
 #endif
@@ -492,7 +492,7 @@ struct progstate {
     struct b_object *(*Alcobject)(struct b_class *);
     struct b_methp *(*Alcmethp)(void);
     struct b_coexpr *(*Alccoexp)(void);
-    struct b_ucs *(*Alcucs)(int);
+    struct b_ucs *(*Alcucs)(word);
     struct b_selem *(*Alcselem)(void);
     char *(*Alcstr)(char *, word);
     struct b_tvsubs *(*Alcsubs)(void);

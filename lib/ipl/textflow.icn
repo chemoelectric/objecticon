@@ -151,7 +151,7 @@ end
 #
 # Represents one result of a search.  The Point element is for sorting
 # the results into order.  The `memb` member is the set of
-# `TextSelection`s, one for each word in the search.
+# `TextSelection`s, one for each word (or part of word) in the search.
 #
 class SearchMatch(Point)
    public const
@@ -506,8 +506,10 @@ class TextFlow(Component, HasLastHighlight)
                         W.draw_string(x1 + o.x, y1 + o.y + W.get_line_ascent(), o.s)
 
                         every ts := browser.is_searched(o) do {
+                           # Note that browser.highlighted_searched may be &null, if we've done a redo_search and
+                           # cannot reset the highlight; a different split of WBR tags may have this effect.
                            text_bg(W, 
-                                   if member(browser.highlighted_searched.memb, ts) then SEARCHED_CURR_COLOR else SEARCHED_OTHER_COLOR,
+                                   if member((\browser.highlighted_searched).memb, ts) then SEARCHED_CURR_COLOR else SEARCHED_OTHER_COLOR,
                                    x1 + o.x + ts.w_off,
                                    y1 + o.y, 
                                    ts.w_sub,
@@ -647,7 +649,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    package search(sl, searched, sorted)
-      local or, o, o1, ts, i, j, k, sp, s, W, x1, y1, sal, font, e
+      local or, o, o1, ts, i, j, k, sp, s, W, x1, y1, sal, font, e, w
       s := sl[1]
       use {
          W := cbwin.clone(),
@@ -660,9 +662,14 @@ class TextFlow(Component, HasLastHighlight)
                every o := !or.l do {
                   if is(o, TextOut) then {
                      /o.l_s := map(o.s)
-                     every k := find(s, o.l_s) do {
-                        if *sl = 1 then {
-                           # Optimize for simple case of one word.
+                     o.l_s ? every k := find(s[1]) do {
+                        # Get the word (or first part thereof) starting at k
+                        tab(k)
+                        w := tab(upto(WHITESPACE_NB) | 0)
+                        # Check for a simple one-word search match.
+                        # Otherwise, we do a quick check if w can be
+                        # the start of a match; if so we search ahead.
+                        if *sl = 1 & match(s, w) then {
                            W.set_font(font ~===:= o.attr.font)
                            ts := TextSelection(o, self, 
                                                k, k + *s,
@@ -674,7 +681,7 @@ class TextFlow(Component, HasLastHighlight)
                            # compare on their x position.                                                               
                            sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set(ts))
                            put(sorted, sp)
-                        } else if sal := search_ahead(or, o, i, j, k, sl) then {
+                        } else if match(w, s) & sal := search_ahead(or, o, i, j, k, sl) then {
                            sp := &null
                            every e := !sal do {
                               o1 := e.textout
@@ -705,8 +712,8 @@ class TextFlow(Component, HasLastHighlight)
    #     j = keyof(or.l, o)
    #
    private search_ahead(or, o, i, j, k, sl)
-      local word, i1, res, n
-      n := 0
+      local word, i1, i2, res, n, s
+      n := 1
       res := []
       while or := computed_output_rows[i] do {
          while o := or.l[j] do {
@@ -716,27 +723,56 @@ class TextFlow(Component, HasLastHighlight)
             o.l_s ? {
                tab(k)
                repeat {
-                  tab(many(WHITESPACE_NB))
+                  if tab(many(WHITESPACE_NB)) then {
+                     # End of word, so any accumulated word must match
+                     # the current search word.
+                     if \word then {
+                        word == sl[n] | fail
+                        word := &null
+                        n +:= 1
+                     }
+                  }
                   if pos(0) then
                      break
                   i1 := &pos
-                  word := tab(upto(WHITESPACE_NB) | 0)
-                  n +:= 1
+                  s := tab(upto(WHITESPACE_NB) | 0)
+                  i2 := &pos
+                  /word := ""
+                  word ||:= s
                   # The last word just has to start with the sought
                   # text; the others have to match exactly (the first
                   # one starts at the given offset k, so can be in the
                   # middle of a word).
-                  if n = *sl then
-                     match(sl[n], word) | fail
-                  else
-                     word == sl[n] | fail 
-                  put(res, SearchAhead(o, i1, i1 + *sl[n]))
-                  if n = *sl then
+                  if n = *sl & match(sl[n], word) then {
+                     # We have matched the last word, so succeed.  The
+                     # final SearchAhead is rather complicated; an
+                     # example :-
+                     #    sl[n] = "compute"  (the last search word)
+                     #    s = "uters"
+                     #    word =  "computers" (ie word was "comp" before)
+                     #    i1 = 1, i2 = 6 (o.l_s = "uters ....")
+                     # so the end index is 1 + 7 - 9 + 5 = 4
+                     # ie the first 3 chars of o.l_s, "ute".
+                     #
+                     put(res, SearchAhead(o, i1, i1 + *sl[n] - *word + *s))
                      return res
+                  }
+                  # We do a quick check to ensure that word can
+                  # eventually match sl[n].  For example, if we are
+                  # looking for "compute" and we've got word = "comp"
+                  # so far, we're okay.
+                  match(word, sl[n]) | fail
+                  put(res, SearchAhead(o, i1, i2))
                }
             }
             k := 1
             j +:= 1
+         }
+         # End of row, which is the same as end of word above.
+         if \word then {
+            word == sl[n] | fail
+            word := &null
+            n +:= 1
          }
          k := j := 1
          i +:= 1

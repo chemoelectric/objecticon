@@ -175,19 +175,20 @@ procedure json_escape(s)
    local ch, r
 
    r := ""
-   s ? repeat {
-      r ||:= tab(upto(~JSONParser.UNESCAPED_CHAR) | 0)
-      ch := move(1) | break
-      r ||:= case string(ch) of {
-         "\"": "\\\""
-         "\\": "\\\\"
-         "\b": "\\b"
-         "\f": "\\f"
-         "\n": "\\n"
-         "\r": "\\r"
-         "\t": "\\t"
-         default : "\\u" || Format.int_to_string(ord(ch),,4)
+   s ? {
+      while r ||:= string(tab(upto(~JSONParser.UNESCAPED_CHAR))) do {
+         ch := move(1)
+         r ||:= case string(ch) of {
+            "\"": "\\\""
+            "\\": "\\\\"
+            "\b": "\\b"
+            "\f": "\\f"
+            "\n": "\\n"
+            "\r": "\\r"
+            "\t": "\\t"
+            default : "\\u" || Format.int_to_string(ord(ch),,4)
+         }
       }
+      return r || tab(0)
    }
-   return r
 end

@@ -769,7 +769,7 @@ function lang_Prog_get_region_info_impl(c)
        list_put(&result, &l);
        for (rp = prog->stringregion; rp->prev; rp = rp->prev);
        for (; rp; rp = rp->next) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(UDiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(rp->size, &tmp);
            list_put(&l, &tmp);
@@ -781,7 +781,7 @@ function lang_Prog_get_region_info_impl(c)
        list_put(&result, &l);
        for (rp = prog->blockregion; rp->prev; rp = rp->prev);
        for (; rp; rp = rp->next) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(UDiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(rp->size, &tmp);
            list_put(&l, &tmp);
@@ -1191,7 +1191,7 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
 
     /* Sanity check. */
     if (blk->title != T_Proc)
-        ffatalerr("lang.Class.load_library(): symbol %s not a procedure block", fq);
+        ffatalerr("lang.Class.load_library(): Symbol '%s' not a procedure block", fq);
 
     free(fq);
 
@@ -1229,10 +1229,12 @@ static void *get_handle(char *filename)
     /* Check version number */
     version = (int *)dlsym(handle, "oix_version");
     if (!version) {
+        dlclose(handle);
         LitWhy("Symbol 'oix_version' not found");
         return 0;
     }
     if (*version != OixVersion) {
+        dlclose(handle);
         whyf("Version mismatch (%d -vs- %d)", *version, OixVersion);
         return 0;
     }
@@ -1323,7 +1325,7 @@ function lang_Proc_load(filename, funcname)
        }
        /* Sanity check. */
        if (blk->title != T_Proc)
-           ffatalerr("lang.Proc.load(): symbol %s not a procedure block", tname);
+           ffatalerr("lang.Proc.load(): Symbol '%s' not a procedure block", tname);
 
        free(tname);
        return proc(blk);
@@ -1356,7 +1358,7 @@ static struct b_proc *try_load(HMODULE handle, struct b_class *class0,  struct c
 
     /* Sanity check. */
     if (blk->title != T_Proc)
-        ffatalerr("lang.Class.load_library(): symbol %s not a procedure block", fq);
+        ffatalerr("lang.Class.load_library(): Symbol '%s' not a procedure block", fq);
 
     free(fq);
 
@@ -1397,10 +1399,12 @@ static HMODULE get_handle(char *filename)
     /* Check version number */
     version = (int *)GetProcAddress(handle, "oix_version");
     if (!version) {
+        FreeLibrary(handle);
         LitWhy("Symbol 'oix_version' not found");
         return 0;
     }
     if (*version != OixVersion) {
+        FreeLibrary(handle);
         whyf("Version mismatch (%d -vs- %d)", *version, OixVersion);
         return 0;
     }
@@ -1408,8 +1412,8 @@ static HMODULE get_handle(char *filename)
     /* Set imported variable */
     imported = (struct oisymbols **)GetProcAddress(handle, "imported");
     if (!imported) {
-        whyf("Symbol 'imported' not found in dll %s", filename);
         FreeLibrary(handle);
+        LitWhy("Symbol 'imported' not found");
         return 0;
     }
     *imported = &oiexported;
@@ -1495,7 +1499,7 @@ function lang_Proc_load(filename, funcname)
        }
        /* Sanity check. */
        if (blk->title != T_Proc)
-           ffatalerr("lang.Proc.load(): symbol %s not a procedure block", tname);
+           ffatalerr("lang.Proc.load(): Symbol '%s' not a procedure block", tname);
 
        free(tname);
        return proc(blk);

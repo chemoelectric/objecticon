@@ -128,6 +128,8 @@ struct str_buf {
 #define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
 
 #define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
+#define UDiffPtrsBytes(p1,p2) ((uword)DiffPtrsBytes(p1,p2))
+#define UDiffPtrs(p1,p2) ((uword)DiffPtrs(p1,p2))
 
 /*
  * Return x rounded up to the next multiple of WordSize.

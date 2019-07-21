@@ -4390,7 +4390,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private static strip_newlines(e)
       local s
       text(e.children[1]) ? {
-         if =(u"\n" | u"\r\n") then {
+         if =("\n" | "\r\n") then {
             s := tab(0)
             if *s = 0 then
                delete(e.children, 1)
@@ -5332,15 +5332,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             c.get_selected_text(br, l)
       }
       qsort(l, Point.cmp_yx)
-      s := u""
+      s := ""
       every e := !l do {
          if *s > 0 then
-            s ||:= if e.y > y1 then u"\n" else u" "
-         s ||:= e.val
+            s ||:= if e.y > y1 then Files.EOL else " "
+         s ||:= string(e.val)
          y1 := e.y
       }
       if *s > 0 then
-         text_selection := s
+         text_selection := ucs(s)
    end
 
    public get_current_links_selection()
