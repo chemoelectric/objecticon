@@ -1101,7 +1101,7 @@ package class UnixFileSystem(FileSystem)
       # path.
       if p.is_absolute() | (p.size() > 1) then {
          s := p.str()
-         if Files.access(s, mode) then
+         if Files.access(s, mode) & not Files.is_directory(s) then
             return s
          else
             fail
@@ -1110,7 +1110,7 @@ package class UnixFileSystem(FileSystem)
       # Search all the elements in the path
       path := env_string(n) | ""
       every s := FilePath(split_paths(path)).append(p).str() do {
-         if Files.access(s, mode) then
+         if Files.access(s, mode) & not Files.is_directory(s) then
             return s
       }
    end
