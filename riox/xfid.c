@@ -184,6 +184,7 @@ xfidattach(Xfid *x)
 		if(*n == ',')
 			n++;
 		r.max.y = strtoul(n, &n, 0);
+                r = rectaddpt(r, screen->r.min);
   Allocate:
                 limitrect(noborder, mindx, maxdx, mindy, maxdy, &r);
 		if(hideit)
