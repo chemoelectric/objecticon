@@ -1183,6 +1183,20 @@ final class Window(NoCopy, ObjectOutput)
    end
 end
 
+# Check that x is a `Window`, signalling a runtime error otherwise.
+#
+procedure need_Window(x)
+   is(x, Window) | runerr("Window expected", x)
+   return x
+end
+
+# Check that x is a `Pixels`, signalling a runtime error otherwise.
+#
+procedure need_Pixels(x)
+   is(x, Pixels) | runerr("Pixels expected", x)
+   return x
+end
+
 #
 # Event codes for selection events.
 #
