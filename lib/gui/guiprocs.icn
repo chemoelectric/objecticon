@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics(Mouse,Window,Pixels,Selection),
+import graphics(Mouse,Window,Pixels,Selection,need_Window),
    lang, util, io, xdg, ipl.strings, ipl.graphics, cairo
 
 final abstract class Event()
@@ -1005,18 +1005,21 @@ end
 # used.
 #
 procedure zoom_win(src, dest)
-   local c, p
+   local c
+   need_Window(src)
+   need_Window(dest)
    if \Context.LOADED then {
       use {
-         c := Context(dest), use { p := Pattern.to_pattern(src), {
+         c := Context(dest),
+         {
             c.set_operator("source").
                identity_matrix().   # Just in case dx or dy non-zero
                scale(real(dest.get_width()) / src.get_width(), 
                      real(dest.get_height()) / src.get_height()).
-               set_source(p).
+               set_source(src).
                paint()
          }
-      }}
+      }
    } else
       Zoom(src, dest)
    return
