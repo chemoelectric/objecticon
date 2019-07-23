@@ -184,7 +184,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    # 2^4=16 possible entries, indexed 0..15.
    #
    public get_palette_rgba(i)
-      return Color!get_palette_rgba(i)
+      return Color!get_palette_rgba_impl(i)
    end
 
    private native get_palette_rgba_impl(i)
