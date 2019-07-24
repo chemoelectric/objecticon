@@ -1,6 +1,6 @@
 package cairo
 
-import graphics(Window,Point,Vector,Pixels,Rectangle,Size), 
+import graphics(Window,Point,Vector,Pixels,Rectangle,Size),
    lang, util, io, ipl.pdco(List)
 
 record DeviceOffset(x_offset, y_offset)
@@ -302,6 +302,9 @@ abstract class Pattern(NoCopy)
    # variety of objects.  `v` can be a `Surface`, a `Window`, a
    # `Pixels`, raw image data, or a filename of an image.
    #
+   # Note that if a `Pixels` is given, then a copy is made, and future
+   # changes to the `Pixels` have no effect on the `Pattern`.
+   #
    public static to_pattern(v)
       local t
       return if is(v, Surface) then
@@ -321,8 +324,8 @@ abstract class Pattern(NoCopy)
          }
       else
          use {
-            t := Pixels(v),
-            to_pattern(t)
+            t := ImageSurface(v),
+            SurfacePattern(t)
          }
    end
 end
@@ -679,6 +682,12 @@ final class WindowSurface(Surface)
    #
    public native get_depth()
 
+   # Get the size, as a `Size` record.
+   #
+   public get_size()
+      return Size(get_width(), get_height())
+   end
+
    private static native new_impl()
 
    # Create a new instance from the given `Window`.
@@ -718,15 +727,51 @@ final class ImageSurface(Surface)
    #
    public native get_height()
 
+   # Get the size, as a `Size` record.
+   #
+   public get_size()
+      return Size(get_width(), get_height())
+   end
+
    private static native new_impl(pix)
 
-   # Create a new instance from the given `Pixels` instance, which
-   # must have the format `ImageSurface.FORMAT`.
+   # Create a new instance.  If one parameter is given, then that may
+   # be a `Pixels` instance, in which case it must have the format
+   # `ImageSurface.FORMAT`, and the new `ImageSurface` wraps the
+   # `Pixels` instance, and shares its data.  Otherwise, the parameter
+   # may be raw image data, or a filename of an image, and a new
+   # `ImageSurface` with initialized content is created.
    #
-   public new(pix)
+   # If two parameters are given, then they specify a width and
+   # height, and a new blank `ImageSurface` is created.
+   #
+   public new(a[])
+      local v, t
       cairo_available() | fail
-      pix.get_format() == FORMAT | runerr("Invalid format", pix)
-      ptr := new_impl(pix)
+      ptr := if *a = 1 then {
+         v := a[1]
+         if is(v, Pixels) then {
+            # Wrap an existing Pixels
+            v.get_format() == FORMAT | runerr("Invalid format", v)
+            new_impl(v)
+         } else {
+            # Filename, image string, etc.
+            use {
+               t := Pixels(v),
+               use {
+                  t := t.convert(ImageSurface.FORMAT),
+                  new_impl(t)
+               }
+            } | fail
+         }
+      } else if *a = 2 then {
+         # Width and height
+         use {
+            t := Pixels(a[1], a[2], ImageSurface.FORMAT),
+            new_impl(t)
+         }         
+      } else
+         runerr("Incorrect number of parameters")
       return
    end
 end
@@ -1453,6 +1498,12 @@ final class SVG(NoCopy)
    # Get the height of the document
    #
    public native get_height(id)
+
+   # Get the size, as a `Size` record.
+   #
+   public get_size(id)
+      return Size(get_width(id), get_height(id))
+   end
 
    public native has_sub()
    public native get_x(id)
