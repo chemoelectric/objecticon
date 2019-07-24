@@ -226,7 +226,7 @@ if (!cnv:tmp_string(din,dout)) runerr(103,din);
 #begdef CheckArgMultipleOf(mult, min)
    {
        if ((argc) % (mult) || (argc) / (mult) < (min))
-          runerr(146);
+          runerr(168);
    }
 #enddef				/* CheckArgMultiple */
    
@@ -292,7 +292,7 @@ x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing idp field");
 if (is:null(*x##_dptr))
-    runerr(152, p);
+    runerr(219, p);
 (x) = (struct imgdata *)IntVal(*x##_dptr);
 #enddef
 
@@ -309,7 +309,7 @@ w##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &w##_ic);
 if (!w##_dptr)
     syserr("Missing wbp field");
 if (is:null(*w##_dptr))
-    runerr(142, p);
+    runerr(219, p);
 (w) = (wbp)IntVal(*w##_dptr);
 #enddef
 

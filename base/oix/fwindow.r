@@ -13,7 +13,7 @@ self_id_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_id_ic);
 if (!self_id_dptr)
     syserr("Missing idp field");
 if (is:null(*self_id_dptr))
-    runerr(152, self);
+    runerr(219, self);
 self_id = (struct imgdata *)IntVal(*self_id_dptr);
 #enddef
 
@@ -38,7 +38,7 @@ self_w_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_w_ic);
 if (!self_w_dptr)
     syserr("Missing wbp field");
 if (is:null(*self_w_dptr))
-    runerr(142, self);
+    runerr(219, self);
 self_w = (wbp)IntVal(*self_w_dptr);
 #enddef
 
@@ -2313,7 +2313,7 @@ function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
               /* Refresh self_id, since the Pixels may have been closed. */
               self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
               if (!self_id)
-                  runerr(152, self);
+                  runerr(219, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
               MakeInt(i, &RecordBlk(rec).fields[0]);
               MakeInt(j, &RecordBlk(rec).fields[1]);
@@ -2344,7 +2344,7 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
               /* Refresh self_id, since the Pixels may have been closed. */
               self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
               if (!self_id)
-                  runerr(152, self);
+                  runerr(219, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
               cstr2string(tocolorstring(r, g, b, a), &tmp);
               MakeInt(i, &RecordBlk(rec).fields[0]);

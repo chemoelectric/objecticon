@@ -43,11 +43,9 @@ struct errtab errtab[] = {
     {127, "List or table expected"},
     {128, "Ucs expected"},
     {129, "String or ucs expected"},
-    {130, "Even number of parameters expected"},
     {131, "Invalid type to section operation"},
     {132, "Cset, string or ucs expected"},
     {133, "Set or table expected"},
-    {134, "Odd number of parameters expected"},
     {135, "Cannot transmit failure to this co-expression"},
     {136, "Cannot set activator to a unactivated co-expression"},
     {137, "Must specify activator for an unactivated co-expression"},
@@ -56,20 +54,14 @@ struct errtab errtab[] = {
     {140, "&handler co-expression cannot be an unactivated co-expression"},
 
 #if Graphics
-    {141, "Program terminated by window manager"},
-    {142, "Attempt to read/write on closed window"},
     {143, "Malformed event queue"},
-    {144, "Window system error"},
-    {145, "Bad window attribute"},
-    {146, "Incorrect number of arguments to drawing function"},
-    {147, "Window attribute cannot be read or written as requested"},
     {148, "Invalid position or size"},
-    {152, "Attempt to read/write on closed data"},
     {153, "Invalid pixel format"},
     {154, "Paletted pixel format expected"},
     {155, "Hold or restore called out of sequence"},
 #endif					/* Graphics */
 
+    {168, "Incorrect number of arguments"},
     {169, "Insufficient arguments"},
     {170, "String or integer expected"},
     {171, "Flag value expected"},
@@ -93,7 +85,6 @@ struct errtab errtab[] = {
     {216, "Attempt to cocopy &main"},
     {219, "Already closed"},
 
-    {302, "Memory violation"},
     {303, "Inadequate space for main co-expression"},
     {304, "Inadequate space for qualifier list during garbage collection"},
     {305, "Inadequate space for static allocation"},

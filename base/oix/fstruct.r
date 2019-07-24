@@ -354,7 +354,7 @@ function table(x, v[n])
       TableBlk(result).defvalue = x;
 
       if (n % 2 != 0)
-          runerr(134);
+          runerr(168);
 
       for(argc = 0; argc < n; argc += 2)
           table_insert(&result, &v[argc], &v[argc + 1], 1);

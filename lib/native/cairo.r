@@ -37,7 +37,7 @@ self_cr_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_cr_ic);
 if (!self_cr_dptr)
     syserr("Missing ptr field");
 if (is:null(*self_cr_dptr))
-    runerr(152, self);
+    runerr(219, self);
 self_cr = (cairo_t *)IntVal(*self_cr_dptr);
 ensure(self_cr);
 #enddef
@@ -50,7 +50,7 @@ self_pattern_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_pattern_ic);
 if (!self_pattern_dptr)
     syserr("Missing ptr field");
 if (is:null(*self_pattern_dptr))
-    runerr(152, self);
+    runerr(219, self);
 self_pattern = (cairo_pattern_t *)IntVal(*self_pattern_dptr);
 #enddef
 
@@ -62,7 +62,7 @@ self_surface_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_surface_ic);
 if (!self_surface_dptr)
     syserr("Missing ptr field");
 if (is:null(*self_surface_dptr))
-    runerr(152, self);
+    runerr(219, self);
 self_surface = (cairo_surface_t *)IntVal(*self_surface_dptr);
 #enddef
 
@@ -81,7 +81,7 @@ x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
 if (is:null(*x##_dptr))
-    runerr(152, p);
+    runerr(219, p);
 (x) = (cairo_pattern_t *)IntVal(*x##_dptr);
 #enddef
 
@@ -100,7 +100,7 @@ x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
 if (is:null(*x##_dptr))
-    runerr(152, p);
+    runerr(219, p);
 (x) = (cairo_surface_t *)IntVal(*x##_dptr);
 #enddef
 
@@ -119,7 +119,7 @@ x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
 if (is:null(*x##_dptr))
-    runerr(152, p);
+    runerr(219, p);
 (x) = (cairo_t *)IntVal(*x##_dptr);
 #enddef
 
@@ -131,7 +131,7 @@ self_svg_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_svg_ic);
 if (!self_svg_dptr)
     syserr("Missing ptr field");
 if (is:null(*self_svg_dptr))
-    runerr(152, self);
+    runerr(219, self);
 self_svg = (RsvgHandle *)IntVal(*self_svg_dptr);
 #enddef
 

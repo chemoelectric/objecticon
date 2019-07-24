@@ -308,7 +308,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    protected init_entries(entries)
       if *entries % 2 ~= 0 then
-          runerr(134)
+          runerr(168)
       while *entries > 0 do
          insert(default.get(entries), default.get(entries))
    end
