@@ -570,6 +570,7 @@ class Dialog(Component)
       self.tooltip_init()
       self.init_dialog()
       Dispatcher.add_dialog(self)
+      fire(Event.DIALOG_SHOWN)
       link
    end
 
