@@ -1515,42 +1515,42 @@ class Dialog(Component)
    end
 
    #
-   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MIN_WIDTH` attribute; see `set_wattrib()`.
    #
    public set_min_width(v)
       return set_wattrib(WAttrib.MIN_WIDTH, v)
    end
 
    #
-   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MIN_HEIGHT` attribute; see `set_wattrib()`.
    #
    public set_min_height(v)
       return set_wattrib(WAttrib.MIN_HEIGHT, v)
    end
 
    #
-   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MIN_SIZE` attribute; see `set_wattrib()`.
    #
    public set_min_size(v1, v2)
       return set_wattrib(WAttrib.MIN_SIZE, [v1, v2])
    end
 
    #
-   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MAX_WIDTH` attribute; see `set_wattrib()`.
    #
    public set_max_width(v)
       return set_wattrib(WAttrib.MAX_WIDTH, v)
    end
 
    #
-   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MAX_HEIGHT` attribute; see `set_wattrib()`.
    #
    public set_max_height(v)
       return set_wattrib(WAttrib.MAX_HEIGHT, v)
    end
 
    #
-   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MAX_SIZE` attribute; see `set_wattrib()`.
    #
    public set_max_size(v1, v2)
       return set_wattrib(WAttrib.MAX_SIZE, [v1, v2])
