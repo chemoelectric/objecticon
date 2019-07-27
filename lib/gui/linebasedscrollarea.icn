@@ -8,7 +8,7 @@
 
 package gui
 
-import io
+import io, ipl.pdco(Sum)
 
 class LineBasedScrollAreaRangeInfo()
    public
@@ -378,30 +378,27 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    end
 
    public override calculate_subject_height()
-      local h, s
-      if integer(h := get_line_height()) then
-         return get_line_count() * h
-      else {
-         s := 0
-         every s +:= !h
-         return s
-      }
+      local h
+      return if integer(h := get_line_height()) then
+         get_line_count() * h
+      else
+         Sum{ !h }
    end
 
    public get_height_for_line(i)
       local h
-      if integer(h := get_line_height()) then
-         return h
+      return if integer(h := get_line_height()) then
+         h
       else
-         return h[i]
+         h[i]
    end
 
    public override get_default_vertical_increment()
       local h
-      if integer(h := get_line_height()) then
-         return h
+      return if integer(h := get_line_height()) then
+         h
       else
-         return scale(16)
+         scale(16)
    end
 
    public override get_default_horizontal_increment()
