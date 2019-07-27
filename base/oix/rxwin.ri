@@ -82,6 +82,7 @@ static double calc_progress_factor(double rx, double ry);
 static void synch_pos(wsp ws);
 static int limit_strlen(word n);
 static char *get_atom_name(wdp wd, Atom a);
+static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
 
 static stringint drawops[] = {
@@ -822,6 +823,9 @@ wbp wopen(char *display)
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
+    ws->basewidth = ws->baseheight = 0;
+    ws->incwidth = ws->incheight = 1;
+    ws->minaspect = ws->maxaspect = 0.0;
     ws->pxft = NULL;
     ws->display = wd;
     w->window = ws;
@@ -1007,7 +1011,8 @@ static void wmap(wbp w)
                              0, 0, ws->width, ws->height);
     } else {
         XSizeHints size_hints;
-        size_hints.flags = PSize | PMinSize | PMaxSize;
+        mk_hints(ws, &size_hints);
+        size_hints.flags |= PSize;
         size_hints.width = ws->width;
         size_hints.height= ws->height;
         if (ws->reqx != -INT_MAX && ws->reqy != -INT_MAX) {
@@ -1015,18 +1020,7 @@ static void wmap(wbp w)
             size_hints.x = ws->reqx;
             size_hints.y = ws->reqy;
         }
-        if (ws->resizable) {
-            size_hints.min_width = ws->minwidth;
-            size_hints.min_height = ws->minheight;
-            size_hints.max_width = ws->maxwidth;
-            size_hints.max_height = ws->maxheight;
-        }
-        else {
-            size_hints.min_width = size_hints.max_width = ws->width;
-            size_hints.min_height = size_hints.max_height = ws->height;
-        }
         apply_windowlabel(ws);
-
         XSetWMNormalHints(wd->display, ws->win, &size_hints);
         XSelectInput(wd->display, ws->win, 
                      ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
@@ -1167,26 +1161,54 @@ static void synch_net_wm_state(wsp ws, int desired_state)
     XSync(wd->display, False);
 }
 
+static void mk_hints(wsp ws, XSizeHints *h)
+{
+    h->flags = PMinSize | PMaxSize;
+    if (ws->resizable) {
+        h->min_width = ws->minwidth;
+        h->min_height = ws->minheight;
+        h->max_width = ws->maxwidth;
+        h->max_height = ws->maxheight;
+        if (ws->minaspect != 0.0 || ws->maxaspect != 0.0) {
+            h->flags |= PAspect;
+            h->min_aspect.x = 10000 * ws->minaspect;
+            h->min_aspect.y = 10000;
+            if (ws->maxaspect != 0.0) {
+                h->max_aspect.x = 10000 * ws->maxaspect;
+                h->max_aspect.y = 10000;
+            } else {
+                h->max_aspect.x = INT_MAX;
+                h->max_aspect.y = 1;
+            }
+        }
+        if (ws->incwidth != 1 || ws->incheight != 1) {
+            h->flags |= PResizeInc;
+            h->width_inc = ws->incwidth;
+            h->height_inc = ws->incheight;
+        }
+        if (h->flags & (PAspect | PResizeInc)) {
+            h->flags |= PBaseSize;
+            h->base_width = ws->basewidth;
+            h->base_height = ws->baseheight;
+        }
+    }
+    else {
+        h->min_width = h->max_width = ws->width;
+        h->min_height = h->max_height = ws->height;
+    }
+}
+
 void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
 
     if (ws->win) {
-        if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+        if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE |
+                C_MINASPECT | C_MAXASPECT | C_BASESIZE | C_INCSIZE)) {
             if (status != C_POS) {
                 XSizeHints size_hints;
-                size_hints.flags = PMinSize | PMaxSize;
-                if (ws->resizable) {
-                    size_hints.min_width = ws->minwidth;
-                    size_hints.min_height = ws->minheight;
-                    size_hints.max_width = ws->maxwidth;
-                    size_hints.max_height = ws->maxheight;
-                }
-                else {
-                    size_hints.min_width = size_hints.max_width = ws->width;
-                    size_hints.min_height = size_hints.max_height = ws->height;
-                }
+                mk_hints(ws, &size_hints);
                 XSetWMNormalHints(wd->display, ws->win, &size_hints);
             }
 

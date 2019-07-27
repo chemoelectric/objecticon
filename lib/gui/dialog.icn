@@ -570,6 +570,7 @@ class Dialog(Component)
       self.tooltip_init()
       self.init_dialog()
       Dispatcher.add_dialog(self)
+      fire(Event.DIALOG_SHOWN)
       link
    end
 
@@ -1514,45 +1515,101 @@ class Dialog(Component)
    end
 
    #
-   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MIN_WIDTH` attribute; see `set_wattrib()`.
    #
    public set_min_width(v)
       return set_wattrib(WAttrib.MIN_WIDTH, v)
    end
 
    #
-   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MIN_HEIGHT` attribute; see `set_wattrib()`.
    #
    public set_min_height(v)
       return set_wattrib(WAttrib.MIN_HEIGHT, v)
    end
 
    #
-   # Set the `WAttrib.MIN` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MIN_SIZE` attribute; see `set_wattrib()`.
    #
    public set_min_size(v1, v2)
       return set_wattrib(WAttrib.MIN_SIZE, [v1, v2])
    end
 
    #
-   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MAX_WIDTH` attribute; see `set_wattrib()`.
    #
    public set_max_width(v)
       return set_wattrib(WAttrib.MAX_WIDTH, v)
    end
 
    #
-   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MAX_HEIGHT` attribute; see `set_wattrib()`.
    #
    public set_max_height(v)
       return set_wattrib(WAttrib.MAX_HEIGHT, v)
    end
 
    #
-   # Set the `WAttrib.MAX` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.MAX_SIZE` attribute; see `set_wattrib()`.
    #
    public set_max_size(v1, v2)
       return set_wattrib(WAttrib.MAX_SIZE, [v1, v2])
+   end
+
+   #
+   # Set the `WAttrib.BASE_WIDTH` attribute; see `set_wattrib()`.
+   #
+   public set_base_width(v)
+      return set_wattrib(WAttrib.BASE_WIDTH, v)
+   end
+
+   #
+   # Set the `WAttrib.BASE_HEIGHT` attribute; see `set_wattrib()`.
+   #
+   public set_base_height(v)
+      return set_wattrib(WAttrib.BASE_HEIGHT, v)
+   end
+
+   #
+   # Set the `WAttrib.BASE_SIZE` attribute; see `set_wattrib()`.
+   #
+   public set_base_size(v1, v2)
+      return set_wattrib(WAttrib.BASE_SIZE, [v1, v2])
+   end
+
+   #
+   # Set the `WAttrib.INCREMENT_WIDTH` attribute; see `set_wattrib()`.
+   #
+   public set_increment_width(v)
+      return set_wattrib(WAttrib.INCREMENT_WIDTH, v)
+   end
+
+   #
+   # Set the `WAttrib.INCREMENT_HEIGHT` attribute; see `set_wattrib()`.
+   #
+   public set_increment_height(v)
+      return set_wattrib(WAttrib.INCREMENT_HEIGHT, v)
+   end
+
+   #
+   # Set the `WAttrib.INCREMENT_SIZE` attribute; see `set_wattrib()`.
+   #
+   public set_increment_size(v1, v2)
+      return set_wattrib(WAttrib.INCREMENT_SIZE, [v1, v2])
+   end
+
+   #
+   # Set the `WAttrib.MAX_ASPECT_RATIO` attribute; see `set_wattrib()`.
+   #
+   public set_max_aspect_ratio(v)
+      return set_wattrib(WAttrib.MAX_ASPECT_RATIO, v)
+   end
+
+   #
+   # Set the `WAttrib.MIN_ASPECT_RATIO` attribute; see `set_wattrib()`.
+   #
+   public set_min_aspect_ratio(v)
+      return set_wattrib(WAttrib.MIN_ASPECT_RATIO, v)
    end
 
    private static init()

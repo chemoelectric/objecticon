@@ -35,6 +35,29 @@ class Listener()
 end
 
 #
+# Helper class for `Connectable.connect_n`
+#
+package class ConnectN()
+   private
+      proc, n
+   public
+      x
+
+   public call(a[])
+      proc!a
+      n -:= 1
+      if n = 0 then
+         x.disconnect()
+   end
+
+   public new(proc, n)
+      self.proc := proc
+      self.n := n
+      return
+   end
+end
+
+#
 # A class which provides a listener list facility.
 #
 class Connectable()
@@ -89,17 +112,13 @@ class Connectable()
    # :  self
    #
    public connect_n(proc, type, pos, n)
-      local x
+      local i
       /n := 1
       if default.type(proc) == "co-expression" then
          proc := exprf(proc)
-      connect(lambda{{ 
-         proc!_a
-         n -:= 1
-         if n = 0 then
-            x.disconnect()
-      }}, type, pos) | fail
-      x := last_listener
+      i := ConnectN(proc, n)
+      connect(i.call, type, pos) | fail
+      i.x := last_listener
       link
    end
 

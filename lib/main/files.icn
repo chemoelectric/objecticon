@@ -618,24 +618,22 @@ $endif
    # :  `cd` - the notional current directory to check before the path;
    #          may be &null, in which case no current directory
    #          test is done
-   # :  `mode` - the access mode to check for; by default `Access.F_OK`
    #
-   public static path_find(f, n, cd, mode)
+   public static path_find(f, n, cd)
       local p, s
-      /mode := Access.F_OK
       p := FilePath(f)
 
       # Don't search the path if we have an absolute file
       if p.is_absolute() then {
          s := p.str()
-         if access(s, mode) then
+         if access(s) then
             return s
          else
             fail
       }
 
       # Try current directory first, if given
-      if s := FilePath(\cd).append(p).str() & access(s, mode) then
+      if s := FilePath(\cd).append(p).str() & access(s) then
          return s
 
       # Don't search the path if we have a relative name
@@ -644,7 +642,7 @@ $endif
 
       # Search all the elements in the path
       every s := FilePath(split_paths(env_string(\n))).append(p).str() do {
-         if access(s, mode) then
+         if access(s) then
             return s
       }
    end
@@ -659,9 +657,9 @@ $endif
    # :  `f` - the file to look for
    # :  `n` - the name of the environment variable holding the path,
    #          by default (on Unix) "PATH"
-   # :  `mode` - the access mode to check for; by default `Access.X_OK`
-   public static find_exe(f, n, mode)
-      return FS.find_exe(f, n, mode)
+   #
+   public static find_exe(f, n)
+      return FS.find_exe(f, n)
    end
 
    #
@@ -674,7 +672,7 @@ $endif
          seen := table()
       if t := member(seen, f) then
          return t
-      if t := path_find(f || LIB_SUFFIX, "OI_NATIVE",, Access.X_OK) then {
+      if t := path_find(f || LIB_SUFFIX, "OI_NATIVE") then {
          insert(seen, f, t)
          return t
       }
@@ -759,7 +757,7 @@ package abstract class FileSystem()
    public abstract get_roots()
    public abstract split_paths(s)
    public abstract get_program_name()
-   public abstract find_exe(f, n, mode)
+   public abstract find_exe(f, n)
 end
 
 #
@@ -1262,18 +1260,17 @@ package class UnixFileSystem(FileSystem)
       return u.get_decoded_path()
    end
 
-   public override find_exe(f, n, mode)
+   public override find_exe(f, n)
       local p, s, path
 
       /n := "PATH"
-      /mode := Access.X_OK
       p := FilePath(f)
 
       # Anything with separators in, we just look up and ignore the
       # path.
       if p.is_absolute() | (p.size() > 1) then {
          s := p.str()
-         if Files.access(s, mode) & not Files.is_directory(s) then
+         if Files.access(s, Access.X_OK) & not Files.is_directory(s) then
             return s
          else
             fail
@@ -1282,7 +1279,7 @@ package class UnixFileSystem(FileSystem)
       # Search all the elements in the path
       path := env_string(n) | ""
       every s := FilePath(split_paths(path)).append(p).str() do {
-         if Files.access(s, mode) & not Files.is_directory(s) then
+         if Files.access(s, Access.X_OK) & not Files.is_directory(s) then
             return s
       }
    end
@@ -1310,18 +1307,17 @@ package class Plan9FileSystem(UnixFileSystem)
       }
    end
 
-   public override find_exe(f, n, cd, mode)
+   public override find_exe(f, n)
       local p, s, path
 
       /n := "path"
-      /mode := Access.X_OK
       p := FilePath(f)
 
       # Anything with separators in, we just look up and ignore the
       # path.
       if p.is_absolute() | (p.size() > 1) then {
          s := p.str()
-         if Files.access(s, mode) then
+         if Files.access(s, Access.X_OK) then
             return s
          else
             fail
@@ -1330,7 +1326,7 @@ package class Plan9FileSystem(UnixFileSystem)
       # Search all the elements in the path
       path := env_string(n) | ". /bin"
       every s := FilePath(split_paths(path)).append(p).str() do {
-         if Files.access(s, mode) then
+         if Files.access(s, Access.X_OK) then
             return s
       }
    end
@@ -1494,16 +1490,15 @@ package class WindowsFileSystem(FileSystem)
       suspend s || Files.split_paths(x)
    end
 
-   public override find_exe(f, n, mode)
+   public override find_exe(f, n)
       local p, s, path
 
       /n := "PATH"
-      /mode := Access.X_OK
       p := FilePath(f)
 
       # Try the file as given.
       every s := executables(p.str()) do
-         if Files.access(s, mode) then
+         if Files.access(s, Access.X_OK) & not Files.is_directory(s) then
             return s
 
       # If it has separators in, do no more.
@@ -1513,7 +1508,7 @@ package class WindowsFileSystem(FileSystem)
       # Search all the elements in the path
       path := env_string(n) | ""
       every s := executables(FilePath(split_paths(path)).append(p).str()) do {
-         if Files.access(s, mode) then
+         if Files.access(s, Access.X_OK) & not Files.is_directory(s) then
             return s
       }
    end

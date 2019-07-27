@@ -226,15 +226,16 @@ wbp wopen(char *display)
     ws->state = HiddenCanvas;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
+    ws->basewidth = ws->baseheight = 0;
+    ws->incwidth = ws->incheight = 1;
+    ws->minaspect = ws->maxaspect = 0.0;
     w->window = ws;
     ws = w->window;
     create_list(64, &ws->listp);
-    ws->width = ws->height = 1;
+    ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
     w->context = alccontext(w);
     ws->reqx = ws->reqy = ws->x = ws->y = -INT_MAX;
     ws->pix = gb_create_Bitmap(ws->width, ws->height, w->context->bg->color, 0);
-    ws->pixwidth = ws->width;
-    ws->pixheight = ws->height;
     ws->win = 0;
     return w;
 }
