@@ -13,6 +13,7 @@ static char old_label[256];
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh);
 static int open_winfile(wsp ws, char *s, int mode);
+static int open_snarf(wsp ws, int mode);
 static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
 static void setup_cursors(void);
@@ -178,6 +179,15 @@ static void dump_all(void)
 }
 #endif
 
+static int open_snarf(wsp ws, int mode)
+{
+    int fd;
+    fd = open_winfile(ws, "snarf", mode);
+    if (fd < 0)
+        fd = open("/dev/snarf", mode);
+    return fd;
+}
+
 static int open_winfile(wsp ws, char *s, int mode)
 {
     char *buff;
@@ -339,6 +349,9 @@ wbp wopen(char *display)
     ws->reqx = ws->reqy = ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
+    ws->basewidth = ws->baseheight = 0;
+    ws->incwidth = ws->incheight = 1;
+    ws->minaspect = ws->maxaspect = 0.0;
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
     w->window = ws;
@@ -1492,7 +1505,7 @@ int requestselection(wbp w, char *selection, char *target)
             char buff[512];
             int snarf_len = 0;
             char *snarf = 0;
-            if ((fd = open_winfile(ws, "snarf", OREAD)) < 0) {
+            if ((fd = open_snarf(ws, OREAD)) < 0) {
                 whyf("Can't open snarf file: %r");
                 return Failed;
             }
@@ -1533,7 +1546,7 @@ int sendselectionresponse(wbp w, word requestor, char *property,
     if (!cnv:string(*data, *data))
         ReturnErrVal(103, *data, Error);
 
-    if ((fd = open_winfile(ws, "snarf", OWRITE)) < 0) {
+    if ((fd = open_snarf(ws, OWRITE)) < 0) {
         whyf("Can't open snarf file: %r");
         return Failed;
     }
