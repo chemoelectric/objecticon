@@ -1527,6 +1527,176 @@ function graphics_Window_set_min_width(self, width)
    }
 end
 
+function graphics_Window_set_base_height(self, height)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       if (height < 0)
+           Irunerr(148, height);
+       self_w->window->baseheight = height;
+       SimpleAttr(C_BASESIZE);
+       return self;
+   }
+end
+
+function graphics_Window_set_base_size(self, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       if (width < 0)
+           Irunerr(148, width);
+       if (height < 0)
+           Irunerr(148, height);
+       self_w->window->basewidth = width;
+       self_w->window->baseheight = height;
+       SimpleAttr(C_BASESIZE);
+       return self;
+   }
+end
+
+function graphics_Window_set_base_width(self, width)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   body {
+       GetSelfW();
+       if (width < 0)
+           Irunerr(148, width);
+       self_w->window->basewidth = width;
+       SimpleAttr(C_BASESIZE);
+       return self;
+   }
+end
+
+function graphics_Window_set_increment_height(self, height)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       if (height < 1)
+           Irunerr(148, height);
+       self_w->window->incheight = height;
+       SimpleAttr(C_INCSIZE);
+       return self;
+   }
+end
+
+function graphics_Window_set_increment_size(self, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       if (width < 1)
+           Irunerr(148, width);
+       if (height < 1)
+           Irunerr(148, height);
+       self_w->window->incwidth = width;
+       self_w->window->incheight = height;
+       SimpleAttr(C_INCSIZE);
+       return self;
+   }
+end
+
+function graphics_Window_set_increment_width(self, width)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   body {
+       GetSelfW();
+       if (width < 1)
+           Irunerr(148, width);
+       self_w->window->incwidth = width;
+       SimpleAttr(C_INCSIZE);
+       return self;
+   }
+end
+
+function graphics_Window_get_base_height(self)
+   body {
+       GetSelfW();
+       return C_integer self_w->window->baseheight;
+   }
+end
+
+function graphics_Window_get_base_width(self)
+   body {
+       GetSelfW();
+       return C_integer self_w->window->basewidth;
+   }
+end
+
+function graphics_Window_get_increment_height(self)
+   body {
+       GetSelfW();
+       return C_integer self_w->window->incheight;
+   }
+end
+
+function graphics_Window_get_increment_width(self)
+   body {
+       GetSelfW();
+       return C_integer self_w->window->incwidth;
+   }
+end
+
+function graphics_Window_set_max_aspect_ratio(self, x)
+   body {
+       double d;
+       GetSelfW();
+       if (is:null(x))
+           d = 0.0;
+       else {
+           if (!cnv:C_double(x, d))
+               runerr(102, x);
+           if (d <= 0.0)
+               Drunerr(205, d);
+       }
+       self_w->window->maxaspect = d;
+       SimpleAttr(C_MAXASPECT);
+       return self;
+   }
+end
+
+function graphics_Window_get_max_aspect_ratio(self)
+   body {
+       GetSelfW();
+       if (self_w->window->maxaspect == 0.0)
+           fail;
+       return C_double self_w->window->maxaspect;
+   }
+end
+
+function graphics_Window_set_min_aspect_ratio(self, x)
+   body {
+       double d;
+       GetSelfW();
+       if (is:null(x))
+           d = 0.0;
+       else {
+           if (!cnv:C_double(x, d))
+               runerr(102, x);
+           if (d <= 0.0)
+               Drunerr(205, d);
+       }
+       self_w->window->minaspect = d;
+       SimpleAttr(C_MINASPECT);
+       return self;
+   }
+end
+
+function graphics_Window_get_min_aspect_ratio(self)
+   body {
+       GetSelfW();
+       if (self_w->window->minaspect == 0.0)
+           fail;
+       return C_double self_w->window->minaspect;
+   }
+end
+
 function graphics_Window_set_pointer(self, val)
    if !cnv:string(val) then
        runerr(103, val)

@@ -182,6 +182,14 @@ final abstract class WAttrib()
       MIN_HEIGHT,
       MIN_SIZE,
       MIN_WIDTH,
+      BASE_HEIGHT,
+      BASE_SIZE,
+      BASE_WIDTH,
+      INCREMENT_HEIGHT,
+      INCREMENT_SIZE,
+      INCREMENT_WIDTH,
+      MAX_ASPECT_RATIO,
+      MIN_ASPECT_RATIO,
       PATTERN,
       POINTER,
       POS,
@@ -192,6 +200,31 @@ final abstract class WAttrib()
       WIDTH,
       X,
       Y
+
+   # For a given attribute `k`, generate those attributes which will
+   # also set the same thing `k` does.
+   #
+   public static gen_conflicting(k)
+      suspend case k of {
+         POS: X | Y | GEOMETRY
+         X | Y: POS | GEOMETRY
+         SIZE: HEIGHT | WIDTH | GEOMETRY
+         WIDTH | HEIGHT: SIZE | GEOMETRY
+         GEOMETRY : POS | X | Y | SIZE | HEIGHT | WIDTH
+
+         MIN_WIDTH | MIN_HEIGHT : MIN_SIZE
+         MIN_SIZE : MIN_WIDTH | MIN_HEIGHT
+
+         MAX_WIDTH | MAX_HEIGHT : MAX_SIZE
+         MAX_SIZE : MAX_WIDTH | MAX_HEIGHT
+
+         BASE_WIDTH | BASE_HEIGHT : BASE_SIZE
+         BASE_SIZE : BASE_WIDTH | BASE_HEIGHT
+
+         INCREMENT_WIDTH | INCREMENT_HEIGHT : INCREMENT_SIZE
+         INCREMENT_SIZE : INCREMENT_WIDTH | INCREMENT_HEIGHT
+      }
+   end
 
    private static init()
       BG := "bg"
@@ -217,6 +250,14 @@ final abstract class WAttrib()
       MIN_HEIGHT := "min_height"
       MIN_SIZE := "min_size"
       MIN_WIDTH := "min_width"
+      BASE_HEIGHT := "base_height"
+      BASE_SIZE := "base_size"
+      BASE_WIDTH := "base_width"
+      INCREMENT_HEIGHT := "increment_height"
+      INCREMENT_SIZE := "increment_size"
+      INCREMENT_WIDTH := "increment_width"
+      MAX_ASPECT_RATIO := "max_aspect_ratio"
+      MIN_ASPECT_RATIO := "min_aspect_ratio"
       PATTERN := "pattern"
       POINTER := "pointer"
       POS := "pos"
@@ -441,7 +482,10 @@ final abstract class Gui()
                          WAttrib.FONT, WAttrib.LINE_WIDTH, WAttrib.GEOMETRY, WAttrib.TRANSIENT_FOR,
                          WAttrib.LINE_STYLE, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP, WAttrib.DX,
                          WAttrib.DY, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT,
-                         WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE)
+                         WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE,
+                         WAttrib.BASE_HEIGHT, WAttrib.BASE_SIZE, WAttrib.BASE_WIDTH,
+                         WAttrib.INCREMENT_HEIGHT, WAttrib.INCREMENT_SIZE, WAttrib.INCREMENT_WIDTH,
+                         WAttrib.MAX_ASPECT_RATIO, WAttrib.MIN_ASPECT_RATIO)
       CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING,
                                  WAttrib.LINE_WIDTH, WAttrib.LINE_STYLE, WAttrib.PATTERN)
       EMPTY_WATTRIB_ANCESTOR := EmptyWAttribAncestor() 
@@ -702,6 +746,14 @@ procedure apply_window_table(w, t)
          WAttrib.MAX_WIDTH: w.set_max_width(v)
          WAttrib.MAX_HEIGHT: w.set_max_height(v)
          WAttrib.MAX_SIZE: w.set_max_size(v[1],v[2])
+         WAttrib.INCREMENT_WIDTH: w.set_increment_width(v)
+         WAttrib.INCREMENT_HEIGHT: w.set_increment_height(v)
+         WAttrib.INCREMENT_SIZE: w.set_increment_size(v[1],v[2])
+         WAttrib.BASE_WIDTH: w.set_base_width(v)
+         WAttrib.BASE_HEIGHT: w.set_base_height(v)
+         WAttrib.BASE_SIZE: w.set_base_size(v[1],v[2])
+         WAttrib.MAX_ASPECT_RATIO: w.set_max_aspect_ratio(v)
+         WAttrib.MIN_ASPECT_RATIO: w.set_min_aspect_ratio(v)
       }
    }
    w.erase_area()

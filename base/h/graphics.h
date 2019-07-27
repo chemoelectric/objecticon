@@ -352,10 +352,7 @@ typedef struct _wcontext {
 
 
 /*
- * "Window state" includes the actual X window and references to a large
- * number of resources allocated on a per-window basis.  Windows are
- * allocated out of a global array in rwinrsrc.c.  Windows remember the
- * first WMAXCOLORS colors they allocate, and deallocate them on clearscreen.
+ * "Window state" structure.
  */
 typedef struct _wstate {
   int		refcount;		/* reference count */
@@ -367,6 +364,12 @@ typedef struct _wstate {
   int           minwidth;               /* minimum window width, in pixels */
   int           maxheight;              /* maximum window height, in pixels */
   int           maxwidth;               /* maximum window width, in pixels */
+  double        minaspect;              /* minimum aspect ratio */
+  double        maxaspect;              /* maximum aspect ratio */
+  int           basewidth;              /* base width for aspect ratio/increment */
+  int           baseheight;             /* base height for aspect ratio/increment */
+  int           incwidth;               /* resize increment width */
+  int           incheight;              /* resize increment height */
   int           resizable;              /* flag, is window resizable */
   struct descrip listp;		        /* event list for this window */
   struct descrip windowlabel;		/* window label */
@@ -438,6 +441,11 @@ struct filter {
 #define C_MAXSIZE       8
 #define C_RESIZE	16
 #define C_CLIP	        32
+#define C_MINASPECT     64
+#define C_MAXASPECT     128
+#define C_BASESIZE      256
+#define C_INCSIZE       512
+
 
 /*
  * Event modifiers

@@ -712,6 +712,95 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native set_min_width(width)
 
+   # Set the base height to use in aspect ratio and resize increment
+   # calculations.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_base_height(height)
+
+   # Set the base width to use in aspect ratio and resize increment
+   # calculations.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_base_width(width)
+
+   # Set the base size to use in aspect ratio and resize increment
+   # calculations.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_base_size(width, height)
+
+   # Return the base height; see `set_base_height()`.
+   #
+   public native get_base_height()
+
+   # Return the base width; see `set_base_width()`.
+   #
+   public native get_base_width()
+
+   # Return the base size as a `Size` record; see `set_base_size()`.
+   #
+   public get_base_size()
+      return Size(get_base_width(), get_base_height())
+   end
+
+   # Set the resize increment height to use during resizing.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_increment_height(height)
+
+   # Set the resize increment width to use during resizing.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_increment_width(width)
+
+   # Set the resize increment size to use during resizing.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_increment_size(width, height)
+
+   # Get the resize increment height; see `set_increment_height()`.
+   #
+   public native get_increment_height()
+
+   # Get the resize increment width; see `set_increment_width()`.
+   #
+   public native get_increment_width()
+
+   # Return the increment size as a `Size` record; see `set_increment_size()`.
+   #
+   public get_increment_size()
+      return Size(get_increment_width(), get_increment_height())
+   end
+
+   # Set the maximum aspect ratio allowed during resizing.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_max_aspect_ratio(r)
+
+   # Return the maximum aspect ratio allowed during resizing, or fail
+   # if no value is set; see `set_max_aspect_ratio()`.
+   #
+   public native get_max_aspect_ratio()
+
+   # Set the minimum aspect ratio allowed during resizing.
+   # 
+   # This value is currently only effective on X11.
+   #
+   public native set_min_aspect_ratio(r)
+
+   # Return the minimum aspect ratio allowed during resizing, or fail
+   # if no value is set; see `set_min_aspect_ratio()`.
+   #
+   public native get_min_aspect_ratio()
+
    # A helpful method to set the pattern to something equivalent to
    # the old Icon pattern of the same name using a textured fill
    # style.  (See `Pattern` for symbolic constant pattern names).

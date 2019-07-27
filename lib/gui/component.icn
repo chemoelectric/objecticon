@@ -467,6 +467,7 @@ class Component(Rect,XYAlign,Connectable)
    # this component's cloned buffer window.
    #
    public set_wattrib(attr, val)
+      every remove_wattrib(WAttrib.gen_conflicting(attr))
       insert(self.wattribs, attr, val)
       link
    end

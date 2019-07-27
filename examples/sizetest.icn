@@ -1,7 +1,5 @@
 import
-   gui(Align, CheckBox, Dialog, Dispatcher,
-       Event, GridLayout, Label, Panel,
-       TextButton, TextField, TextPaint, scale)
+   gui
 
 class Untitled(Dialog)
    private
@@ -20,7 +18,25 @@ class Untitled(Dialog)
       text_button_5,
       label_7,
       label_6,
-      label_8
+      label_8,
+      label_9,
+      label_10,
+      label_11,
+      label_12,
+      panel_2,
+      text_field_5,
+      text_field_6,
+      text_field_7,
+      text_field_8,
+      text_button_6,
+      text_button_7,
+      text_button_8,
+      text_button_9,
+      tab_set_1,
+      tab_item_2,
+      tab_item_1,
+      text_list_1,
+      text_display_1
 
    public override component_setup()
       self.setup()
@@ -38,21 +54,29 @@ class Untitled(Dialog)
       local t, s
       repeat {
          t := win.get_geometry()
-         label_1.set_label("Geom:" || t.x || "," || t.y || " " || t.width || "x" || t.height)
+         label_1.set_label("Geom: " || t.x || "," || t.y || " " || t.width || "x" || t.height)
          t := win.get_min_size()
-         label_4.set_label("Min size:" || t.width || "x" || t.height)
+         label_4.set_label("Min size: " || t.width || "x" || t.height)
          t := win.get_max_size()
-         label_5.set_label("Max size:" || t.width || "x" || t.height)
-         label_3.set_label("Dialog size:" || w || "x" || h)
+         label_5.set_label("Max size: " || t.width || "x" || t.height)
+         label_3.set_label("Dialog size: " || w || "x" || h)
          t := win.query_root_pointer()
-         label_6.set_label("Root mouse:"||t.x||","||t.y)
+         label_6.set_label("Root mouse: "||t.x||","||t.y)
          t := win.query_pointer()
-         label_7.set_label("Win mouse:"||t.x||","||t.y)
+         label_7.set_label("Win mouse: "||t.x||","||t.y)
          t := win.get_display_size()
          s := t.width||"x"||t.height
          if t := win.get_display_size_mm() then
             s ||:= " ("|| t.width||"x"||t.height||" mm)"
-         label_8.set_label("Display size:"||s)
+         label_8.set_label("Display size: "||s)
+         t := win.get_base_size()
+         label_9.set_label("Base size: " || t.width || "x" || t.height)
+         t := win.get_increment_size()
+         label_10.set_label("Inc size: " || t.width || "x" || t.height)
+         t := win.get_min_aspect_ratio() | "-"
+         label_11.set_label("Min aspect: " || t)
+         t := win.get_max_aspect_ratio() | "-"
+         label_12.set_label("Max aspect: " || t)
          ticker.sleep(250)
       }
    end
@@ -101,106 +125,138 @@ class Untitled(Dialog)
       win.set_pos!(parse_pair(text_field_4.get_contents()))
    end
 
+   private on_text_button_6(ev)
+      local s
+      s := text_field_5.get_contents()
+      if *s = 0 then
+         win.set_base_size(0,0)
+      else
+         win.set_base_size!(parse_pair(s))
+   end
+
+   private on_text_button_7(ev)
+      local s
+      s := text_field_6.get_contents()
+      if *s = 0 then
+         win.set_increment_size(1,1)
+      else
+         win.set_increment_size!(parse_pair(s))
+   end
+
+   private on_text_button_8(ev)
+      local s
+      s := text_field_7.get_contents()
+      if *s = 0 then
+         win.set_min_aspect_ratio()
+      else
+         win.set_min_aspect_ratio(real(s))
+   end
+
+   private on_text_button_9(ev)
+      local s
+      s := text_field_8.get_contents()
+      if *s = 0 then
+         win.set_max_aspect_ratio()
+      else
+         win.set_max_aspect_ratio(real(s))
+   end
+
    private setup()
-      local paint_2, paint_7, paint_11, paint_4, paint_1, paint_9, paint_6, paint_10, paint, paint_3, paint_8, paint_12, paint_5, layout_2
+      local paint_2, paint_14, paint_7, layout_4, paint_11, paint_19, paint_4, paint_16, paint_21, paint_1, paint_9, border_2, paint_13, paint_6, layout_3, paint_10, paint_18, paint, paint_3, paint_15, paint_20, paint_8, layout_5, paint_12, paint_5, layout_2, paint_17, paint_22
       self.set_resize(&yes)
+      paint_21 := TextPaint("Basic")
+      layout_5 := GridLayout().
+         set_extra("cells")
       paint := TextPaint("Geom:")
       label_1 := Label().
          set_size(scale(300)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint)
-      self.add(label_1)
       paint_1 := TextPaint("Min size:")
       label_4 := Label().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_paint(paint_1)
-      self.add(label_4)
       paint_2 := TextPaint("Max size:")
       label_5 := Label().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_paint(paint_2)
-      self.add(label_5)
       paint_3 := TextPaint("Dialog size:")
       label_3 := Label().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_paint(paint_3)
-      self.add(label_3)
       paint_10 := TextPaint("Root mouse:")
       label_6 := Label().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_paint(paint_10)
-      self.add(label_6)
       paint_11 := TextPaint("Win mouse:")
       label_7 := Label().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_paint(paint_11)
-      self.add(label_7)
       paint_12 := TextPaint("Display size:")
       label_8 := Label().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_paint(paint_12)
-      self.add(label_8)
       text_field_1 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_contents("")
       paint_4 := TextPaint("Min size")
       text_button_1 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          connect(self.on_text_button_1, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_4)
       text_field_3 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_contents("")
       paint_5 := TextPaint("Max size")
       text_button_4 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          connect(self.on_text_button_4, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_5)
       text_field_2 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_contents("")
       paint_6 := TextPaint("Set size")
       text_button_2 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          connect(self.on_text_button_2, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_6)
       text_field_4 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_contents("")
       paint_9 := TextPaint("Set pos")
       text_button_5 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          connect(self.on_text_button_5, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_9)
@@ -209,8 +265,8 @@ class Untitled(Dialog)
          set_extra("cells")
       panel_1 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
          set_layout(layout_2).
          add(text_field_1).
          add(text_button_1).
@@ -220,17 +276,146 @@ class Untitled(Dialog)
          add(text_button_2).
          add(text_field_4).
          add(text_button_5)
-      self.add(panel_1)
       paint_7 := TextPaint("Resizable")
       check_box_1 := CheckBox().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          connect(self.on_check_box_1, Event.ACTION).
          set_toggles(&yes).
          set_is_checked(&yes).
          set_paint(paint_7)
-      self.add(check_box_1)
+      tab_item_1 := TabItem().
+         set_paint(paint_21).
+         set_layout(layout_5).
+         add(label_1).
+         add(label_4).
+         add(label_5).
+         add(label_3).
+         add(label_6).
+         add(label_7).
+         add(label_8).
+         add(panel_1).
+         add(check_box_1)
+      paint_22 := TextPaint("More")
+      layout_4 := GridLayout().
+         set_extra("cells")
+      paint_13 := TextPaint("Base size:")
+      label_9 := Label().
+         set_size(scale(300)).
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_paint(paint_13)
+      paint_14 := TextPaint("Inc size:")
+      label_10 := Label().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_paint(paint_14)
+      paint_15 := TextPaint("Min aspect:")
+      label_11 := Label().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_paint(paint_15)
+      paint_16 := TextPaint("Max aspect:")
+      label_12 := Label().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_paint(paint_16)
+      text_field_5 := TextField().
+         set_size(scale(60)).
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_contents("")
+      paint_17 := TextPaint("Base size")
+      text_button_6 := TextButton().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         connect(self.on_text_button_6, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_17)
+      text_field_6 := TextField().
+         set_size(scale(60)).
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_contents("")
+      paint_18 := TextPaint("Inc size")
+      text_button_7 := TextButton().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         connect(self.on_text_button_7, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_18)
+      text_field_7 := TextField().
+         set_size(scale(60)).
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_contents("")
+      paint_19 := TextPaint("Min aspect")
+      text_button_8 := TextButton().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         connect(self.on_text_button_8, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_19)
+      text_field_8 := TextField().
+         set_size(scale(60)).
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_contents("")
+      paint_20 := TextPaint("Max aspect")
+      text_button_9 := TextButton().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         connect(self.on_text_button_9, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_20)
+      layout_3 := GridLayout().
+         set_doi(scale(0)).
+         set_extra("cells")
+      panel_2 := Panel().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_layout(layout_3).
+         add(text_field_5).
+         add(text_button_6).
+         add(text_field_6).
+         add(text_button_7).
+         add(text_field_7).
+         add(text_button_8).
+         add(text_field_8).
+         add(text_button_9)
+      border_2 := NullBorder()
+      text_display_1 := TextDisplay().
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_border(border_2).
+         set_contents(["Please note that these settings are only", "effective under X11."])
+      tab_item_2 := TabItem().
+         set_paint(paint_22).
+         set_layout(layout_4).
+         add(label_9).
+         add(label_10).
+         add(label_11).
+         add(label_12).
+         add(panel_2).
+         add(text_display_1)
+      tab_set_1 := TabSet().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         add(tab_item_1).
+         add(tab_item_2).
+         set_which_one(tab_item_1)
+      self.add(tab_set_1)
       paint_8 := TextPaint("Quit")
       text_button_3 := TextButton().
          clear_constraints().

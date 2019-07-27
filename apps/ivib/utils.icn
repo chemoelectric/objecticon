@@ -133,7 +133,8 @@ end
 
 procedure normalize_wattrib(key, val)
    case key of {
-      WAttrib.POS | WAttrib.SIZE | WAttrib.MIN_SIZE | WAttrib.MAX_SIZE:
+      WAttrib.POS | WAttrib.SIZE | WAttrib.MIN_SIZE | WAttrib.MAX_SIZE |
+         WAttrib.BASE_SIZE | WAttrib.INCREMENT_SIZE:
          return try_list(val, 2)
       WAttrib.GEOMETRY:
          return try_list(val, 4)
@@ -142,10 +143,12 @@ procedure normalize_wattrib(key, val)
 
       WAttrib.X | WAttrib.Y | WAttrib.HEIGHT | WAttrib.WIDTH | 
          WAttrib.DX | WAttrib.DY | WAttrib.MIN_WIDTH | 
-         WAttrib.MIN_HEIGHT | WAttrib.MAX_WIDTH | WAttrib.MAX_HEIGHT:
+         WAttrib.MIN_HEIGHT | WAttrib.MAX_WIDTH | WAttrib.MAX_HEIGHT |
+         WAttrib.BASE_HEIGHT | WAttrib.BASE_WIDTH |
+         WAttrib.INCREMENT_HEIGHT | WAttrib.INCREMENT_WIDTH:
          return integer(val)
 
-      WAttrib.LEADING  |  WAttrib.LINE_WIDTH:
+      WAttrib.LEADING  |  WAttrib.LINE_WIDTH | WAttrib.MAX_ASPECT_RATIO | WAttrib.MIN_ASPECT_RATIO:
          return real(val)
 
       WAttrib.FG | WAttrib.BG | WAttrib.DRAW_OP | WAttrib.ICON | WAttrib.FONT | WAttrib.LABEL | 
