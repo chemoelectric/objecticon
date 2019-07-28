@@ -1711,10 +1711,12 @@ wcurrent(Window *w)
 	}
 	if(w != oi){
 		if(oi){
+                        sendmouseevent(oi, 'g');
 			oi->wctlready = 1;
 			wsendctlmesg(oi, Wakeup);
 		}
 		if(w){
+                        sendmouseevent(w, 'f');
 			w->wctlready = 1;
 			wsendctlmesg(w, Wakeup);
 		}
