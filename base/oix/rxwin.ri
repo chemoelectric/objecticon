@@ -767,6 +767,12 @@ void pollevent(wbp w)
             case ConfigureNotify:
                 handle_config(ws, (XConfigureEvent *)&event);
                 break;
+            case FocusIn:
+                qeventcode(ws, FOCUSIN);
+                break;
+            case FocusOut:
+                qeventcode(ws, FOCUSOUT);
+                break;
             case ClientMessage: {
                 /*
                  * only client message we handle at present are destroy requests
@@ -1023,7 +1029,7 @@ static void wmap(wbp w)
         apply_windowlabel(ws);
         XSetWMNormalHints(wd->display, ws->win, &size_hints);
         XSelectInput(wd->display, ws->win, 
-                     ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
+                     ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PropertyChangeMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
 

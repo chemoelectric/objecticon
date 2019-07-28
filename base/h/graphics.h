@@ -202,6 +202,8 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 #define MOUSEENTERED    (-18)
 #define MOUSEEXITED     (-19)
 #define MOUSEDRAG       (-20)
+#define FOCUSIN         (-25)
+#define FOCUSOUT        (-26)
 #define SELECTIONREQUEST   (-30)
 #define SELECTIONCLEAR     (-31)
 #define SELECTIONRESPONSE  (-32)

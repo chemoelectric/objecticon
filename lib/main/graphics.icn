@@ -293,6 +293,8 @@ final class Window(NoCopy, ObjectOutput)
       RESIZE,
       MOVE,
       STATE,
+      FOCUS_IN,
+      FOCUS_OUT,
       CLOSE_BUTTON,
       INVOKE_LATER
 
@@ -305,6 +307,8 @@ final class Window(NoCopy, ObjectOutput)
       RESIZE :=       -10
       CLOSE_BUTTON := -11
       INVOKE_LATER := -40
+      FOCUS_IN :=     -25
+      FOCUS_OUT :=    -26
       PATTERNS := table(,
                         Pattern.BLACK, Pixels(8, 8, Pixels.PALETTE1).set_data("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
                         Pattern.VERY_DARK, Pixels(8, 8, Pixels.PALETTE1).set_data("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
