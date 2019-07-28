@@ -547,14 +547,18 @@ filsysread(Filsys *fs, Xfid *x, Fid *f)
 	case Qwsysdir:
 		d = dirtab;
 		d++;	/* first entry is '.' */
-		for(i=0; d->name!=nil && i<e; i+=len){
+                i = 0;
+		while (d->name != nil && i < e) {
+                    if (snarffd < 0 || d->qid != Qsnarf) {    /* skip snarf if snarffd open */
 			len = dostat(fs, WIN(x->f->qid), d, b+n, x->count-n, clock);
 			if(len <= BIT16SZ)
-				break;
+                            break;
 			if(i >= o)
-				n += len;
-			d++;
-		}
+                            n += len;
+                        i += len;
+                    }
+                    d++;
+                }
 		break;
 	case Qwsys:
 		qlock(&all);
