@@ -100,7 +100,7 @@ frdump(Frame *f)
 {
     int i;
     print("Frame %p\n", f);
-    print("nlines=%d nbox=%d nalloc=%d\n", f->nlines, f->nbox, f->nalloc);
+    print("Dx=%d Dy=%d nlines=%d nbox=%d nalloc=%d\n", Dx(f->r), Dy(f->r), f->nlines, f->nbox, f->nalloc);
     for (i = 0; i < f->nbox; ++i) {
         Frbox *b = &f->box[i];
         print("\tbox[%d] %p\n", i, b);
