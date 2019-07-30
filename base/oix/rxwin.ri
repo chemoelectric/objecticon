@@ -700,19 +700,19 @@ void pollevent(wbp w)
                     break;
                 }
 
-                if (actual_type == None) {
-                    if (selection_debug)
-                        printf("XGetWindowProperty returned actual_type == None\n");
-                    list_put(&ws->listp, &nulldesc);
-                    if (prop) XFree(prop);
-                    break;
-                }
-
                 /* Shouldn't ever happen */
                 if (!prop) {
                     if (selection_debug)
                         printf("XGetWindowProperty set prop to null\n");
                     list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                if (actual_type == None) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty returned actual_type == None\n");
+                    list_put(&ws->listp, &nulldesc);
+                    XFree(prop);    // prop is non-null
                     break;
                 }
 
@@ -3436,7 +3436,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                wc->font->ascent + wc->font->descent);
 }
 
-/* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
+/* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in graphics.h. */
 char *atom_names[NUMATOMS] = {
     "CHARACTER_POSITION",
     "CLIENT_WINDOW",
