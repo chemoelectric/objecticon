@@ -6,6 +6,7 @@
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
 #define GetRoot(wd) DefaultRootWindow((wd)->display)
 
+#define UpdateRecent(ws, ev) (ws)->display->recent = (ev)->time
 /*
  * Polyedge to use with pixwin; set to PolyEdgeSharp or PolyEdgeSmooth
  */
@@ -700,19 +701,19 @@ void pollevent(wbp w)
                     break;
                 }
 
-                if (actual_type == None) {
-                    if (selection_debug)
-                        printf("XGetWindowProperty returned actual_type == None\n");
-                    list_put(&ws->listp, &nulldesc);
-                    if (prop) XFree(prop);
-                    break;
-                }
-
                 /* Shouldn't ever happen */
                 if (!prop) {
                     if (selection_debug)
                         printf("XGetWindowProperty set prop to null\n");
                     list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                if (actual_type == None) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty returned actual_type == None\n");
+                    list_put(&ws->listp, &nulldesc);
+                    XFree(prop);    // prop is non-null
                     break;
                 }
 
@@ -766,6 +767,12 @@ void pollevent(wbp w)
                 break;
             case ConfigureNotify:
                 handle_config(ws, (XConfigureEvent *)&event);
+                break;
+            case FocusIn:
+                qeventcode(ws, FOCUSIN);
+                break;
+            case FocusOut:
+                qeventcode(ws, FOCUSOUT);
                 break;
             case ClientMessage: {
                 /*
@@ -1023,7 +1030,7 @@ static void wmap(wbp w)
         apply_windowlabel(ws);
         XSetWMNormalHints(wd->display, ws->win, &size_hints);
         XSelectInput(wd->display, ws->win, 
-                     ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
+                     ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask | FocusChangeMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PropertyChangeMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
 
@@ -1265,9 +1272,11 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
              le = lgnext(&ListBlk(*data), &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))
                 ReturnErrVal(148, le->lslots[state.result], Error);
-            target_list[target_cnt++] = XInternAtom(wd->display, cstr_target, False);
-            if (selection_debug)
-                printf("\tAdding target:%s\n", cstr_target);
+            if (target_cnt < ElemCount(target_list)) {
+                target_list[target_cnt++] = XInternAtom(wd->display, cstr_target, False);
+                if (selection_debug)
+                    printf("\tAdding target:%s\n", cstr_target);
+            }
         }
         XChangeProperty(wd->display,
                         requestor,
@@ -1335,7 +1344,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     return Succeeded;
 }
 
-int ownselection(wbp w, char *selname)
+int ownselection(wbp w, char *selname, word *time)
 {
     Atom selection;
     Window curr;
@@ -1381,7 +1390,19 @@ int ownselection(wbp w, char *selname)
     XSetSelectionOwner(wd->display, 
                        selection,
                        ws->win,
-                       CurrentTime);
+                       wd->recent);
+
+    /*
+     * Time is an unsigned quantity, maybe 64 bits, but the TIMESTAMP
+     * selection must be returned as a 32 bit signed integer, so the
+     * Time is cast here.  This may lead to a negative result.
+     */
+
+    *time = (word)(INT32)wd->recent;
+
+    if (selection_debug)
+        printf("Selection time was %lu, converted to " WordFmt "\n", 
+               (unsigned long)wd->recent, *time);
 
     return Succeeded;
 }
@@ -2033,6 +2054,7 @@ static void handle_crossing(wsp ws, XCrossingEvent *event)
     qevent(ws, &d, event->x, event->y,
            (word)event->time, 
            make_mod(event->state));
+    UpdateRecent(ws, event);
 }
 
 /*
@@ -2081,6 +2103,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     MakeInt(k, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, fl);
+    UpdateRecent(ws, event);
 }
 
 #include "rxkeysyms.ri"
@@ -2125,6 +2148,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  event->x, event->y, 
                  (word)event->time, 
                  make_mod(event->state));
+    UpdateRecent(ws, event);
 }
 
 /*
@@ -3430,7 +3454,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                wc->font->ascent + wc->font->descent);
 }
 
-/* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
+/* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in graphics.h. */
 char *atom_names[NUMATOMS] = {
     "CHARACTER_POSITION",
     "CLIENT_WINDOW",
@@ -3558,6 +3582,7 @@ static wdp alcdisplay(char *s)
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0, 65535);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535, 65535);
     wd->transparent = new_sharedcolor(wd, "transparent", 0, 0, 0, 0);
+    wd->recent = CurrentTime;
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
     setup_cursors(wd);
     GLink(wd, wdsplys);

@@ -36,7 +36,7 @@ class Untitled(Dialog)
       tab_item_2,
       tab_item_1,
       text_list_1,
-      text_display_1
+      label_13
 
    public override component_setup()
       self.setup()
@@ -162,7 +162,7 @@ class Untitled(Dialog)
    end
 
    private setup()
-      local paint_2, paint_14, paint_7, layout_4, paint_11, paint_19, paint_4, paint_16, paint_21, paint_1, paint_9, border_2, paint_13, paint_6, layout_3, paint_10, paint_18, paint, paint_3, paint_15, paint_20, paint_8, layout_5, paint_12, paint_5, layout_2, paint_17, paint_22
+      local paint_2, paint_14, paint_7, layout_4, paint_11, paint_19, paint_24, paint_4, paint_16, paint_21, paint_1, paint_9, paint_13, paint_6, layout_3, paint_10, paint_18, paint, paint_3, paint_15, paint_20, paint_8, layout_5, paint_12, paint_5, layout_2, paint_17, paint_22
       self.set_resize(&yes)
       paint_21 := TextPaint("Basic")
       layout_5 := GridLayout().
@@ -389,13 +389,11 @@ class Untitled(Dialog)
          add(text_button_8).
          add(text_field_8).
          add(text_button_9)
-      border_2 := NullBorder()
-      text_display_1 := TextDisplay().
+      paint_24 := GridPaint(".cell\n.x_ialign l\nPlease note that these settings are only\n.br\neffective under X11.\n.br\n")
+      label_13 := Label().
          clear_constraints().
-         set_constraint(Grid.X_FILL, &yes).
-         set_constraint(Grid.X_WEIGHT, 1.0).
-         set_border(border_2).
-         set_contents(["Please note that these settings are only", "effective under X11."])
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_paint(paint_24)
       tab_item_2 := TabItem().
          set_paint(paint_22).
          set_layout(layout_4).
@@ -404,7 +402,7 @@ class Untitled(Dialog)
          add(label_11).
          add(label_12).
          add(panel_2).
-         add(text_display_1)
+         add(label_13)
       tab_set_1 := TabSet().
          clear_constraints().
          set_constraint(Grid.EOL, &yes).

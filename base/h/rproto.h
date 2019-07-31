@@ -289,7 +289,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  setlinestyle    (wbp w, char *s);
    int  setlinewidth    (wbp w, double linewid);
    int  setpointer      (wbp w, char *val);
-   int  ownselection    (wbp w, char *selection);
+   int  ownselection    (wbp w, char *selection, word *time);
    int  requestselection(wbp w, char *selection, char *targetname);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowicon   (wbp w, struct imgdata *imd);

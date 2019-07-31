@@ -703,6 +703,12 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_SHOWWINDOW:
                 handle_showwindow(ws, msg, wp, lp);
                 return 0;
+            case WM_SETFOCUS:
+                qeventcode(ws, FOCUSIN);
+                return 0;
+            case WM_KILLFOCUS:
+                qeventcode(ws, FOCUSOUT);
+                return 0;
             case WM_CLOSE:
                 qeventcode(ws, WINDOWCLOSED);
                 return 0;
@@ -720,7 +726,7 @@ void pollevent(wbp w)
     }
 }
 
-int ownselection(wbp w, char *selection)
+int ownselection(wbp w, char *selection, word *time)
 {
     wsp ws = w->window;
     tended struct descrip tmp;

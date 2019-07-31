@@ -612,6 +612,14 @@ void pollevent(wbp w)
                 qevent(ws, &d, mx, my, time, 0);
                 break;
             }
+            case 'f': {
+                qeventcode(ws, FOCUSIN);
+                break;
+            }
+            case 'g': {
+                qeventcode(ws, FOCUSOUT);
+                break;
+            }
             case 'x': {
                 struct descrip d;
                 MakeInt(MOUSEEXITED, &d);
@@ -1464,7 +1472,7 @@ void doconfig(wbp w, int status)
         resize_pix_win(w);
 }
 
-int ownselection(wbp w, char *selection)
+int ownselection(wbp w, char *selection, word *time)
 {
     wsp ws = w->window;
     tended struct descrip tmp;

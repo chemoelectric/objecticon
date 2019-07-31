@@ -77,6 +77,10 @@ class Dialog(Component)
       popups,
       # Component with current focus
       focus,
+
+      # Focus remembered between window focus in/out events
+      remembered_focus,
+
       # Mouse click count
       click_count,
       crossing,
@@ -719,8 +723,7 @@ class Dialog(Component)
             }
          } else
             insert(selections, selection, obj)
-         obj.reset_timestamp()
-         win.own_selection(selection)
+         obj.set_timestamp(win.own_selection(selection))
       }
       link
    end
@@ -753,6 +756,23 @@ class Dialog(Component)
       }
    end
 
+   private process_focus_in(l)
+      if \remembered_focus then {
+         if /focus then
+            set_focus(remembered_focus)
+         remembered_focus := &null
+      }
+      fire(l[1])
+   end
+
+   private process_focus_out(l)
+      if \focus then {
+         remembered_focus := focus
+         set_focus()
+      }      
+      fire(l[1])
+   end
+
    public process_event(l)
       local e
       case l[1] of {
@@ -760,10 +780,13 @@ class Dialog(Component)
          Selection.CLEAR: process_selection_clear(l)
          Selection.RESPONSE: process_selection_response(l)
          Window.INVOKE_LATER: process_invoke_later(l)
-         Window.CLOSE_BUTTON: process_close_button(l)
          Window.RESIZE: process_resize(l)
-         Window.MOVE: process_move(l)
-         Window.STATE: process_state(l)
+         Window.CLOSE_BUTTON |
+            Window.MOVE |
+            Window.STATE : fire(l[1])
+         Window.FOCUS_IN : process_focus_in(l)
+         Window.FOCUS_OUT: process_focus_out(l)
+
          default: {
             (popup_manager === self) | syserr("Shouldn't get a mouse/key event in a popup")
             e := WinEvent!l
@@ -1340,18 +1363,6 @@ class Dialog(Component)
       fire(l[1])
    end
 
-   private process_move(l)
-      fire(l[1])
-   end
-
-   private process_state(l)
-      fire(l[1])
-   end
-
-   private process_close_button(l)
-      fire(l[1])
-   end
-
    #
    # Maybe increment or clear the click count
    # 
@@ -1712,12 +1723,11 @@ abstract class SelectionOwner()
    private timestamp
 
    public get_timestamp()
-      /timestamp := iand(Time.get_system_millis(), 16r7fffffff)
       return timestamp
    end
 
-   public reset_timestamp()
-      timestamp := &null
+   public set_timestamp(t)
+      timestamp := t
       link
    end
 

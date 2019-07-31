@@ -68,6 +68,8 @@ void wgetevent(wbp w, dptr res)
                 }
                 return;
             }
+            case FOCUSIN:
+            case FOCUSOUT:
             case WINDOWSTATE:
             case WINDOWRESIZED:
             case WINDOWMOVED:

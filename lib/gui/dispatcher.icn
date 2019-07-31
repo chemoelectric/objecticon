@@ -27,7 +27,7 @@ final abstract class Dispatcher()
       REPEATING
 
    private static init()
-      BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, 
+      BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.FOCUS_IN, Window.FOCUS_OUT,
                                                Window.RESIZE, Window.STATE, Window.MOVE)
       BLOCKED_QUIET := set(Mouse.RELEASE, Mouse.MOVEMENT) ++ Mouse.CROSSING
       REPEATING := Mouse.DRAG_OR_MOVEMENT ++ set(Window.RESIZE, Window.STATE, Window.MOVE)

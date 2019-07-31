@@ -102,6 +102,8 @@ class Untitled(Dialog)
       connect(on_resize, Window.RESIZE)
       connect(on_move, Window.MOVE)
       connect(on_state, Window.STATE)
+      connect(on_focus_in, Window.FOCUS_IN)
+      connect(on_focus_out, Window.FOCUS_OUT)
    end
 
    private on_resize(e)
@@ -114,6 +116,14 @@ class Untitled(Dialog)
 
    private on_state(e)
       log("Window.STATE (now " || win.get_canvas() || ")")
+   end
+
+   private on_focus_in(e)
+      log("Window.FOCUS_IN")
+   end
+
+   private on_focus_out(e)
+      log("Window.FOCUS_OUT")
    end
 
    private paused()
