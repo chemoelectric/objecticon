@@ -1166,7 +1166,9 @@ final class Window(NoCopy, ObjectOutput)
    public native text_width(s)
 
    #
-   # Set the window system's selection
+   # Set the window system's selection.  The value returned is an
+   # integer, which should be the result of any future selection of
+   # the TIMESTAMP property (this is relevant to X11 only).
    #
    public native own_selection(selection)
 

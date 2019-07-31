@@ -837,9 +837,10 @@ function graphics_Window_own_selection(self, selection)
    if !cnv:string(selection) then
       runerr(103,selection)
    body {
+       word time = 0;
        GetSelfW();
-       AttemptOp(ownselection(self_w, buffstr(&selection)));
-       return self;
+       AttemptOp(ownselection(self_w, buffstr(&selection), &time));
+       return C_integer time;
    }
 end
 

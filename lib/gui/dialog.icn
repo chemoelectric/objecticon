@@ -723,8 +723,7 @@ class Dialog(Component)
             }
          } else
             insert(selections, selection, obj)
-         obj.reset_timestamp()
-         win.own_selection(selection)
+         obj.set_timestamp(win.own_selection(selection))
       }
       link
    end
@@ -1724,12 +1723,11 @@ abstract class SelectionOwner()
    private timestamp
 
    public get_timestamp()
-      /timestamp := iand(Time.get_system_millis(), 16r7fffffff)
       return timestamp
    end
 
-   public reset_timestamp()
-      timestamp := &null
+   public set_timestamp(t)
+      timestamp := t
       link
    end
 

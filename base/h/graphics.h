@@ -274,17 +274,23 @@ typedef struct _wfont {
  * Displays are maintained in a global list in rwinrsc.r.
  */
 typedef struct _wdisplay {
-  char		*name;
-  Display *	display;
+  char    *name;
+  Display *display;
   struct _wbinding *wbndngs;          /* List of current window bindings */
   struct _wstate *vwstates;           /* List of windows with win non-null */
-  struct imgdataformat *format;                /* imgdata format */
-  struct progstate *program;           /* owning program */
-  struct SharedColor *black, *white, *transparent;
-  wfp		fonts[FONTHASH_SIZE], defaultfont;
-  XRenderPictFormat *pixfmt, *winfmt, *maskfmt;
+  struct imgdataformat *format;       /* imgdata format */
+  struct progstate *program;          /* owning program */
+  struct SharedColor *black,
+                     *white,
+                     *transparent;
+  wfp	fonts[FONTHASH_SIZE],
+        defaultfont;
+  XRenderPictFormat *pixfmt,
+                    *winfmt,
+                    *maskfmt;
   struct wcursor *cursors[CURSORHASH_SIZE];
-  Atom          atoms[NUMATOMS];      /* interned atoms */
+  Time   recent;                      /* most recent Time reported by server */
+  Atom   atoms[NUMATOMS];             /* interned atoms */
   struct _wdisplay *previous, *next;
 } *wdp;
 

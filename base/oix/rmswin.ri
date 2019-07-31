@@ -726,7 +726,7 @@ void pollevent(wbp w)
     }
 }
 
-int ownselection(wbp w, char *selection)
+int ownselection(wbp w, char *selection, word *time)
 {
     wsp ws = w->window;
     tended struct descrip tmp;
