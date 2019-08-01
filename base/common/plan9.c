@@ -33,7 +33,7 @@ int mkdir(const char *path, mode_t mode)
     }
     f = create(path, OREAD, DMDIR | mode);
     if (f < 0){
-        werrstr("mkdir: can't create '%s': %r", path);
+        werrstr("mkdir: Can't create '%s': %r", path);
         return -1;
     }
     close(f);
@@ -133,8 +133,8 @@ int gethostname(char *name, size_t len)
     close(fd);
     if (n <= 0)
         return -1;
-    if (n >= sizeof(buf)) {
-        werrstr("buffer too short");
+    if (n >= len) {
+        werrstr("Buffer too short");
         return -1;
     }
     buf[n] = 0;
@@ -167,7 +167,7 @@ int rename(const char *from, const char *to)
     if ((d = dirstat(to)) != 0) {
         if (d->mode & DMDIR) {
             free(d);
-            werrstr("rename: target '%s' is a directory", to);
+            werrstr("rename: Target '%s' is a directory", to);
             return -1;
         }
         free(d);
@@ -191,7 +191,7 @@ int rename(const char *from, const char *to)
         char buf[8192];
 
         if (mode & DMDIR) {
-            werrstr("rename: can't move a directory to another directory");
+            werrstr("rename: Can't move a directory to another directory");
             return -1;
         }
 
