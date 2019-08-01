@@ -124,22 +124,22 @@ void *bsearch(const void *key, const void *base,
 int gethostname(char *name, size_t len)
 {
     int n, fd;
-    char buf[128];
-
     fd = open("/dev/sysname", OREAD);
     if (fd < 0)
         return -1;
-    n = read(fd, buf, sizeof(buf));
+    n = read(fd, name, len);
     close(fd);
-    if (n <= 0)
+    if (n < 0)
         return -1;
+    if (n == 0) {
+        werrstr("Empty sysname");
+        return -1;
+    }
     if (n >= len) {
         werrstr("Buffer too short");
         return -1;
     }
-    buf[n] = 0;
-    strncpy(name, buf, len);
-    name[len - 1] = 0;
+    name[n] = 0;
     return 0;
 }
 
