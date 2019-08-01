@@ -191,7 +191,9 @@ char **opt_args;
    char *incl_var;
    
    incl_var = getenv("INCLUDE");
+   if (incl_var) incl_var = salloc(incl_var);
    cl_var = getenv("CL");
+   if (cl_var) cl_var = salloc(cl_var);
    n_paths = 0;
 
    /*
@@ -225,7 +227,7 @@ char **opt_args;
    if (incl_var == NULL)
       syspath = "";
    else {
-      syspath = salloc(incl_var);
+      syspath = incl_var;
       if (*incl_var != '\0')
          ++n_paths;
       while (*incl_var != '\0')
