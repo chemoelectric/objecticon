@@ -70,23 +70,23 @@ class Untitled(Dialog)
       label_1 := Label().
          set_pos(scale(424), scale(323)).
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_paint(paint_4)
       target_list := TextList().
          set_size(scale(200), scale(150)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_target_list, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
-         set_contents([""])
+         set_contents([])
       paint_2 := TextPaint("Get")
       get_targets_button := TextButton().
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          connect(self.on_get_targets, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_2)
@@ -99,10 +99,10 @@ class Untitled(Dialog)
          add(get_targets_button)
       border_1 := Border().
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_title(label_1).
          set_content(border_content_1)
       self.add(border_1)
@@ -110,22 +110,22 @@ class Untitled(Dialog)
       label_2 := Label().
          set_pos(scale(453), scale(179)).
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_paint(paint_5)
       data_area := EditableTextList().
          set_size(scale(200), scale(150)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_contents([""]).
          set_is_editable(&no)
       paint_1 := TextPaint("Get")
       get_data_button := TextButton().
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          connect(self.on_get_data, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_1)
@@ -138,31 +138,31 @@ class Untitled(Dialog)
          add(get_data_button)
       border_2 := Border().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_title(label_2).
          set_content(border_content_2)
       self.add(border_2)
       paint_6 := TextPaint("Primary")
       primary_cb := CheckBox().
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_toggles(&yes).
          set_paint(paint_6)
       paint_7 := TextPaint("Clipboard")
       clipboard_cb := CheckBox().
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_toggles(&yes).
          set_paint(paint_7)
       paint_3 := TextPaint("Quit")
       text_button_3 := TextButton().
          clear_constraints().
-         set_constraint("x_align", Align.R).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.R).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          connect(self.on_quit, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_3)
@@ -171,10 +171,10 @@ class Untitled(Dialog)
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("w", 2).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.W, 2).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
          set_layout(layout_5).
          add(primary_cb).
          add(clipboard_cb).

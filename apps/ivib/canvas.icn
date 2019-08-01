@@ -1096,6 +1096,13 @@ class Canvas(Component,SelectiveObjectCodec)
       }
    end
 
+   public override focus_changed(e) 
+      #
+      # We don't visually display the focus, so there's no need to
+      # invalidate when focus changes (as it may on a focus in/out).
+      #
+   end
+
    #
    # Display the canvas.
    #

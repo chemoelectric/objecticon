@@ -175,7 +175,7 @@ class SmtpClient(NetClient)
       NetClient.new()
       set_port(25)
       set_server("localhost")
-      set_hostname(&host)
+      set_hostname(&host | "unknown")
       return
    end
 end

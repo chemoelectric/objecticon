@@ -59,6 +59,13 @@ class CanvasTextList(CanvasComponent,TextList)
          ["Contents", "contents"]
    end
 
+   public override post_decode()
+      CanvasComponent.post_decode()
+      # This constraints the cursor; if the list is non-empty changing
+      # it from &null to 1.
+      contents_changed()
+   end
+
    #
    # Open the configuration dialog box.
    #

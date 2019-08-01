@@ -189,8 +189,7 @@ char *getenv_utf8(char *var)
 {
     DWORD n;
     WCHAR *wvar, *wbuff;
-    char *res;
-    static struct staticstr buf = {128};
+    static char *res;
     wvar = utf8_to_wchar(var);
     n = GetEnvironmentVariableW(wvar, NULL, 0);
     if (n == 0) {
@@ -201,11 +200,10 @@ char *getenv_utf8(char *var)
     wbuff = safe_zalloc(n * sizeof(WCHAR));
     GetEnvironmentVariableW(wvar, wbuff, n);
     free(wvar);
+    free(res);
     res = wchar_to_utf8(wbuff);
     free(wbuff);
-    sscpy(&buf, res);
-    free(res);
-    return buf.s;
+    return res;
 }
 
 int setenv_utf8(char *var, char *value)

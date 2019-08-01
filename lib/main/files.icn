@@ -684,8 +684,8 @@ $endif
    #
    public static begin_link(f, line)
       is(f, URL) | {
-         f := URL(file_to_url(f)).
-            set_host(&host)
+         f := URL(file_to_url(f))
+         f.set_host(&host)
          if \line then
             f.set_query("line=" || line)
       }

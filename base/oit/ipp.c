@@ -146,8 +146,16 @@ static char *last_line_file,
  */
 int ppinit(char *fname, int m4)
    {
+   static int inited;
    int i;
    cdefn *d, *n;
+
+    if (!inited) {
+        lpath = getenv_nn("OI_INCL");
+        if (lpath)
+            lpath = salloc(lpath);
+        inited = 1;
+    }
 
    /*
     * clear out any existing definitions from previous files
@@ -169,7 +177,6 @@ int ppinit(char *fname, int m4)
    /*
     * initialize variables and open source file 
     */
-   lpath = getenv_nn("OI_INCL");
    curfile = &nofile;			/* init file struct pointer */
    last_line_file = last_line_encoding = 0;
    quoting = 0;
