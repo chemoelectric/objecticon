@@ -3597,10 +3597,10 @@ static wdp alcdisplay(char *s)
  */
 char *tofcpatternstr(char *s)
 {
-    static struct staticstr buf = {64};
+    static char *res;
     int flags;
     double size;
-    char *t, family[MAXFONTWORD];
+    char family[MAXFONTWORD];
     FcPattern *p;
 
     if (!strncmp(s, "fc:", 3))
@@ -3678,12 +3678,11 @@ char *tofcpatternstr(char *s)
     else if (flags & FONTFLAG_EXTENDED)
         FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_EXPANDED);
 
-    t = (char *)FcNameUnparse(p);
-    sscpy(&buf, t);
-    free(t);
+    free(res);
+    res = (char *)FcNameUnparse(p);
     FcPatternDestroy(p);
 
-    return buf.s;
+    return res;
 }
 
 /*
