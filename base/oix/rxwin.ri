@@ -484,15 +484,14 @@ do {
  */
 static char *get_atom_name(wdp wd, Atom a)
 {
-    static struct staticstr buf = {32};
-    char *t;
+    static char *t;
     /* XGetAtomName raises an error on None. */
     if (a == None)
         return "(None)";
+    if (t)
+        XFree(t);
     MemProtect(t = XGetAtomName(wd->display, a));
-    sscpy(&buf, t);
-    XFree(t);
-    return buf.s;
+    return t;
 }
 
 /*
