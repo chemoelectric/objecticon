@@ -175,9 +175,9 @@ class EditableTextList(LineBasedScrollArea)
          self.contents := [""]
 
       #
-      # Ensure elements all of the same type
+      # Ensure elements all of the same (text) type
       #
-      t := type(self.contents[1])
+      t := type(text(self.contents[1]))
       if type(!self.contents) ~== t then
          runerr("Contents of EditableTextList must be all string or all ucs")
 
