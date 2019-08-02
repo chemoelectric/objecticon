@@ -2,12 +2,10 @@
  * mproto.h -- prototypes for functions common to several modules.
  */
 
-void	clear_sbuf	(struct str_buf *sbuf);
 int	cmp_pre		(char *pre1, char *pre2);
 char *getdir(char *s);
 char *getext(char *s);
 struct fileparts *fparse(char *s);
-void	free_stbl	(void);
 void	init_sbuf	(struct str_buf *sbuf);
 void	init_str	(void);
 char	*makename	(char *d,char *name,char *e);
@@ -30,7 +28,6 @@ char    *intern_n(char *s, int n);
 char    *join(char *s, ...);
 struct str_buf *get_sbuf(void);
 void    rel_sbuf(struct str_buf *sbuf);
-void    clear_local_sbufs(void);
 
 /*
  * oi_getopt()  variables and func.

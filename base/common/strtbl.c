@@ -36,24 +36,6 @@ void init_str()
     }
 }
 
-/*
- * free_stbl - free string table.
- */
-void free_stbl()
-{
-    struct str_entry *se, *se1;
-    int h;
-
-    for (h = 0; h < StrTblSz; ++h)
-        for (se = str_tbl[h]; se != NULL; se = se1) {
-            se1 = se->next;
-            free((char *)se);
-        }
-
-    free((char *)str_tbl);
-    str_tbl = NULL;
-}
-
 void dump_stbl()
 {
     struct str_entry *se;
@@ -82,20 +64,6 @@ void dump_sbuf(struct str_buf *s)
  */
 void init_sbuf(struct str_buf *sbuf)
 {
-    memset(sbuf, 0, sizeof(*sbuf));
-}
-
-/*
- * clear_sbuf - free string buffer storage.
- */
-void clear_sbuf(struct str_buf *sbuf)
-{
-    struct str_buf_frag *sbf, *sbf1;
-
-    for (sbf = sbuf->frag_lst; sbf != NULL; sbf = sbf1) {
-        sbf1 = sbf->next;
-        free((char *)sbf);
-    }
     memset(sbuf, 0, sizeof(*sbuf));
 }
 
@@ -302,20 +270,6 @@ void rel_sbuf(struct str_buf *sbuf)
         exit(EXIT_FAILURE);
     }
     --tcount;
-}
-
-/*
- * Call clear_sbuf on the static sbufs in this file.  This should only
- * be called in conjunction with free_stbl(), which will have pointers
- * into any memory allocated in these sbufs.
- */
-void clear_local_sbufs()
-{
-    int i;
-    clear_sbuf(&util);
-    for (i = 0; i < ElemCount(tbuf); ++i)
-        clear_sbuf(&tbuf[i]);
-    tcount = 0;
 }
 
 /*
