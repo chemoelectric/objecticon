@@ -187,7 +187,7 @@ char *getcwd_utf8(char *buff, int maxlen)
 
 char *getenv_utf8(char *var)
 {
-    DWORD n;
+    DWORD n, r;
     WCHAR *wvar, *wbuff;
     static char *res;
     wvar = utf8_to_wchar(var);
@@ -196,10 +196,12 @@ char *getenv_utf8(char *var)
         free(wvar);
         return NULL;
     }
-    ++n;
-    wbuff = safe_zalloc(n * sizeof(WCHAR));
-    GetEnvironmentVariableW(wvar, wbuff, n);
+    wbuff = safe_malloc(n * sizeof(WCHAR));
+    r = GetEnvironmentVariableW(wvar, wbuff, n);
     free(wvar);
+    /* Sanity check */
+    if (r == 0 || r != n - 1)
+        wbuff[0] = 0;
     free(res);
     res = wchar_to_utf8(wbuff);
     free(wbuff);
