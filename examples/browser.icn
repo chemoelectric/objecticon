@@ -743,7 +743,7 @@ class DownloadTab(TabItem)
       if u := URL(s).normal() then
          download(u)
       else
-         msg("Not a valid URL: " || &why)
+         msg("Invalid URL: " || &why)
    end
 
    private handle_paste_response(target_type, data)
@@ -816,6 +816,7 @@ class DownloadTab(TabItem)
    end
 
    private refresh()
+      msg()
       ticker.interrupt()
    end
 
@@ -888,8 +889,7 @@ class DownloadTab(TabItem)
 
    private update_status()
       local l
-      l := []
-      every put(l, (!dl).get_status())
+      l := ipl.pdco.List{ (!dl).get_status() }
       equals(l, url_table.get_contents()) | {
          url_table.set_contents(l)
          update_title()
@@ -1010,8 +1010,7 @@ class DownloadTab(TabItem)
          set_constraint("l_inset", 0).
          set_constraint("r_inset", 0).
          set_constraint("x_fill", &yes).
-         set_border(border).
-         set_paint(TextPaint(""))
+         set_border(border)
       self.add(message_label)
       self.set_layout(GridLayout().set_extra("cells"))
    end
@@ -1479,7 +1478,7 @@ class BrowserTab(TabItem, BrowserUI)
       if u := URL(s).normal() then
          browser.goto(u)
       else
-         msg("Invalid url: " || &why)
+         msg("Invalid URL: " || &why)
    end
 
    public override msg(s, n)
@@ -1853,8 +1852,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("r_inset", 0).
          set_constraint("x_fill", &yes).
          set_constraint("eol", &yes).
-         set_border(border).
-         set_paint(TextPaint(""))
+         set_border(border)
       self.add(message_label)
       self.set_layout(GridLayout().set_extra("cells"))
       search_panel := Component().
