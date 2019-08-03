@@ -37,6 +37,7 @@ class CanvasTextPaint(CanvasPaint,TextPaint)
    end
 
    public override new(s)
+      /s := ""
       TextPaint.new(s)
       CanvasPaint.new()
       self.class_name := "TextPaint"
@@ -116,6 +117,7 @@ class CanvasGridPaint(CanvasPaint,GridPaint)
    end
 
    public override new(s)
+      /s := ""
       GridPaint.new(s)
       CanvasPaint.new()
       self.class_name := "GridPaint"
