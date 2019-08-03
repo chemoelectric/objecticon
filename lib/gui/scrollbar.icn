@@ -278,17 +278,30 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
             self.bar_down_offset := e.y - self.bar_area.bar_y
          else
             self.bar_down_offset := e.x - self.bar_area.bar_x
-      } else if (/self.is_horizontal_flag & (self.bar_area.y  <= e.y < self.bar_area.bar_y)) | 
-         (self.bar_area.x  <= e.x < self.bar_area.bar_x) then {
-         move_value(self.value - self.page_size)
-         set_pos_from_value()
-         start_paging(-1)
-      } else  if (/self.is_horizontal_flag &
-                  (self.bar_area.bar_y + self.bar_area.bar_h  <= e.y <  self.bar_area.y + self.bar_area.h)) | 
-          (self.bar_area.bar_x + self.bar_area.bar_w  <= e.x <  self.bar_area.x + self.bar_area.w) then {
-         move_value(self.value + self.page_size)
-         set_pos_from_value()
-         start_paging(1)
+      } else if (if /is_horizontal_flag then bar_area.y  <= e.y < bar_area.bar_y
+                 else bar_area.x  <= e.x < bar_area.bar_x) then {
+         if \e.shift then {
+            self.bar_down := &yes
+            self.bar_down_offset := bar_size / 2
+            move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
+            set_value_from_pos()
+         } else {
+            move_value(self.value - self.page_size)
+            set_pos_from_value()
+            start_paging(-1)
+         }
+      } else if (if /is_horizontal_flag then bar_area.bar_y + bar_area.bar_h  <= e.y <  bar_area.y + bar_area.h
+                 else bar_area.bar_x + bar_area.bar_w  <= e.x <  bar_area.x + bar_area.w) then {
+         if \e.shift then {
+            self.bar_down := &yes
+            self.bar_down_offset := bar_size / 2
+            move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
+            set_value_from_pos()
+         } else {
+            move_value(self.value + self.page_size)
+            set_pos_from_value()
+            start_paging(1)
+         }
       }
       end_handle(e)
    end
