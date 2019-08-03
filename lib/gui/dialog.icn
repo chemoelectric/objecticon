@@ -234,10 +234,10 @@ class Dialog(Component)
    # give it focus all in one go.
    #
    public restore_win()
-      return if win.get_canvas() == "iconic" then
-         win.set_canvas("normal") & self
+      link if win.get_canvas() == "iconic" then
+         win.set_canvas("normal")
       else
-         win.raise().focus() & self
+         win.raise().focus()
    end
 
    #
