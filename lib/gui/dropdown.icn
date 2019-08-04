@@ -61,6 +61,8 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       local spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs, pref_w, pref_h, x_adj
 
+      parent_dialog.enter_menu_mode(self) | fail
+
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -88,10 +90,7 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
          direction
 
       old_focus := parent_dialog.get_focus()
-
-      parent_dialog.
-         set_focus().
-         enter_menu_mode(self)
+      parent_dialog.set_focus()
 
       popup.
          set_pos(win.get_dx() + x - x_adj,
@@ -122,6 +121,9 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
          parent_dialog.add_popup(d)
          d.show()
       }
+
+      fire(Event.POPUP_OPENED)
+      link
    end
 
    protected close_popup()
@@ -141,6 +143,7 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       self.popup := old_focus := &null
       self.parent_dialog.exit_menu_mode(self)
       fire(Event.POPUP_CLOSED)
+      link
    end
 
    public on_button_press(ev)
@@ -349,6 +352,8 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       if *selection_list = 0 then
          fail
 
+      self.parent_dialog.enter_menu_mode(self) | fail
+
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -392,7 +397,6 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          direction
 
       old_focus := parent_dialog.get_focus()
-      self.parent_dialog.enter_menu_mode(self)
 
       popup.
          set_pos(win.get_dx() + x,
@@ -433,6 +437,9 @@ abstract class SelectionDropDown(SelectionList, DropDown)
             set_cursor(self.selection).
             center_line(self.selection)
       }
+
+      fire(Event.POPUP_OPENED)
+      link
    end
 
    public override initially()

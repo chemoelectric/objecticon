@@ -178,75 +178,6 @@ char **opt_args;
    int i, j;
    char *s, *s1;
   
-/*
- * The following code is operating-system dependent [@files.03].
- *  Determine the number of standard locations to search for
- *  header files and provide any declarations needed for the code
- *  that establishes these search locations.
- */
-
-#if MSWIN32
-   char *syspath;
-   char *cl_var;
-   char *incl_var;
-   
-   incl_var = getenv("INCLUDE");
-   if (incl_var) incl_var = salloc(incl_var);
-   cl_var = getenv("CL");
-   if (cl_var) cl_var = salloc(cl_var);
-   n_paths = 0;
-
-   /*
-    * Check the CL environment variable for -I and -X options.
-    */
-   if (cl_var != NULL) {
-      s = cl_var;
-      while (*s != '\0') {
-         if (*s == '/' || *s == '-') {
-            ++s;
-            if (*s == 'I') {
-               ++n_paths;
-               ++s;
-               while (*s == ' ' || *s == '\t')
-                  ++s;
-               while (*s != ' ' && *s != '\t' && *s != '\0')
-                  ++s;
-               }
-            else if (*s == 'X')
-               incl_var = NULL;		/* ignore INCLUDE environment var */
-            }
-         if (*s != '\0')
-            ++s;
-         }
-      }
-
-   /*
-    * Check the INCLUDE environment variable for standard places to
-    *  search.
-    */
-   if (incl_var == NULL)
-      syspath = "";
-   else {
-      syspath = incl_var;
-      if (*incl_var != '\0')
-         ++n_paths;
-      while (*incl_var != '\0')
-         if (*incl_var++ == ';' && *incl_var != '\0')
-            ++n_paths;
-      }
-#endif					/* MSWIN32 */
-
-
-#if UNIX
-   static char *sysdir = "/usr/include/";
-
-   n_paths = 1;
-#endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
-
    /*
     * Count the number of -I options to the preprocessor.
     */
@@ -305,10 +236,6 @@ char **opt_args;
 #if MSWIN32
 
 #endif					/* MSWIN32 */
-
-#if UNIX
-   incl_search[n_paths - 1] = sysdir;
-#endif					/* UNIX */
 
 /*
  * End of operating-system specific code.

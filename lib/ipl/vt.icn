@@ -2784,6 +2784,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       # Check popup position is in the visible part of the screen.
       parent_dialog.intersect(rs).inside(px, py) | fail
 
+      # This will fail if the parent dialog is iconic and can't grab the pointer.
+      self.parent_dialog.enter_menu_mode(self) | fail
+
       # Space available for popup limited by screen size
       spc_below := rs.y + rs.h - py
       spc_right := rs.x + rs.w - px
@@ -2818,8 +2821,6 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_pos(win.get_dx() + px,
                  win.get_dy() + py).
          resize()
-
-      self.parent_dialog.enter_menu_mode(self)
 
       if Gui.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()

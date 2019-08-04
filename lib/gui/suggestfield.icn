@@ -176,13 +176,15 @@ abstract class SuggestField(TextField, MenuMode)
       # If the list is already open with the same data, do nothing.
       # This avoids the flickering of opening and closing the popup.
       if equals(data, list_data) then
-         return
+         fail
 
       close_popup()
 
       # If no data, or the focus has moved away, leave closed.
       if (*data = 0) | (parent_dialog.get_focus() ~=== self) then
-         return
+         fail
+
+      self.parent_dialog.enter_menu_mode(self) | fail
 
       list_data := copy(data)
       win := parent_dialog.win
@@ -235,8 +237,6 @@ abstract class SuggestField(TextField, MenuMode)
       } else
          direction
 
-      self.parent_dialog.enter_menu_mode(self)
-
       popup.
          set_pos(win.get_dx() + x,
                  win.get_dy() + if use_direction == Direction.DOWN then 
@@ -266,6 +266,8 @@ abstract class SuggestField(TextField, MenuMode)
          parent_dialog.add_popup(d)
          d.show()
       }
+      fire(Event.POPUP_OPENED)
+      link
    end
 
    protected close_popup()
@@ -280,6 +282,7 @@ abstract class SuggestField(TextField, MenuMode)
       list_data := popup := &null
       parent_dialog.exit_menu_mode(self)
       fire(Event.POPUP_CLOSED)
+      link
    end
 
    public override get_nesting_component()

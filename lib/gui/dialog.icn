@@ -234,10 +234,10 @@ class Dialog(Component)
    # give it focus all in one go.
    #
    public restore_win()
-      return if win.get_canvas() == "iconic" then
-         win.set_canvas("normal") & self
+      link if win.get_canvas() == "iconic" then
+         win.set_canvas("normal")
       else
-         win.raise().focus() & self
+         win.raise().focus()
    end
 
    #
@@ -444,15 +444,19 @@ class Dialog(Component)
    #
    public enter_menu_mode(c)
       if popup_manager ~=== self then
-         popup_manager.enter_menu_mode(c)
+         popup_manager.enter_menu_mode(c) | fail
       else {
          while \menu_mode & not(menu_mode.allow_nested(c)) do
             menu_mode.close_all()
          if \menu_mode then
             put(menu_mode_stack, menu_mode)
          else {
+            win.grab_pointer() | fail
+            win.grab_keyboard() | {
+               win.ungrab_pointer()
+               fail
+            }
             popups := []
-            win.grab_pointer()
          }
          self.menu_mode := c
       }
@@ -474,6 +478,7 @@ class Dialog(Component)
             menu_mode := c
          else {
             win.ungrab_pointer()
+            win.ungrab_keyboard()
             menu_mode := popups := &null
          }
       }

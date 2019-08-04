@@ -68,7 +68,7 @@ class TextPaint(Paint)
    # :Parameters :
    # :  `s` - The string to draw
    public override new(s)
-      self.str := s
+      self.str := need_text(s)
       return
    end
 end
@@ -94,7 +94,7 @@ class AbbreviatedTextPaint(Paint)
    # :Parameters :
    # :  `s` - The string to draw
    public override new(s)
-      self.str := s
+      self.str := need_text(s)
       return
    end
 end
@@ -489,7 +489,7 @@ class GridPaint(Paint)
    # :Parameters :
    # :  `s` - The format string
    public override new(s)
-      self.fmt := s
+      self.fmt := need_text(s)
       return
    end
 end
