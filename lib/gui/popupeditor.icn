@@ -14,10 +14,14 @@ class PopupEditor(Component, MenuMode)
       set_wattrib_ancestor(comp)
       set_z(comp.parent_dialog.get_top_z())
       comp.parent_dialog.add(self)
+      parent_dialog.enter_menu_mode(self) | {
+         parent.remove(self)
+         self.comp := &null
+         fail
+      }
       resize()
       old_focus := parent_dialog.get_focus()
       editor.grab_focus()
-      parent_dialog.enter_menu_mode(self)
       invalidate()
       link
    end
@@ -62,6 +66,7 @@ class PopupEditor(Component, MenuMode)
       invalidate()
       parent_dialog.exit_menu_mode(self)
       parent.remove(self)
+      self.comp := &null
       fire(Event.POPUP_CLOSED)
    end
 

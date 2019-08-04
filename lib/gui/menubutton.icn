@@ -62,11 +62,12 @@ class MenuButton(BorderWhilstEntered, MenuSystem, Component)
    end
 
    public open_menu()
-      self.parent_dialog.enter_menu_mode(self)
+      self.parent_dialog.enter_menu_mode(self) | fail
       self.which_open := self.menu
       self.menu.show(self.x,
                      self.y + self.h,, self.y)
       invalidate()
+      link
    end
 
    public close_menu()
@@ -74,6 +75,7 @@ class MenuButton(BorderWhilstEntered, MenuSystem, Component)
       self.which_open := &null
       self.parent_dialog.exit_menu_mode(self)
       invalidate()
+      link
    end
 
    public override close_all()
@@ -100,7 +102,7 @@ class MenuButton(BorderWhilstEntered, MenuSystem, Component)
 
    public override handle_accel(e)
       if /self.which_open then
-         self.open_menu()
+         self.open_menu() | fail
       self.menu.cursor_on()
       # See comment in MenuBar.handle_accel
       menu.accel_skip := e

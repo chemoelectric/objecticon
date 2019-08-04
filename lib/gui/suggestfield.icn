@@ -184,6 +184,8 @@ abstract class SuggestField(TextField, MenuMode)
       if (*data = 0) | (parent_dialog.get_focus() ~=== self) then
          return
 
+      self.parent_dialog.enter_menu_mode(self) | fail
+
       list_data := copy(data)
       win := parent_dialog.win
       dim := win.get_display_size()
@@ -234,8 +236,6 @@ abstract class SuggestField(TextField, MenuMode)
             Direction.UP
       } else
          direction
-
-      self.parent_dialog.enter_menu_mode(self)
 
       popup.
          set_pos(win.get_dx() + x,

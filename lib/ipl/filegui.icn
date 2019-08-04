@@ -597,8 +597,8 @@ class FileTrailList(ButtonOnlyList)
       # fire to the owner.
       set_selection_list(l)
       set_selection()
+      ButtonOnlyList.open_popup(ev) | fail
       b.set_border_whilst_entered(&no)
-      ButtonOnlyList.open_popup(ev)
       if i := Positions{(!l).name, \child} then
          popup.
             set_cursor(i).

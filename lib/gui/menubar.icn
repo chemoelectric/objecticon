@@ -196,7 +196,7 @@ class MenuBar(Component, MenuSystem)
       if self.which_open === x then
          link
 
-      set_which_highlight(x)
+      set_which_highlight(x) | fail
       self.which_open := x
       self.which_open.show(self.which_open.label_x -self.which_open.border.get_l_inset(),
                            self.y + self.h,, self.y)
@@ -214,7 +214,7 @@ class MenuBar(Component, MenuSystem)
          link
 
       if /self.which_highlight then
-         self.parent_dialog.enter_menu_mode(self)
+         self.parent_dialog.enter_menu_mode(self) | fail
 
       # Hide any existing visible submenu (even though it may have already hidden itself)
       (\self.which_open).hide()
@@ -260,11 +260,11 @@ class MenuBar(Component, MenuSystem)
    public override handle_accel(e)
       local m
       m := find_key(e.code) | fail
+      set_which_open(m) | fail
       # The accelerator event will be passed to the menu, which could
       # be two "accelerations" on one keypress.  Therefore the key is noted
       # in menu and skipped by the menu handle_key method.
       m.accel_skip := e
-      set_which_open(m)
       m.cursor_on()
    end
 
