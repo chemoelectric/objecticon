@@ -35,6 +35,7 @@ class PopupMenu(Component, MenuSystem)
       self.parent.remove(self)
       self.comp := self.menu := &null
       fire(Event.POPUP_CLOSED)
+      link
    end
 
    public override close_all()
@@ -89,6 +90,7 @@ class PopupMenu(Component, MenuSystem)
       self.menu.set_component_link(self)         
       self.menu.initially()
       self.menu.show(x, y, xa, ya)
+      fire(Event.POPUP_OPENED)
       link
    end
 

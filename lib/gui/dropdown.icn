@@ -121,6 +121,9 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
          parent_dialog.add_popup(d)
          d.show()
       }
+
+      fire(Event.POPUP_OPENED)
+      link
    end
 
    protected close_popup()
@@ -140,6 +143,7 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       self.popup := old_focus := &null
       self.parent_dialog.exit_menu_mode(self)
       fire(Event.POPUP_CLOSED)
+      link
    end
 
    public on_button_press(ev)
@@ -433,6 +437,9 @@ abstract class SelectionDropDown(SelectionList, DropDown)
             set_cursor(self.selection).
             center_line(self.selection)
       }
+
+      fire(Event.POPUP_OPENED)
+      link
    end
 
    public override initially()

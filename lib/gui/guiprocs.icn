@@ -58,6 +58,7 @@ final abstract class Event()
       DIALOG_SHOWN,
       DIALOG_DISPOSED,
       IN_POINT_CHAIN,
+      POPUP_OPENED,
       POPUP_CLOSED,
       INTERRUPTED,
       RESUMED
@@ -110,6 +111,7 @@ final abstract class Event()
       INTERRUPTED := 503
       RESUMED := 504
       DIALOG_SHOWN := 505
+      POPUP_OPENED := 506
    end
 end
 

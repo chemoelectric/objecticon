@@ -23,6 +23,7 @@ class PopupEditor(Component, MenuMode)
       old_focus := parent_dialog.get_focus()
       editor.grab_focus()
       invalidate()
+      fire(Event.POPUP_OPENED)
       link
    end
 
