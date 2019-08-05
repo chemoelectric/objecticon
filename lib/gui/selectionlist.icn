@@ -1,5 +1,6 @@
 package gui
 
+import ipl.numbers
 
 abstract class SelectionList()
    public 
@@ -97,7 +98,31 @@ abstract class SelectionList()
       link
    end
 
+   #
+   # Helper function to increment the selection.  If the selection
+   # list is empty, it does nothing and fails; otherwise the selection
+   # is incremented, wrapping around at the end of the selection list.
+   #
+   public increment_selection(ev)
+      if *selection_list = 0 then
+         fail
+      set_selection(if /selection then 1
+                    else mod1(selection + 1, *selection_list), ev)
+      link
+   end
+
+   #
+   # Helper function to decrement the selection.  If the selection
+   # list is empty, it does nothing and fails; otherwise the selection
+   # is decremented, wrapping around at the start of the selection list.
+   #
+   public decrement_selection(ev)
+      if *selection_list = 0 then
+         fail
+      set_selection(if /selection then *selection_list
+                    else mod1(selection - 1, *selection_list), ev)
+      link
+   end
+
    public abstract apply_selection(ev)
 end
-
-

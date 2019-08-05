@@ -322,21 +322,11 @@ abstract class SelectionDropDown(SelectionList, DropDown)
    end
 
    public override do_increment(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection | (self.selection = 1) then
-         set_selection(*self.selection_list, e)
-      else
-         set_selection(self.selection - 1, e)
+      decrement_selection(e)
    end
 
    public override do_decrement(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection then
-         set_selection(1, e)
-      else
-         set_selection(1 + self.selection % *self.selection_list, e)
+      increment_selection(e)
    end
 
    public go_to(x, e)
