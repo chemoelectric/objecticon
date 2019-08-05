@@ -138,9 +138,14 @@ class Circulate(SelectionList,Component)
       add(self.l)
       self.b := IconButton().
          set_accepts_focus(&no).
+         set_border(CompoundBorder().
+                    set_outer(RaisedBorder()).
+                    set_inner(EmptyBorder().
+                              set_insets(scale(2), scale(2), Gui.UNIT, Gui.UNIT))).
+         set_paint(ImagePaint().
+                   set_cache(ImageCache.get_key_with_resize("gui.CIRCULATE_12"))).
          connect(self.on_button_pressed, Event.ACTION)
       add(self.b)
-      b.set_paint(ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.CIRCULATE_12")))
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       return
