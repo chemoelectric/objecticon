@@ -500,10 +500,7 @@ static void ensure(cairo_t *cr)
     surface = cairo_get_target(cr);
     ws = w->window;
     /*
-     * We don't put a check in here to compare the surface's current
-     * drawable against ws->pix (and do nothing if they are equal),
-     * since there is a small chance that ws->pix has been deallocated
-     * and reallocated at the same address, but with a different size.
+     * Ensure the pix and size is up-to-date (in case of a resize).
      */
     cairo_xlib_surface_set_drawable(surface,
                                     ws->pix,
