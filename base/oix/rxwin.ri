@@ -112,7 +112,7 @@ static stringint linestyles[] = {
 };
 
 static stringint canvastypes[] = {
-    {0, 8},
+    {0, 9},
     {"fullscreen",  FullScreenState},
     {"hidden",      HiddenState},
     {"iconic",      IconicState},
@@ -120,6 +120,7 @@ static stringint canvastypes[] = {
     {"normal",      NormalState},
     {"popup",       PopupState},
     {"root",        RootState},
+    {"shaded",      ShadedState},
     {"withdrawn",   WithdrawnState},
 };
 
@@ -1094,6 +1095,13 @@ static void wmap(wbp w)
                         ATOM(wd, _NET_WM_STATE),
                         XA_ATOM, 32,
                         PropModeReplace, (unsigned char *)atoms, 1);
+    } else if (ws->state == ShadedState) {
+        Atom atoms[1];
+        atoms[0] = ATOM(wd, _NET_WM_STATE_SHADED);
+        XChangeProperty(wd->display, ws->win,
+                        ATOM(wd, _NET_WM_STATE),
+                        XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)atoms, 1);
     }
 
     if (ws->state != RootState && ws->state != WithdrawnState)
@@ -1130,6 +1138,10 @@ static void synch_net_wm_state(wsp ws, int desired_state)
             e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
             e.xclient.data.l[2] = 0;
             XSendEvent(wd->display, GetRoot(wd), False,
@@ -1139,6 +1151,10 @@ static void synch_net_wm_state(wsp ws, int desired_state)
         case MaximizedState: {
             e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
             e.xclient.data.l[2] = 0;
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
@@ -1155,8 +1171,29 @@ static void synch_net_wm_state(wsp ws, int desired_state)
             e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
             e.xclient.data.l[0] = _NET_WM_STATE_ADD;
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            break;
+        }
+        case ShadedState: { 
+            e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[0] = _NET_WM_STATE_ADD;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
             e.xclient.data.l[2] = 0;
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
@@ -1630,7 +1667,8 @@ int setcanvas(wbp w, char *s)
 
         case NormalState:
         case MaximizedState:
-        case FullScreenState: {
+        case FullScreenState:
+        case ShadedState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
             if (ws->state == WithdrawnState) {
@@ -1988,7 +2026,9 @@ static void synch_state1(wsp ws)
         int i, max = 0;
         Atom *atoms = (Atom *)prop;
         for (i = 0; i < nitems; ++i) {
-            if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT))
+            if (atoms[i] == ATOM(wd, _NET_WM_STATE_SHADED))
+                max |= 8;
+            else if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT))
                 max |= 1;
             else if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ))
                 max |= 2;
@@ -1997,8 +2037,10 @@ static void synch_state1(wsp ws)
         }
         if (max == 3)
             ws->state = MaximizedState;
-        else if (max == 4)
+        else if (max & 4)
             ws->state = FullScreenState;
+        else if (max & 8)
+            ws->state = ShadedState;
         else
             ws->state = NormalState;
     } else
@@ -3488,6 +3530,7 @@ char *atom_names[NUMATOMS] = {
     "_OBJECTICON_PROP5",
     "_OBJECTICON_PROP6",
     "_OBJECTICON_PROP7",
+    "_NET_WM_STATE_SHADED",
 };
 
 /*
