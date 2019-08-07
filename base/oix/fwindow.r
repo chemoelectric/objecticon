@@ -1019,6 +1019,17 @@ function graphics_Window_get_display(self)
    }
 end
 
+function graphics_Window_get_id(self)
+   body {
+       tended struct descrip result;
+       char *s;
+       GetSelfW();
+       AttemptOp(getwindowid(self_w, &s));
+       cstr2string(s, &result);
+       return result;
+   }
+end
+
 function graphics_Window_get_draw_op(self)
    body {
        tended struct descrip result;

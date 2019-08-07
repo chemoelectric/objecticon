@@ -3424,6 +3424,14 @@ int lowerwindow(wbp w)
     return Succeeded;
 }
 
+int getwindowid(wbp w, char **s)
+{
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    *s = buffprintf("%lx", (unsigned long)ws->win);
+    return Succeeded;
+}
+
 int walert(wbp w, int volume)
 {
     wsp ws = w->window;
