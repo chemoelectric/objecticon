@@ -216,6 +216,7 @@ abstract class SuggestField(TextField, MenuMode)
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
          set_always_show_focus_cursor(&yes).
+         set_wrap_on_up_down(&yes).
          set_select_mode(Select.ONE).
          set_z(self.parent_dialog.get_top_z())
 

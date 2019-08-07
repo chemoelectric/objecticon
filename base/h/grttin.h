@@ -190,7 +190,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
       typedef int Cardinal,String,XtResource,XtPointer,XArc,CARD32,INT32;
       typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
-      typedef int XPointDouble;
+      typedef int XPointDouble, XFixed;
    #endif				/* XWindows */
 #endif					/* Graphics */
 

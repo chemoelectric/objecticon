@@ -145,21 +145,11 @@ abstract class SelectionSpin(SelectionList, Spin)
    end
 
    public override do_increment(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection | self.selection = *self.selection_list then
-         self.set_selection(1, e)
-      else
-         self.set_selection(self.selection + 1, e)
+      increment_selection(e)
    end
 
    public override do_decrement(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection | (self.selection = 1) then
-         self.set_selection(*self.selection_list, e)
-      else
-         self.set_selection(self.selection - 1, e)
+      decrement_selection(e)
    end
 
    public go_to(x, e)

@@ -297,6 +297,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  setwindowlabel  (wbp w, dptr val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
+   int  getwindowid(wbp w, char **s);
    wbp  wopen           (char *display);
    int  grabpointer      (wbp w);
    int  ungrabpointer    (wbp w);

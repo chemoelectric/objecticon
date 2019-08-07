@@ -322,21 +322,11 @@ abstract class SelectionDropDown(SelectionList, DropDown)
    end
 
    public override do_increment(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection | (self.selection = 1) then
-         set_selection(*self.selection_list, e)
-      else
-         set_selection(self.selection - 1, e)
+      decrement_selection(e)
    end
 
    public override do_decrement(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection then
-         set_selection(1, e)
-      else
-         set_selection(1 + self.selection % *self.selection_list, e)
+      increment_selection(e)
    end
 
    public go_to(x, e)
@@ -382,6 +372,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
          set_select_mode(Select.ONE).
+         set_wrap_on_up_down(&yes).
          set_selection_on_key_moves(&no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(popup)

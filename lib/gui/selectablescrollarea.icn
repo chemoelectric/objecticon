@@ -12,7 +12,8 @@ import
    util, 
    lang, 
    graphics,
-   ipl.sets
+   ipl.sets,
+   ipl.numbers
 
 #
 # This class extends LineBasedScrollArea to provide selection on lines,
@@ -63,6 +64,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       motion_cursor_flag,
       selection_on_key_moves_flag,
       always_show_focus_cursor_flag,
+      wrap_on_up_down_flag,
       scroll_ticker,
       scroll_ticker_interval
 
@@ -150,6 +152,15 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_draggable_cursor(s)
       self.draggable_cursor_flag := need_flag(s)
+      link
+   end
+
+   #
+   # Configure whether or not cursor up and down keys should wrap
+   # around the contents.  Default is no.
+   #
+   public set_wrap_on_up_down(s)
+      self.wrap_on_up_down_flag := need_flag(s)
       link
    end
 
@@ -627,13 +638,19 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    public handle_key_up(e)
       start_handle(e)
-      move_cursor_on_key(e, get_cursor() - 1)
+      move_cursor_on_key(e, if /wrap_on_up_down_flag then
+                                get_cursor() - 1
+                            else
+                                 mod1(get_cursor() - 1, *contents))
       end_handle(e)
    end
 
    public handle_key_down(e)
       start_handle(e)
-      move_cursor_on_key(e, get_cursor() + 1)
+      move_cursor_on_key(e, if /wrap_on_up_down_flag then
+                               get_cursor() + 1
+                            else
+                               mod1(get_cursor() + 1, *contents))
       end_handle(e)
    end
 

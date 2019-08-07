@@ -86,6 +86,9 @@ static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
 
+static void CompositeDoublePoly(Display *, int, Picture, Picture, XRenderPictFormat *,
+                                int, int, int, int, XPointDouble *, int, int);
+
 static stringint drawops[] = {
    { 0, 12},
    {"atop",  PictOpAtop},
@@ -109,7 +112,7 @@ static stringint linestyles[] = {
 };
 
 static stringint canvastypes[] = {
-    {0, 8},
+    {0, 9},
     {"fullscreen",  FullScreenState},
     {"hidden",      HiddenState},
     {"iconic",      IconicState},
@@ -117,6 +120,7 @@ static stringint canvastypes[] = {
     {"normal",      NormalState},
     {"popup",       PopupState},
     {"root",        RootState},
+    {"shaded",      ShadedState},
     {"withdrawn",   WithdrawnState},
 };
 
@@ -1039,15 +1043,24 @@ static void wmap(wbp w)
 
     wmhints.input = True;
     wmhints.flags = InputHint;
-    if (ws->state == IconicState) {
-        wmhints.flags |= StateHint;
-        wmhints.initial_state = IconicState;
-    } else if (ws->state == WithdrawnState) {
-        wmhints.flags |= StateHint;
-        wmhints.initial_state = WithdrawnState;
-    } else if (ws->state != RootState) {
-        wmhints.flags |= StateHint;
-        wmhints.initial_state = NormalState;
+    switch (ws->state) {
+        case IconicState: {
+            wmhints.flags |= StateHint;
+            wmhints.initial_state = IconicState;
+            break;
+        }
+        case WithdrawnState: {
+            wmhints.flags |= StateHint;
+            wmhints.initial_state = WithdrawnState;
+            break;
+        }
+        case RootState:
+            break;
+        default: {
+            wmhints.flags |= StateHint;
+            wmhints.initial_state = NormalState;
+            break;
+        }
     }
     XSetWMHints(wd->display, ws->win, &wmhints);
 
@@ -1076,21 +1089,35 @@ static void wmap(wbp w)
     free(m2);
     XSync(wd->display, False);
 
-    if (ws->state == MaximizedState) {
-        Atom atoms[2];
-        atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
-        atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_STATE),
-                        XA_ATOM, 32,
-                        PropModeReplace, (unsigned char *)atoms, 2);
-    } else if (ws->state == FullScreenState) {
-        Atom atoms[1];
-        atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_STATE),
-                        XA_ATOM, 32,
-                        PropModeReplace, (unsigned char *)atoms, 1);
+    switch (ws->state) {
+        case MaximizedState: {
+            Atom atoms[2];
+            atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+            XChangeProperty(wd->display, ws->win,
+                            ATOM(wd, _NET_WM_STATE),
+                            XA_ATOM, 32,
+                            PropModeReplace, (unsigned char *)atoms, 2);
+            break;
+        }
+        case FullScreenState: {
+            Atom atoms[1];
+            atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            XChangeProperty(wd->display, ws->win,
+                            ATOM(wd, _NET_WM_STATE),
+                            XA_ATOM, 32,
+                            PropModeReplace, (unsigned char *)atoms, 1);
+            break;
+        }
+        case ShadedState: {
+            Atom atoms[1];
+            atoms[0] = ATOM(wd, _NET_WM_STATE_SHADED);
+            XChangeProperty(wd->display, ws->win,
+                            ATOM(wd, _NET_WM_STATE),
+                            XA_ATOM, 32,
+                            PropModeReplace, (unsigned char *)atoms, 1);
+            break;
+        }
     }
 
     if (ws->state != RootState && ws->state != WithdrawnState)
@@ -1127,6 +1154,10 @@ static void synch_net_wm_state(wsp ws, int desired_state)
             e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
             e.xclient.data.l[2] = 0;
             XSendEvent(wd->display, GetRoot(wd), False,
@@ -1136,6 +1167,10 @@ static void synch_net_wm_state(wsp ws, int desired_state)
         case MaximizedState: {
             e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
             e.xclient.data.l[2] = 0;
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
@@ -1152,8 +1187,29 @@ static void synch_net_wm_state(wsp ws, int desired_state)
             e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
             e.xclient.data.l[0] = _NET_WM_STATE_ADD;
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            break;
+        }
+        case ShadedState: { 
+            e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[0] = _NET_WM_STATE_ADD;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_SHADED);
             e.xclient.data.l[2] = 0;
             XSendEvent(wd->display, GetRoot(wd), False,
                        SubstructureNotifyMask | SubstructureRedirectMask, &e);
@@ -1627,7 +1683,8 @@ int setcanvas(wbp w, char *s)
 
         case NormalState:
         case MaximizedState:
-        case FullScreenState: {
+        case FullScreenState:
+        case ShadedState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
             if (ws->state == WithdrawnState) {
@@ -1985,7 +2042,9 @@ static void synch_state1(wsp ws)
         int i, max = 0;
         Atom *atoms = (Atom *)prop;
         for (i = 0; i < nitems; ++i) {
-            if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT))
+            if (atoms[i] == ATOM(wd, _NET_WM_STATE_SHADED))
+                max |= 8;
+            else if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT))
                 max |= 1;
             else if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ))
                 max |= 2;
@@ -1994,8 +2053,10 @@ static void synch_state1(wsp ws)
         }
         if (max == 3)
             ws->state = MaximizedState;
-        else if (max == 4)
+        else if (max & 4)
             ws->state = FullScreenState;
+        else if (max & 8)
+            ws->state = ShadedState;
         else
             ws->state = NormalState;
     } else
@@ -2959,12 +3020,12 @@ void fillpolygon(wbp w, struct point *points, int npoints)
         }
         mask = getmask(wd, width, height);
 
-        XRenderCompositeDoublePoly(wd->display, 
-                                   PictOpOver,
-                                   wd->white->brush,
-                                   mask, 
-                                   None, 0, 0, 0, 0,
-                                   xpoints, npoints, 0);
+        CompositeDoublePoly(wd->display, 
+                            PictOpOver,
+                            wd->white->brush,
+                            mask, 
+                            None, 0, 0, 0, 0,
+                            xpoints, npoints, 0);
 
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
@@ -2973,12 +3034,12 @@ void fillpolygon(wbp w, struct point *points, int npoints)
             xpoints[i].x = points[i].x;
             xpoints[i].y = points[i].y;
         }
-        XRenderCompositeDoublePoly(wd->display, 
-                                   wc->drawop->i,
-                                   get_draw_picture(wc),
-                                   ws->ppic, 
-                                   None, 0, 0, 0, 0,
-                                   xpoints, npoints, 0);
+        CompositeDoublePoly(wd->display, 
+                            wc->drawop->i,
+                            get_draw_picture(wc),
+                            ws->ppic, 
+                            None, 0, 0, 0, 0,
+                            xpoints, npoints, 0);
         pix_to_win(ws, x, y, width, height);
     }
     free(xpoints);
@@ -3363,6 +3424,14 @@ int lowerwindow(wbp w)
     return Succeeded;
 }
 
+int getwindowid(wbp w, char **s)
+{
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    *s = buffprintf("%lx", (unsigned long)ws->win);
+    return Succeeded;
+}
+
 int walert(wbp w, int volume)
 {
     wsp ws = w->window;
@@ -3485,6 +3554,7 @@ char *atom_names[NUMATOMS] = {
     "_OBJECTICON_PROP5",
     "_OBJECTICON_PROP6",
     "_OBJECTICON_PROP7",
+    "_NET_WM_STATE_SHADED",
 };
 
 /*
@@ -3921,4 +3991,284 @@ void registerplatformimgdataformats()
 {
     registerimgdataformat(&imgdataformat_X11ARGB32);
     registerimgdataformat(&imgdataformat_X11BGRA32);
+}
+
+
+
+
+/*
+ * This is a modified version of the code in libXrender (Poly.c),
+ * which contains an array overrun bug.  This code doesn't work very
+ * well, but at least it doesn't crash.
+ */
+
+
+struct Edge {
+    XLineFixed  edge;
+    XFixed      current_x;
+    struct Edge *next, *prev;
+};
+
+static int
+CompareEdge (const void *o1, const void *o2)
+{
+    const struct Edge  *e1 = o1, *e2 = o2;
+
+    return e1->edge.p1.y - e2->edge.p1.y;
+}
+
+static XFixed
+ComputeX (XLineFixed *line, XFixed y)
+{
+    XFixed  dx = line->p2.x - line->p1.x;
+    double  ex = (double) (y - line->p1.y) * (double) dx;
+    XFixed  dy = line->p2.y - line->p1.y;
+
+    return (XFixed) line->p1.x + (XFixed) (ex / dy);
+}
+
+static double
+ComputeInverseSlope (XLineFixed *l)
+{
+    return (XFixedToDouble (l->p2.x - l->p1.x) /
+            XFixedToDouble (l->p2.y - l->p1.y));
+}
+
+static double
+ComputeXIntercept (XLineFixed *l, double inverse_slope)
+{
+    return XFixedToDouble (l->p1.x) - inverse_slope * XFixedToDouble (l->p1.y);
+}
+
+static XFixed
+ComputeIntersect (XLineFixed *l1, XLineFixed *l2)
+{
+    /*
+     * x = m1y + b1
+     * x = m2y + b2
+     * m1y + b1 = m2y + b2
+     * y * (m1 - m2) = b2 - b1
+     * y = (b2 - b1) / (m1 - m2)
+     */
+    double  m1 = ComputeInverseSlope (l1);
+    double  b1 = ComputeXIntercept (l1, m1);
+    double  m2 = ComputeInverseSlope (l2);
+    double  b2 = ComputeXIntercept (l2, m2);
+
+    return XDoubleToFixed ((b2 - b1) / (m1 - m2));
+}
+
+static int
+ComputeTrapezoids (struct Edge   *edges,
+                   int           nedges,
+                   int           winding,
+                   XTrapezoid    *traps,
+                   int           maxtraps)
+{
+    int ntraps = 0;
+    int inactive;
+    struct Edge *active, *e, *en, *next;
+    XFixed y, next_y, intersect;
+
+    qsort (edges, nedges, sizeof (struct Edge), CompareEdge);
+
+    y = edges[0].edge.p1.y;
+    active = NULL;
+    inactive = 0;
+    while (active || inactive < nedges)
+    {
+        /* insert new active edges into list */
+        while (inactive < nedges)
+        {
+            e = &edges[inactive];
+            if (e->edge.p1.y > y)
+                break;
+            /* move this edge into the active list */
+            inactive++;
+            e->next = active;
+            e->prev = NULL;
+            if (active)
+                active->prev = e;
+            active = e;
+        }
+        /* compute x coordinates along this group */
+        for (e = active; e; e = e->next)
+            e->current_x = ComputeX (&e->edge, y);
+
+        /* sort active list */
+        for (e = active; e; e = next)
+        {
+            next = e->next;
+            /*
+             * Find one later in the list that belongs before the
+             * current one
+             */
+            for (en = next; en; en = en->next)
+            {
+                if (en->current_x < e->current_x ||
+                    (en->current_x == e->current_x &&
+                     en->edge.p2.x < e->edge.p2.x))
+                {
+                    /*
+                     * insert en before e
+                     *
+                     * extract en
+                     */
+                    en->prev->next = en->next;
+                    if (en->next)
+                        en->next->prev = en->prev;
+                    /*
+                     * insert en
+                     */
+                    if (e->prev)
+                        e->prev->next = en;
+                    else
+                        active = en;
+                    en->prev = e->prev;
+                    e->prev = en;
+                    en->next = e;
+                    /*
+                     * start over at en
+                     */
+                    next = en;
+                    break;
+                }
+            }
+        }
+
+        /* find next inflection point */
+        next_y = active->edge.p2.y;
+        for (e = active; e; e = en)
+        {
+            if (e->edge.p2.y < next_y)
+                next_y = e->edge.p2.y;
+            en = e->next;
+            /* check intersect */
+            if (en && e->edge.p2.x > en->edge.p2.x)
+            {
+                intersect = ComputeIntersect (&e->edge, &e->next->edge);
+                /* make sure this point is below the actual intersection */
+                intersect = intersect + 1;
+                if (intersect < next_y)
+                    next_y = intersect;
+            }
+        }
+        /* check next inactive point */
+        if (inactive < nedges && edges[inactive].edge.p1.y < next_y)
+            next_y = edges[inactive].edge.p1.y;
+
+        /* walk the list generating trapezoids */
+        for (e = active; e && (en = e->next); e = en->next)
+        {
+            /*
+             * (RPP) This is the only consequential change - the
+             * version in libXrender just goes sailing right out
+             * there.
+             */
+            if (ntraps == maxtraps)
+                return ntraps;
+            traps->top = y;
+            traps->bottom = next_y;
+            traps->left = e->edge;
+            traps->right = en->edge;
+            traps++;
+            ntraps++;
+        }
+
+        y = next_y;
+
+        /* delete inactive edges from list */
+        for (e = active; e; e = next)
+        {
+            next = e->next;
+            if (e->edge.p2.y <= y)
+            {
+                if (e->prev)
+                    e->prev->next = e->next;
+                else
+                    active = e->next;
+                if (e->next)
+                    e->next->prev = e->prev;
+            }
+        }
+    }
+    return ntraps;
+}
+
+static void
+CompositeDoublePoly(Display             *dpy,
+                    int                 op,
+                    Picture             src,
+                    Picture             dst,
+                    XRenderPictFormat   *maskFormat,
+                    int                 xSrc,
+                    int                 ySrc,
+                    int                 xDst,
+                    int                 yDst,
+                    XPointDouble        *fpoints,
+                    int                 npoints,
+                    int                 winding)
+{
+    struct Edge     *edges;
+    XTrapezoid      *traps;
+    int             i, nedges, ntraps, maxtraps;
+    XFixed          x, y, prevx = 0, prevy = 0, firstx = 0, firsty = 0,
+                    top = 0, bottom = 0;
+
+    maxtraps = npoints * npoints;
+    edges = safe_malloc(npoints * sizeof (struct Edge));
+    traps = safe_malloc(maxtraps * sizeof (XTrapezoid));
+
+    nedges = 0;
+    for (i = 0; i <= npoints; i++)
+    {
+        if (i == npoints)
+        {
+            x = firstx;
+            y = firsty;
+        }
+        else
+        {
+            x = XDoubleToFixed (fpoints[i].x);
+            y = XDoubleToFixed (fpoints[i].y);
+        }
+        if (i)
+        {
+            if (y < top)
+                top = y;
+            else if (y > bottom)
+                bottom = y;
+            if (prevy < y)
+            {
+                edges[nedges].edge.p1.x = prevx;
+                edges[nedges].edge.p1.y = prevy;
+                edges[nedges].edge.p2.x = x;
+                edges[nedges].edge.p2.y = y;
+                nedges++;
+            }
+            else if (prevy > y)
+            {
+                edges[nedges].edge.p1.x = x;
+                edges[nedges].edge.p1.y = y;
+                edges[nedges].edge.p2.x = prevx;
+                edges[nedges].edge.p2.y = prevy;
+                nedges++;
+            }
+            /* drop horizontal edges */
+        }
+        else
+        {
+            top = y;
+            bottom = y;
+            firstx = x;
+            firsty = y;
+        }
+        prevx = x;
+        prevy = y;
+    }
+    ntraps = ComputeTrapezoids (edges, nedges, winding, traps, maxtraps);
+    /* XXX adjust xSrc/xDst */
+    XRenderCompositeTrapezoids (dpy, op, src, dst, maskFormat, xSrc, ySrc, traps, ntraps);
+    free (edges);
+    free (traps);
 }

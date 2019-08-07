@@ -1069,6 +1069,14 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
+int getwindowid(wbp w, char **s)
+{
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    LitWhy("Not implemented");
+    return Failed;
+}
+
 int setlinestyle(wbp w, char *val)
 {
     stringint *e;
