@@ -419,6 +419,11 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native get_display()
 
+   # Return a system-dependent string which can identify the visible
+   # window to external programs.  Fails if the window is hidden.
+   #
+   public native get_id()
+
    # Return the drawing operator as set by `set_draw_op()`.
    #
    public native get_draw_op()
@@ -1212,10 +1217,6 @@ final class Window(NoCopy, ObjectOutput)
    # same canvas exist, the underlying window is closed.
    #
    public native close()
-
-$if _PLAN9
-   public native get_dir()
-$endif
 
    #
    # Return the absolute leading, which is the pixels equivalent of

@@ -1402,6 +1402,14 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
+int getwindowid(wbp w, char **s)
+{
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    *s = ws->mount_dir;
+    return Succeeded;
+}
+
 int focuswindow(wbp w)
 {
     wsp ws = w->window;

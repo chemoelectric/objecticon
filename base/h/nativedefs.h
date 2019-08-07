@@ -49,6 +49,7 @@ NativeDef(graphics.Window,get_clip_impl,graphics_Window_get_clip_impl)
 NativeDef(graphics.Window,get_depth,graphics_Window_get_depth)
 NativeDef(graphics.Window,get_font_descent,graphics_Window_get_font_descent)
 NativeDef(graphics.Window,get_format,graphics_Window_get_format)
+NativeDef(graphics.Window,get_id,graphics_Window_get_id)
 NativeDef(graphics.Window,get_display,graphics_Window_get_display)
 NativeDef(graphics.Window,get_display_size_impl,graphics_Window_get_display_size_impl)
 NativeDef(graphics.Window,get_display_size_mm_impl,graphics_Window_get_display_size_mm_impl)
@@ -135,9 +136,6 @@ NativeDef(graphics.Window,unclip,graphics_Window_unclip)
 NativeDef(graphics.Window,warp_pointer,graphics_Window_warp_pointer)
 NativeDef(graphics.Window,define_pointer_impl,graphics_Window_define_pointer_impl)
 NativeDef(graphics.Window,copy_pointer,graphics_Window_copy_pointer)
-#if PLAN9
-NativeDef(graphics.Window,get_dir,graphics_Window_get_dir)
-#endif
 #endif /* Graphics */
 NativeDef(graphics.Pixels,get_width,graphics_Pixels_get_width)
 NativeDef(graphics.Pixels,get_height,graphics_Pixels_get_height)

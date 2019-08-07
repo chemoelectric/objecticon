@@ -1019,6 +1019,17 @@ function graphics_Window_get_display(self)
    }
 end
 
+function graphics_Window_get_id(self)
+   body {
+       tended struct descrip result;
+       char *s;
+       GetSelfW();
+       AttemptOp(getwindowid(self_w, &s));
+       cstr2string(s, &result);
+       return result;
+   }
+end
+
 function graphics_Window_get_draw_op(self)
    body {
        tended struct descrip result;
@@ -1804,19 +1815,6 @@ function graphics_Window_set_width(self, width)
        return self;
    }
 end
-
-#if PLAN9
-function graphics_Window_get_dir(self)
-   body {
-       tended struct descrip result;
-       GetSelfW();
-       if (!self_w->window->win)
-           fail;
-       cstr2string(self_w->window->mount_dir, &result);
-       return result;
-   }
-end
-#endif
 
 function graphics_Window_set_transient_for(self, val)
    body {
