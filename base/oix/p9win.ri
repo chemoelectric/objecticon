@@ -1665,11 +1665,16 @@ static int open_screen_win(wsp ws)
             }
         }
 
-        if (ws->state == IconicCanvas)
-            fprint(ws->wctl_fd, "hide");
-        else if (ws->state != PopupCanvas)
-            fprint(ws->wctl_fd, "unhide");
-
+        switch (ws->state) {
+            case IconicCanvas:
+                fprint(ws->wctl_fd, "hide");
+                break;
+            case PopupCanvas:
+                break;
+            default:
+                fprint(ws->wctl_fd, "unhide");
+                break;
+        }
         use_win = 0;
     } else {
         ws->wsys_fd = open(ws->wsys, ORDWR|OCEXEC);
@@ -1689,10 +1694,14 @@ static int open_screen_win(wsp ws)
             sprint(buff, "new -r %d %d %d %d",
                    ws->reqx, ws->reqy,  ws->reqx + adjust(ws, ws->width), 
                    ws->reqy + adjust(ws, ws->height));
-        if (ws->state == PopupCanvas)
-            strcat(buff, " -noborder -layer 1");
-        else if (ws->state == IconicCanvas)
-            strcat(buff, " -hide");
+        switch (ws->state) {
+            case PopupCanvas:
+                strcat(buff, " -noborder -layer 1");
+                break;
+            case IconicCanvas:
+                strcat(buff, " -hide");
+                break;
+        }
         sprint(buff + strlen(buff), 
                " -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                adjust(ws, minw),
