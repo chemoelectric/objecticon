@@ -1043,15 +1043,24 @@ static void wmap(wbp w)
 
     wmhints.input = True;
     wmhints.flags = InputHint;
-    if (ws->state == IconicState) {
-        wmhints.flags |= StateHint;
-        wmhints.initial_state = IconicState;
-    } else if (ws->state == WithdrawnState) {
-        wmhints.flags |= StateHint;
-        wmhints.initial_state = WithdrawnState;
-    } else if (ws->state != RootState) {
-        wmhints.flags |= StateHint;
-        wmhints.initial_state = NormalState;
+    switch (ws->state) {
+        case IconicState: {
+            wmhints.flags |= StateHint;
+            wmhints.initial_state = IconicState;
+            break;
+        }
+        case WithdrawnState: {
+            wmhints.flags |= StateHint;
+            wmhints.initial_state = WithdrawnState;
+            break;
+        }
+        case RootState:
+            break;
+        default: {
+            wmhints.flags |= StateHint;
+            wmhints.initial_state = NormalState;
+            break;
+        }
     }
     XSetWMHints(wd->display, ws->win, &wmhints);
 
@@ -1080,28 +1089,35 @@ static void wmap(wbp w)
     free(m2);
     XSync(wd->display, False);
 
-    if (ws->state == MaximizedState) {
-        Atom atoms[2];
-        atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
-        atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_STATE),
-                        XA_ATOM, 32,
-                        PropModeReplace, (unsigned char *)atoms, 2);
-    } else if (ws->state == FullScreenState) {
-        Atom atoms[1];
-        atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_STATE),
-                        XA_ATOM, 32,
-                        PropModeReplace, (unsigned char *)atoms, 1);
-    } else if (ws->state == ShadedState) {
-        Atom atoms[1];
-        atoms[0] = ATOM(wd, _NET_WM_STATE_SHADED);
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_STATE),
-                        XA_ATOM, 32,
-                        PropModeReplace, (unsigned char *)atoms, 1);
+    switch (ws->state) {
+        case MaximizedState: {
+            Atom atoms[2];
+            atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+            XChangeProperty(wd->display, ws->win,
+                            ATOM(wd, _NET_WM_STATE),
+                            XA_ATOM, 32,
+                            PropModeReplace, (unsigned char *)atoms, 2);
+            break;
+        }
+        case FullScreenState: {
+            Atom atoms[1];
+            atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            XChangeProperty(wd->display, ws->win,
+                            ATOM(wd, _NET_WM_STATE),
+                            XA_ATOM, 32,
+                            PropModeReplace, (unsigned char *)atoms, 1);
+            break;
+        }
+        case ShadedState: {
+            Atom atoms[1];
+            atoms[0] = ATOM(wd, _NET_WM_STATE_SHADED);
+            XChangeProperty(wd->display, ws->win,
+                            ATOM(wd, _NET_WM_STATE),
+                            XA_ATOM, 32,
+                            PropModeReplace, (unsigned char *)atoms, 1);
+            break;
+        }
     }
 
     if (ws->state != RootState && ws->state != WithdrawnState)
