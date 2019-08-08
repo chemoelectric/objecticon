@@ -3431,7 +3431,7 @@ int getwindowid(wbp w, char **s)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    *s = buffprintf("%lx", (unsigned long)ws->win);
+    *s = buffprintf("0x%lx", (unsigned long)ws->win);
     return Succeeded;
 }
 
