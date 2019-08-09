@@ -463,9 +463,13 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native get_label()
 
-   # Return the line style setting as set by `set_line_style()`.
+   # Return the line style setting as set by `set_line_end()`.
    #
-   public native get_line_style()
+   public native get_line_end()
+
+   # Return the line style setting as set by `set_line_join()`.
+   #
+   public native get_line_join()
 
    # Return the line width (a real), as set by `set_line_width()`.
    #
@@ -682,10 +686,16 @@ final class Window(NoCopy, ObjectOutput)
    public native set_label(v)
 
    # Set the line style, which specifies how `draw_line()` draws the
-   # ends of a line.  Possible values are "disc", and "square".  (See
-   # `LineStyle` for symbolic constants).
+   # ends of a line.  Possible values are "round", and "square".  (See
+   # `LineEnd` for symbolic constants).
    #
-   public native set_line_style(v)
+   public native set_line_end(v)
+
+   # Set the line style, which specifies how `draw_line()` draws the
+   # joins of a line.  Possible values are "bevel", "miter" "round".  (See
+   # `LineJoin` for symbolic constants).
+   #
+   public native set_line_join(v)
 
    # Set the width of drawn lines.
    #
@@ -1920,17 +1930,34 @@ final abstract class DrawOp()
 end
 
 #
-# This class provides symbolic names for the line styles supported by
-# `Window.set_line_style()`.
+# This class provides symbolic names for the styles supported by
+# `Window.set_line_end()`.
 #
-final abstract class LineStyle()
+final abstract class LineEnd()
    public static const
-      DISC,
+      ROUND,
       SQUARE
 
    private static init()
-      DISC := "disc"
+      ROUND := "round"
       SQUARE := "square"
+   end
+end
+
+#
+# This class provides symbolic names for the styles supported by
+# `Window.set_line_join()`.
+#
+final abstract class LineJoin()
+   public static const
+      BEVEL,
+      MITER,
+      ROUND
+
+   private static init()
+      BEVEL := "bevel"
+      MITER := "miter"
+      ROUND := "round"
    end
 end
 

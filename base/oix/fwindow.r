@@ -1106,11 +1106,20 @@ function graphics_Window_get_label(self)
    }
 end
 
-function graphics_Window_get_line_style(self)
+function graphics_Window_get_line_end(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       cstr2string(getlinestyle(self_w), &result);
+       cstr2string(getlineend(self_w), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_line_join(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       cstr2string(getlinejoin(self_w), &result);
        return result;
    }
 end
@@ -1409,12 +1418,22 @@ function graphics_Window_set_label(self, val)
    }
 end
 
-function graphics_Window_set_line_style(self, val)
+function graphics_Window_set_line_end(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setlinestyle(self_w, buffstr(&val)), "Invalid line_style");
+       AttemptAttr(setlineend(self_w, buffstr(&val)), "Invalid line end style");
+       return self;
+   }
+end
+
+function graphics_Window_set_line_join(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setlinejoin(self_w, buffstr(&val)), "Invalid line join style");
        return self;
    }
 end

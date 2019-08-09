@@ -1087,7 +1087,10 @@ static void wmap(wbp w)
     XSetClassHint(wd->display, ws->win, &clhints);
     free(m1);
     free(m2);
-    XSync(wd->display, False);
+
+    /* This is a convenient way to set the WM_CLIENT_MACHINE and
+     * WM_LOCALE_NAME properties. */
+    XSetWMProperties(wd->display, ws->win, 0, 0, 0, 0, 0, 0, 0);
 
     switch (ws->state) {
         case MaximizedState: {
@@ -3428,7 +3431,7 @@ int getwindowid(wbp w, char **s)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    *s = buffprintf("%lx", (unsigned long)ws->win);
+    *s = buffprintf("0x%lx", (unsigned long)ws->win);
     return Succeeded;
 }
 
