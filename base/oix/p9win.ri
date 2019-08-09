@@ -124,9 +124,16 @@ static stringint drawops[] = {
    {"xor",            SxorD},
 };
 
-static stringint linestyles[] = {
+static stringint linejoins[] = {
+    {0, 3},
+    {"bevel",     1},
+    {"miter",     2},
+    {"round",     3},
+};
+
+static stringint lineends[] = {
     {0, 2},
-    {"disc",     Enddisc},
+    {"round",    Enddisc},
     {"square",   Endsquare},
 };
 
@@ -366,8 +373,9 @@ wbp wopen(char *display)
     wc->font = default_font;
     wc->leading = defaultleading;
     wc->drawop = stringint_lookup(drawops, "over");
-    wc->linestyle = stringint_lookup(linestyles, "square");
     wc->linewidth = 1;
+    wc->linejoin = stringint_lookup(linejoins, "bevel");
+    wc->lineend = stringint_lookup(lineends, "square");
 
     w->context = wc;
 
@@ -833,7 +841,7 @@ void drawlines(wbp w, struct point *points0, int npoints)
     if (closed)
         term = Enddisc;
     else
-        term = wc->linestyle->i;
+        term = wc->lineend->i;
     clip(w);
     /* mask with overlap flag set since polyop draws the line joins
      * overlapping the line segments. */
@@ -2070,14 +2078,25 @@ int setwindowlabel(wbp w, dptr val)
     return Succeeded;
 }
 
-int setlinestyle(wbp w, char *val)
+int setlineend(wbp w, char *val)
 {
     stringint *e;
     wcp wc = w->context;
-    e = stringint_lookup(linestyles, val);
+    e = stringint_lookup(lineends, val);
     if (!e)
         return Failed;
-    wc->linestyle = e;
+    wc->lineend = e;
+    return Succeeded;
+}
+
+int setlinejoin(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(linejoins, val);
+    if (!e)
+        return Failed;
+    wc->linejoin = e;
     return Succeeded;
 }
 
@@ -2147,9 +2166,14 @@ char *getdisplay(wbp w)
     return w->window->wsys;
 }
 
-char *getlinestyle(wbp w)
+char *getlineend(wbp w)
 {
-    return w->context->linestyle->s;
+    return w->context->lineend->s;
+}
+
+char *getlinejoin(wbp w)
+{
+    return w->context->linejoin->s;
 }
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh)
@@ -2334,7 +2358,8 @@ static wcp clonecontext(wcp src)
     wc->font = src->font;
     wc->linewidth = src->linewidth;
     wc->drawop = src->drawop;
-    wc->linestyle = src->linestyle;
+    wc->lineend = src->lineend;
+    wc->linejoin = src->linejoin;
     return wc;
 }
 
