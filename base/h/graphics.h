@@ -108,7 +108,7 @@ extern struct sdescrip wclassname;
 #define FullScreenState IconicState+5
 #define ShadedState IconicState+6
 
-#define EndDisc 1
+#define EndRound 1
 #define EndSquare 2
 
 /* Interned atoms array */
@@ -347,13 +347,15 @@ typedef struct _wcontext {
   wdp		display;
   struct SharedColor *fg, *bg;
   struct SharedPicture  *pattern;
-  stringint     *linestyle;
+  stringint     *lineend;
+  stringint     *linejoin;
   double	linewidth;
   stringint     *drawop;
 #elif MSWIN32
   struct SharedColor *fg, *bg;
   struct SharedBitmap  *pattern;
-  stringint     *linestyle;
+  stringint     *lineend;
+  stringint     *linejoin;
   double         linewidth;
   stringint     *drawop;
 #endif
