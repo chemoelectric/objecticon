@@ -311,18 +311,19 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     Pen *p = get_fg_pen(d, b);
-    g->DrawArc(p, 
-               (REAL)cx - (REAL)rx,
-               cy - ry,
-               2 * rx,
-               2 * ry,
-               to_degrees(angle1),
-               to_degrees(angle2)); 
-    gb_pix_to_win(d, 
-                  cx - rx - d->linewidth, 
-                  cy - ry - d->linewidth, 
-                  2 * rx + 2 * d->linewidth, 
-                  2 * ry + 2 * d->linewidth);
+    GraphicsPath path;
+    Rect bound;
+    path.AddArc((REAL)cx - (REAL)rx,
+                cy - ry,
+                2 * rx,
+                2 * ry,
+                to_degrees(angle1),
+                to_degrees(angle2)); 
+
+    g->DrawPath(p, &path);
+    path.GetBounds(&bound, NULL, p);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete p;
     delete b;
     delete g;
@@ -333,18 +334,19 @@ void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
 {
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
-    g->FillPie(b, 
-               (REAL)cx - (REAL)rx,
-               cy - ry,
-               2 * rx,
-               2 * ry,
-               to_degrees(angle1),
-               to_degrees(angle2)); 
-    gb_pix_to_win(d, 
-                  cx - rx - 4, 
-                  cy - ry - 4, 
-                  2 * rx + 8, 
-                  2 * ry + 8);
+    GraphicsPath path;
+    Rect bound;
+    path.AddPie((REAL)cx - (REAL)rx,
+                cy - ry,
+                2 * rx,
+                2 * ry,
+                to_degrees(angle1),
+                to_degrees(angle2)); 
+
+    g->FillPath(b, &path);
+    path.GetBounds(&bound, NULL, NULL);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete b;
     delete g;
 }
