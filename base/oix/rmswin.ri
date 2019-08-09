@@ -113,9 +113,16 @@ stringint drawops[] = {
 /*
  * line types
  */
-stringint linestyles[] = {
+static stringint linejoins[] = {
+    {0, 3},
+    {"bevel",     JoinBevel},
+    {"miter",     JoinMiter},
+    {"round",     JoinRound},
+};
+
+stringint lineends[] = {
     {0, 2},
-    {"disc",     EndDisc},
+    {"round",    EndRound},
     {"square",   EndSquare},
 };
 
@@ -259,7 +266,8 @@ static void mk_Draw(wbp w, gb_Draw *d)
     else
         d->pattern = 0;
     d->drawop = wc->drawop->i;
-    d->linestyle = wc->linestyle->i;
+    d->lineend = wc->lineend->i;
+    d->linejoin = wc->linejoin->i;
     d->holding = ws->holding;
 }
 
@@ -1077,14 +1085,25 @@ int getwindowid(wbp w, char **s)
     return Failed;
 }
 
-int setlinestyle(wbp w, char *val)
+int setlineend(wbp w, char *val)
 {
     stringint *e;
     wcp wc = w->context;
-    e = stringint_lookup(linestyles, val);
+    e = stringint_lookup(lineends, val);
     if (!e)
         return Failed;
-    wc->linestyle = e;
+    wc->lineend = e;
+    return Succeeded;
+}
+
+int setlinejoin(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(linejoins, val);
+    if (!e)
+        return Failed;
+    wc->linejoin = e;
     return Succeeded;
 }
 
@@ -1170,9 +1189,14 @@ int setdrawop(wbp w, char *val)
     return Succeeded;
 }
 
-char *getlinestyle(wbp w)
+char *getlineend(wbp w)
 {
-    return w->context->linestyle->s;
+    return w->context->lineend->s;
+}
+
+char *getlinejoin(wbp w)
+{
+    return w->context->linejoin->s;
 }
 
 char *getpointer(wbp w)
@@ -1285,11 +1309,8 @@ int queryrootpointer(wbp w, int *x, int *y)
 void drawlines(wbp w, struct point *points, int npoints)
 {
     gb_Draw d;
-    int x, y, width, height, adj;
     mk_Draw(w, &d);
-    points_extent(points, npoints, &x, &y, &width, &height);
-    adj = d.linewidth;
-    gb_drawlines(&d, points, npoints, x - adj, y - adj, width + 2 * adj, height + 2 * adj);
+    gb_drawlines(&d, points, npoints);
 }
 
 void drawarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
@@ -1334,11 +1355,8 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
 void fillpolygon(wbp w, struct point *points, int npoints)
 {
     gb_Draw d;
-    int x, y, width, height, adj;
     mk_Draw(w, &d);
-    points_extent(points, npoints, &x, &y, &width, &height);
-    adj = 4;
-    gb_fillpolygon(&d, points, npoints, x - adj, y - adj, width + 2 * adj, height + 2 * adj);
+    gb_fillpolygon(&d, points, npoints);
 }
 
 void fillrectangle(wbp wb, int x, int y, int width, int height)
@@ -1362,7 +1380,8 @@ static wcp alccontext(wbp w)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->drawop = stringint_lookup(drawops, "over");
-    wc->linestyle = stringint_lookup(linestyles, "square");
+    wc->linejoin = stringint_lookup(linejoins, "bevel");
+    wc->lineend = stringint_lookup(lineends, "square");
     wc->linewidth = 1.0;
     wc->font = default_font;
     wc->leading = defaultleading;
@@ -1393,7 +1412,8 @@ static wcp clonecontext(wcp src)
         wc->pattern = link_sharedbitmap(src->pattern);
     wc->drawop = src->drawop;
     wc->linewidth = src->linewidth;
-    wc->linestyle = src->linestyle;
+    wc->lineend = src->lineend;
+    wc->linejoin = src->linejoin;
     wc->font = src->font;
     return wc;
 }
