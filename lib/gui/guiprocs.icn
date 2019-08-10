@@ -176,7 +176,8 @@ final abstract class WAttrib()
       IMAGE,
       LABEL,
       LEADING,
-      LINE_STYLE,
+      LINE_JOIN,
+      LINE_END,
       LINE_WIDTH,
       MAX_HEIGHT,
       MAX_SIZE,
@@ -244,7 +245,8 @@ final abstract class WAttrib()
       IMAGE := "image"
       LABEL := "label"
       LEADING := "leading"
-      LINE_STYLE := "line_style"
+      LINE_JOIN := "line_join"
+      LINE_END := "line_end"
       LINE_WIDTH := "line_width"
       MAX_HEIGHT := "max_height"
       MAX_SIZE := "max_size"
@@ -482,14 +484,14 @@ final abstract class Gui()
                          WAttrib.HEIGHT, WAttrib.WIDTH, WAttrib.IMAGE, WAttrib.CANVAS, WAttrib.POINTER, 
                          WAttrib.DISPLAY, WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.ICON, WAttrib.LEADING,
                          WAttrib.FONT, WAttrib.LINE_WIDTH, WAttrib.GEOMETRY, WAttrib.TRANSIENT_FOR,
-                         WAttrib.LINE_STYLE, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP, WAttrib.DX,
-                         WAttrib.DY, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT,
+                         WAttrib.LINE_END, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP, WAttrib.DX,
+                         WAttrib.DY, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT, WAttrib.LINE_JOIN,
                          WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE,
                          WAttrib.BASE_HEIGHT, WAttrib.BASE_SIZE, WAttrib.BASE_WIDTH,
                          WAttrib.INCREMENT_HEIGHT, WAttrib.INCREMENT_SIZE, WAttrib.INCREMENT_WIDTH,
                          WAttrib.MAX_ASPECT_RATIO, WAttrib.MIN_ASPECT_RATIO)
       CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING,
-                                 WAttrib.LINE_WIDTH, WAttrib.LINE_STYLE, WAttrib.PATTERN)
+                                 WAttrib.LINE_WIDTH, WAttrib.LINE_END, WAttrib.LINE_JOIN, WAttrib.PATTERN)
       EMPTY_WATTRIB_ANCESTOR := EmptyWAttribAncestor() 
    end
 
@@ -736,7 +738,8 @@ procedure apply_window_table(w, t)
          WAttrib.LINE_WIDTH: w.set_line_width(v)
          WAttrib.GEOMETRY: w.set_geometry(v[1],v[2],v[3],v[4])
          WAttrib.TRANSIENT_FOR: w.set_transient_for(v)
-         WAttrib.LINE_STYLE: w.set_line_style(v)
+         WAttrib.LINE_JOIN: w.set_line_join(v)
+         WAttrib.LINE_END: w.set_line_end(v)
          WAttrib.PATTERN: w.set_pattern(v)
          WAttrib.CLIP: w.clip(v[1],v[2],v[3],v[4])
          WAttrib.UNCLIP: w.unclip()
@@ -779,7 +782,8 @@ procedure apply_context_table(w, t)
          WAttrib.FONT: w.set_font(v)
          WAttrib.LEADING: w.set_leading(v)
          WAttrib.LINE_WIDTH: w.set_line_width(v)
-         WAttrib.LINE_STYLE: w.set_line_style(v)
+         WAttrib.LINE_END: w.set_line_end(v)
+         WAttrib.LINE_JOIN: w.set_line_join(v)
          WAttrib.PATTERN: w.set_pattern(v)
       }
    }
