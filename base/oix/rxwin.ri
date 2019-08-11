@@ -21,7 +21,7 @@ static wdp wdsplys;
 struct lineinfo {
     double dx, dy;
     double len;
-    XPointDouble p1, p2, q1, q2;
+    XPointDouble p0, q0, p1, p2, q1, q2;
 };
 
 /*
@@ -85,6 +85,7 @@ static int limit_strlen(word n);
 static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
+static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
 
 static void CompositeDoublePoly(Display *, int, Picture, Picture, XRenderPictFormat *,
                                 int, int, int, int, XPointDouble *, int, int);
@@ -105,10 +106,17 @@ static stringint drawops[] = {
    {"xor",  PictOpXor},
 };
 
-static stringint linestyles[] = {
+static stringint linejoins[] = {
+    {0, 3},
+    {"bevel",     JoinBevel},
+    {"miter",     JoinMiter},
+    {"round",     JoinRound},
+};
+
+static stringint lineends[] = {
     {0, 2},
-    {"disc",     EndDisc},
-    {"square",   EndSquare},
+    {"round",     EndRound},
+    {"square",    EndSquare},
 };
 
 static stringint canvastypes[] = {
@@ -851,7 +859,8 @@ wbp wopen(char *display)
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
-    wc->linestyle = stringint_lookup(linestyles, "square");
+    wc->linejoin = stringint_lookup(linejoins, "round");
+    wc->lineend = stringint_lookup(lineends, "square");
 
     w->context = wc;
 
@@ -1721,16 +1730,30 @@ int setcanvas(wbp w, char *s)
 }
 
 /*
- * Set the context's line style by name.
+ * Set the context's line end style by name.
  */
-int setlinestyle(wbp w, char *val)
+int setlineend(wbp w, char *val)
 {
     stringint *e;
     wcp wc = w->context;
-    e = stringint_lookup(linestyles, val);
+    e = stringint_lookup(lineends, val);
     if (!e)
         return Failed;
-    wc->linestyle = e;
+    wc->lineend = e;
+    return Succeeded;
+}
+
+/*
+ * Set the context's line join style by name.
+ */
+int setlinejoin(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(linejoins, val);
+    if (!e)
+        return Failed;
+    wc->linejoin = e;
     return Succeeded;
 }
 
@@ -1814,9 +1837,14 @@ char *getbg(wbp w)
     return w->context->bg->name;
 }
 
-char *getlinestyle(wbp w)
+char *getlineend(wbp w)
 {
-    return w->context->linestyle->s;
+    return w->context->lineend->s;
+}
+
+char *getlinejoin(wbp w)
+{
+    return w->context->linejoin->s;
 }
 
 char *getpointer(wbp w)
@@ -2558,7 +2586,8 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 
 /*
  * The orientation of the computed corner points is always the same
- * (p0 and q0 are the given input points), as follows :-
+ * (p0 and q0 are the given input points, linewidth comes from the
+ * context), as follows :-
  *  
  *   p2 -------------------- q2      ^
  *   |                       |       |
@@ -2575,12 +2604,41 @@ static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct linei
     res->dx = q0->x - p0->x;
     res->dy = q0->y - p0->y;
     res->len = hypot(res->dx, res->dy);
+    res->p0 = *p0;
+    res->q0 = *q0;
     ex = (wc->linewidth * res->dy) / (2 * res->len);
     ey = -(wc->linewidth * res->dx) / (2 * res->len);
     res->p1 = doublept(p0->x - ex ,p0->y - ey);
     res->p2 = doublept(p0->x + ex, p0->y + ey);
     res->q1 = doublept(q0->x - ex ,q0->y - ey);
     res->q2 = doublept(q0->x + ex, q0->y + ey);
+}
+
+static XPointDouble get_miter_point(struct lineinfo *prev, struct lineinfo *curr)
+{
+    if (curr->dx * prev->dy > curr->dy * prev->dx)
+        return intersect(&curr->p1, &curr->q1, &prev->p1, &prev->q1);
+    else
+        return intersect(&curr->p2, &curr->q2, &prev->p2, &prev->q2);
+}
+
+static double dotprod(struct lineinfo *u, struct lineinfo *v)
+{
+    return u->dx * v->dx + u->dy * v->dy;
+}
+                          
+static double anglediff(struct lineinfo *u, struct lineinfo *v)
+{
+    double det, s;
+    // https://math.stackexchange.com/questions/1858274/how-to-determine-if-two-lines-are-parallel-almost-parallel
+    det = u->dx * v->dy - u->dy * v->dx;
+    s = det / (u->len * v->len);
+    return asin(s);
+}
+
+static int too_straight(struct lineinfo *u, struct lineinfo *v)
+{
+    return fabs(anglediff(u, v)) < 0.1;
 }
 
 static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x, int *y, int *width, int *height)
@@ -2593,11 +2651,29 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
         if (i == 0) {
             x1 = x2 = li->p1.x;
             y1 = y2 = li->p1.y;
+
+            if (closed && wc->linejoin->i == JoinMiter && !too_straight(&lis[n - 1], &lis[i])) {
+                XPointDouble m;
+                m = get_miter_point(&lis[n - 1], &lis[i]);
+                if (m.x < x1) x1 = m.x;
+                if (m.x > x2) x2 = m.x;
+                if (m.y < y1) y1 = m.y;
+                if (m.y > y2) y2 = m.y;
+            }
+
         } else {
             if (li->p1.x < x1) x1 = li->p1.x;
             if (li->p1.x > x2) x2 = li->p1.x;
             if (li->p1.y < y1) y1 = li->p1.y;
             if (li->p1.y > y2) y2 = li->p1.y;
+            if (wc->linejoin->i == JoinMiter && !too_straight(&lis[i - 1], &lis[i])) {
+                XPointDouble m;
+                m = get_miter_point(&lis[i - 1], &lis[i]);
+                if (m.x < x1) x1 = m.x;
+                if (m.x > x2) x2 = m.x;
+                if (m.y < y1) y1 = m.y;
+                if (m.y > y2) y2 = m.y;
+            }
         }
         if (li->p2.x < x1) x1 = li->p2.x;
         if (li->p2.x > x2) x2 = li->p2.x;
@@ -2624,14 +2700,6 @@ static XPointDouble doublept(double x, double y)
     XPointDouble t;
     t.x = x;
     t.y = y;
-    return t;
-}
-
-static XPointDouble midpt(XPointDouble p1, XPointDouble p2)
-{
-    XPointDouble t;
-    t.x = (p1.x + p2.x) / 2.0;
-    t.y = (p1.y + p2.y) / 2.0;
     return t;
 }
 
@@ -2667,7 +2735,7 @@ static void traps(wbp w,
                   int op,
                   Picture src,
                   Picture dest,
-                  XPointDouble p1, double top, double x1, double x2,  double bottom, double x3, double x4, XPointDouble p2)
+                  XPointDouble *p1, double top, double x1, double x2,  double bottom, double x3, double x4, XPointDouble *p2)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -2675,18 +2743,18 @@ static void traps(wbp w,
     XTrapezoid trap;
     top = round(top);
     bottom = round(bottom);
-    tri[0] = triangle(p1.x,p1.y, x1,top, x2,top);
-    tri[1] = triangle(p2.x,p2.y, x3,bottom, x4,bottom);
+    tri[0] = triangle(p1->x,p1->y, x1,top, x2,top);
+    tri[1] = triangle(p2->x,p2->y, x3,bottom, x4,bottom);
     XRenderCompositeTriangles(wd->display, op, src, dest, 0,0,0, tri, 2);
     trap = trapezoid(top, x1, x2, bottom, x3, x4);
     XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, &trap, 1);
 }
 
-static void drawjoin(wbp w, 
-                     int op,
-                     Picture src,
-                     Picture dest,
-                     XPointDouble r)
+static void roundjoin(wbp w, 
+                      int op,
+                      Picture src,
+                      Picture dest,
+                      XPointDouble *r)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -2695,13 +2763,152 @@ static void drawjoin(wbp w,
     XTrapezoid *traps;
     int ntraps;
     radius = wc->linewidth / 2.0;
-    traps = mk_ellipse(r.x, r.y,
+    traps = mk_ellipse(r->x, r->y,
                        radius, radius,
                        &ntraps);
     XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, traps, ntraps);
     free(traps);
 }
 
+/*
+ * Given two points a and b on a straight line, extend the line d
+ * units from b.  Positive d means away from a :-
+ * 
+ *    a                          b    d>0  r     
+ *    +--------------------------+---------+
+ * 
+ * or
+ * 
+ *    a                 r  d<0   b     
+ *    +-----------------+--------+
+ * 
+ * where r is the result.
+ */
+static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
+{
+    double dx, dy, ex, ey, h;
+
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+
+    if (dy == 0) {
+        if (dx < 0)
+            return doublept(b->x - d, b->y);
+        else
+            return doublept(b->x + d, b->y);
+    }
+
+    h = hypot(dx, dy);
+    ex = dx * (h + d) / h;
+    ey = dy * (h + d) / h;
+
+    return doublept(a->x + ex, a->y + ey);
+}
+
+static void drawlineinfo1(wbp w,
+                          int op,
+                          Picture src,
+                          Picture dest,
+                          struct lineinfo *v)
+{
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    wcp wc = w->context;
+
+    if (NearZero(v->dx, 2) || NearZero(v->dy, 2)) {
+        XTrapezoid trap;
+        /*
+         * Almost vertical or horizontal, so draw as a single
+         * trapezoid, which should be almost a rectangle.
+         */
+        if (NearZero(v->dx, 2)) {
+            if (v->dy > 0)
+                trap = trapezoid(v->p1.y, v->p1.x, v->p2.x, v->q1.y, v->q1.x, v->q2.x);
+            else
+                trap = trapezoid(v->q2.y, v->q2.x, v->q1.x, v->p2.y, v->p2.x, v->p1.x);
+        } else { /* v->dy ~== 0 */
+            if (v->dx > 0)
+                trap = trapezoid(v->p2.y, v->p2.x, v->q2.x, v->p1.y, v->p1.x, v->q1.x);
+            else
+                trap = trapezoid(v->q1.y, v->q1.x, v->p1.x, v->q2.y, v->q2.x, v->p2.x);
+        }
+        XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, &trap, 1);
+    } else {
+        if (v->q1.y >= v->p1.y && v->p1.y >= v->q2.y) {
+            traps(w, op, src, dest, 
+                  &v->p2, 
+                  v->q2.y,  v->p2.x - (v->dy*v->dy)/v->dx, v->q2.x,
+                  v->p1.y,  v->p1.x, v->q1.x + (v->dy*v->dy)/v->dx,
+                  &v->q1);
+        } else if (v->q1.y >= v->q2.y && v->q2.y  >= v->p1.y) {
+            traps(w, op, src, dest, 
+                  &v->p2, 
+                  v->p1.y,  v->p1.x,v->p1.x + (wc->linewidth*v->len)/v->dy,
+                  v->q2.y,  v->q2.x - (wc->linewidth*v->len)/v->dy,v->q2.x,
+                  &v->q1);
+        } else if (v->q2.y >= v->q1.y && v->q1.y >= v->p2.y) {
+            traps(w, op, src, dest, 
+                  &v->p1, 
+                  v->p2.y,  v->p2.x - (wc->linewidth*v->len)/v->dy,v->p2.x,
+                  v->q1.y,  v->q1.x,v->q1.x + (wc->linewidth*v->len)/v->dy,
+                  &v->q2);
+        } else if (v->q2.y >= v->p2.y && v->p2.y >= v->q1.y) {
+            traps(w, op, src, dest, 
+                  &v->p1, 
+                  v->q1.y,  v->q1.x,v->p1.x - (v->dy*v->dy)/v->dx,
+                  v->p2.y,  v->q2.x + (v->dy*v->dy)/v->dx,v->p2.x,
+                  &v->q2);
+        } else if (v->p2.y >= v->q2.y && v->q2.y >= v->p1.y) {
+            traps(w, op, src, dest, 
+                  &v->q1, 
+                  v->p1.y,  v->q1.x + (v->dy*v->dy)/v->dx,v->p1.x,
+                  v->q2.y,  v->q2.x,v->p2.x - (v->dy*v->dy)/v->dx,
+                  &v->p2);
+        } else if (v->p2.y >= v->p1.y && v->p1.y >= v->q2.y) {
+            traps(w, op, src, dest, 
+                  &v->q1, 
+                  v->q2.y,  v->q2.x,v->q2.x - (wc->linewidth*v->len)/v->dy,
+                  v->p1.y,  v->p1.x + (wc->linewidth*v->len)/v->dy,v->p1.x,
+                  &v->p2);
+        } else if (v->p1.y >= v->p2.y && v->p2.y >= v->q1.y) {
+            traps(w, op, src, dest, 
+                  &v->q2, 
+                  v->q1.y,  v->q1.x + (wc->linewidth*v->len)/v->dy,v->q1.x,
+                  v->p2.y, v->p2.x, v->p2.x - (wc->linewidth*v->len)/v->dy,
+                  &v->p1);
+        } else if (v->p1.y >= v->q1.y && v->q1.y >= v->p2.y) {
+            traps(w, op, src, dest, 
+                  &v->q2, 
+                  v->p2.y,  v->p2.x,v->q2.x + (v->dy*v->dy)/v->dx,
+                  v->q1.y, v->p1.x - (v->dy*v->dy)/v->dx,v->q1.x, 
+                  &v->p1);
+        }
+    }
+}
+
+/*
+ * Return the intersection of the two straight lines defined by the
+ * pairs of points (a1,a2) and (b1,b2).
+ */
+static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
+{
+    double a, b, d;
+
+    a = (a1->x * a2->y - a1->y * a2->x);
+    b = (b1->x * b2->y - b1->y * b2->x);
+    d = ( (a1->x - a2->x) * (b1->y - b2->y) - (a1->y - a2->y) * (b1->x -b2->x) );
+
+    return doublept((a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d,
+                    (a * (b1->y- b2->y) - (a1->y - a2->y) * b ) / d);
+}
+
+static double distance(XPointDouble *a, XPointDouble *b)
+{
+    double dx, dy;
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+    return hypot(dy, dx);
+}
 
 static void drawlineinfo(wbp w,
                          int op,
@@ -2714,106 +2921,146 @@ static void drawlineinfo(wbp w,
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
-    if (NearZero(curr->dx, 2) || NearZero(curr->dy, 2)) {
-        XTrapezoid trap;
+    XPointDouble p0, q0;
+    int mod = 0;
+
+    if (wc->linewidth > 1) {
+        double d;
+
         /*
-         * Almost vertical or horizontal, so draw as a single
-         * trapezoid, which should be almost a rectangle.
+         * If the adjacent segments are almost in a line with this
+         * one, extend the end(s) slightly to avoid artifacts.  This
+         * does cause some double writing of joining pixels, which
+         * does cause its own artifacts however.  The dotprod()
+         * function indicates whether the segments are aligned or
+         * simply overlapping.
          */
-        if (NearZero(curr->dx, 2)) {
-            if (curr->dy > 0)
-                trap = trapezoid(curr->p1.y, curr->p1.x, curr->p2.x, curr->q1.y, curr->q1.x, curr->q2.x);
-            else
-                trap = trapezoid(curr->q2.y, curr->q2.x, curr->q1.x, curr->p2.y, curr->p2.x, curr->p1.x);
-        } else { /* curr->dy ~== 0 */
-            if (curr->dx > 0)
-                trap = trapezoid(curr->p2.y, curr->p2.x, curr->q2.x, curr->p1.y, curr->p1.x, curr->q1.x);
-            else
-                trap = trapezoid(curr->q1.y, curr->q1.x, curr->p1.x, curr->q2.y, curr->q2.x, curr->p2.x);
+        p0 = curr->p0;
+        q0 = curr->q0;
+        if (prev && too_straight(prev, curr) && dotprod(prev, curr) > 0) {
+            /* This is a way to increase the nudge slightly with
+             * increasing angle and line width. */
+            d = 0.5 + distance(&prev->q1, &curr->p1) / 2;
+            p0 = nudge(&q0, &p0, d);
+            mod = 1;
         }
-        XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, &trap, 1);
-    } else {
-        if (curr->q1.y > curr->p1.y && curr->p1.y > curr->q2.y) {
-            traps(w, op, src, dest, 
-                  curr->p2, 
-                  curr->q2.y,  curr->p2.x - (curr->dy*curr->dy)/curr->dx, curr->q2.x,
-                  curr->p1.y,  curr->p1.x, curr->q1.x + (curr->dy*curr->dy)/curr->dx,
-                  curr->q1);
-        } else if (curr->q1.y > curr->q2.y && curr->q2.y  > curr->p1.y) {
-            traps(w, op, src, dest, 
-                  curr->p2, 
-                  curr->p1.y,  curr->p1.x,curr->p1.x + (wc->linewidth*curr->len)/curr->dy,
-                  curr->q2.y,  curr->q2.x - (wc->linewidth*curr->len)/curr->dy,curr->q2.x,
-                  curr->q1);
-        } else if (curr->q2.y > curr->q1.y && curr->q1.y > curr->p2.y) {
-            traps(w, op, src, dest, 
-                  curr->p1, 
-                  curr->p2.y,  curr->p2.x - (wc->linewidth*curr->len)/curr->dy,curr->p2.x,
-                  curr->q1.y,  curr->q1.x,curr->q1.x + (wc->linewidth*curr->len)/curr->dy,
-                  curr->q2);
-        } else if (curr->q2.y > curr->p2.y && curr->p2.y > curr->q1.y) {
-            traps(w, op, src, dest, 
-                  curr->p1, 
-                  curr->q1.y,  curr->q1.x,curr->p1.x - (curr->dy*curr->dy)/curr->dx,
-                  curr->p2.y,  curr->q2.x + (curr->dy*curr->dy)/curr->dx,curr->p2.x,
-                  curr->q2);
-        } else if (curr->p2.y > curr->q2.y && curr->q2.y > curr->p1.y) {
-            traps(w, op, src, dest, 
-                  curr->q1, 
-                  curr->p1.y,  curr->q1.x + (curr->dy*curr->dy)/curr->dx,curr->p1.x,
-                  curr->q2.y,  curr->q2.x,curr->p2.x - (curr->dy*curr->dy)/curr->dx,
-                  curr->p2);
-        } else if (curr->p2.y > curr->p1.y && curr->p1.y > curr->q2.y) {
-            traps(w, op, src, dest, 
-                  curr->q1, 
-                  curr->q2.y,  curr->q2.x,curr->q2.x - (wc->linewidth*curr->len)/curr->dy,
-                  curr->p1.y,  curr->p1.x + (wc->linewidth*curr->len)/curr->dy,curr->p1.x,
-                  curr->p2);
-        } else if (curr->p1.y > curr->p2.y && curr->p2.y > curr->q1.y) {
-            traps(w, op, src, dest, 
-                  curr->q2, 
-                  curr->q1.y,  curr->q1.x + (wc->linewidth*curr->len)/curr->dy,curr->q1.x,
-                  curr->p2.y, curr->p2.x, curr->p2.x - (wc->linewidth*curr->len)/curr->dy,
-                  curr->p1);
-        } else if (curr->p1.y > curr->q1.y && curr->q1.y > curr->p2.y) {
-            traps(w, op, src, dest, 
-                  curr->q2, 
-                  curr->p2.y,  curr->p2.x,curr->q2.x + (curr->dy*curr->dy)/curr->dx,
-                  curr->q1.y, curr->p1.x - (curr->dy*curr->dy)/curr->dx,curr->q1.x, 
-                  curr->p1);
+        if (next && too_straight(curr, next) && dotprod(curr, next) > 0) {
+            d = 0.5 + distance(&curr->q1, &next->p1) / 2;
+            q0 = nudge(&p0, &q0, d);
+            mod += 2;
         }
     }
+    if (mod) {
+        struct lineinfo li;
+        getlineinfo(wc, &p0, &q0, &li);
+        drawlineinfo1(w, op, src, dest, &li);
+    } else
+        drawlineinfo1(w, op, src, dest, curr);
 
-    if (prev) {
-        XPointDouble r = midpt(curr->p1, curr->p2);
-        if (wc->linewidth == 1) {
-            /*
-             * This provides a solid pixel in the corner between
-             * perpendicular horizontal/vertical single pixel width
-             * lines; without it the corner would be transluscent due
-             * to the 0.5 pixel shift at each end.
-             */
-            if ((curr->dy == 0 && prev->dx == 0) || (curr->dx == 0 && prev->dy == 0))
-                XRenderComposite(wd->display,
-                                 op,
-                                 src,          /* src */
-                                 None,         /* mask */
-                                 dest,         /* dest */
-                                 0,0,          /* src x,y */
-                                 0,0,          /* mask x,y */
-                                 r.x, r.y,     /* dst x,y */
-                                 1, 1);
+    if (!(mod & 1)) {             /* Check if we've already drawn the join with prev
+                                   * using a "nudge" */
+        if (prev) {
+            if (wc->linewidth == 1) {
+                /*
+                 * This provides a solid pixel in the corner between
+                 * perpendicular horizontal/vertical single pixel width
+                 * lines; without it the corner would be transluscent due
+                 * to the 0.5 pixel shift at each end.
+                 */
+                if ((curr->dy == 0 && prev->dx == 0) || (curr->dx == 0 && prev->dy == 0))
+                    XRenderComposite(wd->display,
+                                     op,
+                                     src,          /* src */
+                                     None,         /* mask */
+                                     dest,         /* dest */
+                                     0,0,          /* src x,y */
+                                     0,0,          /* mask x,y */
+                                     curr->p0.x,   /* dst x,y */
+                                     curr->p0.y,
+                                     1, 1);
+            } else {
+                if (wc->linejoin->i == JoinBevel || wc->linejoin->i == JoinMiter) {
+                    if (too_straight(prev,curr)) {
+                        /* Two lines almost straight but pointing in
+                         * opposite directions (ie: almost overlapping);
+                         * do nothing. */
+                    } else {
+                        XTriangle t[5];
+                        XPointDouble A1, A2, B1, B2, I;
+                        double d;
+                        int n;
+
+                        /*
+                         *                  A2      A1
+                         *                  /\      /\
+                         *                 /   \   /   \
+                         *       nudged A2/      \/      \  nudged A1
+                         *               /       / \       \
+                         *              /       /    \       \
+                         *             /       /     /         \
+                         *            /         \   /            \
+                         *           /  prev      \/ I   curr     B1
+                         *         B2             / \
+                         *                       /   \
+                         * 
+                         */
+
+                        if (curr->dx * prev->dy > curr->dy * prev->dx) {
+                            A1 = curr->p1;
+                            A2 = prev->q1;
+                            B1 = curr->q1;
+                            B2 = prev->p1;
+                            I = intersect(&curr->p2, &curr->q2, &prev->p2, &prev->q2);
+                        } else {
+                            A1 = curr->p2;
+                            A2 = prev->q2;
+                            B1 = curr->q2;
+                            B2 = prev->p2;
+                            I = intersect(&curr->p1, &curr->q1, &prev->p1, &prev->q1);
+                        }
+
+                        n = 0;
+
+                        /*
+                         * Firstly draw the triangle A1,A2,I.  This draws
+                         * the bevel correctly, but may leave artifacts.
+                         */
+                        t[n++] = triangle(I.x, I.y, A1.x, A1.y, A2.x, A2.y);
+
+                        /*
+                         * Nudge A1 and A2 away from the bevel, and draw
+                         * the triangle again; this should overwrite the
+                         * artifacts.  Smaller angles need a slightly
+                         * larger nudge.
+                         */
+                        d = 1.0 + 0.05 / fabs(anglediff(prev, curr));
+                        A1 = nudge(&B1, &A1, -d);
+                        A2 = nudge(&B2, &A2, -d);
+                        t[n++] = triangle(I.x, I.y, A1.x, A1.y, A2.x, A2.y);
+
+                        /*
+                         * The miter point is drawn from the nudged points to avoid artifacts.
+                         */
+                        if (wc->linejoin->i == JoinMiter) {
+                            XPointDouble m = get_miter_point(prev, curr);
+                            t[n++] = triangle(m.x, m.y, A1.x, A1.y, A2.x, A2.y);
+                        }
+
+                        XRenderCompositeTriangles(wd->display, op, src, dest, 0,0,0, t, n);
+                    }
+                } else {
+                    roundjoin(w, op, src, dest, &curr->p0);
+                }
+            }
         } else {
-            drawjoin(w, op, src, dest, r);
+            if (wc->linewidth > 1 && wc->lineend->i == EndRound)
+                roundjoin(w, op, src, dest, &curr->p0);
         }
-    } else {
-        if (wc->linewidth > 1 && wc->linestyle->i == EndDisc)
-            drawjoin(w, op, src, dest, midpt(curr->p1, curr->p2));
     }
 
     if (!next) {
-        if (wc->linewidth > 1 && wc->linestyle->i == EndDisc)
-            drawjoin(w, op, src, dest, midpt(curr->q1, curr->q2));
+        if (wc->linewidth > 1 && wc->lineend->i == EndRound)
+            roundjoin(w, op, src, dest, &curr->q0);
     }
 }
 
@@ -2871,12 +3118,28 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     if (nlis == 0)
         return;
     calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
+
+    if (x < 0)  { 
+        width += x; 
+        x = 0; 
+    }
+    if (y < 0)  { 
+        height += y; 
+        y = 0; 
+    }
+    if (x + width > ws->width)
+        width = ws->width - x; 
+    if (y + height > ws->height)
+        height = ws->height - y; 
+
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask = getmask(wd, width, height);
         for (i = 0; i < nlis; ++i) {
+            lis[i].p0.x -= x; lis[i].p0.y -= y;
             lis[i].p1.x -= x; lis[i].p1.y -= y;
             lis[i].p2.x -= x; lis[i].p2.y -= y;
+            lis[i].q0.x -= x; lis[i].q0.y -= y;
             lis[i].q1.x -= x; lis[i].q1.y -= y;
             lis[i].q2.x -= x; lis[i].q2.y -= y;
         }
@@ -3851,7 +4114,8 @@ static wcp clonecontext(wcp wc)
     if (wc->pattern)
         rv->pattern = link_sharedpicture(wc->pattern);
     rv->font = wc->font;
-    rv->linestyle = wc->linestyle;
+    rv->lineend = wc->lineend;
+    rv->linejoin = wc->linejoin;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
     return rv;
