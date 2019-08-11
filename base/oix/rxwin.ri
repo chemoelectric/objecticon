@@ -2636,7 +2636,7 @@ static double anglediff(struct lineinfo *u, struct lineinfo *v)
     return asin(s);
 }
 
-static int too_straight(struct lineinfo *u, struct lineinfo *v)
+static int almost_straight(struct lineinfo *u, struct lineinfo *v)
 {
     return fabs(anglediff(u, v)) < 0.1;
 }
@@ -2652,7 +2652,7 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
             x1 = x2 = li->p1.x;
             y1 = y2 = li->p1.y;
 
-            if (closed && wc->linejoin->i == JoinMiter && !too_straight(&lis[n - 1], &lis[i])) {
+            if (closed && wc->linejoin->i == JoinMiter && !almost_straight(&lis[n - 1], &lis[i])) {
                 XPointDouble m;
                 m = get_miter_point(&lis[n - 1], &lis[i]);
                 if (m.x < x1) x1 = m.x;
@@ -2666,7 +2666,7 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
             if (li->p1.x > x2) x2 = li->p1.x;
             if (li->p1.y < y1) y1 = li->p1.y;
             if (li->p1.y > y2) y2 = li->p1.y;
-            if (wc->linejoin->i == JoinMiter && !too_straight(&lis[i - 1], &lis[i])) {
+            if (wc->linejoin->i == JoinMiter && !almost_straight(&lis[i - 1], &lis[i])) {
                 XPointDouble m;
                 m = get_miter_point(&lis[i - 1], &lis[i]);
                 if (m.x < x1) x1 = m.x;
@@ -2937,14 +2937,14 @@ static void drawlineinfo(wbp w,
          */
         p0 = curr->p0;
         q0 = curr->q0;
-        if (prev && too_straight(prev, curr) && dotprod(prev, curr) > 0) {
+        if (prev && almost_straight(prev, curr) && dotprod(prev, curr) > 0) {
             /* This is a way to increase the nudge slightly with
              * increasing angle and line width. */
             d = 0.5 + distance(&prev->q1, &curr->p1) / 2;
             p0 = nudge(&q0, &p0, d);
             mod = 1;
         }
-        if (next && too_straight(curr, next) && dotprod(curr, next) > 0) {
+        if (next && almost_straight(curr, next) && dotprod(curr, next) > 0) {
             d = 0.5 + distance(&curr->q1, &next->p1) / 2;
             q0 = nudge(&p0, &q0, d);
             mod += 2;
@@ -2980,13 +2980,14 @@ static void drawlineinfo(wbp w,
                                      1, 1);
             } else {
                 if (wc->linejoin->i == JoinBevel || wc->linejoin->i == JoinMiter) {
-                    if (too_straight(prev,curr)) {
+                    if (almost_straight(prev,curr)) {
                         /* Two lines almost straight but pointing in
                          * opposite directions (ie: almost overlapping);
                          * do nothing. */
                     } else {
                         XTriangle t[5];
-                        XPointDouble A1, A2, B1, B2, I;
+                        XPointDouble *A1, *A2, *B1, *B2, *C1, *C2, *D1, *D2;
+                        XPointDouble NA1, NA2, I;
                         double d;
                         int n;
 
@@ -2994,38 +2995,57 @@ static void drawlineinfo(wbp w,
                          *                  A2      A1
                          *                  /\      /\
                          *                 /   \   /   \
-                         *       nudged A2/      \/      \  nudged A1
+                         *       nudged A2/      \/P0    \  nudged A1
                          *               /       / \       \
                          *              /       /    \       \
-                         *             /       /     /         \
-                         *            /         \   /            \
-                         *           /  prev      \/ I   curr     B1
+                         *             /     C1/     /C2       \
+                         *            /         \ I /            \
+                         *           /  prev      \/     curr     B1
                          *         B2             / \
-                         *                       /   \
-                         * 
+                         *                       /   \ 
+                         *                     D2     D1
                          */
 
                         if (curr->dx * prev->dy > curr->dy * prev->dx) {
-                            A1 = curr->p1;
-                            A2 = prev->q1;
-                            B1 = curr->q1;
-                            B2 = prev->p1;
-                            I = intersect(&curr->p2, &curr->q2, &prev->p2, &prev->q2);
+                            A1 = &curr->p1;
+                            A2 = &prev->q1;
+                            B1 = &curr->q1;
+                            B2 = &prev->p1;
+                            C1 = &curr->p2;
+                            C2 = &prev->q2;
+                            D1 = &curr->q2;
+                            D2 = &prev->p2;
                         } else {
-                            A1 = curr->p2;
-                            A2 = prev->q2;
-                            B1 = curr->q2;
-                            B2 = prev->p2;
-                            I = intersect(&curr->p1, &curr->q1, &prev->p1, &prev->q1);
+                            A1 = &curr->p2;
+                            A2 = &prev->q2;
+                            B1 = &curr->q2;
+                            B2 = &prev->p2;
+                            C1 = &curr->p1;
+                            C2 = &prev->q1;
+                            D1 = &curr->q1;
+                            D2 = &prev->p1;
                         }
 
                         n = 0;
 
                         /*
+                         * Calculate the lower point of the bevel fill
+                         * triangle.  We have to check if I lies
+                         * outside the segments; this may be the case
+                         * if the angle between them is small.  In
+                         * that case, fall back to using P0 as an
+                         * alternative, although this may produce
+                         * aliasing artifacts.
+                         */
+                        I = intersect(C1, D1, C2, D2);
+                        if (distance(&I, C1) >= curr->len && distance(&I, C2) >= prev->len)
+                            I = curr->p0;
+
+                        /*
                          * Firstly draw the triangle A1,A2,I.  This draws
                          * the bevel correctly, but may leave artifacts.
                          */
-                        t[n++] = triangle(I.x, I.y, A1.x, A1.y, A2.x, A2.y);
+                        t[n++] = triangle(I.x, I.y, A1->x, A1->y, A2->x, A2->y);
 
                         /*
                          * Nudge A1 and A2 away from the bevel, and draw
@@ -3034,16 +3054,16 @@ static void drawlineinfo(wbp w,
                          * larger nudge.
                          */
                         d = 1.0 + 0.05 / fabs(anglediff(prev, curr));
-                        A1 = nudge(&B1, &A1, -d);
-                        A2 = nudge(&B2, &A2, -d);
-                        t[n++] = triangle(I.x, I.y, A1.x, A1.y, A2.x, A2.y);
+                        NA1 = nudge(B1, A1, -d);
+                        NA2 = nudge(B2, A2, -d);
+                        t[n++] = triangle(I.x, I.y, NA1.x, NA1.y, NA2.x, NA2.y);
 
                         /*
                          * The miter point is drawn from the nudged points to avoid artifacts.
                          */
                         if (wc->linejoin->i == JoinMiter) {
                             XPointDouble m = get_miter_point(prev, curr);
-                            t[n++] = triangle(m.x, m.y, A1.x, A1.y, A2.x, A2.y);
+                            t[n++] = triangle(m.x, m.y, NA1.x, NA1.y, NA2.x, NA2.y);
                         }
 
                         XRenderCompositeTriangles(wd->display, op, src, dest, 0,0,0, t, n);
