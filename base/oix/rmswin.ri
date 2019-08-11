@@ -1380,7 +1380,7 @@ static wcp alccontext(wbp w)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->drawop = stringint_lookup(drawops, "over");
-    wc->linejoin = stringint_lookup(linejoins, "bevel");
+    wc->linejoin = stringint_lookup(linejoins, "round");
     wc->lineend = stringint_lookup(lineends, "square");
     wc->linewidth = 1.0;
     wc->font = default_font;
