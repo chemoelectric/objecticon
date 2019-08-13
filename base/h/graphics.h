@@ -18,11 +18,6 @@ struct triangle {
     struct point p1, p2, p3;
 };
 
-struct trapezoid {
-    double top, x1, x2;
-    double bottom, x3, x4;
-};
-
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
 

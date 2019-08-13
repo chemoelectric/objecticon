@@ -89,10 +89,13 @@ static Brush *get_fg_brush(gb_Draw *d)
 static Pen *get_fg_pen(gb_Draw *d, Brush *b)
 {
     Pen *p = new Pen(b, d->linewidth);
-    if (d->linestyle == EndDisc) {
-        p->SetLineJoin(LineJoinRound);
+    if (d->lineend == EndRound) {
         p->SetEndCap(LineCapRound);
         p->SetStartCap(LineCapRound);
+    }
+    switch (d->linejoin) {
+        case JoinRound: p->SetLineJoin(LineJoinRound); break;
+        case JoinBevel: p->SetLineJoin(LineJoinBevel); break;
     }
     return p;
 }
@@ -308,18 +311,19 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     Pen *p = get_fg_pen(d, b);
-    g->DrawArc(p, 
-               (REAL)cx - (REAL)rx,
-               cy - ry,
-               2 * rx,
-               2 * ry,
-               to_degrees(angle1),
-               to_degrees(angle2)); 
-    gb_pix_to_win(d, 
-                  cx - rx - d->linewidth, 
-                  cy - ry - d->linewidth, 
-                  2 * rx + 2 * d->linewidth, 
-                  2 * ry + 2 * d->linewidth);
+    GraphicsPath path;
+    Rect bound;
+    path.AddArc((REAL)cx - (REAL)rx,
+                cy - ry,
+                2 * rx,
+                2 * ry,
+                to_degrees(angle1),
+                to_degrees(angle2)); 
+
+    g->DrawPath(p, &path);
+    path.GetBounds(&bound, NULL, p);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete p;
     delete b;
     delete g;
@@ -330,18 +334,19 @@ void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
 {
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
-    g->FillPie(b, 
-               (REAL)cx - (REAL)rx,
-               cy - ry,
-               2 * rx,
-               2 * ry,
-               to_degrees(angle1),
-               to_degrees(angle2)); 
-    gb_pix_to_win(d, 
-                  cx - rx - 4, 
-                  cy - ry - 4, 
-                  2 * rx + 8, 
-                  2 * ry + 8);
+    GraphicsPath path;
+    Rect bound;
+    path.AddPie((REAL)cx - (REAL)rx,
+                cy - ry,
+                2 * rx,
+                2 * ry,
+                to_degrees(angle1),
+                to_degrees(angle2)); 
+
+    g->FillPath(b, &path);
+    path.GetBounds(&bound, NULL, NULL);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete b;
     delete g;
 }
@@ -359,20 +364,24 @@ static PointF *convert_points(struct point *points0, int npoints)
 }
 
 extern "C"
-void gb_drawlines(gb_Draw *d, struct point *points0, int npoints,
-                  int ex_x, int ex_y, int ex_width, int ex_height)
+void gb_drawlines(gb_Draw *d, struct point *points0, int npoints)
 {
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     Pen *p = get_fg_pen(d, b);
     PointF *points = convert_points(points0, npoints);
+    GraphicsPath path;
+    Rect bound;
     if (draw_debug) dbg("doing %d points\n",npoints);
     if (points0[0].x == points0[npoints - 1].x &&
         points0[0].y == points0[npoints - 1].y)
-        g->DrawPolygon(p, points, npoints);
+        path.AddPolygon(points, npoints);
     else
-        g->DrawLines(p, points, npoints);
-    gb_pix_to_win(d, ex_x, ex_y, ex_width, ex_height);
+        path.AddLines(points, npoints);
+    g->DrawPath(p, &path);
+    path.GetBounds(&bound, NULL, p);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete[] points;
     delete p;
     delete b;
@@ -380,14 +389,18 @@ void gb_drawlines(gb_Draw *d, struct point *points0, int npoints,
 }
 
 extern "C"
-void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints,
-                      int ex_x, int ex_y, int ex_width, int ex_height)
+void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints)
 {
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     PointF *points = convert_points(points0, npoints);
-    g->FillPolygon(b, points, npoints);
-    gb_pix_to_win(d, ex_x, ex_y, ex_width, ex_height);
+    GraphicsPath path;
+    Rect bound;
+    path.AddPolygon(points, npoints);
+    g->FillPath(b, &path);
+    path.GetBounds(&bound, NULL, NULL);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete[] points;
     delete b;
     delete g;

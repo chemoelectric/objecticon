@@ -152,7 +152,7 @@ procedure normalize_wattrib(key, val)
          return real(val)
 
       WAttrib.FG | WAttrib.BG | WAttrib.DRAW_OP | WAttrib.ICON | WAttrib.FONT | WAttrib.LABEL | 
-         WAttrib.LINE_STYLE:
+         WAttrib.LINE_JOIN | WAttrib.LINE_END:
          return best_text(val)
    }
 end

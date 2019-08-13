@@ -14,11 +14,16 @@ typedef struct gb_Draw {
    gb_Bitmap *pattern;
    double linewidth;
    int drawop;
-   int linestyle;
+   int linejoin;
+   int lineend;
 } gb_Draw;
 
-#define EndDisc 1
+#define EndRound 1
 #define EndSquare 2
+
+#define JoinBevel    1
+#define JoinMiter    2
+#define JoinRound    3
 
 #ifdef __cplusplus
 struct point {
@@ -73,10 +78,8 @@ void gb_erasearea(gb_Draw *d, int x, int y, int width, int height);
 void gb_drawstring(gb_Draw *d, int x, int y, WCHAR *str, int length);
 void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2);
 void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2);
-void gb_drawlines(gb_Draw *d, struct point *points, int npoints,
-                      int ex_x, int ex_y, int ex_width, int ex_height);
-void gb_fillpolygon(gb_Draw *d, struct point *points, int npoints,
-                      int ex_x, int ex_y, int ex_width, int ex_height);
+void gb_drawlines(gb_Draw *d, struct point *points, int npoints);
+void gb_fillpolygon(gb_Draw *d, struct point *points, int npoints);
 float gb_textwidth(gb_Draw *d, WCHAR *str, int length);
 void gb_do_paint(HWND hwnd, gb_Bitmap *pix);
 void gb_copyarea(gb_Bitmap *src, int x, int y, int width, int height, gb_Draw *d, int x2, int y2);

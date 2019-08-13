@@ -1554,10 +1554,17 @@ class Component(Rect,XYAlign,Connectable)
    end
 
    #
-   # Set the `WAttrib.LINE_STYLE` attribute; see `set_wattrib()`.
+   # Set the `WAttrib.LINE_END` attribute; see `set_wattrib()`.
    #
-   public set_line_style(v)
-      return set_wattrib(WAttrib.LINE_STYLE, v)
+   public set_line_end(v)
+      return set_wattrib(WAttrib.LINE_END, v)
+   end
+
+   #
+   # Set the `WAttrib.LINE_JOIN` attribute; see `set_wattrib()`.
+   #
+   public set_line_join(v)
+      return set_wattrib(WAttrib.LINE_JOIN, v)
    end
 
    #

@@ -310,7 +310,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void drawlines       (wbp w, struct point *points, int npoints);
    void drawrectangle   (wbp w, int x, int y, int width, int height, int thick);
    void fillpolygon     (wbp w, struct point *pts, int npts);
-   void filltrapezoids  (wbp w, struct trapezoid *traps, int ntraps);
    void filltriangles   (wbp w, struct triangle *tris, int ntris);
    void drawstring      (wbp w, int x, int y, dptr str);
    int  textwidth       (wbp w, dptr str);
@@ -337,7 +336,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
 #endif
 
 void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height);
-void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height);
 void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height);
 void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
 int is_hidden(wbp w);

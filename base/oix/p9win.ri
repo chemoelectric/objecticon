@@ -374,7 +374,7 @@ wbp wopen(char *display)
     wc->leading = defaultleading;
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linewidth = 1;
-    wc->linejoin = stringint_lookup(linejoins, "bevel");
+    wc->linejoin = stringint_lookup(linejoins, "round");
     wc->lineend = stringint_lookup(lineends, "square");
 
     w->context = wc;
@@ -978,39 +978,6 @@ static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height)
               ZP, 
               wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
-}
-
-void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    int x, y, width, height, i;
-    trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
-    clip(w);
-    if (needmask(wc, 1)) {
-        Image *mask = getmask(width, height);
-        for (i = 0; i < ntraps; ++i) {
-            Point p[4];
-            p[0] = Pt(traps[i].x1 - x, traps[i].top - y);
-            p[1] = Pt(traps[i].x2 - x, traps[i].top - y);
-            p[2] = Pt(traps[i].x4 - x, traps[i].bottom - y);
-            p[3] = Pt(traps[i].x3 - x, traps[i].bottom - y);
-            fillpolyop(mask, p, 4, 0, white->i, ZP, SoverD);
-        }
-        maskimage2(w, mask, x, y, width, height);
-        freeimage(mask);
-    } else {
-        for (i = 0; i < ntraps; ++i) {
-            Point p[4];
-            p[0] = Pt(traps[i].x1, traps[i].top);
-            p[1] = Pt(traps[i].x2, traps[i].top);
-            p[2] = Pt(traps[i].x4, traps[i].bottom);
-            p[3] = Pt(traps[i].x3, traps[i].bottom);
-            fillpolyop(ws->pix, p, 4, 0, get_draw_img(wc), ZP, wc->drawop->i);
-        }
-        pix_to_win(ws, x, y, width, height);
-    }
-    flushimage(display, 1);
 }
 
 void filltriangles(wbp w, struct triangle *tris, int ntris)

@@ -669,12 +669,15 @@ class Dialog(Component)
       local c, data, target
       target := l[5]
       if c := member(selections, l[4]) then {
-         if target == Selection.TARGETS_TARGET then {
-            data := []
-            every put(data, c.get_targets())
-         } else {
-            if c.get_targets() == target then 
-               data := c.get_content(target)
+         data := case target of {
+            Selection.TARGETS_TARGET:
+               ipl.pdco.List{ c.get_targets() | Selection.TIMESTAMP_TARGET }
+            Selection.TIMESTAMP_TARGET:
+               c.get_timestamp()
+            default: {
+               if c.get_targets() == target then 
+                  c.get_content(target)
+            }
          }
       }
       win.send_selection_response(l[2], l[3], l[4], l[5], l[6], data)
@@ -1745,14 +1748,13 @@ abstract class TextSelectionOwner(SelectionOwner)
    protected abstract get_text()
 
    public override get_targets()
-      suspend Selection.TIMESTAMP_TARGET | Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
+      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
    end
 
    public override get_content(target)
       return case target of {
          Selection.STRING_TARGET: text_convert(get_text(), "string")
          Selection.UTF8_STRING_TARGET: text_convert(get_text(), "ucs")
-         Selection.TIMESTAMP_TARGET: get_timestamp()
       }
    end
 end
@@ -1789,8 +1791,6 @@ class URLSelectionOwner(SelectionOwner)
             text_guess_convert(String{ (!urls).str(), Files.EOL }, "string")
          Selection.UTF8_STRING_TARGET:
             text_guess_convert(String{ (!urls).str(), Files.EOL }, "ucs")
-         Selection.TIMESTAMP_TARGET:
-            get_timestamp()
       }
    end
 
@@ -1798,7 +1798,7 @@ class URLSelectionOwner(SelectionOwner)
    end
 
    public override get_targets()
-      suspend Selection.TIMESTAMP_TARGET | Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | Selection.URI_LIST_TARGET
+      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | Selection.URI_LIST_TARGET
    end
 
    public new(urls)
