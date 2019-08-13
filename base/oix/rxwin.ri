@@ -77,7 +77,6 @@ static void pix_to_win(wsp ws, int x, int y, int width, int height);
 static void synch_pix_and_win(wsp ws, int x, int y, int width, int height);
 static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
-static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
 static int needmask(wcp wc, int overlap);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
@@ -2823,18 +2822,6 @@ static XPointDouble doublept(double x, double y)
     return t;
 }
 
-static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3)
-{
-    XTriangle t;
-    t.p1.x = XDoubleToFixed(x1);
-    t.p1.y = XDoubleToFixed(y1);
-    t.p2.x = XDoubleToFixed(x2);
-    t.p2.y = XDoubleToFixed(y2);
-    t.p3.x = XDoubleToFixed(x3);
-    t.p3.y = XDoubleToFixed(y3);
-    return t;
-}
-
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4)
 {
     XTrapezoid t;
@@ -3233,86 +3220,47 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     free(xpoints);
 }
 
-void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
-{
-    XTrapezoid *xtraps;
-    wsp ws = w->window;
-    wcp wc = w->context;
-    wdp wd = ws->display;
-    int x, y, width, height, i;
-
-    trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
-    xtraps = safe_malloc(ntraps * sizeof(XTrapezoid));
-    clip(w);
-    if (needmask(wc, 1)) {
-        Picture mask;
-        for (i = 0; i < ntraps; ++i)
-            xtraps[i] = trapezoid(traps[i].top - y, traps[i].x1 - x, traps[i].x2 - x,
-                                  traps[i].bottom - y, traps[i].x3 - x, traps[i].x4 - x);
-        mask = getmask(wd, width, height);
-        XRenderCompositeTrapezoids(wd->display, 
-                                   PictOpOver,
-                                   wd->white->brush,
-                                   mask,
-                                   0, 0, 0,
-                                   xtraps, ntraps);
-        maskpic2(w, mask, x, y, width, height);
-        XRenderFreePicture(wd->display, mask);
-    } else {
-        for (i = 0; i < ntraps; ++i)
-            xtraps[i] = trapezoid(traps[i].top, traps[i].x1, traps[i].x2,
-                                  traps[i].bottom, traps[i].x3, traps[i].x4);
-        XRenderCompositeTrapezoids(wd->display, 
-                                   wc->drawop->i,
-                                   get_draw_picture(wc),
-                                   ws->ppic, 
-                                   0, 0, 0,
-                                   xtraps, ntraps);
-        pix_to_win(ws, x, y, width, height);
-    }
-    free(xtraps);
-}
-
 void filltriangles(wbp w, struct triangle *tris, int ntris)
 {
-    XTriangle *xtris;
+    struct traplist tl;
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
     int x, y, width, height, i;
 
     triangles_extent(tris, ntris, &x, &y, &width, &height);
-    xtris = safe_malloc(ntris * sizeof(XTrapezoid));
+    init_traplist(&tl, 2 * ntris);
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
-        for (i = 0; i < ntris; ++i)
-            xtris[i] = triangle(tris[i].p1.x - x, tris[i].p1.y - y,
-                                tris[i].p2.x - x, tris[i].p2.y - y, 
-                                tris[i].p3.x - x, tris[i].p3.y - y);
+        for (i = 0; i < ntris; ++i) {
+            tris[i].p1.x -= x; tris[i].p1.y -= y;
+            tris[i].p2.x -= x; tris[i].p2.y -= y;
+            tris[i].p3.x -= x; tris[i].p3.y -= y;
+            add_tri(&tl,
+                    (XPointDouble *)&tris[i].p1,
+                    (XPointDouble *)&tris[i].p2,
+                    (XPointDouble *)&tris[i].p3);
+        }
         mask = getmask(wd, width, height);
-        XRenderCompositeTriangles(wd->display, 
-                                  PictOpOver,
-                                  wd->white->brush,
-                                  mask,
-                                  0, 0, 0,
-                                  xtris, ntris);
+        draw_traplist(&tl,
+                      wd->display, PictOpOver, wd->white->brush,  mask);
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
         for (i = 0; i < ntris; ++i)
-            xtris[i] = triangle(tris[i].p1.x, tris[i].p1.y,
-                                tris[i].p2.x, tris[i].p2.y, 
-                                tris[i].p3.x, tris[i].p3.y);
-        XRenderCompositeTriangles(wd->display, 
-                                  wc->drawop->i,
-                                  get_draw_picture(wc),
-                                  ws->ppic, 
-                                  0, 0, 0,
-                                  xtris, ntris);
+            add_tri(&tl,
+                    (XPointDouble *)&tris[i].p1,
+                    (XPointDouble *)&tris[i].p2,
+                    (XPointDouble *)&tris[i].p3);
+        draw_traplist(&tl,
+                      wd->display,
+                      wc->drawop->i,
+                      get_draw_picture(wc),
+                      ws->ppic);
         pix_to_win(ws, x, y, width, height);
     }
-    free(xtris);
+    free_traplist(&tl);
 }
 
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)

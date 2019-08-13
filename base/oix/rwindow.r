@@ -1763,29 +1763,6 @@ void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *wid
     range_extent(x1, y1, x2, y2, x, y, width, height);
 }
 
-void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height)
-{
-    int i;
-    double x1, y1, x2, y2;
-    if (ntraps == 0) {
-        *x = *y = *width = *height = 0;
-        return;
-    }
-    y1 = traps[0].top;
-    y2 = traps[0].bottom;
-    x1 = Min(traps[0].x1, traps[0].x3);
-    x2 = Max(traps[0].x2, traps[0].x4);
-    for (i = 1; i < ntraps; ++i) {
-        if (traps[i].top < y1) y1 = traps[i].top;
-        if (traps[i].bottom > y2) y2 = traps[i].bottom;
-        if (traps[i].x1 < x1) x1 = traps[i].x1;
-        if (traps[i].x3 < x1) x1 = traps[i].x3;
-        if (traps[i].x2 > x2) x2 = traps[i].x2;
-        if (traps[i].x4 > x2) x2 = traps[i].x4;
-    }
-    range_extent(x1, y1, x2, y2, x, y, width, height);
-}
-
 void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height)
 {
     int i;
