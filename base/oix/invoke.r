@@ -1150,7 +1150,7 @@ static void simple_access()
 
 static void handle_access_failure()
 {
-    whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
+    whyf("%s (error=%d)", lookup_err_msg(t_errornumber), t_errornumber);
 }
 
 function lang_Class_get(obj, field)
