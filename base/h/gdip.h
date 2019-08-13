@@ -31,6 +31,9 @@ struct point {
     double y;
 };
 
+struct triangle {
+    struct point p1, p2, p3;
+};
 
 #define FONTATT_SPACING         0x01000000
 #define FONTFLAG_MONO           0x00000001
@@ -80,6 +83,7 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
 void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2);
 void gb_drawlines(gb_Draw *d, struct point *points, int npoints);
 void gb_fillpolygon(gb_Draw *d, struct point *points, int npoints);
+void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris);
 float gb_textwidth(gb_Draw *d, WCHAR *str, int length);
 void gb_do_paint(HWND hwnd, gb_Bitmap *pix);
 void gb_copyarea(gb_Bitmap *src, int x, int y, int width, int height, gb_Draw *d, int x2, int y2);
