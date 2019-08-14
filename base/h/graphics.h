@@ -340,21 +340,17 @@ typedef struct _wcontext {
   wfp		font;
   int		dx, dy;
   double        leading;
-#if XWindows
-  wdp		display;
-  struct SharedColor *fg, *bg;
-  struct SharedPicture  *pattern;
   stringint     *lineend;
   stringint     *linejoin;
   double	linewidth;
   stringint     *drawop;
+#if XWindows
+  wdp		display;
+  struct SharedColor *fg, *bg;
+  struct SharedPicture  *pattern;
 #elif MSWIN32
   struct SharedColor *fg, *bg;
   struct SharedBitmap  *pattern;
-  stringint     *lineend;
-  stringint     *linejoin;
-  double         linewidth;
-  stringint     *drawop;
 #endif
 
 } wcontext, *wcp;
@@ -384,6 +380,8 @@ typedef struct _wstate {
   struct descrip windowlabel;		/* window label */
   int           mousestate;             /* buttons down after last mouse event */
   int           holding;
+  stringint     *state;                 /* canvas state */
+  struct wcursor *cursor;               /* current cursor */
 #if XWindows
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
@@ -393,11 +391,9 @@ typedef struct _wstate {
   Picture       ppic;                   /* Render extension Picture view of pix */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  struct wcursor *cursor;               /* current cursor */
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
   XftDraw       *pxft;
-  int		state;			/* window state; icon, window or root*/
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
 #elif MSWIN32
@@ -406,8 +402,6 @@ typedef struct _wstate {
   gb_Bitmap     *pix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  int		state;			/* window state; icon, window or root*/
-  struct wcursor *cursor;               /* current cursor */
   struct _wstate *transientfor;
   HWND          savedcapture;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */

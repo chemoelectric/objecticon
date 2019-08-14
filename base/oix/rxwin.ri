@@ -852,7 +852,7 @@ wbp wopen(char *display)
     add_gc_global(&ws->windowlabel);
     add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor(wd, "left ptr");
-    ws->state = HiddenState;
+    ws->state = stringint_lookup(canvastypes, "hidden");
     ws->reqx = ws->reqy = ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
@@ -989,7 +989,7 @@ static void wmap(wbp w)
      */
     attr.background_pixel = 0xffffff;  /* TODO wc->bg->c; */
 
-    switch (ws->state) {
+    switch (ws->state->i) {
         case RootState:
             ws->win = GetRoot(wd);
             break;
@@ -1039,7 +1039,7 @@ static void wmap(wbp w)
     GLink4(ws, wd->vwstates, vnext, vprevious);
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
-    if (ws->state == RootState) {
+    if (ws->state->i == RootState) {
         XRenderFillRectangle(wd->display,
                              PictOpSrc,
                              ws->wpic,
@@ -1069,7 +1069,7 @@ static void wmap(wbp w)
 
     wmhints.input = True;
     wmhints.flags = InputHint;
-    switch (ws->state) {
+    switch (ws->state->i) {
         case IconicState: {
             wmhints.flags |= StateHint;
             wmhints.initial_state = IconicState;
@@ -1118,7 +1118,7 @@ static void wmap(wbp w)
      * WM_LOCALE_NAME properties. */
     XSetWMProperties(wd->display, ws->win, 0, 0, 0, 0, 0, 0, 0);
 
-    switch (ws->state) {
+    switch (ws->state->i) {
         case MaximizedState: {
             Atom atoms[2];
             atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
@@ -1149,7 +1149,7 @@ static void wmap(wbp w)
         }
     }
 
-    if (ws->state != RootState && ws->state != WithdrawnState)
+    if (ws->state->i != RootState && ws->state->i != WithdrawnState)
         XMapWindow(wd->display, ws->win);
 
     XGetWindowAttributes(wd->display, ws->win, &attrs);
@@ -1658,14 +1658,6 @@ static void no_clip(wsp ws, int and_win)
                              &attr);
 }
 
-char *getcanvas(wbp w)
-{
-    char *v = stringint_int2str(canvastypes, w->window->state);
-    if (!v)
-        syserr("Invalid value of state");
-    return v;
-}
-
 /*
  *  Set the canvas type
  */
@@ -1677,12 +1669,12 @@ int setcanvas(wbp w, char *s)
     e = stringint_lookup(canvastypes, s);
     if (!e)
         return Failed;
-    if (e->i == ws->state)
+    if (e == ws->state)
         return Succeeded;
 
     if (!ws->win) {
         if (e->i != HiddenState) {
-            ws->state = e->i;
+            ws->state = e;
             wmap(w);
         }
         return Succeeded;
@@ -1690,9 +1682,9 @@ int setcanvas(wbp w, char *s)
 
     switch (e->i) {
         case IconicState: {
-            if (ws->state == RootState || ws->state == PopupState)
+            if (ws->state->i == RootState || ws->state->i == PopupState)
                 return Failed;
-            if (ws->state == WithdrawnState) {
+            if (ws->state->i == WithdrawnState) {
                 XWMHints wmhints;
                 wmhints.flags = StateHint;
                 wmhints.initial_state = IconicState;
@@ -1704,7 +1696,7 @@ int setcanvas(wbp w, char *s)
         }
 
         case WithdrawnState: {
-            if (ws->state == RootState || ws->state == PopupState)
+            if (ws->state->i == RootState || ws->state->i == PopupState)
                 return Failed;
             XWithdrawWindow(wd->display, ws->win, DefaultScreen(wd->display));
             break;
@@ -1714,9 +1706,9 @@ int setcanvas(wbp w, char *s)
         case MaximizedState:
         case FullScreenState:
         case ShadedState: {
-            if (ws->state == RootState || ws->state == PopupState)
+            if (ws->state->i == RootState || ws->state->i == PopupState)
                 return Failed;
-            if (ws->state == WithdrawnState) {
+            if (ws->state->i == WithdrawnState) {
                 XWMHints wmhints;
                 wmhints.flags = StateHint;
                 wmhints.initial_state = NormalState;
@@ -1784,11 +1776,6 @@ int setlinewidth(wbp w, double linewid)
     return Succeeded;
 }
 
-double getlinewidth(wbp w)
-{
-    return w->context->linewidth;
-}
-
 /*
  * Set the context's foreground color by name.
  */
@@ -1852,26 +1839,6 @@ char *getfg(wbp w)
 char *getbg(wbp w)
 {
     return w->context->bg->name;
-}
-
-char *getlineend(wbp w)
-{
-    return w->context->lineend->s;
-}
-
-char *getlinejoin(wbp w)
-{
-    return w->context->linejoin->s;
-}
-
-char *getpointer(wbp w)
-{
-    return w->window->cursor->name;
-}
-
-char *getdrawop(wbp w)
-{
-    return w->context->drawop->s;
 }
 
 int grabpointer(wbp w)
@@ -2022,16 +1989,16 @@ static void synch_state(wsp ws)
     int t;
 
     if (ws->win == 0) {
-        ws->state = HiddenState;
+        ws->state = stringint_lookup(canvastypes, "hidden");
         return;
     }
 
-    if (ws->state == PopupState || ws->state == RootState)
+    if (ws->state->i == PopupState || ws->state->i == RootState)
         return;
 
-    t = ws->state;
+    t = ws->state->i;
     synch_state1(ws);
-    if (t != ws->state)
+    if (t != ws->state->i)
         qeventcode(ws, WINDOWSTATE);
 }
 
@@ -2067,7 +2034,7 @@ static void synch_state1(wsp ws)
     if (prop) XFree(prop);
 
     if (state == WithdrawnState || state == IconicState) {
-        ws->state = state;
+        ws->state = stringint_rev_lookup(canvastypes, state);
         return;
     }
 
@@ -2101,16 +2068,18 @@ static void synch_state1(wsp ws)
                 max |= 4;
         }
         if (max == 3)
-            ws->state = MaximizedState;
+            state = MaximizedState;
         else if (max & 4)
-            ws->state = FullScreenState;
+            state = FullScreenState;
         else if (max & 8)
-            ws->state = ShadedState;
+            state = ShadedState;
         else
-            ws->state = NormalState;
+            state = NormalState;
     } else
         /* Unexpected, assume normal state */
-        ws->state = NormalState;
+        state = NormalState;
+
+    ws->state = stringint_rev_lookup(canvastypes, state);
 
     if (prop) XFree(prop);
 }

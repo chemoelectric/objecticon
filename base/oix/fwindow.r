@@ -862,10 +862,8 @@ end
 
 function graphics_Window_get_canvas(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(getcanvas(self_w), &result);
-       return result;
+       return C_string self_w->window->state->s;
    }
 end
 
@@ -996,10 +994,8 @@ end
 
 function graphics_Window_get_draw_op(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(getdrawop(self_w), &result);
-       return result;
+       return C_string self_w->context->drawop->s;
    }
 end
 
@@ -1042,10 +1038,8 @@ end
 
 function graphics_Window_get_font(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(self_w->context->font->name, &result);
-       return result;
+       return C_string self_w->context->font->name;
    }
 end
 
@@ -1072,26 +1066,22 @@ end
 
 function graphics_Window_get_line_end(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(getlineend(self_w), &result);
-       return result;
+       return C_string self_w->context->lineend->s;
    }
 end
 
 function graphics_Window_get_line_join(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(getlinejoin(self_w), &result);
-       return result;
+       return C_string self_w->context->linejoin->s;
    }
 end
 
 function graphics_Window_get_line_width(self)
    body {
        GetSelfW();
-       return C_double getlinewidth(self_w);
+       return C_double self_w->context->linewidth;
    }
 end
 
@@ -1125,10 +1115,8 @@ end
 
 function graphics_Window_get_pointer(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(getpointer(self_w), &result);
-       return result;
+       return C_string self_w->window->cursor->name;
    }
 end
 
