@@ -13,7 +13,7 @@
  * (pixwin and mask).
  */
 #define PolyEdge PolyEdgeSmooth
-#define PolyMode PolyModePrecise
+#define PolyMode PolyModeImprecise
 
 /*
  * Global variables specific to X
@@ -98,6 +98,7 @@ static void init_traplist(struct traplist *l, int alloc);
 static void free_traplist(struct traplist *l);
 static void draw_traplist(struct traplist *l, Display *display, int op, Picture src, Picture dest);
 static void add_trap(struct traplist *l, double top, double x1, double x2, double bottom, double x3, double x4);
+static void add_rect(struct traplist *l, XPointDouble *tl, XPointDouble *br);
 static void add_tri(struct traplist *l, XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
 
 static void CompositeDoublePoly(Display *, int, Picture, Picture, XRenderPictFormat *,
@@ -127,7 +128,9 @@ static stringint linejoins[] = {
 };
 
 static stringint lineends[] = {
-    {0, 2},
+    {0, 4},
+    {"flat",      EndFlat},
+    {"point",     EndPoint},
     {"round",     EndRound},
     {"square",    EndSquare},
 };
@@ -873,7 +876,7 @@ wbp wopen(char *display)
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
     wc->linejoin = stringint_lookup(linejoins, "round");
-    wc->lineend = stringint_lookup(lineends, "square");
+    wc->lineend = stringint_lookup(lineends, "flat");
 
     w->context = wc;
 
@@ -2349,6 +2352,22 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 static void mk_ellipse(double cx, double cy, double rx, double ry, struct traplist *tl)
 {
     double th, r, pf, x, y, t1x, b, b1, t, t1, b1x;
+
+    /* Very small radius circles just add a single square trap of
+     * equivalent area. */
+    if (rx == ry && rx <= 1 && ry <= 1) {
+        double sq;
+        /* sq is half the side of a square with the same area as the circle, ie
+         *  (2*sq)^2 = Pi*rx^2
+         * sq is then reduced slightly since the ellipse algorithm draws
+         * within the outline (and thus leaves small gaps).
+         */
+        sq = 0.98 * rx * sqrt(Pi) / 2;
+        add_trap(tl,
+                 cy - sq, cx - sq, cx + sq,
+                 cy + sq, cx - sq, cx + sq);
+        return;
+    }
     
     pf = calc_progress_factor(rx, ry);
     th = 0.0;
@@ -2699,6 +2718,12 @@ static void add_trap(struct traplist *l,
     l->traps[l->n++] = trapezoid(top, x1, x2, bottom, x3, x4);
 }
 
+static void add_rect(struct traplist *l, XPointDouble *tl, XPointDouble *br)
+{
+    add_trap(l, tl->y, tl->x, br->x,  br->y, tl->x, br->x);
+}
+
+
 /*
  * The orientation of the computed corner points is always the same
  * (p0 and q0 are the given input points, linewidth comes from the
@@ -2838,9 +2863,8 @@ static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, dou
     return t;
 }
 
-static void roundjoin(wbp w, XPointDouble *r, struct traplist *tl)
+static void roundjoin(wcp wc, XPointDouble *r, struct traplist *tl)
 {
-    wcp wc = w->context;
     double radius;
     radius = wc->linewidth / 2.0;
     mk_ellipse(r->x, r->y,
@@ -2865,6 +2889,41 @@ static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *
 }
 
 /*
+ * Given two points a and b on a straight line, extend the line d
+ * units from b.  Positive d means away from a :-
+ * 
+ *    a                          b    d>0  r     
+ *    +--------------------------+---------+
+ * 
+ * or
+ * 
+ *    a                 r  d<0   b     
+ *    +-----------------+--------+
+ * 
+ * where r is the result.
+ */
+static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
+{
+    double dx, dy, ex, ey, h;
+
+    dx = b->x - a->x;
+    dy = b->y - a->y;
+
+    if (dy == 0) {
+        if (dx < 0)
+            return doublept(b->x - d, b->y);
+        else
+            return doublept(b->x + d, b->y);
+    }
+
+    h = hypot(dx, dy);
+    ex = dx * (h + d) / h;
+    ey = dy * (h + d) / h;
+
+    return doublept(a->x + ex, a->y + ey);
+}
+
+/*
  * Output a segment.  It is important to output a vertical or
  * horizontal segment as a single trapezoid to avoid some bugs in
  * Xrender.
@@ -2873,36 +2932,70 @@ static void drawlineinfo1(struct lineinfo *u, struct traplist *tl)
 {
     if (u->dx == 0) {
         if (u->p1.y < u->q1.y)
-            add_trap(tl,
-                     u->p1.y, u->p1.x, u->p2.x,
-                     u->q1.y, u->q1.x, u->q2.x);
+            add_rect(tl, &u->p1, &u->q2);
         else
-            add_trap(tl,
-                     u->q1.y, u->q2.x, u->q1.x,
-                     u->p1.y, u->p2.x, u->p1.x);
+            add_rect(tl, &u->q2, &u->p1);
     } else if (u->dy == 0) {
         if (u->p1.x < u->q1.x)
-            add_trap(tl,
-                     u->p2.y, u->p2.x, u->q2.x,
-                     u->p1.y, u->p1.x, u->q1.x);
+            add_rect(tl, &u->p2, &u->q1);
         else
-            add_trap(tl,
-                     u->p1.y, u->q1.x, u->p1.x,
-                     u->p2.y, u->q2.x, u->p2.x);
+            add_rect(tl, &u->q1, &u->p2);
     } else {
         add_tri(tl, &u->p2, &u->p1, &u->q2);
         add_tri(tl, &u->q1, &u->p1, &u->q2);
     }
 }
 
-static void drawlineinfo(wbp w,
+static void drawlineend(wcp wc,
+                        struct lineinfo *u,
+                        int end,
+                        struct traplist *tl)
+{
+    XPointDouble *A0, *A1, *A2, *C0, N;
+    struct lineinfo li;
+
+    if (wc->lineend->i == EndFlat)
+        return;
+
+    if (end) {
+        A0 = &u->q0;
+        C0 = &u->p0;
+        A1 = &u->q1;
+        A2 = &u->q2;
+    } else {
+        A0 = &u->p0;
+        C0 = &u->q0;
+        A1 = &u->p1;
+        A2 = &u->p2;
+    }
+
+    if (wc->lineend->i == EndRound) {
+        roundjoin(wc, A0, tl);
+        return;
+    }
+
+    N = nudge(C0, A0, wc->linewidth / 2);
+    switch (wc->lineend->i) {
+        case EndPoint: {
+            add_tri(tl, A1, A2, &N);
+            break;
+        }
+        case EndSquare: {
+            getlineinfo(wc, A0, &N, &li);
+            drawlineinfo1(&li, tl);
+            break;
+        }
+        default:
+            syserr("Unexpected lineend");
+    }
+}
+
+static void drawlineinfo(wcp wc,
                          struct lineinfo *prev,
                          struct lineinfo *curr,
                          struct lineinfo *next,
                          struct traplist *tl)
 {
-    wcp wc = w->context;
-
     /* Output the current segment. */
     drawlineinfo1(curr, tl);
 
@@ -2950,20 +3043,17 @@ static void drawlineinfo(wbp w,
                 add_tri(tl, &m, A1, A2);
             }
         } else
-            roundjoin(w, &curr->p0, tl);
-    } else {
-        if (wc->linewidth > 1 && wc->lineend->i == EndRound)
-            roundjoin(w, &curr->p0, tl);
-    }
+            roundjoin(wc, &curr->p0, tl);
+    } else
+        drawlineend(wc, curr, 0, tl);
 
-    if (!next) {
-        if (wc->linewidth > 1 && wc->lineend->i == EndRound)
-            roundjoin(w, &curr->q0, tl);
-    }
+    if (!next)
+        drawlineend(wc, curr, 1, tl);
 }
 
 static void drawlineinfos_impl(wbp w, struct lineinfo *lis, int nlis, int closed, struct traplist *tl)
 {
+    wcp wc = w->context;
     int i;
     for (i = 0; i < nlis; ++i) {
         struct lineinfo *prev, *next;
@@ -2975,7 +3065,7 @@ static void drawlineinfos_impl(wbp w, struct lineinfo *lis, int nlis, int closed
             next = &lis[i + 1];
         else
             next = closed ? &lis[0] : 0;
-        drawlineinfo(w, prev, &lis[i], next, tl);
+        drawlineinfo(wc, prev, &lis[i], next, tl);
     }
 }
 
