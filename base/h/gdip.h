@@ -18,12 +18,14 @@ typedef struct gb_Draw {
    int lineend;
 } gb_Draw;
 
-#define EndRound 1
-#define EndSquare 2
+#define EndFlat      0   // LineCapFlat
+#define EndSquare    1   // LineCapSquare
+#define EndRound     2   // LineCapRound
+#define EndPoint     3   // LineCapTriangle
 
-#define JoinBevel    1
-#define JoinMiter    2
-#define JoinRound    3
+#define JoinBevel    1   // LineJoinBevel
+#define JoinRound    2   // LineJoinRound
+#define JoinMiter    3   // LineJoinMiterClipped
 
 #ifdef __cplusplus
 struct point {

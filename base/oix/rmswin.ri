@@ -121,9 +121,11 @@ static stringint linejoins[] = {
 };
 
 stringint lineends[] = {
-    {0, 2},
-    {"round",    EndRound},
-    {"square",   EndSquare},
+    {0, 4},
+    {"flat",      EndFlat},
+    {"point",     EndPoint},
+    {"round",     EndRound},
+    {"square",    EndSquare},
 };
 
 #define NormalCanvas 1
@@ -1363,7 +1365,7 @@ static wcp alccontext(wbp w)
     wc->bg = link_sharedcolor(white);
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linejoin = stringint_lookup(linejoins, "round");
-    wc->lineend = stringint_lookup(lineends, "square");
+    wc->lineend = stringint_lookup(lineends, "flat");
     wc->linewidth = 1.0;
     wc->font = default_font;
     wc->leading = defaultleading;

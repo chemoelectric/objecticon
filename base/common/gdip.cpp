@@ -89,14 +89,9 @@ static Brush *get_fg_brush(gb_Draw *d)
 static Pen *get_fg_pen(gb_Draw *d, Brush *b)
 {
     Pen *p = new Pen(b, d->linewidth);
-    if (d->lineend == EndRound) {
-        p->SetEndCap(LineCapRound);
-        p->SetStartCap(LineCapRound);
-    }
-    switch (d->linejoin) {
-        case JoinRound: p->SetLineJoin(LineJoinRound); break;
-        case JoinBevel: p->SetLineJoin(LineJoinBevel); break;
-    }
+    p->SetEndCap((LineCap)d->lineend);
+    p->SetStartCap((LineCap)d->lineend);
+    p->SetLineJoin((LineJoin)d->linejoin);
     return p;
 }
 
