@@ -1813,12 +1813,16 @@ end
 #
 final abstract class LineEnd()
    public static const
+      BUTT,
       ROUND,
-      SQUARE
+      SQUARE,
+      POINT
 
    private static init()
+      BUTT := "butt"
       ROUND := "round"
       SQUARE := "square"
+      POINT := "point"
    end
 end
 

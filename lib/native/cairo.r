@@ -481,9 +481,12 @@ function cairo_Context_new_impl(sur)
            }
            cairo_matrix_init_translate(&matrix, wc->dx, wc->dy);
            cairo_set_matrix(cr, &matrix);
-           /* The cairo default is BUTT, the same as our square. */
-           if (wc->lineend->i == EndRound)
-               cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+           /* The cairo default is BUTT. */
+           switch (wc->lineend->i) {
+               case EndPoint:
+               case EndRound: cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND); break;
+               case EndSquare: cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE); break;
+           }
            /* The cairo default is MITER. */
            switch (wc->linejoin->i) {
                case JoinRound: cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND); break;
