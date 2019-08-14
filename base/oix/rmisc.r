@@ -1873,11 +1873,9 @@ int stringint_str2int(stringint *sip, char *s)
  */
 char *stringint_int2str(stringint *sip, int i)
 {
-    stringint *sip2 = sip + 1;
-    for(; sip2 <= sip + sip[0].i; sip2++) 
-        if (sip2->i == i) 
-            return sip2->s;
-    return NULL;
+    stringint *p;
+    p = stringint_rev_lookup(sip, i);
+    return p ? p->s : NULL;
 }
 
 /*
