@@ -103,8 +103,10 @@ extern struct sdescrip wclassname;
 #define FullScreenState IconicState+5
 #define ShadedState IconicState+6
 
-#define EndRound 1
-#define EndSquare 2
+#define EndFlat   1
+#define EndRound  2
+#define EndSquare 3
+#define EndPoint  4
 
 /* Interned atoms array */
 #define NUMATOMS        31
@@ -362,28 +364,20 @@ typedef struct _wcontext {
   wfp		font;
   int		dx, dy;
   double        leading;
-#if XWindows
-  wdp		display;
-  struct SharedColor *fg, *bg;
-  struct SharedPicture  *pattern;
   stringint     *lineend;
   stringint     *linejoin;
   double	linewidth;
   stringint     *drawop;
+#if XWindows
+  wdp		display;
+  struct SharedColor *fg, *bg;
+  struct SharedPicture  *pattern;
 #elif PLAN9
   struct SharedColor *fg, *bg;
   struct SharedImage  *pattern;
-  stringint     *lineend;
-  stringint     *linejoin;
-  int           linewidth;
-  stringint     *drawop;
 #elif MSWIN32
   struct SharedColor *fg, *bg;
   struct SharedBitmap  *pattern;
-  stringint     *lineend;
-  stringint     *linejoin;
-  double         linewidth;
-  stringint     *drawop;
 #endif
 
 } wcontext, *wcp;
@@ -413,6 +407,8 @@ typedef struct _wstate {
   struct descrip windowlabel;		/* window label */
   int           mousestate;             /* buttons down after last mouse event */
   int           holding;
+  stringint     *state;                 /* canvas state */
+  struct wcursor *cursor;               /* current cursor */
 #if XWindows
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
@@ -422,11 +418,9 @@ typedef struct _wstate {
   Picture       ppic;                   /* Render extension Picture view of pix */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  struct wcursor *cursor;               /* current cursor */
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
   XftDraw       *pxft;
-  int		state;			/* window state; icon, window or root*/
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
 #elif PLAN9
@@ -444,8 +438,6 @@ typedef struct _wstate {
   int           mouse_pid, cons_pid;
   int           winid;                  /* Id as per winid file */
   struct _wstate *transientfor;         /* Reference to  transient-for window */
-  int           state;                  /* Current or desired window state */
-  struct wcursor *cursor;               /* current cursor */
   int           using_win;
   int           border_width;
 #elif MSWIN32
@@ -454,8 +446,6 @@ typedef struct _wstate {
   gb_Bitmap     *pix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  int		state;			/* window state; icon, window or root*/
-  struct wcursor *cursor;               /* current cursor */
   struct _wstate *transientfor;
   HWND          savedcapture;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */

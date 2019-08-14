@@ -1722,7 +1722,7 @@ wcp linkcontext(wcp wc)
 
 int is_hidden(wbp w)
 {
-    return strcmp(getcanvas(w), "hidden") == 0;
+    return strcmp(w->window->state->s, "hidden") == 0;
 }
 
 void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height)

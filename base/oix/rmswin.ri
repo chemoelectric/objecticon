@@ -121,9 +121,11 @@ static stringint linejoins[] = {
 };
 
 stringint lineends[] = {
-    {0, 2},
-    {"round",    EndRound},
-    {"square",   EndSquare},
+    {0, 4},
+    {"flat",      EndFlat},
+    {"point",     EndPoint},
+    {"round",     EndRound},
+    {"square",    EndSquare},
 };
 
 #define NormalCanvas 1
@@ -230,7 +232,7 @@ wbp wopen(char *display)
     add_gc_global(&ws->windowlabel);
     add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor("arrow");
-    ws->state = HiddenCanvas;
+    ws->state = stringint_lookup(canvastypes, "hidden");
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->basewidth = ws->baseheight = 0;
@@ -344,14 +346,14 @@ static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (wp == 0)
         synch_state(ws, WithdrawnCanvas);
-    else if (ws->state != PopupCanvas)
+    else if (ws->state->i != PopupCanvas)
         synch_state(ws, NormalCanvas);
 }
 
 static void synch_state(wsp ws, int new_state)
 {
-    if (ws->state != new_state) {
-        ws->state = new_state;
+    if (ws->state->i != new_state) {
+        ws->state = stringint_rev_lookup(canvastypes, new_state);
         if (new_state == NormalCanvas || new_state == MaximizedCanvas)
             note_skip(ws);
         qeventcode(ws, WINDOWSTATE);
@@ -839,7 +841,7 @@ static void close_screen_win(wsp ws)
         ws->win = 0;
         ws->x = ws->y = -INT_MAX;
         ws->trackingmouse = ws->capturecount = 0;
-        ws->state = HiddenCanvas;
+        ws->state = stringint_lookup(canvastypes, "hidden");
         GUnlink4(ws, vwstates, vnext, vprevious);
     }
 }
@@ -876,7 +878,7 @@ static void note_skip(wsp ws)
 
 static void open_screen_win(wsp ws)
 {
-    switch (ws->state) {
+    switch (ws->state->i) {
         case PopupCanvas: {
             ws->win = CreateWindowExW(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
                                       L"oix", 
@@ -911,7 +913,7 @@ static void open_screen_win(wsp ws)
         }
     }
 
-    switch (ws->state) {
+    switch (ws->state->i) {
         case WithdrawnCanvas: {
             ShowWindow(ws->win, SW_HIDE);
             break;
@@ -947,7 +949,7 @@ int setcanvas(wbp w, char *s)
     if (!e)
         return Failed;
 
-    if (e->i == ws->state)
+    if (e == ws->state)
         return Succeeded;
 
     /*
@@ -955,7 +957,7 @@ int setcanvas(wbp w, char *s)
      */
     if (!ws->win) {
         if (e->i != HiddenCanvas) {
-            ws->state = e->i;
+            ws->state = e;
             /* We should now get a WM_PAINT message which will copy
              * the pix to the new window. */
             open_screen_win(ws);
@@ -972,25 +974,25 @@ int setcanvas(wbp w, char *s)
             break;
         }
         case IconicCanvas: {
-            if (ws->state == PopupCanvas)
+            if (ws->state->i == PopupCanvas)
                 return Failed;
             ShowWindow(ws->win, SW_MINIMIZE);
             break;
         }
         case WithdrawnCanvas: {
-            if (ws->state == PopupCanvas)
+            if (ws->state->i == PopupCanvas)
                 return Failed;
             ShowWindow(ws->win, SW_HIDE);
             break;
         }
         case MaximizedCanvas: {
-            if (ws->state == PopupCanvas)
+            if (ws->state->i == PopupCanvas)
                 return Failed;
             ShowWindow(ws->win, SW_MAXIMIZE);
             break;
         }
         case NormalCanvas: {
-            if (ws->state == PopupCanvas)
+            if (ws->state->i == PopupCanvas)
                 return Failed;
             ShowWindow(ws->win, SW_SHOWNORMAL);
             break;
@@ -1114,11 +1116,6 @@ int setlinewidth(wbp w, double linewid)
     return Succeeded;
 }
 
-double getlinewidth(wbp w)
-{
-    return w->context->linewidth;
-}
-
 int getdepth(wbp w, int *res)
 {
     int i, j;
@@ -1189,37 +1186,9 @@ int setdrawop(wbp w, char *val)
     return Succeeded;
 }
 
-char *getlineend(wbp w)
-{
-    return w->context->lineend->s;
-}
-
-char *getlinejoin(wbp w)
-{
-    return w->context->linejoin->s;
-}
-
-char *getpointer(wbp w)
-{
-    return w->window->cursor->name;
-}
-
 char *getdisplay(wbp w)
 {
     return "MS Windows";
-}
-
-char *getdrawop(wbp w)
-{
-    return w->context->drawop->s;
-}
-
-char *getcanvas(wbp w)
-{
-    char *v = stringint_int2str(canvastypes, w->window->state);
-    if (!v)
-        syserr("Invalid value of state");
-    return v;
 }
 
 /*
@@ -1327,29 +1296,11 @@ void fillarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, 
     gb_fillarc(&d, cx, cy, rx, ry, angle1, angle2);
 }
 
-void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
-{
-    int i;
-    for (i = 0; i < ntraps; ++i) {
-        struct point p[4];
-        p[0].x = traps[i].x1; p[0].y = traps[i].top;
-        p[1].x = traps[i].x2; p[1].y = traps[i].top;
-        p[2].x = traps[i].x4; p[2].y = traps[i].bottom;
-        p[3].x = traps[i].x3; p[3].y = traps[i].bottom;
-        fillpolygon(w, p, 4);
-    }
-}
-
 void filltriangles(wbp w, struct triangle *tris, int ntris)
 {
-    int i;
-    for (i = 0; i < ntris; ++i) {
-        struct point p[3];
-        p[0].x = tris[i].p1.x; p[0].y = tris[i].p1.y;
-        p[1].x = tris[i].p2.x; p[1].y = tris[i].p2.y;
-        p[2].x = tris[i].p3.x; p[2].y = tris[i].p3.y;
-        fillpolygon(w, p, 3);
-    }
+    gb_Draw d;
+    mk_Draw(w, &d);
+    gb_filltriangles(&d, tris, ntris);
 }
 
 void fillpolygon(wbp w, struct point *points, int npoints)
@@ -1381,7 +1332,7 @@ static wcp alccontext(wbp w)
     wc->bg = link_sharedcolor(white);
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linejoin = stringint_lookup(linejoins, "round");
-    wc->lineend = stringint_lookup(lineends, "square");
+    wc->lineend = stringint_lookup(lineends, "flat");
     wc->linewidth = 1.0;
     wc->font = default_font;
     wc->leading = defaultleading;
@@ -1472,7 +1423,7 @@ int setpattern(wbp w, struct imgdata *imd)
 
 static int get_outer_width(wsp ws)
 {
-    if (ws->state == PopupCanvas)
+    if (ws->state->i == PopupCanvas)
         return ws->width;
     else
         return ws->width + BORDER_WIDTH;
@@ -1480,7 +1431,7 @@ static int get_outer_width(wsp ws)
 
 static int get_outer_height(wsp ws)
 {
-    if (ws->state == PopupCanvas)
+    if (ws->state->i == PopupCanvas)
         return ws->height;
     else
         return ws->height + BORDER_HEIGHT;

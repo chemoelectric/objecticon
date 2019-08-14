@@ -686,8 +686,8 @@ final class Window(NoCopy, ObjectOutput)
    public native set_label(v)
 
    # Set the line style, which specifies how `draw_line()` draws the
-   # ends of a line.  Possible values are "round", and "square".  (See
-   # `LineEnd` for symbolic constants).
+   # ends of a line.  Possible values are "flat", "point", "round",
+   # and "square".  (See `LineEnd` for symbolic constants).
    #
    public native set_line_end(v)
 
@@ -1930,12 +1930,16 @@ end
 #
 final abstract class LineEnd()
    public static const
+      FLAT,
       ROUND,
-      SQUARE
+      SQUARE,
+      POINT
 
    private static init()
+      FLAT := "flat"
       ROUND := "round"
       SQUARE := "square"
+      POINT := "point"
    end
 end
 

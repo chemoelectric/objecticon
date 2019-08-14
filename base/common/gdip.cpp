@@ -89,14 +89,9 @@ static Brush *get_fg_brush(gb_Draw *d)
 static Pen *get_fg_pen(gb_Draw *d, Brush *b)
 {
     Pen *p = new Pen(b, d->linewidth);
-    if (d->lineend == EndRound) {
-        p->SetEndCap(LineCapRound);
-        p->SetStartCap(LineCapRound);
-    }
-    switch (d->linejoin) {
-        case JoinRound: p->SetLineJoin(LineJoinRound); break;
-        case JoinBevel: p->SetLineJoin(LineJoinBevel); break;
-    }
+    p->SetEndCap((LineCap)d->lineend);
+    p->SetStartCap((LineCap)d->lineend);
+    p->SetLineJoin((LineJoin)d->linejoin);
     return p;
 }
 
@@ -402,6 +397,29 @@ void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints)
     gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
 
     delete[] points;
+    delete b;
+    delete g;
+}
+
+extern "C"
+void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris)
+{
+    Graphics *g = get_graphics(d, 1);
+    Brush *b = get_fg_brush(d);
+    GraphicsPath path;
+    Rect bound;
+    int i;
+    for (i = 0; i < ntris; ++i) {
+        PointF p[3];
+        p[0].X = tris[i].p1.x; p[0].Y = tris[i].p1.y;
+        p[1].X = tris[i].p2.x; p[1].Y = tris[i].p2.y;
+        p[2].X = tris[i].p3.x; p[2].Y = tris[i].p3.y;
+        path.AddPolygon(p, 3);
+    }
+    g->FillPath(b, &path);
+    path.GetBounds(&bound, NULL, NULL);
+    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+
     delete b;
     delete g;
 }

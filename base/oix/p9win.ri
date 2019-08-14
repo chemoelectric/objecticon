@@ -132,9 +132,11 @@ static stringint linejoins[] = {
 };
 
 static stringint lineends[] = {
-    {0, 2},
-    {"round",    Enddisc},
-    {"square",   Endsquare},
+    {0, 4},
+    {"flat",      Endsquare},
+    {"point",     Enddisc},
+    {"round",     Enddisc},
+    {"square",    Enddisc},
 };
 
 static stringint canvastypes[] = {
@@ -360,7 +362,7 @@ wbp wopen(char *display)
     ws->incwidth = ws->incheight = 1;
     ws->minaspect = ws->maxaspect = 0.0;
     ws->width = ws->height = 1;
-    ws->state = HiddenCanvas;
+    ws->state = stringint_lookup(canvastypes, "hidden");
     w->window = ws;
     ws->wsys = salloc(wsysstr);
     create_list(64, &ws->listp);
@@ -375,7 +377,7 @@ wbp wopen(char *display)
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linewidth = 1;
     wc->linejoin = stringint_lookup(linejoins, "round");
-    wc->lineend = stringint_lookup(lineends, "square");
+    wc->lineend = stringint_lookup(lineends, "flat");
 
     w->context = wc;
 
@@ -1584,11 +1586,11 @@ static int open_screen_win(wsp ws)
         }
         if (strncmp(buff, "noborder", 8) == 0) {
             ws->border_width = 0;
-            ws->state = PopupCanvas;
+            ws->state = stringint_lookup(canvastypes, "popup");
         } else {
             ws->border_width = 2 * Borderwidth;
-            if (ws->state == PopupCanvas)
-                ws->state = NormalCanvas;
+            if (ws->state->i == PopupCanvas)
+                ws->state = stringint_lookup(canvastypes, "normal");
         }
 
         /* OI_USE_WIN=1 -> set size and pos of enclosing window 
@@ -1648,7 +1650,7 @@ static int open_screen_win(wsp ws)
             }
         }
 
-        switch (ws->state) {
+        switch (ws->state->i) {
             case IconicCanvas:
                 fprint(ws->wctl_fd, "hide");
                 break;
@@ -1667,7 +1669,7 @@ static int open_screen_win(wsp ws)
             return Failed;
         }
         MemProtect(ws->mount_dir = smprint("%s/oix-win.%d.%d", mntgen_dir, getpid(), ++window_count));
-        ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
+        ws->border_width = (ws->state->i == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->reqx == -INT_MAX || ws->reqy == -INT_MAX)
             sprint(buff, "new -dx %d -dy %d",
@@ -1677,7 +1679,7 @@ static int open_screen_win(wsp ws)
             sprint(buff, "new -r %d %d %d %d",
                    ws->reqx, ws->reqy,  ws->reqx + adjust(ws, ws->width), 
                    ws->reqy + adjust(ws, ws->height));
-        switch (ws->state) {
+        switch (ws->state->i) {
             case PopupCanvas:
                 strcat(buff, " -noborder -layer 1");
                 break;
@@ -1984,7 +1986,7 @@ int setcanvas(wbp w, char *s)
     if (!e)
         return Failed;
 
-    if (e->i == ws->state)
+    if (e == ws->state)
         return Succeeded;
 
     /*
@@ -1992,7 +1994,7 @@ int setcanvas(wbp w, char *s)
      */
     if (!ws->win) {
         if (e->i != HiddenCanvas) {
-            ws->state = e->i;
+            ws->state = e;
             if (open_screen_win(ws) == Failed)
                 return Failed;
         }
@@ -2009,7 +2011,7 @@ int setcanvas(wbp w, char *s)
         }
 
         case IconicCanvas: {
-            if (ws->state == PopupCanvas)
+            if (ws->state->i == PopupCanvas)
                 return Failed;
             if (fprint(ws->wctl_fd, "hide") < 0) {
                 whyf("Can't make iconic: %r");
@@ -2019,7 +2021,7 @@ int setcanvas(wbp w, char *s)
         }
 
         case NormalCanvas: {
-            if (ws->state == PopupCanvas)
+            if (ws->state->i == PopupCanvas)
                 return Failed;
             if (fprint(ws->wctl_fd, "unhide") < 0) {
                 whyf("Can't make normal: %r");
@@ -2079,11 +2081,6 @@ int setlinewidth(wbp w, double linewid)
     return Succeeded;
 }
 
-double getlinewidth(wbp w)
-{
-    return w->context->linewidth;
-}
-
 static void synch_cursor(wsp ws)
 {
     struct Cursor *c;
@@ -2131,16 +2128,6 @@ int warppointer(wbp w, int x, int y)
 char *getdisplay(wbp w)
 {
     return w->window->wsys;
-}
-
-char *getlineend(wbp w)
-{
-    return w->context->lineend->s;
-}
-
-char *getlinejoin(wbp w)
-{
-    return w->context->linejoin->s;
 }
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh)
@@ -2206,16 +2193,6 @@ int querypointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-char *getpointer(wbp w)
-{
-    return w->window->cursor->name;
-}
-
-char *getdrawop(wbp w)
-{
-    return w->context->drawop->s;
-}
-
 int settransientfor(wbp w, wbp other)
 {
     wsp ws = w->window;
@@ -2235,14 +2212,6 @@ int settransientfor(wbp w, wbp other)
     return Succeeded;
 }
 
-char *getcanvas(wbp w)
-{
-    char *v = stringint_int2str(canvastypes, w->window->state);
-    if (!v)
-        syserr("Invalid value of state");
-    return v;
-}
-
 void restore(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
@@ -2258,16 +2227,16 @@ static void synch_state(wsp ws)
     int t;
 
     if (!ws->win) {
-        ws->state = HiddenCanvas;
+        ws->state = stringint_lookup(canvastypes, "hidden");
         return;
     }
 
-    if (ws->state == PopupCanvas)
+    if (ws->state->i == PopupCanvas)
         return;
 
-    t = ws->state;
+    t = ws->state->i;
     synch_state1(ws);
-    if (t != ws->state)
+    if (t != ws->state->i)
         qeventcode(ws, WINDOWSTATE);
 }
 
@@ -2278,7 +2247,8 @@ static void synch_state1(wsp ws)
     if ((n = pread(ws->wininfo_fd, buf, sizeof(buf) - 1, 0)) <= 0)
         return;
     buf[n] = 0;
-    ws->state = strstr(buf, "hidden") ? IconicCanvas:NormalCanvas;
+    ws->state = stringint_lookup(canvastypes,
+                                 strstr(buf, "hidden") ? "iconic" : "normal");
 }
 
 int getdisplaysize(wbp w, int *width, int *height)

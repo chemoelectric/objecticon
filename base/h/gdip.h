@@ -18,12 +18,14 @@ typedef struct gb_Draw {
    int lineend;
 } gb_Draw;
 
-#define EndRound 1
-#define EndSquare 2
+#define EndFlat      0   // LineCapFlat
+#define EndSquare    1   // LineCapSquare
+#define EndRound     2   // LineCapRound
+#define EndPoint     3   // LineCapTriangle
 
-#define JoinBevel    1
-#define JoinMiter    2
-#define JoinRound    3
+#define JoinBevel    1   // LineJoinBevel
+#define JoinRound    2   // LineJoinRound
+#define JoinMiter    3   // LineJoinMiterClipped
 
 #ifdef __cplusplus
 struct point {
@@ -31,6 +33,9 @@ struct point {
     double y;
 };
 
+struct triangle {
+    struct point p1, p2, p3;
+};
 
 #define FONTATT_SPACING         0x01000000
 #define FONTFLAG_MONO           0x00000001
@@ -80,6 +85,7 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
 void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2);
 void gb_drawlines(gb_Draw *d, struct point *points, int npoints);
 void gb_fillpolygon(gb_Draw *d, struct point *points, int npoints);
+void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris);
 float gb_textwidth(gb_Draw *d, WCHAR *str, int length);
 void gb_do_paint(HWND hwnd, gb_Bitmap *pix);
 void gb_copyarea(gb_Bitmap *src, int x, int y, int width, int height, gb_Draw *d, int x2, int y2);

@@ -184,6 +184,7 @@
 #define stringint_str2int (*(imported->stringint_str2int))
 #define stringint_int2str (*(imported->stringint_int2str))
 #define stringint_lookup (*(imported->stringint_lookup))
+#define stringint_rev_lookup (*(imported->stringint_rev_lookup))
 #define utf8_check (*(imported->utf8_check))
 #define utf8_iter (*(imported->utf8_iter))
 #define utf8_rev_iter (*(imported->utf8_rev_iter))
