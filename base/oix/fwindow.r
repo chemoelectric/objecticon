@@ -1963,9 +1963,7 @@ end
 
 function graphics_Window_get_default_font()
    body {
-       tended struct descrip result;
-       cstr2string(defaultfont, &result);
-       return result;
+       return C_string defaultfont;
    }
 end
 
