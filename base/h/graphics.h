@@ -103,10 +103,10 @@ extern struct sdescrip wclassname;
 #define FullScreenState IconicState+5
 #define ShadedState IconicState+6
 
-#define EndButt 1
-#define EndRound 2
+#define EndFlat   1
+#define EndRound  2
 #define EndSquare 3
-#define EndPoint 4
+#define EndPoint  4
 
 /* Interned atoms array */
 #define NUMATOMS        31
