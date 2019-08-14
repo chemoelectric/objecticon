@@ -428,6 +428,7 @@ void env_string(char *name, char **variable);
 int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
+stringint *stringint_rev_lookup(stringint *sip, int i);
 char *lookup_err_msg(int n);
 void set_errno(int n);
 void errno2why(void);

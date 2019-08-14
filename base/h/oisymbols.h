@@ -180,6 +180,7 @@ struct oisymbols {
     int (*stringint_str2int)(stringint * sip, char *s);
     char * (*stringint_int2str)(stringint * sip, int i);
     stringint * (*stringint_lookup)(stringint *sip, char *s);
+    stringint * (*stringint_rev_lookup)(stringint *sip, int i);
     int (*utf8_check)(char **p, char *end);
     int (*utf8_iter)(char **p);
     int (*utf8_rev_iter)(char **p);

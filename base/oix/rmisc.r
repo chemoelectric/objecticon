@@ -1889,6 +1889,18 @@ stringint *stringint_lookup(stringint *sip, char *s)
 }
 
 /*
+ * stringint reverse lookup of the int value, returning the entry, or NULL if not found
+ */
+stringint *stringint_rev_lookup(stringint *sip, int i)
+{
+    stringint *sip2 = sip + 1;
+    for(; sip2 <= sip + sip[0].i; sip2++) 
+        if (sip2->i == i) 
+            return sip2;
+    return NULL;
+}
+
+/*
  * This function can be used to set errno in oix from a native library
  * dll which has a distinct errno.  After this, errno2why() can be
  * used with correct results.
