@@ -194,6 +194,7 @@ final abstract class WAttrib()
       MAX_ASPECT_RATIO,
       MIN_ASPECT_RATIO,
       PATTERN,
+      MASK,
       POINTER,
       POS,
       RESIZE,
@@ -263,6 +264,7 @@ final abstract class WAttrib()
       MAX_ASPECT_RATIO := "max_aspect_ratio"
       MIN_ASPECT_RATIO := "min_aspect_ratio"
       PATTERN := "pattern"
+      MASK := "mask"
       POINTER := "pointer"
       POS := "pos"
       RESIZE := "resize"
@@ -489,9 +491,10 @@ final abstract class Gui()
                          WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE,
                          WAttrib.BASE_HEIGHT, WAttrib.BASE_SIZE, WAttrib.BASE_WIDTH,
                          WAttrib.INCREMENT_HEIGHT, WAttrib.INCREMENT_SIZE, WAttrib.INCREMENT_WIDTH,
-                         WAttrib.MAX_ASPECT_RATIO, WAttrib.MIN_ASPECT_RATIO)
+                         WAttrib.MAX_ASPECT_RATIO, WAttrib.MIN_ASPECT_RATIO, WAttrib.MASK)
       CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING,
-                                 WAttrib.LINE_WIDTH, WAttrib.LINE_END, WAttrib.LINE_JOIN, WAttrib.PATTERN)
+                                 WAttrib.LINE_WIDTH, WAttrib.LINE_END, WAttrib.LINE_JOIN, WAttrib.PATTERN,
+                                 WAttrib.MASK)
       EMPTY_WATTRIB_ANCESTOR := EmptyWAttribAncestor() 
    end
 
@@ -741,6 +744,7 @@ procedure apply_window_table(w, t)
          WAttrib.LINE_JOIN: w.set_line_join(v)
          WAttrib.LINE_END: w.set_line_end(v)
          WAttrib.PATTERN: w.set_pattern(v)
+         WAttrib.MASK: w.set_mask(v)
          WAttrib.CLIP: w.clip(v[1],v[2],v[3],v[4])
          WAttrib.UNCLIP: w.unclip()
          WAttrib.DX: w.set_dx(v)
@@ -785,6 +789,7 @@ procedure apply_context_table(w, t)
          WAttrib.LINE_END: w.set_line_end(v)
          WAttrib.LINE_JOIN: w.set_line_join(v)
          WAttrib.PATTERN: w.set_pattern(v)
+         WAttrib.MASK: w.set_mask(v)
       }
    }
    return w

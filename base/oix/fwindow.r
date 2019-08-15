@@ -111,10 +111,10 @@ function graphics_Window_clone_impl(self)
    }
 end
 
-function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy, mask, mx, my)
+function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy)
    body {
-      word ox, oy, x, y, width, height, x2, y2, x3, y3;
-      wbp w2, w3;
+      word ox, oy, x, y, width, height, x2, y2;
+      wbp w2;
 
       GetSelfW();
 
@@ -123,13 +123,6 @@ function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy, mask, mx, m
       else {
           WindowStaticParam(dest, tmp);
           w2 = tmp;
-      }
-
-      if (is:null(mask))
-          w3 = NULL;
-      else {
-          WindowStaticParam(mask, tmp);
-          w3 = tmp;
       }
 
       /*
@@ -141,20 +134,12 @@ function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy, mask, mx, m
       if (pointargs_def(w2, &dx, &x2, &y2) == Error)
           runerr(0);
 
-      if (w3) {
-          if (pointargs_def(w3, &mx, &x3, &y3) == Error)
-              runerr(0);
-      } else
-          x3 = y3 = 0;
-
       ox = x;
       oy = y;
       if (!reducerect(self_w, 0, &x, &y, &width, &height))
           return self;
       x2 += (x - ox);
       y2 += (y - oy);
-      x3 += (x - ox);
-      y3 += (y - oy);
 
       ox = x2;
       oy = y2;
@@ -162,21 +147,8 @@ function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy, mask, mx, m
           return self;
       x += (x2 - ox);
       y += (y2 - oy);
-      x3 += (x2 - ox);
-      y3 += (y2 - oy);
-
-      if (w3) {
-          ox = x3;
-          oy = y3;
-          if (!reducerect(w3, 0, &x3, &y3, &width, &height))
-              return self;
-          x += (x3 - ox);
-          y += (y3 - oy);
-          x2 += (x3 - ox);
-          y2 += (y3 - oy);
-      }
       
-      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2, y2, w3, x3, y3));
+      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2, y2));
 
       return self;
    }
@@ -1287,6 +1259,21 @@ function graphics_Window_set_pattern_impl(self, val)
       else {
           PixelsStaticParam(val, id);
           AttemptAttr(setpattern(self_w, id), "Failed to set pattern");
+      }
+      return self;
+      }
+   }
+end
+
+function graphics_Window_set_mask_impl(self, val)
+   body {
+      GetSelfW();
+      {
+      if (is:null(val))
+          AttemptAttr(setmask(self_w, 0), "Failed to clear mask");
+      else {
+          PixelsStaticParam(val, id);
+          AttemptAttr(setmask(self_w, id), "Failed to set mask");
       }
       return self;
       }
