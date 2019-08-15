@@ -254,10 +254,8 @@ void unlink_sharedpicture(struct SharedPicture *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
-        if (x->i)
-            XRenderFreePicture(x->wd->display, x->i);
-        if (x->pix)
-            XFreePixmap(x->wd->display, x->pix);
+        XRenderFreePicture(x->wd->display, x->i);
+        XFreePixmap(x->wd->display, x->pix);
         free(x);
     }
 }
