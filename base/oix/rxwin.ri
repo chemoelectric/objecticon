@@ -2412,7 +2412,8 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         if (has_wedge) {
             XTrapezoid traps[3];
             Picture wedge1, wedge2;
-            double x1, x2, y1, y2, a1, a2, op;
+            double x1, x2, y1, y2, a1, a2;
+            int op;
             if (angle1 + angle2 < 2 * Pi) {
                 /* Calculate a wedge to include */
                 a1 = angle1;
