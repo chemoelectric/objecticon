@@ -3346,7 +3346,7 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
                          get_mask_picture(wc),          /* src */
                          mask,         /* mask */
                          mask,         /* dest */
-                         0,0,          /* src x,y */
+                         x,y,          /* src x,y */
                          0,0,          /* mask x,y */
                          0,0,          /* dst x,y */
                          width, height);
@@ -3375,7 +3375,7 @@ static void pat1(wbp w, int x, int y, int width, int height)
                      get_mask_picture(wc),         /* mask */
                      ws->ppic,     /* dest */
                      x,y,          /* src x,y */
-                     0,0,          /* mask x,y */
+                     x,y,          /* mask x,y */
                      x, y,         /* dst x,y */
                      width, height);
 }
@@ -3521,7 +3521,7 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
                      get_mask_picture(wc2),/* mask */
                      ws2->ppic,    /* dest */
                      x, y,         /* src_x,y */
-                     0, 0,         /* mask x,y */
+                     x2, y2,         /* mask x,y */
                      x2, y2,       /* dst x,y */
                      width, height);
     pix_to_win(ws2, x2, y2, width, height);
@@ -3559,7 +3559,7 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
                      get_mask_picture(wc),  /* mask */
                      ws->ppic,     /* dest */
                      0,0,          /* src x,y */
-                     0,0,          /* mask x,y */
+                     x,y,          /* mask x,y */
                      x, y,         /* dst x,y */
                      imd->width, imd->height);
     pix_to_win(ws, x, y, imd->width, imd->height);
