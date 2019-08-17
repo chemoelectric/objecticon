@@ -30,6 +30,7 @@ static Image *any_other_win(Image *win);
 static void close_screen_win(wsp ws);
 static void open_pix_win(wsp ws);
 static Image *get_draw_img(wcp wc);
+static Image *get_mask_img(wcp wc);
 static void close_pix_win(wsp ws);
 static void resize_pix_win(wbp w);
 static void handle_reshape(wsp ws);
@@ -45,7 +46,7 @@ static Point InnerPt(Image *i, int x, int y);
 static struct SharedColor *new_sharedcolor(char *name, int rgba);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
-static struct SharedImage *new_sharedimage(struct imgdata *imd);
+static struct SharedImage *new_sharedimage(struct imgdata *imd, int depth);
 static struct SharedImage *link_sharedimage(struct SharedImage *x);
 static void unlink_sharedimage(struct SharedImage *x);
 static struct SharedCursor *new_sharedcursor(struct Cursor *cursor);
@@ -61,10 +62,8 @@ static void note_time(char *s);
 static void copy_pix_to_win(wsp ws);
 static void pix_to_win(wsp ws, int x, int y, int width, int height);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
-static Image *imgdata_to_Image(struct imgdata *imd);
+static Image *imgdata_to_Image(struct imgdata *imd, int cv_depth);
 static void fill1(wbp w, int x, int y, int width, int height);
-static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height);
-static void line2(wbp w, int x1, int y1, int x2, int y2);
 static int get_thick(wcp wc);
 static Point *convert_points(struct point *points0, int npoints);
 static Image *getmask(int width, int height);
@@ -233,11 +232,11 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-static struct SharedImage *new_sharedimage(struct imgdata *imd)
+static struct SharedImage *new_sharedimage(struct imgdata *imd, int depth)
 {
     struct SharedImage *res;
     GAlloc(res, SharedImage);
-    res->i = imgdata_to_Image(imd);
+    res->i = imgdata_to_Image(imd, depth);
     return res;
 }
 
@@ -710,26 +709,19 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2, wbp w3, int x3, int y3)
+int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
 {
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
     wcp wc2 = w2->context;
-    Image *mask;
-    if (w3) {
-        wsp ws3 = w3->window;
-        no_clip(ws3, 0);
-        mask = ws3->pix;
-    } else
-        mask = nil;
     no_clip(ws1, 0);
     clip(w2);
     gendrawop(ws2->pix,
               MkRect(x2, y2, w, h), 
               ws1->pix,
               Pt(x, y),
-              mask,
-              Pt(x3, y3),
+              get_mask_img(wc2),
+              Pt(x2, y2),
               wc2->drawop->i);
     pix_to_win(ws2, x2, y2, w, h);
     flushimage(display, 1);
@@ -799,14 +791,28 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     y = cy -ry - 1 - thick;
     width = 2 * rx + 2 * thick + 2;
     height = 2 * ry + 2 * thick + 2;
-    arcop(ws->pix, 
-          Pt(cx, cy),
-          rx, ry,
-          thick,
-          get_draw_img(wc), 
-          Pt(cx, cy),
-          alpha, phi,
-          wc->drawop->i);
+    if (needmask(wc, 0)) {
+        Image *mask = getmask(width, height);
+        arcop(mask, 
+              Pt(rx + 1 + thick, ry + 1 + thick),
+              rx, ry,
+              thick,
+              white->i, 
+              ZP,
+              alpha, phi,
+              SoverD);
+        maskimage2(w, mask, x, y, width, height);
+        freeimage(mask);
+    } else {
+        arcop(ws->pix, 
+              Pt(cx, cy),
+              rx, ry,
+              thick,
+              get_draw_img(wc), 
+              Pt(cx, cy),
+              alpha, phi,
+              wc->drawop->i);
+    }
     pix_to_win(ws, x, y, width, height);
     flushimage(display, 1);
 }
@@ -871,36 +877,7 @@ static void fill1(wbp w, int x, int y, int width, int height)
     gendrawop(ws->pix, 
               MkRect(x, y, width, height),
               get_draw_img(wc), Pt(x, y), 
-              0, ZP, wc->drawop->i);
-}
-
-static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height)
-{
-    wsp ws = w->window;
-    gendrawop(ws->pix, 
-              MkRect(x, y, width, height),
-              color, Pt(x, y), 
-              0, ZP, op);
-    pix_to_win(ws, x, y, width, height);
-}
-
-static void line2(wbp w, int x1, int y1, int x2, int y2)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    int thick;
-    if (x2 < x1) {
-        int t = x1 ; x1 = x2; x2 = t;
-    }
-    if (y2 < y1) {
-        int t = y1 ; y1 = y2; y2 = t;
-    }
-    thick = get_thick(wc);
-    if (x1 == x2)
-        lineop(ws->pix, Pt(x1, y1), Pt(x2, y2 + 1), Endsquare, Endsquare, thick, get_draw_img(wc), ZP, wc->drawop->i);
-    else
-        lineop(ws->pix, Pt(x1, y1), Pt(x2 + 1, y2), Endsquare, Endsquare, thick, get_draw_img(wc), ZP, wc->drawop->i);
-    pix_to_win(ws, x1 - thick, y1 - thick, 1 + x2 - x1 + 2 * thick, 1 + y2 - y1 + 2 * thick);
+              get_mask_img(wc), Pt(x, y), wc->drawop->i);
 }
 
 void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
@@ -938,7 +915,13 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     points_extent(points0, npoints, &x, &y, &width, &height);
     points = convert_points(points0, npoints);
     clip(w);
-    fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), points[0], wc->drawop->i);
+    if (needmask(wc, 0)) {
+        Image *mask = getmask(width, height);
+        fillpolyop(mask, points, npoints, 0, white->i, ZP, SoverD);
+        maskimage2(w, mask, x, y, width, height);
+        freeimage(mask);
+    } else
+        fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), points[0], wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
     free(points);
     flushimage(display, 1);
@@ -949,7 +932,7 @@ static int needmask(wcp wc, int overlap)
     /* ops where influence of source pixel is 0 (clear, dest) */
     if (wc->drawop->i == Clear || wc->drawop->i == D)
         return 0;
-    if (wc->pattern)
+    if (wc->pattern || wc->mask)
         return 1;
     if (!overlap)
         return 0;
@@ -964,7 +947,7 @@ static int needmask(wcp wc, int overlap)
 static Image *getmask(int width, int height)
 {
     Image *i;
-    MemProtect(i = allocimage(display, Rect(0, 0, width, height), RGBA32, 1, DTransparent));
+    MemProtect(i = allocimage(display, Rect(0, 0, width, height), CHAN1(CAlpha, 8), 1, DTransparent));
     return i;
 }
 
@@ -972,6 +955,15 @@ static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    if (wc->mask) {
+        gendrawop(mask, 
+                  MkRect(0, 0, width, height),
+                  get_mask_img(wc),
+                  Pt(x, y),
+                  mask,
+                  ZP, 
+                  DinS);
+    }
     gendrawop(ws->pix, 
               MkRect(x, y, width, height),
               get_draw_img(wc),
@@ -1118,9 +1110,15 @@ static Rune *iso8859_to_runes(dptr str)
 
 void erasearea(wbp w, int x, int y, int width, int height)
 {
+    wsp ws = w->window;
     wcp wc = w->context;
     clip(w);
-    fill2(w, S, wc->bg->i, x, y, width, height);
+    gendrawop(ws->pix, 
+              MkRect(x, y, width, height),
+              wc->bg->i, ZP, 
+              0, ZP,
+              S);
+    pix_to_win(ws, x, y, width, height);
     flushimage(display, 1);
 }
 
@@ -1185,13 +1183,26 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     y = cy -ry - 1;
     width = 2 * rx + 2;
     height = 2 * ry + 2;
-    fillarcop(ws->pix,
-              Pt(cx, cy),
-              rx, ry,
-              get_draw_img(wc),
-              Pt(cx, cy),
-              alpha, phi,
-              wc->drawop->i);
+    if (needmask(wc, 0)) {
+        Image *mask = getmask(width, height);
+        fillarcop(mask,
+                  Pt(rx + 1, ry + 1),
+                  rx, ry,
+                  white->i,
+                  ZP,
+                  alpha, phi,
+                  SoverD);
+        maskimage2(w, mask, x, y, width, height);
+        freeimage(mask);
+    } else {
+        fillarcop(ws->pix,
+                  Pt(cx, cy),
+                  rx, ry,
+                  get_draw_img(wc),
+                  Pt(cx, cy),
+                  alpha, phi,
+                  wc->drawop->i);
+    }
     pix_to_win(ws, x, y, width, height);
     flushimage(display, 1);
 }
@@ -1204,11 +1215,21 @@ static Image *get_draw_img(wcp wc)
         return wc->fg->i;
 }
 
+static Image *get_mask_img(wcp wc)
+{
+    if (wc->mask)
+        return wc->mask->i;
+    else
+        return 0;
+}
+
 void fillrectangle(wbp w, int x, int y, int width, int height)
 {
+    wsp ws = w->window;
     wcp wc = w->context;
     clip(w);
-    fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, height);
+    fill1(w, x, y, width, height);
+    pix_to_win(ws, x, y, width, height);
     flushimage(display, 1);
 }
 
@@ -1289,9 +1310,21 @@ int setpattern(wbp w, struct imgdata *imd)
     if (wc->pattern)
         unlink_sharedimage(wc->pattern);
     if (imd)
-        wc->pattern = new_sharedimage(imd);
+        wc->pattern = new_sharedimage(imd, 32);
     else
         wc->pattern = 0;
+    return Succeeded;
+}
+
+int setmask(wbp w, struct imgdata *imd)
+{
+    wcp wc = w->context;
+    if (wc->mask)
+        unlink_sharedimage(wc->mask);
+    if (imd)
+        wc->mask = new_sharedimage(imd, 8);
+    else
+        wc->mask = 0;
     return Succeeded;
 }
 
@@ -1307,25 +1340,46 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->data = data;
 }
 
-static Image *imgdata_to_Image1(struct imgdata *imd)
+static Image *imgdata_to_Image1(struct imgdata *imd, ulong chan)
 {
     Image *im;
-    int len;
-    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGBA32, 1, DNofill));
-    len = imd->width * imd->height * 4;
+    int len, depth;
+    depth = imd->format->alpha_depth + imd->format->color_depth;
+    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), chan, 1, DNofill));
+    len = imd->width * imd->height * (depth / 8);
     loadimage(im, im->r, imd->data, len);
     return im;
 }
 
-static Image *imgdata_to_Image(struct imgdata *imd)
+/*
+ * Convert the given imgdata to an Image.  depth (8 or 32) indicates
+ * the required depth if a transformation of the imgdata has to be
+ * done; the returned Image won't necessarily be of this depth if it
+ * is already in a known format.
+ */
+static Image *imgdata_to_Image(struct imgdata *imd, int depth)
 {
     struct imgdata *tmp;
+    struct imgdataformat *cv_fmt = 0;
+    ulong cv_chan = 0;
     Image *im;
     if (imd->format == &imgdataformat_P9ABGR32)
-        return imgdata_to_Image1(imd);
-    tmp = initimgdata(imd->width, imd->height, &imgdataformat_P9ABGR32);
+        return imgdata_to_Image1(imd, RGBA32);
+    if (imd->format == &imgdataformat_A8)
+        return imgdata_to_Image1(imd, CHAN1(CAlpha, 8));
+    if (imd->format == &imgdataformat_BGR24)
+        return imgdata_to_Image1(imd, RGB24);
+
+    /* Conversion needed */
+    switch (depth) {
+        case 8:  cv_fmt = &imgdataformat_A8; cv_chan = CHAN1(CAlpha, 8); break;
+        case 32: cv_fmt = &imgdataformat_P9ABGR32; cv_chan = RGBA32; break;
+        default: syserr("Invalid depth"); break;
+    }
+
+    tmp = initimgdata(imd->width, imd->height, cv_fmt);
     copyimgdata(tmp, imd);
-    im = imgdata_to_Image1(tmp);
+    im = imgdata_to_Image1(tmp, cv_chan);
     unlinkimgdata(tmp);
     return im;
 }
@@ -1336,14 +1390,22 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
     wsp ws = w->window;
     Image *im;
     /* Allocate a temp win to represent the imgdata */
-    im = imgdata_to_Image(imd);
+    im = imgdata_to_Image(imd, 32);
     /* Copy tmp image back to screen */
     clip(w);
-    gendrawop(ws->pix,
-              MkRect(x, y, imd->width, imd->height),
-              im, ZP, 
-              0, ZP, 
-              copy ? S : wc->drawop->i);
+    if (copy)
+        gendrawop(ws->pix,
+                  MkRect(x, y, imd->width, imd->height),
+                  im, ZP, 
+                  0, ZP,
+                  S);
+    else
+        gendrawop(ws->pix,
+                  MkRect(x, y, imd->width, imd->height),
+                  im, ZP, 
+                  get_mask_img(wc), Pt(x, y),
+                  wc->drawop->i);
+
     pix_to_win(ws, x, y, imd->width, imd->height);
     freeimage(im);
     flushimage(display, 1);
@@ -1974,6 +2036,8 @@ static void freecontext(wcp wc)
         unlink_sharedcolor(wc->bg);
         if (wc->pattern)
             unlink_sharedimage(wc->pattern);
+        if (wc->mask)
+            unlink_sharedimage(wc->mask);
         free(wc);
     }
 }
@@ -2292,6 +2356,8 @@ static wcp clonecontext(wcp src)
     wc->bg = link_sharedcolor(src->bg);
     if (src->pattern)
         wc->pattern = link_sharedimage(src->pattern);
+    if (src->mask)
+        wc->mask = link_sharedimage(src->mask);
     wc->font = src->font;
     wc->linewidth = src->linewidth;
     wc->drawop = src->drawop;
