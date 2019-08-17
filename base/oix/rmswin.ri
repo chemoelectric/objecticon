@@ -1204,7 +1204,7 @@ void erasearea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2, wbp w3, int x3, int y3)
+int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
 {
     gb_Draw d;
     mk_Draw(w2, &d);
@@ -1419,6 +1419,12 @@ int setpattern(wbp w, struct imgdata *imd)
     else
         wc->pattern = 0;
     return Succeeded;
+}
+
+int setmask(wbp w, struct imgdata *imd)
+{
+    LitWhy("Not implemented");
+    return Failed;
 }
 
 static int get_outer_width(wsp ws)

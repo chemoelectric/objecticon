@@ -873,6 +873,23 @@ final class Window(NoCopy, ObjectOutput)
 
    private native set_pattern_impl(v)
 
+   # Set a mask to use with certain drawing operations.
+   #
+   # If no parameter is given, the setting is cleared and the
+   # foreground colour is used again.  Otherwise, the parameter should
+   # be a `Pixels` instance or raw image data, or an image filename.
+   #
+   public set_mask(v)
+      return if /v | is(v, Pixels) then
+         set_mask_impl(v)
+      else use {
+         v := Pixels(v),
+         set_mask_impl(v)
+      }
+   end
+
+   private native set_mask_impl(v)
+
    # Set the shape of the figure that represents the mouse position.
    # The recognised values for string `v` are system dependent; see
    # the `cursors` example program for the available pointer shapes.
@@ -991,10 +1008,10 @@ final class Window(NoCopy, ObjectOutput)
 
    private native draw_image_impl(x, y, pix)
 
-   # Copy a rectangular area from this window to another window, `dest`, at `x2`,
-   # `y2`, with an optional mask window.
+   # Copy a rectangular area from this window to another window, `dest`, at `x2`.
+   # `y2`.
    #
-   public native copy_to(x1, y1, width, height, dest, x2, y2, mask, x3, y3)
+   public native copy_to(x1, y1, width, height, dest, x2, y2)
 
    # Draw a line through the points `(x1,y1,...xN,yN)`.  At least 2
    # points (4 parameters) must be given.

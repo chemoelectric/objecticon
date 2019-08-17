@@ -1574,6 +1574,13 @@ class Component(Rect,XYAlign,Connectable)
       return set_wattrib(WAttrib.PATTERN, v)
    end
 
+   #
+   # Set the `WAttrib.MASK` attribute; see `set_wattrib()`.
+   #
+   public set_mask(v)
+      return set_wattrib(WAttrib.MASK, v)
+   end
+
    public override new()
       Connectable.new()
       self.wattribs := table()

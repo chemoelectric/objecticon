@@ -73,6 +73,7 @@ static void pat1(wbp w, int x, int y, int width, int height);
 static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
 static Picture get_draw_picture(wcp wc);
+static Picture get_mask_picture(wcp wc);
 static void pix_to_win(wsp ws, int x, int y, int width, int height);
 static void synch_pix_and_win(wsp ws, int x, int y, int width, int height);
 static Picture getmask(wdp wd, int width, int height);
@@ -230,15 +231,16 @@ static void dump_ximage(XImage *xi)
 
 #define ATOM(d, x) ((d)->atoms[ATOM_##x])
 
-struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
+struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd, int depth)
 {
     struct SharedPicture *res;
     XRenderPictureAttributes pa;
+    XRenderPictFormat *format;
     GAlloc(res, SharedPicture);
     res->wd = wd;
-    res->pix = imgdata_to_Pixmap(wd, imd);
+    res->pix = imgdata_to_Pixmap(wd, imd, depth, &format);
     pa.repeat = 1;
-    res->i = XRenderCreatePicture(wd->display, res->pix, wd->pixfmt, CPRepeat, &pa);
+    res->i = XRenderCreatePicture(wd->display, res->pix, format, CPRepeat, &pa);
     res->width = imd->width;
     res->height = imd->height;
     return res;
@@ -254,10 +256,8 @@ void unlink_sharedpicture(struct SharedPicture *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
-        if (x->i)
-            XRenderFreePicture(x->wd->display, x->i);
-        if (x->pix)
-            XFreePixmap(x->wd->display, x->pix);
+        XRenderFreePicture(x->wd->display, x->i);
+        XFreePixmap(x->wd->display, x->pix);
         free(x);
     }
 }
@@ -357,9 +357,10 @@ int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
     Picture pic;
     struct wcursor *rv;
     Cursor nc;
+    XRenderPictFormat *format;
 
-    pix = imgdata_to_Pixmap(wd, imd);
-    pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, 0, 0);
+    pix = imgdata_to_Pixmap(wd, imd, 32, &format);
+    pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     nc = XRenderCreateCursor(wd->display, pic, x, y);
     rv = ensure_wcursor(wd, name);
     if (rv->shared_cursor) {
@@ -933,9 +934,22 @@ int setpattern(wbp w, struct imgdata *imd)
     if (wc->pattern)
         unlink_sharedpicture(wc->pattern);
     if (imd)
-        wc->pattern = new_sharedpicture(wd, imd);
+        wc->pattern = new_sharedpicture(wd, imd, 32);
     else
         wc->pattern = 0;
+    return Succeeded;
+}
+
+int setmask(wbp w, struct imgdata *imd)
+{
+    wcp wc = w->context;
+    wdp wd = w->window->display;
+    if (wc->mask)
+        unlink_sharedpicture(wc->mask);
+    if (imd)
+        wc->mask = new_sharedpicture(wd, imd, 8);
+    else
+        wc->mask = 0;
     return Succeeded;
 }
 
@@ -2412,7 +2426,8 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         if (has_wedge) {
             XTrapezoid traps[3];
             Picture wedge1, wedge2;
-            double x1, x2, y1, y2, a1, a2, op;
+            double x1, x2, y1, y2, a1, a2;
+            int op;
             if (angle1 + angle2 < 2 * Pi) {
                 /* Calculate a wedge to include */
                 a1 = angle1;
@@ -3150,7 +3165,7 @@ static int needmask(wcp wc, int overlap)
     /* ops where influence of source pixel is 0 (clear, dest) */
     if (wc->drawop->i == PictOpClear || wc->drawop->i == PictOpDst)
         return 0;
-    if (wc->pattern)
+    if (wc->pattern || wc->mask)
         return 1;
     if (!overlap)
         return 0;
@@ -3167,8 +3182,16 @@ static Picture getmask(wdp wd, int width, int height)
     Pixmap pix;
     Picture pic;
     XRenderPictureAttributes attr;
+    /*
+     * An XRender bug causes polygon seam artifacts for pixmaps of
+     * size <= 64 (in other words, the poly_mode setting below appears
+     * to be ignored and the Pixmap behaves like PolyModePrecise).
+     * Since these are only transient temporary pixmaps it makes sense
+     * to avoid this bug by allocating a slightly larger pixmap.
+     */
     pix = XCreatePixmap(wd->display, GetRoot(wd),
-                        width, height,
+                        Max(65, width),
+                        Max(65, height),
                         8);
     attr.poly_edge = PolyEdge;
     attr.poly_mode = PolyMode;
@@ -3192,7 +3215,7 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
         /* Note that we know the two vertical lines will be at least one pixel high, since
          * height > 2 * thick
          */
-        if (wc->pattern) {
+        if (wc->pattern || wc->mask) {
             pat1(w,
                  x, y,
                  width, thick);
@@ -3327,6 +3350,17 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
+    if (wc->mask) {
+        XRenderComposite(wd->display,
+                         PictOpInReverse,
+                         get_mask_picture(wc),          /* src */
+                         mask,         /* mask */
+                         mask,         /* dest */
+                         x,y,          /* src x,y */
+                         0,0,          /* mask x,y */
+                         0,0,          /* dst x,y */
+                         width, height);
+    }
     XRenderComposite(wd->display,
                      wc->drawop->i,
                      get_draw_picture(wc),          /* src */
@@ -3344,13 +3378,14 @@ static void pat1(wbp w, int x, int y, int width, int height)
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
+
     XRenderComposite(wd->display,
                      wc->drawop->i,
-                     wc->pattern->i,  /* src */
-                     None,         /* mask */
+                     get_draw_picture(wc),  /* src */
+                     get_mask_picture(wc),         /* mask */
                      ws->ppic,     /* dest */
                      x,y,          /* src x,y */
-                     0,0,          /* mask x,y */
+                     x,y,          /* mask x,y */
                      x, y,         /* dst x,y */
                      width, height);
 }
@@ -3378,19 +3413,21 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
     XImage *xi;
     Pixmap pix;
     GC gc;
+    int depth;
+    depth = imd->format->alpha_depth + imd->format->color_depth;
     MemProtect(xi = XCreateImage(wd->display, 
                                  NULL,
-                                 32,            /* depth */
+                                 depth,            /* depth */
                                  ZPixmap, 
                                  0, 
                                  (char *)imd->data, 
                                  imd->width, imd->height, 
-                                 BitmapPad(wd->display),
+                                 depth,            /* bitmap_pad */
                                  0));
 
     pix = XCreatePixmap(wd->display, GetRoot(wd),
                       imd->width, imd->height,
-                      32);
+                      depth);
     gc = XCreateGC(wd->display, pix, 0, NULL);
     XPutImage(wd->display, pix, gc, xi,
               0,0, 0,0, imd->width, imd->height);
@@ -3400,13 +3437,33 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
     return pix;
 }
 
-Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
+/*
+ * Convert the given imgdata to a Pixmap.  depth (8 or 32) indicates
+ * the required depth if a transformation of the imgdata has to be
+ * done; the returned Pixmap won't necessarily be of this depth if it
+ * is already in a known format.  The picture format matching the
+ * returned Pixmap is returned in format.
+ */
+Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int depth, XRenderPictFormat **format)
 {
     struct imgdata *tmp;
+    struct imgdataformat *cv_fmt = 0;
     Pixmap pix;
-    if (imd->format == wd->format)
+    if (imd->format == wd->format) {
+        *format = wd->pixfmt;
         return imgdata_to_Pixmap1(wd, imd);
-    tmp = initimgdata(imd->width, imd->height, wd->format);
+    }
+    if (imd->format == &imgdataformat_A8) {
+        *format = wd->maskfmt;
+        return imgdata_to_Pixmap1(wd, imd);
+    }
+    /* Conversion needed */
+    switch (depth) {
+        case 8:  *format = wd->maskfmt; cv_fmt = &imgdataformat_A8; break;
+        case 32: *format = wd->pixfmt; cv_fmt = wd->format; break;
+        default: syserr("Invalid depth"); break;
+    }
+    tmp = initimgdata(imd->width, imd->height, cv_fmt);
     copyimgdata(tmp, imd);
     pix = imgdata_to_Pixmap1(wd, tmp);
     unlinkimgdata(tmp);
@@ -3421,6 +3478,14 @@ static Picture get_draw_picture(wcp wc)
         return wc->fg->brush;
 }
 
+static Picture get_mask_picture(wcp wc)
+{
+    if (wc->mask)
+        return wc->mask->i;
+    else
+        return None;
+}
+
 /*
  * fill a rectangle
  */
@@ -3431,7 +3496,7 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
     /*
      * fill the rectangle with the pattern or foreground color
      */
-    if (wc->pattern)
+    if (wc->pattern || wc->mask)
         pat2(w, 
              x, y, width, height);
     else
@@ -3460,30 +3525,18 @@ void erasearea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2, wbp w3, int x3, int y3)
+int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
 {
     wsp ws1 = w->window;
     wsp ws2 = w2->window;
     wcp wc2 = w2->context;
     wdp wd1 = ws1->display;
     wdp wd2 = ws2->display;
-    Picture mask;
 
     if (wd1->display != wd2->display) {
         LitWhy("Can't copy between different displays");
         return Failed;
     }
-
-    if (w3) {
-        wsp ws3 = w3->window;
-        if (wd1->display != ws3->display->display) {
-            LitWhy("Can't use a mask from a different display");
-            return Failed;
-        }
-        no_clip(ws3, 0);
-        mask = ws3->ppic;
-    } else
-        mask = None;
 
     /*
      * Copying is between windows on one display, perhaps the same window.
@@ -3497,10 +3550,10 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2,
     XRenderComposite(wd1->display,
                      wc2->drawop->i,
                      ws1->ppic,    /* src */
-                     mask,         /* mask */
+                     get_mask_picture(wc2),/* mask */
                      ws2->ppic,    /* dest */
                      x, y,         /* src_x,y */
-                     x3, y3,       /* mask x,y */
+                     x2, y2,         /* mask x,y */
                      x2, y2,       /* dst x,y */
                      width, height);
     pix_to_win(ws2, x2, y2, width, height);
@@ -3528,19 +3581,32 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
     wdp wd = ws->display;
     Pixmap pix;
     Picture pic;
-    pix = imgdata_to_Pixmap(wd, imd);
-    pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, 0, 0);
+    XRenderPictFormat *format;
+    pix = imgdata_to_Pixmap(wd, imd, 32, &format);
+    pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     clip(w);
 
-    XRenderComposite(wd->display,
-                     copy ? PictOpSrc : wc->drawop->i,      /* op */
-                     pic,          /* src */
-                     None,         /* mask */
-                     ws->ppic,     /* dest */
-                     0,0,          /* src x,y */
-                     0,0,          /* mask x,y */
-                     x, y,         /* dst x,y */
-                     imd->width, imd->height);
+    if (copy)
+        XRenderComposite(wd->display,
+                         PictOpSrc,    /* op */
+                         pic,          /* src */
+                         None,         /* mask */
+                         ws->ppic,     /* dest */
+                         0,0,          /* src x,y */
+                         0,0,          /* mask x,y */
+                         x, y,         /* dst x,y */
+                         imd->width, imd->height);
+    else
+        XRenderComposite(wd->display,
+                         wc->drawop->i,  /* op */
+                         pic,            /* src */
+                         get_mask_picture(wc),  /* mask */
+                         ws->ppic,       /* dest */
+                         0,0,            /* src x,y */
+                         x,y,            /* mask x,y */
+                         x,y,            /* dst x,y */
+                         imd->width, imd->height);
+
     pix_to_win(ws, x, y, imd->width, imd->height);
 
     XFreePixmap(wd->display, pix);
@@ -4042,6 +4108,8 @@ static wcp clonecontext(wcp wc)
     rv->bg = link_sharedcolor(wc->bg);
     if (wc->pattern)
         rv->pattern = link_sharedpicture(wc->pattern);
+    if (wc->mask)
+        rv->mask = link_sharedpicture(wc->mask);
     rv->font = wc->font;
     rv->lineend = wc->lineend;
     rv->linejoin = wc->linejoin;
@@ -4083,6 +4151,8 @@ static void freecontext(wcp wc)
         unlink_sharedcolor(wc->bg);
         if (wc->pattern)
             unlink_sharedpicture(wc->pattern);
+        if (wc->mask)
+            unlink_sharedpicture(wc->mask);
         free(wc);
     }
 }

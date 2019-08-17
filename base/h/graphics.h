@@ -372,9 +372,11 @@ typedef struct _wcontext {
   wdp		display;
   struct SharedColor *fg, *bg;
   struct SharedPicture  *pattern;
+  struct SharedPicture  *mask;
 #elif PLAN9
   struct SharedColor *fg, *bg;
   struct SharedImage  *pattern;
+  struct SharedImage  *mask;
 #elif MSWIN32
   struct SharedColor *fg, *bg;
   struct SharedBitmap  *pattern;
