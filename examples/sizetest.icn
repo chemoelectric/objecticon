@@ -305,6 +305,7 @@ class Untitled(Dialog)
          clear_constraints().
          set_constraint(Grid.EOL, &yes).
          set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_13)
       paint_14 := TextPaint("Inc size:")
       label_10 := Label().
