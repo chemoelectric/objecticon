@@ -305,12 +305,12 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
    struct SharedColor *link_sharedcolor(struct SharedColor *x);
    void unlink_sharedcolor(struct SharedColor *x);
-   struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
+   struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd, int depth);
    struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
    void unlink_sharedpicture(struct SharedPicture *x);
    wfp loadfont(wdp wd, char *s);
    char *tofcpatternstr(char *s);
-   Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
+   Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int depth, XRenderPictFormat **format);
    wbp alcwbinding(wdp wd);
    wbp findwbp(wsp ws);
 #endif
