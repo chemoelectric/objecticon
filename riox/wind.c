@@ -1151,19 +1151,7 @@ wdelete(Window *w, uint q0, uint q1)
 
 static Window	*clickwin;
 static uint	clickmsec;
-static Window	*selectwin;
 static uint	selectq;
-
-/*
- * called from frame library
- */
-static void
-framescroll(Frame *f, int dl)
-{
-	if(f != &selectwin->Frame)
-		error("frameselect not right frame");
-	wframescroll(selectwin, dl);
-}
 
 static void
 wframescroll(Window *w, int dl)
@@ -1192,8 +1180,11 @@ wframescroll(Window *w, int dl)
 	wsetorigin(w, q0, TRUE);
 }
 
-/**************************************************/
-/* Copied from frselect.c to work with MousectlEx */
+/**************************************************
+ * Copied from frselect.c to work with MousectlEx
+ * and to eliminate use of a global variable, selectwin, which introduced
+ * a race condition.
+ */
 
 static
 int
@@ -1207,11 +1198,12 @@ region(int a, int b)
 }
 
 static void
-frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
+frselectex(Window *w, MousectlEx *mc)	/* when called, button 1 is down */
 {
 	ulong p0, p1, q;
 	Point mp, pt0, pt1, qt;
 	int reg, b, scrled;
+        Frame *f = w;
 
 	mp = mc->xy;
 	b = mc->buttons;
@@ -1227,26 +1219,24 @@ frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
 	reg = 0;
 	do{
 		scrled = 0;
-		if(f->scroll){
-			if(mp.y < f->r.min.y){
-				(*f->scroll)(f, -(f->r.min.y-mp.y)/(int)f->font->height-1);
-				p0 = f->p1;
-				p1 = f->p0;
-				scrled = 1;
-			}else if(mp.y > f->r.max.y){
-				(*f->scroll)(f, (mp.y-f->r.max.y)/(int)f->font->height+1);
-				p0 = f->p0;
-				p1 = f->p1;
-				scrled = 1;
-			}
-			if(scrled){
-				if(reg != region(p1, p0))
-					q = p0, p0 = p1, p1 = q;	/* undo the swap that will happen below */
-				pt0 = frptofchar(f, p0);
-				pt1 = frptofchar(f, p1);
-				reg = region(p1, p0);
-			}
-		}
+                if(mp.y < f->r.min.y){
+                    wframescroll(w, -(f->r.min.y-mp.y)/(int)f->font->height-1);
+                    p0 = f->p1;
+                    p1 = f->p0;
+                    scrled = 1;
+                }else if(mp.y > f->r.max.y){
+                    wframescroll(w, (mp.y-f->r.max.y)/(int)f->font->height+1);
+                    p0 = f->p0;
+                    p1 = f->p1;
+                    scrled = 1;
+                }
+                if(scrled){
+                    if(reg != region(p1, p0))
+                        q = p0, p0 = p1, p1 = q;	/* undo the swap that will happen below */
+                    pt0 = frptofchar(f, p0);
+                    pt1 = frptofchar(f, p1);
+                    reg = region(p1, p0);
+                }
 		q = frcharofpt(f, mp);
 		if(p1 != q){
 			if(reg != region(q, p0)){	/* crossed starting point; reset */
@@ -1285,7 +1275,7 @@ frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
 			f->p1 = p0;
 		}
 		if(scrled)
-			(*f->scroll)(f, 0);
+			wframescroll(w, 0);
 		flushimage(f->display, 1);
 		if(!scrled)
 			readmouseex(mc);
@@ -1304,7 +1294,6 @@ wselection(Window *w)
         if(w != input) return;
 
 	first = 1;
-	selectwin = w;
 	/*
 	 * Double-click immediately if it might make sense.
 	 */
@@ -1330,12 +1319,10 @@ wselection(Window *w)
 		selectq = q0;
 	}
 	if(w->mc.buttons == b){
-		w->scroll = framescroll;
                 frselectex(w, &w->mc);
 		/* horrible botch: while asleep, may have lost selection altogether */
 		if(selectq > w->nr)
 			selectq = w->org + w->p0;
-		w->Frame.scroll = nil;
 		if(selectq < w->org)
 			q0 = selectq;
 		else
