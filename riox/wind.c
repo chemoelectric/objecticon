@@ -42,6 +42,19 @@ static	Image	*paleyellow;
 static	Image	*paleblue;
 static	Image	*palecyan;
 
+static void wmousectl(Window*);
+static void wkeyctl(Window*, Rune);
+static void wselection(Window*);
+static int wctlmesg(Window*, int);
+static void wsetcols(Window*);
+static void wrepaint(Window*);
+static void wdelete(Window*, uint, uint);
+static void wframescroll(Window*, int);
+static int wbswidth(Window*, Rune);
+static void wclosewin(Window*);
+static void wdoubleclick(Window*, uint*, uint*);
+static int wclickmatch(Window*, int, int, int, uint*);
+static void wfill(Window*);
 static void addhist(Window *w, int from, int to);
 static void rmhist(Window *w);
 static void gotohist(Window *w, int pos);
@@ -569,7 +582,7 @@ interruptproc(void *v)
 	free(notefd);
 }
 
-int
+static int
 windfilewidth(Window *w, uint q0, int oneelement)
 {
 	uint q;
@@ -587,7 +600,7 @@ windfilewidth(Window *w, uint q0, int oneelement)
 	return q0-q;
 }
 
-void
+static void
 showcandidates(Window *w, Completion *c)
 {
 	int i;
@@ -627,7 +640,7 @@ showcandidates(Window *w, Completion *c)
         wshow(w, w->q0);
 }
 
-Rune*
+static Rune*
 namecomplete(Window *w)
 {
 	int nstr, npath;
@@ -681,7 +694,7 @@ namecomplete(Window *w)
 	return rp;
 }
 
-void
+static void
 wkeyctl(Window *w, Rune r)
 {
 	uint q0 ,q1;
@@ -850,7 +863,7 @@ wkeyctl(Window *w, Rune r)
 	wshow(w, q0+1);
 }
 
-void
+static void
 wsetcols(Window *w)
 {
 	if(w->holding)
@@ -883,7 +896,7 @@ wsetcols(Window *w)
         }
 }
 
-void
+static void
 wrepaint(Window *w)
 {
 	wsetcols(w);
@@ -896,7 +909,7 @@ wrepaint(Window *w)
 		wborder(w, Unselborder);
 }
 
-int
+static int
 wbswidth(Window *w, Rune c)
 {
 	uint q, eq, stop;
@@ -1043,7 +1056,7 @@ winborder(Window *w, Point xy)
 	return !w->noborder && ptinrect(xy, w->screenr) && !ptinrect(xy, insetrect(w->screenr, Selborder));
 }
 
-void
+static void
 wmousectl(Window *w)
 {
 	int but;
@@ -1100,7 +1113,7 @@ wmpress(Window *w)
     wshow(w, w->q0);
 }
 
-void
+static void
 wdelete(Window *w, uint q0, uint q1)
 {
 	uint n, p0, p1;
@@ -1144,7 +1157,7 @@ static uint	selectq;
 /*
  * called from frame library
  */
-void
+static void
 framescroll(Frame *f, int dl)
 {
 	if(f != &selectwin->Frame)
@@ -1152,7 +1165,7 @@ framescroll(Frame *f, int dl)
 	wframescroll(selectwin, dl);
 }
 
-void
+static void
 wframescroll(Window *w, int dl)
 {
 	uint q0;
@@ -1193,7 +1206,7 @@ region(int a, int b)
 	return 1;
 }
 
-void
+static void
 frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
 {
 	ulong p0, p1, q;
@@ -1282,7 +1295,7 @@ frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
 
 /**************************************************/
 
-void
+static void
 wselection(Window *w)
 {
 	uint q0, q1;
@@ -1373,7 +1386,7 @@ wsendctlmesg(Window *w, int type)
 	send(w->cctl, &type);
 }
 
-int
+static int
 wctlmesg(Window *w, int m)
 {
 	switch(m){
@@ -1933,7 +1946,7 @@ wlookid(int id)
 	return nil;
 }
 
-void
+static void
 wclosewin(Window *w)
 {
 	Rectangle r;
@@ -2043,20 +2056,20 @@ static Rune right1[] = { L'}', L']', L')', L'>', L'»', 0 };
 static Rune left2[] =  { L'\n', 0 };
 static Rune left3[] =  { L'\'', L'"', L'`', 0 };
 
-Rune *left[] = {
+static Rune *left[] = {
 	left1,
 	left2,
 	left3,
 	nil
 };
-Rune *right[] = {
+static Rune *right[] = {
 	right1,
 	left2,
 	left3,
 	nil
 };
 
-void
+static void
 wdoubleclick(Window *w, uint *q0, uint *q1)
 {
 	int c, i;
@@ -2102,7 +2115,7 @@ wdoubleclick(Window *w, uint *q0, uint *q1)
 		(*q0)--;
 }
 
-int
+static int
 wclickmatch(Window *w, int cl, int cr, int dir, uint *q)
 {
 	Rune c;
@@ -2324,7 +2337,7 @@ winsert(Window *w, Rune *r, Attr a, int n, uint q0)
 	return q0;
 }
 
-void
+static void
 wfill(Window *w)
 {
 	int i, n, m, nl;
