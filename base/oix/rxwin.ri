@@ -2222,6 +2222,8 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button3: state |= 4; break;
                 case Button4: state |= 8; break;
                 case Button5: state |= 16; break;
+                case 6: state |= 32; break;         /* Button 6, wheel left */
+                case 7: state |= 64; break;         /* Button 7, wheel right */
             }
             break;
         }
@@ -2232,6 +2234,8 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button3: state &= ~4; break;
                 case Button4: state &= ~8; break;
                 case Button5: state &= ~16; break;
+                case 6: state &= ~32; break;
+                case 7: state &= ~64; break;
             }
             break;
         }

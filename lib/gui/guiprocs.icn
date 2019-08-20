@@ -25,6 +25,8 @@ final abstract class Event()
       MOUSE_MOVEMENT,
       MOUSE_WHEEL_UP,
       MOUSE_WHEEL_DOWN,
+      MOUSE_WHEEL_LEFT,
+      MOUSE_WHEEL_RIGHT,
       WINDOW_STATE,
       WINDOW_RESIZE,
       WINDOW_MOVE,
@@ -76,6 +78,8 @@ final abstract class Event()
       MOUSE_MOVEMENT := Mouse.MOVEMENT
       MOUSE_WHEEL_UP := Mouse.WHEEL_UP
       MOUSE_WHEEL_DOWN := Mouse.WHEEL_DOWN
+      MOUSE_WHEEL_LEFT := Mouse.WHEEL_LEFT
+      MOUSE_WHEEL_RIGHT := Mouse.WHEEL_RIGHT
       WINDOW_STATE := Window.STATE
       WINDOW_MOVE := Window.MOVE
       WINDOW_RESIZE := Window.RESIZE
@@ -881,6 +885,11 @@ abstract class HasUseWheel(Connectable)
    public abstract handle_wheel_up(e)
 
    public abstract handle_wheel_down(e)
+
+   public abstract handle_wheel_left(e)
+
+   public abstract handle_wheel_right(e)
+
    
    public set_use_wheel(s)
       need_flag(s)
@@ -889,7 +898,9 @@ abstract class HasUseWheel(Connectable)
          &null
       else
          [connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener,
-          connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener]
+          connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener,
+          connect(handle_wheel_left, Event.MOUSE_WHEEL_LEFT).last_listener,
+          connect(handle_wheel_right, Event.MOUSE_WHEEL_RIGHT).last_listener]
       link
    end
 end

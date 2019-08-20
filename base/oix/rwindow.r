@@ -198,6 +198,14 @@ void qmouseevents(wsp ws,             /* canvas */
             MakeInt(MOUSE5UP, &d);
             qevent(ws, &d, x, y, t, mod);
         }
+        if ((ws->mousestate & 32) && !(state & 32)) {
+            MakeInt(MOUSE6UP, &d);
+            qevent(ws, &d, x, y, t, mod);
+        }
+        if ((ws->mousestate & 64) && !(state & 64)) {
+            MakeInt(MOUSE7UP, &d);
+            qevent(ws, &d, x, y, t, mod);
+        }
 
         ws->mousestate = state;
     }
