@@ -2209,11 +2209,11 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
 static void handle_mouse(wsp ws, XButtonEvent *event)
 {
     int state = 0;
+    /* Initialize state based on the three buttons that can be
+     * held. */
     if (event->state & Button1Mask) state |= 1;
     if (event->state & Button2Mask) state |= 2;
     if (event->state & Button3Mask) state |= 4;
-    if (event->state & Button4Mask) state |= 8;
-    if (event->state & Button5Mask) state |= 16;
     switch (event->type) {
         case ButtonPress: {
             switch (event->button) {
@@ -2222,8 +2222,8 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button3: state |= 4; break;
                 case Button4: state |= 8; break;
                 case Button5: state |= 16; break;
-                case 6: state |= 32; break;         /* Button 6, wheel left */
-                case 7: state |= 64; break;         /* Button 7, wheel right */
+                case 6:       state |= 32; break;  /* Wheel left */
+                case 7:       state |= 64; break;  /* Wheel right */
             }
             break;
         }
@@ -2232,10 +2232,6 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button1: state &= ~1; break;
                 case Button2: state &= ~2; break;
                 case Button3: state &= ~4; break;
-                case Button4: state &= ~8; break;
-                case Button5: state &= ~16; break;
-                case 6: state &= ~32; break;
-                case 7: state &= ~64; break;
             }
             break;
         }
