@@ -254,6 +254,12 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
       go_down(e)
    end
 
+   public override handle_wheel_left(e)
+   end
+
+   public override handle_wheel_right(e)
+   end
+
    public override new()
       Component.new()
       self.set_border(SunkenBorder())

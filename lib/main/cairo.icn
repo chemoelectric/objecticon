@@ -759,7 +759,7 @@ final class ImageSurface(Surface)
             use {
                t := Pixels(v),
                use {
-                  t := t.convert(ImageSurface.FORMAT),
+                  t := t.convert(FORMAT),
                   new_impl(t)
                }
             } | fail
@@ -767,7 +767,7 @@ final class ImageSurface(Surface)
       } else if *a = 2 then {
          # Width and height
          use {
-            t := Pixels(a[1], a[2], ImageSurface.FORMAT),
+            t := Pixels(a[1], a[2], FORMAT),
             new_impl(t)
          }         
       } else

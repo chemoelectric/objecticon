@@ -1375,6 +1375,8 @@ final abstract class Mouse()
       MOVEMENT,
       WHEEL_UP,
       WHEEL_DOWN,
+      WHEEL_LEFT,
+      WHEEL_RIGHT,
       WHEEL,
       DRAG_OR_MOVEMENT,
       ENTER,
@@ -1393,7 +1395,9 @@ final abstract class Mouse()
       MOVEMENT :=            -12
       WHEEL_UP :=            -16
       WHEEL_DOWN :=          -17
-      WHEEL := set(WHEEL_UP, WHEEL_DOWN)
+      WHEEL_LEFT :=          -21
+      WHEEL_RIGHT :=         -22
+      WHEEL := set(WHEEL_UP, WHEEL_DOWN, WHEEL_LEFT, WHEEL_RIGHT)
       ENTER :=               -18
       EXIT :=                -19
       CROSSING := set(ENTER, EXIT)
