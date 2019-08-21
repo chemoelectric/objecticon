@@ -41,7 +41,7 @@ end
 #
 # Selection from a list
 #
-class Circulate(SelectionList,Component)
+class Circulate(SelectionList, Component, HasUseWheel)
    public
       old_selection, 
       b,
@@ -125,6 +125,14 @@ class Circulate(SelectionList,Component)
       end_change(e)
    end
 
+   public override handle_wheel_up(e)
+      go_up(e)
+   end
+
+   public override handle_wheel_down(e)
+      go_down(e)
+   end
+
    public override initially()
       \self.selection_list | runerr("No selection list specified")
       Component.initially()
@@ -146,8 +154,7 @@ class Circulate(SelectionList,Component)
                    set_cache(ImageCache.get_key_with_resize("gui.CIRCULATE_12"))).
          connect(self.on_button_pressed, Event.ACTION)
       add(self.b)
-      connect(self.go_up, Event.MOUSE_WHEEL_UP)
-      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      set_use_wheel(&yes)
       return
    end
 end

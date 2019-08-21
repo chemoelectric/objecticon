@@ -14,7 +14,7 @@ import graphics
 # This class is the base class for all spin components.  It just provides the up/down
 # buttons and two abstract methods which are invoked to implement those actions.
 #
-abstract class Spin(Component)
+abstract class Spin(Component, HasUseWheel)
    public 
       up, 
       down,
@@ -107,6 +107,14 @@ abstract class Spin(Component)
       end_change(e)
    end
 
+   public override handle_wheel_up(e)
+      go_up(e)
+   end
+
+   public override handle_wheel_down(e)
+      go_down(e)
+   end
+
    public override new()
       Component.new()
       self.set_border(SunkenBorder())
@@ -129,8 +137,7 @@ abstract class Spin(Component)
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", 1.0)
-      connect(self.go_up, Event.MOUSE_WHEEL_UP)
-      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      set_use_wheel(&yes)
       return
    end
 end
