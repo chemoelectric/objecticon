@@ -886,10 +886,13 @@ abstract class HasUseWheel(Connectable)
 
    public abstract handle_wheel_down(e)
 
-   public abstract handle_wheel_left(e)
+   public handle_wheel_left(e)
+      handle_wheel_up(e)
+   end
 
-   public abstract handle_wheel_right(e)
-
+   public handle_wheel_right(e)
+      handle_wheel_down(e)
+   end
    
    public set_use_wheel(s)
       need_flag(s)
