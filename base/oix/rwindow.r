@@ -188,26 +188,26 @@ void qmouseevents(wsp ws,             /* canvas */
             qevent(ws, &d, x, y, t, mod);
         }
 
-        /* The mouse wheel just generates up events, depending on the 
-         * direction */
-        if ((ws->mousestate & 8) && !(state & 8)) {
-            MakeInt(MOUSE4UP, &d);
+        /* The mouse wheel buttons just generate one kind of event,
+         * and cannot be held. */
+        if (state & 8) {
+            MakeInt(MOUSE4, &d);
             qevent(ws, &d, x, y, t, mod);
         }
-        if ((ws->mousestate & 16) && !(state & 16)) {
-            MakeInt(MOUSE5UP, &d);
+        if (state & 16) {
+            MakeInt(MOUSE5, &d);
             qevent(ws, &d, x, y, t, mod);
         }
-        if ((ws->mousestate & 32) && !(state & 32)) {
-            MakeInt(MOUSE6UP, &d);
+        if (state & 32) {
+            MakeInt(MOUSE6, &d);
             qevent(ws, &d, x, y, t, mod);
         }
-        if ((ws->mousestate & 64) && !(state & 64)) {
-            MakeInt(MOUSE7UP, &d);
+        if (state & 64) {
+            MakeInt(MOUSE7, &d);
             qevent(ws, &d, x, y, t, mod);
         }
 
-        ws->mousestate = state;
+        ws->mousestate = (state & 7);
     }
 }
 

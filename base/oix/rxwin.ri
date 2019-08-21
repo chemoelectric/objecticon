@@ -2142,11 +2142,11 @@ static int make_mod(unsigned int state)
 static void handle_crossing(wsp ws, XCrossingEvent *event)
 {
     struct descrip d;
+    UpdateRecent(ws, event);
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, 
            make_mod(event->state));
-    UpdateRecent(ws, event);
 }
 
 /*
@@ -2159,6 +2159,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     tended struct descrip d;
     KeySym k;
 
+    UpdateRecent(ws, event);
     fl = make_mod(event->state);
     if (event->type == KeyRelease)
         fl |= MOD_RELEASE;
@@ -2195,7 +2196,6 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     MakeInt(k, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, fl);
-    UpdateRecent(ws, event);
 }
 
 #include "rxkeysyms.ri"
@@ -2209,6 +2209,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
 static void handle_mouse(wsp ws, XButtonEvent *event)
 {
     int state = 0;
+    UpdateRecent(ws, event);
     /* Initialize state based on the three buttons that can be
      * held. */
     if (event->state & Button1Mask) state |= 1;
@@ -2232,6 +2233,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button1: state &= ~1; break;
                 case Button2: state &= ~2; break;
                 case Button3: state &= ~4; break;
+                default: return;
             }
             break;
         }
@@ -2240,7 +2242,6 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  event->x, event->y, 
                  (word)event->time, 
                  make_mod(event->state));
-    UpdateRecent(ws, event);
 }
 
 /*

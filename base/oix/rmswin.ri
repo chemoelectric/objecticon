@@ -505,16 +505,8 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     dir = (delta > 0) ? 8 : 16;
     num = Abs(delta) / WHEEL_DELTA;
 
-    /*
-     * We only get one MS event for a wheel movement, so call
-     * qmouseevents twice for each increment, once with the button 4 or
-     * 5 going down and again with it coming up.  This generates one
-     * icon event, on the second qmouseevents call.
-     */
-    while (num--) {
+    while (num--)
         qmouseevents(ws, state | dir, p.x, p.y, t, fl);
-        qmouseevents(ws, state, p.x, p.y, t, fl);
-    }
 }
 
 static void dbg(char *fmt, ...)
