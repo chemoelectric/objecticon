@@ -238,6 +238,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int dpointargs(wbp w, dptr argv, double *px, double *py);
    int interpimage(dptr d,  struct imgdata *imd);
    int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
+   int int_reducerect(wbp w, int clip, int *x, int *y, int *width, int *height);
    void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
    void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy);
    struct imgdataformat *getimgdataformat(wbp w);

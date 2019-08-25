@@ -370,6 +370,19 @@ int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height)
     return 1;
 }
 
+int int_reducerect(wbp w, int clip, int *x0, int *y0, int *width0, int *height0)
+{
+#if IntBits == WordBits
+    return reducerect(w, clip, (word *)x0, (word *)y0, (word *)width0, (word *)height0);
+#else
+    int res;
+    word x = *x0, y = *y0, width = *width0, height = *height0;
+    res = reducerect(w, clip, &x, &y, &width, &height);
+    *x0 = x; *y0 = y; *width0 = width; *height0 = height;
+    return res;
+#endif
+}
+
 static int tryimagedata(dptr data, struct imgdata *imd)
 {
     int r;
