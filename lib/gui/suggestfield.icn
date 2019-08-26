@@ -343,47 +343,41 @@ abstract class SuggestField(TextField, MenuMode)
 
    public override handle_return(e)
       if \select_using_enter_flag then
-         (\popup).fire(Event.KEY_PRESS, e)
+         forward_key(e)
       TextField.handle_return(e)
       keep_closed()
    end
 
+   public forward_key(e)
+      (\popup).fire(Event.KEY_PRESS, e)
+   end
+
    public handle_key_up(e)
-      (\popup).fire(Event.KEY_PRESS, e)
-   end
-
-   public handle_key_page_up(e)
-      (\popup).fire(Event.KEY_PRESS, e)
-   end
-
-   public handle_key_page_down(e)
-      (\popup).fire(Event.KEY_PRESS, e)
+      forward_key(e)
    end
 
    public handle_key_down(e)
-      if \popup then {
-         if popup.get_cursor() then
-            popup.fire(Event.KEY_PRESS, e)
-         else {
-            popup.set_cursor(1)
-            if /select_using_enter_flag then {
-               popup.set_selections([1])
-               synch_contents(e)
-            }
-         }
-      }
+      forward_key(e)
+   end
+
+   public handle_key_page_up(e)
+      forward_key(e)
+   end
+
+   public handle_key_page_down(e)
+      forward_key(e)
    end
 
    public override handle_key_home(e)
       if \popup & \forward_home_end_flag then
-         popup.fire(Event.KEY_PRESS, e)
+         forward_key(e)
       else
          TextField.handle_key_home(e)
    end
 
    public override handle_key_end(e)
       if \popup & \forward_home_end_flag then
-         popup.fire(Event.KEY_PRESS, e)
+         forward_key(e)
       else
          TextField.handle_key_end(e)
    end

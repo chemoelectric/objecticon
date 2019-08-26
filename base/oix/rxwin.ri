@@ -2142,11 +2142,11 @@ static int make_mod(unsigned int state)
 static void handle_crossing(wsp ws, XCrossingEvent *event)
 {
     struct descrip d;
+    UpdateRecent(ws, event);
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, 
            make_mod(event->state));
-    UpdateRecent(ws, event);
 }
 
 /*
@@ -2159,6 +2159,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     tended struct descrip d;
     KeySym k;
 
+    UpdateRecent(ws, event);
     fl = make_mod(event->state);
     if (event->type == KeyRelease)
         fl |= MOD_RELEASE;
@@ -2195,7 +2196,6 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     MakeInt(k, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, fl);
-    UpdateRecent(ws, event);
 }
 
 #include "rxkeysyms.ri"
@@ -2209,11 +2209,12 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
 static void handle_mouse(wsp ws, XButtonEvent *event)
 {
     int state = 0;
+    UpdateRecent(ws, event);
+    /* Initialize state based on the three buttons that can be
+     * held. */
     if (event->state & Button1Mask) state |= 1;
     if (event->state & Button2Mask) state |= 2;
     if (event->state & Button3Mask) state |= 4;
-    if (event->state & Button4Mask) state |= 8;
-    if (event->state & Button5Mask) state |= 16;
     switch (event->type) {
         case ButtonPress: {
             switch (event->button) {
@@ -2222,8 +2223,8 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button3: state |= 4; break;
                 case Button4: state |= 8; break;
                 case Button5: state |= 16; break;
-                case 6: state |= 32; break;         /* Button 6, wheel left */
-                case 7: state |= 64; break;         /* Button 7, wheel right */
+                case 6:       state |= 32; break;  /* Wheel left */
+                case 7:       state |= 64; break;  /* Wheel right */
             }
             break;
         }
@@ -2232,10 +2233,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                 case Button1: state &= ~1; break;
                 case Button2: state &= ~2; break;
                 case Button3: state &= ~4; break;
-                case Button4: state &= ~8; break;
-                case Button5: state &= ~16; break;
-                case 6: state &= ~32; break;
-                case 7: state &= ~64; break;
+                default: return;
             }
             break;
         }
@@ -2244,7 +2242,6 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  event->x, event->y, 
                  (word)event->time, 
                  make_mod(event->state));
-    UpdateRecent(ws, event);
 }
 
 /*
@@ -3097,19 +3094,8 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
         return;
 
     calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
-
-    if (x < 0)  { 
-        width += x; 
-        x = 0; 
-    }
-    if (y < 0)  { 
-        height += y; 
-        y = 0; 
-    }
-    if (x + width > ws->width)
-        width = ws->width - x; 
-    if (y + height > ws->height)
-        height = ws->height - y; 
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
 
     init_traplist(&tl, nlis * 3);
 
@@ -3271,6 +3257,8 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     if (npoints < 3)
         return;
     points_extent(points, npoints, &x, &y, &width, &height);
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
     xpoints = safe_malloc(npoints * sizeof(XPointDouble));
     clip(w);
     if (needmask(wc, 0)) {
@@ -3315,6 +3303,9 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     int x, y, width, height, i;
 
     triangles_extent(tris, ntris, &x, &y, &width, &height);
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
+
     init_traplist(&tl, 2 * ntris);
     clip(w);
     if (needmask(wc, 1)) {

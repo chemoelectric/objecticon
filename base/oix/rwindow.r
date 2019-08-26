@@ -188,26 +188,26 @@ void qmouseevents(wsp ws,             /* canvas */
             qevent(ws, &d, x, y, t, mod);
         }
 
-        /* The mouse wheel just generates up events, depending on the 
-         * direction */
-        if ((ws->mousestate & 8) && !(state & 8)) {
-            MakeInt(MOUSE4UP, &d);
+        /* The mouse wheel buttons just generate one kind of event,
+         * and cannot be held. */
+        if (state & 8) {
+            MakeInt(MOUSE4, &d);
             qevent(ws, &d, x, y, t, mod);
         }
-        if ((ws->mousestate & 16) && !(state & 16)) {
-            MakeInt(MOUSE5UP, &d);
+        if (state & 16) {
+            MakeInt(MOUSE5, &d);
             qevent(ws, &d, x, y, t, mod);
         }
-        if ((ws->mousestate & 32) && !(state & 32)) {
-            MakeInt(MOUSE6UP, &d);
+        if (state & 32) {
+            MakeInt(MOUSE6, &d);
             qevent(ws, &d, x, y, t, mod);
         }
-        if ((ws->mousestate & 64) && !(state & 64)) {
-            MakeInt(MOUSE7UP, &d);
+        if (state & 64) {
+            MakeInt(MOUSE7, &d);
             qevent(ws, &d, x, y, t, mod);
         }
 
-        ws->mousestate = state;
+        ws->mousestate = (state & 7);
     }
 }
 
@@ -368,6 +368,19 @@ int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height)
             return 0;
     }
     return 1;
+}
+
+int int_reducerect(wbp w, int clip, int *x0, int *y0, int *width0, int *height0)
+{
+#if IntBits == WordBits
+    return reducerect(w, clip, (word *)x0, (word *)y0, (word *)width0, (word *)height0);
+#else
+    int res;
+    word x = *x0, y = *y0, width = *width0, height = *height0;
+    res = reducerect(w, clip, &x, &y, &width, &height);
+    *x0 = x; *y0 = y; *width0 = width; *height0 = height;
+    return res;
+#endif
 }
 
 static int tryimagedata(dptr data, struct imgdata *imd)

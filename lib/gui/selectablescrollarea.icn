@@ -625,32 +625,52 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public handle_key_page_up(e)
+      local c
       start_handle(e)
-      move_cursor_on_key(e, get_page_movement(get_cursor(), -1))
+      c := if \cursor then
+         get_page_movement(cursor, -1)
+      else
+         *contents
+      move_cursor_on_key(e, c)
       end_handle(e)
    end
 
    public handle_key_page_down(e)
+      local c
       start_handle(e)
-      move_cursor_on_key(e, get_page_movement(get_cursor(), 1))
+      c := if \cursor then
+         get_page_movement(cursor, 1)
+      else
+         1
+      move_cursor_on_key(e, c)
       end_handle(e)
    end
 
    public handle_key_up(e)
+      local c
       start_handle(e)
-      move_cursor_on_key(e, if /wrap_on_up_down_flag then
-                                get_cursor() - 1
-                            else
-                                 mod1(get_cursor() - 1, *contents))
+      c := if \cursor then {
+         if /wrap_on_up_down_flag then
+            cursor - 1
+         else
+            mod1(cursor - 1, *contents)
+      } else
+         *contents
+      move_cursor_on_key(e, c)
       end_handle(e)
    end
 
    public handle_key_down(e)
+      local c
       start_handle(e)
-      move_cursor_on_key(e, if /wrap_on_up_down_flag then
-                               get_cursor() + 1
-                            else
-                               mod1(get_cursor() + 1, *contents))
+      c := if \cursor then {
+         if /wrap_on_up_down_flag then
+            cursor + 1
+         else
+            mod1(cursor + 1, *contents)
+      } else
+         1
+      move_cursor_on_key(e, c)
       end_handle(e)
    end
 

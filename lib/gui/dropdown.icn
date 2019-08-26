@@ -247,17 +247,13 @@ abstract class DropDown(Component, HasUseWheel, MenuMode)
    end
 
    public override handle_wheel_up(e)
-      go_up(e)
+      if /popup then
+         go_up(e)
    end
 
    public override handle_wheel_down(e)
-      go_down(e)
-   end
-
-   public override handle_wheel_left(e)
-   end
-
-   public override handle_wheel_right(e)
+      if /popup then
+         go_down(e)
    end
 
    public override new()

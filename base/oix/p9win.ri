@@ -641,17 +641,6 @@ void pollevent(wbp w)
                              mx,
                              my,
                              time, 0);
-                /* A wheel button (8, 16, 32 or 64) just gives one
-                 * event, but qmouseevents expects two, as though this
-                 * were a button press and release.  So enqueue
-                 * another event with the flag turned off.
-                 */
-                if (arg & 120)
-                    qmouseevents(ws, 
-                                 arg & ~120,
-                                 mx,
-                                 my,
-                                 time, 0);
                 break;
             }
             default:
@@ -784,17 +773,19 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     wsp ws = w->window;
     wcp wc = w->context;
     thick = get_thick(wc);
-    clip(w);
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
     x = cx - rx - 1 - thick;
     y = cy -ry - 1 - thick;
     width = 2 * rx + 2 * thick + 2;
     height = 2 * ry + 2 * thick + 2;
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
+    clip(w);
     if (needmask(wc, 0)) {
         Image *mask = getmask(width, height);
         arcop(mask, 
-              Pt(rx + 1 + thick, ry + 1 + thick),
+              Pt(cx - x, cy - y),
               rx, ry,
               thick,
               white->i, 
@@ -844,6 +835,8 @@ void drawlines(wbp w, struct point *points0, int npoints)
     y -= thick;
     width += 2 * thick;
     height += 2 * thick;
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
 
     points = convert_points(points0, npoints);
     if (closed)
@@ -908,15 +901,21 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    int x, y, width, height;
+    int i, x, y, width, height;
     Point *points;
     if (npoints < 3)
         return;
     points_extent(points0, npoints, &x, &y, &width, &height);
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
     points = convert_points(points0, npoints);
     clip(w);
     if (needmask(wc, 0)) {
         Image *mask = getmask(width, height);
+        for (i = 0; i < npoints; ++i) {
+            points[i].x -= x;
+            points[i].y -= y;
+        }
         fillpolyop(mask, points, npoints, 0, white->i, ZP, SoverD);
         maskimage2(w, mask, x, y, width, height);
         freeimage(mask);
@@ -980,6 +979,8 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     wcp wc = w->context;
     int x, y, width, height, i;
     triangles_extent(tris, ntris, &x, &y, &width, &height);
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
     clip(w);
     if (needmask(wc, 1)) {
         Image *mask = getmask(width, height);
@@ -1176,17 +1177,19 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     int alpha, phi, x, y, width, height;
     wsp ws = w->window;
     wcp wc = w->context;
-    clip(w);
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
     x = cx - rx - 1;
     y = cy -ry - 1;
     width = 2 * rx + 2;
     height = 2 * ry + 2;
+    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+        return;
+    clip(w);
     if (needmask(wc, 0)) {
         Image *mask = getmask(width, height);
         fillarcop(mask,
-                  Pt(rx + 1, ry + 1),
+                  Pt(cx - x, cy - y),
                   rx, ry,
                   white->i,
                   ZP,

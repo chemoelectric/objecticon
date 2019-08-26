@@ -361,14 +361,6 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       end_handle(e)
    end
 
-   public override handle_wheel_left(e)
-      handle_wheel_up(e)
-   end
-
-   public override handle_wheel_right(e)
-      handle_wheel_down(e)
-   end
-
    public handle_button_up(e)
       start_handle(e)
       #
