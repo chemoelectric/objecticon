@@ -52,7 +52,7 @@ class MD5()
    end
 
    private H(x, y, z)
-      return ixor(ixor(x, y), z)
+      return ixor(x, y, z)
    end
 
    private I(x, y, z)
@@ -104,6 +104,7 @@ class MD5()
             transform(block)
          buffer := tab(0)
       }
+      link
    end
 
    #
@@ -264,6 +265,7 @@ class MD5()
       c := 16r98badcfe
       d := 16r10325476
       buffer := ""
+      link
    end
 
    public new()
@@ -271,5 +273,3 @@ class MD5()
       return
    end
 end
-
-
