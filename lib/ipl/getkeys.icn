@@ -59,7 +59,7 @@ procedure getkeys(FNAME)
 	}
     }
 
-    /FNAME & runerr("error (getkeys):  null argument")
+    /FNAME & runerr("getkeys:  Null argument")
 
     # Try to open index file (there may not be one).
     if intext := open(Pathname(FNAME) || getidxname(FNAME)) then {
@@ -73,7 +73,7 @@ procedure getkeys(FNAME)
 	close(intext)
     }
 
-    intext := open(FNAME) | runerr("getkeys:  ",FNAME," not found")
+    intext := open(FNAME) | stop("getkeys:  ",FNAME," not found")
     intext.seek(\start_unindexed_part | 1)
     while line := read(intext) do
 	line ? { suspend (="::", tab(0)) \ 1 }

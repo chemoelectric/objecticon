@@ -51,7 +51,7 @@ procedure lsmap(s1,T)
    local s
 
    if type(T) ~== "table" then
-      runerr("lsmap() - second argument not a table!", T)
+      runerr("lsmap: Second argument not a table", T)
 
    s := ""
    s1 ? while s ||:= (\T[move(1)] | move(1))

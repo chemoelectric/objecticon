@@ -339,7 +339,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
       if is(opt, Opt) then {
          every optname := string(!opt.names) do {
             if member(opttable, optname) then
-               runerr("duplicate option", optname)
+               runerr("Duplicate option", optname)
             insert(opttable, optname, opt)
          }
       }

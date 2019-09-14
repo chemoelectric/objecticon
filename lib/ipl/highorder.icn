@@ -25,7 +25,7 @@ package class Partial()
             "a": put(r, get(a))
             "A": while put(r, get(a))
             "-": get(a)
-            default: runerr("invalid spec char to partial", c)
+            default: runerr("Invalid spec char to partial", c)
          }
       }
       suspend f!r
@@ -144,7 +144,7 @@ end
 # greater than 0.
 #
 procedure lpb(x, op)
-   op := callable(op, 2) | runerr("invalid operation for lpb", op)
+   op := callable(op, 2) | runerr("Invalid operation for lpb", op)
    return lpartial(op, x)
 end
 
@@ -156,7 +156,7 @@ end
 # returns a function which halves its argument.
 #
 procedure rpb(op, x)
-   op := callable(op, 2) | runerr("invalid operation for rpb", op)
+   op := callable(op, 2) | runerr("Invalid operation for rpb", op)
    return rpartial(op, x)
 end
 
