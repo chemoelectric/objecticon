@@ -337,6 +337,7 @@ class Source2(Source)
       cs.add(createcc_converter("CanvasTabSet"))
       cs.add(createcc_converter("CanvasTextField"))
       cs.add(createcc_converter("CanvasMenuButton"))
+      cs.add(createcc_converter("CanvasSlider"))
 
       c := createcc_converter("CanvasMenuBar")
       cs.add(c)
@@ -1229,7 +1230,7 @@ class FixConstraintsAction(Action)
       /t := table()
       # Empty strings for these meant "on"
       every s := "eol"|"x_fill"|"y_fill" do
-         if t[s] === "" then t[s] := &yes
+         if t[s] === ("" | 1) then t[s] := &yes
       if s := member(t, "tab") then {
          delete(t, "tab")
          insert(t, "x_tab", s)
