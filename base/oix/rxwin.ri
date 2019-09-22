@@ -806,7 +806,8 @@ void pollevent(wbp w)
                 /*
                  * only client message we handle at present are destroy requests
                  */
-                if (event.xclient.data.l[0] == ATOM(wd, WM_DELETE_WINDOW))
+                if (event.xclient.message_type == ATOM(wd, WM_PROTOCOLS) &&
+                    event.xclient.data.l[0] == ATOM(wd, WM_DELETE_WINDOW))
                     qeventcode(ws, WINDOWCLOSED);
                 break;
             }
@@ -1184,8 +1185,8 @@ static void synch_net_wm_state(wsp ws, int desired_state)
     wdp wd = ws->display;
     e.xclient.type = ClientMessage;
     e.xclient.serial = 0;
+    e.xclient.display = 0;
     e.xclient.send_event = True;
-    e.xclient.display = wd->display;
     e.xclient.message_type = ATOM(wd, _NET_WM_STATE);
     e.xclient.format = 32;
     e.xclient.window = ws->win;
@@ -1345,7 +1346,7 @@ static convert_to_macro(INT32)
 int sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data)
 {
     Atom property_atom, target_atom, selection_atom, target_list[32];
-    XEvent theevent;
+    XEvent ev;
     struct lgstate state;
     tended struct b_lelem *le;
     tended char *cstr_target;
@@ -1384,12 +1385,12 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
                         PropModeReplace,
                         (unsigned char *)target_list,
                         target_cnt);
-        theevent.xselection.property = property_atom;
+        ev.xselection.property = property_atom;
     } else if (is:null(*data)) {
         /* Can't handle this target type */
         if (selection_debug)
             printf("\tSetting property to None\n");
-        theevent.xselection.property = None;
+        ev.xselection.property = None;
     } else if (convert_target(wd, target_atom) == XA_INTEGER) {
         INT32 i32;
         long l;
@@ -1410,7 +1411,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
                         PropModeReplace,
                         (unsigned char *)&l,
                         1);
-        theevent.xselection.property = property_atom;
+        ev.xselection.property = property_atom;
     } else {
         if (!cnv:string(*data, *data))
             ReturnErrVal(103, *data, Error);
@@ -1424,20 +1425,21 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
                         PropModeReplace,
                         (unsigned char *)StrLoc(*data),
                         StrLen(*data));
-        theevent.xselection.property = property_atom;
+        ev.xselection.property = property_atom;
     }
 
-    theevent.type = SelectionNotify;
-    theevent.xselection.serial = 0; /*event.xselectionrequest.serial;*/
-    theevent.xselection.send_event = True;
-    theevent.xselection.requestor = requestor;
-    theevent.xselection.selection = selection_atom;
-    theevent.xselection.target = target_atom;
-    theevent.xselection.time = time;
+    ev.type = SelectionNotify;
+    ev.xselection.serial = 0;
+    ev.xselection.display = 0;
+    ev.xselection.send_event = True;
+    ev.xselection.requestor = requestor;
+    ev.xselection.selection = selection_atom;
+    ev.xselection.target = target_atom;
+    ev.xselection.time = time;
 
     XSendEvent(wd->display,
                requestor,
-               False, NoEventMask, &theevent);
+               False, NoEventMask, &ev);
 
     return Succeeded;
 }
@@ -3811,6 +3813,7 @@ char *atom_names[NUMATOMS] = {
     "_OBJECTICON_PROP6",
     "_OBJECTICON_PROP7",
     "_NET_WM_STATE_SHADED",
+    "WM_PROTOCOLS",
 };
 
 /*

@@ -109,7 +109,7 @@ extern struct sdescrip wclassname;
 #define EndPoint  4
 
 /* Interned atoms array */
-#define NUMATOMS        31
+#define NUMATOMS        32
 #define ATOM_CHARACTER_POSITION            0
 #define ATOM_CLIENT_WINDOW                 1
 #define ATOM_CLIPBOARD                     2
@@ -141,6 +141,7 @@ extern struct sdescrip wclassname;
 #define ATOM__OBJECTICON_PROP6            28
 #define ATOM__OBJECTICON_PROP7            29
 #define ATOM__NET_WM_STATE_SHADED         30
+#define ATOM_WM_PROTOCOLS                 31
 
 #define _NET_WM_STATE_ADD            1
 #define _NET_WM_STATE_REMOVE         0
