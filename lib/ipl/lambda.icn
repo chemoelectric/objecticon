@@ -5,16 +5,35 @@ import util(State, save_state)
 global _a, _l
 
 #
-# Implementation class for `lambda`
+# Implementation class which stores a co-expression.
 #
-package class Lambda()
+package class Coexpr()
    private e
 
-   public call(a[])
-      suspend save_state(^e, LambdaState(a))
+   public act()
+      return @e
    end
 
-   public call1(a)
+   public gen()
+      suspend !e
+   end
+
+   public argf(a[])
+      suspend argf1(a)
+   end
+
+   public argf1(a)
+      local t
+      t := ^e
+      @t
+      suspend a@t | |@t
+   end
+
+   public lambda(a[])
+      suspend lambda1(a)
+   end
+
+   public lambda1(a)
       suspend save_state(^e, LambdaState(a))
    end
 
@@ -25,40 +44,122 @@ package class Lambda()
 end
 
 #
-# This is a procedure for making lambda-style functions.  For example:
-# ~~~
+# Given a co-expression `e`, this returns a function which produces `@e`
+# on each evaluation.  Arguments to the function are discarded.
+#
+procedure coexf(e)
+   return Coexpr(e).act
+end
+
+#
+# Given a co-expression `e`, this returns a function which generates `!e`
+# on each evaluation.  Arguments to the function are discarded.
+#
+procedure exprf(e)
+   return Coexpr(e).gen
+end
+
+#
+# Given a co-expression `e`, this returns a function which, when
+# invoked, passes its arguments (as a list) to a refreshed copy of `e`
+# by way of an activation.  The subsequent results of the co-expresson
+# form the results sequence of the function.
+#
+# For example :-
+# ~
+#   local f, a
+#   ...
+#   f := argf {{
+#       a := coact()       # Get the args
+#       (a[1] to a[2])^2   # The results
+#   }}
+#   ...
+#   f(3, 5)       # Generates 9, 16, 25
+# ~
+#
+# Another example is a recursive factorial function.  Note how `a`
+# must be de-referenced to get its value before the recursive call
+# changes it (the local `a` is shared by all the invocations).
+#
+# ~
+#   local g, a
+#   ...
+#   g := argf {{
+#      a := coact()[1]     # The first arg
+#      if a = 0 then 1 else .a * g(a - 1)
+#   }}
+#   ...
+#   g(5)          # Returns 120
+# ~
+#
+# An alternative to this procedure is `lambda`, which passes arguments
+# by way of a global variable.
+#
+procedure argf(e)
+   return Coexpr(e).argf
+end
+
+#
+# This is just like `argf`, but the first argument only is
+# transmitted, and other arguments are discarded.  This makes
+# functions which take a single argument slightly more compact.  So the
+# second example given above in `argf` would instead be :-
+#
+# ~
+#   g := argf1 {{
+#      a := coact()
+#      if a = 0 then 1 else .a * g(a - 1)
+#   }}
+# ~
+#
+procedure argf1(e)
+   return Coexpr(e).argf1
+end
+
+#
+# Given a co-expression `e`, this returns a function whose results
+# sequence is generated from a refreshed copy of `e`.  Arguments to
+# the function are passed to `e` via a global variable `_a`.  For
+# example:
+#
+# ~
 #   f := lambda{ _a[1] + 100 }
-# ~~~
-# sets `f' to be a function returning its first argument plus 100.  Note
-# that args are passed to the function via a global variable `_a`, since
-# icon syntax allows no other way.  Further, although the function can
-# use any variables in scope, it cannot declare any itself.  To simulate
-# local variables, another global, `_l`, can be used.  It can be set
-# to any value.
+# ~
+#
+# sets `f' to be a function returning its first argument plus 100.
+#
+# To simulate local variables, another global, `_l`, can be used.  It
+# can be set to any value.
 # 
 # Other examples:-
-# ~~~
+#
+# ~
 #   # Return the sum of the arguments, eg f(1,2,3) -> 6
 #   # - note that _l must be dereferenced, otherwise the caller sees the
 #   #   value before the function is called.
 #   f := lambda{{ _l := 0; every _l +:= !_a ; ._l }}
-# ~~~
+# ~
+#
+# An alternative to this procedure is `argf`, which passes arguments
+# by way of an activation.
 #
 procedure lambda(e)
-   return Lambda(e).call
+   return Coexpr(e).lambda
 end
 
 #
 # This is just like `lambda`, but the global variable `_a` is assigned
 # to the first argument, and other arguments are discarded.  This
-# makes functions which take a single argument rather more compact.
-# So the example given above in `lambda` would instead be :-
-# ~~~
-#   f := lambda1{ _a + 100 }
-# ~~~
+# makes functions which take a single argument rather more
+# compact.  For example :-
+#
+# ~
+#   # A factorial function 
+#   g := lambda1{ if _a = 0 then 1 else _a * g(_a - 1) }
+# ~
 #
 procedure lambda1(e)
-   return Lambda(e).call1
+   return Coexpr(e).lambda1
 end
 
 # Evaluates coexpression `e`, saving the value of `_a` and `_l`.  This
@@ -68,7 +169,7 @@ end
 # Example :-
 # ~
 #     f := lambda{
-#        throw("Something bad")
+#        throw("Some problem")
 #     }
 #
 #     g := lambda{{

@@ -189,42 +189,6 @@ procedure methodf(field)
    return Methodf(field).call
 end
 
-#
-# Implementation class for `coexf` and `exprf`
-#
-package class Coexpr()
-   private e
-
-   public act()
-      return @e
-   end
-
-   public gen()
-      suspend !e
-   end
-
-   public new(e)
-      self.e := e
-      return
-   end
-end
-
-#
-# Given a co-expression `e`, this returns a function which produces @e
-# on each evaluation.  Arguments to the function are discarded.
-#
-procedure coexf(e)
-   return Coexpr(e).act
-end
-
-#
-# Given a co-expression `e`, this returns a function which generates !e
-# on each evaluation.  Arguments to the function are discarded.
-#
-procedure exprf(e)
-   return Coexpr(e).gen
-end
-
 # Implementation class for `flip` and `revargs`.
 package class Func()
    private f
