@@ -843,7 +843,7 @@ class TextFlow(Component, HasLastHighlight)
          Align.T: 0
          Align.C: (h - get_default_height(w)) / 2
          Align.B: h - get_default_height(w)
-         default: runerr("invalid v_align", v_align)
+         default: runerr("Invalid v_align", v_align)
       }
 
       x1 := x + border.get_l_inset()
@@ -909,7 +909,7 @@ class TextFlow(Component, HasLastHighlight)
                      Align.T: row_y
                      "absbottom": row_y + row_height - r.h
                      "absmiddle": row_y + (row_height - r.h) / 2
-                     default: runerr("invalid alignment", r.align)
+                     default: runerr("Invalid alignment", r.align)
                   }
                   x1 +:= r.w
                   # Save images in the row for banded selection.
@@ -1088,7 +1088,7 @@ class TextFlow(Component, HasLastHighlight)
             comp_out(cmd, co)
             row_abs_middle_height <:= co.h
          }
-         default: runerr("invalid alignment", cmd.align)
+         default: runerr("Invalid alignment", cmd.align)
       }
    end
 

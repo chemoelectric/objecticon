@@ -38,10 +38,10 @@ procedure patword(s)
 #
 # Next map each of these new characters into contiguous letters.
 
-    numbering := revnum[1 : *s + 1] | runerr("word too long")
+    numbering := revnum[1 : *s + 1] | runerr("Word too long")
     orderS := map(s, reverse(s), numbering)
     orderset := string(cset(orderS))
-    patlbls := labels[1 : *orderset + 1] | runerr("too many characters")
+    patlbls := labels[1 : *orderset + 1] | runerr("Too many characters")
 
     return map(orderS, orderset, patlbls)
 

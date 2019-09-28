@@ -596,7 +596,7 @@ end
 procedure add_vectors(v1,v2)
    local v3, i
 
-   if *v1 ~= *v2 then runerr("cannot add vectors of differing sizes")
+   if *v1 ~= *v2 then runerr("Cannot add vectors of differing sizes")
 
    v3 := copy(v1)
    every i := 1 to *v3 do
@@ -608,7 +608,7 @@ end
 procedure sub_vectors(v1,v2)
    local v3, i
 
-   if *v1 ~= *v2 then runerr("cannot subtract vectors of differing sizes")
+   if *v1 ~= *v2 then runerr("Cannot subtract vectors of differing sizes")
 
    v3 := copy(v1)
    every i := 1 to *v3 do
@@ -642,7 +642,7 @@ end
 procedure dot(v1,v2)
    local sum, i
 
-   if *v1 ~= *v2 then runerr("dot product: vectors of differing sizes")
+   if *v1 ~= *v2 then runerr("dot: Vectors of differing sizes")
    sum := 0
    every i := 1 to *v1 do
       sum +:= v1[i]*v2[i]

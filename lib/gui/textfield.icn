@@ -8,7 +8,7 @@
 
 package gui
 
-import undo, util, graphics
+import undo, util, graphics, ipl.functional
 
 #
 # A class for a single input line of text.  The text can
@@ -303,7 +303,7 @@ class TextField(Component)
       }
    end
 
-   private handle_mpress_response(target_type, data, e)
+   private handle_mpress_response(e, target_type, data)
       local s, ed
       \data | fail
       \self.is_editable_flag | fail
@@ -322,8 +322,7 @@ class TextField(Component)
    public handle_mpress(e)
       parent_dialog.request_selection(Selection.PRIMARY, 
                                       [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_mpress_response, 
-                                      e)
+                                      lpartial(handle_mpress_response, e))
    end
 
    public whereis_x(e)
@@ -612,15 +611,14 @@ class TextField(Component)
          return s
    end
 
-   private handle_paste_response(target_type, data, e)
+   private handle_paste_response(e, target_type, data)
       insert_string(selection_convert(target_type, \data), e)
    end
 
    public handle_paste(e)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
                                       [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_paste_response, 
-                                      e)
+                                      lpartial(handle_paste_response, e))
    end
 
    #

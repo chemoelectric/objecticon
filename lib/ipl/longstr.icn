@@ -64,7 +64,7 @@ procedure longstr(l,s,i,j)
     # Is l a list, set, or table?
     #
     type(l) == ("list"|"set"|"table") |
-	runerr("longstr:  list, set, or table expected (arg 1)", l)
+	runerr("longstr:  List, set, or table expected (arg 1)", l)
 
     #
     # Sort l longest-to-shortest, and keep a copy of the resulting

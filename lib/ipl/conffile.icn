@@ -270,20 +270,20 @@ procedure ReadDirectives(
    /whitespace := ' \b\t\v\f\r'
 
    comment := need_string(comment)
-   if *comment ~= 1 then runerr("comment not of length 1",comment)
+   if *comment ~= 1 then runerr("Comment not of length 1",comment)
 
    continue := need_string(continue)
-   if *continue ~= 1 then runerr("continue not of length 1",continue)
+   if *continue ~= 1 then runerr("Continue not of length 1",continue)
 
    escape := need_cset(escape)
-   if *escape ~= 1 then runerr("escape not of length 1",escape)
+   if *escape ~= 1 then runerr("Escape not of length 1",escape)
    notescape := ~escape
 
    quotes := need_cset(quotes)
-   if *quotes = 0 then runerr("quotes is empty",quotes)
+   if *quotes = 0 then runerr("Quotes is empty",quotes)
 
    whitespace :=  need_cset(whitespace)
-   if *whitespace = 0 then runerr("whitespace is empty",whitespace)
+   if *whitespace = 0 then runerr("Whitespace is empty",whitespace)
 
    if type(fnL) ~== "list" then runerr(108,fnL)
 

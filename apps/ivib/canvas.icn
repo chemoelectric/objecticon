@@ -7,7 +7,7 @@
 #
 
 import lang, gui, graphics(Selection,Key), util, 
-   ipl.pdco, ipl.numbers
+   ipl.pdco, ipl.numbers, ipl.functional
 
 class BorderOfCanvas(Component)
    public
@@ -339,7 +339,7 @@ class Canvas(Component,SelectiveObjectCodec)
       self.update_pos_label()
    end
 
-   public component_paste_response(target_type, s, cc)
+   public component_paste_response(cc, target_type, s)
       local c
 
       if /s then
@@ -366,8 +366,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public component_paste(cc)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
                                       [Ivib.IVIB_COMPONENT_TARGET], 
-                                      component_paste_response, 
-                                      cc)
+                                      lpartial(component_paste_response, cc))
    end
 
    #

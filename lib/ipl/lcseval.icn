@@ -59,6 +59,6 @@ procedure lcseval(a, c, m)
    b := a - 1
 
    every s := seq() do
-      if (b ^ s) % m = 0 then runerr("potency should be at least 5", s)
+      if (b ^ s) % m = 0 then runerr("Potency should be at least 5", s)
 
 end

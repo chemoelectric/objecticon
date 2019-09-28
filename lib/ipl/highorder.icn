@@ -25,7 +25,7 @@ package class Partial()
             "a": put(r, get(a))
             "A": while put(r, get(a))
             "-": get(a)
-            default: runerr("invalid spec char to partial", c)
+            default: runerr("Invalid spec char to partial", c)
          }
       }
       suspend f!r
@@ -144,7 +144,7 @@ end
 # greater than 0.
 #
 procedure lpb(x, op)
-   op := callable(op, 2) | runerr("invalid operation for lpb", op)
+   op := callable(op, 2) | runerr("Invalid operation for lpb", op)
    return lpartial(op, x)
 end
 
@@ -156,7 +156,7 @@ end
 # returns a function which halves its argument.
 #
 procedure rpb(op, x)
-   op := callable(op, 2) | runerr("invalid operation for rpb", op)
+   op := callable(op, 2) | runerr("Invalid operation for rpb", op)
    return rpartial(op, x)
 end
 
@@ -187,42 +187,6 @@ end
 # ~
 procedure methodf(field)
    return Methodf(field).call
-end
-
-#
-# Implementation class for `coexf` and `exprf`
-#
-package class Coexpr()
-   private e
-
-   public act()
-      return @e
-   end
-
-   public gen()
-      suspend !e
-   end
-
-   public new(e)
-      self.e := e
-      return
-   end
-end
-
-#
-# Given a co-expression `e`, this returns a function which produces @e
-# on each evaluation.  Arguments to the function are discarded.
-#
-procedure coexf(e)
-   return Coexpr(e).act
-end
-
-#
-# Given a co-expression `e`, this returns a function which generates !e
-# on each evaluation.  Arguments to the function are discarded.
-#
-procedure exprf(e)
-   return Coexpr(e).gen
 end
 
 # Implementation class for `flip` and `revargs`.

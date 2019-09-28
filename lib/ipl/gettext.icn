@@ -96,7 +96,7 @@
 package ipl.gettext
 
 import
-   io(close, open, read),
+   io(close, open, read, stop),
    ipl.adjuncts(Pathname, _OS_offset, _delimiter, firstline,
                 getidxname)
 
@@ -116,7 +116,7 @@ procedure gettext(KEY,FNAME)
       # We've got a new text-base file.  Close the old one.
       every close(\intext | \inidx)
       # Try to open named text-base file.
-      intext := open(FNAME) | runerr("gettext: file \"",FNAME,"\" not found")
+      intext := open(FNAME) | stop("gettext: file \"",FNAME,"\" not found")
       # Try to open index file.
       inidx := open(Pathname(FNAME) || getidxname(FNAME),"ru") | &null
       }

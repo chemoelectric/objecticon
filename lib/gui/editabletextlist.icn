@@ -14,6 +14,7 @@ import
    util, 
    ipl.lists,
    ipl.strings,
+   ipl.functional,
    graphics
 
 #
@@ -454,15 +455,14 @@ class EditableTextList(LineBasedScrollArea)
          return s
    end
 
-   private handle_paste_response(target_type, data, e)
+   private handle_paste_response(e, target_type, data)
       insert_string(selection_convert(target_type, \data), e)
    end
 
    public handle_paste(e)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
                                       [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_paste_response, 
-                                      e)
+                                      lpartial(handle_paste_response, e))
    end
 
    #
@@ -719,7 +719,7 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
 
-   private handle_mpress_response(target_type, data, e)
+   private handle_mpress_response(e, target_type, data)
       local s, ed
       \data | fail
       \self.is_editable_flag | fail
@@ -740,8 +740,7 @@ class EditableTextList(LineBasedScrollArea)
    public handle_mpress(e)
       parent_dialog.request_selection(Selection.PRIMARY, 
                                       [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                                      handle_mpress_response, 
-                                      e)
+                                      lpartial(handle_mpress_response, e))
    end
 
    public handle_undo(e)

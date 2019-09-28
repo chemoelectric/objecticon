@@ -109,7 +109,8 @@ extern struct sdescrip wclassname;
 #define EndPoint  4
 
 /* Interned atoms array */
-#define NUMATOMS        31
+#define NUM_ATOMS        33
+#define NUM_PROP_ATOMS   8
 #define ATOM_CHARACTER_POSITION            0
 #define ATOM_CLIENT_WINDOW                 1
 #define ATOM_CLIPBOARD                     2
@@ -141,6 +142,8 @@ extern struct sdescrip wclassname;
 #define ATOM__OBJECTICON_PROP6            28
 #define ATOM__OBJECTICON_PROP7            29
 #define ATOM__NET_WM_STATE_SHADED         30
+#define ATOM_WM_PROTOCOLS                 31
+#define ATOM_INCR                         32
 
 #define _NET_WM_STATE_ADD            1
 #define _NET_WM_STATE_REMOVE         0
@@ -268,6 +271,19 @@ typedef struct _wfont {
 
 #if XWindows
 
+/*
+ * A structure for helping with selection requests which are received
+ * in incremental chunks.  There are NUM_PROP_ATOMS helpers, one for
+ * each of the ATOM__OBJECTICON_PROP destination properties.
+ */
+struct selection_helper {
+    char *result;                  /* Accumulating result */
+    word expect;                   /* Expected total size */
+    word size;                     /* Actual size so far */
+    Atom selection;                /* Selection and target atoms */
+    Atom target;
+};
+
 #define FONTHASH_SIZE 64
 #define CURSORHASH_SIZE 128
 
@@ -291,7 +307,8 @@ typedef struct _wdisplay {
                     *maskfmt;
   struct wcursor *cursors[CURSORHASH_SIZE];
   Time   recent;                      /* most recent Time reported by server */
-  Atom   atoms[NUMATOMS];             /* interned atoms */
+  Atom   atoms[NUM_ATOMS];            /* interned atoms */
+  struct selection_helper selection_helpers[NUM_PROP_ATOMS];
   struct _wdisplay *previous, *next;
 } *wdp;
 

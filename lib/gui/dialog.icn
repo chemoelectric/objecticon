@@ -704,12 +704,12 @@ class Dialog(Component)
             else {
                # Notify of failure by invoking callback with null data
                delete(selection_requests, l[2])
-               req.proc(l[3], &null, req.user_data)
+               req.proc(l[3], &null)
             }
          } else {
             # Success; invoke callback procedure
             delete(selection_requests, l[2])
-            req.proc(l[3], l[4], req.user_data)
+            req.proc(l[3], l[4])
          }
       }
    end
@@ -736,9 +736,9 @@ class Dialog(Component)
       link
    end
 
-   public request_selection(selection, target_types, proc, user_data)
+   public request_selection(selection, target_types, proc)
       # We copy target_types since process_selection_response() may edit that list.
-      insert(selection_requests, selection, SelectionRequest(copy(target_types), proc, user_data))
+      insert(selection_requests, selection, SelectionRequest(copy(target_types), proc))
       win.request_selection(selection, target_types[1])
       link
    end
@@ -1716,12 +1716,10 @@ end
 class SelectionRequest()
    public const
       proc,
-      user_data,
       target_types
 
-   public new(target_types, proc, user_data)
+   public new(target_types, proc)
       self.proc := proc
-      self.user_data := user_data
       self.target_types := target_types
       return
    end

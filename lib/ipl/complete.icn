@@ -88,7 +88,7 @@ procedure complete(s,st)
 	fail
     }
     type(st) == ("list"|"set") |
-	runerr("error (complete):  list or set expected for arg2", st)
+	runerr("complete:  List or set expected for arg2", st)
 
     # Seriously, all that's being done here is that possible states
     # are being represented by sets containing possible completions of
