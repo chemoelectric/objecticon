@@ -2,9 +2,11 @@ import gui, ipl.lists, graphics, util
 
 class Untitled(Dialog)
    public target_list, clipboard_cb, primary_cb, data_area, get_data_button
+
    public override component_setup()
       self.setup()
       update_grey()
+      data_area.set_wrap_mode("width")
    end
 
    public override end_dialog()
@@ -29,7 +31,17 @@ class Untitled(Dialog)
    end
 
    private on_get_data_response(target_type, data)
-      /data := "<Failed>"
+      local h
+      if /data then
+         data := "<Failed>"
+      else {
+         h := "Got " || *data || " bytes.\n"
+         if *data > 4096 then {
+            h ||:= "Following data truncated to 4K bytes.\n"
+            data := data[1:4097]
+         }
+         data := h || data
+      }
       data_area.set_contents_str(data)
       data_area.move_cursor(1, 1)
    end
@@ -113,7 +125,7 @@ class Untitled(Dialog)
          set_constraint(Grid.X_ALIGN, Align.L).
          set_paint(paint_5)
       data_area := EditableTextList().
-         set_size(scale(200), scale(150)).
+         set_size(scale(350), scale(250)).
          clear_constraints().
          set_constraint(Grid.EOL, &yes).
          set_constraint(Grid.X_FILL, &yes).
