@@ -298,6 +298,39 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       return s
    end
 
+   private list_all_authentications()
+      local s, e
+      s := "<html><title>Authentications</title>"
+      every e := (!sort(pool.authentications))[1] do
+         s ||:= "<a href=config:authentication?q=" || URL.cgi_encode(e) || ">" || Browser.to_content(e) || "</a><br>"
+      s ||:= "</html>"
+      return s
+   end
+
+   private list_authentication(req)
+      local k, s, t
+      (k := member(req.url.extract_cgi_parameters(), "q")[1]) | return error("Bad request")
+      s := "<html><title>Authentications</title><h2>Authentication for " || k || "</h2><p>"
+      if t := member(pool.authentications, k) then {
+         s ||:= "<table>"
+         s ||:= "<tr><td>Username&nbsp;&nbsp;</td><td>" || t.username || "</td></tr>"
+         s ||:= "<tr><td>Password&nbsp;&nbsp;</td><td>" || t.password || "</td></tr>"
+         s ||:= "</table><br><a href=config:del_authentication?" || URL.make_cgi_string(table(, "q", k)) ||
+            ">Delete</a>"
+      } else 
+         s ||:= "Authentication removed."
+      s ||:= "<p><a href=config:authentications>Back to list</a>"
+      s ||:= "</html>"
+      return s
+   end
+
+   private del_authentication(req)
+      local k
+      (k := member(req.url.extract_cgi_parameters(), "q")[1]) | return error("Bad request")
+      delete(pool.authentications, k)
+      return list_authentication(req)
+   end
+
    private del_cookie(req)
       local t, t1, t2, k, path, name
 
@@ -342,7 +375,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
                s ||:= "<tr><td>Expires&nbsp;&nbsp;</td><td>" || (\ck.expires).to_rfc822() || "</td></tr>"
                s ||:= "<tr><td>Domain&nbsp;&nbsp;</td><td>" || \ck.domain || "</td></tr>"
                s ||:= "<tr><td>Path&nbsp;&nbsp;</td><td>" || path || "</td></tr>"
-               s ||:= "<tr><td>Secure&nbsp;&nbsp;</td><td>" || \ck.secure || "</td></tr>"
+               s ||:= "<tr><td>Secure&nbsp;&nbsp;</td><td>" || (if \ck.secure then "Y" else "N") || "</td></tr>"
                s ||:= "<tr><td>Comment&nbsp;&nbsp;</td><td>" || \ck.comment || "</td></tr>"
                s ||:= "<tr><td>Version&nbsp;&nbsp;</td><td>" || \ck.version || "</td></tr>"
                s ||:= "</table><br><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
@@ -391,6 +424,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       s := "<html><title>Config</title>"
       s ||:= \msg
       s ||:= "<a href=config:cookies >Edit cookies</a><p>_
+              <a href=config:authentications >Edit authentications</a><p>_
               <a href=config:visited >Visited pages</a><p>_
               <a href=config:cache >Cache status</a><p>_
               <a href=config:clear_cache >Clear cache</a><p>_
@@ -454,12 +488,15 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          "delay": do_delay(worker)
          "visited": list_visited()
          "cookies": list_all_cookies()
+         "authentications": list_all_authentications()
          "cookie": list_cookie(req)
+         "authentication": list_authentication(req)
          "cache": cache_status()
          "clear_cache": clear_cache()
          "workers": workers_status()
          "del_cookies": del_cookies(req)
          "del_cookie": del_cookie(req)
+         "del_authentication": del_authentication(req)
          "submit": edit_settings(req)
          "image": do_image(req)
          default: error("Bad config request")
