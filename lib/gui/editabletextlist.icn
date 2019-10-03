@@ -1257,21 +1257,19 @@ class EditableTextList(LineBasedScrollArea)
          create_view_list()
       return self.long_line.tw + 2 * Gui.TEXT_INSET
    end
-
+   
    #
-   # Return the index into view_list containing the
-   # content position x, y.  Binary search is used.
-   # 
+   # Return the index into view_list containing the content position
+   # x, y, or fail on out of range x or y.  Binary search is used.
+   #
    public get_view_list_index(x, y)
       local i, j, mid, v
       /x := self.cursor_x
       /y := self.cursor_y
       # A search is not necessary with wrap mode off, since
       # view_list[i].index=i for every line.
-      if is(line_splitter, DefaultLineSplitter) then {
-         v := view_list[y]
-         return (v.index = y) & (v.first <= x <= v.last) & y
-      }
+      if is(line_splitter, DefaultLineSplitter) then
+         return (v := view_list[y]) & (v.index = y) & (v.first <= x <= v.last) & y
       i := 1
       j := *view_list
       while i <= j do {
@@ -1342,7 +1340,7 @@ class EditableTextList(LineBasedScrollArea)
       if del = 0 & index = view_list[-1].index + 1 then
          vi := *view_list + 1
       else {
-         vi := get_view_list_index(1, index) | syserr("No such index" || index)
+         vi := get_view_list_index(1, index) | syserr("No such view index: " || index)
          # Do the deletions
          while view_list[vi].index <= index + del - 1 do {
             if view_list[vi] === long_line then

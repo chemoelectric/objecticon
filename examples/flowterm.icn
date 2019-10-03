@@ -127,17 +127,6 @@ class OpenWithMenu(MenuWithPopup)
    end
 end
 
-class OpenWithMenuItem(TextMenuItem)
-   public const
-      runner
-
-   public override new(runner)
-      TextMenuItem.new()
-      self.runner := runner
-      return
-   end
-end
-
 class TerminalMenu(DynamicMenu)
    public override populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_context_menu())
@@ -2388,9 +2377,7 @@ $endif
       return add_custom_menus(m, misc_menu_commands)
    end
 
-   private on_open_with(ev, src)
-      local r
-      r := src.runner
+   private on_open_with(r, ev, src)
       if ev.code === Mouse.MIDDLE_RELEASE then
          send_tty(r.get_command() || " ")
       else
@@ -2400,9 +2387,9 @@ $endif
    private create_open_with_menu_item(r)
       local m, de
       de := r.desktop_entry
-      m := OpenWithMenuItem(r).
+      m := TextMenuItem().
          set_label(de.name).
-         connect(on_open_with, Event.ACTION)
+         connect(lpartial(on_open_with, r), Event.ACTION)
       m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
       return m
    end

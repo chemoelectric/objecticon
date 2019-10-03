@@ -266,7 +266,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          return DEFAULT_INNER_SIZE + border.get_total_width()
    end
 
-   public handle_lpress(e)
+   public handle_lmpress(e)
       start_handle(e)
       if (self.bar_area.bar_x <= e.x < self.bar_area.bar_x + self.bar_area.bar_w) & 
          (self.bar_area.bar_y  <= e.y < self.bar_area.bar_y + self.bar_area.bar_h) then {
@@ -280,7 +280,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
             self.bar_down_offset := e.x - self.bar_area.bar_x
       } else if (if /is_horizontal_flag then bar_area.y  <= e.y < bar_area.bar_y
                  else bar_area.x  <= e.x < bar_area.bar_x) then {
-         if \e.shift then {
+         if \e.shift | e.code === Mouse.MIDDLE_PRESS then {
             self.bar_down := &yes
             self.bar_down_offset := bar_size / 2
             move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
@@ -292,7 +292,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          }
       } else if (if /is_horizontal_flag then bar_area.bar_y + bar_area.bar_h  <= e.y <  bar_area.y + bar_area.h
                  else bar_area.bar_x + bar_area.bar_w  <= e.x <  bar_area.x + bar_area.w) then {
-         if \e.shift then {
+         if \e.shift | e.code === Mouse.MIDDLE_PRESS then {
             self.bar_down := &yes
             self.bar_down_offset := bar_size / 2
             move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
@@ -306,7 +306,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       end_handle(e)
    end
 
-   public handle_lrelease(e)
+   public handle_lmrelease(e)
       start_handle(e)
       self.bar_down := &null
       stop_paging()
@@ -381,7 +381,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       end_handle(e)
    end
 
-   public handle_ldrag(e)
+   public handle_lmdrag(e)
       \self.bar_down | fail
 
       start_handle(e)
@@ -398,7 +398,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
 
    public handle_interrupted()
       if bar_area.is_held(Mouse.LEFT_PRESS) then
-         handle_lrelease()
+         handle_lmrelease()
    end
 
    public override display()
@@ -605,9 +605,12 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          set_accepts_focus(&no)
       add(self.b2)
       self.bar_area := BarArea().
-         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
-         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
-         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+         connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS).
+         connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG).
+         connect(self.handle_lmrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS).
+         connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG).
+         connect(self.handle_lmrelease, Event.MOUSE_MIDDLE_RELEASE)
       connect(handle_interrupted, Event.INTERRUPTED)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR

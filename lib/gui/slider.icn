@@ -239,7 +239,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       link
    end
 
-   public handle_lpress(e)
+   public handle_lmpress(e)
       start_handle(e)
       if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & 
          (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
@@ -253,7 +253,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
             self.slider_down_offset := e.x - self.slider_pos
       } else if (if /is_horizontal_flag then slider_area.y  <= e.y < slider_area.slider_y
                  else slider_area.x <= e.x < slider_area.slider_x) then {
-         if \e.shift then {
+         if \e.shift | e.code === Mouse.MIDDLE_PRESS  then {
             self.slider_down := &yes
             slider_down_offset := 0
             move_slider_pos(if /self.is_horizontal_flag then e.y else e.x)
@@ -265,7 +265,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
          }
       } else if (if /is_horizontal_flag then slider_area.slider_y + slider_area.slider_h <= e.y < slider_area.y + slider_area.h
                  else slider_area.slider_x + slider_area.slider_w <= e.x < slider_area.x + slider_area.w) then {
-         if \e.shift then {
+         if \e.shift | e.code === Mouse.MIDDLE_PRESS then {
             self.slider_down := &yes
             slider_down_offset := 0
             move_slider_pos(if /self.is_horizontal_flag then e.y else e.x)
@@ -279,7 +279,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       end_handle(e)
    end
 
-   public handle_lrelease(e)
+   public handle_lmrelease(e)
       local n
       start_handle(e)
       if \self.slider_down then {
@@ -299,7 +299,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
 
    public handle_interrupted()
       if slider_area.is_held(Mouse.LEFT_PRESS) then
-         handle_lrelease()
+         handle_lmrelease()
    end
 
    public handle_key_home(e)
@@ -362,7 +362,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       repeat_ticker.stop()
    end
 
-   public handle_ldrag(e)
+   public handle_lmdrag(e)
       \self.slider_down | fail
 
       start_handle(e)
@@ -597,9 +597,12 @@ class Slider(Component, HasOrientation, HasUseWheel)
       set_border(NullBorder())
       add(slider_area)
       slider_area.
-         connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
-         connect(handle_ldrag, Event.MOUSE_LEFT_DRAG).
-         connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+         connect(handle_lmpress, Event.MOUSE_LEFT_PRESS).
+         connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG).
+         connect(handle_lmrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS).
+         connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG).
+         connect(handle_lmrelease, Event.MOUSE_MIDDLE_RELEASE)
       connect(handle_key, Event.KEY_PRESS)
       connect(handle_interrupted, Event.INTERRUPTED)
       return
