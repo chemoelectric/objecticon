@@ -38,7 +38,8 @@ class Cookie()
          every f := !sort(e[2]) do {
             every g := !sort(f[2]) do {
                t := g[2].expires
-               /t | t.after(now) | delete(f[2], g[1])
+               if /t | now.after(t) then
+                  delete(f[2], g[1])
             }
             if *f[2] = 0 then
                delete(e[2], f[1])
@@ -588,7 +589,7 @@ $endif
                "expires" : c.expires := Time.parse(v, "E, dd-MMM-yyyy hh:mm:ss zzz")
                "path" : c.path := v
                "domain" : c.domain := v
-               "secure" : c.secure := 1
+               "secure" : c.secure := &yes
                "max-age" : {
                   if d := integer(v) then {
                      t := Time()
@@ -683,7 +684,7 @@ $endif
    end
 
    private create_cookie_header()
-      local s, e, f, domain, path, c, now, ver
+      local s, e, f, domain, path, c, now, ver, t
 
       domain := string(map(request.url.get_host()))
       path := string(request.url.get_file())
@@ -693,7 +694,8 @@ $endif
          every f := back(sort(e)) do {
             if match(f[1], path) then {
                every c := (!sort(f[2]))[2] do {
-                  if /c.expires | c.expires.after(now) then {
+                  t := c.expires
+                  if /t | t.after(now) then {
                      if *s > 0 then
                         s ||:= "; "
                      s ||:= c.name
