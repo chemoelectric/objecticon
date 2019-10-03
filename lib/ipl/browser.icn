@@ -1636,7 +1636,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
       s := tf.get_contents()
       if *s = 0 then
          return
-      return Files.access(s) | error("No such file")
+      succeed Files.access(s) | error("No such file")
    end
 
    public get_filename()
@@ -1704,7 +1704,7 @@ class FormImgY(FormEntry)
    end
 end
 
-class FormTextField(SuggestField, FormEntry, HasAscent)
+class FormSuggestField(SuggestField, FormEntry, HasAscent)
    private const
       browser,
       init_val,
@@ -1740,7 +1740,7 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
 
    protected override do_request()
       local l, t, e, s
-      l := browser.get_datalist(\datalist_id) | fail
+      l := browser.get_datalist(datalist_id) | fail
       s := map(contents)
       t := []
       every e := !l do {
@@ -1750,20 +1750,46 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
       return t
    end
 
-   public override handle_return(e)
-      if \popup then
-         keep_closed()
-      else
-         TextField.handle_return(e)
-   end
-
    public override new(browser, init_val, datalist_id)
       SuggestField.new()
       self.browser := browser
       self.init_val := init_val
       self.datalist_id := datalist_id
       set_contents(init_val)
-      return
+      set_action_while_popup(&no)
+     return
+   end
+end
+
+class FormTextField(TextField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public override get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public override reset_form()
+      set_contents(init_val)
+   end
+
+   public override get_form_value()
+      return get_contents()
+   end
+
+   public override get_save_value()
+      return get_contents()
+   end
+
+   public override restore_value(val)
+      set_contents(val)
+   end
+
+   public override new(init_val)
+      TextField.new()
+      self.init_val := init_val
+      set_contents(init_val)
+     return
    end
 end
 
@@ -1784,7 +1810,7 @@ class FormURLField(TextField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return URL(get_contents()) | error("Bad URL")
+      succeed URL(get_contents()) | error("Bad URL")
    end
 
    public override get_save_value()
@@ -1816,7 +1842,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Bad date format")
+      succeed get_value() | error("Bad date format")
    end
 
    public override get_form_value()
@@ -1851,7 +1877,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Bad week format")
+      succeed get_value() | error("Bad week format")
    end
 
    public override get_form_value()
@@ -1895,7 +1921,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Bad time format")
+      succeed get_value() | error("Bad time format")
    end
 
    public override get_form_value()
@@ -1941,7 +1967,7 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return date.validate_form() & time.validate_form()
+      succeed date.validate_form() & time.validate_form()
    end
 
    public static parse(s)
@@ -1980,7 +2006,7 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Bad timezone format")
+      succeed get_value() | error("Bad timezone format")
    end
 
    public override get_form_value()
@@ -2021,7 +2047,7 @@ class FormYearField(YearField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Bad timezone format")
+      succeed get_value() | error("Bad timezone format")
    end
 
    public override get_form_value()
@@ -2097,7 +2123,7 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return date.validate_form() & time.validate_form() & zone.validate_form()
+      succeed date.validate_form() & time.validate_form() & zone.validate_form()
    end
 
    public static parse(s)
@@ -2151,7 +2177,7 @@ class FormMonthYearField(Component, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return year.validate_form()
+      succeed year.validate_form()
    end
 
    public static parse(s)
@@ -2226,7 +2252,7 @@ class FormNumberField(RangeSpin, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Invalid number")
+      succeed get_value() | error("Invalid number")
    end
 
    public override get_form_value()
@@ -2262,7 +2288,7 @@ class FormColorField(ColorField, FormEntry, HasAscent)
    end
 
    public override validate_form()
-      return get_value() | error("Bad color format")
+      succeed get_value() | error("Bad color format")
    end
 
    public override get_form_value()
@@ -4238,8 +4264,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                            mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
                }
             }
-            q := FormTextField(self, v, did).
-               set_width(size).
+            q := if /did then
+               FormTextField(v)
+            else
+               FormSuggestField(self, v, did)
+            q.set_width(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
