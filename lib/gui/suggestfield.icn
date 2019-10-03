@@ -24,6 +24,7 @@ abstract class SuggestField(TextField, MenuMode)
       max_height,
       max_width,
       select_using_enter_flag,
+      action_while_popup_flag,
       popup_on_tab_flag,
       forward_home_end_flag     # Forward home/end key to list?
 
@@ -67,6 +68,15 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_select_using_enter(s)
       self.select_using_enter_flag := need_flag(s)
+      link
+   end
+
+   #
+   # If set, then an ACTION event is fired if return is pressed whilst
+   # the selection popup is open.  Default is yes.
+   #
+   public set_action_while_popup(s)
+      self.action_while_popup_flag := need_flag(s)
       link
    end
 
@@ -342,10 +352,14 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public override handle_return(e)
-      if \select_using_enter_flag then
-         forward_key(e)
-      TextField.handle_return(e)
-      keep_closed()
+      if \popup then {
+         if \select_using_enter_flag then
+            forward_key(e)
+         keep_closed()
+         if \action_while_popup_flag then
+            TextField.handle_return(e)
+      } else
+         TextField.handle_return(e)
    end
 
    public forward_key(e)
@@ -444,7 +458,7 @@ abstract class SuggestField(TextField, MenuMode)
       connect(on_change, Event.CONTENT_CHANGED)
       req := Dispatcher.new_task{requests()}
       direction := Direction.BEST
-      forward_home_end_flag := select_using_enter_flag := &yes
+      forward_home_end_flag := select_using_enter_flag := action_while_popup_flag := &yes
       return
    end
 end
