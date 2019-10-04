@@ -278,8 +278,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
 
    private list_visited()
       local s, e, n
-      s := "<html><title>Visited</title>" || Browser.TABLE_TAG || ""
-      s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
+      s := "<html><title>Visited</title><table>_
+            <tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, scale(200)) | ""
          s ||:= "<tr><td nowrap>" || Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
