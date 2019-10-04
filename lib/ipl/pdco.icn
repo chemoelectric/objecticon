@@ -723,7 +723,7 @@ procedure Palin(e)
       push(tail, x)
       } 
 
-   every suspend !tail
+   suspend !tail
 
 end
 
@@ -756,7 +756,7 @@ procedure PatternPalin(e)
 
    pull(tail)
 
-   every suspend !tail
+   suspend !tail
 
 end
 
