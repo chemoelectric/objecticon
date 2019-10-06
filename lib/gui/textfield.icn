@@ -65,7 +65,8 @@ class TextField(Component)
    # Set the displaychar attribute
    #
    public set_displaychar(c)
-      displaychar := c
+      displaychar := need_text(c)
+      (*c = 1) | runerr("Single character string expected", c)
       link
    end
 
@@ -73,7 +74,7 @@ class TextField(Component)
    # Set the placeholder attribute
    #
    public set_placeholder(s)
-      placeholder := s
+      placeholder := need_text(s)
       link
    end
 
@@ -738,10 +739,10 @@ class TextField(Component)
    end
 
    public get_view()
-      if \displaychar then
-         return repl(displaychar, *(self.contents))
+      return if \displaychar then
+         repl(displaychar, *contents)
       else
-         return self.contents
+         contents
    end
 
    public cursor_tick()
