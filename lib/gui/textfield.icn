@@ -66,7 +66,7 @@ class TextField(Component)
    #
    public set_displaychar(c)
       displaychar := need_text(c)
-      (*c = 1) | runerr("Single character string expected", c)
+      (*displaychar = 1) | runerr("Single character string expected", displaychar)
       link
    end
 
@@ -87,7 +87,7 @@ class TextField(Component)
    # :Parameters :
    # :  `c` - The cset of permissible characters.
    public set_filter(c)
-      self.filter := c ** Gui.PRINTABLE_1
+      self.filter := need_cset(c) ** Gui.PRINTABLE_1
       link
    end
 
