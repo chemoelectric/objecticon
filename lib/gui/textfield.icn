@@ -748,7 +748,7 @@ class TextField(Component)
    public cursor_tick()
       local t
       repeat {
-         if self.has_focus() & self.is_unshaded() & self.is_unhidden() then 
+         if should_draw_focus() & is_unhidden() then 
          {
             t := cursor_on
             cursor_on := if dont_blink(self) then
@@ -795,7 +795,7 @@ class TextField(Component)
       #
       # If has focus display box cursor, else display outline cursor
       #
-      if self.has_focus() & self.is_unshaded() then {
+      if should_draw_focus() then {
          if self.cursor_on ~= 2 then
             Gui.style.draw_text_cursor(self.cbwin,
                                        self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)

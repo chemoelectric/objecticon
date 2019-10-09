@@ -572,7 +572,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
 
       display_children()
 
-      if has_focus() & is_unshaded() then
+      if should_draw_focus() then
          border.draw_focus_rect(self.cbwin, self)
    end
 

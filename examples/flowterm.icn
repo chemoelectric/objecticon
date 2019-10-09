@@ -493,7 +493,7 @@ class Columns(LineBasedScrollArea)
             item_border.draw_rect(view.cbwin, r)
          }
          if k === cursor then {
-            if has_focus() & is_unshaded() then
+            if should_draw_focus() then
                item_border.draw_focus_rect(view.cbwin, r, FOCUS_DASHED_WIDTH)
             else
                item_border.draw_dashed_rect(view.cbwin, r)

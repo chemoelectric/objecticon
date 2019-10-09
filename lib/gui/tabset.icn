@@ -159,7 +159,7 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     Yes{ has_focus() & is_unshaded() & c === self.which_one },
+                                     Yes{ should_draw_focus() & c === self.which_one },
                                      Yes{ c === self.which_highlight })
                      }
                   }
@@ -216,7 +216,7 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     Yes{ has_focus() & is_unshaded() & c === self.which_one })
+                                     Yes{ should_draw_focus() & c === self.which_one })
                      }
                   }
                }

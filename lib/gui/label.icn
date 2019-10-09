@@ -96,7 +96,7 @@ class Label(Component)
    public override display()
       paint.draw_rect(self.cbwin, border.float(self, paint))
       border.draw_rect(self.cbwin, self)
-      if self.has_focus() & self.is_unshaded() then
+      if should_draw_focus() then
          border.draw_focus_rect(self.cbwin, self)
    end
 

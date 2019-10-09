@@ -1537,7 +1537,7 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
          Gui.style.fill_down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
          tf.border.draw_rev_rect(self.cbwin, self)
       }
-      if self.has_focus() & self.is_unshaded() then
+      if should_draw_focus() then
          tf.border.draw_focus_rect(self.cbwin, self)
    end
 
@@ -3165,7 +3165,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public override get_authentication(httpc, dom, realm)
       local d
-      parent_dialog.exit_menu_mode()
       d := AuthenticationDialog(dom, realm)
       d.show_modal(parent_dialog)
       return \d.result

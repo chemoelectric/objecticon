@@ -639,6 +639,10 @@ class Component(Rect,XYAlign,Connectable)
       succeed (\self.parent_dialog).get_focus() === self
    end
 
+   public should_draw_focus()
+      succeed (\parent_dialog).is_unblocked() & has_focus() & is_unshaded()
+   end
+
    #
    # Method called when the component loses the keyboard focus; may be extended.
    # :Parameters :

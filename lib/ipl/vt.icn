@@ -2050,7 +2050,7 @@ class Vt(LineBasedScrollArea, MenuMode)
                                                         (r.hi - r.lo) * char_w, line_height)
 
                   if i = \cursor_i then {
-                     if has_focus() & is_unshaded() then {
+                     if should_draw_focus() then {
                         if cursor_on ~= 2 then
                            Gui.style.draw_text_cursor(W,
                                                       xp + (cx - 1) * char_w,
@@ -2171,7 +2171,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private cursor_tick()
       local t
       repeat {
-         if /hide_cursor_mode & self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
+         if /hide_cursor_mode & should_draw_focus() & is_unhidden() then {
             t := cursor_on
             cursor_on := if dont_blink(self) then
                0
