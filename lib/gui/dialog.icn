@@ -164,6 +164,10 @@ class Dialog(Component)
       succeed \self.is_blocked_flag
    end
 
+   public is_unblocked()
+      succeed /self.is_blocked_flag
+   end
+
    public is_popup()
       succeed popup_manager ~=== self
    end
@@ -204,14 +208,10 @@ class Dialog(Component)
    public set_is_blocked(s)
       local c, e
       need_flag(s)
-      if \s then {
-         # Check were not doing something that might lock up the desktop.
-         if is_popup() then
-            runerr("Cannot block a popup")
-         if get_menu_mode() then
-            runerr("Cannot block a dialog whilst in menu mode")
-      }
+      if is_popup() then
+         runerr("Cannot use set_is_blocked() on a popup")
       if is_blocked_flag ~===:= s then {
+         get_focus().invalidate()
          e := if /s then Event.RESUMED else Event.INTERRUPTED
          every c := Seq{traverse_postorder()} do
             c.fire(e)
@@ -306,7 +306,15 @@ class Dialog(Component)
    #            currently unblocked dialogs.
    #
    public show_modal(d, l)
+      local e
       /l := Dispatcher.list_unblocked()
+      # Exit menu mode from all dialogs in l
+      every e := !l do {
+         if \e.win then
+            e.exit_menu_mode()
+      }
+      # Reduce l to any remaining open windows.
+      l := ipl.pdco.List{ ( e := !l, \e.win, e ) }
       self.show(d)
       every (!l).set_is_blocked(&yes)
       Dispatcher.message_loop(self)
