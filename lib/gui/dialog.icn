@@ -78,8 +78,8 @@ class Dialog(Component)
       # Component with current focus
       focus,
 
-      # Focus remembered between window focus in/out events
-      remembered_focus,
+      # Is the focus out of the window?
+      focus_out_flag,
 
       # Mouse click count
       click_count,
@@ -147,6 +147,9 @@ class Dialog(Component)
       link
    end
 
+   #
+   # Invalidate the given `Rect`, meaning that area will subsequently be redrawn.
+   #
    public invalidate_rect(r)
       local t, i
       /invalid_rects := []
@@ -160,14 +163,34 @@ class Dialog(Component)
       link
    end
 
+   # Succeed if the dialog is blocked.
+   #
    public is_blocked()
       succeed \self.is_blocked_flag
    end
 
+   # Succeed if the dialog isn't blocked.
+   #
    public is_unblocked()
       succeed /self.is_blocked_flag
    end
 
+   # Succeed if the dialog doesn't have the window system focus (see `is_focus_in()`).
+   #
+   public is_focus_out()
+      succeed \self.focus_out_flag
+   end
+
+   # Succeed if the dialog has the window system focus.  Note that
+   # this is assumed to be the case when a dialog is shown, and the
+   # state is thereafter monitored by focus in/out events.
+   #
+   public is_focus_in()
+      succeed /self.focus_out_flag
+   end
+
+   # Succeed if the dialog is a popup, managed by another dialog.
+   #
    public is_popup()
       succeed popup_manager ~=== self
    end
@@ -211,7 +234,7 @@ class Dialog(Component)
       if is_popup() then
          runerr("Cannot use set_is_blocked() on a popup")
       if is_blocked_flag ~===:= s then {
-         get_focus().invalidate()
+         get_focus().focus_changed()
          e := if /s then Event.RESUMED else Event.INTERRUPTED
          every c := Seq{traverse_postorder()} do
             c.fire(e)
@@ -612,7 +635,7 @@ class Dialog(Component)
       }
       self.point_chain := self.point_chain_source := self.held := 
          self.click_event := self.invalid_rects := self.crossing := 
-         self.selections := self.selection_requests := 
+         self.selections := self.selection_requests := self.focus_out_flag :=
          self.click_count := self.entered := &null
       fire(Event.DIALOG_DISPOSED)
       link
@@ -772,20 +795,19 @@ class Dialog(Component)
       }
    end
 
+   private set_focus_out(f)
+      if focus_out_flag ~===:= f then
+         get_focus().focus_changed()
+      link
+   end
+
    private process_focus_in(l)
-      if \remembered_focus then {
-         if /focus then
-            set_focus(remembered_focus)
-         remembered_focus := &null
-      }
+      set_focus_out(&no)
       fire(l[1])
    end
 
    private process_focus_out(l)
-      if \focus then {
-         remembered_focus := focus
-         set_focus()
-      }      
+      set_focus_out(&yes)
       fire(l[1])
    end
 
@@ -838,18 +860,22 @@ class Dialog(Component)
 
       old_n_held := *held
       if member(Mouse.PRESS, ec) then {
+         set_focus_out(&no)
          # Note the position of the start of a potential drag
          drag_gesture_x := e.x
          drag_gesture_y := e.y
          if c := (!point_chain).find_focus(e) then
             set_focus(c, e)
       }
-      else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
-         if c := (!\popups | self).find_accel(ec) then {
-            c.handle_accel(e)
-            # The handler may have called dispose() or blocked the dialog.
-            if /point_chain then
-               fail
+      else if /e.release & type(ec) == ("string" | "ucs") then {
+         set_focus_out(&no)
+         if \e.meta then {
+            if c := (!\popups | self).find_accel(ec) then {
+               c.handle_accel(e)
+               # The handler may have called dispose() or blocked the dialog.
+               if /point_chain then
+                  fail
+            }
          }
       }
 

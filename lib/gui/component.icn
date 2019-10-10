@@ -639,8 +639,12 @@ class Component(Rect,XYAlign,Connectable)
       succeed (\self.parent_dialog).get_focus() === self
    end
 
+   #
+   # Succeed if this component should draw itself with the focus shown
+   # (eg a red border or cursor).
+   #
    public should_draw_focus()
-      succeed (\parent_dialog).is_unblocked() & has_focus() & is_unshaded()
+      succeed has_focus() & is_unshaded() & (\parent_dialog).is_unblocked() & (\parent_dialog).is_focus_in()
    end
 
    #
@@ -654,8 +658,9 @@ class Component(Rect,XYAlign,Connectable)
    end
 
    #
-   # This is invoked when the focus is got/lost; by default it just
-   # calls invalidate.
+   # This is invoked when the focus is got/lost, or may need to be
+   # redrawn; by default it just calls invalidate.
+   #
    # :Parameters :
    # :  `e` - the event causing the change of focus, if any
    #
