@@ -406,6 +406,7 @@ class Columns(LineBasedScrollArea)
       held,
       over,
       highlight,
+      multi_begin,
       cursor
 
    private
@@ -711,6 +712,10 @@ class Columns(LineBasedScrollArea)
       return data[\cursor]
    end
 
+   public object_get_multi_begin()
+      return data[\multi_begin]
+   end
+
    public object_get_over()
       return data[\over]
    end
@@ -721,6 +726,10 @@ class Columns(LineBasedScrollArea)
    
    public get_cursor()
       return .\cursor
+   end
+
+   public get_multi_begin()
+      return .\multi_begin
    end
 
    public handle_lpress(e)
@@ -739,6 +748,7 @@ class Columns(LineBasedScrollArea)
    public handle_mpress(e)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
+         set_multi_begin(cursor)
          set_highlight(over)
          held := over
       } 
@@ -840,19 +850,25 @@ class Columns(LineBasedScrollArea)
       }
    end
 
+   public set_multi_begin(d)
+      self.multi_begin := d
+      link
+   end
+
    public set_held(d)
       self.held := d
       link
    end
 
    public data_changed()
-      # over, held and highlight are cleared, since we store these as
-      # indices (which may change) rather than the underlying objects.
-      # cursor is left, however, and so the underlying object may
-      # change.
+      # multi_begin, over, held and highlight are cleared, since we
+      # store these as indices (which may change) rather than the
+      # underlying objects.  cursor is left, however, and so the
+      # underlying object may change.
       set_over()
       set_held()
       set_highlight()
+      set_multi_begin()
       invalidate_columnize()
       invalidate_subject_width()
       invalidate_line_count()
@@ -1848,8 +1864,8 @@ class Terminal(TabItem, VtUI)
       split.reorient()
    end
 
-   public override link_middle_clicked(url, ev)
-      insert_link(url, ev)
+   public override link_middle_clicked(urls, ev)
+      every insert_link(!urls, ev)
    end
 
    public override quieten_cursor()
@@ -2131,7 +2147,7 @@ $endif
       case string(url.scheme) of {
          "file": {
             if s := get_ucs_decoded_path(url) then {
-               es := if /ev.shift & url.is_local_file() & cwd ~== "/" then {
+               es := if /ev.meta & /ev.meta5 & url.is_local_file() & cwd ~== "/" then {
                   if cwd == s then
                      u"./"
                   else if match(cwd || "/", s) then
@@ -2220,8 +2236,11 @@ $endif
    end
 
    private on_columns_mclick(ev)
-      local item
-      if item := columns.object_get_cursor() then
+      local item, r, i, j
+      if \ev.shift & i := columns.get_cursor() & j := columns.get_multi_begin() then
+         r := if i > j then columns.data[j + 1:i + 1] else columns.data[i:j]
+      /r := [columns.object_get_cursor()]
+      every item := !\r do
          insert_link(item_to_url(item), ev)
    end
 
@@ -2698,7 +2717,7 @@ $endif
    end
 
    private resort_cwd(track_cursor)
-      local i, ino, info, vis, high, held, over, c
+      local i, ino, prev_ino, info, vis, high, held, over, c
       \cwd | fail
       if is_live() then {
          if \track_cursor & c := columns.get_cursor() then {
@@ -2712,12 +2731,13 @@ $endif
             high := Yes{ c = columns.get_highlight() }
             held := Yes{ c = columns.get_held() }
             over := Yes{ c = columns.get_over() }
+            prev_ino := columns.object_get_multi_begin().stat.ino
          }
          sort_cwd_list()
          # Search for the old ino in the new data.  If found, set the highlight and if the old
          # cursor was visible, ensure the new one is too.
          if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
-            columns.set_cursor(i)
+            columns.set_cursor(i).set_multi_begin()
             if \vis then
                columns.ensure_line_visible(columns.get_row_for_index(i))
             if \high then
@@ -2726,8 +2746,10 @@ $endif
                columns.set_held(i)
             if \over then
                columns.set_over(i)
+            if i := Positions{(!columns.data).stat.ino, \prev_ino} then
+               columns.set_multi_begin(i)
          } else
-            columns.set_cursor()
+            columns.set_cursor().set_multi_begin()
          # Since the pointer may be over the files list, update the pointer.
          parent_dialog.resynch_pointer()
       } else

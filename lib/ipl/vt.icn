@@ -170,7 +170,7 @@ end
 # This interface provides external required functionality for the terminal.
 abstract class VtUI()
    public abstract link_left_clicked(url)
-   public abstract link_middle_clicked(url)
+   public abstract link_middle_clicked(urls)
    public abstract create_link_menu(url)
    public abstract create_context_menu()
    public abstract quieten_cursor()
@@ -236,6 +236,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       scroll_ticker_interval,
       highlight,                  # Link clicked on (shown red).
       last_highlight,             # Link last clicked, shown with a dotted rectangle
+      multi_begin,                # Start of potential shifted middle press block
       held,                       # Link held by mouse down
       over,                       # Link mouse is over
       no_drag,                    # Don't allow drag to set the cursor
@@ -2403,6 +2404,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_mpress(e)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
+         multi_begin := last_highlight
          set_highlight(over)
          held := over
       } else {
@@ -2443,27 +2445,23 @@ class Vt(LineBasedScrollArea, MenuMode)
       return \.links_selection
    end
 
-   private ls_add(seg, l)
-      put(l, \seg.attr.url)
-   end
-
    private calculate_links_selection()
       local l
       links_selection := &null
-      l := []
       \mark_y | fail
-      if mark_y < cursor_y then
-         every ls_add(segments_in_range(contents[mark_y], mark_x) |
-                      !contents[mark_y + 1 to cursor_y - 1].l |
-                      segments_in_range(contents[cursor_y],, cursor_x), l)
-      else if mark_y > cursor_y then
-         every ls_add(segments_in_range(contents[cursor_y], cursor_x) |
-                      !contents[cursor_y + 1 to mark_y - 1].l |
-                      segments_in_range(contents[mark_y],, mark_x), l)
-      else
-         # mark_y = cursor_y
-         every ls_add(segments_in_range(contents[cursor_y], cursor_x, mark_x), l)
-      l := lunique(l)
+      l := urls_in_segments {
+         if mark_y < cursor_y then
+            segments_in_range(contents[mark_y], mark_x) |
+            !contents[mark_y + 1 to cursor_y - 1].l |
+            segments_in_range(contents[cursor_y],, cursor_x)
+         else if mark_y > cursor_y then
+            segments_in_range(contents[cursor_y], cursor_x) |
+            !contents[cursor_y + 1 to mark_y - 1].l |
+            segments_in_range(contents[mark_y],, mark_x)
+         else
+            # mark_y = cursor_y
+            segments_in_range(contents[cursor_y], cursor_x, mark_x)
+      }
       if *l > 0 then
          links_selection := l
    end
@@ -2554,11 +2552,22 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
+   private urls_in_segments(e)
+      return ipl.pdco.List{ Unique{ \Seq(e).attr.url }}
+   end
+
    private handle_mrelease(e)
+      local l, i, j, r
       \held | fail
       if \over then {
          set_highlight()
-         ui.link_middle_clicked(over, e)
+         if \e.shift & \multi_begin then {
+            l := urls_in_segments{ !(!contents).l }
+            if i := keyof(l, over) & j := keyof(l, multi_begin) then
+               r := if i > j then l[j + 1:i + 1] else l[i:j]
+         }
+         /r := [over]
+         ui.link_middle_clicked(r, e)
       }
       held := &null
    end

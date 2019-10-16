@@ -61,8 +61,8 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       }
    end
 
-   public override link_middle_clicked(url)
-      input.insert_string(get_url_text(url) || u" ")
+   public override link_middle_clicked(urls)
+      every input.insert_string(get_url_text(!urls) || u" ")
    end
 
    private copy_text(s)
