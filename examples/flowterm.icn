@@ -1582,11 +1582,16 @@ class Terminal(TabItem, VtUI)
          }
          "paste": {
             check_live(s) | fail
-            output.handle_paste()
+            # The artificial event is for the benefit of insert_link()
+            handle_paste(WinEvent(,,,, 0))
+         }
+         "paste-alt": {
+            check_live(s) | fail
+            handle_paste(WinEvent(,,,, Key.MOD_META))
          }
          "paste-escaped": {
             check_live(s) | fail
-            output.handle_paste_escaped()
+            handle_paste_escaped()
          }
          "pgup": {
             check_live(s) | fail
@@ -1692,6 +1697,39 @@ class Terminal(TabItem, VtUI)
          default: return error("Invalid command: " || s)
       }
       link
+   end
+
+   private send_tr_nl(s)
+      send_tty(replace(s, u"\n", u"\r"))
+   end
+
+   private handle_paste(e)
+      output.goto_bottom()
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Selection.URI_LIST_TARGET, Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      lpartial(handle_paste_response, e))
+   end
+
+   private split_url_response(data)
+      suspend URL(words(\data, '\r\n'))
+   end
+
+   private handle_paste_response(ev, target_type, data)
+      if target_type == Selection.URI_LIST_TARGET then
+         every insert_link(split_url_response(data), ev)
+      else
+         send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
+   end
+
+   private handle_paste_escaped(e)
+      output.goto_bottom()
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      lpartial(handle_paste_escaped_response, e))
+   end
+
+   private handle_paste_escaped_response(ev, target_type, data)
+      send_tty(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
    private do_change_vt_font_size(s)
@@ -2353,10 +2391,10 @@ $endif
                connect(output.handle_copy_links, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Paste").
-            connect(output.handle_paste, Event.ACTION))
+            connect(handle_paste, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Paste escaped").
-            connect(output.handle_paste_escaped, Event.ACTION))
+            connect(handle_paste_escaped, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Select all").
             connect(output.handle_select_all, Event.ACTION))
@@ -3533,6 +3571,7 @@ procedure usage(opts)
    help_line(":copy", "Copy the current selection to the clipboard")
    help_line(":copy-urls", "Copy any URLs in the current selection to the clipboard")
    help_line(":paste", "Paste from the clipboard")
+   help_line(":paste-alt", "Paste from the clipboard, with no relative URL file paths (like middle click with the alt key)")
    help_line(":paste-escaped", "Paste from the clipboard, with shell escaping")
    help_line(":pgup", "Go up one page")
    help_line(":pgdn", "Go down one page")
