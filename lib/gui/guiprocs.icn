@@ -710,10 +710,9 @@ end
 # a corresponding string or a ucs as appropriate.
 #
 procedure selection_convert(target_type, data)
-   case target_type of {
-      Selection.UTF8_STRING_TARGET : return ucs(data)
-      Selection.STRING_TARGET : return string(data)
-      default: fail
+   return case target_type of {
+      Selection.UTF8_STRING_TARGET : ucs(data)
+      Selection.STRING_TARGET : string(data)
    }
 end
 
