@@ -1711,7 +1711,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private split_url_response(data)
-      suspend URL(words(\data, '\r\n'))
+      suspend URL(words(ucs(data), '\r\n'))
    end
 
    private handle_paste_response(ev, target_type, data)
