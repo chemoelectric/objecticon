@@ -11,7 +11,7 @@
  *   list_put(&l, get_element(&x, i)).   Rather, one should use
  * 
  *   tended struct descrip tmp;
- *   tmp = get_element(&x, i);
+ *   tmp = *get_element(&x, i);
  *   list_put(&l, &tmp);
  */
 
