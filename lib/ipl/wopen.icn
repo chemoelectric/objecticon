@@ -65,8 +65,9 @@ end
 
 
 procedure WQuit(win)
-   while *win.pending() > 0 do
-      if win.event()[1] === QuitEvents() then
+   local e
+   while e := win.event() do
+      if e[1] === QuitEvents() then
          return win
    fail
 end
