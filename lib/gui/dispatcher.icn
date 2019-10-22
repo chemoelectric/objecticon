@@ -70,6 +70,7 @@ final abstract class Dispatcher()
          while \r.win do
             work_or_sleep()
       }
+      link
    end
 
    # This is similar to the normal `message_loop` method, but instead
@@ -89,6 +90,7 @@ final abstract class Dispatcher()
          while \r.win &
             work()
       }
+      link
    end
 
    #
@@ -106,39 +108,40 @@ final abstract class Dispatcher()
    #
    public static work_or_sleep()
       work() | delay(Gui.IDLE_SLEEP)
+      link
    end
 
    public static do_event()
-      local d, bag, l
+      local d, bag, e, v
       every d := !dialogs do {
-         l := d.win.pending()
-         if *l > 0 then {
+         if e := d.win.peek() then {
             /bag := []
             if /d.is_blocked_flag then
                put(bag, d)
             else {
                # Consume all blocked events, or until a BLOCKED_ALLOW
                # event is encountered.
-               while *l > 0 do {
-                  if member(BLOCKED_ALLOW, l[1]) then {
+               repeat {
+                  if member(BLOCKED_ALLOW, e) then {
                      put(bag, d)
                      break
                   }
                   # Discard and maybe beep in the window.
-                  member(BLOCKED_QUIET, l[1]) | d.win.alert()
+                  member(BLOCKED_QUIET, e) | d.win.alert()
                   d.win.event()
+                  e := d.win.peek() | break
                }
             }
          }
       }
       if d := ?\bag then {
-         l := d.win.event()
+         v := d.win.event()
          # Discard unwanted repeating events.
-         if member(REPEATING, l[1]) then {
-            while d.win.pending()[1] === l[1] do
-               l := d.win.event()
+         if member(REPEATING, v[1]) then {
+            while d.win.peek() === v[1] do
+               v := d.win.event()
          }
-         d.process_event(l)
+         d.process_event(v)
          return
       }
    end

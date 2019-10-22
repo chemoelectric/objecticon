@@ -1049,9 +1049,22 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native erase_area(x, y, width, height)
 
-   # Add to and then produce a list of events pending on window
+   # Return the window's event queue (a list) after bringing it
+   # up-to-date with any events from the window system.
    #
-   public native pending(a[])
+   public native pending()
+
+   # Enqueue the given values onto the event queue.  The caller must
+   # ensure the values make sense, or a fatal error will occur when
+   # `event` is called (see the function wgetevent in rwindow.r for
+   # details).
+   #
+   public native enqueue(a[])
+
+   # Return the event code of the next event (without removing it), or
+   # fail if there is no event available.
+   #
+   public native peek()
 
    # Fill the given arc of an ellipse; the parameters are as for
    # `draw_arc()`.
@@ -1274,18 +1287,6 @@ final class Window(NoCopy, ObjectOutput)
    #
    public get_line_descent()
       return get_font_descent() + get_absolute_leading()
-   end
-
-   # Enqueue a window event.
-   #
-   public enqueue(eventcode, x, y, time, mod)
-      /x := -1
-      /y := -1
-      x +:= get_dx()
-      y +:= get_dy()
-      /time := 0
-      /mod := 0
-      return pending(eventcode, x, y, time, mod)
    end
 
    # Convenient method to open an image and return a hidden window with
