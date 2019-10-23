@@ -395,18 +395,6 @@ function graphics_Window_peek(self)
    }
 end
 
-function graphics_Window_enqueue(self, argv[argc])
-   body {
-      int i;
-      GetSelfW();
-
-      for (i = 0; i < argc; i++)
-          list_put(&self_w->window->listp, &argv[i]);
-
-      return self;
-   }
-end
-
 function graphics_Window_hold(self)
    body {
       GetSelfW();

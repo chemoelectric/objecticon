@@ -1052,17 +1052,19 @@ final class Window(NoCopy, ObjectOutput)
    # Return the window's event queue (a list) after bringing it
    # up-to-date with any events from the window system.
    #
+   # The list may be edited to add events to the queue; in this case
+   # the caller must ensure the addition makes sense, or a fatal error
+   # will occur when `event` is called (see the function wgetevent in
+   # rwindow.r for details).
+   #
    public native pending()
 
-   # Enqueue the given values onto the event queue.  The caller must
-   # ensure the values make sense, or a fatal error will occur when
-   # `event` is called (see the function wgetevent in rwindow.r for
-   # details).
-   #
-   public native enqueue(a[])
-
    # Return the event code of the next event (without removing it), or
-   # fail if there is no event available.
+   # fail if there is no event available.  It will give the same
+   # result as
+   # ~
+   #     pending()[1]
+   # ~
    #
    public native peek()
 

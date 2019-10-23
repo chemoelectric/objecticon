@@ -1465,7 +1465,7 @@ class Dialog(Component)
    # :  `coex` - The co-expression to activate
    #
    public invoke_later(coex)
-      self.win.enqueue(Window.INVOKE_LATER, coex)
+      put_n(win.pending(), Window.INVOKE_LATER, coex)
       link
    end
 
@@ -1871,7 +1871,7 @@ class WindowControl(Component)
    end
 
    private close_window()
-      parent_dialog.win.enqueue(Window.CLOSE_BUTTON)
+      push(parent_dialog.win.pending(), Window.CLOSE_BUTTON)
    end
 
    private iconify_window()
