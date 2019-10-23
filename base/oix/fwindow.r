@@ -360,37 +360,38 @@ function graphics_Window_event(self)
       tended struct descrip d;
       GetSelfW();
       if (ListBlk(self_w->window->listp).size == 0) {
-        pollevent(self_w);
-        if (ListBlk(self_w->window->listp).size == 0)
-            fail;
+          pollevent(self_w);
+          if (ListBlk(self_w->window->listp).size == 0)
+              fail;
       }
       wgetevent(self_w, &d);
       return d;
    }
 end
 
-function graphics_Window_pending(self, argv[argc])
+function graphics_Window_pending(self)
    body {
-      wsp ws;
-      int i;
       GetSelfW();
 
-      ws = self_w->window;
-
       /*
-       * put additional arguments to Pending on the pending list in
-       * guaranteed consecutive order.
-       */
-      for (i = 0; i < argc; i++)
-          list_put(&(ws->listp), &argv[i]);
-
-      /*
-       * retrieve any events that might be relevant before returning the
+       * Retrieve any events that might be relevant before returning the
        * pending queue.
        */
       pollevent(self_w);
 
-      return ws->listp;
+      return self_w->window->listp;
+   }
+end
+
+function graphics_Window_peek(self)
+   body {
+      GetSelfW();
+      if (ListBlk(self_w->window->listp).size == 0) {
+          pollevent(self_w);
+          if (ListBlk(self_w->window->listp).size == 0)
+              fail;
+      }
+      return *get_element(&self_w->window->listp, 1);
    }
 end
 

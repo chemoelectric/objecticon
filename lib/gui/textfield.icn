@@ -65,7 +65,8 @@ class TextField(Component)
    # Set the displaychar attribute
    #
    public set_displaychar(c)
-      displaychar := c
+      displaychar := need_text(c)
+      (*displaychar = 1) | runerr("Single character string expected", displaychar)
       link
    end
 
@@ -73,7 +74,7 @@ class TextField(Component)
    # Set the placeholder attribute
    #
    public set_placeholder(s)
-      placeholder := s
+      placeholder := need_text(s)
       link
    end
 
@@ -86,7 +87,7 @@ class TextField(Component)
    # :Parameters :
    # :  `c` - The cset of permissible characters.
    public set_filter(c)
-      self.filter := c ** Gui.PRINTABLE_1
+      self.filter := need_cset(c) ** Gui.PRINTABLE_1
       link
    end
 
@@ -738,16 +739,16 @@ class TextField(Component)
    end
 
    public get_view()
-      if \displaychar then
-         return repl(displaychar, *(self.contents))
+      return if \displaychar then
+         repl(displaychar, *contents)
       else
-         return self.contents
+         contents
    end
 
    public cursor_tick()
       local t
       repeat {
-         if self.has_focus() & self.is_unshaded() & self.is_unhidden() then 
+         if should_draw_focus() & is_unhidden() then 
          {
             t := cursor_on
             cursor_on := if dont_blink(self) then
@@ -794,7 +795,7 @@ class TextField(Component)
       #
       # If has focus display box cursor, else display outline cursor
       #
-      if self.has_focus() & self.is_unshaded() then {
+      if should_draw_focus() then {
          if self.cursor_on ~= 2 then
             Gui.style.draw_text_cursor(self.cbwin,
                                        self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)

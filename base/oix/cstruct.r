@@ -11,7 +11,7 @@
  *   list_put(&l, get_element(&x, i)).   Rather, one should use
  * 
  *   tended struct descrip tmp;
- *   tmp = get_element(&x, i);
+ *   tmp = *get_element(&x, i);
  *   list_put(&l, &tmp);
  */
 
@@ -339,7 +339,7 @@ int list_pull(dptr l, dptr res)
 
 void list_push(dptr l, dptr val)
 {
-   word i = 0;
+   word i;
    struct b_lelem *bp; /* does not need to be tended */
 
    /*
@@ -502,7 +502,7 @@ void list_del(dptr l, word index)
 
 void list_put(dptr l, dptr val)
 {
-   word i = 0;
+   word i;
    struct b_lelem *bp;  /* does not need to be tended */
 
    /*

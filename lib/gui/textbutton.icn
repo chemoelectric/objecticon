@@ -41,7 +41,7 @@ class TextButton(Button, BorderWhilstEntered)
             border.draw_rev_rect(self.cbwin, self)
       }
 
-      if has_focus() & is_unshaded() then
+      if should_draw_focus() then
          border.draw_focus_rect(self.cbwin, self)
    end
 

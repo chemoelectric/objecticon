@@ -493,7 +493,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    public override display()
       border.draw_rect(cbwin, self)
       display_children()
-      if \default_key_listener & has_focus() & is_unshaded() then
+      if \default_key_listener & should_draw_focus() then
          # Allowing the border to draw the focus rect wouldn't look
          # right here, since the scrollbars abut the border.  So we
          # draw it manually around the edge.
