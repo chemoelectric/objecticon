@@ -2155,8 +2155,6 @@ void
 wshow(Window *w, uint q0)
 {
 	int qe;
-	int nl;
-	uint q;
         int t;
 
 	qe = w->org+w->nchars;
@@ -2169,13 +2167,23 @@ wshow(Window *w, uint q0)
 	if(w->org<=q0 && (q0<qe || (q0==qe && qe==w->nr && t <= w->maxlines)))
 		wscrdraw(w);
 	else{
-		nl = 4*w->maxlines/5;
-		q = wbacknl(w, q0, nl);
-		/* avoid going backwards if trying to go forwards - long lines! */
-		if(!(q0>w->org && q<w->org))
-			wsetorigin(w, q, TRUE);
-		while(q0 > w->org+w->nchars)
+                /* Move origin so that q0 is on the screen; a slightly
+                 * more complicated loop is needed in the case of
+                 * newline. */
+                if (q0 > 0 && w->r[q0 - 1] == '\n') {
+                    while(q0 >= w->org + w->nchars && w->org < w->nr) {
 			wsetorigin(w, w->org+1, FALSE);
+                        /* No point moving origin further forward if
+                         * all remaining chars on screen (that would
+                         * just give a bigger gap at the end) */
+                        if (w->org + w->nchars == w->nr) break;
+                    }
+
+                } else {
+                    while(q0 > w->org + w->nchars) {
+			wsetorigin(w, w->org+1, FALSE);
+                    }
+                }
 	}
 }
 
