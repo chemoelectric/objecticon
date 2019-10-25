@@ -2151,6 +2151,42 @@ wbacknl(Window *w, uint p, uint n)
 	return p;
 }
 
+/*
+ * Return the character position after the end of the first visible
+ * line in the window.
+ */
+static uint
+nextline(Window *w)
+{
+    uint res;
+    int i, x;
+    Frbox *b;
+    Frame *fr;
+
+    fr = w;
+    res = w->org;        /* Start at the current origin */
+    x = fr->r.min.x;
+
+    for (i = 0; i < fr->nbox; ++i) {
+        b = &fr->box[i];
+        /* If break box, count the break char and exit. */
+        if (b->nrune < 0) {
+            ++res;
+            break;
+        }
+        /* Count the pixels to check if this box is on the next line.
+         * If so, exit. */
+        x += b->wid;
+        if (x > fr->r.max.x)
+            break;
+
+        /* Otherwise, count its chars and continue. */
+        res += b->nrune;
+    }
+    return res;
+}
+
+
 void
 wshow(Window *w, uint q0)
 {
@@ -2171,18 +2207,13 @@ wshow(Window *w, uint q0)
                  * more complicated loop is needed in the case of
                  * newline. */
                 if (q0 > 0 && w->r[q0 - 1] == '\n') {
-                    while(q0 >= w->org + w->nchars && w->org < w->nr) {
-			wsetorigin(w, w->org+1, FALSE);
-                        /* No point moving origin further forward if
-                         * all remaining chars on screen (that would
-                         * just give a bigger gap at the end) */
-                        if (w->org + w->nchars == w->nr) break;
-                    }
-
+                    while(q0 >= w->org + w->nchars &&
+                          w->org < w->nr &&            /* org can increase */
+                          w->nlines == w->maxlines)    /* and no empty space on-screen already */
+                        wsetorigin(w, nextline(w), TRUE);
                 } else {
-                    while(q0 > w->org + w->nchars) {
-			wsetorigin(w, w->org+1, FALSE);
-                    }
+                    while(q0 > w->org + w->nchars)
+                        wsetorigin(w, nextline(w), TRUE);
                 }
 	}
 }
