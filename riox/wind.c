@@ -638,6 +638,7 @@ showcandidates(Window *w, Completion *c)
 	free(rp);
 	wsetselect(w, q0+nr, q0+nr);
         wshow(w, w->q0);
+	wscrdraw(w);
 }
 
 static Rune*
@@ -746,7 +747,7 @@ wkeyctl(Window *w, Rune r)
 			}
 			return;
 		case Khome:
-			wshow(w, 0);
+			wsetorigin(w, 0, TRUE);
 			return;
 		case Kend:
 			wshow(w, w->nr);
@@ -808,6 +809,7 @@ wkeyctl(Window *w, Rune r)
                 if (w->q0 < w->nr) {
                     wdelete(w, w->q0, w->q0 + 1);
                     wshow(w, w->q0);
+                    wscrdraw(w);
                 }
                 return;
 	case 0x7F:		/* send interrupt */
@@ -828,6 +830,7 @@ wkeyctl(Window *w, Rune r)
 		q0 = w->q0;
 		q0 = winsert(w, rp, 0, nr, q0);
 		wshow(w, q0+nr);
+                wscrdraw(w);
 		free(rp);
 		return;
 	case 0x08:	/* ^H: erase character */
@@ -845,6 +848,7 @@ wkeyctl(Window *w, Rune r)
 		if(nb > 0){
 			wdelete(w, q0, q0+nb);
 			wsetselect(w, q0, q0);
+                        wscrdraw(w);
 		}
 		return;
         case '\n' :
@@ -861,6 +865,7 @@ wkeyctl(Window *w, Rune r)
 	q0 = w->q0;
 	q0 = winsert(w, &r, 0, 1, q0);
 	wshow(w, q0+1);
+        wscrdraw(w);
 }
 
 static void
@@ -1111,6 +1116,7 @@ wmpress(Window *w)
     free(t);
     wsetselect(w, w->nr, w->nr);
     wshow(w, w->q0);
+    wscrdraw(w);
 }
 
 static void
@@ -1541,6 +1547,7 @@ gotohist(Window *w, int pos)
     winsert(w, rs, 0, runestrlen(rs), w->nr);
     wsetselect(w, w->nr, w->nr);
     wshow(w, w->nr);
+    wscrdraw(w);
 
     /* Note the new position */
     w->hpos = pos;
@@ -2186,36 +2193,25 @@ nextline(Window *w)
     return res;
 }
 
-
+/* Move origin so that q0 is on the screen */
 void
 wshow(Window *w, uint q0)
 {
-	int qe;
-        int t;
-
-	qe = w->org+w->nchars;
-        /* This calculation stops the cursor disappearing below the
-         * window when a newline is the last char and at the bottom of
-         * the window. */
-        t = w->nlines;
-        if (w->nr > 0 && w->r[w->nr - 1] == '\n')
-            ++t;
-	if(w->org<=q0 && (q0<qe || (q0==qe && qe==w->nr && t <= w->maxlines)))
-		wscrdraw(w);
-	else{
-                /* Move origin so that q0 is on the screen; a slightly
-                 * more complicated loop is needed in the case of
-                 * newline. */
-                if (q0 > 0 && w->r[q0 - 1] == '\n') {
-                    while(q0 >= w->org + w->nchars &&
-                          w->org < w->nr &&            /* org can increase */
-                          w->nlines == w->maxlines)    /* and no empty space on-screen already */
-                        wsetorigin(w, nextline(w), TRUE);
-                } else {
-                    while(q0 > w->org + w->nchars)
-                        wsetorigin(w, nextline(w), TRUE);
-                }
-	}
+    if (q0 < w->org)
+        wsetorigin(w, wbacknl(w, q0, 0), TRUE);
+    else {
+        /* A slightly more complicated loop is needed in the case of
+         * newline. */
+        if (q0 > 0 && w->r[q0 - 1] == '\n') {
+            while(q0 >= w->org + w->nchars &&
+                  w->org < w->nr &&            /* org can increase */
+                  w->nlines == w->maxlines)    /* and no empty space on-screen already */
+                wsetorigin(w, nextline(w), TRUE);
+        } else {
+            while(q0 > w->org + w->nchars)
+                wsetorigin(w, nextline(w), TRUE);
+        }
+    }
 }
 
 void
