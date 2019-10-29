@@ -83,7 +83,8 @@ function mysql_MySql_options(self, option, arg)
       runerr(101, option)
 
    body {
-      tended char *c_arg;
+      void *c_arg;
+      tended char *str_arg;
       unsigned int int_arg;
       GetSelfMySql();
 
@@ -96,7 +97,7 @@ function mysql_MySql_options(self, option, arg)
               if (!cnv:C_integer(arg, w))
                   runerr(101, arg);
               int_arg = (unsigned int)w;
-              c_arg = (char*)&int_arg;
+              c_arg = &int_arg;
               break;
           }
 
@@ -111,7 +112,7 @@ function mysql_MySql_options(self, option, arg)
                   if (!cnv:C_integer(arg, w))
                       runerr(101, arg);
                   int_arg = (unsigned int)w;
-                  c_arg = (char*)&int_arg;
+                  c_arg = &int_arg;
               }
               break;
           }
@@ -120,10 +121,13 @@ function mysql_MySql_options(self, option, arg)
            * These take a single mandatory char* as an arg.
            */
           case MYSQL_INIT_COMMAND:
+          case MYSQL_SET_CHARSET_NAME:
+          case MYSQL_SET_CHARSET_DIR:
           case MYSQL_READ_DEFAULT_FILE:
           case MYSQL_READ_DEFAULT_GROUP: {
-              if (!cnv:C_string(arg, c_arg))
+              if (!cnv:C_string(arg, str_arg))
                   runerr(103, arg);
+              c_arg = str_arg;
               break;
           }
 
