@@ -46,26 +46,25 @@ record ColumnizeResult(rows, cols, width)
 #            before it is added to the output.
 # 
 procedure columnize_gen(l, screen_width, gutter, rowwise, cvt)
-   local cr, s, i, j, k, w
+   local cr, s, i, j, k
    /gutter := 2
    /cvt := 1
    cr := columnize(List{*!l}, screen_width, gutter, rowwise)
    every i := 1 to cr.rows do {
       s := ""
       every j := 1 to cr.cols do {
-         # Setting the last col width to 0 avoids padding the
-         # rightmost column, which can avoid unwanted line breaks if
-         # we have a single column which is wider than screen_width.
-         w := if j < cr.cols then
-            cr.width[j] + gutter
-         else
-            0
-         k := if /rowwise then 
-            i + cr.rows * (j - 1)
-         else
-            (i - 1) * cr.cols + j 
-         s ||:= cvt(l[k])
-         s ||:= repl(" ", 0 < w - *l[k])
+         if /rowwise then {
+            k := i + cr.rows * (j - 1)
+            s ||:= cvt(l[k])
+            # Check for end-of-line
+            (k + cr.rows <= *l) | break
+         } else {
+            k := (i - 1) * cr.cols + j 
+            s ||:= cvt(l[k])
+            (k < *l & j < cr.cols) | break
+         }
+         # Not end of line, so add padding
+         s ||:= repl(" ", cr.width[j] + gutter - *l[k])
       }
       suspend s
    }
