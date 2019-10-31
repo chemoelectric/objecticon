@@ -52,7 +52,7 @@ procedure columnize_gen(l, screen_width, gutter, rowwise, cvt)
    cr := columnize(List{*!l}, screen_width, gutter, rowwise)
    every i := 1 to cr.rows do {
       s := ""
-      every j := 1 to cr.cols do {
+      every j := seq() do {
          if /rowwise then {
             k := i + cr.rows * (j - 1)
             s ||:= cvt(l[k])
