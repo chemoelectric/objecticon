@@ -17,6 +17,7 @@ class Split(Component)
       min_first,
       min_second,
       weight,
+      step,
       start_size_first,
       start_size_second
 
@@ -219,6 +220,14 @@ class Split(Component)
    end
 
    #
+   # If set, then the slider will move in steps of this amount.
+   #
+   public set_step(v)
+      self.step := v
+      link
+   end
+
+   #
    # If this flag is set then whilst the sizer moves, an intermediate bar is
    # shown and the `Component`s are not laid out, until the mouse is released.
    # This is helpful if the inner `Component`s are expensive to lay out.
@@ -254,12 +263,15 @@ class Split(Component)
    end
 
    public update()
+      local d
+      d := sizer.get_delta()
+      d -:= d % \step
       if /self.sizer.is_horizontal_flag then {
-         first.w_spec := start_size_first + sizer.get_delta()
-         second.w_spec := start_size_second - sizer.get_delta()
+         first.w_spec := start_size_first + d
+         second.w_spec := start_size_second - d
       } else {
-         first.h_spec := start_size_first + sizer.get_delta()
-         second.h_spec := start_size_second - sizer.get_delta()
+         first.h_spec := start_size_first + d
+         second.h_spec := start_size_second - d
       }
       layout()
       invalidate()
@@ -293,6 +305,3 @@ class Split(Component)
       return
    end
 end
-
-   
-
