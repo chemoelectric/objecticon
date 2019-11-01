@@ -2801,6 +2801,25 @@ static void free_traplist(struct traplist *l)
     l->alloc = l->n = 0;
 }
 
+#if 0
+static void show_traplist(struct traplist *l)
+{
+    int i;
+    printf("traplist %p n=%d alloc=%d\n", l, l->n, l->alloc);
+    for (i = 0; i < l->n; ++i) {
+        XTrapezoid t;
+        t = l->traps[i];
+        printf("%2d:\ttop      = %d (%f)\n ", i, (int)t.top, XFixedToDouble(t.top));
+        printf("\tbottom   = %d (%f)\n ", (int)t.bottom, XFixedToDouble(t.bottom));
+        printf("\tleft  p1 = %d,%d (%f,%f)\n ", (int)t.left.p1.x, (int)t.left.p1.y, XFixedToDouble(t.left.p1.x), XFixedToDouble(t.left.p1.y));
+        printf("\t      p2 = %d,%d (%f,%f)\n ", (int)t.left.p2.x, (int)t.left.p2.y, XFixedToDouble(t.left.p2.x), XFixedToDouble(t.left.p2.y));
+        printf("\tright p1 = %d,%d (%f,%f)\n ", (int)t.right.p1.x, (int)t.right.p1.y, XFixedToDouble(t.right.p1.x), XFixedToDouble(t.right.p1.y));
+        printf("\t      p2 = %d,%d (%f,%f)\n ", (int)t.right.p2.x, (int)t.right.p2.y, XFixedToDouble(t.right.p2.x), XFixedToDouble(t.right.p2.y));
+    }
+    printf("============\n");
+}
+#endif
+
 static void draw_traplist(struct traplist *l, Display *display, int op, Picture src, Picture dest)
 {
     XRenderCompositeTrapezoids(display, op, src, dest, 0,0,0, l->traps, l->n);
@@ -2820,16 +2839,16 @@ static void add_tri(struct traplist *l,
                     XPointDouble *p1, XPointDouble *p2, XPointDouble *p3)
 {
     XTrapezoid t1, t2;
+    double i;
 
-    if (p1->x == p2->x && p2->x == p3->x)
+    if ((p1->x == p2->x && p2->x == p3->x) ||
+        (p1->y == p2->y && p2->y == p3->y))
         return;
 
     /* Sort the points into ascending y order. */
     if (p1->y > p3->y) { Swap(p1,p3); }
     if (p1->y > p2->y) { Swap(p1,p2); }
     if (p2->y > p3->y) { Swap(p2,p3); }
-
-    ensure_traps(l, 2);
 
     /*
      * Turning a triangle into 2 trapezoids falls into two cases.  In
@@ -2865,19 +2884,24 @@ static void add_tri(struct traplist *l,
      *        -------------------------x3---------- y3
      * 
      * 
+     * To distinguish the cases, calculate the point i at which the
+     * line p1->p3 crosses the horizontal line y2, and see which side
+     * of x2 it is on.
      */
+
+    i = p1->x + (p3->x - p1->x) * ((p2 -> y - p1->y) / (p3->y - p1->y));
+    if (i == p2->x)    /* The triangle is a straight line. */
+        return;
     t1.top = XDoubleToFixed(p1->y);
     t1.bottom = t2.top = XDoubleToFixed(p2->y);
     t2.bottom = XDoubleToFixed(p3->y);
     t1.left.p1.x = XDoubleToFixed(p1->x);
     t1.left.p1.y = t1.top;          // p1->y
-    if ( (p1->x <= p2->x && p2->x <= p3->x) ||
-         (p1->x <= p3->x && p3->x <= p2->x) ||
-         (p3->x <= p1->x && p1->x <= p2->x) )
+    t1.right.p1 = t1.left.p1;
+    if (i < p2->x)
     {
         t1.left.p2.x = XDoubleToFixed(p3->x);
         t1.left.p2.y = t2.bottom;   // p3->y
-        t1.right.p1 = t1.left.p1;
         t1.right.p2.x = XDoubleToFixed(p2->x);
         t1.right.p2.y = t1.bottom;  // p2->y
         t2.left = t1.left;
@@ -2887,7 +2911,6 @@ static void add_tri(struct traplist *l,
     else {
         t1.left.p2.x = XDoubleToFixed(p2->x);
         t1.left.p2.y = t1.bottom;   // p2->y
-        t1.right.p1 = t1.left.p1;
         t1.right.p2.x = XDoubleToFixed(p3->x);
         t1.right.p2.y = t2.bottom;  // p3->y
         t2.left.p1 = t1.left.p2;
@@ -2895,6 +2918,7 @@ static void add_tri(struct traplist *l,
         t2.right = t1.right;
     }
 
+    ensure_traps(l, 2);
     if (t1.top != t1.bottom)
         l->traps[l->n++] = t1;
     if (t2.top != t2.bottom)
@@ -2912,7 +2936,6 @@ static void add_rect(struct traplist *l, XPointDouble *tl, XPointDouble *br)
 {
     add_trap(l, tl->y, tl->x, br->x,  br->y, tl->x, br->x);
 }
-
 
 /*
  * The orientation of the computed corner points is always the same
