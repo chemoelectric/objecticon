@@ -40,7 +40,8 @@ abstract class Button(Toggle,Component)
       no_click_focus_flag,
       toggles_flag,
       repeat_ticker,
-      held_event
+      held_event,
+      middle_listeners
 
    public set_parent_button_group(x)
       self.parent_button_group := x
@@ -207,6 +208,22 @@ abstract class Button(Toggle,Component)
    #
    public set_toggles(s)
       self.toggles_flag := need_flag(s)
+      link
+   end
+
+   #
+   # If this flag is set, then the middle mouse button acts in the
+   # same way as the left mouse button.
+   #
+   public set_use_middle(s)
+      need_flag(s)
+      every (!\middle_listeners).disconnect()
+      middle_listeners := if /s then
+         &null
+      else
+         [ connect(handle_lpress, Event.MOUSE_MIDDLE_PRESS).last_listener,
+           connect(handle_ldrag, Event.MOUSE_MIDDLE_DRAG).last_listener,
+           connect(handle_lrelease, Event.MOUSE_MIDDLE_RELEASE).last_listener ]
       link
    end
 
