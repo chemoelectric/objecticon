@@ -959,7 +959,7 @@ static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height)
                   MkRect(0, 0, width, height),
                   get_mask_img(wc),
                   Pt(x, y),
-                  mask,
+                  0,
                   ZP, 
                   DinS);
     }
