@@ -4284,6 +4284,7 @@ function io_PttyStream_set_size(self, cols, rows)
     body {
        struct winsize ws;
        GetSelfFd();
+       memset(&ws, 0, sizeof(ws));  /* Avoid valgrind warning */
        ws.ws_row = rows;
        ws.ws_col = cols;
        if (ioctl(self_fd, TIOCSWINSZ, &ws) < 0) {
