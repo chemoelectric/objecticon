@@ -1983,7 +1983,7 @@ static void synch_pix_and_win(wsp ws, int x, int y, int width, int height)
     wdp wd = ws->display;
     if (ws->win && !ws->holding) {
         no_clip(ws, 1);
-        XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
+        XRenderComposite(wd->display, PictOpSrc, ws->ppic, None, ws->wpic,
                          x, y, 0, 0, x, y, width, height);
     }
 }
@@ -1996,7 +1996,7 @@ static void pix_to_win(wsp ws, int x, int y, int width, int height)
 {
     wdp wd = ws->display;
     if (ws->win && !ws->holding)
-        XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
+        XRenderComposite(wd->display, PictOpSrc, ws->ppic, None, ws->wpic,
                          x, y, 0, 0, x, y, width, height);
 }
 
@@ -2046,7 +2046,7 @@ static void resizepixmap(wbp w)
                          0, 0, ws->pixwidth, ws->pixheight);
 
     no_clip(ws, 0);
-    XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, pp,
+    XRenderComposite(wd->display, PictOpSrc, ws->ppic, None, pp,
                      0,0,0,0,0,0, old_w, old_h);
 
     XFreePixmap(wd->display, ws->pix);	/* free old pixmap */
@@ -3563,7 +3563,7 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
         XRenderComposite(wd->display,
                          PictOpInReverse,
                          get_mask_picture(wc),          /* src */
-                         mask,         /* mask */
+                         None,         /* mask */
                          mask,         /* dest */
                          x,y,          /* src x,y */
                          0,0,          /* mask x,y */
