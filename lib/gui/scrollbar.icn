@@ -363,20 +363,16 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
 
    public handle_button_up(e)
       start_handle(e)
-      #
-      # Button up clicked
-      #
-      move_value(self.value - self.increment_size)
+      move_value(if \e.shift | e.code === Mouse.MIDDLE_PRESS then
+                    lo else value - increment_size)
       set_pos_from_value()
       end_handle(e)
    end
 
    public handle_button_down(e)
       start_handle(e)
-      #
-      # Button down clicked
-      #
-      move_value(self.value + self.increment_size)
+      move_value(if \e.shift | e.code === Mouse.MIDDLE_PRESS then
+                    hi else value + increment_size)
       set_pos_from_value()
       end_handle(e)
    end
@@ -573,14 +569,14 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # Succeed if the bar is at its topmost (or leftmost) position.
    #
    public at_top()
-      if bar_pos = bar_area_pos then return
+      succeed bar_pos = bar_area_pos
    end
 
    #
    # Succeed if the bar is at its bottommost (or rightmost) position.
    #
    public at_bottom()
-      if bar_pos + bar_size = bar_area_pos + bar_area_size then return
+      succeed bar_pos + bar_size = bar_area_pos + bar_area_size
    end
 
    public override finally()
@@ -596,12 +592,14 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          set_border(NullBorder()).
          connect(self.handle_button_up, Event.BUTTON_PRESS).
          connect(self.handle_button_up, Event.BUTTON_HELD).
+         set_use_middle(&yes).
          set_accepts_focus(&no)
       add(self.b1)
       self.b2 := IconButton().
          set_border(NullBorder()).
          connect(self.handle_button_down, Event.BUTTON_PRESS).
          connect(self.handle_button_down, Event.BUTTON_HELD).
+         set_use_middle(&yes).
          set_accepts_focus(&no)
       add(self.b2)
       self.bar_area := BarArea().
