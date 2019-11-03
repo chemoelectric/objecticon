@@ -378,6 +378,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    end
 
    public override handle_wheel_up(e)
+      /self.slider_down | fail
       start_handle(e)
       move_value(self.value - self.wheel_factor * self.increment_size)
       set_pos_from_value()
@@ -385,6 +386,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    end
 
    public override handle_wheel_down(e)
+      /self.slider_down | fail
       start_handle(e)
       move_value(self.value + self.wheel_factor * self.increment_size)
       set_pos_from_value()

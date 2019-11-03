@@ -29,30 +29,58 @@ package ipl.columnize
 
 import ipl.pdco
 
+# Result record for `columnize`
 record ColumnizeResult(rows, cols, width)
 
+# A helpful function to take a list of strings and columnize them into
+# generated lines using `columnize`.  Widths are taken to be simple
+# string lengths.
+#
+# :Parameters :
+# :  `l` - a list of strings
+# :  `screen_width` - the total width available in characters
+# :  `gutter` - the desired space between columns, default 2 characters
+# : `rowwise` - a flag indicating whether output will be left to right
+#               (flag set), or top to bottom (flag unset).
+# :  `cvt` - an optional function to apply to an input string just
+#            before it is added to the output.
+# 
 procedure columnize_gen(l, screen_width, gutter, rowwise, cvt)
-   local cr, s, i, j, k, w
+   local cr, s, i, j, k
    /gutter := 2
    /cvt := 1
    cr := columnize(List{*!l}, screen_width, gutter, rowwise)
    every i := 1 to cr.rows do {
       s := ""
-      every j := 1 to cr.cols do {
-         w := cr.width[j]
-         if j < cr.cols then
-            w +:= gutter
-         k := if /rowwise then 
-            i + cr.rows * (j - 1)
-         else
-            (i -1) * cr.cols + j 
-         s ||:= cvt(l[k])
-         s ||:= repl(" ", 0 < w - *l[k])
+      every j := seq() do {
+         if /rowwise then {
+            k := i + cr.rows * (j - 1)
+            s ||:= cvt(l[k])
+            # Check for end-of-line
+            (k + cr.rows <= *l) | break
+         } else {
+            k := (i - 1) * cr.cols + j 
+            s ||:= cvt(l[k])
+            (k < *l & j < cr.cols) | break
+         }
+         # Not end of line, so add padding
+         s ||:= repl(" ", cr.width[j] + gutter - *l[k])
       }
       suspend s
    }
 end
 
+# Columnize a list of items given their widths.  A `ColumnizeResult`
+# record is returned, giving the dimensions of the output as well as a
+# list of the column widths.
+#
+# :Parameters :
+# :  `l` - a list of item widths
+# :  `screen_width` - the total width available
+# :  `gutter` - the desired space between columns
+# : `rowwise` - a flag indicating whether output will be left to right
+#               (flag set), or top to bottom (flag unset).
+#
 procedure columnize(l, screen_width, gutter, rowwise)
    local cols, rows, w, mean, est, widths, mx
    mx := Max{!l} | 0

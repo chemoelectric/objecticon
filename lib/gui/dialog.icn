@@ -1470,6 +1470,20 @@ class Dialog(Component)
    end
 
    #
+   # This is like `invoke_later`, except that the event is pushed on
+   # the front of the event queue, rather than at the back.  Thus, the
+   # event will be processed before, rather than after, any other
+   # events currently on the queue.
+   #
+   # :Parameters :
+   # :  `coex` - The co-expression to activate
+   #
+   public invoke_sooner(coex)
+      push_n(win.pending(), Window.INVOKE_LATER, coex)
+      link
+   end
+
+   #
    # Set the `WAttrib.LABEL` attribute; see `set_wattrib()`.
    #
    public set_label(v)

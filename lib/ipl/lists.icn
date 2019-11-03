@@ -867,11 +867,16 @@ procedure put_n(l, a[])
    return l
 end
 
-#
-# Push all the parameters on the given list.
+# Push all the parameters on the given list.  Note that the order of
+# the given items is maintained, so that for example :-
+# ~
+#   l := [1,2,3]
+#   push_n(l, 4,5,6)
+#   # Now l is [4,5,6,1,2,3]
+# ~
 #
 procedure push_n(l, a[])
-   every push(l, !a)
+   every push(l, back(a))
    return l
 end
 
