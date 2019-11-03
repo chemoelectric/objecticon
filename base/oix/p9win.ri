@@ -920,7 +920,7 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
         maskimage2(w, mask, x, y, width, height);
         freeimage(mask);
     } else
-        fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), points[0], wc->drawop->i);
+        fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
     free(points);
     flushimage(display, 1);
