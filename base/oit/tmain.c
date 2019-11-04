@@ -442,8 +442,8 @@ static void execute(char **args)
    STARTUPINFOW siStartupInfo; 
    PROCESS_INFORMATION piProcessInfo; 
 
-   memset(&siStartupInfo, 0, sizeof(siStartupInfo)); 
-   memset(&piProcessInfo, 0, sizeof(piProcessInfo)); 
+   StructClear(siStartupInfo); 
+   StructClear(piProcessInfo); 
    siStartupInfo.cb = sizeof(siStartupInfo); 
 
    cl = GetCommandLineW();
