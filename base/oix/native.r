@@ -2236,7 +2236,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         }
         *port++ = 0;
 
-        memset(&hints, 0, sizeof(hints));
+        StructClear(hints);
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
         if (strcmp(buf, "*") == 0) {
@@ -2287,7 +2287,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             }
             *port++ = 0;
         }
-        memset(&hints, 0, sizeof(hints));
+        StructClear(hints);
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_STREAM;
         if (strcmp(host, "*") == 0) {
@@ -2339,7 +2339,7 @@ function io_SocketStream_dns_query(host, ver)
       struct addrinfo *res, *t;
       tended struct descrip result;
       int error;
-      memset(&hints, 0, sizeof(hints));
+      StructClear(hints);
       switch (ver) {
           case 4:  hints.ai_family = AF_INET; break;
           case 6:  hints.ai_family = AF_INET6; break;
@@ -5361,6 +5361,7 @@ function io_PttyStream_set_size(self, cols, rows)
     body {
        struct winsize ws;
        GetSelfFd();
+       StructClear(ws);  /* Avoid valgrind warning */
        ws.ws_row = rows;
        ws.ws_col = cols;
        if (ioctl(self_fd, TIOCSWINSZ, &ws) < 0) {
@@ -5534,7 +5535,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         }
         *port++ = 0;
 
-        memset(&hints, 0, sizeof(hints));
+        StructClear(hints);
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
         if (strcmp(buf, "*") == 0) {
@@ -5585,7 +5586,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             }
             *port++ = 0;
         }
-        memset(&hints, 0, sizeof(hints));
+        StructClear(hints);
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_STREAM;
         if (strcmp(host, "*") == 0) {
@@ -5637,7 +5638,7 @@ function io_WinsockStream_dns_query(host, ver)
       struct addrinfoW *res, *t;
       tended struct descrip result;
       int error;
-      memset(&hints, 0, sizeof(hints));
+      StructClear(hints);
       switch (ver) {
           case 4:  hints.ai_family = AF_INET; break;
           case 6:  hints.ai_family = AF_INET6; break;

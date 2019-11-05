@@ -131,8 +131,12 @@ class Ieval(MinimalObjectOutput)
          LineEditorStream.get_console_width() | 80
    end
 
+   private text_link2(l, i)
+      return text_link(l[i])
+   end
+
    private output_columns(l)
-      every output.write(columnize_gen(qsort(l, Text.consistent_compare), get_screen_width(),,, text_link))
+      every output.write(columnize_gen(qsort(l, Text.consistent_compare), get_screen_width(),,, text_link2))
    end
 
    private list_syms()

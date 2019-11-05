@@ -43,24 +43,25 @@ record ColumnizeResult(rows, cols, width)
 # : `rowwise` - a flag indicating whether output will be left to right
 #               (flag set), or top to bottom (flag unset).
 # :  `cvt` - an optional function to apply to an input string just
-#            before it is added to the output.
+#            before it is added to the output.  It is given the `l` and
+#            an index into `l`.
 # 
 procedure columnize_gen(l, screen_width, gutter, rowwise, cvt)
    local cr, s, i, j, k
    /gutter := 2
-   /cvt := 1
+   /cvt := proc("[]", 2)
    cr := columnize(List{*!l}, screen_width, gutter, rowwise)
    every i := 1 to cr.rows do {
       s := ""
       every j := seq() do {
          if /rowwise then {
             k := i + cr.rows * (j - 1)
-            s ||:= cvt(l[k])
+            s ||:= cvt(l, k)
             # Check for end-of-line
             (k + cr.rows <= *l) | break
          } else {
             k := (i - 1) * cr.cols + j 
-            s ||:= cvt(l[k])
+            s ||:= cvt(l, k)
             (k < *l & j < cr.cols) | break
          }
          # Not end of line, so add padding
