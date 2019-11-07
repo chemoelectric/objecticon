@@ -403,6 +403,28 @@ static void destroylayout(void *data)
     g_object_unref((PangoLayout *)data);
 }
 
+/*
+ * Adapted from XftDefaultSubstitute and _XftDefaultInitDouble in
+ * libXft (xftdpy.c), so that it behaves in the same way.
+ */
+static double getdpi(Display *display)
+{
+    char *v, *e;
+    double  d;
+
+    /* Look up the Xft.dpi setting in X resources. */
+    v = XGetDefault(display, "Xft", "dpi");
+    if (v) {
+	d = strtod(v, &e);
+	if (e != v)
+	    return d;
+    }
+
+    /* Not found, so calculate the dpi based on display height. */
+    return (((double) DisplayHeight(display, DefaultScreen(display)) * 25.4) /
+             (double) DisplayHeightMM(display, DefaultScreen(display)));
+}
+
 function cairo_Context_new_impl(sur)
     body {
        cairo_t *cr;
@@ -419,8 +441,6 @@ function cairo_Context_new_impl(sur)
            cairo_matrix_t matrix;
            PangoFontDescription *fontdesc;
            PangoLayout *layout;
-           PangoContext *pc;
-           double dpi;
            wsp ws;
            wdp wd;
            wcp wc;
@@ -464,15 +484,14 @@ function cairo_Context_new_impl(sur)
            layout = getpangolayout(cr);
            pango_layout_set_font_description(layout, fontdesc);
            pango_font_description_free(fontdesc);
+
            /* 
             * Set the resolution (dpi).  Otherwise, fonts won't be converted
             * from point size to pixels properly (a default 96dpi would be
             * used).
             */
-           dpi = (((double) DisplayHeight(wd->display, DefaultScreen(wd->display)) * 25.4) /
-                  (double) DisplayHeightMM(wd->display, DefaultScreen(wd->display)));
-           pc = pango_layout_get_context(layout);
-           pango_cairo_context_set_resolution(pc, dpi);
+           pango_cairo_context_set_resolution(pango_layout_get_context(layout),
+                                              getdpi(wd->display));
 
            if (wc->clipw >= 0) {
                cairo_rectangle(cr, wc->clipx, wc->clipy, wc->clipw, wc->cliph);
