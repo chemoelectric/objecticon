@@ -237,6 +237,7 @@ class Worker()
 
       start_t := Prog.get_runtime_millis()
       if res := hc.retrieve(hr) then {
+         end_t := Prog.get_runtime_millis()
          if /opts["head"] then {
             close_input_stream() | clean_stop("Couldn't close input_stream: ", &why)
             close_output_stream() | clean_stop("Couldn't close output_stream: ", &why)
@@ -248,7 +249,6 @@ class Worker()
                   clean_stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
                }
             } else {
-               end_t := Prog.get_runtime_millis()
                kbps := Format.numeric_to_string((hc.get_read() / 1024.0) / ((end_t - start_t) / 1000.0), 1, ',')
                msg := Format.numeric_to_string(hc.get_read(), 0, ',') || " bytes OK (" || kbps  || " kB/s)"
 
