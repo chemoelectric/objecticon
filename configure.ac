@@ -162,7 +162,7 @@ AC_OUTPUT
 echo "Summary:-"
 if test "$found_x11" = yes; then
         echo "X11 graphics           : yes"
-        if test "$ac_cv_lib_jpeg_main" = yes; then
+        if test "$found_jpeg" = yes; then
                 echo "jpeg library           : yes"
         else
                 echo "jpeg library           : no"
