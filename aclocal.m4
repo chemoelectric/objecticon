@@ -321,7 +321,7 @@ AC_DEFUN([AX_CHECK_CAIRO],
               AC_DEFINE(HAVE_LIBCAIRO)
               AC_MSG_RESULT(yes)
            else
-              AC_MSG_RESULT([no])
+              AC_MSG_RESULT(no)
               PKGERR=`pkg-config --errors-to-stdout --print-errors $CAIRO_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
@@ -363,7 +363,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
               AC_DEFINE(HAVE_LIBOPENSSL)
               AC_MSG_RESULT(yes)
            else
-              AC_MSG_RESULT([no])
+              AC_MSG_RESULT(no)
               PKGERR=`pkg-config --errors-to-stdout --print-errors $OPENSSL_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
@@ -404,7 +404,7 @@ AC_DEFUN([AX_CHECK_PNG],
               AC_MSG_RESULT(yes)
               found_png=yes
            else
-              AC_MSG_RESULT([no])
+              AC_MSG_RESULT(no)
               PKGERR=`pkg-config --errors-to-stdout --print-errors $PNG_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
@@ -440,7 +440,7 @@ AC_DEFUN([AX_CHECK_ZLIB],
               AC_MSG_RESULT(yes)
               found_zlib=yes
            else
-              AC_MSG_RESULT([no])
+              AC_MSG_RESULT(no)
               PKGERR=`pkg-config --errors-to-stdout --print-errors $ZLIB_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
@@ -476,7 +476,7 @@ AC_DEFUN([AX_CHECK_X11],
               AC_MSG_RESULT(yes)
               found_x11=yes
            else
-              AC_MSG_RESULT([no])
+              AC_MSG_RESULT(no)
               PKGERR=`pkg-config --errors-to-stdout --print-errors $X11_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
@@ -512,7 +512,7 @@ AC_DEFUN([AX_CHECK_JPEG],
               AC_MSG_RESULT(yes)
               found_jpeg=yes
            else
-              AC_MSG_RESULT([no])
+              AC_MSG_RESULT(no)
               PKGERR=`pkg-config --errors-to-stdout --print-errors $JPEG_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
@@ -547,9 +547,11 @@ AC_DEFUN([AX_LIB_MYSQL],
                MYSQL_LIBS=`pkg-config --libs-only-l $MYSQL_CONFIG`
                MYSQL_VERSION=`pkg-config --modversion $MYSQL_CONFIG`
                AC_DEFINE(HAVE_MYSQL)
-               AC_MSG_RESULT([yes])
+               AC_MSG_RESULT(yes)
            else
-               AC_MSG_RESULT([no])
+               AC_MSG_RESULT(no)
+               PKGERR=`pkg-config --errors-to-stdout --print-errors $MYSQL_CONFIG`
+               AC_MSG_RESULT([$PKGERR])
            fi
     fi
 
