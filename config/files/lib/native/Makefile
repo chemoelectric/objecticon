@@ -1,6 +1,6 @@
 include ../../Makedefs
 
-ifeq (@HAVE_DYNAMIC_LINKING@, no)
+ifeq (@HAVE_LIBDL@,)
   TARGET=
 else
   TARGET=objecticonipclib.so objecticonmemdebug.so

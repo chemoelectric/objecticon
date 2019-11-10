@@ -26,23 +26,6 @@ case $host_os in
         ;;
 esac
 
-
-AC_DEFUN([OI_ADD_LIB],[
- AC_CHECK_LIB($1,main)
-])
-
-AC_DEFUN([OI_ADD_LIB_DIR],[
-  if test "$1" != "/usr/lib" -a -d "$1"; then
-    LDFLAGS="$LDFLAGS -L$1"
-  fi
-])
-
-AC_DEFUN([OI_ADD_INCLUDE_DIR],[
-  if test "$1" != "/usr/include" -a -d "$1"; then
-    CPPFLAGS="$CPPFLAGS -I$1"
-  fi
-])
-
 AC_SUBST([CONFIG_DIR])
 CONFIG_DIR=$(pwd -P)
 
@@ -70,7 +53,7 @@ AX_CHECK_X11()
 if test "$found_x11" = yes; then
    AX_CHECK_JPEG()
    AX_CHECK_PNG()
-   if test "$HAVE_DYNAMIC_LINKING" = yes; then
+   if test "$HAVE_LIBDL" = yes; then
       AX_CHECK_CAIRO()
    fi
 fi
@@ -78,12 +61,12 @@ fi
 AX_CHECK_TIOCSCTTY()
 
 AX_CHECK_ZLIB()
-OI_ADD_LIB(m)
-if ! test "$ac_cv_lib_m_main" = yes; then
-        AC_MSG_ERROR([*** Couldn't find the math library (-lm) - can't compile without it.])
-fi
+AC_SEARCH_LIBS(sin, [m],,
+   [
+    AC_MSG_ERROR([*** Couldn't find the math library - can't compile without it.])
+   ])
 
-if test "$HAVE_DYNAMIC_LINKING" = yes; then
+if test "$HAVE_LIBDL" = yes; then
    AX_LIB_MYSQL()
    AX_CHECK_OPENSSL()
 fi
@@ -180,7 +163,7 @@ if test "$found_zlib" = yes; then
 else
         echo "zlib compression       : no"
 fi
-if test "$HAVE_DYNAMIC_LINKING" = yes; then
+if test "$HAVE_LIBDL" = yes; then
         echo "dynamic linking        : yes"
         if test -z "$MYSQL_VERSION"; then 
                 echo "mysql lib              : no"

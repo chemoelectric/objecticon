@@ -177,119 +177,127 @@ done
 
 AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
    [ 
+     dnl This shell variable has the same name as the #define value set below; it is used by configure.ac and the
+     dnl lib/native Makefile
+     unset HAVE_LIBDL
      dnl Save $LIBS since we won't want -ldl if we find we can't use dynamic linking
      my_save_libs=$LIBS
-     AC_CHECK_LIB(dl,main)
-     AC_MSG_CHECKING(for dynamic linking)
+     AC_SEARCH_LIBS(dlopen, [dl dld], 
+        [
+        dnl library found, check that it resolves symbols correctly
+        dnl
+        AC_MSG_CHECKING(for symbol resolution)
 
-     dnl Set default compiler options if not set externally
-     if test -z "$DYNAMIC_LIB_CFLAGS" ; then
-        dnl Flags for compiling source file which is part of a library
-        case $host_os in
-           *darwin* )
-                    dnl No flag needed
-                    ;;
-           *)
-                    DYNAMIC_LIB_CFLAGS="-fPIC"
-                    ;;
-        esac
-     fi
-     if test -z "$DYNAMIC_LIB_LDFLAGS" ; then
-        dnl Flags for linking a library
-        case $host_os in
-           *darwin* )
-                    DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
-                    ;;
-           *solaris* )
-                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bdirect"
-                    ;;
-           *aix* )
-                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G -Wl,-bsymbolic"
-                    ;;
-           *)
-                    DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bsymbolic"
-                    ;;
-        esac
-     fi
-     if test -z "$DYNAMIC_EXPORT_LDFLAGS" ; then
-        dnl Flags for linking the main program so its symbols are accessible to a loaded library
-        case $host_os in
-           *solaris* )
-                    dnl No flag needed
-                    ;;
-           *darwin* )
-                    dnl No flag needed
-                    ;;
-           *aix* )
-                    DYNAMIC_EXPORT_LDFLAGS="-Wl,-brtl -Wl,-bexpall "
-                    ;;
-           *)
-                    DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
-                    ;;
-        esac
-     fi
+        dnl Set default compiler options if not set externally
+        if test -z "$DYNAMIC_LIB_CFLAGS" ; then
+           dnl Flags for compiling source file which is part of a library
+           case $host_os in
+              *darwin* )
+                       dnl No flag needed
+                       ;;
+              *)
+                       DYNAMIC_LIB_CFLAGS="-fPIC"
+                       ;;
+           esac
+        fi
+        if test -z "$DYNAMIC_LIB_LDFLAGS" ; then
+           dnl Flags for linking a library
+           case $host_os in
+              *darwin* )
+                       DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
+                       ;;
+              *solaris* )
+                       DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bdirect"
+                       ;;
+              *aix* )
+                       DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G -Wl,-bsymbolic"
+                       ;;
+              *)
+                       DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bsymbolic"
+                       ;;
+           esac
+        fi
+        if test -z "$DYNAMIC_EXPORT_LDFLAGS" ; then
+           dnl Flags for linking the main program so its symbols are accessible to a loaded library
+           case $host_os in
+              *solaris* )
+                       dnl No flag needed
+                       ;;
+              *darwin* )
+                       dnl No flag needed
+                       ;;
+              *aix* )
+                       DYNAMIC_EXPORT_LDFLAGS="-Wl,-brtl -Wl,-bexpall "
+                       ;;
+              *)
+                       DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
+                       ;;
+           esac
+        fi
 
-     dnl Create a shared library, dloadtest.so, to use with this test.
-     dnl If this fails, the main test will surely fail.
-     rm -f ./dloadtest.so ./conftest.o
-     AC_LANG_CONFTEST(
-        [AC_LANG_SOURCE([[extern int func1(int); 
-                          extern int var1;
-                          int func2() { return 5; }
-                          int var2 = 7;
-                          int func3(int x) { return 2*x*var1*var2*func2()*func1(20); }]])]
-      )
-     $ac_ct_CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
-     $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
-     rm -f ./conftest.o
+        dnl Create a shared library, dloadtest.so, to use with this test.
+        dnl If this fails, the main test will surely fail.
+        rm -f ./dloadtest.so ./conftest.o
+        AC_LANG_CONFTEST(
+           [AC_LANG_SOURCE([[extern int func1(int); 
+                             extern int var1;
+                             int func2() { return 5; }
+                             int var2 = 7;
+                             int func3(int x) { return 2*x*var1*var2*func2()*func1(20); }]])]
+         )
+        $ac_ct_CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
+        $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
+        rm -f ./conftest.o
 
-     dnl Now try to link a program with the shared library, and have each half call the other.
-     my_save_ldflags="$LDFLAGS"
-     LDFLAGS="$LDFLAGS $DYNAMIC_EXPORT_LDFLAGS"
-     AC_RUN_IFELSE(
-        [AC_LANG_SOURCE([[#include <dlfcn.h>
-                          #include <stdlib.h>
-                          #if OS_DARWIN
-                          /* On macos, func2() in the library is overridden (gives 19 not 5) */
-                          #define RES 1144066
-                          #else
-                          #define RES 301070
-                          #endif
-                          int func1(int x) { return 3+x; }
-                          int func2() { return 19; }
-                          int var1 = 11;
-                          int var2 = 13;
-                          int main() {
-                              void *handle;
-                              int (*func3)(int);
-                              handle = dlopen("./dloadtest.so", RTLD_LAZY);
-                              if (!handle) exit(1);
-                              *(void **)(&func3) = dlsym(handle, "func3");
-                              if (!func3) exit(1);
-                              if (func3(17) != RES) exit(1);
-                              exit(0);
-                          }
-                          ]])],
-                   [
-                   AC_MSG_RESULT(yes)
-                   HAVE_DYNAMIC_LINKING=yes
-                   ],
-                   [
-                   AC_MSG_RESULT(no)
-                   LIBS=$my_save_libs
-                   HAVE_DYNAMIC_LINKING=no
-                   DYNAMIC_LIB_CFLAGS=""
-                   DYNAMIC_LIB_LDFLAGS=""
-                   DYNAMIC_EXPORT_LDFLAGS=""
-                   ]
-
-     )
-     LDFLAGS="$my_save_ldflags"
-     rm -f ./dloadtest.so
+        dnl Now try to link a program with the shared library, and have each half call the other.
+        my_save_ldflags="$LDFLAGS"
+        LDFLAGS="$LDFLAGS $DYNAMIC_EXPORT_LDFLAGS"
+        AC_RUN_IFELSE(
+           [AC_LANG_SOURCE([[#include <dlfcn.h>
+                             #include <stdlib.h>
+                             #if OS_DARWIN
+                             /* On macos, func2() in the library is overridden (gives 19 not 5) */
+                             #define RES 1144066
+                             #else
+                             #define RES 301070
+                             #endif
+                             int func1(int x) { return 3+x; }
+                             int func2() { return 19; }
+                             int var1 = 11;
+                             int var2 = 13;
+                             int main() {
+                                 void *handle;
+                                 int (*func3)(int);
+                                 handle = dlopen("./dloadtest.so", RTLD_LAZY);
+                                 if (!handle) exit(1);
+                                 *(void **)(&func3) = dlsym(handle, "func3");
+                                 if (!func3) exit(1);
+                                 if (func3(17) != RES) exit(1);
+                                 exit(0);
+                             }
+                             ]])],
+                      [
+                      AC_MSG_RESULT(yes)
+                      AC_DEFINE(HAVE_LIBDL)
+                      HAVE_LIBDL=yes
+                      ],
+                      [
+                      AC_MSG_RESULT(no)
+                      unset DYNAMIC_LIB_CFLAGS DYNAMIC_LIB_LDFLAGS DYNAMIC_EXPORT_LDFLAGS
+                      LIBS=$my_save_libs
+                      ]
+   
+        )
+        LDFLAGS="$my_save_ldflags"
+        rm -f ./dloadtest.so
+     ],[
+        dnl no lib dl found
+        unset DYNAMIC_LIB_CFLAGS DYNAMIC_LIB_LDFLAGS DYNAMIC_EXPORT_LDFLAGS
+     ])
+     AC_SUBST(HAVE_LIBDL)
      AC_SUBST(DYNAMIC_LIB_CFLAGS)
      AC_SUBST(DYNAMIC_LIB_LDFLAGS)
      AC_SUBST(DYNAMIC_EXPORT_LDFLAGS)
-     AC_SUBST(HAVE_DYNAMIC_LINKING)
 ])
 
 AC_DEFUN([AX_CHECK_CAIRO],
@@ -331,7 +339,6 @@ AC_DEFUN([AX_CHECK_CAIRO],
     AC_SUBST(CAIRO_LDFLAGS)
     AC_SUBST(CAIRO_CPPFLAGS)
     AC_SUBST(CAIRO_LIBS)
-
 ])
 
 AC_DEFUN([AX_CHECK_OPENSSL],
@@ -393,6 +400,7 @@ AC_DEFUN([AX_CHECK_PNG],
     ]
     )
 
+    unset found_png
     if test "$with_png" != "no"; then
            PNG_CONFIG="libpng >= 1.2.37"
            AC_MSG_CHECKING([for $PNG_CONFIG])
@@ -429,6 +437,7 @@ AC_DEFUN([AX_CHECK_ZLIB],
     ]
     )
 
+    unset found_zlib
     if test "$with_zlib" != "no"; then
            ZLIB_CONFIG="zlib >= 1.2.7"
            AC_MSG_CHECKING([for $ZLIB_CONFIG])
@@ -465,6 +474,7 @@ AC_DEFUN([AX_CHECK_X11],
     ]
     )
 
+    unset found_x11
     if test "$with_X11" != "no"; then
            X11_CONFIG="x11 >= 1.5 xrender >= 0.9.7 xft >= 2.3.1 fontconfig >= 2.8.0 freetype2 >= 14.1.8"
            AC_MSG_CHECKING([for $X11_CONFIG])
@@ -501,7 +511,8 @@ AC_DEFUN([AX_CHECK_JPEG],
    ]
    )
 
-    if test "$with_jpeg" != "no"; then
+   unset found_jpeg
+   if test "$with_jpeg" != "no"; then
            JPEG_CONFIG="libjpeg"
            AC_MSG_CHECKING([for $JPEG_CONFIG])
            if pkg-config $JPEG_CONFIG; then
@@ -523,8 +534,8 @@ AC_DEFUN([AX_LIB_MYSQL],
 [
     AC_MSG_CHECKING(if mysql is wanted)
     AC_ARG_WITH(mysql,
-    [  --with-mysql to enable OpenSSL if available (the default)
-  --without-mysql to disable mysql usage completely],
+    [  --with-mysql to enable MySQL if available (the default)
+  --without-mysql to disable MySQL usage completely],
     [
       if test "$withval" != "no"; then
          AC_MSG_RESULT(yes)
