@@ -1726,12 +1726,11 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public override new(browser_dialog, url, referer_url, revert_tab)
-      local b
       TabItem.new()
       self.revert_tab := revert_tab
       label_border.set_x_align(Align.L)
       set_title()
-      setup()
+      setup(browser_dialog)
       set_remembered_focus(browser)
       # Try themed icon buttons
       theme_toolbar_button(close_button, "window-close")
@@ -1746,20 +1745,13 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(search_next_button, "go-next")
       theme_toolbar_button(increase_font_button, "format-font-size-more")
       theme_toolbar_button(decrease_font_button, "format-font-size-less")
-      # Narrow border around outermost TextFlow
-      b := scale(2)
-      browser.
-         set_ui(self).
-         set_worker_pool(browser_dialog.pool).
-         set_outermost_border(EmptyBorder().set_insets(b, b, b, b)).
-         set_font_factor(browser_dialog.settings.font_factor)
       start_url := url
       start_referer_url := referer_url
       return
    end
 
-   private setup()
-      local panel, border
+   private setup(browser_dialog)
+      local panel, border, b
       close_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -1865,6 +1857,8 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_url_field, Event.ACTION).
          connect(self.on_url_field_selection, Event.SELECTION_CHANGED)
       self.add(url_field)
+      # Narrow border around outermost TextFlow
+      b := scale(2)
       browser := Browser().
          set_size(scale(650), scale(330)).
          clear_constraints().
@@ -1872,7 +1866,11 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0)
+         set_constraint("y_weight", 1.0).
+         set_ui(self).
+         set_worker_pool(browser_dialog.pool).
+         set_outermost_border(EmptyBorder().set_insets(b, b, b, b)).
+         set_font_factor(browser_dialog.settings.font_factor)
       self.add(browser)
       border := CompoundBorder().
          set_outer(SunkenBorder()).
