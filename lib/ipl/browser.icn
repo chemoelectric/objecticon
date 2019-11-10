@@ -5046,12 +5046,20 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
    end
 
+   #
+   # Set a custom `WorkerPool` to use.  This also sets the shared
+   # worker pool flag; see `set_shared_worker_pool`.
+   #
    public set_worker_pool(worker_pool)
       self.worker_pool := worker_pool
       self.shared_worker_pool_flag := &yes
       link
    end
 
+   #
+   # A flag setting; if set then the worker pool is not initialized
+   # and finalized by this component.  By default off.
+   #
    public set_shared_worker_pool(s)
       self.shared_worker_pool_flag := need_flag(s)
       link
