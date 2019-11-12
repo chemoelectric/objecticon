@@ -1,6 +1,6 @@
 include ../../Makedefs
 
-ifeq (@HAVE_DYNAMIC_LINKING@, no)
+ifeq (@HAVE_LIBDL@,)
   TARGET=
 else
   TARGET=objecticonipclib.so objecticonmemdebug.so
@@ -18,11 +18,11 @@ endif
 all : $(TARGET)
 
 objecticonmysqllib.so : mysql.o
-	$(CC) $(LDFLAGS) $(DYNAMIC_LIB_LDFLAGS) -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
+	$(CC) @MYSQL_LDFLAGS@  $(DYNAMIC_LIB_LDFLAGS) -o objecticonmysqllib.so mysql.o @MYSQL_LIBS@
 
 mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
-	$(CC) @MYSQL_CFLAGS@ $(CPPFLAGS) $(CFLAGS) $(DYNAMIC_LIB_CFLAGS) -c mysql.c -o mysql.o
+	$(CC) @MYSQL_CPPFLAGS@ $(CPPFLAGS) $(CFLAGS) $(DYNAMIC_LIB_CFLAGS) -c mysql.c -o mysql.o
 	$(RM) mysql.c
 
 objecticonipclib.so : ipc.o
