@@ -507,7 +507,7 @@ class Dialog(Component)
          }
          if c := pull(menu_mode_stack) then
             menu_mode := c
-         else {
+         else if \menu_mode then {
             win.ungrab_pointer()
             win.ungrab_keyboard()
             menu_mode := popups := &null
@@ -807,6 +807,10 @@ class Dialog(Component)
    end
 
    private process_focus_out(l)
+      # X is too chatty with focus events for this to be used here.
+$if ~ _X_WINDOW_SYSTEM
+      exit_menu_mode()
+$endif
       set_focus_out(&yes)
       fire(l[1])
    end
@@ -826,7 +830,10 @@ class Dialog(Component)
          Window.FOCUS_OUT: process_focus_out(l)
 
          default: {
-            (popup_manager === self) | syserr("Shouldn't get a mouse/key event in a popup")
+            # A popup shouldn't normally get events, but if it does
+            # forward the event to the manager.
+            (popup_manager === self) |
+               return popup_manager.process_event(l)
             e := WinEvent!l
             check_entered(e)
             check_click_count(e)
