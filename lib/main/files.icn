@@ -884,6 +884,17 @@ class FilePath(ObjectOutput)
    end
 
    #
+   # Succeed if this instance represents a Windows UNC path, meaning
+   # that its first element is a "\\".  This method always fails on
+   # non-Windows systems.
+   #
+   public is_unc()
+$if _MS_WIN32
+      succeed l[1] == "\\\\"
+$endif
+   end
+
+   #
    # Succeed iff two FilePaths represent the same path, based on their
    # `str()` values.
    #
