@@ -533,10 +533,12 @@ class FileDialog(Dialog)
    end
 
    public on_up_button(ev)
-      if loaded_dir_path.size() > 1 then
-         goto_dir(loaded_dir_path.parent())
-      else
+      if loaded_dir_path.size() <= 1 |
+        (loaded_dir_path.is_unc() & loaded_dir_path.size() <= 3)
+      then
          msg("At root")
+      else
+         goto_dir(loaded_dir_path.parent())
    end
 
    public on_home_button(ev)

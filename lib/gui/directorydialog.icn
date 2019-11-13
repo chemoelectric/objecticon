@@ -81,15 +81,30 @@ class DirectoryDialog(Dialog)
       link
    end
 
+   # Return a `ListEntryWithIcon` for the given file f.
+   #
+   public static get_entry(f)
+      local lst, st
+      lst := Files.lstat(f) | fail
+      st := if lst.mode_str[1] == "l" then
+         Files.stat(f) | fail
+      else
+         lst
+      return ListEntryWithIcon(f, lst, st)
+   end
+
    public override component_setup()
-      local root_node, d
+      local root_node, d, l
       #
       # Defaults and extra dirs.
       #
       /init_dirs := []
       root_node := TreeNode()
       every d := Files.get_roots() do
-         root_node.add(TreeNode().set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
+         if l := get_entry(ucs(d)) then
+            root_node.add(TreeNode().
+                            set_label(l).
+                            set_always_expandable(&yes))
       tree.set_root_node(root_node)
       res := &null
       dir.set_use_wheel(&no)
@@ -153,7 +168,7 @@ class DirectoryDialog(Dialog)
    # always succeed.
    #
    public get_full_path(n)
-      local l
+      local l, t
       l := []
       repeat {
          push(l, n.get_label().name)
@@ -161,7 +176,12 @@ class DirectoryDialog(Dialog)
          if n === tree.get_root_node() then
             break
       }
-      return FilePath(l)
+      # A UNC needs special handling, since the first tree node
+      # must match to a three-element FilePath.
+      return if (t := FilePath(l[1])).is_unc() then
+         t.append(l[2:0])
+      else
+         FilePath(l)
    end
 
    public on_tree_expansion()
@@ -243,19 +263,52 @@ class DirectoryDialog(Dialog)
    end
 
    public goto_dir(d)
-      local n, s, p, err, i, root
+      local n, s, p, err, i, root, v, l
       p := need_FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
       n := root := tree.get_root_node()
-      every s := p.gen() do {
-         n := find_child(n, s) | break
-         load_subtree(n) | {
-            err := &why
-            break
+
+      # For a UNC file, the first three elements make up the
+      # top-level tree node.
+      if p.is_unc() &
+         v := p.slice(1, 4).ucs()
+      then {
+         (n := find_child(root, v)) | {
+            if l := get_entry(Files.standard_case(v)) then {
+               n := TreeNode().
+                  set_label(l).
+                  set_always_expandable(&yes)
+               root.add(n)
+               if load_subtree(n) then
+                  n.set_expanded(&yes)
+               else
+                  err := &why
+            }
+            else
+               err := &why
          }
-         n.set_expanded(&yes)
+         if /err then {
+            every s := p.slice(4).gen() do {
+               n := find_child(n, s) | break
+               load_subtree(n) | {
+                  err := &why
+                  break
+               }
+               n.set_expanded(&yes)
+            }
+         }
+      } else {
+         every s := p.gen() do {
+            n := find_child(n, s) | break
+            load_subtree(n) | {
+               err := &why
+               break
+            }
+            n.set_expanded(&yes)
+         }
       }
-      # n may still be at the root if (on Win32) we input a network
-      # path (which isn't in the tree).
+
+      # n may still be at the root if (on Win32) we input an invalid
+      # or non-existent path.
       if n === root then
          n := root.children[1]
       else
@@ -342,10 +395,12 @@ class DirectoryDialog(Dialog)
    end
 
    public on_up_button(ev)
-      if selected_path.size() > 1 then
-         goto_dir(selected_path.parent())
-      else
+      if selected_path.size() <= 1 |
+        (selected_path.is_unc() & selected_path.size() <= 3)
+      then
          msg("At root")
+      else
+         goto_dir(selected_path.parent())
    end
 
    public on_home_button(ev)
