@@ -875,9 +875,9 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Convenient method to convert this path to a file URL, using
-   # `Files.file_to_url()`, applied to the absolute path converted
-   # to string.
+   # Convenient method to convert this path to a file URL (as a
+   # string), using `Files.file_to_url()`, applied to the absolute
+   # path converted to string.
    #
    public to_url()
       return Files.file_to_url(absolute().str())
