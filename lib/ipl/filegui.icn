@@ -781,15 +781,19 @@ class RenameDialog(NameDialog)
          msg("Invalid character in filename entered")
          fail
       }
-      s := p.sibling(s).ucs()
-      if Files.access(s) then
-         msg("File already exists")
-      else if Files.rename(p.str(), s) then {
-         result := s
-         dispose()
+      if p.size() = 1 then
+         msg("Can't rename a root directory")
+      else {
+         s := p.sibling(s).ucs()
+         if Files.access(s) then
+            msg("File already exists")
+         else if Files.rename(p.str(), s) then {
+            result := s
+            dispose()
+         }
+         else
+            msg("Failed: " || &why)
       }
-      else
-         msg("Failed: " || &why)
    end
 
    public override init_dialog()
@@ -801,10 +805,10 @@ class RenameDialog(NameDialog)
          name_field.move_cursor(*s - *x, &yes)
    end
 
-   # The constructor requires a ucs string, being the file to be renamed.
+   # The constructor requires a non-empty ucs string, being the file to be renamed.
    public override new(s)
       s := need_ucs(s)
-      p := FilePath(s)
+      p := FilePath(s).canonical()
       NameDialog.new(p.get(-1))
       set_label("Rename file")
       name_field.set_size(scale(350))
@@ -836,7 +840,7 @@ class NewDirectoryDialog(NameDialog)
    end
 
    # The constructor requires a ucs string, being the directory in
-   # which the new directory is to be created. to be renamed.
+   # which the new directory is to be created.
    public override new(s)
       s := need_ucs(s)
       p := FilePath(s)

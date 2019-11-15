@@ -1,22 +1,21 @@
 import io, ipl.filegui, ipl.options
 
 procedure main(a)
-   local s, d, f
+   local s, d
    options(a, [],
            "Usage: ern [FILE]...\N_
             Rename files using a gui")
    every s := !a do {
       s := ucs(s) | help_stop("Parameter not UTF-8")
-      Files.access(s) | stop("Can't access file ", s)
+      Files.access("" ~== s) | stop("Can't access file ", s)
       d := RenameDialog(s).
          show_modal()
       if /d.result then
          break
       writes(s, " -> ")
-      if FileStream.stdout.is_flowterm_tty() then {
-         f := FilePath(d.result).canonical().str()
-         write(Files.begin_link(f), d.result, Files.end_link())
-      } else
+      if FileStream.stdout.is_flowterm_tty() then
+         write(Files.begin_link(d.result), d.result, Files.end_link())
+      else
          write(d.result)
    }
 end
