@@ -2300,20 +2300,6 @@ $endif
                                   URLSelectionOwner([url]))
    end 
 
-   private rename(s)
-      local d
-      d := RenameDialog(s)
-      d.show_modal(parent_dialog)
-      s := \d.result | fail
-      info_msg("Renamed OK")
-      # This just avoids a slight delay in refreshing the columns (see
-      # check_cwd_time).
-      if cwd == FilePath(s).parent().ucs() then
-         refresh_cwd()
-      # Check for a changed cwd name in all tabs.
-      every (!parent.children).check_cwd_change()
-   end
-
    private on_copy_cwd(e)
       copy_text(cwd)
    end
@@ -2487,10 +2473,6 @@ $endif
                      connect(create open_in_new_tab(udp), Event.ACTION))
             } else
                m.add(create_open_with_menu(url))
-
-            m.add(TextMenuItem().
-                  set_label("Rename").
-                  connect(create rename(udp), Event.ACTION))
          }
       } else
          m.add(create_open_with_menu(url))
