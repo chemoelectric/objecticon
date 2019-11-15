@@ -771,10 +771,19 @@ class FilePath(ObjectOutput)
    # Return the sibling path, ie a path with the same elements, except the
    # last one, which is replaced by `s`.  Fails if the path has no elements.
    #
+   # Caution is required with this function, since some results may
+   # not make much sense, especially if this path is not canonical.
+   # For example :-
+   # ~
+   #    FilePath("/").sibling("x")        # Gives FilePath("x")
+   #    FilePath("/a/b/..").sibling("y")  # Gives FilePath("/a/b/y")
+   # ~
+   # An alternative may be to use `walk("..", s)`.
+   #
    public sibling(s)
       local t
       t := copy(l)
-      t[-1] := need_text(s) | fail
+      (t[-1] := need_text(s)) | fail
       return from_list(t)
    end
 
