@@ -14,7 +14,6 @@ import
    ipl.sets,
    ipl.lists,
    ipl.pdco,
-   io(Files),
    util
 
 #
@@ -1841,9 +1840,9 @@ class URLSelectionOwner(SelectionOwner)
          Selection.URI_LIST_TARGET :
             text_guess_convert(String{ (!urls).str() || "\r\n" }, "ucs")
          Selection.STRING_TARGET :
-            text_guess_convert(String{ (!urls).str(), Files.EOL }, "string")
+            text_guess_convert(String{ (!urls).str(), "\N" }, "string")
          Selection.UTF8_STRING_TARGET:
-            text_guess_convert(String{ (!urls).str(), Files.EOL }, "ucs")
+            text_guess_convert(String{ (!urls).str(), "\N" }, "ucs")
       }
    end
 

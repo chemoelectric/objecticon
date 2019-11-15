@@ -21,7 +21,7 @@
 package ipl.printf
 
 import
-   io(stop, ewrites, writes, Files),
+   io(stop, ewrites, writes),
    util(Format, need_integer, need_text, need_real, need_list),
    lang(to_string)
 
@@ -115,7 +115,6 @@ end
 # *   %e  real in exponential format
 # *   %E  real in exponential format, with a capital E in
 #         the result
-# *   %n  platform-independent end-of-line string
 # *   %w  the value of &why
 #
 procedure printf(format, args[])
@@ -188,7 +187,6 @@ package procedure one(args)
    } else {
       # Formats that don't take an argument.
       case string(conv) of {
-         "n": v := str(Files.EOL, prec)
          "w": v := str(&why, prec)
          default: v := str(conv, prec)
       }

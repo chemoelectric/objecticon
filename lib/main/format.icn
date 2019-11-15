@@ -201,6 +201,8 @@ final abstract class Format()
                     char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
                  else if ="x" then
                     char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+                 else if ="N" then
+                    "\N"
                  else if ="u" then
                     Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
                  else if ="U" then

@@ -192,7 +192,7 @@ abstract class Stream(HasMode)
    # 
    public write1(s)
       local e
-      every e := s | Files.EOL do
+      every e := s | "\N" do
          writes1(e) | fail
       link
    end
@@ -215,7 +215,7 @@ abstract class Stream(HasMode)
    #
    public write(a[])
       local e
-      every e := !a | Files.EOL do
+      every e := !a | "\N" do
          writes1(e) | fail
       link
    end
@@ -472,7 +472,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    # Push the string s followed by an end-of-line.
    #
    public push_line(s)
-      return push(s || Files.EOL)
+      return push(s || "\N")
    end
 
    public override read_line()
@@ -849,9 +849,9 @@ procedure write(a[])
       pop(a)
    else
       FileStream.stdout
-   every e := \!a | Files.EOL do {
+   every e := \!a | "\N" do {
       if is(e, Stream) then {
-         f.writes1(Files.EOL) | fail
+         f.writes1("\N") | fail
          f := e
       } else
          f.writes1(e) | fail
@@ -1239,7 +1239,7 @@ abstract class LineBasedInputStream(Stream)
    public override read_line()
       local t
       if *line > 0 then {
-         t := line[1:-*Files.EOL]
+         t := line[1:-*"\N"]
          line := ""
          return t
       }
@@ -1253,7 +1253,7 @@ abstract class LineBasedInputStream(Stream)
          t := read_line_impl() | fail
          if /t then
             return
-         line := t || Files.EOL
+         line := t || "\N"
       }
       line ? {
          t := move(n) | tab(0)

@@ -3,8 +3,8 @@ import io, ipl.filegui, ipl.options
 procedure main(a)
    local s, d, f
    options(a, [],
-           "Usage: ern [FILE]..." || Files.EOL ||
-           "Rename files using a gui")
+           "Usage: ern [FILE]...\N_
+            Rename files using a gui")
    every s := !a do {
       s := ucs(s) | help_stop("Parameter not UTF-8")
       Files.access(s) | stop("Can't access file ", s)

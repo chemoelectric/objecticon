@@ -18,8 +18,6 @@ final abstract class Files()
       FS
 
    public static const 
-      # The end-of-line sequence
-      EOL,
       # The separator for elements of a path
       PATH_SEPARATOR,
       # A cset, being the non-filename characters which may appear in a path
@@ -36,7 +34,6 @@ final abstract class Files()
 
    private static init()
 $if _UNIX
-      EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := ":"
@@ -45,7 +42,6 @@ $if _UNIX
       NULL_FILE := "/dev/null"
       FS := UnixFileSystem()
 $elsif _MS_WIN32
-      EOL := "\r\n"
       PATH_SEPARATOR := "\\"
       PATH_SPECIALS := ':\\/'
       PATHS_SEPARATOR := ";"

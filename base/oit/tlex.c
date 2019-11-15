@@ -483,8 +483,7 @@ static struct toktab *getnum(int ac, int *cc)
  */
 static struct toktab *getstring(int ac, int *cc)
 {
-    int c, i, n;
-    int len;
+    int c, i, n, len;
     char utf8[MAX_UTF8_SEQ_LEN];
     c = NextLitChar;
     while (c != '"' && c != '\n' && c != EOF) {
@@ -507,6 +506,12 @@ static struct toktab *getstring(int ac, int *cc)
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
                 AppChar(lex_sbuf, hexesc(2));
+            else if (c == 'N') {
+#if MSWIN32
+                AppChar(lex_sbuf, '\r');
+#endif
+                AppChar(lex_sbuf, '\n');
+            }
             else if (c == 'u') {
                 c = hexesc(4);
                 n = utf8_seq(c, utf8);
@@ -562,8 +567,7 @@ static struct toktab *getstring(int ac, int *cc)
  */
 static struct toktab *getucs(int ac, int *cc)
 {
-    int c, i, n;
-    int len;
+    int c, i, n, len;
     char utf8[MAX_UTF8_SEQ_LEN];
     char *p;
 
@@ -588,6 +592,12 @@ static struct toktab *getucs(int ac, int *cc)
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
                 AppChar(lex_sbuf, hexesc(2));
+            else if (c == 'N') {
+#if MSWIN32
+                AppChar(lex_sbuf, '\r');
+#endif
+                AppChar(lex_sbuf, '\n');
+            }
             else if (c == 'u') {
                 c = hexesc(4);
                 n = utf8_seq(c, utf8);
