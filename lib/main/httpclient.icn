@@ -768,14 +768,6 @@ $endif
    end
 
    #
-   # Reset the read and length counters to null.
-   #
-   private reset_progress_counters()
-      self.read := self.length := &null
-      link
-   end
-
-   #
    # Retrieve the current request; doesn't handle redirects and so
    # on - these are handled by the caller, retrieve().
    # 
@@ -783,8 +775,8 @@ $endif
       local i
 
       i := retries
+      self.read := self.length := &null
       reset_dont_retry()
-      reset_progress_counters()
 
       fire(BEGIN_EVENT)
       repeat {
