@@ -413,6 +413,11 @@ class FileDialog(Dialog)
             msg("Selected file is a directory")
             fail
          }
+         # A UNC path of <= 3 cannot be a file
+         if f.size() <= 1 | (f.is_unc() & f.size() <= 3) then {
+            msg("Invalid path")
+            fail
+         }
          case existing_file_mode of {
             REQUIRE: {
                if not Files.access(fs) then {
@@ -455,9 +460,14 @@ class FileDialog(Dialog)
       if Files.is_directory(f := p.str()) then {
          file.set_contents(u"")
          goto_dir(f)
-      } else if Files.is_directory(f := p.parent().str()) then {
+      } else if p.size() > 1 & Files.is_directory(f := p.parent().str()) then {
          file.set_contents(p.get(-1))
          goto_dir(f)
+      } else if FilePath(file.get_contents()).is_absolute() then {
+         # An absolute path has been entered, but not a directory.  Treat
+         # it as a directory; an error message will be produced by goto_dir.
+         file.set_contents(u"")
+         goto_dir(p.str())
       }
    end
 
