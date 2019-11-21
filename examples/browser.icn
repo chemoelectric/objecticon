@@ -1594,7 +1594,7 @@ class BrowserTab(TabItem, BrowserUI)
          d.set_directory(parent_dialog.last_file_dir).set_files()
       else {
          p := FilePath(s).canonical()
-         if Files.is_directory(p.str()) then
+         if Files.is_directory(p.str()) | p.is_prefix_dir() then
             d.set_directory(p.str()).set_files()
          else
             d.set_directory(p.parent().str()).set_file(p.get(-1))

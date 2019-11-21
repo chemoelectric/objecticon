@@ -413,8 +413,8 @@ class FileDialog(Dialog)
             msg("Selected file is a directory")
             fail
          }
-         # A UNC path of <= 3 cannot be a file
-         if f.size() <= 1 | (f.is_unc() & f.size() <= 3) then {
+         # A prefix dir cannot be a file
+         if f.is_prefix_dir() then {
             msg("Invalid path")
             fail
          }
@@ -543,9 +543,7 @@ class FileDialog(Dialog)
    end
 
    public on_up_button(ev)
-      if loaded_dir_path.size() <= 1 |
-        (loaded_dir_path.is_unc() & loaded_dir_path.size() <= 3)
-      then
+      if loaded_dir_path.is_prefix_dir() then
          msg("At root")
       else
          goto_dir(loaded_dir_path.parent())

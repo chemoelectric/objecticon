@@ -749,7 +749,12 @@ class FilePath(ObjectOutput)
 
    #
    # Return the parent path, ie a path with everything but the last
-   # element.  Fails if the path has no elements.
+   # element.  Fails if and only if the path has no elements.  Note
+   # that some results may not be as expected; for example :-
+   # ~
+   #    FilePath("/").parent()
+   # ~
+   # gives the empty path (with no elements).
    #
    public parent()
       return from_list(l[1:-1])
@@ -897,6 +902,16 @@ class FilePath(ObjectOutput)
 $if _MS_WIN32
       succeed l[1] == "\\\\"
 $endif
+   end
+
+   #
+   # Succeed iff this path is an absolute directory, and one which is
+   # a necessary prefix for such a path.  On Unix, this is just the
+   # root directory, and on Windows it is either a drive root or the
+   # three (or fewer) top-level elements of a UNC path.
+   #
+   public is_prefix_dir()
+      succeed is_absolute() & (*l <= 1 | (is_unc() & *l <= 3))
    end
 
    #

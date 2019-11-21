@@ -395,9 +395,7 @@ class DirectoryDialog(Dialog)
    end
 
    public on_up_button(ev)
-      if selected_path.size() <= 1 |
-        (selected_path.is_unc() & selected_path.size() <= 3)
-      then
+      if selected_path.is_prefix_dir() then
          msg("At root")
       else
          goto_dir(selected_path.parent())
