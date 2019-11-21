@@ -2335,10 +2335,10 @@ $endif
       } else
          dest := FilePath(dest).canonical()
       s := dest.ucs() | return info_msg(u"Log file not UTF-8")
-      parent_dialog.last_log_file := log_file := dest
-      if log := open(s, "w") then
+      if log := open(s, "w") then {
+         parent_dialog.last_log_file := log_file := dest
          info_msg("Logging to file " || s)
-      else
+      } else
          info_msg("Failed to open " || s || ": " || ucs(&why))
    end
 
