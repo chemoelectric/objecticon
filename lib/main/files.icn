@@ -645,6 +645,8 @@ package abstract class FileSystem()
    public abstract filepath_normal(fp)
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
+   public abstract filepath_is_unc(fp)
+   public abstract filepath_is_prefix_dir(fp)
    public abstract standard_case(s)
    public abstract file_to_url(f)
    public abstract url_to_file(u)
@@ -899,9 +901,7 @@ class FilePath(ObjectOutput)
    # non-Windows systems.
    #
    public is_unc()
-$if _MS_WIN32
-      succeed l[1] == "\\\\"
-$endif
+      return Files.FS.filepath_is_unc(self)
    end
 
    #
@@ -911,7 +911,7 @@ $endif
    # three (or fewer) top-level elements of a UNC path.
    #
    public is_prefix_dir()
-      succeed is_absolute() & (*l <= 1 | (is_unc() & *l <= 3))
+      return Files.FS.filepath_is_prefix_dir(self)
    end
 
    #
@@ -1041,6 +1041,13 @@ package class UnixFileSystem(FileSystem)
 
    public override filepath_is_absolute(fp)
       succeed fp.l[1] == "/"
+   end
+
+   public override filepath_is_unc(fp)
+   end
+
+   public override filepath_is_prefix_dir(fp)
+      succeed filepath_is_absolute(fp) & *fp.l = 1
    end
 
    public override filepath_normal(fp)
@@ -1181,6 +1188,14 @@ package class WindowsFileSystem(FileSystem)
 
    public override filepath_is_absolute(fp)
       succeed fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
+   end
+
+   public override filepath_is_unc(fp)
+      succeed fp.l[1] == "\\\\"
+   end
+
+   public override filepath_is_prefix_dir(fp)
+      succeed filepath_is_absolute(fp) & (*fp.l = 1 | (filepath_is_unc(fp) & *fp.l <= 3))
    end
 
    public override filepath_normal(fp)
