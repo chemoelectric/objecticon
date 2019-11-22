@@ -188,7 +188,7 @@ end
 
 procedure test_stream(x)
    local s, i, buff
-   buff := BufferStream(x, "buff_size=5")
+   buff := BufferStream(x).set_buff_size(5)
    every i := 1 to 26 do {
       s := &ucase[1:i]
       buff.writes(s)
