@@ -395,7 +395,7 @@ class DirectoryDialog(Dialog)
    end
 
    public on_up_button(ev)
-      if selected_path.is_prefix_dir() then
+      if selected_path.is_prefix() then
          msg("At root")
       else
          goto_dir(selected_path.parent())

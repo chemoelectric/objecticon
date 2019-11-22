@@ -646,7 +646,7 @@ package abstract class FileSystem()
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
    public abstract filepath_is_unc(fp)
-   public abstract filepath_is_prefix_dir(fp)
+   public abstract filepath_is_prefix(fp)
    public abstract standard_case(s)
    public abstract file_to_url(f)
    public abstract url_to_file(u)
@@ -910,8 +910,8 @@ class FilePath(ObjectOutput)
    # root directory, and on Windows it is either a drive root or the
    # three (or fewer) top-level elements of a UNC path.
    #
-   public is_prefix_dir()
-      return Files.FS.filepath_is_prefix_dir(self)
+   public is_prefix()
+      return Files.FS.filepath_is_prefix(self)
    end
 
    #
@@ -1046,7 +1046,7 @@ package class UnixFileSystem(FileSystem)
    public override filepath_is_unc(fp)
    end
 
-   public override filepath_is_prefix_dir(fp)
+   public override filepath_is_prefix(fp)
       succeed filepath_is_absolute(fp) & *fp.l = 1
    end
 
@@ -1194,7 +1194,7 @@ package class WindowsFileSystem(FileSystem)
       succeed fp.l[1] == "\\\\"
    end
 
-   public override filepath_is_prefix_dir(fp)
+   public override filepath_is_prefix(fp)
       succeed filepath_is_absolute(fp) & (*fp.l = 1 | (filepath_is_unc(fp) & *fp.l <= 3))
    end
 
