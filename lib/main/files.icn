@@ -30,7 +30,11 @@ final abstract class Files()
       # Suffix for executable
       PROG_SUFFIX,
       # Name of null file
-      NULL_FILE
+      NULL_FILE,
+      # Relative filename of current directory
+      CURRENT_DIR,
+      # Relative filename of parent directory
+      PARENT_DIR
 
    private static init()
 $if _UNIX
@@ -40,6 +44,8 @@ $if _UNIX
       LIB_SUFFIX := ".so"
       PROG_SUFFIX := ""
       NULL_FILE := "/dev/null"
+      CURRENT_DIR := "."
+      PARENT_DIR := ".."
       FS := UnixFileSystem()
 $elsif _MS_WIN32
       PATH_SEPARATOR := "\\"
@@ -48,6 +54,8 @@ $elsif _MS_WIN32
       LIB_SUFFIX := ".dll"
       PROG_SUFFIX := ".exe"
       NULL_FILE := "nul"
+      CURRENT_DIR := "."
+      PARENT_DIR := ".."
       FS := WindowsFileSystem()
 $else
       runerr("Can't init_file_system: unknown o/s type")
