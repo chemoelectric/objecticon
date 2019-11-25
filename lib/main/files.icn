@@ -7,6 +7,7 @@ import
    posix,
    ipl.random,
    ipl.scan,
+   ipl.strings,
    ipl.pdco(List)
 
 #
@@ -1109,15 +1110,13 @@ package class UnixFileSystem(FileSystem)
    public override get_roots()
       return "/"
    end
-
+   
    public override split_paths(s)
       local t
-      s ? repeat {
-         t := tab(upto(':') | 0)
+      every t := separate(s, ':') do {
          if *t = 0 then
-            t := "."
+            t ||:= "."   # Keep type of t
          suspend t
-         move(1) | break
       }
    end
 
@@ -1278,12 +1277,10 @@ package class WindowsFileSystem(FileSystem)
 
    public override split_paths(s)
       local t
-      s ? repeat {
-         t := tab(upto(';') | 0)
+      every t := separate(s, ';') do {
          if *t = 0 then
-            t := "."
+            t ||:= "."   # Keep type of t
          suspend t
-         move(1) | break
       }
    end
 
