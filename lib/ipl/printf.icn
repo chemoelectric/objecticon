@@ -200,13 +200,10 @@ package procedure doprnt(format, args)
    local out
    out := ""
    args := Args(args)
-   format ? repeat {
-      out ||:= tab(upto('%') | 0)
-      if pos(0) then
-         break
-      out ||:= one(args)
+   format ? {
+      while out ||:= tab(upto('%')) || one(args)
+      return out || tab(0)
    }
-   return out
 end
 
 package procedure str(x, prec)
