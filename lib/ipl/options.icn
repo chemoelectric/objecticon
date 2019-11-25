@@ -184,7 +184,7 @@ end
 #
 procedure help_stop(a[])
    push(a, Files.get_program_name() || ": ")
-   put(a, Files.EOL || "Use the -? option for more information")
+   put(a, "\NUse the -? option for more information")
    stop!a
 end
 

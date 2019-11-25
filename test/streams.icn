@@ -174,7 +174,7 @@ procedure check_file(f, data)
    every i := 1 to *data by 200 do {
       f.seek(i)
       s := "The quick brown fox" || repl("*",i/50)
-      s1 := s || Files.EOL
+      s1 := s || "\N"
       f.write(s)
       data[i:min(i+*s1,*data+1)] := s1
       f.seek(i)
@@ -199,7 +199,7 @@ end
 
 procedure test_stream(x)
    local s, i, buff
-   buff := BufferStream(x, "buff_size=5")
+   buff := BufferStream(x).set_buff_size(5)
    every i := 1 to 26 do {
       s := &ucase[1:i]
       buff.writes(s)
@@ -218,7 +218,7 @@ procedure test_dir()
    f := DirStream("testdir") | stop(&why)
    s := f.reads(1000)
    t := set()
-   s ? while insert(t, tab(find(Files.EOL))) do move(*Files.EOL)
+   s ? while insert(t, tab(find("\N"))) do move(*"\N")
    pr_seq{"Dir1", !sort(t)}
    f.close()
    t := set()

@@ -21,7 +21,7 @@
 package ipl.lists
 
 import
-   io(Files,open),
+   io(open),
    ipl.indices(indices),
    ipl.numbers(residue),
    ipl.sets(elementset),
@@ -856,7 +856,7 @@ end
 # :  `l` - the list
 #
 procedure cat_lines(l)
-   return list2str(l, Files.EOL)
+   return list2str(l, "\N")
 end
 
 #

@@ -8,7 +8,7 @@ import
    ipl.charset,
    xdg,
    io,
-   util(use)
+   util(use,Format)
 
 global opts, hc
 
@@ -53,8 +53,8 @@ procedure main(args)
                           Opt("r",integer_range(0), "RETRIES#Number of retries"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("text",,"Do text search for tags rather than search parsed document")],
-                          "Usage: lslinks [URL]... [OPTIONS]" || Files.EOL ||
-                          "List links in URL(s)")
+                          "Usage: lslinks [URL]... [OPTIONS]\N_
+                           List links in URL(s)")
 
    hc := HttpClient()
    hc.set_timeout(\opts["t"] * 1000)
@@ -161,7 +161,7 @@ procedure parse_entity()
       move(1)
       if any('x') then {
          move(1)
-         integer("16r" || tab(many('0-9a-fA-F')))
+         Format.string_to_int(tab(many('0-9a-fA-F')))
       } else
          integer(tab(many(&digits)))
    } else

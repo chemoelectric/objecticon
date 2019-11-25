@@ -1775,8 +1775,8 @@ class Terminal(TabItem, VtUI)
    private static parse_key(s)
       local c
       s := string(s)
-      return (s[1] == "x" & char(integer("16r" || s[2:0]))) |
-             (s[1] == "u" & uchar(integer("16r" || s[2:0]))) |
+      return (s[1] == "x" & char(Format.string_to_int(s[2:0]))) |
+             (s[1] == "u" & uchar(Format.string_to_int(s[2:0]))) |
              (s := map(s, &lcase, &ucase) & not match("MOD_", s) &
                        c := Class.getq(Key, s) & type(c) == "integer" & c)
    end
@@ -2008,16 +2008,7 @@ $endif
    end
 
    public get_pats()
-      local pat, pats
-      pats := []
-      filter.get_contents() ? {
-         repeat {
-            pat := tab(upto(';') | 0)
-            put(pats, Wildcard(pat))
-            move(1) | break
-         }
-      }
-      return pats
+      return ipl.pdco.List{ Wildcard(separate(filter.get_contents(), ';')) }
    end
 
    public tab_active()
@@ -2300,20 +2291,6 @@ $endif
                                   URLSelectionOwner([url]))
    end 
 
-   private rename(s)
-      local d
-      d := RenameDialog(s)
-      d.show_modal(parent_dialog)
-      s := \d.result | fail
-      info_msg("Renamed OK")
-      # This just avoids a slight delay in refreshing the columns (see
-      # check_cwd_time).
-      if cwd == FilePath(s).parent().ucs() then
-         refresh_cwd()
-      # Check for a changed cwd name in all tabs.
-      every (!parent.children).check_cwd_change()
-   end
-
    private on_copy_cwd(e)
       copy_text(cwd)
    end
@@ -2349,10 +2326,10 @@ $endif
       } else
          dest := FilePath(dest).canonical()
       s := dest.ucs() | return info_msg(u"Log file not UTF-8")
-      parent_dialog.last_log_file := log_file := dest
-      if log := open(s, "w") then
+      if log := open(s, "w") then {
+         parent_dialog.last_log_file := log_file := dest
          info_msg("Logging to file " || s)
-      else
+      } else
          info_msg("Failed to open " || s || ": " || ucs(&why))
    end
 
@@ -2487,10 +2464,6 @@ $endif
                      connect(create open_in_new_tab(udp), Event.ACTION))
             } else
                m.add(create_open_with_menu(url))
-
-            m.add(TextMenuItem().
-                  set_label("Rename").
-                  connect(create rename(udp), Event.ACTION))
          }
       } else
          m.add(create_open_with_menu(url))

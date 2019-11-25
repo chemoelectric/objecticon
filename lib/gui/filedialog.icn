@@ -413,6 +413,11 @@ class FileDialog(Dialog)
             msg("Selected file is a directory")
             fail
          }
+         # A prefix dir cannot be a file
+         if f.is_prefix() then {
+            msg("Invalid path")
+            fail
+         }
          case existing_file_mode of {
             REQUIRE: {
                if not Files.access(fs) then {
@@ -448,16 +453,24 @@ class FileDialog(Dialog)
    end
 
    public on_file_action(ev)
-      local f, p
+      local f, p, q
       if file.view.was_applied(ev) then
          fail
       p := get_current_selection() | fail
       if Files.is_directory(f := p.str()) then {
          file.set_contents(u"")
          goto_dir(f)
-      } else if Files.is_directory(f := p.parent().str()) then {
+      } else if p.size() > 1 & Files.is_directory(f := p.parent().str()) then {
          file.set_contents(p.get(-1))
          goto_dir(f)
+      } else {
+         q := FilePath(file.get_contents())
+         if q.is_absolute() | q.size() > 1 then {
+            # Something that looks like a directory, but isn't.  Treat
+            # it as a directory; an error message will be produced by goto_dir.
+            file.set_contents(u"")
+            goto_dir(p.str())
+         }
       }
    end
 
@@ -501,13 +514,7 @@ class FileDialog(Dialog)
    end
 
    protected synch_pats()
-      local pat
-      pats := []
-      filter.get_contents() ? repeat {
-         pat := tab(upto(';') | 0)
-         put(pats, Wildcard(Files.standard_case(pat)))
-         move(1) | break
-      }
+      pats := ipl.pdco.List{ Wildcard(Files.standard_case(separate(filter.get_contents(), ';'))) }
       file.view.set_patterns(pats)
    end
 
@@ -533,10 +540,10 @@ class FileDialog(Dialog)
    end
 
    public on_up_button(ev)
-      if loaded_dir_path.size() > 1 then
-         goto_dir(loaded_dir_path.parent())
-      else
+      if loaded_dir_path.is_prefix() then
          msg("At root")
+      else
+         goto_dir(loaded_dir_path.parent())
    end
 
    public on_home_button(ev)

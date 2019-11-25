@@ -74,7 +74,7 @@ procedure list_notes()
          limit(s)
       else
          Files.begin_link(u) || limit(s) || Files.end_link()
-      printf("%3d  %s%n", i, s)
+      printf("%3d  %s\N", i, s)
    }
 end
 

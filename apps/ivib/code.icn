@@ -194,7 +194,7 @@ class Code()
    public output_code(s)
       local prog, im, cl, e, fl
 
-      set_eol(Files.EOL)
+      set_eol("\N")
       prog := Factory.new_prog()
       im := Factory.new_import("", [])
       prog.get_imports().put(im)

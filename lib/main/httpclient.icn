@@ -147,6 +147,7 @@ $endif
       cookies,
       authentications,
       abort_flag,
+      some_data_flag,
       gzip_flag,
       inflater_stream
 
@@ -767,27 +768,18 @@ $endif
    end
 
    #
-   # Reset the read and length counters to null.
-   #
-   public reset_progress_counters()
-      self.read := self.length := &null
-      link
-   end
-
-   #
    # Retrieve the current request; doesn't handle redirects and so
    # on - these are handled by the caller, retrieve().
    # 
    private retrieve_page()
-      local i, prev_read
+      local i
 
       i := retries
+      self.read := self.length := &null
       reset_dont_retry()
-      reset_progress_counters()
 
       fire(BEGIN_EVENT)
       repeat {
-         prev_read := self.read
          if tryone() then {
             store_cookies()
             close_inflater() | {
@@ -816,9 +808,9 @@ $endif
             fail
          }
 
-         if prev_read ~=== self.read & \retry_while_data_flag then {
+         if \retry_while_data_flag & \some_data_flag then
             i := retries
-         } else if (i -:= 1) < 0 then {
+         else if (i -:= 1) < 0 then {
             save_why{close_inflater()}
             if retries > 0 then
                error("Gave up after " || (1+retries) || " attempts - last reason: " || &why)
@@ -832,6 +824,11 @@ $endif
 
    private tryone()
       local s
+
+      # Flag to indicate whether we read any data in this attempt.
+      #
+      some_data_flag := &null
+
       #
       # Open the connection
       #
@@ -1045,7 +1042,7 @@ $endif
       repeat {
          l := expect_line() | fail
          l ? {
-            chunk := integer("16r" || tab(many('0987654321abcdefABCDEF'))) |
+            chunk := Format.string_to_int(tab(many('0987654321abcdefABCDEF'))) |
                return error("Expected chunk-length specifier; got " || l)
          }
          if chunk = 0 then
@@ -1124,7 +1121,8 @@ $endif
    end
 
    private add_some(s)
-      self.read +:= *s
+      read +:= *s
+      some_data_flag := &yes
       fire(PROGRESS_EVENT)
       return if \inflater_stream then
          inflater_stream.writes1(s) | error_dont_retry("Couldn't write to inflater stream: " || &why)

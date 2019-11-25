@@ -8,7 +8,7 @@
 
 package xml
 
-import util, io
+import util
 
 #
 # A formatter for XML documents.  The default formatter behaviour is to output the
@@ -105,8 +105,8 @@ class XmlFormatter(Formatter)
       local s, istr1, istr2, x, l, e
 
       if \indent then {
-         istr1 := Files.EOL || repl(" ", indent * level)
-         istr2 := Files.EOL || repl(" ", indent * (level - 1))
+         istr1 := "\N" || repl(" ", indent * level)
+         istr2 := "\N" || repl(" ", indent * (level - 1))
       }
 
       s := "<" || n.name

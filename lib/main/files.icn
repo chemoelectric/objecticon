@@ -7,6 +7,7 @@ import
    posix,
    ipl.random,
    ipl.scan,
+   ipl.strings,
    ipl.pdco(List)
 
 #
@@ -18,8 +19,6 @@ final abstract class Files()
       FS
 
    public static const 
-      # The end-of-line sequence
-      EOL,
       # The separator for elements of a path
       PATH_SEPARATOR,
       # A cset, being the non-filename characters which may appear in a path
@@ -32,35 +31,42 @@ final abstract class Files()
       # Suffix for executable
       PROG_SUFFIX,
       # Name of null file
-      NULL_FILE
+      NULL_FILE,
+      # Relative filename of current directory
+      CURRENT_DIR,
+      # Relative filename of parent directory
+      PARENT_DIR
 
    private static init()
 $if _UNIX
-      EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := ":"
       LIB_SUFFIX := ".so"
       PROG_SUFFIX := ""
       NULL_FILE := "/dev/null"
+      CURRENT_DIR := "."
+      PARENT_DIR := ".."
       FS := UnixFileSystem()
 $elsif _PLAN9
-      EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := " "
       LIB_SUFFIX := ""
       PROG_SUFFIX := ""
       NULL_FILE := "/dev/null"
+      CURRENT_DIR := "."
+      PARENT_DIR := ".."
       FS := Plan9FileSystem()
 $elsif _MS_WIN32
-      EOL := "\r\n"
       PATH_SEPARATOR := "\\"
       PATH_SPECIALS := ':\\/'
       PATHS_SEPARATOR := ";"
       LIB_SUFFIX := ".dll"
       PROG_SUFFIX := ".exe"
       NULL_FILE := "nul"
+      CURRENT_DIR := "."
+      PARENT_DIR := ".."
       FS := WindowsFileSystem()
 $else
       runerr("Can't init_file_system: unknown o/s type")
@@ -747,6 +753,8 @@ package abstract class FileSystem()
    public abstract filepath_normal(fp)
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
+   public abstract filepath_is_unc(fp)
+   public abstract filepath_is_prefix(fp)
    public abstract standard_case(s)
    public abstract file_to_url(f)
    public abstract url_to_file(u)
@@ -851,7 +859,12 @@ class FilePath(ObjectOutput)
 
    #
    # Return the parent path, ie a path with everything but the last
-   # element.  Fails if the path has no elements.
+   # element.  Fails if and only if the path has no elements.  Note
+   # that some results may not be as expected; for example :-
+   # ~
+   #    FilePath("/").parent()
+   # ~
+   # gives the empty path (with no elements).
    #
    public parent()
       return from_list(l[1:-1])
@@ -873,10 +886,19 @@ class FilePath(ObjectOutput)
    # Return the sibling path, ie a path with the same elements, except the
    # last one, which is replaced by `s`.  Fails if the path has no elements.
    #
+   # Caution is required with this function, since some results may
+   # not make much sense, especially if this path is not canonical.
+   # For example :-
+   # ~
+   #    FilePath("/").sibling("x")        # Gives FilePath("x")
+   #    FilePath("/a/b/..").sibling("y")  # Gives FilePath("/a/b/y")
+   # ~
+   # An alternative may be to use `walk("..", s)`.
+   #
    public sibling(s)
       local t
       t := copy(l)
-      t[-1] := need_text(s) | fail
+      (t[-1] := need_text(s)) | fail
       return from_list(t)
    end
 
@@ -973,12 +995,31 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Convenient method to convert this path to a file URL, using
-   # `Files.file_to_url()`, applied to the absolute path converted
-   # to string.
+   # Convenient method to convert this path to a file URL (as a
+   # string), using `Files.file_to_url()`, applied to the absolute
+   # path converted to string.
    #
    public to_url()
       return Files.file_to_url(absolute().str())
+   end
+
+   #
+   # Succeed if this instance represents a Windows UNC path, meaning
+   # that its first element is a "\\".  This method always fails on
+   # non-Windows systems.
+   #
+   public is_unc()
+      return Files.FS.filepath_is_unc(self)
+   end
+
+   #
+   # Succeed iff this path is an absolute directory, and one which is
+   # a necessary prefix for such a path.  On Unix, this is just the
+   # root directory, and on Windows it is either a drive root or the
+   # three (or fewer) top-level elements of a UNC path.
+   #
+   public is_prefix()
+      return Files.FS.filepath_is_prefix(self)
    end
 
    #
@@ -1153,6 +1194,8 @@ class Stat()
 end
 $endif
 
+$if _UNIX | _PLAN9
+
 package class UnixFileSystem(FileSystem)
    public override get_path_list(s)
       local l, t
@@ -1182,6 +1225,13 @@ package class UnixFileSystem(FileSystem)
 
    public override filepath_is_absolute(fp)
       succeed fp.l[1] == "/"
+   end
+
+   public override filepath_is_unc(fp)
+   end
+
+   public override filepath_is_prefix(fp)
+      succeed filepath_is_absolute(fp) & *fp.l = 1
    end
 
    public override filepath_normal(fp)
@@ -1235,15 +1285,13 @@ package class UnixFileSystem(FileSystem)
    public override get_roots()
       return "/"
    end
-
+   
    public override split_paths(s)
       local t
-      s ? repeat {
-         t := tab(upto(':') | 0)
+      every t := separate(s, ':') do {
          if *t = 0 then
-            t := "."
+            t ||:= "."   # Keep type of t
          suspend t
-         move(1) | break
       }
    end
 
@@ -1296,14 +1344,10 @@ package class Plan9FileSystem(UnixFileSystem)
 
    public override split_paths(s)
       local t
-      s ? repeat {
-         t := tab(upto(' ') | 0)
+      every t := separate(s, ' ') do {
          if *t = 0 then
             t := "."
          suspend t
-         if pos(0) then
-            break
-         move(1)
       }
    end
 
@@ -1331,6 +1375,8 @@ package class Plan9FileSystem(UnixFileSystem)
       }
    end
 end
+
+$elsif _MS_WIN32
 
 package class WindowsFileSystem(FileSystem)
    public override get_path_list(s)
@@ -1369,6 +1415,14 @@ package class WindowsFileSystem(FileSystem)
 
    public override filepath_is_absolute(fp)
       succeed fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
+   end
+
+   public override filepath_is_unc(fp)
+      succeed fp.l[1] == "\\\\"
+   end
+
+   public override filepath_is_prefix(fp)
+      succeed filepath_is_absolute(fp) & (*fp.l = 1 | (filepath_is_unc(fp) & *fp.l <= 3))
    end
 
    public override filepath_normal(fp)
@@ -1443,12 +1497,10 @@ package class WindowsFileSystem(FileSystem)
 
    public override split_paths(s)
       local t
-      s ? repeat {
-         t := tab(upto(';') | 0)
+      every t := separate(s, ';') do {
          if *t = 0 then
-            t := "."
+            t ||:= "."   # Keep type of t
          suspend t
-         move(1) | break
       }
    end
 
@@ -1513,3 +1565,5 @@ package class WindowsFileSystem(FileSystem)
       }
    end
 end
+
+$endif

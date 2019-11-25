@@ -4,7 +4,7 @@
 
 package mail
 
-import util, io, ipl.strings, ipl.pdco
+import util, ipl.strings, ipl.pdco
 
 class TextHandler(TypeHandler)
    public override can_handle(ct)
@@ -17,7 +17,7 @@ class TextHandler(TypeHandler)
       #
       # Convert line endings to local form
       #
-      res := String{ separate_lines(data), Files.EOL }
+      res := String{ separate_lines(data), "\N" }
 
       if map(m.get_content_type().get_parameter("charset")) == "utf-8" then
          res := ucs(res) | return error("TextHandler: raw data not in UTF-8 format")

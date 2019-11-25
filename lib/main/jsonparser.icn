@@ -3,7 +3,6 @@ package json
 import 
    lang,
    util,
-   io,
    exception
 
 class JSONParser()
@@ -56,28 +55,18 @@ class JSONParser()
    end
 
    private parse_string()
-      local res
-      # Shortcut for common case
-      if ="\"" & res := tab(many(UNESCAPED_CHAR)) & ="\"" then
-         return res
-      return use {
-         res := RamStream(),
-         parse_string1(res)
-      }
-   end
-
-   private parse_string1(res)
-      local t, ch, i
+      local s, ch, i
       ="\""
+      s := ""
       repeat {
-         res.out(tab(many(UNESCAPED_CHAR)))
+         s ||:= string(tab(many(UNESCAPED_CHAR)))
          if pos(0) then
             err("Unclosed quote")
          if ="\"" then
             break
          if ="\\" then {
             ch := move(1) | err("Unclosed quote")
-            res.out(case string(ch) of {
+            s ||:= case string(ch) of {
                "\"": "\""
                "\\": "\\"
                "/": "/"
@@ -87,20 +76,18 @@ class JSONParser()
                "r": "\r"
                "t": "\t"
                "u": {
-                  many(&digits ++ 'ABCDEFabcdef', t := move(4)) = 5 | err("Invalid \\u escape")
-                  i := integer("16r" || t)
+                  i := (0 <= Format.string_to_int(move(4))) | err("Invalid \\u escape")
                   if \utf8_flag then
                      Text.utf8_seq(i | 63)
                   else
                      char(i | 63)
                }
                default: err("Invalid escape char in string: " || ch)
-            })
+            }
          } else
-            err("Invalid char in string:" || image(&subject[&pos]))
+            err("Invalid char in string: " || image(&subject[&pos]))
       }
-      res := res.str()
-      return if \utf8_flag then ucs(res) else res
+      return if \utf8_flag then ucs(s) else s
    end
 
    private parse_value()
@@ -169,7 +156,7 @@ class JSONParser()
 
    private end_check(o)
       next_token()
-      pos(0) | err("Extraneous input:" || tab(0))
+      pos(0) | err("Extraneous input: " || tab(0))
       return o
    end
 

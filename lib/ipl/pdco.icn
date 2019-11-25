@@ -303,6 +303,27 @@ procedure Every(e1, e2)
 
 end
 
+# Evaluate `e1` and for each result, evaluate `e2`, failing should it
+# fail.  Succeed when `e1` is exhausted (and hence each evaluation of
+# `e2` succeeded).
+#
+# Examples :-
+# ~
+#    # Are the characters in string s in ascending
+#    # lexicographic order?
+#    if All{ i := 1 to *s - 1,
+#            s[i] <<= s[i + 1] }
+#    then write("Yes")
+#
+#    # Are all the elements of list l positive?
+#    if All{ e := !l, e > 0 }
+#    then write("Yes")
+# ~
+procedure All(e1, e2)
+   while @e1 do @^e2 | fail
+   return
+end
+
 # PDCO to extend `e` to `count` results
 procedure ExtendSeq(e, count)	
    local fl

@@ -297,10 +297,8 @@ class Worker()
    end
 
    private get_out(fname)
-      if \opts["n"] then {
-         out := opts["n"]
+      if out := \opts["n"] then
          fail
-      }
 
       if *fname = 0 then
          fname := "geturl.out"

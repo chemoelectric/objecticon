@@ -1,7 +1,5 @@
 import io, lang, xdg, ipl.options, net, util
 
-global opts
-
 procedure text_link(s)
    return if FileStream.stdout.is_flowterm_tty() then
       "\e[!\"text:" || URL.percent_encode(s, URL.PATH_CHAR) || "\"L" || s || "\e[!L" 
@@ -32,10 +30,9 @@ procedure need_pair(a)
       help_stop("This option needs two parameters")
 end
 
-procedure usage(opts)
+procedure usage()
    write("Usage: lsxdg CMD [ARGS]")
    write("Query the xdg database")
-   options_help(opts)
    write("Possible values of CMD :-")
    help_line("mime", "Get mime type for file(s)")
    help_line("alt-mime" ,"List alternatives for a mime type")
@@ -55,7 +52,7 @@ end
 procedure main(a)
    local s, s1, d, cmd, u, u1, p, c
 
-   opts := options(a, [], usage)
+   options(a, [], usage)
 
    c := pop(a) | help_stop("Command argument needed")
 

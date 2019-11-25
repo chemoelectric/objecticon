@@ -1496,19 +1496,15 @@ class XmlParser(Connectable)
    # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
    #
    private parse_char_ref(expand)
-      local c, digs, i, j
+      local digs, i, j
       j := &pos
       ="&#" | throw("'&#' expected")
       if any('x') then {
          move(1)
-         c := '0-9a-fA-F'
-         any(c) | throw("Hex digit expected")
-         digs := tab(many(c)) 
-         i := integer("16r" || digs)
+         digs := tab(many('0-9a-fA-F')) | throw("Hex digit expected")
+         i := Format.string_to_int(digs)
       } else {
-         c := &digits
-         any(c) | throw("Digit expected")
-         digs := tab(many(c)) 
+         digs := tab(many(&digits)) | throw("Digit expected")
          i := integer(digs)
       }
       =";" | throw("';' expected")

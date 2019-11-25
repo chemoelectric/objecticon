@@ -128,22 +128,23 @@ class FontTestDialog(Dialog)
    end
 
    private parse_range(s)
-      local i, j
+      local i, j, c
+      c := '0-9a-fA-F'
       s ? {
          if any(&digits) then
             i := integer(tab(many(&digits)))
          else if ="U+" then
-            i := integer("16r" || move(4)) | return error("Bad range")
+            i := Format.string_to_int(tab(many(c))) | return error("Bad range")
          ="-" | return error("- expected")
          if any(&digits) then
             j := integer(tab(many(&digits)))
          else if ="U+" then
-            j := integer("16r" || move(4)) | return error("Bad range")
+            j := Format.string_to_int(tab(many(c))) | return error("Bad range")
       }
       i <= j | return error("From bigger than to")
       if j - i > 300 then
          return error("Range too big")
-      return Text.create_cset(i,j)
+      return Text.create_cset(i, j)
    end
 
    private setup()
@@ -213,7 +214,6 @@ class FontTestDialog(Dialog)
          clear_constraints().
          set_constraint(Grid.X_ALIGN, Align.L).
          set_constraint(Grid.X_FILL, &yes).
-         set_constraint(Grid.X_WEIGHT, 1.0).
          connect(self.synch_range, Event.ACTION).
          connect(self.synch_range, Event.SELECTION_CHANGED).
          set_selection_list([""])
@@ -228,6 +228,8 @@ class FontTestDialog(Dialog)
          set_size(scale(150)).
          clear_constraints().
          set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_13)
       layout_9 := GridLayout().
          set_doi(scale(0)).
@@ -236,6 +238,7 @@ class FontTestDialog(Dialog)
          clear_constraints().
          set_constraint(Grid.EOL, &yes).
          set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
          set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_9).
          add(label_5).

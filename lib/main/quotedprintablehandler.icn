@@ -86,19 +86,18 @@ class QuotedPrintableHandler(EncodingHandler)
    public override decode_data(m, data) 
       local res
       res := ""
-      data ? repeat {
-         res ||:= tab(upto('\r=') | 0)
-         if pos(0) then
-            break
-         if any('=') then {
-            move(1)
-            # If not a soft line break, then unescape the =XX format.
-            if not ="\r\n" then {
-               res ||:= char(integer("16r" || move(2))) | return error("Bad quoted-printable data")
-            }
-         } else
-            res ||:= ="\r\n" | return error("Bad quoted-printable data")
+      data ? {
+         while res ||:= tab(upto('\r=')) do {
+            if any('=') then {
+               move(1)
+               # If not a soft line break, then unescape the =XX format.
+               if not ="\r\n" then {
+                  res ||:= char(Format.string_to_int(move(2))) | return error("Bad quoted-printable data")
+               }
+            } else
+               res ||:= ="\r\n" | return error("Bad quoted-printable data")
+         }
+         return res || tab(0)
       }
-      return res
    end
 end

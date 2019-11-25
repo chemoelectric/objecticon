@@ -151,12 +151,10 @@ function ssl_SslStream_verify(self)
        X509 *peer;
        GetSelfSsl();
 
-#if !MSWIN32
        if ((l = SSL_get_verify_result(self_ssl->ssl)) != X509_V_OK) {
            whyf("Certificate doesn't verify: %s", X509_verify_cert_error_string(l));
            fail;
        }
-#endif
 
        peer = SSL_get_peer_certificate(self_ssl->ssl);
        if (!match_common_name(peer, self_ssl->host) && !match_alt_names(peer, self_ssl->host)) {

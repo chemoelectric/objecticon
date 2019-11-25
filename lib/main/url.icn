@@ -509,12 +509,13 @@ class URL(ObjectOutput)
       local res
       s := need_string(s)
       res := ""
-      s ? repeat {
-         res ||:= tab(upto('%') | 0)
-         move(1) | break
-         res ||:= char(integer("16r" || move(2))) | "%"
+      s ? {
+         while res ||:= tab(upto('%')) do {
+            move(1)
+            res ||:= char(Format.string_to_int(move(2))) | "%"
+         }
+         return res || tab(0)
       }
-      return res
    end
 
    #
@@ -599,7 +600,7 @@ class URL(ObjectOutput)
             break
          res ||:= if any('%') then {
             move(1)
-            if ch := char(integer("16r" || move(2))) then {
+            if ch := char(Format.string_to_int(move(2))) then {
                if any(c2, ch) then
                   ch
                else
