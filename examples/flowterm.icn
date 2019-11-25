@@ -2008,16 +2008,7 @@ $endif
    end
 
    public get_pats()
-      local pat, pats
-      pats := []
-      filter.get_contents() ? {
-         repeat {
-            pat := tab(upto(';') | 0)
-            put(pats, Wildcard(pat))
-            move(1) | break
-         }
-      }
-      return pats
+      return ipl.pdco.List{ Wildcard(separate(filter.get_contents(), ';')) }
    end
 
    public tab_active()

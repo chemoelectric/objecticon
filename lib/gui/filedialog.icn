@@ -514,13 +514,7 @@ class FileDialog(Dialog)
    end
 
    protected synch_pats()
-      local pat
-      pats := []
-      filter.get_contents() ? repeat {
-         pat := tab(upto(';') | 0)
-         put(pats, Wildcard(Files.standard_case(pat)))
-         move(1) | break
-      }
+      pats := ipl.pdco.List{ Wildcard(Files.standard_case(separate(filter.get_contents(), ';'))) }
       file.view.set_patterns(pats)
    end
 
