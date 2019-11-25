@@ -1683,7 +1683,7 @@ function lang_Text_create_cset(x[n])
                          runerr(101, pb->lelem.lslots[k]);
                      }
                      if (to < 0 || to > MAX_CODE_POINT) {
-                         whyf("Invalid codepoint:" WordFmt, to);
+                         whyf("Invalid codepoint: " WordFmt, to);
                          free_rangeset(rs);
                          fail;
                      }
@@ -1704,7 +1704,7 @@ function lang_Text_create_cset(x[n])
                  runerr(101, x[i]);
              }
              if (from < 0 || from > MAX_CODE_POINT) {
-                 whyf("Invalid codepoint:" WordFmt, from);
+                 whyf("Invalid codepoint: " WordFmt, from);
                  free_rangeset(rs);
                  fail;
              }
@@ -1715,7 +1715,7 @@ function lang_Text_create_cset(x[n])
                      runerr(101, x[i]);
                  }
                  if (to < 0 || to > MAX_CODE_POINT) {
-                     whyf("Invalid codepoint:" WordFmt, to);
+                     whyf("Invalid codepoint: " WordFmt, to);
                      free_rangeset(rs);
                      fail;
                  }
