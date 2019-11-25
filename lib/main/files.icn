@@ -1021,6 +1021,8 @@ class Stat()
    end
 end
 
+$if _UNIX
+
 package class UnixFileSystem(FileSystem)
    public override get_path_list(s)
       local l, t
@@ -1157,6 +1159,8 @@ package class UnixFileSystem(FileSystem)
       }
    end
 end
+
+$elsif _MS_WIN32
 
 package class WindowsFileSystem(FileSystem)
    public override get_path_list(s)
@@ -1345,3 +1349,5 @@ package class WindowsFileSystem(FileSystem)
       }
    end
 end
+
+$endif
