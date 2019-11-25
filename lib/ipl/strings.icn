@@ -735,17 +735,16 @@ procedure remove_surrogate_pairs(s)
    s := need_text(s)
    upto('\ud800-\udfff', s) | return s
    t := ""
-   s ? repeat {
-      t ||:= string(tab(upto('\ud800-\udfff') | 0))
-      if pos(0) then
-         break
-      any('\ud800-\udbff') | fail
-      c1 := move(1)
-      any('\udc00-\udfff') | fail
-      c2 := move(1)
-      t ||:= Text.utf8_seq(16r10000 + ishift(iand(ord(c1), 16r3ff), 10) + iand(ord(c2), 16r3ff))
+   s ? {
+      while t ||:= string(tab(upto('\ud800-\udfff'))) do {
+         any('\ud800-\udbff') | fail
+         c1 := move(1)
+         any('\udc00-\udfff') | fail
+         c2 := move(1)
+         t ||:= Text.utf8_seq(16r10000 + ishift(iand(ord(c1), 16r3ff), 10) + iand(ord(c2), 16r3ff))
+      }
+      return t || tab(0)
    }
-   return ucs(t)
 end
 
 # Return a string which is the same as `s`, but with any characters
@@ -757,13 +756,14 @@ procedure add_surrogate_pairs(s)
    s := need_text(s)
    upto('\U10000-\U10FFFF', s) | return s
    t := ""
-   s ? repeat {
-      t ||:= string(tab(upto('\U10000-\U10FFFF') | 0))
-      c := move(1) | break
-      i := ord(c) - 16r10000
-      t ||:= Text.utf8_seq(16rd800 + ishift(i, -10)) || Text.utf8_seq(16rdc00 + iand(i, 16r3ff))
+   s ? {
+      while t ||:= string(tab(upto('\U10000-\U10FFFF'))) do {
+         c := move(1)
+         i := ord(c) - 16r10000
+         t ||:= Text.utf8_seq(16rd800 + ishift(i, -10)) || Text.utf8_seq(16rdc00 + iand(i, 16r3ff))
+      }
+      return t || tab(0)
    }
-   return ucs(t)
 end
 
 #
