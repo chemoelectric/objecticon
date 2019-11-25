@@ -127,7 +127,7 @@ class RFC1522()
                      t ||:= " "
                   } else {
                      move(1)
-                     t ||:= char(integer("16r" || move(2))) | return error("Bad q-encoded data")
+                     t ||:= char(Format.string_to_int(move(2))) | return error("Bad q-encoded data")
                   }
                }
             }

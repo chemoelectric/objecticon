@@ -1042,7 +1042,7 @@ $endif
       repeat {
          l := expect_line() | fail
          l ? {
-            chunk := integer("16r" || tab(many('0987654321abcdefABCDEF'))) |
+            chunk := Format.string_to_int(tab(many('0987654321abcdefABCDEF'))) |
                return error("Expected chunk-length specifier; got " || l)
          }
          if chunk = 0 then

@@ -528,7 +528,7 @@ class HtmlParser()
          move(1)
          if any('x') then {
             move(1)
-            integer("16r" || tab(many('0-9a-fA-F')))
+            Format.string_to_int(tab(many('0-9a-fA-F')))
          } else
             integer(tab(many(&digits)))
       } else

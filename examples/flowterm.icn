@@ -1775,8 +1775,8 @@ class Terminal(TabItem, VtUI)
    private static parse_key(s)
       local c
       s := string(s)
-      return (s[1] == "x" & char(integer("16r" || s[2:0]))) |
-             (s[1] == "u" & uchar(integer("16r" || s[2:0]))) |
+      return (s[1] == "x" & char(Format.string_to_int(s[2:0]))) |
+             (s[1] == "u" & uchar(Format.string_to_int(s[2:0]))) |
              (s := map(s, &lcase, &ucase) & not match("MOD_", s) &
                        c := Class.getq(Key, s) & type(c) == "integer" & c)
    end

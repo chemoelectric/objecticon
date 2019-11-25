@@ -6,7 +6,8 @@ package mail
 
 import 
    exception,
-   ipl.scan
+   ipl.scan,
+   util
 
 record ExtValue(charset, language, value)
 
@@ -241,7 +242,7 @@ class RFC2616Parser()
             s ||:= string(tab(many(ATTR_CHAR)))
          else if any('%') then {
             move(1)
-            s ||:= char(integer("16r" || move(2))) | throw("Invalid % encoding")
+            s ||:= char(Format.string_to_int(move(2))) | throw("Invalid % encoding")
          } else
             return s
       }

@@ -8,7 +8,7 @@
 
 package util
 
-import lang, ipl.scan(max_many), io(RamStream)
+import lang, ipl.scan(max_many)
 
 final abstract class Format()
    public static const
@@ -22,12 +22,44 @@ final abstract class Format()
       DECIMAL_POINT := env_string("OI_FORMAT_DECIMAL_POINT") | "."
       THOUSANDS_SEPARATOR := env_string("OI_FORMAT_THOUSANDS_SEPARATOR") | ","
    end
+
+   #
+   # Convert a string to an integer.  Unlike the idiomatic
+   # `integer("16r" || s)` technique, this does not create a temporary
+   # string.  It is therefore suitable for use in loops which build up
+   # a lengthy concatenated string result.
+   #
+   # :Parameters :
+   # :  `s` - The input string
+   # :  `base` - The desired base of the result, default 16
+   # 
+   public static string_to_int(s, base)
+      local r, c, d, neg
+      static dig
+      initial {
+         dig := table()
+         every c := !"0123456789abcdefABCDEF" do
+            dig[c] := integer("16r" || c)
+      }
+      s := need_string(s)
+      base := need_integer(\base, 2, 16) | 16
+      if s[1] == "-" then {
+         s := s[2:0]
+         neg := &yes
+      }
+      r := 0
+      every c := !s do {
+         d := (base > member(dig, c)) | fail
+         r := r * base + d
+      }
+      return if /neg then r else -r
+   end
       
    #
    # Convert an integer to a string.
    #
    # :Parameters :
-   # :  `base` - The desired base of the result.
+   # :  `base` - The desired base of the result, default 16
    # :  `p` - The minimum width of the result, padding with zeroes
    #               if necessary.
    #
@@ -39,7 +71,7 @@ final abstract class Format()
       n := need_integer(subject)
       if n < 0 then {
          n := -n
-         neg := 1
+         neg := &yes
       }
       digs := "0123456789ABCDEF"[1:base + 1]
       while n > 0 do {
@@ -71,18 +103,21 @@ final abstract class Format()
    #           such zeroes altogether.
    #
    public static numeric_to_string(subject, p, f)
-      local n1, s, t, lim, d, zs, dig, i, n, ec
+      local neg, s, t, lim, d, zs, dig, i, n, ec
 
       f := need_cset(\f) | ''
       n := need_numeric(subject)
       p := need_integer(\p, 0) | 4
 
-      n1 := abs(n)
+      if n < 0 then {
+         n := -n
+         neg := &yes
+      }
       any(f, ec <- "e"|"E")
-      if /ec & type(n1) == "integer" then 
-         s := string(n1) || repl("0", p)
+      if /ec & type(n) == "integer" then 
+         s := string(n) || repl("0", p)
       else {
-         t := norm(n1)
+         t := norm(n)
          lim := if \ec then p else p + t[2]
          if lim >= -1 then {
             s := ""
@@ -125,11 +160,10 @@ final abstract class Format()
             else ""
          }
       }
-      if n < 0 then
+      if \neg then
          s := "-" || s
-      else
-         if any(f, "+") then 
-            s := "+" || s
+      else if any(f, "+") then 
+         s := "+" || s
 
       return if \ec then
          s || ec || (if t[2] < 0 then "-" else "+") || abs(t[2])
@@ -193,41 +227,34 @@ final abstract class Format()
       }
    end
 
-   private static unescape1(rs)
-      repeat {
-         rs.out(tab(upto('\\') | 0))
-         move(1) | break
-         rs.out((if any('01234567') then
-                    char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
-                 else if ="x" then
-                    char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
-                 else if ="N" then
-                    "\N"
-                 else if ="u" then
-                    Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
-                 else if ="U" then
-                    Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) |
-                       return error("Code point out of range")
-                 else if ="^" then
-                    char(iand(ord(move(1)), 8r37))
-                 else 
-                    unescape_char(move(1))) | "\0")
-      }
-      return rs.str()
-   end
-
    #
    # Remove escape sequences from `s`.
    #
    public static unescape(s)
-      local rs, res
+      local res
       s ? {
          # Shortcut for common case
          upto('\\') | return s
-         res := use {
-            rs := RamStream(),
-            unescape1(rs)
-         } | fail
+         res := ""
+         repeat {
+            res ||:= string(tab(upto('\\') | 0))
+            move(1) | break
+            res ||:= (if any('01234567') then
+                    char(iand(string_to_int(tab(max_many('01234567', 3)), 8), 8r377))
+                 else if ="x" then
+                    char(string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 2))))
+                 else if ="N" then
+                    "\N"
+                 else if ="u" then
+                    Text.utf8_seq(string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 4))))
+                 else if ="U" then
+                    Text.utf8_seq(string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+                       return error("Code point out of range")
+                 else if ="^" then
+                    char(iand(ord(move(1)), 8r37))
+                 else 
+                    string(unescape_char(move(1)))) | "\0"
+         }
          return if type(s) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
       }
    end
@@ -245,13 +272,13 @@ final abstract class Format()
             esc_flag := &yes
             move(1)
             c := (if any('01234567') then
-                     iand("8r" || tab(max_many('01234567', 3)), 8r377)
+                     iand(string_to_int(tab(max_many('01234567', 3)), 8), 8r377)
                   else if ="x" then
-                     integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+                     string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
                   else if ="u" then
-                     integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+                     string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
                   else if ="U" then
-                     (16r10FFFF >= integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+                     (16r10FFFF >= string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
                         return error("Code point out of range")
                   else if ="^" then
                      iand(ord(move(1)), 8r37)
