@@ -239,16 +239,16 @@ final abstract class Format()
          repeat {
             res ||:= string(tab(upto('\\') | 0))
             move(1) | break
-            res ||:= (if any('01234567') then
-                    char(iand(string_to_int(tab(max_many('01234567', 3)), 8), 8r377))
+            res ||:= (if any('0-7') then
+                    char(iand(string_to_int(tab(max_many('0-7', 3)), 8), 8r377))
                  else if ="x" then
-                    char(string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 2))))
+                    char(string_to_int(tab(max_many('0-9a-fA-F', 2))))
                  else if ="N" then
                     "\N"
                  else if ="u" then
-                    Text.utf8_seq(string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 4))))
+                    Text.utf8_seq(string_to_int(tab(max_many('0-9a-fA-F', 4))))
                  else if ="U" then
-                    Text.utf8_seq(string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+                    Text.utf8_seq(string_to_int(tab(max_many('0-9a-fA-F', 6)))) |
                        return error("Code point out of range")
                  else if ="^" then
                     char(iand(ord(move(1)), 8r37))
@@ -271,14 +271,14 @@ final abstract class Format()
          if any('\\') then {
             esc_flag := &yes
             move(1)
-            c := (if any('01234567') then
-                     iand(string_to_int(tab(max_many('01234567', 3)), 8), 8r377)
+            c := (if any('0-7') then
+                     iand(string_to_int(tab(max_many('0-7', 3)), 8), 8r377)
                   else if ="x" then
-                     string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+                     string_to_int(tab(max_many('0-9a-fA-F', 2)))
                   else if ="u" then
-                     string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+                     string_to_int(tab(max_many('0-9a-fA-F', 4)))
                   else if ="U" then
-                     (16r10FFFF >= string_to_int(tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+                     (16r10FFFF >= string_to_int(tab(max_many('0-9a-fA-F', 6)))) |
                         return error("Code point out of range")
                   else if ="^" then
                      iand(ord(move(1)), 8r37)

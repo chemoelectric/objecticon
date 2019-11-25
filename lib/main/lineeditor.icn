@@ -165,7 +165,7 @@ $endif
          # ^? is a special case meaning DEL(127) - see terminfo(5)
          "^":  if ="?" then "\d" else char(iand(ord(move(1)), 8r37))
          "\\": {
-            if any('01234567') & (v := char(iand(0 <= Format.string_to_int(move(3), 8), 8r377))) then
+            if any('0-7') & (v := char(iand(0 <= Format.string_to_int(move(3), 8), 8r377))) then
                v
             else case ch := move(1) of {
                "0": "\200"
