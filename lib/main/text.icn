@@ -81,31 +81,28 @@ final abstract class Text()
       s := need_string(s)
       subst := need_string(\subst) | "\uFFFD"
       t := ""
-      s ? repeat {
-         t ||:= tab(many(&ascii))
-         if pos(0) then
-            break
-         (n := get_utf8_seq_len(&subject[&pos]) & t ||:= string(ucs(move(n)))) | {
-            t ||:= subst
-            move(1)
+      s ? {
+         while t ||:= tab(upto(~&ascii)) do {
+            (n := get_utf8_seq_len(&subject[&pos]) & t ||:= string(ucs(move(n)))) | {
+               t ||:= subst
+               move(1)
+            }
          }
+         return ucs(t || tab(0))
       }
-      return ucs(t)
    end
 
    #
    # Convert an ISO-8859-1 string to ucs
    #
    public static iso_8859_1_to_ucs(s)
-      local t, ch
+      local t
       s := need_string(s)
       t := ""
-      s ? repeat {
-         t ||:= tab(many(&ascii))
-         ch := ord(move(1)) | break
-         t ||:= Text.utf8_seq(ch)
+      s ? {
+         while t ||:= tab(upto(~&ascii)) || Text.utf8_seq(ord(move(1)))
+         return ucs(t || tab(0))
       }
-      return ucs(t)
    end
 
    #
@@ -117,12 +114,13 @@ final abstract class Text()
       s := need_ucs(s)
       /subst := "?"
       t := ""
-      s ? repeat {
-         t ||:= string(tab(many(&ascii)))
-         ch := ord(move(1)) | break
-         t ||:= char(ch) | subst
+      s ? {
+         while t ||:= string(tab(upto(~&ascii))) do {
+            ch := ord(move(1))
+            t ||:= char(ch) | subst
+         }
+         return t || string(tab(0))
       }
-      return t
    end
 
    # Given a cset `c`, produce another cset containing those characters in 
