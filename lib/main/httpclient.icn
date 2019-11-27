@@ -872,6 +872,8 @@ $endif
       #
       if (request.method == "HEAD") | (response.get_status_code() = (204 | 304)) then
          maybe_close_connection()
+      else if \ (request.range_start | request.range_end) & response.get_status_code() ~= 206 then
+         return error_dont_retry("Requested for range was unsatisfiable")
       else
          read_data() | fail
 
