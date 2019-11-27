@@ -111,6 +111,8 @@ void visitfunc_pre(struct lfunction *f, visitf v);
 void visitfunc_post(struct lfunction *f, visitf v);
 void visit_pre(visitf v);
 void visit_post(visitf v);
+void visitnode_pre(struct lnode *n, visitf v);
+void visitnode_post(struct lnode *n, visitf v);
 
 void replace_node(struct lnode *old, struct lnode *new);
 int get_class_field_ref(struct lnode_field *x, struct lclass **class, struct lclass_field_ref **field);

@@ -565,7 +565,7 @@ void loadtrees()
     }
 }
 
-static void visitnode_pre(struct lnode *n, visitf v)
+void visitnode_pre(struct lnode *n, visitf v)
 {
     if (!v(n))
         return;
@@ -756,7 +756,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
     }
 }
 
-static void visitnode_post(struct lnode *n, visitf v)
+void visitnode_post(struct lnode *n, visitf v)
 {
     switch (n->op) {
         case Uop_Start:

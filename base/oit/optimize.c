@@ -29,6 +29,8 @@ struct literal {
 #define Failed		-5
 #define Succeeded	-7
 
+static int field_in_init_mode;
+
 static int changes(struct lnode *n);
 static int lexcmp(struct literal *x, struct literal *y);
 static int equiv(struct literal *x, struct literal *y);
@@ -648,29 +650,25 @@ static int visit_init_assign(struct lnode *n)
         return 1;
     if ((f->flag & (M_Static | M_Const)) != (M_Static | M_Const))
         return 1;
+    if (f->const_flag != NOT_SEEN)
+        return 1;
+
+    field_in_init_mode = 2;
+    visitnode_post(x->child2, fold_consts);
 
     if (x->child2->op == Uop_Const) {
         struct centry *ce = ((struct lnode_const *)x->child2)->con;
-        if (f->const_flag == NOT_SEEN) {
-            f->const_val = ce;
-            f->const_flag = SET_CONST;
-        } else
-            f->const_flag = OTHER;
+        f->const_val = ce;
+        f->const_flag = SET_CONST;
         /* Return 0 so that we don't traverse the lhs (and call visit_init_field below) */
         return 0;
     } else if (x->child2->op == Uop_Keyword) {
         int k = ((struct lnode_keyword *)x->child2)->num;
         if (k == K_NULL) {
-            if (f->const_flag == NOT_SEEN)
-                f->const_flag = SET_NULL;
-            else
-                f->const_flag = OTHER;
+            f->const_flag = SET_NULL;
             return 0;
         } else if (k == K_YES) {
-            if (f->const_flag == NOT_SEEN)
-                f->const_flag = SET_YES;
-            else
-                f->const_flag = OTHER;
+            f->const_flag = SET_YES;
             return 0;
         }
     }
@@ -708,10 +706,8 @@ static void compute_class_consts(void)
         fprintf(stderr, "Static constant analysis:\n\n");
     for (vclass = lclasses; vclass; vclass = vclass->next) {
         struct lclass_field *f = lookup_field(vclass, init_string);
-        if (f) {
-            visitfunc_post(f->func, fold_consts);
+        if (f)
             visitfunc_pre(f->func, visit_init_method);
-        }
         if (verbose > 3) {
             struct lclass_field *cf;
             fprintf(stderr, "Class %s\n", vclass->global->name);
@@ -760,6 +756,7 @@ void optimize()
 {
     init_rangesets();
     compute_class_consts();
+    field_in_init_mode = 1;
     visit_post(fold_consts);
     visit_post(tidy_lists);
     if (!strinv) {
@@ -2855,9 +2852,22 @@ static void fold_field(struct lnode *n)
         return;
 
     if (curr_vfunc->method &&
-        curr_vfunc->method->name == init_string && curr_vfunc->method->class == f->class)
-        return;
-
+        curr_vfunc->method->name == init_string) {
+        switch (field_in_init_mode) {
+            case 1: {
+                if (curr_vfunc->method->class == f->class)
+                    return;
+                break;
+            }
+            case 2: {
+                if (curr_vfunc->method->class != f->class)
+                    return;
+                break;
+            }
+            default:
+                quit("Bad field_in_init_mode");
+        }
+    }
     if (!check_access(curr_vfunc, f))
         return;
 
