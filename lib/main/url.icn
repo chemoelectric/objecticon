@@ -39,7 +39,8 @@ class URL(ObjectOutput)
       USERINFO_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':'
       HOST_CHAR := UNRESERVED ++ SUB_DELIMS
       PATH_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/'
-      FRAGMENT_CHAR := QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
+      QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
+      FRAGMENT_CHAR := QUERY_CHAR
    end
 
    #
