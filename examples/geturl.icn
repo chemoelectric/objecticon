@@ -521,6 +521,7 @@ procedure main(args)
    if nw = 1 then
       workers[1].run_alone()
    else {
+      /opts["n"] | help_stop("Can't have -n and several workers")
       opts["npro"] := &yes
       sched := Scheduler(200)
       every (!workers).run_sched()
