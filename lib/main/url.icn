@@ -12,6 +12,7 @@ import
    lang,
    util,
    ipl.scan,
+   ipl.strings,
    ipl.tables
 
 #
@@ -479,17 +480,13 @@ class URL(ObjectOutput)
    # :  A table, representing the keys and values of the fields.
    #
    public static make_cgi_table(s)
-      local cgi, key, val
+      local cgi, key, t
       s := need_string(s)
       cgi := table()
-      s ? until pos(0) do {
-         key := cgi_decode(tab(upto('&=') | 0))
-         val := if ="=" then
-            cgi_decode(tab(upto('&') | 0))
-         else
-            ""
-         inserts(cgi, key, val)
-         move(1)
+      every t := separate(s, '&') do t ? {
+         key := 1(tab(upto('=')),move(1)) | tab(0)
+         if *key > 0 then
+            inserts(cgi, cgi_decode(key), cgi_decode(tab(0)))
       }
       return cgi
    end
