@@ -264,12 +264,11 @@ $endif
       repeat {
          b1 := f1.in(1048576) | fail
          if /b1 then 
-            break
+            # f1 is at eof, and a further read of f2 should be at eof.
+            return /f2.in(1)
          b2 := f2.read_exactly(*b1) | fail
          b1 === b2 | fail
       }
-      # f1 is at eof, and a further read of f2 should be at eof.
-      return /f2.in(1)
    end
 
    #

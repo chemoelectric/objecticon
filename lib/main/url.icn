@@ -529,10 +529,9 @@ class URL(ObjectOutput)
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
-         ch := move(1) | break
+         ch := move(1) | return res
          res ||:= percent(ch)
       }
-      return res
    end
 
    #
@@ -597,7 +596,7 @@ class URL(ObjectOutput)
       s ? repeat {
          res ||:= tab(many(c1))
          if pos(0) then
-            break
+            return res
          res ||:= if ="%" & ch := char(Format.string_to_int(move(2))) then {
             if any(c2, ch) then
                ch
@@ -606,7 +605,6 @@ class URL(ObjectOutput)
          } else
             percent(move(1))
       }
-      return res
    end
 
    #
