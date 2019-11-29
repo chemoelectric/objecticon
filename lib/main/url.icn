@@ -39,7 +39,8 @@ class URL(ObjectOutput)
       USERINFO_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':'
       HOST_CHAR := UNRESERVED ++ SUB_DELIMS
       PATH_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/'
-      FRAGMENT_CHAR := QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
+      QUERY_CHAR := UNRESERVED ++ SUB_DELIMS ++ ':@/?'
+      FRAGMENT_CHAR := QUERY_CHAR
    end
 
    #
@@ -502,6 +503,7 @@ class URL(ObjectOutput)
       return percent_decode(map(s, "+", " "))
    end
 
+   #
    # Convert a string by decoding any %xx encoding characters.  The
    # result is always a string, never ucs.
    #
@@ -510,10 +512,7 @@ class URL(ObjectOutput)
       s := need_string(s)
       res := ""
       s ? {
-         while res ||:= tab(upto('%')) do {
-            move(1)
-            res ||:= char(Format.string_to_int(move(2))) | "%"
-         }
+         while res ||:= tab(upto('%')) || (move(1), char(Format.string_to_int(move(2))))
          return res || tab(0)
       }
    end
@@ -530,12 +529,12 @@ class URL(ObjectOutput)
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
-         ch := move(1) | break
+         ch := move(1) | return res
          res ||:= percent(ch)
       }
-      return res
    end
 
+   #
    # Percent encode a single character, ch.
    #
    public static percent(ch)
@@ -597,21 +596,18 @@ class URL(ObjectOutput)
       s ? repeat {
          res ||:= tab(many(c1))
          if pos(0) then
-            break
-         res ||:= if any('%') then {
-            move(1)
-            if ch := char(Format.string_to_int(move(2))) then {
-               if any(c2, ch) then
-                  ch
-               else
-                  percent(ch)
-            } else "%"
+            return res
+         res ||:= if ="%" & ch := char(Format.string_to_int(move(2))) then {
+            if any(c2, ch) then
+               ch
+            else
+               percent(ch)
          } else
             percent(move(1))
       }
-      return res
    end
 
+   #
    # Return a normalized version of this URL.  All percent encodings
    # are normalized, (see `re_encode` above).  Host case is lowered.
    # Dotted dirs are compacted.  All parts are of string type.  See

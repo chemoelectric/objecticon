@@ -41,8 +41,8 @@ abstract class Stream(HasMode)
       WRITE := 2
       SEEK := 4
       TRUNCATE := 8
-      READ_WRITE := 3     # READ, WRITE
-      ALL := 15           # READ, WRITE, SEEK, TRUNCATE
+      READ_WRITE := READ + WRITE
+      ALL := READ + WRITE + SEEK + TRUNCATE
    end
 
    #

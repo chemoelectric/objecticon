@@ -165,19 +165,17 @@ class Encode(Stream, HasUnderlyingStream)
    end
 
    private static encode_string(s)
-      local r, ch
+      local r
       static l
       initial {
          l := []
          every put(l, right(0 to 255, 3, "0"))
       }
       r := ""
-      s ? repeat {
-         r ||:= tab(many(Codec.PRINTABLE))
-         ch := ord(move(1)) | break
-         r ||:= "\\" || l[ch + 1]
+      s ? {
+         while r ||:= tab(upto(~Codec.PRINTABLE)) || "\\" || l[ord(move(1)) + 1]
+         return r || tab(0)
       }
-      return r
    end
 
    private encode_methp(mp)
@@ -450,12 +448,13 @@ class Decode()
    private static decode_string(s)
       local r
       r := ""
-      s ? repeat {
-         r ||:= tab(many(~'\\'))
-         move(1) | break
-         r ||:= char(move(3))
+      s ? {
+         while r ||:= tab(upto('\\')) do {
+            move(1)
+            r ||:= char(integer(move(3))) | throw("Invalid string escape")
+         }
+         return r || tab(0)
       }
-      return r
    end
 
    private static decode_proc_code(fn)

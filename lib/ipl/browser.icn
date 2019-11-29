@@ -2559,17 +2559,6 @@ class Form()
       return t
    end
 
-   private static escape_1521_value(s)
-      local t, ch
-      t := u"\""
-      s ? repeat {
-         t ||:= tab(many(&uset -- '\"\\\r'))
-         ch := move(1) | break
-         t ||:= u"\\" || ch
-      }
-      return t || u"\""
-   end
-
    private make_cgi_message(ev, src)
       local k, v, c, m, mp, m2, fn, mt
       m := Message()
@@ -2582,19 +2571,19 @@ class Form()
                   fn := c.get_filename()
                   mt := Mime.get_mime_type_for_file(fn) | "application/octet-stream"
                   m2.set_header("Content-Disposition", 
-                                "form-data; name=" || escape_1521_value(k) || 
-                                "; filename=" || escape_1521_value(fn))
+                                "form-data; name=" || RFC822Parser.quote_string(k) || 
+                                "; filename=" || RFC822Parser.quote_string(fn))
                   m2.set_header("Content-Type", mt)
                } else 
                   m2.set_header("Content-Disposition", 
-                                "form-data; name=" || escape_1521_value(k))
+                                "form-data; name=" || RFC822Parser.quote_string(k))
                m2.set_decoded_content(v)
                mp.add_part(m2)
             }
          }
       }
       m.set_header("Content-Type", "multipart/form-data")
-      m.set_content_object(mp) | stop("Failed to set_content_object:", &why)
+      m.set_content_object(mp) | stop("Failed to set_content_object: ", &why)
       return m
    end
 

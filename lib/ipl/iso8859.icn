@@ -52,12 +52,11 @@ class ISO8859()
       t := ""
       s ? repeat {
          t ||:= tab(many(&ascii))
-         ch := ord(move(1)) | break
+         ch := ord(move(1)) | return ucs(t)
          if ch >= 160 then
             ch := l[ch - 160 + 1]
          t ||:= Text.utf8_seq(ch)
       }
-      return ucs(t)
    end
 
    #
@@ -73,11 +72,9 @@ class ISO8859()
       t := ""
       s ? repeat {
          t ||:= string(tab(many(&ascii)))
-         ch := ord(move(1)) | break
-         if ch >= 160 then
-            ch := member(m, ch) | subst
-         t ||:= char(ch)
+         ch := ord(move(1)) | return t
+         t ||:= char(if ch >= 160 then
+                     member(m, ch) else ch) | subst
       }
-      return t
    end
 end

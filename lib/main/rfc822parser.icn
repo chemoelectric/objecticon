@@ -103,20 +103,28 @@ class RFC822Parser()
    end
 
    #
+   # Helper to add quotes to a string `s`, and escape any characters
+   # in `c`, which defaults to `'\"\\\r'`.
+   #
+   public static quote_string(s, c)
+      local t
+      t := "\""
+      /c := '\"\\\r'
+      s ? {
+         while t ||:= tab(upto(c)) || "\\" || move(1)
+         return t || tab(0) || "\""
+      }
+   end
+
+   #
    # Little utility function for quoting a string (if necessary).
    #
    public static escape_1521_value(s)
-      local t, ch
       # If non-empty and all chars are atom chars, no quotes needed.
-      if many(ATOM_CHAR_1521, s) = *s + 1 then
-         return s
-      t := "\""
-      s ? repeat {
-         t ||:= tab(many(QTEXT_CHAR))
-         ch := move(1) | break
-         t ||:= "\\" || ch
-      }
-      return t || "\""
+      return if many(ATOM_CHAR_1521, s) = *s + 1 then
+         s
+      else
+         quote_string(s, ~QTEXT_CHAR)
    end
 
    #

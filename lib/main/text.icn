@@ -84,13 +84,12 @@ final abstract class Text()
       s ? repeat {
          t ||:= tab(many(&ascii))
          if pos(0) then
-            break
+            return ucs(t)
          (n := get_utf8_seq_len(&subject[&pos]) & t ||:= string(ucs(move(n)))) | {
             t ||:= subst
             move(1)
          }
       }
-      return ucs(t)
    end
 
    #
@@ -102,10 +101,9 @@ final abstract class Text()
       t := ""
       s ? repeat {
          t ||:= tab(many(&ascii))
-         ch := ord(move(1)) | break
+         ch := ord(move(1)) | return ucs(t)
          t ||:= Text.utf8_seq(ch)
       }
-      return ucs(t)
    end
 
    #
@@ -119,10 +117,9 @@ final abstract class Text()
       t := ""
       s ? repeat {
          t ||:= string(tab(many(&ascii)))
-         ch := ord(move(1)) | break
+         ch := ord(move(1)) | return t
          t ||:= char(ch) | subst
       }
-      return t
    end
 
    # Given a cset `c`, produce another cset containing those characters in 
