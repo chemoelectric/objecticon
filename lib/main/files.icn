@@ -1028,11 +1028,9 @@ package class UnixFileSystem(FileSystem)
       l := []
       s ? {
          put(l, ="/")
-         until pos(0) do {
-            t := tab(upto('/') | 0)
+         every t := separate(tab(0), '/') do {
             if *t > 0 then
                put(l, t)
-            move(1)
          }
       }
       return l
@@ -1175,11 +1173,9 @@ package class WindowsFileSystem(FileSystem)
             put(l, move(2))
          else if &subject[1] == "\\" then     # \X
             put(l, move(1))                
-         until pos(0) do {
-            t := tab(upto('\\') | 0)
+         every t := separate(tab(0), '\\') do {
             if *t > 0 then
                put(l, t)
-            move(1)
          }
       }
       return l
