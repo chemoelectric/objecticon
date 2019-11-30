@@ -711,16 +711,12 @@ end
 #
 procedure separate_lines(s)
    local t
-   s ? {
-      while t := tab(upto('\n')) do {
-         # This just tests 't[-1] == "\r"', but avoids an allocation
-         # if s is ucs.
-         if any('\r', t, -1) then
-            t[-1] := ""
-         suspend t
-         move(1)
-      }
-      return tab(0)
+   every t := separate(s, '\n') do {
+      # This just tests 't[-1] == "\r"', but avoids an allocation
+      # if s is ucs.
+      if any('\r', t, -1) then
+         t[-1] := ""
+      suspend t
    }
 end
 
