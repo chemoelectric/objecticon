@@ -483,11 +483,16 @@ class URL(ObjectOutput)
       local cgi, key, t
       s := need_string(s)
       cgi := table()
-      every t := separate(s, '&') do t ? {
-         key := 1(tab(upto('=')),move(1)) | tab(0)
-         if *key > 0 then
-            inserts(cgi, cgi_decode(key), cgi_decode(tab(0)))
-      }
+      # Allow ; as a separator as well as &.  See :-
+      #    https://www.w3.org/TR/1999/REC-html401-19991224/appendix/notes.html#h-B.2.2
+      #
+      every t := separate(s, '&;') do
+         if *t > 0 then
+            t ? {
+               key := 1(tab(upto('=')),move(1)) | tab(0)
+               inserts(cgi, cgi_decode(key), cgi_decode(tab(0)))
+            }
+      
       return cgi
    end
 
@@ -620,9 +625,9 @@ class URL(ObjectOutput)
       } else
          p := re_encode(path, PATH_CHAR)
       q := if s == ("http" | "https") then
-         map(re_encode(\query, CGI_UNRESERVED ++ '=&+', CGI_UNRESERVED), " ", "+")
+         map(re_encode(\query, CGI_UNRESERVED ++ '=&;+', CGI_UNRESERVED), " ", "+")
       else
-         map(re_encode(\query, QUERY_CHAR ++ ' ', QUERY_CHAR ++ ' ' -- '=&+'), " ", "+")
+         map(re_encode(\query, QUERY_CHAR ++ ' ', QUERY_CHAR ++ ' ' -- '=&;+'), " ", "+")
       f := re_encode(\fragment, FRAGMENT_CHAR)
       return from_parts(s, u, h, port, p, q, f)
    end
