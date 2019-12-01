@@ -1466,6 +1466,8 @@ final abstract class Key()
       KP_BEGIN,
       KP_END,
       KP_NEXT,
+      KP_INSERT,
+      KP_DELETE,
       L1,
       L2,
       L3,
@@ -1597,6 +1599,8 @@ $if _X_WINDOW_SYSTEM
       KP_BEGIN :=            65437
       KP_END :=              65436
       KP_NEXT :=             65435
+      KP_INSERT :=           65438
+      KP_DELETE :=           65439
       L1 :=                  65480  # clash with f11
       L2 :=                  65481  # clash with f12
       L3 :=                  65482
@@ -1754,6 +1758,8 @@ $elsif _MS_WIN32
       KP_HOME :=            0
       KP_NEXT :=            0
       KP_PRIOR :=           0
+      KP_INSERT :=          0
+      KP_DELETE :=          0
       META_L :=             0
       META_R :=             0
       SHIFT_LOCK :=         0
