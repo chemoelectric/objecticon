@@ -358,9 +358,9 @@ package final abstract class Util()
    end
 
    private static parse_ini_file(s)
-      local group, groups, gn
+      local group, groups, gn, l
       groups := table()
-      every separate_lines(s) ? {
+      every l := separate_lines(s) do l ? {
          if pos(0) | match("#") then
             next
          if ="[" & gn := tab(upto(']')) then {

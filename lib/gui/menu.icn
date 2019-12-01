@@ -307,7 +307,7 @@ class Menu(TextMenuItem)
          Key.RIGHT: handle_key_right(e)
          Key.LEFT: handle_key_left(e)
          "\e" : handle_key_escape(e)
-         "\r" | " " : handle_key_return(e)
+         "\r" | "\l" | " " : handle_key_return(e)
          default: handle_default(e)
       }
    end

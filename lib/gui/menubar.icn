@@ -394,7 +394,7 @@ class MenuBar(Component, MenuSystem)
 
    public handle_key(e)
        case /e.release & e.code of {
-         Key.DOWN | " " | "\r": handle_key_down(e)
+         Key.DOWN | " " | "\r" | "\l": handle_key_down(e)
          Key.RIGHT: handle_key_right(e)
          Key.LEFT: handle_key_left(e)
          "\e" : handle_key_escape(e)

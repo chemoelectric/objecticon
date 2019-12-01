@@ -174,7 +174,7 @@ abstract class Button(Toggle,Component)
    end
 
    public handle_key(e)
-      if e.code === ("\r"|"\l"|" ") then
+      if e.code === ("\r" | "\l" | " ") then
          visualize_action(e)
    end
 
