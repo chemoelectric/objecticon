@@ -1440,24 +1440,24 @@ void doconfig(wbp w, int status)
     wsp ws = w->window;
     wcp wc = w->context;
     if (ws->win) {
-        switch (status & (C_POS|C_SIZE)) {
-            case C_POS|C_SIZE: {
+        switch (status & (C_POS | C_SIZE)) {
+            case C_POS | C_SIZE: {
                 SetWindowPos(ws->win, ws->win, ws->reqx, ws->reqy,
                              get_outer_width(ws), get_outer_height(ws),
-                             SWP_NOZORDER|SWP_NOACTIVATE);
+                             SWP_NOZORDER | SWP_NOACTIVATE);
                 break;
             }
             case C_SIZE: {
                 SetWindowPos(ws->win, ws->win, 0, 0,
                              get_outer_width(ws), get_outer_height(ws),
-                             SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+                             SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
                 break;
             }
             case C_POS: {
                 SetWindowPos(ws->win, ws->win,
                              ws->reqx,
                              ws->reqy,
-                             0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+                             0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
                 break;
             }
         }
