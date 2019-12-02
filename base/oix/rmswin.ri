@@ -1439,46 +1439,44 @@ void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-        if (ws->win) {
-            switch (status & (C_POS|C_SIZE)) {
-                case C_POS|C_SIZE: {
-                    SetWindowPos(ws->win, ws->win, ws->reqx, ws->reqy,
-                                 get_outer_width(ws), get_outer_height(ws),
-                                 SWP_NOZORDER|SWP_NOACTIVATE);
-                    break;
-                }
-                case C_SIZE: {
-                    SetWindowPos(ws->win, ws->win, 0, 0,
-                                 get_outer_width(ws), get_outer_height(ws),
-                                 SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-                    break;
-                }
-                case C_POS: {
-                    SetWindowPos(ws->win, ws->win,
-                                 ws->reqx,
-                                 ws->reqy,
-                                 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
-                    break;
-                }
+    if (ws->win) {
+        switch (status & (C_POS|C_SIZE)) {
+            case C_POS|C_SIZE: {
+                SetWindowPos(ws->win, ws->win, ws->reqx, ws->reqy,
+                             get_outer_width(ws), get_outer_height(ws),
+                             SWP_NOZORDER|SWP_NOACTIVATE);
+                break;
             }
-            if (status & C_SIZE) {
-                RECT r;
-                /*
-                 * Within a call to SetWindowPos doing a resize, DOS
-                 * will synchronously send a WM_GETMINMAXINFO, and
-                 * then set the size and (if the size has changed)
-                 * send a WM_SIZE.  A minor problem occurs if the
-                 * window size is equal to the maximum size, and we
-                 * request a change to a size greater than the
-                 * maximum.  Since the actual window size does not
-                 * change, there is no WM_SIZE message, and
-                 * ws->width/height remain inconsistent.  Therefore we
-                 * synch the size here to ensure it is correct.
-                 */
-                GetClientRect(ws->win, &r);
-                synch_size(ws, r.right - r.left, r.bottom - r.top);
+            case C_SIZE: {
+                SetWindowPos(ws->win, ws->win, 0, 0,
+                             get_outer_width(ws), get_outer_height(ws),
+                             SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+                break;
             }
+            case C_POS: {
+                SetWindowPos(ws->win, ws->win,
+                             ws->reqx,
+                             ws->reqy,
+                             0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+                break;
+            }
+        }
+        if (status & C_SIZE) {
+            RECT r;
+            /*
+             * Within a call to SetWindowPos doing a resize, DOS
+             * will synchronously send a WM_GETMINMAXINFO, and
+             * then set the size and (if the size has changed)
+             * send a WM_SIZE.  A minor problem occurs if the
+             * window size is equal to the maximum size, and we
+             * request a change to a size greater than the
+             * maximum.  Since the actual window size does not
+             * change, there is no WM_SIZE message, and
+             * ws->width/height remain inconsistent.  Therefore we
+             * synch the size here to ensure it is correct.
+             */
+            GetClientRect(ws->win, &r);
+            synch_size(ws, r.right - r.left, r.bottom - r.top);
         }
     }
     if (status & C_SIZE)
