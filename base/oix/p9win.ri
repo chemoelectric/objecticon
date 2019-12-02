@@ -1497,7 +1497,7 @@ void doconfig(wbp w, int status)
                 sprint(buf + strlen(buf), " -minx %d -miny %d", ws->reqx, ws->reqy);
             if (status & C_SIZE)
                 sprint(buf + strlen(buf), " -dx %d -dy %d", adjust(ws, ws->width), adjust(ws, ws->height));
-            if (status != C_POS) {
+            if (status & (C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
                 int minw, maxw, minh, maxh;
                 if (ws->resizable) {
                     minw = ws->minwidth;
