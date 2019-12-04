@@ -157,12 +157,10 @@ end
 procedure parse_entity()
    local i
    ="&"
-   i := (if any('#') then {
-      move(1)
-      if any('x') then {
-         move(1)
+   i := (if ="#" then {
+      if ="x" then
          Format.string_to_int(tab(many('0-9a-fA-F')))
-      } else
+      else
          integer(tab(many(&digits)))
    } else
       member(HtmlParser.ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
@@ -176,17 +174,16 @@ end
 procedure remove_entities(s)
    local res, i, j
    res := ""
-   s ? repeat {
-      res ||:= tab(upto('&') | 0)
-      if pos(0) then
-         break
-      i := &pos
-      res ||:= if j := parse_entity() then {
-         uchar(j | 63)
-      } else {
-         &pos := i
-         move(1)
+   s ? {
+      while res ||:= tab(upto('&')) do {
+         i := &pos
+         res ||:= if j := parse_entity() then
+            uchar(j | 63)
+         else {
+            &pos := i
+            move(1)
+         }
       }
+      return res || tab(0)
    }
-   return res
 end

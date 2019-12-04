@@ -41,49 +41,62 @@ class RFC1522()
       pre := "=?" || charset || "?" || encoding || "?"
       res := ""
       na := ~alphabet
-      s ? repeat {
-         i := upto(na) | {
-            res ||:= tab(0)
-            break
-         }
+      s ? {
+         while i := upto(na) do {
+            # Go back to the beginning of the word to encode.
+            j := i
+            while j > &pos & not any(delimeter,, j - 1) do
+               j -:= 1
+            # ... and go forward to the end.
+            k := upto(delimeter,, j + 1) | 0
 
-         # Go back to the beginning of the word to encode.
-         j := i
-         while j > &pos & not any(delimeter,, j - 1) do
-            j -:= 1
-         # ... and go forward to the end.
-         k := upto(delimeter,, j + 1) | 0
+            # On decoding, whitespace-only between adjacent encoded-words
+            # is ignored.  In that case therefore it must be included in
+            # the encoded-word itself, and a space added to separate the
+            # encoded words.
+            #
+            if /adj | upto(~LWSP_CHAR,,, j) then
+               res ||:= tab(j)
+            else
+               res ||:= " "
 
-         # On decoding, whitespace-only between adjacent encoded-words
-         # is ignored.  In that case therefore it must be included in
-         # the encoded-word itself, and a space added to separate the
-         # encoded words.
-         #
-         if /adj | upto(~LWSP_CHAR,,, j) then
-            res ||:= tab(j)
-         else
-            res ||:= " "
-
-         t := tab(k)
-         res ||:= pre
-         case map(encoding) of {
-            "b": {
-               res ||:= base64encode(t)
-            }
-            "q": {
-               t ? until pos(0) do {
-                  res ||:= tab(many(Q_PRINTABLE_CHAR)) |
-                     (=" ", "_") |
-                     "=" || Format.int_to_string(ord(move(1)), 16, 2)
+            t := tab(k)
+            res ||:= pre
+            case map(encoding) of {
+               "b": {
+                  res ||:= base64encode(t)
                }
+               "q": {
+                  t ? until pos(0) do {
+                     res ||:= tab(many(Q_PRINTABLE_CHAR)) |
+                        (=" ", "_") |
+                        "=" || Format.int_to_string(ord(move(1)), 16, 2)
+                  }
+               }
+               default:
+                  runerr("Unknown content word encoding", encoding)
             }
-            default:
-               runerr("Unknown content word encoding", encoding)
+            res ||:= "?="
+            adj := &yes
          }
-         res ||:= "?="
-         adj := &yes
+         return res || tab(0)
       }
-      return res
+   end
+
+   private static q_decode(s)
+      local r
+      r := ""
+      s ? {
+         while r ||:= tab(upto('_=')) do {
+            r ||:= if ="_" then
+               " "
+            else {
+               move(1)
+               char(Format.string_to_int(move(2))) | return error("Bad q-encoded data")
+            }
+         }
+         return r || tab(0)
+      }
    end
 
    #
@@ -96,50 +109,33 @@ class RFC1522()
    public static decode(s)
       local charset, encoding, data, res, t, adj
       res := ""
-      s ? repeat {
-         t := tab(find("=?") | 0)
-         if pos(0) then {
-            res ||:= t
-            break
-         }
-         #
-         # Whitespace between adjacent encoded-words must be ignored.
-         #
-         if /adj | upto(~LWSP_CHAR, t) then
-            res ||:= t
+      s ? {
+         while t := tab(find("=?")) do {
+            #
+            # Whitespace between adjacent encoded-words must be ignored.
+            #
+            if /adj | upto(~LWSP_CHAR, t) then
+               res ||:= t
 
-         move(2)
-         charset := tab(upto('?')) | return error("Badly formed encoded word")
-         move(1)
-         encoding := tab(upto('?')) | return error("Badly formed encoded word")
-         move(1)
-         data := tab(upto('?')) | return error("Badly formed encoded word")
-         case map(encoding) of {
-            "b": t := base64decode(data) | fail
-            "q": {
-               t := ""
-               data ? repeat {
-                  t ||:= tab(upto('_=') | 0)
-                  if pos(0) then
-                     break
-                  if any('_') then {
-                     move(1)
-                     t ||:= " "
-                  } else {
-                     move(1)
-                     t ||:= char(Format.string_to_int(move(2))) | return error("Bad q-encoded data")
-                  }
-               }
+            move(2)
+            charset := tab(upto('?')) | return error("Badly formed encoded word")
+            move(1)
+            encoding := tab(upto('?')) | return error("Badly formed encoded word")
+            move(1)
+            data := tab(upto('?')) | return error("Badly formed encoded word")
+            t := case map(encoding) of {
+               "b": base64decode(data) | fail
+               "q": q_decode(data) | fail
+               default:
+                  return error("Unknown content word encoding: " || encoding)
             }
-            default:
-               return error("Unknown content word encoding: " || encoding)
+            if map(charset) == "utf-8" then
+               t := ucs(t) | return error("Encoded word data not proper UTF-8")
+            res ||:= t
+            ="?="  | return error("Encoded word did not end with ?=")
+            adj := &yes
          }
-         if map(charset) == "utf-8" then
-            t := ucs(t) | return error("Encoded word data not proper UTF-8")
-         res ||:= t
-         ="?="  | return error("Encoded word did not end with ?=")
-         adj := &yes
+         return res || tab(0)
       }
-      return res
    end
 end

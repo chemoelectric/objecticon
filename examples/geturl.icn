@@ -576,24 +576,24 @@ end
 
 procedure expand_braces(s)
    local l, s1, s2, s3
-   every separate(s) ? {
+   suspend separate(s) ? {
       s1 := tab(upto('-') | 0)
-      if tab(any('-')) then {
+      if ="-" then {
          s2 := tab(upto(':') | 0)
-         s3 := if tab(any(':')) then
+         s3 := if =":" then
             tab(0)
          else
             1
          if any('0', s1 | s2) then {
             l := *s1
             l <:= *s2
-            suspend right(integer(s1) to integer(s2) by integer(s3), l, "0")
+            right(integer(s1) to integer(s2) by integer(s3), l, "0")
          } else if (any(&lcase, s1) & any(&lcase, s2)) |
                    (any(&ucase, s1) & any(&ucase, s2)) then {
-            suspend char(ord(s1[1]) to ord(s2[1]) by integer(s3))
+            char(ord(s1[1]) to ord(s2[1]) by integer(s3))
          } else
-            suspend string(integer(s1) to integer(s2) by integer(s3))
+            string(integer(s1) to integer(s2) by integer(s3))
       } else
-         suspend s1
+         s1
    }
 end
