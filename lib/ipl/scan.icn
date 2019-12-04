@@ -868,6 +868,19 @@ procedure caseless_find(s1, s2, i, j)
 end
 
 #
+# Caseless version of `past()`
+#
+procedure caseless_past(s1, s2, i, j)
+   local a
+   # Note that the usual conversions are necessary, since they potentially
+   # change the type of s1 (and hence *s1).
+   a := begin_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := similar_string_type(s1, s2)
+   suspend caseless_find(s1, s2, i, j) + *s1
+end
+
+#
 # Search backwards in s[i:j], for chars in cset c, beginning at the
 # end.  For each one found, the position just to the right is
 # suspended.
