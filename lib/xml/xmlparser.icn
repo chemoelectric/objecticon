@@ -479,9 +479,8 @@ class XmlParser(Connectable)
       res := ""
       s ? {
          while res ||:= tab(upto('&' ++ SPACE)) do {
-            if any(SPACE) then {
+            if tab(any(SPACE)) then {
                res ||:= " "
-               move(1)
             } else {   # an '&'
                # Char refs aren't recursively treated; entity refs are.
                if match("&#") then
@@ -913,10 +912,7 @@ class XmlParser(Connectable)
 
       parse_eq()
 
-      if any('\'\"') then
-         c := move(1)
-      else
-         throw("\' or \" expected")
+      c := tab(any('\'\"')) | throw("\' or \" expected")
 
       res := ="yes" | ="no" | throw("'yes' or 'no' expected")
 
@@ -1499,8 +1495,7 @@ class XmlParser(Connectable)
       local digs, i, j
       j := &pos
       ="&#" | throw("'&#' expected")
-      if any('x') then {
-         move(1)
+      if ="x" then {
          digs := tab(many('0-9a-fA-F')) | throw("Hex digit expected")
          i := Format.string_to_int(digs)
       } else {
@@ -1603,8 +1598,7 @@ class XmlParser(Connectable)
       # <!ENTITY%x; abc 'def >   where %x -> ' %'
       #
       spaces()
-      if any('%') then {
-         ="%"
+      if ="%" then {
          dtd_spaces()
          name := dtd_parse_name()
          dtd_spaces()

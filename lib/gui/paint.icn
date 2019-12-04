@@ -267,8 +267,7 @@ class GridPaint(Paint)
                   tab(many(' '))
                   if pos(0) then
                      break
-                  if any('\'') then {
-                     move(1)
+                  if ="'" then {
                      t := tab(upto('\'') | 0)
                      move(1)
                   } else

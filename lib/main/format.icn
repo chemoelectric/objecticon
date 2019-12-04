@@ -268,9 +268,8 @@ final abstract class Format()
       state := 0
       l := []
       s ? until pos(0) do {
-         if any('\\') then {
+         if ="\\" then {
             esc_flag := &yes
-            move(1)
             c := (if any('0-7') then
                      iand(string_to_int(tab(max_many('0-7', 3)), 8), 8r377)
                   else if ="x" then
