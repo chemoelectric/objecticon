@@ -56,7 +56,7 @@ class JSONParser()
 
    private parse_string()
       local s, ch, i
-      ="\""
+      ="\"" | err("\" expected")
       s := ""
       repeat {
          s ||:= string(tab(many(UNESCAPED_CHAR)))
