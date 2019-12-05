@@ -518,41 +518,34 @@ class HtmlParser()
    end
 
    #
-   # Parse an entity character, eg "&#xff;", returning the integer char number.
+   # Match an entity character, eg "&#xff;", returning the matched character value.
    #
-   private static parse_entity()
+   private match_entity()
       local i
-      ="&"
-      i := (if ="#" then {
-         if ="x" then
-            Format.string_to_int(tab(many('0-9a-fA-F')))
-         else
-            integer(tab(many(&digits)))
-      } else
-         member(ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
-      =";" | fail
-      return i
+      if ="&" &
+         (i := if ="#" then {
+                 if ="x" then
+                     Format.string_to_int(tab(many('0-9a-fA-F')))
+                 else
+                     integer(tab(many(&digits)))
+              } else
+                  member(ENTITIES, string(tab(many(&letters))))) &
+         =";"
+      then
+         return if \utf8_flag then
+                   uchar(i | 63)
+                else
+                   char(i | 63)
    end
 
    #
    # Remove the entity characters from a string.
    #
    private remove_entities(s)
-      local res, i, j
+      local res
       res := ""
       s ? {
-         while res ||:= tab(upto('&')) do {
-            i := &pos
-            res ||:= if j := parse_entity() then {
-               if \utf8_flag then
-                  uchar(j | 63)
-               else
-                  char(j | 63)
-            } else {
-               &pos := i
-               move(1)
-            }
-         }
+         while res ||:= tab(upto('&')) || match_entity()
          return res || tab(0)
       }
    end
