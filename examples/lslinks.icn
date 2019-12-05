@@ -1,14 +1,16 @@
 import
    http,
-   lang(decode_from_file,Text),
-   net(URL),
-   xml(HtmlParser),
-   ipl.scan(past),
+   lang,
+   net,
+   xml,
+   ipl.scan,
+   ipl.pdco,
    ipl.options,
    ipl.charset,
    xdg,
    io,
-   util(use,Format)
+   util,
+   ipl.printf
 
 global opts, hc
 
@@ -52,7 +54,7 @@ procedure main(args)
                           Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
                           Opt("r",integer_range(0), "RETRIES#Number of retries"),
                           Opt("k",string, "FILE#Load cookies from file"),
-                          Opt("text",,"Do text search for tags rather than search parsed document")],
+                          Opt("text",,"Do a search for tags in the text content of the parsed document")],
                           "Usage: lslinks [URL]... [OPTIONS]\N_
                            List links in URL(s)")
 
@@ -60,7 +62,7 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
-   cookies := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
+   cookies := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stopf("Couldn't access data dir: %w")
    t := decode_from_file(cookies) | table()
    hc.set_cookies(t)
 
@@ -73,12 +75,12 @@ procedure do_one(a)
    local url, hr, res, src, parser, doc, rs, f, s, i
 
    a := ucs(a) | stop("Argument not UTF-8")
-   url := URL(a).normal() | stop("Invalid url: ", a, ": ", &why)
+   url := URL(a).normal() | stopf("Invalid url: %s: %w", a)
 
    if f := Files.url_to_file(url) then
-      src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
+      src := Files.file_to_string(f) | stopf("Couldn't read file: %w")
    else {
-      url.scheme == ("http" | "https") | stop("Unknown url scheme: " || url.scheme)
+      url.scheme == ("http" | "https") | stop("Unknown url scheme: ", url.scheme)
       src := use {
          rs := RamStream(),
          {
@@ -87,7 +89,7 @@ procedure do_one(a)
                set_output_stream(rs).
                set_helper(HttpRequestHelperImpl())
             hr.set_referer(\opts["e"])
-            res := hc.retrieve(hr) | stop("Couldn't get: ", &why)
+            res := hc.retrieve(hr) | stopf("Couldn't get: %w")
             rs.str()
          }
       }
@@ -96,7 +98,7 @@ procedure do_one(a)
 
    # Optionally save page source
    if s := \opts["tee"] then
-      Files.string_to_file(s, src) | stop("Couldn't dump file to ", s, ": ", &why)
+      Files.string_to_file(s, src) | stopf("Couldn't dump file to %s: %w", s)
 
    src := if i := \opts["I"] then
       ISO8859.to_ucs(src, i) | stop("Invalid ISO 8859 number")
@@ -106,22 +108,23 @@ procedure do_one(a)
    parser := HtmlParser()
    doc := parser.parse(src)
    if \opts["i"] then
-      do_search(url, src, doc, u"IMG", u"SRC", "")
+      do_search(url, src, doc, "IMG", u"SRC", "")
    else if \opts["b"] then {
-      do_search(url, src, doc, u"IMG", u"SRC", "IMG:")
-      do_search(url, src, doc, u"A", u"HREF", "A:")
-      do_search(url, src, doc, u"AREA", u"HREF", "A:")
+      do_search(url, src, doc, "IMG", u"SRC", "IMG:")
+      do_search(url, src, doc, "A", u"HREF", "A:")
+      do_search(url, src, doc, "AREA", u"HREF", "A:")
    } else {
-      do_search(url, src, doc, u"A", u"HREF", "")
-      do_search(url, src, doc, u"AREA", u"HREF", "")
+      do_search(url, src, doc, "A", u"HREF", "")
+      do_search(url, src, doc, "AREA", u"HREF", "")
    }
 end
 
 procedure print(pfx, s, base)
    local url
    url := URL(s) | base.get_relative(s)
+   # Normalize to ensure correct % encoding for flowterm output (no errant quotes for instance).
+   url := url.normal()
    \opts["A"] | (url.scheme == ("http" | "https" | "file")) | fail
-
    if FileStream.stdout.is_flowterm_tty() then
       write(pfx, Files.begin_link(url), url.str(), Files.end_link())
    else
@@ -132,58 +135,22 @@ procedure do_search(url, src, doc, tag, attr, pfx)
    local base, n, s
 
    base := url
-   if n := doc.get_root_element().search_tree(u"BASE") then
+   if n := doc.get_root_element().search_tree("BASE") then
       base := URL(n.get_attribute(u"HREF"))
 
-   if \opts["text"] then {
-      map(src) ? {
-         while tab(past(u"<" || map(tag) || u" ")) do {
-            if tab(past(map(attr) || u"=\"")) then {
-               if s := tab(upto('\"')) then {
-                  s := remove_entities(s)
-                  print(pfx, s, base)
+   every n := Seq{doc.get_root_element().traverse_all_preorder()} do {
+      if text(n) then {
+         if \opts["text"] then {
+            n ? {
+               while tab(caseless_past("<" || tag || " ")) do {
+                  if tab(caseless_past(attr || "=\"")) & s := tab(upto('\"')) then
+                     print(pfx, s, base)
                }
             }
          }
-      }
-   } else {
-      every n := doc.get_root_element().search_tree(tag) do {
-         if s := n.get_attribute(attr) then
+      } else if is(n, Element) then {
+         if n.get_name() == tag & s := n.get_attribute(attr) then
             print(pfx, s, base)
       }
-   }
-end
-
-procedure parse_entity()
-   local i
-   ="&"
-   i := (if ="#" then {
-      if ="x" then
-         Format.string_to_int(tab(many('0-9a-fA-F')))
-      else
-         integer(tab(many(&digits)))
-   } else
-      member(HtmlParser.ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
-   =";" | fail
-   return i
-end
-
-#
-# Remove the entity characters from a string.
-#
-procedure remove_entities(s)
-   local res, i, j
-   res := ""
-   s ? {
-      while res ||:= tab(upto('&')) do {
-         i := &pos
-         res ||:= if j := parse_entity() then
-            uchar(j | 63)
-         else {
-            &pos := i
-            move(1)
-         }
-      }
-      return res || tab(0)
    }
 end
