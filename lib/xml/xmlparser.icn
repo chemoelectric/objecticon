@@ -633,7 +633,7 @@ class XmlParser(Connectable)
       local res
       res := CData()
       res.content := tab(find("]]>")) | throw("No corresponding ']]>' in CDATA section")
-      check_is_char_data(res.content, "PI")
+      check_is_char_data(res.content, "CDATA")
       ="]]>"
       return res
    end
