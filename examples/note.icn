@@ -7,7 +7,7 @@ import io, util, lang, graphics, ipl.options, posix(System), ipl.sort,
 global opts, notes, mod
 
 procedure notes_file()
-   return FilePath(BaseDir.ensure_data_home()).child("oinotes").str() | stop("Couldn't access data dir: ", &why)
+   return FilePath(BaseDir.ensure_data_home()).child("oinotes").str() | stopf("Couldn't access data dir: %w")
 end
 
 procedure load_notes()
@@ -15,7 +15,7 @@ procedure load_notes()
 end
 
 procedure save_notes()
-   encode_to_file(notes_file(), notes, &yes) | stop("Failed to write notes file: ", &why)
+   encode_to_file(notes_file(), notes, &yes) | stopf("Failed to write notes file: %w")
 end
 
 procedure load_from(fn)
@@ -24,7 +24,7 @@ procedure load_from(fn)
 end
 
 procedure save_to(fn)
-   encode_to_file(fn, notes, &yes) | stop("Failed to write file: ", &why)
+   encode_to_file(fn, notes, &yes) | stopf("Failed to write file: %w")
 end
 
 procedure do_uniq()

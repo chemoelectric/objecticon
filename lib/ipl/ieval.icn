@@ -5,7 +5,7 @@
 package ipl.ieval
 
 import io, gui-(List), lang, xdg, ipl.columnize, parser(Parser,Token), eval, util,
-   ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists, ipl.scan, net
+   ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists, ipl.scan, net, ipl.printf
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
@@ -491,13 +491,13 @@ class Ieval(MinimalObjectOutput)
       if \opts["z"] then
          do_nothing()
       else {
-         hfile := FilePath(BaseDir.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
+         hfile := FilePath(BaseDir.ensure_data_home()).child("ieval").str() | stopf("Couldn't access data dir: %w")
          history := decode_from_file(hfile) | []
          if \opts["g"] then
             do_gui()
          else
             do_line_editor()
-         encode_to_file(hfile, input.get_history()) | stop("Couldn't encode to history file ", hfile, ": ", &why)
+         encode_to_file(hfile, input.get_history()) | stopf("Couldn't encode to history file %s: %w", hfile)
       }
       write("Ciao")
    end
@@ -525,13 +525,13 @@ class Ieval(MinimalObjectOutput)
       consts["out"] := output
       consts["vars"] := vars
 
-      f := FilePath(BaseDir.ensure_config_home()).child("ieval").str() | stop("Couldn't access config dir: ", &why)
+      f := FilePath(BaseDir.ensure_config_home()).child("ieval").str() | stopf("Couldn't access config dir: %w")
       if Files.access(f) then
          push(files, f)
       every f := !files do {
-         s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
-         n := par.parse_expression(s) | stop("Couldn't parse ", f,  ": ", &why)
-         ev.set_node(n) | stop("Couldn't parse ", f,  ": ", &why) 
+         s := Files.file_to_string(f) | stopf("Couldn't load %s: %w", f)
+         n := par.parse_expression(s) | stopf("Couldn't parse %s: %w", f)
+         ev.set_node(n) | stopf("Couldn't parse %s: %w", f) 
          Safe{ev.eval()}
          if &errortext then {
             if &errornumber then
@@ -771,7 +771,7 @@ class Ieval(MinimalObjectOutput)
       local s, t, prompt
       input := LineEditorStream(opts["s"]).
          set_complete_function(complete).
-         set_history_limit(hlim) | stop("Failed to create LineEditorStream: ", &why)
+         set_history_limit(hlim) | stopf("Failed to create LineEditorStream: %w")
 
       do_nothing()
 
@@ -779,7 +779,7 @@ class Ieval(MinimalObjectOutput)
       prompt := "> "
       repeat {
          input.set_prompt(prompt)
-         t := input.read_line() | stop("Failed to read input: ", &why)
+         t := input.read_line() | stopf("Failed to read input: %w")
          if /t then break
          s ||:= t
          if s[-1] == "\\" then {
