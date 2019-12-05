@@ -399,7 +399,7 @@ class XmlParser(Connectable)
             res ||:= resolve_entity(lookup_pe_reference(parse_pe_reference()))
          } else if match("&#") then
             # Char refs are expanded
-            res ||:= parse_char_ref(1)
+            res ||:= parse_char_ref(&yes)
          else if any('&') then
             # General refs aren't
             res ||:= parse_entity_ref()
@@ -484,7 +484,7 @@ class XmlParser(Connectable)
             } else {   # an '&'
                # Char refs aren't recursively treated; entity refs are.
                if match("&#") then
-                  res ||:= parse_char_ref(1)
+                  res ||:= parse_char_ref(&yes)
                else {
                   ref := parse_entity_ref()
                   if member(\circle, ref) then
@@ -514,9 +514,8 @@ class XmlParser(Connectable)
                }
             }
          }
-         res ||:= tab(0)
+         return res || tab(0)
       }
-      return res
    end
 
    #
@@ -1032,7 +1031,7 @@ class XmlParser(Connectable)
       until pos(0) do {
          if any('&') then {
             if match("&#") then
-               parent.add_string(parse_char_ref(1))
+               parent.add_string(parse_char_ref(&yes))
             else {
                ref := parse_entity_ref()
                if member(\circle, ref) then
