@@ -387,8 +387,7 @@ class XmlParser(Connectable)
    #
    private parse_entity_value()
       local res, c
-      any('\'\"') | throw("\' or \" expected")
-      c := move(1)
+      c := tab(any('\'\"')) | throw("\' or \" expected")
       res := move(0)  # Empty string, same type as &subject
       repeat {
          if any('%') then {
@@ -417,8 +416,7 @@ class XmlParser(Connectable)
    #
    private parse_attvalue()
       local res, c
-      any('\'\"') | throw("\' or \" expected")
-      c := move(1)
+      c := tab(any('\'\"')) | throw("\' or \" expected")
       res := move(0)  # Empty string, same type as &subject
       repeat {
          if any('&') then
@@ -542,8 +540,7 @@ class XmlParser(Connectable)
    #
    private parse_system_literal()
       local c, res
-      any('\'\"') | throw("\' or \" expected")
-      c := move(1)
+      c := tab(any('\'\"')) | throw("\' or \" expected")
       res := tab(upto(c)) | throw("Couldn't find " || c)
       move(1)
       check_is_char_data(res, "system literal value")
@@ -687,8 +684,7 @@ class XmlParser(Connectable)
 
       parse_eq()
 
-      any('\'\"') | throw("\' or \" expected")
-      c := move(1)
+      c := tab(any('\'\"')) | throw("\' or \" expected")
 
       res := parse_version_num()
 
@@ -1127,9 +1123,9 @@ class XmlParser(Connectable)
    #
    private parse_content_spec()
       local a, i
-      if tab(dtd_match("EMPTY")) then
+      if dtd_tabmat("EMPTY") then
          return ContentSpec("EMPTY")
-      else if tab(dtd_match("ANY")) then {
+      else if dtd_tabmat("ANY") then {
          a := ContentSpec("ANY")
          a.is_mixed_flag := &yes
          return a
@@ -1137,7 +1133,7 @@ class XmlParser(Connectable)
       else if dtd_match("(") then {
          # Awkward lookahead.
          i := &pos
-         if tab(dtd_match("(")) & tab(dtd_many0(SPACE)) & dtd_match("#PCDATA") then {
+         if dtd_tabmat("(") & tab(dtd_many0(SPACE)) & dtd_match("#PCDATA") then {
             &pos := i
             return parse_mixed()
          } else {
@@ -1154,11 +1150,10 @@ class XmlParser(Connectable)
    private parse_children()
       local x, op
       x := parse_choiceseq()
-      if dtd_any('?*+') then {
-         op := move(1)
-         return ContentSpec(string(op), x)
-      } else
-         return x
+      return if op := tab(dtd_any('?*+')) then
+         ContentSpec(string(op), x)
+      else
+         x
    end
 
    #
@@ -1173,11 +1168,10 @@ class XmlParser(Connectable)
          x := ContentSpec("name", dtd_parse_name())
       else
          throw("Name or ( expected")
-      if dtd_any('?*+') then {
-         op := move(1)
+      return if op := tab(dtd_any('?*+')) then
          return ContentSpec(string(op), x)
-      } else
-         return x
+      else
+         x
    end
 
    #
@@ -1187,19 +1181,18 @@ class XmlParser(Connectable)
    private parse_choiceseq()
       local res, op, a, t
 
-      tab(dtd_match("(")) | throw("'(' expected")
+      dtd_tabmat("(") | throw("'(' expected")
       dtd_opt_spaces()
       a := parse_cp()
       dtd_opt_spaces()
 
-      if dtd_any('|,') then {
-         op := move(1)
+      if op := tab(dtd_any('|,')) then {
          res := t := ContentSpec(string(op), a)
          repeat {
             dtd_opt_spaces()
             a := parse_cp()
             dtd_opt_spaces()
-            tab(dtd_match(op)) | break
+            dtd_tabmat(op) | break
             t.arg2 := ContentSpec(string(op), a)
             t := t.arg2
          }
@@ -1207,7 +1200,7 @@ class XmlParser(Connectable)
       } else
          res := a
 
-      tab(dtd_match(")")) | throw("')' expected")
+      dtd_tabmat(")") | throw("')' expected")
       return res
    end
 
@@ -1218,16 +1211,15 @@ class XmlParser(Connectable)
    private parse_mixed()
       local res, t, a, seen, n
 
-      tab(dtd_match("(")) | throw("( expected")
+      dtd_tabmat("(") | throw("( expected")
       dtd_opt_spaces()
-      a := ContentSpec(string(tab(dtd_match("#PCDATA")))) | throw("'#PCDATA' expected")
+      a := ContentSpec(string(dtd_tabmat("#PCDATA"))) | throw("'#PCDATA' expected")
        
       dtd_opt_spaces()
 
       seen := set()
 
-      if dtd_any('|') then {
-         move(1)
+      if dtd_tabmat("|") then {
          res := t := ContentSpec("|", a)
          repeat {
             dtd_opt_spaces()
@@ -1238,17 +1230,17 @@ class XmlParser(Connectable)
                insert(seen, n)
             a := ContentSpec("name", n)
             dtd_opt_spaces()
-            tab(dtd_match("|")) | break
+            dtd_tabmat("|") | break
             t.arg2 := ContentSpec("|", a)
             t := t.arg2
          }
          t.arg2 := a
 
-         tab(dtd_match(")*")) | throw("')*' expected")
+         dtd_tabmat(")*") | throw("')*' expected")
          a := ContentSpec("*", res)
       } else {
-         tab(dtd_match(")")) | throw("')' expected")
-         if tab(dtd_match("*")) then
+         dtd_tabmat(")") | throw("')' expected")
+         if dtd_tabmat("*") then
             a :=  ContentSpec("*", a)
       }
 
@@ -1304,7 +1296,7 @@ class XmlParser(Connectable)
             t.add_attribute_def(attr_name, attribute_def)
       }
       dtd_opt_spaces()
-      tab(dtd_match(">")) | throw("'>' expected")
+      dtd_tabmat(">") | throw("'>' expected")
 
       return res
    end
@@ -1318,7 +1310,7 @@ class XmlParser(Connectable)
    private parse_att_type(attribute_def)
       local s
 
-      if s := tab(dtd_match("CDATA" | "IDREFS" | "IDREF"| "ID" | "ENTITY" | "ENTITIES" | "NMTOKENS" | "NMTOKEN")) then
+      if s := dtd_tabmat("CDATA" | "IDREFS" | "IDREF"| "ID" | "ENTITY" | "ENTITIES" | "NMTOKENS" | "NMTOKEN") then
          attribute_def.def_type := string(s)
       else if dtd_match("NOTATION") then {
          attribute_def.def_type := "NOTATION"
@@ -1339,9 +1331,9 @@ class XmlParser(Connectable)
       local res, t
 
       res := set()
-      tab(dtd_match("NOTATION")) | throw("'NOTATION' expected")
+      dtd_tabmat("NOTATION") | throw("'NOTATION' expected")
       dtd_spaces()
-      tab(dtd_match("(")) | throw("'(' expected")
+      dtd_tabmat("(") | throw("'(' expected")
       repeat {
          dtd_opt_spaces()
          t := dtd_parse_name()
@@ -1349,10 +1341,10 @@ class XmlParser(Connectable)
             invalid("Duplicated name in notation enumeration declaration: " || t)
          insert(res, t)
          dtd_opt_spaces()
-         tab(dtd_match("|")) | break
+         dtd_tabmat("|") | break
       }
       opt_spaces()
-      tab(dtd_match(")")) | throw("')' expected")
+      dtd_tabmat(")") | throw("')' expected")
 
       return res
    end
@@ -1364,7 +1356,7 @@ class XmlParser(Connectable)
       local res, t
 
       res := set()
-      tab(dtd_match("(")) | throw("'(' expected")
+      dtd_tabmat("(") | throw("'(' expected")
       repeat {
          dtd_opt_spaces()
          t := dtd_parse_nmtoken()
@@ -1372,10 +1364,10 @@ class XmlParser(Connectable)
             invalid("Duplicated token in enumeration declaration: " || t)
          insert(res, t)
          dtd_opt_spaces()
-         tab(dtd_match("|")) | break
+         dtd_tabmat("|") | break
       }
       dtd_opt_spaces()
-      tab(dtd_match(")")) | throw("')' expected")
+      dtd_tabmat(")") | throw("')' expected")
 
       return res
    end
@@ -1385,10 +1377,10 @@ class XmlParser(Connectable)
    #
    private parse_default_decl(attribute_def)
       local s, val
-      if s := tab(dtd_match("#REQUIRED" | "#IMPLIED")) then
+      if s := dtd_tabmat("#REQUIRED" | "#IMPLIED") then
          attribute_def.default_decl := string(s)
       else {
-         if s := tab(dtd_match("#FIXED")) then {
+         if s := dtd_tabmat("#FIXED") then {
             attribute_def.default_decl := string(s)
             dtd_spaces()
          }
@@ -1453,18 +1445,18 @@ class XmlParser(Connectable)
    #
    private parse_conditional_sect()
       dtd_opt_spaces()
-      if tab(dtd_match("INCLUDE")) then {
+      if dtd_tabmat("INCLUDE") then {
          dtd_opt_spaces()
-         tab(dtd_match("[")) | throw("'[' expected")
+         dtd_tabmat("[") | throw("'[' expected")
          parse_ext_subset_decl()
-      } else if tab(dtd_match("IGNORE")) then {
+      } else if dtd_tabmat("IGNORE") then {
          dtd_opt_spaces()
-         tab(dtd_match("[")) | throw("'[' expected")
+         dtd_tabmat("[") | throw("'[' expected")
          parse_ignore_sect_contents()
       } else 
          throw("'INCLUDE' or 'IGNORE' expected")
 
-      tab(dtd_match("]]>")) | throw("']]>' expected")
+      dtd_tabmat("]]>") | throw("']]>' expected")
 
       return
    end
@@ -1618,7 +1610,7 @@ class XmlParser(Connectable)
             insert(doc.general_entities, name, val)
       }         
       dtd_opt_spaces()
-      tab(dtd_match(">")) | throw("'>' expected")
+      dtd_tabmat(">") | throw("'>' expected")
       return
    end
 
@@ -1665,10 +1657,10 @@ class XmlParser(Connectable)
    private parse_external_id()
       local res
       res := ExternalID()
-      if tab(dtd_match("SYSTEM")) then {
+      if dtd_tabmat("SYSTEM") then {
          dtd_spaces()
          res.system_id := parse_system_literal()
-      } else if tab(dtd_match("PUBLIC")) then {
+      } else if dtd_tabmat("PUBLIC") then {
          dtd_spaces()
          res.public_id := parse_pubid_literal()
          dtd_spaces()
@@ -1684,7 +1676,7 @@ class XmlParser(Connectable)
    private parse_ndata_decl()
       local n
       dtd_spaces()
-      tab(dtd_match("NDATA")) | throw("'NDATA' expected")
+      dtd_tabmat("NDATA") | throw("'NDATA' expected")
       dtd_spaces()
       n := dtd_parse_name()
       return n
@@ -1727,8 +1719,7 @@ class XmlParser(Connectable)
 
       parse_eq()
 
-      any('\'\"') | throw("\' or \" expected")
-      c := move(1)
+      c := tab(any('\'\"')) | throw("\' or \" expected")
 
       res := parse_enc_name()
 
@@ -1761,7 +1752,7 @@ class XmlParser(Connectable)
       dtd_spaces()
       name := dtd_parse_name()
       dtd_spaces()
-      if tab(dtd_match("PUBLIC")) then {
+      if dtd_tabmat("PUBLIC") then {
          dtd_spaces()
          pub := parse_pubid_literal()
          if looking_at_space_then_cset('\'\"') then {
@@ -1775,7 +1766,7 @@ class XmlParser(Connectable)
       else
          throw("SYSTEM or PUBLIC expected")
       dtd_opt_spaces()
-      tab(dtd_match(">")) | throw("'>' expected")
+      dtd_tabmat(">") | throw("'>' expected")
 
       /doc.notation_declarations[name] := res
 
@@ -2072,9 +2063,23 @@ class XmlParser(Connectable)
       repeat {
          if x := match(s) then
             return x
-         every c := !s do {
+         every c := !s do
             =c | break
-         }
+         try_dtd_insert(i) | fail
+      }
+   end
+
+   #
+   # Equivalent to =s, but checks for pe expansions
+   #
+   private dtd_tabmat(s)
+      local i, x, c
+      i := &pos
+      repeat {
+         if x := =s then
+            return x
+         every c := !s do
+            =c | break
          try_dtd_insert(i) | fail
       }
    end
@@ -2140,7 +2145,6 @@ class XmlParser(Connectable)
          return
       }
       &pos := i
-      fail
    end
 
    #
