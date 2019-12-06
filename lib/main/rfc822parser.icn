@@ -88,15 +88,13 @@ class RFC822Parser()
       move(1)
 
       repeat {
-         if any('\\') then {
-            move(1)
+         if ="\\" then
             res ||:= move(1) | throw("Unterminated quoted string")
-         } else if any(QTEXT_CHAR) then
+         else if any(QTEXT_CHAR) then
             res ||:= tab(many(QTEXT_CHAR))
-         else if any('\"') then {
-            move(1)
+         else if ="\"" then
             return res
-         } else
+         else
             # Missing closing quote or illegal char
             throw("Missing closing quote or illegal char")
       }
@@ -262,7 +260,7 @@ class RFC822Parser()
       t := parse_local_part()
       mb.set_local_part(t)
       next_token()
-      ="@" | throw("@ expected")
+      ="@" | throw("'@' expected")
       t := parse_domain()
       mb.set_domain(t)
       return
@@ -277,14 +275,14 @@ class RFC822Parser()
       t := []
       repeat {
          next_token()
-         ="@" | throw("@ expected")
+         ="@" | throw("'@' expected")
          put(t, parse_domain())
          next_token()
          ="," | break
          next_token()
       }
       next_token()
-      =":" | throw(": expected")
+      =":" | throw("':' expected")
       mb.set_route(t)
       return
    end
@@ -294,7 +292,7 @@ class RFC822Parser()
    #
    private parse_route_addr(mb)
       next_token()
-      ="<" | throw("< expected")
+      ="<" | throw("'<' expected")
       next_token()
       if any('@') then
          parse_route(mb)
@@ -302,7 +300,7 @@ class RFC822Parser()
          mb.set_route([])
       parse_addr_spec(mb)
       next_token()
-      =">" | throw("> expected")
+      =">" | throw("'>' expected")
       return
    end
 
@@ -340,11 +338,9 @@ class RFC822Parser()
       p := parse_phrase()
       t := []
       next_token()
-      =":" | throw(": expected")
+      =":" | throw("':' expected")
       next_token()
-      if any(';') then # empty group
-         move(1)
-      else {
+      =";" | {      # ; here implies an empty group
          repeat {
             mb := parse_mailbox_impl()
             put(t, mb)
@@ -352,7 +348,7 @@ class RFC822Parser()
             ="," | break
             next_token()
          }
-         =";" | throw("; expected")
+         =";" | throw("';' expected")
       }
       return Group(t, p)
    end
@@ -462,7 +458,7 @@ class RFC822Parser()
       next_token()
       if =(!DAYS) then {
          next_token()
-         ="," | throw(", expected")
+         ="," | throw("',' expected")
       }
       d := parse_day()
       m := parse_month()
@@ -470,13 +466,12 @@ class RFC822Parser()
 
       hh := parse_2dig()
       next_token()
-      =":" | throw(": expected")
+      =":" | throw("':' expected")
       mm := parse_2dig()
       next_token()
-      if any(':') then {
-         move(1)
+      if =":" then
          ss := parse_2dig()
-      } else
+      else
          ss := 0
 
       s := parse_zone()
@@ -495,7 +490,7 @@ class RFC822Parser()
       next_token()
       f := tab(many(FIELD_NAME_CHARS)) | throw("Expect fieldname chars")
       next_token()
-      =":" | throw(": expected")
+      =":" | throw("':' expected")
       next_token()
       # The handling of folding is done by the caller, so we just take the
       # rest of the string as the field-body.
@@ -586,7 +581,7 @@ class RFC822Parser()
       local key, val
       key := parse_token_1521()
       next_token()
-      ="=" | throw("= expected")
+      ="=" | throw("'=' expected")
       next_token()
       val := parse_value()
       o.set_parameter(key, val)
@@ -613,7 +608,7 @@ class RFC822Parser()
 
       ty := parse_type()
       next_token()
-      ="/" | throw("/ expected")
+      ="/" | throw("'/' expected")
       next_token()
       st := parse_subtype()
       ct := ContentType(ty, st)

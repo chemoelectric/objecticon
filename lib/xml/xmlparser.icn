@@ -399,7 +399,7 @@ class XmlParser(Connectable)
             res ||:= resolve_entity(lookup_pe_reference(parse_pe_reference()))
          } else if match("&#") then
             # Char refs are expanded
-            res ||:= parse_char_ref(1)
+            res ||:= parse_char_ref(&yes)
          else if any('&') then
             # General refs aren't
             res ||:= parse_entity_ref()
@@ -479,13 +479,12 @@ class XmlParser(Connectable)
       res := ""
       s ? {
          while res ||:= tab(upto('&' ++ SPACE)) do {
-            if any(SPACE) then {
+            if tab(any(SPACE)) then {
                res ||:= " "
-               move(1)
             } else {   # an '&'
                # Char refs aren't recursively treated; entity refs are.
                if match("&#") then
-                  res ||:= parse_char_ref(1)
+                  res ||:= parse_char_ref(&yes)
                else {
                   ref := parse_entity_ref()
                   if member(\circle, ref) then
@@ -515,9 +514,8 @@ class XmlParser(Connectable)
                }
             }
          }
-         res ||:= tab(0)
+         return res || tab(0)
       }
-      return res
    end
 
    #
@@ -634,7 +632,7 @@ class XmlParser(Connectable)
       local res
       res := CData()
       res.content := tab(find("]]>")) | throw("No corresponding ']]>' in CDATA section")
-      check_is_char_data(res.content, "PI")
+      check_is_char_data(res.content, "CDATA")
       ="]]>"
       return res
    end
@@ -913,10 +911,7 @@ class XmlParser(Connectable)
 
       parse_eq()
 
-      if any('\'\"') then
-         c := move(1)
-      else
-         throw("\' or \" expected")
+      c := tab(any('\'\"')) | throw("\' or \" expected")
 
       res := ="yes" | ="no" | throw("'yes' or 'no' expected")
 
@@ -1036,7 +1031,7 @@ class XmlParser(Connectable)
       until pos(0) do {
          if any('&') then {
             if match("&#") then
-               parent.add_string(parse_char_ref(1))
+               parent.add_string(parse_char_ref(&yes))
             else {
                ref := parse_entity_ref()
                if member(\circle, ref) then
@@ -1499,8 +1494,7 @@ class XmlParser(Connectable)
       local digs, i, j
       j := &pos
       ="&#" | throw("'&#' expected")
-      if any('x') then {
-         move(1)
+      if ="x" then {
          digs := tab(many('0-9a-fA-F')) | throw("Hex digit expected")
          i := Format.string_to_int(digs)
       } else {
@@ -1603,8 +1597,7 @@ class XmlParser(Connectable)
       # <!ENTITY%x; abc 'def >   where %x -> ' %'
       #
       spaces()
-      if any('%') then {
-         ="%"
+      if ="%" then {
          dtd_spaces()
          name := dtd_parse_name()
          dtd_spaces()

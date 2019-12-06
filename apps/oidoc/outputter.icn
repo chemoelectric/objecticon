@@ -442,10 +442,10 @@ abstract class Outputter()
 
    # Given a comment string, transform to markdown.
    protected markdown(cs)
-      local pre_mark, s, indent, l, t, item
+      local pre_mark, s, indent, l, t, item, x
       l := get_comment_list(cs)
       stk := []
-      every !l ? {
+      every x := !l do x ? {
          if t := stk[1] & t.kind == "pre" then {
             if pre_mark == &subject then
                pop_item()

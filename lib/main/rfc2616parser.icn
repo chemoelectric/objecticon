@@ -78,15 +78,13 @@ class RFC2616Parser()
       move(1)
 
       repeat {
-         if any('\\') then {
-            move(1)
+         if ="\\" then
             res ||:= move(1) | throw("Unterminated quoted string")
-         } else if any(QTEXT_CHAR) then
+         else if any(QTEXT_CHAR) then
             res ||:= tab(many(QTEXT_CHAR))
-         else if any('\"') then {
-            move(1)
+         else if ="\"" then
             return res
-         } else
+         else
             # Missing closing quote or illegal char
             throw("Missing closing quote or illegal char")
       }
@@ -151,7 +149,7 @@ class RFC2616Parser()
       local key, val
       key := parse_atom()
       next_token()
-      ="=" | throw("= expected")
+      ="=" | throw("'=' expected")
       next_token()
       val := parse_value()
       o.set_parameter(key, val)
@@ -168,7 +166,7 @@ class RFC2616Parser()
 
       ty := parse_type()
       next_token()
-      ="/" | throw("/ expected")
+      ="/" | throw("'/' expected")
       next_token()
       st := parse_subtype()
       ct := ContentType(ty, st)
@@ -234,10 +232,9 @@ class RFC2616Parser()
       repeat {
          if any(ATTR_CHAR) then
             s ||:= string(tab(many(ATTR_CHAR)))
-         else if any('%') then {
-            move(1)
+         else if ="%" then
             s ||:= char(Format.string_to_int(move(2))) | throw("Invalid % encoding")
-         } else
+         else
             return s
       }
    end
@@ -271,12 +268,12 @@ class RFC2616Parser()
       key := parse_atom()
       if key[-1] == "*" then {
          next_token()
-         ="=" | throw("= expected")
+         ="=" | throw("'=' expected")
          next_token()
          val := parse_ext_value()
       } else {
          next_token()
-         ="=" | throw("= expected")
+         ="=" | throw("'=' expected")
          next_token()
          val := parse_value()
       }

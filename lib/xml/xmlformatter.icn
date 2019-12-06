@@ -147,9 +147,9 @@ class XmlFormatter(Formatter)
          return \el.whitespace_children | el.children
       if \no_whitespace_flag then
          return el.get_children_no_whitespace()
-      if \text_trim_flag then {
+      if \text_trim_flag then
          return el.get_trimmed_children()
-      }
+
       return el.children
    end
 

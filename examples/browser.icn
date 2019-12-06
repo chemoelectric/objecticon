@@ -17,7 +17,8 @@ $endif
    ipl.strings,
    ipl.lists,
    ipl.pdco,
-   ipl.io
+   ipl.io,
+   ipl.printf
 
 global opts
 
@@ -1975,7 +1976,7 @@ procedure main(a)
                        Opt("agent",string, "Set user agent field"),
                        Opt("v",,"Verbose output")
                        ])
-   home := FilePath(BaseDir.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
+   home := FilePath(BaseDir.ensure_data_home()) | stopf("Couldn't access data dir: %w")
    settings_file := home.child("oibrowser").str()
    cookies_file := \opts["k"] | home.child("oicookies").str()
    cookies := decode_from_file(cookies_file) | table()
@@ -1994,7 +1995,7 @@ procedure main(a)
    else {
       every s := !a do {
          s := ucs(s) | stop("Argument not UTF-8")
-         url := URL(s).normal() | stop("Invalid url: ", s, ": ", &why)
+         url := URL(s).normal() | stopf("Invalid url: %s: %w", s)
          d.new_tab(url)
       }
    }
@@ -2003,13 +2004,13 @@ procedure main(a)
    # Save cookies
    bak := cookies_file || ".bak"
    encode_to_file(bak, Cookie.expire_cookies(cookies)) | 
-      stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+      stopf("Couldn't encode to temp cookie file %s: %w", bak)
 $if _MS_WIN32
    Files.remove(cookies_file)
 $endif
    # Use rename not move to ensure it's atomic
-   Files.rename(bak, cookies_file) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+   Files.rename(bak, cookies_file) | stopf("Couldn't rename cookie file %s: %w", bak)
    # Save settings
    encode_to_file(settings_file, settings,, &yes) |
-      stop("Couldn't encode to settings file ", settings_file, ": ", &why)
+      stopf("Couldn't encode to settings file %s: %w", settings_file)
 end

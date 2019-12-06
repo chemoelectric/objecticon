@@ -454,8 +454,7 @@ class HtmlParser()
             tab(many(SPACE))
             if ="=" then {
                tab(many(SPACE))
-               if any(DELIM) then {
-                  c := move(1)
+               if c := tab(any(DELIM)) then {
                   s := tab(upto(c) | 0)
                   move(1)
                } else
@@ -519,46 +518,36 @@ class HtmlParser()
    end
 
    #
-   # Parse an entity character, eg "&#xff;", returning the integer char number.
+   # Match an entity character, eg "&#xff;", returning the matched character value.
    #
-   private static parse_entity()
+   private match_entity()
       local i
-      ="&"
-      i := (if any('#') then {
-         move(1)
-         if any('x') then {
-            move(1)
-            Format.string_to_int(tab(many('0-9a-fA-F')))
-         } else
-            integer(tab(many(&digits)))
-      } else
-         member(ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
-      =";" | fail
-      return i
+      if ="&" &
+         (i := if ="#" then {
+                 if ="x" then
+                     Format.string_to_int(tab(many('0-9a-fA-F')))
+                 else
+                     integer(tab(many(&digits)))
+              } else
+                  member(ENTITIES, string(tab(many(&letters))))) &
+         =";"
+      then
+         return if \utf8_flag then
+                   uchar(i | 63)
+                else
+                   char(i | 63)
    end
 
    #
    # Remove the entity characters from a string.
    #
    private remove_entities(s)
-      local res, i, j
+      local res
       res := ""
-      s ? repeat {
-         res ||:= tab(upto('&') | 0)
-         if pos(0) then
-            break
-         i := &pos
-         res ||:= if j := parse_entity() then {
-            if \utf8_flag then
-               uchar(j | 63)
-            else
-               char(j | 63)
-         } else {
-            &pos := i
-            move(1)
-         }
+      s ? {
+         while res ||:= tab(upto('&')) || match_entity()
+         return res || tab(0)
       }
-      return res
    end
 
    #

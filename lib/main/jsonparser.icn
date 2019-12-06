@@ -56,7 +56,7 @@ class JSONParser()
 
    private parse_string()
       local s, ch, i
-      ="\""
+      ="\"" | err("\" expected")
       s := ""
       repeat {
          s ||:= string(tab(many(UNESCAPED_CHAR)))
@@ -125,7 +125,7 @@ class JSONParser()
          next_token()
          if ="]" then
             return res
-         ="," | err(", expected")
+         ="," | err("',' expected")
          next_token()
       }
       return res
@@ -141,14 +141,14 @@ class JSONParser()
       repeat {
          m := parse_string()
          next_token()
-         =":" | err(": expected")
+         =":" | err("':' expected")
          next_token()
          v := parse_value()
          next_token()
          insert(res, m, v)
          if ="}" then
             return res
-         ="," | err(", expected")
+         ="," | err("',' expected")
          next_token()
       }
       return res
@@ -167,7 +167,7 @@ class JSONParser()
       else if any('{') then
          parse_object()
       else
-         err("[ or { expected")
+         err("'[' or '{' expected")
    end
 
    private err(s)

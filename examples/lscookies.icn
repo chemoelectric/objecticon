@@ -1,4 +1,4 @@
-import http, lang, io, ipl.options, xdg
+import http, lang, io, ipl.options, xdg, ipl.printf
 
 invocable HttpClient
 
@@ -11,7 +11,7 @@ procedure main(a)
                         Show or edit the Object Icon cookies file\N_
                         If invoked with no options, show all the cookies")
 
-   home := FilePath(BaseDir.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
+   home := FilePath(BaseDir.ensure_data_home()) | stopf("Couldn't access data dir: %w")
 
    cookies := a[1] | home.child("oicookies").str()
 
@@ -49,9 +49,9 @@ procedure main(a)
 
    if \mod then {
       bak := cookies || ".bak"
-      encode_to_file(bak, t) | stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+      encode_to_file(bak, t) | stopf("Couldn't encode to temp cookie file %s: %w", bak)
       # Use rename not move to ensure it's atomic
-      Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+      Files.rename(bak, cookies) | stopf("Couldn't rename cookie file %s: %w", bak)
       write("Modified file written okay")
    }
 end

@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, lang, ipl.options, ipl.lists, io, xdg, ipl.strings
+import util, http, net, lang, ipl.options, ipl.lists, io, xdg, ipl.strings, ipl.printf
 
 global total, ok, err, failed, invalid, opts, skipped, sched, cookies, urls, workers
 
@@ -164,10 +164,19 @@ class Worker()
 
       total +:= 1
 
-      (url := URL(a).normal() & url.scheme == ("http" | "https")) | {
+      (url := URL(a).normal()) | {
+         whyf("Invalid url: %s: %w", a)
          if /opts["q"] then
-            write("Invalid url: ", a, ": ", &why)
+            write(&why)
          put_problem(invalid, a)
+         fail
+      }
+
+      (url.scheme == ("http" | "https")) | {
+         whyf("Unsupported scheme: %s", url.scheme)
+         if /opts["q"] then
+            write(pp_url(url), ": ", &why)
+         put_problem(invalid, url)
          fail
       }
 
@@ -199,13 +208,13 @@ class Worker()
       }
 
       if n := \opts["n"] then {
-         p := Files.stat(n) | clean_stop("Couldn't stat ", n, ": ", &why)
+         p := Files.stat(n) | clean_stopf("Couldn't stat %s: %w", n)
          hr.set_range(p.size)
       }
 
       if \opts["i" | "is"] then {
          input_stream := if n := \opts["i"] then
-            FileStream(n, FileOpt.RDONLY) | clean_stop("Couldn't open ", n, ": ", &why)
+            FileStream(n, FileOpt.RDONLY) | clean_stopf("Couldn't open %s: %w", n)
          else
             StringStream(cat_lines(opts["is"]))
          hr.set_input_stream(input_stream)
@@ -228,10 +237,10 @@ class Worker()
       }
 
       if /opts["head"] then {
-         tmp_file := Files.make_temp_filename("http_geturl.", ".bin") | clean_stop("Couldn't create temp file: ", &why)
+         tmp_file := Files.make_temp_filename("http_geturl.", ".bin") | clean_stopf("Couldn't create temp file: %w")
          output_stream := BufferStream(FileStream(tmp_file, 
                                                   ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
-            set_buff_size(8192) | clean_stop("Couldn't open ", tmp_file, ": ", &why)
+            set_buff_size(8192) | clean_stopf("Couldn't open %s: %w", tmp_file)
          hr.set_output_stream(output_stream)
       }
 
@@ -239,14 +248,14 @@ class Worker()
       if res := hc.retrieve(hr) then {
          end_t := Prog.get_runtime_millis()
          if /opts["head"] then {
-            close_input_stream() | clean_stop("Couldn't close input_stream: ", &why)
-            close_output_stream() | clean_stop("Couldn't close output_stream: ", &why)
+            close_input_stream() | clean_stopf("Couldn't close input_stream: %w")
+            close_output_stream() | clean_stopf("Couldn't close output_stream: %w")
             if \opts["c"] then {
                use {
                   f := FileStream(tmp_file),
                   f.copy_to(FileStream.stdout)
                } | {
-                  clean_stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
+                  clean_stopf("Couldn't copy %s to stdout: %w", tmp_file)
                }
             } else {
                kbps := Format.numeric_to_string((hc.get_read() / 1024.0) / ((end_t - start_t) / 1000.0), 1, ',')
@@ -256,13 +265,13 @@ class Worker()
                   msg ||:= " -> " || out
                } else if \opts["n"] then {
                   Files.append(tmp_file, out) | {
-                     clean_stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
+                     clean_stopf("Unable to append %s to %s: %w", tmp_file, out)
                   }
                   msg ||:= " ->> " || pp_out()
                } else if \opts["over"] then {
                   Files.move(tmp_file, out) | {
                      save_why{ Files.remove(out) }
-                     clean_stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+                     clean_stopf("Unable to move %s to %s: %w", tmp_file, out)
                   }
                   msg ||:= " -> " || pp_out()
                   tmp_file := &null
@@ -272,7 +281,7 @@ class Worker()
                   out := Files.ensure_unique_filename(out)
                   Files.move(tmp_file, out) | {
                      save_why{ Files.remove(out) }
-                     clean_stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+                     clean_stopf("Unable to move %s to %s: %w", tmp_file, out)
                   }
                   msg ||:= " -> " || pp_out()
                   tmp_file := &null
@@ -289,8 +298,8 @@ class Worker()
             put_problem(if hc.get_http_error() then err else default.failed,
                         url)
          if /opts["head"] then {
-            close_input_stream() | clean_stop("Couldn't close input_stream: ", &why)
-            close_output_stream() | clean_stop("Couldn't close output_stream: ", &why)
+            close_input_stream() | clean_stopf("Couldn't close input_stream: %w")
+            close_output_stream() | clean_stopf("Couldn't close output_stream: %w")
             rm_tmp()
          }
       }
@@ -430,9 +439,9 @@ procedure problem_str(p)
    return s
 end
 
-procedure clean_stop(a[])
+procedure clean_stopf(a[])
    every (!workers).cleanup()
-   stop!a
+   stopf!a
 end
 
 procedure usage(opts)
@@ -508,7 +517,7 @@ procedure main(args)
    if \opts["head"] then 
       opts["l"] := &yes
 
-   cookie_file := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
+   cookie_file := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stopf("Couldn't access data dir: %w")
    cookies := decode_from_file(cookie_file) | table()
 
    urls := create gen_urls(args)
@@ -542,12 +551,12 @@ procedure main(args)
    # Save cookies
    t := cookie_file || ".bak"
    encode_to_file(t, Cookie.expire_cookies(cookies)) | 
-      stop("Couldn't encode to temp cookie file ", t, ": ", &why)
+      stopf("Couldn't encode to temp cookie file %s: %w", t)
 $if _MS_WIN32
    Files.remove(cookie_file)
 $endif
    # Use rename not move to ensure it's atomic
-   Files.rename(t, cookie_file) | stop("Couldn't rename cookie file ", t, ": ", &why)
+   Files.rename(t, cookie_file) | stopf("Couldn't rename cookie file %s: %w", t)
 
    if *err = *failed = *invalid = 0 then
       exit(0)
@@ -576,24 +585,24 @@ end
 
 procedure expand_braces(s)
    local l, s1, s2, s3
-   every separate(s) ? {
+   suspend separate(s) ? {
       s1 := tab(upto('-') | 0)
-      if tab(any('-')) then {
+      if ="-" then {
          s2 := tab(upto(':') | 0)
-         s3 := if tab(any(':')) then
+         s3 := if =":" then
             tab(0)
          else
             1
          if any('0', s1 | s2) then {
             l := *s1
             l <:= *s2
-            suspend right(integer(s1) to integer(s2) by integer(s3), l, "0")
+            right(integer(s1) to integer(s2) by integer(s3), l, "0")
          } else if (any(&lcase, s1) & any(&lcase, s2)) |
                    (any(&ucase, s1) & any(&ucase, s2)) then {
-            suspend char(ord(s1[1]) to ord(s2[1]) by integer(s3))
+            char(ord(s1[1]) to ord(s2[1]) by integer(s3))
          } else
-            suspend string(integer(s1) to integer(s2) by integer(s3))
+            string(integer(s1) to integer(s2) by integer(s3))
       } else
-         suspend s1
+         s1
    }
 end

@@ -20,9 +20,9 @@ package class Partial()
       r := []
       every c := !spec do {
          case c of {
-            "v": put(r, @e)
+            "v": put(r, @e | &null)
             "V": while put(r, @e)
-            "a": put(r, get(a))
+            "a": put(r, get(a) | &null)
             "A": while put(r, get(a))
             "-": get(a)
             default: runerr("Invalid spec char to partial", c)
@@ -41,9 +41,10 @@ end
 
 # Returns a function which modifies its arguments according to `spec`,  before applying them
 # to f.  The modification is specified by the following characters in spec:-
-#    "v": add the next value (which follow the spec parameter).
+#    "v": add the next value from the arguments which follow the spec
+#         parameter, or `&null` if none remain.
 #    "V": add the remaining values.
-#    "a": add the next argument.
+#    "a": add the next argument, or `&null` if none remain.
 #    "A": add the remaining arguments.
 #    "-": skip the next argument.
 #

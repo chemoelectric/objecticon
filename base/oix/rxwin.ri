@@ -1369,27 +1369,24 @@ void doconfig(wbp w, int status)
     wdp wd = ws->display;
 
     if (ws->win) {
-        if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE |
-                C_MINASPECT | C_MAXASPECT | C_BASESIZE | C_INCSIZE)) {
-            if (status != C_POS) {
-                XSizeHints size_hints;
-                mk_hints(ws, &size_hints);
-                XSetWMNormalHints(wd->display, ws->win, &size_hints);
+        if (status & (C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE |
+                      C_MINASPECT | C_MAXASPECT | C_BASESIZE | C_INCSIZE)) {
+            XSizeHints size_hints;
+            mk_hints(ws, &size_hints);
+            XSetWMNormalHints(wd->display, ws->win, &size_hints);
+        }
+        switch (status & (C_POS | C_SIZE)) {
+            case C_POS: {
+                XMoveWindow(wd->display, ws->win, ws->reqx, ws->reqy);
+                break;
             }
-
-            switch (status & (C_POS|C_SIZE)) {
-                case C_POS: {
-                    XMoveWindow(wd->display, ws->win, ws->reqx, ws->reqy);
-                    break;
-                }
-                case C_SIZE: {
-                    XResizeWindow(wd->display, ws->win, ws->width, ws->height);
-                    break;
-                }
-                case C_POS|C_SIZE: {
-                    XMoveResizeWindow(wd->display, ws->win, ws->reqx, ws->reqy, ws->width, ws->height);
-                    break;
-                }
+            case C_SIZE: {
+                XResizeWindow(wd->display, ws->win, ws->width, ws->height);
+                break;
+            }
+            case C_POS | C_SIZE: {
+                XMoveResizeWindow(wd->display, ws->win, ws->reqx, ws->reqy, ws->width, ws->height);
+                break;
             }
         }
     }

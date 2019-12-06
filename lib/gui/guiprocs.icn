@@ -558,8 +558,7 @@ class ImageStringInfo()
             pal := (move(1) || tab(many(&digits))) | return error("Palette expected")
             tab_ws()
          }
-         if any('(') then {
-            move(1)
+         if ="(" then {
             extra := tab(upto(')')) | return error("Missing )")
             move(1)
             tab_ws()

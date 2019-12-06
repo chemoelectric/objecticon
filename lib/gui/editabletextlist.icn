@@ -1810,7 +1810,7 @@ class EditableTextListPasteEdit(EditableTextListEdit)
 
       s ? repeat {
          t := tab(upto('\n') | 0)
-         if any('\n') then {
+         if ="\n" then {
             if t[-1] == "\r" then
                t[-1] := ""
             nl := parent.contents[parent.cursor_y][parent.cursor_x:0]
@@ -1819,7 +1819,6 @@ class EditableTextListPasteEdit(EditableTextListEdit)
             n +:= 1
             parent.cursor_y +:= 1
             parent.cursor_x := 1
-            move(1)
          } else {
             parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] || t || parent.contents[parent.cursor_y][parent.cursor_x:0]
             parent.cursor_x +:= *t
