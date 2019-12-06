@@ -381,8 +381,7 @@ class HtmlParser()
 
    private parse_system_literal()
       local c, res
-      any('\'\"') | fail
-      c := move(1)
+      c := tab(any('\'\"')) | fail
       res := tab(upto(c)) | fail
       move(1)
       return res
