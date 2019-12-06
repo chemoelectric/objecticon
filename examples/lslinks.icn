@@ -72,7 +72,7 @@ procedure main(args)
 end
 
 procedure do_one(a)
-   local url, hr, res, src, parser, doc, rs, f, s, i
+   local url, hr, res, src, doc, rs, f, s, i
 
    a := ucs(a) | stop("Argument not UTF-8")
    url := URL(a).normal() | stopf("Invalid url: %s: %w", a)
@@ -105,8 +105,7 @@ procedure do_one(a)
    else
       Text.liberal_ucs(src)
 
-   parser := HtmlParser()
-   doc := parser.parse(src)
+   doc := HtmlParser().parse(src)
    if \opts["i"] then
       do_search(url, src, doc, "IMG", u"SRC", "")
    else if \opts["b"] then {
@@ -131,6 +130,11 @@ procedure print(pfx, s, base)
       write(pfx, url.str())
 end
 
+procedure remove_entities(s)
+   return HtmlParser().parse("<HTML><PLAINTEXT>" || s).
+      get_root_element().search_tree("PLAINTEXT").get_string_content()
+end
+
 procedure do_search(url, src, doc, tag, attr, pfx)
    local base, n, s
 
@@ -139,18 +143,18 @@ procedure do_search(url, src, doc, tag, attr, pfx)
       base := URL(n.get_attribute(u"HREF"))
 
    every n := Seq{doc.get_root_element().traverse_all_preorder()} do {
-      if text(n) then {
-         if \opts["text"] then {
-            n ? {
-               while tab(caseless_past("<" || tag || " ")) do {
-                  if tab(caseless_past(attr || "=\"")) & s := tab(upto('\"')) then
-                     print(pfx, s, base)
-               }
-            }
-         }
-      } else if is(n, Element) then {
+      if is(n, Element) then {
          if n.get_name() == tag & s := n.get_attribute(attr) then
             print(pfx, s, base)
+      } else if \opts["text"] &
+                s := text(n) | (is(n, Comment) & n.comment)
+      then {
+         s ? {
+            while tab(caseless_past("<" || tag || " ")) do {
+               if tab(caseless_past(attr || "=\"")) & s := tab(upto('\"')) then
+                  print(pfx, remove_entities(s), base)
+            }
+         }
       }
    }
 end
