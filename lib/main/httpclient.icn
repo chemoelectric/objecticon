@@ -414,7 +414,7 @@ $endif
          return setup_digest_authentication(t)
       }
 
-      return on_http_error("WWW-Authenticate header contained unknown authentication method.")
+      return on_http_error("WWW-Authenticate header contained unknown authentication method")
    end
 
    private setup_basic_authentication()

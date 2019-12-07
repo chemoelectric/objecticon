@@ -381,7 +381,6 @@ class XmlParser(Connectable)
       return s ? 2(any(NAME_CHAR), parse_nmtokens(), pos(0))
    end
 
-
    #
    # [9] EntityValue ::= '"' ([^%&"] | PEReference | Reference)* '"' |  "'" ([^%&'] | PEReference | Reference)* "'"
    #
@@ -1777,17 +1776,17 @@ class XmlParser(Connectable)
    # S?
    #
    private opt_spaces()
-      if any(SPACE) then
-         return spaces()
+      return if any(SPACE) then
+         spaces()
       else
-         return ""
+         ""
    end
 
    private dtd_opt_spaces()
-      if dtd_any(SPACE) then
-         return dtd_spaces()
+      return if dtd_any(SPACE) then
+         dtd_spaces()
       else
-         return ""
+         ""
    end
 
    #
@@ -2127,22 +2126,19 @@ class XmlParser(Connectable)
    private try_dtd_insert(i)
       local j, t
       if any('%') then {
-         if /in_ext_subset then {
-            # Only show an error once; this prevents the same error message
-            # being produced several times.
-            if /dtd_insert_shown_error then 
-               invalid("Cannot reference a pe except in the external dtd")
-            dtd_insert_shown_error := &yes
+         if \in_ext_subset then {
+            j := &pos
+            t := resolve_entity(lookup_pe_reference(parse_pe_reference()))
+            # The entity is expanded by one leading and one trailing space (4.4.8)
+            &subject := &subject[1:j] || " " || t || " " || &subject[&pos:0]
             &pos := i
-            fail
+            return
          }
-
-         j := &pos
-         t := resolve_entity(lookup_pe_reference(parse_pe_reference()))
-         # The entity is expanded by one leading and one trailing space (4.4.8)
-         &subject := &subject[1:j] || " " || t || " " || &subject[&pos:0]
-         &pos := i
-         return
+         # Only show an error once; this prevents the same error message
+         # being produced several times.
+         if /dtd_insert_shown_error then 
+            invalid("Cannot reference a pe except in the external dtd")
+         dtd_insert_shown_error := &yes
       }
       &pos := i
    end
