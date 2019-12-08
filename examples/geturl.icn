@@ -22,13 +22,7 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    end
 
    public new()
-      local u, p
-      \opts["a"] ? {
-         u := tab(upto(':')) | syserr("Bad -a option")
-         move(1)
-         p := tab(0)
-         auth := Authentication(u, p)
-      }
+      auth := \opts["a"]
       return
    end
 end
@@ -105,7 +99,7 @@ class Worker()
    end
 
    private http_error(ev)
-      write("HTTP Error: ", &why, " - no data output")
+      write("HTTP Error: ", &why, " - No data output")
    end
 
    private connecting(ev, src, type)
@@ -393,6 +387,9 @@ class Worker()
       if \opts["while"] then
          hc.set_retry_while_data(&yes)
 
+      if hc.set_proxy(\opts["P"]) then
+         hc.set_proxy_auth(\opts["Pa"])
+
       hc.set_cookies(cookies)
 
       if /opts["q"] then {
@@ -476,7 +473,7 @@ procedure main(args)
                           Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
-                          Opt("a",string_with(':'), "USER:PASS#Specify authorization"),
+                          Opt("a",authentication, "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("l",, "Show HTTP headers and data flow"),
                           Opt("n",string, "FILE#Append to the given partial file"),
@@ -492,7 +489,10 @@ procedure main(args)
                           Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0"),
                           Opt("x",string_with(':'),"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
-                          Opt("v1",, "Use HTTP 1.0")],
+                          Opt("v1",, "Use HTTP 1.0"),
+                          Opt("P",host_port(),"SERVER:PORT#Proxy server and port"),
+                          Opt("Pa",authentication,"USER:PASS#Proxy authorization")
+                          ],
                           usage)
 
    # Check for invalid option mixtures

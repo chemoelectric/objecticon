@@ -6,22 +6,23 @@ package net
 
 $if _MS_WIN32
 import 
-   util, 
-   io,
-   lang,
    ssl,
-   ipl.pdco,
-   ipl.scan
+   ipl.pdco
 $else
 import 
-   util, 
-   io,
-   lang,
    ssl,
    posix,
-   ipl.pdco,
-   ipl.scan
+   ipl.pdco
 $endif
+
+import
+   io,
+   lang,
+   util, 
+   ipl.base64,
+   ipl.scan,
+   ipl.printf,
+   ipl.functional
 
 #
 # Common base class for a client class which holds a connection to a
@@ -61,8 +62,10 @@ abstract class NetClient(Connectable, HasTask)
       ssl_flag,
       ssl_verify_flag,
       dont_retry_flag,
-      ip_version
-
+      ip_version,
+      proxy,
+      proxy_auth
+   
    private
       connection,
       ssl_connection,
@@ -118,11 +121,11 @@ abstract class NetClient(Connectable, HasTask)
    end
 
 $if _MS_WIN32
-   private dns_query()
+   private dns_query(server)
       return WinsockStream.dns_query(server, ip_version)
    end
 
-   private ip_to_addr(ip)
+   private ip_to_addr(ip, port)
       return if upto('.', ip) then 
          "inet:" || ip || ":" || port
       else
@@ -139,19 +142,31 @@ $if _MS_WIN32
       fire(CONNECTING_EVENT)
       if \path then
          return error_dont_retry("UNIX domain not supported")
-      l := dns_query() | return error("Couldn't translate address: " || &why)
-      l := List{ ip_to_addr(!l) }
-      addr := choose_addr(l)
-      domain := if match("inet:", addr) then
-         ProtocolFormat.INET
-      else
-         ProtocolFormat.INET6
-      msg_addr := server || " (" || addr || ")"
+      if \proxy then {
+         l := dns_query(proxy.host) | return whyf("Couldn't translate proxy address: %w")
+         l := List{ ip_to_addr(!l, proxy.port) }
+         addr := choose_addr(l)
+         domain := if match("inet:", addr) then
+            ProtocolFormat.INET
+         else
+            ProtocolFormat.INET6
+         msg_addr := proxy.host || " (" || addr || ")"
+      } else {
+         ensure_server()
+         l := dns_query(server) | return whyf("Couldn't translate address: %w")
+         l := List{ ip_to_addr(!l, port) }
+         addr := choose_addr(l)
+         domain := if match("inet:", addr) then
+            ProtocolFormat.INET
+         else
+            ProtocolFormat.INET6
+         msg_addr := server || " (" || addr || ")"
+      }
 
       connection := WinsockStream(domain)
       connection.set_blocking_mode(&no) | {
          quietly_close_connection()
-         return error_dont_retry("Couldn't put socket in non-blocking mode: " || &why)
+         return whyf_dont_retry("Couldn't put socket in non-blocking mode: %w")
       }
 
       connection.connect(addr) | {
@@ -159,22 +174,29 @@ $if _MS_WIN32
             r := do_poll(Poll.OUT) | {
                quietly_close_connection()
                avoid_addr(addr)
-               return error("Couldn't connect to " || msg_addr || ": " || &why)
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
             if /r then {
                close_connection()
                avoid_addr(addr)
-               return error("Couldn't connect to " || msg_addr || ": timeout")
+               return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
                close_connection()
                avoid_addr(addr)
-               return error("Couldn't connect to " || msg_addr || ": socket error")
+               return whyf("Couldn't connect to %s: Socket error", msg_addr)
             }
          } else {
             quietly_close_connection()
             avoid_addr(addr)
-            return error("Couldn't connect to " || msg_addr || ": " || &why)
+            return whyf("Couldn't connect to %s: %w", msg_addr)
+         }
+      }
+
+      if \proxy then {
+         establish_proxy_connection() | {
+            quietly_close_connection()
+            fail
          }
       }
 
@@ -182,44 +204,43 @@ $if _MS_WIN32
          ssl_available() | return error_dont_retry(&why)
          ssl_connection := SslStream(connection, server) | {
             quietly_close_connection()
-            return error("Couldn't create SslStream: " || &why)
+            return whyf("Couldn't create SslStream: %w")
          }
          until ssl_connection.connect() do {
             ssl_maybe_poll() | {
                quietly_close_connection()
-               return error("Couldn't perform SSL connection: " || &why)
+               return whyf("Couldn't perform SSL connection: %w")
             }
          }
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                quietly_close_connection()
-               return error_dont_retry("Couldn't verify SSL connection: " || &why)
+               return whyf_dont_retry("Couldn't verify SSL connection: %w")
             }
          }
       }
 
-      sbuff := ""
       fire(CONNECTED_EVENT, addr)
       link
    end
 $else
-   private dns_query_impl()
+   private dns_query_impl(server)
       return SocketStream.dns_query(server, ip_version)
    end
 
-   private dns_bg_query(p)
+   private dns_bg_query(p, server)
       local r
-      if r := dns_query_impl() then
+      if r := dns_query_impl(server) then
          p.send(r)
       else
          p.send(&why)
    end
 
-   private dns_query()
+   private dns_query(server)
       local p, v
       if /task then
-         return dns_query_impl()
-      p := Process{dns_bg_query(p)}.set_task(task)
+         return dns_query_impl(server)
+      p := Process{dns_bg_query(p, server)}.set_task(task)
       p.start() | fail
       if v := p.poll() then {
          p.close()
@@ -234,7 +255,7 @@ $else
          p.stop()
    end
 
-   private ip_to_addr(ip)
+   private ip_to_addr(ip, port)
       return if upto('.', ip) then 
          "inet:" || ip || ":" || port
       else
@@ -250,25 +271,34 @@ $else
       close_connection()
       fire(CONNECTING_EVENT)
 
-      if \server then {
-         l := dns_query() | return error("Couldn't translate address: " || &why)
-         l := List{ ip_to_addr(!l) }
+      if \proxy then {
+         l := dns_query(proxy.host) | return whyf("Couldn't translate proxy address: %w")
+         l := List{ ip_to_addr(!l, proxy.port) }
+         addr := choose_addr(l)
+         domain := if match("inet:", addr) then
+            ProtocolFormat.INET
+         else
+            ProtocolFormat.INET6
+         msg_addr := proxy.host || " (" || addr || ")"
+      } else if \path then {
+         domain := ProtocolFormat.UNIX
+         msg_addr := addr := "unix:" || path
+      } else {
+         ensure_server()
+         l := dns_query(server) | return whyf("Couldn't translate address: %w")
+         l := List{ ip_to_addr(!l, port) }
          addr := choose_addr(l)
          domain := if match("inet:", addr) then
             ProtocolFormat.INET
          else
             ProtocolFormat.INET6
          msg_addr := server || " (" || addr || ")"
-      } else if \path then {
-         domain := ProtocolFormat.UNIX
-         msg_addr := addr := "unix:" || path
-      } else
-         runerr("Neither server/port nor path set")
+      }
 
       connection := SocketStream(domain)
       connection.flag(FileOpt.NONBLOCK) | {
          quietly_close_connection()
-         return error_dont_retry("Couldn't put socket in non-blocking mode: " || &why)
+         return whyf_dont_retry("Couldn't put socket in non-blocking mode: %w")
       }
 
       connection.connect(addr) | {
@@ -276,45 +306,52 @@ $else
             r := do_poll(Poll.OUT) | {
                quietly_close_connection()
                avoid_addr(addr)
-               return error("Couldn't connect to " || msg_addr || ": " || &why)
+               return whyf("Couldn't connect to " || msg_addr || ": %w")
             }
             if /r then {
                close_connection()
                avoid_addr(addr)
-               return error("Couldn't connect to " || msg_addr || ": timeout")
+               return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
                close_connection()
                avoid_addr(addr)
-               return error("Couldn't connect to " || msg_addr || ": socket error")
+               return whyf("Couldn't connect to %s: Socket error", msg_addr)
             }
          } else {
             quietly_close_connection()
             avoid_addr(addr)
-            return error("Couldn't connect to " || msg_addr || ": " || &why)
+            return whyf("Couldn't connect to %s: %w", msg_addr)
          }
       }
+
+      if \proxy then {
+         establish_proxy_connection() | {
+            quietly_close_connection()
+            fail
+         }
+      }
+
       if \ssl_flag then {
          ssl_available() | return error_dont_retry(&why)
          ssl_connection := SslStream(connection, server) | {
             quietly_close_connection()
-            return error("Couldn't create SslStream: " || &why)
+            return whyf("Couldn't create SslStream: %w")
          }
          until ssl_connection.connect() do {
             ssl_maybe_poll() | {
                quietly_close_connection()
-               return error("Couldn't perform SSL connection: " || &why)
+               return whyf("Couldn't perform SSL connection: %w")
             }
          }
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                quietly_close_connection()
-               return error_dont_retry("Couldn't verify SSL connection: " || &why)
+               return whyf_dont_retry("Couldn't verify SSL connection: %w")
             }
          }
       }
 
-      sbuff := ""
       fire(CONNECTED_EVENT, addr)
       link
    end
@@ -334,18 +371,50 @@ $endif
       }
       case err of {
          2 : {  # SSL_ERROR_WANT_READ
-            r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
+            r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed (timeout)")
             DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
             return
          }
          3 : {  # SSL_ERROR_WANT_WRITE 
-            r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
+            r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed (timeout)")
             DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
             return
          }
       }
+   end
+
+   private ensure_server()
+      \server | runerr("No server set")
+      \port | runerr("Server set, but no port")
+      return
+   end
+
+   private establish_proxy_connection()
+      local l, pr, code, s
+      ensure_server()
+      l := ["CONNECT " || server || ":" || port  || " HTTP/1.1"]
+      put(l, "User-Agent: netclient.icn [en]")
+      if \proxy_auth then
+         put(l, "Proxy-Authorization: Basic " || base64encode(proxy_auth.username || ":" || proxy_auth.password))
+      put(l, "Host: " || server || ":" || port)
+      put(l, "")
+      write_lines(l) | fail
+      pr := expect_line(&yes) | fail
+      if pr ? code := (tab(upto(' ')), tab(many(' ')), integer(tab(many(&digits)))) then {
+         if code = 200 then {
+            # Skip any headers upto and including a blank line
+            repeat {
+               s := expect_line(&yes) | fail
+               if *s = 0 then
+                  return
+            }
+         }
+         if code = 404 then
+            return error("Proxy server status error: " || pr)
+      }
+      return error_dont_retry("Proxy server status error: " || pr)
    end
 
    #
@@ -370,6 +439,7 @@ $endif
          connection := &null
          fire(CLOSED_EVENT)
       }
+      sbuff := ""
       return if /f then self else error(f)
    end
 
@@ -405,6 +475,22 @@ $endif
    end
 
    #
+   # Set the proxy server to use
+   #
+   public set_proxy(s)
+      proxy := s
+      link
+   end
+
+   #
+   # Set the proxy auth
+   #
+   public set_proxy_auth(s)
+      proxy_auth := s
+      link
+   end
+
+   #
    # Low-level write on the connection. 
    #
    private send(s)
@@ -415,14 +501,14 @@ $endif
             if i := ssl_connection.out(s) then
                s := s[i+1 : 0]
             else
-               ssl_maybe_poll() | return error("Send SSL out() failed: " || &why)
+               ssl_maybe_poll() | return whyf("Send SSL out() failed: %w")
          }
       } else {
          while *s > 0 do {
-            r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
+            r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed (timeout)")
             DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
-            i := connection.out(s) | return error("Send out() failed: " || &why)
+            i := connection.out(s) | return whyf("Send out() failed: %w")
             s := s[i+1 : 0]
          }
       }
@@ -438,13 +524,13 @@ $endif
          repeat {
             if s := ssl_connection.in(len) then
                return s
-            ssl_maybe_poll() | return error("Receive SSL in() failed: " || &why)
+            ssl_maybe_poll() | return whyf("Receive SSL in() failed: %w")
          }
       } else {
-         r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
+         r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
          if /r then return error("Receive failed (timeout)")
          DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
-         return connection.in(len) | error("Receive in() failed: " || &why)
+         return connection.in(len) | whyf("Receive in() failed: %w")
       }
    end
 
@@ -477,11 +563,15 @@ $endif
    end
 
    #
-   # Read a single line from the connection, and return it.  Returns `&null` on eof.
+   # Read a single line from the connection, and return it.  Returns
+   # `&null` on eof.  `fl` is a flag; if set then characters are read
+   # one at a time from the connection.  This avoids the usual buffering
+   # taking place (although any existing buffered characters are still
+   # consumed).
    #
-   protected read_line()
-      local line, s
-
+   protected read_line(fl)
+      local line, s, len
+      len := if /fl then 1048576 else 1
       repeat {
          #
          # Look for a line and if found return it.
@@ -494,7 +584,7 @@ $endif
                return line
             }
          }
-         s := recv(1048576) | fail
+         s := recv(len) | fail
          if /s then {
             if *sbuff = 0 then
                return
@@ -511,9 +601,9 @@ $endif
    # This method is the same as `read_line`, except that on end of
    # file it fails, setting `&why`, rather than returning `&null`.
    #
-   protected expect_line()
+   protected expect_line(fl)
       local s
-      s := read_line() | fail
+      s := read_line(fl) | fail
       return \s | error("Unexpected eof")
    end
 
@@ -583,6 +673,14 @@ $endif
    end
 
    #
+   # Like `error_dont_retry`, but take a format arguments for `whyf`.
+   #
+   protected whyf_dont_retry(a[])
+      dont_retry_flag := &yes
+      whyf!a
+   end
+
+   #
    # Clear the `dont_retry_flag`.
    #
    protected reset_dont_retry()
@@ -596,4 +694,35 @@ $endif
       ssl_verify_flag := &yes
       return
    end
+end
+
+#
+# Class for storing a host and a port.
+#
+class HostPort()
+   public const
+      host, port
+
+   public new(host, port)
+      self.host := host
+      self.port := port
+      return
+   end
+end
+
+package procedure host_port_impl(def, s)
+   local v
+   return s ? {
+      if v := tab(upto(':')) then
+         HostPort( v, move(1) & integer(tab(0)) )
+      else
+         HostPort( tab(0), \def )
+   } | error("Host:port expected")
+end
+
+#
+# options() converter function for a host:port argument.  `def` is an optional default port.
+#
+procedure host_port(def)
+   return lpartial(host_port_impl, def)
 end
