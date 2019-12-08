@@ -196,8 +196,11 @@ class Lex(Connectable)
          } else {
             # Must be at a "\".  Skip that and the first char of the
             # escape; the others will be skipped by the tab at the top
-            # of the loop.
-            move(2 | 1)
+            # of the loop.  A \^ must be treated specially however, to
+            # avoid treating (eg) \^" as a closing quote.
+            move(1)
+            ="^"
+            move(1)
          }
       }
 

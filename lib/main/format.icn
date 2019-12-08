@@ -212,8 +212,9 @@ final abstract class Format()
       return [m, e]
    end
 
-   private static unescape_char(ch)
-      return case string(ch) of {
+   private static unescape_char()
+      local ch
+      return case string(ch := esc1()) of {
          "n": "\n"
          "l": "\l"
          "b": "\b"
@@ -225,6 +226,28 @@ final abstract class Format()
          "f": "\f"
          default:  ch
       }
+   end
+
+   private static hex_dig(n)
+      local i
+      i := string_to_int(tab(max_many('0-9a-fA-F', n))) | 
+         return error("Missing hex digits after escape")
+      return (16r10FFFF >= i) | error("Code point out of range")
+   end
+
+   private static oct_dig()
+      local i
+      # Assume we're at a digit, so the following must succeed.
+      i := string_to_int(tab(max_many('0-7', 3)), 8)
+      return (255 >= i) | error("Octal escape out of range")
+   end
+
+   private static unescape_ctl()
+      return iand(ord(esc1()), 8r37)
+   end
+
+   private static esc1()
+      return move(1) | error("Incomplete escape")
    end
 
    #
@@ -240,20 +263,19 @@ final abstract class Format()
             res ||:= string(tab(upto('\\') | 0))
             move(1) | break
             res ||:= (if any('0-7') then
-                    char(iand(string_to_int(tab(max_many('0-7', 3)), 8), 8r377))
+                    char(oct_dig())
                  else if ="x" then
-                    char(string_to_int(tab(max_many('0-9a-fA-F', 2))))
+                    char(hex_dig(2))
                  else if ="N" then
                     "\N"
                  else if ="u" then
-                    Text.utf8_seq(string_to_int(tab(max_many('0-9a-fA-F', 4))))
+                    Text.utf8_seq(hex_dig(4))
                  else if ="U" then
-                    Text.utf8_seq(string_to_int(tab(max_many('0-9a-fA-F', 6)))) |
-                       return error("Code point out of range")
+                    Text.utf8_seq(hex_dig(6))
                  else if ="^" then
-                    char(iand(ord(move(1)), 8r37))
+                    char(unescape_ctl())
                  else 
-                    string(unescape_char(move(1)))) | "\0"
+                    string(unescape_char())) | fail
          }
          return if type(s) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
       }
@@ -271,18 +293,17 @@ final abstract class Format()
          if ="\\" then {
             esc_flag := &yes
             c := (if any('0-7') then
-                     iand(string_to_int(tab(max_many('0-7', 3)), 8), 8r377)
+                     oct_dig()
                   else if ="x" then
-                     string_to_int(tab(max_many('0-9a-fA-F', 2)))
+                     hex_dig(2)
                   else if ="u" then
-                     string_to_int(tab(max_many('0-9a-fA-F', 4)))
+                     hex_dig(4)
                   else if ="U" then
-                     (16r10FFFF >= string_to_int(tab(max_many('0-9a-fA-F', 6)))) |
-                        return error("Code point out of range")
+                     hex_dig(6)
                   else if ="^" then
-                     iand(ord(move(1)), 8r37)
+                     unescape_ctl()
                   else 
-                     ord(unescape_char(move(1)))) | 0
+                     ord(unescape_char())) | break
          } else {
             esc_flag := &no
             c := ord(move(1))
