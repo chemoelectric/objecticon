@@ -761,7 +761,6 @@ class Worker()
          set_cookies(pool.cookies).
          set_authentications(pool.authentications).
          set_retry_while_data(&yes)
-      httpc.set_user_agent(\pool.user_agent)
 
       every httpc.connect(status, 
                           NetClient.CONNECTING_EVENT |
@@ -791,6 +790,8 @@ class Worker()
             connect(other, NetClient.CLOSED_EVENT).
             connect(other, HttpClient.COMPLETE_EVENT)
       }
+
+      pool.owner.configure_http_client(httpc)
    end
 
    private handle_launch_req()
@@ -891,6 +892,7 @@ end
 
 abstract class WorkerPoolOwner()
    public abstract get_authentication(httpc, dom, realm)
+   public configure_http_client(httpc) end
 end
 
 class WorkerPool()
@@ -904,7 +906,6 @@ class WorkerPool()
       active,
       log_file,
       cookies,
-      user_agent,
       cache,
       authentications,
       scheme_handlers
@@ -1044,14 +1045,6 @@ class WorkerPool()
 
    public add_scheme_handler(scheme, func)
       insert(scheme_handlers, scheme, func)
-      link
-   end
-
-   #
-   # Set the user-agent identification
-   #
-   public set_user_agent(s)
-      self.user_agent := s
       link
    end
 
