@@ -84,10 +84,7 @@ class Opt()
    end
 
    package build_param_err()
-      local s
-      if s := \param_err then
-         return s
-      return case convert of {
+      return \param_err | case convert of {
          real|integer|numeric|ucs|text|string|cset :
             capitalize_cnv(convert) || " expected"
          flag:

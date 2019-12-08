@@ -1346,7 +1346,7 @@ function trim(s,c,ends)
           utf8_start = p = StrLoc(UcsBlk(s).utf8);
 
           /*
-           * Left trimming: Start at the beginning of s and then advance StrLoc(s)
+           * Left trimming: Start at the beginning of s and then advance utf8_start
            * and decrease the slen until a character that is not in c is found.
            */
           if (ends > -1) {
@@ -1374,8 +1374,13 @@ function trim(s,c,ends)
               }
           }
 
+          /*
+           * Simple cases if we've trimmed everything or nothing.
+           */
           if (slen == 0)
               return ucs(emptystr_ucs);
+          if (slen == UcsBlk(s).length)
+              return s;
 
           MakeStr(utf8_start, utf8_end - utf8_start, &utf8);
 

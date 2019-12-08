@@ -520,10 +520,6 @@ static struct toktab *getstring(int ac, int *cc)
             }
             else if (c == 'U') {
                 c = hexesc(6);
-                if (c > MAX_CODE_POINT) {
-                    lexfatal("Code point out of range");
-                    c = 0;
-                }
                 n = utf8_seq(c, utf8);
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
@@ -606,10 +602,6 @@ static struct toktab *getucs(int ac, int *cc)
             }
             else if (c == 'U') {
                 c = hexesc(6);
-                if (c > MAX_CODE_POINT) {
-                    lexfatal("Code point out of range");
-                    c = 0;
-                }
                 n = utf8_seq(c, utf8);
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
@@ -706,13 +698,8 @@ static struct toktab *getcset(int ac, int *cc)
                 c = hexesc(2);
             else if (c == 'u')
                 c = hexesc(4);
-            else if (c == 'U') {
+            else if (c == 'U')
                 c = hexesc(6);
-                if (c > MAX_CODE_POINT) {
-                    lexfatal("Code point out of range");
-                    c = 0;
-                }
-            }
             else if (c == '^') {
                 c = NextLitChar;
                 c = ctlesc(c);
@@ -806,11 +793,15 @@ static int octesc(int ac)
     } while (isoctal(nc) && i++ < 3);
     PushChar(nc);
 
-    return (c & 0377);
+    if (c > 255) {
+        lexfatal("Octal escape out of range");
+        c = 0;
+    }
+    return c;
 }
 
 /*
- * hexesc - translate a hexadecimal escape -- backslash-x
+ * hexesc - translate a hexadecimal escape -- backslash-x, u or U
  *  followed by up to 'digs' hexadecimal digits.
  */
 
@@ -829,10 +820,17 @@ static int hexesc(int digs)
         else if (isdigit_ex(nc))
             nc -= '0';
         else {
+            if (i == 1)
+                lexfatal("Missing hex digits after escape");
             PushChar(nc);
             break;
         }
         c = (c << 4) | nc;
+    }
+
+    if (c > MAX_CODE_POINT) {
+        lexfatal("Code point out of range");
+        c = 0;
     }
 
     return c;

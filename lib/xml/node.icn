@@ -136,11 +136,9 @@ abstract class Node()
    # removed.  This leaves the children list intact.
    #
    public get_children_no_whitespace()
-      local l, e
-      l := []
-      every e := !children do
-         (text(e) & (many(XmlParser.SPACE ++ '\f', e) = *e + 1)) | put(l, e)
-      return l
+      local e
+      return List{ (e := !children,
+                    if not(text(e)) | upto(~(XmlParser.SPACE ++ '\f'), e) then e) }
    end
 
    #
@@ -148,17 +146,9 @@ abstract class Node()
    # left in the list.
    #
    public get_trimmed_children()
-      local l, e
-      l := []
-      every e := !children do {
-         if text(e) then {
-            e := xml_trim(e)
-            if *e > 0 then
-               put(l, e)
-         } else
-            put(l, e)
-      }
-      return l
+      local e
+      return List{ (e := !children,
+                    if text(e) then "" ~== xml_trim(e) else e) }
    end
 
    #
@@ -181,11 +171,9 @@ abstract class Node()
    # Like `get_string_content()`, but includes CDATA sections too.
    #
    public get_string_content_with_cdata()
-      local s, e
-      s := ""
-      every e := !self.children do
-         s ||:= text(e) | if is(e, CData) then e.get_content()
-      return s
+      local e
+      return String{ (e := !self.children,
+                      if is(e, CData) then e.get_content() else text(e)) }
    end
 
    #
@@ -193,11 +181,9 @@ abstract class Node()
    # too (which are not trimmed).
    #
    public get_trimmed_string_content_with_cdata()
-      local s, e
-      s := ""
-      every e := !self.children do
-         s ||:= xml_trim(text(e)) | if is(e, CData) then e.get_content()
-      return s
+      local e
+      return String{ (e := !self.children,
+                      if is(e, CData) then e.get_content() else xml_trim(text(e))) }
    end
 
    #

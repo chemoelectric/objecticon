@@ -54,7 +54,10 @@ procedure main(args)
                           Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
                           Opt("r",integer_range(0), "RETRIES#Number of retries"),
                           Opt("k",string, "FILE#Load cookies from file"),
-                          Opt("text",,"Do a search for tags in the text content of the parsed document")],
+                          Opt("text",,"Do a search for tags in the text content of the parsed document"),
+                          Opt("P",host_port(),"SERVER:PORT#Proxy server and port"),
+                          Opt("Pa",authentication,"USER:PASS#Proxy authorization")
+                          ],
                           "Usage: lslinks [URL]... [OPTIONS]\N_
                            List links in URL(s)")
 
@@ -62,6 +65,8 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
+   if hc.set_proxy(\opts["P"]) then
+      hc.set_proxy_auth(\opts["Pa"])
    cookies := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stopf("Couldn't access data dir: %w")
    t := decode_from_file(cookies) | table()
    hc.set_cookies(t)

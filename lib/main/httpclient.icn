@@ -11,7 +11,8 @@ import util,
    datastruct(SortTable),
    ipl.base64,
    ipl.strings,
-   ipl.scan
+   ipl.scan,
+   ipl.printf
 
 #
 # Little helper class to store cookie details
@@ -63,6 +64,14 @@ class Authentication()
       self.password := password
       return
    end
+end
+
+#
+# options() converter function for an authentication argument.
+#
+procedure authentication(s)
+   return s ? Authentication( tab(upto(':')), move(1) & tab(0) ) |
+      error("Username:password expected")
 end
 
 # This class contains an interface for additional functions which can
@@ -414,7 +423,7 @@ $endif
          return setup_digest_authentication(t)
       }
 
-      return on_http_error("WWW-Authenticate header contained unknown authentication method.")
+      return on_http_error("WWW-Authenticate header contained unknown authentication method")
    end
 
    private setup_basic_authentication()
@@ -471,9 +480,9 @@ $endif
          # Calculate H(entity)
          t := MD5()
          if \request.input_stream then {
-            request.input_stream.seek(1) | return error_dont_retry("Couldn't seek on request input stream: " || &why)
+            request.input_stream.seek(1) | return whyf_dont_retry("Couldn't seek on request input stream: %w")
             repeat {
-               s := request.input_stream.in(1048576) | return error_dont_retry("Couldn't read request input stream: " || &why)
+               s := request.input_stream.in(1048576) | return whyf_dont_retry("Couldn't read request input stream: %w")
                if /s then
                   break
                t.update(s)
@@ -803,7 +812,7 @@ $endif
             # Since we may be closing the inflater prematurely, gzip would
             # overwrite &why with "unexpected end of file"
             save_why{close_inflater()}
-            error("Failed and unable to retry - last reason: " || &why)
+            whyf("Failed and unable to retry - last reason: %w")
             fire(FAILED_EVENT)
             fail
          }
@@ -813,7 +822,7 @@ $endif
          else if (i -:= 1) < 0 then {
             save_why{close_inflater()}
             if retries > 0 then
-               error("Gave up after " || (1+retries) || " attempts - last reason: " || &why)
+               whyf("Gave up after %d attempts - last reason: %w", 1 + retries)
             fire(FAILED_EVENT)
             fail
          }
@@ -926,15 +935,15 @@ $endif
 
       if \request.input_stream then {
          request.set_header("content-type", request.content_type)
-         sz := request.input_stream.seek(0) - 1 | return error_dont_retry("Couldn't seek on request input stream: " || &why)
+         sz := request.input_stream.seek(0) - 1 | return whyf_dont_retry("Couldn't seek on request input stream: %w")
          request.set_header("content-length", sz)
          maybe_set_authorization_header() | fail
          add_request_headers(l)
          put(l, "")
          write_lines(l) | fail
-         request.input_stream.seek(1) | return error_dont_retry("Couldn't seek on request input stream: " || &why)
+         request.input_stream.seek(1) | return whyf_dont_retry("Couldn't seek on request input stream: %w")
          repeat {
-            s := request.input_stream.in(1048576) | return error_dont_retry("Couldn't read request input stream: " || &why)
+            s := request.input_stream.in(1048576) | return whyf_dont_retry("Couldn't read request input stream: %w")
             if /s then
                break
             if \abort_flag then fail
@@ -1004,7 +1013,7 @@ $endif
          not endswith(map(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
       {
          inflater_stream := FilterOutputStream(request.output_stream, "gunzip", ["-c"]) | 
-            return error_dont_retry("Couldn't open inflater stream: " || &why)
+            return whyf_dont_retry("Couldn't open inflater stream: %w")
       }
       return
    end
@@ -1020,7 +1029,7 @@ $endif
       #
       if not(\self.read & response.get_status_code() = 206) then {
          close_inflater()
-         request.output_stream.truncate(0).seek(1) | return error_dont_retry("Couldn't reset request output stream: " || &why)
+         request.output_stream.truncate(0).seek(1) | return whyf_dont_retry("Couldn't reset request output stream: %w")
          open_inflater() | fail
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
@@ -1127,9 +1136,9 @@ $endif
       some_data_flag := &yes
       fire(PROGRESS_EVENT)
       return if \inflater_stream then
-         inflater_stream.writes1(s) | error_dont_retry("Couldn't write to inflater stream: " || &why)
+         inflater_stream.writes1(s) | whyf_dont_retry("Couldn't write to inflater stream: %w")
       else
-         request.output_stream.writes1(s) | error_dont_retry("Couldn't write to request output stream: " || &why)
+         request.output_stream.writes1(s) | whyf_dont_retry("Couldn't write to request output stream: %w")
    end
 
    public override new()
