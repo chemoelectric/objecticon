@@ -123,8 +123,9 @@ abstract class Stream(HasMode)
    # Read `n` chars from the stream.  This method will try and return
    # exactly `n` characters, and will only return less because of
    # reaching the end-of-file.
-   #
-   # Returns `&null` on end-of-file
+   # 
+   # If end-of-file is encountered before any characters were read, 
+   # then `&null` is returned.
    #
    public read_exactly(n)
       local s, t
@@ -2057,8 +2058,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
          coex := &null
          return
       }
-      t := need_string(t)
-      return t
+      return need_string(t)
    end
 
    public override new(coex)
