@@ -52,28 +52,6 @@ class Cookie()
    end
 end
 
-#
-# The result of a `HttpRequestHelper.get_authentication` call.
-#
-class Authentication()
-   public const
-      username, password
-
-   public new(username, password)
-      self.username := username
-      self.password := password
-      return
-   end
-end
-
-#
-# options() converter function for an authentication argument.
-#
-procedure authentication(s)
-   return s ? Authentication( tab(upto(':')), move(1) & tab(0) ) |
-      error("Username:password expected")
-end
-
 # This class contains an interface for additional functions which can
 # be called during a request.  It is set by setting the helper member
 # of `HttpRequest`.
