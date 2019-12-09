@@ -64,7 +64,8 @@ abstract class NetClient(Connectable, HasTask)
       dont_retry_flag,
       ip_version,
       proxy,
-      proxy_auth
+      proxy_auth,
+      proxy_type
    
    private
       connection,
@@ -306,7 +307,7 @@ $else
             r := do_poll(Poll.OUT) | {
                quietly_close_connection()
                avoid_addr(addr)
-               return whyf("Couldn't connect to " || msg_addr || ": %w")
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
             if /r then {
                close_connection()
@@ -372,14 +373,14 @@ $endif
       case err of {
          2 : {  # SSL_ERROR_WANT_READ
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
-            if /r then return error("Receive failed (timeout)")
-            DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
+            if /r then return error("Receive failed: Timeout")
+            DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
             return
          }
          3 : {  # SSL_ERROR_WANT_WRITE 
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
-            if /r then return error("Send failed (timeout)")
-            DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
+            if /r then return error("Send failed: Timeout")
+            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
             return
          }
       }
@@ -392,8 +393,73 @@ $endif
    end
 
    private establish_proxy_connection()
-      local l, pr, code, s
       ensure_server()
+      return case proxy_type of {
+         &null | "http" : establish_http_proxy_connection()
+         "socks5" : establish_socks5_proxy_connection()
+         default: runerr("Invalid proxy type", proxy_type)
+      }
+   end
+
+   private static socks5_string(s)
+      s := need_string(s)
+      return char(*s) || s
+   end
+
+   private establish_socks5_proxy_connection()
+      local s, len, v
+      static errs
+      initial
+         errs := ["General SOCKS server failure",
+                  "Connection not allowed by ruleset",
+                  "Network unreachable",
+                  "Host unreachable",
+                  "Connection refused",
+                  "TTL expired",
+                  "Command not supported",
+                  "Address type not supported"]
+
+      # Auth methods
+      write_str(if \proxy_auth then "\x05\x02\x00\x02"
+                               else "\x05\x01\x00") | fail
+      s := exact_str(2) | fail
+      case v := ord(s[2]) of {
+         0 : {}     # No authentication needed
+         2 : {
+            # Username and password authentication
+            write_str("\x01" || socks5_string(proxy_auth.username) ||
+                 socks5_string(proxy_auth.password)) | fail
+            s := exact_str(2) | fail
+            (s[2] == "\x00") | return error_dont_retry("SOCKS authentication failure")
+         }
+         255:
+            return error_dont_retry("SOCKS authentication method(s) not accepted")
+         default:
+            return whyf_dont_retry("Unknown SOCKS authentication method requested (%d)", v)
+      }
+      # Connect request
+      write_str("\x05\x01\x00\x03" || socks5_string(server) || char(port / 256) || char(port % 256)) | fail
+      s := exact_str(4) | fail
+      v := ord(s[2]) 
+      (v = 0) | return case v of {
+         1 to 6: error("SOCKS connection error: " || errs[v])
+         7 to 8: error_dont_retry("SOCKS connection error: " || errs[v])
+         default: whyf_dont_retry("Unknown SOCKS connection error code (%d)", v)
+      }
+      # The length of the address
+      len := case v := ord(s[4]) of {
+         1: 4
+         4: 16
+         3: ord(exact_str(1)) | fail
+         default: return error_dont_retry("Incorrect SOCKS address indicator (%d)", v)
+      }
+      # Read and discard address and port
+      exact_str(len + 2) | fail
+      return
+   end
+
+   private establish_http_proxy_connection()
+      local l, pr, code, s
       l := ["CONNECT " || server || ":" || port  || " HTTP/1.1"]
       put(l, "User-Agent: netclient.icn [en]")
       if \proxy_auth then
@@ -475,7 +541,7 @@ $endif
    end
 
    #
-   # Set the proxy server to use
+   # Set the proxy server to use, as a `HostPort` instance.
    #
    public set_proxy(s)
       proxy := s
@@ -483,10 +549,20 @@ $endif
    end
 
    #
-   # Set the proxy auth
+   # Set the proxy authentication, as an `Authentication` instance.
    #
    public set_proxy_auth(s)
       proxy_auth := s
+      link
+   end
+
+   #
+   # Set the type of proxy server to use.  Possible values are "http"
+   # for HTTP with the CONNECT method (the default), or "socks5" for a
+   # SOCKS5 server.
+   #
+   public set_proxy_type(s)
+      proxy_type := s
       link
    end
 
@@ -506,8 +582,8 @@ $endif
       } else {
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
-            if /r then return error("Send failed (timeout)")
-            DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
+            if /r then return error("Send failed: Timeout")
+            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
             i := connection.out(s) | return whyf("Send out() failed: %w")
             s := s[i+1 : 0]
          }
@@ -528,8 +604,8 @@ $endif
          }
       } else {
          r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
-         if /r then return error("Receive failed (timeout)")
-         DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
+         if /r then return error("Receive failed: Timeout")
+         DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
          return connection.in(len) | whyf("Receive in() failed: %w")
       }
    end
@@ -564,10 +640,10 @@ $endif
 
    #
    # Read a single line from the connection, and return it.  Returns
-   # `&null` on eof.  `fl` is a flag; if set then characters are read
-   # one at a time from the connection.  This avoids the usual buffering
-   # taking place (although any existing buffered characters are still
-   # consumed).
+   # `&null` on end of file.  `fl` is a flag; if set then characters
+   # are read one at a time from the connection.  This avoids the
+   # usual buffering taking place (although any existing buffered
+   # characters are still consumed).
    #
    protected read_line(fl)
       local line, s, len
@@ -604,11 +680,12 @@ $endif
    protected expect_line(fl)
       local s
       s := read_line(fl) | fail
-      return \s | error("Unexpected eof")
+      return \s | error("Unexpected end of file")
    end
 
    #
-   # Read up to len bytes on the connection, returning `&null` on eof.
+   # Read up to len bytes on the connection, returning `&null` on
+   # end of file.
    #
    protected read_str(len)
       local t
@@ -629,13 +706,30 @@ $endif
       return t
    end
 
+   #
    # This method is the same as `read_str`, except that on end of file
    # it fails, setting `&why`, rather than returning `&null`.
    #
    protected expect_str(len)
       local s
       s := read_str(len) | fail
-      return \s | error("Unexpected eof")
+      return \s | error("Unexpected end of file")
+   end
+
+   #
+   # This calls `expect_str` several times in order to read exactly `len`
+   # characters from the connection.
+   #
+   protected exact_str(len)
+      local s, t
+      len := need_integer(len, 1)
+      s := ""
+      while len > 0 do {
+         t := expect_str(len) | fail
+         s ||:= t
+         len -:= *t
+      }
+      return s
    end
 
    #
@@ -725,4 +819,26 @@ end
 #
 procedure host_port(def)
    return lpartial(host_port_impl, def)
+end
+
+#
+# A class for encapsulating a username and password
+#
+class Authentication()
+   public const
+      username, password
+
+   public new(username, password)
+      self.username := username
+      self.password := password
+      return
+   end
+end
+
+#
+# options() converter function for an authentication argument.
+#
+procedure authentication(s)
+   return s ? Authentication( tab(upto(':')), move(1) & tab(0) ) |
+      error("Username:password expected")
 end
