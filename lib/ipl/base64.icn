@@ -31,7 +31,7 @@
 
 package ipl.base64
 
-import util(error)
+import util(error,need_string)
 
 # encode a string into base 64 (MIME)
 procedure base64encode(s)   
@@ -39,6 +39,7 @@ procedure base64encode(s)
    static b64
    initial b64 := &ucase || &lcase || &digits || "+/"
 
+   s := need_string(s)
    i := (3 - (*s % 3)) % 3
    s ||:= repl("\x00",i)
    pad := repl("=",i)
@@ -64,6 +65,8 @@ procedure base64decode(s)
       c64 := cset(b64)
       n64 := &cset[1+:64]
       }
+
+   s := need_string(s)
 
    s ? {
       tab(many(c64))
