@@ -8,8 +8,7 @@ import net, util(error)
 
 class PopClient(NetClient)
    private
-      username,
-      password
+      auth
 
    #
    # Flag the given message for deletion
@@ -22,18 +21,11 @@ class PopClient(NetClient)
    end
 
    #
-   # Set the username for the session
+   # Set the authentication for the session (user and password), as an
+   # `Authentication` instance.
    #
-   public set_username(s)
-      username := s
-      link
-   end
-
-   #
-   # Set the password for the session
-   #
-   public set_password(s)
-      password := s
+   public set_auth(a)
+      auth := a
       link
    end
 
@@ -53,8 +45,8 @@ class PopClient(NetClient)
    # Authenticate the username, password combination
    #
    public login()
-      send_command("USER " || username) | fail
-      send_command("PASS " || password) | fail
+      send_command("USER " || auth.username) | fail
+      send_command("PASS " || auth.password) | fail
       link
    end
 
