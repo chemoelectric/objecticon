@@ -1084,9 +1084,9 @@ $endif
       # Got a content length.  Read len bytes and leave the connection
       # open - unless told to close it.
       #
-      while self.read < length do {
+      while read < length do {
          if \abort_flag then fail
-         s := expect_str(min(1048576, length - self.read)) | fail
+         s := expect_str(min(1048576, length - read)) | fail
          add_some(s) | fail
       }
 
