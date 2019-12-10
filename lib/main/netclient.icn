@@ -423,6 +423,8 @@ $endif
       write_str(if \proxy_auth then "\x05\x02\x00\x02"
                                else "\x05\x01\x00") | fail
       s := exact_str(2) | fail
+      v := ord(s[1])
+      (v = 5) | return whyf_dont_retry("SOCKS version mismatch (%d)", v)
       case v := ord(s[2]) of {
          0 : {}     # No authentication needed
          2 : {
