@@ -427,6 +427,7 @@ $endif
          0 : {}     # No authentication needed
          2 : {
             # Username and password authentication
+            \proxy_auth |  return error_dont_retry("Unexpected SOCKS authentication request")
             write_str("\x01" || socks5_string(proxy_auth.username) ||
                  socks5_string(proxy_auth.password)) | fail
             s := exact_str(2) | fail
@@ -451,7 +452,7 @@ $endif
          1: 4
          4: 16
          3: ord(exact_str(1)) | fail
-         default: return error_dont_retry("Incorrect SOCKS address indicator (%d)", v)
+         default: return whyf_dont_retry("Incorrect SOCKS address indicator (%d)", v)
       }
       # Read and discard address and port
       exact_str(len + 2) | fail
