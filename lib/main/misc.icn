@@ -173,6 +173,14 @@ procedure need_table(x)
    return x
 end
 
+# Check that x is an instance of cl (a class or constructor),
+# signalling a runtime error otherwise.
+#
+procedure need_instance(x, cl)
+   is(x, cl) | runerr("Instance of " || image(cl) || " expected", x)
+   return x
+end
+
 # Convert and return `s1` so that it has the same type as `s2`, which
 # is assumed to be string or ucs, giving a runerr if conversion is not
 # possible.
