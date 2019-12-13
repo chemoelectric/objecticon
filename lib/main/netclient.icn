@@ -105,7 +105,7 @@ abstract class NetClient(Connectable, HasTask)
    # `SocketStream.dns_query()`.  By default, this is `&null`.
    #
    public set_ip_version(ver)
-      self.ip_version := ver
+      self.ip_version := /ver | need_integer(ver)
       link
    end
 
@@ -113,7 +113,7 @@ abstract class NetClient(Connectable, HasTask)
    # be used.
    #
    public set_timeout(timeout)
-      self.timeout := timeout
+      self.timeout := /timeout | need_integer(timeout, 0)
       link
    end
 
@@ -143,6 +143,7 @@ $if _MS_WIN32
       fire(CONNECTING_EVENT)
       if \path then
          return error_dont_retry("UNIX domain not supported")
+      validate_settings() | fail
       if \proxy then {
          l := dns_query(proxy.host) | return whyf("Couldn't translate proxy address: %w")
          l := List{ ip_to_addr(!l, proxy.port) }
@@ -153,7 +154,6 @@ $if _MS_WIN32
             ProtocolFormat.INET6
          msg_addr := proxy.host || " (" || addr || ")"
       } else {
-         ensure_server()
          l := dns_query(server) | return whyf("Couldn't translate address: %w")
          l := List{ ip_to_addr(!l, port) }
          addr := choose_addr(l)
@@ -271,8 +271,11 @@ $else
 
       close_connection()
       fire(CONNECTING_EVENT)
-
-      if \proxy then {
+      validate_settings() | fail
+      if \path then {
+         domain := ProtocolFormat.UNIX
+         msg_addr := addr := "unix:" || path
+      } else if \proxy then {
          l := dns_query(proxy.host) | return whyf("Couldn't translate proxy address: %w")
          l := List{ ip_to_addr(!l, proxy.port) }
          addr := choose_addr(l)
@@ -281,11 +284,7 @@ $else
          else
             ProtocolFormat.INET6
          msg_addr := proxy.host || " (" || addr || ")"
-      } else if \path then {
-         domain := ProtocolFormat.UNIX
-         msg_addr := addr := "unix:" || path
       } else {
-         ensure_server()
          l := dns_query(server) | return whyf("Couldn't translate address: %w")
          l := List{ ip_to_addr(!l, port) }
          addr := choose_addr(l)
@@ -386,14 +385,26 @@ $endif
       }
    end
 
-   private ensure_server()
-      \server | runerr("No server set")
-      \port | runerr("Server set, but no port")
+   public static valid_port(i)
+      succeed 0 < i < 65536
+   end
+
+   private validate_settings()
+      if \path then {
+         /server | runerr("Path and server set")
+         /port | runerr("Path and port set")
+         /proxy | runerr("Path and proxy set")
+      } else {
+         \server | runerr("No server set")
+         \port | runerr("Server set, but no port")
+         valid_port(port) | return error_dont_retry("Port out of range")
+         if \proxy then
+            valid_port(proxy.port) | return error_dont_retry("Proxy port out of range")
+      } 
       return
    end
 
    private establish_proxy_connection()
-      ensure_server()
       return case proxy_type of {
          &null | "http" : establish_http_proxy_connection()
          "socks5" : establish_socks5_proxy_connection()
@@ -523,7 +534,7 @@ $endif
    # Set the path to use (implies using PF_UNIX socket domain)
    #
    public set_path(s)
-      path := s
+      path := /s | need_text(s)
       link
    end
 
@@ -531,7 +542,7 @@ $endif
    # Set the server to use (implies using PF_INET socket domain)
    #
    public set_server(s)
-      server := s
+      server := /s | need_text(s)
       link
    end
 
@@ -539,7 +550,7 @@ $endif
    # Set the port
    #
    public set_port(n)
-      port := n
+      port := /n | need_integer(n, 0)
       link
    end
 
@@ -801,27 +812,29 @@ class HostPort()
       host, port
 
    public new(host, port)
-      self.host := host
-      self.port := port
+      self.host := need_text(host)
+      self.port := need_integer(port, 0)
       return
    end
 end
 
-package procedure host_port_impl(def, s)
-   local v
-   return s ? {
-      if v := tab(upto(':')) then
+package procedure host_port_opt_impl(def, s)
+   local v, r
+   s ? {
+      r := if v := tab(upto(':')) then
          HostPort( v, move(1) & integer(tab(0)) )
       else
          HostPort( tab(0), \def )
-   } | error("Host:port expected")
+   } | return error("Host:port expected")
+   NetClient.valid_port(r.port) | return error("Port out of range")
+   return r
 end
 
 #
 # options() converter function for a host:port argument.  `def` is an optional default port.
 #
-procedure host_port(def)
-   return lpartial(host_port_impl, def)
+procedure host_port_opt(def)
+   return lpartial(host_port_opt_impl, def)
 end
 
 #
@@ -832,8 +845,8 @@ class Authentication()
       username, password
 
    public new(username, password)
-      self.username := username
-      self.password := password
+      self.username := need_text(username)
+      self.password := need_text(password)
       return
    end
 end
@@ -841,7 +854,14 @@ end
 #
 # options() converter function for an authentication argument.
 #
-procedure authentication(s)
+procedure authentication_opt(s)
    return s ? Authentication( tab(upto(':')), move(1) & tab(0) ) |
       error("Username:password expected")
+end
+
+#
+# options() converter function for an IP version argument.
+#
+procedure ip_version_opt(s)
+   return integer(s) = (4 | 6 | 46 | 64 | 0) | error("IP version expected")
 end

@@ -256,7 +256,7 @@ $endif
    # Set the number of retries to use.  The default is two.
    #
    public set_retries(retries)
-      self.retries := retries
+      self.retries := need_integer(retries, 0)
       link
    end
 
