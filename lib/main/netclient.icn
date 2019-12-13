@@ -826,8 +826,7 @@ package procedure host_port_opt_impl(def, s)
       else
          HostPort( tab(0), \def )
    } | return error("Host:port expected")
-   NetClient.valid_port(r.port) | return error("Port out of range")
-   return r
+   return if NetClient.valid_port(r.port) then r else error("Port out of range")
 end
 
 #
@@ -864,4 +863,12 @@ end
 #
 procedure ip_version_opt(s)
    return integer(s) = (4 | 6 | 46 | 64 | 0) | error("IP version expected")
+end
+
+#
+# options() converter function for a port number.
+#
+procedure port_opt(s)
+   s := integer(s) | return error("Port expected")
+   return if NetClient.valid_port(s) then s else error("Port out of range")
 end
