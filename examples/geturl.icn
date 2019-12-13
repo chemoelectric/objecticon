@@ -476,7 +476,7 @@ procedure main(args)
                           Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
-                          Opt("a",authentication, "USER:PASS#Specify authorization"),
+                          Opt("a",authentication_opt, "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("l",, "Show HTTP headers and data flow"),
                           Opt("n",string, "FILE#Append to the given partial file"),
@@ -493,8 +493,8 @@ procedure main(args)
                           Opt("x",string_with(':'),"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0"),
-                          Opt("P",host_port(),"SERVER:PORT#Proxy server and port"),
-                          Opt("Pa",authentication,"USER:PASS#Proxy authorization"),
+                          Opt("P",host_port_opt(),"SERVER:PORT#Proxy server and port"),
+                          Opt("Pa",authentication_opt,"USER:PASS#Proxy authorization"),
                           Opt("P5",, "Use SOCKS5 rather than HTTP CONNECT as the proxy protocol")
                           ],
                           usage)

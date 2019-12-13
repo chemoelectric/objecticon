@@ -55,8 +55,8 @@ procedure main(args)
                           Opt("r",integer_range(0), "RETRIES#Number of retries"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("text",,"Do a search for tags in the text content of the parsed document"),
-                          Opt("P",host_port(),"SERVER:PORT#Proxy server and port"),
-                          Opt("Pa",authentication,"USER:PASS#Proxy authorization"),
+                          Opt("P",host_port_opt(),"SERVER:PORT#Proxy server and port"),
+                          Opt("Pa",authentication_opt,"USER:PASS#Proxy authorization"),
                           Opt("P5",, "Use SOCKS5 rather than HTTP CONNECT as the proxy protocol")
                           ],
                           "Usage: lslinks [URL]... [OPTIONS]\N_

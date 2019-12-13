@@ -1947,8 +1947,8 @@ procedure main(a)
                        Opt("l",,"Show HTTP headers and data flow"),
                        Opt("agent",string, "Set user agent field"),
                        Opt("nsslv",, "Don't verify SSL certificates"),
-                       Opt("P",host_port(),"SERVER:PORT#Proxy server and port"),
-                       Opt("Pa",authentication,"USER:PASS#Proxy authorization"),
+                       Opt("P",host_port_opt(),"SERVER:PORT#Proxy server and port"),
+                       Opt("Pa",authentication_opt,"USER:PASS#Proxy authorization"),
                        Opt("P5",, "Use SOCKS5 rather than HTTP CONNECT as the proxy protocol"),
                        Opt("v",,"Verbose output")
                        ])
