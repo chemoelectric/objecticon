@@ -1611,26 +1611,22 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
    end
 
    protected do_poll()
-      local x, l, t2, t3
+      local x, l
       l := []
       if \cin then
          every put(l, cin | Poll.IN)
-      if \cerr then {
+      if \cerr then
          every put(l, cerr | Poll.IN)
-         t2 := *l / 2
-      }
-      if \cout then {
+      if \cout then
          every put(l, cout | Poll.OUT)
-         t3 := *l / 2
-      }
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if \cin & DescStream.poll_in_test(x[1]) then
+      if \cin & DescStream.poll_in_test(pop(x)) then
          return cin
-      if \cerr & DescStream.poll_in_test(x[t2]) then
+      if \cerr & DescStream.poll_in_test(pop(x)) then
          return cerr
-      if \cout & DescStream.poll_out_test(x[t3]) then
+      if \cout & DescStream.poll_out_test(pop(x)) then
          return cout
       return error("Child command I/O failed")
    end
