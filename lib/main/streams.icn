@@ -128,8 +128,9 @@ abstract class Stream(HasMode)
    # Read `n` chars from the stream.  This method will try and return
    # exactly `n` characters, and will only return less because of
    # reaching the end-of-file.
-   #
-   # Returns `&null` on end-of-file
+   # 
+   # If end-of-file is encountered before any characters were read, 
+   # then `&null` is returned.
    #
    public read_exactly(n)
       local s, t
@@ -1809,28 +1810,24 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
    end
 
    protected do_poll()
-      local x, l, t2, t3
+      local x, l
       l := []
       if \cin then
          every put(l, cin | Poll.IN)
-      if \cerr then {
+      if \cerr then
          every put(l, cerr | Poll.IN)
-         t2 := *l / 2
-      }
-      if \cout then {
+      if \cout then
          every put(l, cout | Poll.OUT)
-         t3 := *l / 2
-      }
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if \cin & DescStream.poll_in_test(x[1]) then
+      if \cin & DescStream.poll_in_test(pop(x)) then
          return cin
-      if \cerr & DescStream.poll_in_test(x[t2]) then
+      if \cerr & DescStream.poll_in_test(pop(x)) then
          return cerr
-      if \cout & DescStream.poll_out_test(x[t3]) then
+      if \cout & DescStream.poll_out_test(pop(x)) then
          return cout
-      return error("Child command i/o failed")
+      return error("Child command I/O failed")
    end
 
    protected close_cin()
@@ -2090,26 +2087,22 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
    end
 
    protected do_poll()
-      local x, l, t2, t3
+      local x, l
       l := []
       if \cin then
          every put(l, cin | Poll.IN)
-      if \cerr then {
+      if \cerr then
          every put(l, cerr | Poll.IN)
-         t2 := *l / 2
-      }
-      if \cout then {
+      if \cout then
          every put(l, cout | Poll.OUT)
-         t3 := *l / 2
-      }
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if \cin & DescStream.poll_in_test(x[1]) then
+      if \cin & DescStream.poll_in_test(pop(x)) then
          return cin
-      if \cerr & DescStream.poll_in_test(x[t2]) then
+      if \cerr & DescStream.poll_in_test(pop(x)) then
          return cerr
-      if \cout & DescStream.poll_out_test(x[t3]) then
+      if \cout & DescStream.poll_out_test(pop(x)) then
          return cout
       return error("Child command I/O failed")
    end
@@ -3182,8 +3175,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
          coex := &null
          return
       }
-      t := need_string(t)
-      return t
+      return need_string(t)
    end
 
    public override new(coex)

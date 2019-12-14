@@ -28,7 +28,7 @@ class XmlFormatter(Formatter)
    # will be inserted as appropriate.  By default, no indentation is done.
    #
    public set_indent(n)
-      self.indent := n
+      self.indent := /n | need_integer(n, 0)
       link
    end
 

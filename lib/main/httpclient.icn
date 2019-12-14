@@ -52,28 +52,6 @@ class Cookie()
    end
 end
 
-#
-# The result of a `HttpRequestHelper.get_authentication` call.
-#
-class Authentication()
-   public const
-      username, password
-
-   public new(username, password)
-      self.username := username
-      self.password := password
-      return
-   end
-end
-
-#
-# options() converter function for an authentication argument.
-#
-procedure authentication(s)
-   return s ? Authentication( tab(upto(':')), move(1) & tab(0) ) |
-      error("Username:password expected")
-end
-
 # This class contains an interface for additional functions which can
 # be called during a request.  It is set by setting the helper member
 # of `HttpRequest`.
@@ -278,7 +256,7 @@ $endif
    # Set the number of retries to use.  The default is two.
    #
    public set_retries(retries)
-      self.retries := retries
+      self.retries := need_integer(retries, 0)
       link
    end
 
@@ -1106,9 +1084,9 @@ $endif
       # Got a content length.  Read len bytes and leave the connection
       # open - unless told to close it.
       #
-      while self.read < length do {
+      while read < length do {
          if \abort_flag then fail
-         s := expect_str(min(1048576, length - self.read)) | fail
+         s := expect_str(min(1048576, length - read)) | fail
          add_some(s) | fail
       }
 

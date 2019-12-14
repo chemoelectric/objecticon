@@ -64,7 +64,8 @@ abstract class NetClient(Connectable, HasTask)
       dont_retry_flag,
       ip_version,
       proxy,
-      proxy_auth
+      proxy_auth,
+      proxy_type
    
    private
       connection,
@@ -104,7 +105,7 @@ abstract class NetClient(Connectable, HasTask)
    # `SocketStream.dns_query()`.  By default, this is `&null`.
    #
    public set_ip_version(ver)
-      self.ip_version := ver
+      self.ip_version := /ver | need_integer(ver)
       link
    end
 
@@ -112,7 +113,7 @@ abstract class NetClient(Connectable, HasTask)
    # be used.
    #
    public set_timeout(timeout)
-      self.timeout := timeout
+      self.timeout := /timeout | need_integer(timeout, 0)
       link
    end
 
@@ -132,13 +133,13 @@ $if _PLAN9
          return error_dont_retry("SSL not supported")
       if \path then
          return error_dont_retry("UNIX domain not supported")
+      validate_settings() | fail
       if \proxy then {
          addr := "tcp!" || proxy.host || "!" || proxy.port
          l := NetStream.cs_query(addr, ip_version, task) | return whyf("Couldn't translate address: %w")
          cs := choose_addr(l)
          msg_addr := proxy.host || " (" || cs || ")"
       } else {
-         ensure_server()
          addr := "tcp!" || server || "!" || port
          l := NetStream.cs_query(addr, ip_version, task) | return whyf("Couldn't translate address: %w")
          cs := choose_addr(l)
@@ -184,6 +185,7 @@ $elsif _MS_WIN32
       fire(CONNECTING_EVENT)
       if \path then
          return error_dont_retry("UNIX domain not supported")
+      validate_settings() | fail
       if \proxy then {
          l := dns_query(proxy.host) | return whyf("Couldn't translate proxy address: %w")
          l := List{ ip_to_addr(!l, proxy.port) }
@@ -194,7 +196,6 @@ $elsif _MS_WIN32
             ProtocolFormat.INET6
          msg_addr := proxy.host || " (" || addr || ")"
       } else {
-         ensure_server()
          l := dns_query(server) | return whyf("Couldn't translate address: %w")
          l := List{ ip_to_addr(!l, port) }
          addr := choose_addr(l)
@@ -312,8 +313,11 @@ $else
 
       close_connection()
       fire(CONNECTING_EVENT)
-
-      if \proxy then {
+      validate_settings() | fail
+      if \path then {
+         domain := ProtocolFormat.UNIX
+         msg_addr := addr := "unix:" || path
+      } else if \proxy then {
          l := dns_query(proxy.host) | return whyf("Couldn't translate proxy address: %w")
          l := List{ ip_to_addr(!l, proxy.port) }
          addr := choose_addr(l)
@@ -322,11 +326,7 @@ $else
          else
             ProtocolFormat.INET6
          msg_addr := proxy.host || " (" || addr || ")"
-      } else if \path then {
-         domain := ProtocolFormat.UNIX
-         msg_addr := addr := "unix:" || path
       } else {
-         ensure_server()
          l := dns_query(server) | return whyf("Couldn't translate address: %w")
          l := List{ ip_to_addr(!l, port) }
          addr := choose_addr(l)
@@ -348,7 +348,7 @@ $else
             r := do_poll(Poll.OUT) | {
                quietly_close_connection()
                avoid_addr(addr)
-               return whyf("Couldn't connect to " || msg_addr || ": %w")
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
             if /r then {
                close_connection()
@@ -413,28 +413,108 @@ $endif
       case err of {
          2 : {  # SSL_ERROR_WANT_READ
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
-            if /r then return error("Receive failed (timeout)")
-            DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
+            if /r then return error("Receive failed: Timeout")
+            DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
             return
          }
          3 : {  # SSL_ERROR_WANT_WRITE 
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
-            if /r then return error("Send failed (timeout)")
-            DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
+            if /r then return error("Send failed: Timeout")
+            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
             return
          }
       }
    end
 
-   private ensure_server()
-      \server | runerr("No server set")
-      \port | runerr("Server set, but no port")
+   public static valid_port(i)
+      succeed 0 < i < 65536
+   end
+
+   private validate_settings()
+      if \path then {
+         /server | runerr("Path and server set")
+         /port | runerr("Path and port set")
+         /proxy | runerr("Path and proxy set")
+      } else {
+         \server | runerr("No server set")
+         \port | runerr("Server set, but no port")
+         valid_port(port) | return error_dont_retry("Port out of range")
+         if \proxy then
+            valid_port(proxy.port) | return error_dont_retry("Proxy port out of range")
+      } 
       return
    end
 
    private establish_proxy_connection()
+      return case proxy_type of {
+         &null | "http" : establish_http_proxy_connection()
+         "socks5" : establish_socks5_proxy_connection()
+         default: runerr("Invalid proxy type", proxy_type)
+      }
+   end
+
+   private static socks5_string(s)
+      s := need_string(s)
+      return char(*s) || s
+   end
+
+   private establish_socks5_proxy_connection()
+      local s, len, v
+      static errs
+      initial
+         errs := ["General SOCKS server failure",
+                  "Connection not allowed by ruleset",
+                  "Network unreachable",
+                  "Host unreachable",
+                  "Connection refused",
+                  "TTL expired",
+                  "Command not supported",
+                  "Address type not supported"]
+
+      # Auth methods
+      write_str(if \proxy_auth then "\x05\x02\x00\x02"
+                               else "\x05\x01\x00") | fail
+      s := exact_str(2) | fail
+      v := ord(s[1])
+      (v = 5) | return whyf_dont_retry("SOCKS version mismatch (%d)", v)
+      case v := ord(s[2]) of {
+         0 : {}     # No authentication needed
+         2 : {
+            # Username and password authentication
+            \proxy_auth |  return error_dont_retry("Unexpected SOCKS authentication request")
+            write_str("\x01" || socks5_string(proxy_auth.username) ||
+                 socks5_string(proxy_auth.password)) | fail
+            s := exact_str(2) | fail
+            (s[2] == "\x00") | return error_dont_retry("SOCKS authentication failure")
+         }
+         255:
+            return error_dont_retry("SOCKS authentication method(s) not accepted")
+         default:
+            return whyf_dont_retry("Unknown SOCKS authentication method requested (%d)", v)
+      }
+      # Connect request
+      write_str("\x05\x01\x00\x03" || socks5_string(server) || char(port / 256) || char(port % 256)) | fail
+      s := exact_str(4) | fail
+      v := ord(s[2]) 
+      (v = 0) | return case v of {
+         1 to 6: error("SOCKS connection error: " || errs[v])
+         7 to 8: error_dont_retry("SOCKS connection error: " || errs[v])
+         default: whyf_dont_retry("Unknown SOCKS connection error code (%d)", v)
+      }
+      # The length of the address
+      len := case v := ord(s[4]) of {
+         1: 4
+         4: 16
+         3: ord(exact_str(1)) | fail
+         default: return whyf_dont_retry("Incorrect SOCKS address indicator (%d)", v)
+      }
+      # Read and discard address and port
+      exact_str(len + 2) | fail
+      return
+   end
+
+   private establish_http_proxy_connection()
       local l, pr, code, s
-      ensure_server()
       l := ["CONNECT " || server || ":" || port  || " HTTP/1.1"]
       put(l, "User-Agent: netclient.icn [en]")
       if \proxy_auth then
@@ -495,7 +575,7 @@ $endif
    # Set the path to use (implies using PF_UNIX socket domain)
    #
    public set_path(s)
-      path := s
+      path := /s | need_text(s)
       link
    end
 
@@ -503,7 +583,7 @@ $endif
    # Set the server to use (implies using PF_INET socket domain)
    #
    public set_server(s)
-      server := s
+      server := /s | need_text(s)
       link
    end
 
@@ -511,12 +591,12 @@ $endif
    # Set the port
    #
    public set_port(n)
-      port := n
+      port := /n | need_integer(n, 0)
       link
    end
 
    #
-   # Set the proxy server to use
+   # Set the proxy server to use, as a `HostPort` instance.
    #
    public set_proxy(s)
       proxy := s
@@ -524,10 +604,20 @@ $endif
    end
 
    #
-   # Set the proxy auth
+   # Set the proxy authentication, as an `Authentication` instance.
    #
    public set_proxy_auth(s)
       proxy_auth := s
+      link
+   end
+
+   #
+   # Set the type of proxy server to use.  Possible values are "http"
+   # for HTTP with the CONNECT method (the default), or "socks5" for a
+   # SOCKS5 server.
+   #
+   public set_proxy_type(s)
+      proxy_type := s
       link
    end
 
@@ -547,8 +637,8 @@ $endif
       } else {
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
-            if /r then return error("Send failed (timeout)")
-            DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
+            if /r then return error("Send failed: Timeout")
+            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
             i := connection.out(s) | return whyf("Send out() failed: %w")
             s := s[i+1 : 0]
          }
@@ -569,8 +659,8 @@ $endif
          }
       } else {
          r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
-         if /r then return error("Receive failed (timeout)")
-         DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
+         if /r then return error("Receive failed: Timeout")
+         DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
          return connection.in(len) | whyf("Receive in() failed: %w")
       }
    end
@@ -605,10 +695,10 @@ $endif
 
    #
    # Read a single line from the connection, and return it.  Returns
-   # `&null` on eof.  `fl` is a flag; if set then characters are read
-   # one at a time from the connection.  This avoids the usual buffering
-   # taking place (although any existing buffered characters are still
-   # consumed).
+   # `&null` on end of file.  `fl` is a flag; if set then characters
+   # are read one at a time from the connection.  This avoids the
+   # usual buffering taking place (although any existing buffered
+   # characters are still consumed).
    #
    protected read_line(fl)
       local line, s, len
@@ -645,11 +735,12 @@ $endif
    protected expect_line(fl)
       local s
       s := read_line(fl) | fail
-      return \s | error("Unexpected eof")
+      return \s | error("Unexpected end of file")
    end
 
    #
-   # Read up to len bytes on the connection, returning `&null` on eof.
+   # Read up to len bytes on the connection, returning `&null` on
+   # end of file.
    #
    protected read_str(len)
       local t
@@ -670,13 +761,30 @@ $endif
       return t
    end
 
+   #
    # This method is the same as `read_str`, except that on end of file
    # it fails, setting `&why`, rather than returning `&null`.
    #
    protected expect_str(len)
       local s
       s := read_str(len) | fail
-      return \s | error("Unexpected eof")
+      return \s | error("Unexpected end of file")
+   end
+
+   #
+   # This calls `expect_str` several times in order to read exactly `len`
+   # characters from the connection.
+   #
+   protected exact_str(len)
+      local s, t
+      len := need_integer(len, 1)
+      s := ""
+      while len > 0 do {
+         t := expect_str(len) | fail
+         s ||:= t
+         len -:= *t
+      }
+      return s
    end
 
    #
@@ -745,25 +853,63 @@ class HostPort()
       host, port
 
    public new(host, port)
-      self.host := host
-      self.port := port
+      self.host := need_text(host)
+      self.port := need_integer(port, 0)
       return
    end
 end
 
-package procedure host_port_impl(def, s)
-   local v
-   return s ? {
-      if v := tab(upto(':')) then
+package procedure host_port_opt_impl(def, s)
+   local v, r
+   s ? {
+      r := if v := tab(upto(':')) then
          HostPort( v, move(1) & integer(tab(0)) )
       else
          HostPort( tab(0), \def )
-   } | error("Host:port expected")
+   } | return error("Host:port expected")
+   return if NetClient.valid_port(r.port) then r else error("Port out of range")
 end
 
 #
 # options() converter function for a host:port argument.  `def` is an optional default port.
 #
-procedure host_port(def)
-   return lpartial(host_port_impl, def)
+procedure host_port_opt(def)
+   return lpartial(host_port_opt_impl, def)
+end
+
+#
+# A class for encapsulating a username and password
+#
+class Authentication()
+   public const
+      username, password
+
+   public new(username, password)
+      self.username := need_text(username)
+      self.password := need_text(password)
+      return
+   end
+end
+
+#
+# options() converter function for an authentication argument.
+#
+procedure authentication_opt(s)
+   return s ? Authentication( tab(upto(':')), move(1) & tab(0) ) |
+      error("Username:password expected")
+end
+
+#
+# options() converter function for an IP version argument.
+#
+procedure ip_version_opt(s)
+   return integer(s) = (4 | 6 | 46 | 64 | 0) | error("IP version expected")
+end
+
+#
+# options() converter function for a port number.
+#
+procedure port_opt(s)
+   s := integer(s) | return error("Port expected")
+   return if NetClient.valid_port(s) then s else error("Port out of range")
 end

@@ -255,6 +255,7 @@ final abstract class Format()
    #
    public static unescape(s)
       local res
+      s := need_text(s)
       s ? {
          # Shortcut for common case
          upto('\\') | return s
@@ -287,6 +288,7 @@ final abstract class Format()
    #
    public static cset_unescape(s)
       local l, state, c, prev, esc_flag
+      s := need_text(s)
       state := 0
       l := []
       s ? until pos(0) do {
@@ -303,7 +305,7 @@ final abstract class Format()
                   else if ="^" then
                      unescape_ctl()
                   else 
-                     ord(unescape_char())) | break
+                     ord(unescape_char())) | fail
          } else {
             esc_flag := &no
             c := ord(move(1))
@@ -344,6 +346,7 @@ final abstract class Format()
    #
    public static shell_escape(s)
       local t, ch
+      s := need_text(s)
       t := ""
       s ? {
          while t ||:= string(tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>~[]{}!$`\'\" '))) do {

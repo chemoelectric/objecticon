@@ -387,8 +387,11 @@ class Worker()
       if \opts["while"] then
          hc.set_retry_while_data(&yes)
 
-      if hc.set_proxy(\opts["P"]) then
+      if hc.set_proxy(\opts["P"]) then {
          hc.set_proxy_auth(\opts["Pa"])
+         if \opts["P5"] then
+            hc.set_proxy_type("socks5")
+      }
 
       hc.set_cookies(cookies)
 
@@ -449,10 +452,6 @@ procedure usage(opts)
    exit(0)
 end
 
-procedure ip_version(s)
-   return integer(s) = (4 | 6 | 46 | 64 | 0) | error("IP version expected")
-end
-
 procedure gen_urls(args)
    suspend expand_arg(if *args = 0 then |read() else !args)
 end
@@ -473,7 +472,7 @@ procedure main(args)
                           Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
-                          Opt("a",authentication, "USER:PASS#Specify authorization"),
+                          Opt("a",authentication_opt, "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("l",, "Show HTTP headers and data flow"),
                           Opt("n",string, "FILE#Append to the given partial file"),
@@ -486,12 +485,13 @@ procedure main(args)
                           Opt("agent",string, "Set user agent field"),
                           Opt("while",, "Set the retry-while-data flag"),
                           Opt("close",, "Use Connection: Close"),
-                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0"),
+                          Opt("ip",ip_version_opt, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0"),
                           Opt("x",string_with(':'),"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0"),
-                          Opt("P",host_port(),"SERVER:PORT#Proxy server and port"),
-                          Opt("Pa",authentication,"USER:PASS#Proxy authorization")
+                          Opt("P",host_port_opt(),"SERVER:PORT#Proxy server and port"),
+                          Opt("Pa",authentication_opt,"USER:PASS#Proxy authorization"),
+                          Opt("P5",, "Use SOCKS5 rather than HTTP CONNECT as the proxy protocol")
                           ],
                           usage)
 

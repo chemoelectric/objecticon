@@ -34,8 +34,8 @@ class HttpRequest(MimeHeaders)
    # start or end of data respectively.
    #
    public set_range(s, e)
-      self.range_start := s
-      self.range_end := e
+      self.range_start := /s | need_integer(s, 0)
+      self.range_end := /e | need_integer(e, 0)
       link
    end
 
@@ -87,7 +87,7 @@ class HttpRequest(MimeHeaders)
    # case the default is `POST`.
    #
    public set_method(method)
-      self.method := method
+      self.method := need_string(method)
       link
    end
 

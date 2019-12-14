@@ -607,7 +607,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #              is used.
    #
    public set_seconds(n, zone)
-      self.seconds := n
+      self.seconds := need_integer(n)
       self.zone := \zone | Timezone.get_timezone_at(get_unix_seconds())
       self.compute_broken_down_fields()
       link
@@ -617,7 +617,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set year; recompute seconds past the base date.
    #
    public set_year(n)
-      self.year := n
+      self.year := need_integer(n)
       self.compute_seconds()
       link
    end
@@ -627,7 +627,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # truncate to end of month
    #
    public set_year_truncate(n)
-      self.year := n
+      self.year := need_integer(n)
       if self.mday > 28 then
          self.mday := default.min(self.mday, get_mdays(self.year, self.month))
       self.compute_seconds()
@@ -638,7 +638,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set month; recompute seconds past the base date.
    #
    public set_month(n)
-      self.month := n
+      self.month := need_integer(n)
       self.compute_seconds()
       link
    end
@@ -649,7 +649,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    public set_month_truncate(n)
       local t
-      self.month := n
+      self.month := need_integer(n)
       if self.mday > 28 then {
          t := self.mday
          self.mday := 1
@@ -664,7 +664,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set mday; recompute seconds past the base date.
    #
    public set_mday(n)
-      self.mday := n
+      self.mday := need_integer(n)
       self.compute_seconds()
       link
    end
@@ -673,7 +673,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set hour; recompute seconds past the base date.
    #
    public set_hour(n)
-      self.hour := n
+      self.hour := need_integer(n)
       self.compute_seconds()
       link
    end
@@ -682,7 +682,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set min; recompute seconds past the base date.
    #
    public set_min(n)
-      self.min := n
+      self.min := need_integer(n)
       self.compute_seconds()
       link
    end
@@ -691,7 +691,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set seconds past the hour; recompute seconds past the base date.
    #
    public set_sec(n)
-      self.sec := n
+      self.sec := need_integer(n)
       self.compute_seconds()
       link
    end
@@ -913,12 +913,12 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # local timezone, depending on the other fields.
    #
    public set_fields(year, month, mday, hour, min, sec, zone)   
-      self.year := \year | BASE_YEAR
-      self.month := \month | 1
-      self.mday := \mday | 1
-      self.hour := \hour | 0
-      self.min := \min | 0
-      self.sec := \sec | 0
+      self.year := need_integer(\year) | BASE_YEAR
+      self.month := need_integer(\month) | 1
+      self.mday := need_integer(\mday) | 1
+      self.hour := need_integer(\hour) | 0
+      self.min := need_integer(\min) | 0
+      self.sec := need_integer(\sec) | 0
       self.zone := \zone | Timezone.LOCAL_STANDARD_TIMEZONE
       compute_seconds()
       if /zone then
@@ -931,12 +931,12 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # seconds.  Any omitted fields are left unchanged.
    #
    public edit_fields(year, month, mday, hour, min, sec, zone)   
-      self.year := \year
-      self.month := \month
-      self.mday := \mday
-      self.hour := \hour
-      self.min := \min
-      self.sec := \sec
+      self.year := need_integer(\year)
+      self.month := need_integer(\month)
+      self.mday := need_integer(\mday)
+      self.hour := need_integer(\hour)
+      self.min := need_integer(\min)
+      self.sec := need_integer(\sec)
       self.zone := \zone
       compute_seconds()
       link

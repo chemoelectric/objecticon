@@ -921,11 +921,28 @@ $endif
    end
 end
 
+#
+# This class contains additional methods implemented by the owner of a
+# `WorkerPool`.
+#
 abstract class WorkerPoolOwner()
+   #
+   # Called by a `Worker` when its `HttpClient` needs
+   # authentication; see also `HttpRequestHelper.get_authentication`
+   #
    public abstract get_authentication(httpc, dom, realm)
-   public configure_http_client(httpc) end
+
+   # Called by a `Worker` to allow custom configuration of its
+   # `HttpClient`.  By default this method is empty, meaning accept
+   # the default setup done by the worker.
+   #
+   public configure_http_client(httpc)
+   end
 end
 
+#
+# A pool of `Worker`s.
+#
 class WorkerPool()
    private
       queue,
