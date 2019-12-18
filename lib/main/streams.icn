@@ -1365,7 +1365,7 @@ abstract class HasBgProc()
    # Wait for the child to exit, setting `exit_info`.
    #
    protected do_wait()
-      \pid | runerr("do_wait() called out of sequence", self)
+      \pid | runerr("do_wait() called out of sequence")
       # wait should never fail (even if the child crashed).
       exit_info := System.wait(pid) | syserr("System.wait failed unexpectedly: " || &why)
       pid := &null
@@ -1604,7 +1604,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
    public succeeded()
       local x
       is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
-      x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
+      x := get_exit_info() | runerr("succeeded() can only be called after close()")
       if x.succeeded() then
          return
       return error(cmd || " failed: " || &why || ": " || trim(replace(err_sink.str(), "\n", " ")))

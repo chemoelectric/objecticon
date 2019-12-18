@@ -25,7 +25,7 @@ class Process(HasTask, HasBgProc)
    #
    public start()
       local l
-      /pid | runerr("start() called out of sequence", self)
+      /pid | runerr("start() called out of sequence")
       l := SocketStream.socketpair() | fail
       (l[1].dflag(DescOpt.CLOEXEC) &
        l[2].dflag(DescOpt.CLOEXEC) &
@@ -131,7 +131,7 @@ class Process(HasTask, HasBgProc)
    # Called by the parent to kill the child.  Then the `close` method is invoked.
    #
    public stop()
-      \pid | runerr("stop() called out of sequence", self)
+      \pid | runerr("stop() called out of sequence")
       # kill should never fail (even if the child crashed).
       System.kill(pid, Signal.SIGTERM) | syserr("System.kill failed unexpectedly: " || &why)
       close()

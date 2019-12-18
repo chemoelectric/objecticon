@@ -145,7 +145,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # implemented for tables with ORDER capability.
    #
    public select(i)
-      can(ORDER) | runerr("Table doesn't have ORDER capability", self)
+      can(ORDER) | runerr("Table doesn't have ORDER capability")
       return Index{key(), cvpos_item(i, size())}
    end
 
