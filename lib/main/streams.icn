@@ -1172,7 +1172,8 @@ class SocketStream(DescStream)
 
    #
    # Returns a string giving the address and port of the peer
-   # connected to the socket.
+   # connected to the socket, in the format used by the
+   # `connect` method.
    #
    public native get_peer()
 
@@ -2208,7 +2209,8 @@ class WinsockStream(Stream, NoCopy)
 
    #
    # Returns a string giving the address and port of the peer
-   # connected to the socket.
+   # connected to the socket, in the format used by the
+   # `connect` method.
    #
    public native get_peer()
 

@@ -2349,16 +2349,16 @@ static char *sockaddr_string(struct sockaddr *sa)
             char ipstr[INET_ADDRSTRLEN];
             struct sockaddr_in *s = (struct sockaddr_in *)sa;
             inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 12);
-            sprintf(buf.s, "%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
+            ssreserve(&buf, strlen(ipstr) + 17);
+            sprintf(buf.s, "inet:%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
             break;
         }
         case AF_INET6 : {
             char ipstr[INET6_ADDRSTRLEN];
             struct sockaddr_in6 *s = (struct sockaddr_in6 *)sa;
             inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 14);
-            sprintf(buf.s, "[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
+            ssreserve(&buf, strlen(ipstr) + 20);
+            sprintf(buf.s, "inet6:[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
             break;
         }
         default:
@@ -4693,16 +4693,16 @@ static char *sockaddr_string(struct sockaddr *sa)
             char ipstr[INET_ADDRSTRLEN];
             struct sockaddr_in *s = (struct sockaddr_in *)sa;
             inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 12);
-            sprintf(buf.s, "%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
+            ssreserve(&buf, strlen(ipstr) + 17);
+            sprintf(buf.s, "inet:%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
             break;
         }
         case AF_INET6 : {
             char ipstr[INET6_ADDRSTRLEN];
             struct sockaddr_in6 *s = (struct sockaddr_in6 *)sa;
             inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 14);
-            sprintf(buf.s, "[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
+            ssreserve(&buf, strlen(ipstr) + 20);
+            sprintf(buf.s, "inet6:[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
             break;
         }
         default:
