@@ -1213,8 +1213,9 @@ class SocketStream(DescStream)
    public native shutdown(how)
 
    #
-   # Send the given string `s` to the address `dest`, which should be
-   # in the format used by the `connect` method.
+   # Send the given string `s` (which may be empty) to the address
+   # `dest`, which should be in the format used by the `connect`
+   # method.
    #
    # :Parameters :
    # :  `s` - the message to send (a string)
@@ -1226,7 +1227,9 @@ class SocketStream(DescStream)
    #
    # Receive a message of up to length `n`. The result on success is
    # a `Received` object encapsulating data and source address, which
-   # will be in the format used by the `connect` method.
+   # will be in the format used by the `connect` method.  Unlike
+   # `in()`, the data returned may be the empty string (and never
+   # `&null`).
    #
    # :Parameters :
    # :  `n` - the limit of the message length
@@ -2281,8 +2284,9 @@ class WinsockStream(Stream, NoCopy)
    public native set_blocking_mode(flag)
 
    #
-   # Send the given string `s` to the address `dest`, which should be
-   # in the format used by the `connect` method.
+   # Send the given string `s` (which may be empty) to the address
+   # `dest`, which should be in the format used by the `connect`
+   # method.
    #
    # :Parameters :
    # :  `s` - the message to send (a string)
@@ -2294,7 +2298,9 @@ class WinsockStream(Stream, NoCopy)
    #
    # Receive a message of up to length `n`. The result on success is
    # a `Received` object encapsulating data and source address, which
-   # will be in the format used by the `connect` method.
+   # will be in the format used by the `connect` method.  Unlike
+   # `in()`, the data returned may be the empty string (and never
+   # `&null`).
    #
    # :Parameters :
    # :  `n` - the limit of the message length

@@ -2122,6 +2122,8 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             getaddrinfo_error2why(error);
             return 0;
         }
+        if (res->ai_addrlen != sizeof(iss))
+            syserr("Unexpected address size");
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
         *len = sizeof(iss);
@@ -2172,6 +2174,8 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             getaddrinfo_error2why(error);
             return 0;
         }
+        if (res->ai_addrlen != sizeof(iss))
+            syserr("Unexpected address size");
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
         *len = sizeof(iss);
@@ -2463,15 +2467,11 @@ function io_SocketStream_recvfrom_impl(self, i, flags)
        iss_len = sizeof(iss);
 
        nread = recvfrom(self_fd, s, i, flags, (struct sockaddr *)&iss, &iss_len);
-       if (nread <= 0) {
+       if (nread < 0) {
            /* Reset the memory just allocated */
            dealcstr(s);
-
-           if (nread < 0) {
-               errno2why();
-               fail;
-           } else  /* nread == 0 */
-               return nulldesc;
+           errno2why();
+           fail;
        }
 
        /*
@@ -4555,6 +4555,8 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             win32error2why();
             return 0;
         }
+        if (res->ai_addrlen != sizeof(iss))
+            syserr("Unexpected address size");
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
         FreeAddrInfoW(res);
         *len = sizeof(iss);
@@ -4605,6 +4607,8 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             win32error2why();
             return 0;
         }
+        if (res->ai_addrlen != sizeof(iss))
+            syserr("Unexpected address size");
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
         FreeAddrInfoW(res);
         *len = sizeof(iss);
@@ -4891,15 +4895,11 @@ function io_WinsockStream_recvfrom_impl(self, i, flags)
        iss_len = sizeof(iss);
 
        nread = recvfrom(self_socket, s, i, flags, (struct sockaddr *)&iss, &iss_len);
-       if (nread <= 0) {
+       if (nread < 0) {
            /* Reset the memory just allocated */
            dealcstr(s);
-
-           if (nread < 0) {
-               errno2why();
-               fail;
-           } else  /* nread == 0 */
-               return nulldesc;
+           errno2why();
+           fail;
        }
 
        /*
