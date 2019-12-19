@@ -4864,7 +4864,7 @@ function io_WinsockStream_sendto(self, s, dest, flags)
 
        rc = sendto(self_socket, StrLoc(s), StrLen(s), flags, sa, len);
        if (rc < 0) {
-           errno2why();
+           win32error2why();
            fail;
        }
        return C_integer rc;
@@ -4898,7 +4898,7 @@ function io_WinsockStream_recvfrom_impl(self, i, flags)
        if (nread < 0) {
            /* Reset the memory just allocated */
            dealcstr(s);
-           errno2why();
+           win32error2why();
            fail;
        }
 
