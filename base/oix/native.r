@@ -2411,6 +2411,90 @@ function io_SocketStream_get_local(self)
    }
 end
 
+function io_SocketStream_sendto(self, s, dest, flags)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:C_string(dest) then
+      runerr(103, dest)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr *sa;
+       int len;
+       word rc;
+       GetSelfFd();
+
+       sa = parse_sockaddr(dest, &len);
+       if (!sa) {
+           /* &why already set by parse_sockaddr */
+           fail;
+       }
+
+       rc = sendto(self_fd, StrLoc(s), StrLen(s), flags, sa, len);
+       if (rc < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function io_SocketStream_recvfrom_impl(self, i, flags)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr_storage iss;
+       socklen_t iss_len;
+       word nread;
+       char *s, *ip;
+       tended struct descrip result, tmp;
+       GetSelfFd();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(s = alcstr(NULL, i));
+
+       iss_len = sizeof(iss);
+
+       nread = recvfrom(self_fd, s, i, flags, (struct sockaddr *)&iss, &iss_len);
+       if (nread <= 0) {
+           /* Reset the memory just allocated */
+           dealcstr(s);
+
+           if (nread < 0) {
+               errno2why();
+               fail;
+           } else  /* nread == 0 */
+               return nulldesc;
+       }
+
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(s + nread);
+       MakeStr(s, nread, &tmp);
+
+       create_list(2, &result);
+       list_put(&result, &tmp);
+
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No name information available");
+           fail;
+       }
+       cstr2string(ip, &tmp);
+       list_put(&result, &tmp);
+
+       return result;
+   }
+end
+
 function io_SocketStream_accept_impl(self)
    body {
        int sockfd;
@@ -4751,6 +4835,90 @@ function io_WinsockStream_get_local(self)
            fail;
        }
        cstr2string(ip, &result);
+       return result;
+   }
+end
+
+function io_WinsockStream_sendto(self, s, dest, flags)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:C_string(dest) then
+      runerr(103, dest)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr *sa;
+       int len;
+       word rc;
+       GetSelfSocket();
+
+       sa = parse_sockaddr(dest, &len);
+       if (!sa) {
+           /* &why already set by parse_sockaddr */
+           fail;
+       }
+
+       rc = sendto(self_socket, StrLoc(s), StrLen(s), flags, sa, len);
+       if (rc < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function io_WinsockStream_recvfrom_impl(self, i, flags)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr_storage iss;
+       socklen_t iss_len;
+       word nread;
+       char *s, *ip;
+       tended struct descrip result, tmp;
+       GetSelfSocket();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(s = alcstr(NULL, i));
+
+       iss_len = sizeof(iss);
+
+       nread = recvfrom(self_socket, s, i, flags, (struct sockaddr *)&iss, &iss_len);
+       if (nread <= 0) {
+           /* Reset the memory just allocated */
+           dealcstr(s);
+
+           if (nread < 0) {
+               errno2why();
+               fail;
+           } else  /* nread == 0 */
+               return nulldesc;
+       }
+
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(s + nread);
+       MakeStr(s, nread, &tmp);
+
+       create_list(2, &result);
+       list_put(&result, &tmp);
+
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No name information available");
+           fail;
+       }
+       cstr2string(ip, &tmp);
+       list_put(&result, &tmp);
+
        return result;
    }
 end

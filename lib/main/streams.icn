@@ -1089,6 +1089,21 @@ class PipeStream(FileStream)
 end
 
 #
+# This class encapsulates data received from a particular source
+# address.
+#
+class Received()
+   public const
+      data, src
+
+   package new(data, src)
+      self.data := data
+      self.src := src
+      return
+   end
+end
+
+#
 # This class represents a stream based on a socket.
 #
 class SocketStream(DescStream)
@@ -1196,6 +1211,32 @@ class SocketStream(DescStream)
    # :  `how` - one of the constants in `Shut`
    #
    public native shutdown(how)
+
+   #
+   # Send the given string `s` to the address `dest`, which should be
+   # in the format used by the `connect` method.
+   #
+   # :Parameters :
+   # :  `s` - the message to send (a string)
+   # :  `dest` - the destination
+   # :  `flags` - optional selection of flags from `MessageOpt`
+   #
+   public native sendto(s, dest, flags)
+
+   #
+   # Receive a message of up to length `n`. The result on success is
+   # a `Received` object encapsulating data and source address, which
+   # will be in the format used by the `connect` method.
+   #
+   # :Parameters :
+   # :  `n` - the limit of the message length
+   # :  `flags` - optional selection of flags from `MessageOpt`
+   #
+   public recvfrom(n, flags)
+      return Received!recvfrom_impl(n, flags)
+   end
+
+   private native recvfrom_impl(n, flags)
 
    #
    # Return a list of IP numerical addresses for the given host.
@@ -2238,6 +2279,32 @@ class WinsockStream(Stream, NoCopy)
    # Set whether or not the socket is in blocking mode.
    #
    public native set_blocking_mode(flag)
+
+   #
+   # Send the given string `s` to the address `dest`, which should be
+   # in the format used by the `connect` method.
+   #
+   # :Parameters :
+   # :  `s` - the message to send (a string)
+   # :  `dest` - the destination
+   # :  `flags` - optional selection of flags from `MessageOpt`
+   #
+   public native sendto(s, dest, flags)
+
+   #
+   # Receive a message of up to length `n`. The result on success is
+   # a `Received` object encapsulating data and source address, which
+   # will be in the format used by the `connect` method.
+   #
+   # :Parameters :
+   # :  `n` - the limit of the message length
+   # :  `flags` - optional selection of flags from `MessageOpt`
+   #
+   public recvfrom(n, flags)
+      return Received!recvfrom_impl(n, flags)
+   end
+
+   private native recvfrom_impl(n, flags)
 
    #
    # Return a list of IP numerical addresses for the given host.
