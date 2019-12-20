@@ -5189,7 +5189,7 @@ function io_WinsockStream_getopt(self, opt)
           case SO_REUSEADDR: {
               optval = &int_arg;
               optlen = sizeof(int_arg);
-              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
                   win32error2why();
                   fail;
               }
@@ -5200,7 +5200,7 @@ function io_WinsockStream_getopt(self, opt)
           case SO_LINGER: {
               optval = &linger_arg;
               optlen = sizeof(linger_arg);
-              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
                   win32error2why();
                   fail;
               }
@@ -5220,7 +5220,7 @@ function io_WinsockStream_getopt(self, opt)
           case SO_SNDBUF: {
               optval = &int_arg;
               optlen = sizeof(int_arg);
-              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
                   win32error2why();
                   fail;
               }
