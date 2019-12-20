@@ -1117,6 +1117,57 @@ int main(void)
 #endif       
     end_class();
 
+    start_class("SocketOpt", "SO_", 0, 0);
+#ifdef SO_ACCEPTCONN
+       Const(SO_ACCEPTCONN)
+#endif
+#ifdef SO_BROADCAST
+        Const(SO_BROADCAST)
+#endif
+#ifdef SO_DONTROUTE
+        Const(SO_DONTROUTE)
+#endif
+#ifdef SO_KEEPALIVE    
+        Const(SO_KEEPALIVE)
+#endif
+#ifdef SO_REUSEADDR
+        Const(SO_REUSEADDR)
+#endif
+#ifdef SO_LINGER
+        Const(SO_LINGER)
+#endif
+#ifdef SO_RCVTIMEO
+        Const(SO_RCVTIMEO)
+#endif
+#ifdef SO_SNDTIMEO
+        Const(SO_SNDTIMEO)
+#endif
+#ifdef SO_RCVBUF
+        Const(SO_RCVBUF)
+#endif
+#ifdef SO_SNDBUF
+        Const(SO_SNDBUF)
+#endif
+#ifdef SO_ERROR
+        Const(SO_ERROR)
+#endif
+#ifdef SO_TYPE
+        Const(SO_TYPE)
+#endif
+#ifdef SO_OOBINLINE
+        Const(SO_OOBINLINE)
+#endif
+#ifdef SO_RCVLOWAT
+        Const(SO_RCVLOWAT)
+#endif
+#ifdef SO_SNDLOWAT
+        Const(SO_SNDLOWAT)
+#endif
+#ifdef SO_DEBUG
+        Const(SO_DEBUG)
+#endif
+    end_class();
+
     start_class("Shut", "SHUT_", 0, 0);
 #ifdef SHUT_RD
         Const(SHUT_RD)

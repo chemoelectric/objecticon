@@ -1242,6 +1242,25 @@ class SocketStream(DescStream)
    private native recvfrom_impl(n, flags)
 
    #
+   # Set values using the underlying setsockopt call.  The options
+   # listed in the following table are recognized :-
+   #
+   # <https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_10_16>
+   # 
+   # Symbolic options can be found in the `SocketOpt` class.
+   #
+   # Flag values should have a `&yes` or `&no` argument.  `LINGER`
+   # accepts `&null` meaning "off", or an integer value meaning on
+   # with that seconds value.  The timeout values are in milliseconds.
+   #
+   public native setopt(opt, arg)
+
+   #
+   # Get values using the underlying getopt call; see `setopt` above.
+   #
+   public native getopt(opt)
+
+   #
    # Return a list of IP numerical addresses for the given host.
    # 
    # The second parameter, `ver`, an integer, specifies the IP
@@ -2311,6 +2330,25 @@ class WinsockStream(Stream, NoCopy)
    end
 
    private native recvfrom_impl(n, flags)
+
+   #
+   # Set values using the underlying setsockopt call.  The options
+   # listed in the following table are recognized :-
+   #
+   # <https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_10_16>
+   # 
+   # Symbolic options can be found in the `SocketOpt` class.
+   #
+   # Flag values should have a `&yes` or `&no` argument.  `LINGER`
+   # accepts `&null` meaning "off", or an integer value meaning on
+   # with that seconds value.  The timeout values are in milliseconds.
+   #
+   public native setopt(opt, arg)
+
+   #
+   # Get values using the underlying getopt call; see `setopt` above.
+   #
+   public native getopt(opt)
 
    #
    # Return a list of IP numerical addresses for the given host.
