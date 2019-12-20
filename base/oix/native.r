@@ -167,6 +167,7 @@ convert_to_macro(pid_t)
 convert_from_macro(pid_t)
 #endif
 convert_from_macro(uint64_t)
+convert_from_macro(int64_t)
 convert_from_macro(uword)
 
 function lang_Prog_get_event_mask(ce)

@@ -179,6 +179,7 @@ declare_convert_to_macro(pid_t)
 declare_convert_from_macro(pid_t)
 #endif
 declare_convert_from_macro(uint64_t)
+declare_convert_from_macro(int64_t)
 declare_convert_from_macro(uword)
 
 char *buffstr(dptr d);
