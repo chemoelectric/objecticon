@@ -2078,22 +2078,24 @@ static void getaddrinfo_error2why(int error)
         whyf("%s (gai errno=%d)", gai_strerror(error), error);
 }
 
-static struct sockaddr *parse_sockaddr(char *s, int *len)
+static struct sockaddr *parse_sockaddr(char *s, socklen_t *len)
 {
+    static union {
+        struct sockaddr_un us;
+        struct sockaddr_in in;
+        struct sockaddr_in6 in6;
+    } r;
     if (strncmp(s, "unix:", 5) == 0) {
-        static struct sockaddr_un us;
         char *t = s + 5;
-        if (strlen(t) >= sizeof(us.sun_path)) {
+        if (strlen(t) >= sizeof(r.us.sun_path)) {
             LitWhy("Name too long");
             return 0;
         }
-        us.sun_family = AF_UNIX;
-        strcpy(us.sun_path, t);
-        *len = sizeof(us.sun_family) + strlen(us.sun_path);
-        return (struct sockaddr *)&us;
-    } 
-    if (strncmp(s, "inet:", 5) == 0) {
-        static struct sockaddr_in iss;
+        StructClear(r.us);
+        r.us.sun_family = AF_UNIX;
+        strcpy(r.us.sun_path, t);
+        *len = sizeof(r.us);
+    } else if (strncmp(s, "inet:", 5) == 0) {
         struct addrinfo hints;
         struct addrinfo *res;
         int error;
@@ -2123,15 +2125,12 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             getaddrinfo_error2why(error);
             return 0;
         }
-        if (res->ai_addrlen != sizeof(iss))
+        if (res->ai_addrlen != sizeof(r.in))
             syserr("Unexpected address size");
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        memcpy(&r.in, res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
-    }
-    if (strncmp(s, "inet6:", 6) == 0) {
-        static struct sockaddr_in6 iss;
+        *len = sizeof(r.in);
+    } else if (strncmp(s, "inet6:", 6) == 0) {
         struct addrinfo hints;
         struct addrinfo *res;
         int error;
@@ -2175,16 +2174,16 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             getaddrinfo_error2why(error);
             return 0;
         }
-        if (res->ai_addrlen != sizeof(iss))
+        if (res->ai_addrlen != sizeof(r.in6))
             syserr("Unexpected address size");
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        memcpy(&r.in6, res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
+        *len = sizeof(r.in6);
+    } else {
+        LitWhy("Bad socket address format (unknown family)");
+        return 0;
     }
-
-    LitWhy("Bad socket address format (unknown family)");
-    return 0;
+    return (struct sockaddr *)&r;
 }
 
 static void add_addrinfo4(struct addrinfo *t, dptr result)
@@ -2286,7 +2285,7 @@ function io_SocketStream_connect(self, addr)
       runerr(103, addr)
    body {
        struct sockaddr *sa;
-       int len;
+       socklen_t len;
        GetSelfFd();
 
        sa = parse_sockaddr(addr, &len);
@@ -2309,7 +2308,7 @@ function io_SocketStream_bind(self, addr)
       runerr(103, addr)
    body {
        struct sockaddr *sa;
-       int len;
+       socklen_t len;
        GetSelfFd();
 
        sa = parse_sockaddr(addr, &len);
@@ -2341,10 +2340,26 @@ function io_SocketStream_listen(self, backlog)
    }
 end
 
-static char *sockaddr_string(struct sockaddr *sa)
+static char *sockaddr_string(struct sockaddr *sa, socklen_t len)
 {
     static struct staticstr buf = {16};
     switch (sa->sa_family) {
+        case AF_UNIX : {
+            struct sockaddr_un *s = (struct sockaddr_un *)sa;
+            char *p, *stop;
+            int count;
+            /* Count path chars up to a terminating null, but don't
+             * read beyond the specified length of s (the path may not
+             * be null terminated). */
+            stop = (char *)s + len;
+            p = s->sun_path;
+            while (p < stop && *p)
+                ++p;
+            count = p - s->sun_path;
+            ssreserve(&buf, count + 10);
+            sprintf(buf.s, "unix:%.*s", count, s->sun_path);
+            break;
+        }
         case AF_INET : {
             char ipstr[INET_ADDRSTRLEN];
             struct sockaddr_in *s = (struct sockaddr_in *)sa;
@@ -2379,7 +2394,7 @@ function io_SocketStream_get_peer(self)
            errno2why();
            fail;
        }
-       ip = sockaddr_string((struct sockaddr *)&iss);
+       ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
            LitWhy("No peer information available");
            fail;
@@ -2401,7 +2416,7 @@ function io_SocketStream_get_local(self)
            errno2why();
            fail;
        }
-       ip = sockaddr_string((struct sockaddr *)&iss);
+       ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
            LitWhy("No name information available");
            fail;
@@ -2420,7 +2435,7 @@ function io_SocketStream_sendto(self, s, dest, flags)
       runerr(101, flags)
    body {
        struct sockaddr *sa;
-       int len;
+       socklen_t len;
        word rc;
        GetSelfFd();
 
@@ -2479,7 +2494,7 @@ function io_SocketStream_recvfrom_impl(self, i, flags)
        create_list(2, &result);
        list_put(&result, &tmp);
 
-       ip = sockaddr_string((struct sockaddr *)&iss);
+       ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
            LitWhy("No name information available");
            fail;
@@ -4687,8 +4702,11 @@ static int getaddrinfo_utf8(char *node,
 
 static struct sockaddr *parse_sockaddr(char *s, int *len)
 {
+    static union {
+        struct sockaddr_in in;
+        struct sockaddr_in6 in6;
+    } r;
     if (strncmp(s, "inet:", 5) == 0) {
-        static struct sockaddr_in iss;
         struct addrinfoW hints;
         struct addrinfoW *res;
         int error;
@@ -4718,15 +4736,12 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             win32error2why();
             return 0;
         }
-        if (res->ai_addrlen != sizeof(iss))
+        if (res->ai_addrlen != sizeof(r.in))
             syserr("Unexpected address size");
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        memcpy(&r.in, res->ai_addr, res->ai_addrlen);
         FreeAddrInfoW(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
-    }
-    if (strncmp(s, "inet6:", 6) == 0) {
-        static struct sockaddr_in6 iss;
+        *len = sizeof(r.in);
+    } else if (strncmp(s, "inet6:", 6) == 0) {
         struct addrinfoW hints;
         struct addrinfoW *res;
         int error;
@@ -4770,16 +4785,16 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             win32error2why();
             return 0;
         }
-        if (res->ai_addrlen != sizeof(iss))
+        if (res->ai_addrlen != sizeof(r.in6))
             syserr("Unexpected address size");
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        memcpy(&r.in6, res->ai_addr, res->ai_addrlen);
         FreeAddrInfoW(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
+        *len = sizeof(r.in6);
+    } else {
+        LitWhy("Bad socket address format (unknown family)");
+        return 0;
     }
-
-    LitWhy("Bad socket address format (unknown family)");
-    return 0;
+    return (struct sockaddr *)&r;
 }
 
 static void add_addrinfo4(struct addrinfoW *t, dptr result)
