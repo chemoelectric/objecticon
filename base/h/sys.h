@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <stddef.h>
 
 /*
  * Operating-system-dependent includes.
