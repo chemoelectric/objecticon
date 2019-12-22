@@ -650,25 +650,6 @@ abstract class DescStream(Stream, NoCopy)
    end
 
    #
-   # Performs a select on the given lists of streams, each of which
-   # must be a `DescStream`.  The lists are changed by the method,
-   # and the modified lists indicate which streams are ready to read,
-   # write or have an error.
-   # 
-   # On an error this method fails and sets `&why`.  On a timeout it
-   # returns 0, with all lists empty.
-   #
-   # :Parameters :
-   # :  `rl` - the read list of streams
-   # :  `wl` - the write list of streams
-   # :  `el` - the error list of streams
-   # :  `timeout` - the timeout; if omitted waits indefinitely
-   # :Returns :
-   # :  the number of items in the three lists, always >= 0.
-   #
-   public static native select(rl, wl, el, timeout)
-
-   #
    # Performs a poll on one or more streams, each of which must be a
    # `DescStream`.  The parameter `l` is a list of pairs.  Each pair
    # is a `Stream` followed by flags, which should be selected from

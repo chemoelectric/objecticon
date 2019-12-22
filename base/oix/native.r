@@ -2708,44 +2708,6 @@ UnsupportedFunc(io_SocketStream_socketpair_impl)
 UnsupportedFunc(io_SocketStream_dns_query)
 #endif   /* UNIX */
 
-/*
- * These two are macros since they call runerr (so does FdStaticParam).
- */
-
-#begdef list2fd_set(l, tmpl, s)
-{
-    tended struct descrip e;
-
-    FD_ZERO(&s);
-    if (!is:null(l)) {
-        if (!is:list(l))
-            runerr(108, l);
-        create_list(ListBlk(l).size, &tmpl);
-        while (list_get(&l, &e)) {
-            FdStaticParam(e, fd);
-            list_put(&tmpl, &e);
-            FD_SET(fd, &s);
-        }
-    }
-}
-#enddef
-
-#begdef fd_set2list(l, tmpl, s)
-{
-    tended struct descrip e;
-
-    if (!is:null(l)) {
-        while (list_get(&tmpl, &e)) {
-            FdStaticParam(e, fd);
-            if (FD_ISSET(fd, &s)) {
-                list_put(&l, &e);
-                ++count;
-            }
-        }
-    }
-}
-#enddef
-
 function io_DescStream_dup2_impl(self, other)
    body {
        GetSelfFd();
@@ -2882,48 +2844,7 @@ function io_DescStream_wstat(self, mode, uid, gid, atime, mtime, atime_ns, mtime
    }
 end
 
-function io_DescStream_select(rl, wl, el, timeout)
-    body {
-       fd_set rset, wset, eset;
-       struct timeval tv, *ptv;
-       tended struct descrip rtmp, wtmp, etmp;
-       int rc, count;
-
-       list2fd_set(rl, rtmp, rset);
-       list2fd_set(wl, wtmp, wset);
-       list2fd_set(el, etmp, eset);
-
-       if (is:null(timeout))
-           ptv = 0;
-       else {
-           if (!cnv:integer(timeout, timeout))
-               runerr(101, timeout);
-           if (!ms_to_timeval(&timeout, &tv))
-               runerr(0);
-           ptv = &tv;
-       }
-
-       rc = select(FD_SETSIZE, &rset, &wset, &eset, ptv);
-       if (rc < 0) {
-           errno2why();
-           fail;
-       }
-
-       count = 0;
-       fd_set2list(rl, rtmp, rset);
-       fd_set2list(wl, wtmp, wset);
-       fd_set2list(el, etmp, eset);
-
-       if (count != rc) {
-           LitWhy("Unexpected mismatch between FD_SETs and list sizes");
-           fail;
-       }
-
-       return C_integer rc;
-    }
-end
-
-#if !MSWIN32
+#if UNIX
 function io_DescStream_poll(l, timeout)
    if !is:list(l) then
       runerr(108,l)
@@ -2980,7 +2901,7 @@ function io_DescStream_poll(l, timeout)
        return result;
    }
 end
-#endif  /* MSWIN32 */
+#endif  /* UNIX */
 
 function io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
