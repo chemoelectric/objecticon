@@ -170,6 +170,24 @@ convert_from_macro(uint64_t)
 convert_from_macro(int64_t)
 convert_from_macro(uword)
 
+/*
+ * Try to convert an integer-valued descriptor, with a value in ms, to
+ * a timeval structure.
+ */
+static int ms_to_timeval(dptr i, struct timeval *res)
+{
+    tended struct descrip t;
+    time_t sec;
+    bigdiv(i, &thousanddesc, &t);
+    if (!convert_to_time_t(&t, &sec))
+        return 0;
+    bigmod(i, &thousanddesc, &t);
+    StructClear(*res);
+    res->tv_sec = sec;
+    res->tv_usec = IntVal(t) * 1000;
+    return 1;
+}
+
 function lang_Prog_get_event_mask(ce)
    body {
        struct progstate *prog;
@@ -2563,12 +2581,10 @@ function io_SocketStream_setopt(self, opt, arg)
 
           case SO_RCVTIMEO:
           case SO_SNDTIMEO: {
-              word w;
-              if (!cnv:C_integer(arg, w))
+              if (!cnv:integer(arg, arg))
                   runerr(101, arg);
-              StructClear(timeval_arg);
-              timeval_arg.tv_sec = w / 1000;
-              timeval_arg.tv_usec = (w % 1000) * 1000;
+              if (!ms_to_timeval(&arg, &timeval_arg))
+                  runerr(0);
               optval = &timeval_arg;
               optlen = sizeof(timeval_arg);
               break;
@@ -2880,12 +2896,10 @@ function io_DescStream_select(rl, wl, el, timeout)
        if (is:null(timeout))
            ptv = 0;
        else {
-           word t;
-           if (!cnv:C_integer(timeout, t))
+           if (!cnv:integer(timeout, timeout))
                runerr(101, timeout);
-           StructClear(tv);
-           tv.tv_sec = t / 1000;
-           tv.tv_usec = (t % 1000) * 1000;
+           if (!ms_to_timeval(&timeout, &tv))
+               runerr(0);
            ptv = &tv;
        }
 
