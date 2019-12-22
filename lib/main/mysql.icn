@@ -304,6 +304,11 @@ final class MySql(NoCopy)
    public native options(option, arg)
 
    #
+   # Invoke mysql_get_option() for the current connection.
+   #
+   public native get_option(option, arg)
+
+   #
    # Invoke mysql_ping() for the current connection.
    #
    public native ping()

@@ -194,6 +194,7 @@ declare_convert_from_macro(uvlong)
 declare_convert_from_macro(uint)
 #endif
 declare_convert_from_macro(uint64_t)
+declare_convert_from_macro(int64_t)
 declare_convert_from_macro(uword)
 
 char *buffstr(dptr d);

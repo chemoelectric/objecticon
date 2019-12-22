@@ -1087,6 +1087,126 @@ int main(void)
 
     end_class();
 
+    start_class("MessageOpt", "MSG_", 0, 0);
+#ifdef MSG_OOB
+       Const(MSG_OOB)
+#endif       
+#ifdef MSG_PEEK
+       Const(MSG_PEEK)
+#endif       
+#ifdef MSG_DONTROUTE
+       Const(MSG_DONTROUTE)
+#endif       
+#ifdef MSG_TRYHARD
+       Const(MSG_TRYHARD)
+#endif       
+#ifdef MSG_CTRUNC
+       Const(MSG_CTRUNC)
+#endif       
+#ifdef MSG_PROXY
+       Const(MSG_PROXY)
+#endif       
+#ifdef MSG_TRUNC
+       Const(MSG_TRUNC)
+#endif       
+#ifdef MSG_DONTWAIT
+       Const(MSG_DONTWAIT)
+#endif       
+#ifdef MSG_EOR
+       Const(MSG_EOR)
+#endif       
+#ifdef MSG_WAITALL
+       Const(MSG_WAITALL)
+#endif       
+#ifdef MSG_FIN
+       Const(MSG_FIN)
+#endif       
+#ifdef MSG_SYN
+       Const(MSG_SYN)
+#endif       
+#ifdef MSG_CONFIRM
+       Const(MSG_CONFIRM)
+#endif       
+#ifdef MSG_RST
+       Const(MSG_RST)
+#endif       
+#ifdef MSG_ERRQUEUE
+       Const(MSG_ERRQUEUE)
+#endif       
+#ifdef MSG_NOSIGNAL
+       Const(MSG_NOSIGNAL)
+#endif       
+#ifdef MSG_MORE
+       Const(MSG_MORE)
+#endif       
+#ifdef MSG_WAITFORONE
+       Const(MSG_WAITFORONE)
+#endif       
+#ifdef MSG_BATCH
+       Const(MSG_BATCH)
+#endif       
+#ifdef MSG_ZEROCOPY
+       Const(MSG_ZEROCOPY)
+#endif       
+#ifdef MSG_FASTOPEN
+       Const(MSG_FASTOPEN)
+#endif       
+#ifdef MSG_CMSG_CLOEXEC
+       Const(MSG_CMSG_CLOEXEC)
+#endif       
+    end_class();
+
+    start_class("SocketOpt", "SO_", 0, 0);
+#ifdef SO_ACCEPTCONN
+       Const(SO_ACCEPTCONN)
+#endif
+#ifdef SO_BROADCAST
+        Const(SO_BROADCAST)
+#endif
+#ifdef SO_DONTROUTE
+        Const(SO_DONTROUTE)
+#endif
+#ifdef SO_KEEPALIVE    
+        Const(SO_KEEPALIVE)
+#endif
+#ifdef SO_REUSEADDR
+        Const(SO_REUSEADDR)
+#endif
+#ifdef SO_LINGER
+        Const(SO_LINGER)
+#endif
+#ifdef SO_RCVTIMEO
+        Const(SO_RCVTIMEO)
+#endif
+#ifdef SO_SNDTIMEO
+        Const(SO_SNDTIMEO)
+#endif
+#ifdef SO_RCVBUF
+        Const(SO_RCVBUF)
+#endif
+#ifdef SO_SNDBUF
+        Const(SO_SNDBUF)
+#endif
+#ifdef SO_ERROR
+        Const(SO_ERROR)
+#endif
+#ifdef SO_TYPE
+        Const(SO_TYPE)
+#endif
+#ifdef SO_OOBINLINE
+        Const(SO_OOBINLINE)
+#endif
+#ifdef SO_RCVLOWAT
+        Const(SO_RCVLOWAT)
+#endif
+#ifdef SO_SNDLOWAT
+        Const(SO_SNDLOWAT)
+#endif
+#ifdef SO_DEBUG
+        Const(SO_DEBUG)
+#endif
+    end_class();
+
     start_class("Shut", "SHUT_", 0, 0);
 #ifdef SHUT_RD
         Const(SHUT_RD)

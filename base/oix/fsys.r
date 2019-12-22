@@ -104,12 +104,7 @@ function delay(n)
 #if PLAN9
       sleep(n);
 #elif UNIX
-      {
-      struct timeval t;
-      t.tv_sec = n / 1000;
-      t.tv_usec = (n % 1000) * 1000;
-      select(1, NULL, NULL, NULL, &t);
-      }
+      poll(NULL, 0, n);
 #elif MSWIN32
       Sleep(n);
 #endif

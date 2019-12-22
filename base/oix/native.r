@@ -194,7 +194,26 @@ convert_from_macro(uvlong)
 convert_from_macro(uint)
 #endif
 convert_from_macro(uint64_t)
+convert_from_macro(int64_t)
 convert_from_macro(uword)
+
+/*
+ * Try to convert an integer-valued descriptor, with a value in ms, to
+ * a timeval structure.
+ */
+static int ms_to_timeval(dptr i, struct timeval *res)
+{
+    tended struct descrip t;
+    time_t sec;
+    bigdiv(i, &thousanddesc, &t);
+    if (!convert_to_time_t(&t, &sec))
+        return 0;
+    bigmod(i, &thousanddesc, &t);
+    StructClear(*res);
+    res->tv_sec = sec;
+    res->tv_usec = IntVal(t) * 1000;
+    return 1;
+}
 
 function lang_Prog_get_event_mask(ce)
    body {
@@ -675,7 +694,7 @@ function lang_Prog_get_runtime_millis(c)
        struct progstate *prog;
        struct timeval tp;
        struct descrip ls, lm;
-       tended struct descrip lt, result;
+       tended struct descrip result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
@@ -686,8 +705,8 @@ function lang_Prog_get_runtime_millis(c)
       }
       MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
       MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
-      bigmul(&ls, &thousanddesc, &lt);
-      bigadd(&lt, &lm, &result);
+      bigmul(&ls, &thousanddesc, &result);
+      bigadd(&result, &lm, &result);
       return result;
    }
 end
@@ -695,16 +714,16 @@ end
 function lang_Prog_get_startup_micros(c)
    body {
        struct progstate *prog;
-       struct descrip ls, lm;
-       tended struct descrip lt, result;
+       struct descrip lm;
+       tended struct descrip ls, result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       MakeInt(prog->start_time.tv_sec, &ls);
+       convert_from_time_t(prog->start_time.tv_sec, &ls);
        MakeInt(prog->start_time.tv_usec, &lm);
-       bigmul(&ls, &milliondesc, &lt);
-       bigadd(&lt, &lm, &result);
+       bigmul(&ls, &milliondesc, &result);
+       bigadd(&result, &lm, &result);
        return result;
    }
 end
@@ -2204,22 +2223,24 @@ static void getaddrinfo_error2why(int error)
         whyf("%s (gai errno=%d)", gai_strerror(error), error);
 }
 
-static struct sockaddr *parse_sockaddr(char *s, int *len)
+static struct sockaddr *parse_sockaddr(char *s, socklen_t *len)
 {
+    static union {
+        struct sockaddr_un us;
+        struct sockaddr_in in;
+        struct sockaddr_in6 in6;
+    } r;
     if (strncmp(s, "unix:", 5) == 0) {
-        static struct sockaddr_un us;
         char *t = s + 5;
-        if (strlen(t) >= sizeof(us.sun_path)) {
+        if (strlen(t) >= sizeof(r.us.sun_path)) {
             LitWhy("Name too long");
             return 0;
         }
-        us.sun_family = AF_UNIX;
-        strcpy(us.sun_path, t);
-        *len = sizeof(us.sun_family) + strlen(us.sun_path);
-        return (struct sockaddr *)&us;
-    } 
-    if (strncmp(s, "inet:", 5) == 0) {
-        static struct sockaddr_in iss;
+        StructClear(r.us);
+        r.us.sun_family = AF_UNIX;
+        strcpy(r.us.sun_path, t);
+        *len = sizeof(r.us);
+    } else if (strncmp(s, "inet:", 5) == 0) {
         struct addrinfo hints;
         struct addrinfo *res;
         int error;
@@ -2249,13 +2270,12 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             getaddrinfo_error2why(error);
             return 0;
         }
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        if (res->ai_addrlen != sizeof(r.in))
+            syserr("Unexpected address size");
+        memcpy(&r.in, res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
-    }
-    if (strncmp(s, "inet6:", 6) == 0) {
-        static struct sockaddr_in6 iss;
+        *len = sizeof(r.in);
+    } else if (strncmp(s, "inet6:", 6) == 0) {
         struct addrinfo hints;
         struct addrinfo *res;
         int error;
@@ -2299,14 +2319,16 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             getaddrinfo_error2why(error);
             return 0;
         }
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        if (res->ai_addrlen != sizeof(r.in6))
+            syserr("Unexpected address size");
+        memcpy(&r.in6, res->ai_addr, res->ai_addrlen);
         freeaddrinfo(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
+        *len = sizeof(r.in6);
+    } else {
+        LitWhy("Bad socket address format (unknown family)");
+        return 0;
     }
-
-    LitWhy("Bad socket address format (unknown family)");
-    return 0;
+    return (struct sockaddr *)&r;
 }
 
 static void add_addrinfo4(struct addrinfo *t, dptr result)
@@ -2408,7 +2430,7 @@ function io_SocketStream_connect(self, addr)
       runerr(103, addr)
    body {
        struct sockaddr *sa;
-       int len;
+       socklen_t len;
        GetSelfFd();
 
        sa = parse_sockaddr(addr, &len);
@@ -2431,8 +2453,7 @@ function io_SocketStream_bind(self, addr)
       runerr(103, addr)
    body {
        struct sockaddr *sa;
-       int optval;
-       int len;
+       socklen_t len;
        GetSelfFd();
 
        sa = parse_sockaddr(addr, &len);
@@ -2441,10 +2462,6 @@ function io_SocketStream_bind(self, addr)
            fail;
        }
 
-       /* This prevents a TIME_WAIT expiring connection blocking a server listening on
-        * the same port */
-       optval = 1;
-       setsockopt(self_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
        if (bind(self_fd, sa, len) < 0) {
            errno2why();
            fail;
@@ -2468,24 +2485,40 @@ function io_SocketStream_listen(self, backlog)
    }
 end
 
-static char *sockaddr_string(struct sockaddr *sa)
+static char *sockaddr_string(struct sockaddr *sa, socklen_t len)
 {
     static struct staticstr buf = {16};
     switch (sa->sa_family) {
+        case AF_UNIX : {
+            struct sockaddr_un *s = (struct sockaddr_un *)sa;
+            char *p, *stop;
+            int count;
+            /* Count path chars up to a terminating null, but don't
+             * read beyond the specified length of s (the path may not
+             * be null terminated). */
+            stop = (char *)s + len;
+            p = s->sun_path;
+            while (p < stop && *p)
+                ++p;
+            count = p - s->sun_path;
+            ssreserve(&buf, count + 10);
+            sprintf(buf.s, "unix:%.*s", count, s->sun_path);
+            break;
+        }
         case AF_INET : {
             char ipstr[INET_ADDRSTRLEN];
             struct sockaddr_in *s = (struct sockaddr_in *)sa;
             inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 12);
-            sprintf(buf.s, "%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
+            ssreserve(&buf, strlen(ipstr) + 17);
+            sprintf(buf.s, "inet:%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
             break;
         }
         case AF_INET6 : {
             char ipstr[INET6_ADDRSTRLEN];
             struct sockaddr_in6 *s = (struct sockaddr_in6 *)sa;
             inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 14);
-            sprintf(buf.s, "[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
+            ssreserve(&buf, strlen(ipstr) + 20);
+            sprintf(buf.s, "inet6:[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
             break;
         }
         default:
@@ -2506,7 +2539,7 @@ function io_SocketStream_get_peer(self)
            errno2why();
            fail;
        }
-       ip = sockaddr_string((struct sockaddr *)&iss);
+       ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
            LitWhy("No peer information available");
            fail;
@@ -2528,12 +2561,92 @@ function io_SocketStream_get_local(self)
            errno2why();
            fail;
        }
-       ip = sockaddr_string((struct sockaddr *)&iss);
+       ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
            LitWhy("No name information available");
            fail;
        }
        cstr2string(ip, &result);
+       return result;
+   }
+end
+
+function io_SocketStream_sendto(self, s, dest, flags)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:C_string(dest) then
+      runerr(103, dest)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr *sa;
+       socklen_t len;
+       word rc;
+       GetSelfFd();
+
+       sa = parse_sockaddr(dest, &len);
+       if (!sa) {
+           /* &why already set by parse_sockaddr */
+           fail;
+       }
+
+       rc = sendto(self_fd, StrLoc(s), StrLen(s), flags, sa, len);
+       if (rc < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function io_SocketStream_recvfrom_impl(self, i, flags)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr_storage iss;
+       socklen_t iss_len;
+       word nread;
+       char *s, *ip;
+       tended struct descrip result, tmp;
+       GetSelfFd();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(s = alcstr(NULL, i));
+
+       iss_len = sizeof(iss);
+
+       nread = recvfrom(self_fd, s, i, flags, (struct sockaddr *)&iss, &iss_len);
+       if (nread < 0) {
+           /* Reset the memory just allocated */
+           dealcstr(s);
+           errno2why();
+           fail;
+       }
+
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(s + nread);
+       MakeStr(s, nread, &tmp);
+
+       create_list(2, &result);
+       list_put(&result, &tmp);
+
+       ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
+       if (!ip) {
+           LitWhy("No name information available");
+           fail;
+       }
+       cstr2string(ip, &tmp);
+       list_put(&result, &tmp);
+
        return result;
    }
 end
@@ -2551,49 +2664,175 @@ function io_SocketStream_accept_impl(self)
        return C_integer sockfd;
    }
 end
+function io_SocketStream_setopt(self, opt, arg)
+   if !cnv:C_integer(opt) then
+      runerr(101, opt)
+   body {
+      void *optval;
+      socklen_t optlen;
+      int int_arg;
+      struct linger linger_arg;
+      struct timeval timeval_arg;
+
+      GetSelfFd();
+      switch (opt) {
+          case SO_DEBUG:
+          case SO_OOBINLINE:
+          case SO_BROADCAST:
+          case SO_DONTROUTE:
+          case SO_KEEPALIVE:
+          case SO_REUSEADDR: {
+              if (!is_flag(&arg))
+                  runerr(171, arg);
+              int_arg = is:null(arg) ? 0 : 1;
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              break;
+          }
+
+          case SO_LINGER: {
+              if (is:null(arg))
+                  linger_arg.l_onoff = linger_arg.l_linger = 0;
+              else {
+                  word w;
+                  if (!cnv:C_integer(arg, w))
+                      runerr(101, arg);
+                  linger_arg.l_onoff = 1;
+                  linger_arg.l_linger = w;
+              }
+              optval = &linger_arg;
+              optlen = sizeof(linger_arg);
+              break;
+          }
+
+          case SO_RCVTIMEO:
+          case SO_SNDTIMEO: {
+              if (!cnv:integer(arg, arg))
+                  runerr(101, arg);
+              if (!ms_to_timeval(&arg, &timeval_arg))
+                  runerr(0);
+              optval = &timeval_arg;
+              optlen = sizeof(timeval_arg);
+              break;
+         }
+
+          case SO_RCVLOWAT:
+          case SO_SNDLOWAT:
+          case SO_RCVBUF:
+          case SO_SNDBUF: {
+              word w;
+              if (!cnv:C_integer(arg, w))
+                  runerr(101, arg);
+              int_arg = w;
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              break;
+          }
+
+          default: {
+              LitWhy("Bad option number");
+              fail;
+          }
+      }
+
+      if (setsockopt(self_fd, SOL_SOCKET, opt, optval, optlen) < 0) {
+          errno2why();
+          fail;
+      }
+
+      return self;
+   }
+end
+
+function io_SocketStream_getopt(self, opt)
+   if !cnv:C_integer(opt) then
+      runerr(101, opt)
+   body {
+      void *optval;
+      socklen_t optlen;
+      int int_arg;
+      struct linger linger_arg;
+      struct timeval timeval_arg;
+      struct descrip lm;
+      tended struct descrip ls, result;
+
+      GetSelfFd();
+      switch (opt) {
+          case SO_DEBUG:
+          case SO_OOBINLINE:
+          case SO_ACCEPTCONN:
+          case SO_BROADCAST:
+          case SO_DONTROUTE:
+          case SO_KEEPALIVE:
+          case SO_REUSEADDR: {
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  errno2why();
+                  fail;
+              }
+              return int_arg ? yesdesc : nulldesc;
+          }
+
+
+          case SO_LINGER: {
+              optval = &linger_arg;
+              optlen = sizeof(linger_arg);
+              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  errno2why();
+                  fail;
+              }
+              if (linger_arg.l_onoff)
+                  return C_integer linger_arg.l_linger;
+              else
+                  return nulldesc;
+          }
+
+          case SO_RCVTIMEO:
+          case SO_SNDTIMEO: {
+              optval = &timeval_arg;
+              optlen = sizeof(timeval_arg);
+              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  errno2why();
+                  fail;
+              }
+              convert_from_time_t(timeval_arg.tv_sec, &ls);
+              MakeInt(timeval_arg.tv_usec / 1000, &lm);
+              bigmul(&ls, &thousanddesc, &result);
+              bigadd(&result, &lm, &result);
+              return result;
+         }
+
+          case SO_ERROR:
+          case SO_RCVLOWAT:
+          case SO_SNDLOWAT:
+          case SO_TYPE:
+          case SO_RCVBUF:
+          case SO_SNDBUF: {
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  errno2why();
+                  fail;
+              }
+              return C_integer int_arg;
+          }
+
+          default: {
+              LitWhy("Bad option number");
+              fail;
+          }
+      }
+      /* Not reached */
+      fail;
+   }
+end
+
 #else
 UnsupportedFunc(io_SocketStream_new_impl)
 UnsupportedFunc(io_SocketStream_socketpair_impl)
 UnsupportedFunc(io_SocketStream_dns_query)
 #endif   /* UNIX */
-
-/*
- * These two are macros since they call runerr (so does FdStaticParam).
- */
-
-#begdef list2fd_set(l, tmpl, s)
-{
-    tended struct descrip e;
-
-    FD_ZERO(&s);
-    if (!is:null(l)) {
-        if (!is:list(l))
-            runerr(108, l);
-        create_list(ListBlk(l).size, &tmpl);
-        while (list_get(&l, &e)) {
-            FdStaticParam(e, fd);
-            list_put(&tmpl, &e);
-            FD_SET(fd, &s);
-        }
-    }
-}
-#enddef
-
-#begdef fd_set2list(l, tmpl, s)
-{
-    tended struct descrip e;
-
-    if (!is:null(l)) {
-        while (list_get(&tmpl, &e)) {
-            FdStaticParam(e, fd);
-            if (FD_ISSET(fd, &s)) {
-                list_put(&l, &e);
-                ++count;
-            }
-        }
-    }
-}
-#enddef
 
 function io_DescStream_dup2_impl(self, other)
    body {
@@ -2805,60 +3044,13 @@ function io_DescStream_wstat(self, mode, uid, gid, atime, mtime, atime_ns, mtime
 end
 #endif
 
-function io_DescStream_select(rl, wl, el, timeout)
-    body {
-#if PLAN9
-       Unsupported;
-#else
-       fd_set rset, wset, eset;
-       struct timeval tv, *ptv;
-       tended struct descrip rtmp, wtmp, etmp;
-       int rc, count;
-
-       list2fd_set(rl, rtmp, rset);
-       list2fd_set(wl, wtmp, wset);
-       list2fd_set(el, etmp, eset);
-
-       if (is:null(timeout))
-           ptv = 0;
-       else {
-           word t;
-           if (!cnv:C_integer(timeout, t))
-               runerr(101, timeout);
-           tv.tv_sec = t / 1000;
-           tv.tv_usec = (t % 1000) * 1000;
-           ptv = &tv;
-       }
-
-       rc = select(FD_SETSIZE, &rset, &wset, &eset, ptv);
-       if (rc < 0) {
-           errno2why();
-           fail;
-       }
-
-       count = 0;
-       fd_set2list(rl, rtmp, rset);
-       fd_set2list(wl, wtmp, wset);
-       fd_set2list(el, etmp, eset);
-
-       if (count != rc) {
-           LitWhy("Unexpected mismatch between FD_SETs and list sizes");
-           fail;
-       }
-
-       return C_integer rc;
-#endif
-    }
-end
-
-#if !MSWIN32
+#if UNIX
 function io_DescStream_poll(l, timeout)
    if !is:list(l) then
       runerr(108,l)
    if !def:C_integer(timeout, -1) then
       runerr(101, timeout)
    body {
-#if HAVE_POLL
        static struct staticstr buf = {16 * sizeof(struct pollfd)};
        struct pollfd *ufds = 0;
        unsigned int nfds;
@@ -2907,12 +3099,9 @@ function io_DescStream_poll(l, timeout)
        }
 
        return result;
-#else
-       Unsupported;
-#endif  /* HAVE_POLL */
    }
 end
-#endif  /* MSWIN32 */
+#endif  /* UNIX */
 
 function io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
@@ -3896,15 +4085,15 @@ function util_Time_get_system_millis()
    body {
       struct timeval tp;
       struct descrip lm;
-      tended struct descrip ls, lt, result;
+      tended struct descrip ls, result;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec / 1000, &lm);
-      bigmul(&ls, &thousanddesc, &lt);
-      bigadd(&lt, &lm, &result);
+      bigmul(&ls, &thousanddesc, &result);
+      bigadd(&result, &lm, &result);
       return result;
    }
 end
@@ -3913,15 +4102,15 @@ function util_Time_get_system_micros()
    body {
       struct timeval tp;
       struct descrip lm;
-      tended struct descrip ls, lt, result;
+      tended struct descrip ls, result;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      bigmul(&ls, &milliondesc, &lt);
-      bigadd(&lt, &lm, &result);
+      bigmul(&ls, &milliondesc, &result);
+      bigadd(&result, &lm, &result);
       return result;
    }
 end
@@ -5517,8 +5706,11 @@ static int getaddrinfo_utf8(char *node,
 
 static struct sockaddr *parse_sockaddr(char *s, int *len)
 {
+    static union {
+        struct sockaddr_in in;
+        struct sockaddr_in6 in6;
+    } r;
     if (strncmp(s, "inet:", 5) == 0) {
-        static struct sockaddr_in iss;
         struct addrinfoW hints;
         struct addrinfoW *res;
         int error;
@@ -5548,13 +5740,12 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             win32error2why();
             return 0;
         }
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        if (res->ai_addrlen != sizeof(r.in))
+            syserr("Unexpected address size");
+        memcpy(&r.in, res->ai_addr, res->ai_addrlen);
         FreeAddrInfoW(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
-    }
-    if (strncmp(s, "inet6:", 6) == 0) {
-        static struct sockaddr_in6 iss;
+        *len = sizeof(r.in);
+    } else if (strncmp(s, "inet6:", 6) == 0) {
         struct addrinfoW hints;
         struct addrinfoW *res;
         int error;
@@ -5598,14 +5789,16 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             win32error2why();
             return 0;
         }
-        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        if (res->ai_addrlen != sizeof(r.in6))
+            syserr("Unexpected address size");
+        memcpy(&r.in6, res->ai_addr, res->ai_addrlen);
         FreeAddrInfoW(res);
-        *len = sizeof(iss);
-        return (struct sockaddr *)&iss;
+        *len = sizeof(r.in6);
+    } else {
+        LitWhy("Bad socket address format (unknown family)");
+        return 0;
     }
-
-    LitWhy("Bad socket address format (unknown family)");
-    return 0;
+    return (struct sockaddr *)&r;
 }
 
 static void add_addrinfo4(struct addrinfoW *t, dptr result)
@@ -5770,16 +5963,16 @@ static char *sockaddr_string(struct sockaddr *sa)
             char ipstr[INET_ADDRSTRLEN];
             struct sockaddr_in *s = (struct sockaddr_in *)sa;
             inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 12);
-            sprintf(buf.s, "%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
+            ssreserve(&buf, strlen(ipstr) + 17);
+            sprintf(buf.s, "inet:%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
             break;
         }
         case AF_INET6 : {
             char ipstr[INET6_ADDRSTRLEN];
             struct sockaddr_in6 *s = (struct sockaddr_in6 *)sa;
             inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
-            ssreserve(&buf, strlen(ipstr) + 14);
-            sprintf(buf.s, "[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
+            ssreserve(&buf, strlen(ipstr) + 20);
+            sprintf(buf.s, "inet6:[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
             break;
         }
         default:
@@ -5832,6 +6025,86 @@ function io_WinsockStream_get_local(self)
    }
 end
 
+function io_WinsockStream_sendto(self, s, dest, flags)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:C_string(dest) then
+      runerr(103, dest)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr *sa;
+       int len;
+       word rc;
+       GetSelfSocket();
+
+       sa = parse_sockaddr(dest, &len);
+       if (!sa) {
+           /* &why already set by parse_sockaddr */
+           fail;
+       }
+
+       rc = sendto(self_socket, StrLoc(s), StrLen(s), flags, sa, len);
+       if (rc < 0) {
+           win32error2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function io_WinsockStream_recvfrom_impl(self, i, flags)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !def:C_integer(flags, 0) then
+      runerr(101, flags)
+   body {
+       struct sockaddr_storage iss;
+       socklen_t iss_len;
+       word nread;
+       char *s, *ip;
+       tended struct descrip result, tmp;
+       GetSelfSocket();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(s = alcstr(NULL, i));
+
+       iss_len = sizeof(iss);
+
+       nread = recvfrom(self_socket, s, i, flags, (struct sockaddr *)&iss, &iss_len);
+       if (nread < 0) {
+           /* Reset the memory just allocated */
+           dealcstr(s);
+           win32error2why();
+           fail;
+       }
+
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(s + nread);
+       MakeStr(s, nread, &tmp);
+
+       create_list(2, &result);
+       list_put(&result, &tmp);
+
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No name information available");
+           fail;
+       }
+       cstr2string(ip, &tmp);
+       list_put(&result, &tmp);
+
+       return result;
+   }
+end
+
 function io_WinsockStream_accept_impl(self)
    body {
        SOCKET sock;
@@ -5843,6 +6116,144 @@ function io_WinsockStream_accept_impl(self)
        }
 
        return C_integer sock;
+   }
+end
+
+function io_WinsockStream_setopt(self, opt, arg)
+   if !cnv:C_integer(opt) then
+      runerr(101, opt)
+   body {
+      void *optval;
+      int optlen;
+      DWORD int_arg;
+      struct linger linger_arg;
+
+      GetSelfSocket();
+      switch (opt) {
+          case SO_DEBUG:
+          case SO_OOBINLINE:
+          case SO_BROADCAST:
+          case SO_DONTROUTE:
+          case SO_KEEPALIVE:
+          case SO_REUSEADDR: {
+              if (!is_flag(&arg))
+                  runerr(171, arg);
+              int_arg = is:null(arg) ? 0 : 1;
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              break;
+          }
+
+          case SO_LINGER: {
+              if (is:null(arg))
+                  linger_arg.l_onoff = linger_arg.l_linger = 0;
+              else {
+                  word w;
+                  if (!cnv:C_integer(arg, w))
+                      runerr(101, arg);
+                  linger_arg.l_onoff = 1;
+                  linger_arg.l_linger = w;
+              }
+              optval = &linger_arg;
+              optlen = sizeof(linger_arg);
+              break;
+          }
+
+          case SO_RCVTIMEO:
+          case SO_SNDTIMEO:
+          case SO_RCVLOWAT:
+          case SO_SNDLOWAT:
+          case SO_RCVBUF:
+          case SO_SNDBUF: {
+              word w;
+              if (!cnv:C_integer(arg, w))
+                  runerr(101, arg);
+              int_arg = w;
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              break;
+          }
+
+          default: {
+              LitWhy("Bad option number");
+              fail;
+          }
+      }
+
+      if (setsockopt(self_socket, SOL_SOCKET, opt, optval, optlen) < 0) {
+          win32error2why();
+          fail;
+      }
+
+      return self;
+   }
+end
+
+function io_WinsockStream_getopt(self, opt)
+   if !cnv:C_integer(opt) then
+      runerr(101, opt)
+   body {
+      void *optval;
+      int optlen;
+      DWORD int_arg;
+      struct linger linger_arg;
+
+      GetSelfSocket();
+      switch (opt) {
+          case SO_DEBUG:
+          case SO_OOBINLINE:
+          case SO_ACCEPTCONN:
+          case SO_BROADCAST:
+          case SO_DONTROUTE:
+          case SO_KEEPALIVE:
+          case SO_REUSEADDR: {
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  win32error2why();
+                  fail;
+              }
+              return int_arg ? yesdesc : nulldesc;
+          }
+
+
+          case SO_LINGER: {
+              optval = &linger_arg;
+              optlen = sizeof(linger_arg);
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  win32error2why();
+                  fail;
+              }
+              if (linger_arg.l_onoff)
+                  return C_integer linger_arg.l_linger;
+              else
+                  return nulldesc;
+          }
+
+          case SO_RCVTIMEO:
+          case SO_SNDTIMEO:
+          case SO_ERROR:
+          case SO_RCVLOWAT:
+          case SO_SNDLOWAT:
+          case SO_TYPE:
+          case SO_RCVBUF:
+          case SO_SNDBUF: {
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  win32error2why();
+                  fail;
+              }
+              return C_integer int_arg;
+          }
+
+          default: {
+              LitWhy("Bad option number");
+              fail;
+          }
+      }
+      /* Not reached */
+      fail;
    }
 end
 

@@ -25,7 +25,7 @@ class Process(HasTask, HasBgProc)
    #
    public start()
       local l
-      /pid | runerr("start() called out of sequence", self)
+      /pid | runerr("start() called out of sequence")
 $if _PLAN9
       l := FileStream.pipe(FileOpt9.OCEXEC, FileOpt9.OCEXEC) | fail
       pid := System.fork() | {
@@ -157,7 +157,7 @@ $endif
    # Called by the parent to kill the child.  Then the `close` method is invoked.
    #
    public stop()
-      \pid | runerr("stop() called out of sequence", self)
+      \pid | runerr("stop() called out of sequence")
 $if _PLAN9
       # This may fail if the child has exited, so this isn't regarded as an
       # error (unix kill will succeed even if the child has already exited).

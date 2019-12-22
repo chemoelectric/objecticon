@@ -122,6 +122,7 @@
    #include <assert.h>
    #include <setjmp.h>
    #include <stdint.h>
+   #include <stddef.h>
 #endif
 
 /*
@@ -183,12 +184,9 @@
    #include <sys/types.h>
    #include <termios.h>
    #include <sys/utsname.h>
-   #include <sys/select.h>
    #include <sys/wait.h>
    #include <sys/ioctl.h>
-   #if HAVE_POLL
    #include <sys/poll.h>
-   #endif
    #if HAVE_MMAP
    #include <sys/mman.h>
    #endif

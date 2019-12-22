@@ -595,7 +595,7 @@ class Dialog(Component)
    #   When a parent dialog is closed, its child dialogs are automatically closed.
    #
    public show(d)
-      /win | runerr("show() called on open Dialog", self)
+      /win | runerr("show() called on open Dialog")
       if \d then {
          insert(d.child_dialogs, self)
          self.owning_dialog := d
@@ -614,7 +614,7 @@ class Dialog(Component)
    end
 
    public dispose()
-      \win | runerr("dispose() called on closed Dialog", self)
+      \win | runerr("dispose() called on closed Dialog")
       # If menu_mode is set, then we are the popup manager and a menu is active,
       # so close all menus.
       if \menu_mode then

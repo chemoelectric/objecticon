@@ -78,7 +78,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # implemented for sets with ORDER capability.
    #
    public select(i)
-      can(ORDER) | runerr("Set doesn't have ORDER capability: ", self)
+      can(ORDER) | runerr("Set doesn't have ORDER capability")
       return Index{gen(), cvpos_item(i, size())}
    end
 

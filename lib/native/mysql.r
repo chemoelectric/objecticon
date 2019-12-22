@@ -102,18 +102,13 @@ function mysql_MySql_options(self, option, arg)
           }
 
           /*
-           * These take a single optional int as an arg.
+           * These take a single int flag value as an arg.
            */
           case MYSQL_OPT_LOCAL_INFILE: {
-              if (is:null(arg))
-                  c_arg = NULL;
-              else {
-                  word w;
-                  if (!cnv:C_integer(arg, w))
-                      runerr(101, arg);
-                  int_arg = (unsigned int)w;
-                  c_arg = &int_arg;
-              }
+              if (!is_flag(&arg))
+                  runerr(171, arg);
+              int_arg = is:null(arg) ? 0 : 1;
+              c_arg = &int_arg;
               break;
           }
 
@@ -147,6 +142,58 @@ function mysql_MySql_options(self, option, arg)
           fail;
       }
       return self;
+   }
+end
+
+function mysql_MySql_get_option(self, option)
+   if !cnv:C_integer(option) then
+      runerr(101, option)
+
+   body {
+      const char *str_arg;
+      unsigned int int_arg;
+      bool bool_arg;
+      tended struct descrip result;
+      GetSelfMySql();
+
+      switch (option) {
+          case MYSQL_OPT_CONNECT_TIMEOUT: {
+              if (mysql_get_option(self_mysql, (enum mysql_option)option, &int_arg)) {
+                  on_mysql_error(self_mysql);
+                  fail;
+              }
+              convert_from_uint64_t(int_arg, &result);
+              return result;
+          }
+
+          case MYSQL_OPT_LOCAL_INFILE: {
+              /* Oddly the docs say this is a bool (but options above uses an int). */
+              if (mysql_get_option(self_mysql, (enum mysql_option)option, &bool_arg)) {
+                  on_mysql_error(self_mysql);
+                  fail;
+              }
+              return bool_arg ? yesdesc : nulldesc;
+          }
+
+          case MYSQL_SET_CHARSET_NAME:
+          case MYSQL_SET_CHARSET_DIR:
+          case MYSQL_READ_DEFAULT_FILE:
+          case MYSQL_READ_DEFAULT_GROUP: {
+              if (mysql_get_option(self_mysql, (enum mysql_option)option, &str_arg)) {
+                  on_mysql_error(self_mysql);
+                  fail;
+              }
+              /* Note that str_arg may be NULL here (leading to a &null result). */
+              cstr2string((char*)str_arg, &result);
+              return result;
+          }
+          default: {
+              LitWhy("Bad option number");
+              fail;
+          }
+      }
+      /* Not reached */
+      fail;
    }
 end
 

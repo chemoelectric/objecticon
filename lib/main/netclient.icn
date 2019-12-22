@@ -859,22 +859,29 @@ class HostPort()
    end
 end
 
-package procedure host_port_opt_impl(def, s)
-   local v, r
+#
+# Parse a string `s` in the form "host:port" into a `HostPort` instance.
+# `def` is an optional default port value.
+#
+procedure parse_host_port(s, def)
+   local host, port
    s ? {
-      r := if v := tab(upto(':')) then
-         HostPort( v, move(1) & integer(tab(0)) )
+      host := if ="[" then
+         1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
       else
-         HostPort( tab(0), \def )
-   } | return error("Host:port expected")
-   return if NetClient.valid_port(r.port) then r else error("Port out of range")
+         tab(upto(':') | 0)
+      port := (if =":" then integer(tab(0)) else \def) | return error("Host:port expected")
+      NetClient.valid_port(port) | return error("Port out of range")
+   }
+   return HostPort(host, port)
 end
 
 #
-# options() converter function for a host:port argument.  `def` is an optional default port.
+# Return an options() converter function for a host:port argument,
+# with `def` as an optional default port.
 #
 procedure host_port_opt(def)
-   return lpartial(host_port_opt_impl, def)
+   return rpartial(parse_host_port, def)
 end
 
 #

@@ -412,12 +412,12 @@ procedure do_line_editor()
    sched := Scheduler()
    task := Task(sched, create terminal_task(task))
    if \opts["s"] then
-      f := TaskStream(FileStream.stdin, task).set_close_underlying(&no)
+      f := TaskStream(FileStream.stdin, task)     # Never closed
    input := LineEditorStream(opts["s"], f).
       set_complete_function(complete).
       set_history_limit(hlim).
       set_prompt("? ").
-      set_task(task)
+      set_task(task) | stopf("Failed to create LineEditorStream: %w")
    output := FileStream.stdout
    task.start()
    prelim()
