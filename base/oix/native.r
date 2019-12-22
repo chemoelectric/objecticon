@@ -2930,7 +2930,6 @@ function io_DescStream_poll(l, timeout)
    if !def:C_integer(timeout, -1) then
       runerr(101, timeout)
    body {
-#if HAVE_POLL
        static struct staticstr buf = {16 * sizeof(struct pollfd)};
        struct pollfd *ufds = 0;
        unsigned int nfds;
@@ -2979,9 +2978,6 @@ function io_DescStream_poll(l, timeout)
        }
 
        return result;
-#else
-       Unsupported;
-#endif  /* HAVE_POLL */
    }
 end
 #endif  /* MSWIN32 */

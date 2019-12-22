@@ -85,9 +85,7 @@
    #include <sys/select.h>
    #include <sys/wait.h>
    #include <sys/ioctl.h>
-   #if HAVE_POLL
    #include <sys/poll.h>
-   #endif
    #if HAVE_MMAP
    #include <sys/mman.h>
    #endif
