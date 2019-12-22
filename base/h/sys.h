@@ -82,7 +82,6 @@
    #include <sys/types.h>
    #include <termios.h>
    #include <sys/utsname.h>
-   #include <sys/select.h>
    #include <sys/wait.h>
    #include <sys/ioctl.h>
    #include <sys/poll.h>
