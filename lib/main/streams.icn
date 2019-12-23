@@ -2718,7 +2718,7 @@ class NetStream(FileStream)
    # Return a new `NetStream` which can be used to listen on the given address.
    # 
    # :Parameters :
-   # :  `addr` - the address, eg "tcp!www.google.com!80"
+   # :  `addr` - the address, eg "tcp!*!8000"
    # :  `ver` - the IP version(s) to try; see `cs_query()`
    #
    public static announce(addr, ver)
