@@ -1501,8 +1501,9 @@ static void activate_child_prog()
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res)
 {
     ObjectBlk(*res).fields[0] = prog->event_queue_head->eventcode;
+    /* A dptr to eventval is safe to pass to deref() (unlike ...fields[1]) */
+    Deref(prog->event_queue_head->eventval);
     ObjectBlk(*res).fields[1] = prog->event_queue_head->eventval;
-    Deref(ObjectBlk(*res).fields[1]);
     if (prog->event_queue_head == prog->event_queue_tail) {
         free(prog->event_queue_head);
         prog->event_queue_head = prog->event_queue_tail = 0;
