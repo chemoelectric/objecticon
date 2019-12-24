@@ -6,6 +6,8 @@ import
 $if _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
+   ipl.printf, net, ipl.pdco(String),
+   ipl.strings(separate),
 $else
    lang(Class, NoCopy),
    posix(System),
@@ -2647,7 +2649,7 @@ class NetStream(FileStream)
       if \fd  then
          return error("Data stream already open")
       fd := open_subfile("data", FileOpt.RDWR).get_fd() |
-         return error("Couldn't open data stream: " || &why)
+         return whyf("Couldn't open data stream: %w")
       link
    end
 
@@ -2662,19 +2664,19 @@ class NetStream(FileStream)
    public static connect(s, timeout, task)
       local clone_file, dest, res
       s ? {
-         clone_file := tab(upto(' '))
+         clone_file := tab(upto(' ')) | return error("Connect string not in correct format")
          move(1)
          dest := tab(0)
       }
       res := clone(clone_file) | fail
       # Try to connect
       res.write_ctrl("connect " || dest, timeout, task) | {
-         res.close()
+         save_why{ res.close() }
          # &why should be set appropriately by the response to the connect
          fail
       }
       res.open_data() | {
-         res.close()
+         save_why{ res.close() }
          fail
       }
       return res
@@ -2709,7 +2711,7 @@ class NetStream(FileStream)
    #
    public static clone(fn)
       local cf, name
-      cf := FileStream(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || &why)
+      cf := FileStream(fn, FileOpt.RDWR) | return whyf("Couldn't open clone file: %w")
       # Get the id number of the connection clone created
       name := cf.in(1024)
       return NetStream(cf, FilePath(fn).sibling(name))
@@ -2726,13 +2728,13 @@ class NetStream(FileStream)
       l := cs_query(addr, ver) | fail
       # will be in the form "/net/tcp/clone 1234"      
       l[1] ? {
-         clone_file := tab(upto(' '))
+         clone_file := tab(upto(' ')) | return error("Connect string not in correct format")
          move(1)
          arg := tab(0)
       }
       res := clone(clone_file) | fail
       res.write_ctrl("announce " || arg) | {
-         res.close()
+         save_why{ res.close() }
          # &why should be set appropriately by the response to the announce
          fail
       }
@@ -2748,7 +2750,7 @@ class NetStream(FileStream)
    public listen(timeout, task)
       local cf, name, cw, r, fd
       if /timeout & /task then
-         cf := open_subfile("listen", FileOpt.RDWR) | return error("Couldn't open listen file: " || &why)
+         cf := open_subfile("listen", FileOpt.RDWR) | return whyf("Couldn't open listen file: %w")
       else {
          fd := use {
             cw := FileWorker(),
@@ -2759,7 +2761,7 @@ class NetStream(FileStream)
                if /r then
                   error("Timeout")
                else
-                  (cw.await(), cw.dup_fd()) | error("Couldn't open listen file: " || &why)
+                  (cw.await(), cw.dup_fd()) | whyf("Couldn't open listen file: %w")
             }
          } | fail
          cf := CtrlStream(fd)
@@ -2772,7 +2774,7 @@ class NetStream(FileStream)
    #
    public accept()
       # May fail, so ignore errors
-      save_why{write_ctrl("accept " || dir.get(-1))}
+      save_why{ write_ctrl("accept " || dir.get(-1)) }
       # Open data stream
       return open_data()
    end
@@ -2781,7 +2783,7 @@ class NetStream(FileStream)
    #
    public reject(cause)
       # May fail, so ignore errors
-      save_why{write_ctrl("reject " || dir.get(-1) || " " || cause)}
+      save_why{ write_ctrl("reject " || dir.get(-1) || " " || cause) }
       link
    end
 
@@ -2797,6 +2799,22 @@ class NetStream(FileStream)
       return .ctrl
    end
 
+   #
+   # Returns a string giving the address and port of the remote side of
+   # the connection.
+   #
+   public get_remote()
+      return trim(Files.file_to_string(dir.child("remote").str()), '\n')
+   end
+
+   #
+   # Returns a string giving the address and port of the local side of
+   # the connection.
+   #
+   public get_local()
+      return trim(Files.file_to_string(dir.child("local").str()), '\n')
+   end
+
    public override close()
       if \fd  then
          FileStream.close()
@@ -2809,6 +2827,60 @@ class NetStream(FileStream)
       self.ctrl := ctrl
       self.dir := dir
       return
+   end
+end
+
+#
+# This class contains some helpful methods for use with a `NetStream`
+# being used as a UDP server or client.
+#
+final abstract class UDP()
+   #
+   # A helpful method for use with a UDP server, which has written
+   # "headers" to its control file.  It obtains an incoming message
+   # from `Stream` `c` and splits it into the header and data, and
+   # checks for errors.  A `Received` object is returned.
+   #
+   public static recvfrom(c, n)
+      local d, h
+      d := c.in(n + 52) | fail
+      if /d then
+         return error("Unexpected end of file")
+      d ? return if h := move(52) then Received(tab(0), h) else
+                     error("Header too short")
+   end
+
+   #
+   # This method is the counterpart to `recvfrom`, and just adds the
+   # given header `dest` (which should be obtained from the `src`
+   # field of a `Received` instance) to the message, before sending the
+   # message on `Stream` `c`.
+   #
+   public static sendto(c, s, dest)
+      dest := need_string(dest)
+      (*dest = 52) | return error("Header too short")
+      return c.out(dest || s)
+   end
+
+   private static ip_str(s)
+      return "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff" || String{char(separate(s, '.'))}
+   end
+
+   private static port_str(n)
+      return char(n / 256) || char(n % 256)
+   end
+
+   #
+   # Create a header for the `NetStream` `c` which can then be used with
+   # `sendto()`.
+   #
+   public static mk_header(c)
+      local l, r, s
+      l := parse_host_port(c.get_local(),, '!') | return whyf("Unable to get local side: %w")
+      r := parse_host_port(c.get_remote(),, '!') | return whyf("Unable to get remote side: %w")
+      s := ip_str(r.host) || ip_str(l.host) || repl("\x00", 16) || port_str(r.port) || port_str(l.port)
+      (*s = 52) | return error("Size ends up wrong")
+      return s
    end
 end
 
