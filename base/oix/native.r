@@ -197,24 +197,6 @@ convert_from_macro(uint64_t)
 convert_from_macro(int64_t)
 convert_from_macro(uword)
 
-/*
- * Try to convert an integer-valued descriptor, with a value in ms, to
- * a timeval structure.
- */
-static int ms_to_timeval(dptr i, struct timeval *res)
-{
-    tended struct descrip t;
-    time_t sec;
-    bigdiv(i, &thousanddesc, &t);
-    if (!convert_to_time_t(&t, &sec))
-        return 0;
-    bigmod(i, &thousanddesc, &t);
-    StructClear(*res);
-    res->tv_sec = sec;
-    res->tv_usec = IntVal(t) * 1000;
-    return 1;
-}
-
 function lang_Prog_get_event_mask(ce)
    body {
        struct progstate *prog;
@@ -2236,6 +2218,10 @@ static struct sockaddr *parse_sockaddr(char *s, socklen_t *len)
             LitWhy("Name too long");
             return 0;
         }
+        if (!*t) {
+            LitWhy("Name empty");
+            return 0;
+        }
         StructClear(r.us);
         r.us.sun_family = AF_UNIX;
         strcpy(r.us.sun_path, t);
@@ -2488,6 +2474,10 @@ end
 static char *sockaddr_string(struct sockaddr *sa, socklen_t len)
 {
     static struct staticstr buf = {16};
+    /* On Linux at least, len is set to zero by recvfrom if we are
+     * receiving a datagram over a unix socket. */
+    if (len == 0)
+        return "unix:";
     switch (sa->sa_family) {
         case AF_UNIX : {
             struct sockaddr_un *s = (struct sockaddr_un *)sa;
@@ -2707,10 +2697,14 @@ function io_SocketStream_setopt(self, opt, arg)
 
           case SO_RCVTIMEO:
           case SO_SNDTIMEO: {
+              tended struct descrip t;
               if (!cnv:integer(arg, arg))
                   runerr(101, arg);
-              if (!ms_to_timeval(&arg, &timeval_arg))
+              bigdiv(&arg, &thousanddesc, &t);
+              if (!convert_to_time_t(&t, &timeval_arg.tv_sec))
                   runerr(0);
+              bigmod(&arg, &thousanddesc, &t);
+              timeval_arg.tv_usec = IntVal(t) * 1000;
               optval = &timeval_arg;
               optlen = sizeof(timeval_arg);
               break;
