@@ -474,8 +474,6 @@ pressed(Window *w)
     if(!w->topped == topped && input == w || w->noborder)
         return;
     wtop(w);
-    if (input != w)
-        w->focusclickflag = 1;
     wcurrent(w);
     flushimage(display, 1);
 }
