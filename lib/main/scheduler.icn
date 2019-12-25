@@ -11,7 +11,7 @@ import lang, util
 class TaskStream(Stream, HasTask, HasUnderlyingStream)
    private readable
       timeout
-   private
+   private const
       other
 
    public override in(n)

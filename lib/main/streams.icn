@@ -434,8 +434,9 @@ end
 # chunks.
 #
 class BufferStream(Stream, HasUnderlyingStream)
+   private const
+      other
    private
-      other,
       rpos,
       wbuff,
       wbuff_len,
@@ -2041,7 +2042,7 @@ end
 # the output of those streams.
 #
 class SequenceStream(Stream, HasUnderlyingStream)
-   private
+   private const
       a, ac
 
    public override in(n)
@@ -2163,7 +2164,7 @@ end
 # used to communicate with a child process, such as a shell.
 #
 class PttyStream(FileStream)
-   private readable 
+   public const
       slave_name
 
    public native set_size(cols, rows)
