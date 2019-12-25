@@ -157,7 +157,7 @@ abstract class File9P()
       if is(self,Dir9P) then 
          x := ior(x, Mode9.DMDIR)
       else
-         iand(x, Mode9.DMDIR) = 0 | rthrow("Cannot set DMDIR in a regular file", self)
+         iand(x, Mode9.DMDIR) = 0 | rthrow("Cannot set DMDIR in a regular file")
       self.perm := x
       self.fixed := y
       link
@@ -269,7 +269,7 @@ class TableDir9P(Dir9P)
    package override rename_child(x, s)
       if ent[x.name] === x & x.name ~== s then {
          if member(ent, s) then
-            rthrow("Can't change name to " || s || " - already exists", self)
+            rthrow("Can't change name to " || s || " - already exists")
          delete(ent, x.name)
          insert(ent, s, x)
       }

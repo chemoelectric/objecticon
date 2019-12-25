@@ -441,8 +441,9 @@ end
 # chunks.
 #
 class BufferStream(Stream, HasUnderlyingStream)
+   private const
+      other
    private
-      other,
       rpos,
       wbuff,
       wbuff_len,
@@ -2528,7 +2529,7 @@ end
 # A stream for network connections.
 #
 class NetStream(FileStream)
-   private dir, ctrl
+   private const dir, ctrl
 
    private static native get_default_ip_version()
 
@@ -2790,13 +2791,13 @@ class NetStream(FileStream)
    # Return the directory of the stream (eg "/net/tcp/6"), as a `FilePath` object.
    #
    public get_dir()
-      return .dir
+      return dir
    end
 
    # Return the control file, which will be a `FileStream`.
    #
    public get_ctrl()
-      return .ctrl
+      return ctrl
    end
 
    #
@@ -3234,7 +3235,7 @@ $endif
 # the output of those streams.
 #
 class SequenceStream(Stream, HasUnderlyingStream)
-   private
+   private const
       a, ac
 
    public override in(n)
@@ -3356,7 +3357,7 @@ end
 # used to communicate with a child process, such as a shell.
 #
 class PttyStream(FileStream)
-   private readable 
+   public const
       slave_name
 
    public native set_size(cols, rows)
