@@ -855,3 +855,32 @@ class New()
       return
    end
 end
+
+#
+# Try to convert `x` to something which can be invoked.  This follows
+# similar logic to that used in converting an expression for
+# invocation (see the function general_call in invoke.r).
+#
+# :Parameters :
+# :  `x` - the thing to convert
+# :  `n` - the optional number of args for an operator.  If null, then
+#          a valid operator name will be returned as a string; if 0 then
+#          no operator names are recognized; if 1, 2 or 3 then only
+#          an operator with that number of parameters will be recognized.
+#
+procedure callable(x, n)
+   if type(x) == ("procedure" | "class" | "constructor" | "methp") then
+      return x
+   if x := integer(x) then
+      return x
+   if x := string(x) then {
+      if x := Prog.get_named_global(x) | Prog.get_function(x) | Prog.get_keyword(x) then
+         return x
+      return if /n then
+         # Null means any operator and return the name
+         Prog.get_operator(x, 1 to 3) & x
+      else
+         # Otherwise match the number, or reject if n=0.
+         Prog.get_operator(x, 0 < n)
+   }
+end
