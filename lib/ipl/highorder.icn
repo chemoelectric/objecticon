@@ -11,7 +11,7 @@ import
 # Implementation class for `partial`
 #
 package class Partial()
-   private
+   private const
       f, spec, v
 
    public call(a[])
@@ -61,7 +61,7 @@ end
 # Implementation class for `lpartial` and `rpartial`
 #
 package class LRPartial()
-   private
+   private const
       f, x
 
    public lcall(a[])
@@ -111,7 +111,7 @@ end
 # Implementation class for `compose`
 #
 package class Compose()
-   private
+   private const
       f, g
 
    public call(a[])
@@ -165,7 +165,8 @@ end
 # Implementation class for `methodf`
 #
 package class Methodf()
-   private field
+   private const
+      field
 
    public call(obj, a[])
       suspend Class.get(obj, field)!a
@@ -192,7 +193,7 @@ end
 
 # Implementation class for `flip` and `revargs`.
 package class Func()
-   private f
+   private const f
 
    public two(a, b)
       suspend f(b, a)
@@ -225,7 +226,8 @@ end
 
 # Implementation class for `memoize` and `memoize1`
 package class Memoize()
-   private f, t
+   private const
+      f, t
 
    public call(a[])
       local l
@@ -282,7 +284,7 @@ end
 
 # Implementation class for `adjoin`.
 package class Adjoin()
-   private f
+   private const f
 
    private mk(f, a)
       return create f!a

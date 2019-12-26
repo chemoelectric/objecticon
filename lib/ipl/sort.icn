@@ -171,7 +171,8 @@ end
 
 # Implementation class for `combine_cmp`.
 package class CombineCmp()
-   private f, g
+   private const
+      f, g
 
    public call(a, b)
       local i
@@ -209,7 +210,8 @@ end
 
 # Implementation class for `index_cmp`.
 package class IndexCmp()
-   private f, i
+   private const
+      f, i
 
    public call(a, b)
       return f(a[i], b[i]) | runerr("Invalid index given to index_cmp")
@@ -239,7 +241,8 @@ end
 
 # Implementation class for `field_cmp`.
 package class FieldCmp()
-   private f, q
+   private const
+      f, q
 
    public call(a, b)
       return f(Class.get(a, q), Class.get(b, q))
@@ -289,7 +292,8 @@ end
 
 # Implementation class for `convert_cmp`.
 package class ConvertCmp()
-   private f, cnv
+   private const
+      f, cnv
 
    public call(a, b)
       a := cnv(a)
