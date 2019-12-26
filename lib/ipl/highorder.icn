@@ -2,7 +2,7 @@ package ipl.functional
 
 import
    lang(Class),
-   ipl.callable(callable),
+   util(need_string,need_callable),
    ipl.lists(lreverse_mod),
    ipl.pdco(List,Parallel),
    datastruct(EqTable,BuiltinTable)
@@ -54,7 +54,7 @@ end
 #     f("x","y","z")   # writes abcxyzpqr
 # ~
 procedure partial(f, spec, l[])
-   return Partial(f, spec, l).call
+   return Partial(need_callable(f), need_string(spec), l).call
 end
 
 #
@@ -91,6 +91,7 @@ end
 # Partial application to function f, prepending l to the arguments.
 #
 procedure lpartial(f, l[])
+   f := need_callable(f)
    return if *l = 1 then
       LRPartial(f, l[1]).lcall1
    else
@@ -101,6 +102,7 @@ end
 # Partial application to function f, appending l to the arguments.
 #
 procedure rpartial(f, l[])
+   f := need_callable(f)
    return if *l = 1 then
       LRPartial(f, l[1]).rcall1
    else
@@ -129,7 +131,7 @@ end
 # Compose functions f and g
 #
 procedure compose(f, g)
-   return Compose(f, g).call
+   return Compose(need_callable(f), need_callable(g)).call
 end
 
 # Convenient function to get the binary operator `op`, partially
@@ -145,8 +147,7 @@ end
 # greater than 0.
 #
 procedure lpb(x, op)
-   op := callable(op, 2) | runerr("Invalid operation for lpb", op)
-   return lpartial(op, x)
+   return LRPartial(need_callable(op, 2), x).lcall1
 end
 
 # Convenient function to get the binary operator `op`, partially
@@ -157,8 +158,7 @@ end
 # returns a function which halves its argument.
 #
 procedure rpb(op, x)
-   op := callable(op, 2) | runerr("Invalid operation for rpb", op)
-   return rpartial(op, x)
+   return LRPartial(need_callable(op, 2), x).rcall1
 end
 
 #
@@ -213,7 +213,7 @@ end
 # which invokes the original, but swapping its two arguments.
 #
 procedure flip(f)
-   return Func(f).two
+   return Func(need_callable(f, 2)).two
 end
 
 # This function takes a function and returns another function which
@@ -221,7 +221,7 @@ end
 # `flip` above, but more general (and slower).
 #
 procedure revargs(f)
-   return Func(f).all
+   return Func(need_callable(f)).all
 end
 
 # Implementation class for `memoize` and `memoize1`
@@ -262,7 +262,7 @@ end
 #
 procedure memoize(f, t)
    /t := EqTable()
-   return Memoize(f, t).call
+   return Memoize(need_callable(f), t).call
 end
 
 # This is a simpler (but faster) version of `memoize()`.  Only a
@@ -279,7 +279,7 @@ end
 #
 procedure memoize1(f, t)
    /t := BuiltinTable()
-   return Memoize(f, t).call1
+   return Memoize(need_callable(f, 1), t).call1
 end
 
 # Implementation class for `adjoin`.

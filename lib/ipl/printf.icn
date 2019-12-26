@@ -128,7 +128,8 @@ end
 
 # A helper class to process the arguments
 package class Args()
-   private a, e
+   private a
+   private const e
 
    public get(i)
       return if /i then @e else a[i]

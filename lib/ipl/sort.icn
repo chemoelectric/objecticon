@@ -16,9 +16,11 @@
 
 package ipl.sort
 
-import lang(Class,Prog,Internal), util(cvslice_def),
-   datastruct(Entry), ipl.tables(inserts)
-
+import
+   lang(Class,Prog,Internal),
+   util(cvslice_def, need_callable),
+   datastruct(Entry),
+   ipl.tables(inserts)
 
 #
 #  Customizable sort procedure for inclusion in Icon programs.
@@ -43,9 +45,9 @@ import lang(Class,Prog,Internal), util(cvslice_def),
 #
 procedure isort(x,keyproc,y)
    local items,item,key,result
-   if y := integer(keyproc) then
-	 keyproc := Prog.get_operator("[]",2)
-   else /keyproc := 1
+   keyproc := if y := integer(keyproc) then
+	 Prog.get_operator("[]",2)
+   else need_callable(\keyproc,1) | 1
    items := table()
    every item := !x do {
       key := keyproc(item,y)
@@ -205,7 +207,7 @@ end
 #    ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
 # ~
 procedure combine_cmp(f, g)
-   return CombineCmp(f, g).call
+   return CombineCmp(need_callable(f), need_callable(g)).call
 end
 
 # Implementation class for `index_cmp`.
@@ -219,7 +221,6 @@ package class IndexCmp()
 
    public new(i, f)
       self.i := i
-      /f := Internal.compare
       self.f := f
       return
    end
@@ -236,7 +237,7 @@ end
 #     qsort(l, index_cmp(2))
 # ~
 procedure index_cmp(i, f)
-   return IndexCmp(i, f).call
+   return IndexCmp(i, need_callable_def(f)).call
 end
 
 # Implementation class for `field_cmp`.
@@ -250,7 +251,6 @@ package class FieldCmp()
 
    public new(q, f)
       self.q := q
-      /f := Internal.compare
       self.f := f
       return
    end
@@ -267,7 +267,7 @@ end
 #     qsort(l, field_cmp("x"))
 # ~
 procedure field_cmp(q, f)
-   return FieldCmp(q, f).call
+   return FieldCmp(q, need_callable_def(f)).call
 end
 
 #
@@ -303,7 +303,6 @@ package class ConvertCmp()
 
    public new(cnv, f)
       self.cnv := cnv
-      /f := Internal.compare
       self.f := f
       return
    end
@@ -347,7 +346,8 @@ end
 # 
 # ~
 procedure convert_cmp(cnv, f)
-   return ConvertCmp(cnv, f).call
+   return ConvertCmp(need_callable(cnv),
+                     need_callable_def(f)).call
 end
 
 #
@@ -364,7 +364,7 @@ end
 procedure qsort(l, cmp, pos1, pos2)
    local s
    s := cvslice_def(pos1, pos2, *l) | fail
-   /cmp := Internal.compare
+   cmp := need_callable_def(cmp)
    return qsort1(l, cmp, s.lo, s.hi - 1)
 end
 
@@ -413,7 +413,7 @@ end
 procedure bsearch(l, val, cmp, pos1, pos2, iflag)
    local s, m, c, first, last
    s := cvslice_def(pos1, pos2, *l) | fail
-   /cmp := Internal.compare
+   cmp := need_callable_def(cmp)
    first := s.lo
    last := s.hi - 1
    while first <= last do {
@@ -444,7 +444,7 @@ end
 procedure mergesort(l, cmp, pos1, pos2)
    local s
    s := cvslice_def(pos1, pos2, *l) | fail
-   /cmp := Internal.compare
+   cmp := need_callable_def(cmp)
    return mergesort1(l, cmp, s.lo, s.hi - 1)
 end
 
@@ -490,7 +490,7 @@ package record Item(last, e)
 procedure sort_seq(el, cmp)
    local l, cmp_item, e, i
 
-   /cmp := Internal.compare
+   cmp := need_callable_def(cmp)
 
    # Create the initial list of Items, excluding those expressions
    # that fail to produce a result.  The first element of the list
@@ -509,4 +509,12 @@ procedure sort_seq(el, cmp)
          # Re-insert Item i into the list, keeping it in sorted order.
          insert(l, bsearch(l, i, cmp_item,,, &yes), i)
    }
+end
+
+#
+# A useful procedure which is like `need_callable`, but if f is null, then
+# `Internal.compare` is assumed.
+#
+procedure need_callable_def(f)
+   return need_callable(\f) | Internal.compare
 end
