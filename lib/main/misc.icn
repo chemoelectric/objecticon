@@ -1,6 +1,6 @@
 package util
 
-import lang(Text),
+import lang(Text,callable),
    ipl.lists(ldel1),
    posix(System)
 
@@ -179,6 +179,16 @@ end
 procedure need_instance(x, cl)
    is(x, cl) | runerr("Instance of " || image(cl) || " expected", x)
    return x
+end
+
+# Convert to a callable or signal a runtime error
+#
+# :Parameters :
+# :  `x` - the thing to convert
+# :  `n` - the optional number of args for an operator
+#
+procedure need_callable(x, n)
+   return callable(x, n) | runerr("Callable expected", x)
 end
 
 # Convert and return `s1` so that it has the same type as `s2`, which

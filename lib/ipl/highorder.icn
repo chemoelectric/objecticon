@@ -2,7 +2,7 @@ package ipl.functional
 
 import
    lang(Class),
-   ipl.callable(callable),
+   util(need_string,need_callable),
    ipl.lists(lreverse_mod),
    ipl.pdco(List,Parallel),
    datastruct(EqTable,BuiltinTable)
@@ -11,7 +11,7 @@ import
 # Implementation class for `partial`
 #
 package class Partial()
-   private
+   private const
       f, spec, v
 
    public call(a[])
@@ -54,14 +54,14 @@ end
 #     f("x","y","z")   # writes abcxyzpqr
 # ~
 procedure partial(f, spec, l[])
-   return Partial(f, spec, l).call
+   return Partial(need_callable(f), need_string(spec), l).call
 end
 
 #
 # Implementation class for `lpartial` and `rpartial`
 #
 package class LRPartial()
-   private
+   private const
       f, x
 
    public lcall(a[])
@@ -91,6 +91,7 @@ end
 # Partial application to function f, prepending l to the arguments.
 #
 procedure lpartial(f, l[])
+   f := need_callable(f)
    return if *l = 1 then
       LRPartial(f, l[1]).lcall1
    else
@@ -101,6 +102,7 @@ end
 # Partial application to function f, appending l to the arguments.
 #
 procedure rpartial(f, l[])
+   f := need_callable(f)
    return if *l = 1 then
       LRPartial(f, l[1]).rcall1
    else
@@ -111,7 +113,7 @@ end
 # Implementation class for `compose`
 #
 package class Compose()
-   private
+   private const
       f, g
 
    public call(a[])
@@ -129,7 +131,7 @@ end
 # Compose functions f and g
 #
 procedure compose(f, g)
-   return Compose(f, g).call
+   return Compose(need_callable(f), need_callable(g)).call
 end
 
 # Convenient function to get the binary operator `op`, partially
@@ -145,8 +147,7 @@ end
 # greater than 0.
 #
 procedure lpb(x, op)
-   op := callable(op, 2) | runerr("Invalid operation for lpb", op)
-   return lpartial(op, x)
+   return LRPartial(need_callable(op, 2), x).lcall1
 end
 
 # Convenient function to get the binary operator `op`, partially
@@ -157,15 +158,15 @@ end
 # returns a function which halves its argument.
 #
 procedure rpb(op, x)
-   op := callable(op, 2) | runerr("Invalid operation for rpb", op)
-   return rpartial(op, x)
+   return LRPartial(need_callable(op, 2), x).rcall1
 end
 
 #
 # Implementation class for `methodf`
 #
 package class Methodf()
-   private field
+   private const
+      field
 
    public call(obj, a[])
       suspend Class.get(obj, field)!a
@@ -192,7 +193,7 @@ end
 
 # Implementation class for `flip` and `revargs`.
 package class Func()
-   private f
+   private const f
 
    public two(a, b)
       suspend f(b, a)
@@ -212,7 +213,7 @@ end
 # which invokes the original, but swapping its two arguments.
 #
 procedure flip(f)
-   return Func(f).two
+   return Func(need_callable(f, 2)).two
 end
 
 # This function takes a function and returns another function which
@@ -220,12 +221,13 @@ end
 # `flip` above, but more general (and slower).
 #
 procedure revargs(f)
-   return Func(f).all
+   return Func(need_callable(f)).all
 end
 
 # Implementation class for `memoize` and `memoize1`
 package class Memoize()
-   private f, t
+   private const
+      f, t
 
    public call(a[])
       local l
@@ -260,7 +262,7 @@ end
 #
 procedure memoize(f, t)
    /t := EqTable()
-   return Memoize(f, t).call
+   return Memoize(need_callable(f), t).call
 end
 
 # This is a simpler (but faster) version of `memoize()`.  Only a
@@ -277,12 +279,12 @@ end
 #
 procedure memoize1(f, t)
    /t := BuiltinTable()
-   return Memoize(f, t).call1
+   return Memoize(need_callable(f, 1), t).call1
 end
 
 # Implementation class for `adjoin`.
 package class Adjoin()
-   private f
+   private const f
 
    private mk(f, a)
       return create f!a

@@ -488,7 +488,8 @@ procedure ucs_with(q)
 end
 
 package class IgnoreAfterImpl(New)
-   private f, fl
+   private const f
+   private fl
 
    public call(x, t)
       if /fl & f(x, t) then
@@ -502,7 +503,7 @@ end
 # then option processing ceases, and all further arguments are treated
 # as-is.
 procedure ignore_after(f)
-   return IgnoreAfterImpl(f).call
+   return IgnoreAfterImpl(need_callable(f)).call
 end
 
 # Used with ignore_after to ignore options after first non-flag argument

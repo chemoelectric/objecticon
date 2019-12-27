@@ -8,7 +8,8 @@ import ipl.functional
 class Listener()
    private readable 
       obj,
-      proc,
+      proc
+   public const
       type
 
    #
@@ -39,7 +40,9 @@ end
 #
 package class ConnectN()
    private
-      proc, n
+      n
+   private const
+      proc
    public
       x
 
@@ -61,10 +64,12 @@ end
 # A class which provides a listener list facility.
 #
 class Connectable()
-   private listeners
+   private const
+      listeners
 
    # This variable contains the last `Listener` added with `connect()`.
-   private readable last_listener
+   private readable
+      last_listener
 
    #
    # Fire an event to listeners of the given type.
@@ -96,8 +101,10 @@ class Connectable()
    #
    public connect(proc, type, pos)
       local l
-      if default.type(proc) == "co-expression" then
-         proc := exprf(proc)
+      proc := if default.type(proc) == "co-expression" then
+         exprf(proc)
+      else
+         need_callable(proc)
       /pos := 0
       l := copy(member(listeners, type)) | []
       insert(l, pos, last_listener <- Listener(self, proc, type)) | fail
@@ -114,8 +121,10 @@ class Connectable()
    public connect_n(proc, type, pos, n)
       local i
       /n := 1
-      if default.type(proc) == "co-expression" then
-         proc := exprf(proc)
+      proc := if default.type(proc) == "co-expression" then
+         exprf(proc)
+      else
+         need_callable(proc)
       i := ConnectN(proc, n)
       connect(i.call, type, pos) | fail
       i.x := last_listener

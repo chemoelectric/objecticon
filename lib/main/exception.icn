@@ -1,6 +1,6 @@
 package exception
 
-import util(State,save_state), ipl.printf(sprintf)
+import util(State,save_state), ipl.printf(lprintf)
 
 package readable global 
    # The co-expression currently ready to handle an exception
@@ -56,8 +56,8 @@ end
 
 # A convenient procedure to invoke `throw` using a `printf` format
 # string and parameters.
-procedure throwf(a[])
-   throw(sprintf!a)
+procedure throwf(format, args[])
+   throw(lprintf(format, args))
 end
 
 #
