@@ -1087,6 +1087,37 @@ abstract class Data9P()
    end
 end
 
+#
+# This class (which may be used as a mixin-style class), contains
+# implementations of the various methods which modify the filesystem.
+# Each throws an exception indicating the file system is read-only.
+#
+abstract class ReadOnlyData9P(Data9P)
+   protected read_only()
+      throw("Read-only filesystem")
+   end
+
+   public override remove_child(p1, p2)
+      read_only()
+   end
+
+   public override create_child(p, name, uid, perm)
+      read_only()
+   end
+
+   public override modified(p, uid)
+      read_only()
+   end
+
+   public override write(p, s, pos)
+      read_only()
+   end
+
+   public override set_info(p, x)
+      read_only()
+   end
+end
+
 # An implementation of `Data9P` which uses `File9P` instances to
 # implement each method, except get_root, which must be implemented in
 # subclasses to provide the root of the tree for each mount.
@@ -1222,7 +1253,7 @@ class Session9P()
    end
 
    private is_path_open(path)
-      return member(open_cnt, data.get_file_key(path))
+      succeed member(open_cnt, data.get_file_key(path))
    end
 
    private lookup(n, t)
