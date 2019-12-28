@@ -222,15 +222,12 @@ abstract class Dir9P(File9P)
    package optional rename_child(x, s)
    public abstract gen_children()
    public optional create_child(name, uid, perm)
-   public is_empty()
-      succeed not gen_children()
-   end
 end
 
 # An implementation of `Dir9P` which keeps its children in a simple table.
 #
 class TableDir9P(Dir9P)
-   private
+   private const
       ent
 
    public override add_child(x)
@@ -262,7 +259,7 @@ class TableDir9P(Dir9P)
       link
    end
 
-   public override is_empty()
+   public is_empty()
       succeed *ent = 0
    end
 
@@ -1020,7 +1017,10 @@ abstract class Data9P()
    # there is no such path.
    public abstract get_child(p, name)
 
-   # Generate the children of path `p`.
+   # Generate the children of path `p`.  Note that this generator may not
+   # be used to exhaustion, and any resource it uses (such as a
+   # `DirStream`) must be enclosed in a `use_seq` to ensure correct
+   # cleanup.
    public abstract gen_children(p)
 
    # Remove the child path `p2` from directory given by path `p1`.
@@ -1028,9 +1028,6 @@ abstract class Data9P()
 
    # Create and return new child path under the directory given by path `p`.
    public abstract create_child(p, name, uid, perm)
-
-   # Succeed iff the directory given by path `p` is empty.
-   public abstract is_empty(p)
 
    # This is invoked to note that the given path `p` has been modified
    # by user `uid`.
@@ -1143,10 +1140,6 @@ abstract class FileData9P(Data9P)
       return p.create_child(name, uid, perm)
    end
 
-   public override is_empty(p)
-      return p.is_empty()
-   end
-   
    public override modified(p, uid)
       link p.modified(uid)
    end
@@ -1193,7 +1186,7 @@ end
 # ignored.
 #
 class TreeData9P(FileData9P)
-   private readable
+   public const
       root
 
    public override get_root(aname)
@@ -1212,12 +1205,14 @@ package record WorkItem(req, resp, worker)
 # The main server class, which manages a 9P server session.
 #
 class Session9P()
-   private
+   private const
       fids,        # table mapping fid numbers to Fid() records
+      open_cnt,    # table counting no. of fids open for i/o by file keys
+      ref_cnt
+
+   private
       data, 
       users,
-      open_cnt,    # table counting no. of fids open for i/o by file keys
-      ref_cnt,
       track_refs,
       verbose
 
@@ -1389,7 +1384,7 @@ class Session9P()
             o := lookup(x.fid, t)
             del_fid(x.fid)
             info := data.get_info(o.path)
-            if iand(info.mode, Mode9.DMDIR) ~= 0 & not data.is_empty(o.path) then
+            if iand(info.mode, Mode9.DMDIR) ~= 0 & tmp(data.gen_children(o.path), t) then
                throw("Directory not empty")
             p := tmp(data.get_parent(o.path), t)
             has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("Permission denied")
