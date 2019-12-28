@@ -322,7 +322,7 @@ end
 #
 abstract class Regular9P(File9P)
    public optional write(s, pos)
-   public optional read(pos, count)
+   public optional read(count, pos)
 end
 
 # An implementation of `Regular9P` which keeps its file content in a string.
@@ -350,7 +350,7 @@ class StringFile9P(Regular9P)
       return *s
    end
 
-   public override read(pos, count)
+   public override read(count, pos)
       if pos > *data then
          return
       else
@@ -395,7 +395,7 @@ class FifoFile9P(Regular9P)
       return *s
    end
 
-   public override read(pos, count)
+   public override read(count, pos)
       local s
       data ? {
          s := move(count) | tab(0)
@@ -443,7 +443,7 @@ class QueueFile9P(Regular9P)
       return *s
    end
 
-   public override read(pos, count)
+   public override read(count, pos)
       local s
       if *q = 0 then
          return
@@ -1043,7 +1043,7 @@ abstract class Data9P()
 
    # Read `count` bytes from path `p` at position `pos`.  Returns
    # `&null` on end-of-file.
-   public abstract read(p, pos, count)
+   public abstract read(p, count, pos)
 
    # Close the given path
    public abstract close(p)
@@ -1152,8 +1152,8 @@ abstract class FileData9P(Data9P)
       return p.write(s, pos)
    end
 
-   public override read(p, pos, count)
-      return p.read(pos, count)
+   public override read(p, count, pos)
+      return p.read(count, pos)
    end
 
    public override close(p)
@@ -1513,7 +1513,7 @@ class Session9P()
                while *s + *o.dir[1] <= x.count do
                   s ||:= get(o.dir)
             } else {
-               s := data.read(o.path, x.offset + 1, x.count)
+               s := data.read(o.path, x.count, x.offset + 1)
                # In case of end-of-file
                /s := ""
             }
