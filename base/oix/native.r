@@ -3231,7 +3231,6 @@ function io_DirStream_read_line_impl(self)
    }
 end
 
-
 function io_DirStream_close(self)
    body {
        GetSelfDir();
@@ -5165,14 +5164,14 @@ end
 
 #begdef CheckFileOpen()
    if (self_fileworker->fd < 0) {
-       CMakeStr("worker file not open", &t_errortext);
+       CMakeStr("Worker file not open", &t_errortext);
        runerr(-1);
    }
 #enddef
 
 #begdef CheckFileClosed()
    if (self_fileworker->fd >= 0) {
-       CMakeStr("worker file already open", &t_errortext);
+       CMakeStr("Worker file already open", &t_errortext);
        runerr(-1);
    }
 #enddef
@@ -5368,7 +5367,7 @@ function io_FileWorker_get_buff(self, n)
    body {
       tended struct descrip result;
       GetSelfFileWorker()
-      if (n <= 0)
+      if (n < 0)
            Irunerr(205, n);
       if (n > self_fileworker->buff_size) {
           LitWhy("Request size too long for buffer");
