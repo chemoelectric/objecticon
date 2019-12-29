@@ -453,9 +453,9 @@ $endif
       }
    end
 
-   private static socks5_string(s)
+   private socks5_string(s)
       s := need_string(s)
-      return char(*s) || s
+      return (char(*s) || s) | error_dont_retry("String too long for SOCKS encoding")
    end
 
    private establish_socks5_proxy_connection()

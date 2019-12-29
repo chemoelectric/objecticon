@@ -1513,7 +1513,7 @@ end
 
 static void mk_errortext(cairo_status_t status)
 {
-    cstr2string(buffprintf("cairo error: %s", cairo_status_to_string(status)), &t_errortext);
+    cstr2string(buffprintf("Cairo error: %s", cairo_status_to_string(status)), &t_errortext);
 }
 
 function cairo_Context_pop_group_impl(self)
