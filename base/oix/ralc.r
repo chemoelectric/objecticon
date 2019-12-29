@@ -528,9 +528,7 @@ char *f(char *s, word slen)
    tended struct descrip ts;
    char *ofree;
 
-#if e_string
     EVVal(slen, e_string);
-#endif					/* E_String */
 
    /*
     * Make sure there is enough room in the string space.
