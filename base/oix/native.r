@@ -5106,6 +5106,10 @@ function io_FileWorker_new_impl(f, buff_size)
        struct fileworker *p;
        int pid, fd;
        static int fileworker_inited;
+
+       if (buff_size < 1)
+           Irunerr(205, buff_size);
+
        if (is:null(f))
            fd = -1;
        else {
@@ -5187,10 +5191,8 @@ function io_FileWorker_op_read(self, n)
               runerr(101, n);
           if (i <= 0)
               Irunerr(205, i);
-          if (i > self_fileworker->buff_size) {
-              LitWhy("Request size too long for buffer");
-              fail;
-          }
+          if (i > self_fileworker->buff_size)
+              i = self_fileworker->buff_size;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       CheckFileOpen()
@@ -5250,10 +5252,8 @@ function io_FileWorker_op_pread(self, n, offset)
               runerr(101, n);
           if (i <= 0)
               Irunerr(205, i);
-          if (i > self_fileworker->buff_size) {
-              LitWhy("Request size too long for buffer");
-              fail;
-          }
+          if (i > self_fileworker->buff_size)
+              i = self_fileworker->buff_size;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       CheckFileOpen()
@@ -5295,7 +5295,7 @@ function io_FileWorker_op_open(self, path, mode)
    body {
       GetSelfFileWorker();
       if (StrLen(path) >= self_fileworker->buff_size) {
-          LitWhy("String too long for buffer");
+          LitWhy("Path too long for buffer");
           fail;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
@@ -5312,17 +5312,15 @@ function io_FileWorker_op_create(self, path, mode, perm)
       runerr(103, path)
    if !cnv:C_integer(mode) then
       runerr(101, mode)
+   if !def:integer(perm, 0666, perm) then
+      runerr(101, perm)
    body {
       ulong uperm;
       GetSelfFileWorker();
-      if (is:null(perm))
-          uperm = 0664;
-      else {
-          if (!convert_to_ulong(&perm, &uperm))
-              runerr(0);
-      }
+      if (!convert_to_ulong(&perm, &uperm))
+          runerr(0);
       if (StrLen(path) >= self_fileworker->buff_size) {
-          LitWhy("String too long for buffer");
+          LitWhy("Path too long for buffer");
           fail;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
