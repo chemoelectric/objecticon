@@ -1052,6 +1052,18 @@ $if _PLAN9
       return
    end
 
+   #
+   # Open a file.  This is like using the normal constructor, but fits
+   # more closely to the underlying plan9 open call.
+   #
+   # :Parameters :
+   # :  `name` - the file name
+   # :  `flags` - the flags, selected from `FileOpt9`, if mode
+   #        is omitted this defaults to `FileOpt9.OREAD`
+   # :  `mode` - the resulting `Stream`'s mode; if omitted
+   #        this is deduced from `flags` parameter and the
+   #        type of file being opened.
+   #
    public static open9(name, flags, mode)
       if \mode then
          return create_for_fd(open_impl(name, flags), mode)
@@ -1068,6 +1080,20 @@ $if _PLAN9
       return create_for_fd(open_impl(name, flags), mode).adjust_mode()
    end
 
+   #
+   # Create a file.  This is like using the normal constructor with
+   # `FileOpt.CREAT`, but fits more closely to the underlying plan9
+   # create call.
+   #
+   # :Parameters :
+   # :  `name` - the file name
+   # :  `flags` - the flags, selected from `FileOpt9`, if mode
+   #        is omitted this defaults to `FileOpt9.OREAD`
+   # :  `perm` - the permissions bits
+   # :  `mode` - the resulting `Stream`'s mode; if omitted
+   #        this is deduced from `flags` parameter and the
+   #        type of file being opened.
+   #
    public static create9(name, flags, perm, mode)
       if \mode then
          return create_for_fd(create_impl(name, flags, perm), mode)
@@ -3156,63 +3182,116 @@ class FileWorker(Pollable, NoCopy)
    private static native new_impl(other, buff_size)
 
    # Start a read operation in the background.
+   #
+   # :Parameters :
+   # :  `n` - defaults to `buff_size`.  The number of bytes
+   #          actually requested is limited by `buff_size`.
+   #
    public native op_read(n)
 
    # Start a write operation in the background.
+   #
+   # :Parameters :
+   # :  `s` - the string to write.  If `s` is longer than
+   #          `buff_size`, this call fails and no write takes place.
+   #
    public native op_write(s)
 
    # Start a write_all operation in the background.  This performs
    # successive writes until the string is fully output.
+   #
+   # :Parameters :
+   # :  `s` - the string to write.  If `s` is longer than
+   #          `buff_size`, this call fails and no write takes place.
+   #
    public native op_write_all(s)
 
    # Start a pread operation in the background.  Note that, for
    # consistency with `FileStream.pread`, `offset` is one-based.
+   #
+   # :Parameters :
+   # :  `n` - defaults to `buff_size`.  The number of bytes
+   #          actually requested is limited by `buff_size`.
+   # :  `offset` - the one-based offset to seek to before reading.
+   #
    public native op_pread(n, offset)
 
    # Start a pwrite operation in the background.  Note that, for
    # consistency with `FileStream.pwrite`, `offset` is one-based.
+   #
+   # :Parameters :
+   # :  `s` - the string to write.  If `s` is longer than
+   #          `buff_size`, this call fails and no write takes place.
+   # :  `offset` - the one-based offset to seek to before reading.
+   #
    public native op_pwrite(s, offset)
 
-   # Start a open operation in the background.
+   #
+   # Start an open operation in the background.
+   #
+   # :Parameters :
+   # :  `path` - the file path.  If `path` is longer than
+   #          `buff_size`, this call fails and no write takes place.
+   # :  `mode` - the integer mode; see `FileOpt9`.
+   #
    public native op_open(path, mode)
 
+   #
    # Start a create operation in the background.
+   #
+   # :Parameters :
+   # :  `path` - the file path.  If `path` is longer than
+   #          `buff_size`, this call fails and no write takes place.
+   # :  `mode` - the integer mode; see `FileOpt9`.
+   # :  `perm` - the optional integer permissions.
+   #
    public native op_create(path, mode, perm)
 
    # Start a close operation in the background.
+   #
    public native op_close()
 
    # Succeed iff a background operation is currently running.
+   #
    public native is_running()
 
    # Return the buffer size
+   #
    public native get_buff_size()
 
-   # Return the first `n` bytes of the buffer.
+   # Return the first `n` bytes of the buffer.  Fails if n is larger than the
+   # buffer size.
+   #
    public native get_buff(n)
 
    # Get the integer result code of the last operation.  Note that
    # this always succeeds and returns an integer.
+   #
    public native get_result()
 
    # Wait for the background operation (if any) to finish.  Then, if
    # the result code of the last operation indicates an error, this
    # method fails, setting `&why`.  Otherwise it succeeds, returning
    # the result code.
+   #
    public native await()
 
    # Close this instance and free any resources.
+   #
    public native close()
 
    # If a background operation is running, a flag is set indicating
    # that this instance should be closed on its completion; otherwise
    # this instance is closed immediately.
+   #
    public native close_when_complete()
 
    # Return a "dup"ed copy of the underlying file descriptor.
+   #
    public native dup_fd()
 
    # Succeed iff a background operation is not currently running.
+   #
    public is_complete()
       return not is_running()
    end
