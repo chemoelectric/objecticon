@@ -1358,14 +1358,19 @@ class Session9P()
    end
 
    private respond_impl(x, t)
-      local o, qids, e, s, i, p, info, n, perm
+      local o, qids, e, s, i, p, q, info, n, perm
       case classof(x) of {
          TVersion:
             return RVersion(65535, 8216, "9P2000")
          TAttach: {
             p := tmp(data.get_root(x.aname), t)
+            q := data.get_qid(p)
+            # In this and similar places below, avoid calling
+            # new_fid() until last, so that we never add a fid and
+            # then throw an exception, leaving the fid dangling in the
+            # table, never to be clunked.
             new_fid(x.fid, p, x.uname)
-            return RAttach(x.tag, Comms9P.encode_qid(data.get_qid(p)))
+            return RAttach(x.tag, Comms9P.encode_qid(q))
          }
          TClunk: {
             o := lookup(x.fid, t)
@@ -1412,9 +1417,10 @@ class Session9P()
             p := tmp(data.create_child(o.path, x.name, o.uid, perm), t)
             p := tmp(data.open(p, x.mode), t)
             data.modified(o.path, o.uid)
+            q := data.get_qid(p)
             del_fid(x.fid)
             new_fid(x.fid, p, o.uid, x.mode)
-            return RCreate(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
+            return RCreate(x.tag, Comms9P.encode_qid(q), 0)
          }
          TOpen: {
             o := lookup(x.fid, t)
@@ -1440,14 +1446,15 @@ class Session9P()
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("Permission denied")
             }
             p := tmp(data.open(o.path, x.mode), t)
-            del_fid(x.fid)
-            new_fid(x.fid, p, o.uid, x.mode)
             # OTRUNC means the file is to be truncated, unless the file is append-only
             if iand(info.mode, Mode9.DMAPPEND) = 0 & iand(x.mode, FileOpt9.OTRUNC) ~= 0 then {
                data.set_info(p, Info(,,, 0))
                data.modified(p, o.uid)
             }
-            return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
+            q := data.get_qid(p)
+            del_fid(x.fid)
+            new_fid(x.fid, p, o.uid, x.mode)
+            return ROpen(x.tag, Comms9P.encode_qid(q), 0)
          }
          TWalk: {
             o := lookup(x.fid, t)
