@@ -46,7 +46,6 @@ abstract class File9P()
       name,
       perm,
       qversion,
-      qpath,
       atime,
       mtime,
       uid,
@@ -54,55 +53,98 @@ abstract class File9P()
       muid,
       fixed
 
-   private static 
+   public const
+      qpath
+
+   private static const
       qpath_seq, user
       
    private static init()
-      qpath_seq := 0
+      qpath_seq := create seq()
       user := Files.file_to_string("/env/user") | "none"
    end
 
+   #
+   # Get the length of the file; the default implementation just
+   # returns zero.
+   #
    public get_length()
       return 0
    end
 
+   #
+   # Set the length of the file; the default implementation does nothing, ie
+   # the length is effectively fixed at zero.
+   #
    public set_length(len)
       link
    end
 
+   #
+   # Note the file as modified, updating the qid version, muid and
+   # mtime.  If no parameter is given, then muid stays the same as
+   # before.
+   #
    public modified(uid)
-      self.qversion +:= 1
-      self.muid := uid
-      self.mtime := Time.get_system_seconds()
+      new_version()
+      set_muid(\uid)
+      set_mtime(Time.get_system_seconds())
       link
    end
 
+   #
+   # Open the file; the default implementation returns self.
+   #
    public open(mode)
       link
    end
 
+   #
+   # Open the file; the default implementation does nothing.
+   #
    public close()
       link
    end
 
+   #
+   # Return the file key; the default implementation returns self.
+   # Since this instance represents a file, it would make little sense
+   # to return anything else.
+   #
    public get_file_key()
       link
    end
 
+   #
+   # Invoked when this instance is no longer referenced by the
+   # session, if the session's `track_refs` flags is set.
+   #
    public path_unreferenced()
       link
    end
 
+   #
    # Return the parent, or fail if this is the root directory.
    #
    public get_parent()
       return .\self.parent
    end
 
+   #
+   # Return an `Info` structure for this instance.
+   #
    public get_info()
       return Info(perm, atime, mtime, get_length(), name, uid, gid, muid)
    end
 
+   #
+   # Return a `Qid` structure for this instance.
+   #
+   public get_qid()
+      return Qid(ishift(perm, -24), qversion, qpath)
+   end
+
+   #
    # Set the file's settings from the given `Info` record.
    #
    # Note that the file's mode, mtime and gid are protected by the
@@ -120,6 +162,7 @@ abstract class File9P()
       link
    end
 
+   #
    # Note that normally `set_parent` should not be called; rather
    # `add_child` in the parent directory should be used.  This method
    # is public in order to allow files to point upwards to a
@@ -131,6 +174,9 @@ abstract class File9P()
       link
    end
 
+   #
+   # Set the file's name.
+   #
    public set_name(x)
       # Must be string since it's used as a table key
       x := need_string(x)
@@ -154,6 +200,8 @@ abstract class File9P()
    # or'ed to `x` automatically.
    #
    public set_perm(x, y)
+      x := need_integer(x, 0)
+      y := need_flag(y)
       if is(self,Dir9P) then 
          x := ior(x, Mode9.DMDIR)
       else
@@ -163,46 +211,45 @@ abstract class File9P()
       link
    end
 
-   public set_qversion(x)
-      self.qversion := x
+   #
+   # Increment the qid version number
+   #
+   public new_version()
+      qversion +:= 1
       link
    end
 
    public set_mtime(x)
-      self.mtime := x
+      self.mtime := need_integer(x, 0)
       link
    end
 
    public set_atime(x)
-      self.atime := x
+      self.atime := need_integer(x, 0)
       link
    end
 
    public set_uid(x)
-      self.uid := x
+      self.uid := need_string(x)
       link
    end
 
    public set_gid(x)
-      self.gid := x
+      self.gid := need_string(x)
       link
    end
 
    public set_muid(x)
-      self.muid := x
+      self.muid := need_string(x)
       link
-   end
-
-   public get_qid()
-      return Qid(ishift(perm, -24), qversion, qpath)
    end
 
    # Create a new instance with the given filename.
    #
    public new(name)
       set_name(name)
-      self.qversion := 0
-      self.qpath := (qpath_seq +:= 1)
+      self.qversion := 1
+      self.qpath := @qpath_seq
       self.mtime := self.atime := Time.get_system_seconds()
       self.uid := self.gid := self.muid := user
       self.perm := if is(self,Dir9P) then ior(8r777, Mode9.DMDIR) else 8r666
@@ -216,11 +263,36 @@ end
 # directories.
 #
 abstract class Dir9P(File9P)
+   #
+   # Add a child `File9P` to this directory.
+   #
    public optional add_child(x)
+
+   #
+   # Remove a child `File9P` from this directory.
+   #
    public optional remove_child(x)
+
+   #
+   # Return the child of the given name or fail
+   #
    public abstract get_child(x)
+
+   #
+   # This is invoked when a child's `File9P.set_name` method is called,
+   # to update the directory's state.  It should not be used directly.
+   #
    package optional rename_child(x, s)
+
+   #
+   # Generate the children
+   #
    public abstract gen_children()
+
+   #
+   # Create and add a new `File9P` with the given name, uid and
+   # permission.
+   #
    public optional create_child(name, uid, perm)
 end
 
@@ -259,6 +331,9 @@ class TableDir9P(Dir9P)
       link
    end
 
+   #
+   # Succeed iff the directory has no children.
+   #
    public is_empty()
       succeed *ent = 0
    end
@@ -361,9 +436,13 @@ class StringFile9P(Regular9P)
       return *data
    end
 
+   #
+   # Set the data content to the given string.  Note that this doesn't
+   # affect any of the file's metadata (except length); to do this use
+   # `modified`.
+   #
    public set_data(s)
-      s := need_string(s)
-      data := s
+      data := need_string(s)
       link
    end
 
@@ -946,8 +1025,9 @@ package record Group(name, leader, members)
 # Users database read from /adm/users file.
 #
 class AdmUsers(Users)
+   private const
+      source
    private
-      source,
       groups
 
    private parse(s)
@@ -987,8 +1067,7 @@ class AdmUsers(Users)
    end
 
    public new(source)
-      /source := "/adm/users"
-      self.source := source
+      self.source := need_string(\source) | "/adm/users"
       refresh() | fail
       return
    end
