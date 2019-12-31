@@ -31,8 +31,48 @@ package record TWrite(tag, fid, offset, data)
 package record TWstat(tag, fid, stat)
 package record Tinvalid()
 
-record Info(mode, atime, mtime, length, name, uid, gid, muid)
-record Qid(type, version, path)
+class Info()
+   public const
+      mode, atime, mtime, length, name, uid, gid, muid
+
+   package static make_raw(mode, atime, mtime, length, name, uid, gid, muid)
+      local i
+      i := Class.create_raw_instance()
+      i.mode := mode
+      i.atime := atime
+      i.mtime := mtime
+      i.length := length
+      i.name := name
+      i.uid := uid
+      i.gid := gid
+      i.muid := muid
+      return Class.complete_raw_instance(i)
+   end
+
+   public new(mode, atime, mtime, length, name, uid, gid, muid)
+      self.mode := need_integer(mode, 0)
+      self.atime := need_integer(atime, 0)
+      self.mtime := need_integer(mtime, 0)
+      self.length := need_integer(length, 0)
+      self.name := need_string(name)
+      self.uid := need_string(uid)
+      self.gid := need_string(gid)
+      self.muid := need_string(muid)
+      return
+   end
+end
+
+class Qid()
+   public const
+      type, version, path
+
+   public new(type, version, path)
+      self.type := need_integer(type, 0)
+      self.version := need_integer(version, 0)
+      self.path := need_integer(path, 0)
+      return
+   end
+end
 
 # This class represents a single entry in a file hierarchy, which can
 # be constructed and served to 9P clients.  This class just deals with
@@ -108,8 +148,9 @@ abstract class File9P()
 
    #
    # Return the file key; the default implementation returns self.
-   # Since this instance represents a file, it would make little sense
-   # to return anything else.
+   # See `Data9P.get_file_key()` for more information.
+   #
+   # This method should not throw an exception.
    #
    public get_file_key()
       link
@@ -118,6 +159,8 @@ abstract class File9P()
    #
    # Invoked when this instance is no longer referenced by the
    # session, if the session's `track_refs` flags is set.
+   #
+   # This method should not throw an exception.
    #
    public path_unreferenced()
       link
@@ -713,28 +756,28 @@ package class Comms9P()
    end
 
    public static decode_wstat(s)
-      local i, t
-      i := Info()
+      local t, mode, atime, mtime, length, name, uid, gid, muid
+
       s ? {
          move(21) | fail          # tab past qid
          t := get_int4() | fail
-         if t ~= MAX_32 then i.mode := t
+         if t ~= MAX_32 then mode := t
          t := get_int4() | fail
-         if t ~= MAX_32 then i.atime := t
+         if t ~= MAX_32 then atime := t
          t := get_int4() | fail
-         if t ~= MAX_32 then i.mtime := t
+         if t ~= MAX_32 then mtime := t
          t := get_int8() | fail
-         if t ~= MAX_64 then i.length := t
+         if t ~= MAX_64 then length := t
          t := get_data_len2() | fail
-         if *t > 0 then i.name := t
+         if *t > 0 then name := t
          t := get_data_len2() | fail
-         if *t > 0 then i.uid := t
+         if *t > 0 then uid := t
          t := get_data_len2() | fail
-         if *t > 0 then i.gid := t
+         if *t > 0 then gid := t
          t := get_data_len2() | fail
-         if *t > 0 then i.muid := t
+         if *t > 0 then muid := t
       }
-      return i
+      return Info.make_raw(mode, atime, mtime, length, name, uid, gid, muid)
    end
 
    public static encode_int4(n)
@@ -1144,12 +1187,16 @@ abstract class Data9P()
    # By default this simply returns `p`, and only needs to be
    # overridden if several paths represent the same actual file.
    #
+   # This method should not throw an exception.
+   #
    public get_file_key(p)
       return p
    end
 
    # Invoked when the given path is no longer referenced, if the
    # session's `track_refs` flags is set.
+   #
+   # This method should not throw an exception.
    #
    public path_unreferenced(p)
       link
@@ -1287,7 +1334,7 @@ class Session9P()
    private const
       fids,        # table mapping fid numbers to Fid() records
       open_cnt,    # table counting no. of fids open for i/o by file keys
-      ref_cnt
+      ref_cnt      # table counting references to paths
 
    private
       data, 
@@ -1319,7 +1366,7 @@ class Session9P()
          k := data.get_file_key(x.path)
          i := (open_cnt[k] -:= 1)
          if i < 0 then
-            syserr("negative open path count in Session9P")
+            syserr("Negative open path count in Session9P")
          if i = 0 then
             delete(open_cnt, k)
       }
@@ -1410,7 +1457,7 @@ class Session9P()
          i := (ref_cnt[p] -:= 1)
          if \verbose then write("DEC: ",image(p)," to ", i)
          if i < 0 then
-            syserr("negative reference count in Session9P")
+            syserr("Negative reference count in Session9P")
          if i = 0 then {
             delete(ref_cnt, p)
             data.path_unreferenced(p)
@@ -1433,7 +1480,7 @@ class Session9P()
       clean{ (y := try1{respond_impl(x, t)}) | (f := &why) }
       every e := !t do
          clean{ try1{dec_ref(e)} | (/f := &why) }
-      return if /f then y else RError(x.tag, f)
+      return if /f then y else RError(x.tag, need_string(f))
    end
 
    private respond_impl(x, t)
@@ -1527,7 +1574,7 @@ class Session9P()
             p := tmp(data.open(o.path, x.mode), t)
             # OTRUNC means the file is to be truncated, unless the file is append-only
             if iand(info.mode, Mode9.DMAPPEND) = 0 & iand(x.mode, FileOpt9.OTRUNC) ~= 0 then {
-               data.set_info(p, Info(,,, 0))
+               data.set_info(p, Info.make_raw(,,, 0))
                data.modified(p, o.uid)
             }
             q := data.get_qid(p)
@@ -1603,7 +1650,7 @@ class Session9P()
                # In case of end-of-file
                /s := ""
             }
-            return RRead(x.tag, s)
+            return RRead(x.tag, need_string(s))
          }
          TStat: {
             o := lookup(x.fid, t)
