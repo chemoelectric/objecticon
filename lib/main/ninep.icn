@@ -31,6 +31,10 @@ package record TWrite(tag, fid, offset, data)
 package record TWstat(tag, fid, stat)
 package record Tinvalid()
 
+#
+# A simple class representing the attributes (other than Qid) required
+# for a stat or a wstat message.
+#
 class Info()
    public const
       mode, atime, mtime, length, name, uid, gid, muid
@@ -62,6 +66,9 @@ class Info()
    end
 end
 
+#
+# A class to represent the three parts of a Qid.
+#
 class Qid()
    public const
       type, version, path
@@ -143,16 +150,6 @@ abstract class File9P()
    # Open the file; the default implementation does nothing.
    #
    public close()
-      link
-   end
-
-   #
-   # Return the file key; the default implementation returns self.
-   # See `Data9P.get_file_key()` for more information.
-   #
-   # This method should not throw an exception.
-   #
-   public get_file_key()
       link
    end
 
@@ -1122,10 +1119,9 @@ end
 #
 # Paths are arbitrary objects.  Several paths may represent the same
 # underlying actual server file if desired, but usually there is a
-# one-to-one correspondence.  In the former case, `get_file_key()`
-# should be overridden so that files with the exclusive bit set are
-# handled correctly; also care should be taken so that `get_qid()`
-# returns a `Qid` with the same path for the underlying file.
+# one-to-one correspondence.  In the former case, care should be taken
+# so that `get_qid()` returns a `Qid` with the same unique path value
+# for the underlying file.
 #
 abstract class Data9P()
    # Return the root path.  `aname` is from the `TAttach` message.
@@ -1178,20 +1174,6 @@ abstract class Data9P()
 
    # Return a `Qid` record for the given path.
    public abstract get_qid(p)
-
-   # Return a key for the given path, which will be identical to the
-   # key returned for another path which represents the same file on
-   # the server.  This is used to determine whether a file with the
-   # exclusive mode bit set can be opened.
-   #
-   # By default this simply returns `p`, and only needs to be
-   # overridden if several paths represent the same actual file.
-   #
-   # This method should not throw an exception.
-   #
-   public get_file_key(p)
-      return p
-   end
 
    # Invoked when the given path is no longer referenced, if the
    # session's `track_refs` flags is set.
@@ -1298,10 +1280,6 @@ abstract class FileData9P(Data9P)
       return p.get_qid()
    end
 
-   public override get_file_key(p)
-      return p.get_file_key()
-   end
-
    public override path_unreferenced(p)
       link p.path_unreferenced()
    end
@@ -1325,7 +1303,7 @@ class TreeData9P(FileData9P)
    end
 end
 
-package record Fid(path, uid, omode, dir)
+package record Fid(path, qpath, uid, omode, dir)
 package record WorkItem(req, resp, worker)
 
 # The main server class, which manages a 9P server session.
@@ -1333,8 +1311,8 @@ package record WorkItem(req, resp, worker)
 class Session9P()
    private const
       fids,        # table mapping fid numbers to Fid() records
-      open_cnt,    # table counting no. of fids open for i/o by file keys
-      ref_cnt      # table counting references to paths
+      open_cnt,    # table mapping qid paths to open count
+      ref_cnt      # table mapping paths to reference count
 
    private
       data, 
@@ -1349,32 +1327,46 @@ class Session9P()
       done_flag,   # Flag to indicate writer to exit
       queue        # Queue of WorkItems for output
 
-   private new_fid(n, path, uid, mode)
+   # Create a new entry in the fids table.  qpath is the qid path of
+   # path, and so should equal data.get_qid(path).path.  If mode is
+   # set, then the file is open with that mode, and the open count
+   # for qpath is incremented.
+   #
+   private new_fid(n, path, qpath, uid, mode)
       if member(fids, n) then
          throw("Fid already in use: " || n)
-      insert(fids, n, Fid(path, uid, mode))
+      insert(fids, n, Fid(path, qpath, uid, mode))
       if \mode then
-         open_cnt[data.get_file_key(path)] +:= 1
+         inc_open(qpath)
       inc_ref(path)
    end
 
    private del_fid(n)
-      local x, k, i
+      local x
       x := member(fids, n) | throw("No such fid: " || n)
       delete(fids, n)
-      if \x.omode then {
-         k := data.get_file_key(x.path)
-         i := (open_cnt[k] -:= 1)
-         if i < 0 then
-            syserr("Negative open path count in Session9P")
-         if i = 0 then
-            delete(open_cnt, k)
-      }
+      if \x.omode then
+         dec_open(x.qpath)
       dec_ref(x.path)
    end
 
-   private is_path_open(path)
-      succeed member(open_cnt, data.get_file_key(path))
+   private inc_open(k)
+      open_cnt[k] +:= 1
+      if \verbose then write("INC OPEN: ",image(k), " to ", open_cnt[k])
+   end
+
+   private dec_open(k)
+      local i
+      i := (open_cnt[k] -:= 1)
+      if \verbose then write("DEC OPEN: ",image(k)," to ", i)
+      if i < 0 then
+         syserr("Negative open count in Session9P")
+      if i = 0 then
+         delete(open_cnt, k)
+   end
+
+   private is_path_open(qpath)
+      succeed member(open_cnt, qpath)
    end
 
    private lookup(n, t)
@@ -1398,24 +1390,20 @@ class Session9P()
             s := n || "/" || s
          t := data.get_parent(t) | break
       }
-      return s
+      return image(path) || " (" || s || ")"
    end
 
    public dump()
       local e
       write("Fids(",*fids,")")
       every e := !sort(fids) do
-         write(e[1], " -> Fid(", path_string(e[2].path), ", ", e[2].uid, ", ", if \e[2].omode then "open" else "closed", ")")
+         write("\t", e[1], " -> Fid(", path_string(e[2].path), ", ", e[2].qpath, ", ", e[2].uid, ", ", if \e[2].omode then "open" else "closed", ")")
       write("Open counts(",*open_cnt,")")
-      every e := !sort(open_cnt) do {
-         writes(path_string(e[1]), " -> ")
-         every writes(!e[2], " ")
-         write()
-      }
+      every e := !sort(open_cnt) do
+         write("\t", e[1], " -> ", e[2])
       write("Ref counts(",*ref_cnt,")")
-      every e := !sort(ref_cnt) do {
-         write(path_string(e[1]), "(",image(e[1]), ") -> ", e[2])
-      }
+      every e := !sort(ref_cnt) do
+         write("\t", path_string(e[1]), " -> ", e[2])
    end
 
    private has_perm(info, uid, p)
@@ -1465,26 +1453,33 @@ class Session9P()
       }
    end
 
-   # Add path p to the temporary path list and increment its refcount.
+   # If counting references, increment path p's reference count for
+   # the duration of the current message.
    private tmp(p, t)
       if \track_refs then {
-         put(t, p)
          inc_ref(p)
+         put(t, create dec_ref(p))
       }
       return p
    end
 
+   # Increment qid path qp's open count for the duration of the
+   # current message.
+   private tmp_open(qp, t)
+      inc_open(qp)
+      put(t, create dec_open(qp))
+   end
+
    private respond(x)
-      local t, y, f, e
-      t := []  # A list of paths temporarily used by respond_impl
+      local t, y, f
+      t := []  # A list of cleanups to run
       clean{ (y := try1{respond_impl(x, t)}) | (f := &why) }
-      every e := !t do
-         clean{ try1{dec_ref(e)} | (/f := &why) }
+      every @!t
       return if /f then y else RError(x.tag, need_string(f))
    end
 
    private respond_impl(x, t)
-      local o, qids, e, s, i, p, q, info, n, perm
+      local o, qids, e, s, i, p, q, info, n, perm, qp
       case classof(x) of {
          TVersion:
             return RVersion(65535, 8216, "9P2000")
@@ -1495,7 +1490,7 @@ class Session9P()
             # new_fid() until last, so that we never add a fid and
             # then throw an exception, leaving the fid dangling in the
             # table, never to be clunked.
-            new_fid(x.fid, p, x.uname)
+            new_fid(x.fid, p, q.path, x.uname)
             return RAttach(x.tag, Comms9P.encode_qid(q))
          }
          TClunk: {
@@ -1541,11 +1536,13 @@ class Session9P()
             else
                iand(x.perm, ior(icom(8r777), iand(info.mode, 8r777)))
             p := tmp(data.create_child(o.path, x.name, o.uid, perm), t)
+            # Like TOpen, avoid DMEXCL race conditions.
+            tmp_open(data.get_qid(p).path, t)
             p := tmp(data.open(p, x.mode), t)
             data.modified(o.path, o.uid)
             q := data.get_qid(p)
             del_fid(x.fid)
-            new_fid(x.fid, p, o.uid, x.mode)
+            new_fid(x.fid, p, q.path, o.uid, x.mode)
             return RCreate(x.tag, Comms9P.encode_qid(q), 0)
          }
          TOpen: {
@@ -1555,8 +1552,11 @@ class Session9P()
             # Same as for TCreate above.
             if iand(info.mode, Mode9.DMDIR) ~= 0 & x.mode ~= FileOpt9.OREAD then
                throw("Invalid mode for opening a directory")
-            if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) then
+            if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.qpath) then
                throw("Exclusive use file already open")
+            # Note this path as opened during this message to avoid
+            # any DMEXCL race conditions if data.open() is asynchronous.
+            tmp_open(o.qpath, t)
             i := case iand(x.mode, 3) of {
                FileOpt9.OREAD : Comms9P.AREAD
                FileOpt9.OWRITE : Comms9P.AWRITE
@@ -1577,15 +1577,16 @@ class Session9P()
                data.set_info(p, Info.make_raw(,,, 0))
                data.modified(p, o.uid)
             }
-            q := data.get_qid(p)
+            q := data.get_qid(p) 
             del_fid(x.fid)
-            new_fid(x.fid, p, o.uid, x.mode)
+            new_fid(x.fid, p, q.path, o.uid, x.mode)
             return ROpen(x.tag, Comms9P.encode_qid(q), 0)
          }
          TWalk: {
             o := lookup(x.fid, t)
             /o.omode | throw("Cannot clone open fid")
             p := o.path
+            qp := o.qpath
             qids := []
             every e := !x.wname do {
                # End on non-directory
@@ -1610,10 +1611,13 @@ class Session9P()
                   }
                   p := tmp(data.get_child(p, e), t) | break
                }
-               put(qids, Comms9P.encode_qid(data.get_qid(p)))
+               q := data.get_qid(p)
+               qp := q.path
+               put(qids, Comms9P.encode_qid(q))
             }
             if *qids = *x.wname then {
-               new_fid(x.newfid, p, o.uid)
+               # qp is always the qid path of p
+               new_fid(x.newfid, p, qp, o.uid)
                return RWalk(x.tag, qids)
             } 
             if *qids = 0 then
