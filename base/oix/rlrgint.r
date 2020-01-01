@@ -1560,7 +1560,7 @@ void bigshift(dptr da, word n, dptr dx)
         struct descrip td;
         union word_b_bignum tdigits;
         if (n >= WordBits || 
-            ((ci = (uword)IntVal(*da)) != 0 && n > 0 && (ci >= (1 << (WordBits - n -1))))) {
+            ((ci = (uword)IntVal(*da)) != 0 && n > 0 && (ci >= ((uword)1 << (WordBits - n -1))))) {
             /* Convert to bignum and recurse */
             itobig(IntVal(*da), &tdigits.blk, &td);
             bigshift(&td, n, dx);

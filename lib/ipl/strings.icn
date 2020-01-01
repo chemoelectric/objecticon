@@ -780,3 +780,19 @@ procedure guess_eol(s)
    }
    return if i >= j then "\n" else "\r\n"
 end
+
+#
+# Split the given string into chunks of size `n`, followed by any
+# residual substring, if `n` doesn't divide `s` exactly.  The empty
+# string just returns itself.
+#
+procedure chunks(s, n)
+   local t
+   n := need_integer(n, 1)
+   s ? repeat {
+      t := (move(n) | tab(0))
+      if pos(0) then
+         return t
+      suspend t
+   }
+end
