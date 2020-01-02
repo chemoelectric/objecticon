@@ -507,73 +507,81 @@ static void domouse(void)
         }
     }
 
-    /* Which buttons have been pressed */
-    press = ~oldbuttons & mouse->buttons;
-
-    if (press) {
+    if (mouse->buttons & 120) {
+        /* One of the four mouse wheel buttons */
         if (held)
             sendmouseevent(held, 'm');
-        else {
-            /* Top and give focus if appropriate.  The last &&
-             * indicates not to give focus on the right-click context
-             * menu (button3wmenu) */
-            if ((press & 7) && overw && !grabpointer && !(overb && !classic && ((press & 5) == 4)))
-                pressed(overw);
-            held = over;
+        else if (over)
+            sendmouseevent(over, 'm');
+    } else {
+        /* Which buttons have been pressed */
+        press = ~oldbuttons & mouse->buttons;
+
+        if (press) {
             if (held)
                 sendmouseevent(held, 'm');
+            else {
+                /* Top and give focus if appropriate.  The last &&
+                 * indicates not to give focus on the right-click context
+                 * menu (button3wmenu) */
+                if ((press & 7) && overw && !grabpointer && !(overb && !classic && ((press & 5) == 4)))
+                    pressed(overw);
+                held = over;
+                if (held)
+                    sendmouseevent(held, 'm');
 
-            if (overb) {
-                if (press & 1) {
-                    if (classic || whichcorner(overb, mouse->xy) % 2 == 0)
-                        doresize(overb);
-                    else
-                        domove(overb);
-                } else if (press & 4) {
-                    if (classic)
-                        domove(overb);
-                    else {
-                        riosetcursor(nil, 0);
-                        button3wmenu(overb);
+                if (overb) {
+                    if (press & 1) {
+                        if (classic || whichcorner(overb, mouse->xy) % 2 == 0)
+                            doresize(overb);
+                        else
+                            domove(overb);
+                    } else if (press & 4) {
+                        if (classic)
+                            domove(overb);
+                        else {
+                            riosetcursor(nil, 0);
+                            button3wmenu(overb);
+                        }
                     }
-                }
-            } else if (!over && (press & 4)) {
-                if (classic)
-                    classic_button3menu();
-                else
-                    button3menu();
-            } else if((press & 6) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr)) {
-                if (press & 4) {
+                } else if (!over && (press & 4)) {
                     if (classic)
                         classic_button3menu();
                     else
-                        button3txtmenu(over);
-                } else {  /* press & 2 */
-                    if (classic)
-                        button3txtmenu(over);
-                    else
-                        wmpress(over);
+                        button3menu();
+                } else if((press & 6) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr)) {
+                    if (press & 4) {
+                        if (classic)
+                            classic_button3menu();
+                        else
+                            button3txtmenu(over);
+                    } else {  /* press & 2 */
+                        if (classic)
+                            button3txtmenu(over);
+                        else
+                            wmpress(over);
+                    }
+                    held = 0;
                 }
-                held = 0;
             }
-        }
-    } else if (mouse->buttons == 0) {
-        if (oldbuttons == 0) {
-            if (over) sendmouseevent(over, 'm');
+        } else if (mouse->buttons == 0) {
+            if (oldbuttons == 0) {
+                if (over) sendmouseevent(over, 'm');
+            } else {
+                if (held) sendmouseevent(held, 'm');
+            }
+            if (overb)
+                cornercursor(overb, mouse->xy, 0);
+            else
+                wsetcursor(over, 0);
+            held = 0;
         } else {
-            if (held) sendmouseevent(held, 'm');
+            if (held)
+                sendmouseevent(held, 'm');
         }
-        if (overb)
-            cornercursor(overb, mouse->xy, 0);
-        else
-            wsetcursor(over, 0);
-        held = 0;
-    } else {
-        if (held)
-            sendmouseevent(held, 'm');
-    }
 
-    oldbuttons = mouse->buttons;
+        oldbuttons = mouse->buttons;
+    }
 }
 
 void
