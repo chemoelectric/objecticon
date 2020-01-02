@@ -2740,7 +2740,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private on_popup_selection()
       local pe
-      pe := popup.object_get_selections()[1]
+      pe := popup.object_first_selection()
       close_all()
       send_tr_nl(pe.str)
    end

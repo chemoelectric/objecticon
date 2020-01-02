@@ -203,7 +203,7 @@ class DirectoryDialog(Dialog)
    public on_tree_selection(ev)
       # This may fail if the user clears the selection; in this case
       # do nothing and leave selected_path as is.
-      selected_path := get_full_path(tree.object_get_selections()[1]) | fail
+      selected_path := get_full_path(tree.object_first_selection()) | fail
       dir.set_contents(selected_path.ucs())
       dir.view.set_cwd(selected_path)
       check_existing()

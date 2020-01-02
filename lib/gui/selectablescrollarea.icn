@@ -13,7 +13,8 @@ import
    lang, 
    graphics,
    ipl.sets,
-   ipl.numbers
+   ipl.numbers,
+   ipl.pdco
 
 #
 # This class extends LineBasedScrollArea to provide selection on lines,
@@ -274,12 +275,12 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    #
-   # Return a list of items selected (highlighted)
+   # Return a list of items selected (highlighted), in ascending order.
    # :Returns :
    # :  A list of items currently selected
    #
    public get_selections()
-      return sort(self.selections)
+      return sort(selections)
    end
 
    #
@@ -288,10 +289,21 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # :  A list of objects currently selected
    #
    public object_get_selections()
-      local r
-      r := []
-      every put(r, self.contents[!sort(self.selections)])
-      return r
+      return ipl.pdco.List{ object_gen_selections() }
+   end
+
+   #
+   # Generate the selected (highlighted) objects.
+   #
+   public object_gen_selections()
+      suspend contents[!sort(selections)]
+   end
+
+   #
+   # Return the first selected (highlighted) object (if any).
+   #
+   public object_first_selection()
+      return object_gen_selections()
    end
 
    #
@@ -513,9 +525,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
       if *l > 0 then {
          # Save the moving lines into a list
-         t := []
-         every put(t, self.contents[!l])
-
+         t := ipl.pdco.List{ contents[!l] }
          # Get the place to insert after we've deleted l.
          n1 := n
          every e := !l do

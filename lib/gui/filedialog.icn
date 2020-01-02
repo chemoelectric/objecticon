@@ -475,7 +475,7 @@ class FileDialog(Dialog)
    end
 
    public on_dlist()
-      goto_dir(loaded_dir_path.child(dlist.object_get_selections()[1].name))
+      goto_dir(loaded_dir_path.child(dlist.object_first_selection().name))
    end
 
    public update_file_label()
@@ -503,7 +503,7 @@ class FileDialog(Dialog)
       msg()
       synch_file_overlay()
       if showing_file() then
-         file.set_contents(flist.object_get_selections()[1].name)
+         file.set_contents(flist.object_first_selection().name)
       else
          update_file_label()
       check_current_selection()
@@ -613,7 +613,7 @@ class FileDialog(Dialog)
          # Save cursor and selection settings.  If reloading, then we
          # save names rather than objects.
          if \load then {
-            s := Set{ (!flist.object_get_selections()).name }
+            s := Set{ flist.object_gen_selections().name }
             c := flist.object_get_cursor().name
             load_dir_list()
          } else { 

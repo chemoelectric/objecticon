@@ -441,7 +441,7 @@ class NamedImageDialog(Dialog)
    end
 
    public on_okay()
-      result := lst.object_get_selections()[1] | return alert_error(self, "No image selected")
+      result := lst.object_first_selection() | return alert_error(self, "No image selected")
       self.dispose()
    end
 

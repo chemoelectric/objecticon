@@ -125,7 +125,7 @@ class FavouriteDirectoriesDialog(Dialog)
    private on_table_selection()
       local e
       if *etc.get_selections() = 1 then {
-         e := etc.object_get_selections()[1]
+         e := etc.object_first_selection()
          application_field.set_contents(e[1])
          directory_field.set_contents(e[2])
          application_check_box.set_is_checked(Yes{/e[1]})

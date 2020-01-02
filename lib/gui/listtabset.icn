@@ -58,7 +58,7 @@ class ListTabSet(Component)
    end
 
    public synch()
-      self.oa.set_which_one(self.dl.object_get_selections()[1])
+      self.oa.set_which_one(self.dl.object_first_selection())
    end
 
    public override handle_accel(e)
