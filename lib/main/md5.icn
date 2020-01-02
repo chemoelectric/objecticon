@@ -95,6 +95,8 @@ class MD5()
    public update(input)
       local block
 
+      input := need_string(input)
+
       # Update number of bits
       bit_count +:= 8 * (*input)
 
