@@ -108,7 +108,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public synch_contents(ev)
-      apply_value(popup.object_get_selections()[1], ev, &yes)
+      apply_value(popup.object_first_selection(), ev, &yes)
    end
 
    public convert_element(o)

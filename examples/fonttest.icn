@@ -105,7 +105,7 @@ class FontTestDialog(Dialog)
    end
 
    public on_native_list(ev)
-      native_field.set_contents(native_list.object_get_selections()[1])
+      native_field.set_contents(native_list.object_first_selection())
       synch_font()
    end
 

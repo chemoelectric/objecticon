@@ -57,7 +57,7 @@ class Explorer(Dialog)
       # have something selected if the user contracted the parent
       # node of the selected node.
       #
-      if n := tree.object_get_selections()[1] then {
+      if n := tree.object_first_selection() then {
          load_table(n)
       }
    end

@@ -87,6 +87,22 @@ class MD5()
       return iand(a, BIT32)
    end
 
+   private complete()
+      local bits, pad_len, padding
+
+      bits := encode(iand(bit_count, BIT32)) ||
+         encode(iand(ishift(bit_count, -32), BIT32))
+
+      if *buffer < 56 then
+         pad_len := 56 - *buffer
+      else
+         pad_len := 120 - *buffer
+      padding := char(16r80) || repl(char(0), pad_len - 1)
+      
+      update(padding)
+      update(bits)
+   end
+
    #
    # Add some input data to the computation
    # :Parameters :
@@ -94,6 +110,8 @@ class MD5()
    #
    public update(input)
       local block
+
+      input := need_string(input)
 
       # Update number of bits
       bit_count +:= 8 * (*input)
@@ -108,7 +126,7 @@ class MD5()
    end
 
    #
-   # Call finally and then convert the result to a 32 bit string
+   # Call finally and then convert the result to a 32 character string
    # of lower case hex digits.
    #
    public final_str()
@@ -123,25 +141,23 @@ class MD5()
    # a string of 16 characters.
    #
    public finally()
-      local bits, pad_len, s, padding
-
-      bits := encode(iand(bit_count, BIT32)) ||
-         encode(iand(ishift(bit_count, -32), BIT32))
-
-      if *buffer < 56 then
-         pad_len := 56 - *buffer
-      else
-         pad_len := 120 - *buffer
-      padding := char(16r80) || repl(char(0), pad_len - 1)
-      
-      update(padding)
-      update(bits)
-
+      local s
+      complete()
       s := encode(a) || encode(b) || encode(c) || encode(d)
-
       reset()
-
       return s
+   end
+
+   #
+   # Complete and return the final values of a, b, c and d that the
+   # algorithm produced.  Each is an unsigned 32-bit integer.
+   #
+   public final_raw()
+      local l
+      complete()
+      l := [a, b, c, d]
+      reset()
+      return l
    end
 
    private transform(block)

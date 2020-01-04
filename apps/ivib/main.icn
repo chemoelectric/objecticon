@@ -1521,7 +1521,7 @@ class PathTab(TabItem)
       #
       # Line in the table clicked - copy the line to the edit area.
       #
-      path.set_contents(path_list.object_get_selections()[1])
+      path.set_contents(path_list.object_first_selection())
       update_grey()
    end
 
