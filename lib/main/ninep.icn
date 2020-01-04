@@ -1482,7 +1482,8 @@ class Session9P()
       local o, qids, e, s, i, p, q, info, n, perm, qp
       case classof(x) of {
          TVersion:
-            return RVersion(65535, 8216, "9P2000")
+            return RVersion(x.tag, x.msize,
+                            if match("9P", x.version) then "9P2000" else "unknown")
          TAttach: {
             p := tmp(data.get_root(x.aname), t)
             q := data.get_qid(p)
