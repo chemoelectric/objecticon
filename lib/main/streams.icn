@@ -6,7 +6,7 @@ import
 $if _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
-   ipl.printf, net, ipl.pdco(String),
+   ipl.printf, net, ipl.pdco(String, List),
    ipl.strings(separate),
 $else
    lang(Class, NoCopy),
@@ -2592,16 +2592,15 @@ class NetStream(FileStream)
       f.seek(1)
       while put(l, \f.in(1024))
       # Transform according to the desired ip version.
-      r := []
-      case ver of {
-         4 :  every put(r, is_v4(!l))
-         6 :  every put(r, is_v6(!l))
-         46 : every put(r, is_v4(!l) | is_v6(!l))
-         64 : every put(r, is_v6(!l) | is_v4(!l))
-         0 :  r := l
+      r := case ver of {
+         4 :  List{ is_v4(!l) }
+         6 :  List{ is_v6(!l) }
+         46 : List{ is_v4(!l) | is_v6(!l) }
+         64 : List{ is_v6(!l) | is_v4(!l) }
+         0 :  l
          default: runerr(205, ver)
       }
-      return r
+      return if *r = 0 then error("No results from cs_query") else r
    end
 
    # Query the connection server (/net/cs)
