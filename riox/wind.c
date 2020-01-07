@@ -1067,20 +1067,20 @@ wmousectl(Window *w)
 	int but;
 
         /*
-         * After an 'f' event (focus in), ignore the next 'm' (mouse)
-         * event; this avoids inadvertently moving the text cursor
-         * when switching between windows.
+         * After an 'f' event (focus in), ignore immediately following
+         * 'm' (mouse) press/drag event(s); this avoids inadvertently
+         * moving the text cursor when switching between windows.
          */
         if(w->mc.type == 'f')
             w->focusclickflag = 1;
+        else if(w->focusclickflag) {
+            if(w->mc.type == 'm' && w->mc.buttons)
+                return;
+            w->focusclickflag = 0;
+        }
 
         if(w->mc.type != 'm')
             return;
-
-        if(w->focusclickflag) {
-            w->focusclickflag = 0;
-            return;
-        }
 
 	if(w->mc.buttons == 1)
 		but = 1;
