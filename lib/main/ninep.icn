@@ -1617,6 +1617,9 @@ class Session9P()
                put(qids, Comms9P.encode_qid(q))
             }
             if *qids = *x.wname then {
+               # fid and newfid may be the same (but never seem to be in practice).
+               if x.fid = x.newfid then
+                  del_fid(x.fid)
                # qp is always the qid path of p
                new_fid(x.newfid, p, qp, o.uid)
                return RWalk(x.tag, qids)
