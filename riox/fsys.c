@@ -246,6 +246,7 @@ filsysmount(Filsys *fs, int id)
 		fprint(2, "bind failed: %r\n");
 		return -1;
 	}
+        putenv("wdir", "/mnt/wsys");
 	return 0;
 }
 
