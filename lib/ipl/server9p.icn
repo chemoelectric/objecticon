@@ -158,7 +158,7 @@ end
 procedure async_sched_loop(sess, sched, f)
    local nb
    use {
-      nb := NonBlockStream(f).set_close_underlying(&no),
+      nb := NonBlockStream(f,, 16 * 1024, 16 * 1024).set_close_underlying(&no),
       {
          sess.async_io(sched, nb)
          # Main loop
@@ -193,7 +193,7 @@ procedure gui_main(attach, sess, async_flag, body, ff)
       if \opts["v"] then 
          sess.set_verbose(&yes)
       use {
-         nb := NonBlockStream(p[2]),
+         nb := NonBlockStream(p[2],, 16 * 1024, 16 * 1024),
          {
             if /async_flag then
                sess.io_task(Dispatcher.scheduler, nb)
