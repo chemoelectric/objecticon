@@ -800,7 +800,8 @@ button3wmenu(Window *w)
         if (!w->transientfor)
             menustr[hide = i++] = "Hide";
 
-        menustr[close = i++] = "Close";
+        if (w->mouseopen)
+            menustr[close = i++] = "Close";
         if (!w->transientfor) {
             if (w->layer != 0)
                 menustr[keepnormal = i++] = "Keep normal";
@@ -810,6 +811,8 @@ button3wmenu(Window *w)
                 menustr[keepbelow = i++] = "Keep below";
             menustr[delete = i++] = "Delete";
         }
+        if (i == 0)
+            return;
         menustr[i] = 0;
 	i = menuhit(3, mousectl, &menu, wscreen);
         if (i == hide)
