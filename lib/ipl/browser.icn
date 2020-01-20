@@ -5078,7 +5078,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private handle_lpress(e)
       parent_dialog.get_held_count() = 1 | fail
       running === 0 | fail
-      can_lpress(e) | fail
+      can_lpress(e) | {
+         clear_mark()
+         fail
+      }
       view.inner.invalidate(calculate_banded_rect())
       set_cursor_from_pos(e)
       if \e.shift then {
@@ -5105,7 +5108,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private handle_ldrag(e)
-      \mark_x | fail
+      \draw_band | fail
 
       view.inner.invalidate(get_band_rect())
       view.inner.invalidate(calculate_banded_rect())
