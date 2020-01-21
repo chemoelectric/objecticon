@@ -219,6 +219,16 @@ package class VtView(DrawScrollAreaView)
    end
 end
 
+package class VtVsb(ScrollBar)
+   public override page_jump(n)
+      return parent.page_jump_impl(n)
+   end
+
+   public override small_jump(n)
+      return parent.small_jump_impl(n)
+   end
+end
+
 #
 # A VT emulator.
 #
@@ -424,6 +434,10 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public override create_view()
       return VtView()
+   end
+
+   public override create_vsb()
+      return VtVsb()
    end
 
    public override layout()
@@ -2191,11 +2205,25 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public handle_pgup(e)
-      goto_first(get_line_info().first_whole - max(rows - 3, 1))
+      set_area_y(page_jump_impl(-1))
    end
 
    public handle_pgdn(e)
-      goto_last(get_line_info().last_whole + max(rows - 3, 1))
+      set_area_y(page_jump_impl(1))
+   end
+
+   package page_jump_impl(n)
+      return if n > 0 then
+         get_cum_line_height(get_line_info().last_whole + max(rows - 3, 1) + 1) - view.h
+      else
+         get_cum_line_height(get_line_info().first_whole - max(rows - 3, 1))
+   end
+
+   package small_jump_impl(n)
+      return if n > 0 then
+         get_cum_line_height(get_line_info().last_whole + n + 1) - view.h
+      else
+         get_cum_line_height(get_line_info().first_whole + n)
    end
 
    public handle_copy(e)

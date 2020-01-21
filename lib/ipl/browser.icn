@@ -5620,6 +5620,16 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       link
    end
 
+   public override create_vsb()
+      return ScrollBar().
+         set_increment_size(SCROLL_INCREMENT)
+   end
+
+   public override create_hsb()
+      return ScrollBar().
+         set_increment_size(SCROLL_INCREMENT)
+   end
+
    public override new()
       ComponentScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
@@ -5629,8 +5639,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
       set_use_default_keys(&yes)
-      set_vertical_increment(SCROLL_INCREMENT)
-      set_horizontal_increment(SCROLL_INCREMENT)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0

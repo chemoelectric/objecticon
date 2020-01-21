@@ -393,16 +393,16 @@ abstract class LineBasedScrollArea(DrawScrollArea)
          h[i]
    end
 
-   public override get_default_vertical_increment()
+   public override create_vsb()
       local h
-      return if integer(h := get_line_height()) then
-         h
-      else
-         scale(16)
+      h := integer(get_line_height()) | scale(16)
+      return ScrollBar().
+         set_increment_size(h)
    end
 
-   public override get_default_horizontal_increment()
-      return self.cbwin.text_width("m")
+   public override create_hsb()
+      return ScrollBar().
+         set_increment_size(cbwin.text_width("m"))
    end
 
    public dump()

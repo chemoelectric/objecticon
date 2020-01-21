@@ -370,12 +370,14 @@ class ShowGridPaint(DrawScrollArea)
       return (\d).h | 0
    end
 
-   public override get_default_vertical_increment()
-      return scale(10)
+   public override create_vsb()
+      return ScrollBar().
+         set_increment_size(scale(10))
    end
 
-   public override get_default_horizontal_increment()
-      return scale(10)
+   public override create_hsb()
+      return ScrollBar().
+         set_increment_size(scale(10))
    end
 
    public override draw()
