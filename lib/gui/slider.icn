@@ -98,7 +98,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # the nearest multiple of n.
    #
    public set_snaps(n)
-      self.snaps := n
+      self.snaps := need_numeric(n)
       link
    end
 
@@ -106,7 +106,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # Draw ticks at the given interval
    #
    public set_ticks(n)
-      self.ticks := n
+      self.ticks := need_numeric(n)
       link
    end
 
@@ -114,7 +114,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # Draw labels at the given interval
    #
    public set_labels(n)
-      self.labels := n
+      self.labels := need_numeric(n)
       link
    end
 
@@ -124,7 +124,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # :  `x` - The increment_size
    #
    public set_increment_size(x)
-      self.increment_size := x
+      self.increment_size := need_numeric(x)
       self.invalidate()
       link
    end
@@ -141,7 +141,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # move on a wheel press; by default it is `DEFAULT_WHEEL_FACTOR`
    #
    public set_wheel_factor(n)
-      self.wheel_factor := n
+      self.wheel_factor := need_integer(n, 1)
       link
    end
 
@@ -156,6 +156,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # Set the current value
    #
    public set_value(x)
+      x := need_numeric(x)
       if value ~=== x then {
          if is_live() then {
             move_value(x)
@@ -228,6 +229,8 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # :  `hi` - The upper bound
    #
    public set_range(lo, hi)
+      lo := need_numeric(lo)
+      hi := need_numeric(hi)
       if self.lo ~=== lo | self.hi ~=== hi then {
          if lo >= hi then
             runerr("Invalid range")
@@ -239,7 +242,8 @@ class Slider(Component, HasOrientation, HasUseWheel)
       link
    end
 
-   public handle_lmpress(e)
+   public handle_press(e)
+      local k
       start_handle(e)
       if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & 
          (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
@@ -259,9 +263,10 @@ class Slider(Component, HasOrientation, HasUseWheel)
             move_slider_pos(if /self.is_horizontal_flag then e.y else e.x)
             set_value_from_pos()
          } else {
-            move_value(self.value - self.increment_size)
+            k := if e.code === Mouse.RIGHT_PRESS then 1 else -1
+            move_value(small_jump(k))
             set_pos_from_value()
-            start_paging(-1)
+            start_paging(k)
          }
       } else if (if /is_horizontal_flag then slider_area.slider_y + slider_area.slider_h <= e.y < slider_area.y + slider_area.h
                  else slider_area.slider_x + slider_area.slider_w <= e.x < slider_area.x + slider_area.w) then {
@@ -271,15 +276,20 @@ class Slider(Component, HasOrientation, HasUseWheel)
             move_slider_pos(if /self.is_horizontal_flag then e.y else e.x)
             set_value_from_pos()
          } else {
-            move_value(self.value + self.increment_size)
+            k := if e.code === Mouse.RIGHT_PRESS then -1 else 1
+            move_value(small_jump(k))
             set_pos_from_value()
-            start_paging(1)
+            start_paging(k)
          }
       }
       end_handle(e)
    end
 
-   public handle_lmrelease(e)
+   public small_jump(n)
+      return value + n * increment_size
+   end
+
+   public handle_release(e)
       local n
       start_handle(e)
       if \self.slider_down then {
@@ -299,7 +309,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
 
    public handle_interrupted()
       if slider_area.is_held(Mouse.LEFT_PRESS) then
-         handle_lmrelease()
+         handle_release()
    end
 
    public handle_key_home(e)
@@ -318,14 +328,14 @@ class Slider(Component, HasOrientation, HasUseWheel)
 
    public handle_key_right(e)
       start_handle(e)
-      move_value(self.value + self.increment_size)
+      move_value(small_jump(1))
       set_pos_from_value()
       end_handle(e)
    end
 
    public handle_key_left(e)
       start_handle(e)
-      move_value(self.value - self.increment_size)
+      move_value(small_jump(-1))
       set_pos_from_value()
       end_handle(e)
    end
@@ -343,7 +353,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
             start_handle()
-            move_value(self.value  + self.is_paging * self.increment_size)
+            move_value(small_jump(is_paging))
             set_pos_from_value()
             end_handle()
          }
@@ -362,7 +372,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       repeat_ticker.stop()
    end
 
-   public handle_lmdrag(e)
+   public handle_drag(e)
       \self.slider_down | fail
 
       start_handle(e)
@@ -380,7 +390,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    public override handle_wheel_up(e)
       /self.slider_down | fail
       start_handle(e)
-      move_value(self.value - self.wheel_factor * self.increment_size)
+      move_value(small_jump(-wheel_factor))
       set_pos_from_value()
       end_handle(e)
    end
@@ -388,7 +398,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    public override handle_wheel_down(e)
       /self.slider_down | fail
       start_handle(e)
-      move_value(self.value + self.wheel_factor * self.increment_size)
+      move_value(small_jump(wheel_factor))
       set_pos_from_value()
       end_handle(e)
    end
@@ -599,12 +609,15 @@ class Slider(Component, HasOrientation, HasUseWheel)
       set_border(NullBorder())
       add(slider_area)
       slider_area.
-         connect(handle_lmpress, Event.MOUSE_LEFT_PRESS).
-         connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG).
-         connect(handle_lmrelease, Event.MOUSE_LEFT_RELEASE).
-         connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS).
-         connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG).
-         connect(handle_lmrelease, Event.MOUSE_MIDDLE_RELEASE)
+         connect(handle_press, Event.MOUSE_LEFT_PRESS).
+         connect(handle_drag, Event.MOUSE_LEFT_DRAG).
+         connect(handle_release, Event.MOUSE_LEFT_RELEASE).
+         connect(handle_press, Event.MOUSE_RIGHT_PRESS).
+         connect(handle_drag, Event.MOUSE_RIGHT_DRAG).
+         connect(handle_release, Event.MOUSE_RIGHT_RELEASE).
+         connect(handle_press, Event.MOUSE_MIDDLE_PRESS).
+         connect(handle_drag, Event.MOUSE_MIDDLE_DRAG).
+         connect(handle_release, Event.MOUSE_MIDDLE_RELEASE)
       connect(handle_key, Event.KEY_PRESS)
       connect(handle_interrupted, Event.INTERRUPTED)
       return
