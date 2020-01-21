@@ -340,9 +340,13 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    end
 
    #
-   # This method is overridden by the subclass to work out the
-   # line height.  Because this operation is potentially expensive, it
-   # is called as late as possible and its value cached.
+   # This method is overridden by the subclass to work out the line
+   # height.  It should return either an integer, indicating that each
+   # line is the same height, or a list, giving the height of each
+   # line.
+   #
+   # Because this operation is potentially expensive, it is called as
+   # late as possible and its value cached.
    #
    public abstract calculate_line_height()
 
