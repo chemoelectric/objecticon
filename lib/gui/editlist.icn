@@ -8,6 +8,8 @@
 
 package gui
 
+import ipl.pdco
+
 #
 # This component functions in the same way as List above, but
 # the item selected may be edited by the user.  An extra
@@ -102,11 +104,11 @@ class EditList(SelectionDropDown)
    end
 
    public override get_default_width()
-      local t
-      t := 0
-      # Max string length + space for cursor (cf TextField's get_view() method)
-      every t <:= self.cbwin.text_width((view.contents | convert_element(!self.selection_list)) || " ")
-      return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
+      return border.get_total_width() +
+         b.get_preferred_width() +
+         # Max string length + space for cursor (cf TextField's get_view() method)
+         MaxNN{ self.cbwin.text_width((view.contents | convert_element(!self.selection_list)) || " ") } +
+         view.border.get_total_width()
    end
 
    public override new()

@@ -8,6 +8,8 @@
 
 package gui
 
+import ipl.pdco
+
 #
 # Selection from a list
 #
@@ -38,10 +40,10 @@ class ListSpin(SelectionSpin)
    end
 
    public override get_default_width()
-      local t
-      t := 0
-      every t <:= self.cbwin.text_width(convert_element(!self.selection_list))
-      return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
+      return border.get_total_width() +
+         up.get_preferred_width() +
+         MaxNN{ self.cbwin.text_width(convert_element(!self.selection_list)) } +
+         view.border.get_total_width()
    end
 end
 

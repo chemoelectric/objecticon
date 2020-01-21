@@ -8,6 +8,8 @@
 
 package gui
 
+import ipl.pdco
+
 #
 # This is a Spin for numeric values, optionally within a fixed range.
 #
@@ -108,11 +110,11 @@ class RangeSpin(Spin)
    end
 
    public override get_default_width()
-      local t
-      t := 0
-      # Bit difficult if we don't have a maximum...
-      every t <:= self.cbwin.text_width((view.contents | \self.lo | \self.hi) || " ")
-      return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
+      return border.get_total_width() +
+         up.get_preferred_width() +
+         # Bit difficult if we don't have a maximum...
+         MaxNN{ self.cbwin.text_width((view.contents | \self.lo | \self.hi) || " ") } +
+         view.border.get_total_width()
    end
 
    public override new()

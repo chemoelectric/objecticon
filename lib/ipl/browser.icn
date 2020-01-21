@@ -4537,14 +4537,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             tbl.content.set_vrules(set!get_colgroup_cols(ct)[2:0])
          }
          "all": {
-            i := 1
-            every i <:= (!tbl.content.children).get_constraint("x")
+            i :=  MaxNN{ (!tbl.content.children).get_constraint("x") }
             tbl.content.set_vrules(Set{2 to i})
             tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
          "cols": {
-            i := 1
-            every i <:= (!tbl.content.children).get_constraint("x")
+            i := MaxNN{ (!tbl.content.children).get_constraint("x") }
             tbl.content.set_vrules(Set{2 to i})
          }
          "rows": {

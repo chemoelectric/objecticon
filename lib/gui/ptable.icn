@@ -1,6 +1,6 @@
 package gui
 
-import util
+import util, ipl.pdco
 
 #
 # A column in a `PTable`.
@@ -107,12 +107,8 @@ class PTableColumn(BasePTableColumn)
    end
 
    public override calculate_column_width(W)
-      local w
-      if \fixed_width then
-         return fixed_width
-      w := 0
-      every w <:= W.text_width(detab(slice()))
-      return w
+      return \fixed_width |
+         MaxNN{ W.text_width(detab(slice())) }
    end
 
    public override draw_cell(W, data, line, col, cx, cy, ch)
@@ -194,12 +190,8 @@ class ItemPaintPTableColumn(BasePTableColumn)
    end
 
    public override calculate_column_width(W)
-      local w
-      if \fixed_width then
-         return fixed_width
-      w := 0
-      every w <:= item_paint.get_width(W, slice())
-      return w + item_border.get_total_width()
+      return \fixed_width |
+         MaxNN{ item_paint.get_width(W, slice()) } + item_border.get_total_width()
    end
 
    public override draw_cell(W, data, line, col, cx, cy, ch)

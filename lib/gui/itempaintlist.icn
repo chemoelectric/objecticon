@@ -60,10 +60,8 @@ class ItemPaintList(SelectableScrollArea)
 
    public override calculate_subject_width()
       local mw
-      (mw := item_paint.get_constant_width(self.cbwin)) | {
-         mw := 0
-         every mw <:= item_paint.get_width(self.cbwin, !self.contents)
-      }
+      mw := ( item_paint.get_constant_width(self.cbwin) |
+         MaxNN{ item_paint.get_width(self.cbwin, !self.contents) } )
       return mw + item_border.get_total_width()
    end
 

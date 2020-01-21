@@ -259,14 +259,11 @@ class Ieval(MinimalObjectOutput)
    end
 
    private print_table(t, links)
-      local w, widths, col, row
+      local widths, col, row
       /links := set()
       widths := []
-      every col := 1 to *t[1] - 1 do {
-         w := 0
-         every w <:= *(!t)[col]
-         put(widths, w)
-      }
+      every col := 1 to *t[1] - 1 do
+         put(widths, MaxNN{ *(!t)[col] })
       every row := !t do {
          every col := 1 to *t[1] do {
             output.writes1(if member(links, col) then text_link(row[col]) else row[col])
