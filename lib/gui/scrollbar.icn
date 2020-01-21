@@ -77,6 +77,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       page_size,               #                 
       increment_size,          #                      
       wheel_factor,
+      page_factor,
       total_size,              #                  
       hi,                      #          
       lo,                      #          
@@ -97,12 +98,14 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       repeat_delay
 
    public static const
-      DEFAULT_INNER_SIZE, BAR_INDENT, DEFAULT_WHEEL_FACTOR, MIN_BAR_SIZE, RANGE_BAR_SIZE
+      DEFAULT_INNER_SIZE, BAR_INDENT, DEFAULT_WHEEL_FACTOR,
+      DEFAULT_PAGE_FACTOR, MIN_BAR_SIZE, RANGE_BAR_SIZE
 
    private static init()
       DEFAULT_INNER_SIZE := env_scale("OI_SCROLLBAR_DEFAULT_INNER_SIZE") | scale(16)
       BAR_INDENT := env_scale_even("OI_SCROLLBAR_BAR_INDENT") | Gui.FINE_WIDTH
       DEFAULT_WHEEL_FACTOR := env_int("OI_SCROLLBAR_DEFAULT_WHEEL_FACTOR", 1) | 4
+      DEFAULT_PAGE_FACTOR := env_real("OI_SCROLLBAR_DEFAULT_PAGE_FACTOR", 0.0, 1.0) | 0.9
       MIN_BAR_SIZE := env_scale("OI_SCROLLBAR_MIN_BAR_SIZE") | scale(8)
       RANGE_BAR_SIZE := env_scale("OI_SCROLLBAR_RANGE_BAR_SIZE") | scale(24)
    end
@@ -113,6 +116,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # :  `x` - The total size
    #
    public set_total_size(x)
+      x := need_numeric(x)
       # See notes as to why this is a good idea.
       if total_size ~=== x then {
          total_size := x
@@ -134,6 +138,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # :  `x` - The size.
    #
    public set_page_size(x)
+      x := need_numeric(x)
       if page_size ~=== x then {
          if x <= 0 then
             runerr("Invalid page size", x)
@@ -166,6 +171,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # :  `x` - The value.
    #
    public set_value(x)
+      x := need_numeric(x)
       if value ~=== x then {
          if is_live() then {
             move_value(x)
@@ -183,7 +189,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # :  `x` - The increment size.
    #
    public set_increment_size(x)
-      self.increment_size := x
+      self.increment_size := need_numeric(x)
       link
    end
 
@@ -195,6 +201,8 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # :  `hi` - The upper bound
    #
    public set_range(lo, hi)
+      lo := need_numeric(lo)
+      hi := need_numeric(hi)
       if self.lo ~=== lo | self.hi ~=== hi then {
          if lo >= hi then
             runerr("Invalid range")
@@ -211,15 +219,35 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # move on a wheel press; by default it is `DEFAULT_WHEEL_FACTOR`
    #
    public set_wheel_factor(n)
-      self.wheel_factor := n
+      self.wheel_factor := need_integer(n, 1)
       link
    end
 
    #
-   # Get the wheel_factor
+   # Get the wheel factor
    #
    public get_wheel_factor()
       return self.wheel_factor
+   end
+
+   #
+   # Set the page factor.  This is a real number indicating the
+   # percentage of the page size to move on a page movement (a click
+   # in the bar area outside the bar); by default it is
+   # `DEFAULT_PAGE_FACTOR`.
+   #
+   # This is ignored for a range based scrollbar.
+   #
+   public set_page_factor(n)
+      self.page_factor := need_real(n, 0.0, 1.0)
+      link
+   end
+
+   #
+   # Get the page factor
+   #
+   public get_page_factor()
+      return self.page_factor
    end
 
    private move_bar_pos(x)
@@ -266,7 +294,8 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          return DEFAULT_INNER_SIZE + border.get_total_width()
    end
 
-   public handle_lmpress(e)
+   public handle_press(e)
+      local k
       start_handle(e)
       if (self.bar_area.bar_x <= e.x < self.bar_area.bar_x + self.bar_area.bar_w) & 
          (self.bar_area.bar_y  <= e.y < self.bar_area.bar_y + self.bar_area.bar_h) then {
@@ -286,9 +315,10 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
             move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
             set_value_from_pos()
          } else {
-            move_value(self.value - self.page_size)
+            k := if e.code === Mouse.RIGHT_PRESS then 1 else -1
+            move_value(page_jump(k))
             set_pos_from_value()
-            start_paging(-1)
+            start_paging(k)
          }
       } else if (if /is_horizontal_flag then bar_area.bar_y + bar_area.bar_h  <= e.y <  bar_area.y + bar_area.h
                  else bar_area.bar_x + bar_area.bar_w  <= e.x <  bar_area.x + bar_area.w) then {
@@ -298,15 +328,47 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
             move_bar_pos(-bar_down_offset + if /self.is_horizontal_flag then e.y else e.x)
             set_value_from_pos()
          } else {
-            move_value(self.value + self.page_size)
+            k := if e.code === Mouse.RIGHT_PRESS then -1 else 1
+            move_value(page_jump(k))
             set_pos_from_value()
-            start_paging(1)
+            start_paging(k)
          }
       }
       end_handle(e)
    end
 
-   public handle_lmrelease(e)
+   #
+   # Return a new value based on a move of of `n` pages (`n` will be
+   # +/- 1), ie when the user clicks in the bar area outside the
+   # bar itself.
+   # 
+   # This may be overridden to provide custom behaviour, for example
+   # to make scroll bar moves match up with keyboard page up and down.
+   # The default implementation moves value by `page_factor * n *
+   # page_size` for a non-range scrollbar, or just `n * page_size` for
+   # a range.
+   #
+   public page_jump(n)
+      return value + if /is_range_flag then
+                         integer(page_factor * n * page_size)
+                     else
+                         n * page_size
+   end
+
+   #
+   # Return a new value based on a move of of `n` units.  This is used
+   # when the user clicks on the buttons (`n` is +/- 1), or uses the
+   # scroll wheel (`n` is +/- `wheel_factor`).
+   #
+   # Like `page_jump`, this may be overridden to provide custom
+   # behaviour.  The default implementation just moves value by `n *
+   # increment_size`.
+   #
+   public small_jump(n)
+      return value + n * increment_size
+   end
+
+   public handle_release(e)
       start_handle(e)
       self.bar_down := &null
       stop_paging()
@@ -317,7 +379,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
             start_handle()
-            move_value(self.value + self.is_paging * self.page_size)
+            move_value(page_jump(is_paging))
             set_pos_from_value()
             end_handle()
          }
@@ -348,7 +410,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    public override handle_wheel_up(e)
       /self.bar_down | fail
       start_handle(e)
-      move_value(self.value - self.wheel_factor * self.increment_size)
+      move_value(small_jump(-wheel_factor))
       set_pos_from_value()
       end_handle(e)
    end
@@ -356,7 +418,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    public override handle_wheel_down(e)
       /self.bar_down | fail
       start_handle(e)
-      move_value(self.value + self.wheel_factor * self.increment_size)
+      move_value(small_jump(wheel_factor))
       set_pos_from_value()
       end_handle(e)
    end
@@ -364,7 +426,11 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    public handle_button_up(e)
       start_handle(e)
       move_value(if \e.shift | e.code === Mouse.MIDDLE_PRESS then
-                    lo else value - increment_size)
+                    lo
+                 else if e.code === Mouse.RIGHT_PRESS then
+                    small_jump(1)
+                 else
+                    small_jump(-1))
       set_pos_from_value()
       end_handle(e)
    end
@@ -372,12 +438,16 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    public handle_button_down(e)
       start_handle(e)
       move_value(if \e.shift | e.code === Mouse.MIDDLE_PRESS then
-                    hi else value + increment_size)
+                    hi
+                 else if e.code === Mouse.RIGHT_PRESS then
+                    small_jump(-1)
+                 else
+                    small_jump(1))
       set_pos_from_value()
       end_handle(e)
    end
 
-   public handle_lmdrag(e)
+   public handle_drag(e)
       \self.bar_down | fail
 
       start_handle(e)
@@ -394,7 +464,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
 
    public handle_interrupted()
       if bar_area.is_held(Mouse.LEFT_PRESS) then
-         handle_lmrelease()
+         handle_release()
    end
 
    public override display()
@@ -442,7 +512,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          # Range; set bar size to constant, but leave room if bar_area_size is small.
          #
          self.bar_size := RANGE_BAR_SIZE
-         self.bar_size >:= self.bar_area_size - 8
+         self.bar_size >:= self.bar_area_size - scale(8)
       }
       #
       # Ensure bar size in range not less than MIN_BAR_SIZE, but must be within
@@ -472,7 +542,9 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          \self.total_size | runerr("Total size not set")
          \self.page_size | runerr("Page size not set")
       }
-      \self.increment_size | runerr("Increment size not set")
+      # May not need increment_size if small_jump is overridden.
+      if Class.get_field_defining_class(self, "small_jump") === ScrollBar & /self.increment_size then
+         runerr("Increment size not set")
       \self.value | runerr("Value not set")
       check_vals()
       if /self.is_horizontal_flag then {
@@ -593,6 +665,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          connect(self.handle_button_up, Event.BUTTON_PRESS).
          connect(self.handle_button_up, Event.BUTTON_HELD).
          set_use_middle(&yes).
+         set_use_right(&yes).
          set_accepts_focus(&no)
       add(self.b1)
       self.b2 := IconButton().
@@ -600,18 +673,23 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
          connect(self.handle_button_down, Event.BUTTON_PRESS).
          connect(self.handle_button_down, Event.BUTTON_HELD).
          set_use_middle(&yes).
+         set_use_right(&yes).
          set_accepts_focus(&no)
       add(self.b2)
       self.bar_area := BarArea().
-         connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS).
-         connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG).
-         connect(self.handle_lmrelease, Event.MOUSE_LEFT_RELEASE).
-         connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS).
-         connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG).
-         connect(self.handle_lmrelease, Event.MOUSE_MIDDLE_RELEASE)
+         connect(self.handle_press, Event.MOUSE_LEFT_PRESS).
+         connect(self.handle_drag, Event.MOUSE_LEFT_DRAG).
+         connect(self.handle_release, Event.MOUSE_LEFT_RELEASE).
+         connect(self.handle_press, Event.MOUSE_RIGHT_PRESS).
+         connect(self.handle_drag, Event.MOUSE_RIGHT_DRAG).
+         connect(self.handle_release, Event.MOUSE_RIGHT_RELEASE).
+         connect(self.handle_press, Event.MOUSE_MIDDLE_PRESS).
+         connect(self.handle_drag, Event.MOUSE_MIDDLE_DRAG).
+         connect(self.handle_release, Event.MOUSE_MIDDLE_RELEASE)
       connect(handle_interrupted, Event.INTERRUPTED)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
+      self.page_factor := DEFAULT_PAGE_FACTOR
       set_use_wheel(&yes)
       set_border(RaisedBorder())
       return
