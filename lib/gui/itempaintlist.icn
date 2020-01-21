@@ -8,6 +8,8 @@
 
 package gui
 
+import ipl.pdco
+
 class ItemPaintList(SelectableScrollArea)
    public
       item_border,
@@ -50,19 +52,15 @@ class ItemPaintList(SelectableScrollArea)
    end
 
    public override calculate_line_height()
-      local h, bh
+      local bh
       bh := item_border.get_total_height()
-      if not(h := item_paint.get_constant_height(self.cbwin) + bh) then 
-      {
-         h := []
-         every put(h, item_paint.get_height(self.cbwin, !self.contents) + bh)
-      }
-      return h
+      return item_paint.get_constant_height(self.cbwin) + bh |
+         ipl.pdco.List{ item_paint.get_height(self.cbwin, !self.contents) + bh }
    end
 
    public override calculate_subject_width()
       local mw
-      if not(mw := item_paint.get_constant_width(self.cbwin)) then {
+      (mw := item_paint.get_constant_width(self.cbwin)) | {
          mw := 0
          every mw <:= item_paint.get_width(self.cbwin, !self.contents)
       }
