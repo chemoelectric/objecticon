@@ -35,10 +35,6 @@ abstract class BaseTree(SelectableScrollArea)
       ImageCache.copy_key_with_resize("tree.FILE", "gui.FILE_16")
    end
    
-   public override abstract calculate_line_height()
-
-   public override abstract calculate_subject_width()
-
    public abstract get_node_data_width(n)
 
    public abstract draw_node_data(n, xp, yp)
