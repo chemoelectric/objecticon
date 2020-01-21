@@ -41,7 +41,8 @@ abstract class Button(Toggle,Component)
       toggles_flag,
       repeat_ticker,
       held_event,
-      middle_listeners
+      middle_listeners,
+      right_listeners
 
    public set_parent_button_group(x)
       self.parent_button_group := x
@@ -224,6 +225,22 @@ abstract class Button(Toggle,Component)
          [ connect(handle_lpress, Event.MOUSE_MIDDLE_PRESS).last_listener,
            connect(handle_ldrag, Event.MOUSE_MIDDLE_DRAG).last_listener,
            connect(handle_lrelease, Event.MOUSE_MIDDLE_RELEASE).last_listener ]
+      link
+   end
+
+   #
+   # If this flag is set, then the right mouse button acts in the
+   # same way as the left mouse button.
+   #
+   public set_use_right(s)
+      need_flag(s)
+      every (!\right_listeners).disconnect()
+      right_listeners := if /s then
+         &null
+      else
+         [ connect(handle_lpress, Event.MOUSE_RIGHT_PRESS).last_listener,
+           connect(handle_ldrag, Event.MOUSE_RIGHT_DRAG).last_listener,
+           connect(handle_lrelease, Event.MOUSE_RIGHT_RELEASE).last_listener ]
       link
    end
 
