@@ -16,7 +16,7 @@
 
 package ipl.strings
 
-import lang(Prog,Text), util
+import lang(Text), util
 
 # Concatenates an arbitrary number of strings.
 procedure cat(args[])			
@@ -247,27 +247,6 @@ end
 procedure ispal(s)			
 
    if s == reverse(s) then return s else fail
-
-end
-
-# Returns the length of the longest string in `L`.  If `p` is given,
-# it is applied to each string as as a "length" procedure.  The
-# default for `p` is :-
-# ~
-#      Prog.get_operator("*", 1)
-# ~
-procedure maxlen(L, p)			
-   local i
-
-   if *L = 0 then fail
-
-   /p := Prog.get_operator("*", 1)
-
-   i := 0
-
-   every i <:= p(!L)
-
-   return i
 
 end
 
