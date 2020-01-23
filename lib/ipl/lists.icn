@@ -794,25 +794,6 @@ procedure sortvalues(L)
 
 end
 
-# Creates list with `i`-character lines from `s`.  The default for `i`
-# is 1.
-#
-procedure splitstring(s, i)			
-   local L
-
-   /i := 1
-
-   L := []
-
-   s ? {
-      while put(L, move(i))
-      if not pos(0) then put(L, tab(0))
-      }
-
-   return L
-
-end
-
 #
 # Convert a string to a list.
 #
