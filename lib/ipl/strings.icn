@@ -367,18 +367,6 @@ procedure permutes(s)
 
 end
 
-# Trims characters from beginning of `s`.
-procedure pretrim(s, c)			
-
-   /c := ' '
-
-   s ? {
-      tab(many(c))
-      return tab(0)
-      }
-
-end
-
 # Returns `s1` concatenated with `s2` and the reversal of `s1` to
 # produce a palindroid; the values of `i` determine "end conditions"
 # for the reversal:
