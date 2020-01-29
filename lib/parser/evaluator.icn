@@ -162,11 +162,8 @@ class Evaluator()
       return create E(e)
    end
 
-   private pos_list(x, i)
-      local l
-      l := []
-      every put(l, x.gen().pos)
-      return l
+   private pos_list(x)
+      return ipl.pdco.List{ x.gen().pos }
    end
 
    private do_invoke(n)
