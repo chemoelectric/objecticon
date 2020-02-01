@@ -8,6 +8,8 @@
 
 package gui
 
+import ipl.pdco(MaxNN)
+
 #
 #
 # This component is for selecting one string from a list of
@@ -62,12 +64,10 @@ class List(SelectionDropDown)
 
    public override get_default_width()
       local t
-      if \self.constant_label then
-         t := self.cbwin.text_width(self.constant_label)
-      else {
-         t := 0
-         every t <:= self.cbwin.text_width(convert_element(!self.selection_list))
-      }
+      t := if \self.constant_label then
+         self.cbwin.text_width(self.constant_label)
+      else
+         MaxNN{ self.cbwin.text_width(convert_element(!self.selection_list)) }
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end
 end

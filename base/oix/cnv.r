@@ -202,9 +202,8 @@ static int cnv_c_int_impl(dptr s, word *d)
 int cnv_c_str(dptr s, dptr d)
    {
    /*
-    * Get the string to the end of the string region and append a '\0'.
+    * Convert to string first
     */
-
    if (is:string(*s)) {
       *d = *s;
       }
@@ -216,24 +215,22 @@ int cnv_c_str(dptr s, dptr d)
       }
 
    /*
-    * See if the end of d is already at the end of the string region
-    * and there is room for one more byte.
+    * Now append a '\0'.  See if the end of d is already at the end of
+    * the string region and there is room for one more byte.
+    * Otherwise, allocate and copy to a new string.
     */
    if ((StrLoc(*d) + StrLen(*d) == strfree) && (strfree != strend)) {
-      MemProtect(alcstr("\0", 1));
-      ++StrLen(*d);
-      }
+       MemProtect(alcstr("\0", 1));
+   }
    else {
-      word slen = StrLen(*d);
-      char *sp, *dp;
-      MemProtect(dp = alcstr(NULL, slen + 1));
-      ++StrLen(*d);
-      sp = StrLoc(*d);
-      StrLoc(*d) = dp;
-      while (slen-- > 0)
-         *dp++ = *sp++;
-      *dp = '\0';
-      }
+       word len = StrLen(*d);
+       char *t;
+       MemProtect(t = alcstr(NULL, len + 1));
+       memcpy(t, StrLoc(*d), len);
+       t[len] = 0;
+       StrLoc(*d) = t;
+   }
+   ++StrLen(*d);
 
    return 1;
    }

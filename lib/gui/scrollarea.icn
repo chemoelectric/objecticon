@@ -22,9 +22,6 @@ abstract class ScrollArea(Component, HasUseWheel)
       view,
       subject_width,       
       subject_height,
-      wheel_factor,
-      vertical_increment,
-      horizontal_increment,
       default_key_listener
 
    public static const
@@ -125,51 +122,6 @@ abstract class ScrollArea(Component, HasUseWheel)
             self.refresh()
       }
       link
-   end
-
-   #
-   # Set the wheel factor, being the number of vertical increments to
-   # move on a wheel press; if not set then the scrollbar will use
-   # its default value.
-   #
-   public set_wheel_factor(n)
-      self.wheel_factor := n
-      link
-   end
-
-   #
-   # Get the wheel_factor
-   #
-   public get_wheel_factor()
-      return self.wheel_factor
-   end
-
-   #
-   # Set the vertical increment, which is the amount moved on a press on
-   # the small button; if not set then the subclass's method
-   # `get_default_vertical_increment()` is used for the value.
-   #
-   public set_vertical_increment(n)
-      self.vertical_increment := n
-      link
-   end
-
-   public get_vertical_increment()
-      return self.vertical_increment
-   end
-
-   #
-   # Set the horizontal increment, which is the amount moved on a press on
-   # the small button; if not set then the subclass's method
-   # `get_default_horizontal_increment()` is used for the value.
-   #
-   public set_horizontal_increment(n)
-      self.horizontal_increment := n
-      link
-   end
-
-   public get_horizontal_increment()
-      return self.horizontal_increment
    end
 
    public predict_view_width(w, sb)
@@ -307,7 +259,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public set_internal_fields()
       local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, 
-         new_vsb, new_hsb, i, sb_size
+         new_vsb, new_hsb, sb_size
 
       sb_size := SCROLLBAR_SIZE
 
@@ -355,9 +307,9 @@ abstract class ScrollArea(Component, HasUseWheel)
          #
          # Two scroll bars.
          #
-         if /self.vsb := ScrollBar() then
+         if /self.vsb := create_vsb() then
             new_vsb := &yes
-         if /self.hsb := ScrollBar() then {
+         if /self.hsb := create_hsb() then {
             self.hsb.set_is_horizontal(&yes)
             new_hsb := &yes
          }
@@ -378,7 +330,7 @@ abstract class ScrollArea(Component, HasUseWheel)
          #
          # One vertical scroll bar.
          #
-         if /self.vsb := ScrollBar() then
+         if /self.vsb := create_vsb() then
             new_vsb := &yes
          remove_hsb()
 
@@ -393,7 +345,7 @@ abstract class ScrollArea(Component, HasUseWheel)
          #
          # One horizontal scroll bar.
          #
-         if /self.hsb := ScrollBar() then {
+         if /self.hsb := create_hsb() then {
             self.hsb.set_is_horizontal(&yes)
             new_hsb := &yes
          }
@@ -412,15 +364,9 @@ abstract class ScrollArea(Component, HasUseWheel)
       # Initialize scroll bars.
       #
       if \self.vsb then {
-         if view.h > 0 then
-            self.vsb.set_page_size(view.h)
-         else
-            self.vsb.set_page_size(1)
+         self.vsb.set_page_size(max(view.h, 1))
          self.vsb.set_total_size(get_subject_height())
-         i := \self.vertical_increment | get_default_vertical_increment()
-         self.vsb.set_increment_size(i)
          if \new_vsb then {
-            self.vsb.set_wheel_factor(\self.wheel_factor)
             self.vsb.
                set_use_wheel(&no).
                connect(self.on_vsb, Event.VALUE_CHANGED).
@@ -431,13 +377,8 @@ abstract class ScrollArea(Component, HasUseWheel)
       } 
 
       if \self.hsb then {
-         if view.w > 0 then
-            self.hsb.set_page_size(view.w)
-         else
-            self.hsb.set_page_size(1)
+         self.hsb.set_page_size(max(view.w, 1))
          self.hsb.set_total_size(get_subject_width())
-         i := \self.horizontal_increment | get_default_horizontal_increment()
-         self.hsb.set_increment_size(i)
          if \new_hsb then {
             self.hsb.
                set_use_wheel(&no).
@@ -533,12 +474,12 @@ abstract class ScrollArea(Component, HasUseWheel)
       case e.code of {
          Key.HOME : goto_top()
          Key.END : goto_bottom()
-         Key.PGUP : set_area_y(get_area_y() - (\self.vsb).page_size)
-         Key.PGDN : set_area_y(get_area_y() + (\self.vsb).page_size)
-         Key.UP : set_area_y(get_area_y() - (\self.vsb).increment_size)
-         Key.DOWN : set_area_y(get_area_y() + (\self.vsb).increment_size)
-         Key.LEFT : set_area_x(get_area_x() - (\self.hsb).increment_size)
-         Key.RIGHT : set_area_x(get_area_x() + (\self.hsb).increment_size)
+         Key.PGUP : set_area_y((\vsb).page_jump(-1))
+         Key.PGDN : set_area_y((\vsb).page_jump(1))
+         Key.UP : set_area_y((\vsb).small_jump(-1))
+         Key.DOWN : set_area_y((\vsb).small_jump(1))
+         Key.LEFT : set_area_x((\hsb).small_jump(-1))
+         Key.RIGHT : set_area_x((\hsb).small_jump(1))
       }
    end
 
@@ -608,19 +549,19 @@ abstract class ScrollArea(Component, HasUseWheel)
    end
 
    #
-   # Return the default increment on a line-up/line-down
-   #
-   public abstract get_default_vertical_increment()
-
-   #
-   # Return the default increment on a line-left/line-right
-   #
-   public abstract get_default_horizontal_increment()
-
-   #
    # Create the view component
    #
    public abstract create_view()
+
+   #
+   # Create a scroll bar for scrolling vertically.
+   #
+   public abstract create_vsb()
+
+   #
+   # Create a scroll bar for scrolling horizontally.
+   #
+   public abstract create_hsb()
 
    public override new()
       Component.new()

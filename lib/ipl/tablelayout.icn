@@ -4,6 +4,7 @@ import
    util, 
    lang,
    ipl.sort,
+   ipl.pdco,
    io,
    gui,
    ipl.graphics,
@@ -558,8 +559,7 @@ class TableLayout(Layout)
       local i, c, ma
       every i := 1 to g.gh do {
          if should_align_baselines(i) then {
-            ma := 0
-            every ma <:= cells_at(i).ascent
+            ma := MaxNN{ cells_at(i).ascent }
             every c := cells_at(i) do
                c.obj.ascent_adj := ma - c.ascent
          }

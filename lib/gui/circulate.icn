@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics
+import graphics, ipl.pdco
 
 class CirculateLabel(Label)
    public override keeps(e)
@@ -59,10 +59,10 @@ class Circulate(SelectionList, Component, HasUseWheel)
    end
 
    public override get_default_width()
-      local t
-      t := 0
-      every t <:= self.cbwin.text_width(!self.selection_list)
-      return border.get_total_width() + b.get_preferred_width() + t + l.border.get_total_width()
+      return border.get_total_width() +
+         b.get_preferred_width() +
+         MaxNN{ self.cbwin.text_width(!self.selection_list) } +
+         l.border.get_total_width()
    end
 
    public override layout()

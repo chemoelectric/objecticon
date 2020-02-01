@@ -115,7 +115,6 @@ $endif
    lst(lminlen, L, integer)
    lst(sortkeys, L)
    lst(sortvalues, L)
-   lst(splitstring, "Once upon a midnight dreary", 5)
    # several others omitted
 
    write()
@@ -232,14 +231,13 @@ $endif
    gen(fchars,   "deinstitutionalization")
    gen(interleave,"abcde", "123")
    gen(ispal,    "abcdcba")
-   gen(maxlen,   ["quick", "brown", "fox", "jumped"])
+   gen(lmaxlen,   ["quick", "brown", "fox", "jumped"])
    gen(meander,  "abcd", 3)
    gen(multicoll,["quick", "brown", "fox"])
    gen(ochars,   "deinstitutionalization")
    gen(odd_even, "31415926535")
    gen(palins,   "abcd", 3)
    gen(permutes, "abc")
-   gen(pretrim,  "   And in conclusion...")
    gen(reflect,  "abc",  , "*")
    gen(reflect,  "abc", 1, "*")
    gen(reflect,  "abc", 2, "*")
@@ -257,6 +255,7 @@ $endif
    gen(substrings, "deinstitutionalization", 3, 3)
    gen(transpose, "housecat", "12345678", "61785234")
    gen(words,    "fly.me.to.the.moon.and.let.me.play.among.the.stars", '.')
+   gen(chunks, "Once upon a midnight dreary", 5)
 
    write()
    write("tables:")			# tables

@@ -19,6 +19,7 @@ procedure main(a)
    fmt := XmlFormatter()
 
    t := options(a, [Opt("u",,"Input is UTF-8"),
+                    Opt("q",,"Don't output formatted document and structures"),
                     Opt("g",,"Show global names"),
                     Opt("nc",,"Don't preserve comments"),
                     Opt("nv",,"Don't validate"),
@@ -52,7 +53,6 @@ procedure main(a)
       fmt.set_as_read(&yes)
    fmt.set_indent(\t["fi"])
 
-
    every e := !a do {
       s := Files.file_to_string(e) | stop("Couldn't open ", e, ": ", &why)
       if \t["u"] then
@@ -61,15 +61,17 @@ procedure main(a)
       write("--- Parsing ", e)
       if d := p.parse(s, FilePath(e).canonical().to_url()) then {
          write("--- Parsing complete.  Document was well-formed")
-         write("--- Formatted input")
-         fmt.format(d)
-         write("--- Document structure")
-         to_stdout(d, 3)
-         d.show_entities()
-         d.show_element_declarations()
-         d.show_notation_declarations()
-         d.show_attribute_lists()
-         d.show_id_attributes()
+         if /t["q"] then {
+            write("--- Formatted input")
+            fmt.format(d)
+            write("--- Document structure")
+            to_stdout(d, 3)
+            d.show_entities()
+            d.show_element_declarations()
+            d.show_notation_declarations()
+            d.show_attribute_lists()
+            d.show_id_attributes()
+         }
       } else {
          write("--- Parsing failed: ", &why)
       }

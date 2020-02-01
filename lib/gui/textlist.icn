@@ -8,6 +8,7 @@
 
 package gui
 
+import ipl.pdco
 
 #
 # This class displays a list of strings.
@@ -18,10 +19,7 @@ class TextList(SelectableScrollArea)
    end
 
    public override calculate_subject_width()
-      local mw
-      mw := 0
-      every mw <:= view.cbwin.text_width(detab(!self.contents))
-      return mw + 2 * Gui.TEXT_INSET
+      return MaxNN{ view.cbwin.text_width(detab(!self.contents)) } + 2 * Gui.TEXT_INSET
    end
 
    public override draw_line_data(xp, yp, lh, i)

@@ -16,7 +16,7 @@
 
 package ipl.strings
 
-import lang(Prog,Text), util
+import lang(Text), util
 
 # Concatenates an arbitrary number of strings.
 procedure cat(args[])			
@@ -250,27 +250,6 @@ procedure ispal(s)
 
 end
 
-# Returns the length of the longest string in `L`.  If `p` is given,
-# it is applied to each string as as a "length" procedure.  The
-# default for `p` is :-
-# ~
-#      Prog.get_operator("*", 1)
-# ~
-procedure maxlen(L, p)			
-   local i
-
-   if *L = 0 then fail
-
-   /p := Prog.get_operator("*", 1)
-
-   i := 0
-
-   every i <:= p(!L)
-
-   return i
-
-end
-
 # Produces a "meandering" string that contains all n-tuples of
 # characters of `s`.
 procedure meander(alpha, n)		
@@ -385,18 +364,6 @@ procedure permutes(s)
 
    if *s = 0 then return s
    suspend s[i := 1 to *s] || permutes(s[1:i] || s[i+1:0])
-
-end
-
-# Trims characters from beginning of `s`.
-procedure pretrim(s, c)			
-
-   /c := ' '
-
-   s ? {
-      tab(many(c))
-      return tab(0)
-      }
 
 end
 

@@ -920,13 +920,15 @@ end
 # values from `e`.
 #
 procedure Reduce(op, x, e)	
+   local v
 
    op := ce_param(op) | fail
    x := ce_param(x) | fail
 
    op := need_callable(op, 2)
 
-   while x := op(x, @e)
+   while v := @e do
+      x := op(x, v)
 
    return x
 
@@ -1417,4 +1419,21 @@ end
 #
 procedure Min(e, cmp)
    return MinMaxImpl(e, cmp, -1)
+end
+
+#
+# A useful function to calculate the maximum of a sequence of
+# non-negative numbers.  Unlike `Max` above, the empty sequence makes
+# sense, and returns 0.  It is equivalent to :-
+#
+# ~~~
+#   Reduce{ "<", 0, ... }
+# ~~~
+procedure MaxNN(e)
+   local x, v
+   x := 0
+   while v := @e do
+      x <:= v
+
+   return x
 end

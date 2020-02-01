@@ -4568,14 +4568,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             tbl.content.set_vrules(set!get_colgroup_cols(ct)[2:0])
          }
          "all": {
-            i := 1
-            every i <:= (!tbl.content.children).get_constraint("x")
+            i :=  MaxNN{ (!tbl.content.children).get_constraint("x") }
             tbl.content.set_vrules(Set{2 to i})
             tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
          "cols": {
-            i := 1
-            every i <:= (!tbl.content.children).get_constraint("x")
+            i := MaxNN{ (!tbl.content.children).get_constraint("x") }
             tbl.content.set_vrules(Set{2 to i})
          }
          "rows": {
@@ -5109,7 +5107,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private handle_lpress(e)
       parent_dialog.get_held_count() = 1 | fail
       running === 0 | fail
-      can_lpress(e) | fail
+      can_lpress(e) | {
+         clear_mark()
+         fail
+      }
       view.inner.invalidate(calculate_banded_rect())
       set_cursor_from_pos(e)
       if \e.shift then {
@@ -5136,7 +5137,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private handle_ldrag(e)
-      \mark_x | fail
+      \draw_band | fail
 
       view.inner.invalidate(get_band_rect())
       view.inner.invalidate(calculate_banded_rect())
@@ -5648,6 +5649,16 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       link
    end
 
+   public override create_vsb()
+      return ScrollBar().
+         set_increment_size(SCROLL_INCREMENT)
+   end
+
+   public override create_hsb()
+      return ScrollBar().
+         set_increment_size(SCROLL_INCREMENT)
+   end
+
    public override new()
       ComponentScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
@@ -5657,8 +5668,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
       set_use_default_keys(&yes)
-      set_vertical_increment(SCROLL_INCREMENT)
-      set_horizontal_increment(SCROLL_INCREMENT)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0
