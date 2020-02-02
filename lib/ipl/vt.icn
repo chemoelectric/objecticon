@@ -1033,7 +1033,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          top_margin := saved_buffer.top_margin
          bottom_margin := saved_buffer.bottom_margin
          tab_stops := saved_buffer.tab_stops
-         move_cursor(saved_buffer.cx, saved_buffer.cy)
+         move_cursor(saved_buffer.cx, saved_buffer.cy, &yes)
       }
       attr := saved_buffer.attr
       charsets := saved_buffer.charsets
@@ -1421,7 +1421,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       invalidate_line(i)
    end
 
-   private move_cursor(x, y)
+   # extra is a flag; if set then we allow the x cursor to go into the
+   # "extra" cols+1 column; this is used when restoring a saved
+   # cursor.
+   #
+   private move_cursor(x, y, extra)
       if \y then {
          invalidate_cursor()
          y <:= 1
@@ -1432,7 +1436,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          x <:= 1
          cx := x
       }
-      cx >:= cols
+      cx >:= if /extra then cols else cols + 1
       reset_blink()
       invalidate_cursor()
    end
@@ -1686,7 +1690,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       attr := saved_cursor.attr
       curr_charset := saved_cursor.curr_charset
       charsets := saved_cursor.charsets
-      move_cursor(saved_cursor.cx, saved_cursor.cy)
+      move_cursor(saved_cursor.cx, saved_cursor.cy, &yes)
       saved_cursor := &null
    end
 
