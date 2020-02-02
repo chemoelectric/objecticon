@@ -1470,16 +1470,16 @@ class Vt(LineBasedScrollArea, MenuMode)
       local s, t
       t := []
       every s := !l do
-         put(t, ucs(URL.percent_decode(s))) | fail
+         put(t, ucs(URL.percent_decode(\s))) | fail
       return t
    end
 
    private do_popup(l)
       local t, e
       # Validate params; must be ucs encoded list, even number, and no empty ones.
-      l := decode_list(l) | fail
-      if (*l % 2 ~= 0) | /!l then
+      if (*l % 2 ~= 0) then
          fail
+      l := decode_list(l) | fail
       t := []
       e := create !l
       while put(t, PopupElement(@e, @e))
@@ -1488,7 +1488,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private do_set_link(l)
       attr := copy(attr)
-      attr.url := URL(l[1]) | &null
+      attr.url := URL(\l[1]) | &null
    end
 
    # This is called (from view's initially) just after cbwin has been
