@@ -1649,7 +1649,17 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_osc()
-      read_string1()
+      local s, u
+      s := read_string1()
+      # Recognize URLs according to the scheme described at
+      #    https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+      s ? {
+         if ="8;" &
+            tab(upto(';') + 1) &
+            u := tab(0)
+         then
+            do_set_link(if *u = 0 then [] else [u])
+      }
    end
 
    private do_sos()
