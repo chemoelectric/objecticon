@@ -2768,7 +2768,6 @@ function io_SocketStream_getopt(self, opt)
               return int_arg ? yesdesc : nulldesc;
           }
 
-
           case SO_LINGER: {
               optval = &linger_arg;
               optlen = sizeof(linger_arg);
@@ -2795,9 +2794,23 @@ function io_SocketStream_getopt(self, opt)
               bigmul(&ls, &thousanddesc, &result);
               bigadd(&result, &lm, &result);
               return result;
-         }
+          }
 
-          case SO_ERROR:
+          case SO_ERROR: {
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              if (getsockopt(self_fd, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  errno2why();
+                  fail;
+              }
+              if (int_arg) {
+                  errno = int_arg;
+                  cstr2string(get_system_error(), &result);
+                  return result;
+              } else
+                  return nulldesc;
+          }
+
           case SO_RCVLOWAT:
           case SO_SNDLOWAT:
           case SO_TYPE:
@@ -6188,6 +6201,7 @@ function io_WinsockStream_getopt(self, opt)
       int optlen;
       DWORD int_arg;
       struct linger linger_arg;
+      tended struct descrip result;
 
       GetSelfSocket();
       switch (opt) {
@@ -6207,7 +6221,6 @@ function io_WinsockStream_getopt(self, opt)
               return int_arg ? yesdesc : nulldesc;
           }
 
-
           case SO_LINGER: {
               optval = &linger_arg;
               optlen = sizeof(linger_arg);
@@ -6221,9 +6234,23 @@ function io_WinsockStream_getopt(self, opt)
                   return nulldesc;
           }
 
+          case SO_ERROR: {
+              optval = &int_arg;
+              optlen = sizeof(int_arg);
+              if (getsockopt(self_socket, SOL_SOCKET, opt, optval, &optlen) < 0) {
+                  win32error2why();
+                  fail;
+              }
+              if (int_arg) {
+                  errno = int_arg;
+                  cstr2string(get_system_error(), &result);
+                  return result;
+              } else
+                  return nulldesc;
+          }
+
           case SO_RCVTIMEO:
           case SO_SNDTIMEO:
-          case SO_ERROR:
           case SO_RCVLOWAT:
           case SO_SNDLOWAT:
           case SO_TYPE:

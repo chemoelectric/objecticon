@@ -1471,6 +1471,8 @@ class SocketStream(DescStream)
 
    #
    # Get values using the underlying getopt call; see `setopt` above.
+   # `ERROR` will return `&null` if no error is set, or an error string
+   # in the same format as `&why`.
    #
    public native getopt(opt)
 
@@ -3134,6 +3136,24 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    end
 
    #
+   # Call `await()` on the reader.  Succeeds with &null, or fails and
+   # sets &why; this can be used to get an error message if `poll()`
+   # or `get_in_status()` indicates an error.
+   #
+   public await_reader()
+      succeed reader.await()
+   end
+
+   #
+   # Call `await()` on the writer.  Succeeds with &null, or fails and
+   # sets &why; this can be used to get an error message if `poll()`
+   # or `get_out_status()` indicates an error.
+   #
+   public await_writer()
+      succeed writer.await()
+   end
+
+   #
    # Create a new instance
    # :Parameters :
    # :  `other` - the `DescStream` to wrap
@@ -3602,6 +3622,8 @@ class WinsockStream(Stream, NoCopy)
 
    #
    # Get values using the underlying getopt call; see `setopt` above.
+   # `ERROR` will return `&null` if no error is set, or an error string
+   # in the same format as `&why`.
    #
    public native getopt(opt)
 

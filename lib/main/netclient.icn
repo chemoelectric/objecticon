@@ -122,6 +122,23 @@ abstract class NetClient(Connectable, HasTask)
    end
 
 $if _PLAN9
+   # Try to get an informative error message if possible
+   private why_connection()
+      local in, out
+      # This checks the things that can cause poll_in_test or
+      # poll_out_test to fail, based on NonBlockStream's get_poll().
+      in := connection.get_in_status()
+      out := connection.get_out_status()
+      if in = NonBlockStream.ERROR then
+         connection.await_reader()
+      else if out = NonBlockStream.ERROR then
+         connection.await_writer()
+      else if in = NonBlockStream.EOF then
+         &why := "Reader EOF"
+      else
+         &why := "Socket error"
+   end
+
    #
    # Open the connection.
    #
@@ -175,6 +192,11 @@ $elsif _MS_WIN32
          "inet6:[" || ip || "]:" || port
    end
 
+   # Try to get an informative error message if possible
+   private why_connection()
+      &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+   end
+
    #
    # Open the connection.
    #
@@ -225,9 +247,10 @@ $elsif _MS_WIN32
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               close_connection()
+               why_connection()
+               quietly_close_connection()
                avoid_addr(addr)
-               return whyf("Couldn't connect to %s: Socket error", msg_addr)
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
          } else {
             quietly_close_connection()
@@ -305,6 +328,11 @@ $else
          "inet6:[" || ip || "]:" || port
    end
 
+   # Try to get an informative error message if possible
+   private why_connection()
+      &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+   end
+
    #
    # Open the connection.
    #
@@ -356,9 +384,10 @@ $else
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               close_connection()
+               why_connection()
+               quietly_close_connection()
                avoid_addr(addr)
-               return whyf("Couldn't connect to %s: Socket error", msg_addr)
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
          } else {
             quietly_close_connection()
@@ -414,13 +443,19 @@ $endif
          2 : {  # SSL_ERROR_WANT_READ
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed: Timeout")
-            DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
+            DescStream.poll_in_test(r[1]) | {
+               why_connection()
+               return whyf("Receive failed: %w")
+            }
             return
          }
          3 : {  # SSL_ERROR_WANT_WRITE 
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
-            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
+            DescStream.poll_out_test(r[1]) | {
+               why_connection()
+               return whyf("Send failed: %w")
+            }
             return
          }
       }
@@ -638,7 +673,10 @@ $endif
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
-            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
+            DescStream.poll_out_test(r[1]) | {
+               why_connection()
+               return whyf("Send failed: %w")
+            }
             i := connection.out(s) | return whyf("Send out() failed: %w")
             s := s[i+1 : 0]
          }
@@ -660,7 +698,10 @@ $endif
       } else {
          r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
          if /r then return error("Receive failed: Timeout")
-         DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
+         DescStream.poll_in_test(r[1]) | {
+            why_connection()
+            return whyf("Receive failed: %w")
+         }
          return connection.in(len) | whyf("Receive in() failed: %w")
       }
    end
