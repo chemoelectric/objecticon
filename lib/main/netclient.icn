@@ -183,9 +183,11 @@ $if _MS_WIN32
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               close_connection()
+               # Try to get an informative error message if possible
+               &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+               quietly_close_connection()
                avoid_addr(addr)
-               return whyf("Couldn't connect to %s: Socket error", msg_addr)
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
          } else {
             quietly_close_connection()
@@ -314,9 +316,11 @@ $else
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               close_connection()
+               # Try to get an informative error message if possible
+               &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+               quietly_close_connection()
                avoid_addr(addr)
-               return whyf("Couldn't connect to %s: Socket error", msg_addr)
+               return whyf("Couldn't connect to %s: %w", msg_addr)
             }
          } else {
             quietly_close_connection()
