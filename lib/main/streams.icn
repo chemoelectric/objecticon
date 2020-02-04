@@ -1239,6 +1239,8 @@ class SocketStream(DescStream)
 
    #
    # Get values using the underlying getopt call; see `setopt` above.
+   # `ERROR` will return `&null` if no error is set, or an error string
+   # in the same format as `&why`.
    #
    public native getopt(opt)
 
@@ -2329,6 +2331,8 @@ class WinsockStream(Stream, NoCopy)
 
    #
    # Get values using the underlying getopt call; see `setopt` above.
+   # `ERROR` will return `&null` if no error is set, or an error string
+   # in the same format as `&why`.
    #
    public native getopt(opt)
 
