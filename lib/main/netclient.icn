@@ -133,6 +133,11 @@ $if _MS_WIN32
          "inet6:[" || ip || "]:" || port
    end
 
+   # Try to get an informative error message if possible
+   private why_connection()
+      &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+   end
+
    #
    # Open the connection.
    #
@@ -183,8 +188,7 @@ $if _MS_WIN32
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               # Try to get an informative error message if possible
-               &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+               why_connection()
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -265,6 +269,11 @@ $else
          "inet6:[" || ip || "]:" || port
    end
 
+   # Try to get an informative error message if possible
+   private why_connection()
+      &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+   end
+
    #
    # Open the connection.
    #
@@ -316,8 +325,7 @@ $else
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               # Try to get an informative error message if possible
-               &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
+               why_connection()
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -377,13 +385,19 @@ $endif
          2 : {  # SSL_ERROR_WANT_READ
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed: Timeout")
-            DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
+            DescStream.poll_in_test(r[1]) | {
+               why_connection()
+               return whyf("Receive failed: %w")
+            }
             return
          }
          3 : {  # SSL_ERROR_WANT_WRITE 
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
-            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
+            DescStream.poll_out_test(r[1]) | {
+               why_connection()
+               return whyf("Send failed: %w")
+            }
             return
          }
       }
@@ -601,7 +615,10 @@ $endif
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
-            DescStream.poll_out_test(r[1]) | return error("Send failed: Socket error")
+            DescStream.poll_out_test(r[1]) | {
+               why_connection()
+               return whyf("Send failed: %w")
+            }
             i := connection.out(s) | return whyf("Send out() failed: %w")
             s := s[i+1 : 0]
          }
@@ -623,7 +640,10 @@ $endif
       } else {
          r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
          if /r then return error("Receive failed: Timeout")
-         DescStream.poll_in_test(r[1]) | return error("Receive failed: Socket error")
+         DescStream.poll_in_test(r[1]) | {
+            why_connection()
+            return whyf("Receive failed: %w")
+         }
          return connection.in(len) | whyf("Receive in() failed: %w")
       }
    end
