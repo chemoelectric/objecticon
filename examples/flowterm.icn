@@ -2095,7 +2095,8 @@ $endif
             check_cwd_change()
             some_in := &yes
          } else {
-            err_msg("IO problem on tty, neither poll in or out ready")
+            tty.improve_why()
+            err_msg("IO problem on tty, neither poll in or out ready: " || &why)
             break
          }
       }

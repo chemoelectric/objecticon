@@ -8,7 +8,7 @@
 
 package util
 
-import lang, posix, io
+import lang, posix, io, ipl.printf
 
 # This class is a convenient way of creating a sub-process in a
 # program.  It sets up a socket connection between the parent and
@@ -89,11 +89,14 @@ class Process(HasTask, HasBgProc)
    public poll(t)
       local r
       r := do_poll(Poll.IN, t) | fail
-      if /r then
-         return error("Timeout")
-      if DescStream.poll_in_test(r[1]) then
-         return receive()
-      return error("I/O error on reading from socket")
+      return if /r then
+         error("Timeout")
+      else if DescStream.poll_in_test(r[1]) then
+         receive()
+      else {
+         sock.improve_why()
+         whyf("Error reading from socket: %w")
+      }
    end
 
    #
