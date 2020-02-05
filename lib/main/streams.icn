@@ -8,7 +8,7 @@ import
    ipl.strings(replace)
 
 $if _UNIX
-import util(env_string)
+import util(env_string), ipl.printf
 $endif
 
 #
@@ -1671,11 +1671,11 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
       x := get_exit_info() | runerr("succeeded() can only be called after close()")
       if x.succeeded() then
          return
-      return error(cmd || " failed: " || &why || ": " || trim(replace(err_sink.str(), "\n", " ")))
+      return whyf("%s failed: %w: %s", cmd, trim(replace(err_sink.str(), "\n", " ")))
    end
 
    protected do_poll()
-      local x, l
+      local x, l, v
       l := []
       if \cin then
          every put(l, cin | Poll.IN)
@@ -1686,13 +1686,31 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if \cin & DescStream.poll_in_test(pop(x)) then
-         return cin
-      if \cerr & DescStream.poll_in_test(pop(x)) then
-         return cerr
-      if \cout & DescStream.poll_out_test(pop(x)) then
-         return cout
-      return error("Child command I/O failed")
+      if \cin & (v := pop(x)) > 0 then {
+         return if DescStream.poll_in_test(v) then
+            cin
+         else {
+            cin.improve_why()
+            whyf("Error on cin poll: %w")
+         }
+      }
+      if \cerr & (v := pop(x)) > 0 then {
+         return if DescStream.poll_in_test(v) then
+            cerr
+         else {
+            cerr.improve_why()
+            whyf("Error on cerr poll: %w")
+         }
+      }
+      if \cout & (v := pop(x)) > 0 then {
+         return if DescStream.poll_out_test(v) then
+            cout
+         else {
+            cout.improve_why()
+            whyf("Error on cout poll: %w")
+         }
+      }
+      syserr("Invalid poll result")
    end
 
    protected close_cin()
