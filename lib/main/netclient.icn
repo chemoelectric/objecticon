@@ -121,24 +121,11 @@ abstract class NetClient(Connectable, HasTask)
       return choose_poll([connection, for], timeout)
    end
 
-$if _PLAN9
-   # Try to get an informative error message if possible
-   private why_connection()
-      local in, out
-      # This checks the things that can cause poll_in_test or
-      # poll_out_test to fail, based on NonBlockStream's get_poll().
-      in := connection.get_in_status()
-      out := connection.get_out_status()
-      if in = NonBlockStream.ERROR then
-         connection.await_reader()
-      else if out = NonBlockStream.ERROR then
-         connection.await_writer()
-      else if in = NonBlockStream.EOF then
-         &why := "Reader EOF"
-      else
-         &why := "Socket error"
+   private improve_why()
+      connection.improve_why("Socket error")
    end
 
+$if _PLAN9
    #
    # Open the connection.
    #
@@ -180,6 +167,7 @@ $if _PLAN9
       fire(CONNECTED_EVENT, cs)
       link
    end
+
 $elsif _MS_WIN32
    private dns_query(server)
       return WinsockStream.dns_query(server, ip_version)
@@ -190,11 +178,6 @@ $elsif _MS_WIN32
          "inet:" || ip || ":" || port
       else
          "inet6:[" || ip || "]:" || port
-   end
-
-   # Try to get an informative error message if possible
-   private why_connection()
-      &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
    end
 
    #
@@ -247,7 +230,7 @@ $elsif _MS_WIN32
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               why_connection()
+               improve_why()
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -328,11 +311,6 @@ $else
          "inet6:[" || ip || "]:" || port
    end
 
-   # Try to get an informative error message if possible
-   private why_connection()
-      &why := \connection.getopt(SocketOpt.ERROR) | "Socket error"
-   end
-
    #
    # Open the connection.
    #
@@ -384,7 +362,7 @@ $else
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
             DescStream.poll_out_test(r[1]) | {
-               why_connection()
+               improve_why()
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -444,7 +422,7 @@ $endif
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed: Timeout")
             DescStream.poll_in_test(r[1]) | {
-               why_connection()
+               improve_why()
                return whyf("Receive failed: %w")
             }
             return
@@ -453,7 +431,7 @@ $endif
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
             DescStream.poll_out_test(r[1]) | {
-               why_connection()
+               improve_why()
                return whyf("Send failed: %w")
             }
             return
@@ -674,7 +652,7 @@ $endif
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
             DescStream.poll_out_test(r[1]) | {
-               why_connection()
+               improve_why()
                return whyf("Send failed: %w")
             }
             i := connection.out(s) | return whyf("Send out() failed: %w")
@@ -699,7 +677,7 @@ $endif
          r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
          if /r then return error("Receive failed: Timeout")
          DescStream.poll_in_test(r[1]) | {
-            why_connection()
+            improve_why()
             return whyf("Receive failed: %w")
          }
          return connection.in(len) | whyf("Receive in() failed: %w")

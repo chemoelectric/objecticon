@@ -725,6 +725,14 @@ $endif
    end
 
    #
+   # Try to set `&why` to a helpful value based on any error value
+   # stored in the stream.  This is particularly useful after `poll`
+   # has indicated an error.  `v` is an optional default value of
+   # `&why`.
+   #
+   public abstract improve_why(v)
+
+   #
    # Turn the specified flags on or off, and return the new set of
    # flags.  The flags should be selected from the constants in
    # `FileOpt`.
@@ -985,6 +993,10 @@ class FileStream(DescStream)
    #
    public dup()
       return create_for_fd(dup_impl(), mode)
+   end
+
+   public override improve_why(v)
+      &why := \v | "I/O error"
    end
 
 $if _PLAN9
@@ -1475,6 +1487,10 @@ class SocketStream(DescStream)
    # in the same format as `&why`.
    #
    public native getopt(opt)
+
+   public override improve_why(v)
+      &why := \getopt(SocketOpt.ERROR) | \v | "I/O error"
+   end
 
    #
    # Return a list of IP numerical addresses for the given host.
@@ -3136,21 +3152,25 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    end
 
    #
-   # Call `await()` on the reader.  Succeeds with &null, or fails and
-   # sets &why; this can be used to get an error message if `poll()`
-   # or `get_in_status()` indicates an error.
+   # Try to set `&why` to a helpful value based on any error value
+   # stored in the stream.  This is particularly useful after `poll`
+   # has indicated an error.  `v` is an optional default value of
+   # `&why`.
    #
-   public await_reader()
-      succeed reader.await()
-   end
-
-   #
-   # Call `await()` on the writer.  Succeeds with &null, or fails and
-   # sets &why; this can be used to get an error message if `poll()`
-   # or `get_out_status()` indicates an error.
-   #
-   public await_writer()
-      succeed writer.await()
+   public improve_why(v)
+      local in, out
+      # This checks the things that can cause poll_in_test or
+      # poll_out_test to fail, based on get_poll().
+      in := get_in_status()
+      out := get_out_status()
+      if in = ERROR then
+         reader.await()
+      else if out = ERROR then
+         writer.await()
+      else &why := if in = EOF then
+         "Reader EOF"
+      else
+         \v | "I/O error"
    end
 
    #
@@ -3626,6 +3646,16 @@ class WinsockStream(Stream, NoCopy)
    # in the same format as `&why`.
    #
    public native getopt(opt)
+
+   #
+   # Try to set `&why` to a helpful value based on any error value
+   # stored in the stream.  This is particularly useful after `poll`
+   # has indicated an error.  `v` is an optional default value of
+   # `&why`.
+   #
+   public improve_why(v)
+      &why := \getopt(SocketOpt.ERROR) | \v | "I/O error"
+   end
 
    #
    # Return a list of IP numerical addresses for the given host.

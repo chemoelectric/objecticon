@@ -1,6 +1,6 @@
 package io
 
-import lang, util
+import lang, util, ipl.printf
 
 # This stream wraps another stream (normally a `SocketStream`).  The
 # `in` and `out` methods are invoked from the co-expression of the
@@ -21,8 +21,10 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
          error(if /task.notify_flag then "Timeout" else "Notified")
       else if DescStream.poll_in_test(r[1]) then
          other.in(n)
-      else
-         error("poll() indicated an I/O error")
+      else {
+         other.improve_why()
+         whyf("Error on poll(): %w")
+      }
    end
 
    public override out(s)
@@ -32,8 +34,10 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
          error(if /task.notify_flag then "Timeout" else "Notified")
       else if DescStream.poll_out_test(r[1]) then
          other.out(s)
-      else
-         error("poll() indicated an I/O error")
+      else {
+         other.improve_why()
+         whyf("Error on poll(): %w")
+      }
    end
 
    public override close()
