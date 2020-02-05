@@ -789,7 +789,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          c := get_chs(Gui.PRINTABLE_1)
          case string(c) of {
             "\r" : do_cr()
-            "\n" : do_nl()
+            "\n" | "\f" | "\v" : do_nl()
             "\e" : do_esc()
             "\b" : do_backspace()
             "\t" : do_tab()
