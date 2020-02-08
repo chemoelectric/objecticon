@@ -290,9 +290,10 @@ procedure cvpos(pos, len)
    len := need_integer(len)
    if pos < -len | pos > len + 1 then
       fail
-   if pos > 0 then
-      return pos
-   return pos + len + 1
+   return if pos > 0 then
+      pos
+   else
+      pos + len + 1
 end
 
 # Convert an index position based on a length, to an absolute index,
@@ -304,9 +305,10 @@ procedure cvpos_item(pos, len)
    len := need_integer(len)
    if pos < -len | pos > len | pos = 0 then
       fail
-   if pos > 0 then
-      return pos
-   return pos + len + 1
+   return if pos > 0 then
+      pos
+   else
+      pos + len + 1
 end
 
 package record Slice(lo, hi)
