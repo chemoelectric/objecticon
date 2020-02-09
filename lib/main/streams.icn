@@ -5,17 +5,18 @@ import
         save_why, HasMode),
 $if _PLAN9
    lang(Class, NoCopy, Prog),
-   posix(System), util(use),
-   ipl.printf, net, ipl.pdco(String, List),
+   util(use),
+   net, ipl.pdco(String, List),
    ipl.strings(separate),
 $else
    lang(Class, NoCopy),
-   posix(System),
 $endif
-   ipl.strings(replace)
+   posix(System),
+   ipl.strings(replace),
+   ipl.printf
 
 $if _UNIX
-import util(env_string), ipl.printf
+import util(env_string)
 $endif
 
 #
