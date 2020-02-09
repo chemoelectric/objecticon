@@ -5,10 +5,11 @@ import
         save_why, HasMode),
    lang(Class, NoCopy),
    posix(System),
-   ipl.strings(replace)
+   ipl.strings(replace),
+   ipl.printf
 
 $if _UNIX
-import util(env_string), ipl.printf
+import util(env_string)
 $endif
 
 #
