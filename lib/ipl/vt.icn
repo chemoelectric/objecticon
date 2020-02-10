@@ -1273,6 +1273,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_erase_all()
+      cx >:= cols
       every content_edit(row_to_index(1) to *contents,, attr.bg)
       view.invalidate()
    end
