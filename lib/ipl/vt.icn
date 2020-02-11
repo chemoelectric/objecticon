@@ -1241,6 +1241,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          0 : do_erase_right()
          1 : do_erase_left()
          2 : do_erase_line()
+         7 : do_custom_erase_right()
       }
    end
 
@@ -1395,6 +1396,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       m := split_upto(r, cx - 1)
       content_edit(i, split_from(r, cx + n - 1, m), r.bg, r.join)
       invalidate_line(i)
+   end
+
+   # Flowterm-specific; like do_erase_right(), but a no-op if the
+   # cursor is in the "extra" last column.  This behaves like konsole
+   # and gnome terminal's erase-right.
+   #
+   private do_custom_erase_right()
+      if cx <= cols then
+         do_erase_right()
    end
 
    private do_erase_right()
