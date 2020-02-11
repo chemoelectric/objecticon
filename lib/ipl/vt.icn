@@ -959,10 +959,10 @@ class Vt(LineBasedScrollArea, MenuMode)
          1 : do_application_cursor_keys_mode(&yes)
          3 : set_col_mode(132)
          5 : do_reverse_video(&yes)
-         6 : origin_mode := &yes
-         7 : wraparound_mode := &yes
+         6 : do_origin_mode(&yes)
+         7 : do_wraparound_mode(&yes)
          25 : do_hide_cursor(&no)
-         40 : allow_80_132_mode := &yes
+         40 : do_allow_80_132_mode(&yes)
          1047 | 1049 : do_use_alternate_buffer()
          1048 : do_save_cursor()
       }
@@ -973,10 +973,10 @@ class Vt(LineBasedScrollArea, MenuMode)
          1 : do_application_cursor_keys_mode(&no)
          3 : set_col_mode(80)
          5 : do_reverse_video(&no)
-         6 : origin_mode := &no
-         7 : wraparound_mode := &no
+         6 : do_origin_mode(&no)
+         7 : do_wraparound_mode(&no)
          25 : do_hide_cursor(&yes)
-         40 : allow_80_132_mode := &no
+         40 : do_allow_80_132_mode(&no)
          1047 | 1049 : do_use_normal_buffer()
          1048 : do_restore_cursor()
       }
@@ -1055,6 +1055,19 @@ class Vt(LineBasedScrollArea, MenuMode)
    private do_reverse_video(f)
       if reverse_mode ~===:= f then
          view.reset()
+   end
+
+   private do_origin_mode(f)
+      if origin_mode ~===:= f then
+         do_move_cursor(1, 1)
+   end
+
+   private do_wraparound_mode(f)
+      wraparound_mode := f
+   end
+
+   private do_allow_80_132_mode(f)
+      allow_80_132_mode := f
    end
 
    private set_col_mode(n)
@@ -1318,10 +1331,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       top >:= bottom
       top_margin := top
       bottom_margin := bottom
-      if /origin_mode then
-         move_cursor(1, 1)
-      else
-         move_cursor(1, top)
+      do_move_cursor(1, 1)
    end
 
    private static int_param(param, n, def)
@@ -1934,6 +1944,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local s1, i, r
       if /wraparound_mode then {
          if *s > cols - cx then {
+            cx >:= cols
             s := s[1+:cols - cx] || s[-1]
             do_insert_or_put(s)
             cx := cols
