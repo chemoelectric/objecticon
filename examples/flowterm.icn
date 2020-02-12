@@ -127,6 +127,17 @@ class OpenWithMenu(MenuWithPopup)
    end
 end
 
+class OpenWithMenuItem(TextMenuItem)
+   public const
+      runner
+
+   public override new(runner)
+      TextMenuItem.new()
+      self.runner := runner
+      return
+   end
+end
+
 class TerminalMenu(DynamicMenu)
    public override populate()
       move_all(parent_component.parent_dialog.tabs.which_one.create_context_menu())
@@ -933,7 +944,27 @@ class FilterEditList(EditList)
    end
 end
 
-class FavouritesList(ButtonOnlyList)
+#
+# Helper class for the common bits of the three directory list classes below.
+#
+abstract class ListHelper(DropDown)
+   private on_popup_menu_closed(ev, src)
+      if /src.selected then
+         popup.clear_selections()
+      else
+         close_popup()
+   end
+
+   protected open_popup_menu(e, m)
+      local pm
+      pm := PopupMenu().
+         connect(on_popup_menu_closed, Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+end
+
+class FavouritesList(ButtonOnlyList, ListHelper)
    public override create_button()
       local b
       b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
@@ -946,13 +977,7 @@ class FavouritesList(ButtonOnlyList)
    end
 
    private on_rpress(e)
-      local m, pm
-      m := parent.parent.create_link_menu(cursor_to_url()) | fail
-      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION, 1)
-      pm := PopupMenu().
-         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
-      pm.popup(popup, m, e.x, e.y)
-      popup.set_selections([popup.get_cursor()])
+      open_popup_menu(e, parent.parent.create_link_menu(cursor_to_url()))
    end
 
    private on_mrelease(ev)
@@ -998,7 +1023,7 @@ class HistoryEntryItemPaint(StringDirItemPaint)
    end
 end
 
-class HistoryList(ButtonOnlyList)
+class HistoryList(ButtonOnlyList, ListHelper)
    public override create_button()
       local b
       b := IconButton().set_paint(ImagePaint().set_cache("rpp.HOURGLASS_24"))
@@ -1011,13 +1036,7 @@ class HistoryList(ButtonOnlyList)
    end
 
    private on_rpress(e)
-      local m, pm
-      m := parent.parent.create_link_menu(cursor_to_url()) | fail
-      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION, 1)
-      pm := PopupMenu().
-         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
-      pm.popup(popup, m, e.x, e.y)
-      popup.set_selections([popup.get_cursor()])
+      open_popup_menu(e, parent.parent.create_link_menu(cursor_to_url()))
    end
 
    private on_mrelease(ev)
@@ -1048,19 +1067,13 @@ class HistoryList(ButtonOnlyList)
    end
 end
 
-class FileTrailListEx(FileTrailList)
+class FileTrailListEx(FileTrailList, ListHelper)
    private cursor_to_url()
       return mk_file_URL(p.child(popup.object_get_cursor().name).ucs())
    end
 
    private on_rpress(e)
-      local m, pm
-      m := parent.parent.parent.create_link_menu(cursor_to_url()) | fail
-      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION, 1)
-      pm := PopupMenu().
-         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
-      pm.popup(popup, m, e.x, e.y)
-      popup.set_selections([popup.get_cursor()])
+      open_popup_menu(e, parent.parent.parent.create_link_menu(cursor_to_url()))
    end
 
    private on_mrelease(ev)
@@ -2212,24 +2225,15 @@ $endif
       info_msg(s)
    end
 
-   private static get_possible_desktop_entries(s)
-      suspend Mime.gen_desktop_entries_for_file(FilePath(s).get(-1))
-   end
-
-   private static get_possible_scheme_handler_desktop_entries(url)
-      suspend Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))
-   end
-
-   private get_runners(url)
+   private get_runners(url, ex_dir)
       local s, cd, de, fl
       case string(url.scheme) of {
          "file" : {
             url.is_local_file() | return error("Can't run a file on another host (" || url.host || ")")
             s := get_ucs_decoded_path(url) | fail
-            if Files.is_directory(s) then
+            if /ex_dir & Files.is_directory(s) then
                return ImmediateRunner("cd " || Format.shell_escape(s))
-            # Get a DesktopEntry based on the content-type if available, or the filename.
-            every de := get_possible_desktop_entries(s) do {
+            every de := Mime.gen_desktop_entries_for_path(s) do {
                fl := &yes
                suspend DesktopRunner(de, url, s)
             }
@@ -2246,7 +2250,7 @@ $endif
             return LaunchRunner(s, cd)
          }
          default : {
-            every de := get_possible_scheme_handler_desktop_entries(url) do {
+            every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do {
                fl := &yes
                suspend DesktopRunner(de, url, url.ucs())
             }
@@ -2412,7 +2416,9 @@ $endif
       return add_custom_menus(m, misc_menu_commands)
    end
 
-   private on_open_with(r, ev, src)
+   private on_open_with(ev, src)
+      local r
+      r := src.runner
       if ev.code === Mouse.MIDDLE_RELEASE then
          send_tty(r.get_command() || " ")
       else
@@ -2422,9 +2428,9 @@ $endif
    private create_open_with_menu_item(r)
       local m, de
       de := r.desktop_entry
-      m := TextMenuItem().
+      m := OpenWithMenuItem(r).
          set_label(de.name).
-         connect(lpartial(on_open_with, r), Event.ACTION)
+         connect(on_open_with, Event.ACTION)
       m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
       return m
    end
@@ -2432,7 +2438,7 @@ $endif
    private create_open_with_menu(url)
       local m, r
       m := OpenWithMenu(self).set_label("Open with")
-      every r := get_runners(url) do {
+      every r := get_runners(url, &yes) do {
          if is(r, DesktopRunner) then
             m.add(create_open_with_menu_item(r))
       }
@@ -2463,8 +2469,8 @@ $endif
                m.add(TextMenuItem().
                      set_label("Open in new tab").
                      connect(create open_in_new_tab(udp), Event.ACTION))
-            } else
-               m.add(create_open_with_menu(url))
+            }
+            m.add(create_open_with_menu(url))
          }
       } else
          m.add(create_open_with_menu(url))
