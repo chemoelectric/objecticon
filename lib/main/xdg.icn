@@ -516,6 +516,7 @@ final abstract class IconTheme()
    public static find_icon(icon, size)
       local k, v
       icon := need_string(icon)
+      size := need_integer(size)
       k := icon || "/" || size
       if not(v := member(FIND_ICON_CACHE, k)) then {
          v := find_icon_helper(icon, size, theme, set()) | lookup_fallback_icon(icon)
@@ -646,12 +647,12 @@ final abstract class Mime()
       }
    end
 
-   private static mime_type_param(mt)
-      return map(string(mt)) | runerr(103, mt)
+   private static need_mime_type(mt)
+      return map(need_string(mt))
    end
 
    #
-   # Given a filename, return the corresponding mime type.
+   # Given a filename (not a path), return the corresponding mime type.
    #
    public static get_mime_type_for_file(f)
       return GLOBS.lookup(f).mime_type
@@ -661,14 +662,14 @@ final abstract class Mime()
    # Generate the generic icons defined for the given mime type.
    #
    public static gen_generic_icons(mt)
-      suspend .!member(GENERIC_ICONS, mime_type_param(mt))
+      suspend .!member(GENERIC_ICONS, need_mime_type(mt))
    end
 
    #
    # Generate the icons defined for the given mime type.
    #
    public static gen_icons(mt)
-      suspend .!member(ICONS, mime_type_param(mt))
+      suspend .!member(ICONS, need_mime_type(mt))
    end
 
    #
@@ -677,7 +678,7 @@ final abstract class Mime()
    # and then the generic icons.
    #
    public static gen_all_icons(mt)
-      mt := mime_type_param(mt)
+      mt := need_mime_type(mt)
       suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
    end
 
@@ -807,7 +808,7 @@ final abstract class Mime()
    end
 
    #
-   # Find an icon given a filename (string) and integer size.
+   # Find an icon given a filename (not a path) and integer size.
    #
    public static find_icon_for_file(file, size)
       return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
@@ -940,6 +941,20 @@ final abstract class Mime()
    end
 
    #
+   # Given a file path (as a string), if the path represents an
+   # existing directory, then the desktop entries for mime type
+   # "inode/directory" are returned; otherwise
+   # `gen_desktop_entries_for_file()` is called on the last path
+   # component.
+   #
+   public static gen_desktop_entries_for_path(file)
+      suspend if Files.is_directory(file) then
+         gen_desktop_entries("inode/directory")
+      else
+         gen_desktop_entries_for_file(FilePath(file).get(-1))
+   end
+
+   #
    # Generate the `DesktopEntry` objects suitable for a particular
    # filename (without path), with the most suitable first.
    #
@@ -951,7 +966,7 @@ final abstract class Mime()
    # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
-      suspend .!member(DESKTOP_ENTRIES, mime_type_param(mt))
+      suspend .!member(DESKTOP_ENTRIES, need_mime_type(mt))
    end
 end
 
