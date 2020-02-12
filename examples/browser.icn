@@ -1453,12 +1453,9 @@ class BrowserTab(TabItem, BrowserUI)
             connect(create copy_link(url), Event.ACTION))
       m1 := Menu().set_label("Open with")
       if url.scheme == "file" then {
-         if f := ucs(Files.url_to_file(url)) &
-            Files.access(f) &
-            not Files.is_directory(f) 
-         then {
-            every de := Mime.gen_desktop_entries_for_file(f) do
-               m1.add(BrowserDialog.create_open_with_menu_item(de, f))
+         if f := ucs(Files.url_to_file(url)) & Files.access(f) then {
+            every de := Mime.gen_desktop_entries_for_path(f) do
+                m1.add(BrowserDialog.create_open_with_menu_item(de, f))
          }
       } else {
          every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
@@ -1581,7 +1578,7 @@ class BrowserTab(TabItem, BrowserUI)
          not Files.is_directory(f) &
          not (string(map(Files.get_extension(f))) ==
               ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
-         de := Mime.gen_desktop_entries_for_file(f)
+         de := Mime.gen_desktop_entries_for_file(FilePath(f).get(-1))
       then {
          BrowserDialog.launch_prog(de, f)
          parent_dialog.update_visited(url)
