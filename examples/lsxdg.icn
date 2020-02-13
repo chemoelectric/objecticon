@@ -30,6 +30,10 @@ procedure need_pair(a)
       help_stop("This option needs two parameters")
 end
 
+procedure no_path(s)
+   return FilePath(s).get(-1)
+end
+
 procedure usage()
    write("Usage: lsxdg CMD [ARGS]")
    write("Query the xdg database")
@@ -60,7 +64,7 @@ procedure main(a)
       "mime": {
          every s := !a do {
             s := ucs(s) | help_stop("Parameter not UTF-8")
-            write(s, ": ", text_link(Mime.get_mime_type_for_file(s)))
+            write(s, ": ", text_link(Mime.get_mime_type_for_file(no_path(s))))
          }
       }
 
@@ -86,7 +90,7 @@ procedure main(a)
 
       "icon-file": {
          p := need_pair(a)
-         write(file_link(Mime.find_icon_for_file(p.name, p.size)))
+         write(file_link(Mime.find_icon_for_file(no_path(p.name), p.size)))
       }
 
       "find-icon": {
@@ -101,7 +105,7 @@ procedure main(a)
 
       "de-file": {
          s := need_one(a)
-         every write(to_string(Mime.gen_desktop_entries_for_file(s), 3, &yes))
+         every write(to_string(Mime.gen_desktop_entries_for_file(no_path(s)), 3, &yes))
       }
 
       "dir": {
@@ -114,7 +118,7 @@ procedure main(a)
       "cmd": {
          s := need_one(a)
          s1 := Format.shell_escape(FilePath(s).canonical().ucs()) | help_stop("Path not UTF-8")
-         every d := Mime.gen_desktop_entries_for_file(s) do {
+         every d := Mime.gen_desktop_entries_for_file(no_path(s)) do {
             cmd := d.subst_file(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
