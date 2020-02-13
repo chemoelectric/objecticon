@@ -165,6 +165,27 @@ class DesktopEntry()
    package
       list_pos              # Used internally for initial_preference sort
 
+   public static const
+      # A command (including any flag) to prefix to the `subst_file`
+      # result for an entry with the terminal flag set.  It may be
+      # configured via the environment variable `OI_XDG_TERM_CMD`.  If
+      # unset, a search is made for a default.
+      #
+      TERM_CMD
+
+   private static find_term_cmd()
+      local s
+      every s := ["xterm" | "konsole" | "rxvt", "-e"] | ["gnome-terminal", "--"] do {
+         if Files.find_exe(s[1]) then
+            return s[1] || " " || s[2]
+      }
+      return "xterm -e"
+   end
+
+   private static init()
+      TERM_CMD := env_string("OI_XDG_TERM_CMD") | find_term_cmd()
+   end
+
    #
    # Substitute a single file, with optional line number, into the
    # Exec command, returning a command string.
@@ -174,7 +195,7 @@ class DesktopEntry()
       s := exec
       if \line then
          s := \exec_line
-      r := ""
+      r := if \terminal then TERM_CMD || " " else ""
       s ? repeat {
          r ||:= tab(upto('%') | 0)
          move(1) | break
@@ -815,10 +836,13 @@ final abstract class Mime()
                                  size)
    end
 
+   private static true_key(dm, key)
+      succeed map(member(dm, key)) == "true"
+   end
+
    private static build_desktop_entry(dm, src)
       local name, icon, exec, path, terminal, try_exec, 
          initial_preference, exec_line
-      dm := member(dm, u"Desktop Entry") | fail
       member(dm, u"Type") == "Application" | fail
       name := member(dm, u"Name") | fail
 
@@ -831,13 +855,13 @@ final abstract class Mime()
       exec := member(dm, u"Exec") | fail
       exec_line := member(dm, u"ExecLine")
       path := member(dm, u"Path")
-      terminal := if map(member(dm, u"Terminal")) == "true" then &yes
+      terminal := Yes{ true_key(dm, u"Terminal") }
       initial_preference := integer(member(dm, u"InitialPreference"))
       return DesktopEntry(name, icon, src, exec, exec_line, path, terminal, initial_preference)
    end
 
    private static gen_desktop_mime_types(dm)
-      suspend "" ~== map(string(separate(member(member(dm, u"Desktop Entry"), u"MimeType"), ';')))
+      suspend "" ~== map(string(separate(member(dm, u"MimeType"), ';')))
    end
 
    private static scan_application_dir(p, prefix, t, u)
@@ -852,11 +876,18 @@ final abstract class Mime()
                if (not member(t, key)) & 
                   src := p.child(e.name).str() &
                   dm := Util.load_ini_file(src) &
-                  de := build_desktop_entry(dm, src) then 
-               {
-                  insert(t, key, de)
-                  every mt := gen_desktop_mime_types(dm) do
-                     inserts(u, mt, de)
+                  dm := member(dm, u"Desktop Entry")
+               then {
+                  # A Hidden entry adds a null entry to t, to mask any further
+                  # occurrences of the key; it is deleted below after scanning
+                  # is complete.
+                  if true_key(dm, u"Hidden") then
+                     insert(t, key, &null)
+                  else if de := build_desktop_entry(dm, src) then {
+                     insert(t, key, de)
+                     every mt := gen_desktop_mime_types(dm) do
+                        inserts(u, mt, de)
+                  }
                }
             }
          }
@@ -921,11 +952,17 @@ final abstract class Mime()
    end
 
    private static read_desktop_entries()
-      local d, t, u, f, mm
+      local d, t, u, f, mm, k
       t := table()    # maps desktop entry names (ucs, eg u"kate.desktop") to DesktopEntry object
       u := table()    # mime-type (string) to list of DesktopEntry
       every d := BaseDir.gen_data_dirs() do
          scan_application_dir(FilePath(d).child("applications"), u"", t, u)
+
+      # Delete hidden (null) entries from t
+      every k := key(t) do {
+         if /t[k] then
+            delete(t, k)
+      }
 
       # Sort each list of DesktopEntry by the initial preference field.
       every sort_by_preference(!u)
