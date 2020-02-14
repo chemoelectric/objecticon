@@ -1,4 +1,4 @@
-import io, lang, xdg, ipl.options, net, util
+import io, lang, xdg, ipl.options, net
 
 procedure text_link(s)
    return if FileStream.stdout.is_flowterm_tty() then
@@ -117,8 +117,8 @@ procedure main(a)
 
       "cmd": {
          s := need_one(a)
-         s1 := Format.shell_escape(FilePath(s).canonical().ucs()) | help_stop("Path not UTF-8")
-         every d := Mime.gen_desktop_entries_for_file(no_path(s)) do {
+         s1 := FilePath(s).canonical().ucs() | help_stop("Path not UTF-8")
+         every d := Mime.gen_desktop_entries_for_path(s) do {
             cmd := d.subst_file(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
