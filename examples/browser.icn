@@ -170,13 +170,13 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file(file)
+      cmd := de.subst_file_list(file)
       if \opts["v"] then 
-         ewrite("Command: ", image(cmd))
+         ewrite("Command: ", to_string(cmd))
       System.setpgid()
       null_stdio()
       Files.bulk_close(100)
-      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec(pop(cmd), cmd) | stop(&why)
       syserr("Not reached")
    end
 

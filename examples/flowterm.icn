@@ -58,6 +58,8 @@ end
 
 abstract class ExternalRunner(Runner)
    public abstract get_working_dir()
+
+   public abstract get_command_list()
 end
 
 class LaunchRunner(ExternalRunner)
@@ -71,6 +73,10 @@ class LaunchRunner(ExternalRunner)
 
    public override get_command()
       return cmd
+   end
+
+   public override get_command_list()
+      return ["/bin/sh", "-c", "exec " || get_command()]
    end
 
    public new(cmd, wd)
@@ -93,11 +99,19 @@ class DesktopRunner(ExternalRunner)
       return \desktop_entry.path
    end
 
-   public override get_command()
+   private line_param()
       local line
       if url.scheme == "file" then
          line := integer(url.extract_cgi_parameters()["line"][1])
-      return desktop_entry.subst_file(subst, line)
+      return line
+   end
+
+   public override get_command()
+      return desktop_entry.subst_file_shell(subst, line_param())
+   end
+
+   public override get_command_list()
+      return desktop_entry.subst_file_list(subst, line_param())
    end
 
    public new(desktop_entry, url, subst)
@@ -2130,12 +2144,12 @@ $endif
       }
       # Set the working directory for the child process
       Files.chdir(runner.get_working_dir() | Files.get_home())
-      # Get the command to run.
-      cmd := runner.get_command()
+      # Get the command to run, as a list.
+      cmd := runner.get_command_list()
       System.setpgid()
       null_stdio()
       Files.bulk_close(50)
-      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec(pop(cmd), cmd) | stop(&why)
       syserr("Not reached")
    end
 

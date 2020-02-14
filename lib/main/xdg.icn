@@ -242,10 +242,18 @@ class DesktopEntry()
    end
 
    #
+   # Helpful method to return the results of `subst_file_args()`
+   # as a list.
+   #
+   public subst_file_list(file, line)
+      return ipl.pdco.List{ subst_file_args(file, line) }
+   end
+
+   #
    # This takes the results of `subst_file_args()` and produces a
    # single string suitable for execution by the shell.
    #
-   public subst_file(file, line)
+   public subst_file_shell(file, line)
       return String{ Format.shell_escape(subst_file_args(file, line)), " " }
    end
 
