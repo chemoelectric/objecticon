@@ -119,7 +119,7 @@ procedure main(a)
          s := need_one(a)
          s1 := FilePath(s).canonical().ucs() | help_stop("Path not UTF-8")
          every d := Mime.gen_desktop_entries_for_path(s) do {
-            cmd := d.subst_file(s1)
+            cmd := d.subst_file_shell(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
                write(Files.begin_link(u), cmd, Files.end_link())
@@ -133,7 +133,7 @@ procedure main(a)
          u1 := URL(s) | help_stop("This option needs a valid URL parameter")
          s1 := u1.ucs()
          every d := Mime.gen_desktop_entries("x-scheme-handler/" || string(u1.scheme)) do {
-            cmd := d.subst_file(s1)
+            cmd := d.subst_file_shell(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
                write(Files.begin_link(u), cmd, Files.end_link())
