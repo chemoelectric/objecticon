@@ -97,7 +97,7 @@ class DesktopRunner(ExternalRunner)
       local line
       if url.scheme == "file" then
          line := integer(url.extract_cgi_parameters()["line"][1])
-      return desktop_entry.subst_file(Format.shell_escape(subst), line)
+      return desktop_entry.subst_file(subst, line)
    end
 
    public new(desktop_entry, url, subst)

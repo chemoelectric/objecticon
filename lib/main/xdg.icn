@@ -186,32 +186,67 @@ class DesktopEntry()
       TERM_CMD := env_string("OI_XDG_TERM_CMD") | find_term_cmd()
    end
 
+   private static gen_args(s)
+      local t
+      static ch
+      initial ch := ~' \t\n'
+      s ? while tab(upto(ch)) do {
+         if ="\"" then {
+            t := ""
+            repeat {
+               t ||:= tab(upto('\\"') | 0)
+               if ="\\" then
+                  t ||:= move(1)
+               else {
+                  move(1)
+                  break
+               }
+            }
+         } else
+            t := tab(many(ch))
+         suspend t
+      }
+   end
+
+   private expand_code(s, file, line)
+      if *s = 2 & s[1] == "%" then {
+         suspend ucs(case string(s[2]) of {
+            "%": "%"
+            "i": if \icon then "--icon" | icon
+            "c": name
+            "k": source
+            !"uUfF": \file
+            "L": \line
+            !"dDnNvM": &fail
+            default: s
+         })
+      } else
+         return s
+   end
+
    #
-   # Substitute a single file, with optional line number, into the
-   # Exec command, returning a command string.
+   # Substitute a single file (an absolute path or a URL), with
+   # optional line number, into the Exec command, generating a
+   # sequence of resulting arguments.
    #
-   public subst_file(f, line)
-      local r, s, fl
+   public subst_file_args(file, line)
+      local s
+      file := need_ucs(\file)
+      line := need_integer(\line)
       s := exec
       if \line then
          s := \exec_line
-      r := if \terminal then TERM_CMD || " " else ""
-      s ? repeat {
-         r ||:= tab(upto('%') | 0)
-         move(1) | break
-         r ||:= case string(move(1)) of {
-            "%": "%"
-            "i": "--icon " || \icon
-            "c": name
-            "k": ucs(source)
-            !"uUfF": (fl := &yes, \f)
-            "L": \line
-         }
-      }
-      # If file not substituted, then add to the end.
-      if /fl then
-         r ||:= " " || \f
-      return r
+      if \terminal then
+         s := TERM_CMD || " " || s
+      suspend expand_code(gen_args(s), file, line)
+   end
+
+   #
+   # This takes the results of `subst_file_args()` and produces a
+   # single string suitable for execution by the shell.
+   #
+   public subst_file(file, line)
+      return String{ Format.shell_escape(subst_file_args(file, line)), " " }
    end
 
    public new(name, icon, source, exec, exec_line, path, terminal, initial_preference)

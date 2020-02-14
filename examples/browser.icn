@@ -170,7 +170,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file(Format.shell_escape(file))
+      cmd := de.subst_file(file)
       if \opts["v"] then 
          ewrite("Command: ", image(cmd))
       System.setpgid()
