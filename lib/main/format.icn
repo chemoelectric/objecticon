@@ -347,6 +347,8 @@ final abstract class Format()
    public static shell_escape(s)
       local t, ch
       s := need_text(s)
+      if *s = 0 then
+         return s || "$''"
       t := ""
       s ? {
          while t ||:= string(tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>~[]{}!$`\'\" '))) do {
