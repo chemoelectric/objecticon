@@ -156,7 +156,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    public static launch_prog(de, file)
-      local pid, cmd
+      local pid, cmd, args
       if \opts["v"] then {
          ewrite("Desktop entry: ", to_string(de, 3, &yes))
          ewrite("File: ", image(file))
@@ -170,13 +170,14 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file_list(file)
+      args := de.subst_file_list(file)
       if \opts["v"] then 
-         ewrite("Command: ", to_string(cmd))
+         ewrite("Command list: ", to_string(args))
+      cmd := pop(args) | stop("Empty command list")
       System.setpgid()
       null_stdio()
       Files.bulk_close(100)
-      System.exec(pop(cmd), cmd) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 

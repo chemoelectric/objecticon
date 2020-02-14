@@ -30,7 +30,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       line
 
    public static launch_prog(de, file, line)
-      local pid, cmd
+      local pid, cmd, args
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -40,11 +40,12 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file_list(file, line)
+      args := de.subst_file_list(file, line)
+      cmd := pop(args) | stop("Empty command list")
       System.setpgid()
       null_stdio()
       Files.bulk_close(50)
-      System.exec(pop(cmd), cmd) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 

@@ -2134,7 +2134,7 @@ $endif
    end
 
    public static launch_prog(runner)
-      local pid, cmd
+      local pid, cmd, args
       if \opts["v"] then write("Launch runner: ", to_string(runner, 3, &yes))
       pid := System.fork() | fail
       if pid > 0 then {
@@ -2145,11 +2145,12 @@ $endif
       # Set the working directory for the child process
       Files.chdir(runner.get_working_dir() | Files.get_home())
       # Get the command to run, as a list.
-      cmd := runner.get_command_list()
+      args := runner.get_command_list()
+      cmd := pop(args) | stop("Empty command list")
       System.setpgid()
       null_stdio()
       Files.bulk_close(50)
-      System.exec(pop(cmd), cmd) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 
