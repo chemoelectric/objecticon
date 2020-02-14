@@ -529,29 +529,25 @@ $endif
    # :  `omit` - if non-null, omit the quotes from the result
    public static parse_quoted_string(omit)
       local res
-
       if /omit then
          res := move(1)
       else {
          res := ""
          move(1)
       }
-
       repeat {
-         res ||:= tab(upto('\\\"') | 0)
-         if pos(0) then
-            break
-         if any('\"') then {
+         res ||:= tab(upto('\\"') | 0)
+         if any('\\') then
+            res ||:= move(2)
+         else {
+            # Closing quote or end of string
             if /omit then 
                res ||:= move(1)
             else
                move(1)
-            break
+            return res
          }
-         # At a backslash.
-         res ||:= move(2)
       }
-      return res
    end
 
    private maybe_set_authorization_header()
