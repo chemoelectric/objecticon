@@ -19,7 +19,10 @@ package gui
 class PopupMenu(Component, MenuSystem)
    public 
       menu,
-      comp
+      comp,
+      # If the menu was closed via a selection, this is set to the
+      # relevant `MenuComponent`.
+      selected
 
    public override go_right()
    end
@@ -38,7 +41,8 @@ class PopupMenu(Component, MenuSystem)
       link
    end
 
-   public override close_all()
+   public override close_all(v)
+      selected := v
       close_menu()
    end
 
@@ -86,6 +90,7 @@ class PopupMenu(Component, MenuSystem)
          self.comp := &null
          fail
       }
+      self.selected := &null
       self.menu := menu
       self.menu.set_component_link(self)         
       self.menu.initially()

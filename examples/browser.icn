@@ -159,7 +159,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
 
 $if _PLAN9
    public static launch_prog(de, file)
-      local pid, cmd
+      local pid, cmd, args
       if \opts["v"] then {
          ewrite("Desktop entry: ", to_string(de, 3, &yes))
          ewrite("File: ", image(file))
@@ -179,16 +179,17 @@ $if _PLAN9
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file(Format.rc_escape(file))
+      args := de.subst_file_list(file)
       if \opts["v"] then 
-         ewrite("Command: ", image(cmd))
+         ewrite("Command list: ", to_string(args))
+      cmd := pop(args) | stop("Empty command list")
       null_stdio()
-      System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 $else
    public static launch_prog(de, file)
-      local pid, cmd, s
+      local pid, cmd, args
       if \opts["v"] then {
          ewrite("Desktop entry: ", to_string(de, 3, &yes))
          ewrite("File: ", image(file))
@@ -202,13 +203,14 @@ $else
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file(Format.shell_escape(file))
+      args := de.subst_file_list(file)
       if \opts["v"] then 
-         ewrite("Command: ", image(cmd))
+         ewrite("Command list: ", to_string(args))
+      cmd := pop(args) | stop("Empty command list")
       System.setpgid()
       null_stdio()
       Files.bulk_close(100)
-      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 
@@ -1491,12 +1493,9 @@ class BrowserTab(TabItem, BrowserUI)
             connect(create copy_link(url), Event.ACTION))
       m1 := Menu().set_label("Open with")
       if url.scheme == "file" then {
-         if f := ucs(Files.url_to_file(url)) &
-            Files.access(f) &
-            not Files.is_directory(f) 
-         then {
-            every de := Mime.gen_desktop_entries_for_file(f) do
-               m1.add(BrowserDialog.create_open_with_menu_item(de, f))
+         if f := ucs(Files.url_to_file(url)) & Files.access(f) then {
+            every de := Mime.gen_desktop_entries_for_path(f) do
+                m1.add(BrowserDialog.create_open_with_menu_item(de, f))
          }
       } else {
          every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
@@ -1619,7 +1618,7 @@ class BrowserTab(TabItem, BrowserUI)
          not Files.is_directory(f) &
          not (string(map(Files.get_extension(f))) ==
               ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
-         de := Mime.gen_desktop_entries_for_file(f)
+         de := Mime.gen_desktop_entries_for_file(FilePath(f).get(-1))
       then {
          BrowserDialog.launch_prog(de, f)
          parent_dialog.update_visited(url)

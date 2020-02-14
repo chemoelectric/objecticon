@@ -1,5 +1,5 @@
 #
-# $Id: rfc822parser.icn 3894 2013-02-06 16:02:46Z r.parlett $
+# $Id$
 #
 
 package mail
@@ -31,40 +31,6 @@ class RFC2616Parser()
       MIME_CHARSET_CHAR := &letters ++ &digits ++ '!#$%&+\-^_/`{}/~'
       LANGUAGE_CHAR := &letters ++ &digits ++ '\-'
       ATTR_CHAR := ATOM_CHAR -- '*\'%'
-   end
-
-   #
-   # The first four parse objects are the fundamental lexical components, other
-   # than inidividual special characters (see rfc822).  Therefore, they must
-   # be preceded by a call to next_token, to move the position to the correct
-   # point to parse them.
-   #
-
-   #
-   # qtext = <any CHAR excepting <">, "\" & CR, and including 
-   #         linear-white-space>
-   # quoted-pair =  "\" CHAR
-   # quoted-string = <"> *(qtext/quoted-pair) <">
-   #
-   # Must be preceded by a call to next_token()
-   #
-   private parse_quoted_string()
-      local res
-
-      res := move(1)
-
-      repeat {
-         if any('\\') then {
-            res ||:= move(2) | throw("Unterminated quoted string")
-         } else if any(QTEXT_CHAR) then
-            res ||:= tab(many(QTEXT_CHAR))
-         else if any('\"') then {
-            res ||:= move(1)
-            return res
-         } else
-            # Missing closing quote or illegal char
-            throw("Missing closing quote or illegal char")
-      }
    end
 
    #

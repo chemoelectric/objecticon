@@ -305,7 +305,7 @@ $endif
 
          retrieve_page() | fail
          sc := response.get_status_code() | return on_http_error("Invalid status code in response")
-         if sc = (200 | 206) then {
+         if sc = (200 | 201 | 206) then {
             fire(HTTP_SUCCESS_EVENT)
             return response
          }
@@ -494,16 +494,24 @@ $endif
       return h
    end
 
+   #
+   # Parse a string `s` as a generic header consisting of key-values.
+   # The keys are comprised of `TOKEN_CHAR`s, as are the values,
+   # unless enclosed in double quotes.  Examples of `s` :-
+   # ~
+   #      a=100 b=200; c="hello world"
+   #      x="backslash escapes \" are allowed"
+   # ~
+   #
    public static parse_generic_header(s)
       local t, k, v
 
       t := SortTable(, Text.caseless_compare)
-      s ? repeat {
-         tab(upto(TOKEN_CHAR)) | break
+      s ? while tab(upto(TOKEN_CHAR)) do {
          k := tab(many(TOKEN_CHAR))
          if ="=" then {
             if any('\"') then
-               v := parse_quoted_string(1)
+               v := parse_quoted_string(&yes)
             else
                v := tab(many(TOKEN_CHAR)) | ""
          } else
@@ -514,34 +522,32 @@ $endif
    end
 
    #
+   # Parse a string in double quotes; a scan must be in progress with
+   # &pos at a ".  &pos will be moved beyond the terminating quote.
    # 
    # :Parameters :
    # :  `omit` - if non-null, omit the quotes from the result
    public static parse_quoted_string(omit)
       local res
-
       if /omit then
          res := move(1)
       else {
          res := ""
          move(1)
       }
-
       repeat {
-         res ||:= tab(upto('\\\"') | 0)
-         if pos(0) then
-            break
-         else if any('\"') then {
+         res ||:= tab(upto('\\"') | 0)
+         if any('\\') then
+            res ||:= move(2)
+         else {
+            # Closing quote or end of string
             if /omit then 
                res ||:= move(1)
             else
                move(1)
-            break
-         } else if any('\\') then {
-            res ||:= move(2)
+            return res
          }
       }
-      return res
    end
 
    private maybe_set_authorization_header()

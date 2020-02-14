@@ -383,8 +383,9 @@ abstract class MenuComponent(Rect,Connectable)
    public selected(ev)
       if /keep_open_on_shift_flag | /ev | 
          /ev.shift | not(member(Mouse.RELEASE, ev.code) | ev.code === ("\r" | "\l")) then
-         close_all()
+         parent_component.close_all(self)
       fire(Event.ACTION, ev)
+      link
    end
 
    #
@@ -627,4 +628,3 @@ abstract class MenuSystem(MenuMode)
    public abstract go_left()
    public abstract make_partial()
 end
-

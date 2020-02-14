@@ -244,8 +244,8 @@ final abstract class ImageCache()
       local w, key, w2
       key := get_key(s, win) | fail
       w := member(imap, key)
-      /width := scale(w.get_width())
-      /height := scale(w.get_height())
+      width := need_integer(\width) | scale(w.get_width())
+      height := need_integer(\height) | scale(w.get_height())
       if w.get_width() = width & w.get_height() = height then
          return key
       key ||:= "#Resized to " || width || "x" || height
@@ -271,6 +271,8 @@ final abstract class ImageCache()
    #
    public static get_scaled_svg_key(s, width, height)
       local w, key, cc, svg
+      width := need_integer(width)
+      height := need_integer(height)
       key := s || "#Scaled to " || width || "x" || height
       if member(imap, key) then
          return key

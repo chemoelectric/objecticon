@@ -347,6 +347,8 @@ final abstract class Format()
    public static shell_escape(s)
       local t, ch
       s := need_text(s)
+      if *s = 0 then
+         return s || "$''"
       t := ""
       s ? {
          while t ||:= string(tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>~[]{}!$`\'\" '))) do {
@@ -370,7 +372,9 @@ final abstract class Format()
    # Convert a string into rc shell format by enclosing in single quotes
    #
    public static rc_escape(s)
-      return if upto('=^|*?&#()<>[]{}$`\' ', s) then
+      return if *s = 0 then
+         s || "''"
+      else if upto('=^|*?&#()<>[]{}$`\' ', s) then
          "'" || replace(s, "'", "''") || "'"
       else
          s

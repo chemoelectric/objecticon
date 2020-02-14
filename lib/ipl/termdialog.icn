@@ -34,7 +34,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
 
 $if _PLAN9
    public static launch_prog(de, file, line)
-      local pid, cmd
+      local pid, cmd, args
       pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
@@ -50,14 +50,15 @@ $if _PLAN9
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file(Format.rc_escape(file), line)
+      args := de.subst_file_list(file, line)
+      cmd := pop(args) | stop("Empty command list")
       null_stdio()
-      System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 $else
    public static launch_prog(de, file, line)
-      local pid, cmd
+      local pid, cmd, args
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -67,11 +68,12 @@ $else
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      cmd := de.subst_file(Format.shell_escape(file), line)
+      args := de.subst_file_list(file, line)
+      cmd := pop(args) | stop("Empty command list")
       System.setpgid()
       null_stdio()
       Files.bulk_close(50)
-      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec(cmd, args) | stop(&why)
       syserr("Not reached")
    end
 $endif
@@ -83,7 +85,7 @@ $endif
          "file": {
             file := ucs(Files.url_to_file(url)) | fail
             line := integer(url.extract_cgi_parameters()["line"][1])
-            if de := Mime.gen_desktop_entries_for_file(FilePath(file).get(-1)) then
+            if de := Mime.gen_desktop_entries_for_path(file) then
                launch_prog(de, file, line)
          }
       }

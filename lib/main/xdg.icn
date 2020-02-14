@@ -165,32 +165,107 @@ class DesktopEntry()
    package
       list_pos              # Used internally for initial_preference sort
 
+   public static const
+      # A command (including any flag) to prefix to the `subst_file`
+      # result for an entry with the terminal flag set.  It may be
+      # configured via the environment variable `OI_XDG_TERM_CMD`.  If
+      # unset, a search is made for a default.
+      #
+      TERM_CMD
+
+   private static find_term_cmd()
+      local s
+      every s := ["xterm" | "konsole" | "rxvt", "-e"] | ["gnome-terminal", "--"] do {
+         if Files.find_exe(s[1]) then
+            return s[1] || " " || s[2]
+      }
+      return "xterm -e"
+   end
+
+   private static init()
+      TERM_CMD := env_string("OI_XDG_TERM_CMD") | find_term_cmd()
+   end
+
+   private static gen_args(s)
+      local t
+      static ch
+      initial ch := ~' \t\n'
+      s ? while tab(upto(ch)) do {
+         if ="\"" then {
+            t := ""
+            repeat {
+               t ||:= tab(upto('\\"') | 0)
+               if ="\\" then
+                  t ||:= move(1)
+               else {
+                  move(1)
+                  break
+               }
+            }
+         } else
+            t := tab(many(ch))
+         suspend t
+      }
+   end
+
+   private expand_code(s, file, line)
+      local t, ch, iflag
+      t := ""
+      s ? {
+         while t ||:= tab(upto('%')) do {
+            move(1)
+            t ||:= case string(ch := move(1)) of {
+               "%": "%"
+               "i": 1(\icon, iflag := &yes)
+               "c": name
+               "k": ucs(source) | "Not utf-8"
+               !"uUfF": \file
+               "L": \line
+               !"dDnNvM": fail
+               default: ch
+            } | fail
+         }
+         if \iflag then
+            suspend u"--icon"
+         return t || tab(0)
+      }
+   end
+
    #
-   # Substitute a single file, with optional line number, into the
-   # Exec command, returning a command string.
+   # Substitute a single file (an absolute path or a URL), with
+   # optional line number, into the Exec command, generating a
+   # sequence of resulting arguments.
    #
-   public subst_file(f, line)
-      local r, s, fl
+   public subst_file_args(file, line)
+      local s
+      file := need_ucs(\file)
+      line := need_integer(\line)
       s := exec
       if \line then
          s := \exec_line
-      r := ""
-      s ? repeat {
-         r ||:= tab(upto('%') | 0)
-         move(1) | break
-         r ||:= case string(move(1)) of {
-            "%": "%"
-            "i": "--icon " || \icon
-            "c": name
-            "k": ucs(source)
-            !"uUfF": (fl := &yes, \f)
-            "L": \line
-         }
-      }
-      # If file not substituted, then add to the end.
-      if /fl then
-         r ||:= " " || \f
-      return r
+      if \terminal then
+         s := TERM_CMD || " " || s
+      suspend expand_code(gen_args(s), file, line)
+   end
+
+   #
+   # Helpful method to return the results of `subst_file_args()`
+   # as a list.
+   #
+   public subst_file_list(file, line)
+      return ipl.pdco.List{ subst_file_args(file, line) }
+   end
+
+   #
+   # This takes the results of `subst_file_args()` and produces a
+   # single string suitable for execution by the shell.
+   #
+   public subst_file_shell(file, line)
+$if _PLAN9
+      return String{ Format.rc_escape(subst_file_args(file, line)), " " }
+$else
+      return String{ Format.shell_escape(subst_file_args(file, line)), " " }
+$endif
    end
 
    public new(name, icon, source, exec, exec_line, path, terminal, initial_preference)
@@ -516,6 +591,7 @@ final abstract class IconTheme()
    public static find_icon(icon, size)
       local k, v
       icon := need_string(icon)
+      size := need_integer(size)
       k := icon || "/" || size
       if not(v := member(FIND_ICON_CACHE, k)) then {
          v := find_icon_helper(icon, size, theme, set()) | lookup_fallback_icon(icon)
@@ -646,12 +722,12 @@ final abstract class Mime()
       }
    end
 
-   private static mime_type_param(mt)
-      return map(string(mt)) | runerr(103, mt)
+   private static need_mime_type(mt)
+      return map(need_string(mt))
    end
 
    #
-   # Given a filename, return the corresponding mime type.
+   # Given a filename (not a path), return the corresponding mime type.
    #
    public static get_mime_type_for_file(f)
       return GLOBS.lookup(f).mime_type
@@ -661,14 +737,14 @@ final abstract class Mime()
    # Generate the generic icons defined for the given mime type.
    #
    public static gen_generic_icons(mt)
-      suspend .!member(GENERIC_ICONS, mime_type_param(mt))
+      suspend .!member(GENERIC_ICONS, need_mime_type(mt))
    end
 
    #
    # Generate the icons defined for the given mime type.
    #
    public static gen_icons(mt)
-      suspend .!member(ICONS, mime_type_param(mt))
+      suspend .!member(ICONS, need_mime_type(mt))
    end
 
    #
@@ -677,7 +753,7 @@ final abstract class Mime()
    # and then the generic icons.
    #
    public static gen_all_icons(mt)
-      mt := mime_type_param(mt)
+      mt := need_mime_type(mt)
       suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
    end
 
@@ -807,17 +883,20 @@ final abstract class Mime()
    end
 
    #
-   # Find an icon given a filename (string) and integer size.
+   # Find an icon given a filename (not a path) and integer size.
    #
    public static find_icon_for_file(file, size)
       return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
                                  size)
    end
 
+   private static true_key(dm, key)
+      succeed map(member(dm, key)) == "true"
+   end
+
    private static build_desktop_entry(dm, src)
       local name, icon, exec, path, terminal, try_exec, 
          initial_preference, exec_line
-      dm := member(dm, u"Desktop Entry") | fail
       member(dm, u"Type") == "Application" | fail
       name := member(dm, u"Name") | fail
 
@@ -830,13 +909,13 @@ final abstract class Mime()
       exec := member(dm, u"Exec") | fail
       exec_line := member(dm, u"ExecLine")
       path := member(dm, u"Path")
-      terminal := if map(member(dm, u"Terminal")) == "true" then &yes
+      terminal := Yes{ true_key(dm, u"Terminal") }
       initial_preference := integer(member(dm, u"InitialPreference"))
       return DesktopEntry(name, icon, src, exec, exec_line, path, terminal, initial_preference)
    end
 
    private static gen_desktop_mime_types(dm)
-      suspend "" ~== map(string(separate(member(member(dm, u"Desktop Entry"), u"MimeType"), ';')))
+      suspend "" ~== map(string(separate(member(dm, u"MimeType"), ';')))
    end
 
    private static scan_application_dir(p, prefix, t, u)
@@ -851,11 +930,18 @@ final abstract class Mime()
                if (not member(t, key)) & 
                   src := p.child(e.name).str() &
                   dm := Util.load_ini_file(src) &
-                  de := build_desktop_entry(dm, src) then 
-               {
-                  insert(t, key, de)
-                  every mt := gen_desktop_mime_types(dm) do
-                     inserts(u, mt, de)
+                  dm := member(dm, u"Desktop Entry")
+               then {
+                  # A Hidden entry adds a null entry to t, to mask any further
+                  # occurrences of the key; it is deleted below after scanning
+                  # is complete.
+                  if true_key(dm, u"Hidden") then
+                     insert(t, key, &null)
+                  else if de := build_desktop_entry(dm, src) then {
+                     insert(t, key, de)
+                     every mt := gen_desktop_mime_types(dm) do
+                        inserts(u, mt, de)
+                  }
                }
             }
          }
@@ -920,11 +1006,17 @@ final abstract class Mime()
    end
 
    private static read_desktop_entries()
-      local d, t, u, f, mm
+      local d, t, u, f, mm, k
       t := table()    # maps desktop entry names (ucs, eg u"kate.desktop") to DesktopEntry object
       u := table()    # mime-type (string) to list of DesktopEntry
       every d := BaseDir.gen_data_dirs() do
          scan_application_dir(FilePath(d).child("applications"), u"", t, u)
+
+      # Delete hidden (null) entries from t
+      every k := key(t) do {
+         if /t[k] then
+            delete(t, k)
+      }
 
       # Sort each list of DesktopEntry by the initial preference field.
       every sort_by_preference(!u)
@@ -940,6 +1032,20 @@ final abstract class Mime()
    end
 
    #
+   # Given a file path (as a string), if the path represents an
+   # existing directory, then the desktop entries for mime type
+   # "inode/directory" are returned; otherwise
+   # `gen_desktop_entries_for_file()` is called on the last path
+   # component.
+   #
+   public static gen_desktop_entries_for_path(file)
+      suspend if Files.is_directory(file) then
+         gen_desktop_entries("inode/directory")
+      else
+         gen_desktop_entries_for_file(FilePath(file).get(-1))
+   end
+
+   #
    # Generate the `DesktopEntry` objects suitable for a particular
    # filename (without path), with the most suitable first.
    #
@@ -951,7 +1057,7 @@ final abstract class Mime()
    # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
-      suspend .!member(DESKTOP_ENTRIES, mime_type_param(mt))
+      suspend .!member(DESKTOP_ENTRIES, need_mime_type(mt))
    end
 end
 

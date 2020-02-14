@@ -1,4 +1,4 @@
-import io, lang, xdg, ipl.options, net, util
+import io, lang, xdg, ipl.options, net
 
 procedure text_link(s)
    return if FileStream.stdout.is_flowterm_tty() then
@@ -28,6 +28,10 @@ procedure need_pair(a)
       return pair(ucs(a[1]), integer(a[2])) | help_stop("This option needs a UTF-8 string and an integer second parameter")
    else
       help_stop("This option needs two parameters")
+end
+
+procedure no_path(s)
+   return FilePath(s).get(-1)
 end
 
 procedure usage()
@@ -60,7 +64,7 @@ procedure main(a)
       "mime": {
          every s := !a do {
             s := ucs(s) | help_stop("Parameter not UTF-8")
-            write(s, ": ", text_link(Mime.get_mime_type_for_file(s)))
+            write(s, ": ", text_link(Mime.get_mime_type_for_file(no_path(s))))
          }
       }
 
@@ -86,7 +90,7 @@ procedure main(a)
 
       "icon-file": {
          p := need_pair(a)
-         write(file_link(Mime.find_icon_for_file(p.name, p.size)))
+         write(file_link(Mime.find_icon_for_file(no_path(p.name), p.size)))
       }
 
       "find-icon": {
@@ -101,7 +105,7 @@ procedure main(a)
 
       "de-file": {
          s := need_one(a)
-         every write(to_string(Mime.gen_desktop_entries_for_file(s), 3, &yes))
+         every write(to_string(Mime.gen_desktop_entries_for_file(no_path(s)), 3, &yes))
       }
 
       "dir": {
@@ -113,9 +117,9 @@ procedure main(a)
 
       "cmd": {
          s := need_one(a)
-         s1 := Format.shell_escape(FilePath(s).canonical().ucs()) | help_stop("Path not UTF-8")
-         every d := Mime.gen_desktop_entries_for_file(s) do {
-            cmd := d.subst_file(s1)
+         s1 := FilePath(s).canonical().ucs() | help_stop("Path not UTF-8")
+         every d := Mime.gen_desktop_entries_for_path(s) do {
+            cmd := d.subst_file_shell(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
                write(Files.begin_link(u), cmd, Files.end_link())
@@ -129,7 +133,7 @@ procedure main(a)
          u1 := URL(s) | help_stop("This option needs a valid URL parameter")
          s1 := u1.ucs()
          every d := Mime.gen_desktop_entries("x-scheme-handler/" || string(u1.scheme)) do {
-            cmd := d.subst_file(s1)
+            cmd := d.subst_file_shell(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
                write(Files.begin_link(u), cmd, Files.end_link())
