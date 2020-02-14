@@ -209,19 +209,26 @@ class DesktopEntry()
    end
 
    private expand_code(s, file, line)
-      if *s = 2 & s[1] == "%" then {
-         suspend ucs(case string(s[2]) of {
-            "%": "%"
-            "i": if \icon then "--icon" | icon
-            "c": name
-            "k": source
-            !"uUfF": \file
-            "L": \line
-            !"dDnNvM": &fail
-            default: s
-         })
-      } else
-         return s
+      local t, ch, iflag
+      t := ""
+      s ? {
+         while t ||:= tab(upto('%')) do {
+            move(1)
+            t ||:= case string(ch := move(1)) of {
+               "%": "%"
+               "i": 1(\icon, iflag := &yes)
+               "c": name
+               "k": ucs(source) | "Not utf-8"
+               !"uUfF": \file
+               "L": \line
+               !"dDnNvM": fail
+               default: ch
+            } | fail
+         }
+         if \iflag then
+            suspend u"--icon"
+         return t || tab(0)
+      }
    end
 
    #
