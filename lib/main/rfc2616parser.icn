@@ -1,7 +1,3 @@
-#
-# $Id$
-#
-
 package mail
 
 import 
@@ -34,8 +30,14 @@ class RFC2616Parser()
    end
 
    #
-   # As above, but returns the string without the surrounding quotes, and any
-   # escape sequences converted.
+   # qtext = <any CHAR excepting <">, "\" & CR, and including 
+   #         linear-white-space>
+   # quoted-pair =  "\" CHAR
+   # quoted-string = <"> *(qtext/quoted-pair) <">
+   #
+   # Must be preceded by a call to next_token().  Returns the string
+   # without the surrounding quotes, and any escape sequences
+   # converted.
    #
    private parse_and_convert_quoted_string()
       local res
