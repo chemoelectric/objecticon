@@ -216,7 +216,7 @@ class DesktopEntry()
             move(1)
             t ||:= case string(ch := move(1)) of {
                "%": "%"
-               "i": 1(\icon, iflag := &yes)
+               "i": 1("" ~== \icon, iflag := &yes)
                "c": name
                "k": ucs(source) | "Not utf-8"
                !"uUfF": \file
@@ -232,8 +232,8 @@ class DesktopEntry()
    end
 
    #
-   # Substitute a single file (an absolute path or a URL), with
-   # optional line number, into the Exec command, generating a
+   # Substitute a single file (an absolute path or a URL), and a line
+   # number (both are optional), into the Exec command, generating a
    # sequence of resulting arguments.
    #
    public subst_file_args(file, line)
