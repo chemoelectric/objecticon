@@ -77,7 +77,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       LOCAL_AM_PM
 
    private static init()
-      DEFAULT_FORMAT := "yyyy/MM/dd HH:mm:ss zzz"
+      DEFAULT_FORMAT := "yyyy'/'MM'/'dd HH':'mm':'ss z"
       MONTHS := ["January", "February", "March", "April", "May",
                  "June", "July", "August", "September", "October",
                  "November", "December",
@@ -286,7 +286,9 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
                   "w": format_week(w)
                   "d": format_int(self.mday, w)
                   "h": {
-                     if self.hour < 13 then
+                     if self.hour = 0 then
+                        format_int(12, w)
+                     else if self.hour < 13 then
                         format_int(self.hour, w)
                      else
                         format_int(self.hour - 12, w)
@@ -1058,7 +1060,7 @@ class TimeParser()
       every i := 1 to 2 do {
          s := map(l[i])
          if s == map(ss.move(*s)) then {
-            if i = 2 & (0 < \hh < 12) then 
+            if i = 2 & (0 <= \hh < 12) then 
                hh +:= 12
             return hh
          }
@@ -1111,6 +1113,13 @@ class TimeParser()
    end
 
    # 
+   # Get the next parsed hour in the 12-hour clock
+   # 
+   private parse_12h(w)
+      return parse_int(w, 1, 12) % 12
+   end
+
+   # 
    # Parse the instance using the given pattern string.  The pattern
    # consists of pattern chars and other chars.  Succeeds if the 
    # string could be parsed; fails and sets &why otherwise.
@@ -1123,8 +1132,11 @@ class TimeParser()
    # the widths are 4, 3 and 2 respectively.
    # 
    # Except for the month and year (see below), the only use of the
-   # width is to separate adjacent fields, eg yyyyMMdd with input
-   # "19991201".
+   # width is to separate adjacent numeric fields.  For example, with
+   # the format "HHmmss", because the field following the "HH" is
+   # numeric, the width of the hours field is limited to two digits,
+   # and in the input "123211" consumes only "12" (rather than the
+   # whole sequence of digits).
    # 
    # The possible pattern chars are :-
    # 
@@ -1155,7 +1167,7 @@ class TimeParser()
    # s - The second in the minute
    # 
    # a/A - am or pm.  Case is ignored.  If pm, then the hour is
-   # adjusted accordingly in the result.
+   # adjusted accordingly in the result.  Should only be used with "h".
    # 
    # b/B - Like a/A, but using the local am/pm names.
    #
@@ -1163,7 +1175,14 @@ class TimeParser()
    #
    # T - The timezone in RFC3339 format (eg Z or +04:00).
    #
-   # x - Matches the end of string, and can be used to detect extraneous input.
+   # x - Matches the remaining input, and can be used to skip extraneous
+   #     trailing input, which would otherwise cause an error.
+   #
+   # A literal string may be matched by enclosing it in single quotes.  For
+   # example ',' matches exactly one comma.
+   #
+   # Any other character matches zero or more instances of that character.  For
+   # example a space matches zero or more spaces.
    #
    public parse(s, p)
       ss := Scan(s)
@@ -1184,14 +1203,14 @@ class TimeParser()
                "N": m := parse_month(w, Time.LOCAL_MONTHS)
                "d": d := parse_int(w, 1, 31)
                "H": hh := parse_int(w, 0, 23)
-               "h": hh := parse_int(w, 0, 12)
+               "h": hh := parse_12h(w)
                "m": mm := parse_int(w, 0, 59)
                "s": sec := parse_int(w, 0, 59)
                "z": z := parse_timezone()
                "T": z := parse_rfc3339_timezone()
                "A"|"a": hh := parse_am_pm(hh, Time.AM_PM)
                "B"|"b": hh := parse_am_pm(hh, Time.LOCAL_AM_PM)
-               "x": ss.pos(0) | throw("Extraneous content")
+               "x": ss.tab(0)
             }
          } else if any('\'') then {
             lit := Time.match_literal()
@@ -1201,6 +1220,7 @@ class TimeParser()
             ss.tab(ss.many(ch))
          }
       }
+      ss.pos(0) | throw("Extraneous content")
       return Time(y, m, d, hh, mm, sec, z)
    end
 end
