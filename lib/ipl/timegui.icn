@@ -57,7 +57,7 @@ class DateField(DropDown)
    # currently valid.
    #
    public get_value()
-      return Time.parse(view.get_contents(), format || "x")
+      return Time.parse(view.get_contents(), format)
    end
 
    # Set the value from the given `Time` instance.
@@ -95,7 +95,7 @@ class DateField(DropDown)
       DropDown.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
-      format := "dd-MMM-yyyy"
+      format := "dd'-'MMM'-'yyyy"
       set_value(val)
       return
    end
@@ -111,7 +111,7 @@ class TimeField(Spin)
       last_val
 
    public override create_view()
-      return SpinTextField().set_filter(&digits ++ ':')
+      return SpinTextField()
    end
 
    public override do_increment(ev)
@@ -132,7 +132,7 @@ class TimeField(Spin)
    # currently valid.
    #
    public get_value()
-      return Time.parse(view.get_contents(), format || "x")
+      return Time.parse(view.get_contents(), format)
    end
 
    # Set the value from the given `Time` instance.
@@ -184,7 +184,7 @@ class TimeField(Spin)
       Spin.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
-      format := "HH:mm:ss"
+      format := "HH':'mm':'ss"
       set_value(val)
       return
    end
