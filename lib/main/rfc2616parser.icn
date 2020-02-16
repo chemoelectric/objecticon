@@ -271,7 +271,7 @@ class RFC2616Parser()
 
    private end_check(o)
       next_token()
-      pos(0) | throw("Extraneous input:" || tab(0))
+      pos(0) | throw("Extraneous input: " || tab(0))
       return o
    end
 
