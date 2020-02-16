@@ -108,7 +108,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Output object
    #
    private override object_output(oo)
-      oo.object_string(self, format("MMMM d, yyyy H:mm.ss z"))
+      oo.object_string(self, format("MMMM d, yyyy HH:mm:ss z"))
    end
 
    #
@@ -163,6 +163,18 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          format_int(self.year % 100, w)
       else
          format_int(self.year, w)
+   end
+
+   #
+   # Format a 12-hour hour
+   # 
+   private format_12h(w)
+      return if self.hour = 0 then
+         format_int(12, w)
+      else if self.hour < 13 then
+         format_int(self.hour, w)
+      else
+         format_int(self.hour - 12, w)
    end
 
    #
@@ -285,14 +297,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
                   "N": format_month(w, LOCAL_MONTHS)
                   "w": format_week(w)
                   "d": format_int(self.mday, w)
-                  "h": {
-                     if self.hour = 0 then
-                        format_int(12, w)
-                     else if self.hour < 13 then
-                        format_int(self.hour, w)
-                     else
-                        format_int(self.hour - 12, w)
-                  }
+                  "h": format_12h(w)
                   "H": format_int(self.hour, w)
                   "m": format_int(self.min, w)
                   "s": format_int(self.sec, w)
