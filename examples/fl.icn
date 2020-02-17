@@ -2,7 +2,7 @@ import io, ipl.options, util, net
 
 global fl, opts, non_ws
 
-record Loc(str, file, line)
+record Loc(str, file, line, col)
 
 procedure try_url(s)
    if match("http://" | "https://" | "file:/", s) then
@@ -11,37 +11,49 @@ end
 
 procedure try_file(x)
    if Files.access(x.file) then
-      return do_link(x.str, FilePath(x.file).canonical().str(), x.line)
+      return do_link(x.str, FilePath(x.file).canonical().str(), x.line, x.col)
 end
 
-procedure do_link(x, y, line)
-   return Files.begin_link(y, line) || x || Files.end_link()
+procedure do_link(x, y, line, col)
+   return Files.begin_link(y, line, col) || x || Files.end_link()
 end
 
 procedure whole()
    suspend tab(many(non_ws))
 end
 
+procedure digs()
+   suspend tab(many(&digits))
+end
+
+procedure to_delim()
+   suspend tab(upto(':'))
+end
+
 procedure with_line_no()
    local f, l, s
-   suspend s := ((f := tab(upto(':'))) || move(1) || (l := tab(many(&digits))) || =":") & Loc(s, f, integer(l))
+   suspend s := ((f := to_delim()) || move(1) || (l := digs()) || =":") & Loc(s, f, 0 < integer(l))
+end
+
+procedure with_line_no_and_col()
+   local f, l, c, s
+   suspend s := ((f := to_delim()) || move(1) || (l := digs()) || =":" || (c := digs()) || =":") &
+           Loc(s, f, 0 < integer(l), 0 < integer(c))
 end
 
 procedure without_line_no()
    local s
-   suspend s := (tab(upto(':')) | whole()) & Loc(s, s)
+   suspend s := (to_delim() | whole()) & Loc(s, s)
 end
 
 procedure linkify(s)
    local r
    r := ""
-   s ? repeat {
-      r ||:= tab(upto(non_ws) | 0)
-      if pos(0) then
-         break
-      r ||:= try_url(whole()) | try_file(with_line_no() | without_line_no()) | whole()
+   s ? {
+      while r ||:= tab(upto(non_ws)) do
+         r ||:= try_url(whole()) | try_file(with_line_no_and_col() | with_line_no() | without_line_no()) | whole()
+      return r || tab(0)
    }
-   return r
 end
 
 procedure do_one(f)

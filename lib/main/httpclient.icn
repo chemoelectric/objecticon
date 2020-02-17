@@ -509,13 +509,13 @@ $endif
       t := SortTable(, Text.caseless_compare)
       s ? while tab(upto(TOKEN_CHAR)) do {
          k := tab(many(TOKEN_CHAR))
-         if ="=" then {
+         v := if ="=" then {
             if any('\"') then
-               v := parse_quoted_string(&yes)
+               parse_and_convert_quoted_string()
             else
-               v := tab(many(TOKEN_CHAR)) | ""
+               tab(many(TOKEN_CHAR)) | ""
          } else
-            v := &null
+            &null
          t.insert(k, v)
       }
       return t
@@ -524,27 +524,39 @@ $endif
    #
    # Parse a string in double quotes; a scan must be in progress with
    # &pos at a ".  &pos will be moved beyond the terminating quote.
-   # 
-   # :Parameters :
-   # :  `omit` - if non-null, omit the quotes from the result
-   public static parse_quoted_string(omit)
+   #
+   # The whole matched string including enclosing quotes is returned.
+   #
+   public static parse_quoted_string()
       local res
-      if /omit then
-         res := move(1)
-      else {
-         res := ""
-         move(1)
-      }
+      res := move(1)
       repeat {
          res ||:= tab(upto('\\"') | 0)
          if any('\\') then
             res ||:= move(2)
          else {
             # Closing quote or end of string
-            if /omit then 
-               res ||:= move(1)
-            else
-               move(1)
+            res ||:= move(1)
+            return res
+         }
+      }
+   end
+
+   #
+   # As `parse_quoted_string()` above, but returns the string without
+   # the surrounding quotes, and any escape sequences converted.
+   #
+   public static parse_and_convert_quoted_string()
+      local res
+      res := ""
+      move(1)
+      repeat {
+         res ||:= tab(upto('\\"') | 0)
+         if ="\\" then
+            res ||:= move(1)
+         else {
+            # Closing quote or end of string
+            move(1)
             return res
          }
       }
@@ -560,27 +572,29 @@ $endif
       return
    end
 
-   private parse_cookie_string(s)
+   private static parse_cookie_string(s)
       local c, k, v, t, d
 
-      s ? repeat {
-         tab(upto(TOKEN_CHAR)) | break
+      s ? while tab(upto(TOKEN_CHAR)) do {
          k := tab(many(TOKEN_CHAR))
-         if ="=" then {
+         v := if ="=" then {
             if any('\"') then
                # The first one (c.value) keeps its quotes, the others don't.
-               v := parse_quoted_string(c)
+               if /c then parse_quoted_string()
+                     else parse_and_convert_quoted_string()
             else
-               v := tab(upto(';') | 0)
+               tab(upto(';') | 0)
          } else
-            v := &null
+            &null
          if /c then {
             c := Cookie()
             c.name := k
             c.value := v
          } else {
             case map(k) of {
-               "expires" : c.expires := Time.parse(v, "E, dd-MMM-yyyy hh:mm:ss zzz")
+               # Allow old netscape format or format from the later RFCs.
+               "expires" : c.expires := Time.parse(v, "E, d MMM yyyy HH':'mm':'ss z" |
+                                                      "E, d'-'MMM'-'yyyy HH':'mm':'ss z")
                "path" : c.path := v
                "domain" : c.domain := v
                "secure" : c.secure := &yes
@@ -679,7 +693,6 @@ $endif
 
    private create_cookie_header()
       local s, e, f, domain, path, c, now, ver, t
-
       domain := string(map(request.url.get_host()))
       path := string(request.url.get_file())
       now := Time()
@@ -689,7 +702,9 @@ $endif
             if match(f[1], path) then {
                every c := (!sort(f[2]))[2] do {
                   t := c.expires
-                  if /t | t.after(now) then {
+                  if (/t | t.after(now)) &
+                     (/c.secure | request.url.get_scheme() == "https")
+                  then {
                      if *s > 0 then
                         s ||:= "; "
                      s ||:= c.name

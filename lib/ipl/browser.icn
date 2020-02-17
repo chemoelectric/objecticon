@@ -495,7 +495,7 @@ class HttpSubWorker(SubWorker)
          exp := now + \ma
          if /exp &
             s := hres.get_first_header("Expires") then {
-               exp := Time.parse(s, "E, d MMM yyyy hh:mm:ss z").get_unix_seconds() | fail
+               exp := Time.parse(s, "E, d MMM yyyy HH':'mm':'ss z").get_unix_seconds() | fail
             }
          if \ (lm | etag) then
             return CacheControl(exp, lm, etag)
@@ -505,7 +505,7 @@ class HttpSubWorker(SubWorker)
             return CacheControl(now + (0 < ma))
       }
       if s := hres.get_first_header("Expires") then {
-         exp := Time.parse(s, "E, d MMM yyyy hh:mm:ss z").get_unix_seconds() | fail
+         exp := Time.parse(s, "E, d MMM yyyy HH':'mm':'ss z").get_unix_seconds() | fail
          return CacheControl(now < exp)
       }
       return CacheControl()
@@ -1926,7 +1926,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
 
    public static parse(s)
       local w, y
-      s ? {
+      trim(s, ' \t') ? {
          (y := integer(tab(many(&digits))) &
           1000 <= y <= 9999 &
           ="-W" &
@@ -1934,7 +1934,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
           1 <= w <= 53 &
           pos(0)) | fail
       }
-      return Time.get_week_of_year(y, w)
+      return Time.get_time_of_week_date(y, w)
    end
 
    public override get_save_value()
@@ -1982,7 +1982,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
 
    public static parse(s)
       s ?:= tab(upto('.'))
-      return Time.parse(s, "HH':'mm':'ssx")
+      return Time.parse(s, "HH':'mm':'ss")
    end
 
    public override new(init_val)
@@ -2012,7 +2012,7 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
 
    public static parse(s)
       s ?:= tab(upto('.'))
-      return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx")
+      return Time.parse(s, "yyyy'-'MM'-'dd'T'HH':'mm':'ss")
    end
 
    public override get_form_value()
@@ -2174,7 +2174,7 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
             s ||:= tab(0)
          }
       }
-      return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx")
+      return Time.parse(s, "yyyy'-'MM'-'dd'T'HH':'mm':'ssT")
    end
 
    public override get_form_value()
@@ -2222,7 +2222,7 @@ class FormMonthYearField(Component, FormEntry, HasAscent)
 
    public static parse(s)
       local y, m
-      s ? {
+      trim(s, ' \t') ? {
          (y := integer(tab(many(&digits))) &
           1000 <= y <= 9999 &
           ="-" &
@@ -2230,7 +2230,7 @@ class FormMonthYearField(Component, FormEntry, HasAscent)
           1 <= m <= 12 &
           pos(0)) | fail
       }
-      return Time(y, m)
+      return Time(y, m, 1)
    end
 
    public override get_form_value()
@@ -4184,7 +4184,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             add_form_component(e, p, q, context)
          }
          "date": {
-            v := Time.parse(e.get_attribute(u"VALUE"), "yyyy-MM-dd") | Time()
+            v := Time.parse(e.get_attribute(u"VALUE"), "yyyy'-'MM'-'dd") | Time()
             q := FormDateField(v)
             add_form_component(e, p, q, context)
          }

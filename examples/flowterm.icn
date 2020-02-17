@@ -99,19 +99,21 @@ class DesktopRunner(ExternalRunner)
       return \desktop_entry.path
    end
 
-   private line_param()
-      local line
-      if url.scheme == "file" then
-         line := integer(url.extract_cgi_parameters()["line"][1])
-      return line
+   private do_subst(f)
+      local line, col, t
+      if url.scheme == "file" & t := url.extract_cgi_parameters() then {
+         if line := 0 < integer(member(t, "line")[1]) then
+            col := 0 < integer(member(t, "col")[1])
+      }
+      return f(subst, line, col)
    end
 
    public override get_command()
-      return desktop_entry.subst_file_shell(subst, line_param())
+      return do_subst(desktop_entry.subst_file_shell)
    end
 
    public override get_command_list()
-      return desktop_entry.subst_file_list(subst, line_param())
+      return do_subst(desktop_entry.subst_file_list)
    end
 
    public new(desktop_entry, url, subst)
