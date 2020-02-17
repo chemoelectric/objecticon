@@ -281,15 +281,17 @@ class WeekField(DropDown)
    #
    public get_value()
       local w, y
-      map(view.get_contents()) ? {
+      trim(map(view.get_contents())) ? {
          (y := integer(tab(many(&digits))) &
           1000 <= y <= 9999 &
-          =" week " &
+          tab(many(' ')) &
+          ="week" &
+          tab(many(' ')) &
           w := integer(tab(many(&digits))) &
           1 <= w <= 53 &
           pos(0)) | fail
       }
-      return Time.get_week_of_year(y, w)
+      return Time.get_time_of_week_date(y, w)
    end
 
    # Set the value from the given `Time` instance.
@@ -379,7 +381,7 @@ class WeekButton(TextButton)
       self.time := clone(t)
       set_constraint("x_fill", &yes)
       set_border(EmptyBorder())
-      set_label(t.get_week()[1])
+      set_label(t.get_week_date().week)
       set_no_click_focus(&yes)
       return
    end
@@ -423,7 +425,8 @@ class Calendar(Component)
    end
 
    private day_press(ev, src)
-      if compare(curr, src.time) then return
+      if compare(curr, src.time) then
+         return
       curr := src.time
       showing := clone(curr).set_mday(1)
       update()
@@ -444,16 +447,21 @@ class Calendar(Component)
    end
 
    private compare(t1, t2)
-      return if /week_mode_flag then
+      succeed if /week_mode_flag then
          (t1.year = t2.year & t1.month = t2.month & t1.mday = t2.mday)
-      else
-         equals(t1.get_week(), t2.get_week())
+      else {
+         t1 := t1.get_week_date()
+         t2 := t2.get_week_date()
+         (t1.year = t2.year & t1.week = t2.week)
+      }
    end
 
    private setup_buttons()
       local p, t, w, b, s, bg
       t := clone(showing)
-      t.set_mday(1).set_mday(1 - (t.wday + 5) % 7)
+      t.mday = 1 | syserr("Showing mday wrong")
+      # First Monday on or before 1st of displayed month.
+      t.set_mday(1 - (t.wday + 5) % 7)
       p := Panel().
          set_layout(GridLayout().set_doi(0).set_dii(0)).
          set_constraint("eol", &yes)
@@ -484,7 +492,6 @@ class Calendar(Component)
             } else
                b.set_fg("grey")
             b.connect(day_press, Event.ACTION)
-            #write(to_string(curr),"-v-",to_string(t))
             if compare(curr, t) then
                b.set_bg("pale blue")
             bg.add(b)
