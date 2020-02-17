@@ -590,12 +590,18 @@ $endif
    # Return the opening escape sequence for an embedded link.  File f
    # must be a `URL` (properly url-encoded), or an absolute path.
    #
-   public static begin_link(f, line)
+   public static begin_link(f, line, col)
+      local t
       is(f, URL) | {
          f := URL(file_to_url(f)).
             set_host(&host) | runerr("Failed to convert to URL: " || &why, f)
-         if \line then
-            f.set_query("line=" || line)
+         if \line then {
+            t := table()
+            insert(t, "line", need_integer(line, 1))
+            if \col then
+               insert(t, "col", need_integer(col, 1))
+            f.set_cgi_parameters(t)
+         }
       }
       return "\e[!\"" || f.str() || "\"L"
    end

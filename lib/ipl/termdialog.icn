@@ -29,7 +29,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       complete_function,
       line
 
-   public static launch_prog(de, file, line)
+   public static launch_prog(de, file, line, col)
       local pid, cmd, args
       pid := System.fork() | fail
       if pid > 0 then {
@@ -40,7 +40,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      args := de.subst_file_list(file, line)
+      args := de.subst_file_list(file, line, col)
       cmd := pop(args) | stop("Empty command list")
       System.setpgid()
       null_stdio()
@@ -50,14 +50,17 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    end
 
    public override link_left_clicked(url)
-      local file, line, de
+      local file, line, col, de, t
       case string(url.scheme) of {
          "text": input.insert_string(ucs(url.get_decoded_path()))
          "file": {
             file := ucs(Files.url_to_file(url)) | fail
-            line := integer(url.extract_cgi_parameters()["line"][1])
+            if t := url.extract_cgi_parameters() then {
+               if line := 0 < integer(member(t, "line")[1]) then
+                  col := 0 < integer(member(t, "col")[1])
+            }
             if de := Mime.gen_desktop_entries_for_path(file) then
-               launch_prog(de, file, line)
+               launch_prog(de, file, line, col)
          }
       }
    end
