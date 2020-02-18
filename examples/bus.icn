@@ -1819,7 +1819,7 @@ class BusView(Dialog)
    end
 
    private on_icon_event(ev)
-      if ev.code === "\^q" then
+      if ev.code === "\^q" & /ev.release then
          dispose()
    end
 
