@@ -807,8 +807,8 @@ class Worker()
       pool.owner.configure_http_client(httpc)
    end
 
-$if _PLAN9
    private handle_launch_req()
+$if _PLAN9
       local pid, f
       if (\req.referer).scheme == ("http" | "https") then
          return error("Can't launch a prog from an http page")
@@ -822,9 +822,7 @@ $if _PLAN9
       null_stdio()
       System.exec("/bin/rc", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")
-   end
 $else
-   private handle_launch_req()
       local pid, f
       if (\req.referer).scheme == ("http" | "https") then
          return error("Can't launch a prog from an http page")
@@ -840,8 +838,8 @@ $else
       Files.bulk_close(100)
       System.exec("/bin/sh", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")
-   end
 $endif
+   end
 
    private handle_cache_req()
       return pool.cache.get(req.url) | error("Cache entry expired")

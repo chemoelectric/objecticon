@@ -8,16 +8,11 @@ import
    http,
    net,
    xdg,
-   posix,
-$if ~ _PLAN9
-   ipl.childwait,
-$endif
    ipl.options,
    ipl.browser,
    ipl.strings,
    ipl.lists,
    ipl.pdco,
-   ipl.io,
    ipl.printf
 
 global opts
@@ -148,80 +143,17 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
                      Mime.gen_desktop_entries(Mime.alternative_mime_types(Mime.get_mime_type_for_file(\res.fname)))}
    end
 
-   public static create_open_with_menu_item(de, path)
+   public static create_open_with_menu_item(de, subst)
       local m
       m := TextMenuItem().
          set_label(de.name).
-         connect(create launch_prog(de, path), Event.ACTION)
+         connect(create de.launch_prog(subst), Event.ACTION)
       m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
       return m
    end
 
-$if _PLAN9
-   public static launch_prog(de, file)
-      local pid, cmd, args
-      if \opts["v"] then {
-         ewrite("Desktop entry: ", to_string(de, 3, &yes))
-         ewrite("File: ", image(file))
-      }
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
-                             ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
-      if pid > 0 then {
-         # Parent
-         return
-      }
-
-      # Unmount our window directories in /n.  If we didn't do this,
-      # and since we are copying the namespace, this would prevent
-      # these windows closing until the launched application closes.
-      Files.unmount_windows()
-
-      # Set the working directory for the child process
-      Files.chdir(\de.path | Files.get_home())
-      # Get the command to run.
-      args := de.subst_file_list(file)
-      if \opts["v"] then 
-         ewrite("Command list: ", to_string(args))
-      cmd := pop(args) | stop("Empty command list")
-      null_stdio()
-      System.exec(cmd, args) | stop(&why)
-      syserr("Not reached")
-   end
-$else
-   public static launch_prog(de, file)
-      local pid, cmd, args
-      if \opts["v"] then {
-         ewrite("Desktop entry: ", to_string(de, 3, &yes))
-         ewrite("File: ", image(file))
-      }
-      pid := System.fork() | fail
-      if pid > 0 then {
-         # Parent
-         ChildWait.add_pid(pid, on_prog_exit)
-         return
-      }
-      # Set the working directory for the child process
-      Files.chdir(\de.path | Files.get_home())
-      # Get the command to run.
-      args := de.subst_file_list(file)
-      if \opts["v"] then 
-         ewrite("Command list: ", to_string(args))
-      cmd := pop(args) | stop("Empty command list")
-      System.setpgid()
-      null_stdio()
-      Files.bulk_close(100)
-      System.exec(cmd, args) | stop(&why)
-      syserr("Not reached")
-   end
-
-   private static on_prog_exit(r)
-      if \opts["v"] then
-         ewrite("Child application exited: ", to_string(r))
-   end
-$endif
-
    private on_icon_event(ev)
-      if ev.code === "\^q" then
+      if ev.code === "\^q"  & /ev.release then
          dispose()
    end
 
@@ -909,7 +841,7 @@ $endif
    end
 
    private on_table_rpress(ev)
-      local popup, menu, l, d, m, de
+      local popup, menu, l, d, m, de, subst
 
       msg()
 
@@ -934,8 +866,9 @@ $endif
                set_label("Copy escaped result").
                connect(create on_copy_escaped_result(d), Event.ACTION))
             m := Menu().set_label("Open with")
+            subst := Subst(d.full_path)
             every de := BrowserDialog.gen_desktop_entries_for_resp(d.resp) do
-               m.add(BrowserDialog.create_open_with_menu_item(de, d.full_path))
+               m.add(BrowserDialog.create_open_with_menu_item(de, subst))
             if *m.children > 0 then 
                menu.add(m)
          }
@@ -1487,19 +1420,20 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private populate_link_menu(url, m)
-      local f, de, m1
+      local de, m1, subst
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
       m1 := Menu().set_label("Open with")
       if url.scheme == "file" then {
-         if f := ucs(Files.url_to_file(url)) & Files.access(f) then {
-            every de := Mime.gen_desktop_entries_for_path(f) do
-                m1.add(BrowserDialog.create_open_with_menu_item(de, f))
+         if subst := Subst.from_URL(url) & Files.access(subst.file) then {
+            every de := Mime.gen_desktop_entries_for_path(subst.file) do
+                m1.add(BrowserDialog.create_open_with_menu_item(de, subst))
          }
       } else {
+         subst := Subst.from_URL(url)
          every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
-            m1.add(BrowserDialog.create_open_with_menu_item(de, url.ucs()))
+            m1.add(BrowserDialog.create_open_with_menu_item(de, subst))
          if url.scheme == ("http" | "https") then {
             m.add(TextMenuItem().
                   set_label("Download").
@@ -1606,32 +1540,35 @@ class BrowserTab(TabItem, BrowserUI)
       local de, file
       de := BrowserDialog.gen_desktop_entries_for_resp(res) | fail
       file := make_display_file(res)
-      BrowserDialog.launch_prog(de, file)
+      de.launch_prog(Subst(file))
       parent_dialog.update_visited(res.url)
       return
    end
 
    public override goto_externally(url)
-      local f, de, sc
-      if f := ucs(Files.url_to_file(url)) &
-         Files.access(f) &
-         not Files.is_directory(f) &
-         not (string(map(Files.get_extension(f))) ==
-              ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
-         de := Mime.gen_desktop_entries_for_file(FilePath(f).get(-1))
-      then {
-         BrowserDialog.launch_prog(de, f)
-         parent_dialog.update_visited(url)
-         return
-      }
-
-      if sc := string(url.scheme) &
-         not( sc == ("http" | "https" | "file") ) &
-         de := Mime.gen_desktop_entries("x-scheme-handler/" || sc)
-      then {
-         BrowserDialog.launch_prog(de, url.ucs())
-         parent_dialog.update_visited(url)
-         return
+      local f, de, subst
+      if url.scheme == "file" then {
+         if subst := Subst.from_URL(url) &
+            f := subst.file &
+            Files.access(f) &
+            not Files.is_directory(f) &
+            not (string(map(Files.get_extension(f))) ==
+                 ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
+            de := Mime.gen_desktop_entries_for_path(f)
+         then {
+            de.launch_prog(subst)
+            parent_dialog.update_visited(url)
+            return
+         }
+      } else {
+         if not( url.scheme == ("http" | "https") ) &
+            subst := Subst.from_URL(url) &
+            de := Mime.gen_desktop_entries("x-scheme-handler/" || url.scheme)
+         then {
+            de.launch_prog(subst)
+            parent_dialog.update_visited(url)
+            return
+         }
       }
    end
 

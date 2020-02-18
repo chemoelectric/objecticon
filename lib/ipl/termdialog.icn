@@ -1,11 +1,7 @@
 package ipl.termdialog
 
 import
-   gui, io, graphics, util, undo, ipl.vt, xdg, 
-$if ~ _PLAN9
-      ipl.childwait,
-$endif
-      ipl.io, posix
+   gui, io, graphics, util, undo, ipl.vt, xdg
 
 class TermTextField(CompleteField)
    public override keeps(e)
@@ -32,64 +28,15 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       complete_function,
       line
 
-$if _PLAN9
-   public static launch_prog(de, file, line, col)
-      local pid, cmd, args
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
-                             ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
-      if pid > 0 then {
-         # Parent
-         return
-      }
-
-      # Unmount our window directories in /n.  If we didn't do this,
-      # and since we are copying the namespace, this would prevent
-      # these windows closing until the launched application closes.
-      Files.unmount_windows()
-
-      # Set the working directory for the child process
-      Files.chdir(\de.path | Files.get_home())
-      # Get the command to run.
-      args := de.subst_file_list(file, line, col)
-      cmd := pop(args) | stop("Empty command list")
-      null_stdio()
-      System.exec(cmd, args) | stop(&why)
-      syserr("Not reached")
-   end
-$else
-   public static launch_prog(de, file, line, col)
-      local pid, cmd, args
-      pid := System.fork() | fail
-      if pid > 0 then {
-         # Parent
-         ChildWait.add_pid(pid)
-         return
-      }
-      # Set the working directory for the child process
-      Files.chdir(\de.path | Files.get_home())
-      # Get the command to run.
-      args := de.subst_file_list(file, line, col)
-      cmd := pop(args) | stop("Empty command list")
-      System.setpgid()
-      null_stdio()
-      Files.bulk_close(50)
-      System.exec(cmd, args) | stop(&why)
-      syserr("Not reached")
-   end
-$endif
-
    public override link_left_clicked(url)
-      local file, line, col, de, t
+      local subst, de
       case string(url.scheme) of {
          "text": input.insert_string(ucs(url.get_decoded_path()))
          "file": {
-            file := ucs(Files.url_to_file(url)) | fail
-            if t := url.extract_cgi_parameters() then {
-               if line := 0 < integer(member(t, "line")[1]) then
-                  col := 0 < integer(member(t, "col")[1])
-            }
-            if de := Mime.gen_desktop_entries_for_path(file) then
-               launch_prog(de, file, line, col)
+            if subst := Subst.from_URL(url) &
+               de := Mime.gen_desktop_entries_for_path(subst.file)
+            then
+               de.launch_prog(subst)
          }
       }
    end
@@ -379,7 +326,7 @@ $endif
    end
 
    private on_icon_event(ev)
-      if ev.code === "\^q" then 
+      if ev.code === "\^q" & /ev.release then 
          dispose()
    end
 

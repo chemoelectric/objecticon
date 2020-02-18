@@ -6,6 +6,11 @@ import
    lang,
    gui,
    cairo,
+   posix,
+   ipl.io,
+$if ~ _PLAN9
+   ipl.childwait,
+$endif
    ipl.tables,
    ipl.strings,
    ipl.wildcard,
@@ -149,6 +154,50 @@ package class CachedDir()
 end
 
 #
+# This class holds the data needed to expand a `DesktopEntry`'s Exec or
+# ExecLine into a command.
+#
+class Subst()
+   public const
+      file,
+      line,
+      col
+
+   #
+   # Create a `Subst` given a `URL`.  A `file:` URL will have its
+   # parameter string examined to extract valid line and col
+   # parameters.
+   #
+   # Fails and sets `&why` if URL is not UTF-8 or a non-local file.
+   #
+   public static from_URL(url)
+      local t, file, line, col
+      if url.scheme == "file" then {
+         file := Files.url_to_file(url) | fail
+         file := ucs(file) | return error("File not UTF-8")
+         if t := url.extract_cgi_parameters() then {
+            if line := 0 < integer(member(t, "line")[1]) then
+               col := 0 < integer(member(t, "col")[1])
+         }
+      } else
+         file := url.ucs() | return error("URL not UTF-8")
+      return Subst(file, line, col)
+   end
+
+   #
+   # Create an instance from a file (ucs, an absolute path or a URL),
+   # a line (integer) and a column number (integer).  All fields are
+   # optional.
+   #
+   public new(file, line, col)
+      self.file := need_ucs(\file)
+      if self.line := need_integer(\line, 1) then
+         self.col := need_integer(\col, 1)
+      return
+   end
+end
+
+#
 # Represents info from a ".desktop" file
 #
 class DesktopEntry()
@@ -186,6 +235,54 @@ class DesktopEntry()
       TERM_CMD := env_string("OI_XDG_TERM_CMD") | find_term_cmd()
    end
 
+   #
+   # Helpful method to launch an application using this `DesktopEntry`
+   # with the given `Subst` values applied to its Exec entry.
+   #
+   public launch_prog(subst)
+$if _PLAN9
+      local pid, cmd, args
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
+                             ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
+      if pid > 0 then {
+         # Parent
+         return
+      }
+
+      # Unmount our window directories in /n.  If we didn't do this,
+      # and since we are copying the namespace, this would prevent
+      # these windows closing until the launched application closes.
+      Files.unmount_windows()
+
+      # Set the working directory for the child process
+      Files.chdir(\path | Files.get_home())
+      # Get the command to run.
+      args := subst_file_list(subst)
+      cmd := pop(args) | stop("Empty command list")
+      null_stdio()
+      System.exec(cmd, args) | stop(&why)
+      syserr("Not reached")
+$else
+      local pid, cmd, args
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         ChildWait.add_pid(pid)
+         return
+      }
+      # Set the working directory for the child process
+      Files.chdir(\path | Files.get_home())
+      # Get the command to run.
+      args := subst_file_list(subst)
+      cmd := pop(args) | stop("Empty command list")
+      System.setpgid()
+      null_stdio()
+      Files.bulk_close(50)
+      System.exec(cmd, args) | stop(&why)
+      syserr("Not reached")
+$endif
+   end
+
    private static gen_args(s)
       local t
       static ch
@@ -208,7 +305,7 @@ class DesktopEntry()
       }
    end
 
-   private expand_code(s, file, line, col)
+   private expand_code(s, subst)
       local t, ch, iflag
       t := ""
       s ? {
@@ -219,10 +316,13 @@ class DesktopEntry()
                "i": 1("" ~== \icon, iflag := &yes)
                "c": name
                "k": ucs(source) | "Not utf-8"
-               !"uUfF": \file
-               "L": \line
-               "C": \col
-               "P": if \line then if \col then line || ":" || col else line
+               !"uUfF": \subst.file
+               "L": \subst.line
+               "C": \subst.col
+               "P": if \subst.line then if \subst.col then
+                       subst.line || ":" || subst.col
+                    else
+                       subst.line
                !"dDnNvM": fail
                default: ch
             } | fail
@@ -234,40 +334,36 @@ class DesktopEntry()
    end
 
    #
-   # Substitute a single file (an absolute path or a URL), a line and
-   # a column number (all are optional), into the Exec command,
-   # generating a sequence of resulting arguments.
+   # Substitute from the given `Subst`, into the Exec (or ExecLine)
+   # command, generating a sequence of resulting arguments.
    #
-   public subst_file_args(file, line, col)
+   public subst_file_args(subst)
       local s
-      file := need_ucs(\file)
-      if line := need_integer(\line, 1) then
-         col := need_integer(\col, 1)
       s := exec
-      if \line then
+      if \subst.line then
          s := \exec_line
       if \terminal then
          s := TERM_CMD || " " || s
-      suspend expand_code(gen_args(s), file, line, col)
+      suspend expand_code(gen_args(s), subst)
    end
 
    #
    # Helpful method to return the results of `subst_file_args()`
    # as a list.
    #
-   public subst_file_list(file, line, col)
-      return ipl.pdco.List{ subst_file_args(file, line, col) }
+   public subst_file_list(subst)
+      return ipl.pdco.List{ subst_file_args(subst) }
    end
 
    #
    # This takes the results of `subst_file_args()` and produces a
    # single string suitable for execution by the shell.
    #
-   public subst_file_shell(file, line, col)
+   public subst_file_shell(subst)
 $if _PLAN9
-      return String{ Format.rc_escape(subst_file_args(file, line, col)), " " }
+      return String{ Format.rc_escape(subst_file_args(subst)), " " }
 $else
-      return String{ Format.shell_escape(subst_file_args(file, line, col)), " " }
+      return String{ Format.shell_escape(subst_file_args(subst)), " " }
 $endif
    end
 
