@@ -6,6 +6,9 @@ import
    lang,
    gui,
    cairo,
+   posix,
+   ipl.io,
+   ipl.childwait,
    ipl.tables,
    ipl.strings,
    ipl.wildcard,
@@ -228,6 +231,30 @@ class DesktopEntry()
 
    private static init()
       TERM_CMD := env_string("OI_XDG_TERM_CMD") | find_term_cmd()
+   end
+
+   #
+   # Helpful method to launch an application using this `DesktopEntry`
+   # with the given `Subst` values applied to its Exec entry.
+   #
+   public launch_prog(subst)
+      local pid, cmd, args
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         ChildWait.add_pid(pid)
+         return
+      }
+      # Set the working directory for the child process
+      Files.chdir(\path | Files.get_home())
+      # Get the command to run.
+      args := subst_file_list(subst)
+      cmd := pop(args) | stop("Empty command list")
+      System.setpgid()
+      null_stdio()
+      Files.bulk_close(50)
+      System.exec(cmd, args) | stop(&why)
+      syserr("Not reached")
    end
 
    private static gen_args(s)
