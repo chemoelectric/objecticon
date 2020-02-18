@@ -157,11 +157,6 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          dispose()
    end
 
-   private static on_prog_exit(r)
-      if \opts["v"] then
-         ewrite("Child application exited: ", to_string(r))
-   end
-
    public goto_tab(t)
       tabs.set_which_one(t)
       update_grey()
