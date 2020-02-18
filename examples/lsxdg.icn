@@ -34,6 +34,16 @@ procedure no_path(s)
    return FilePath(s).get(-1)
 end
 
+procedure cmd_out(de, subst)
+   local cmd, u
+   cmd := de.subst_file_shell(subst)
+   if FileStream.stdout.is_flowterm_tty() then {
+      u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
+      write(Files.begin_link(u), cmd, Files.end_link())
+   } else
+      write(cmd)
+end
+
 procedure usage()
    write("Usage: lsxdg CMD [ARGS]")
    write("Query the xdg database")
@@ -54,7 +64,7 @@ procedure usage()
 end
 
 procedure main(a)
-   local s, s1, d, cmd, u, u1, p, c
+   local s, s1, u1, p, c
 
    options(a, [], usage)
 
@@ -118,28 +128,18 @@ procedure main(a)
       "cmd": {
          s := need_one(a)
          s1 := Subst(FilePath(s).canonical().ucs()) | help_stop("Path not UTF-8")
-         every d := Mime.gen_desktop_entries_for_path(s) do {
-            cmd := d.subst_file_shell(s1)
-            if FileStream.stdout.is_flowterm_tty() then {
-               u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
-               write(Files.begin_link(u), cmd, Files.end_link())
-            } else
-               write(cmd)
-         }
+         every cmd_out(Mime.gen_desktop_entries_for_path(s1.file), s1)
       }
 
       "cmd-url": {
          s := need_one(a)
          u1 := URL(s) | help_stop("This option needs a valid URL parameter")
-         s1 := Subst(u1.ucs())
-         every d := Mime.gen_desktop_entries("x-scheme-handler/" || string(u1.scheme)) do {
-            cmd := d.subst_file_shell(s1)
-            if FileStream.stdout.is_flowterm_tty() then {
-               u := URL("launch:" || URL.percent_encode(cmd, URL.PATH_CHAR))
-               write(Files.begin_link(u), cmd, Files.end_link())
-            } else
-               write(cmd)
-         }
+         s1 := Subst.from_URL(u1) | help_stop("Couldn't create Subst from URL: ", &why)
+         every cmd_out(if u1.scheme == "file" then
+                          Mime.gen_desktop_entries_for_path(s1.file)
+                       else
+                          Mime.gen_desktop_entries("x-scheme-handler/" || u1.scheme),
+                       s1)
       }
 
       default:
