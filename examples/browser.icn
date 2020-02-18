@@ -170,7 +170,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       # Set the working directory for the child process
       Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
-      args := de.subst_file_list(file)
+      args := de.subst_file_list(Subst(file))
       if \opts["v"] then 
          ewrite("Command list: ", to_string(args))
       cmd := pop(args) | stop("Empty command list")

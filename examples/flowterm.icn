@@ -90,35 +90,23 @@ class DesktopRunner(ExternalRunner)
    public const
       # The DesktopEntry giving the command and other parameters.
       desktop_entry,
-      # The string to substitute to create a command to run
-      subst,
-      # The url itself (a URL object).
-      url
+      # The Subst object
+      subst
 
    public override get_working_dir()
       return \desktop_entry.path
    end
 
-   private do_subst(f)
-      local line, col, t
-      if url.scheme == "file" & t := url.extract_cgi_parameters() then {
-         if line := 0 < integer(member(t, "line")[1]) then
-            col := 0 < integer(member(t, "col")[1])
-      }
-      return f(subst, line, col)
-   end
-
    public override get_command()
-      return do_subst(desktop_entry.subst_file_shell)
+      return desktop_entry.subst_file_shell(subst)
    end
 
    public override get_command_list()
-      return do_subst(desktop_entry.subst_file_list)
+      return desktop_entry.subst_file_list(subst)
    end
 
-   public new(desktop_entry, url, subst)
+   public new(desktop_entry, subst)
       self.desktop_entry := desktop_entry
-      self.url := url
       self.subst := subst
       return
    end
@@ -2243,16 +2231,17 @@ $endif
    end
 
    private get_runners(url, ex_dir)
-      local s, cd, de, fl
+      local s, cd, de, fl, subst
       case string(url.scheme) of {
          "file" : {
             url.is_local_file() | return error("Can't run a file on another host (" || url.host || ")")
             s := get_ucs_decoded_path(url) | fail
             if /ex_dir & Files.is_directory(s) then
                return ImmediateRunner("cd " || Format.shell_escape(s))
+            subst := Subst.from_URL(url) | fail      # Shouldn't fail
             every de := Mime.gen_desktop_entries_for_path(s) do {
                fl := &yes
-               suspend DesktopRunner(de, url, s)
+               suspend DesktopRunner(de, subst)
             }
             return if /fl then error("No matching desktop entry for this URL")
          }
@@ -2267,9 +2256,10 @@ $endif
             return LaunchRunner(s, cd)
          }
          default : {
+            subst := Subst.from_URL(url) | fail      # Shouldn't fail
             every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do {
                fl := &yes
-               suspend DesktopRunner(de, url, url.ucs())
+               suspend DesktopRunner(de, subst)
             }
             return if /fl then error("No desktop entry for url scheme " || url.scheme)
          }
