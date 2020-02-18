@@ -2257,7 +2257,7 @@ $endif
          }
          default : {
             subst := Subst.from_URL(url) | fail      # Shouldn't fail
-            every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do {
+            every de := Mime.gen_desktop_entries("x-scheme-handler/" || url.scheme) do {
                fl := &yes
                suspend DesktopRunner(de, subst)
             }
