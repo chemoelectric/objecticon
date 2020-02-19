@@ -803,14 +803,14 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       local t, d, v
       d := (wday + 5) % 7 + 1
       if month = 12 & mday >= 29 then {
-         t := get_time_of_week_date(year + 1, 1)
+         t := from_week_date(year + 1, 1)
          # Note we don't use before/after here to avoid having to
          # normalize self's timezone.
          if (t.month = 12) & (mday >= t.mday) then
             return WeekDate(year + 1, 1, d)
       } else if month = 1 & mday <= 3 then {
          # The first day of the first week of this year
-         t := get_time_of_week_date(year, 1)
+         t := from_week_date(year, 1)
          if (t.month = 1) & (mday < t.mday) then {
             # We are in the last week (52 or 53) of the previous year
             v := t.set_mday(t.mday - 7).get_week_date()
@@ -831,7 +831,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Note also that the result may not actually be in the given year, eg
    # week 1 for 2009 begins on Monday Dec 29, 2008.
    #
-   public static get_time_of_week_date(year, week, day)
+   public static from_week_date(year, week, day)
       local t, a
       t := Time(year, 1, 4)
       week := need_integer(week, 1, 53)
