@@ -831,6 +831,14 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Note also that the result may not actually be in the given year, eg
    # week 1 for 2009 begins on Monday Dec 29, 2008.
    #
+   # The `Time` returned is set at midnight on the day in question, in
+   # the local timezone in effect on that date.  For example :-
+   # ~
+   #    Time.from_week_date(1967, 22, 6)
+   #    result :-
+   #       object util.Time#1(June 3, 1967 00:00:00 BST)
+   # ~
+   #
    public static from_week_date(year, week, day)
       local t, a
       t := Time(year, 1, 4)
