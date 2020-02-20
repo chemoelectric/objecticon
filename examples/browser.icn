@@ -1511,7 +1511,8 @@ class BrowserTab(TabItem, BrowserUI)
       if t := ucs(Files.url_to_file(res.url)) then
          return t
       if /res.fname then
-         t := Files.make_temp_filename("oibrowser")
+         # Since we are going to use this file with Subst() below, it must be utf-8.
+         t := ucs(Files.make_temp_filename("oibrowser")) | stop("Temp directory not utf-8")
       else {
          # Use liberal_ucs here since we will insert it into the desktop entry's command string,
          # which is ucs.  Also, we don't want non-utf files created in the filesystem.
