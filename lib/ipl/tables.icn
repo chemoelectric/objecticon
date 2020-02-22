@@ -33,7 +33,7 @@
 
 package ipl.tables
 
-import datastruct
+import ipl.pdco(List,Set), datastruct(Entry)
 
 # Table union, approximates `T1 ++ T2`.
 procedure tblunion(T1, T2)			
@@ -112,26 +112,14 @@ procedure twt(T)
 
 end
 
-# Produces list of keys in table `T`.
+# Produces sorted list of keys in table `T`.
 procedure keylist(tbl)			
-   local lst
-
-   lst := []
-   every put(lst, key(tbl))
-   return sort(lst)
-
+   return sort(List{ key(tbl) })
 end
 
 # Produces values in `T` ordered by sorted order of keys.
 procedure kvallist(T)
-   local result
-
-   result := []
-   
-   every put(result, T[!keylist(T)])
-
-   return result
-
+   return List{ T[!keylist(T)] }
 end
 
 # Tests equivalences of tables `T1` and `T2`.
@@ -150,24 +138,14 @@ procedure tbleq(tbl1, tbl2)
 
 end
 
-# Produces list of values in table `T`.
+# Produces sorted list of values in table `T`.
 procedure vallist(tbl)		
-   local list1
-
-   list1 := []
-   every put(list1, !tbl)
-   return sort(list1)
-
+   return sort(List{ !tbl })
 end
 
 # Produces set of values in table `T`.
 procedure valset(tbl)		
-   local set1
-
-   set1 := set()
-   every insert(set1, !tbl)
-   return set1
-
+   return Set{ !tbl }
 end
 
 #
@@ -192,10 +170,7 @@ end
 
 # Return a flat list, with alternating key-value entries.
 procedure flatten(t)
-   local l
-   l := []
-   every put(l, keyval(t))
-   return l
+   return List{ keyval(t) }
 end
 
 # Return an (unsorted) list of pairs of key-values.

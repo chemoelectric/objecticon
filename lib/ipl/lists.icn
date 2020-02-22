@@ -26,7 +26,7 @@ import
    ipl.numbers(residue),
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
-   ipl.pdco(String2, List),
+   ipl.pdco(String, String2, List),
    lang(equals,Prog),
    util(cvpos, cvslice, cvslice_def, cvpos_item, use)
 
@@ -124,9 +124,7 @@ end
 procedure llayer(args[])		
    local offsets, offset, seq, arg, lists, k
 
-   lists := []
-
-   every put(lists, lcompact(!args))
+   lists := List{ lcompact(!args) }
 
    offsets := []
 
@@ -156,9 +154,7 @@ procedure lcompact(seq)
 
    unique := elementset(seq)
 
-   target := []
-
-   every put(target, 1 to *unique)
+   target := List{ 1 to *unique }
 
    return lmap(seq, sort(unique), target)
 
@@ -338,27 +334,16 @@ procedure lflipv(L)
 
 end
 
-# Unadorned list image
+# String image of list
 procedure limage(L)			
-   local result
-
-   if type(L) ~== "list" then fail
-
-   result := ""
-
-   every result ||:= image(!L) || ","
-
-   return ("[" || result[1:-1] || "]") | "[]"
-
+   return "[" || String{ image(!L), "," } || "]"
 end
 
 # Generalized list collation;; like `linterl()` except stops on short list.
 procedure lcollate(args[])		
    local seq, arg, lists, k
 
-   lists := []
-
-   every put(lists, copy(!args))
+   lists := List{ copy(!args) }
 
    seq := []
 
@@ -410,29 +395,19 @@ end
 
 # List run up
 procedure lrunup(L1, L2, L3)		
-   local L4
 
    /L3 := [1]		# could be /L3 := 1 ...
 
-   L4 := []
-
-   every put(L4, !L1 to !L2 by !L3)
-
-   return L4
+   return List{ !L1 to !L2 by !L3 }
 
 end
 
 # List run down
 procedure lrundown(L1, L2, L3)		
-   local L4
 
    /L3 := [1]		# could be /L3 := 1 ...
 
-   L4 := []
-
-   every put(L4, !L1 to !L2 by -!L3)
-
-   return L4
+   return List{ !L1 to !L2 by -!L3 }
 
 end
 
@@ -516,15 +491,10 @@ end
 
 # List residue
 procedure lresidue(L, m, i)		
-   local result
 
    /i := 0
 
-   result := []
-
-   every put(result, residue(!L, m, i))
-
-   return result
+   return List{ residue(!L, m, i) }
 
 end
 
@@ -770,28 +740,14 @@ end
 # where `L` is the result of sorting a table with option 3 or 4.
 #
 procedure sortkeys(L)			
-   local result
-
-   result := []
-
-   every put(result, L[1 to *L by 2])
-
-   return result
-
+   return List{ L[1 to *L by 2] }
 end
 
 # Extract values from sorted list, returning list of values from `L`,
 # where `L` is the result of sorting a table with option 3 or 4.
 #
 procedure sortvalues(L)			
-   local result
-
-   result := []
-
-   every put(result, L[2 to *L by 2])
-
-   return result
-
+   return List{ L[2 to *L by 2] }
 end
 
 #
