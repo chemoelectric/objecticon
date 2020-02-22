@@ -33,7 +33,7 @@
 
 package ipl.tables
 
-import ipl.pdco(List,Set), datastruct(Entry)
+import ipl.pdco(List,Set,Index), datastruct(Entry)
 
 # Table union, approximates `T1 ++ T2`.
 procedure tblunion(T1, T2)			
@@ -173,31 +173,17 @@ procedure flatten(t)
    return List{ keyval(t) }
 end
 
-# Return an (unsorted) list of pairs of key-values.
+# Return an (unsorted) list of pairs of key-values.  Apply `sortf(l,
+# 1)` to the result to get a sorted list.
 procedure entrylist(t)
-   local e, x, r, f
-   r := []
-   every x := keyval(t) do {
-      if /f then {
-         e := Entry(x)
-         f := &yes
-      } else {
-         e.val := x
-         put(r, e)
-         f := &null
-      }
-   }
-   return r
+   local e
+   e := create keyval(t)
+   return List{ |Entry(@e, @e) }
 end
 
 # Return a random key from table t
 procedure randomkey(t)
-   local i, k
-   i := ?*t
-   every k := key(t) do
-      if (i -:= 1) = 0 then
-         return k
-   syserr("randkomkey unreachable")
+   return Index{ key(t), ?(0 < *t) }
 end
 
 #  inserts() -- Inserts values into a table in which the same key can
