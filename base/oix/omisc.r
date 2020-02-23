@@ -213,7 +213,7 @@ operator = tabmat(x)
           j = UcsBlk(k_subject).length;
 
       if (i > j + 1)
-          runerr(205, kywd_pos);
+          Irunerr(205, i);
       else 
           k_pos = i;
 

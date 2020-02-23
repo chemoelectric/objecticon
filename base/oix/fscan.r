@@ -79,7 +79,7 @@ function move(i)
           j = UcsBlk(k_subject).length;
 
       if (oldpos > j + 1)
-          runerr(205, kywd_pos);
+          Irunerr(205, oldpos);
       else
           k_pos = oldpos;
 
@@ -205,7 +205,7 @@ function tab(i)
           j = UcsBlk(k_subject).length;
 
       if (oldpos > j + 1)
-          runerr(205, kywd_pos);
+          Irunerr(205, oldpos);
       else
           k_pos = oldpos;
 
