@@ -137,7 +137,7 @@ procedure eval_tree(n)
 
    n := integer(n)
 
-   if type(n) ~== "node" then return n
+   is(n, node) | return n
 
    every i := 1 to *n.seqlist do
       n.seqlist[i] := eval_tree(n.seqlist[i])
