@@ -19,7 +19,8 @@ import
    ipl.columnize,
    ipl.strings,
    ipl.browser,
-   ipl.io
+   ipl.io,
+   ipl.printf
 
 global opts, glob_cmds
 
@@ -1307,6 +1308,10 @@ class Terminal(TabItem, VtUI)
       return flag(\param) | error(s || " expects a flag parameter")
    end
 
+   private check_int_param(s, param, min)
+      return (min <= integer(param)) | return whyf("Integer >= %d expected to %s", min, s)
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
@@ -1331,7 +1336,7 @@ class Terminal(TabItem, VtUI)
          }
          "font" : {
             check_param(s, param) | fail
-            output.set_vt_font(param) | return error("Invalid parameter to font: " || &why)
+            output.set_vt_font(param) | return whyf("Invalid parameter to font: %w")
          }
          "font-size" : {
             check_live(s) | fail
@@ -1358,23 +1363,23 @@ class Terminal(TabItem, VtUI)
          "reset-terminal-menus" : do_reset_custom_menus(terminal_menu_commands)
          "reset-list-menus" : do_reset_custom_menus(columns_menu_commands)
          "reset-misc-menus" : do_reset_custom_menus(misc_menu_commands)
-         "fg": output.set_normal_fg(param) | return error("Invalid parameter to fg: " || &why)
-         "bg": output.set_normal_bg(param) | return error("Invalid parameter to bg: " || &why)
-         "reverse-fg": output.set_reverse_fg(param) | return error("Invalid parameter to reverse-fg: " || &why)
-         "reverse-bg": output.set_reverse_bg(param) | return error("Invalid parameter to reverse-bg: " || &why)
+         "fg": output.set_normal_fg(param) | return whyf("Invalid parameter to fg: %w")
+         "bg": output.set_normal_bg(param) | return whyf("Invalid parameter to bg: %w")
+         "reverse-fg": output.set_reverse_fg(param) | return whyf("Invalid parameter to reverse-fg: %w")
+         "reverse-bg": output.set_reverse_bg(param) | return whyf("Invalid parameter to reverse-bg: %w")
          "scroll": {
             /param := Vt.DEFAULT_HISTORY_SIZE
-            param := (0 <= integer(param)) | return error("Integer >= 0 expected to scroll")
+            param := check_int_param(s, param, 0) | fail
             output.set_history_size(param)
          }
          "list-width": {
             /param := DEFAULT_LIST_WIDTH
-            param := (0 <= integer(param)) | return error("Integer >= 0 expected to list-width")
+            param := check_int_param(s, param, 0) | fail
             set_list_width(scale(param))
          }
          "list-height": {
             /param := DEFAULT_LIST_HEIGHT
-            param := (0 <= integer(param)) | return error("Integer >= 0 expected to list-height")
+            param := check_int_param(s, param, 0) | fail
             set_list_height(scale(param))
          }
          "auto-close" : {
@@ -1542,7 +1547,7 @@ class Terminal(TabItem, VtUI)
          }
          "history": {
             /param := DEFAULT_HISTORY_SIZE
-            param := (0 < integer(param)) | return error("Integer > 0 expected to history")
+            param := check_int_param(s, param, 1) | fail
             history_size := param
          }
          "search" : {
@@ -1582,7 +1587,7 @@ class Terminal(TabItem, VtUI)
          "url" : {
             check_live(s) | fail
             check_param(s, param) | fail
-            param := URL(param) | return error("Invalid url: " || &why)
+            param := URL(param) | return whyf("Invalid url: %w")
             open_link(param)
          }
          "copy-cwd": {
@@ -1824,7 +1829,7 @@ class Terminal(TabItem, VtUI)
                                      bits, 
                                      mask, 
                                      custom_key_func, 
-                                     verb) | return error("Failed to add key function: " || &why)
+                                     verb) | return whyf("Failed to add key function: %w")
             }
          }
       }
@@ -2502,22 +2507,24 @@ $endif
          return paint.str
    end
 
-   private on_show_name_only(e)
-      annotate_opt ~===:= SHOW_NAME_ONLY | fail
+   private annotate_change()
       annotate_cwd_list()
       columns.data_changed()
+   end
+
+   private on_show_name_only(e)
+      if annotate_opt ~===:= SHOW_NAME_ONLY then
+         annotate_change()
    end
 
    private on_show_date(e)
-      annotate_opt ~===:= SHOW_DATE | fail
-      annotate_cwd_list()
-      columns.data_changed()
+      if annotate_opt ~===:= SHOW_DATE then
+         annotate_change()
    end
 
    private on_show_size(e)
-      annotate_opt ~===:= SHOW_SIZE | fail
-      annotate_cwd_list()
-      columns.data_changed()
+      if annotate_opt ~===:= SHOW_SIZE then
+         annotate_change()
    end
 
    private toggle_mix_entries_menu_item()
