@@ -884,31 +884,25 @@ class FileDialog(Dialog)
       }
    end
 
-   private on_date_button(ev)
-      if sorter === Files.date_cmp then
+   private on_sort_button(f)
+      if sorter === f then
          ascending := toggle_flag(ascending)
       else
-         sorter := Files.date_cmp
+         sorter := f
       synch_paints()
       refresh_dir()
+   end
+
+   private on_date_button(ev)
+      on_sort_button(Files.date_cmp)
    end
 
    private on_name_button(ev)
-      if sorter === Files.name_cmp then
-         ascending := toggle_flag(ascending)
-      else
-         sorter := Files.name_cmp
-      synch_paints()
-      refresh_dir()
+      on_sort_button(Files.name_cmp)
    end
 
    private on_size_button(ev)
-      if sorter === Files.size_cmp then
-         ascending := toggle_flag(ascending)
-      else
-         sorter := Files.size_cmp
-      synch_paints()
-      refresh_dir()
+      on_sort_button(Files.size_cmp)
    end
 
    private on_favourites_list(ev)

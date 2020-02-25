@@ -2507,24 +2507,23 @@ $endif
          return paint.str
    end
 
-   private annotate_change()
-      annotate_cwd_list()
-      columns.data_changed()
+   private on_set_annotate_opt(v)
+      if annotate_opt ~===:= v then {
+         annotate_cwd_list()
+         columns.data_changed()
+      }
    end
 
-   private on_show_name_only(e)
-      if annotate_opt ~===:= SHOW_NAME_ONLY then
-         annotate_change()
+   private on_show_name_only()
+      on_set_annotate_opt(SHOW_NAME_ONLY)
    end
 
-   private on_show_date(e)
-      if annotate_opt ~===:= SHOW_DATE then
-         annotate_change()
+   private on_show_date()
+      on_set_annotate_opt(SHOW_DATE)
    end
 
-   private on_show_size(e)
-      if annotate_opt ~===:= SHOW_SIZE then
-         annotate_change()
+   private on_show_size()
+      on_set_annotate_opt(SHOW_SIZE)
    end
 
    private toggle_mix_entries_menu_item()
@@ -2663,28 +2662,24 @@ $endif
       }
    end
 
-   private on_date_button(ev)
-      if sorter === Files.date_cmp then
+   private on_sort_button(f)
+      if sorter === f then
          ascending := toggle_flag(ascending)
       else
-         sorter := Files.date_cmp
+         sorter := f
       synch_paints_and_resort()
    end
 
-   private on_name_button(ev)
-      if sorter === Files.name_cmp then
-         ascending := toggle_flag(ascending)
-      else
-         sorter := Files.name_cmp
-      synch_paints_and_resort()
+   private on_date_button()
+      on_sort_button(Files.date_cmp)
    end
 
-   private on_size_button(ev)
-      if sorter === Files.size_cmp then
-         ascending := toggle_flag(ascending)
-      else
-         sorter := Files.size_cmp
-      synch_paints_and_resort()
+   private on_name_button()
+      on_sort_button(Files.name_cmp)
+   end
+
+   private on_size_button()
+      on_sort_button(Files.size_cmp)
    end
 
    private static get_ns_mtime(f)
