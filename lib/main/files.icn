@@ -1214,6 +1214,10 @@ package class WindowsFileSystem(FileSystem)
 
    public override filepath_normal(fp)
       local e, r
+      # Check for named pipe.  See
+      #   https://docs.microsoft.com/en-gb/windows/win32/ipc/pipe-names
+      if filepath_is_unc(fp) & map(fp.l[3]) == "pipe" then
+         return fp
       r := []
       every e := !fp.l do {
          if e == "." then
@@ -1233,10 +1237,7 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public override filepath_standard_case(fp)
-      local r
-      r := []
-      every put(r, map(!fp.l))
-      return FilePath.from_list(r)
+      return FilePath.from_list(List{ map(!fp.l) })
    end
 
    public override standard_case(s)
