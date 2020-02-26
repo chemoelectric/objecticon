@@ -171,7 +171,7 @@ class FlowTermDialog(Dialog)
    public
       last_log_file
 
-   private on_quit(ev)
+   private on_quit()
       dispose()
    end
 
@@ -230,11 +230,11 @@ class FlowTermDialog(Dialog)
       return t
    end
 
-   private on_new_tab(ev)
+   private on_new_tab()
       new_tab(&yes)
    end
 
-   private on_xdg_refresh(ev)
+   private on_xdg_refresh()
       IconTheme.refresh()
       Mime.refresh()
       tabs.which_one.info_msg("XDG database reloaded")
@@ -257,7 +257,7 @@ class FlowTermDialog(Dialog)
       d.show_modal(self)
    end
 
-   private on_about(ev)
+   private on_about()
       show_html("<html><h1><img src=img:rpp.ABOUT_64 width=64 height=64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
 <h2>Author</h2>Robert Parlett_
 <h2>Contact</h2><a href=mailto:2rparlett@gmail.com</a>2rparlett@gmail.com</a>_
@@ -265,7 +265,7 @@ class FlowTermDialog(Dialog)
 "</html>")
    end
 
-   private on_help(ev)
+   private on_help()
       show_html("<html><h1><img src=img:rpp.HELP_64 width=64 height=64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
 FlowTerm is a terminal emulator which uses web-like hyperlinks._
 <p>_
@@ -280,7 +280,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
 </html>")
    end
 
-   private on_favourite_dirs(ev)
+   private on_favourite_dirs()
       FavouriteDirectoriesDialog().show_modal(self)
    end
 
@@ -329,7 +329,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       tabs.which_one.insert_link(mk_file_URL(t.cwd), e)
    end
 
-   private on_tabs_changed(e)
+   private on_tabs_changed()
       tabs.which_one.tab_active()
    end
 
@@ -616,7 +616,7 @@ class Columns(LineBasedScrollArea)
       quieten := &null
    end
 
-   private handle_move(ev)
+   private handle_move()
       unquieten_cursor()
    end
 
@@ -633,12 +633,12 @@ class Columns(LineBasedScrollArea)
          set_over()
    end
 
-   private handle_exit(e)
+   private handle_exit()
       parent_dialog.get_held_count() = 0 | fail
       set_over()
    end
 
-   private handle_interrupted(e)
+   private handle_interrupted()
       set_highlight()
       set_over()
       held := &null
@@ -761,7 +761,7 @@ class Columns(LineBasedScrollArea)
       } 
    end
 
-   public handle_mpress(e)
+   public handle_mpress()
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_multi_begin(cursor)
@@ -770,29 +770,29 @@ class Columns(LineBasedScrollArea)
       } 
    end
 
-   public handle_key_page_up(e)
+   public handle_key_page_up()
       local t
       t := get_page_movement(cursor, -1)
       t <:= n_rows * (get_col_for_index(cursor) - 1) + 1
       return t
    end
 
-   public handle_key_page_down(e)
+   public handle_key_page_down()
       local t
       t := get_page_movement(cursor, 1)
       t >:= n_rows * get_col_for_index(cursor)
       return t
    end
 
-   public handle_key_up(e)
+   public handle_key_up()
       return cursor - 1
    end
 
-   public handle_key_down(e)
+   public handle_key_down()
       return cursor + 1
    end
 
-   public handle_key_left(e)
+   public handle_key_left()
       local t
       (cursor > 1) | fail
       t := cursor - n_rows
@@ -804,7 +804,7 @@ class Columns(LineBasedScrollArea)
       return t
    end
 
-   public handle_key_right(e)
+   public handle_key_right()
       local t
       t := cursor + n_rows
       if t > *data then {
@@ -814,11 +814,11 @@ class Columns(LineBasedScrollArea)
       return t
    end
 
-   public handle_key_home(e)
+   public handle_key_home()
       return 1
    end
 
-   public handle_key_end(e)
+   public handle_key_end()
       return *data
    end
 
@@ -1920,7 +1920,7 @@ class Terminal(TabItem, VtUI)
       split.hide_neither()
    end
 
-   private on_reorient(e)
+   private on_reorient()
       split.reorient()
    end
 
@@ -2290,7 +2290,7 @@ $endif
          insert_link(item_to_url(item), ev)
    end
 
-   private on_columns_over_changed(ev)
+   private on_columns_over_changed()
       local item
       if item := columns.object_get_over() then
          msg(item_to_url(item).ucs())
@@ -2308,7 +2308,7 @@ $endif
                                   URLSelectionOwner([url]))
    end 
 
-   private on_copy_cwd(e)
+   private on_copy_cwd()
       copy_text(cwd)
    end
 
@@ -2316,7 +2316,7 @@ $endif
       parent_dialog.new_tab(, dir,, self)
    end
 
-   private on_start_log(e)
+   private on_start_log()
       start_log()
    end
 
@@ -2531,7 +2531,7 @@ $endif
       on_mix_entries_menu_item()
    end
 
-   private on_mix_entries_menu_item(e)
+   private on_mix_entries_menu_item()
       annotate_cwd_list()
       resort_cwd()
       sort_dirs_menu_item.set_is_shaded(mix_entries_menu_item.get_status())
@@ -2542,7 +2542,7 @@ $endif
       on_sort_dirs_menu_item()
    end
 
-   private on_sort_dirs_menu_item(e)
+   private on_sort_dirs_menu_item()
       annotate_cwd_list()
       resort_cwd()
    end
@@ -2552,7 +2552,7 @@ $endif
       on_filter_dirs_menu_item()
    end
 
-   private on_filter_dirs_menu_item(e)
+   private on_filter_dirs_menu_item()
       resort_cwd(&yes)
    end
 
@@ -2561,7 +2561,7 @@ $endif
       on_dont_quieten_menu_item()
    end
 
-   private on_dont_quieten_menu_item(e)
+   private on_dont_quieten_menu_item()
       output.set_dont_quieten(dont_quieten_menu_item.get_status())
    end
 
@@ -2570,7 +2570,7 @@ $endif
       on_show_hidden_menu_item()
    end
 
-   private on_show_hidden_menu_item(e)
+   private on_show_hidden_menu_item()
       resort_cwd(&yes)
    end
 
@@ -2852,7 +2852,7 @@ $endif
       goto_dir(ev)
    end
 
-   private on_columns_move(ev)
+   private on_columns_move()
       output.unquieten_cursor()
    end
 
@@ -3030,11 +3030,11 @@ $endif
       revert_tab := check_cwd_time_task := io_task := tty := pid := &null
    end
 
-   private on_favourites_list(ev)
+   private on_favourites_list()
       goto_dir(favourites_list.object_get_selection())
    end
 
-   private on_history_list(ev)
+   private on_history_list()
       local he
       he := history_list.object_get_selection()
       history_pos := keyof(history, he) | fail
@@ -3042,22 +3042,22 @@ $endif
       goto_dir(he.dir)
    end
 
-   private on_home_button(ev)
+   private on_home_button()
       goto_dir(Files.get_home())
    end
 
-   private on_refresh_button(ev)
+   private on_refresh_button()
       refresh_cwd()
    end
 
-   private on_up_button(ev)
+   private on_up_button()
       local t
       t := FilePath(cwd)
       if t.size() > 1 then
          goto_dir(t.parent().str())
    end
 
-   private on_close_button(ev)
+   private on_close_button()
       close_tab()
    end
 
@@ -3105,7 +3105,7 @@ $endif
       }
    end
 
-   private on_filter_action(ev)
+   private on_filter_action()
       resort_cwd(&yes)
       set_best_focus()
    end
@@ -3115,7 +3115,7 @@ $endif
          on_filter_action()
    end
 
-   private on_filter_popup_closed(ev)
+   private on_filter_popup_closed()
       set_best_focus()
    end
 
@@ -3123,7 +3123,7 @@ $endif
       parent_dialog.set_focus(best_focus)
    end
 
-   private on_prev_button(ev)
+   private on_prev_button()
       local he
       (history_pos < *history) | fail
       he := history[history_pos +:= 1]
@@ -3131,7 +3131,7 @@ $endif
       goto_dir(he.dir)
    end
 
-   private on_next_button(ev)
+   private on_next_button()
       local he
       (history_pos > 1) | fail
       he := history[history_pos -:= 1]
@@ -3153,7 +3153,7 @@ $endif
       on_focus_columns_button()
    end
 
-   private on_focus_columns_button(ev)
+   private on_focus_columns_button()
       local f, c
       f := focus_columns_button.get_status()
       columns.set_accepts_focus(f)
@@ -3164,11 +3164,11 @@ $endif
          set_remembered_focus(c)
    end
 
-   private on_columns_focus(ev)
+   private on_columns_focus()
       best_focus := columns
    end
 
-   private on_vt_focus(ev)
+   private on_vt_focus()
       best_focus := output
    end
 
