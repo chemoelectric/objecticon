@@ -291,7 +291,7 @@ class WeekField(DropDown)
           1 <= w <= 53 &
           pos(0)) | fail
       }
-      return Time.get_time_of_week_date(y, w)
+      return Time.from_week_date(y, w)
    end
 
    # Set the value from the given `Time` instance.

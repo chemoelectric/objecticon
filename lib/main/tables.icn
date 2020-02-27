@@ -220,21 +220,11 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
       return ipl.pdco.List{key()}
    end
 
-   # Return an (unsorted) list of pairs of key-values.
+   # Return an unsorted list of pairs of key-values.
    public entry_list()
-      local e, x, r, f
-      r := []
-      every x := keyval() do {
-         if /f then {
-            e := Entry(x)
-            f := &yes
-         } else {
-            e.val := x
-            put(r, e)
-            f := &null
-         }
-      }
-      return r
+      local e
+      e := create keyval()
+      return ipl.pdco.List{ |Entry(@e, @e) }
    end
 
    #

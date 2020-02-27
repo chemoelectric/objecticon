@@ -1932,7 +1932,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
           1 <= w <= 53 &
           pos(0)) | fail
       }
-      return Time.get_time_of_week_date(y, w)
+      return Time.from_week_date(y, w)
    end
 
    public override get_save_value()

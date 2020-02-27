@@ -25,7 +25,8 @@ import
    numbers(Rat),
    lang(equals, Internal),
    util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
-        need_ucs, use, need_text, need_callable, same_string_type)
+        need_ucs, use, need_text, need_callable, same_string_type,
+        need_numeric)
 
 # Adds tabby to treadling sequence
 procedure AddTabby(e, i)	
@@ -115,8 +116,7 @@ procedure Complint(e)
 
    j := 0
 
-   while i := @e do {
-      i := need_integer(i)
+   while i := need_integer(@e) do {
       suspend j to i - 1
       j := i + 1
       }
@@ -214,7 +214,7 @@ procedure Decimate(e1, e2)
 
    count := 0
 
-   while j := @e2 do {
+   while j := need_integer(@e2) do {
       while i := @e1 | fail do {
          count +:= 1
          if count = j then break next
@@ -231,7 +231,7 @@ procedure Decimation(e)
 
    count := 0
 
-   while i := @e do {
+   while i := need_integer(@e) do {
       count +:= 1
       if i % 2 = 1 then suspend count
       }
@@ -260,9 +260,9 @@ end
 procedure Delta(e)	
    local i, j
 
-   i := @e | fail
+   i := need_numeric(@e) | fail
 
-   while j := @e do {
+   while j := need_numeric(@e) do {
       suspend j - i
       i := j
       }
@@ -273,11 +273,8 @@ end
 procedure Elevate(e1, m, n)	
    local shafts, i, j, k
 
-   m := ce_param(m) | fail
-   n := ce_param(n) | fail
-
-   m := need_integer(m)
-   n := need_integer(n)
+   m := need_integer(ce_param(m)) | fail
+   n := need_integer(ce_param(n)) | fail
 
    shafts := list(m)
 
@@ -457,11 +454,11 @@ end
 procedure Increasing(e)	
    local last, current
 
-   last := @e | fail
+   last := need_numeric(@e) | fail
 
    suspend last
 
-   while current := @e do {
+   while current := need_numeric(@e) do {
       if current <= last then next
       else {
          suspend current
@@ -471,18 +468,22 @@ procedure Increasing(e)
 
 end
 
-# PDCO to produce `e1`-th terms from `e2`
+# PDCO to produce `e2`-th terms from `e1`.  `e2` should generate
+# ascending indices.
 procedure Index(e1, e2)		
    local i, j, x
 
-   j := @e2 | fail
+   repeat {
+      j := need_integer(@e2) | fail
+      if j > 0 then break
+      }
 
    every i := seq() do {	# position
       x := @e1 | fail
       if j = i then {
          suspend x
          repeat {
-            j := @e2 | fail
+            j := need_integer(@e2) | fail
             if j > i then break
             }
          }
@@ -555,7 +556,7 @@ end
 procedure Limit(e1, e2)	
    local i, x
 
-   while i := @e2 do {
+   while i := need_integer(@e2, 0) do {
       every 1 to i do
          if x := @e1 then suspend x
          else break
@@ -938,8 +939,7 @@ end
 procedure Repeat(e1, e2)	
    local i
 
-   while i := @e2 do {
-      i := need_integer(i)
+   while i := need_integer(@e2) do {
       every 1 to i do {
          suspend |@e1
          e1 := ^e1
@@ -985,7 +985,7 @@ end
 procedure Resume(e1, e2, e3)	
    local i
 
-   while i := @e2 do {
+   while i := need_integer(@e2, 0) do {
       e1 := ^e1
       every 1 to i do if @e1 then @^e3 else break
    }
@@ -1029,8 +1029,7 @@ procedure Selfrepl(e, j)
    local i
    j := ce_param(j) | fail
    j := need_integer(\j) | 1
-   while i := @e do {
-      i := need_integer(i)
+   while i := need_integer(@e) do {
       suspend (1 to i * j) & i
       }
 
@@ -1042,8 +1041,7 @@ procedure Compl(e)
 
    j := 1
 
-   while i := @e do {
-      i := need_integer(i)
+   while i := need_integer(@e) do {
       suspend j to i - 1
       j := i + 1
       }
@@ -1084,7 +1082,7 @@ procedure Skip(e1, e2)
    suspend @e1
 
    repeat {
-      gap := @e2 | fail
+      gap := need_integer(@e2) | fail
       every 1 to gap do
          @e1 | fail
       suspend @e1
@@ -1279,17 +1277,37 @@ procedure Succeeds(e)
    succeed @e
 end
 
-# Evaluate each element of e, suspending all the results of the nth element.
 #
-procedure Each(n, e[])
-   local f
-   n := need_integer(ce_param(n)) | fail
-   n := cvpos_item(n, *e) | fail
-   every f := !e do {
-      if (n -:= 1) = 0 then
-         suspend |@f
-      else
-         @f
+# Evaluate each element of `e`, suspending on the way the results of
+# those indicated by the sequence `e1`, which should be ascending.
+#
+procedure Each(e1, e[])
+   local i, j
+
+   repeat {
+      if j := need_integer(@e1) then {
+         if j := cvpos_item(j, *e) then
+            break
+      } else {
+         j := 0
+         break
+      }
+   }
+
+   every i := 1 to *e do {	# position
+      if j = i then {
+         suspend |@e[i]
+         repeat {
+            if j := need_integer(@e1) then {
+               if j := i < cvpos_item(j, *e) then
+                  break
+            } else {
+               j := 0
+               break
+            }
+         }
+      } else
+         while @e[i]
    }
 end
 

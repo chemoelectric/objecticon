@@ -124,7 +124,7 @@ package ipl.numbers
 
 import
    ipl.strings(palins),
-   util(Format, Math, need_integer, need_real)
+   util(Format, Math, need_integer, need_real, need_string)
 
 # additive digital persistence
 procedure adp(i)		
@@ -571,11 +571,12 @@ procedure roman(n)
 
    initial equiv := ["","I","II","III","IV","V","VI","VII","VIII","IX"]
 
-   n := (0 < integer(n)) | fail
+   n := need_integer(n)
+   (0 < n < 4000) | fail
    result := ""
    every arabic := !n do
       result := map(result,"IVXLCDM","XLCDM**") || equiv[arabic + 1]
-   if find("*",result) then fail else return result
+   return result
 
 end
 
@@ -584,7 +585,7 @@ end
 #
 procedure alphaseq(n)
    local r
-   n := (0 < integer(n)) | fail
+   n := (0 < need_integer(n)) | fail
    r := ""
    while n > 0 do {
       r := &ucase[(n - 1) % 26 + 1] || r
@@ -592,7 +593,6 @@ procedure alphaseq(n)
    }
    return r
 end
-
 
 # round real
 procedure round(r)		
@@ -640,12 +640,13 @@ end
 
 # convert Roman numeral to integer
 procedure unroman(s)		
-   local nbr,lastVal,val
+   local nbr,lastVal,val,c
 
+   s := map(need_string(s))
    nbr := lastVal := 0
 
-   s ? {
-      while val := case map(move(1)) of {
+   every c := !s do {
+      val := case c of {
 	 "m": 1000
 	 "d": 500
 	 "c": 100
@@ -653,12 +654,11 @@ procedure unroman(s)
 	 "x": 10
 	 "v": 5
 	 "i": 1
-	 } do {
-	 nbr +:= if val <= lastVal then val else val - 2 * lastVal
-	 lastVal := val
+         default: fail
 	 }
+      nbr +:= if val <= lastVal then val else val - 2 * lastVal
+      lastVal := val
       }
    return nbr
 
 end
-

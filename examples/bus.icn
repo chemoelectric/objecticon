@@ -369,7 +369,7 @@ class Map(Panel)
             every rt := !saved_filters[k] do
                s ||:= rt.number || rt.direction || ","
             s[-1] := ""
-            write(f, k || ":", s)
+            write(f, k, ":", s)
          }
       }
    end
@@ -381,7 +381,7 @@ class Map(Panel)
          f := open(get_file("filters.txt")),
          while s := f.read() do {
             s ? {
-               k := 1(tab(upto(':')), move(1)) | next
+               k := ucs(1(tab(upto(':')), move(1))) | next
                routes := set()
                every rn := separate(tab(0)) do {
                   rt := string_to_route(rn[1:-1]) | next
