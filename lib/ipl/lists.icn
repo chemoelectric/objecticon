@@ -992,3 +992,10 @@ package procedure altlists1(l, alts, i, res, mod)
    res[i] := l[i]
    suspend altlists1(l, alts, i+1, res, mod)
 end
+
+#
+# This procedure simply returns its arguments as a list.
+#
+procedure mklist(a[])
+   return a
+end
