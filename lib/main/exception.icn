@@ -39,7 +39,7 @@ procedure throw(x)
    thrown := x
    thrower := &current
    cofail(throw_handler)
-   runerr("throw(): code co-expression reactivated unexpectedly")
+   runerr("throw() code co-expression reactivated unexpectedly")
 end
 
 # A convenient procedure to invoke `runerr` if there is no
