@@ -373,7 +373,10 @@ class Worker()
          hc.set_timeout()
       else
          hc.set_timeout(\opts["t"] * 1000)
-      hc.set_retries(\opts["r"])
+      if \opts["nr"] then
+         hc.set_retries()
+      else
+         hc.set_retries(\opts["r"])
       hc.set_user_agent(\opts["agent"])
       hc.set_ip_version(\opts["ip"])
       if \opts["nsslv"] then
@@ -471,8 +474,9 @@ procedure main(args)
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("q",, "Quiet mode (output only an error summary, if needed)"),
                           Opt("t",integer_range(1),"TIMEOUT#Timeout in seconds (default 12s)"),
-                          Opt("nt",,"Never timeout"),
+                          Opt("nt",,"Use infinite timeout"),
                           Opt("r",integer_range(0), "RETRIES#Number of retries (default 2)"),
+                          Opt("nr",,"Use infinite retries"),
                           Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
@@ -512,6 +516,9 @@ procedure main(args)
 
    if \opts["t"] & \opts["nt"] then
       help_stop("Can't have -t and -nt options together")
+
+   if \opts[k := "r" | "while"] & \opts["nr"] then
+      help_stop("Can't have -", k, " and -nr options together")
 
    total := ok := skipped := 0
    err := []

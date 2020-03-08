@@ -253,10 +253,11 @@ $endif
    end
 
    #
-   # Set the number of retries to use.  The default is two.
+   # Set the number of retries to use, with `&null` meaning
+   # retry indefinitely.  The default is two.
    #
    public set_retries(retries)
-      self.retries := need_integer(retries, 0)
+      self.retries := /retries | need_integer(retries, 0)
       link
    end
 
@@ -818,7 +819,7 @@ $endif
 
          if \retry_while_data_flag & \some_data_flag then
             i := retries
-         else if (i -:= 1) < 0 then {
+         else if (\i -:= 1) < 0 then {
             save_why{close_inflater()}
             if retries > 0 then
                whyf("Gave up after %d attempts - last reason: %w", 1 + retries)
