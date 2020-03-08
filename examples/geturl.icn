@@ -369,7 +369,10 @@ class Worker()
 
    private create_client()
       hc := HttpClient()
-      hc.set_timeout(\opts["t"] * 1000)
+      if \opts["nt"] then
+         hc.set_timeout()
+      else
+         hc.set_timeout(\opts["t"] * 1000)
       hc.set_retries(\opts["r"])
       hc.set_user_agent(\opts["agent"])
       hc.set_ip_version(\opts["ip"])
@@ -467,8 +470,9 @@ procedure main(args)
                           Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("q",, "Quiet mode (output only an error summary, if needed)"),
-                          Opt("t",integer_range(1),"TIMEOUT#Timeout (in seconds)"),
-                          Opt("r",integer_range(0), "RETRIES#Number of retries"),
+                          Opt("t",integer_range(1),"TIMEOUT#Timeout in seconds (default 12s)"),
+                          Opt("nt",,"Never timeout"),
+                          Opt("r",integer_range(0), "RETRIES#Number of retries (default 2)"),
                           Opt("w",integer_range(1),"WORKERS#Number of workers"),
                           Opt("p",string,"Prepend string to all output files"),
                           Opt("d",string, "Append string to all output files"),
@@ -505,6 +509,9 @@ procedure main(args)
 
    if \opts[k := "i" | "is" | "form"] & \opts["head"] then
       help_stop("Can't have -", k, " and -head options together")
+
+   if \opts["t"] & \opts["nt"] then
+      help_stop("Can't have -t and -nt options together")
 
    total := ok := skipped := 0
    err := []
