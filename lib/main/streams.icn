@@ -674,7 +674,8 @@ $if _PLAN9
       if *l % 2 ~= 0 then
          runerr(177, l)
       r := list(*l / 2)
-      loop_until := Prog.get_runtime_millis() + \timeout
+      # A -ve timeout is the same as null
+      loop_until := Prog.get_runtime_millis() + (0 <= \timeout)
       snooze := 1
       repeat {
          clear(r)
