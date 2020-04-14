@@ -252,6 +252,13 @@ abstract class Stream(HasMode)
    end
 end
 
+# Check that x is a `Stream`, signalling a runtime error otherwise.
+#
+procedure need_Stream(x)
+   is(x, Stream) | runerr("Stream expected", x)
+   return x
+end
+
 #
 # This class simply adds the close_underlying_flag to a `Stream`.
 #
@@ -620,7 +627,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    end
 
    public new(other)
-      self.other := other
+      self.other := need_Stream(other)
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
