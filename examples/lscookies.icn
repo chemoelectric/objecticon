@@ -3,7 +3,7 @@ import http, lang, io, ipl.options, xdg, ipl.printf
 invocable HttpClient
 
 procedure main(a)
-   local t, cookies, bak, opts, mod, k, home, l
+   local t, cookies, opts, mod, k, home, l
    opts := options(a, [Opt("d", string, "Delete the given key; multiple uses allowed", &yes),
                        Opt("k", string, "Show just the given key; multiple uses allowed", &yes),
                        Opt("x",, "Expire out-of-date cookies")],
@@ -48,10 +48,8 @@ procedure main(a)
    }
 
    if \mod then {
-      bak := cookies || ".bak"
-      encode_to_file(bak, t) | stopf("Couldn't encode to temp cookie file %s: %w", bak)
-      # Use rename not move to ensure it's atomic
-      Files.rename(bak, cookies) | stopf("Couldn't rename cookie file %s: %w", bak)
+      atomic_encode_to_file(cookies, t) |
+         stopf("Couldn't encode to cookies file %s: %w", cookies)
       write("Modified file written okay")
    }
 end

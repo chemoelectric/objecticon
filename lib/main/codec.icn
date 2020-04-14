@@ -1,6 +1,6 @@
 package lang
 
-import io, util, exception, ipl.scan
+import io, util, exception, ipl.scan, ipl.printf
 
 # A class implements this interface to provide custom encoding/decoding.
 #
@@ -101,6 +101,30 @@ procedure encode_to_file(fn, o, fast, bin)
       f := open(fn, "w"),
       Encode(f).set_fast(fast).set_allow_binary(bin).begin(o)
    }
+end
+
+#
+# Like `encode_to_file`, but encodes to a temporary file first, and
+# then atomically renames that file to the destination.
+#
+procedure atomic_encode_to_file(fn, o, fast, bin)
+   local p, tmp
+   p := FilePath(fn).canonical()
+   if p.size() < 2 then
+      return error("Destination path too short")
+   tmp := Files.make_temp_filename(p.get(-1), ".tmp", p.parent().str()) |
+      return whyf("Couldn't create temporary file: %w")
+   encode_to_file(tmp, o, fast, bin) | {
+      save_why{ Files.remove(tmp) }
+      return whyf("Couldn't encode to temporary file %s: %w", tmp)
+   }
+$if _MS_WIN32
+   Files.remove(fn)
+$endif
+   # Use rename not move to ensure it's atomic
+   Files.rename(tmp, fn) |
+      return whyf("Couldn't rename temporary file %s to %s: %w", tmp, fn)
+   return
 end
 
 #

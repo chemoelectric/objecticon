@@ -1912,7 +1912,7 @@ class BrowserTab(TabItem, BrowserUI)
 end
 
 procedure main(a)
-   local d, url, cookies_file, cookies, bak, settings, settings_file, home, s
+   local d, url, cookies_file, cookies, settings, settings_file, home, s
    opts := options(a, [Opt("k",string, "FILE#Load cookies from file"),
                        Opt("l",,"Show HTTP headers and data flow"),
                        Opt("agent",string, "Set user agent field"),
@@ -1948,14 +1948,8 @@ procedure main(a)
    d.set_focus(d.tabs.children[1].url_field.find_focus())
    d.show_modal()
    # Save cookies
-   bak := cookies_file || ".bak"
-   encode_to_file(bak, Cookie.expire_cookies(cookies)) | 
-      stopf("Couldn't encode to temp cookie file %s: %w", bak)
-$if _MS_WIN32
-   Files.remove(cookies_file)
-$endif
-   # Use rename not move to ensure it's atomic
-   Files.rename(bak, cookies_file) | stopf("Couldn't rename cookie file %s: %w", bak)
+   atomic_encode_to_file(cookies_file, Cookie.expire_cookies(cookies)) | 
+      stopf("Couldn't encode to cookies file %s: %w", cookies_file)
    # Save settings
    encode_to_file(settings_file, settings,, &yes) |
       stopf("Couldn't encode to settings file %s: %w", settings_file)
