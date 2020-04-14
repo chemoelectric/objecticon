@@ -5,7 +5,7 @@ import
         save_why, HasMode),
 $if _PLAN9
    lang(Class, NoCopy, Prog),
-   util(use),
+   util(use, need_instance, need_list),
    net, ipl.pdco(String, List),
    ipl.strings(separate),
 $else
@@ -257,6 +257,13 @@ abstract class Stream(HasMode)
          f.writes1(s) | fail
       }
    end
+end
+
+# Check that x is a `Stream`, signalling a runtime error otherwise.
+#
+procedure need_Stream(x)
+   is(x, Stream) | runerr("Stream expected", x)
+   return x
 end
 
 #
@@ -627,7 +634,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    end
 
    public new(other)
-      self.other := other
+      self.other := need_Stream(other)
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
@@ -671,18 +678,18 @@ abstract class DescStream(Stream, NoCopy)
 $if _PLAN9
    public static poll(l, timeout)
       local loop_until, f, ev, r, done, i, res, snooze
+      need_list(l)
       if *l % 2 ~= 0 then
          runerr(177, l)
       r := list(*l / 2)
       # A -ve timeout is the same as null
-      loop_until := Prog.get_runtime_millis() + (0 <= \timeout)
+      loop_until := Prog.get_runtime_millis() + (0 <= need_integer(\timeout))
       snooze := 1
       repeat {
          clear(r)
          every i := 1 to *l by 2 do {
-            f := l[i]
-            ev := l[i + 1]
-            is(f, Pollable) | runerr("io.Pollable expected", f)
+            f := need_instance(l[i], Pollable)
+            ev := need_integer(l[i + 1])
             res := f.get_poll(ev)
             put(r, res)
             if res ~= 0 then

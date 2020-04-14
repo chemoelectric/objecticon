@@ -82,7 +82,7 @@ package ipl.imscolor
 
 import
    graphics(Window),
-   io(read, write, Stream),
+   io(read, write, need_Stream),
    ipl.graphics(CenterString, Contrast),
    util(Math)
 
@@ -352,7 +352,7 @@ procedure XPMImage(f, pal)
    local w, h, nc, cpp, i, im, c, k, s1, s2
 
    /pal := "c1"
-   is(f, Stream) | runerr("File expected", f)
+   need_Stream(f)
    Window.palette_chars(pal) | runerr(205, f)
 
    (read(f) ? find("XPM")) | fail

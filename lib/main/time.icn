@@ -623,7 +623,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    public set_seconds(n, zone)
       self.seconds := need_integer(n)
-      self.zone := \zone | Timezone.get_timezone_at(get_unix_seconds())
+      self.zone := need_Timezone(\zone) | Timezone.get_timezone_at(get_unix_seconds())
       self.compute_broken_down_fields()
       link
    end
@@ -718,7 +718,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # :  `z` - a `Timezone` object.
    #
    public set_zone(z)
-      self.zone := z
+      self.zone := need_Timezone(z)
       self.compute_seconds()
       link
    end
@@ -961,7 +961,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       self.hour := need_integer(\hour) | 0
       self.min := need_integer(\min) | 0
       self.sec := need_integer(\sec) | 0
-      self.zone := \zone | Timezone.LOCAL_STANDARD_TIMEZONE
+      self.zone := need_Timezone(\zone) | Timezone.LOCAL_STANDARD_TIMEZONE
       compute_seconds()
       if /zone then
          normalize_zone()
@@ -979,7 +979,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       self.hour := need_integer(\hour)
       self.min := need_integer(\min)
       self.sec := need_integer(\sec)
-      self.zone := \zone
+      self.zone := need_Timezone(\zone)
       compute_seconds()
       link
    end
