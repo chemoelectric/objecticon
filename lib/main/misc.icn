@@ -1,6 +1,6 @@
 package util
 
-import lang(Text,callable),
+import lang(Text,Class,callable),
    ipl.lists(ldel1),
    posix(System)
 
@@ -177,7 +177,7 @@ end
 # signalling a runtime error otherwise.
 #
 procedure need_instance(x, cl)
-   is(x, cl) | runerr("Instance of " || image(cl) || " expected", x)
+   is(x, cl) | runerr(Class.get_name(cl) || " expected", x)
    return x
 end
 
