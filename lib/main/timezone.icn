@@ -119,9 +119,16 @@ class Timezone()
             offset := get_known_timezone(id).get_offset() | fail
          }
       } else {
-         offset := integer(a[1]) | runerr(101, a[1])
+         offset := need_integer(a[1])
          id := a[2]
       }
       return
    end
+end
+
+# Check that x is a `Timezone`, signalling a runtime error otherwise.
+#
+procedure need_Timezone(x)
+   is(x, Timezone) | runerr("Timezone expected", x)
+   return x
 end
