@@ -587,8 +587,8 @@ procedure main(args)
 
    synch_mask()
 
-   tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stop(&why)
-   tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stopf("Couldn't create temp file: %w")
+   tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stopf("Couldn't open temp file: %w")
 
    hfile := FilePath(BaseDir.ensure_data_home()).child("memdebug").str() | stopf("Couldn't access data dir: %w")
    history := decode_from_file(hfile) | []
