@@ -208,9 +208,8 @@ operator ? random(underef x -> dx)
          }
 
       ucs: {
-            word val;
+            word val, i;
             double rval;
-            word i;
 
             if ((val = UcsBlk(dx).length) == 0)
                fail;
@@ -224,9 +223,8 @@ operator ? random(underef x -> dx)
        }
 
       cset: {
-             word val;
+             word val, i;
              double rval;
-             word i;
              int k, ch;
              if ((val = CsetBlk(dx).size) == 0)
                  fail;
@@ -246,9 +244,8 @@ operator ? random(underef x -> dx)
           * x is a list.  Set i to a random number in the range [1,*x],
           *  failing if the list is empty.
           */
-            word val;
+            word val, i, j;
             double rval;
-            word i, j;
             struct b_lelem *le;     /* doesn't need to be tended */
             if ((val = ListBlk(dx).size) == 0)
                fail;
