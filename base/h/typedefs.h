@@ -10,7 +10,9 @@
    #define MaxUWord  ((uword)0xffffffffffffffff) /* largest uword */
    #define MaxWord  ((word)0x7fffffffffffffff) /* largest word */
    #define MinWord  ((word)0x8000000000000000) /* smallest word */
-
+   #define RandA      6364136223846793005        /* random seed multiplier */
+   #define RandC      1442695040888963407       /* random seed additive constant */
+   #define RandScale   1.0842021724855e-19      /* random scale factor a little less than 1/(2^63-1) */
    #define F_Nqual      0x8000000000000000	/* set if NOT string qualifier*/
    #define F_Var	0x4000000000000000	/* set if variable */
    #define F_Ptr	0x1000000000000000	/* set if value field is ptr */
@@ -20,7 +22,9 @@
    #define MaxUWord  ((uword)0xffffffff)   /* largest uword */
    #define MaxWord  ((word)0x7fffffff)   /* largest word */
    #define MinWord  ((word)0x80000000)   /* smallest word */
-   
+   #define RandA      1103515245        /* random seed multiplier */
+   #define RandC      453816693         /* random seed additive constant */
+   #define RandScale  4.65661286e-10    /* random scale factor a little less than 1/(2^31-1) */
    #define F_Nqual	0x80000000	/* set if NOT string qualifier */
    #define F_Var	0x40000000	/* set if variable */
    #define F_Ptr	0x10000000	/* set if value field is pointer */

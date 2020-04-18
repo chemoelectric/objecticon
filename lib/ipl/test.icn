@@ -4,7 +4,7 @@ package ipl.test
 # Some functions used by the programs in the test directory.
 #
 
-import io, lang
+import io, lang, ipl.pdco, util
 
 procedure imagex(o)
    local t
@@ -162,5 +162,34 @@ procedure init_serial()
    repeat {
       e := []
       if serial(e) = 100 then break
+   }
+end
+
+global seed
+
+# random number generator
+procedure rand(i)
+   local n
+   static a, c, m
+
+   initial {
+      /seed := 0
+      a := 1103515245
+      c := 453816694
+      m := 4.65661286e-10
+      }
+
+   case type(i) of {
+      "list" | "record" | "string" | "cset": 
+         return i[rand(0 < *i)]
+      "table" | "set" : {
+         n := rand(0 < *i) | fail
+         return Index{ !i, n }
+      }
+      default: {
+         i := need_integer(i, 0)
+         seed := iand(a * seed + c, 2^31 - 1)
+         return if i = 0 then m * seed else integer( i * m * seed) + 1
+      }
    }
 end

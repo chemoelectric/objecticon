@@ -8,7 +8,7 @@ import
    ipl.lists,
    ipl.math,
    ipl.numbers,
-   ipl.random,
+#   ipl.random,
    ipl.records,
    ipl.sets,
    ipl.sort,
@@ -175,16 +175,16 @@ $endif
    tbl(options, argv, "a:svi:r")
    every writes(" ", "  argv        " | !argv | "\n")
 
-   write()
-   write("random:")			# random
-   gen(rand_num)
-   gen(rand_int, 20)
-   gen(randomize)
-   gen(randrange, 30, 50)
-   gen(randrangeseq, 52, 99)
-   gen(randseq, 1903)
-   gen(rng) 
-   gen(shuffle, "A23456789TJQK")
+#   write()
+#   write("random:")			# random
+#   gen(rand_num)
+#   gen(rand_int, 20)
+#   gen(randomize)
+#   gen(randrange, 30, 50)
+#   gen(randrangeseq, 52, 99)
+#   gen(randseq, 1903)
+#   gen(rng) 
+#   gen(shuffle, "A23456789TJQK")
 
    write()
    write("records:")			# records
@@ -247,7 +247,7 @@ $endif
    gen(replc,    "abc", [3, 1, 2])
    gen(rotate,   "housecat", -3)
    gen(schars,   "deinstitutionalization")
-   gen(scramble, "deinstitutionalization")
+   #gen(scramble, "deinstitutionalization")
    gen(selectp,  "deinstitutionalization", [3, 4, 6, 9, 11, 19])
    gen(slugs,    "fly.me.to.the.moon.and.let.me.play.among.the.stars", 11, '.')
    gen(starseq,  "ab")

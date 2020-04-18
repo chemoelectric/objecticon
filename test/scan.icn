@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io
+import io, ipl.test
 
 record array(a,b,c,d,e,f,g)
 
@@ -18,9 +18,9 @@ procedure p1()
 end
 
 procedure p2()
-   write("?10 ----> ",image(?10) | "none")
-   write("?10 ----> ",image(?10) | "none")
-   write("?10 ----> ",image(?10) | "none")
+   write("?10 ----> ",image(rand(10)) | "none")
+   write("?10 ----> ",image(rand(10)) | "none")
+   write("?10 ----> ",image(rand(10)) | "none")
    write("~&cset ----> ",image(~&cset) | "none")
    write("~&ascii ----> ",image(~&ascii) | "none")
    write("&subject := string(&lcase) ----> ",image(&subject := string(&lcase)) | "none")

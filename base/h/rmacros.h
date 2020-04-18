@@ -10,10 +10,7 @@
 #define MinListSlots	    8	/* number of elements in an expansion
 				 * list element block  */
 
-#define RandA        1103515245	/* random seed multiplier */
-#define RandC	      453816694	/* random seed additive constant */
-#define RanScale 4.65661286e-10	/* random scale factor = 1/(2^31-1) */
-#define RandVal (RanScale*(k_random=(RandA*k_random+RandC)&0x7FFFFFFFL))
+#define RandVal (RandScale * (k_random = (RandA * k_random + RandC) & MaxWord))
 
 #define Pi 3.14159265358979323846264338327950288419716939937511
 

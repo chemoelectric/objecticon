@@ -1,5 +1,5 @@
 
-import io,lang
+import io,lang, ipl.test
 
 global defs, ifile, in, limit, tswitch, prompt
 
@@ -88,7 +88,7 @@ procedure gener(goal)
          if \tswitch then write(genstr,symimage(symbol),listimage(pending))
          case itype(symbol) of {
             "string":   genstr ||:= symbol
-            "charset":  genstr ||:= ?symbol.chars
+            "charset":  genstr ||:= rand(symbol.chars)
 	    "query":    {
                writes("*** supply string for ",symbol.name,"  ")
                genstr ||:= read() | {
@@ -98,7 +98,7 @@ procedure gener(goal)
                   }
                }
             "nonterm":  {
-               pending := ?\defs[symbol.name] ||| pending | {
+               pending := rand(\defs[symbol.name]) ||| pending | {
                   write("*** undefined nonterminal:  <",symbol.name,">")
                   suspend genstr
                   break next

@@ -6,7 +6,7 @@
 #  implemented in Icon using co-expressions and the p{ ... }
 #  syntax that facilitates their use.
 
-import io
+import io, ipl.test
 
 procedure main()
    if not(&features == "co-expressions") then
@@ -49,7 +49,7 @@ end
 
 procedure Ranseq(a[])
    local x
-   while x := @?a do suspend x
+   while x := @rand(a) do suspend x
 end
 
 procedure Seqimage(L[])
