@@ -4,9 +4,7 @@ import
    lang,
    util,
    net,
-$if _UNIX | _PLAN9
    posix,
-$endif
    ipl.random,
    ipl.scan,
    ipl.strings,
@@ -306,11 +304,15 @@ $endif
       repeat {
          ?1                                # change &random
          name := p.child(prefix || left(&random, len, "0") || suffix).str()
-         if not access(name) then {
-            # Touch the filename to stop anyone else using it.
-            use{ FileStream(name, ior(FileOpt.WRONLY, FileOpt.CREAT)) } | fail
+         # Try to create the file, with the EXCL flag.
+         if use{ FileStream(name, ior(FileOpt.WRONLY, FileOpt.CREAT, FileOpt.EXCL)) } then
             return name
-         }
+         # Any reason other than a clash is an error.
+$if _PLAN9
+         save_why{ access(name) } | fail
+$else
+         errno() = Errno.EEXIST | fail
+$endif
       }
    end
 

@@ -463,7 +463,7 @@ procedure gen_urls(args)
 end
 
 procedure main(args)
-   local t, cookie_file, k, nw
+   local cookies_file, k, nw
 
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
@@ -531,8 +531,8 @@ procedure main(args)
    if \opts["head"] then 
       opts["l"] := &yes
 
-   cookie_file := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stopf("Couldn't access data dir: %w")
-   cookies := decode_from_file(cookie_file) | table()
+   cookies_file := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stopf("Couldn't access data dir: %w")
+   cookies := decode_from_file(cookies_file) | table()
 
    urls := create gen_urls(args)
 
@@ -563,14 +563,8 @@ procedure main(args)
       every ewrite("Invalid URL:" | problem_str(!invalid))
 
    # Save cookies
-   t := cookie_file || ".bak"
-   encode_to_file(t, Cookie.expire_cookies(cookies)) | 
-      stopf("Couldn't encode to temp cookie file %s: %w", t)
-$if _MS_WIN32
-   Files.remove(cookie_file)
-$endif
-   # Use rename not move to ensure it's atomic
-   Files.rename(t, cookie_file) | stopf("Couldn't rename cookie file %s: %w", t)
+   atomic_encode_to_file(cookies_file, Cookie.expire_cookies(cookies)) | 
+      stopf("Couldn't encode to cookies file %s: %w", cookies_file)
 
    if *err = *failed = *invalid = 0 then
       exit(0)

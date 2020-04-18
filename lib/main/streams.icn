@@ -1049,7 +1049,7 @@ $if _PLAN9
          flags2 := ior(flags2, FileOpt9.OEXCL)
 
       if iand(flags, FileOpt.CREAT) ~= 0 then {
-         if Files.access(name, 0) then {
+         if Files.access(name) then {
             if iand(flags, FileOpt.EXCL) ~= 0 then
                return error("File exists")
             # Fall through to normal open
