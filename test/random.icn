@@ -68,8 +68,8 @@ procedure misc()
    local v
 
    write()
-   yes_no{ "max 63 bit random < 1", 1.0842021724855e-19 * 2^64-1 < 1.0 }
-   yes_no{ "max 31 bit random < 1", 4.65661286e-10 * 2^31-1 < 1.0 }
+   yes_no{ "max 63 bit random < 1", 1.0842021724855e-19 * (2^63-1) < 1.0 }
+   yes_no{ "max 31 bit random < 1", 4.65661286e-10 * (2^31-1) < 1.0 }
 
    v := valset(T)
    every 1 to 150 do {
