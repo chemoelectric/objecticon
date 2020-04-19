@@ -180,7 +180,7 @@ procedure rand(i)
       }
 
    case type(i) of {
-      "list" | "record" | "string" | "cset": 
+      "list" | "record" | "string" | "ucs" | "cset": 
          return i[rand(0 < *i)]
       "table" | "set" : {
          n := rand(0 < *i) | fail
