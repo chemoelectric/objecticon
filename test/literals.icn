@@ -598,7 +598,7 @@ import ipl.test procedure main()
 	test_597()
 	test_598()
 	test_599()
-	test_600()
+	test_600();	test_601()
 end
 procedure test_1()
 	 try{&line, "a">u"abc"}
@@ -31799,4 +31799,88 @@ procedure test_600()
 	 try{&line, &cset>>u"0"}
 	 try{&line, &cset++u"0"}
 	 try{&line, u"abc"~==1}
+end
+
+procedure test_601()
+	 local var
+	 var := 123
+	 try{&line, u"0" ^ &cset}
+	 try{&line, 3801 ^ "a"}
+	 try{&line, "0.20934" ^ 1000}
+	 try{&line, 8504 ^ &cset}
+	 try{&line, '.1234567' ^ "1234"}
+	 try{&line, 8204 ^ 1000}
+	 try{&line, "0.20934" ^ &cset}
+	 try{&line, 1 ^ u"0"}
+	 try{&line, "" ^ &lcase}
+	 try{&line, "1234" ^ &fail}
+	 try{&line, u"23.91847" ^ 9706}
+	 try{&line, "`2*\x0e4rrIL\x05\x11\x1fz+,V" ^ 1000}
+	 try{&line, "0.20934" ^ &cset}
+	 try{&line, "" ^ '.1234567'}
+	 try{&line, 5470 ^ u"abc"}
+	 try{&line, 8339 ^ "FAi*381.X3+Um>\x1eI#"}
+	 try{&line, &cset ^ 9080}
+	 try{&line, u"" ^ var}
+	 try{&line, &fail ^ &ascii}
+	 try{&line, "0.20934" ^ 9439}
+	 try{&line, "1.2e+4" ^ u""}
+	 try{&line, 9774 ^ "1234"}
+	 try{&line, "a" ^ u"\u00c8"}
+	 try{&line, 9664 ^ 1000}
+	 try{&line, 2.718281828 ^ u"abc"}
+	 try{&line, '\x1d\x99\xb9\u0182' ^ 9191}
+	 try{&line, u"abc" ^ &null}
+	 try{&line, u"23.91847" ^ 2.718281828}
+	 try{&line, "0.20934" ^ &cset}
+	 try{&line, 3.141592654 ^ 9939}
+	 try{&line, u"9749" ^ 2.718281828}
+	 try{&line, &ucase ^ '\rx\u0104\u0157\u01d7'}
+	 try{&line, 3.141592654 ^ "a"}
+	 try{&line, u"" ^ &ucase}
+	 try{&line, 1000 ^ u"0"}
+	 try{&line, u"abc" ^ &cset}
+	 try{&line, u"abc" ^ &ascii}
+	 try{&line, 3866 ^ ""}
+	 try{&line, "1234" ^ u"23.91847"}
+	 try{&line, &cset ^ &cset}
+	 try{&line, &cset ^ 3.141592654}
+	 try{&line, u"abc" ^ 247}
+	 try{&line, 2470 ^ u"0"}
+	 try{&line, '\x90\xea\u010d\u0114\u0156\u015e\u016d\u01a2' ^ 2.718281828}
+	 try{&line, "0.20934" ^ u"\u01c8\u0109\u01c7\x12\e"}
+	 try{&line, var ^ '\u0100'}
+	 try{&line, 9053 ^ u"23.91847"}
+	 try{&line, 7331 ^ 1000}
+	 try{&line, &null ^ 139}
+	 try{&line, u"\u0190\f\u00fb\u016e\u01e8\u01c3\u0189X\u014d\u00d9\u01b7\u0085\f\u01d0" ^ 1}
+
+	 try{&line, 0.0 ^ -139.0}
+	 try{&line, -23.0 ^ 13.9}
+	 try{&line, 1e123 ^ 13.9e200}
+
+	 try{&line, 0.0 ^ -1234}
+	 try{&line, 1.234 ^ -1234}
+	 try{&line, 1.234e200 ^ 123456}
+	 try{&line, 1.234e20 ^ 12}
+
+	 try{&line, 2147483647 ^ 2}
+	 try{&line, 9223372036854775807 ^ 2}
+
+	 try{&line, 0 ^ -2}
+	 try{&line, 0 ^ 0}
+	 try{&line, -1 ^ -2}
+	 try{&line, -1 ^ -3}
+	 try{&line, 1 ^ -2}
+	 try{&line, 1 ^ -3}
+	 try{&line, 2 ^ -2}
+	 try{&line, 2 ^ -3}
+
+	 try{&line, 5739 ^ 2.718281828}
+	 try{&line, 573.92137 ^ 2.718281828}
+	 try{&line, 2.718281828 ^ 123}
+	 try{&line, 271828 ^ 123}
+	 try{&line, u"9749" ^ u"0"}
+	 try{&line, 1 ^ u"23.91847"}
+	 try{&line, "1234" ^ "0.20934"}
 end
