@@ -517,6 +517,7 @@ static struct membuff c3_mb = {"C3 calculation membuff", 64000, 0,0,0 };
 void compute_inheritance()
 {
     struct lclass *cl;
+    struct lrecord *rec;
     for (cl = lclasses; cl; cl = cl->next) {
         if (!cl->implemented_classes) {
             /* Flag value for checking if a class has been seen.  Doing it this way saves
@@ -526,8 +527,22 @@ void compute_inheritance()
             mb_clear(&c3_mb);
         }
         check_override1(cl);
+        if (cl->n_implemented_class_fields + cl->n_implemented_instance_fields > 0xffff)
+            lfatal(cl->global->defined,
+                   &cl->global->pos,
+                   "Class %s has too many fields", 
+                   cl->global->name);
+
     }
     mb_free(&c3_mb);
+
+    for (rec = lrecords; rec; rec = rec->next) {
+        if (rec->nfields > 0xffff)
+            lfatal(rec->global->defined,
+                   &rec->global->pos,
+                   "Record %s has too many fields", 
+                   rec->global->name);
+    }
 }
 
 /*
