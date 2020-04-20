@@ -202,6 +202,11 @@ int main(int argc, char **argv)
     char ch;
     struct fileparts *fp;
 
+#if PLAN9
+    /* Turn off floating point exceptions */
+    setfcr(getfcr()&~(FPOVFL|FPINEX|FPUNFL|FPZDIV|FPINVAL));
+#endif
+
     fp = fparse(*argv);
     progname = salloc(fp->name);
 
