@@ -4,8 +4,8 @@ procedure mkstr(n)
    local s, i, l
    l := []
    s := ""
-   every 1 to ?n do {
-      i := ?[10,20,100,120,200,220,300,400,500,1000,2000,3000,4000,5000,10000]
+   every 1 to rand(n) do {
+      i := rand([10,20,100,120,200,220,300,400,500,1000,2000,3000,4000,5000,10000])
       put(l, i)
       s ||:= string(uchar(i))
    }
@@ -29,7 +29,7 @@ procedure check_assign(s, l)
    check_assign_impl(s, l, 1, 1)
    
    every 1 to 25 do {
-      check_assign_impl(s, l, ?(*s+1), ?(*s+1))
+      check_assign_impl(s, l, rand(*s+1), rand(*s+1))
    }
 end
 
@@ -67,8 +67,8 @@ procedure check_substr(s, l)
    }
 
    every 1 to 20 do {
-      i := ?(*s+1)
-      j := ?(*s+1)
+      i := rand(*s+1)
+      j := rand(*s+1)
       sb := s[i:j]
       lb := l[i:j]
       yes_no{"3.Substring length", *sb = *lb}

@@ -365,7 +365,7 @@ function table(x, v[n])
 end
 
 
-"keyof(s, x) - given a table or list s and a value x, generate the keys k such that s[k] === x"
+"keyof(s, x) - given a table, list or record s and a value x, generate the keys k such that s[k] === x"
 
 function keyof(s,x)
    body {
@@ -388,6 +388,16 @@ function keyof(s,x)
 		 ep = hgnext(BlkLoc(s), &state, ep)) {
                if (equiv(&ep->telem.tval, &x))
                   suspend ep->telem.tref;
+            }
+	    fail;
+         }
+
+         record: {
+            word i, j;
+            j = RecordBlk(s).constructor->n_fields;
+            for (i = 0; i < j; i++) {
+                if (equiv(&RecordBlk(s).fields[i], &x))
+                   suspend C_integer (i + 1);
             }
 	    fail;
          }

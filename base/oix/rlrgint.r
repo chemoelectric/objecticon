@@ -1650,7 +1650,6 @@ void bigrand(dptr da, dptr dx)
         word alen = LEN(&BignumBlk(*da));
         DIGIT *d;
         word i;
-        double rval;
 
         MemProtect(x = alcbignum(alen));
         MemProtect(td = alcbignum(alen + 1));
@@ -1658,8 +1657,9 @@ void bigrand(dptr da, dptr dx)
         a = &BignumBlk(*da);
 
         for (i = alen; i >= 0; i--) {
-            rval = RandVal;
-            d[i] = rval * B;
+            NextRand;
+            /* Take the top DigitBits of k_random. */
+            d[i] = k_random >> (DigitBits - 1);
         }
     
         MemProtect(tu = alcbignum(alen + 2));

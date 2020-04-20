@@ -108,6 +108,9 @@ static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
 static int numeric_via_string(struct literal *src);
+static word powii(word a, word i);
+static double powri(double a, word n);
+static double powrr(double x, double y);
 
 static struct str_buf opt_sbuf;
 
@@ -2679,7 +2682,35 @@ static void fold_power(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    /* Don't do anything other than check for fail... */
+
+    if (cnv_eint(&l2)) {
+        if (cnv_eint(&l1)) {
+            word w = powii(l1.u.i, l2.u.i);
+            if (!over_flow)
+                replace_node(n, (struct lnode*)
+                             lnode_const(&n->loc,
+                                         new_constant(F_IntLit, 
+                                                      intern_n((char *)&w, sizeof(word)), 
+                                                      sizeof(word))));
+        } else if (cnv_real(&l1)) {
+            double d = powri(l1.u.d, l2.u.i);
+            if (!over_flow)
+                replace_node(n, (struct lnode*)
+                             lnode_const(&n->loc,
+                                         new_constant(F_RealLit, 
+                                                      intern_n((char *)&d, sizeof(double)), 
+                                                      sizeof(double))));
+        }
+    } else if (cnv_real(&l1) && cnv_real(&l2)) {
+        double d = powrr(l1.u.d, l2.u.d);
+        if (!over_flow)
+            replace_node(n, (struct lnode*)
+                     lnode_const(&n->loc,
+                                 new_constant(F_RealLit, 
+                                              intern_n((char *)&d, sizeof(double)), 
+                                              sizeof(double))));
+    }
+
     free_literal(&l1);
     free_literal(&l2);
 }
@@ -3464,4 +3495,112 @@ static int numeric_via_string(struct literal *src)
    src->type = REAL;
    src->u.d = d;
    return 1;
+}
+
+/* see bigpowii() in rlrgint.r */
+static word powii(word a, word i)
+{
+    word x;
+    int n = WordBits;
+
+    if (a == 0 || i <= 0) {              /* special cases */
+        if (a == 0 && i < 0) {           /* 0 ^ negative -> error */
+            over_flow = 1;
+	    return 0;
+        }
+        if (i == 0) {
+            over_flow = 0;
+	    return 1;
+        }
+        if (a == -1) {                    /* -1 ^ [odd,even] -> [-1,+1] */
+            if (!(i & 1))
+                a = 1;
+        }
+        else if (a != 1) {                /* 1 ^ any -> 1 */
+            a = 0;
+        }                   /* others ^ negative -> 0 */
+        x = a;
+    }
+    else {
+        /* scan bits left to right.  skip leading 1. */
+        while (--n >= 0)
+            if (i & ((word)1 << n))
+                break;
+        /* then, for each zero, square the partial result;
+           for each one, square it and multiply it by a */
+        x = a;
+        while (--n >= 0) {
+            x = mul(x, x);
+            if (over_flow)
+                return 0;
+            if (i & ((word)1 << n)) {
+                x = mul(x, a);
+                if (over_flow)
+                    return 0;
+            }
+        }
+    }
+    over_flow = 0;
+    return x;
+}
+
+/* see bigpowri() in rlrgint.r */
+static double powri(double a, word n)
+{
+    double retval;
+
+    if (n < 0) {
+        /*
+         * a ^ n = ( 1/a ) * ( ( 1/a ) ^ ( -1 - n ) )
+         *
+         * (-1) - n never overflows, even when n == MinWord.
+         */
+        if (a == 0.0) {
+            over_flow = 1;
+	    return 0.0;
+        }
+        n = (-1) - n;
+        a = 1.0 / a;
+        retval = a;
+    }
+    else 	
+        retval = 1.0;
+
+    /* multiply retval by a ^ n */
+    while (n > 0) {
+        if (n & 01L)
+            retval *= a;
+        a *= a;
+        n >>= 1;
+    }
+
+    if (!isfinite(retval)) {
+        over_flow = 1;
+        return 0.0;
+    }
+
+    over_flow = 0;
+    return retval;
+}
+
+/* see operator ^ power(x, y) in oarith.r */
+static double powrr(double x, double y)
+{
+    double r;
+    if (x == 0.0 && y < 0.0) {
+        over_flow = 1;
+        return 0.0;
+    }
+
+    if (x < 0.0) {
+        over_flow = 1;
+        return 0.0;
+    }
+    r = pow(x,y);
+    if (!isfinite(r)) {
+        over_flow = 1;
+        return 0.0;
+    }
+    over_flow = 0;
+    return r;
 }

@@ -945,6 +945,10 @@ static int nextchar(int in_literal)
         case '\n':
             in_line++;
             incol = 0;
+            if (in_line > 0x7fff) {
+                lexfatal("Too many lines");
+                in_line = 0;
+            }
             break;
         case '\t':
             incol = (incol | 7) + 1;
