@@ -25,7 +25,7 @@
    #define MaxWord      ((word)0x7fffffff)      /* largest word */
    #define MinWord      ((word)0x80000000)      /* smallest word */
    #define RandA        1103515245              /* random seed multiplier */
-   #define RandC        453816694               /* random seed additive constant */
+   #define RandC        453816693               /* random seed additive constant */
    #define RandScale    4.65661286e-10          /* random scale factor, a little less than 1/(2^31-1) */
    #define F_Nqual      0x80000000              /* set if NOT string qualifier */
    #define F_Var        0x40000000              /* set if variable */
