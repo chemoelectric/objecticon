@@ -10,7 +10,8 @@
 #define MinListSlots	    8	/* number of elements in an expansion
 				 * list element block  */
 
-#define RandVal (RandScale * (k_random = (RandA * k_random + RandC) & MaxWord))
+#define NextRand (k_random = (RandA * k_random + RandC) & MaxWord)
+#define RandVal (RandScale * NextRand)
 
 #define Pi 3.14159265358979323846264338327950288419716939937511
 
