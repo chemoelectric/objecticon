@@ -100,7 +100,10 @@ final abstract class Format()
    #           if c contains '+' then a leading + is added to positive
    #           numbers.  If c contains 's' then trailing fractional
    #           zeroes are replaced with spaces, whilst 'z' means drop
-   #           such zeroes altogether.
+   #           such zeroes altogether.  If c contains 'v' then any
+   #           significant digits beyond `SIG_DIGITS` are output
+   #           verbatim; otherwise these are replaced by zeroes, since
+   #           they are usually meaningless.
    #
    public static numeric_to_string(subject, p, f)
       local neg, s, t, lim, d, zs, dig, i, n, ec
@@ -122,7 +125,7 @@ final abstract class Format()
          if lim >= -1 then {
             s := ""
             d := t[1]
-            if lim > SIG_DIGITS then {
+            if lim > SIG_DIGITS & not any(f, "v") then {
                zs := repl("0", lim - SIG_DIGITS)
                lim := SIG_DIGITS
             }
