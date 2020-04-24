@@ -16,21 +16,6 @@
 #
 #  This file contains procedures related to pseudo-random numbers.
 #
-#	rand_num()	is a linear congruential pseudo-random number
-#			generator.  Each time it is called, it produces
-#			another number in the sequence and also assigns it
-#			to the global variable random.  With no arguments,
-#			rand_num() produces the same sequence(s) as Icon's
-#			built-in random-number generator.  Arguments can be
-#			used to get different sequences.
-#
-#			The global variable random serves the same role that
-#			&random does for Icon's built-in random number
-#			generator.
-#
-#	rand_int(i)	produces a randomly selected integer in the range 1
-#			to i.  It models ?i for positive i.
-#
 #	randomize()	sets &random to a "random" value, based on the time
 #			of day and the date.
 #
@@ -44,11 +29,6 @@
 #	randseq(seed)	generates the values of &random, starting at seed,
 #			that occur as the result of using ?x.
 #
-#	rng(a, c, m, x)	generates a sequence of numbers using the linear
-#			congruence method.  With appropriate parameters, the
-#		 	result is a pseudo-random sequence.  The default
-#			values produce the sequence used in Icon.
-#
 #	shuffle(x)	shuffles the elements of x
 #
 ############################################################################
@@ -60,37 +40,13 @@
 package ipl.random
 
 import
-   util(Time, need_integer),
-   ipl.factors(nxtprime)
+   util(Time, need_integer, need_string),
+   ipl.factors(nxtprime),
+   ipl.pdco(Index),
+   ipl.printf(stopf),
+   io(need_Stream)
 
 global random
-
-# random number generator
-procedure rand_num(a_, c_, m_)		
-   static a, c, m
-
-   initial {
-      /random := 0
-      a := \a_ | 1103515245
-      c := \c_ | 453816694
-      m := (\m_ | 2 ^ 31)
-      }
-
-    return random := (a * random + c) % m
-     
-end
-
-# model ?i
-procedure rand_int(i)			
-   static scale
-	
-   initial scale := 1.0 / (2 ^ 31 - 1)
-
-   i := need_integer(i, 1)
-
-   return integer(i * rand_num() * scale) + 1
-
-end
 
 # randomize
 procedure randomize()			
@@ -145,19 +101,6 @@ procedure randseq(seed)
 
 end
 
-# random number generator
-procedure rng(a, c, m, x)	
-
-   /a := 1103515245			# multiplicative constant
-   /c := 453816694			# additive constant
-   /m := 2 ^ 31 - 1			# modulus
-   /x := 0				# initial value
-
-   suspend x
-   suspend x := iand(a * |x + c, m)
-
-end
-
 #  The procedure shuffle(x) shuffles a string, list, or record.
 #  In the case that x is a string, a corresponding string with the
 #  characters randomly rearranged is produced. In the case that x is
@@ -191,4 +134,443 @@ procedure choose(k, n)
          k -:= 1
       }
    }
+end
+
+#
+# An abstract base class for random number generators.
+#
+abstract class Random()
+   # Return a real number in the range [0, 1).
+   #
+   public abstract real()
+
+   # Return an integer in the range [1, n).
+   #
+   public abstract range(n)
+
+   # Select an element from structure or string type.
+   #
+   public choose(i)
+      return case type(i) of {
+         "list" | "record" | "string" | "ucs" | "cset": 
+            i[range(0 < *i)]
+         "table" | "set" :
+            Index{ !i, range(0 < *i) }
+         default:
+            choose(need_string(i))
+      }
+   end
+end
+
+#
+# A `Random` generator that just wraps the builtin random operator
+# `?`.
+#
+class BuiltinRandom(Random)
+   public override real()
+      return ?0
+   end
+
+   public override range(n)
+      return ?n
+   end
+end
+
+# An abstract base class for random generators which generate integers
+# in the range of an arbitrary fixed modulus (usually a power of 2).
+#
+# The modulus `m` is supplied in the constructor, and a single method,
+# `get()` is implemented which generates numbers in the range [0, m).
+#
+abstract class RandomWithModulus(Random)
+   public const
+      m                 # The modulus
+   private
+      n1, b1, p1, s1    # Some cached values
+   public static const
+      REAL_BITS         # Number of bits in a `real` mantissa
+
+   private static init() 
+      REAL_BITS := 53
+   end
+
+   #
+   # Return a random number in the range [0, m)
+   #
+   public abstract get()
+
+   public override real()
+      local r
+      repeat {
+         r := (range(2 ^ REAL_BITS) - 1) * (2.0 ^ -REAL_BITS)
+         # This test should always succeed, but just in case.
+         if r < 1.0 then
+            return r
+      }
+   end
+
+   #
+   # This method combines `p` random numbers from `get()` to give a
+   # result in the range [0, m^p).  For example, if m=2^5, `get_n(2)`
+   # would return a number in the range [0, m^2) = [0, 2^10).
+   #
+   public get_n(p)
+      local r
+      # Invariant: r is in [0, m^i), where i is is the loop iteration,
+      #     since (m^i - 1) * m + (m - 1) = m^(i + 1) - 1
+      r := 0
+      every 1 to p do
+         r := r * m + get()
+      return r
+   end
+
+   public override range(n)
+      local r, m1
+      n := need_integer(n, 1)
+      # See if we have to update the various cached fields.
+      (n === n1) | {
+         # Establish the smallest p1 for which m1 = m^p1 and m1 >= n.
+         # m1 will thus be a modulus big enough to encompass n, and
+         # formed from combining p1 results from `get()`.
+         p1 := 1
+         m1 := m
+         while m1 < n do {
+            m1 *:= m
+            p1 +:= 1
+         }
+         b1 := m1 % n
+         # Now since m1 >= n > 0 and 0 <= b1 < n,
+         #      m1 = b1 + qn, for some q > 0
+         # So (m1 - b1) is positive and divisible by n.
+         s1 := (m1 - b1) / n
+         n1 := n
+      }
+      repeat {
+         # Get a random number r in the range [0, m^p1)
+         r := get_n(p1)
+         # Filter out any below the bias
+         if r >= b1 then
+            # We could return 1 + r % n here, but that would depend on
+            # the lower order bits of r being a good random source
+            # (which will not be the case for a power of 2 LCG).
+            #
+            # So instead split the possible range of r into n equal
+            # sections and see which one it landed in.
+            #
+            # Since we have filtered r below b1, it is now in the
+            # range [b1, m1).  so (r - b1) is in [0, m1 - b1).
+            #
+            # Now divide that range into n equal sections, each of
+            # size (m1 - b1) / n, which is s1 (see above).
+            # 
+            return 1 + (r - b1) / s1
+      }
+   end
+
+   # Returns `iand(n, 2^64 - 1)`
+   #
+   public static mod64(n)
+      return iand(n, 16rFFFFFFFFFFFFFFFF)
+   end
+
+   # Returns `iand(n, 2^32 - 1)`
+   #
+   public static mod32(n)
+      return iand(n, 16rFFFFFFFF)
+   end
+
+   # The constructor takes the modulus, an integer `m >= 2`.
+   public new(m)
+      self.m := need_integer(m, 2)
+      return
+   end
+end
+
+# A random number generator which generates numbers based on random
+# data from a `io.Stream`.
+#
+# For example to produce 64-bit integers from `/dev/urandom` :-
+# ~
+#   r := RandomFromStream(open("/dev/urandom"), 8)
+# ~
+#
+class RandomFromStream(RandomWithModulus)
+   public const
+      c, src
+
+   public override get()
+      local s, i, x
+      s := src.reads(c) | stopf("Failed to read random source: %w")
+      i := 0
+      every x := ord(s) do
+         i := 256 * i + x
+      return i
+   end
+
+   # Close the underlying `io.Stream`.
+   #
+   public close()
+      link src.close()
+   end
+
+   # Create an instance using `io.Stream` `src` and reading `c`
+   # (default 4) bytes at a time.  The modulus is thus `2 ^ (8*c)`.
+   #
+   public override new(src, c)
+      self.src := need_Stream(src)
+      self.c := need_integer(\c, 1) | 4
+      RandomWithModulus.new(2 ^ (8 * self.c))
+      return
+   end
+end
+
+#
+# A linear congruential random number generator.
+#
+class LCG(RandomWithModulus)
+   public const
+      a, c
+   private readable
+      x
+
+   #
+   # Set the current value of the generator sequence.
+   #
+   public set(x)
+      self.x := need_integer(x)
+      link
+   end
+
+   public override get()
+      x := (a * x + c) % m
+      return .x
+   end
+
+   #
+   # Create a generator with multiplier `a`, additive constant `c`,
+   # modulus `m`, and initial value `x` (default 0).
+   #
+   public override new(a, c, m, x)
+      RandomWithModulus.new(m)
+      self.a := need_integer(a, 1)
+      self.c := need_integer(c, 0)
+      /x := 0
+      set(x)
+      return
+   end
+end
+
+# See https://www.pcg-random.org/
+#
+# Adapted from the C Implementation from
+#    https://www.pcg-random.org/download.html
+#
+class PCG32(RandomWithModulus)
+   public const
+      a
+   private readable
+      x, i
+
+   public set(x, i)
+      x := need_integer(x)
+      i := need_integer(i)
+      self.x := 0
+      self.i := mod64(ior(2 * i, 1))
+      get()
+      self.x := mod64(self.x + x)
+      get()
+      link
+   end
+
+   public override get()
+      local o, s, r
+      o := x
+      self.x := mod64(o * a + i)
+      s := mod32(ishift(ixor(ishift(o, -18), o), -27))
+      r := ishift(o, -59)
+      return mod32(ior(ishift(s, -r), ishift(s, iand(-r, 31))))
+   end
+
+   public override new(x, i, a)
+      RandomWithModulus.new(16r100000000)
+      self.a := need_integer(\a, 1) | 6364136223846793005
+      /i := 1442695040888963407
+      /x := 9600629759793949339
+      set(x, i)
+      return
+   end
+end
+
+#
+# 64-bit Mersenne Twister random generator.
+#
+# Adapted from :-
+#    http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/C-LANG/mt19937-64.c
+#
+class MersenneTwister64(RandomWithModulus)
+   private
+      mt,
+      mti
+
+   public static const
+      N,
+      M,
+      MATRIX_A,
+      UPPER_MASK,
+      LOWER_MASK
+
+   private static init() 
+      N := 312
+      M := 156
+      MATRIX_A := 16rB5026F5AA96619E9
+      UPPER_MASK := 16rFFFFFFFF80000000
+      LOWER_MASK := 16r7FFFFFFF
+   end
+
+   public override get()
+      local kk, y
+
+      if mti >= N then {
+         every kk := 1 to N - M do {
+            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+            mt[kk] := ixor(mt[kk + M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+         }
+         every kk := N - M + 1 to N - 1 do {
+            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+            mt[kk] := ixor(mt[kk + (M - N)], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+         }
+         y := ior(iand(mt[N], UPPER_MASK), iand(mt[1], LOWER_MASK))
+         mt[N] := ixor(mt[M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+
+         mti := 0
+      }
+
+      y := mt[mti +:= 1]
+      y := ixor(y, iand(ishift(y, -29), 16r5555555555555555))
+      y := ixor(y, iand(ishift(y, 17), 16r71D67FFFEDA60000))
+      y := ixor(y, iand(ishift(y, 37), 16rFFF7EEE000000000))
+      y := ixor(y, ishift(y, -43))
+      
+      return y
+   end
+
+   public init_list(l)
+      local i, j
+      init_genrand(19650218)
+      i := 1; j := 0
+      every 1 to max(N, *l) do {
+         mt[i + 1] := mod64(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -62)) * 3935559000370003845) + l[j + 1] + j)
+         i +:= 1
+         if i >= N then { mt[1] := mt[N]; i := 1 }
+         j := (j + 1) % *l
+      }
+      every 1 to N - 1 do {
+         mt[i + 1] := mod64(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -62)) * 2862933555777941757) - i)
+         i +:= 1
+         if i >= N then { mt[1] := mt[N]; i := 1 }
+      }
+      mt[1] := 16r8000000000000000
+   end
+
+   private init_genrand(s)
+      local i
+      mt := [ mod64(s) ]
+      every i := 2 to N do
+         put(mt, mod64(6364136223846793005 * ixor(mt[-1], ishift(mt[-1], -62)) + (i - 1)))
+      mti := N
+   end
+
+   public override new(l)
+      RandomWithModulus.new(16r10000000000000000)
+      /l := [16r12345, 16r23456, 16r34567, 16r45678]
+      init_list(l)
+      return
+   end
+end
+
+#
+# 32-bit Mersenne Twister random generator.
+#
+# Adapted from :-
+#  http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
+#
+class MersenneTwister32(RandomWithModulus)
+   private
+      mt,
+      mti
+
+   public static const
+      N,
+      M,
+      MATRIX_A,
+      UPPER_MASK,
+      LOWER_MASK
+
+   private static init() 
+      N := 624
+      M := 397
+      MATRIX_A := 16r9908B0DF
+      UPPER_MASK := 16r80000000
+      LOWER_MASK := 16r7FFFFFFF
+   end
+
+   public override get()
+      local kk, y
+
+      if mti >= N then {
+         every kk := 1 to N - M do {
+            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+            mt[kk] := ixor(mt[kk + M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+         }
+         every kk := N - M + 1 to N - 1 do {
+            y := ior(iand(mt[kk], UPPER_MASK), iand(mt[kk + 1], LOWER_MASK))
+            mt[kk] := ixor(mt[kk + (M - N)], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+         }
+         y := ior(iand(mt[N], UPPER_MASK), iand(mt[1], LOWER_MASK))
+         mt[N] := ixor(mt[M], (y / 2), if y % 2 = 1 then MATRIX_A else 0)
+
+         mti := 0
+      }
+
+      y := mt[mti +:= 1]
+      y := ixor(y, ishift(y, -11))
+      y := ixor(y, iand(ishift(y, 7), 16r9D2C5680))
+      y := ixor(y, iand(ishift(y, 15), 16rEFC60000))
+      y := ixor(y, ishift(y, -18))
+      
+      return y
+   end
+
+   public init_list(l)
+      local i, j
+      init_genrand(19650218)
+      i := 1; j := 0
+      every 1 to max(N, *l) do {
+         mt[i + 1] := mod32(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -30)) * 1664525) + l[j + 1] + j)
+         i +:= 1
+         if i >= N then { mt[1] := mt[N]; i := 1 }
+         j := (j + 1) % *l
+      }
+      every 1 to N - 1 do {
+         mt[i + 1] := mod32(ixor(mt[i + 1], ixor(mt[i], ishift(mt[i], -30)) * 1566083941) - i)
+         i +:= 1
+         if i >= N then { mt[1] := mt[N]; i := 1 }
+      }
+      mt[1] := 16r80000000
+   end
+
+   private init_genrand(s)
+      local i
+      mt := [ mod32(s) ]
+      every i := 2 to N do
+         put(mt, mod32(1812433253 * ixor(mt[-1], ishift(mt[-1], -30)) + (i - 1)))
+      mti := N
+   end
+
+   public override new(l)
+      RandomWithModulus.new(16r100000000)
+      /l := [16r123, 16r234, 16r345, 16r456]
+      init_list(l)
+      return
+   end
 end
