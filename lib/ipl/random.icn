@@ -188,10 +188,12 @@ abstract class RandomWithModulus(Random)
    private
       n1, b1, p1, s1    # Some cached values
    public static const
-      REAL_BITS         # Number of bits in a `real` mantissa
+      REAL_RANGE,       # Range for calculating a `real`
+      REAL_FACTOR       # Multiplier for same
 
    private static init() 
-      REAL_BITS := 53
+      REAL_RANGE := 2 ^ 53
+      REAL_FACTOR := 1.0 / REAL_RANGE
    end
 
    #
@@ -202,7 +204,7 @@ abstract class RandomWithModulus(Random)
    public override real()
       local r
       repeat {
-         r := (range(2 ^ REAL_BITS) - 1) * (2.0 ^ -REAL_BITS)
+         r := (range(REAL_RANGE) - 1) * REAL_FACTOR
          # This test should always succeed, but just in case.
          if r < 1.0 then
             return r
@@ -371,6 +373,9 @@ class PCG32(RandomWithModulus)
    private readable
       x, i
 
+   #
+   # Set the current state of the generator sequence.
+   #
    public set(x, i)
       x := need_integer(x)
       i := need_integer(i)
