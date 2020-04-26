@@ -40,7 +40,7 @@
 package ipl.random
 
 import
-   util(Time, need_integer, need_string),
+   util(Time, need_integer, need_string, Math),
    ipl.factors(nxtprime),
    ipl.pdco(Index),
    ipl.printf(stopf),
@@ -73,23 +73,52 @@ end
 
 # random sequence in range
 procedure randrangeseq(i, j)		
-   local x, m, a, c, n
+   i := need_integer(i) - 1
+   j := need_integer(j)
 
-   n := j - i + 1
+   suspend permutation(j - i)  + i
+end
 
-   if n < 0 then fail
+# suspend the elements of x in a random order; x should be something which
+# can be indexed by integer (string, ucs, list, or cset).
+procedure randelements(x)
+   suspend x[permutation(*x)]
+end
 
-   x := 1
-   m := nxtprime(n)
-   a := m + 1
-   c := nxtprime(m)
+# Generate a random permutation of the integers 1..n.
+#
+procedure permutation(n)
+   local x, m, a, c, p, r
 
-   every 1 to m do {
-      x := (a * x + c) % m
-      if x < n then {		# discard out-of-range values
-         suspend x + i
-         }
-      }
+   n := need_integer(n)
+   if n <= 0 then fail
+   if n = 1 then return 1
+
+   # Create the parameters for a full-cycle LCG
+
+   # Choose a modulus m >= n in the form of a perfect square of a
+   # prime p >= 5.
+   p := nxtprime(Math.sqrt(n))
+   p <:= 5
+   m := p^2
+   # Choose c relatively prime to m, ie not divisible by p
+   repeat {
+      c := ?m
+      if c % p > 0 then
+         break
+   }
+   # Choose a such that a=1 (mod p), p being the sole prime factor of
+   # m, and also so that a > 1 (mod m), since a = 1 gives a poor
+   # random sequence.  We can choose from p*i + 1, for 1 <= i < p. (If
+   # i = p then a = p^2 + 1 = 1 (mod m)).
+   a := p * ?(p - 1) + 1
+
+   # Create an LCG with a randomly chosen seed
+   r := LCG(a, c, m, ?m)
+   every 1 to n do {
+      x := n > |r.get()       # discard out-of-range values
+      suspend 1 + x
+   }
 
 end
 
@@ -128,6 +157,8 @@ end
 # Choose k numbers from the range 1..n in ascending order
 procedure choose(k, n)
    local i
+   k := need_integer(k, 0)
+   n := need_integer(n, 0)
    every i := 1 to n do {
       if ?0 < real(k) / (n - i + 1) then {
          suspend i
@@ -339,7 +370,7 @@ class LCG(RandomWithModulus)
    # Set the current value of the generator sequence.
    #
    public set(x)
-      self.x := need_integer(x)
+      self.x := need_integer(x, 0)
       link
    end
 
