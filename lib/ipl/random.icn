@@ -40,7 +40,9 @@
 package ipl.random
 
 import
-   util(Time, need_integer, need_string, Math),
+   lang(Limit),
+   util(Time, need_integer, need_string,
+        HasCloseUnderlying, Math),
    ipl.factors(nxtprime),
    ipl.pdco(Index),
    ipl.printf(stopf),
@@ -191,6 +193,12 @@ abstract class Random()
             choose(need_string(i))
       }
    end
+
+   # Close this instance, by freeing any resources it uses.
+   #
+   public close()
+      link
+   end
 end
 
 #
@@ -327,7 +335,7 @@ end
 #   r := RandomFromStream(open("/dev/urandom"), 8)
 # ~
 #
-class RandomFromStream(RandomWithModulus)
+class RandomFromStream(RandomWithModulus, HasCloseUnderlying)
    public const
       c, src
 
@@ -342,8 +350,10 @@ class RandomFromStream(RandomWithModulus)
 
    # Close the underlying `io.Stream`.
    #
-   public close()
-      link src.close()
+   public override close()
+      if \close_underlying_flag then
+         src.close() | fail
+      link
    end
 
    # Create an instance using `io.Stream` `src` and reading `c`
@@ -353,6 +363,7 @@ class RandomFromStream(RandomWithModulus)
       self.src := need_Stream(src)
       self.c := need_integer(\c, 1) | 4
       RandomWithModulus.new(2 ^ (8 * self.c))
+      self.close_underlying_flag := &yes
       return
    end
 end
@@ -389,6 +400,20 @@ class LCG(RandomWithModulus)
       self.c := need_integer(c, 0)
       /x := 0
       set(x)
+      return
+   end
+end
+
+#
+# A `RandomWithModulus` generator that uses the values from `&random`.
+#
+class BuiltinLCG(RandomWithModulus)
+   public override get()
+      return ?1 & &random
+   end
+
+   public override new()
+      RandomWithModulus.new(Limit.MaxWord + 1)
       return
    end
 end

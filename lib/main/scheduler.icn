@@ -8,7 +8,7 @@ import lang, util, ipl.printf
 # co-expression.  The stream's co-expression is re-activated only when
 # the `Scheduler` determines the stream is ready for i/o.
 #
-class TaskStream(Stream, HasTask, HasUnderlyingStream)
+class TaskStream(Stream, HasTask, HasCloseUnderlying)
    private readable
       timeout
    private const

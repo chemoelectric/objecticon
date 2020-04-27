@@ -2,7 +2,7 @@ package io
 
 import
    util(error, need_flag, need_integer, need_string,
-        save_why, HasMode),
+        save_why, HasMode, HasCloseUnderlying, lclose),
    lang(Class, NoCopy),
    posix(System),
    ipl.strings(replace),
@@ -260,22 +260,6 @@ procedure need_Stream(x)
 end
 
 #
-# This class simply adds the close_underlying_flag to a `Stream`.
-#
-abstract class HasUnderlyingStream()
-   protected
-      close_underlying_flag
-
-   #
-   # If set, the stream will close any underlying `Stream`s when it is closed.
-   #
-   public set_close_underlying(s)
-      self.close_underlying_flag := need_flag(s)
-      link
-   end
-end
-
-#
 # This is a stream based on an Icon string.  An initial string can be
 # provided to the constructor.  Reading from the stream will be quite
 # efficient, but writing will be relatively slow, particularly if the
@@ -441,7 +425,7 @@ end
 # that input/output to the inner stream tends to take place in larger
 # chunks.
 #
-class BufferStream(Stream, HasUnderlyingStream)
+class BufferStream(Stream, HasCloseUnderlying)
    private const
       other
    private
@@ -907,16 +891,6 @@ end
 #
 procedure close(f)
    return f.close()
-end
-
-#
-# Useful procedure to close a list of `Stream`s.
-#
-procedure lclose(l)
-   local e, f
-   every e := !l do
-      e.close() | (f := &why)
-   return /f | error(f)
 end
 
 #
@@ -1659,7 +1633,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, HasTask, NoCopy)
    protected
       cmd,
       err_sink,
@@ -2085,7 +2059,7 @@ end
 # This stream takes a list of other streams.  Its output is the concatenation of
 # the output of those streams.
 #
-class SequenceStream(Stream, HasUnderlyingStream)
+class SequenceStream(Stream, HasCloseUnderlying)
    private const
       a, ac
 

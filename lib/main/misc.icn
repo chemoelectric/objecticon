@@ -355,6 +355,32 @@ abstract class HasMode()
    public abstract get_mode()
 end
 
+#
+# This class simply adds a close_underlying_flag to a class.
+#
+abstract class HasCloseUnderlying()
+   protected
+      close_underlying_flag
+
+   #
+   # If set, the stream will close any underlying `Stream`s when it is closed.
+   #
+   public set_close_underlying(s)
+      self.close_underlying_flag := need_flag(s)
+      link
+   end
+end
+
+#
+# Useful procedure to close a list of objects with `close` methods.
+#
+procedure lclose(l)
+   local e, f
+   every e := !l do
+      e.close() | (f := &why)
+   return /f | error(f)
+end
+
 # This class is used to save and restore some arbitrary global state.
 #
 abstract class State()

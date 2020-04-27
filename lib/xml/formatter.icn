@@ -8,14 +8,14 @@
 
 package xml
 
-import io, exception
+import io, exception, util
 
 #
 # This is an abstract base class for Formatters, which take a Document
 # object (or a Node within a Document), and output that document to a
 # stream.
 #
-abstract class Formatter(Stream, HasUnderlyingStream)
+abstract class Formatter(Stream, HasCloseUnderlying)
    private
       file
    protected 
