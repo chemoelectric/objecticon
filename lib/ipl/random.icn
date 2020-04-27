@@ -42,7 +42,7 @@ package ipl.random
 import
    lang(Limit),
    util(Time, need_integer, need_string,
-        HasCloseUnderlying, Math),
+        HasClose, HasCloseUnderlying, Math),
    ipl.factors(nxtprime),
    ipl.pdco(Index),
    ipl.printf(stopf),
@@ -172,7 +172,7 @@ end
 #
 # An abstract base class for random number generators.
 #
-abstract class Random()
+abstract class Random(HasClose)
    # Return a real number in the range [0, 1).
    #
    public abstract real()
@@ -192,12 +192,6 @@ abstract class Random()
          default:
             choose(need_string(i))
       }
-   end
-
-   # Close this instance, by freeing any resources it uses.
-   #
-   public close()
-      link
    end
 end
 

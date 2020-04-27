@@ -2,7 +2,8 @@ package io
 
 import
    util(error, need_flag, need_integer, need_string,
-        save_why, HasMode, HasCloseUnderlying, lclose),
+        save_why, HasMode, HasCloseUnderlying, HasClose,
+        lclose),
    lang(Class, NoCopy),
    posix(System),
    ipl.strings(replace),
@@ -16,7 +17,7 @@ $endif
 # This is the top-level stream class.  It is not instantiated
 # directly.
 #
-abstract class Stream(HasMode)
+abstract class Stream(HasClose, HasMode)
    public static const
       # Constant indicating read capability
       READ,
@@ -83,15 +84,6 @@ abstract class Stream(HasMode)
    # remains unchanged.
    #
    public optional truncate(len)
-
-   #
-   # Close the stream.  After being closed, any further calls on the
-   # stream may stop with a runtime error.  Fails on error, setting
-   # `&why`; returns `self` on success.
-   #
-   public close()
-      link
-   end
 
    #
    # Read a complete line from the stream, reading up to the next "\n"

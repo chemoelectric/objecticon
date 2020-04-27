@@ -356,6 +356,22 @@ abstract class HasMode()
 end
 
 #
+# This class adds a close method to a class.  The default
+# implementation just returns `self`.
+#
+abstract class HasClose()
+   #
+   # Close the instance and free any resources it may have used.
+   # After being closed, any further calls on the instance may stop
+   # with a runtime error.  Fails on error, setting `&why`; returns
+   # `self` on success.
+   #
+   public close()
+      link
+   end
+end
+
+#
 # This class simply adds a close_underlying_flag to a class.
 #
 abstract class HasCloseUnderlying()
