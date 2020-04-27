@@ -215,7 +215,8 @@ procedure Decimate(e1, e2)
    count := 0
 
    while j := need_integer(@e2) do {
-      while i := @e1 | fail do {
+      repeat {
+         i := @e1 | fail
          count +:= 1
          if count = j then break next
          else suspend i
