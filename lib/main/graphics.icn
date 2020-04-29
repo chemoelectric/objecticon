@@ -2,7 +2,7 @@ package graphics
 
 import 
    lang(Class, NoCopy, ObjectClone, ObjectOutput, Unencodable),
-   util(use, error)
+   util(use, error, HasClose)
 
 record Size(width, height)
 record Point(x, y)
@@ -17,7 +17,7 @@ record References(canvas, context)
 # from a Window, or created from scratch.  The data is stored in
 # various underlying formats depending on the source.
 #
-final class Pixels(ObjectClone, ObjectOutput, Unencodable)
+final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    private
       ptr
 
@@ -99,7 +99,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
 
    # Dispose of the object, freeing the memory used by the block
    #
-   public native close()
+   public override native close()
 
    # Get the format of the underlying data, which will be one of the constant values listed above.
    #
@@ -285,7 +285,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    end
 end
 
-final class Window(NoCopy, ObjectOutput)
+final class Window(NoCopy, ObjectOutput, HasClose)
    private
       ptr
 
@@ -1253,7 +1253,7 @@ final class Window(NoCopy, ObjectOutput)
    # Close this binding to the window.  If no other bindings to the
    # same canvas exist, the underlying window is closed.
    #
-   public native close()
+   public override native close()
 
    #
    # Return the absolute leading, which is the pixels equivalent of

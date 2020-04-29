@@ -8,7 +8,7 @@ import
 #
 # A class for outputting formatted output of a json structure.
 #
-class JSONFormatter(Stream, HasUnderlyingStream)
+class JSONFormatter(Stream, HasCloseUnderlying)
    private
       file,
       indent,

@@ -8,7 +8,7 @@
 
 package ipc
 
-import lang
+import lang, util
 
 #
 # This class provides a semaphore facility.  The implementation requires
@@ -17,7 +17,7 @@ import lang
 # Instances of this class should not be created directly, but rather using the static
 # methods `open_public`, `create_public` and `create_private`
 #
-final class Sem(NoCopy)
+final class Sem(NoCopy, HasClose)
    private 
       id
 
@@ -90,7 +90,7 @@ final class Sem(NoCopy)
    # Clean up the resources used by the semaphore.  This should be called by
    # the parent process after the semaphore is no longer needed.
    #
-   public native close()
+   public override native close()
 
    #
    # Return the underlying id of the semaphore, failing if it is closed.

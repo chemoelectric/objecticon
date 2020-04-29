@@ -109,7 +109,7 @@ end
 # For simpler procedure interfaces to this class, see `to_string`,
 # `to_stdout` and `to_stderr`.
 #
-class ObjectOutputStream(Stream, HasUnderlyingStream)
+class ObjectOutputStream(Stream, HasCloseUnderlying)
    private readable
       depth,
       indent,

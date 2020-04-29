@@ -15,7 +15,7 @@ import lang, posix, io, ipl.printf
 # child processes to allow them to communicate in a bi-directional
 # fashion.
 #
-class Process(HasTask, HasBgProc)
+class Process(HasTask, HasBgProc, HasClose)
    private readable
       e,
       sock
@@ -150,7 +150,7 @@ $endif
    # child process will no longer exist after this call, so it resets pid to
    # &null and closes the socket.
    #
-   public close()
+   public override close()
       do_wait()
       close_sock()
       link

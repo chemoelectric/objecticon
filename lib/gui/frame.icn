@@ -1,6 +1,8 @@
 package gui
 
-class Frame(Component)
+import util
+
+class Frame(Component, HasClose)
    public
       held_flag,
       bar,
@@ -133,7 +135,7 @@ class Frame(Component)
       }
    end
 
-   public close()
+   public override close()
       self.invalidate()
       self.parent.remove(self)
       link

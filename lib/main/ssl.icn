@@ -12,7 +12,7 @@ end
 #
 # A very simple SSL stream, using the openssl library.
 #
-final class SslStream(Stream, HasUnderlyingStream, NoCopy)
+final class SslStream(Stream, HasCloseUnderlying, NoCopy)
    private
       ptr,
       other

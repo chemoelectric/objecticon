@@ -13,7 +13,7 @@ import lang, util
 #
 # This class provides a wrapper around an MYSQL_RES object.
 #
-final class MySqlRes(NoCopy)
+final class MySqlRes(NoCopy, HasClose)
    private
       ptr,
       fields
@@ -101,7 +101,7 @@ final class MySqlRes(NoCopy)
    #
    # Invoke mysql_free_result() for the current connection.
    #
-   public native close()
+   public override native close()
 
    #
    # Invoke mysql_num_rows() for the current connection.

@@ -8,7 +8,7 @@
 
 package ipc
 
-import lang
+import lang, util
 
 #
 # This class provides an inter process shared variable facility.  The implementation requires
@@ -17,7 +17,7 @@ import lang
 # Instances of this class should not be created directly, but rather using the static
 # methods `open_public`, `create_public` and `create_private`
 #
-final class Shm(NoCopy)
+final class Shm(NoCopy, HasClose)
    private 
       id
 
@@ -46,7 +46,7 @@ final class Shm(NoCopy)
    # Clean up the resources used by the variable.  This should be called by
    # the parent process after the shared variable is no longer needed.
    #
-   public native close()
+   public override native close()
 
    #
    # Return the underlying id of the shared variable; fails if the

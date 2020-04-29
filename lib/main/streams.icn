@@ -2,7 +2,8 @@ package io
 
 import
    util(error, need_flag, need_integer, need_string,
-        save_why, HasMode),
+        save_why, HasMode, HasCloseUnderlying, HasClose,
+        lclose),
 $if _PLAN9
    lang(Class, NoCopy, Prog),
    util(use, need_instance, need_list),
@@ -23,7 +24,7 @@ $endif
 # This is the top-level stream class.  It is not instantiated
 # directly.
 #
-abstract class Stream(HasMode)
+abstract class Stream(HasClose, HasMode)
    public static const
       # Constant indicating read capability
       READ,
@@ -90,15 +91,6 @@ abstract class Stream(HasMode)
    # remains unchanged.
    #
    public optional truncate(len)
-
-   #
-   # Close the stream.  After being closed, any further calls on the
-   # stream may stop with a runtime error.  Fails on error, setting
-   # `&why`; returns `self` on success.
-   #
-   public close()
-      link
-   end
 
    #
    # Read a complete line from the stream, reading up to the next "\n"
@@ -267,22 +259,6 @@ procedure need_Stream(x)
 end
 
 #
-# This class simply adds the close_underlying_flag to a `Stream`.
-#
-abstract class HasUnderlyingStream()
-   protected
-      close_underlying_flag
-
-   #
-   # If set, the stream will close any underlying `Stream`s when it is closed.
-   #
-   public set_close_underlying(s)
-      self.close_underlying_flag := need_flag(s)
-      link
-   end
-end
-
-#
 # This is a stream based on an Icon string.  An initial string can be
 # provided to the constructor.  Reading from the stream will be quite
 # efficient, but writing will be relatively slow, particularly if the
@@ -448,7 +424,7 @@ end
 # that input/output to the inner stream tends to take place in larger
 # chunks.
 #
-class BufferStream(Stream, HasUnderlyingStream)
+class BufferStream(Stream, HasCloseUnderlying)
    private const
       other
    private
@@ -967,16 +943,6 @@ end
 #
 procedure close(f)
    return f.close()
-end
-
-#
-# Useful procedure to close a list of `Stream`s.
-#
-procedure lclose(l)
-   local e, f
-   every e := !l do
-      e.close() | (f := &why)
-   return /f | error(f)
 end
 
 #
@@ -1887,7 +1853,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, HasTask, NoCopy)
    protected
       cmd,
       err_sink,
@@ -2182,7 +2148,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, HasTask, NoCopy)
    protected
       cmd,
       err_sink,
@@ -2982,7 +2948,7 @@ end
 # background processes are doing, and whether the `in` and `out`
 # methods may block.  Instances can be used with `DescStream.poll`.
 #
-class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
+class NonBlockStream(Stream, Pollable, HasCloseUnderlying, NoCopy)
    public static const
       INVALID, 
       READING, 
@@ -3249,7 +3215,7 @@ end
 # This is a class for performing basic blocking i/o system calls in a
 # background process, on a particular file.
 #
-class FileWorker(Pollable, NoCopy)
+class FileWorker(Pollable, NoCopy, HasClose)
    private
       ptr
 
@@ -3362,7 +3328,7 @@ class FileWorker(Pollable, NoCopy)
 
    # Close this instance and free any resources.
    #
-   public native close()
+   public override native close()
 
    # If a background operation is running, a flag is set indicating
    # that this instance should be closed on its completion; otherwise
@@ -3399,7 +3365,7 @@ $endif
 # This stream takes a list of other streams.  Its output is the concatenation of
 # the output of those streams.
 #
-class SequenceStream(Stream, HasUnderlyingStream)
+class SequenceStream(Stream, HasCloseUnderlying)
    private const
       a, ac
 

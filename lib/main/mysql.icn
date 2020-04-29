@@ -22,7 +22,7 @@ end
 # methods have a single underlying corresponding C function - see the MySql
 # documentation for details on what the underlying function does.
 #
-final class MySql(NoCopy)
+final class MySql(NoCopy, HasClose)
    public static const 
       FIELD_TYPE_DECIMAL,
       FIELD_TYPE_TINY,
@@ -168,7 +168,7 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_close() for the current connection.
    #
-   public native close()
+   public override native close()
 
    #
    # Invoke mysql_set_server_option() for the current connection.

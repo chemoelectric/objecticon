@@ -225,7 +225,7 @@ end
 # wrapping the same cairo object.  Each one has a reference to the
 # underlying object and must be closed separately.
 #
-abstract class Pattern(NoCopy)
+abstract class Pattern(NoCopy, HasClose)
    package ptr
 
    private static init()
@@ -296,7 +296,7 @@ abstract class Pattern(NoCopy)
    # Close this instance, releasing the reference to the underlying
    # cairo object.
    #
-   public native close()
+   public override native close()
 
    # This is a convenient method to create a `Pattern` instance from a
    # variety of objects.  `v` can be a `Surface`, a `Window`, a
@@ -599,7 +599,7 @@ end
 # wrapping the same cairo object.  Each one has a reference to the
 # underlying object and must be closed separately.
 #
-abstract class Surface(NoCopy)
+abstract class Surface(NoCopy, HasClose)
    package ptr
 
    private static init()
@@ -656,7 +656,7 @@ abstract class Surface(NoCopy)
    # Close this instance, releasing the reference to the underlying
    # cairo object.
    #
-   public native close()
+   public override native close()
 end
 
 # A `Surface` which reads and writes to a `Window`.
@@ -913,7 +913,7 @@ end
 
 # This class wraps a cairo drawing context.
 #
-final class Context(NoCopy)
+final class Context(NoCopy, HasClose)
    private ptr
 
    public static const LOADED, WHY
@@ -1111,7 +1111,7 @@ final class Context(NoCopy)
    # Close this instance, releasing the reference to the underlying
    # cairo object.
    #
-   public native close()
+   public override native close()
 
    # Set the drawing operator according to the given string; possible
    # values are "atop", "clear", "dest", "dest atop", "dest in", "dest
@@ -1484,7 +1484,7 @@ final class Context(NoCopy)
    end
 end
 
-final class SVG(NoCopy)
+final class SVG(NoCopy, HasClose)
    private ptr
 
    private static init()
@@ -1516,7 +1516,7 @@ final class SVG(NoCopy)
    #
    public native render(context, id)
 
-   public native close()
+   public override native close()
 
    private static native new_impl()
 

@@ -14,7 +14,7 @@ import util
 # An UndoableEdit which groups several edits together in a list.  The
 # undo and redo methods are implemented to undo the edits in the list together.
 #
-class CompoundEdit(UndoableEdit)
+class CompoundEdit(UndoableEdit, HasClose)
    protected l
 
    private readable
@@ -50,7 +50,7 @@ class CompoundEdit(UndoableEdit)
    # A closed CompoundEdit is one which cannot have any more
    # edits added to it by add_edit.
    #
-   public close()
+   public override close()
       self.closed := 1
       link
    end

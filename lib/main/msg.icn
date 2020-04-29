@@ -8,7 +8,7 @@
 
 package ipc
 
-import lang
+import lang, util
 
 #
 # This class provides an inter process messaging facility.  The implementation requires
@@ -17,7 +17,7 @@ import lang
 # Instances of this class should not be created directly, but rather using the static
 # methods `open_public`, `create_public` and `create_private`
 #
-final class Msg(NoCopy)
+final class Msg(NoCopy, HasClose)
    private 
       id
 
@@ -72,7 +72,7 @@ final class Msg(NoCopy)
    # Clean up the resources used by the queue.  This should be called by
    # the parent process after the queue is no longer needed.
    #
-   public native close()
+   public override native close()
 
    #
    # Return the underlying id of the queue, failing if it's closed.

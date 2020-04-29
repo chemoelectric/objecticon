@@ -28,7 +28,7 @@ import
 # Common base class for a client class which holds a connection to a
 # server and communicates using CRLF-terminated lines.
 #
-abstract class NetClient(Connectable, HasTask)
+abstract class NetClient(Connectable, HasTask, HasClose)
    public static const 
       CONNECTING_EVENT,
       CONNECTED_EVENT,
@@ -580,7 +580,7 @@ $endif
    #
    # Close this client and any associated connection.
    #
-   public close()
+   public override close()
       return close_connection()
    end
 

@@ -143,7 +143,7 @@ procedure decode_from_file(fn)
    return decode(Files.file_to_string(fn))
 end
 
-class Encode(Stream, HasUnderlyingStream)
+class Encode(Stream, HasCloseUnderlying)
    private
       tag_count,
       seen, 
