@@ -16,32 +16,13 @@
 #
 #  This file contains procedures related to pseudo-random numbers.
 #
-#	randomize()	sets &random to a "random" value, based on the time
-#			of day and the date.
-#
-#	randrange(min, max)
-#			produces random number in the range min <= i <= max.
-#
-#	randrangeseq(i, j)
-#			generates the integers from i to j in random order.
-#
-#
-#	randseq(seed)	generates the values of &random, starting at seed,
-#			that occur as the result of using ?x.
-#
-#	shuffle(x)	shuffles the elements of x
-#
-############################################################################
-#
-#  Links:  factors
-#
 ############################################################################
 
 package ipl.random
 
 import
    lang(Limit),
-   util(Time, need_integer, need_string,
+   util(Time, need_integer, need_string, ce_param,
         HasClose, HasCloseUnderlying, Math),
    ipl.factors(nxtprime),
    ipl.pdco(Index),
@@ -50,7 +31,9 @@ import
 
 global random
 
-# randomize
+# randomize() sets &random to a "random" value, based on the time
+# of day and the date.
+#
 procedure randomize()			
    static ncalls
 
@@ -66,14 +49,14 @@ procedure randomize()
 
 end
 
-# random number in range
+# produces random number in the range min <= i <= max.
 procedure randrange(min, max)		
 
    return min - 1 + ?(max - min + 1)
 
 end
 
-# random sequence in range
+# generates the integers from i to j in random order.
 procedure randrangeseq(i, j)		
    i := need_integer(i) - 1
    j := need_integer(j)
@@ -83,6 +66,7 @@ end
 
 # suspend the elements of x in a random order; x should be something which
 # can be indexed by integer (string, ucs, list, or cset).
+#
 procedure randelements(x)
    suspend x[permutation(*x)]
 end
@@ -124,7 +108,9 @@ procedure permutation(n)
 
 end
 
-# generate &random
+# generates the values of &random, starting at seed,
+# that occur as the result of using ?x.
+#
 procedure randseq(seed)			
 
    suspend &random := seed
@@ -136,8 +122,7 @@ end
 #  In the case that x is a string, a corresponding string with the
 #  characters randomly rearranged is produced. In the case that x is
 #  list or records the elements are randomly rearranged.
-   
-# shuffle
+#
 procedure shuffle(x)			
    local i
 
@@ -170,7 +155,7 @@ procedure choose(k, n)
 end
 
 #
-# An abstract base class for random number generators.
+# An abstract class for random number generators.
 #
 abstract class Random(HasClose)
    # Return a real number in the range [0, 1).
@@ -209,8 +194,8 @@ class BuiltinRandom(Random)
    end
 end
 
-# An abstract base class for random generators which generate integers
-# in the range of an arbitrary fixed modulus (usually a power of 2).
+# An abstract class for random generators which generate integers in
+# the range of an arbitrary fixed modulus (usually a power of 2).
 #
 # The modulus `m` is supplied in the constructor, and a single method,
 # `get()` is implemented which generates numbers in the range [0, m).
@@ -218,15 +203,15 @@ end
 abstract class RandomWithModulus(Random)
    public const
       m                 # The modulus
+   private readable
+      rr, rf            # For calculating reals
    private
       n1, b1, p1, s1    # Some cached values
    public static const
-      REAL_RANGE,       # Range for calculating a `real`
-      REAL_FACTOR       # Multiplier for same
+      MAX_REAL_RANGE    # Max range for calculating a `real`
 
    private static init() 
-      REAL_RANGE := 2 ^ 53
-      REAL_FACTOR := 1.0 / REAL_RANGE
+      MAX_REAL_RANGE := 2 ^ 53
    end
 
    #
@@ -234,14 +219,33 @@ abstract class RandomWithModulus(Random)
    #
    public abstract get()
 
+   #
+   # Set the range of values to use in calculating the result of
+   # `real()`.  The default is `MAX_REAL_RANGE`, which gives the
+   # maximum possible range of values, but may involve more calls to
+   # `get()` for each real, if it is greater than the modulus.
+   #
+   public set_real_range(rr)
+      self.rr := need_integer(rr, 2, MAX_REAL_RANGE)
+      self.rf := 1.0 / self.rr
+      link
+   end
+
    public override real()
       local r
       repeat {
-         r := (range(REAL_RANGE) - 1) * REAL_FACTOR
+         r := (range(rr) - 1) * rf
          # This test should always succeed, but just in case.
          if r < 1.0 then
             return r
       }
+   end
+
+   # A convenient method to generate a sequence of results by
+   # repeatedly calling `get()`.
+   #
+   public gen()
+      suspend |get()
    end
 
    #
@@ -317,6 +321,7 @@ abstract class RandomWithModulus(Random)
    # The constructor takes the modulus, an integer `m >= 2`.
    public new(m)
       self.m := need_integer(m, 2)
+      set_real_range(MAX_REAL_RANGE)
       return
    end
 end
@@ -626,6 +631,76 @@ class MersenneTwister32(RandomWithModulus)
       RandomWithModulus.new(16r100000000)
       /l := [16r123, 16r234, 16r345, 16r456]
       init_list(l)
+      return
+   end
+end
+
+# This class is a `RandomWithModulus` in which a co-expression
+# provides the values returned by `get()`.  This enables results from
+# other generators to be easily modified or combined.
+#
+# For convenience, the constructor optionally accepts PDCO-style
+# parameters.
+#
+# For example :-
+# ~
+#    import ipl.pdco
+#    ...
+#    # A generator which uses every third result from a PCG32 source.
+#    r1 := PCG32()
+#    r := RandomFromGenerator{ r1.m, Index{ r1.gen(), seq(3, 3) } }
+#
+#    # A generator which XORs two LCGs' results.
+#    r1 := LCG(53, 1, 2^16) ; r2 := LCG(525, 11, 2^16)
+#    r := RandomFromGenerator{ r1.m, ixor!Parallel{ r1.gen(), r2.gen() } }
+# ~
+#
+class RandomFromGenerator(RandomWithModulus)
+   private const
+      coex
+
+   public override get()
+      return @coex
+   end
+
+   # The constructor takes the modulus, and the co-expression, the
+   # results from which must be integers in the range [0, m).
+   #
+   public override new(m, coex)
+      m := ce_param(m) | fail
+      RandomWithModulus.new(m)
+      self.coex := coex
+      return
+   end
+end
+
+#
+# A `Random` which implements `range()` in terms of `real()`.
+#
+abstract class RandomFromReal(Random)
+   public override range(n)
+      return 1 + integer(need_integer(n, 1) * real())
+   end
+end
+
+#
+# This class is a `RandomFromReal` in which a co-expression provides
+# the values of `real()`.  This enables results from other generators
+# to be easily modified or combined.
+#
+class RandomFromRealGenerator(RandomFromReal)
+   private const
+      coex
+
+   public override real()
+      return @coex
+   end
+
+   # The constructor takes a co-expression, the results from which
+   # must be reals in the range [0, 1).
+   #
+   public new(coex)
+      self.coex := coex
       return
    end
 end
