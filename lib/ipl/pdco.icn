@@ -24,7 +24,7 @@ import
    datastruct(EqSet),
    numbers(Rat),
    lang(equals, Internal),
-   util(save_state, HandlerState, ce_param, cvpos_item, need_integer,
+   util(save_state, HandlerState, ce_param, need_integer,
         need_ucs, use, need_text, need_callable, same_string_type,
         need_numeric)
 
@@ -208,21 +208,22 @@ procedure Cyclepar(L[])
 end
 
 # "Decimate" e1 by deleting e2-numbered terms (e2 is assumed to be an
-# increasing sequence).
+# increasing sequence).  See also `Index`.
 procedure Decimate(e1, e2)	
    local i, j, count
 
    count := 0
 
-   while j := need_integer(@e2) do {
+   every j := IncreasingFrom(1, e2) do {
       repeat {
          i := @e1 | fail
          count +:= 1
-         if count = j then break next
-         else suspend i
+         if count = j then break
+         suspend i
          }
       }
 
+   suspend |@e1
 end
 
 # Produce a decimation sequence from e1 by deleting even-valued terms
@@ -455,13 +456,12 @@ end
 procedure Increasing(e)	
    local last, current
 
-   last := need_numeric(@e) | fail
+   last := need_integer(@e) | fail
 
    suspend last
 
-   while current := need_numeric(@e) do {
-      if current <= last then next
-      else {
+   while current := need_integer(@e) do {
+      if current > last then {
          suspend current
          last := current
          }
@@ -469,23 +469,37 @@ procedure Increasing(e)
 
 end
 
-# PDCO to produce `e2`-th terms from `e1`.  `e2` should generate
-# ascending indices.
-procedure Index(e1, e2)		
-   local i, j, x
+# Like `Increasing`, but an initial value is provided; any values less
+# than `last` are removed from the beginning of `e`.
+procedure IncreasingFrom(last, e)	
+   local current
 
-   repeat {
-      j := need_integer(@e2) | fail
-      if j > 0 then break
+   last := need_integer(ce_param(last)) - 1 | fail
+
+   while current := need_integer(@e) do {
+      if current > last then {
+         suspend current
+         last := current
+         }
       }
 
-   every i := seq() do {	# position
-      x := @e1 | fail
-      if j = i then {
-         suspend x
-         repeat {
-            j := need_integer(@e2) | fail
-            if j > i then break
+end
+
+
+# PDCO to produce `e2`-th terms from `e1`.  `e2` should generate
+# ascending indices.  See also `Decimate`.
+procedure Index(e1, e2)		
+   local i, j, count
+
+   count := 0
+
+   every j := IncreasingFrom(1, e2) do {
+      repeat {
+         i := @e1 | fail
+         count +:= 1
+         if count = j then {
+            suspend i
+            break
             }
          }
       }
@@ -1283,33 +1297,23 @@ end
 # those indicated by the sequence `e1`, which should be ascending.
 #
 procedure Each(e1, e[])
-   local i, j
+   local j, x, count
 
-   repeat {
-      if j := need_integer(@e1) then {
-         if j := cvpos_item(j, *e) then
+   count := 0
+   every j := IncreasingFrom(1 , e1) do {
+      repeat {
+         x := e[count +:= 1] | fail
+         if count = j then {
+            suspend |@x
             break
-      } else {
-         j := 0
-         break
+         }
+         while @x
       }
    }
 
-   every i := 1 to *e do {	# position
-      if j = i then {
-         suspend |@e[i]
-         repeat {
-            if j := need_integer(@e1) then {
-               if j := i < cvpos_item(j, *e) then
-                  break
-            } else {
-               j := 0
-               break
-            }
-         }
-      } else
-         while @e[i]
-   }
+   while x := e[count +:= 1] do
+      while @x
+
 end
 
 #
