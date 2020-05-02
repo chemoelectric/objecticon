@@ -17,42 +17,6 @@
 #  This file contains procedures related to factorization and prime
 #  numbers.
 #
-#	divisors(n)	generates the divisors of n.
-#
-#	factorial(n)	returns n!.  It fails if n is less than 0.
-#
-#	factors(i, j)	returns a list containing the prime factors of i
-#			limited to maximum value j; default, no limit.
-#
-#	genfactors(i, j)
-#			like factors(), except factors are generated as
-#			they are found.
-#
-#	gfactorial(n, i)
-#			generalized factorial; n x (n - i) x (n - 2i) x ...
-#
-#	ispower(i, j)	succeeds and returns root if i is k^j
-#
-#	isprime(n)	succeeds if n is a prime.
-#
-#	nxtprime(n)	returns the next prime number beyond n.
-#
-#	pfactors(i)	returns a list containing the primes that divide i.
-#
-#	prdecomp(i)	returns a list of exponents for the prime
-#			decomposition of i.
-#
-#	prime()		generates the primes.
-#
-#	primel()	generates the primes from a precompiled list.
-#
-#	primorial(i,j)	product of primes j <= i; j defaults to 1.
-#
-#	sfactors(i, j)	as factors(i, j), except output is in string form
-#			with exponents for repeated factors
-#
-#	squarefree(i)	succeeds if i is square free
-#
 ############################################################################
 #
 #  Notes:  Some of these procedures are not fast enough for extensive work.
@@ -64,10 +28,6 @@
 #  Requires: Large-integer arithmetic; prime.lst for primel() and primorial().
 #
 ############################################################################
-#
-#  Links:  io, numbers
-#
-############################################################################
 
 package ipl.factors
 
@@ -75,6 +35,7 @@ import
    ipl.io(dopen),
    ipl.numbers(round),
    ipl.sets(elementset),
+   ipl.pdco(List,Product),
    util(Math,need_integer)
 
 # generate the divisors of n
@@ -98,37 +59,26 @@ end
 
 # return list of divisors of n
 procedure divisorl(n)
-   local divs
-   every put(divs := [], divisors(n))
-   return divs
+   return List{ divisors(n) }
 end
 
-# return n! (n factorial)
+# return n! (n factorial); fails if n is less than 0.
 procedure factorial(n)			
-   local i
-
    n := need_integer(n)
 
    if n < 0 then fail
 
-   i := 1
-
-   every i *:= 1 to n
-
-   return i
-
+   return Product{ 1 to n }
 end
 
-# return list of factors
+# returns a list containing the prime factors of i
+# limited to maximum value j; default, no limit.
 procedure factors(i, j)			
-   local facts
-
-   every put(facts := [], genfactors(i, j))
-   return facts
-
+   return List{ genfactors(i, j) }
 end
 
-# generate prime factors of integer
+# generate prime factors of integer.  like `factors()`, except factors
+# are generated as they are found.
 procedure genfactors(i, j)		
    local p
 
@@ -147,7 +97,7 @@ procedure genfactors(i, j)
 
 end
 
-# generalized factorial
+# generalized factorial; n x (n - i) x (n - 2i) x ...
 procedure gfactorial(n, i)		
    local j
 
@@ -168,7 +118,7 @@ procedure gfactorial(n, i)
 
 end
 
-# primes that divide integer
+# returns a list containing the primes that divide i.
 procedure pfactors(i)			
    local facts, p
 
@@ -187,7 +137,7 @@ procedure pfactors(i)
 
 end
 
-# test for integer power
+# succeeds and returns root if i is k^j
 procedure ispower(i, j)			
    local k, n
 
@@ -199,7 +149,7 @@ end
 #  NOTE:  The following method for testing primality, called Baby Division,
 #  is about the worst possible.  It is inappropriate for all but small
 #  numbers.
-
+#
 # test for primality
 procedure isprime(n)			
    local p
@@ -213,7 +163,7 @@ procedure isprime(n)
 
 end
 
-# next prime beyond n
+# returns the next prime number beyond n.
 procedure nxtprime(n)			
    local d
    static step, div
@@ -239,7 +189,8 @@ procedure nxtprime(n)
 
 end
 
-# prime decomposition
+# returns a list of exponents for the prime
+# decomposition of i.
 procedure prdecomp(i)			
    local decomp, count, p
 
@@ -258,7 +209,7 @@ procedure prdecomp(i)
 
 end
 
-# generate primes
+# generates the primes
 procedure prime()			
    local i, k
 
@@ -267,7 +218,7 @@ procedure prime()
 
 end
 
-# primes from list
+# generates the primes from a precompiled list.
 procedure primel()			
    local pfile
 
@@ -277,7 +228,7 @@ procedure primel()
 
 end
 
-# product of primes
+# product of primes j <= i; j defaults to 1.
 procedure primorial(i, j)		
    local m, k, mark
 
@@ -300,6 +251,8 @@ procedure primorial(i, j)
 end
 
 # return factors in string form
+# as factors(i, j), except output is in string form
+# with exponents for repeated factors
 procedure sfactors(i, j)		
    local facts, result, term, nterm, count
 
@@ -327,7 +280,7 @@ procedure sfactors(i, j)
 
 end
 
-# test for square-free number
+# succeeds if n is square-free
 procedure squarefree(n)			
    local facts
 
