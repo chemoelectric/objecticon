@@ -192,7 +192,7 @@
 #endif					/* MaxHLoad */
 
 /*
- * The number of decimal digits at which the image lf a large integer
+ * The number of decimal digits at which the image of a large integer
  * goes from exact to approximate (to avoid possible long delays in
  * conversion from large integer to string because of its quadratic
  * complexity).
