@@ -1,5 +1,7 @@
 package lang
 
+import ipl.pdco
+
 # In the methods below, the term "program" refers to the main
 # co-expression of either the root program, or a program loaded via
 # `Prog.load` below.   The parameters named `P` are always programs
@@ -260,16 +262,16 @@ final abstract class Prog()
 end
 
 #
-# This class contains some useful methods for manipulating coexpressions.
+# This class contains some useful methods for manipulating co-expressions.
 #
 final abstract class Coexpression()
    #
-   # Return the given coexpression's activator (ie the value of
-   # `&source` when it was last active); fails if the coexpression has
+   # Return the given co-expression's activator (ie the value of
+   # `&source` when it was last active); fails if the co-expression has
    # never been activated.
    #
    # :Parameters :
-   # :  `ce` - the coexpression, by default &current
+   # :  `ce` - the co-expression, by default &current
    #
    public static native get_activator(ce)
 
@@ -278,25 +280,25 @@ final abstract class Coexpression()
    # of the given co-expression.
    #
    # :Parameters :
-   # :  `ce` - the coexpression, by default &current
+   # :  `ce` - the co-expression, by default &current
    #
    public static native get_program(ce)
 
    #
-   # Succeed iff this coexpression is the main coexpression of a
+   # Succeed iff this co-expression is the main co-expression of a
    # program.
    #
    # :Parameters :
-   # :  `ce` - the coexpression, by default &current
+   # :  `ce` - the co-expression, by default &current
    #
    public static native is_main(ce)
 
    #
    # Return the current procedure depth level of the given
-   # coexpression (ie the value of &level for that coexpression).
+   # co-expression (ie the value of &level for that co-expression).
    #
    # :Parameters :
-   # :  `ce` - the coexpression, by default &current
+   # :  `ce` - the co-expression, by default &current
    #
    public static native get_level(ce)
 
@@ -305,14 +307,14 @@ final abstract class Coexpression()
    # a runtime error.
    #
    # :Parameters :
-   # :  `ce` - the coexpression, by default &current
+   # :  `ce` - the co-expression, by default &current
    # :  `act_chain` - if non-null, show the traceback for the activator chain, otherwise
-   #            just show the traceback for this coexpression.
+   #            just show the traceback for this co-expression.
    #
    public static native traceback(ce, act_chain)
 
    #
-   # Output (to stderr) a dump of the stack of the given coexpression,
+   # Output (to stderr) a dump of the stack of the given co-expression,
    # showing the internal format of the stack.
    #
    public static native print_stack(ce)
@@ -322,15 +324,24 @@ final abstract class Coexpression()
    # co-expression.  Each element is a `FrameInfo` instance.
    #
    # :Parameters :
-   # :  `ce` - the coexpression, by default &current
+   # :  `ce` - the co-expression, by default &current
    # :  `lim` - the maximum number of frames to put in the list, by default 
    #              all frames
    #
    public static get_stack_info(ce, lim)
-      local l
-      l := []
-      every put(l, FrameInfo!get_stack_info_impl(ce, lim))
-      return l
+      return List{ FrameInfo!get_stack_info_impl(ce, lim) }
+   end
+
+   #
+   # This is like `get_stack_info`, but just returns what would be the
+   # first element of the list, which represents the current procedure
+   # frame of the given co-expression.
+   #
+   # :Parameters :
+   # :  `ce` - the co-expression, by default &current
+   #
+   public static get_current_frame_info(ce)
+      return FrameInfo!get_stack_info_impl(ce, 1)
    end
 
    private static native get_stack_info_impl()
@@ -468,11 +479,7 @@ class Region()
    # Add up the elements in a list of `Region`s.
    #
    public static sum_list(l)
-      local x, y
-      x := y := 0
-      every x +:= (!l).used
-      every y +:= (!l).size
-      return Region(x, y)
+      return Region(Sum{ (!l).used }, Sum{ (!l).size })
    end
 
    #
