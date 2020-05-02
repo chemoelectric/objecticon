@@ -329,7 +329,9 @@ final abstract class Coexpression()
    #              all frames
    #
    public static get_stack_info(ce, lim)
-      return List{ FrameInfo!get_stack_info_impl(ce, lim) }
+      local l
+      every put(l := [], FrameInfo!get_stack_info_impl(ce, lim))
+      return l
    end
 
    #
