@@ -1199,7 +1199,10 @@ void getimage(dptr dp1, dptr dp2)
                + log((double)blk->digits[blk->msd]) * 0.4342944819032518 + 0.5;
 							/* 1 / ln(10) */
             if (dlen >= MaxDigits) {
-               sprintf(sbuf,"integer(~10^" WordFmt ")", dlen);
+               if (blk->sign)
+                   sprintf(sbuf,"integer(-~10^" WordFmt ")", dlen);
+               else
+                   sprintf(sbuf,"integer(~10^" WordFmt ")", dlen);
 	       len = strlen(sbuf);
                MakeStrMemProtect(alcstr(sbuf,len), len, dp2);
                }
