@@ -20,7 +20,7 @@
 ############################################################################
 #
 #  Notes:  Some of these procedures are not fast enough for extensive work.
-#  Factoring is believed to be a hard problem. factors() should only be
+#  Factoring is believed to be a hard problem. prime_factors() should only be
 #  used for small numbers.
 #
 ############################################################################
@@ -33,14 +33,15 @@ package ipl.factors
 
 import
    ipl.io(dopen),
-   ipl.numbers(round),
-   ipl.sets(elementset),
-   ipl.pdco(List,Product),
-   util(Math,need_integer)
+   ipl.numbers(round, exp_modulo),
+   ipl.pdco(List,Product,String,Sum),
+   util(need_integer)
 
-# generate the divisors of n
+# generate the divisors of positive integer n
 procedure divisors(n)			
    local d, dlist
+
+   n := need_integer(n, 1)
 
    dlist := []
    every d := seq() do {
@@ -62,50 +63,109 @@ procedure divisorl(n)
    return List{ divisors(n) }
 end
 
-# return n! (n factorial); fails if n is less than 0.
-procedure factorial(n)			
-   n := need_integer(n)
+# Succeed if positive integer n is a perfect number.
+procedure perfect(n)
+   n := need_integer(n, 1)
+   succeed Sum{ divisors(n) } = 2*n
+end
 
-   if n < 0 then fail
+# Calculate Euler's totient function for positive integer `n`.
+procedure totient(n)
+   local f
+   n := need_integer(n, 1)
+   every f := prime_factors(n) do
+      n := (n * (f.p - 1)) / f.p
+   return n
+end
+
+# return n! (n factorial)
+procedure factorial(n)			
+   n := need_integer(n, 0)
 
    return Product{ 1 to n }
 end
 
-# returns a list containing the prime factors of i
-# limited to maximum value j; default, no limit.
-procedure factors(i, j)			
-   return List{ genfactors(i, j) }
+# Result record for several factoring procedures.
+record prime_factor(p, e)
+
+# Generate the prime factors of positive integer i.  A sequence of
+# `prime_factor` records is generated, each giving a prime and an
+# exponent.  For example, `prime_factors` applied to
+# ~
+#     5913648 = (2^4) * (3^7) * (13^2)
+# ~
+# generates :-
+# ~
+#    prime_factor(p=2;e=4)
+#    prime_factor(p=3;e=7)
+#    prime_factor(p=13;e=2)
+# ~
+#
+procedure prime_factors(i)
+   local p, e
+
+   i := need_integer(i, 1)
+   if i = 1 then fail
+
+   every p := primes() do {
+      if p * p > i then
+         return prime_factor(i, 1)
+      e := 0
+      while i % p = 0 do {
+         e +:= 1
+         i /:= p
+      }
+      if e > 0 then
+         suspend prime_factor(p, e)
+
+      if i = 1 then fail
+      }
 end
 
-# generate prime factors of integer.  like `factors()`, except factors
-# are generated as they are found.
-procedure genfactors(i, j)		
-   local p
+# This is just like `prime_factors`, but also generates intermediate
+# prime numbers that aren't factors (with zero exponents).
+#
+procedure prime_factors0(i)
+   local p, e
 
-   i := need_integer(i)
-   /j := i
+   i := need_integer(i, 1)
+   if i = 1 then fail
 
-   every p := prime() do {
-      if p > j | p * p > i then break
+   every p := primes() do {
+      e := 0
       while i % p = 0 do {
-         suspend p
+         e +:= 1
          i /:= p
-         }
-      if i = 1 then break
       }
-   if i > 1 then suspend i
+      suspend prime_factor(p, e)
 
+      if i = 1 then fail
+      }
+end
+
+# Generate the prime factors of integer.  For example,
+# `prime_factors1` applied to
+# ~
+#    1188 = (2^2) * (3^3) * 11
+# ~
+# generates
+# ~
+#    2, 2, 3, 3, 3 and 11
+# ~
+#
+procedure prime_factors1(i)		
+   local f
+   every f := prime_factors(i) do
+      suspend |f.p \ f.e
 end
 
 # generalized factorial; n x (n - i) x (n - 2i) x ...
 procedure gfactorial(n, i)		
    local j
 
-   n := need_integer(n)
-   i := integer(i) | 1
-
-   if n < 0 then fail
-   if i < 1 then fail
+   n := need_integer(n, 0)
+   i := need_integer(\i, 1) | 1
+   if n = 0 then return 1
 
    j := n
 
@@ -118,28 +178,12 @@ procedure gfactorial(n, i)
 
 end
 
-# returns a list containing the primes that divide i.
-procedure pfactors(i)			
-   local facts, p
-
-   i := need_integer(i)
-   facts := []
-   every p := prime() do {
-      if p > i then break
-      if i % p = 0 then {
-         put(facts, p)
-         while i % p = 0 do
-            i /:= p
-         }
-      }
-
-   return facts
-
-end
-
-# succeeds and returns root if i is k^j
+# succeeds and returns root if i is k^j.  i and j must be positive integers.
 procedure ispower(i, j)			
    local k, n
+
+   i := need_integer(i, 1)
+   j := need_integer(j, 1)
 
    k := (n := round(i ^ (1.0 / j))) ^ j
    if k = i then return n else fail
@@ -150,72 +194,116 @@ end
 #  is about the worst possible.  It is inappropriate for all but small
 #  numbers.
 #
-# test for primality
+#  see also : `probably_prime()`.
 procedure isprime(n)			
    local p
 
    n := need_integer(n)
    if n <= 1 then fail		# 1 is not a prime
-   every p := prime() do {
-      if p * p > n then return n
+   every p := primes() do {
+      if p * p > n then return
       if n % p = 0 then fail
       }
-
 end
 
-# returns the next prime number beyond n.
-procedure nxtprime(n)			
-   local d
-   static step, div
+# Helper procedure; given a number n return the next integer to test
+# for primality.
+package procedure primeskip(n)
+   static step
 
    initial {
       step := [1,6,5,4,3,2,1,4,3,2,1,2,1,4,3,2,1,2,1,4,3,2,1,6,5,4,3,2,1,2]
+      }
+
+   return n + step[n % 30 + 1]		# step past multiples of 2, 3, 5
+
+end
+
+# generate the prime numbers beyond n (default 1).
+procedure primes(n)			
+   local d
+   static div
+
+   initial {
       div := [7]			# list of known primes
       }
 
-   n := need_integer(n)
+   n := need_integer(\n) | 1
    if n < 7 then			# handle small primes specially
-      return n < (2 | 3 | 5 | 7)
+      suspend n <:= (2 | 3 | 5 | 7)
 
    repeat {
-      n +:= step[n % 30 + 1]		# step past multiples of 2, 3, 5
-      every (d := !div) | |put(div, d := nxtprime(d)) do {  # get test divisors
+      n := primeskip(n)
+
+      every (d := !div) | put(div, d := primes(d)) do {  # get test divisors
          if n % d = 0 then		# if composite, try a larger candidate
             break
-         if d * d > n then		# if not divisible up to sqrt, is prime
-            return n
+         if d * d > n then {		# if not divisible up to sqrt, is prime
+            suspend n
+            break
+            }
          }
       }
 
 end
 
-# returns a list of exponents for the prime
-# decomposition of i.
-procedure prdecomp(i)			
-   local decomp, count, p
+# this is like `primes()`, but primes are calculated using `probably_prime()` below,
+# so it is much faster for large `n`, over about `10^9`.
+#
+procedure probable_primes(n, c)			
+   n := need_integer(\n) | 1
+   if n < 7 then			# handle small primes specially
+      suspend n <:= (2 | 3 | 5 | 7)
 
-   decomp := []
-   every p := prime() do {
-      count := 0
-      while i % p = 0 do {
-         count +:= 1
-         i /:= p
-         }
-      put(decomp, count)
-      if i = 1 then break
-      }
-
-   return decomp
+   repeat {
+      n := primeskip(n)
+      if probably_prime(n, c) then
+         suspend n
+   }
 
 end
 
-# generates the primes
-procedure prime()			
-   local i, k
+# Probabilistic prime testing.  Succeeds if `n` is "probably" prime.
+# Adapted from Knuth vol. 2, 2nd ed. sec 4.5.4.
+#
+# `c` is the confidence level (default 50).  The algorithm will give a
+# false positive (ie say a number is prime when it isn't) with
+# probability about `(1/4)^c` (for c=50 this is about 10^-30).
+#
+procedure probably_prime(n, c)
+   local j, q, k, r, y
 
-   suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to Math.sqrt(i) by 2)) *
-      (i / k))) & i)
+   n := need_integer(n)
+   c := need_integer(\c, 0) | 50
 
+   if n <= 1 then fail		# 1 is not a prime
+   if n < 4 then
+      return
+
+   q := n - 1
+   k := 0
+   while q % 2 = 0 do {
+      q /:= 2
+      k +:= 1
+   }
+   if k = 0 then    # n is even
+      fail
+
+   # Now n = 1 + q * (2^k), k > 0
+
+   every 1 to c do {
+      # Generate random r,  1 < r < n
+      r := 1 + ?(n - 2)
+      y := exp_modulo(r, q, n)
+      every j := seq() do {
+         if (j = 1 & y = 1) | (y = n - 1) then
+            break
+         if (j > 1 & y = 1) | (j = k) then
+            fail
+         y := (y ^ 2) % n
+      }
+   }
+   return
 end
 
 # generates the primes from a precompiled list.
@@ -228,64 +316,32 @@ procedure primel()
 
 end
 
-# product of primes j <= i; j defaults to 1.
+# product of primes p, where j <= p <= i; j defaults to 1.
 procedure primorial(i, j)		
-   local m, k, mark
+   local m, k
 
-   /j := 1
+   i := need_integer(i)
+   j := need_integer(\j) | 1
 
    m := 1
-   mark := &null			# to check for completeness
 
-   every k := primel() do {		# limited by prime list
-      if k <= j then next
+   every k := (j <= primes()) do {
       if k <= i then m *:= k
-      else {
-         mark := 1
-         break
-         }
+      else return m
       }
-
-   if \mark then return m else fail	# fail if list is too short
 
 end
 
+package procedure factorstr(f)
+   return if f.e = 1 then f.p else f.p || "^" || f.e
+end
+
 # return factors in string form
-# as factors(i, j), except output is in string form
-# with exponents for repeated factors
-procedure sfactors(i, j)		
-   local facts, result, term, nterm, count
-
-   facts := factors(i, j)
-
-   result := ""
-
-   term := get(facts)			# will be at least one
-   count := 1
-   
-   while nterm := get(facts) do {
-      if term = nterm then count +:= 1
-      else {
-         if count > 1 then result ||:= " " || term || "^" || count
-         else result ||:= " " || term
-         count := 1
-         term := nterm
-         }
-      }
-
-   if count > 1 then result ||:= " " || term || "^" || count
-   else result ||:= " " || term
-
-   return result[2:0]
-
+procedure sfactors(i)
+   return String{ factorstr(prime_factors(i)), " " }
 end
 
 # succeeds if n is square-free
 procedure squarefree(n)			
-   local facts
-
-   facts := factors(n)
-
-   if *facts = *elementset(facts) then return n else fail
-
+   (prime_factors(n).e > 1) | return
 end

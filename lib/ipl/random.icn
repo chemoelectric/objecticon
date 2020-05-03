@@ -25,7 +25,7 @@ import
    util(Time, need_integer, need_string, ce_param,
         HasClose, HasCloseUnderlying, Math, lclose,
         need_instance),
-   ipl.factors(nxtprime),
+   ipl.factors(primes),
    ipl.numbers(residue),
    ipl.pdco(Index),
    ipl.printf(stopf),
@@ -87,7 +87,7 @@ procedure permutation(n)
 
    # Choose a modulus m >= n in the form of a perfect square of a
    # prime p >= 5.
-   p := nxtprime(Math.sqrt(n))
+   p := primes(Math.sqrt(n))
    p <:= 5
    m := p^2
    # Choose c relatively prime to m, ie not divisible by p
@@ -105,7 +105,7 @@ procedure permutation(n)
    # Create an LCG with a randomly chosen seed
    r := LCG(a, c, m, ?m)
    every 1 to n do {
-      x := n > |r.get()       # discard out-of-range values
+      x := n > r.gen()       # discard out-of-range values
       suspend 1 + x
    }
 
