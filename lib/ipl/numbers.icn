@@ -585,3 +585,57 @@ procedure unroman(s)
    return nbr
 
 end
+
+# Result record for `extended_euclid`.
+record euclid_result(u, v, gcd)
+
+# Calculate the gcd and coefficients using the extended Euclidean
+# algorithm, adapted from Knuth vol.2, 2nd ed., p325.
+#
+# Returns a record `r` with fields u, v and gcd such that :-
+# ~
+#     u * r.u + v * r.v = r.gcd
+# ~
+procedure extended_euclid(u, v)
+   local u2, v1, v2, v3, t1, t2, t3, u1, u3, q
+
+   u := need_integer(u, 0)
+   v := need_integer(v, 0)
+
+   u1 := 1; u2 := 0; u3 := u
+   v1 := 0; v2 := 1; v3 := v
+   
+   repeat {
+      if v3 = 0 then
+         return euclid_result(u1, u2, u3)
+      q := u3 / v3
+      t1 := u1 - q * v1; t2 := u2 - q * v2; t3 := u3 - q * v3
+      u1 := v1 ; u2 := v2 ; u3 := v3
+      v1 := t1 ; v2 := t2 ; v3 := t3
+   }
+end
+
+#
+# Return (x ^ y) % m, for integers x, y >= 0, m > 1.
+#
+procedure exp_modulo(x, y, m)
+   local s
+
+   x := need_integer(x, 0)
+   y := need_integer(y, 0)
+   m := need_integer(m, 2)
+
+   x %:= m
+   s := 1
+   while y > 0 do {
+      if y % 2 = 1 then {
+         s := (s * x) % m
+         y -:= 1
+      } else {
+         x := (x * x) % m
+         y /:= 2
+      }
+   }
+
+   return s
+end
