@@ -587,27 +587,39 @@ procedure unroman(s)
 end
 
 # Result record for `extended_euclid`.
-record euclid_result(u, v, gcd)
+record euclid_result(u1, v1, u2, v2, gcd)
 
-# Calculate the gcd and coefficients using the extended Euclidean
-# algorithm, adapted from Knuth vol.2, 2nd ed., p325.
+# Calculate the gcd and coefficients of Bézout's identity for positive
+# integers `u` and `v`, using the extended Euclidean algorithm, adapted
+# from Knuth vol.2, 2nd ed., p325.
 #
-# Returns a record `r` with fields u, v and gcd such that :-
+# Returns a record `r` with fields `u1, v1, u2, v2, gcd`, giving
+# the two minimal pairs of coefficients :-
 # ~
-#     u * r.u + v * r.v = r.gcd
+#     u * r.u1 + v * r.v1 = r.gcd, r.u1 > 0, r.v1 <= 0
+#     u * r.u2 + v * r.v2 = r.gcd, r.u2 <= 0, r.v2 > 0
 # ~
+#
 procedure extended_euclid(u, v)
    local u2, v1, v2, v3, t1, t2, t3, u1, u3, q
 
-   u := need_integer(u, 0)
-   v := need_integer(v, 0)
+   u := need_integer(u, 1)
+   v := need_integer(v, 1)
 
    u1 := 1; u2 := 0; u3 := u
    v1 := 0; v2 := 1; v3 := v
    
    repeat {
-      if v3 = 0 then
-         return euclid_result(u1, u2, u3)
+      if v3 = 0 then {
+         return if u1 > 0 then
+            euclid_result(u1, u2,
+                          u1 - v/u3, u2 + u/u3,
+                          u3)
+         else
+            euclid_result(u1 + v/u3, u2 - u/u3,
+                          u1, u2,
+                          u3)
+      }
       q := u3 / v3
       t1 := u1 - q * v1; t2 := u2 - q * v2; t3 := u3 - q * v3
       u1 := v1 ; u2 := v2 ; u3 := v3
