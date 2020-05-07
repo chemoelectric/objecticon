@@ -973,9 +973,8 @@ end
 # For the example above, (2+1)*(2+1) - 1 = 8.
 #
 procedure altlists(l, alts)
-   if *alts = 0 then
-      fail
-   suspend altlists1(l, alts, 1, list(*l))
+   if *alts > 0 then
+      suspend altlists1(l, alts, 1, list(*l))
 end
 
 package procedure altlists1(l, alts, i, res, mod)
@@ -991,6 +990,58 @@ package procedure altlists1(l, alts, i, res, mod)
 
    res[i] := l[i]
    suspend altlists1(l, alts, i+1, res, mod)
+end
+
+package procedure setdivisions(s)
+   local e, i, x, es
+   e := !s | return []
+   s := delete(copy(s), e)
+   es := set(e)
+   every x := setdivisions(s) do {
+      every i := 1 to *x do
+         suspend x[1:i]  ||| [es ++ x[i]] ||| x[i+1:0]
+      suspend [es] ||| x
+   }
+end
+
+package procedure listdivisions(l)
+   local e, el, i, x
+   e := l[1] | return []
+   el := [e]
+   every x := listdivisions(l[2:0]) do {
+      every i := 1 to *x do
+         suspend x[1:i]  ||| [el ||| x[i]] ||| x[i+1:0]
+      suspend [el] ||| x
+   }
+end
+
+# Given a list or set x, generate all possible divisions into sublists (or subsets).
+# For example, if x is `[1,2,3]` we generate :-
+# ~
+# [ [1,2,3] ]
+# [ [1], [2,3] ]
+# [ [1,2], [3] ]
+# [ [2], [1,3] ]
+# [ [1], [2], [3] ]
+# ~
+# Notes :-
+#
+# * the empty list or set is never included in any result (unless `x` is empty).
+# * for lists, the order of elements within each sublist is maintained.
+# * the results are in no special order, although the first result always
+#   has a single element (a copy of `x`) and the last has `*x` elements.
+# * each result list and the sublists or subsets are distinct instances.
+#
+procedure divisions(x)
+   case type(x) of {
+      "list": {
+         suspend listdivisions(x)
+      }
+      "set": {
+         suspend setdivisions(x)
+      }
+      default: runerr(179, x)
+   }
 end
 
 #
