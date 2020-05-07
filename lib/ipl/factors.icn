@@ -34,7 +34,7 @@ package ipl.factors
 import
    ipl.io(dopen),
    ipl.numbers(round, exp_modulo),
-   ipl.pdco(List,Product,String,Sum),
+   ipl.pdco(List,Product,String,Sum,UniqueEq),
    util(need_integer)
 
 # generate the divisors of positive integer n
@@ -344,4 +344,43 @@ end
 # succeeds if n is square-free
 procedure squarefree(n)			
    (prime_factors(n).e > 1) | return
+end
+
+package procedure factorizations1(e)
+   local f, i, x, j
+   f := @e | return []
+   every x := factorizations1(e) do {
+      # x is a factorization of the "tail" after removing factor f.
+      # If it is say [a,b,c] then the factors of the whole are
+      # [f*a,b,c], [a,f*b,c], [a,b,f*c] and [f,a,b,c].
+      # The variable j just avoids needless duplicates.
+      j := &null
+      every i := 1 to *x do {
+         if j ~===:= x[i] then
+            suspend sort(x[1:i]  ||| [f * j] ||| x[i+1:0])
+      }
+      suspend [f] ||| x
+   }
+end
+
+# Generate a sequence of lists giving all the possible factorizations
+# of positive integer `n`.  For example, if `n` is 24, then :-
+# ~
+#   [24], [2,12], [4,6], [2,2,6]
+#   [3,8], [2,3,4] and [2,2,2,3]
+# ~
+# is generated.
+#
+# Notes :-
+#
+# * `1` is never included in any result.
+# * the factors in each list are in ascending order,
+# * the results are in no special order, although the first result always
+#   has one element and the last all the prime factors.
+# * no list is repeated,
+# * each list is a distinct list instance,
+# * `factorizations(1)` returns the empty list.
+#
+procedure factorizations(n)
+   suspend UniqueEq{ factorizations1{ prime_factors1(n) } }
 end
