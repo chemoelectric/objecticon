@@ -84,7 +84,7 @@ end
 #
 procedure columnize(l, screen_width, gutter, rowwise)
    local cols, rows, w, mean, est, widths, mx
-   mx := Max{!l} | 0
+   mx := MaxNN{!l}
    if *l >= 2 & mx < screen_width then {
       /gutter := 2
       mean := Sum{!l} / *l
