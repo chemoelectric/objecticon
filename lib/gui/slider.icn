@@ -8,7 +8,7 @@
 
 package gui
 
-import lang, graphics, util, ipl.pdco(Max)
+import lang, graphics, util, ipl.pdco(MaxNN)
 
 #
 # Component representing the slider area
@@ -98,7 +98,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # the nearest multiple of n.
    #
    public set_snaps(n)
-      self.snaps := need_numeric(n)
+      self.snaps := /n | need_numeric(n)
       link
    end
 
@@ -106,7 +106,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # Draw ticks at the given interval
    #
    public set_ticks(n)
-      self.ticks := need_numeric(n)
+      self.ticks := /n | need_numeric(n)
       link
    end
 
@@ -114,7 +114,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    # Draw labels at the given interval
    #
    public set_labels(n)
-      self.labels := need_numeric(n)
+      self.labels := /n | need_numeric(n)
       link
    end
 
@@ -426,7 +426,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
       if /self.is_horizontal_flag then {
          w := AREA_H + border.get_total_width()
          if \self.labels then
-            w +:= Max{ cbwin.text_width(hi | lo) } + Gui.X_INSET
+            w +:= MaxNN{ cbwin.text_width(hi | lo) } + Gui.X_INSET
          if \self.ticks then
             w +:= TICK_H + Gui.X_INSET
          return w
