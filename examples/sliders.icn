@@ -1,4 +1,4 @@
-import gui
+import gui, util
 
 class Untitled(Dialog)
    public slider1, label1, slider2,label2,slider3,label3
@@ -12,12 +12,12 @@ class Untitled(Dialog)
       slider1.set_snaps(1)
       slider1.set_is_horizontal(&yes)
 
-      slider2.set_range(0,5000)
-      slider2.set_value(2500)
-      slider2.set_ticks(500)
-      slider2.set_labels(1000)
-      slider2.set_snaps(500)
-      slider2.set_increment_size(500)
+      slider2.set_range(0,500)
+      slider2.set_value(250)
+      slider2.set_ticks(50)
+      slider2.set_labels(100)
+      slider2.set_snaps(50)
+      slider2.set_increment_size(50)
       slider2.set_is_horizontal(&yes)
 
       slider3.set_range(0.0,3.0)
@@ -47,7 +47,7 @@ class Untitled(Dialog)
    end
 
    public on_slider3()
-      label3.set_label(slider3.get_value())
+      label3.set_label(Format.numeric_to_string(slider3.get_value()))
    end
 
    public override end_dialog()
@@ -76,7 +76,7 @@ class Untitled(Dialog)
          set_size(scale(88)).
          set_align(Align.C, Align.T).
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          set_paint(paint_1)
       self.add(label1)
       slider2 := Slider().
@@ -88,7 +88,7 @@ class Untitled(Dialog)
          set_size(scale(88)).
          set_align(Align.C, Align.T).
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          set_paint(paint_2)
       self.add(label2)
       slider3 := Slider().
@@ -100,13 +100,14 @@ class Untitled(Dialog)
          set_size(scale(88)).
          set_align(Align.C, Align.T).
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          set_paint(paint_3)
       self.add(label3)
       paint := TextPaint("Quit")
       qb := TextButton().
          set_align(Align.C, Align.T).
          clear_constraints().
+         set_constraint(Grid.W, 2).
          connect(self.on_qb, Event.ACTION).
          set_toggles(&no).
          set_paint(paint)
