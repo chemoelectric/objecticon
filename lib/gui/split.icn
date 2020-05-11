@@ -204,8 +204,8 @@ class Split(Component)
    # and bottom) components respectively.  The default for both is zero.
    #
    public set_min(f, s)
-      self.min_first := f
-      self.min_second := s
+      self.min_first := need_integer(f)
+      self.min_second := need_integer(s)
       link
    end
 
@@ -215,7 +215,7 @@ class Split(Component)
    # the extra.
    #
    public set_weight(w)
-      self.weight := w
+      self.weight := need_numeric(w)
       link
    end
 
@@ -223,7 +223,7 @@ class Split(Component)
    # If set, then the slider will move in steps of this amount.
    #
    public set_step(v)
-      self.step := v
+      self.step := /v | need_integer(v)
       link
    end
 
