@@ -310,10 +310,11 @@ end
 procedure primel()			
    local pfile
 
-   pfile := dopen("primes.lst") | runerr("*** cannot open primes.lst")
+   pfile := dopen("primes.lst") | runerr("Cannot open primes.lst")
 
-   suspend pfile.gen()
+   suspend integer(pfile.gen())
 
+   pfile.close()
 end
 
 # product of primes p, where j <= p <= i; j defaults to 1.
