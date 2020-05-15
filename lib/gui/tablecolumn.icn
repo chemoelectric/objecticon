@@ -8,6 +8,8 @@
 
 package gui
 
+import ipl.pdco
+
 #
 # This class provides one column within a `Table`, which
 # displays a table of data.  A column has a label with a
@@ -251,13 +253,10 @@ class ItemPaintTableColumn(BaseTableColumn)
    end
 
    public override calculate_line_height(W)
-      local h, bh
+      local bh
       bh := item_border.get_total_height()
-      if not(h := item_paint.get_constant_height(W) + bh) then {
-         h := []
-         every put(h, item_paint.get_height(W, slice()) + bh)
-      }
-      return h
+      return item_paint.get_constant_height(W) + bh |
+         ipl.pdco.List{ item_paint.get_height(W, slice()) + bh }
    end
 
    public override draw_cell(W, data, line, col, cy, ch)

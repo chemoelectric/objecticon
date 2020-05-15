@@ -1,6 +1,6 @@
 package util
 
-import ipl.functional
+import ipl.functional, ipl.pdco
 
 #
 # This simply holds information about a single listener.
@@ -141,8 +141,7 @@ class Connectable()
    package disconnect_impl(e)
       local l, t
       l := member(listeners, e.type) | fail
-      t := []
-      every put(t, e ~=== !l)
+      t := List{ e ~=== !l }
       if *t > 0 then
          insert(listeners, e.type, t)
       else

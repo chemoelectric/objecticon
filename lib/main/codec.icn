@@ -1,6 +1,6 @@
 package lang
 
-import io, util, exception, ipl.scan, ipl.printf
+import io, util, exception, ipl.scan, ipl.printf, ipl.pdco
 
 # A class implements this interface to provide custom encoding/decoding.
 #
@@ -192,8 +192,7 @@ class Encode(Stream, HasCloseUnderlying)
       local r
       static l
       initial {
-         l := []
-         every put(l, right(0 to 255, 3, "0"))
+         l := List{ right(0 to 255, 3, "0") }
       }
       r := ""
       s ? {
@@ -248,7 +247,7 @@ class Encode(Stream, HasCloseUnderlying)
    end
 
    public encode(o)
-      local ty, i, n, e, l
+      local ty, i, n, l
 
       if i := member(seen, o) then {
          writes(Codec.REF_CODE, i)
@@ -268,8 +267,7 @@ class Encode(Stream, HasCloseUnderlying)
                n := Class.get_n_instance_fields(o)
                if \fast_flag then {
                   writes1(n)
-                  every e := Class.get(o, 1 to n) do
-                     encode(e)
+                  every encode(Class.get(o, 1 to n))
                } else {
                   encode(n)
                   every i := 1 to n do {
@@ -326,11 +324,9 @@ class Encode(Stream, HasCloseUnderlying)
 
          "cset" : {
             writes1(Codec.CSET_CODE)
-            l := []
-            every put(l, Text.get_ord_range(o))
+            l := List{ Text.get_ord_range(o) }
             writes1(*l)
-            every e := !l do
-               encode(e)
+            every encode(!l)
          }
 
          "integer" : {
@@ -349,8 +345,7 @@ class Encode(Stream, HasCloseUnderlying)
             note_seen(o)
             writes1(*o)
             if \fast_flag then {
-               every e := !o do
-                  encode(e)
+               every encode(!o)
             } else {
                every i := 1 to *o do {
                   encode(Constructor.get_field_name(o, i))
@@ -362,23 +357,20 @@ class Encode(Stream, HasCloseUnderlying)
          "list" : {
             writes(Codec.LIST_CODE, *o)
             note_seen(o)
-            every e := !o do
-               encode(e)
+            every encode(!o)
          }
 
          "set" : {
             writes(Codec.SET_CODE, *o)
             note_seen(o)
-            every e := !o do
-               encode(e)
+            every encode(!o)
          }
 
          "table" : {
             writes(Codec.TABLE_CODE, *o)
             encode(o[[]])
             note_seen(o)
-            every e := keyval(o) do
-               encode(e)
+            every encode(keyval(o))
          }
 
          "methp" : {

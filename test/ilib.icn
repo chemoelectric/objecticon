@@ -16,7 +16,8 @@ import
    ipl.tables,
    io,
    lang,
-   util(Math,Format)
+   util(Math,Format),
+   ipl.pdco(List)
 
 $define LSIZE 16
 $define GENLIMIT 25
@@ -50,19 +51,20 @@ procedure main()
    gen(factorial, 0)
    gen(factorial, 6)
    lst(factors, 360)
-   gen(genfactors, 360)
+   gen(prime_factors1, 360)
+   gen(sfactors, 360)
    gen(gfactorial, 5, 2)
    gen(ispower, 81, 4)
-   gen(isprime, 97)
-   gen(nxtprime, 97)
+   geni(isprime, 97)
+   gen(primes, 97)
    lst(pfactors, 360)
    lst(prdecomp, 360)
    lst(prdecomp, 504)
-   gen(prime)
+   gen(primes)
 #  gen(primel)		# not testable without data file
 #  gen(primeorial, 12)	# not testable without data file
    gen(sfactors, 360)
-   every gen(squarefree, 23 to 30)
+   every geni(squarefree, 23 to 30)
 
    write("[testing factorizations]")
    every tfact(1 to 100)
@@ -287,6 +289,13 @@ procedure gen(p, a[])			#: test a simple procedure or generator
    return
 end
 
+procedure geni(p, a[])			#: test a simple procedure or generator
+   &random := 4747
+   writes(left(pimg(p), LSIZE - 1))
+   every writes(" ", image((p ! a) \ GENLIMIT) | "\n")
+   return
+end
+
 procedure cnv(x)
    return string(x) | image(x)
 end
@@ -323,10 +332,26 @@ procedure tbl(p, a[])			#: test a procedure that returns a table
    return \T
 end
 
+# returns a list of exponents for the prime
+# decomposition of i.
+procedure prdecomp(i)			
+   return List{ prime_factors0(i).e }
+end
+
+# returns a list containing the prime factors of i
+procedure pfactors(i)			
+   return List{ prime_factors(i).p }
+end
+
+procedure factors(i)			
+   return List{ prime_factors1(i) }
+end
+
 procedure tfact(n)			#: test factorization of n
    local D, F, P, i, v
 
    F := factors(n)
+
    # every writes(" ", (n || ":") | !F | "\n")      # uncomment to show factors
    v := 1
    every v *:= !F
@@ -363,12 +388,12 @@ procedure tprimes(n)			#: test the first n primes
          }
       }
 
-   every put(L2 := [], prime() \ n)
+   every put(L2 := [], primes() \ n)
 
    L3 := []
    i := 1
    while *L3 < n do
-      put(L3, i := nxtprime(i))
+      put(L3, i := primes(i))
 
    every i := 1 to n do
       if not (L1[i] = L2[i] = L3[i]) then

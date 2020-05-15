@@ -30,7 +30,7 @@
 package ipl.imxform
 
 import
-   ipl.factors(pfactors),
+   ipl.factors(prime_factors),
    ipl.random(shuffle),
    ipl.strings(collate, decollate, rotate)
 
@@ -52,7 +52,7 @@ procedure imxcollap(rows)
    local size, fact
 
    size := *rows
-   every fact := !pfactors(size) do {
+   every fact := prime_factors(size).p do {
       while rowdupl(rows, fact) do {
          size /:= fact
          rows := rows[1+:size]

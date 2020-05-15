@@ -194,3 +194,13 @@ procedure inserts(t, k, v)
    put(member(t, k), v) | insert(t, k, [v])
    return t
 end
+
+#
+# This is like `inserts()` above, but the values of the given table are
+# sets rather than lists.
+#
+procedure inserts_set(t, k, v)
+   insert(member(t, k), v) | insert(t, k, set(v))
+   return t
+end
+

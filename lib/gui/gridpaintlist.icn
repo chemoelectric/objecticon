@@ -8,6 +8,7 @@
 
 package gui
 
+import ipl.pdco
 
 #
 # This class displays a list of objects using the GridPaint class.
@@ -50,18 +51,11 @@ class GridPaintList(SelectableScrollArea)
    end
 
    public override calculate_line_height()
-      local l
-      l := []
-      every put(l, get_draw(!self.contents).h)
-      return l
+      return ipl.pdco.List{ get_draw(!self.contents).h }
    end
 
    public override calculate_subject_width()
-      local d, mw
-      mw := 0
-      every d := get_draw(!self.contents) do
-         mw <:= d.w
-      return mw
+      return MaxNN{ get_draw(!self.contents).w }
    end
 
    public override draw_line_data(xp, yp, lh, i)

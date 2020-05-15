@@ -472,13 +472,12 @@ package final abstract class Util()
 
    private static init()
       LC_MESSAGES := Locale(env_string("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
-      INI_LC_KEYS := []
-      every put(INI_LC_KEYS, 
+      INI_LC_KEYS := ipl.pdco.List {
                 LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
                 LC_MESSAGES.lang || "_" || \LC_MESSAGES.country |
                 LC_MESSAGES.lang || "@" || \LC_MESSAGES.modifier |
                 LC_MESSAGES.lang |
-                &null)
+                &null }
    end
 
    private static unescape(s)

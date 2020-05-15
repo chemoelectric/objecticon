@@ -41,8 +41,8 @@ class Sizer(Component, HasOrientation)
    # must be set on each `SIZER_PRESS` event.
    #
    public set_range(lo, hi)
-      self.lo := lo
-      self.hi := hi
+      self.lo := /lo | need_integer(lo)
+      self.hi := /hi | need_integer(hi)
       link
    end
 

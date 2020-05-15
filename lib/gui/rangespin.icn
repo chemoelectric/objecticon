@@ -8,7 +8,7 @@
 
 package gui
 
-import ipl.pdco
+import util, ipl.pdco
 
 #
 # This is a Spin for numeric values, optionally within a fixed range.
@@ -52,8 +52,8 @@ class RangeSpin(Spin)
    # :  `hi` - The upper bound
    #
    public set_range(lo, hi)
-      self.lo := lo
-      self.hi := hi
+      self.lo := /lo | need_numeric(lo)
+      self.hi := /hi | need_numeric(hi)
       link
    end
 
@@ -61,6 +61,7 @@ class RangeSpin(Spin)
    # Set the value
    #
    public set_value(x)
+      x := need_numeric(x)
       x <:= \self.lo
       x >:= \self.hi
       view.set_contents(x)
@@ -74,6 +75,7 @@ class RangeSpin(Spin)
    # Set the value, firing events
    #
    public assign_value(x, ev, coalesce)
+      x := need_numeric(x)
       x <:= \self.lo
       x >:= \self.hi
       view.assign_contents(x,, ev, coalesce)
@@ -84,7 +86,7 @@ class RangeSpin(Spin)
    # Set the increment, ie the amount moved up/down by the buttons.
    #
    public set_increment_size(x)
-      self.increment_size := x
+      self.increment_size := need_numeric(x)
       link
    end
 
@@ -124,4 +126,3 @@ class RangeSpin(Spin)
       return
    end
 end
-

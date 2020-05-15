@@ -180,13 +180,10 @@ class ItemPaintPTableColumn(BasePTableColumn)
    end
 
    public override calculate_line_height(W)
-      local h, bh
+      local bh
       bh := item_border.get_total_height()
-      if not(h := item_paint.get_constant_height(W) + bh) then {
-         h := []
-         every put(h, item_paint.get_height(W, slice()) + bh)
-      }
-      return h
+      return item_paint.get_constant_height(W) + bh |
+         ipl.pdco.List{ item_paint.get_height(W, slice()) + bh }
    end
 
    public override calculate_column_width(W)

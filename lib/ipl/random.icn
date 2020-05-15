@@ -23,10 +23,13 @@ package ipl.random
 import
    lang(Limit),
    util(Time, need_integer, need_string, ce_param,
-        HasClose, HasCloseUnderlying, Math),
-   ipl.factors(nxtprime),
+        HasClose, HasCloseUnderlying, Math, lclose,
+        need_instance),
+   ipl.factors(primes),
+   ipl.numbers(residue),
    ipl.pdco(Index),
    ipl.printf(stopf),
+   ipl.sort(mergesort, field_cmp, rev_internal_cmp),
    io(need_Stream)
 
 global random
@@ -84,7 +87,7 @@ procedure permutation(n)
 
    # Choose a modulus m >= n in the form of a perfect square of a
    # prime p >= 5.
-   p := nxtprime(Math.sqrt(n))
+   p := primes(Math.sqrt(n))
    p <:= 5
    m := p^2
    # Choose c relatively prime to m, ie not divisible by p
@@ -102,7 +105,7 @@ procedure permutation(n)
    # Create an LCG with a randomly chosen seed
    r := LCG(a, c, m, ?m)
    every 1 to n do {
-      x := n > |r.get()       # discard out-of-range values
+      x := n > r.gen()       # discard out-of-range values
       suspend 1 + x
    }
 
@@ -701,6 +704,45 @@ class RandomFromRealGenerator(RandomFromReal)
    #
    public new(coex)
       self.coex := coex
+      return
+   end
+end
+
+#
+# Combine several `RandomWithModulus` instances, using the scheme
+# described in
+#    <https://en.wikipedia.org/wiki/Combined_linear_congruential_generator>
+#
+class CombinedRandom(RandomWithModulus, HasCloseUnderlying)
+   private const
+      r
+
+   public override get()
+      local i, o, e
+      o := 1
+      i := 0
+      every e := !r do {
+         i +:= o * e.get()
+         o := -o
+      }
+      i := residue(i, m - 1)
+      return if i = 0 then m - 1 else i
+   end
+
+   public override close()
+      if \close_underlying_flag then
+         lclose(r) | fail
+      link
+   end
+
+   #
+   # The constructor accepts several `RandomWithModulus` instances.
+   #
+   public override new(r[])
+      every need_instance(!r, RandomWithModulus)
+      r := mergesort(r, field_cmp("m", rev_internal_cmp))
+      RandomWithModulus.new(r[1].m)
+      self.r := r
       return
    end
 end

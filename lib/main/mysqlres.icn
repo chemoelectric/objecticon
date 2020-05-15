@@ -8,7 +8,7 @@
 
 package mysql
 
-import lang, util
+import lang, util, ipl.pdco
 
 #
 # This class provides a wrapper around an MYSQL_RES object.
@@ -54,11 +54,9 @@ final class MySqlRes(NoCopy, HasClose)
    # :  a list of `MySqlField` instances
    #
    public fetch_fields()
-      local l, res
+      local l
       l := fetch_fields_impl()
-      res := []
-      every put(res, MySqlField!(!l))
-      return res
+      return List{ MySqlField!(!l) }
    end
 
    private native fetch_fields_impl()
