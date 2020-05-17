@@ -130,7 +130,7 @@ $if _MS_WIN32
       return WinsockStream.dns_query(server, ip_version)
    end
 
-   private ip_to_addr(ip, port)
+   private static ip_to_addr(ip, port)
       return if upto('.', ip) then 
          "inet:" || ip || ":" || port
       else
@@ -261,7 +261,7 @@ $else
          p.stop()
    end
 
-   private ip_to_addr(ip, port)
+   private static ip_to_addr(ip, port)
       return if upto('.', ip) then 
          "inet:" || ip || ":" || port
       else
