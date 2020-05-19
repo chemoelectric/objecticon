@@ -423,6 +423,14 @@ $endif
    end
 
    #
+   # Generate the config directories, being `get_config_home()` followed
+   # by the elements of `get_config_dirs()`
+   #
+   public static gen_config_dirs()
+      suspend get_config_home() | Files.split_paths(get_config_dirs())
+   end
+
+   #
    # Generate the base directories, being `get_data_home()` followed
    # by the elements of `get_data_dirs()`
    #
@@ -988,7 +996,7 @@ final abstract class Mime()
 
    private static scan_application_dir(p, prefix, t, u)
       local l, e, de, mt, dm, src, key
-      l := Files.ucs_list(p.str()) | fail
+      l := qsort(Files.ucs_list(p.str()), Files.name_cmp) | fail
       every e := !l do {
          if not(Files.is_hidden(e.name)) then {
             if e.stat.mode_str[1] == "d" then {
@@ -1073,6 +1081,14 @@ final abstract class Mime()
       qsort(l, prefcmp)
    end
 
+   private static gen_mimeapps_lists()
+      local d
+      every d := Reverse{ BaseDir.gen_data_dirs() } do
+         suspend FilePath(d).walk("applications", "mimeapps.list").str()
+      every d := Reverse{ BaseDir.gen_config_dirs() } do
+         suspend FilePath(d).child("mimeapps.list").str()
+   end
+
    private static read_desktop_entries()
       local d, t, u, f, mm, k
       t := table()    # maps desktop entry names (ucs, eg u"kate.desktop") to DesktopEntry object
@@ -1090,8 +1106,7 @@ final abstract class Mime()
       every sort_by_preference(!u)
 
       # Process customisations from the mimeapps.lists files.
-      every d := Reverse{ BaseDir.gen_data_dirs() } do {
-         f := FilePath(d).walk("applications", "mimeapps.list").str()
+      every f := gen_mimeapps_lists() do {
          if mm := Util.load_ini_file(f) then
             process_mimeapps_list(mm, t, u)
       }
