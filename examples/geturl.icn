@@ -117,7 +117,7 @@ class Worker()
    private got_headers()
       local fname
 
-      if \opts["head"|"c"] then
+      if \opts["head" | "c"] then
          fail
 
       if fname := hc.get_response().get_filename() & *fname > 0 then {
@@ -519,6 +519,9 @@ procedure main(args)
 
    if \opts[k := "r" | "while"] & \opts["nr"] then
       help_stop("Can't have -", k, " and -nr options together")
+
+   if \opts["c"] & \opts["o"] then
+      help_stop("Can't have -c and -o options together")
 
    total := ok := skipped := 0
    err := []
