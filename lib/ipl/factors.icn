@@ -35,7 +35,7 @@ import
    ipl.io(dopen),
    ipl.numbers(round, exp_modulo),
    ipl.pdco(List,Product,String,Sum,UniqueEq),
-   util(need_integer)
+   util(need_integer, use_seq)
 
 # generate the divisors of positive integer n
 procedure divisors(n)			
@@ -306,15 +306,20 @@ procedure probably_prime(n, c)
    return
 end
 
-# generates the primes from a precompiled list.
+# Generates the primes from a precompiled list, "primes.lst", in the
+# directory indicated by the environment variable `DPATH` (see
+# `dopen`).  If the sequence won't be generated to exhaustion, enclose
+# the call in `util.clean` to ensure the underlying file is closed; eg
+# ~
+#   clean{ every write(primel() \ 20) }
+# ~
 procedure primel()			
    local pfile
 
-   pfile := dopen("primes.lst") | runerr("Cannot open primes.lst")
-
-   suspend integer(pfile.gen())
-
-   pfile.close()
+   suspend use_seq {
+      pfile := dopen("primes.lst") | runerr("Cannot open primes.lst"),
+      integer(pfile.gen())
+   }
 end
 
 # product of primes p, where j <= p <= i; j defaults to 1.
