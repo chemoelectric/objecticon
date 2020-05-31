@@ -1281,7 +1281,7 @@ static cdefn *dquery(char *name, int len)
 {
     int h, i;
     unsigned int t;
-    cdefn *d, **p;
+    cdefn *d;
     if (len < 0)
         len = strlen(name);
     if (len == 0)
@@ -1289,11 +1289,11 @@ static cdefn *dquery(char *name, int len)
     for (t = i = 0; i < len; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
+    d = cbin[h];			/* get head of list */
+    while (d != NULL) {
         if (d->nlen == len && strncmp(name, d->name, len) == 0)
             return d;			/* return pointer to entry */
-        p = &d->next;
+        d = d->next;
     }
     /*
      * No match
