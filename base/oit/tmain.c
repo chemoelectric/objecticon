@@ -199,7 +199,7 @@ static gzFile gzopen_utf8(char *path, char *mode)
 int main(int argc, char **argv)
 {
     int c;
-    char ch;
+    char ch, *ext;
     struct fileparts *fp;
 
     fp = fparse(*argv);
@@ -331,12 +331,12 @@ int main(int argc, char **argv)
             add_link_file("stdin.u");
         }
         else {
-            fp = fparse(argv[oi_optind]);		/* parse file name */
-            if (*fp->ext == '\0' || strcasecmp(fp->ext, SourceSuffix) == 0) {
+            ext = getext(argv[oi_optind]);		/* get file name extension */
+            if (*ext == '\0' || strcasecmp(ext, SourceSuffix) == 0) {
                 add_trans_file(makename(0, argv[oi_optind],  SourceSuffix));
                 add_link_file(makename(0, argv[oi_optind], USuffix));
             }
-            else if (strcasecmp(fp->ext, USuffix) == 0)
+            else if (strcasecmp(ext, USuffix) == 0)
                 add_link_file(makename(0, argv[oi_optind], USuffix));
             else
                 quit("Bad argument %s", argv[oi_optind]);
@@ -373,8 +373,7 @@ int main(int argc, char **argv)
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
        ofile = intern(makename(0,link_files->name, ".exe"));
     } else {				/* add extension in necessary */
-        fp = fparse(ofile);
-        if (*fp->ext == '\0') /* if no ext given */
+        if (*getext(ofile) == '\0') /* if no ext given */
 	   ofile = intern(makename(0,ofile, ".exe"));
     }
 #else                                   /* MSWIN32 */
