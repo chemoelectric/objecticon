@@ -246,7 +246,6 @@ int isabsolute(char *s)
 static char *tryexe(char *dir, char *name)
 {
     char *s = makename(dir, name, 0);
-    struct fileparts *fp;
 
     /*
      * Try as given
@@ -258,8 +257,7 @@ static char *tryexe(char *dir, char *name)
      * If name has no extension, try extensions .exe and .bat
      * as alternatives.
      */
-    fp = fparse(name);
-    if (!*fp->ext) {
+    if (*getext(name) == '\0') {
        s = makename(dir, name, ".exe");
        if (!access(s, 0))
 	  return s;
