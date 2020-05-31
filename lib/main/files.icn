@@ -491,13 +491,10 @@ $endif
       local i, p, s
       access(stem) | return stem
       i := 1
-      p := backto('.', stem) - 1
+      p := get_extension(stem)
       repeat {
          s := stem
-         if /p then
-            s ||:= "_" || i
-         else
-            s[p] := "_" || i || s[p]
+         (if /p then s else s[-*p - 2]) ||:= "_" || i
          access(s) | return s
          i +:= 1
       }
@@ -508,7 +505,8 @@ $endif
    #
    public static get_extension(f)
       local i                                                     
-      if 2 < (i := backto('.' ++ PATH_SPECIALS, f)\1) <= *f & any('.', f[i - 1]) then
+      if (i := backto('.' ++ PATH_SPECIALS, f)\1) <= *f &
+         any('.', f[i - 1]) & any(~PATH_SPECIALS, f[i - 2]) then
          return f[i:0]
    end
 

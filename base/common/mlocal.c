@@ -474,8 +474,8 @@ char *getext(char *s)
 {
     char *p, *x;
     x = p = s + strlen(s);
-    while (--p >= s) {
-        if (*p == '.')
+    while (--p > s) {
+        if (*p == '.' && p < x - 1 && !strchr(FILEPREFIX, p[-1]))
             return p;
         else if (strchr(FILEPREFIX, *p))
             break;
@@ -497,7 +497,8 @@ struct fileparts *fparse(char *s)
     q = s;
     fp.ext = p = s + strlen(s);
     while (--p >= s) {
-        if (*p == '.' && *fp.ext == '\0')
+        if (*p == '.' && p > s && *fp.ext == '\0' &&
+            p < fp.ext - 1 && !strchr(FILEPREFIX, p[-1]))
             fp.ext = p;
         else if (strchr(FILEPREFIX, *p)) {
             q = p+1;
