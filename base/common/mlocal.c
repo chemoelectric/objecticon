@@ -472,10 +472,15 @@ char *getdir(char *s)
  */
 char *getext(char *s)
 {
-    char *r = strrchr(s, '.');
-    if (!r)
-        r = s + strlen(s);
-    return r;
+    char *p, *x;
+    x = p = s + strlen(s);
+    while (--p >= s) {
+        if (*p == '.')
+            return p;
+        else if (strchr(FILEPREFIX, *p))
+            break;
+    }
+    return x;
 }
 
 /*
@@ -494,7 +499,7 @@ struct fileparts *fparse(char *s)
     while (--p >= s) {
         if (*p == '.' && *fp.ext == '\0')
             fp.ext = p;
-        else if (strchr(FILEPREFIX,*p)) {
+        else if (strchr(FILEPREFIX, *p)) {
             q = p+1;
             break;
         }
