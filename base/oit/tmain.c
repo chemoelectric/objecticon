@@ -328,7 +328,7 @@ int main(int argc, char **argv)
             break;
         else if (strcmp(argv[oi_optind],"-") == 0) {
             add_trans_file("stdin");      /* "-" means standard input */
-            add_link_file("stdin.u");
+            add_link_file("stdin" USuffix);
         }
         else {
             ext = getext(argv[oi_optind]);		/* get file name extension */
