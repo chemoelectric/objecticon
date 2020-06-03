@@ -1303,8 +1303,6 @@ static void dremove(char *name)
     unsigned int t;
     cdefn *d, **p;
     nlen = strlen(name);
-    if (nlen == 0)
-        return;
     for (t = i = 0; i < nlen; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
@@ -1323,16 +1321,14 @@ static void dinsert(char *name, char *val)
 {
     int h, i, nlen, vlen;
     unsigned int t;
-    cdefn *d, **p;
+    cdefn *d;
     nlen = strlen(name);
-    if (nlen == 0)
-        return;
     vlen = strlen(val);
     for (t = i = 0; i < nlen; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
+    d = cbin[h];			/* get head of list */
+    while (d != NULL) {
         if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
             /*
              * We found a match in the table.
@@ -1341,7 +1337,7 @@ static void dinsert(char *name, char *val)
                 pfatal("Value redefined: %s", name);
             return;
         }
-        p = &d->next;
+        d = d->next;
     }
     d = Alloc1(*d);
     d->nlen = nlen;
@@ -1363,15 +1359,13 @@ static void dinsert_pre(char *name, char *val, int vlen)
 {
     int h, i, nlen;
     unsigned int t;
-    cdefn *d, **p;
+    cdefn *d;
     nlen = strlen(name);
-    if (nlen == 0)
-        return;
     for (t = i = 0; i < nlen; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
+    d = cbin[h];			/* get head of list */
+    while (d  != NULL) {
         if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
             /*
              * We found a match in the table.
@@ -1380,7 +1374,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
                 pfatal("Value redefined: %s", name);
             return;
         }
-        p = &d->next;
+        d = d->next;
     }
     d = Alloc1(*d);
     d->nlen = nlen;
