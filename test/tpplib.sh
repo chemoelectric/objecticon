@@ -4,11 +4,10 @@
 [ -f custom.sh ] && . ./custom.sh
 touch empty
 oit -s tpplib.icn
-./tpplib tpp.icn >tpplib.out 2>tpplib.err
+./tpplib -DC1=100 -DC2=200 -D_PIPES tpp.icn >tpplib.out 2>tpplib.err
 set -e
 # should give same output as tpp.sh (tpplib.std is a dummy file)
 cmp tpplib.out tpp.std
 # but slightly different errors
 cmp tpplib.err tpplib.stde
 rm -f tpplib.err empty
-
