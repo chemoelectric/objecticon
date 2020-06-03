@@ -1282,10 +1282,6 @@ static cdefn *dquery(char *name, int len)
     int h, i;
     unsigned int t;
     cdefn *d;
-    if (len < 0)
-        len = strlen(name);
-    if (len == 0)
-        return NULL;
     for (t = i = 0; i < len; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
@@ -1461,7 +1457,7 @@ static char *evalexpr3(char **ss, int *val)
     c = **ss;
     if (oi_isalpha(c) || c == '_') {
         *ss = getidt(name = *ss - 1, *ss);		/* get name */
-        *val = (dquery(name, -1) != NULL);
+        *val = (dquery(name, strlen(name)) != NULL);
     } else {
         ++*ss;
         switch (c) {
