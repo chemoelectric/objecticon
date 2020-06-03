@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import parser, ipl.options, io, net
+import parser, ipl.options, ipl.pdco, io, net
 
 global opts, arg_packs
 
@@ -34,7 +34,7 @@ procedure usage(opts)
 end
 
 procedure main(a)
-   local s, o, symbol_table, pp_defs
+   local s, o, symbol_table, l
 
    # Traversing raw parse trees can take a lot of recursion.
    &maxlevel := 50000
@@ -45,12 +45,14 @@ procedure main(a)
                        Opt("a",, "Generate documentation for all packages"),
                        Opt("d",, "Generate scanning event debug output"),
                        Opt("r",, "Restrict output to specified packages"),
-                       Opt("D",string,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
+                       Opt("D",Preprocessor.pp_def_opt,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
                        Opt("ci",, "Assume case-insensitive file system")],
                        usage)
 
-   pp_defs := Preprocessor.parse_defs(\opts["D"])
-   symbol_table := SymbolTable().set_pp_defs(pp_defs)
+   symbol_table := SymbolTable()
+   if l := \opts["D"] then
+      symbol_table.set_pp_defs(Table{ !l })
+
    if \opts["d"] then
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
    if \opts["a"] then {

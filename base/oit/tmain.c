@@ -112,6 +112,8 @@ static void add_pp_def(char *s)
     struct pp_def *p = Alloc(struct pp_def);
     eq = strchr(s, '=');
     if (eq) {
+        if (eq == s)
+            quit("Invalid -D option");
         p->key = intern_n(s, eq - s);
         p->value = intern(eq + 1);
     } else {

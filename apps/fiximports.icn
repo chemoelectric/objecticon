@@ -1,4 +1,4 @@
-import parser, ipl.options, io, util, ipl.strings
+import parser, ipl.options, io, util, ipl.strings, ipl.pdco
 
 global symbol_table, scanned_file, need, pp_defs, opts
 
@@ -14,15 +14,19 @@ procedure usage(opts)
 end
 
 procedure main(a)
-   local s
+   local s, l
    opts := options(a, [Opt("d",, "Generate symbol table scanning progress messages"),
                        Opt("f",string,"Specify file to scan, but not to rewrite.  Several -f options may be given",&yes),
-                       Opt("D",string,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
+                       Opt("D",Preprocessor.pp_def_opt,"KEY[=VALUE]#Define or clear a preprocessor symbol",&yes),
                        Opt("c",, "Output to standard output, without changing the source file")],
                        usage)
 
-   pp_defs := Preprocessor.parse_defs(\opts["D"])
-   symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U).set_pp_defs(pp_defs)
+   symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U)
+
+   if l := \opts["D"] then {
+      pp_defs := Table{ !l }
+      symbol_table.set_pp_defs(pp_defs)
+   }
    if \opts["d"] then
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
 
