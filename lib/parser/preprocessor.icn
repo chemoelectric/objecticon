@@ -744,6 +744,7 @@ class Preprocessor(Connectable)
             move(1)
             v := tab(0)
          } else
+            # v will be &null, meaning this key is to be deleted (see above).
             k := s
       }
       return if *k = 0 then
