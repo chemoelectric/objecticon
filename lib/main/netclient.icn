@@ -849,6 +849,8 @@ procedure parse_host_port(s, def, c)
          1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
       else
          tab(upto(c) | 0)
+      if *host = 0 then
+         return error("Missing host")
       (port := (if tab(any(c)) then integer(tab(many(&digits))) else \def) & pos(0)) |
                  return error("Host" || c || "port expected")
       NetClient.valid_port(port) | return error("Port out of range")
