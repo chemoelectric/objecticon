@@ -27,13 +27,8 @@ static struct str_entry **str_tbl = NULL; /* string hash table */
  */
 void init_str()
 {
-    int h;
-
-    if (str_tbl == NULL) {
+    if (str_tbl == NULL)
         str_tbl = safe_zalloc(StrTblSz * sizeof(struct str_entry *));
-        for (h = 0; h < StrTblSz; ++h)
-            str_tbl[h] = NULL;
-    }
 }
 
 void dump_stbl()
