@@ -1,13 +1,13 @@
 package util
 
-import io(write), lang(Text), datastruct
+import io(write), lang(Text), datastruct, ipl.pdco(String)
 
 #
 # Base class for an object which has headers (Message, and HTTP response
 # and request objects).
 #
 class MimeHeaders()
-   private readable
+   public const
       headers
 
    #
@@ -71,20 +71,13 @@ class MimeHeaders()
    # :  if there is no header with the given key
    #
    public get_catenated_headers(key, delim)
-      local s, l, e
+      local l
 
       l := get_headers(key) | fail
 
       /delim := ","
 
-      s := ""
-      every e := !l do {
-         if *s > 0 then 
-            s ||:= delim
-         s ||:= e
-      }
-
-      return s
+      return String{ !l, delim }
    end
 
    #
