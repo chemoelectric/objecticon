@@ -468,23 +468,29 @@ procedure real_range(min, max)
    return lpartial(range_impl, real, min, max)
 end
 
-package procedure text_with_impl(cnv, q, s)
+package procedure text_with_impl(cnv, q, i, s)
+   local j
+   i := need_integer(\i) | 1
    s := cnv(s) | return error(capitalize_cnv(cnv) || " expected")
-   return if (type(q) == "cset" & upto(q, s)) | find(q, s) then
-      s
-   else
+   return if (j := if type(q) == "cset" then upto(q, s) else find(q, s)) then {
+      if j >= i then
+         s
+      else
+         error(image(q) || " in invalid position")
+   } else
       error(capitalize_cnv(cnv) || " containing " || image(q) || " expected")
 end
 
 # Converter function for a string option which must contain a char in
-# `q` (if q is a cset), or the substring `q`, otherwise.
-procedure string_with(q)
-   return lpartial(text_with_impl, string, q)
+# `q` (if q is a cset), or the substring `q`, otherwise.  `i` is an
+# optional integer giving a minimum index for `q`.
+procedure string_with(q, i)
+   return lpartial(text_with_impl, string, q, i)
 end
 
 # Same as `string_with`, but returns a ucs.
-procedure ucs_with(q)
-   return lpartial(text_with_impl, ucs, q)
+procedure ucs_with(q, i)
+   return lpartial(text_with_impl, ucs, q, i)
 end
 
 package class IgnoreAfterImpl(New)
