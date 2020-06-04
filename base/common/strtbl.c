@@ -59,21 +59,11 @@ void dump_sbuf(struct str_buf *s)
 }
 
 /*
- * init_sbuf - initialize a new sbuf struct.  This just zeroes the
- * structure.
- */
-void init_sbuf(struct str_buf *sbuf)
-{
-    memset(sbuf, 0, sizeof(*sbuf));
-}
-
-/*
  * new_sbuf - allocate a new buffer for a sbuf struct, copying the partially
  *   created string from the end of full buffer to the new one.
  */
 void new_sbuf(struct str_buf *sbuf)
 {
-    struct str_buf_frag *sbf;
     char *s1, *s2;
 
     if (sbuf->size == 0) 
@@ -87,11 +77,7 @@ void new_sbuf(struct str_buf *sbuf)
     }
 
     s1 = sbuf->strtimage;
-    sbf = safe_zalloc(sizeof(struct str_buf_frag) + (sbuf->size - 1));
-    sbf->next = sbuf->frag_lst;
-    sbuf->frag_lst = sbf;
-    sbuf->strtimage = sbf->s;
-    s2 = sbuf->strtimage;
+    s2 = sbuf->strtimage = safe_malloc(sbuf->size);
     while (s1 < sbuf->endimage)
         *s2++ = *s1++;
     sbuf->endimage = s2;
