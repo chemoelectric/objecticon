@@ -57,12 +57,6 @@ struct str_buf {
 #define CurrLen(sbuf) ((sbuf).endimage - (sbuf).strtimage)
 
 /*
- * minimum number of unsigned ints needed to hold the bits of a cset - only
- *  used in translators, not in the run-time system.
- */
-#define BVectSize 16
-
-/*
  * Number of elements of a C array, and element size.
  */
 #define ElemCount(a)  (sizeof(a)/sizeof(a[0]))
