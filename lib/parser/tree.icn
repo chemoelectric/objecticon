@@ -68,7 +68,7 @@ end
 class Node()
    public const 
       label
-   private
+   private const
       children
    public static const
       EMPTY
@@ -89,11 +89,11 @@ class Node()
    # Get the index of the given child element
    #
    public get_index(c)
-      return keyof(self.children, c)
+      return keyof(children, c)
    end
 
    public set(i, x)
-      self.children[i] := x
+      children[i] := x
       link
    end
 
@@ -575,7 +575,7 @@ class Body(SimpleLList)
 end
 
 class Prog(Tree)
-   private decls
+   private const decls
 
    public get_package()
       return Package(Node.EMPTY ~=== decls.child(1))
