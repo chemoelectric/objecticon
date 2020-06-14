@@ -45,6 +45,14 @@ static int pattern_match (char *pattern, char *string)
     return *n == '\0';
 }
 
+static char *rm_trailing_dot(char *s)
+{
+    size_t n = strlen(s);
+    if (n > 0 && s[n - 1] == '.')
+        s[n - 1] = 0;
+    return s;
+}
+
 function ssl_SslStream_new_impl(other, host)
    if !cnv:C_string(host) then
       runerr(103, host)
@@ -69,7 +77,9 @@ function ssl_SslStream_new_impl(other, host)
 
        p = safe_malloc(sizeof(*p));
        p->ctx = ctx;
-       p->host = salloc(host);
+       /* A trailing dot in the hostname must be removed, or the
+        * certificate may not match. (See RFC 6066 page 7). */
+       p->host = rm_trailing_dot(salloc(host));
 
        SSL_CTX_set_default_verify_paths(ctx);
 
@@ -119,27 +129,40 @@ static int match_common_name(X509 *cert, char *host)
     OPENSSL_free(utf8);
     return res;
 }
- 
+
 static int match_alt_names(X509 *cert, char *host)
 {
     GENERAL_NAMES *names;
-    int i, n;
+    int i, n, res;
  
     names = X509_get_ext_d2i(cert, NID_subject_alt_name, 0, 0);
     if (!names)
         return 0;
- 
+
     n = sk_GENERAL_NAME_num(names);
     for(i = 0; i < n; ++i) {
         GENERAL_NAME *name = sk_GENERAL_NAME_value(names, i);
-        if (name->type == GEN_DNS) {
-            unsigned char *utf8;
-            int res;
-            ASN1_STRING_to_UTF8(&utf8, name->d.dNSName);
-            res = pattern_match((char *)utf8, host);
-            OPENSSL_free(utf8);
-            if (res)
-                return 1;
+        switch (name->type) {
+            case GEN_DNS: {
+                unsigned char *utf8;
+                if (ASN1_STRING_to_UTF8(&utf8, name->d.dNSName) >= 0) {
+                    res = pattern_match((char *)utf8, host);
+                    OPENSSL_free(utf8);
+                    if (res)
+                        return 1;
+                }
+                break;
+            }
+            case GEN_IPADD: {
+                ASN1_OCTET_STRING *t = a2i_IPADDRESS(host);
+                if (t) {
+                    res = (ASN1_STRING_cmp(t, name->d.iPAddress) == 0);
+                    ASN1_OCTET_STRING_free(t);
+                    if (res)
+                        return 1;
+                }
+                break;
+            }
         }
     }
     return 0;
