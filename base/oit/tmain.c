@@ -31,6 +31,7 @@ int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace i
 int Olevel      =1;     /* -O n: optimisation */
 int nolink      =0;	/* suppress linking? */
 int baseopt     =1;     /* indicates where to set hdr.Base */
+int Aflag       =0;     /* -A: treat files other than .icn or .u as source files */
 
 /*
  * Some convenient interned strings.
@@ -111,6 +112,8 @@ static void add_pp_def(char *s)
     struct pp_def *p = Alloc(struct pp_def);
     eq = strchr(s, '=');
     if (eq) {
+        if (eq == s)
+            quit("Invalid -D option");
         p->key = intern_n(s, eq - s);
         p->value = intern(eq + 1);
     } else {
@@ -199,7 +202,7 @@ static gzFile gzopen_utf8(char *path, char *mode)
 int main(int argc, char **argv)
 {
     int c;
-    char ch;
+    char ch, *ext;
     struct fileparts *fp;
 
 #if PLAN9
@@ -228,8 +231,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBfgmnsELIZWTV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
-    while ((c = oi_getopt(argc,argv, "?cBfgmno:sv:ELIZWTVl:O:D:b:")) != EOF) {
+#define Usage "[-cBfgmnsELIZWTAV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
+    while ((c = oi_getopt(argc,argv, "?cBAfgmno:sv:ELIZWTVl:O:D:b:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -237,6 +240,10 @@ int main(int argc, char **argv)
 
             case 'B':
                 Bflag = 1;
+                break;
+
+            case 'A':
+                Aflag = 1;
                 break;
 
             case 'E':			/* -E: preprocess only */
@@ -333,17 +340,20 @@ int main(int argc, char **argv)
             break;
         else if (strcmp(argv[oi_optind],"-") == 0) {
             add_trans_file("stdin");      /* "-" means standard input */
-            add_link_file("stdin.u");
+            add_link_file("stdin" USuffix);
         }
         else {
-            fp = fparse(argv[oi_optind]);		/* parse file name */
-            if (*fp->ext == '\0' || strcasecmp(fp->ext, SourceSuffix) == 0) {
+            ext = getext(argv[oi_optind]);		/* get file name extension */
+            if (*ext == '\0' || strcasecmp(ext, SourceSuffix) == 0) {
                 add_trans_file(makename(0, argv[oi_optind],  SourceSuffix));
                 add_link_file(makename(0, argv[oi_optind], USuffix));
             }
-            else if (strcasecmp(fp->ext, USuffix) == 0)
+            else if (strcasecmp(ext, USuffix) == 0)
                 add_link_file(makename(0, argv[oi_optind], USuffix));
-            else
+            else if (Aflag) {
+                add_trans_file(argv[oi_optind]);
+                add_link_file(makename(0, argv[oi_optind], USuffix));
+            } else
                 quit("Bad argument %s", argv[oi_optind]);
         }
         oi_optind++;
@@ -378,8 +388,7 @@ int main(int argc, char **argv)
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
        ofile = intern(makename(0,link_files->name, ".exe"));
     } else {				/* add extension in necessary */
-        fp = fparse(ofile);
-        if (*fp->ext == '\0') /* if no ext given */
+        if (*getext(ofile) == '\0') /* if no ext given */
 	   ofile = intern(makename(0,ofile, ".exe"));
     }
 #else                                   /* MSWIN32 */
@@ -705,6 +714,7 @@ static void usage()
                    "-E        Direct the results of preprocessing to standard output and inhibit further\n"
                    "          processing\n"
                    "-b i      Base option in icode file; 0 means zero base\n"
+                   "-A        Treat files other than .icn or .u files as source files\n"
                    "-V        Announce version and configuration information on standard error\n");
     exit(EXIT_SUCCESS);
 }

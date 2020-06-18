@@ -598,7 +598,5 @@ end
 # procedure fails.
 #
 procedure ce_param(v)
-   if type(v) == "co-expression" then
-      v := @v | fail
-   return v
+   return if type(v) == "co-expression" then @v else v
 end

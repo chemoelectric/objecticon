@@ -618,8 +618,10 @@ end
 
 
 # Construct a table from a result sequence.  The expression `e` should
-# produce 2-element lists representing key-value pairs to add to the
-# table.
+# produce 2-element lists (or records) representing key-value pairs to
+# add to the table.
+#
+# An optional second parameter provides a default value for the table.
 #
 # For example :-
 # ~
@@ -629,9 +631,9 @@ end
 # ~
 #    {1->1, 2->4, 3->9, 4->16}
 # ~
-procedure Table(e)
+procedure Table(e, def)
    local t, x
-   t := table()
+   t := table(ce_param(def)) | fail
    while x := @e do
       insert(t, x[1], x[2])
    return t

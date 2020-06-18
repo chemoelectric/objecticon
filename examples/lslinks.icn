@@ -30,20 +30,14 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    end
 
    public new()
-      local u, p
-      \opts["a"] ? {
-         u := tab(upto(':')) | syserr("Bad -a option")
-         move(1)
-         p := tab(0)
-         auth := Authentication(u, p)
-      }
+      auth := \opts["a"]
       return
    end
 end
 
 procedure main(args)
    local t, cookies
-   opts := options(args, [Opt("a",string_with(':'), "USER:PASS#Specify authorization"),
+   opts := options(args, [Opt("a",authentication_opt, "USER:PASS#Specify authorization"),
                           Opt("e",string, "URL#Set referer header"),
                           Opt("agent",string, "Set user agent field"),
                           Opt("A",, "Print URLs of any scheme, rather than http, https and file"),

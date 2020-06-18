@@ -250,7 +250,6 @@ int isabsolute(char *s)
 static char *tryexe(char *dir, char *name)
 {
     char *s = makename(dir, name, 0);
-    struct fileparts *fp;
 
     /*
      * Try as given
@@ -262,8 +261,7 @@ static char *tryexe(char *dir, char *name)
      * If name has no extension, try extensions .exe and .bat
      * as alternatives.
      */
-    fp = fparse(name);
-    if (!*fp->ext) {
+    if (*getext(name) == '\0') {
        s = makename(dir, name, ".exe");
        if (!access(s, 0))
 	  return s;
@@ -506,10 +504,15 @@ char *getdir(char *s)
  */
 char *getext(char *s)
 {
-    char *r = strrchr(s, '.');
-    if (!r)
-        r = s + strlen(s);
-    return r;
+    char *p, *x;
+    x = p = s + strlen(s);
+    while (--p > s) {
+        if (*p == '.' && p < x - 1 && !strchr(FILEPREFIX, p[-1]))
+            return p;
+        else if (strchr(FILEPREFIX, *p))
+            break;
+    }
+    return x;
 }
 
 /*
@@ -526,9 +529,10 @@ struct fileparts *fparse(char *s)
     q = s;
     fp.ext = p = s + strlen(s);
     while (--p >= s) {
-        if (*p == '.' && *fp.ext == '\0')
+        if (*p == '.' && p > s && *fp.ext == '\0' &&
+            p < fp.ext - 1 && !strchr(FILEPREFIX, p[-1]))
             fp.ext = p;
-        else if (strchr(FILEPREFIX,*p)) {
+        else if (strchr(FILEPREFIX, *p)) {
             q = p+1;
             break;
         }

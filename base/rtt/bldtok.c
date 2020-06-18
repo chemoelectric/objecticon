@@ -68,7 +68,6 @@ void init_tok()
 
    if (first_time) {
       first_time = 0;
-      init_sbuf(&tknize_sbuf); /* initialize string buffer */
       /*
        * install reserved words into the string table
        */

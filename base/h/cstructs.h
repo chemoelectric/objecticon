@@ -42,18 +42,11 @@ struct membuff {
  *  at a time. When a buffer "fragment" is filled, another is allocated
  *  and the the current string copied to it.
  */
-struct str_buf_frag {
-   struct str_buf_frag *next;     /* next buffer fragment */
-   char s[1];                     /* variable size buffer, really > 1 */
-   };
-
 struct str_buf {
    size_t size;                   /* total size of current buffer */
    char *strtimage;               /* start of string currently being built */
    char *endimage;                /* next free character in buffer */
    char *end;                     /* end of current buffer */
-   struct str_buf_frag *frag_lst; /* list of buffer fragments */
-   struct str_buf *next;          /* buffers can be put on free list */
    };
 
 #define AppChar(sbuf, c) do {\
@@ -62,12 +55,6 @@ struct str_buf {
    *((sbuf).endimage)++ = (c); } while (0)
 
 #define CurrLen(sbuf) ((sbuf).endimage - (sbuf).strtimage)
-
-/*
- * minimum number of unsigned ints needed to hold the bits of a cset - only
- *  used in translators, not in the run-time system.
- */
-#define BVectSize 16
 
 /*
  * Number of elements of a C array, and element size.

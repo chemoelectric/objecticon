@@ -181,7 +181,7 @@ int main(argc, argv)
 void trans(src_file)
     char *src_file;
 {
-    struct fileparts *fp;
+    char *ext;
     struct tdefnm *td;
 
     cur_src = src_file;
@@ -210,10 +210,10 @@ void trans(src_file)
         cname = salloc(makename(0, "stdin", CSuffix));
     }
     else {
-        fp = fparse(cur_src);
-        if (*fp->ext == '\0')
+        ext = getext(cur_src);
+        if (*ext == '\0')
             cur_src = salloc(makename(0, cur_src, RttSuffix));
-        else if (strcasecmp(fp->ext, RttSuffix) != 0)
+        else if (strcasecmp(ext, RttSuffix) != 0)
             err2("unknown file suffix ", cur_src);
         cur_src = spec_str(cur_src);
 

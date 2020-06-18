@@ -1,13 +1,13 @@
 package util
 
-import io(write), lang(Text), datastruct
+import io(write), lang(Text), datastruct, ipl.pdco(String)
 
 #
 # Base class for an object which has headers (Message, and HTTP response
 # and request objects).
 #
-class MimeHeaders()
-   private readable
+abstract class MimeHeaders()
+   public const
       headers
 
    #
@@ -50,7 +50,7 @@ class MimeHeaders()
    # :  if no headers for the key have been defined
    #
    public get_headers(key)
-      return headers.member(key)
+      return headers.member(need_string(key))
    end
 
    #
@@ -71,26 +71,21 @@ class MimeHeaders()
    # :  if there is no header with the given key
    #
    public get_catenated_headers(key, delim)
-      local s, l, e
+      local l
 
       l := get_headers(key) | fail
 
       /delim := ","
 
-      s := ""
-      every e := !l do {
-         if *s > 0 then 
-            s ||:= delim
-         s ||:= e
-      }
-
-      return s
+      return String{ !l, delim }
    end
 
    #
    # Add a header with the given key, after any existing ones with the same key
    #
    public add_header(key, val)
+      key := need_string(key)
+      val := need_string(val)
       put(headers.member(key), val) | headers.insert(key, [val])
       link
    end
@@ -100,7 +95,7 @@ class MimeHeaders()
    # are removed.
    #
    public set_header(key, val)
-      headers.insert(key, [val])
+      headers.insert(need_string(key), [need_string(val)])
       link
    end
 
@@ -108,7 +103,7 @@ class MimeHeaders()
    # Unset the header(s) for the given key
    #
    public unset_header(key)
-      headers.delete(key)
+      headers.delete(need_string(key))
       link
    end
 
@@ -116,7 +111,7 @@ class MimeHeaders()
    # Succeed iff there is a header with the given key.
    #
    public has_header(key)
-      succeed headers.member(key)
+      succeed headers.member(need_string(key))
    end
 
    public new()

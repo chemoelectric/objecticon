@@ -1281,19 +1281,15 @@ static cdefn *dquery(char *name, int len)
 {
     int h, i;
     unsigned int t;
-    cdefn *d, **p;
-    if (len < 0)
-        len = strlen(name);
-    if (len == 0)
-        return NULL;
+    cdefn *d;
     for (t = i = 0; i < len; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
+    d = cbin[h];			/* get head of list */
+    while (d != NULL) {
         if (d->nlen == len && strncmp(name, d->name, len) == 0)
             return d;			/* return pointer to entry */
-        p = &d->next;
+        d = d->next;
     }
     /*
      * No match
@@ -1307,8 +1303,6 @@ static void dremove(char *name)
     unsigned int t;
     cdefn *d, **p;
     nlen = strlen(name);
-    if (nlen == 0)
-        return;
     for (t = i = 0; i < nlen; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
@@ -1327,16 +1321,14 @@ static void dinsert(char *name, char *val)
 {
     int h, i, nlen, vlen;
     unsigned int t;
-    cdefn *d, **p;
+    cdefn *d;
     nlen = strlen(name);
-    if (nlen == 0)
-        return;
     vlen = strlen(val);
     for (t = i = 0; i < nlen; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
+    d = cbin[h];			/* get head of list */
+    while (d != NULL) {
         if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
             /*
              * We found a match in the table.
@@ -1345,7 +1337,7 @@ static void dinsert(char *name, char *val)
                 pfatal("Value redefined: %s", name);
             return;
         }
-        p = &d->next;
+        d = d->next;
     }
     d = Alloc1(*d);
     d->nlen = nlen;
@@ -1367,15 +1359,13 @@ static void dinsert_pre(char *name, char *val, int vlen)
 {
     int h, i, nlen;
     unsigned int t;
-    cdefn *d, **p;
+    cdefn *d;
     nlen = strlen(name);
-    if (nlen == 0)
-        return;
     for (t = i = 0; i < nlen; i++)
         t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
     h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
+    d = cbin[h];			/* get head of list */
+    while (d  != NULL) {
         if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
             /*
              * We found a match in the table.
@@ -1384,7 +1374,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
                 pfatal("Value redefined: %s", name);
             return;
         }
-        p = &d->next;
+        d = d->next;
     }
     d = Alloc1(*d);
     d->nlen = nlen;
@@ -1461,7 +1451,7 @@ static char *evalexpr3(char **ss, int *val)
     c = **ss;
     if (oi_isalpha(c) || c == '_') {
         *ss = getidt(name = *ss - 1, *ss);		/* get name */
-        *val = (dquery(name, -1) != NULL);
+        *val = (dquery(name, strlen(name)) != NULL);
     } else {
         ++*ss;
         switch (c) {

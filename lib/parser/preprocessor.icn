@@ -1,6 +1,6 @@
 package parser
 
-import io, util, ipl.scan
+import io, util, ipl.scan, datastruct(Entry)
 
 class Preprocessor(Connectable)
    private
@@ -105,7 +105,7 @@ class Preprocessor(Connectable)
          if /v then
             delete(sym_table, k)
          else
-            insert(sym_table, k, string(v)) | runerr(103, v)
+            insert(sym_table, k, need_string(v))
       }
       if_stack := []
       file_stack := []
@@ -734,24 +734,23 @@ class Preprocessor(Connectable)
       fire("error", ErrorDetail(FilePath(filename).canonical().standard_case().str(), line, msg))
    end
 
-   # Helper function to parse a list of strings in the form
-   # "KEY=VALUE" (obtained from command line options), into a table
-   # which can be passed to the preprocessor.
    #
-   public static parse_defs(l)
-      local s, t, k, v
-      t := table()
-      every s := !l do {
-         s ? {
-            if k := tab(upto('=')) then {
-               move(1)
-               v := tab(0)
-               insert(t, k, v)
-            } else
-               # Insert &null, meaning this key is to be deleted (see above).
-               insert(t, s)
-         }
+   # options() converter function for a KEY[=VALUE] argument.  A
+   # `datastruct.Entry` record is returned.
+   #
+   public static pp_def_opt(s)
+      local k, v
+      s ? {
+         if k := tab(upto('=')) then {
+            move(1)
+            v := tab(0)
+         } else
+            # v will be &null, meaning this key is to be deleted (see above).
+            k := s
       }
-      return t
+      return if *k = 0 then
+         error("Missing key")
+      else
+         Entry(k, v)
    end
 end
