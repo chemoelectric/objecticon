@@ -306,5 +306,5 @@ end
 # lists containing those results is generated.
 #
 procedure adjoin(f[])
-   return Adjoin(f).call
+   return Adjoin(List{need_callable(!f)}).call
 end
