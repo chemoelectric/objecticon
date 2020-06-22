@@ -160,17 +160,21 @@ abstract class BorderWhilstEntered(Component)
       border_whilst_entered_flag,
       entered
 
+   public static const
+      DEFAULT
+
+   private static init()
+      DEFAULT := env_flag("OI_BORDER_WHILST_ENTERED_DEFAULT")
+   end
+
    #
    # If set, only draw the border whilst the button is enabled and the
    # mouse pointer is over the button.  This is useful for toolbar
    # buttons.
    #
    public set_border_whilst_entered(s)
-      s := need_flag(s)
-      if s ~=== border_whilst_entered_flag then {
-         border_whilst_entered_flag := s
+      if border_whilst_entered_flag ~===:= need_flag(s) then
          invalidate()
-      }
       link
    end
 
@@ -194,6 +198,7 @@ abstract class BorderWhilstEntered(Component)
       connect(handle_enter, Event.MOUSE_ENTER)
       connect(handle_exit, Event.MOUSE_EXIT)
       connect(handle_interrupted, Event.INTERRUPTED)
+      border_whilst_entered_flag := DEFAULT
       return
    end
 end
