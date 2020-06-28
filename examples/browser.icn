@@ -13,7 +13,8 @@ import
    ipl.strings,
    ipl.lists,
    ipl.pdco,
-   ipl.printf
+   ipl.printf,
+   ipl.numbers
 
 global opts
 
@@ -1326,19 +1327,13 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private on_search_next()
-      if search_pos < *browser.sorted_searched then
-         search_pos +:= 1
-      else
-         search_pos := 1
+      search_pos := mod1(search_pos + 1, *browser.sorted_searched)
       browser.goto_searched(search_pos)
       update_search_state()
    end
 
    private on_search_prev()
-      if search_pos > 1 then
-         search_pos -:= 1
-      else
-         search_pos := *browser.sorted_searched
+      search_pos := mod1(search_pos - 1, *browser.sorted_searched)
       browser.goto_searched(search_pos)
       update_search_state()
    end
