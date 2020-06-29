@@ -26,7 +26,7 @@ import
         HasClose, HasCloseUnderlying, Math, lclose,
         need_instance),
    ipl.factors(primes),
-   ipl.numbers(residue),
+   ipl.numbers(mod),
    ipl.pdco(Index),
    ipl.printf(stopf),
    ipl.sort(mergesort, field_cmp, rev_internal_cmp),
@@ -725,7 +725,7 @@ class CombinedRandom(RandomWithModulus, HasCloseUnderlying)
          i +:= o * e.get()
          o := -o
       }
-      i := residue(i, m - 1)
+      i := mod(i, m - 1)
       return if i = 0 then m - 1 else i
    end
 

@@ -22,60 +22,42 @@ package ipl.lstfncs
 
 import
    ipl.genrfncs(fibseq, multiseq, primeseq),
-   ipl.numbers(residue)
+   ipl.numbers(mod1),
+   ipl.pdco(),
+   util(ce_param)
+
 
 procedure fiblist(l, m)
-   local result
-
    /l := 128
    /m := 8
 
-   result := []
-
-   every put(result, residue(fibseq(), m, 1)) \ l
-
-   return result
+   return ipl.pdco.List{ mod1(fibseq() \ l, m) }
 
 end
 
 procedure multilist(l, m)
-   local result
-
    /l := 128
    /m := 8
 
-   result := []
-
-   every put(result, residue(multiseq(), m, 1)) \ l
-
-   return result
+   return ipl.pdco.List{ mod1(multiseq() \ l, m) }
 
 end
 
 procedure primelist(l, m)
-   local result
-
    /l := 128
    /m := 8
 
-   result := []
-
-   every put(result, residue(primeseq(), m, 1)) \ l
-
-   return result
+   return ipl.pdco.List{ mod1(primeseq() \ l, m) }
 
 end
 
 procedure List(e, l, m)		
-   local result
+   l := ce_param(l) | fail
+   m := ce_param(m) | fail
 
-   l := @\l | 128	# length
-   m := @\m | 8		# modulus
+   /l := 128	# length
+   /m := 8	# modulus
 
-   result := []
-
-   every put(result, residue(|@e, m, 1)) \ l
-
-   return result
+   return ipl.pdco.List{ mod1(|@e, m) \ l }
 
 end
