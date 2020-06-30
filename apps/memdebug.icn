@@ -173,8 +173,8 @@ procedure do_slim(a)
 end
 
 procedure do_hlim(a)
-   get_options(a,, "Usage: hlim length (> 10)") | fail
-   if *a = 1 & hlim := 10 < integer(a[1]) then {
+   get_options(a,, "Usage: hlim length (>= 10)") | fail
+   if *a = 1 & hlim := 10 <= integer(a[1]) then {
       input.set_history_limit(hlim)
       cmd_out.write("hlim is now ", hlim)
    } else
@@ -182,8 +182,8 @@ procedure do_hlim(a)
 end
 
 procedure do_llim(a)
-   get_options(a,, "Usage: llim length (> 10)") | fail
-   if *a = 1 & llim := 10 < integer(a[1]) then {
+   get_options(a,, "Usage: llim length (>= 0)") | fail
+   if *a = 1 & llim := 0 <= integer(a[1]) then {
       if is(input, TermDialog) then
          input.set_log_limit(llim)
       cmd_out.write("llim is now ", llim)
