@@ -17,9 +17,12 @@ end
 
 class Ieval(MinimalObjectOutput)
    private
-      input, output, error, vars, ev, quiet_flag, par, consts,
-      oos, trace_flag, parse_flag, last_runerr, ee, hlim,
-      elim, llim, imports, files, opts, history, is_flowterm
+      input, output, error, quiet_flag,
+      oos, trace_flag, parse_flag, last_runerr, hlim,
+      elim, llim, history, is_flowterm
+
+   private const
+       par, vars, ev, consts, imports, files, ee, opts
 
    private show_env()
       local p
@@ -406,7 +409,8 @@ class Ieval(MinimalObjectOutput)
 
    private load(s)
       local p, e
-      p := Prog.load(s,, 0, 0) | fail
+      s := Files.find_exe(s) | return whyf("Command not found: %s", s)
+      p := Prog.load(s,, 0, 0) | return whyf("Couldn't load %s: %w", s)
       e := create load_handler(p)
       @e
       Prog.eval_keyword("&handler", p) := e
