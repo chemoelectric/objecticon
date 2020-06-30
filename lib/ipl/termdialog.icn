@@ -148,7 +148,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    # Set the limit in lines for the command history.
    #
    public set_history_limit(n)
-      self.history_limit := n
+      self.history_limit := /n | need_integer(n, 0)
       limit_history()
       reset_term()
       link

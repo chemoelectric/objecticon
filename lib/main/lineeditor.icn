@@ -30,7 +30,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    # Set the limit in lines for the command history.
    #
    public set_history_limit(n)
-      self.history_limit := n
+      self.history_limit := /n | need_integer(n, 0)
       limit_history()
       link
    end
@@ -56,7 +56,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    # Set the prompt to display.
    #
    public set_prompt(s)
-      self.prompt := s
+      self.prompt := need_ucs(s)
       link
    end
 
