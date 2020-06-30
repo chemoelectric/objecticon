@@ -173,6 +173,13 @@ procedure need_table(x)
    return x
 end
 
+# Check that x is a co-expression, signalling a runtime error otherwise.
+#
+procedure need_coexpression(x)
+   type(x) == "co-expression" | runerr(118, x)
+   return x
+end
+
 # Check that x is an instance of cl (a class or constructor),
 # signalling a runtime error otherwise.
 #
