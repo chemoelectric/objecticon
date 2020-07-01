@@ -35,31 +35,33 @@ class Ieval(MinimalObjectOutput)
 
    private show_help()
       output.
-         write("!env        Show the values stored in the environment, excluding these predefined").
-         write("            values.").
-         write("!help       Show help.").
-         write("!parse      Toggle parse mode, in which just the syntax structure of the command is").
-         write("            printed.").
-         write("!trace      Toggle tracing.").
-         write("!wglob      Toggle the write-globals flag.").
-         write("!traceback  Show the traceback of the last command that gave a runtime error.").
-         write("!quiet      Don't force evaluation of all of the values in the expression, and don't").
-         write("            output any expression value.").
-         write("dir(x,l)    With no parameter, show all global variables.  With a parameter, show").
-         write("            information about it.  If l is non-null, show class field locations.").
-         write("!hist       Show the command line history.").
-         write("!cls        Clear the screen.").
-         write("old(s)      Search history for commands containing string s.").
-         write("hlim(n)     Set the history limit to n.").
-         write("elim(n)     Set the expression limit to n (min 10).").
-         write("llim(n)     Set the gui log area line limit to n (min 10).").
-         write("load(s)     Load the given prog, and set its error handler.").
-         write("gg(s,p)     Get the given global from the the given prog (shorthand for").
-         write("            Prog.get_global).").
-         write("c3(c)       Show the C3 linearizaton algorithm for class c.").
-         write("oos         The ObjectOutputStream used to output results.").
-         write("out         The OutputStream of the terminal.").
-         write("vars        The environment (as shown by !env), as a table.")
+         write("!env         Show the values stored in the environment, excluding these predefined").
+         write("             values").
+         write("!help        Show help").
+         write("!parse       Toggle parse mode, in which just the syntax structure of the command is").
+         write("             printed").
+         write("!trace       Toggle tracing").
+         write("!wglob       Toggle the write-globals flag").
+         write("!traceback   Show the traceback of the last command that gave a runtime error").
+         write("!quiet       Don't force evaluation of all of the values in the expression, and don't").
+         write("             output any expression value").
+         write("dir(x,l)     With no parameter, show all global variables.  With a parameter, show").
+         write("             information about it.  If l is non-null, show class field locations").
+         write("!hist        Show the command line history").
+         write("!cls         Clear the screen").
+         write("old(s)       Search history for commands containing string s").
+         write("hlim(n)      Set the history limit to n").
+         write("elim(n)      Set the expression limit to n (min 10)").
+         write("llim(n)      Set the gui log area line limit to n").
+         write("load(s,a[])  Load the given prog, and set its error handler.  Optional symbols in").
+         write("             a[] are then loaded as variables, as in sym()").
+         write("sym(p,a[])   Load symbols from prog p as variables").
+         write("gg(s,p)      Get the given global from the the given prog (shorthand for").
+         write("             Prog.get_global)").
+         write("c3(c)        Show the C3 linearizaton algorithm for class c").
+         write("oos          The ObjectOutputStream used to output results").
+         write("out          The OutputStream of the terminal").
+         write("vars         The environment (as shown by !env), as a table")
    end
 
    private do_c3(c)
@@ -356,37 +358,19 @@ class Ieval(MinimalObjectOutput)
    end
 
    private set_elim(n)
-      if \n then {
-         (elim := (10 <= n)) | {
-            error.write("Parameter to elim() out of range")
-            fail
-         }
-      }
+      elim := need_integer(\n, 10)
       return .elim
    end
 
    private set_hlim(n)
-      if \n then {
-         if hlim := (10 <= n) then
-            input.set_history_limit(hlim)
-         else {
-            error.write("Parameter to hlim() out of range")
-            fail
-         }
-      }
+      if hlim := need_integer(\n, 10) then
+         input.set_history_limit(hlim)
       return .hlim
    end
 
    private set_llim(n)
-      if \n then {
-         if llim := (0 <= n) then {
-            if is(input, TermDialog) then
-               input.set_log_limit(llim)
-         } else {
-            error.write("Parameter to llim() out of range")
-            fail
-         }
-      }
+      if llim := need_integer(\n, 0) & is(input, TermDialog) then
+         input.set_log_limit(llim)
       return .llim
    end
 
@@ -407,14 +391,29 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private load(s)
+   private load(s, a[])
       local p, e
       s := Files.find_exe(s) | return whyf("Command not found: %s", s)
       p := Prog.load(s,, 0, 0) | return whyf("Couldn't load %s: %w", s)
       e := create load_handler(p)
       @e
       Prog.eval_keyword("&handler", p) := e
+      sym!push(a, p)
       return p
+   end
+
+   private sym(p, a[])
+      local s, k, v
+      every s := need_string(!a) do {
+         if v := Prog.get_global(s, p) then {
+            k := map(s, ".", "_")
+            while Prog.get_global(k) do
+               k ||:= "_"
+            vars[k] := v
+            output.write(k, " = ", image(v))
+         } else
+            error.write("Symbol ", s, " not found")
+      }
    end
 
    private traceback()
@@ -512,6 +511,7 @@ class Ieval(MinimalObjectOutput)
       consts["quiet"] := create quiet_flag := toggle_flag(quiet_flag)
       consts["wglob"] := create wglob()
       consts["dir"] := dir
+      consts["sym"] := sym
       consts["hist"] := create hist()
       consts["cls"] := create cls()
       consts["old"] := hist
