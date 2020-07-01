@@ -374,19 +374,27 @@ class Ieval(MinimalObjectOutput)
       return .llim
    end
 
-   private load_handler(prog)
+   # Check for an runtime error in the given prog (may be &null), and
+   # output any error to file f.  Succeeds in this case, fails
+   # otherwise.
+   private check_error(f, prog)
       local s, i
+      if s := Prog.eval_keyword("&errortext", prog) then {
+         if i := Prog.eval_keyword("&errornumber", prog) then
+            f.write("Runtime error ", i, ": ", s)
+         else
+            f.write("Runtime error: ", s)
+         f.write("Offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
+         last_runerr := Prog.eval_keyword("&errorcoexpr", prog)
+         errorclear(prog)
+         return
+      }
+   end
+
+   private load_handler(prog)
       coact()
       repeat {
-         if s := Prog.eval_keyword("&errortext", prog) then {
-            if i := Prog.eval_keyword("&errornumber", prog) then
-               error.write("Runtime error ", i, ": ", s)
-            else
-               error.write("Runtime error: ", s)
-            error.write("Offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
-            last_runerr := Prog.eval_keyword("&errorcoexpr", prog)
-            errorclear(prog)
-         }
+         check_error(error, prog)
          cofail(&handler)
       }
    end
@@ -534,16 +542,8 @@ class Ieval(MinimalObjectOutput)
          n := par.parse_expression(s) | stopf("Couldn't parse %s: %w", f)
          ev.set_node(n) | stopf("Couldn't parse %s: %w", f) 
          Safe{ev.eval()}
-         if &errortext then {
-            if &errornumber then
-               ewrite("Runtime error ", &errornumber, ": ", &errortext)
-            else
-               ewrite("Runtime error: ", &errortext)
-            ewrite("Offending value: ", image(&errorvalue))
-            last_runerr := &errorcoexpr
-            errorclear()
+         if check_error(FileStream.stderr) then
             break
-         }
       }
 
       # History is set here (rather than when input is created), so
@@ -579,15 +579,7 @@ class Ieval(MinimalObjectOutput)
                      output.write()
                   }
                }
-               if &errortext then {
-                  if &errornumber then
-                     error.write("Runtime error ", &errornumber, ": ", &errortext)
-                  else
-                     error.write("Runtime error: ", &errortext)
-                  error.write("Offending value: ", image(&errorvalue))
-                  last_runerr := &errorcoexpr
-                  errorclear()
-               }
+               check_error(error)
             } else
                error.write("Couldn't parse: ", &why)
          }
