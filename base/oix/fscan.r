@@ -7,8 +7,8 @@
 
 function move(i)
 
-   if !def:C_integer(i, 1) then
-      runerr(101,i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
 
    body {
        word j, oldpos;
@@ -120,7 +120,7 @@ end
 
 function tab(i)
 
-   if !def:C_integer(i, 0) then
+   if !cnv:C_integer(i) then
       runerr(101, i);
 
    body {
