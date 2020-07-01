@@ -601,6 +601,7 @@ class Scan()
    end
 
    private cvpos(i)
+      \i | runerr(101, i)   # Since match would default i to 1
       return default.match("", ksubject, i)
    end
 
