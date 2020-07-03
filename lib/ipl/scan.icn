@@ -570,7 +570,9 @@ class Scan()
       ksubject, kpos
 
    public move(i)
-      suspend tab(kpos + i)
+      i := kpos + need_integer(i)
+      if i > 0 then
+         suspend tab(i)
    end
 
    public tab(i)
@@ -588,6 +590,8 @@ class Scan()
       return kpos = cvpos(i) 
    end
 
+   # Set the subject, and reset the position to 1.
+   #
    public set_subject(s)
       s := need_text(s)
       ksubject := s
@@ -595,9 +599,10 @@ class Scan()
       link
    end
 
+   # Set the position, failing if the given value is out of range.
+   #
    public set_pos(i)
-      kpos := cvpos(i) | fail
-      link
+      link kpos := cvpos(i)
    end
 
    private cvpos(i)
@@ -633,18 +638,32 @@ class Scan()
       suspend default.find(s, ksubject, kpos)
    end
 
-   public q(e)
-      ksubject ? {
-         &pos := kpos
-         suspend 1(|@e, ksubject := &subject, kpos := &pos)
-         ksubject := &subject
-         kpos := &pos
-      }
+   private qswap()
+      local t
+      t := &pos
+      &subject :=: ksubject
+      &pos := kpos
+      kpos := t
    end
 
+   # This method allows other string scanning functions to be used
+   # with this class.  The co-expression `e` is evaluated for its
+   # results, with `&subject` and `&pos` being repeatedly swapped with
+   # `ksubject` and `kpos`.  For example :-
+   #
+   # ~
+   #    s := Scan("Mary had a little lamb").set_pos(0)
+   #    s.q{ backto('a') }     # Generates 21, 11, 8, 3.
+   # ~
+   #
+   public q(e)
+      suspend save_state(e, qswap)
+   end
+
+   # Create a new instance with subject `s`.
+   #
    public new(s)
       set_subject(s)
-      self.kpos := 1
       return
    end
 end
