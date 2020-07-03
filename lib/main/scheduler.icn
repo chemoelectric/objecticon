@@ -1,6 +1,6 @@
 package io
 
-import lang, util, ipl.printf
+import lang, util, ipl.printf, ipl.pdco
 
 # This stream wraps another stream (normally a `SocketStream`).  The
 # `in` and `out` methods are invoked from the co-expression of the
@@ -466,9 +466,7 @@ class Scheduler()
          }
 
          if *polling > 0 then {
-            poll_l := []
-            every t := !polling do
-               every put(poll_l, !t.poll_req)
+            poll_l := List{ !(!polling).poll_req }
             curr_time := Prog.get_runtime_millis() + poll_timeout
             if r := DescStream.poll(poll_l, poll_timeout) then {
                if /r then {
