@@ -1,6 +1,6 @@
 package exception
 
-import util(State,save_state), ipl.printf(lprintf)
+import util(State,save_state,need_coexpression), ipl.printf(lprintf)
 
 package readable global 
    # The co-expression currently ready to handle an exception
@@ -21,7 +21,7 @@ class ThrowHandlerState(State)
    end
 
    public new(i)
-      self.th := i
+      self.th := need_coexpression(\i)
       return
    end
 end
