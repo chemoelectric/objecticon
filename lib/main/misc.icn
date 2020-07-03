@@ -1,6 +1,7 @@
 package util
 
-import lang(Text,Class,callable),
+import
+   lang(Text,callable),
    ipl.lists(ldel1),
    posix(System)
 
@@ -180,11 +181,32 @@ procedure need_coexpression(x)
    return x
 end
 
+# Check that x is a weak reference, signalling a runtime error otherwise.
+#
+procedure need_weakref(x)
+   type(x) == "weakref" | runerr(630, x)
+   return x
+end
+
+# Check that x is a class, signalling a runtime error otherwise.
+#
+procedure need_class(x)
+   type(x) == "class" | runerr(603, x)
+   return x
+end
+
+# Check that x is a record constructor, signalling a runtime error otherwise.
+#
+procedure need_constructor(x)
+   type(x) == "constructor" | runerr(604, x)
+   return x
+end
+
 # Check that x is an instance of cl (a class or constructor),
 # signalling a runtime error otherwise.
 #
 procedure need_instance(x, cl)
-   is(x, cl) | runerr(Class.get_name(cl) || " expected", x)
+   is(x, cl) | runerr(image(cl) ? (tab(upto(' ') + 1), tab(0) || " expected"), x)
    return x
 end
 
