@@ -100,6 +100,7 @@ struct errtab errtab[] = {
     {601, "Attempt to access static field via instance"},
     {602, "Object expected"},
     {603, "Class expected"},
+    {604, "Constructor expected"},
     {605, "An abstract class is uninstantiable"},
     {606, "Can only access an instance method via a class from an instance method"},
     {607, "Can only access an instance method via a class when the method is in an implemented class of self"},
