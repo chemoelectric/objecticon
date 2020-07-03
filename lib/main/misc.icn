@@ -445,10 +445,8 @@ class ScanState(State)
    end
 
    public new(is, ip)
-      /is := ""
-      /ip := 1
-      self.s := is
-      self.p := ip
+      self.s := need_text(\is) | ""
+      self.p := need_integer(\ip) | 1
       return
    end
 end
@@ -463,8 +461,7 @@ class PosState(State)
    end
 
    public new(i)
-      /i := 1
-      self.p := i
+      self.p := need_integer(\i) | 1
       return
    end
 end
@@ -489,8 +486,7 @@ class WhyState(State)
    end
 
    public new(i)
-      /i := ""
-      self.w := i
+      self.w := need_text(\i) | ""
       return
    end
 end
@@ -505,8 +501,7 @@ class TraceState(State)
    end
 
    public new(i)
-      /i := 0
-      self.t := i
+      self.t := need_integer(\i) | 0
       return
    end
 end
@@ -521,7 +516,22 @@ class HandlerState(State)
    end
 
    public new(i)
-      self.h := i
+      self.h := need_coexpression(\i)
+      return
+   end
+end
+
+# A `State` with `swap` implemented by a function.
+#
+class FuncState(State)
+   private const f
+
+   public override swap()
+      f()
+   end
+
+   public new(f)
+      self.f := need_callable(f)
       return
    end
 end
@@ -529,7 +539,7 @@ end
 # A `State` which just brings a list of several other `State`s together.
 #
 class States(State)
-   private l
+   private const l
 
    public override swap()
       every (!l).swap()
@@ -542,14 +552,17 @@ class States(State)
 end
 
 # Evaluate the given co-expression `e`, suspending its results, whilst
-# using the given `State` instance to save and restore some global
-# state.
+# invoking function `f` before and after each result of `e` is
+# generated, in order to save and restore some particular state.
 #
-procedure save_state(e, state)
-   state.swap()
-   suspend 1(|@e, { state.swap() ; &null} ) do
-      state.swap()
-   state.swap()
+# `f` may be an instance of `State`, in which case its `swap` method
+# is called instead.
+#
+procedure save_state(e, f)
+   f := if is(f, State) then f.swap else need_callable(f)
+   f()
+   suspend 1(|@e, { f() ; } ) do f()
+   f()
 end
 
 #
