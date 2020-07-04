@@ -1783,11 +1783,11 @@ abstract class SelectionOwner()
    private timestamp
 
    public get_timestamp()
-      return timestamp
+      return .timestamp
    end
 
    public set_timestamp(t)
-      timestamp := t
+      timestamp := need_integer(t)
       link
    end
 
@@ -1812,28 +1812,24 @@ abstract class TextSelectionOwner(SelectionOwner)
 end
 
 class StaticTextSelectionOwner(TextSelectionOwner)
-   private s
+   private const s
 
    protected override get_text()
       return s
-   end
-
-   public set_text(s)
-      self.s := s
-      link
    end
 
    public override lost_ownership()
    end
 
    public new(s)
-      self.s := s
+      self.s := need_text(s)
       return
    end
 end
 
 class URLSelectionOwner(SelectionOwner)
-   private urls
+   private const
+      urls
 
    public override get_content(target)
       return case target of {

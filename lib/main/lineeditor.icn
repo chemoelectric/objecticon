@@ -578,8 +578,9 @@ $endif
 end
 
 abstract class LineEditorEdit(UndoableEdit)
+   protected const
+      parent
    protected
-      parent,
       pos
 
    public doit()

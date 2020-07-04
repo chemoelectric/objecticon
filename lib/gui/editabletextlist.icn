@@ -1527,8 +1527,9 @@ class TextSplit()
 end
 
 abstract class EditableTextListEdit(UndoableEdit)
+   public const
+      parent
    public
-      parent,
       cursor_x, 
       cursor_y,
       mark_x,
@@ -1851,7 +1852,7 @@ class EditableTextListPasteEdit(EditableTextListEdit)
 end
 
 abstract class LineSplitter()
-   public parent
+   public const parent
 
    public abstract split(s)
 
@@ -1862,7 +1863,7 @@ abstract class LineSplitter()
 end
 
 class ColumnLineSplitter(LineSplitter)
-   public wrap_col
+   public const wrap_col
 
    public override split(s)
       local ch, ds, p

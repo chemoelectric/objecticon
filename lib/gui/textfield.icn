@@ -842,7 +842,7 @@ class TextField(Component)
 end
 
 class TextFieldPrimarySelectionOwner(TextSelectionOwner)
-   private parent
+   private const parent
 
    protected override get_text()
       return \parent.primary
@@ -866,8 +866,9 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
 end
 
 abstract class TextFieldEdit(UndoableEdit)
-   public 
-      parent,
+   public const
+      parent
+   public
       cursor, 
       mark
 
@@ -1057,7 +1058,8 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 end
 
 class TextFieldAssignEdit(TextFieldEdit)
-   public s, pos, pre, coalesce
+   public s, pos, pre
+   public const coalesce
 
    public override add_edit(other)
       if \coalesce & is(other, gui.TextFieldAssignEdit) & \other.coalesce then {
@@ -1082,7 +1084,7 @@ class TextFieldAssignEdit(TextFieldEdit)
       TextFieldEdit.new(parent)
       self.s := s
       self.pos := pos
-      self.coalesce := coalesce
+      self.coalesce := need_flag(coalesce)
       return
    end
 end

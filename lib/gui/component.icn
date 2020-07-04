@@ -811,7 +811,7 @@ class Component(Rect,XYAlign,Connectable)
    # key to provide keyboard accelerators.
    #
    public set_accel(k)
-      self.accel := k
+      self.accel := need_text(k)
       link
    end
 

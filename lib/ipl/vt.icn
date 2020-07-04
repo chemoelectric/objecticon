@@ -185,7 +185,7 @@ abstract class VtUI()
 end
 
 package class VtPrimarySelectionOwner(TextSelectionOwner)
-   private parent
+   private const parent
 
    protected override get_text()
       return \parent.primary

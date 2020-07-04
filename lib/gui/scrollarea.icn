@@ -103,6 +103,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public set_area_x(horiz)
       local t
+      horiz := need_integer(horiz)
       if t := (\self.hsb).value then {
          self.hsb.set_value(horiz)
          if hsb.value ~= t then
@@ -116,6 +117,7 @@ abstract class ScrollArea(Component, HasUseWheel)
    #
    public set_area_y(vert)
       local t
+      vert := need_integer(vert)
       if t := (\self.vsb).value then {
          self.vsb.set_value(vert)
          if vsb.value ~= t then

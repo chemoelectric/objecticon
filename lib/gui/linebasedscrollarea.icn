@@ -8,7 +8,7 @@
 
 package gui
 
-import io, ipl.pdco(Sum)
+import io, util, ipl.pdco(Sum)
 
 class LineBasedScrollAreaRangeInfo()
    public
@@ -139,6 +139,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    public get_cum_line_height(line)
       local h, s
+      line := need_integer(line, 1)
       if integer(h := get_line_height()) then
          return h * (line - 1)
       else {
