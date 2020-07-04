@@ -324,15 +324,6 @@ class Table(Component)
       return self.table_content.get_contents()
    end
 
-   public set_checked(l)
-      self.table_content.set_checked(l)
-      link
-   end
-
-   public get_checked()
-      return self.table_content.get_checked()
-   end
-
    #
    # Move to the given position.  Either parameter may be omitted.
    # :Parameters :
