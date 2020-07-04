@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics(Window)
+import util, graphics(Window)
 
 #
 # This class scales and displays an image.  The image source can
@@ -110,7 +110,7 @@ class Image(Component)
    # image is distorted to fill both dimensions.
    #
    public set_fill_dimensions(n)
-      self.fill_dimensions := n
+      self.fill_dimensions := need_integer(n, 0, 2)
       link
    end
 

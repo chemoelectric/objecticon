@@ -650,7 +650,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # Specifies an image to load into the window.  On success, the
    # window is resized to the size of the image.  The given parameter
    # `v` may be raw binary image data (eg a gif file), or the name of
-   # a file containing an image.
+   # a file containing an image, or a `Pixels` instance.
    #
    public set_image(v)
       return if is(v, Pixels) then {

@@ -104,7 +104,7 @@ import
    io(write),
    util(need_callable),
    ipl.factors(divisors),
-   ipl.numbers(residue),
+   ipl.numbers(mod1),
    ipl.sets(elementset)
 
 global expressions
@@ -870,7 +870,7 @@ procedure smod(xargs[])
    lseq := []
 
    every i := !x2 do
-      every put(lseq, residue(!x1, i, 1))
+      every put(lseq, mod1(!x1, i))
 
    return lseq
 
@@ -1186,7 +1186,7 @@ procedure srotatev(xargs[])
 
    lseq := []
 
-   every put(lseq, residue(!x + 1, m, 1))
+   every put(lseq, mod1(!x + 1, m))
 
    return lseq
 

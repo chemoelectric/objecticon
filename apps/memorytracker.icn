@@ -1,4 +1,4 @@
-import io, lang, util, ipl.options
+import io, lang, util, ipl.options, ipl.printf
 
 procedure f(i)
    return Format.numeric_to_string(i,0,',')
@@ -68,7 +68,7 @@ procedure main(args)
    ss := 1048576 * \opts["ss"]
    cmd := args[1]
    cmd := Files.find_exe(cmd) | stop("Command not found: ", cmd)
-   prog := Prog.load(cmd, args[2:0], bs, ss) | stop("Couldn't load ", cmd, ": ", &why)
+   prog := Prog.load(cmd, args[2:0], bs, ss) | stopf("Couldn't load %s: %w", cmd)
 
    proact := table(0)
    totals := table(0)

@@ -1,6 +1,6 @@
 package io
 
-import lang, util, ipl.printf
+import lang, util, ipl.printf, ipl.pdco
 
 # This stream wraps another stream (normally a `SocketStream`).  The
 # `in` and `out` methods are invoked from the co-expression of the
@@ -62,18 +62,19 @@ class TaskStream(Stream, HasTask, HasCloseUnderlying)
       return other.truncate(len)
    end
 
-   # Set the timeout in ms to use.
+   # Set the timeout in ms to use.  If `&null`, then no timeout will
+   # be used.
    #
    public set_timeout(timeout)
-      self.timeout := timeout
+      self.timeout := /timeout | need_integer(timeout, 0)
       link
    end
 
    public new(other, task, timeout)
-      self.other := other
+      self.other := need_Stream(other)
       self.close_underlying_flag := &yes
-      self.task := task
-      self.timeout := timeout
+      self.task := need_instance(task, Task)
+      set_timeout(timeout)
       return
    end
 end
@@ -106,6 +107,7 @@ class Task()
    #
    public change_time(n)
       \coex | runerr("change_time() called on a currently active task")
+      n := need_integer(\n, 0)
       if is_sleeping() | is_polling() then
          time_until := (time_from + \n) | &null
       link
@@ -120,6 +122,7 @@ class Task()
    #
    public change_time_from_now(n)
       \coex | runerr("change_time_from_now() called on a currently active task")
+      n := need_integer(\n, 0)
       if is_sleeping() | is_polling() then
          time_until := (Prog.get_runtime_millis() + \n) | &null
       link
@@ -188,6 +191,10 @@ class Task()
    #
    public poll(l, timeout)
       is_current() | runerr("poll() called on task which is not current")
+      need_list(l)
+      if *l % 2 ~= 0 then
+         runerr(177, l)
+      timeout := need_integer(\timeout, 0)
       coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \timeout) | &null
@@ -223,6 +230,7 @@ class Task()
    #
    public sleep(n)
       is_current() | runerr("sleep() called on task which is not current")
+      n := need_integer(\n, 0)
       coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \n) | &null
@@ -239,6 +247,7 @@ class Task()
    #
    public interrupt(why)
       \coex | runerr("interrupt() called on a currently active task")
+      why := need_text(\why)
       scheduler.interrupt(self, why)
       link
    end
@@ -315,9 +324,9 @@ class Task()
    #        from this Task.
    #
    public new(scheduler, coex, xstate)
-      self.coex := coex
-      self.scheduler := scheduler
-      self.xstate := xstate
+      self.scheduler := need_instance(scheduler, Scheduler)
+      self.coex := need_coexpression(coex)
+      self.xstate := need_instance(\xstate, State)
       return
    end
 end
@@ -333,7 +342,7 @@ class Scheduler()
       polling
    
    public new(n)
-      poll_timeout := \n | 0
+      set_poll_timeout(n)
       ready := set()
       sleeping := set()
       polling := set()
@@ -341,7 +350,7 @@ class Scheduler()
    end
 
    public set_poll_timeout(n)
-      poll_timeout := n
+      poll_timeout := need_integer(\n, 0) | 0
       link
    end
 
@@ -457,9 +466,7 @@ class Scheduler()
          }
 
          if *polling > 0 then {
-            poll_l := []
-            every t := !polling do
-               every put(poll_l, !t.poll_req)
+            poll_l := List{ !(!polling).poll_req }
             curr_time := Prog.get_runtime_millis() + poll_timeout
             if r := DescStream.poll(poll_l, poll_timeout) then {
                if /r then {

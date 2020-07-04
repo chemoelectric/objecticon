@@ -212,16 +212,8 @@ class EditableTextList(LineBasedScrollArea)
       } else
          clear_mark()
 
-      if \y then {
-         y <:= 1
-         y >:= *self.contents
-         self.cursor_y := y
-      }
-      if \x then {
-         x <:= 1
-         x >:= *self.contents[self.cursor_y] + 1
-         self.cursor_x := x
-      }
+      set_cursor(x, y)
+
       end_handle(e)
       link
    end
@@ -648,14 +640,30 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public set_mark(mx, my)
-      self.mark_x := mx
-      self.mark_y := my
+      if my := need_integer(\my) then {
+         my <:= 1
+         my >:= *self.contents
+         self.mark_y := my
+      }
+      if mx := need_integer(\mx) then {
+         mx <:= 1
+         mx >:= *self.contents[self.mark_y] + 1
+         self.mark_x := mx
+      }
       link
    end
 
    public set_cursor(cx, cy)
-      self.cursor_x := cx
-      self.cursor_y := cy
+      if cy := need_integer(\cy) then {
+         cy <:= 1
+         cy >:= *self.contents
+         self.cursor_y := cy
+      }
+      if cx := need_integer(\cx) then {
+         cx <:= 1
+         cx >:= *self.contents[self.cursor_y] + 1
+         self.cursor_x := cx
+      }
       link
    end
 
@@ -1425,7 +1433,7 @@ class EditableTextList(LineBasedScrollArea)
    # Set the tab width to use.  Default is from the style object.
    #
    public set_tab_width(n)
-      self.tab_width := n
+      self.tab_width := need_integer(n, 1)
       if is_live() then {
          clear_split_list()
          compute_and_invalidate()

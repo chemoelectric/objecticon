@@ -17,9 +17,12 @@ end
 
 class Ieval(MinimalObjectOutput)
    private
-      input, output, error, vars, ev, quiet_flag, par, consts,
-      oos, trace_flag, parse_flag, last_runerr, ee, hlim,
-      elim, llim, imports, files, opts, history, is_flowterm
+      input, output, error, quiet_flag,
+      oos, trace_flag, parse_flag, last_runerr, hlim,
+      elim, llim, history, is_flowterm
+
+   private const
+       par, vars, ev, consts, imports, files, ee, opts
 
    private show_env()
       local p
@@ -32,31 +35,33 @@ class Ieval(MinimalObjectOutput)
 
    private show_help()
       output.
-         write("!env        Show the values stored in the environment, excluding these predefined").
-         write("            values.").
-         write("!help       Show help.").
-         write("!parse      Toggle parse mode, in which just the syntax structure of the command is").
-         write("            printed.").
-         write("!trace      Toggle tracing.").
-         write("!wglob      Toggle the write-globals flag.").
-         write("!traceback  Show the traceback of the last command that gave a runtime error.").
-         write("!quiet      Don't force evaluation of all of the values in the expression, and don't").
-         write("            output any expression value.").
-         write("dir(x,l)    With no parameter, show all global variables.  With a parameter, show").
-         write("            information about it.  If l is non-null, show class field locations.").
-         write("!hist       Show the command line history.").
-         write("!cls        Clear the screen.").
-         write("old(s)      Search history for commands containing string s.").
-         write("hlim(n)     Set the history limit to n.").
-         write("elim(n)     Set the expression limit to n (min 10).").
-         write("llim(n)     Set the gui log area line limit to n (min 10).").
-         write("load(s)     Load the given prog, and set its error handler.").
-         write("gg(s,p)     Get the given global from the the given prog (shorthand for").
-         write("            Prog.get_global).").
-         write("c3(c)       Show the C3 linearizaton algorithm for class c.").
-         write("oos         The ObjectOutputStream used to output results.").
-         write("out         The OutputStream of the terminal.").
-         write("vars        The environment (as shown by !env), as a table.")
+         write("!env         Show the values stored in the environment, excluding these predefined").
+         write("             values").
+         write("!help        Show help").
+         write("!parse       Toggle parse mode, in which just the syntax structure of the command is").
+         write("             printed").
+         write("!trace       Toggle tracing").
+         write("!wglob       Toggle the write-globals flag").
+         write("!traceback   Show the traceback of the last command that gave a runtime error").
+         write("!quiet       Don't force evaluation of all of the values in the expression, and don't").
+         write("             output any expression value").
+         write("dir(x,l)     With no parameter, show all global variables.  With a parameter, show").
+         write("             information about it.  If l is non-null, show class field locations").
+         write("!hist        Show the command line history").
+         write("!cls         Clear the screen").
+         write("old(s)       Search history for commands containing string s").
+         write("hlim(n)      Set the history limit to n").
+         write("elim(n)      Set the expression limit to n (min 10)").
+         write("llim(n)      Set the gui log area line limit to n").
+         write("load(s,a[])  Load the given prog, and set its error handler.  Optional symbols in").
+         write("             a[] are then loaded as variables, as in sym()").
+         write("sym(p,a[])   Load symbols from prog p as variables").
+         write("gg(s,p)      Get the given global from the the given prog (shorthand for").
+         write("             Prog.get_global)").
+         write("c3(c)        Show the C3 linearizaton algorithm for class c").
+         write("oos          The ObjectOutputStream used to output results").
+         write("out          The OutputStream of the terminal").
+         write("vars         The environment (as shown by !env), as a table")
    end
 
    private do_c3(c)
@@ -353,64 +358,70 @@ class Ieval(MinimalObjectOutput)
    end
 
    private set_elim(n)
-      if \n then {
-         (elim := (10 <= n)) | {
-            error.write("Parameter to elim() out of range")
-            fail
-         }
-      }
+      elim := need_integer(\n, 10)
       return .elim
    end
 
    private set_hlim(n)
-      if \n then {
-         if hlim := (10 <= n) then
-            input.set_history_limit(hlim)
-         else {
-            error.write("Parameter to hlim() out of range")
-            fail
-         }
-      }
+      if hlim := need_integer(\n, 10) then
+         input.set_history_limit(hlim)
       return .hlim
    end
 
    private set_llim(n)
-      if \n then {
-         if llim := (0 <= n) then {
-            if is(input, TermDialog) then
-               input.set_log_limit(llim)
-         } else {
-            error.write("Parameter to llim() out of range")
-            fail
-         }
-      }
+      if llim := need_integer(\n, 0) & is(input, TermDialog) then
+         input.set_log_limit(llim)
       return .llim
    end
 
-   private load_handler(prog)
+   # Check for an runtime error in the given prog (may be &null), and
+   # output any error to file f.  Succeeds in this case, fails
+   # otherwise.
+   private check_error(f, prog)
       local s, i
+      if s := Prog.eval_keyword("&errortext", prog) then {
+         if i := Prog.eval_keyword("&errornumber", prog) then
+            f.write("Runtime error ", i, ": ", s)
+         else
+            f.write("Runtime error: ", s)
+         f.write("Offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
+         last_runerr := Prog.eval_keyword("&errorcoexpr", prog)
+         errorclear(prog)
+         return
+      }
+   end
+
+   private load_handler(prog)
       coact()
       repeat {
-         if s := Prog.eval_keyword("&errortext", prog) then {
-            if i := Prog.eval_keyword("&errornumber", prog) then
-               error.write("Runtime error ", i, ": ", s)
-            else
-               error.write("Runtime error: ", s)
-            error.write("Offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
-            last_runerr := Prog.eval_keyword("&errorcoexpr", prog)
-            errorclear(prog)
-         }
+         check_error(error, prog)
          cofail(&handler)
       }
    end
 
-   private load(s)
+   private load(s, a[])
       local p, e
-      p := Prog.load(s,, 0, 0) | fail
+      s := Files.find_exe(s) | return whyf("Command not found: %s", s)
+      p := Prog.load(s,, 0, 0) | return whyf("Couldn't load %s: %w", s)
       e := create load_handler(p)
       @e
       Prog.eval_keyword("&handler", p) := e
+      sym!push(a, p)
       return p
+   end
+
+   private sym(p, a[])
+      local s, k, v
+      every s := need_string(!a) do {
+         if v := Prog.get_global(s, p) then {
+            k := map(s, ".", "_")
+            while Prog.get_global(k) do
+               k ||:= "_"
+            vars[k] := v
+            output.write(k, " = ", image(v))
+         } else
+            error.write("Symbol ", s, " not found")
+      }
    end
 
    private traceback()
@@ -508,6 +519,7 @@ class Ieval(MinimalObjectOutput)
       consts["quiet"] := create quiet_flag := toggle_flag(quiet_flag)
       consts["wglob"] := create wglob()
       consts["dir"] := dir
+      consts["sym"] := sym
       consts["hist"] := create hist()
       consts["cls"] := create cls()
       consts["old"] := hist
@@ -530,16 +542,8 @@ class Ieval(MinimalObjectOutput)
          n := par.parse_expression(s) | stopf("Couldn't parse %s: %w", f)
          ev.set_node(n) | stopf("Couldn't parse %s: %w", f) 
          Safe{ev.eval()}
-         if &errortext then {
-            if &errornumber then
-               ewrite("Runtime error ", &errornumber, ": ", &errortext)
-            else
-               ewrite("Runtime error: ", &errortext)
-            ewrite("Offending value: ", image(&errorvalue))
-            last_runerr := &errorcoexpr
-            errorclear()
+         if check_error(FileStream.stderr) then
             break
-         }
       }
 
       # History is set here (rather than when input is created), so
@@ -575,15 +579,7 @@ class Ieval(MinimalObjectOutput)
                      output.write()
                   }
                }
-               if &errortext then {
-                  if &errornumber then
-                     error.write("Runtime error ", &errornumber, ": ", &errortext)
-                  else
-                     error.write("Runtime error: ", &errortext)
-                  error.write("Offending value: ", image(&errorvalue))
-                  last_runerr := &errorcoexpr
-                  errorclear()
-               }
+               check_error(error)
             } else
                error.write("Couldn't parse: ", &why)
          }

@@ -23,7 +23,7 @@ package ipl.lists
 import
    io(open),
    ipl.indices(indices),
-   ipl.numbers(residue),
+   ipl.numbers(mod1),
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
    ipl.pdco(String, String2, List),
@@ -328,7 +328,7 @@ procedure lflipv(L)
    L1 := []
 
    every i := !L do
-      put(L1, residue(-i + 1, m, 1))
+      put(L1, mod1(-i + 1, m))
 
    return L1
 
@@ -486,15 +486,6 @@ procedure lmap(L1,L2,L3)
    every i := 1 to *L1 do			# map the values
       L1[i] := (tdefault ~=== lmaptbl[L1[i]])
    return L1
-
-end
-
-# List residue
-procedure lresidue(L, m, i)		
-
-   /i := 0
-
-   return List{ residue(!L, m, i) }
 
 end
 

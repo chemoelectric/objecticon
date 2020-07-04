@@ -57,12 +57,12 @@ final class Msg(NoCopy, HasClose)
    # :  `t` - the timeout
    #
    public poll(t)
-      local c, o
-      c := Prog.get_runtime_millis()
+      local o
+      t := Prog.get_runtime_millis() + need_integer(t, 0)
       repeat {
          if o := attempt() then
             return o
-         if Prog.get_runtime_millis() - c >= t then
+         if Prog.get_runtime_millis() >= t then
             fail
          delay(50)
       }

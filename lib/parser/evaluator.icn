@@ -74,10 +74,12 @@ class Evaluator()
       pos,
       # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
       scans,
-      dispatch,
-      cdispatch,
       env,
       node
+
+   private const
+      dispatch,
+      cdispatch
 
    private compute_loops(n, loop, scan)
       if is(n, Node) then

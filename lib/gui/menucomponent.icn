@@ -253,11 +253,8 @@ abstract class MenuComponent(Rect,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      need_flag(s)
-      if s ~=== self.is_shaded_flag then {
-         self.is_shaded_flag := s
+      if is_shaded_flag ~===:= need_flag(s) then
          possibly_invalidate()
-      }
       link
    end
 

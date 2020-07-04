@@ -177,7 +177,7 @@ $endif
    # of the child process.
    #
    public new(e)
-      self.e := e
+      self.e := need_coexpression(e)
       return
    end
 end

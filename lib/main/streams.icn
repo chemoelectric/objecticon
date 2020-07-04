@@ -3,7 +3,7 @@ package io
 import
    util(error, need_flag, need_integer, need_string,
         save_why, HasMode, HasCloseUnderlying, HasClose,
-        lclose),
+        lclose, need_coexpression),
 $if _PLAN9
    lang(Class, NoCopy, Prog),
    util(use, need_instance, need_list),
@@ -3428,7 +3428,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
    end
 
    public override new(coex)
-      self.coex := coex
+      self.coex := need_coexpression(coex)
       LineBasedInputStream.new()
       return
    end
@@ -3457,6 +3457,7 @@ class GeneratorStream(Stream, NoCopy)
 
    public override in(n)
       local t
+      n := need_integer(n, 1)
       if /coex then
          return
       while *buff = 0 do {
@@ -3478,7 +3479,7 @@ class GeneratorStream(Stream, NoCopy)
    end
 
    public new(e)
-      self.coex := e
+      self.coex := need_coexpression(e)
       self.buff := ""
       return
    end

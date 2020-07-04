@@ -8,7 +8,7 @@
 
 package gui
 
-import ipl.pdco
+import util, ipl.pdco
 
 #
 # This class provides one column within a `Table`, which
@@ -82,7 +82,7 @@ abstract class BaseTableColumn(TextButton)
    # :  `x` - The width
    #
    public set_column_width(x)
-      self.column_width := x
+      self.column_width := /x | need_integer(x, 0)
       link
    end
 

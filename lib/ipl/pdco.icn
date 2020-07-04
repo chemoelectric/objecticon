@@ -19,7 +19,7 @@ package ipl.pdco
 import
    io(RamStream),
    ipl.lists(lmap, lrotate),
-   ipl.numbers(residue),
+   ipl.numbers(mod1),
    ipl.periodic(repeater),
    datastruct(EqSet),
    numbers(Rat),
@@ -400,7 +400,7 @@ procedure Friendly(mod, state, e)
       value := @e | fail
       if value % 2 = 0 then state +:= 1
       else state -:= 1
-      state := residue(state, mod, 1)
+      state := mod1(state, mod)
       }
 
 end
@@ -1113,7 +1113,7 @@ procedure Smod(e1, e2)
 
    while i := @e1 do {
       m := @e2 | fail
-      suspend residue(i, m, 1)
+      suspend mod1(i, m)
       }
 
 end
@@ -1127,7 +1127,7 @@ procedure Span(e, m)
    m := need_integer(\m) | 100
 
    j := @e | fail
-   while i := residue(@e, m, 1) do {
+   while i := mod1(@e, m) do {
       if i > j then suspend j to i - 1
       else if i < j then suspend j to i + 1 by -1
       j := i

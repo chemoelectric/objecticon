@@ -350,8 +350,7 @@ class Component(Rect,XYAlign,Connectable)
    # class will shade the component.
    #
    public set_draw_own_shading(s)
-      need_flag(s)
-      if draw_own_shading_flag ~===:= s then
+      if draw_own_shading_flag ~===:= need_flag(s) then
          invalidate()
       link
    end
@@ -415,8 +414,7 @@ class Component(Rect,XYAlign,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      need_flag(s)
-      if is_shaded_flag ~===:= s then {
+      if is_shaded_flag ~===:= need_flag(s) then {
          shaded_change()
          invalidate()
       }
@@ -713,7 +711,7 @@ class Component(Rect,XYAlign,Connectable)
    # :  `z` - The z value.
    #
    public set_z(z)
-      self.z := z
+      self.z := need_integer(z)
       link
    end
 
@@ -804,7 +802,7 @@ class Component(Rect,XYAlign,Connectable)
    # Set the tab priority, which affects the tab focus ordering of the parent.
    #
    public set_tab_ord(x)
-      self.tab_ord := x
+      self.tab_ord := need_integer(x)
       link
    end
 

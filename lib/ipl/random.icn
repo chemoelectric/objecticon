@@ -26,7 +26,7 @@ import
         HasClose, HasCloseUnderlying, Math, lclose,
         need_instance),
    ipl.factors(primes),
-   ipl.numbers(residue),
+   ipl.numbers(mod),
    ipl.pdco(Index),
    ipl.printf(stopf),
    ipl.sort(mergesort, field_cmp, rev_internal_cmp),
@@ -420,10 +420,10 @@ class BuiltinLCG(RandomWithModulus)
    end
 end
 
-# See https://www.pcg-random.org/
+# See <https://www.pcg-random.org/>
 #
 # Adapted from the C Implementation from
-#    https://www.pcg-random.org/download.html
+#    <https://www.pcg-random.org/download.html>
 #
 class PCG32(RandomWithModulus)
    public const
@@ -468,7 +468,7 @@ end
 # 64-bit Mersenne Twister random generator.
 #
 # Adapted from :-
-#    http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/C-LANG/mt19937-64.c
+#    <http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/C-LANG/mt19937-64.c>
 #
 class MersenneTwister64(RandomWithModulus)
    private
@@ -555,7 +555,7 @@ end
 # 32-bit Mersenne Twister random generator.
 #
 # Adapted from :-
-#  http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
+#  <http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c>
 #
 class MersenneTwister32(RandomWithModulus)
    private
@@ -725,7 +725,7 @@ class CombinedRandom(RandomWithModulus, HasCloseUnderlying)
          i +:= o * e.get()
          o := -o
       }
-      i := residue(i, m - 1)
+      i := mod(i, m - 1)
       return if i = 0 then m - 1 else i
    end
 

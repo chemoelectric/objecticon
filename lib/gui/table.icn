@@ -8,7 +8,7 @@
 
 package gui
 
-import util, ipl.lists
+import util, ipl.lists, ipl.pdco
 
 class TableContent(SelectableScrollArea)
    public override calculate_line_height()
@@ -498,10 +498,7 @@ class Table(Component)
    # Get the total width of all columns
    #
    public get_total_column_width()
-      local sw
-      sw := 0
-      every sw +:= (!self.table_header.children).w_spec
-      return sw
+      return Sum{ (!self.table_header.children).w_spec }
    end
 
    #
@@ -514,8 +511,8 @@ class Table(Component)
       sw := 0
       every col := !self.table_header.children do {
          if \col.column_width then {
-            col.w_spec := col.column_width
-            sw +:= col.column_width
+            col.w_spec := max(col.column_width, TableColumn.MIN_COLUMN_WIDTH)
+            sw +:= col.w_spec
          } else 
             put(l, col)
       }
@@ -527,8 +524,7 @@ class Table(Component)
 
       # The width to give the auto size columns.
       av := table_content.predict_view_width(self.w - border.get_total_width(), &yes) - sw
-      dw := av / *l
-      dw <:= TableColumn.MIN_COLUMN_WIDTH
+      dw := max(av / *l, TableColumn.MIN_COLUMN_WIDTH)
 
       every l[1 to *l - 1].w_spec := dw
       l[-1].w_spec := max(av - dw * (*l - 1), TableColumn.MIN_COLUMN_WIDTH)

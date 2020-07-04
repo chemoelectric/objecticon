@@ -1,6 +1,6 @@
 package ipl.functional
 
-import util(State, save_state)
+import util(State, save_state, need_coexpression)
 
 global _a, _l
 
@@ -38,7 +38,7 @@ package class Coexpr()
    end
 
    public new(e)
-      self.e := e
+      self.e := need_coexpression(e)
       return
    end
 end

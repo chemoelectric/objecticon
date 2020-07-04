@@ -29,41 +29,42 @@ class MemDebug()
 end
 
 procedure do_help()
-   cmd_out.write("stop              - stop the monitored program")
-   cmd_out.write("start             - restart the monitored program")
-   cmd_out.write("exit              - exit immediately")
-   cmd_out.write("regions           - display memory regions")
-   cmd_out.write("list [-a] x       - list instances of type x, or show the structure of")
-   cmd_out.write("                    a particular instance x.  For example, list SomeType")
-   cmd_out.write("                    lists all instances of SomeType, whilst list SomeType#22")
-   cmd_out.write("                    shows the elements of a particular instance.  -a means")
-   cmd_out.write("                    include regions outside the current program's regions.")
-   cmd_out.write("refs x            - show what points to the given instance, eg refs")
-   cmd_out.write("                    list#21 would show what references that list.")
-   cmd_out.write("dump              - show all globals, statics and structures of the")
-   cmd_out.write("                    current program.")
-   cmd_out.write("globals           - show the global variables of the current program.")
-   cmd_out.write("nglobals          - show the named globals of the current program..")
-   cmd_out.write("prog x            - set the current program, initially set to the")
-   cmd_out.write("                    monitored program.  x should be an &main co-expression.")
-   cmd_out.write("progs             - list all programs and show the current program.")
-   cmd_out.write("statics x         - list the static variables in the given object x,")
-   cmd_out.write("                    which should be a class, procedure or method name.")
-   cmd_out.write("breakproc [x]     - set or clear breakpoint to stop in procedure x.")
-   cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
-   cmd_out.write("kbreak [f]        - set or toggle whether to break on &break.")
-   cmd_out.write("hlim i            - set the command history limit.")
-   cmd_out.write("hist [s]          - display the history, optionally filtered by s.")
-   cmd_out.write("llim i            - set the history log limit in the gui.")
-   cmd_out.write("slim i            - set the displayed string limit; 0 means no limit.")
-   cmd_out.write("addrs i           - set the display of addresses in the regions")
-   cmd_out.write("                       i=0 (no addresses),")
-   cmd_out.write("                       i=1 (addresses for items with no serial number),")
-   cmd_out.write("                       i=2 (show all addresses)")
-   cmd_out.write("settings          - show the values of the various settings.")
-   cmd_out.write("cls               - clear the screen.")
-   cmd_out.write("echo a...         - echo arguments.")
-   cmd_out.write("help              - show help.")
+   cmd_out.
+      write("stop                Stop the monitored program").
+      write("start               Restart the monitored program").
+      write("exit                Exit immediately").
+      write("regions             Display memory regions").
+      write("list [-a] x         List instances of type x, or show the structure of").
+      write("                    a particular instance x.  For example, list SomeType").
+      write("                    lists all instances of SomeType, whilst list SomeType#22").
+      write("                    shows the elements of a particular instance.  -a means").
+      write("                    include regions outside the current program's regions").
+      write("refs x              Show what points to the given instance, eg refs").
+      write("                    list#21 would show what references that list").
+      write("dump                Show all globals, statics and structures of the").
+      write("                    current program").
+      write("globals             Show the global variables of the current program").
+      write("nglobals            Show the named globals of the current program.").
+      write("prog x              Set the current program, initially set to the").
+      write("                    monitored program.  x should be an &main co-expression").
+      write("progs               List all programs and show the current program").
+      write("statics x           List the static variables in the given object x,").
+      write("                    which should be a class, procedure or method name").
+      write("breakproc [x]       Set or clear breakpoint to stop in procedure x").
+      write("breakpoint [x y]    Set or clear breakpoint at file x, line y").
+      write("kbreak [f]          Set or toggle whether to break on &break").
+      write("hlim i              Set the command history limit").
+      write("hist [s]            Display the history, optionally filtered by s").
+      write("llim i              Set the history log limit in the gui").
+      write("slim i              Set the displayed string limit; 0 means no limit").
+      write("addrs i             Set the display of addresses in the regions").
+      write("                       i=0 (no addresses),").
+      write("                       i=1 (addresses for items with no serial number),").
+      write("                       i=2 (show all addresses)").
+      write("settings            Show the values of the various settings").
+      write("cls                 Clear the screen").
+      write("echo a...           Echo arguments").
+      write("help                Show help")
 end
 
 procedure do_stop()
@@ -173,8 +174,8 @@ procedure do_slim(a)
 end
 
 procedure do_hlim(a)
-   get_options(a,, "Usage: hlim length (> 10)") | fail
-   if *a = 1 & hlim := 10 < integer(a[1]) then {
+   get_options(a,, "Usage: hlim length (>= 10)") | fail
+   if *a = 1 & hlim := 10 <= integer(a[1]) then {
       input.set_history_limit(hlim)
       cmd_out.write("hlim is now ", hlim)
    } else
@@ -182,8 +183,8 @@ procedure do_hlim(a)
 end
 
 procedure do_llim(a)
-   get_options(a,, "Usage: llim length (> 10)") | fail
-   if *a = 1 & llim := 10 < integer(a[1]) then {
+   get_options(a,, "Usage: llim length (>= 0)") | fail
+   if *a = 1 & llim := 0 <= integer(a[1]) then {
       if is(input, TermDialog) then
          input.set_log_limit(llim)
       cmd_out.write("llim is now ", llim)

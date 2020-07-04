@@ -336,7 +336,7 @@ class TextDisplay(LineBasedScrollArea)
    # Set the tab width to use.  Default is set from the style object.
    #
    public set_tab_width(n)
-      self.tab_width := n
+      self.tab_width := need_integer(n, 1)
       if is_live() then {
          clear_split_list()
          compute_and_invalidate()

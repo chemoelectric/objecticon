@@ -463,6 +463,18 @@ procedure mod1(i, m)
 
 end
 
+# return i (mod m).
+procedure mod(i, m)		
+
+   i %:= m
+
+   if i < 0 then i +:= m
+
+   return i
+
+end
+
+
 # generates palindromic n-digit numbers.
 procedure npalins(n)		
    local i
@@ -472,18 +484,6 @@ procedure npalins(n)
 
 end
 
-# residue for j-based integers
-procedure residue(i, m, j)		
-
-   /j := 0
-
-   i %:= m
-
-   if i < j then i +:= m
-
-   return i
-
-end
 
 #  This procedure is based on a SNOBOL4 function written by Jim Gimpel.
 #
