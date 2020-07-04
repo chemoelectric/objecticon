@@ -1062,7 +1062,7 @@ class WorkerPool()
    end
 
    public add_scheme_handler(scheme, func)
-      insert(scheme_handlers, scheme, func)
+      insert(scheme_handlers, need_string(scheme), func)
       link
    end
 
@@ -5580,7 +5580,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    # Set a scaling factor to apply to all fonts (default 1.0).
    #
    public set_font_factor(n)
-      self.font_factor := n
+      self.font_factor := need_real(n)
       link
    end
 
@@ -5588,7 +5588,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    # Set the maximum size of the history, default 100
    #
    public set_history_size(n)
-      self.history_size := n
+      self.history_size := need_integer(n, 0)
       link
    end
 
@@ -5792,7 +5792,7 @@ class SimpleBrowser(Browser)
    # document.
    #
    public set_page(page)
-      self.page := page
+      self.page := need_string(page)
       goto(URL("page:"))
       link
    end
