@@ -245,9 +245,7 @@ class TextField(Component)
       else
          mark := &null
 
-      x <:= 1
-      x >:= *self.contents + 1
-      self.cursor := x
+      set_cursor(x)
 
       end_handle(e)
       link
@@ -430,11 +428,17 @@ class TextField(Component)
    end
 
    public set_mark(m)
+      m := need_integer(m)
+      m <:= 1
+      m >:= *self.contents + 1
       self.mark := m
       link
    end
 
    public set_cursor(c)
+      c := need_integer(c)
+      c <:= 1
+      c >:= *self.contents + 1
       self.cursor := c
       link
    end
@@ -720,11 +724,8 @@ class TextField(Component)
    end
 
    public get_region() 
-      has_region() | fail
-      return if self.mark < self.cursor then
-         self.contents[self.mark:self.cursor]
-      else
-         self.contents[self.cursor:self.mark]
+      if has_region() then
+         return contents[self.cursor:self.mark]
    end
 
    public delete_region(e)

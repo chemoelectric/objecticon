@@ -711,7 +711,7 @@ class Component(Rect,XYAlign,Connectable)
    # :  `z` - The z value.
    #
    public set_z(z)
-      self.z := z
+      self.z := need_integer(z)
       link
    end
 
@@ -802,7 +802,7 @@ class Component(Rect,XYAlign,Connectable)
    # Set the tab priority, which affects the tab focus ordering of the parent.
    #
    public set_tab_ord(x)
-      self.tab_ord := x
+      self.tab_ord := need_integer(x)
       link
    end
 

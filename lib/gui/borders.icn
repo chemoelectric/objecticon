@@ -1,5 +1,7 @@
 package gui
 
+import util
+
 #
 # A `ABorder` (so named to avoid a clash with the `Border` component),
 # is an object which represents a border.  It reports the widths of
@@ -116,22 +118,22 @@ class EmptyBorder(ABorder)
    end
 
    public set_l_inset(n)
-      self.l_inset := n
+      self.l_inset := need_integer(n, 0)
       link
    end
 
    public set_r_inset(n)
-      self.r_inset := n
+      self.r_inset := need_integer(n, 0)
       link
    end
 
    public set_t_inset(n)
-      self.t_inset := n
+      self.t_inset := need_integer(n, 0)
       link
    end
 
    public set_b_inset(n)
-      self.b_inset := n
+      self.b_inset := need_integer(n, 0)
       link
    end
 
@@ -139,7 +141,7 @@ class EmptyBorder(ABorder)
    # drawn focus, dashed and highlight rectangles.  By default zero.
    #
    public set_focus_inset(n)
-      self.focus_inset := n
+      self.focus_inset := need_integer(n, 0)
       link
    end
 
@@ -222,7 +224,7 @@ abstract class LineBorder(ABorder)
 
    # Set the line width of this border; each of the four insets has this width.
    public set_line_width(n)
-      self.line_width := n
+      self.line_width := need_integer(n, 0)
       link
    end
 
@@ -230,7 +232,7 @@ abstract class LineBorder(ABorder)
    # and highlight rectangles.  By default `Gui.FINE_WIDTH`.
    #
    public set_focus_inset(n)
-      self.focus_inset := n
+      self.focus_inset := need_integer(n, 0)
       link
    end
 

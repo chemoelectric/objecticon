@@ -4,6 +4,8 @@
 
 package gui
 
+import util
+
 #
 # A progress bar
 #
@@ -26,7 +28,7 @@ class ProgressBar(Component)
       #
       # Draw the bar in 'down' mode
       #
-      Gui.style.fill_down_rectangle(self.cbwin, r.x, r.y, r.w * p / 100.0, r.h)
+      Gui.style.fill_down_rectangle(self.cbwin, r.x, r.y, (r.w * p) / 100, r.h)
    end
 
    #
@@ -40,6 +42,7 @@ class ProgressBar(Component)
    # Set the percentage.
    #
    public set_percentage(p)
+      p := need_integer(p)
       p <:= 0
       p >:= 100
       self.p := p

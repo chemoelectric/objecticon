@@ -536,7 +536,7 @@ class ImagePaint(Paint)
    # Set the maximum allowed width; the image will be scaled if necessary.
    #
    public set_max_w(w)
-      self.max_w := w
+      self.max_w := /w | need_integer(w, 1)
       link
    end
 
@@ -544,7 +544,7 @@ class ImagePaint(Paint)
    # Set the maximum allowed height; the image will be scaled if necessary.
    #
    public set_max_h(h)
-      self.max_h := h
+      self.max_h := /h | need_integer(h, 1)
       link
    end
 
@@ -552,8 +552,8 @@ class ImagePaint(Paint)
    # Set the maximum allowed size; the image will be scaled if necessary.
    #
    public set_max_size(w, h)
-      self.max_w := w
-      self.max_h := h
+      set_max_w(w)
+      set_max_h(h)
       link
    end
    
@@ -573,7 +573,7 @@ class ImagePaint(Paint)
    # both those dimensions.
    #
    public set_fill_dimensions(n)
-      self.fill_dimensions := n
+      self.fill_dimensions := need_integer(n, 0, 2)
       link
    end
 

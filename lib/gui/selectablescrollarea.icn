@@ -331,6 +331,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Select the given line number
    #
    public select_line(i)
+      i := need_integer(i)
       if (0 < i <= *self.contents) & not member(self.selections, i) then {
          insert(self.selections, i)
          invalidate_line(i)
@@ -342,6 +343,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # De-select the given line number
    #
    public deselect_line(i)
+      i := need_integer(i)
       if member(self.selections, i) then {
          delete(self.selections, i)
          invalidate_line(i)
@@ -391,7 +393,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Succeed iff the index `i` is currently selected.
    #
    public is_selected(i)
-      succeed member(selections, i)
+      succeed member(selections, need_integer(i))
    end
 
    #
@@ -413,6 +415,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Set the cursor to the given line
    #
    public set_cursor(line)
+      line := need_integer(\line)
       if line ~=== self.cursor then {
          invalidate_line(\self.cursor)
          self.cursor := line

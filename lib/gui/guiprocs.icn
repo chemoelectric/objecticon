@@ -529,8 +529,7 @@ package procedure tab_ws()
 end
 
 procedure is_image_string(v)
-   v := text(v) | fail
-   v ? {
+   string(v) ? {
       tab_ws()
       tab(many(&digits)) | fail
       tab_ws()
@@ -575,10 +574,10 @@ class ImageStringInfo()
    public static from_parts(width, pal, extra, data)
       local i
       i := Class.create_instance()
-      i.width := width
-      i.pal := pal
-      i.extra := extra
-      i.data := data
+      i.width := need_integer(width, 1)
+      i.pal := need_string(\pal)
+      i.extra := need_string(\extra)
+      i.data := need_string(data)
       if *data = 0 | *data % width ~= 0 then
          return error("Wrong number of image characters")
       i.height := *data / width

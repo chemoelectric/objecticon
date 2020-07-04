@@ -25,7 +25,7 @@ abstract class BasePTableColumn()
    # weights.
    #
    public set_weight(w)
-      self.weight := w
+      self.weight := need_numeric(w)
       link
    end
 
@@ -36,7 +36,7 @@ abstract class BasePTableColumn()
    # :  `x` - The width
    #
    public set_fixed_width(x)
-      self.fixed_width := x
+      self.fixed_width := /x | need_integer(x, 0)
       link
    end
 
@@ -348,7 +348,7 @@ class PTable(SelectableScrollArea)
    # Set the inset to use between columns.
    #
    public set_inset(n)
-      self.inset := n
+      self.inset := need_integer(n, 0)
       link
    end
 
@@ -518,8 +518,7 @@ class PTable(SelectableScrollArea)
          c.width := c.calc_width
       extra := view.w - get_subject_width()
       if extra > 0 then {
-         tw := 0
-         every tw +:= (!cols).weight
+         tw := Sum{ (!cols).weight }
          if tw > 0 then {
             ta := extra
             every c := !cols do {

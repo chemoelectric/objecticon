@@ -108,6 +108,7 @@ final abstract class ImageCache()
    # if the key already exists in the table.
    #
    public static name_image(name, data)
+      name := need_string(name)
       if member(names, name) then
          runerr("ImageCache duplicate name key", name)
       insert(names, name, data)
@@ -120,7 +121,7 @@ final abstract class ImageCache()
    # existing key into the data table.
    #
    public static copy_name(new_key, key)
-      return name_image(new_key, member(names, key))
+      return name_image(new_key, get_named_image(key))
    end
 
    #
@@ -128,7 +129,7 @@ final abstract class ImageCache()
    # name is unknown.
    #
    public static get_named_image(name)
-      return member(names, name)
+      return member(names, need_string(name))
    end
 
    #
@@ -137,6 +138,7 @@ final abstract class ImageCache()
    # if the key already exists in the table.
    #
    public static cache_window(key, win)
+      key := need_string(key)
       if member(imap, key) then
          runerr("ImageCache duplicate image key", key)
       insert(imap, key, win)
@@ -149,7 +151,7 @@ final abstract class ImageCache()
    # existing key into the image table.
    #
    public static copy_key(new_key, key)
-      return cache_window(new_key, member(imap, key))
+      return cache_window(new_key, get_cached_window(key))
    end
 
    #
@@ -157,7 +159,7 @@ final abstract class ImageCache()
    # present.
    #
    public static get_cached_window(key)
-      return member(imap, key)
+      return member(imap, need_string(key))
    end
 
    #
@@ -178,13 +180,13 @@ final abstract class ImageCache()
    #
    public static get_key(s, win)
       local w, key, p, fl
-      key := s
-      if s := member(names, s) then
+      key := s := need_string(s)
+      if s := member(names, key) then
          fl := &yes
       if is_image_string(s) then {
          if \win then
             key ||:= "#With colour "|| Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
-         if w := member(imap, key) then
+         if member(imap, key) then
             return key
          \fl | return error("Invalid key for ImageCache")
          w := use {
@@ -192,7 +194,7 @@ final abstract class ImageCache()
             Window.open_image(p)
          } | fail
       } else {
-         if w := member(imap, key) then
+         if member(imap, key) then
             return key
          \fl | Files.access(key) | return error("Invalid key for ImageCache")
          w := Window.open_image(s) | fail
@@ -244,8 +246,8 @@ final abstract class ImageCache()
       local w, key, w2
       key := get_key(s, win) | fail
       w := member(imap, key)
-      width := need_integer(\width) | scale(w.get_width())
-      height := need_integer(\height) | scale(w.get_height())
+      width := need_integer(\width, 1) | scale(w.get_width())
+      height := need_integer(\height, 1) | scale(w.get_height())
       if w.get_width() = width & w.get_height() = height then
          return key
       key ||:= "#Resized to " || width || "x" || height
@@ -271,8 +273,9 @@ final abstract class ImageCache()
    #
    public static get_scaled_svg_key(s, width, height)
       local w, key, cc, svg
-      width := need_integer(width)
-      height := need_integer(height)
+      s := need_string(s)
+      width := need_integer(width, 1)
+      height := need_integer(height, 1)
       key := s || "#Scaled to " || width || "x" || height
       if member(imap, key) then
          return key

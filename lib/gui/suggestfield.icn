@@ -89,7 +89,7 @@ abstract class SuggestField(TextField, MenuMode)
    # and can be accommodated on the screen.
    #
    public set_max_height(n)
-      self.max_height := n
+      self.max_height := /n | need_integer(n, 1)
       link
    end
 
@@ -98,7 +98,7 @@ abstract class SuggestField(TextField, MenuMode)
    # and can be accommodated on the screen.
    #
    public set_max_width(n)
-      self.max_width := n
+      self.max_width := /n | need_integer(n, 1)
       link
    end
 
