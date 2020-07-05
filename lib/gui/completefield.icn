@@ -1,6 +1,6 @@
 package gui
 
-import ipl.strings, lang
+import ipl.strings, lang, util
 
 # This type gives, for each displayed suggestion, the label to display
 # in the popup and the string to set in the field on selection, and
@@ -11,7 +11,7 @@ class CompleteElement(Conversion)
       label
 
    public override new(label, str, pos)
-      self.label := label
+      self.label := need_text(label)
       Conversion.new(str, pos)
       return
    end
