@@ -310,9 +310,9 @@ $endif
 
    public assign_contents(x, pos, coalesce)
       local ed
-      /x := ""
-      x := need_text(x)
-      /pos := *x + 1
+      x := need_text(\x) | ""
+      pos := need_integer(\pos, 1, *x + 1) | *x + 1
+      need_flag(coalesce)
       if subj == x then {
          self.pos := pos
       } else {
@@ -717,7 +717,8 @@ class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
 end
 
 class LineEditorAssignEdit(LineEditorEdit)
-   private s, p, pre, coalesce
+   private s, p, pre
+   private const coalesce
 
    public override add_edit(other)
       if \coalesce & is(other, LineEditorAssignEdit) & \other.coalesce then {

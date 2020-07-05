@@ -182,9 +182,9 @@ class TextField(Component)
    #
    public assign_contents(x, pos, e, coalesce)
       local ed
-      /x := ""
-      x := need_text(x)
-      /pos := *x + 1
+      x := need_text(\x) | ""
+      pos := need_integer(\pos, 1, *x + 1) | *x + 1
+      need_flag(coalesce)
       start_handle(e)
       if self.contents == x then {
          clear_mark()
@@ -428,18 +428,12 @@ class TextField(Component)
    end
 
    public set_mark(m)
-      m := need_integer(m)
-      m <:= 1
-      m >:= *self.contents + 1
-      self.mark := m
+      self.mark := restrict(need_integer(m), 1, *contents + 1)
       link
    end
 
    public set_cursor(c)
-      c := need_integer(c)
-      c <:= 1
-      c >:= *self.contents + 1
-      self.cursor := c
+      self.cursor := restrict(need_integer(c), 1, *contents + 1)
       link
    end
 
@@ -1084,7 +1078,7 @@ class TextFieldAssignEdit(TextFieldEdit)
       TextFieldEdit.new(parent)
       self.s := s
       self.pos := pos
-      self.coalesce := need_flag(coalesce)
+      self.coalesce := coalesce
       return
    end
 end

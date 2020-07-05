@@ -1029,6 +1029,16 @@ procedure contained(f1, t1, f2, t2)
    succeed f2 <= f1 <= t2 & f2 <= t1 <= t2
 end
 
+#
+# Restrict i to be within the range f-t
+#
+procedure restrict(i, f, t)
+   if f > t then f :=: t
+   i <:= f
+   i >:= t
+   return i
+end
+
 # This provides some logic to text components on whether or not their
 # cursor should blink, given that comp.should_draw_focus() has already
 # succeeded.

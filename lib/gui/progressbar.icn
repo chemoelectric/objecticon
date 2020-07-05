@@ -42,10 +42,7 @@ class ProgressBar(Component)
    # Set the percentage.
    #
    public set_percentage(p)
-      p := need_integer(p)
-      p <:= 0
-      p >:= 100
-      self.p := p
+      self.p := restrict(need_integer(p), 0, 100)
       self.invalidate()
       link
    end
