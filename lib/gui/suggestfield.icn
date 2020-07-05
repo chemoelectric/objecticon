@@ -7,9 +7,8 @@ class Conversion()
       str, pos
 
    public new(str, pos)
-      self.str := str
-      /pos := *str + 1
-      self.pos := pos
+      self.str := need_text(str)
+      self.pos := need_integer(\pos, 1, *self.str + 1) | *self.str + 1
       return
    end
 end
