@@ -150,8 +150,8 @@ class EmptyPaint(Paint)
    end
 
    public override new(w, h)
-      self.w := w
-      self.h := h
+      self.w := need_integer(w, 0)
+      self.h := need_integer(h, 0)
       return
    end
 end
