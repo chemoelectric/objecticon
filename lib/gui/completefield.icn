@@ -23,36 +23,19 @@ procedure cmp_CompleteElement(x, y)
    return Text.consistent_compare(x.label, y.label)
 end
 
-# An `ItemPaint` class for displaying `CompleteElement`s with strings
-# in their label fields.
-#
-class CompleteElementItemPaint(ItemPaint)
-   public override get_width(W, data)
-      return W.text_width(data.label)
-   end
-
-   public override get_constant_height(W)
-      return W.get_line_height()
-   end
-
-   public override get_size(W, data)
-      return gui.Size(W.text_width(data.label), W.get_line_height())
-   end
-
-   public override draw(W, data, x, y)
-      W.draw_string(x, y + W.get_line_ascent(), data.label)
-   end
-end
-
 # This class is a `TextField` which provides suggested insertion text when
 # tab is pressed.
 #
 # `do_request` should return a list of `CompleteElement` records.
 #
 abstract class CompleteField(SuggestField)
+   private static label_field(x)
+      return x.label
+   end
+
    public override create_popup()
       return ItemPaintList().
-         set_item_paint(CompleteElementItemPaint()).
+         set_item_paint(MapItemPaint(TextItemPaint(), label_field)).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L))

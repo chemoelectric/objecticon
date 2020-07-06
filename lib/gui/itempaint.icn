@@ -1,6 +1,6 @@
 package gui
 
-import lang
+import lang, util
 
 #
 # An `ItemPaint` is an object which can be used in a component which
@@ -271,5 +271,54 @@ class ImageCacheItemPaint(ItemPaint)
 
    public override draw(W, data, x, y)
       ImageCache.get(data, W).copy_to(,,,, W, x, y)
+   end
+end
+
+# An `ItemPaint` which wraps another `ItemPaint`.  Each item of data
+# is mapped using a provided function before being passed to the other
+# instance.
+#
+class MapItemPaint(ItemPaint)
+   public const
+      other, f
+
+   public override initially(c)
+      other.initially(c)
+   end
+
+   public override get_width(W, data)
+      return other.get_width(W, f(data))
+   end
+
+   public override get_height(W, data)
+      return other.get_height(W, f(data))
+   end
+
+   public override get_size(W, data)
+      return other.get_size(W, f(data))
+   end
+
+   public override draw(W, data, x, y, w, h)
+      return other.draw(W, f(data), x, y, w, h)
+   end
+
+   public override get_constant_width(W)
+      return other.get_constant_width(W)
+   end
+
+   public override get_constant_height(W)
+      return other.get_constant_height(W)
+   end
+
+   public override finally()
+      other.finally()
+   end
+
+   # Create a new instance with the given `ItemPaint` to wrap, and
+   # map function `f`.
+   public new(other, f)
+      self.other := other
+      self.f := need_callable(f)
+      return
    end
 end

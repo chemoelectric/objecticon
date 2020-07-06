@@ -22,24 +22,6 @@ package record PopupElement(label, str)
 
 package record Locn(x, y)
 
-package class PopupElementItemPaint(ItemPaint)
-   public override get_width(W, data)
-      return W.text_width(data.label)
-   end
-
-   public override get_constant_height(W)
-      return W.get_line_height()
-   end
-
-   public override get_size(W, data)
-      return Size(W.text_width(data.label), W.get_line_height())
-   end
-
-   public override draw(W, data, x, y)
-      W.draw_string(x, y + W.get_line_ascent(), data.label)
-   end
-end
-
 package class KeyEntry()
    public const 
       bits,       # The bits which must be set in the mask set
@@ -2809,6 +2791,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       send_tr_nl(pe.str)
    end
 
+   private static label_field(x)
+      return x.label
+   end
+
    private open_popup(l)
       local spc_below, spc_right, d, dim, win,
          rs, max_h, max_w, info, px, py
@@ -2842,7 +2828,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       max_w := spc_right
 
       self.popup := ItemPaintList().
-         set_item_paint(PopupElementItemPaint()).
+         set_item_paint(MapItemPaint(TextItemPaint(), label_field)).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
