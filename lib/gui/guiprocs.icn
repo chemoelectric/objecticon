@@ -9,7 +9,8 @@
 package gui
 
 import graphics(Mouse,Window,Pixels,Selection,need_Window),
-   lang, util, io, xdg, ipl.strings, ipl.graphics, cairo
+   lang, util, io, xdg, ipl.strings, ipl.graphics, cairo,
+   ipl.numbers
 
 final abstract class Event()
    public static const
@@ -282,10 +283,11 @@ final abstract class WAttrib()
 end
 
 #
-# Scale the given number using the current scale factor.
+# Scale the given number using the current scale factor.  Note that
+# since `SCALE >= 1.0`, if `i >= 0`, then the result should be `>= i`.
 #
 procedure scale(i)
-   return integer(Gui.SCALE * i + 0.5)
+   return round(Gui.SCALE * i)
 end
 
 #
@@ -445,7 +447,7 @@ final abstract class Gui()
       mm := w.get_display_size_mm() | fail
       t := (pix.width + pix.height) / ((mm.width + mm.height) / 25.4) / 96.0
       # Round to nearest 1%
-      t := integer(t * 100.0 + 0.5) / 100.0
+      t := round(t * 100.0) / 100.0
       return (1.0 < t)
    end
 
