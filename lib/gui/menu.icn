@@ -253,7 +253,7 @@ class Menu(TextMenuItem)
          #
          if m ~=== self.which_highlight then {
             #
-            # Over an (different) item; either open it or highlight it.
+            # Over a (different) item; either open it or highlight it.
             #
             if m.is_sub_menu() then
                self.set_which_open(m)

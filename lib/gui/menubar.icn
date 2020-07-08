@@ -358,7 +358,7 @@ class MenuBar(Component, MenuSystem)
       local t
       if \self.which_highlight & t := which_item(e) then {
          #
-         # Over a (different) item - highlight or open it, depending on whether the
+         # Over an item - highlight or open it, depending on whether the
          # current one is open or just highlighted.
          #
          if /self.which_open then
