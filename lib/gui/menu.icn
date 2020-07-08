@@ -269,12 +269,11 @@ class Menu(TextMenuItem)
    end
 
    public handle_exit(e)
-      if /self.which_open then {
+      if /self.which_open then
          #
-         # Not over one of out items; clear highlight, but not an open submenu.
+         # An exit clears the highlight, unless there is an open submenu.
          #
          self.set_which_highlight()
-      }
    end
 
    public handle_default(e)
