@@ -1457,7 +1457,7 @@ class EditableTextList(LineBasedScrollArea)
 end
 
 class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
-   private parent
+   private const parent
 
    protected override get_text()
       return cat_lines(\parent.primary)
