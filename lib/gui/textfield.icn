@@ -12,17 +12,17 @@ import undo, util, graphics, ipl.functional
 
 #
 # A class for a single input line of text.  The text can
-# scroll within the area specified.  By default, a border
-# surrounds the text area; this can be turned off by using
-# `toggle_draw_border()`.
+# scroll within the area specified.  By default, a sunken
+# border surrounds the text area; this can be changed by
+# `set_border()`.
 #
-# The horizontal size must be set by the `set_size()` method:
-# there is no default (the vertical size will default, however).
+# The horizontal size should be normally set by the `set_size()`
+# method to provide a comfortable input width.
 #
 # An `Event.ACTION` is generated when return is pressed,
 # `Event.CONTENT_CHANGED` whenever the contents are changed,
 # `Event.CURSOR_MOVED` when the cursor moves, and
-# `Event.SELECTION_CHANGED` whenver the selection changes.
+# `Event.SELECTION_CHANGED` whenever the selection changes.
 #
 # Example :-
 # ~
