@@ -250,7 +250,7 @@ class UnmodifiableList(List)
    end
 
    public new(l)
-      self.l := l
+      self.l := need_instance(l, List)
       return
    end
 end
@@ -321,8 +321,7 @@ class BuiltinList(List)
    end
 
    public new(l)
-      /l := []
-      self.l := l
+      self.l := need_list(\l) | []
       return
    end
 end
@@ -724,7 +723,7 @@ class UnmodifiableBuiltinList(List)
    end
 
    public new(l)
-      self.l := l
+      self.l := need_list(l)
       return
    end
 end
@@ -809,9 +808,9 @@ class SubList(List)
    # `lo` and `hi` as the slice to view.
    #
    public new(other, lo, hi)
-      self.other := other
-      self.lo := lo
-      self.hi := hi
+      self.other := need_instance(other, List)
+      self.lo := need_integer(lo)
+      self.hi := need_integer(hi)
       return
    end
 end
