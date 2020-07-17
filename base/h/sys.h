@@ -186,7 +186,7 @@
    #include <sys/utsname.h>
    #include <sys/wait.h>
    #include <sys/ioctl.h>
-   #include <sys/poll.h>
+   #include <poll.h>
    #if HAVE_MMAP
    #include <sys/mman.h>
    #endif

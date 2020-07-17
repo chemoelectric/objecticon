@@ -2826,7 +2826,7 @@ abstract class BrowserUI()
 end
 
 package class BrowserPrimarySelectionOwner(TextSelectionOwner)
-   private parent
+   private const parent
 
    protected override get_text()
       return \parent.primary

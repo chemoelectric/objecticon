@@ -20,28 +20,6 @@ package class FavouriteDirectoriesTable(Table)
    end
 end
 
-package class ApplicationItemPaint(ItemPaint)
-   private convert(data)
-      return \data | "All"
-   end
-
-   public override get_width(W, data)
-      return W.text_width(convert(data))
-   end
-
-   public override get_constant_height(W)
-      return W.get_line_height()
-   end
-
-   public override get_size(W, data)
-      return Size(W.text_width(convert(data)), W.get_line_height())
-   end
-
-   public override draw(W, data, x, y, w)
-      W.draw_string(x, y + W.get_line_ascent(), limit_text(W, convert(data), w))
-   end
-end
-
 class FavouriteDirectoriesDialog(Dialog)
    private
       application_field,
@@ -98,6 +76,10 @@ class FavouriteDirectoriesDialog(Dialog)
       message_label.set(s)
    end
 
+   private static application_col(data)
+      return \data | "All"
+   end
+
    public override component_setup()
       entry_table.set_contents(get_pair_list())
       etc := entry_table.table_content
@@ -113,7 +95,7 @@ class FavouriteDirectoriesDialog(Dialog)
                             set_insets(Gui.TEXT_INSET, 0, 0, 0).
                             set_x_align(Align.L))
       application_column.
-         set_item_paint(ApplicationItemPaint()).
+         set_item_paint(MapItemPaint(AbbreviatedTextItemPaint(), application_col)).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, 0, 0, 0).
                             set_x_align(Align.L))

@@ -337,7 +337,7 @@ abstract class MenuComponent(Rect,Connectable)
    # shortcuts.
    #
    public set_accel(k)
-      self.accel := k
+      self.accel := need_text(k)
       link
    end
 

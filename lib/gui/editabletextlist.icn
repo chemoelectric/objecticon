@@ -640,30 +640,18 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public set_mark(mx, my)
-      if my := need_integer(\my) then {
-         my <:= 1
-         my >:= *self.contents
-         self.mark_y := my
-      }
-      if mx := need_integer(\mx) then {
-         mx <:= 1
-         mx >:= *self.contents[self.mark_y] + 1
-         self.mark_x := mx
-      }
+      if my := need_integer(\my) then
+         self.mark_y := restrict(my, 1, *contents)
+      if mx := need_integer(\mx) then
+         self.mark_x := restrict(mx, 1, *contents[self.mark_y] + 1)
       link
    end
 
    public set_cursor(cx, cy)
-      if cy := need_integer(\cy) then {
-         cy <:= 1
-         cy >:= *self.contents
-         self.cursor_y := cy
-      }
-      if cx := need_integer(\cx) then {
-         cx <:= 1
-         cx >:= *self.contents[self.cursor_y] + 1
-         self.cursor_x := cx
-      }
+      if cy := need_integer(\cy) then
+         self.cursor_y := restrict(cy, 1, *contents)
+      if cx := need_integer(\cx) then
+         self.cursor_x := restrict(cx, 1, *contents[self.cursor_y] + 1)
       link
    end
 
@@ -911,9 +899,7 @@ class EditableTextList(LineBasedScrollArea)
    public adjust_view_list_index(off)
       local e1, e2, v1, v2
       v1 := get_view_list_index()
-      v2 := v1 + off
-      v2 <:= 1
-      v2 >:= *self.view_list
+      v2 := restrict(v1 + off, 1, *self.view_list)
       if v1 = v2 then
          return
       e1 := view_list[v1]
@@ -1471,7 +1457,7 @@ class EditableTextList(LineBasedScrollArea)
 end
 
 class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
-   private parent
+   private const parent
 
    protected override get_text()
       return cat_lines(\parent.primary)
@@ -1527,8 +1513,9 @@ class TextSplit()
 end
 
 abstract class EditableTextListEdit(UndoableEdit)
+   public const
+      parent
    public
-      parent,
       cursor_x, 
       cursor_y,
       mark_x,
@@ -1851,7 +1838,7 @@ class EditableTextListPasteEdit(EditableTextListEdit)
 end
 
 abstract class LineSplitter()
-   public parent
+   public const parent
 
    public abstract split(s)
 
@@ -1862,7 +1849,7 @@ abstract class LineSplitter()
 end
 
 class ColumnLineSplitter(LineSplitter)
-   public wrap_col
+   public const wrap_col
 
    public override split(s)
       local ch, ds, p

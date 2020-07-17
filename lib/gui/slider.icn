@@ -168,9 +168,7 @@ class Slider(Component, HasOrientation, HasUseWheel)
    end
 
    private move_value(x)
-      self.value := x
-      self.value <:= self.lo
-      self.value >:= self.hi
+      self.value := restrict(x, self.lo, self.hi)
    end
 
    #

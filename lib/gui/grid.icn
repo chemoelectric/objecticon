@@ -1,8 +1,10 @@
 package gui
 
 import 
+   util,
    lang,
    ipl.sort,
+   ipl.pdco,
    io,
    ipl.numbers
 
@@ -202,17 +204,11 @@ class Grid()
    end
    
    public static slice(start, span, l)
-      local n
-      n := 0
-      every n +:= l[start to start + span - 1]
-      return n
+      return Sum{ l[start to start + span - 1] }
    end
 
    public static total(l)
-      local n
-      n := 0
-      every n +:= !l
-      return n
+      return Sum{ !l }
    end
 
    public static dist_by_weight(start, span, extra, l, weights, tw)
@@ -455,7 +451,7 @@ class Grid()
    # Set the default inner inset
    #
    public set_dii(n)
-      self.dii := n
+      self.dii := need_integer(n, 0)
       link
    end
 
@@ -463,7 +459,7 @@ class Grid()
    # Set the default outer inset
    #
    public set_doi(n)
-      self.doi := n
+      self.doi := need_integer(n, 0)
       link
    end
 

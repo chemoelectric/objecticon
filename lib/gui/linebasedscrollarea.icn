@@ -8,7 +8,7 @@
 
 package gui
 
-import io, ipl.pdco(Sum)
+import io, util, ipl.pdco(Sum)
 
 class LineBasedScrollAreaRangeInfo()
    public
@@ -135,18 +135,21 @@ abstract class LineBasedScrollArea(DrawScrollArea)
 
    #
    # Get the total line height upto but not including the line, which
-   # may range from 1 ... line_count+1
+   # is constrained within the range from 1 ... line_count+1.
    #
    public get_cum_line_height(line)
       local h, s
-      if integer(h := get_line_height()) then
-         return h * (line - 1)
-      else {
+      line := need_integer(line)
+      line <:= 1
+      return if integer(h := get_line_height()) then {
+         line >:= get_line_count() + 1
+         h * (line - 1)
+      } else {
          if /cum_line_height := [0] then {
             s := 0
             every put(cum_line_height, s +:= !h)
          }
-         return cum_line_height[line]
+         cum_line_height[line | -1]
       }
    end
 
@@ -389,12 +392,19 @@ abstract class LineBasedScrollArea(DrawScrollArea)
          Sum{ !h }
    end
 
-   public get_height_for_line(i)
+   #
+   # Return the height of the given line, failing if that line is not
+   # in the range 1..line_count.
+   #
+   public get_height_for_line(line)
       local h
-      return if integer(h := get_line_height()) then
-         h
-      else
-         h[i]
+      line := need_integer(line)
+      if line > 0 then
+         return if integer(h := get_line_height()) then {
+            if line <= get_line_count() then
+               h
+         } else
+            h[line]
    end
 
    public override create_vsb()

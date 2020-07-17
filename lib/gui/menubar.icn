@@ -358,8 +358,8 @@ class MenuBar(Component, MenuSystem)
       local t
       if \self.which_highlight & t := which_item(e) then {
          #
-         # Over a (different) item - highlight or open it, depending on whether the
-         # current one is open or just highlighted.
+         # Over an item - highlight or open it, depending on whether
+         # the current one is open or just highlighted.
          #
          if /self.which_open then
             self.set_which_highlight(t)
@@ -371,8 +371,11 @@ class MenuBar(Component, MenuSystem)
    public handle_exit(e)
       if /self.which_open & e.code === Mouse.MOVEMENT then
          #
-         # Submenu not open (just highlighted), and a mouse move outside of the
-         # bar - this clears the highlight (and leaves menu mode).
+         # If a submenu is not open, but highlighted, then a mouse
+         # move outside of the bar clears the highlight (and leaves
+         # menu mode).  The test for MOVEMENT allows us to close a
+         # menu, and drag to another without leaving menu mode if we
+         # accidentally move off the bar.
          #
          self.set_which_highlight()
    end

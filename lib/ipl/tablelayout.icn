@@ -467,7 +467,7 @@ class TableGrid()
    # Set the default inner inset
    #
    public set_dii(n)
-      self.dii := n
+      self.dii := need_integer(n, 0)
       link
    end
 
@@ -475,7 +475,7 @@ class TableGrid()
    # Set the default outer inset
    #
    public set_doi(n)
-      self.doi := n
+      self.doi := need_integer(n, 0)
       link
    end
 
@@ -643,12 +643,12 @@ class TableLayout(Layout)
    end
 
    public set_dii(n)
-      self.dii := n
+      self.dii := need_integer(n, 0)
       link
    end
 
    public set_doi(n)
-      self.doi := n
+      self.doi := need_integer(n, 0)
       link
    end
 
@@ -657,5 +657,3 @@ class TableLayout(Layout)
       return
    end
 end
-
-

@@ -162,14 +162,18 @@ procedure rpb(op, x)
 end
 
 #
-# Implementation class for `methodf`
+# Implementation class for `methodf`, `fieldf`
 #
-package class Methodf()
+package class Field()
    private const
       field
 
-   public call(obj, a[])
+   public methodf(obj, a[])
       suspend Class.get(obj, field)!a
+   end
+
+   public fieldf(obj)
+      return Class.get(obj, field)
    end
 
    public new(field)
@@ -188,7 +192,20 @@ end
 #   f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
 # ~
 procedure methodf(field)
-   return Methodf(field).call
+   return Field(field).methodf
+end
+
+# Returns a function that takes one parameter (an object), and which
+# returns the given field of that object.
+#
+# Example :-
+# ~
+#   f := fieldf("abc")
+#   f(obj)       # returns obj.abc
+# ~
+#
+procedure fieldf(field)
+   return Field(field).fieldf
 end
 
 # Implementation class for `flip` and `revargs`.
