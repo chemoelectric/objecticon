@@ -292,7 +292,10 @@ class EqSet(TableSet)
    end
 end
 
-package class EmptySet(Set, SelfClone)
+#
+# An empty set.  An instance of this class is `Set.EMPTY_SET`.
+#
+class EmptySet(Set)
    public override member(x)
    end
 
@@ -305,10 +308,6 @@ package class EmptySet(Set, SelfClone)
 
    public override get_mode()
       return 0
-   end
-
-   package new()
-      return
    end
 end
 

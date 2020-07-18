@@ -326,7 +326,10 @@ class BuiltinList(List)
    end
 end
 
-package class EmptyList(List, SelfClone)
+#
+# An empty list.  An instance of this class is `List.EMPTY_LIST`.
+#
+class EmptyList(List)
    public override at(i)
    end
 
@@ -336,10 +339,6 @@ package class EmptyList(List, SelfClone)
 
    public override get_mode()
       return 0
-   end
-
-   package new()
-      return
    end
 end
 

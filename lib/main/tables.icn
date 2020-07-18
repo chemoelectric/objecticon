@@ -926,7 +926,10 @@ class BuiltinTable(Table)
    end
 end
 
-package class EmptyTable(Table, SelfClone)
+#
+# An empty table.  An instance of this class is `Table.EMPTY_TABLE`.
+#
+class EmptyTable(Table)
    public override member(x)
    end
 
@@ -939,10 +942,6 @@ package class EmptyTable(Table, SelfClone)
 
    public override get_mode()
       return 0
-   end
-
-   package new()
-      return
    end
 end
 
