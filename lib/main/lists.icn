@@ -116,6 +116,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # otherwise values are generated.
    #
    public back_from(i)
+      i := need_integer(i)
       i := cvpos_item(i - 1, size()) | fail
       while i > 0 do {
          suspend at(i)
@@ -366,6 +367,7 @@ class LinkedList(List)
 
    public override insert(i, x)
       local n
+      i := need_integer(i)
       if i <= 0 then
          i := cvpos(i, size()) | fail
       if i = 1 then
@@ -379,6 +381,7 @@ class LinkedList(List)
 
    public override delete(i)
       local n
+      i := need_integer(i)
       if i <= 0 then
          i := cvpos_item(i, size()) | fail
       if i = 1 then
@@ -421,6 +424,7 @@ class LinkedList(List)
 
    public override back_from(i)
       local n
+      i := need_integer(i)
       n := node_at(i - 1) | fail
       repeat {
          suspend n.val
@@ -525,6 +529,7 @@ class LinkedList(List)
    #
    private node_at(i)
       local n
+      i := need_integer(i)
       if i <= 0 then
          i := cvpos_item(i, size()) | fail
       n := nhead
@@ -636,6 +641,7 @@ class DoublyLinkedList(List)
 
    public override back_from(i)
       local n
+      i := need_integer(i)
       n := node_at(i - 1) | fail
       while \n do {
          suspend n.val
