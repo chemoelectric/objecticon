@@ -4,7 +4,12 @@
 
 package datastruct
 
-import ipl.pdco(Seq,Length,Index), ipl.sort(need_callable_def), lang, util
+import
+   lang,
+   util,
+   ipl.tables(tbldflt),
+   ipl.pdco(Seq,Length,Index),
+   ipl.sort(need_callable_def)
 
 record Entry(key, val)
 
@@ -911,8 +916,12 @@ class BuiltinTable(Table)
    #       created.
    #
    public new(t)
-      self.t := need_table(\t) | table()
-      self.def := self.t[[]]
+      if /t then
+         self.t := table()
+      else {
+         self.t := need_table(t)
+         self.def := tbldflt(t)
+      }
       return
    end
 end
@@ -1130,7 +1139,7 @@ class UnmodifiableBuiltinTable(Table)
    #
    public new(t)
       self.t := need_table(t)
-      self.def := self.t[[]]
+      self.def := tbldflt(t)
       return
    end
 end
