@@ -351,7 +351,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
       c.change_canvas(self)
       if /cc.layout_delegate then
-         c.set_pos(10, 10)
+         c.set_pos(scale(10), scale(10))
       else
          c.layout_safe()
       cc.add(c)
@@ -407,7 +407,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
       c.change_canvas(self)
       if /cc.layout_delegate then
-         c.set_pos(10, 10)
+         c.set_pos(scale(10), scale(10))
       else
          c.layout_safe()
       cc.add(c)
@@ -607,8 +607,8 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Not in layout - set pos of new object. 
          #           
-         c.x_spec :=  c.get_x_alignment_offset() + 10 + 7 * (copy_count % 4) + cc.x - cc.parent.x
-         c.y_spec :=  c.get_y_alignment_offset() + 10 + 7 * (copy_count % 4) + cc.y - cc.parent.y
+         c.x_spec :=  c.get_x_alignment_offset() + scale(10 + 7 * (copy_count % 4)) + cc.x - cc.parent.x
+         c.y_spec :=  c.get_y_alignment_offset() + scale(10 + 7 * (copy_count % 4)) + cc.y - cc.parent.y
       }
       cc.parent.add(c)
       c.rename()
@@ -925,14 +925,14 @@ class Canvas(Component,SelectiveObjectCodec)
    # Minimum width of canvas.
    #
    public min_width()
-      return 20
+      return scale(20)
    end
 
    #
    # Minimum height of canvas.
    #
    public min_height()
-      return 20
+      return scale(20)
    end
 
    #
@@ -1288,7 +1288,7 @@ class Canvas(Component,SelectiveObjectCodec)
          if new_parent === (cc.parent | Seq{cc.traverse_tree()}) then
             next
          if /new_parent.layout_delegate then
-            cc.set_pos(10, 10)
+            cc.set_pos(scale(10), scale(10))
          else
             cc.layout_safe()
          cc.parent.remove(cc)
