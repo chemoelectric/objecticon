@@ -838,8 +838,8 @@ class Main(Dialog)
          #
          # Default x, y.  Try to avoid successive adds covering each other.
          #
-         /c.x_spec := 10 + 7 * (add_count % 4)
-         /c.y_spec := 10 + 7 * (add_count % 4)
+         /c.x_spec := scale(10 + 7 * (add_count % 4))
+         /c.y_spec := scale(10 + 7 * (add_count % 4))
       }
       add_count +:= 1
       c.set_align("l", "t")
