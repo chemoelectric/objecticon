@@ -24,6 +24,7 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       c.set_contents(contents.get_contents())
       c.is_editable_flag := is_editable_cb.get_status()
       c.move_on_rpress_flag := move_on_rpress_cb.get_status()
+      c.invalidate_line_height()
    end
 
    private on_ucs_cb()

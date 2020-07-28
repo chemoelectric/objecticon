@@ -26,6 +26,7 @@ class CanvasTextListDialog(CanvasComponentDialog)
       else
          c.set_contents(contents.get_contents())
       c.set_select_mode(select_group.get_select_mode())
+      c.invalidate_line_height()
    end
 
    private on_ucs_cb()

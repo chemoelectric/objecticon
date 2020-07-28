@@ -18,14 +18,14 @@ class CanvasTree(CanvasComponent,Tree)
    # Default minimum width for the object
    #
    public override min_width()
-      return 65
+      return scale(65)
    end
 
    #
    # Default minimum height for the object
    #
    public override min_height()
-      return 65
+      return scale(65)
    end
 
    #

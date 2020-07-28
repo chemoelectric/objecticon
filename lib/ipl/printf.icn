@@ -116,6 +116,8 @@ end
 # *   %E  real in exponential format, with a capital E in
 #         the result
 # *   %w  the value of &why
+# *   %n  the empty string (useful for inserting spaces for
+#         table alignment)
 #
 procedure printf(format, args[])
    return writes(doprnt(format, args))
@@ -168,29 +170,24 @@ package procedure one(args)
    width := args.intparam()
    if ="." then prec := args.intparam()
    conv := move(1) | ""
-
-   if any('dsxXobitreE', conv) then {
-      # Formats that take an argument.
+   # Formats that take an argument.
+   if any('dsxXobitreE', conv) then
       a := args.get(apos)
-      case string(conv) of {
-         "d": v := decimal(a, prec, flag)
-         "s": v := str(a, prec)
-         "x": v := map(intstr(a, prec, flag))
-         "X": v := intstr(a, prec, flag)
-         "o": v := intstr(a, prec, flag, 8)
-         "b": v := intstr(a, prec, flag, 2)
-         "i": v := str(image(a), prec)
-         "t": v := str(to_string(a), prec)
-         "r": v := fixnum(a, prec, flag)
-         "e": v := eformatstr(a, prec, flag ++ 'e')
-         "E": v := eformatstr(a, prec, flag ++ 'E')
-      }
-   } else {
-      # Formats that don't take an argument.
-      case string(conv) of {
-         "w": v := str(&why, prec)
-         default: v := str(conv, prec)
-      }
+   v := case string(conv) of {
+      "d": decimal(a, prec, flag)
+      "s": str(a, prec)
+      "x": map(intstr(a, prec, flag))
+      "X": intstr(a, prec, flag)
+      "o": intstr(a, prec, flag, 8)
+      "b": intstr(a, prec, flag, 2)
+      "i": str(image(a), prec)
+      "t": str(to_string(a), prec)
+      "r": fixnum(a, prec, flag)
+      "e": eformatstr(a, prec, flag ++ 'e')
+      "E": eformatstr(a, prec, flag ++ 'E')
+      "w": str(&why, prec)
+      "n": str("", prec)
+      default: str(conv, prec)
    }
    if \width & *v < width then
       v := just(v, width, pad)

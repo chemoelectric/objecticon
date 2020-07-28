@@ -18,14 +18,14 @@ class CanvasLine(CanvasComponent,Line)
    # Overrides CanvasComponent.min_height()
    #
    public override min_height()
-      return 3
+      return scale(3)
    end
 
    #
    # Overrides CanvasComponent.min_width()
    #
    public override min_width()
-      return 3
+      return scale(3)
    end
 
    #

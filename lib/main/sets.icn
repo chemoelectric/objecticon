@@ -204,7 +204,7 @@ class UnmodifiableSet(Set)
    end
 
    public new(s)
-      self.s := s
+      self.s := need_instance(s, Set)
       return
    end
 end
@@ -274,7 +274,7 @@ class TableSet(Set)
    public new(t, entries[])
       if type(t) == "class" then
          t := t()
-      self.t := t
+      self.t := need_instance(t, Table)
       every insert(!entries)
       return
    end
@@ -292,7 +292,10 @@ class EqSet(TableSet)
    end
 end
 
-package class EmptySet(Set, SelfClone)
+#
+# An empty set.  An instance of this class is `Set.EMPTY_SET`.
+#
+class EmptySet(Set)
    public override member(x)
    end
 
@@ -305,10 +308,6 @@ package class EmptySet(Set, SelfClone)
 
    public override get_mode()
       return 0
-   end
-
-   package new()
-      return
    end
 end
 
@@ -359,8 +358,7 @@ class BuiltinSet(Set)
    # :  `s` - the set to wrap; if omitted a new set is created.
    #
    public new(s)
-      /s := set()
-      self.s := s
+      self.s := need_set(\s) | set()
       return
    end
 end
@@ -398,7 +396,7 @@ class UnmodifiableBuiltinSet(Set)
    # :  `s` - the set to wrap
    #
    public new(s)
-      self.s := s
+      self.s := need_set(s)
       return
    end
 end

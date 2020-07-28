@@ -1347,16 +1347,6 @@ class AddMissingKeyAction(Action)
 end
 
 
-class FixBorderContentAction(Action)
-   public override apply(decode, proxy)
-      local children
-      if proxy.get("Content") then
-         return
-      children := proxy.get("Children")
-   end
-end
-
-
 #
 # Menu event handling
 #

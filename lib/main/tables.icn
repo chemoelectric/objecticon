@@ -4,7 +4,12 @@
 
 package datastruct
 
-import ipl.pdco(Seq,Length,Index), lang, util
+import
+   lang,
+   util,
+   ipl.tables(tbldflt),
+   ipl.pdco(Seq,Length,Index),
+   ipl.sort(need_callable_def)
 
 record Entry(key, val)
 
@@ -363,7 +368,7 @@ class UnmodifiableTable(Table)
    end
 
    public new(t)
-      self.t := t
+      self.t := need_instance(t, Table)
       self.def := t.def
       return
    end
@@ -405,8 +410,8 @@ class TableKeyList(List)
    end
 
    public new(t)
+      self.t := need_instance(t, Table)
       t.can(Table.ORDER) | runerr("Table doesn't have ORDER capability", t)
-      self.t := t
       return
    end
 end
@@ -753,8 +758,7 @@ class SortTable(Table)
    #
    public new(def, cmp, entries[])
       self.def := def
-      /cmp := Internal.compare
-      self.cmp := cmp
+      self.cmp := need_callable_def(cmp)
       init_entries(entries)
       return
    end
@@ -912,14 +916,20 @@ class BuiltinTable(Table)
    #       created.
    #
    public new(t)
-      /t := table()
-      self.t := t
-      self.def := t[[]]
+      if /t then
+         self.t := table()
+      else {
+         self.t := need_table(t)
+         self.def := tbldflt(t)
+      }
       return
    end
 end
 
-package class EmptyTable(Table, SelfClone)
+#
+# An empty table.  An instance of this class is `Table.EMPTY_TABLE`.
+#
+class EmptyTable(Table)
    public override member(x)
    end
 
@@ -932,10 +942,6 @@ package class EmptyTable(Table, SelfClone)
 
    public override get_mode()
       return 0
-   end
-
-   package new()
-      return
    end
 end
 
@@ -1131,8 +1137,8 @@ class UnmodifiableBuiltinTable(Table)
    # :  `t` - the table to wrap
    #
    public new(t)
-      self.t := t
-      self.def := t[[]]
+      self.t := need_table(t)
+      self.def := tbldflt(t)
       return
    end
 end

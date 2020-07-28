@@ -15,17 +15,11 @@ import gui
 #
 class CanvasTextList(CanvasComponent,TextList)
    public override min_height()
-      # need a smart calculation font height + borders + scrollbar
-      # for now based on constants in gui.icn, guiconst.icn we go with
-      # 14 + 8*2 + 22
-      return 52
+      return scale(50)
    end
  
    public override min_width()
-      # need a smart calculation font height + borders + scrollbar
-      # for now based on constants in gui.icn, guiconst.icn we go with
-      # 14 + 5*2 + 22
-      return 46
+      return scale(50)
    end
 
    #

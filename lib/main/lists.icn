@@ -116,6 +116,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # otherwise values are generated.
    #
    public back_from(i)
+      i := need_integer(i)
       i := cvpos_item(i - 1, size()) | fail
       while i > 0 do {
          suspend at(i)
@@ -250,7 +251,7 @@ class UnmodifiableList(List)
    end
 
    public new(l)
-      self.l := l
+      self.l := need_instance(l, List)
       return
    end
 end
@@ -321,13 +322,15 @@ class BuiltinList(List)
    end
 
    public new(l)
-      /l := []
-      self.l := l
+      self.l := need_list(\l) | []
       return
    end
 end
 
-package class EmptyList(List, SelfClone)
+#
+# An empty list.  An instance of this class is `List.EMPTY_LIST`.
+#
+class EmptyList(List)
    public override at(i)
    end
 
@@ -337,10 +340,6 @@ package class EmptyList(List, SelfClone)
 
    public override get_mode()
       return 0
-   end
-
-   package new()
-      return
    end
 end
 
@@ -368,6 +367,7 @@ class LinkedList(List)
 
    public override insert(i, x)
       local n
+      i := need_integer(i)
       if i <= 0 then
          i := cvpos(i, size()) | fail
       if i = 1 then
@@ -381,6 +381,7 @@ class LinkedList(List)
 
    public override delete(i)
       local n
+      i := need_integer(i)
       if i <= 0 then
          i := cvpos_item(i, size()) | fail
       if i = 1 then
@@ -423,6 +424,7 @@ class LinkedList(List)
 
    public override back_from(i)
       local n
+      i := need_integer(i)
       n := node_at(i - 1) | fail
       repeat {
          suspend n.val
@@ -527,6 +529,7 @@ class LinkedList(List)
    #
    private node_at(i)
       local n
+      i := need_integer(i)
       if i <= 0 then
          i := cvpos_item(i, size()) | fail
       n := nhead
@@ -638,6 +641,7 @@ class DoublyLinkedList(List)
 
    public override back_from(i)
       local n
+      i := need_integer(i)
       n := node_at(i - 1) | fail
       while \n do {
          suspend n.val
@@ -724,7 +728,7 @@ class UnmodifiableBuiltinList(List)
    end
 
    public new(l)
-      self.l := l
+      self.l := need_list(l)
       return
    end
 end
@@ -809,9 +813,9 @@ class SubList(List)
    # `lo` and `hi` as the slice to view.
    #
    public new(other, lo, hi)
-      self.other := other
-      self.lo := lo
-      self.hi := hi
+      self.other := need_instance(other, List)
+      self.lo := need_integer(lo)
+      self.hi := need_integer(hi)
       return
    end
 end

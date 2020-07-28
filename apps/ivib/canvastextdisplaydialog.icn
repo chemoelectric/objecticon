@@ -22,6 +22,7 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
          c.set_contents([])
       else
          c.set_contents(contents.get_contents())
+      c.invalidate_line_height()
    end
 
    private on_ucs_cb()
