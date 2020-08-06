@@ -783,8 +783,6 @@ static int cnv_eint(struct literal *s)
             return numeric_via_string(s) && cnv_eint(s);
         }
     }
-
-    return 0;
 }
 
 static int cnv_int(struct literal *s)
@@ -807,8 +805,6 @@ static int cnv_int(struct literal *s)
             return numeric_via_string(s) && cnv_int(s);
         }
     }
-
-    return 0;
 }
 
 static int cnv_real(struct literal *s)
@@ -826,8 +822,6 @@ static int cnv_real(struct literal *s)
             return numeric_via_string(s) && cnv_real(s);
         }
     }
-
-    return 0;
 }
 
 static int cnv_string(struct literal *s)
@@ -920,8 +914,6 @@ static int cnv_ucs(struct literal *s)
             return 1;
         }
     }
-
-    return 0;
 }
 
 
@@ -963,7 +955,6 @@ static int cnv_cset(struct literal *s)
             return 1;
         }
     }
-    return 0;
 }
 
 static int need_ucs(struct literal *s)

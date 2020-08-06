@@ -203,7 +203,9 @@
    #if OS_SOLARIS
    #include <stropts.h>
    #include <ieeefp.h>
+   #ifndef isfinite
    #define isfinite finite
+   #endif
    #endif
    #if OS_DARWIN
    #include <sys/sysctl.h>
