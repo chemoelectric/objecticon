@@ -5246,8 +5246,6 @@ static int asgn_may_fail(struct lnode *n, int swap)
         default:
             return 1;
     }
-    /* Not reached */
-    return 1;
 }
 
 /*
