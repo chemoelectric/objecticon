@@ -4290,7 +4290,7 @@ function lang_Proc_get_proc_field(c, field)
         if (i < 0)
             fail;
         cf = class0->fields[i];
-        if (!cf->flags & M_Method)
+        if (!(cf->flags & M_Method))
             fail;
         return *cf->field_descriptor;
      }
