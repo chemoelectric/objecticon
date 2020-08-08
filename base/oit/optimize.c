@@ -794,7 +794,7 @@ static int cnv_int(struct literal *s)
         case REAL: {
             /* Same tests as realtobig() that would return a normal int. */
             if (isfinite(s->u.d) && 
-                s->u.d >= Max(MinWord,-Big) && s->u.d <= Min(MaxWord,Big)) {
+                s->u.d >= Max((double)MinWord, -Big) && s->u.d <= Min((double)MaxWord, Big)) {
                 s->type = INTEGER;
                 s->u.i = (word)s->u.d;
                 return 1;
