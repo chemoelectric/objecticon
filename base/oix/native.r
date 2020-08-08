@@ -4287,11 +4287,15 @@ function lang_Proc_get_proc_field(c, field)
             runerr(0);
         CheckField(field);
         i = lookup_class_field(class0, &field, 0);
-        if (i < 0)
+        if (i < 0) {
+            LitWhy("Invalid field");
             fail;
+        }
         cf = class0->fields[i];
-        if (!(cf->flags & M_Method))
+        if (!(cf->flags & M_Method)) {
+            LitWhy("Field not a method");
             fail;
+        }
         return *cf->field_descriptor;
      }
 end

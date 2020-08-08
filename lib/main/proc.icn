@@ -8,11 +8,11 @@ import util(error)
 # function or procedure or method pointer.
 #
 # Additionally, `p` may be a two-element list.  The first element
-# should be a class, the second a field name or number referencing a
-# method.  This enables information about instance, special or private
-# methods to be obtained.  In order to ensure consistency in
-# information about native methods, passing a class in this way will
-# cause it to be initialized if it isn't already.
+# should be a class or object, the second a field name or number
+# referencing a method.  This enables information about instance,
+# special or private methods to be obtained.  In order to ensure
+# consistency in information about native methods, passing a class in
+# this way will cause it to be initialized if it isn't already.
 #
 # Note that methods which are resolved to stub functions may not
 # behave as expected.  These stub functions are used as placeholders
@@ -252,8 +252,9 @@ final abstract class Proc()
    private static arg(p)
       if type(p) == "list" then {
          *p = 2 | runerr("Two-element list expected", p)
-         Class.ensure_initialized(p[1])
-         p := get_proc_field!p | runerr("Class field invalid or not a method", p[2])
+         if type(p[1]) == "class" then
+            Class.ensure_initialized(p[1])
+         p := get_proc_field!p | runerr(&why, p[2])
       }
       return p
    end
