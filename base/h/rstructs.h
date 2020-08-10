@@ -329,11 +329,11 @@ struct dpair {
 struct inline_field_cache {
     union block *class;
 #if WordBits == 64
-    unsigned int index:32;
-    int access:32;
+    uint32_t index;
+    int32_t  access;
 #elif WordBits == 32
-    unsigned int index:16;
-    int access:16;
+    uint16_t index;
+    int16_t access;
 #endif
 };
 
