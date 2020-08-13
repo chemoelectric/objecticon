@@ -1,6 +1,8 @@
 package ipl.functional
 
-import util(State, save_state, need_coexpression)
+import
+   lang(callable),
+   util(State, save_state, need_coexpression)
 
 global _a, _l
 
@@ -57,6 +59,18 @@ end
 #
 procedure exprf(e)
    return Coexpr(e).gen
+end
+
+#
+# This is like `util.need_callable()`, but accepts a co-expression as
+# an alternative value; in this case `exprf` is used to convert the
+# co-expression to a callable.
+#
+procedure need_callable_alt_exprf(x, n)
+   return if type(x) == "co-expression" then
+      exprf(x)
+   else
+      callable(x, n) | runerr("Callable or co-expression expected", x)
 end
 
 #

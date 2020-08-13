@@ -101,10 +101,7 @@ class Connectable()
    #
    public connect(proc, type, pos)
       local l
-      proc := if default.type(proc) == "co-expression" then
-         exprf(proc)
-      else
-         need_callable(proc)
+      proc := need_callable_alt_exprf(proc)
       /pos := 0
       l := copy(member(listeners, type)) | []
       insert(l, pos, last_listener <- Listener(self, proc, type)) | fail
@@ -121,10 +118,7 @@ class Connectable()
    public connect_n(proc, type, pos, n)
       local i
       /n := 1
-      proc := if default.type(proc) == "co-expression" then
-         exprf(proc)
-      else
-         need_callable(proc)
+      proc := need_callable_alt_exprf(proc)
       i := ConnectN(proc, n)
       connect(i.call, type, pos) | fail
       i.x := last_listener
