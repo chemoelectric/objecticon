@@ -150,9 +150,14 @@ function mysql_MySql_get_option(self, option)
       runerr(101, option)
 
    body {
-      const char *str_arg;
-      unsigned int int_arg;
-      bool bool_arg;
+      /* These are initialized here to avoid a (clang) compiler
+       * warning caused by the odd declaration of mysql_get_option(),
+       * whose last arg is "const void *arg", indicating (wrongly)
+       * that the thing it points to isn't modified.
+       */
+      const char *str_arg = NULL;
+      unsigned int int_arg = 0;
+      bool bool_arg = false;
       tended struct descrip result;
       GetSelfMySql();
 

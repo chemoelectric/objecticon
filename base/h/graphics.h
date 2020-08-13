@@ -312,6 +312,8 @@ typedef struct _wdisplay {
   struct _wdisplay *previous, *next;
 } *wdp;
 
+#define ATOM(d, x) ((d)->atoms[ATOM_##x])
+
 struct SharedColor {
    wdp wd;
    XRenderColor color;

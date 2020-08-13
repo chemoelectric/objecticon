@@ -307,7 +307,7 @@ int realtobig(double x, dptr dx)
     if (!isfinite(x))
         return 0;
 
-    if (x >= Max(MinWord,-Big) && x <= Min(MaxWord,Big)) {
+    if (x >= Max((double)MinWord, -Big) && x <= Min((double)MaxWord, Big)) {
         MakeInt((word)x, dx);
         return 1;		/* got lucky; a simple integer suffices */
     }

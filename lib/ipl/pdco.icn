@@ -21,9 +21,10 @@ import
    ipl.lists(lmap, lrotate),
    ipl.numbers(mod1),
    ipl.periodic(repeater),
+   ipl.sort(need_callable_def),
    datastruct(EqSet),
    numbers(Rat),
-   lang(equals, Internal),
+   lang(equals),
    util(save_state, HandlerState, ce_param, need_integer,
         need_ucs, use, need_text, need_callable, same_string_type,
         need_numeric)
@@ -1423,7 +1424,7 @@ end
 package procedure MinMaxImpl(e, cmp, dir)
    local i, v
    cmp := ce_param(cmp) | fail
-   cmp := need_callable(\cmp) | Internal.compare
+   cmp := need_callable_def(cmp)
    v := @e | fail
    while i := @e do {
       if dir * cmp(i, v) > 0 then

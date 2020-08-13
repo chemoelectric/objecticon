@@ -207,7 +207,14 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                        DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
                        ;;
               *solaris* )
-                       DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bdirect"
+                       case $CCVER in
+                             *Sun\ C*)
+                                   DYNAMIC_LIB_LDFLAGS="-G -Wl,-Bdirect"
+                                   ;;
+                             *)
+                                   DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bdirect"
+                                   ;;
+                       esac
                        ;;
               *aix* )
                        DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G -Wl,-bsymbolic"

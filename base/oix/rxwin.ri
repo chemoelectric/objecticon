@@ -237,8 +237,6 @@ static void dump_ximage(XImage *xi)
 
 #endif
 
-#define ATOM(d, x) ((d)->atoms[ATOM_##x])
-
 struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd, int depth)
 {
     struct SharedPicture *res;
@@ -3994,7 +3992,7 @@ void drawstring(wbp w, int x, int y, dptr str)
 }
 
 /* This array must correspond with the NUM_ATOMS and ATOM_xxx constants defined in graphics.h. */
-char *atom_names[NUM_ATOMS] = {
+static char *atom_names[NUM_ATOMS] = {
     "CHARACTER_POSITION",
     "CLIENT_WINDOW",
     "CLIPBOARD",
