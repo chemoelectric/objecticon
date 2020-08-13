@@ -7,6 +7,7 @@ import
    lang(Class, NoCopy),
    posix(System),
    ipl.strings(replace),
+   ipl.pdco(String, Sum),
    ipl.printf
 
 $if _UNIX
@@ -1312,7 +1313,7 @@ abstract class LineBasedInputStream(Stream)
    protected abstract read_line_impl()
 
    public new()
-      self.line := ""
+      line := ""
       return
    end
 end
@@ -1322,7 +1323,7 @@ end
 # writing one line at time, rather than the other way round.
 #
 abstract class LineBasedOutputStream(Stream)
-   private
+   private const
       buff
 
    public override out(s)
@@ -1359,7 +1360,7 @@ abstract class LineBasedOutputStream(Stream)
    end
 
    public new()
-      self.buff := []
+      buff := []
       return
    end
 end
@@ -2167,6 +2168,78 @@ class GeneratorStream(Stream, NoCopy)
    public new(e)
       self.coex := need_coexpression(e)
       self.buff := ""
+      return
+   end
+end
+
+#
+# This is a write-only `Stream` which can be used to accumulate
+# strings in a list, which can then be concatenated together in an
+# efficient loop (see `str()`).  `RamStream` can do the same thing
+# (and more), but this class has the advantage that it doesn't need to
+# be closed, since it uses no external resources (`close()` is a
+# no-op).
+#
+# For example :-
+# ~
+#   f := Accumulator()
+#   f.out("Hello ")
+#   f.write("World")
+#   s := f.str()     # "Hello World\n"
+#   # No need to close() f
+# ~
+#
+class Accumulator(Stream)
+   private const
+      buff
+
+   public override get_mode()
+      return WRITE
+   end
+
+   public override out(s)
+      s := need_string(s)
+      if *s > 0 then
+         put(buff, s)
+      return *s
+   end
+
+   #
+   # Return the accumulated string content.
+   #
+   public str()
+      return String{ !buff }
+   end
+
+   #
+   # Return the length of the accumulated string content (equivalent
+   # to `*str()`).
+   #
+   public len()
+      return Sum{ *!buff }
+   end
+
+   #
+   # Reset the string list buffer.
+   #
+   public clear()
+      default.clear(buff)
+      link
+   end
+
+   #
+   # Combine `str()` and `clear()` into one operation, so the stream
+   # can then be reused for a new accumulation.
+   #
+   public done()
+      local s
+      s := str()
+      clear()
+      return s
+   end
+
+   public new()
+      buff := []
       return
    end
 end
