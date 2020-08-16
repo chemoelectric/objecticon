@@ -159,7 +159,7 @@ regardless of where in the line point is when the TAB command is used.")
   "Default expressions to highlight in `objecticon-mode'.")
 
 ;;;###autoload
-(defun objecticon-mode ()
+(define-derived-mode objecticon-mode prog-mode "Object Icon"
   "Major mode for editing Object Icon code.
 Expression and list commands understand all Object Icon brackets.
 Tab indents for Object Icon code.
@@ -191,13 +191,23 @@ Variables controlling indentation style:
 
 Turning on Object Icon mode calls the value of the variable `objecticon-mode-hook'
 with no args, if that value is non-nil."
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map objecticon-mode-map)
-  (setq major-mode 'objecticon-mode)
-  (setq mode-name "Object Icon")
-  (setq local-abbrev-table objecticon-mode-abbrev-table)
-  (set-syntax-table objecticon-mode-syntax-table)
+
+  ;; The above macro creates an objecticon-mode function which
+  ;; does the following things (see derived.el) :-
+  ;;
+  ;;    Sets the key map:
+  ;;         (use-local-map objecticon-mode-map)
+  ;;    Sets the abbrev table:
+  ;;         (setq local-abbrev-table objecticon-mode-abbrev-table)
+  ;;    Sets the syntax table:
+  ;;         (set-syntax-table objecticon-mode-syntax-table)
+  ;;    Sets the major mode and mode name
+  ;;         (setq major-mode 'objecticon-mode)
+  ;;         (setq mode-name "Object Icon")
+  ;;    Runs the body code below.
+  ;;    Runs the mode hooks (after the body code):
+  ;;         (run-mode-hooks 'objecticon-mode-hook)
+  ;;
   (setq-local paragraph-start (concat "$\\|" page-delimiter))
   (setq-local paragraph-separate paragraph-start)
   (setq-local indent-line-function 'objecticon-indent-line)
@@ -216,8 +226,7 @@ with no args, if that value is non-nil."
   (setq font-lock-defaults
 	'((objecticon-font-lock-keywords
            objecticon-font-lock-keywords-1 objecticon-font-lock-keywords-2)
-	  nil nil nil nil))
-  (run-hooks 'objecticon-mode-hook))
+	  nil nil nil nil)))
 
 ;; This is used by indent-for-comment to decide how much to
 ;; indent a comment in Object Icon code based on its context.
@@ -721,5 +730,7 @@ Returns nil if line starts inside a string, t if in a comment."
          ;; Indent next line
          (objecticon-indent-line))
       (newline)))
+
+(provide 'objecticon-mode)
 
 ;;; objecticon-mode.el ends here
