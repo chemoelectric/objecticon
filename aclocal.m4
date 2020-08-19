@@ -234,7 +234,7 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                        dnl No flag needed
                        ;;
               *aix* )
-                       DYNAMIC_EXPORT_LDFLAGS="-Wl,-brtl -Wl,-bexpall "
+                       DYNAMIC_EXPORT_LDFLAGS="-Wl,-brtl -Wl,-bexpall"
                        ;;
               *)
                        DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
