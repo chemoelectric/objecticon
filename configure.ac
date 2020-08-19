@@ -56,7 +56,8 @@ case $CCVER in
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
     *clang*) CFLAGS="$CFLAGS -Wall -Wno-unused-const-variable -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations -Wno-misleading-indentation" ;;
     *Sun\ C*) CFLAGS="$CFLAGS -errtags=yes -erroff=E_STATEMENT_NOT_REACHED -erroff=E_INVALID_CAST_EXPRESSION -erroff=E_ASSIGNMENT_TYPE_MISMATCH" ;;
-    *IBM\ XL*) CFLAGS="$CFLAGS -O0 -Wno-tautological-compare" ;;
+    *IBM\ XL*) if test "$CFLAGS" = "-g -O2" ; then CFLAGS=-g ; fi
+               CFLAGS="$CFLAGS -O0 -Wno-tautological-compare" ;;
 esac
 
 AX_LIB_SOCKET_NSL()
