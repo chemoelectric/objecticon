@@ -226,10 +226,24 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                        esac
                        ;;
               *aix* )
-                       DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G -Wl,-bsymbolic"
+                       case $CCVER in
+                             *IBM\ XL*)
+                                   DYNAMIC_LIB_LDFLAGS="-qmkshrobj -Wl,-G -Wl,-bsymbolic"
+                                   ;;
+                             *)
+                                   DYNAMIC_LIB_LDFLAGS="-shared -Wl,-G -Wl,-bsymbolic"
+                                   ;;
+                       esac
                        ;;
               *)
-                       DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bsymbolic"
+                       case $CCVER in
+                             *IBM\ XL*)
+                                   DYNAMIC_LIB_LDFLAGS="-qmkshrobj -Wl,-Bsymbolic"
+                                   ;;
+                             *)
+                                   DYNAMIC_LIB_LDFLAGS="-shared -Wl,-Bsymbolic"
+                                   ;;
+                       esac
                        ;;
            esac
         fi
