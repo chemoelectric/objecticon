@@ -1,7 +1,16 @@
-#
-# Check for -lnsl and -lsocket (needed on solaris).
-# http://www.nongnu.org/autoconf-archive/ax_lib_socket_nsl.html
-#
+dnl
+dnl Run a program, logging the command and output to just the log file.
+dnl
+AC_DEFUN([AX_RUN_PROG],
+[
+        _AS_ECHO_LOG([$1])
+        $1 >&AS_MESSAGE_LOG_FD 2>&1
+])
+
+dnl
+dnl Check for -lnsl and -lsocket (needed on solaris).
+dnl http://www.nongnu.org/autoconf-archive/ax_lib_socket_nsl.html
+dnl
 AC_DEFUN([AX_LIB_SOCKET_NSL],
 [
         AC_SEARCH_LIBS([gethostbyname], [nsl])
@@ -244,7 +253,7 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
 
         dnl Create a shared library, dloadtest.so, to use with this test.
         dnl If this fails, the main test will surely fail.
-        rm -f ./dloadtest.so ./conftest.o
+        rm -f ./dloadtest.so ./conftest.o ./conftest.c
         AC_LANG_CONFTEST(
            [AC_LANG_SOURCE([[extern int func1(int); 
                              extern int var1;
@@ -252,9 +261,10 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                              int var2 = 7;
                              int func3(int x) { return 2*x*var1*var2*func2()*func1(20); }]])]
          )
-        $CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
-        $CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
-        rm -f ./conftest.o
+        _AS_ECHO_LOG([Trying to create dloadtest.so (2 commands follow)])
+        AX_RUN_PROG([$CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c])
+        AX_RUN_PROG([$CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o])
+        rm -f ./conftest.o ./conftest.c
 
         dnl Now try to link a program with the shared library, and have each half call the other.
         my_save_ldflags="$LDFLAGS"
