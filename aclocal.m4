@@ -252,8 +252,8 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                              int var2 = 7;
                              int func3(int x) { return 2*x*var1*var2*func2()*func1(20); }]])]
          )
-        $ac_ct_CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
-        $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
+        $CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
+        $CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
         rm -f ./conftest.o
 
         dnl Now try to link a program with the shared library, and have each half call the other.
