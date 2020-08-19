@@ -2,6 +2,9 @@
 #passthru #undef list_push
 #passthru #include "mysql.h"
 
+typedef unsigned long unsigned_long;
+static convert_to_macro(unsigned_long)
+
 static void field_to_list(MYSQL_FIELD *field, dptr res);
 
 #begdef GetSelfMySql()
@@ -463,7 +466,7 @@ function mysql_MySql_connect(self, host, user, passwd, db,
       tended char *c_db;
       unsigned int c_port;
       tended char *c_unix_socket;
-      unsigned int c_client_flag;
+      unsigned long c_client_flag;
       GetSelfMySql();
 
       if (is:null(host))
@@ -503,10 +506,10 @@ function mysql_MySql_connect(self, host, user, passwd, db,
       if (is:null(client_flag))
           c_client_flag = 0;
       else {
-          word w;
-          if (!cnv:C_integer(client_flag, w))
+          if (!cnv:integer(client_flag, client_flag))
               runerr(101, client_flag);
-          c_client_flag = (unsigned int)w;
+          if (!convert_to_unsigned_long(&client_flag, &c_client_flag))
+              runerr(0);
       }
 
       if (!mysql_real_connect(self_mysql, c_host, c_user, c_passwd, 
