@@ -56,7 +56,8 @@ case $CCVER in
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
     *clang*) CFLAGS="$CFLAGS -Wall -Wno-unused-const-variable -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations -Wno-misleading-indentation" ;;
     *Sun\ C*) CFLAGS="$CFLAGS -errtags=yes -erroff=E_STATEMENT_NOT_REACHED -erroff=E_INVALID_CAST_EXPRESSION -erroff=E_ASSIGNMENT_TYPE_MISMATCH" ;;
-    *IBM\ XL*) CFLAGS="$CFLAGS -O0 -Wno-tautological-compare" ;;
+    *IBM\ XL*) if test "$CFLAGS" = "-g -O2" ; then CFLAGS=-g ; fi
+               CFLAGS="$CFLAGS -O0 -Wno-tautological-compare" ;;
 esac
 
 AX_LIB_SOCKET_NSL()
@@ -150,52 +151,51 @@ AC_CONFIG_FILES([Makefile:config/files/Makefile])
 AC_CONFIG_FILES([paths.sh:config/files/paths.sh])
 AC_CONFIG_FILES([base/h/version.h:config/files/base/h/version.h])
 if test -f base/h/define.h ; then
-echo base/h/define.h already exists and is left untouched
+AC_MSG_NOTICE([base/h/define.h already exists and is left untouched])
 else
 AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h])
 fi
 AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h])
 AC_OUTPUT
-echo "Summary:-"
+AC_MSG_NOTICE([Summary:-])
 if test "$found_x11" = yes; then
-        echo "X11 graphics           : yes"
+        AC_MSG_NOTICE([X11 graphics           : yes])
         if test "$found_jpeg" = yes; then
-                echo "jpeg library           : yes"
+                AC_MSG_NOTICE([jpeg library           : yes])
         else
-                echo "jpeg library           : no"
+                AC_MSG_NOTICE([jpeg library           : no])
         fi
         if test -z "$found_png"; then
-                echo "png library            : no"
+                AC_MSG_NOTICE([png library            : no])
         else
-                echo "png library            : yes"
+                AC_MSG_NOTICE([png library            : yes])
         fi
 else
-        echo "X11 graphics           : no"
+        AC_MSG_NOTICE([X11 graphics           : no])
 fi
 if test "$found_zlib" = yes; then
-        echo "zlib compression       : yes"
+        AC_MSG_NOTICE([zlib compression       : yes])
 else
-        echo "zlib compression       : no"
+        AC_MSG_NOTICE([zlib compression       : no])
 fi
 if test "$HAVE_LIBDL" = yes; then
-        echo "dynamic linking        : yes"
+        AC_MSG_NOTICE([dynamic linking        : yes])
         if test -z "$MYSQL_VERSION"; then 
-                echo "mysql lib              : no"
+                AC_MSG_NOTICE([mysql lib              : no])
         else
-                echo "mysql lib              : yes"
+                AC_MSG_NOTICE([mysql lib              : yes])
         fi
         if test -z "$CAIRO_VERSION"; then
-                echo "cairo lib              : no"
+                AC_MSG_NOTICE([cairo lib              : no])
         else
-                echo "cairo lib              : yes"
+                AC_MSG_NOTICE([cairo lib              : yes])
         fi
         if test -z "$OPENSSL_VERSION"; then
-                echo "ssl lib                : no"
+                AC_MSG_NOTICE([ssl lib                : no])
         else
-                echo "ssl lib                : yes"
+                AC_MSG_NOTICE([ssl lib                : yes])
         fi
 else
-        echo "dynamic linking        : no"
+        AC_MSG_NOTICE([dynamic linking        : no])
 fi
-echo
-echo "When reconfiguring, please remember to run 'make clean' before 'make'."
+AC_MSG_NOTICE([When reconfiguring, please remember to run 'make clean' before 'make'.])

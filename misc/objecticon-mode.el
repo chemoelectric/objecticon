@@ -159,7 +159,7 @@ regardless of where in the line point is when the TAB command is used.")
   "Default expressions to highlight in `objecticon-mode'.")
 
 ;;;###autoload
-(defun objecticon-mode ()
+(define-derived-mode objecticon-mode prog-mode "Object Icon"
   "Major mode for editing Object Icon code.
 Expression and list commands understand all Object Icon brackets.
 Tab indents for Object Icon code.
@@ -191,39 +191,42 @@ Variables controlling indentation style:
 
 Turning on Object Icon mode calls the value of the variable `objecticon-mode-hook'
 with no args, if that value is non-nil."
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map objecticon-mode-map)
-  (setq major-mode 'objecticon-mode)
-  (setq mode-name "Object Icon")
-  (setq local-abbrev-table objecticon-mode-abbrev-table)
-  (set-syntax-table objecticon-mode-syntax-table)
-  (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "$\\|" page-delimiter))
-  (make-local-variable 'paragraph-separate)
-  (setq paragraph-separate paragraph-start)
-  (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'objecticon-indent-line)
-  (make-local-variable 'require-final-newline)
-  (setq require-final-newline t)
-  (make-local-variable 'comment-start)
-  (setq comment-start "# ")
-  (make-local-variable 'comment-end)
-  (setq comment-end "")
-  (make-local-variable 'comment-column)
-  (setq comment-column 32)
-  (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip "# *")
-  (make-local-variable 'comment-indent-function)
-  (setq comment-indent-function 'objecticon-comment-indent)
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'objecticon-fill-paragraph)
+
+  ;; The above macro creates an objecticon-mode function which
+  ;; does the following things (see derived.el) :-
+  ;;
+  ;;    Sets the key map:
+  ;;         (use-local-map objecticon-mode-map)
+  ;;    Sets the abbrev table:
+  ;;         (setq local-abbrev-table objecticon-mode-abbrev-table)
+  ;;    Sets the syntax table:
+  ;;         (set-syntax-table objecticon-mode-syntax-table)
+  ;;    Sets the major mode and mode name
+  ;;         (setq major-mode 'objecticon-mode)
+  ;;         (setq mode-name "Object Icon")
+  ;;    Runs the body code below.
+  ;;    Runs the mode hooks (after the body code):
+  ;;         (run-mode-hooks 'objecticon-mode-hook)
+  ;;
+  (setq-local paragraph-start (concat "$\\|" page-delimiter))
+  (setq-local paragraph-separate paragraph-start)
+  (setq-local indent-line-function 'objecticon-indent-line)
+  (setq-local require-final-newline t)
+  (setq-local comment-start "# ")
+  (setq-local comment-end "")
+  (setq-local comment-column 32)
+  (setq-local comment-start-skip "#+ *")
+  (setq-local parse-sexp-ignore-comments t)
+  (setq-local parse-sexp-lookup-properties t)
+  (setq-local paragraph-start (concat "$\\|" page-delimiter))
+  (setq-local paragraph-separate paragraph-start)
+  (setq-local paragraph-ignore-fill-prefix t)
+  (setq-local comment-indent-function 'objecticon-comment-indent)
   ;; font-lock support
   (setq font-lock-defaults
 	'((objecticon-font-lock-keywords
            objecticon-font-lock-keywords-1 objecticon-font-lock-keywords-2)
-	  nil nil nil nil))
-  (run-hooks 'objecticon-mode-hook))
+	  nil nil nil nil)))
 
 ;; This is used by indent-for-comment to decide how much to
 ;; indent a comment in Object Icon code based on its context.
@@ -728,207 +731,6 @@ Returns nil if line starts inside a string, t if in a comment."
          (objecticon-indent-line))
       (newline)))
 
-;; The following fill functions adapted from python mode :-
-;; http://courses.csail.mit.edu/6.01/spring08/software/python-mode.el
-;;
-
-(defun objecticon-fill-comment (&optional justify)
-  "Fill the comment paragraph around point"
-  (let (;; Non-nil if the current line contains a comment.
-	has-comment
-
-	;; If has-comment, the appropriate fill-prefix for the comment.
-	comment-fill-prefix)
-
-    ;; Figure out what kind of comment we are looking at.
-    (save-excursion
-      (beginning-of-line)
-      (cond
-        ;; A line with nothing but a comment on it?
-        ((looking-at "[ \t]*#[# \t]*")
-         (setq has-comment t
-               comment-fill-prefix (buffer-substring (match-beginning 0)
-                                                     (match-end 0))))
-
-        ;; A line with some code, followed by a comment? Remember that the hash
-        ;; which starts the comment shouldn't be part of a string or character.
-        ((progn
-           (while (not (looking-at "#\\|$"))
-             (skip-chars-forward "^#\n\"'\\")
-             (cond
-               ((eq (char-after (point)) ?\\) (forward-char 2))
-               ((memq (char-after (point)) '(?\" ?')) (forward-sexp 1))))
-           (looking-at "#+[\t ]*"))
-         (setq has-comment t)
-         (setq comment-fill-prefix
-               (concat (make-string (current-column) ? )
-                       (buffer-substring (match-beginning 0) (match-end 0)))))))
-
-    (if (not has-comment)
-	(fill-paragraph justify)
-
-        ;; Narrow to include only the comment, and then fill the region.
-        (save-restriction
-          (narrow-to-region
-
-           ;; Find the first line we should include in the region to fill.
-           (save-excursion
-             (while (and (zerop (forward-line -1))
-                         (looking-at "^[ \t]*#")))
-
-             ;; We may have gone to far.  Go forward again.
-             (or (looking-at "^[ \t]*#")
-                 (forward-line 1))
-             (point))
-
-           ;; Find the beginning of the first line past the region to fill.
-           (save-excursion
-             (while (progn (forward-line 1)
-                           (looking-at "^[ \t]*#")))
-             (point)))
-
-          ;; Lines with only hashes on them can be paragraph boundaries.
-          (let ((paragraph-start (concat paragraph-start "\\|[ \t#]*$"))
-                (paragraph-separate (concat paragraph-separate "\\|[ \t#]*$"))
-                (fill-prefix comment-fill-prefix))
-            (fill-paragraph justify))))
-    t))
-
-
-(defun objecticon-fill-string (start &optional justify)
-  "Fill the paragraph around (point) in the string starting at start"
-  ;; basic strategy: narrow to the string and call the default
-  ;; implementation
-  (let (;; the start of the string's contents
-	string-start
-	;; the end of the string's contents
-	string-end
-	;; length of the string's delimiter
-	delim-length
-	;; The string delimiter
-	delim
-	)
-
-    (save-excursion
-      (goto-char start)
-      (if (looking-at "\\('''\\|\"\"\"\\|'\\|\"\\)\\\\?\n?")
-	  (setq string-start (match-end 0)
-		delim-length (- (match-end 1) (match-beginning 1))
-		delim (buffer-substring-no-properties (match-beginning 1)
-						      (match-end 1)))
-          (error "The parameter start is not the beginning of a python string"))
-
-      ;; if the string is the first token on a line and doesn't start with
-      ;; a newline, fill as if the string starts at the beginning of the
-      ;; line. this helps with one line docstrings
-      (save-excursion
-	(beginning-of-line)
-	(and (/= (char-before string-start) ?\n)
-	     (looking-at (concat "[ \t]*" delim))
-	     (setq string-start (point))))
-
-      (forward-sexp (if (= delim-length 3) 2 1))
-
-      ;; with both triple quoted strings and single/double quoted strings
-      ;; we're now directly behind the first char of the end delimiter
-      ;; (this doesn't work correctly when the triple quoted string
-      ;; contains the quote mark itself). The end of the string's contents
-      ;; is one less than point
-      (setq string-end (1- (point))))
-
-    ;; Narrow to the string's contents and fill the current paragraph
-    (save-restriction
-      (narrow-to-region string-start string-end)
-      (let ((ends-with-newline (= (char-before (point-max)) ?\n)))
-	(fill-paragraph justify)
-	(if (and (not ends-with-newline)
-		 (= (char-before (point-max)) ?\n))
-	    ;; the default fill-paragraph implementation has inserted a
-	    ;; newline at the end. Remove it again.
-	    (save-excursion
-	      (goto-char (point-max))
-	      (delete-char -1)))))
-
-    ;; return t to indicate that we've done our work
-    t))
-
-(defun objecticon-fill-paragraph (&optional justify)
-  "Like \\[fill-paragraph], but handle Python comments and strings.
-If any of the current line is a comment, fill the comment or the
-paragraph of it that point is in, preserving the comment's indentation
-and initial `#'s.
-If point is inside a string, narrow to that string and fill.
-"
-  (interactive "P")
-  (let* ((bod (objecticon-point 'bod))
-	 (pps (parse-partial-sexp bod (point))))
-    (cond
-      ;; are we inside a comment or on a line with only whitespace before
-      ;; the comment start?
-      ((or (nth 4 pps)
-           (save-excursion (beginning-of-line) (looking-at "[ \t]*#")))
-       (objecticon-fill-comment justify))
-      ;; are we inside a string?
-      ((nth 3 pps)
-       (objecticon-fill-string (nth 8 pps)))
-      ;; are we at the opening quote of a string, or in the indentation?
-      ((save-excursion
-         (forward-word 1)
-         (eq (objecticon-in-literal) 'string))
-       (save-excursion
-         (objecticon-fill-string (objecticon-point 'boi))))
-      ;; are we at or after the closing quote of a string?
-      ((save-excursion
-         (backward-word 1)
-         (eq (objecticon-in-literal) 'string))
-       (save-excursion
-         (objecticon-fill-string (objecticon-point 'boi))))
-      ;; otherwise use the default
-      (t
-       (fill-paragraph justify)))))
-
-(defun objecticon-in-literal ()
-  "Return non-nil if point is in a Icon literal (a comment or string)."
-  ;; This is the version used for non-XEmacs, which has a nicer
-  ;; interface.
-  ;;
-  ;; WARNING: Watch out for infinite recursion.
-  (let* ((lim (objecticon-point 'bod))
-	 (state (parse-partial-sexp lim (point))))
-    (cond
-     ((nth 3 state) 'string)
-     ((nth 4 state) 'comment)
-     (t nil))))
-;; XEmacs has a built-in function that should make this much quicker.
-(if (fboundp 'buffer-syntactic-context)
-    (defalias 'objecticon-in-literal 'buffer-syntactic-context))
-
-(defsubst objecticon-point (position)
-  "Returns the value of point at certain commonly referenced POSITIONs.
-POSITION can be one of the following symbols:
-
-  bol  -- beginning of line
-  eol  -- end of line
-  bod  -- beginning of def or class
-  eod  -- end of def or class
-  bob  -- beginning of buffer
-  eob  -- end of buffer
-  boi  -- back to indentation
-
-This function does not modify point or mark."
-  (let ((here (point)))
-    (cond
-      ((eq position 'bol) (beginning-of-line))
-      ((eq position 'eol) (end-of-line))
-      ((eq position 'bod) (beginning-of-objecticon-defun))
-      ((eq position 'eod) (end-of-objecticon-defun))
-      ((eq position 'bob) (beginning-of-buffer))
-      ((eq position 'eob) (end-of-buffer))
-      ((eq position 'boi) (back-to-indentation))
-      (t (error "Unknown buffer position requested: %s" position))
-      )
-    (prog1
-	(point)
-      (goto-char here))))
+(provide 'objecticon-mode)
 
 ;;; objecticon-mode.el ends here
