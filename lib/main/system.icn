@@ -1,8 +1,8 @@
 package posix
 
 import 
-   io(Files),
-   util(error)
+   io,
+   util
 
 final abstract class System()
    # This provides a slightly easier to use interface to `execve`.
@@ -130,7 +130,28 @@ final abstract class System()
    # Get current working directory of the given process
 $if _SOLARIS
    public static getcwd(pid)
-      return Files.readlink("/proc/" || pid || "/path/cwd") | error("No such pid or permission denied")
+      return Files.readlink("/proc/" || need_integer(pid, 0) || "/path/cwd") | error("No such pid or permission denied")
+   end
+$elsif _BSD
+   public static getcwd(pid)
+      local s, f
+      static kind
+      initial
+         kind := uname().sysname
+      pid := util.need_integer(pid, 0)
+      case kind of {
+         "OpenBSD": {
+            s := use {
+               f := ProgInputStream("ps", ["-p", pid, "-o", "cwd"]),
+               f.read_all()
+            } | fail
+            return (*s > 5 &
+                    s ? 2(="CWD\n", tab(-1), ="\n")) | error("No such pid or permission denied")
+         }
+         default: {
+            return Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")
+         }
+      }
    end
 $elsif _DARWIN
    public static native getcwd(pid)
@@ -140,7 +161,7 @@ $elsif _MS_WIN32
    end
 $else
    public static getcwd(pid)
-      return Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")
+      return Files.readlink("/proc/" || need_integer(pid, 0) || "/cwd") | error("No such pid or permission denied")
    end
 $endif
 end
