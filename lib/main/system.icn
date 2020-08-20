@@ -138,7 +138,7 @@ $elsif _BSD
       static kind
       initial
          kind := uname().sysname
-      pid := util.need_integer(pid, 0)
+      pid := need_integer(pid, 0)
       case kind of {
          "OpenBSD": {
             s := use {
