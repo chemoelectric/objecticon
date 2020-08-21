@@ -191,8 +191,8 @@ end
 #
 # A helpful function for descending through a structure (`v`) of lists
 # and tables returned by json parsing.  The list `a` gives the item to
-# select at each level.  Lists must match integer selectors and tables
-# must have the exact selector key.  For example :-
+# select at each level.  Lists must match integer indices and tables
+# must have the exact key.  For example :-
 #
 # ~
 #    # Typical parse output
@@ -200,17 +200,18 @@ end
 #    walk(v, 5,"x")        # Gives 2
 # ~
 #
+# If the list of selectors doesn't lead to an element, then the
+# procedure fails, setting `&why` to indicate where the search ended.
+#
 procedure walk(v, a[])
    local k
    every k := !a do {
       case type(v) of {
-         "table": {
-            v := member(v, k) | fail
-         }
-         "list": {
-            (type(k) == "integer" & v := v[k]) | fail
-         }
-         default: fail
+         "table":
+            v := member(v, k) | return error("Missed table key: " || k)
+         "list":
+            (type(k) == "integer" & v := v[k]) | return error("Missed list index: " || k)
+         default: return error("End of structure reached")
       }
    }
    return v
