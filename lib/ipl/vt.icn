@@ -2057,7 +2057,7 @@ class Vt(LineBasedScrollArea, MenuMode)
                   }
 
                   if \mark_y & 
-                     ((mark_y <= i <= cursor_y) | (mark_y >= i >= cursor_y)) &
+                     ((mark_y <= i <= cursor_y) | (mark_y >= i >= cursor_y))\1 &
                      n := line_len(row.l) &
                      (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
                       Range(1, 1 + (0 < n))

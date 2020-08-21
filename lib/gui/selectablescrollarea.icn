@@ -944,7 +944,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             &null
          cur := if i = \self.cursor then {
             # cf should_draw_focus() in Component.
-            if (\always_show_focus_cursor_flag | has_focus())  & is_unshaded() &
+            if (\always_show_focus_cursor_flag | has_focus())\1  & is_unshaded() &
                    (\parent_dialog).is_unblocked() & (\parent_dialog).is_focus_in() then
                "f"
             else

@@ -703,7 +703,7 @@ $endif
             if match(f[1], path) then {
                every c := (!sort(f[2]))[2] do {
                   t := c.expires
-                  if (/t | t.after(now)) &
+                  if (/t | t.after(now))\1 &
                      (/c.secure | request.url.get_scheme() == "https")
                   then {
                      if *s > 0 then
