@@ -14,7 +14,7 @@ dnl
 AC_DEFUN([AX_CHECK_SIZEOF],
 [
         AC_CHECK_SIZEOF([$1])
-        if test $ac_cv_sizeof_$2 -eq 0; then
+        if test "$ac_cv_sizeof_$2" -eq 0; then
            AC_MSG_ERROR([Couldn't calculate sizeof($1) - can't compile without it.
 See config.log for possible errors.])
         fi
