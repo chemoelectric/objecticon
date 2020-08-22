@@ -110,7 +110,7 @@ AC_SUBST([CYGWIN])
 AX_CHECK_SIZEOF(short, short)
 AX_CHECK_SIZEOF(int, int)
 AX_CHECK_SIZEOF(long, long)
-AX_CHECK_SIZEOF(void *, void_p)
+AX_CHECK_SIZEOF(void*, voidp)
 AX_CHECK_SIZEOF(double, double)
 AX_CHECK_SIZEOF(long long, long_long)
 
