@@ -8,6 +8,19 @@ AC_DEFUN([AX_RUN_PROG],
 ])
 
 dnl
+dnl Like AC_CHECK_SIZEOF(), but stop if the result is 0 (an error),
+dnl rather than ploughing on pointlessly.
+dnl
+AC_DEFUN([AX_CHECK_SIZEOF],
+[
+        AC_CHECK_SIZEOF([$1])
+        if test $ac_cv_sizeof_$2 -eq 0; then
+           AC_MSG_ERROR([Couldn't calculate sizeof($1) - can't compile without it.
+See config.log for possible errors.])
+        fi
+])
+
+dnl
 dnl Check for -lnsl and -lsocket (needed on solaris).
 dnl http://www.nongnu.org/autoconf-archive/ax_lib_socket_nsl.html
 dnl

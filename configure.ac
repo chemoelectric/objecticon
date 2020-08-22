@@ -78,7 +78,7 @@ AX_CHECK_TIOCSCTTY()
 AX_CHECK_ZLIB()
 AC_SEARCH_LIBS(sin, [m],,
    [
-    AC_MSG_ERROR([*** Couldn't find the math library - can't compile without it.])
+    AC_MSG_ERROR([Couldn't find the math library - can't compile without it.])
    ])
 
 if test "$HAVE_LIBDL" = yes; then
@@ -107,12 +107,12 @@ AC_STRUCT_TIMEZONE()
 AX_STRUCT_TIMEZONE_GMTOFF()
 AC_CYGWIN()
 AC_SUBST([CYGWIN])
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(void*)
-AC_CHECK_SIZEOF(double)
-AC_CHECK_SIZEOF(long long)
+AX_CHECK_SIZEOF(short, short)
+AX_CHECK_SIZEOF(int, int)
+AX_CHECK_SIZEOF(long, long)
+AX_CHECK_SIZEOF(void *, void_p)
+AX_CHECK_SIZEOF(double, double)
+AX_CHECK_SIZEOF(long long, long_long)
 
 AX_CHECK_UNSETENV_RETURNS_INT()
 AX_CHECK_DOUBLE_HAS_WORD_ALIGNMENT()
