@@ -1345,13 +1345,13 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private static split_upto(r, j, pad)
-      local k, t, m, l
+      local k, t, m, l, a
       l := r.l
       m := []
       k := 1
-      while j >= *l[k].s do {
+      while j >= (a := *l[k].s) do {
          put(m, l[k])
-         j -:= *l[k].s
+         j -:= a
          k +:= 1
       }
       if j > 0 then {
@@ -1365,11 +1365,11 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private static split_from(r, j, m)
-      local k, t, l
+      local k, t, l, a
       l := r.l
       k := 1
-      while j >= *l[k].s do {
-         j -:= *l[k].s
+      while j >= (a := *l[k].s) do {
+         j -:= a
          k +:= 1
       }
       /m := []
