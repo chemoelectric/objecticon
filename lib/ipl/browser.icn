@@ -199,7 +199,11 @@ class HttpRequestHelperImpl(HttpRequestHelper)
 end
 
 class Cache()
-   private t, size, id
+   private const
+      t
+   private
+      size,
+      id
 
    public set_size(x)
       self.size := x
@@ -665,8 +669,14 @@ class HttpSubWorker(SubWorker)
 end
 
 class Worker()
+   public const
+      pool,
+      task
    private readable
-      pool, httpc, cancelled, req, task, sub_worker
+      httpc,
+      cancelled,
+      req,
+      sub_worker
 
    public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
@@ -914,13 +924,14 @@ end
 # A pool of `Worker`s.
 #
 class WorkerPool()
-   private
+   private const
       queue,
       workers
    package
       req_worker         # table mapping Req to Worker
+   public const
+      owner
    private readable
-      owner,
       active,
       log_file,
       cookies,
@@ -992,10 +1003,7 @@ class WorkerPool()
    end
 
    public queue_size()
-      local i
-      i := 0
-      every i +:= *!queue
-      return i
+      return Sum{ *!queue }
    end
 
    package queue_get()
@@ -2819,18 +2827,20 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private
       ui,
       shared_worker_pool_flag,
-      status_ticker,
       maps,
       datalists,
       forms,
       form_tab_children,
-      scroll_ticker,
       scroll_ticker_interval,
       h_direction,
       v_direction,
-      primary_selection_owner,
-      outermost_border,
-      tidy_cache_task
+      outermost_border
+
+   private const
+      status_ticker,
+      scroll_ticker,
+      tidy_cache_task,
+      primary_selection_owner
 
    private readable
       history,
