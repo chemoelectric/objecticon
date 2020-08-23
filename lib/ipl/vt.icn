@@ -215,16 +215,18 @@ end
 # A VT emulator.
 #
 class Vt(LineBasedScrollArea, MenuMode)
+   private const
+      scroll_ticker,
+      cursor_ticker,
+      primary_selection_owner
+
    private
-      primary_selection_owner,
       ui,                         # The VtUI instance providing external functionality.
       contents,                   # List of Rows
       tab_stops,                  # Set of column numbers.
       custom_keys,                # KeyTable for custom key settings.
-      cursor_ticker,
       cursor_on,
       going_up,                   # Selection scrolling direction
-      scroll_ticker,
       scroll_ticker_interval,
       highlight,                  # Link clicked on (shown red).
       last_highlight,             # Link last clicked, shown with a dotted rectangle
