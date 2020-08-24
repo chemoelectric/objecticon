@@ -187,7 +187,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
       typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
       typedef int XPointDouble, XFixed, XSelectionRequestEvent, XSelectionClearEvent;
-      typedef int XClientMessageEvent, XftFont, FcFontSet;
+      typedef int XClientMessageEvent, XftFont, FcFontSet, FcCharSet;
    #endif				/* XWindows */
 #endif					/* Graphics */
 

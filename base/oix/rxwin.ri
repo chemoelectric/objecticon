@@ -4017,6 +4017,7 @@ static XftFont *fallback(wbp w, int ch)
          int spacing;
          FcPattern *base = FcNameParse((FcChar8 *)font->name);
          MemProtect(font->fbpatterns = FcFontSetCreate());
+         MemProtect(font->fbcoverage = FcCharSetCreate());
          if (!base)
              return font->fsp;
 
@@ -4030,7 +4031,7 @@ static XftFont *fallback(wbp w, int ch)
              FcPatternAddInteger(base, FC_CHAR_WIDTH, font->fsp->max_advance_width);
          FcConfigSubstitute(NULL, base, FcMatchPattern);
          FcDefaultSubstitute(base);
-         sortedFonts = FcFontSort(NULL, base, FcTrue, NULL, &status);
+         sortedFonts = FcFontSort(NULL, base, FcTrue, &font->fbcoverage, &status);
          if (!sortedFonts) {
              FcPatternDestroy(base);
              return font->fsp;
@@ -4053,22 +4054,25 @@ static XftFont *fallback(wbp w, int ch)
          font->fbfonts = safe_zalloc(font->fbpatterns->nfont * sizeof(XftFont *));
     }
 
-    /* Now font->fbpatterns has the fallback font patterns list
-     *  now search for a font in that list that has ch in it.
+    /* Now font->fbpatterns has the fallback font patterns list, and
+     * font->fbcoverage has the set of characters in those fonts.
      */
-    for (i = 0; i < font->fbpatterns->nfont; i++) {
-        if (!font->fbfonts[i]) {
-            XftFont *f;
-            f = XftFontOpenPattern(wd->display, font->fbpatterns->fonts[i]);
-            /* I don't know if this can happen, but if it does, avoid
-             * leaving a gap in the array, and repeatedly retrying the
-             * open. */
-            if (!f)
-                f = font->fsp;
-            font->fbfonts[i] = f;
+    if (FcCharSetHasChar(font->fbcoverage, ch)) {
+        /* ch should be in the list somewhere. */
+        for (i = 0; i < font->fbpatterns->nfont; i++) {
+            if (!font->fbfonts[i]) {
+                XftFont *f;
+                f = XftFontOpenPattern(wd->display, font->fbpatterns->fonts[i]);
+                /* I don't know if this can happen, but if it does, avoid
+                 * leaving a gap in the array, and repeatedly retrying the
+                 * open. */
+                if (!f)
+                    f = font->fsp;
+                font->fbfonts[i] = f;
+            }
+            if (XftGlyphExists(wd->display, font->fbfonts[i], ch))
+                return font->fbfonts[i];
         }
-        if (XftGlyphExists(wd->display, font->fbfonts[i], ch))
-            return font->fbfonts[i];
     }
 
     /* Nothing found */
