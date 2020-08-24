@@ -2019,6 +2019,9 @@ $endif
          tty.close()
          Files.chdir(cwd)
          Files.bulk_close(50)
+$if _LINUX
+         system("stty iutf8")
+$endif
          System.exec(sh, shell_args, env) | stop(&why)
          syserr("Not reached")
       }
