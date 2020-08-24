@@ -1046,9 +1046,16 @@ static void no_clip(wsp ws, int and_win)
 
 void drawstring(wbp w, int x, int y, dptr str)
 {
+    int width, fl;
     wsp ws = w->window;
     wcp wc = w->context;
     Point p = Pt(x, y - wc->font->ascent);
+
+    /* Flag indicating whether pix_to_win() does anything; this can save
+     * some calls to stringnwidth etc. */
+    fl = (ws->win && !ws->holding);
+    width = 0;
+
     clip(w);
     if (is:string(*str)) {
         Rune *r;
@@ -1062,32 +1069,31 @@ void drawstring(wbp w, int x, int y, dptr str)
             runestringnop(ws->pix, p,
                           get_draw_img(wc), p,
                           wc->font->font, r, StrLen(*str), wc->drawop->i);
-            pix_to_win(ws, 
-                       p.x, 
-                       p.y, 
-                       runestringnwidth(wc->font->font, r, StrLen(*str)) + wc->font->font->width,   /* Add 1xwidth for italics */
-                       wc->font->ascent + wc->font->descent);
+            if (fl)
+                width = runestringnwidth(wc->font->font, r, StrLen(*str));
             free(r);
         } else {
             stringnop(ws->pix, p,
                       get_draw_img(wc), p,
                       wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
-            pix_to_win(ws, 
-                       p.x, 
-                       p.y, 
-                       stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width,   /* Add 1xwidth for italics */
-                       wc->font->ascent + wc->font->descent);
+            if (fl)
+                width = stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str));
         }
     } else {
         stringnop(ws->pix, p,
                   get_draw_img(wc), p,
                   wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length, wc->drawop->i);
+        if (fl)
+            width = stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length);
+    }
+
+    if (fl)
         pix_to_win(ws, 
                    p.x, 
                    p.y, 
-                   stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length) + wc->font->font->width,   /* Add 1xwidth for italics */
+                   width + wc->font->font->width,   /* Add 1xwidth for italics */
                    wc->font->ascent + wc->font->descent);
-    }
+
     flushimage(display, 1);
 }
 
