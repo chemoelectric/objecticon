@@ -261,7 +261,9 @@ typedef struct _wfont {
   int           descent;
   int           maxwidth;               /* max width of one char */
 #if XWindows
-  XftFont     * fsp;
+  XftFont       *fsp;
+  XftFontSet    *fbpatterns;            /* ordered list of fallback patterns */
+  XftFont       **fbfonts;              /* corresponding fonts */
 #elif MSWIN32
   gb_Font	*font;
 #endif

@@ -110,6 +110,7 @@ static void add_rect(struct traplist *l, XPointDouble *tl, XPointDouble *br);
 static void add_tri(struct traplist *l, XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
 static void CompositeDoublePoly(wdp wd, int op, Picture src, Picture dst,
                                 struct point *points, int npoints, int winding);
+static XftFont *fallback(wbp w, int ch);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -3920,31 +3921,63 @@ static int limit_strlen(word n)
 
 int textwidth(wbp w, dptr str)
 {
-    XGlyphInfo	extents; 
-    if (is:string(*str))
-        XftTextExtents8(w->window->display->display,
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    XGlyphInfo extents; 
+    if (is:string(*str)) {
+        XftTextExtents8(wd->display,
                         w->context->font->fsp,
                         (FcChar8 *)StrLoc(*str),
                         limit_strlen(StrLen(*str)),
                         &extents);
-    else if (UcsBlk(*str).index_step == 0)
+        /* xOff is a short; on long strings it wraps round at 32k, so
+         * anding with 0xffff doubles the range of sensible result
+         * values. */
+        return extents.xOff & 0xffff;
+    } else if (UcsBlk(*str).index_step == 0) {
         /* ucs, but all ascii characters. */
-        XftTextExtents8(w->window->display->display,
+        XftTextExtents8(wd->display,
                         w->context->font->fsp,
                         (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
                         limit_strlen(UcsBlk(*str).length),
                         &extents);
-    else
-        XftTextExtentsUtf8(w->window->display->display,
-                           w->context->font->fsp,
-                           (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
-                           limit_strlen(StrLen(UcsBlk(*str).utf8)),
-                           &extents);
-    
-    /* xOff is a short; on long strings it wraps round at 32k, so
-     * anding with 0xffff doubles the range of sensible result
-     * values. */
-    return extents.xOff & 0xffff;
+        return extents.xOff & 0xffff;
+    } else {
+        word len;
+        int width, ch;
+        char *p, *p1, *start;
+        XftFont *font, *f1;
+
+        width = 0;
+        start = p = StrLoc(UcsBlk(*str).utf8);
+        font = wc->font->fsp;
+        len = UcsBlk(*str).length;
+        while (len--) {
+            p1 = p;
+            ch = utf8_iter(&p);
+            f1 = font;
+            font = fallback(w, ch);
+            if (f1 != font && p1 != start) {
+                XftTextExtentsUtf8(wd->display,
+                                   f1,
+                                   (FcChar8 *)start,
+                                   limit_strlen(p1 - start),
+                                   &extents);
+                width += extents.xOff & 0xffff;
+                start = p1;
+            }
+        }
+        if (p != start) {
+            XftTextExtentsUtf8(wd->display,
+                               font,
+                               (FcChar8 *)start,
+                               limit_strlen(p - start),
+                               &extents);
+            width += extents.xOff & 0xffff;
+        }
+        return width;
+    }    
 }
 
 static void prepare_xft(wbp w)
@@ -3967,15 +4000,100 @@ static void prepare_xft(wbp w)
         XftDrawSetClip(ws->pxft, 0);
 }
 
+static XftFont *fallback(wbp w, int ch)
+{
+    int i;
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    wfp font = wc->font;
+
+    if (XftGlyphExists(wd->display, font->fsp, ch))
+        return font->fsp;
+
+    if (!font->fbpatterns) {
+         FcFontSet *sortedFonts;
+         FcResult status;
+         int spacing;
+         FcPattern *base = FcNameParse((FcChar8 *)font->name);
+         MemProtect(font->fbpatterns = FcFontSetCreate());
+         if (!base)
+             return font->fsp;
+
+         FcPatternAddBool(base, FC_SCALABLE, FcTrue);
+         /* For a mono font, set FC_CHAR_WIDTH.  So far as I can tell,
+          * this means that the resulting fonts will all be output as
+          * monospaced, even if the source font was not. */
+         spacing = -1;
+         FcPatternGetInteger(base, FC_SPACING, 0, &spacing);
+         if (spacing == FC_MONO)
+             FcPatternAddInteger(base, FC_CHAR_WIDTH, font->fsp->max_advance_width);
+         FcConfigSubstitute(NULL, base, FcMatchPattern);
+         FcDefaultSubstitute(base);
+         sortedFonts = FcFontSort(NULL, base, FcTrue, NULL, &status);
+         if (!sortedFonts) {
+             FcPatternDestroy(base);
+             return font->fsp;
+         }
+         /* Now we munge the base pattern + each of the returned
+          * patterns together and save the results in fpatterns; these
+          * are the patterns for the fallback fonts.
+          */
+         for (i = 0; i < sortedFonts->nfont; ++i) {
+             FcPattern *munge;
+             munge = FcFontRenderPrepare(NULL, base, sortedFonts->fonts[i]);
+             if (munge)
+                 MemProtect(FcFontSetAdd(font->fbpatterns, munge));
+         }
+         FcPatternDestroy(base);
+         FcFontSetDestroy(sortedFonts);
+
+         /* An array to store the fonts corresponding to the
+          * patterns. */
+         font->fbfonts = safe_zalloc(font->fbpatterns->nfont * sizeof(XftFont *));
+    }
+
+    /* Now font->fbpatterns has the fallback font patterns list
+     *  now search for a font in that list that has ch in it.
+     */
+    for (i = 0; i < font->fbpatterns->nfont; i++) {
+        if (!font->fbfonts[i]) {
+            XftFont *f;
+            f = XftFontOpenPattern(wd->display, font->fbpatterns->fonts[i]);
+            /* I don't know if this can happen, but if it does, avoid
+             * leaving a gap in the array, and repeatedly retrying the
+             * open. */
+            if (!f)
+                f = font->fsp;
+            font->fbfonts[i] = f;
+        }
+        if (XftGlyphExists(wd->display, font->fbfonts[i], ch))
+            return font->fbfonts[i];
+    }
+
+    /* Nothing found */
+    return font->fsp;
+}
+
 void drawstring(wbp w, int x, int y, dptr str)
 {
     XftColor color;
+    int fl, width, ascent, descent;
     wcp wc = w->context;
     wsp ws = w->window;
+    wdp wd = ws->display;
     prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;
-    if (is:string(*str))
+    ascent = wc->font->ascent;
+    descent = wc->font->descent;
+    width = 0;
+
+    /* Flag indicating whether pix_to_win() does anything; this can save
+     * some calls to textwidth etc. */
+    fl = (ws->win && !ws->holding);
+
+    if (is:string(*str)) {
         XftDrawString8(ws->pxft,
                        &color,
                        wc->font->fsp,
@@ -3983,7 +4101,9 @@ void drawstring(wbp w, int x, int y, dptr str)
                        y,
                        (FcChar8 *)StrLoc(*str),
                        limit_strlen(StrLen(*str)));
-    else if (UcsBlk(*str).index_step == 0)
+        if (fl)
+            width = textwidth(w, str);
+    } else if (UcsBlk(*str).index_step == 0) {
         /* ucs, but all ascii characters. */
         XftDrawString8(ws->pxft,
                        &color,
@@ -3992,22 +4112,75 @@ void drawstring(wbp w, int x, int y, dptr str)
                        y,
                        (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
                        limit_strlen(UcsBlk(*str).length));
-    else
-        XftDrawStringUtf8(ws->pxft,
-                          &color,
-                          wc->font->fsp,
-                          x,
-                          y,
-                          (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
-                          limit_strlen(StrLen(UcsBlk(*str).utf8)));
+        if (fl)
+            width = textwidth(w, str);
+    } else {
+        word len;
+        int a, d, ch;
+        char *p, *p1, *start;
+        XftFont *font, *f1;
+        XGlyphInfo extents; 
 
-    /* Avoid pointless call to textwidth() if pix_to_win() is a no-op. */
-    if (ws->win && !ws->holding) {
+        start = p = StrLoc(UcsBlk(*str).utf8);
+        font = wc->font->fsp;
+        len = UcsBlk(*str).length;
+        while (len--) {
+            p1 = p;
+            ch = utf8_iter(&p);
+            f1 = font;
+            font = fallback(w, ch);
+            if (f1 != font && p1 != start) {
+                XftDrawStringUtf8(ws->pxft,
+                                  &color,
+                                  f1,
+                                  x + width,
+                                  y,
+                                  (FcChar8 *)start,
+                                  limit_strlen(p1 - start));
+                XftTextExtentsUtf8(wd->display,
+                                   f1,
+                                   (FcChar8 *)start,
+                                   limit_strlen(p1 - start),
+                                   &extents);
+                width += extents.xOff & 0xffff;
+                if (fl) {
+                    /* cf. newfont() below. */
+                    a = Max(f1->ascent, extents.y);
+                    ascent = Max(ascent, a);
+                    d = Max(f1->descent, extents.height - extents.y);
+                    descent = Max(descent, d);
+                }                    
+                start = p1;
+            }
+        }
+        if (p != start) {
+            XftDrawStringUtf8(ws->pxft,
+                              &color,
+                              font,
+                              x + width,
+                              y,
+                              (FcChar8 *)start,
+                              limit_strlen(p - start));
+            if (fl) {
+                XftTextExtentsUtf8(wd->display,
+                                   font,
+                                   (FcChar8 *)start,
+                                   limit_strlen(p - start),
+                                   &extents);
+                width += extents.xOff & 0xffff;
+                a = Max(font->ascent, extents.y);
+                ascent = Max(ascent, a);
+                d = Max(font->descent, extents.height - extents.y);
+                descent = Max(descent, d);
+            }
+        }
+    }
+    if (fl) {
         clip(w);
         pix_to_win(ws, 
-                   x, y - wc->font->ascent, 
-                   textwidth(w, str),
-                   wc->font->ascent + wc->font->descent);
+                   x, y - ascent, 
+                   width,
+                   ascent + descent);
     }
 }
 
