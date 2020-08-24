@@ -4015,12 +4015,16 @@ static XftFont *fallback(wbp w, int ch)
          FcFontSet *sortedFonts;
          FcResult status;
          int spacing;
-         FcPattern *base = FcNameParse((FcChar8 *)font->name);
+         FcPattern *base;
+
+         /* Set fbpatterns first to ensure we only go through this
+          * branch once.*/
          MemProtect(font->fbpatterns = FcFontSetCreate());
-         MemProtect(font->fbcoverage = FcCharSetCreate());
+
+         /* Turn the font name into a pattern. */
+         base = FcNameParse((FcChar8 *)font->name);
          if (!base)
              return font->fsp;
-
          FcPatternAddBool(base, FC_SCALABLE, FcTrue);
          /* For a mono font, set FC_CHAR_WIDTH.  So far as I can tell,
           * this means that the resulting fonts will all be output as
@@ -4055,9 +4059,12 @@ static XftFont *fallback(wbp w, int ch)
     }
 
     /* Now font->fbpatterns has the fallback font patterns list, and
-     * font->fbcoverage has the set of characters in those fonts.
+     * font->fbcoverage has the set of characters in those fonts.  The
+     * latter may be null if an error occurred in the above setup
+     * code.
      */
-    if (FcCharSetHasChar(font->fbcoverage, ch)) {
+    if (font->fbcoverage &&
+        FcCharSetHasChar(font->fbcoverage, ch)) {
         /* ch should be in the list somewhere. */
         for (i = 0; i < font->fbpatterns->nfont; i++) {
             if (!font->fbfonts[i]) {
