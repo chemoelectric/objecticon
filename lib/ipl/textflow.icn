@@ -210,6 +210,9 @@ class TextFlow(Component, HasLastHighlight)
       v_align,
       y_off
 
+   private const
+      browser
+
    private
       left_comps,
       right_comps,
@@ -247,7 +250,6 @@ class TextFlow(Component, HasLastHighlight)
       dominant_width,
       computed_named_anchors,
       named_anchors,
-      browser,
       blob_start,
       row_blob
 

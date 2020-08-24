@@ -560,7 +560,7 @@ class EditableTextList(LineBasedScrollArea)
 
       # Invalidate on cursor/mark changes
       if /changed & 
-         (\cursor_moved | (mark_x ~=== old_mark_x) | (mark_y ~=== old_mark_y)) & 
+         (\cursor_moved | (mark_x ~=== old_mark_x) | (mark_y ~=== old_mark_y))\1 & 
          (i := get_line_info()) then 
       {
          t := [get_view_list_index(old_cursor_x, old_cursor_y),
