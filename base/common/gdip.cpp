@@ -262,12 +262,16 @@ void gb_drawstring(gb_Draw *d, int x, int y, WCHAR *str, int length)
                         DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
                         0);
 
-    g->MeasureDriverString((UINT16 *)str, 
-                           length, f, &pf, 
-                           DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
-                           0, &bound);
+    /* Avoid unnecessary call to MeasureDriverString if gb_pix_to_win() is a no-op. */
+    if (d->win && !d->holding) {
+        g->MeasureDriverString((UINT16 *)str, 
+                               length, f, &pf, 
+                               DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
+                               0, &bound);
 
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+        gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    }
+
     delete b;
     delete g;
 }

@@ -3927,6 +3927,13 @@ int textwidth(wbp w, dptr str)
                         (FcChar8 *)StrLoc(*str),
                         limit_strlen(StrLen(*str)),
                         &extents);
+    else if (UcsBlk(*str).index_step == 0)
+        /* ucs, but all ascii characters. */
+        XftTextExtents8(w->window->display->display,
+                        w->context->font->fsp,
+                        (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
+                        limit_strlen(UcsBlk(*str).length),
+                        &extents);
     else
         XftTextExtentsUtf8(w->window->display->display,
                            w->context->font->fsp,
@@ -3976,6 +3983,15 @@ void drawstring(wbp w, int x, int y, dptr str)
                        y,
                        (FcChar8 *)StrLoc(*str),
                        limit_strlen(StrLen(*str)));
+    else if (UcsBlk(*str).index_step == 0)
+        /* ucs, but all ascii characters. */
+        XftDrawString8(ws->pxft,
+                       &color,
+                       wc->font->fsp,
+                       x,
+                       y,
+                       (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
+                       limit_strlen(UcsBlk(*str).length));
     else
         XftDrawStringUtf8(ws->pxft,
                           &color,
@@ -3984,11 +4000,15 @@ void drawstring(wbp w, int x, int y, dptr str)
                           y,
                           (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
                           limit_strlen(StrLen(UcsBlk(*str).utf8)));
-    clip(w);
-    pix_to_win(ws, 
-               x, y - wc->font->ascent, 
-               textwidth(w, str),
-               wc->font->ascent + wc->font->descent);
+
+    /* Avoid pointless call to textwidth() if pix_to_win() is a no-op. */
+    if (ws->win && !ws->holding) {
+        clip(w);
+        pix_to_win(ws, 
+                   x, y - wc->font->ascent, 
+                   textwidth(w, str),
+                   wc->font->ascent + wc->font->descent);
+    }
 }
 
 /* This array must correspond with the NUM_ATOMS and ATOM_xxx constants defined in graphics.h. */
