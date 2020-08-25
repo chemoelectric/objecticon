@@ -4345,7 +4345,7 @@ char *tofcpatternstr(char *s)
     if (!parsefont(s, family, &flags, &size))
         return 0;
 
-    p = FcPatternCreate();
+    MemProtect(p = FcPatternCreate());
 
     /*
      * Check first for special "standard" family names.
