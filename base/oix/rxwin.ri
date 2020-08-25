@@ -4012,67 +4012,52 @@ static XftFont *fallback(wbp w, int ch)
         return font->fsp;
 
     if (!font->fbpatterns) {
-         FcFontSet *sortedFonts;
          FcResult status;
          int spacing;
-         FcPattern *base;
-
-         /* Set fbpatterns first to ensure we only go through this
-          * branch once.*/
-         MemProtect(font->fbpatterns = FcFontSetCreate());
-
          /* Turn the font name into a pattern. */
-         base = FcNameParse((FcChar8 *)font->name);
-         if (!base)
-             return font->fsp;
-         FcPatternAddBool(base, FC_SCALABLE, FcTrue);
-         /* For a mono font, set FC_CHAR_WIDTH.  So far as I can tell,
-          * this means that the resulting fonts will all be output as
-          * monospaced, even if the source font was not. */
-         spacing = -1;
-         FcPatternGetInteger(base, FC_SPACING, 0, &spacing);
-         if (spacing == FC_MONO)
-             FcPatternAddInteger(base, FC_CHAR_WIDTH, font->fsp->max_advance_width);
-         FcConfigSubstitute(NULL, base, FcMatchPattern);
-         FcDefaultSubstitute(base);
-         sortedFonts = FcFontSort(NULL, base, FcTrue, &font->fbcoverage, &status);
-         if (!sortedFonts) {
-             FcPatternDestroy(base);
-             return font->fsp;
+         font->base = FcNameParse((FcChar8 *)font->name);
+         if (font->base) {
+             FcPatternAddBool(font->base, FC_SCALABLE, FcTrue);
+             /* For a mono font, set FC_CHAR_WIDTH.  So far as I can tell,
+              * this means that the resulting fonts will all be output as
+              * monospaced, even if the source font was not. */
+             spacing = -1;
+             FcPatternGetInteger(font->base, FC_SPACING, 0, &spacing);
+             if (spacing == FC_MONO)
+                 FcPatternAddInteger(font->base, FC_CHAR_WIDTH, font->fsp->max_advance_width);
+             FcConfigSubstitute(NULL, font->base, FcMatchPattern);
+             FcDefaultSubstitute(font->base);
+             /* Get the list of fallback patterns. */
+             font->fbpatterns = FcFontSort(NULL, font->base, FcTrue, &font->fbcoverage, &status);
          }
-         /* Now we munge the base pattern + each of the returned
-          * patterns together and save the results in fpatterns; these
-          * are the patterns for the fallback fonts.
-          */
-         for (i = 0; i < sortedFonts->nfont; ++i) {
-             FcPattern *munge;
-             munge = FcFontRenderPrepare(NULL, base, sortedFonts->fonts[i]);
-             if (munge)
-                 MemProtect(FcFontSetAdd(font->fbpatterns, munge));
-         }
-         FcPatternDestroy(base);
-         FcFontSetDestroy(sortedFonts);
-
+         /* Set missing empty values, to avoid going through this
+          * setup again, and null test of fbcoverage below. */
+         if (!font->fbcoverage)
+             MemProtect(font->fbcoverage = FcCharSetCreate());
+         if (!font->fbpatterns)
+             MemProtect(font->fbpatterns = FcFontSetCreate());
          /* An array to store the fonts corresponding to the
           * patterns. */
          font->fbfonts = safe_zalloc(font->fbpatterns->nfont * sizeof(XftFont *));
     }
 
     /* Now font->fbpatterns has the fallback font patterns list, and
-     * font->fbcoverage has the set of characters in those fonts.  The
-     * latter may be null if an error occurred in the above setup
-     * code.
-     */
-    if (font->fbcoverage &&
-        FcCharSetHasChar(font->fbcoverage, ch)) {
+     * font->fbcoverage has the set of characters in those fonts. */
+    if (FcCharSetHasChar(font->fbcoverage, ch)) {
         /* ch should be in the list somewhere. */
         for (i = 0; i < font->fbpatterns->nfont; i++) {
             if (!font->fbfonts[i]) {
-                XftFont *f;
-                f = XftFontOpenPattern(wd->display, font->fbpatterns->fonts[i]);
-                /* I don't know if this can happen, but if it does, avoid
-                 * leaving a gap in the array, and repeatedly retrying the
-                 * open. */
+                XftFont *f = NULL;
+                FcPattern *munge;
+                /* Now we munge the base pattern + the returned
+                 * pattern together to get the font to open. */
+                munge = FcFontRenderPrepare(NULL, font->base, font->fbpatterns->fonts[i]);
+                if (munge) {
+                    f = XftFontOpenPattern(wd->display, munge);
+                    FcPatternDestroy(munge);
+                }
+                /* If we failed to get a font somehow, just insert the
+                 * base font as a placeholder instead. */
                 if (!f)
                     f = font->fsp;
                 font->fbfonts[i] = f;
