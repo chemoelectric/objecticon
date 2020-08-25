@@ -4076,6 +4076,9 @@ static XftFont *fallback(wbp w, int ch)
                 if (!f)
                     f = font->fsp;
                 font->fbfonts[i] = f;
+                /* The pattern is no longer needed. */
+                FcPatternDestroy(font->fbpatterns->fonts[i]);
+                font->fbpatterns->fonts[i] = 0;
             }
             if (XftGlyphExists(wd->display, font->fbfonts[i], ch))
                 return font->fbfonts[i];
