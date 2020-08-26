@@ -616,7 +616,8 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # Set the line leading, which specifies extra space to add to font
    # ascent, descent and height, to calculate line ascent, descent and
    # height.  It is specified as a real number, being the proportion
-   # of font height.
+   # of font height.  The default leading value is `0.075`, and this
+   # can be changed by setting the environment variable `OI_LEADING`.
    #
    public native set_leading(v)
 
