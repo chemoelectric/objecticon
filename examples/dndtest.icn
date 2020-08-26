@@ -1,4 +1,6 @@
-import gui, ipl.pdco
+import gui, ipl.pdco, ipl.options
+
+global opts
 
 #
 # A Dnd-enabled list
@@ -386,7 +388,7 @@ class DNDTest(Dialog)
 
       tree := CustomTree().
          set_size(scale(150), scale(220)).
-         set_show_over(&yes).
+         set_show_over(opts["v"]).
          set_allow_drag(&yes).
          set_allow_drop(&yes).
          set_select_mode("many").
@@ -400,7 +402,7 @@ class DNDTest(Dialog)
       lst := CustomList().
          set_constraint("eol", &yes).
          set_size(scale(150), scale(220)).
-         set_show_over(&yes).
+         set_show_over(opts["v"]).
          set_allow_drag(&yes).
          set_allow_drop(&yes).
          set_select_mode("many").
@@ -424,11 +426,9 @@ class DNDTest(Dialog)
 end
 
 
-procedure main()
+procedure main(a)
    local d
+   opts := options(a, [Opt("v",, "Use show-over mode in tree and list")])
    d := DNDTest()
    d.show_modal()
 end
-
-
-
