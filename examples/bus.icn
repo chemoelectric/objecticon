@@ -1828,8 +1828,10 @@ class BusView(Dialog)
    end
 
    private on_search_field_change(ev)
-      # Check for change via click in suggest list
-      if ev.code === Mouse.LEFT_RELEASE then
+      # Check for change via click in suggest list; the was_applied()
+      # test filters out paste insertions from the right-click popup
+      # menu.
+      if ev.code === Mouse.LEFT_RELEASE & search_field.was_applied(ev) then
          csa.control(search_field.get_contents())
    end
 
