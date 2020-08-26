@@ -286,3 +286,12 @@ end
 procedure convert_text_list(l, target)
    return ipl.pdco.List{ text_convert(!l, target) }
 end
+
+#
+# Given a list of strings l, remove all trailing empty lines.
+#
+procedure trim_trailing_empty(l)
+   while *l[-1] = 0 do
+      pull(l)
+   return l
+end
