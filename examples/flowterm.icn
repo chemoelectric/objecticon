@@ -1759,9 +1759,8 @@ class Terminal(TabItem, VtUI)
       n := real(s) | return error("Real number expected to font-size")
       if any('+\-', s) then
          n +:= output.font_size
-      n <:= 1.0
-      output.set_vt_font(output.font_base || "," || n)
-      link
+      # Use the same limits as vt, so the call shouldn't fail
+      link output.set_vt_font(output.font_base || "," || restrict(n, 3.0, 40.0))
    end
 
    private next_index_right()
