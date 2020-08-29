@@ -4049,8 +4049,8 @@ static XftFont *fallback(wbp w, int ch)
     if (!font->fbpatterns) {
          FcResult status;
          int spacing;
-         /* Turn the font name into a pattern. */
-         font->base = FcNameParse((FcChar8 *)font->name);
+         /* Turn the font name into a pattern. +3 skips over "fc:" */
+         font->base = FcNameParse((FcChar8 *)(font->name + 3));
          if (font->base) {
              FcPatternAddBool(font->base, FC_SCALABLE, FcTrue);
              /* For a mono font, set FC_CHAR_WIDTH.  So far as I can tell,
