@@ -269,8 +269,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       hide_cursor_mode,
       text_selection,             # Current text selection, or null
       links_selection,            # Current links selection (a list of URLs), or null
-      font_family,                # Font details
-      font_size,
+      font_base,                  # Font base: family[,attr,attr,..] (no size)
+      font_size,                  # Font size
       primary,                    # Primary selection string, or null
       history_size,               # Size of history scroll lines; 0 -> no vsb
       vt_width,                   # Default width in chars, used by get_default_width()
@@ -627,7 +627,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local s, l
       s := get_wattrib(WAttrib.FONT)
       l := check_font(s) | runerr(&why, self)
-      font_family := l[1]
+      font_base := l[1]
       font_size := l[2]
       char_w := l[3]
       LineBasedScrollArea.initially()
@@ -643,27 +643,34 @@ class Vt(LineBasedScrollArea, MenuMode)
       return if m2 = m * 1000 then m else m2 / 1000.0
    end
 
-   private check_font(s)
-      local fam, size, width, W, t
-      s ? {
-         fam := tab(upto(',') | 0)
-         (*fam > 0) | return error("Font not in required format")
-         if ="," then {
-            t := tab(0)
-            size := real(t) | return error("Font not in required format")
-            if any('+\-', t) then
-               size +:= Window.get_default_font_size()
-            size <:= 3.0
-            size >:= 40.0
-         } else
-            size := Window.get_default_font_size()
+   private static check_font(s)
+      local base, size, width, W, p, e
+      e := create separate(s)
+      (base := "" ~== @e) | return error("Missing font family")
+      while p := @e do {
+         if any(&letters, p) then
+            base ||:= "," || p
+         else {
+            /size | return error("Duplicate font size")
+            if any('*', p) then
+               (size := real(p[2:0]) * Window.get_default_font_size()) |
+                  return error("Invalid * font size")
+            else {
+               (size := real(p)) |
+                  return error("Invalid font size")
+               if any('+\-', p) then
+                  size +:= Window.get_default_font_size()
+            }
+            if size < 3.0 | size > 40.0 then
+               return error("Unreasonable font size")
+         }
       }
-      s := fam || "," || size
+      /size := Window.get_default_font_size()
       width := use {
          W := Window(),
          calc_font_width(W, s)
       } | fail
-      return [fam, size, width]
+      return [base, size, width]
    end
 
    # A wrapper around `set_font()`, which validates `s` as a valid
@@ -674,7 +681,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       s := need_string(s)
       l := check_font(s) | fail
       set_font(s)
-      if is_live() & not(l[1] == font_family & l[2] = font_size) then {
+      if is_live() & not(l[1] == font_base & l[2] = font_size) then {
          invalidate_line_height()
          reset()
          # Update the font entry in all Attr records
@@ -1513,7 +1520,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local s
       /a := attr
       if \ (a.bold | a.italic) then {
-         s := font_family
+         s := font_base
          if \a.bold then
             s ||:= ",bold"
          if \a.italic then

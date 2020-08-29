@@ -1760,7 +1760,7 @@ class Terminal(TabItem, VtUI)
       if any('+\-', s) then
          n +:= output.font_size
       n <:= 1.0
-      output.set_vt_font(output.font_family || "," || n)
+      output.set_vt_font(output.font_base || "," || n)
       link
    end
 
@@ -2959,7 +2959,7 @@ $endif
             set_normal_bg(other.output.normal_bg).
             set_reverse_fg(other.output.reverse_fg).
             set_reverse_bg(other.output.reverse_bg).
-            set_font(other.output.font_family || "," || other.output.font_size).
+            set_font(other.output.get_wattrib(WAttrib.FONT)).
             set_history_size(other.output.get_actual_history_size()) | syserr("Clone output setting failed: " || &why)
          set_shell(other.shell)
          shell_args := copy(other.shell_args)
