@@ -320,12 +320,14 @@ char *canonicalize(char *path)
         sscpy(&buf, path);
     else {
         char *cwd = getcachedcwd();
-        size_t l = strlen(cwd);
-        ssreserve(&buf, l + 1 + strlen(path) + 1);
-        strcpy(buf.s, cwd);
+        size_t l, m;
+        l = strlen(cwd);
+        m = strlen(path);
+        ssreserve(&buf, l + 1 + m + 1);
+        memcpy(buf.s, cwd, l);
         if (!strchr(FILEPREFIX, buf.s[l - 1]))
             buf.s[l++] = FILESEP;
-        strcpy(&buf.s[l], path);
+        memcpy(&buf.s[l], path, m + 1);
     }
     normalize(buf.s);
     return buf.s;
