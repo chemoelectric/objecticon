@@ -167,7 +167,6 @@
 #define c_is (*(imported->c_is))
 #define class_is (*(imported->class_is))
 #define get_proc_kind (*(imported->get_proc_kind))
-#define strict_memcmp (*(imported->strict_memcmp))
 #define rangeset_to_block (*(imported->rangeset_to_block))
 #define make_ucs_block (*(imported->make_ucs_block))
 #define make_one_char_ucs_block (*(imported->make_one_char_ucs_block))

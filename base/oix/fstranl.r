@@ -165,7 +165,7 @@ static int get_rest(dptr utf8, dptr res)
     int first;
     p = StrLoc(*utf8);
     first = utf8_iter(&p);
-    MakeStr(p, StrLen(*utf8) - DiffPtrs(p, StrLoc(*utf8)), res);
+    MakeStr(p, SubStrLen(p, *utf8), res);
     return first;
 }
 
@@ -210,7 +210,7 @@ function find(s1,s2,i,j)
                   ch = *p++;
                   if (ch == first) {
                       /* First char matches, check remainder. */
-                      if (memcmp(p, StrLoc(rest), StrLen(rest)) == 0)
+                      if (StrMemcmp(p, rest) == 0)
                           suspend C_integer cnv_i;
                   }
                   cnv_i++;
@@ -244,7 +244,7 @@ function find(s1,s2,i,j)
                       int ch = utf8_iter(&p);
                       if (ch == first) {
                           /* First char matches, check remainder. */
-                          if (memcmp(p, StrLoc(rest), StrLen(rest)) == 0)
+                          if (StrMemcmp(p, rest) == 0)
                               suspend C_integer cnv_i;
                       }
                       cnv_i++;
@@ -276,7 +276,8 @@ function find(s1,s2,i,j)
                       int ch = utf8_iter(&p);
                       if (ch == first) {
                           /* First char matches, check remainder. */
-                          if (strict_memcmp(p, StrLoc(rest), StrLen(rest)) == 0)
+                          if (SubStrLen(p, UcsBlk(s2).utf8) >= StrLen(rest) &&
+                              StrMemcmp(p, rest) == 0)
                               suspend C_integer cnv_i;
                       }
                       cnv_i++;
@@ -348,7 +349,7 @@ function match(s1,s2,i,j)
            * Compare s1 with s2[i:j] for *s1 characters; fail if an
            *  inequality is found.
            */
-          if (memcmp(StrLoc(s2) + cnv_i - 1, StrLoc(s1), StrLen(s1)) != 0)
+          if (StrMemcmp(StrLoc(s2) + cnv_i - 1, s1) != 0)
               fail;
 
           /*
@@ -370,7 +371,7 @@ function match(s1,s2,i,j)
                * Compare s1 with s2[i:j] for *s1 characters; fail if an
                *  inequality is found.
                */
-              if (memcmp(ucs_utf8_ptr(&UcsBlk(s2), cnv_i), StrLoc(s1), StrLen(s1)) != 0)
+              if (StrMemcmp(ucs_utf8_ptr(&UcsBlk(s2), cnv_i), s1) != 0)
                   fail;
 
               /*
@@ -379,7 +380,8 @@ function match(s1,s2,i,j)
               return C_integer cnv_i + StrLen(s1);
 
           } else {
-          
+              char *p;
+
               if (!cnv:ucs(s1,s1))
                   runerr(128,s1);
 
@@ -393,9 +395,9 @@ function match(s1,s2,i,j)
                * Compare s1 with s2[i:j] for *s1 characters; fail if an
                *  inequality is found.
                */
-              if (strict_memcmp(ucs_utf8_ptr(&UcsBlk(s2), cnv_i),
-                                StrLoc(UcsBlk(s1).utf8),
-                                StrLen(UcsBlk(s1).utf8)) != 0)
+              p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+              if (SubStrLen(p, UcsBlk(s2).utf8) < StrLen(UcsBlk(s1).utf8) ||
+                  StrMemcmp(p, UcsBlk(s1).utf8) != 0)
                   fail;
 
               /*

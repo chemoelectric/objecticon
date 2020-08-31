@@ -163,7 +163,6 @@ struct oisymbols {
     int (*c_is)(dptr x, dptr cname, struct inline_global_cache *ic);
     int (*class_is)(struct b_class *class1, struct b_class *class2);
     int (*get_proc_kind)(struct b_proc *bp);
-    int (*strict_memcmp)(void *a1, void *a2, size_t n);
     struct b_cset * (*rangeset_to_block)(struct rangeset *rs);
     struct b_ucs * (*make_ucs_block)(dptr utf8, word length);
     struct b_ucs * (*make_one_char_ucs_block)(int i);

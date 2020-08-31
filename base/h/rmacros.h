@@ -114,6 +114,19 @@
 #define OffsetVarLoc(d)	((dptr)((word *)BlkLoc(d) + Offset(d)))
 
 /*
+ * Given a pointer p into part of string s, return the length of the
+ * substring starting at p.
+ */
+#define SubStrLen(p, s) (StrLen(s) - DiffPtrs(p, StrLoc(s)))
+
+/*
+ * Given a pointer p and a string s, memcmp() p with the contents of
+ * s.  NB: the caller must ensure that StrLen(s) bytes starting at p
+ * are accessible.
+ */
+#define StrMemcmp(p, s) (memcmp(p, StrLoc(s), StrLen(s)))
+
+/*
  * Macros for testing whether a descriptor is a large integer (stored
  * in a block) or a C integer (stored in the descriptor).
  */

@@ -1410,26 +1410,6 @@ char *ucs_utf8_ptr(struct b_ucs *b, word pos)
 }
 
 /*
- * Compare n bytes of memory from s1 and s2.  This is just like
- * memcmp, but will never read beyond the first different byte of
- * either string.
- */
-int strict_memcmp(void *a1, void *a2, size_t n)
-{
-    unsigned char *s1, *s2, c1, c2;
-
-    s1 = a1;
-    s2 = a2;
-    while (n--) {
-        c1 = *s1++;
-        c2 = *s2++;
-        if (c1 != c2)
-            return (c1 > c2) ? 1 : -1;
-    }
-    return 0;
-}
-
-/*
  * Convert a rangeset to a newly allocated b_cset block.
  */
 struct b_cset *rangeset_to_block(struct rangeset *rs)
