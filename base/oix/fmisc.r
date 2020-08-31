@@ -1410,24 +1410,23 @@ char *ucs_utf8_ptr(struct b_ucs *b, word pos)
 }
 
 /*
- * Compare n bytes of memory from s1 and s2 for equality.  This is
- * rather like memcmp, but will never read beyond the first different
- * byte of either string.
+ * Compare n bytes of memory from s1 and s2.  This is just like
+ * memcmp, but will never read beyond the first different byte of
+ * either string.
  */
-int mem_eq(char *s1, char *s2, word n)
+int strict_memcmp(void *a1, void *a2, size_t n)
 {
-    while (n--)
-        if (*s1++ != *s2++)
-            return 0;
-    return 1;
-}
+    unsigned char *s1, *s2, c1, c2;
 
-/*
- * Compare the contents of string s with t using mem_eq().
- */
-int str_mem_eq(dptr s, char *t)
-{
-    return mem_eq(StrLoc(*s), t, StrLen(*s));
+    s1 = a1;
+    s2 = a2;
+    while (n--) {
+        c1 = *s1++;
+        c2 = *s2++;
+        if (c1 != c2)
+            return (c1 > c2) ? 1 : -1;
+    }
+    return 0;
 }
 
 /*

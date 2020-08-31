@@ -210,7 +210,7 @@ function find(s1,s2,i,j)
                   ch = *p++;
                   if (ch == first) {
                       /* First char matches, check remainder. */
-                      if (str_mem_eq(&rest, p))
+                      if (memcmp(p, StrLoc(rest), StrLen(rest)) == 0)
                           suspend C_integer cnv_i;
                   }
                   cnv_i++;
@@ -244,7 +244,7 @@ function find(s1,s2,i,j)
                       int ch = utf8_iter(&p);
                       if (ch == first) {
                           /* First char matches, check remainder. */
-                          if (str_mem_eq(&rest, p))
+                          if (memcmp(p, StrLoc(rest), StrLen(rest)) == 0)
                               suspend C_integer cnv_i;
                       }
                       cnv_i++;
@@ -276,7 +276,7 @@ function find(s1,s2,i,j)
                       int ch = utf8_iter(&p);
                       if (ch == first) {
                           /* First char matches, check remainder. */
-                          if (str_mem_eq(&rest, p))
+                          if (strict_memcmp(p, StrLoc(rest), StrLen(rest)) == 0)
                               suspend C_integer cnv_i;
                       }
                       cnv_i++;
@@ -348,7 +348,7 @@ function match(s1,s2,i,j)
            * Compare s1 with s2[i:j] for *s1 characters; fail if an
            *  inequality is found.
            */
-          if (!str_mem_eq(&s1, StrLoc(s2) + cnv_i - 1))
+          if (memcmp(StrLoc(s2) + cnv_i - 1, StrLoc(s1), StrLen(s1)) != 0)
               fail;
 
           /*
@@ -370,7 +370,7 @@ function match(s1,s2,i,j)
                * Compare s1 with s2[i:j] for *s1 characters; fail if an
                *  inequality is found.
                */
-              if (!str_mem_eq(&s1, ucs_utf8_ptr(&UcsBlk(s2), cnv_i)))
+              if (memcmp(ucs_utf8_ptr(&UcsBlk(s2), cnv_i), StrLoc(s1), StrLen(s1)) != 0)
                   fail;
 
               /*
@@ -393,7 +393,9 @@ function match(s1,s2,i,j)
                * Compare s1 with s2[i:j] for *s1 characters; fail if an
                *  inequality is found.
                */
-              if (!str_mem_eq(&UcsBlk(s1).utf8, ucs_utf8_ptr(&UcsBlk(s2), cnv_i)))
+              if (strict_memcmp(ucs_utf8_ptr(&UcsBlk(s2), cnv_i),
+                                StrLoc(UcsBlk(s1).utf8),
+                                StrLen(UcsBlk(s1).utf8)) != 0)
                   fail;
 
               /*

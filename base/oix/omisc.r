@@ -116,7 +116,7 @@ operator = tabmat(x)
                * Compare x to &subject[&pos+:*x]
                */
               ssub = ucs_utf8_ptr(&UcsBlk(k_subject), i);
-              if (!str_mem_eq(&x, ssub))
+              if (memcmp(ssub, StrLoc(x), StrLen(x)) != 0)
                   fail;
 
               /*
@@ -152,7 +152,7 @@ operator = tabmat(x)
                * Compare x to &subject[&pos+:*x]
                */
               ssub = ucs_utf8_ptr(&UcsBlk(k_subject), i);
-              if (!str_mem_eq(&UcsBlk(x).utf8, ssub))
+              if (strict_memcmp(ssub, StrLoc(UcsBlk(x).utf8), StrLen(UcsBlk(x).utf8)) != 0)
                   fail;
 
               /*
@@ -188,7 +188,7 @@ operator = tabmat(x)
            * Compare x to &subject[&pos+:*x]
            */
           ssub = StrLoc(k_subject) + i - 1;
-          if (!str_mem_eq(&x, ssub))
+          if (memcmp(ssub, StrLoc(x), StrLen(x)) != 0)
               fail;
 
           /*

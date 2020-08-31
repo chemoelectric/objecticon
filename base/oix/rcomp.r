@@ -270,12 +270,7 @@ int func_name(dptr dp1, dptr dp2)
         * Compare as many bytes as are in the smaller string.  If an
         *  inequality is found, compare the differing bytes.
         */
-       while (minlen--) {
-           unsigned char c1, c2;
-           c1 = *s1++;
-           c2 = *s2++;
-           char_cmp(c1, c2);
-       }
+       char_cmp(s1, s2, minlen);
    }
 
    /*
@@ -290,20 +285,26 @@ int func_name(dptr dp1, dptr dp2)
 /*
  * lexcmp - lexically compare two strings.
  */
-#begdef SimpleCharCmp(c1, c2)
-    if (c1 != c2)
-       return (c1 > c2) ? Greater : Less;
+#begdef SimpleCharCmp(s1, s2, minlen)
+    int i = memcmp(s1, s2, minlen);
+    if (i != 0)
+       return (i > 0) ? Greater : Less;
 #enddef
 LexCmp(lexcmp, SimpleCharCmp)
 
 /*
  * Caseless string comparison
  */
-#begdef CaselessCharCmp(c1, c2)
-    if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
-    if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
-    if (c1 != c2)
-       return (c1 > c2) ? Greater : Less;
+#begdef CaselessCharCmp(s1, s2, minlen)
+   while (minlen--) {
+       unsigned char c1, c2;
+       c1 = *s1++;
+       c2 = *s2++;
+       if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
+       if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
+       if (c1 != c2)
+           return (c1 > c2) ? Greater : Less;
+   }
 #enddef
 LexCmp(caseless_lexcmp, CaselessCharCmp)
 
