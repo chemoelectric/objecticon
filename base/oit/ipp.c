@@ -1287,7 +1287,7 @@ static cdefn *dquery(char *name, int len)
     h = t % HTBINS;			/* calc bin number */
     d = cbin[h];			/* get head of list */
     while (d != NULL) {
-        if (d->nlen == len && strncmp(name, d->name, len) == 0)
+        if (d->nlen == len && memcmp(name, d->name, len) == 0)
             return d;			/* return pointer to entry */
         d = d->next;
     }
@@ -1308,7 +1308,7 @@ static void dremove(char *name)
     h = t % HTBINS;			/* calc bin number */
     p = &cbin[h];			/* get head of list */
     while ((d = *p) != NULL) {
-        if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
+        if (d->nlen == nlen && memcmp(name, d->name, nlen) == 0) {
             *p = d->next;		/* delete from table */
             freecdefn(d);
             return;
@@ -1329,7 +1329,7 @@ static void dinsert(char *name, char *val)
     h = t % HTBINS;			/* calc bin number */
     d = cbin[h];			/* get head of list */
     while (d != NULL) {
-        if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
+        if (d->nlen == nlen && memcmp(name, d->name, nlen) == 0) {
             /*
              * We found a match in the table.
              */
@@ -1366,7 +1366,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
     h = t % HTBINS;			/* calc bin number */
     d = cbin[h];			/* get head of list */
     while (d  != NULL) {
-        if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
+        if (d->nlen == nlen && memcmp(name, d->name, nlen) == 0) {
             /*
              * We found a match in the table.
              */
