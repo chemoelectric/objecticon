@@ -5,11 +5,6 @@
 #include "../h/gsupport.h"
 
 /*
- * Prototype for static function.
- */
-static int streq  (int len,char *s1,char *s2);
-
-/*
  * Entry in string table.
  */
 struct str_entry {
@@ -102,7 +97,7 @@ char *spec_str(char *s)
     }
     h %= StrTblSz;
     for (se = str_tbl[h]; se != NULL; se = se->next)
-        if (l == se->length && streq(l, s, se->s))
+        if (l == se->length && memcmp(s, se->s, l) == 0)
             return se->s;
     se = Alloc(struct str_entry);
     se->s = s;
@@ -140,7 +135,7 @@ char *str_install(struct str_buf *sbuf)
     s = sbuf->strtimage;
     l = e - s;
     for (se = str_tbl[h]; se != NULL; se = se->next)
-        if (l == se->length && streq(l, s, se->s)) {
+        if (l == se->length && memcmp(s, se->s, l) == 0) {
             /*
              * A copy of the string is already in the table. Delete the copy
              *  in the buffer.
@@ -251,16 +246,4 @@ void rel_sbuf(struct str_buf *sbuf)
         exit(EXIT_FAILURE);
     }
     --tcount;
-}
-
-/*
- * streq - compare s1 with s2 for len bytes, and return 1 for equal,
- *  0 for not equal.
- */
-static int streq(int len, char *s1, char *s2)
-{
-    while (len--)
-        if (*s1++ != *s2++)
-            return 0;
-    return 1;
 }
