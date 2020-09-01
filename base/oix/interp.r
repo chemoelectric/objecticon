@@ -120,7 +120,7 @@ void tail_invoke_frame(struct frame *f)
              * enclosing class's defining program.
              */
             p = field ? field->defining_class->program : curpstate;
-            Desc_EVValD(curr_cf->proc, E_Pcall, D_Proc);
+            Desc_EVValDX(curr_cf->proc, curr_cf->pc ? E_Presum : E_Pcall, D_Proc);
             if (field && k_trace) {
                 /*
                  * Same logic as below, but with tracing.
@@ -191,7 +191,7 @@ void tail_invoke_frame(struct frame *f)
         }
         case P_Frame: {
             struct p_frame *pf = (struct p_frame *)f;
-            Desc_EVValD(pf->proc, E_Pcall, D_Proc);
+            Desc_EVValDX(pf->proc, pf->curr_inst ? E_Presum : E_Pcall, D_Proc);
             pf->caller = curr_pf;
             if (pf->proc->program) {
                 /*
