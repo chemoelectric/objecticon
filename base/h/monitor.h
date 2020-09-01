@@ -65,7 +65,7 @@
     */
 #define	E_Lbang		'\301'		/* List generation */
 #define	E_Lcreate	'\302'		/* List creation */
-#define	E_Lget		'\356'		/* List get/pop -- only E_Lget used */
+#define	E_Lget		'\356'		/* List get/pop */
 #define	E_Lpop		'\356'		/* List get/pop */
 #define	E_Lpull		'\304'		/* List pull */
 #define	E_Lpush		'\305'		/* List push */
