@@ -128,7 +128,7 @@
 #define E_Coact		'\101'		/* Co-expression activation */
 #define E_Coret		'\102'		/* Co-expression return */
 #define E_Cofail	'\104'		/* Co-expression failure */
-#define E_Cocreate	'\110'		/* Co-expression create operation */
+#define E_Cocreate	'\110'		/* Co-expression create */
 #define	E_Cobang	'\222'		/* Co-expression generation */
 
    /*
