@@ -2936,20 +2936,27 @@ static unsigned int distance_rgb(struct palentry *pe, int r, int g, int b)
 
 static void set_PALETTE(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
 {
-    unsigned int best_rgb;
-    struct palentry *best;
+    unsigned int best_d, d;
+    struct palentry *best, *pe;
     int i;
+
+    #define Bullseye (best_d == 0 && best->a == a)
     best = imd->paltbl;
-    best_rgb = distance_rgb(imd->paltbl, r, g, b);
-    for (i = 1; i < imd->format->palette_size; ++i) {
-        struct palentry *pe = &imd->paltbl[i];
-        unsigned int d1 = distance_rgb(pe, r, g, b);
-        if (d1 < best_rgb) {
-            best_rgb = d1;
-            best = pe;
-        } else if (d1 == best_rgb) {
-            if (Abs(best->a - a) > Abs(pe->a - a))
+    best_d = distance_rgb(imd->paltbl, r, g, b);
+    if (!Bullseye) {
+        for (i = 1; i < imd->format->palette_size; ++i) {
+            pe = &imd->paltbl[i];
+            d = distance_rgb(pe, r, g, b);
+            if (d < best_d) {
+                best_d = d;
                 best = pe;
+                if (Bullseye) break;
+            } else if (d == best_d) {
+                if (Abs(best->a - a) > Abs(pe->a - a)) {
+                    best = pe;
+                    if (Bullseye) break;
+                }
+            }
         }
     }
     imd->format->setpaletteindex(imd, x, y, best - imd->paltbl);
