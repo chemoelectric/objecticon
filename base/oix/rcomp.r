@@ -128,7 +128,7 @@ int anycmp(dptr dp1, dptr dp2)
          return uwordcmp(TableBlk(*dp1).id, TableBlk(*dp2).id);
 
       default: {
-	 syserr("anycmp: unknown datatype.");
+	 syserr("anycmp: Unknown datatype.");
 	 /*NOTREACHED*/
 	 return 0;  /* avoid gcc warning */
       }
@@ -162,7 +162,7 @@ int order(dptr dp)
      methp:       return 16;
      weakref:     return 17;
      default: {
-	 syserr("order: unknown datatype.");
+	 syserr("order: Unknown datatype.");
 	 /*NOTREACHED*/
 	 return 0;  /* avoid gcc warning */
      }

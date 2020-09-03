@@ -240,18 +240,18 @@ static void pop_word(dptr l, word *res)
 {
     tended struct descrip e;
     if (!list_get(l, &e))
-        syserr("pop_word: empty list");
+        syserr("pop_word: Empty list");
     if (!cnv:C_integer(e, *res))
-        syserr("pop_word: not an int");
+        syserr("pop_word: Not an int");
 }
 
 static void pop_double(dptr l, double *res)
 {
     tended struct descrip e;
     if (!list_get(l, &e))
-        syserr("pop_double: empty list");
+        syserr("pop_double: Empty list");
     if (!cnv:C_double(e, *res))
-        syserr("pop_double: not a double");
+        syserr("pop_double: Not a double");
 }
 
 static cairo_operator_t convert_op(int op)

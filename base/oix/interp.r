@@ -230,7 +230,7 @@ void pop_to(struct frame *f)
         struct frame *t = k_current->sp;
         k_current->sp = t->parent_sp;
         if (!k_current->sp)
-            syserr("pop_to: target not found on stack");
+            syserr("pop_to: Target not found on stack");
         free_frame(t);
     }
 }
