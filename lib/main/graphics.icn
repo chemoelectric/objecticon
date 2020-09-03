@@ -654,6 +654,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # `v` may be raw binary image data (eg a gif file), or the name of
    # a file containing an image, or a `Pixels` instance.
    #
+   # Note that mask and draw_op settings are not changed before
+   # drawing the image; if the image could be transparent it may be
+   # desirable to set draw_op to "source" beforehand, so that the
+   # image does not mix with the existing background.
+   #
    public set_image(v)
       return if is(v, Pixels) then {
          set_size(v.get_width(), v.get_height())
@@ -1299,10 +1304,15 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # :  `img` - the image
    #
    public static open_image(img)
-      local w
+      local w, t
       w := Window() | fail
-      w.set_draw_op("source")
-      w.set_image(img) | {
+      use {
+         t := w.clone(),
+         {
+            t.set_draw_op("source")
+            t.set_image(img)
+         }
+      } | {
          w.close()
          fail
       }
