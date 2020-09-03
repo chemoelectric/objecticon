@@ -2245,6 +2245,10 @@ function graphics_Pixels_convert_impl(self, format)
           LitWhy("Invalid format");
           fail;
       }
+      if (fmt->palette_size > 0) {
+          LitWhy("Can't convert to a paletted format");
+          fail;
+      }
       imd = initimgdata(self_id->width, self_id->height, fmt);
       copyimgdata(imd, self_id);
       return C_integer((word)imd);

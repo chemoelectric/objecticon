@@ -217,7 +217,8 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    end
 
    # Convert this instance to one of the same dimensions in the given
-   # format.
+   # format.  The format may not be a paletted format (since no
+   # palette would have been set up).
    #
    public convert(format)
       return create_for_ptr(convert_impl(format))
