@@ -247,10 +247,6 @@ abstract class BaseTree(SelectableScrollArea)
             yp := self.view.y + get_height_for_line(l) / 2 + l_off - plus.h / 2
             xp := self.get_subject_x() + N.depth * col_w - col_w / 2  - plus.w / 2
             if (xp <= e.x < xp + plus.w) & (yp <= e.y < yp + plus.h) then {
-               #
-               # Clicking on the little icon ends the sequence, and sets the selection
-               # to the given node.
-               #
                curr_sel := *get_selections()
                curr_cursor := self.cursor
                N.toggle_expanded()
@@ -259,8 +255,11 @@ abstract class BaseTree(SelectableScrollArea)
                parent_dialog.release(self.view, Mouse.LEFT_PRESS)
                if curr_cursor ~=== self.cursor then
                   fire(Event.CURSOR_MOVED, e)
-               # Just monitor the number of selections to detect a change.
-               if *get_selections() ~=  curr_sel then
+               # Just monitor the number of selections to detect a
+               # change.  This gives a different to result to what we
+               # would get with start_handle/end_handle, which is
+               # based on selected line numbers.
+               if *get_selections() ~= curr_sel then
                   fire(Event.SELECTION_CHANGED, e)
                fire(Event.TREE_NODE_EXPANSION, e)
                return
