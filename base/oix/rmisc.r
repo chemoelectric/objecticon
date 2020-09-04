@@ -1823,7 +1823,8 @@ void bytes2string(char *s, word len, dptr d)
  */
 void cstrs2string(char **s, char *delim, dptr d) 
 {
-    int n, len = 0;
+    int n;
+    word len = 0;
     for (n = 0; s[n]; ++n)
         len += strlen(s[n]);
     if (n == 0)
