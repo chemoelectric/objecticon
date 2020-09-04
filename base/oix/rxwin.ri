@@ -4061,7 +4061,12 @@ static XftFont *fallback(wbp w, int ch)
              if (spacing == FC_MONO)
                  FcPatternAddInteger(font->base, FC_CHAR_WIDTH, font->fsp->max_advance_width);
              FcConfigSubstitute(NULL, font->base, FcMatchPattern);
-             FcDefaultSubstitute(font->base);
+             /* This is a wrapper around FcDefaultSubstitute().  Of
+              * particular note is that it sets the "dpi" attribute of
+              * the pattern correctly (from Xft.dpi in X resources, or
+              * calcuated via the usual X calls).  This means the
+              * "pixelsize" setting is also made correctly. */
+             XftDefaultSubstitute(wd->display, DefaultScreen(wd->display), font->base);
              /* Get the list of fallback patterns. */
              font->fbpatterns = FcFontSort(NULL, font->base, FcTrue, &font->fbcoverage, &status);
          }
