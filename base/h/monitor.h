@@ -111,7 +111,6 @@
     */
 
 #define E_Assign	'\347'		/* Assignment */
-#define	E_Value		'\350'		/* Value assigned */
 #define E_Deref		'\363'		/* Dereference */
 
 
@@ -193,7 +192,7 @@
 276 277
 
 341 342 343 344 345 346
-351
+350 351
 364 365 366 370
 371 372 373 374 375 376 377
 
