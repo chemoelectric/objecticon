@@ -3,7 +3,6 @@ package lang
 class MonitorCodeSet()
    public static const
       AllocMask,
-      AssignMask,
       ConvMask,
       CallMask,
       ListMask,
@@ -24,8 +23,6 @@ class MonitorCodeSet()
                         MonitorCode.String || MonitorCode.Coexpr || MonitorCode.Weakref ||
                         MonitorCode.Object || MonitorCode.Methp || 
                         MonitorCode.Ucs || MonitorCode.BlkDeAlc || MonitorCode.StrDeAlc)
-
-      AssignMask := cset(MonitorCode.Assign || MonitorCode.Value)
 
       ConvMask := cset(MonitorCode.CnvCDbl || MonitorCode.CnvCInt || MonitorCode.CnvCset ||
                        MonitorCode.CnvUcs ||  MonitorCode.CnvStrOrUcs || MonitorCode.CnvECInt ||
