@@ -96,6 +96,7 @@ struct oisymbols {
     void (*cplist)(dptr dp1,dptr dp2,word i,word size);
     void (*cpset)(dptr dp1,dptr dp2,word size);
     void (*cptable)(dptr dp1,dptr dp2,word size);
+    void (*deref)(dptr dp1, dptr dp2);
     int (*cnv_c_dbl)(dptr s, double *d);
     int (*cnv_c_int)(dptr s, word *d);
     int (*cnv_c_str)(dptr s, dptr d);

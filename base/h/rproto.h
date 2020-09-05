@@ -364,8 +364,7 @@ int     lookup_record_field_by_fnum(struct b_constructor *recdef, int fnum);
 struct loc *lookup_global_loc(dptr name, struct progstate *prog);
 
 void    collect         (int region);
-void    deref_0         (dptr dp1, dptr dp2);
-void    deref_1         (dptr dp1, dptr dp2);
+void    deref           (dptr dp1, dptr dp2);
 int     eq              (dptr dp1,dptr dp2);
 int     getname        (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);

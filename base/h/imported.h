@@ -100,6 +100,7 @@
 #define cplist (*(imported->cplist))
 #define cpset (*(imported->cpset))
 #define cptable (*(imported->cptable))
+#define deref (*(imported->deref))
 #define cnv_c_dbl (*(imported->cnv_c_dbl))
 #define cnv_c_int (*(imported->cnv_c_int))
 #define cnv_c_str (*(imported->cnv_c_str))

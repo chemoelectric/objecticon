@@ -531,14 +531,11 @@ static void deref_tvtbl(dptr s, dptr d)
 }
 
 
-#begdef deref_macro(f, e_deref)
 /*
  * deref - dereference a descriptor.
  */
-void f(dptr s, dptr d)
+void deref(dptr s, dptr d)
    {
-
-   EVValD(s, e_deref);
 
    if (!is:variable(*s))
       *d = *s;
@@ -567,10 +564,6 @@ void f(dptr s, dptr d)
          syserr("Unknown variable type");
       }
    }
-#enddef
-
-deref_macro(deref_0,0)
-deref_macro(deref_1,E_Deref)
 
 
 /*

@@ -646,7 +646,6 @@ __declspec(dllexport)  \
       
 #define k_main        (curpstate->K_main)
       
-#define deref	    (curpstate->Deref)
 #define alcbignum	    (curpstate->Alcbignum)
 #define alccoexp	    (curpstate->Alccoexp)
 #define alccset	    (curpstate->Alccset)

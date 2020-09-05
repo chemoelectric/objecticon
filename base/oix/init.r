@@ -637,7 +637,6 @@ static void initprogstate(struct progstate *p)
     p->stringtotal = p->blocktotal = p->stackcurr = p->collected_user = 
         p->collected_stack = p->collected_string = p->collected_block = 0;
 
-    p->Deref = deref_0;
     p->Alccoexp = alccoexp_0;
     p->Alcbignum = alcbignum_0;
     p->Alccset = alccset_0;

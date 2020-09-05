@@ -477,7 +477,6 @@ struct progstate {
     /*
      * Function Instrumentation Fields.
      */
-    void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
     struct b_cset * (*Alccset)(word);
     union block * (*Alchash)(int);
