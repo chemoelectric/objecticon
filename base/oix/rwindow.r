@@ -383,6 +383,90 @@ int int_reducerect(wbp w, int clip, int *x0, int *y0, int *width0, int *height0)
 #endif
 }
 
+int reducehline(wbp w, int clip, word *x, word *width)
+{
+    wcp wc = w->context;
+    wsp ws = w->window;
+    if (*x < 0)  { 
+        *width += *x; 
+        *x = 0; 
+    }
+    if (*x + *width > ws->width)
+        *width = ws->width - *x; 
+
+    if (*width <= 0)
+        return 0;
+
+    if (clip && wc->clipw >= 0) {
+        /* Further reduce the line to the clipping region */
+        if (*x < wc->clipx) {
+            *width += *x - wc->clipx;
+            *x = wc->clipx;
+        }
+        if (*x + *width > wc->clipx + wc->clipw)
+            *width = wc->clipx + wc->clipw - *x;
+
+        if (*width <= 0)
+            return 0;
+    }
+    return 1;
+}
+
+int int_reducehline(wbp w, int clip, int *x0, int *width0)
+{
+#if IntBits == WordBits
+    return reducehline(w, clip, (word *)x0, (word *)width0);
+#else
+    int res;
+    word x = *x0, width = *width0;
+    res = reducehline(w, clip, &x, &width);
+    *x0 = x; *width0 = width;
+    return res;
+#endif
+}
+
+int reducevline(wbp w, int clip, word *y, word *height)
+{
+    wcp wc = w->context;
+    wsp ws = w->window;
+    if (*y < 0)  { 
+        *height += *y; 
+        *y = 0; 
+    }
+    if (*y + *height > ws->height)
+        *height = ws->height - *y; 
+
+    if (*height <= 0)
+        return 0;
+
+    if (clip && wc->clipw >= 0) {
+        /* Further reduce the line to the clipping region */
+        if (*y < wc->clipy) {
+            *height += *y - wc->clipy; 
+            *y = wc->clipy;
+        }
+        if (*y + *height > wc->clipy + wc->cliph)
+            *height = wc->clipy + wc->cliph - *y;
+
+        if (*height <= 0)
+            return 0;
+    }
+    return 1;
+}
+
+int int_reducevline(wbp w, int clip, int *y0, int *height0)
+{
+#if IntBits == WordBits
+    return reducevline(w, clip, (word *)y0, (word *)height0);
+#else
+    int res;
+    word y = *y0, height = *height0;
+    res = reducevline(w, clip, &y, &height);
+    *y0 = y; *height0 = height;
+    return res;
+#endif
+}
+
 static int tryimagedata(dptr data, struct imgdata *imd)
 {
     int r;
