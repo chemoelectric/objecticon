@@ -3917,7 +3917,7 @@ int walert(wbp w, int volume)
 #define MaxXftChunk 512
 
 /*
- * The textwidth functions follow the same pattern as the drawstring
+ * The textwidth functions follow a similar pattern to the drawstring
  * functions below; see there for comments.
  */
 
@@ -4191,7 +4191,10 @@ static void drawstring8(wbp w, int x, int y, dptr str)
     wsp ws = w->window;
     wdp wd = ws->display;
 
-    if (y_outside(w, y))
+    p = StrLoc(*str);
+    len = StrLen(*str);
+
+    if (len == 0 || y_outside(w, y) || gone_right(w, x))
         return;
 
     prepare_xft(w);
@@ -4200,8 +4203,6 @@ static void drawstring8(wbp w, int x, int y, dptr str)
 
     clip(w);
 
-    p = StrLoc(*str);
-    len = StrLen(*str);
     while (len > MaxXftChunk) {
         XftTextExtents8(wd->display,
                         wc->font->fsp,
@@ -4230,8 +4231,27 @@ static void drawstring8(wbp w, int x, int y, dptr str)
         p += MaxXftChunk;
         len -= MaxXftChunk;
     }
-    if (len && !gone_right(w, x)) {
-        if ((!ws->win || ws->holding) && x >= 0) {
+
+    /* len > 0 */
+    if ((!ws->win || ws->holding) && x >= 0) {
+        XftDrawString8(ws->pxft,
+                       &color,
+                       wc->font->fsp,
+                       x,
+                       y,
+                       (FcChar8 *)p,
+                       len);
+    } else {
+        XftTextExtents8(wd->display,
+                        wc->font->fsp,
+                        (FcChar8 *)p,
+                        len,
+                        &extents);
+        x1 = x - extents.x;
+        w1 = extents.width;
+        y1 = y - extents.y;
+        h1 = extents.height;
+        if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
             XftDrawString8(ws->pxft,
                            &color,
                            wc->font->fsp,
@@ -4239,26 +4259,7 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                            y,
                            (FcChar8 *)p,
                            len);
-        } else {
-            XftTextExtents8(wd->display,
-                            wc->font->fsp,
-                            (FcChar8 *)p,
-                            len,
-                            &extents);
-            x1 = x - extents.x;
-            w1 = extents.width;
-            y1 = y - extents.y;
-            h1 = extents.height;
-            if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
-                XftDrawString8(ws->pxft,
-                               &color,
-                               wc->font->fsp,
-                               x,
-                               y,
-                               (FcChar8 *)p,
-                               len);
-                pix_to_win(ws, x1, y1, w1, h1);
-            }
+            pix_to_win(ws, x1, y1, w1, h1);
         }
     }
 }
@@ -4276,7 +4277,12 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
     wsp ws = w->window;
     wdp wd = ws->display;
 
-    if (y_outside(w, y))
+    p = StrLoc(UcsBlk(*str).utf8);
+    len = UcsBlk(*str).length;
+
+    /* Check for empty string, or x or y which won't produce
+     * output. */
+    if (len == 0 || y_outside(w, y) || gone_right(w, x))
         return;
 
     prepare_xft(w);
@@ -4285,9 +4291,9 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
 
     clip(w);
 
-    start = p = StrLoc(UcsBlk(*str).utf8);
+    start = p;
     font = wc->font->fsp;
-    len = UcsBlk(*str).length;
+
     /* Invariant: cn == #utf-8 chars in the string at start, of length
      * (p - start); cn is only zero on 1st iteration. */
     cn = 0;
@@ -4331,12 +4337,36 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
         } else
             cn++;
     }
-    if (p != start && !gone_right(w, x)) {
-        /* This test just saves a call to XftTextExtentsUtf8() if we
-         * know we don't need to call pix_to_win(), and x isn't
-         * negative (and hence can't be in the range where Xft
-         * malfunctions). */
-        if ((!ws->win || ws->holding) && x >= 0) {
+
+    /* Now p != start, since we must have been around the above while
+     * loop at least once, having checked for empty string at the top.
+     *
+     * This next test just saves a call to XftTextExtentsUtf8() if we
+     * know we don't need to call pix_to_win(), and x isn't in the
+     * range where Xft malfunctions, namely with a very large -ve x.
+     * Should that be the case, we get the extents (that works), and
+     * then expect reducerect to return false (since we know p-start
+     * is a reasonable size, <= MaxXftChunk).
+     */
+    if ((!ws->win || ws->holding) && x >= 0) {
+        XftDrawStringUtf8(ws->pxft,
+                          &color,
+                          font,
+                          x,
+                          y,
+                          (FcChar8 *)start,
+                          p - start);
+    } else {
+        XftTextExtentsUtf8(wd->display,
+                           font,
+                           (FcChar8 *)start,
+                           p - start,
+                           &extents);
+        x1 = x - extents.x;
+        w1 = extents.width;
+        y1 = y - extents.y;
+        h1 = extents.height;
+        if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
             XftDrawStringUtf8(ws->pxft,
                               &color,
                               font,
@@ -4344,26 +4374,7 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
                               y,
                               (FcChar8 *)start,
                               p - start);
-        } else {
-            XftTextExtentsUtf8(wd->display,
-                               font,
-                               (FcChar8 *)start,
-                               p - start,
-                               &extents);
-            x1 = x - extents.x;
-            w1 = extents.width;
-            y1 = y - extents.y;
-            h1 = extents.height;
-            if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
-                XftDrawStringUtf8(ws->pxft,
-                                  &color,
-                                  font,
-                                  x,
-                                  y,
-                                  (FcChar8 *)start,
-                                  p - start);
-                pix_to_win(ws, x1, y1, w1, h1);
-            }
+            pix_to_win(ws, x1, y1, w1, h1);
         }
     }
 }
