@@ -8,7 +8,7 @@
 
 package gui
 
-import util, lang, io, graphics
+import util, lang, io, graphics, ipl.pdco
 
 #
 # This class holds the several `TabItem`s, and represents a tabbed pane.
@@ -593,27 +593,20 @@ class TabSet(Component)
    end
 
    public override get_default_width()
-      local c, mw, tw
+      local mw, tw
 
       # Max width of tab contents.
-      mw := 0
-      every c := !self.children do
-         mw <:= c.get_preferred_width()
-
+      mw := MaxNN{ (!children).get_preferred_width() }
       if \self.prefer_one_row_flag then {
          # Expand mw to the total tab label width if needed.
-         tw := 0
-         every c := !self.children do
-            tw +:= c.get_label_width()
+         tw := Sum{ (!children).get_label_width() }
          # There is 2 * Gui.BORDER_WIDTH of decoration between each label...
          tw +:= 2 * Gui.BORDER_WIDTH * (*self.children - 1)
          mw <:= tw
       } else {
          # We should be wide enough for the widest label to be on a line on its own
          # without clipping.
-         tw := 0
-         every c := !self.children do
-            tw <:= c.get_label_width()
+         tw := MaxNN{ (!children).get_label_width() }
          mw <:= tw
       }
 
@@ -624,16 +617,13 @@ class TabSet(Component)
    end
 
    public override get_default_height(dw)
-      local c, mh
+      local mh
 
       # Our border's width
       dw -:= border.get_total_width()
 
       # Max height of tab contents.
-      mh := 0
-      every c := !self.children do
-         mh <:= c.get_preferred_height(dw)
-
+      mh := MaxNN{ (!children).get_preferred_height(dw) }
       # The top and bottom borders.
       mh +:= border.get_total_height()
 
@@ -646,11 +636,7 @@ class TabSet(Component)
    end
 
    public get_label_height()
-      local h, c
-      h := 0
-      every c := !self.children do
-         h <:= c.get_label_height()
-      return h
+      return MaxNN{ (!children).get_label_height() }
    end
 
    # Debug functions
@@ -707,8 +693,7 @@ class TabSet(Component)
       # The current line_break's lines must still fit in the
       # new width.
       every e := !line_break do {
-         t := 0
-         every t +:= (!e).get_label_width()
+         t := Sum{ (!e).get_label_width() }
          t +:= 2 * Gui.BORDER_WIDTH * (*e - 1)
          if t > self.w - border.get_total_width() then
             fail

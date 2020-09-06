@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, ipl.pdco
 
 #
 # This class provides a container which contains several `OverlayItems`, only one
@@ -94,19 +94,11 @@ class OverlaySet(Component)
    end
 
    public override get_default_width()
-      local c, mw
-      mw := 0
-      every c := !children do
-         mw <:= c.get_preferred_width()
-      return mw
+      return MaxNN{ (!children).get_preferred_width() }
    end
 
    public override get_default_height(dw)
-      local c, mh
-      mh := 0
-      every c := !children do
-         mh <:= c.get_preferred_height(dw)
-      return mh
+      return MaxNN{ (!children).get_preferred_height(dw) }
    end
 
    public override layout()
