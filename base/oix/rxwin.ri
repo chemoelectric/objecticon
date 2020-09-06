@@ -4122,15 +4122,42 @@ static XftFont *fallback(wbp w, int ch)
 }
 
 /*
- * Have we gone past the edge of the window, or (if applicable) the
- * clip region?  If this succeeds, then reducerect(w, 1, x1, ...) would
- * return 0 for all x1 >= x.
+ * Given an x position for drawing a string, does the window/clip size
+ * indicate that no string need be drawn, however long it may be?
  */
 static int gone_right(wbp w, int x)
 {
     wcp wc = w->context;
+
+    /*
+     * Deduct two char widths from x to take into account strings that
+     * render slightly to the left of their given x position (they
+     * will have an XGlyphInfo with a x value > 0).
+     */
+    x -= 2 * wc->font->maxwidth;
+
     return x >= w->window->width ||
         (wc->clipw >= 0 && x >= wc->clipx + wc->clipw);
+}
+
+/*
+ * Given a baseline y for drawing a string, does the window/clip size
+ * indicate that nothing need be done?
+ */
+static int y_outside(wbp w, int y)
+{
+    wcp wc = w->context;
+    int h, fh;
+
+    fh = wc->font->ascent + wc->font->descent;
+
+    /* y is one fh above the top ascent line, y+h is one fh below the
+     * bottom descent line; so a safety margin of 1 fh on either side.
+     */
+    y -= wc->font->ascent + fh;
+    h = 3 * fh;
+
+    return !int_reducevline(w, 1, &y, &h);
 }
 
 /*
@@ -4159,17 +4186,17 @@ static void drawstring8(wbp w, int x, int y, dptr str)
     XGlyphInfo extents; 
     word len;
     char *p;
-    int ascent, descent;
     int x1, y1, w1, h1, wx;
     wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
 
+    if (y_outside(w, y))
+        return;
+
     prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;
-    ascent = wc->font->ascent;
-    descent = wc->font->descent;
 
     clip(w);
 
@@ -4182,10 +4209,10 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                         MaxXftChunk,
                         &extents);
         wx = extents.xOff & 0xffff;
-        x1 = x;
-        w1 = wx;
-        y1 = y - ascent;
-        h1 = ascent + descent;
+        x1 = x - extents.x;
+        w1 = extents.width;
+        y1 = y - extents.y;
+        h1 = extents.height;
         if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
             XftDrawString8(ws->pxft,
                            &color,
@@ -4197,7 +4224,7 @@ static void drawstring8(wbp w, int x, int y, dptr str)
             pix_to_win(ws, x1, y1, w1, h1);
         }
         x += wx;
-        if (h1 <= 0 || gone_right(w, x))
+        if (gone_right(w, x))
             return;
 
         p += MaxXftChunk;
@@ -4218,11 +4245,10 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                             (FcChar8 *)p,
                             len,
                             &extents);
-            wx = extents.xOff & 0xffff;
-            x1 = x;
-            w1 = wx;
-            y1 = y - ascent;
-            h1 = ascent + descent;
+            x1 = x - extents.x;
+            w1 = extents.width;
+            y1 = y - extents.y;
+            h1 = extents.height;
             if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
                 XftDrawString8(ws->pxft,
                                &color,
@@ -4242,20 +4268,20 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
     XftColor color;
     XGlyphInfo extents; 
     word len, cn;
-    int ascent, descent;
     int x1, y1, w1, h1, wx;
-    int a, d, ch;
+    int ch;
     char *p, *p1, *start;
     XftFont *font, *f1;
     wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
 
+    if (y_outside(w, y))
+        return;
+
     prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;
-    ascent = wc->font->ascent;
-    descent = wc->font->descent;
 
     clip(w);
 
@@ -4280,15 +4306,10 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
              * anding with 0xffff doubles the range of sensible result
              * values. */
             wx = extents.xOff & 0xffff;
-            /* cf. newfont() below. */
-            a = Max(f1->ascent, extents.y);
-            a = Max(ascent, a);
-            d = Max(f1->descent, extents.height - extents.y);
-            d = Max(descent, d);
-            x1 = x;
-            w1 = wx;
-            y1 = y - a;
-            h1 = a + d;
+            x1 = x - extents.x;
+            w1 = extents.width;
+            y1 = y - extents.y;
+            h1 = extents.height;
             if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
                 XftDrawStringUtf8(ws->pxft,
                                   &color,
@@ -4300,10 +4321,9 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
                 pix_to_win(ws, x1, y1, w1, h1);
             }
             x += wx;
-            /* Check for early termination, if h1 was limited to
-             * nothing, or x is now past the right of the drawing
-             * area. */
-            if (h1 <= 0 || gone_right(w, x))
+            /* Check for early termination, if x is now past the right
+             * of the drawing area. */
+            if (gone_right(w, x))
                 return;
 
             start = p1;
@@ -4330,15 +4350,10 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
                                (FcChar8 *)start,
                                p - start,
                                &extents);
-            wx = extents.xOff & 0xffff;
-            a = Max(font->ascent, extents.y);
-            a = Max(ascent, a);
-            d = Max(font->descent, extents.height - extents.y);
-            d = Max(descent, d);
-            x1 = x;
-            w1 = wx;
-            y1 = y - a;
-            h1 = a + d;
+            x1 = x - extents.x;
+            w1 = extents.width;
+            y1 = y - extents.y;
+            h1 = extents.height;
             if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
                 XftDrawStringUtf8(ws->pxft,
                                   &color,
