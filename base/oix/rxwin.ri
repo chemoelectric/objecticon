@@ -4176,6 +4176,21 @@ static int y_outside(wbp w, int y)
 
 
 /*
+ * Helper function to take an x, y location and a XGlyphInfo string
+ * extents structure, and calculate the corresponding rectangle,
+ * reduced by window and clip.  Returns true iff the result rectangle
+ * is non-empty.
+ */
+static int reduce_extents(wbp w, int x, int y, XGlyphInfo *extents, int *xr, int *yr, int *wr, int *hr)
+{
+    *xr = x - extents->x;
+    *wr = extents->width;
+    *yr = y - extents->y;
+    *hr = extents->height;
+    return int_reducerect(w, 1, xr, yr, wr, hr);
+}
+
+/*
  * Draw a simple byte string; no font substitution is done.  This
  * follows a similar pattern to the utf-8 case below; see there for
  * comments.
@@ -4210,11 +4225,7 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                         MaxXftChunk,
                         &extents);
         wx = extents.xOff & 0xffff;
-        x1 = x - extents.x;
-        w1 = extents.width;
-        y1 = y - extents.y;
-        h1 = extents.height;
-        if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
+        if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
             XftDrawString8(ws->pxft,
                            &color,
                            wc->font->fsp,
@@ -4247,11 +4258,7 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                         (FcChar8 *)p,
                         len,
                         &extents);
-        x1 = x - extents.x;
-        w1 = extents.width;
-        y1 = y - extents.y;
-        h1 = extents.height;
-        if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
+        if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
             XftDrawString8(ws->pxft,
                            &color,
                            wc->font->fsp,
@@ -4312,11 +4319,7 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
              * anding with 0xffff doubles the range of sensible result
              * values. */
             wx = extents.xOff & 0xffff;
-            x1 = x - extents.x;
-            w1 = extents.width;
-            y1 = y - extents.y;
-            h1 = extents.height;
-            if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
+            if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
                 XftDrawStringUtf8(ws->pxft,
                                   &color,
                                   f1,
@@ -4362,11 +4365,7 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
                            (FcChar8 *)start,
                            p - start,
                            &extents);
-        x1 = x - extents.x;
-        w1 = extents.width;
-        y1 = y - extents.y;
-        h1 = extents.height;
-        if (int_reducerect(w, 1, &x1, &y1, &w1, &h1)) {
+        if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
             XftDrawStringUtf8(ws->pxft,
                               &color,
                               font,
