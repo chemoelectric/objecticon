@@ -31,6 +31,29 @@ AC_DEFUN([AX_LIB_SOCKET_NSL],
                 AC_CHECK_LIB([socket], [socket], [LIBS="-lsocket -lnsl $LIBS"], [], [-lnsl])])
 ])
 
+dnl
+dnl A simple helper macro to start the check for a package or library,
+dnl setting with_$1 to yes or no.
+dnl
+AC_DEFUN([AX_OPT_HEADER],
+[
+    AC_MSG_CHECKING([if $1 is wanted])
+    AC_ARG_WITH($1,
+    [  --with-$1 to enable $2 if available (the default)
+  --without-$1 to disable $2 usage completely],
+    [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+    [
+       with_$1=yes
+       AC_MSG_RESULT(yes)
+    ]
+    )
+])
+
 AC_DEFUN([AX_STRUCT_TIMEZONE_GMTOFF],
 [
   AC_CACHE_CHECK(for struct tm.tm_gmtoff, ax_cv_member_struct_tm_tm_gmtoff,
@@ -346,21 +369,7 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
 
 AC_DEFUN([AX_CHECK_CAIRO],
 [
-    AC_MSG_CHECKING(if cairo is wanted)
-    AC_ARG_WITH(cairo,
-    [  --with-cairo to enable cairo if available (the default)
-  --without-cairo to disable cairo usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_cairo=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
+    AX_OPT_HEADER([cairo], [cairo])
     unset CAIRO_VERSION CAIRO_CPPFLAGS CAIRO_LDFLAGS CAIRO_LIBS
     if test "$with_cairo" != "no"; then
            CAIRO_CONFIG="cairo >= 1.13 pangocairo >= 1.36 librsvg-2.0 >= 2.40"
@@ -387,21 +396,7 @@ AC_DEFUN([AX_CHECK_CAIRO],
 
 AC_DEFUN([AX_CHECK_OPENSSL],
 [
-    AC_MSG_CHECKING(if OpenSSL is wanted)
-    AC_ARG_WITH(openssl,
-    [  --with-openssl to enable OpenSSL if available (the default)
-  --without-openssl to disable OpenSSL usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_openssl=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
+    AX_OPT_HEADER([openssl], [OpenSSL])
     unset OPENSSL_VERSION OPENSSL_CPPFLAGS OPENSSL_LDFLAGS OPENSSL_LIBS
     if test "$with_openssl" != "no"; then
            OPENSSL_CONFIG="openssl >= 1.0"
@@ -428,22 +423,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
 
 AC_DEFUN([AX_CHECK_PNG],
 [
-    AC_MSG_CHECKING(if png is wanted)
-    AC_ARG_WITH(png,
-    [  --with-png to enable png usage if available (the default)
-  --without-png to disable png usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_png=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER([png], [png])
     unset found_png
     if test "$with_png" != "no"; then
            PNG_CONFIG="libpng >= 1.2.37"
@@ -465,22 +445,7 @@ AC_DEFUN([AX_CHECK_PNG],
 
 AC_DEFUN([AX_CHECK_ZLIB],
 [
-    AC_MSG_CHECKING(if zlib is wanted)
-    AC_ARG_WITH(zlib,
-    [  --with-zlib to enable zlib usage if available (the default)
-  --without-zlib to disable zlib usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_zlib=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER([zlib], [zlib])
     unset found_zlib
     if test "$with_zlib" != "no"; then
            ZLIB_CONFIG="zlib >= 1.2.7"
@@ -502,22 +467,7 @@ AC_DEFUN([AX_CHECK_ZLIB],
 
 AC_DEFUN([AX_CHECK_X11],
 [
-    AC_MSG_CHECKING(if X11 graphics are wanted)
-    AC_ARG_WITH(X11,
-    [  --with-X11 to enable X11 usage if available (the default)
-  --without-X11 to disable X11 usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_X11=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER([X11], [X11 graphics])
     unset found_x11
     if test "$with_X11" != "no"; then
            X11_CONFIG="x11 >= 1.5 xrender >= 0.9.7 xft >= 2.3.1 fontconfig >= 2.8.0 freetype2 >= 14.1.8"
@@ -539,22 +489,7 @@ AC_DEFUN([AX_CHECK_X11],
 
 AC_DEFUN([AX_CHECK_JPEG],
 [
-    AC_MSG_CHECKING(if jpeg is wanted)
-    AC_ARG_WITH(jpeg,
-    [  --with-jpeg to enable jpeg usage if available (the default)
-  --without-jpeg to disable jpeg usage completely],
-   [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-   [
-       with_jpeg=yes
-       AC_MSG_RESULT(yes)
-   ]
-   )
-
+   AX_OPT_HEADER([jpeg], [jpeg])
    unset found_jpeg
    if test "$with_jpeg" != "no"; then
            JPEG_CONFIG="libjpeg"
@@ -576,22 +511,7 @@ AC_DEFUN([AX_CHECK_JPEG],
 
 AC_DEFUN([AX_LIB_MYSQL],
 [
-    AC_MSG_CHECKING(if mysql is wanted)
-    AC_ARG_WITH(mysql,
-    [  --with-mysql to enable MySQL if available (the default)
-  --without-mysql to disable MySQL usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_mysql=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER([mysql], [MySQL])
     unset MYSQL_CPPFLAGS MYSQL_LDFLAGS MYSQL_VERSION MYSQL_LIBS
     if test "$with_mysql" != "no"; then
            MYSQL_CONFIG="mysqlclient >= 1.0"
