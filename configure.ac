@@ -199,3 +199,5 @@ else
         AC_MSG_NOTICE([dynamic linking        : no])
 fi
 AC_MSG_NOTICE([When reconfiguring, please remember to run 'make clean' before 'make'.])
+m4_cleardivert([HELP_CANON])dnl
+m4_cleardivert([HELP_ENABLE])dnl
