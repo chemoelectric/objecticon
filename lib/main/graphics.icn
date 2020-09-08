@@ -274,8 +274,9 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    # can be raw image data, or a filename.
    #
    # With two parameters, a blank instance is created of the given
-   # width and height; an optional third parameter provides the
-   # format.  The underlying data is allocated and set to zero.
+   # width and height; an optional third parameter provides the format
+   # (the default is `RGBA64`).  The underlying data is allocated and
+   # set to zero.
    #
    public new(a[])
       (ptr := if *a = 1 then
