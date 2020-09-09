@@ -2,7 +2,6 @@ package gui
 
 import 
    util,
-   graphics(Window),
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
@@ -649,8 +648,7 @@ class ImagePaint(Paint)
       zoom_w <:= 1
       zoom_h <:= 1
 
-      zoom_win := Window().set_size(zoom_w, zoom_h) | runerr("Couldn't open temp window")
-      gui.zoom_win(win, zoom_win)
+      zoom_win := gui.zoom_win(win, zoom_w, zoom_h)
 
       # Now swap the zoomed window into win.
       close_image()

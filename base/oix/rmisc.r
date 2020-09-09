@@ -925,7 +925,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          if (Type(*dp) <= MaxType)
             fputs(blkname[Type(*dp)], f);
          else
-            syserr("outimage: unknown type");
+            syserr("outimage1: Unknown type");
          }
       }
    }
@@ -1427,7 +1427,7 @@ void getimage(dptr dp1, dptr dp2)
          }
 
       default:
-         syserr("Invalid type to getimage");
+         syserr("getimage: Invalid type");
    }
 }
 
@@ -1494,7 +1494,7 @@ static int nearest_with_dptr(int m, int n, struct progstate *prog)
         if (m - off >= 0 && (prog->ClassFields[m - off].flags & (M_Method | M_Static)) == M_Static)
             return m - off;
     }    
-    syserr("name: no field_descriptors in classfields area");
+    syserr("nearest_with_dptr: No field_descriptors in classfields area");
     return 0; /* Unreachable */
 }
 
@@ -1510,7 +1510,7 @@ struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog)
         else
             return &prog->ClassFields[m];
     }
-    syserr("name: no corresponding field_descriptor in classfields area");
+    syserr("find_class_field_for_dptr: No corresponding field_descriptor in classfields area");
     return 0; /* Unreachable */
 }
 
@@ -1626,10 +1626,10 @@ int getname(dptr dp1, dptr dp2)
               }
           }
           if (!prog)
-            syserr("name: Unknown integer keyword variable");
+            syserr("getname: Unknown integer keyword variable");
         }            
       kywdany:
-        syserr("name: Unknown keyword variable");
+        syserr("getname: Unknown keyword variable");
 
       kywdhandler: {
         LitStr("&handler", dp2);
@@ -1645,7 +1645,7 @@ int getname(dptr dp1, dptr dp2)
               }
           }
           if (!prog)
-              syserr("name: Unknown string keyword variable");
+              syserr("getname: Unknown string keyword variable");
         }
       kywdpos: {
         LitStr("&pos", dp2);
@@ -1823,7 +1823,8 @@ void bytes2string(char *s, word len, dptr d)
  */
 void cstrs2string(char **s, char *delim, dptr d) 
 {
-    int n, len = 0;
+    int n;
+    word len = 0;
     for (n = 0; s[n]; ++n)
         len += strlen(s[n]);
     if (n == 0)
@@ -1977,7 +1978,7 @@ int lookup_global(dptr query, struct progstate *prog)
         return i - 1;
     }
 
-    syserr("Invalid query type to lookup_global");
+    syserr("lookup_global: Invalid query type");
     /* Not reached */
     return 0;
 }

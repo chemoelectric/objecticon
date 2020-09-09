@@ -120,7 +120,6 @@ void tail_invoke_frame(struct frame *f)
              * enclosing class's defining program.
              */
             p = field ? field->defining_class->program : curpstate;
-            Desc_EVValD(curr_cf->proc, E_Pcall, D_Proc);
             if (field && k_trace) {
                 /*
                  * Same logic as below, but with tracing.
@@ -191,7 +190,6 @@ void tail_invoke_frame(struct frame *f)
         }
         case P_Frame: {
             struct p_frame *pf = (struct p_frame *)f;
-            Desc_EVValD(pf->proc, E_Pcall, D_Proc);
             pf->caller = curr_pf;
             if (pf->proc->program) {
                 /*
@@ -210,6 +208,7 @@ void tail_invoke_frame(struct frame *f)
                     err_msg(311, NULL);
                     break;
                 }
+                Desc_EVValDX(pf->proc, pf->curr_inst ? E_Presum : E_Pcall, D_Proc);
             }
             set_curr_pf(pf);
             break;
@@ -231,7 +230,7 @@ void pop_to(struct frame *f)
         struct frame *t = k_current->sp;
         k_current->sp = t->parent_sp;
         if (!k_current->sp)
-            syserr("pop_to: target not found on stack");
+            syserr("pop_to: Target not found on stack");
         free_frame(t);
     }
 }
@@ -1299,8 +1298,8 @@ void interp()
                 struct p_frame *t = curr_pf;
                 set_curr_pf(curr_pf->caller);
                 ipc = t->failure_label;
-                Desc_EVValD(t->proc, E_Pfail, D_Proc);
                 if (t->proc->program) {
+                    Desc_EVValD(t->proc, E_Pfail, D_Proc);
                     --k_level;
                     if (k_trace) {
                         k_trace--;
@@ -1319,8 +1318,8 @@ void interp()
                 if (curr_pf->lhs)
                     *curr_pf->lhs = tmp;
                 set_curr_pf(curr_pf->caller);
-                Desc_EVValD(t->proc, E_Psusp, D_Proc);
                 if (t->proc->program) {
+                    Desc_EVValD(t->proc, E_Psusp, D_Proc);
                     --k_level;
                     if (k_trace) {
                         k_trace--;
@@ -1341,8 +1340,8 @@ void interp()
                 /* Pop any frames below the returning procedure frame */
                 pop_to((struct frame *)curr_pf);
                 set_curr_pf(curr_pf->caller);
-                Desc_EVValD(t->proc, E_Pret, D_Proc);
                 if (t->proc->program) {
+                    Desc_EVValD(t->proc, E_Pret, D_Proc);
                     --k_level;
                     if (k_trace) {
                         k_trace--;
@@ -1501,8 +1500,9 @@ static void activate_child_prog()
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res)
 {
     ObjectBlk(*res).fields[0] = prog->event_queue_head->eventcode;
-    /* A dptr to eventval is safe to pass to deref() (unlike ...fields[1]) */
-    Deref(prog->event_queue_head->eventval);
+    if (is:variable(prog->event_queue_head->eventval))
+        syserr("Variable in event queue (code %d)",
+               *StrLoc(prog->event_queue_head->eventcode) & 0xff);
     ObjectBlk(*res).fields[1] = prog->event_queue_head->eventval;
     if (prog->event_queue_head == prog->event_queue_tail) {
         free(prog->event_queue_head);

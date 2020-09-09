@@ -1410,27 +1410,6 @@ char *ucs_utf8_ptr(struct b_ucs *b, word pos)
 }
 
 /*
- * Compare n bytes of memory from s1 and s2 for equality.  This is
- * rather like memcmp, but will never read beyond the first different
- * byte of either string.
- */
-int mem_eq(char *s1, char *s2, word n)
-{
-    while (n--)
-        if (*s1++ != *s2++)
-            return 0;
-    return 1;
-}
-
-/*
- * Compare the contents of string s with t using mem_eq().
- */
-int str_mem_eq(dptr s, char *t)
-{
-    return mem_eq(StrLoc(*s), t, StrLen(*s));
-}
-
-/*
  * Convert a rangeset to a newly allocated b_cset block.
  */
 struct b_cset *rangeset_to_block(struct rangeset *rs)

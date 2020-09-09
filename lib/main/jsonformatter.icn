@@ -9,8 +9,9 @@ import
 # A class for outputting formatted output of a json structure.
 #
 class JSONFormatter(Stream, HasCloseUnderlying)
+   private const
+      file
    private
-      file,
       indent,
       level,
       true,

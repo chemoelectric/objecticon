@@ -160,6 +160,12 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    #
    public native copy_to(x1, y1, width, height, dest, x2, y2)
 
+   # Copy a rectangular area from this instance to another, scaling
+   # the result to fit in the destination rectangle.
+   #
+   public native scale_to(x1, y1, width1, height1,
+                          dest, x2, y2, width2, height2)
+
    #
    # Encode the image to a file.
    #
@@ -217,7 +223,8 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    end
 
    # Convert this instance to one of the same dimensions in the given
-   # format.
+   # format.  The format may not be a paletted format (since no
+   # palette would have been set up).
    #
    public convert(format)
       return create_for_ptr(convert_impl(format))
@@ -273,8 +280,9 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    # can be raw image data, or a filename.
    #
    # With two parameters, a blank instance is created of the given
-   # width and height; an optional third parameter provides the
-   # format.  The underlying data is allocated and set to zero.
+   # width and height; an optional third parameter provides the format
+   # (the default is `RGBA64`).  The underlying data is allocated and
+   # set to zero.
    #
    public new(a[])
       (ptr := if *a = 1 then
@@ -616,7 +624,8 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # Set the line leading, which specifies extra space to add to font
    # ascent, descent and height, to calculate line ascent, descent and
    # height.  It is specified as a real number, being the proportion
-   # of font height.
+   # of font height.  The default leading value is `0.075`, and this
+   # can be changed by setting the environment variable `OI_LEADING`.
    #
    public native set_leading(v)
 
@@ -651,6 +660,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # window is resized to the size of the image.  The given parameter
    # `v` may be raw binary image data (eg a gif file), or the name of
    # a file containing an image, or a `Pixels` instance.
+   #
+   # Note that mask and draw_op settings are not changed before
+   # drawing the image; if the image could be transparent it may be
+   # desirable to set draw_op to "source" beforehand, so that the
+   # image does not mix with the existing background.
    #
    public set_image(v)
       return if is(v, Pixels) then {
@@ -1298,10 +1312,15 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # :  `img` - the image
    #
    public static open_image(img)
-      local w
+      local w, t
       w := Window() | fail
-      w.set_draw_op("source")
-      w.set_image(img) | {
+      use {
+         t := w.clone(),
+         {
+            t.set_draw_op("source")
+            t.set_image(img)
+         }
+      } | {
          w.close()
          fail
       }

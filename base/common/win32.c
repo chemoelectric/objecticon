@@ -168,6 +168,7 @@ char *getcwd_utf8(char *buff, int maxlen)
 {
     WCHAR *t;
     char *u;
+    size_t n;
     t = _wgetcwd(NULL, 32);
     if (!t)
         return NULL;
@@ -175,12 +176,13 @@ char *getcwd_utf8(char *buff, int maxlen)
     free(t);
     if (!buff)
         return u;
-    if (strlen(u) + 1 > maxlen) {
+    n = strlen(u) + 1;
+    if (n > maxlen) {
         free(u);
         errno = ERANGE;
         return NULL;
     }
-    strcpy(buff, u);
+    memcpy(buff, u, n);
     free(u);
     return buff;
 }

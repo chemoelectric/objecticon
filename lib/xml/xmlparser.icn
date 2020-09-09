@@ -14,7 +14,7 @@ import lang, util, ipl.scan, exception
 # Holds detail of a parse position in a file
 #
 package class Diversion()
-   private readable
+   public const
       base,
       id,
       subject, 
@@ -29,9 +29,11 @@ package class Diversion()
    end
 end
 
-
+#
+# Instances of this class are fired to listeners on a parse problem.
+#
 class ProblemDetail()
-   private readable
+   public const
       stack,
       msg
 
@@ -42,12 +44,11 @@ class ProblemDetail()
    end
 end
 
-
 #
 # Holds a attribute usage of IDREF.  Just used for validation.
 #
 package class IdAttributeRef()
-   private readable 
+   public const
       val,
       pos
 
@@ -58,6 +59,9 @@ package class IdAttributeRef()
    end
 end
 
+#
+# An XML Parser
+#
 class XmlParser(Connectable)
    public static const
       SPACE,

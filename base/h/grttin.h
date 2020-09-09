@@ -147,6 +147,23 @@ end
 #enddef					/* Desc_EVValD */
 
 /*
+ * Macro with construction of event descriptor, and expression
+ * for the event type, which is only executed if necessary.
+ */
+#begdef Desc_EVValDX(bp, eventx, type)
+   do {
+      struct descrip eventdesc;
+      int event;
+      if (!curpstate->monitor) break;
+      if (curpstate->eventmask->size == 0) break;
+      event = eventx;
+      if (!Testb(event, curpstate->eventmask->bits)) break;
+      MakeDesc(type, bp, &eventdesc);
+      add_to_prog_event_queue(&eventdesc, event);
+   } while (0)
+#enddef					/* Desc_EVValD */
+
+/*
  * dummy typedefs for things defined in #include files
  */
 typedef int clock_t, time_t, fd_set, va_list, off_t, mode_t,
@@ -191,7 +208,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
       typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
       typedef int XPointDouble, XFixed, XSelectionRequestEvent, XSelectionClearEvent;
-      typedef int XClientMessageEvent;
+      typedef int XClientMessageEvent, XftFont, FcFontSet, FcCharSet;
    #endif				/* XWindows */
 #endif					/* Graphics */
 

@@ -32,7 +32,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
 
    public override set_vals()
       CanvasComponentDialog.set_vals()
-      c.set_selection_list(selection_list.get_contents())
+      c.set_selection_list(trim_trailing_empty(selection_list.get_contents()))
       case group.get_which_one() of {
          set_initial_text : c.set_contents(initial_text.get_contents())
          set_selection : c.set_selection(integer(selection.get_contents()))

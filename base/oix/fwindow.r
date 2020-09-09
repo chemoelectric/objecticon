@@ -113,7 +113,7 @@ end
 
 function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy)
    body {
-      word ox, oy, x, y, width, height, x2, y2;
+      int ox, oy, x, y, width, height, x2, y2;
       wbp w2;
 
       GetSelfW();
@@ -174,7 +174,7 @@ function graphics_Window_draw_arc(self, x0, y0, rx0, ry0, ang1, ang2)
 
       GetSelfW();
 
-      if (dpointargs(self_w, &x0, &x, &y) == Error)
+      if (dpointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
 
       if (!cnv:C_double(rx0, rx))
@@ -274,7 +274,7 @@ end
 
 function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
-      word x, y;
+      int x, y;
       GetSelfW();
       if (pointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
@@ -314,7 +314,8 @@ end
 
 function graphics_Window_draw_rectangle(self, x0, y0, w0, h0, thick0)
    body {
-      word x, y, width, height, thick;
+      word thick;
+      int x, y, width, height;
 
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
@@ -332,7 +333,7 @@ end
 
 function graphics_Window_draw_string(self, x0, y0, str)
    body {
-      word x, y;
+      int x, y;
       GetSelfW();
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
@@ -345,7 +346,7 @@ end
 
 function graphics_Window_erase_area(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
@@ -407,7 +408,7 @@ end
 
 function graphics_Window_restore(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       if (!self_w->window->holding)
           runerr(155);
@@ -426,7 +427,7 @@ function graphics_Window_fill_arc(self, x0, y0, rx0, ry0, ang1, ang2)
 
       GetSelfW();
 
-      if (dpointargs(self_w, &x0, &x, &y) == Error)
+      if (dpointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
 
       if (!cnv:C_double(rx0, rx))
@@ -527,7 +528,7 @@ end
 
 function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
@@ -548,7 +549,7 @@ end
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
@@ -596,7 +597,7 @@ end
 
 function graphics_Window_filter(self, x0, y0, w0, h0, spec)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       struct filter *filter;
       struct imgdata *imd;
       int i, nfilter;
@@ -845,7 +846,7 @@ function graphics_Window_drawable_impl(self, x0, y0, w0, h0)
       tended struct descrip result;
       struct descrip t;
       wcp wc;
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       wc = self_w->context;
 
@@ -874,7 +875,7 @@ function graphics_Window_viewable_impl(self, x0, y0, w0, h0)
       tended struct descrip result;
       struct descrip t;
       wcp wc;
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       wc = self_w->context;
 
@@ -1170,7 +1171,7 @@ end
 
 function graphics_Window_clip(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       wcp wc;
       GetSelfW();
 
@@ -2062,14 +2063,10 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
    }
 end
 
-function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
-   if !def:C_integer(x2, 0) then
-      runerr(101, x2)
-   if !def:C_integer(y2, 0) then
-      runerr(101, y2)
+function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, a2, b2)
    body {
       int i, j, r, g, b, a;
-      word ox, oy, x, y, width, height;
+      int ox, oy, x, y, width, height, x2, y2;
       struct imgdata *id2;
 
       GetSelfPixels();
@@ -2082,9 +2079,15 @@ function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
       }
 
       /*
-       * x1, y1, width, and height follow standard conventions.
+       * x, y, width, and height follow standard conventions.
        */
       if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      /*
+       * x2 and y2 default to 0.
+       */
+      if (pixels_pointargs_def(&a2, &x2, &y2) == Error)
           runerr(0);
 
       ox = x;
@@ -2107,6 +2110,76 @@ function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
               id2->format->setpixel(id2, x2 + i, y2 + j, r, g, b, a);
           }
 
+      return self;
+   }
+end
+
+static float inter(float s, float e, float t)
+{
+    return s + (e - s) * t;
+}
+ 
+static int bl_inter(float c00, float c10, float c01, float c11, float tx, float ty)
+{
+    return (int)inter(inter(c00, c10, tx), inter(c01, c11, tx), ty) & 0xffff;
+}
+
+function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
+   body {
+      int r, g, b, a;
+      int x, y, width, height;
+      int x2, y2, width2, height2;
+      struct imgdata *id2;
+      float rw, rh, fi, fj;
+      int i, j, i2, j2;
+      int r00, g00, b00, a00;
+      int r01, g01, b01, a01;
+      int r10, g10, b10, a10;
+      int r11, g11, b11, a11;
+      GetSelfPixels();
+
+      if (is:null(dest))
+          id2 = self_id;
+      else {
+          PixelsStaticParam(dest, tmp);
+          id2 = tmp;
+      }
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (pixels_rectargs(id2, &a0, &x2, &y2, &width2, &height2) == Error)
+          runerr(0);
+
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          return self;
+
+      if (!pixels_reducerect(id2, &x2, &y2, &width2, &height2))
+          return self;
+
+      rw = (float)width / width2;
+      rh = (float)height / height2;
+      for (j2 = 0; j2 < height2; ++j2) {
+          fj = j2 * rh;
+          j = (int)fj;
+          for (i2 = 0; i2 < width2; ++i2) {
+              fi = i2 * rw;
+              i = (int)fi;
+              #define ClampW(i) Min(i, width - 1)
+              #define ClampH(i) Min(i, height - 1)
+              self_id->format->getpixel(self_id, ClampW(x + i     ), ClampH(y + j     ), &r00, &g00, &b00, &a00);
+              self_id->format->getpixel(self_id, ClampW(x + i + 1 ), ClampH(y + j     ), &r10, &g10, &b10, &a10);
+              self_id->format->getpixel(self_id, ClampW(x + i     ), ClampH(y + j + 1 ), &r01, &g01, &b01, &a01);
+              self_id->format->getpixel(self_id, ClampW(x + i + 1 ), ClampH(y + j + 1 ), &r11, &g11, &b11, &a11);
+
+              r = bl_inter(r00, r10, r01, r11, fi - i, fj - j);
+              g = bl_inter(g00, g10, g01, g11, fi - i, fj - j);
+              b = bl_inter(b00, b10, b01, b11, fi - i, fj - j);
+              a = bl_inter(a00, a10, a01, a11, fi - i, fj - j);
+
+              id2->format->setpixel(id2, x2 + i2, y2 + j2, r, g, b, a);
+          }
+      }
       return self;
    }
 end
@@ -2243,6 +2316,10 @@ function graphics_Pixels_convert_impl(self, format)
       fmt = parseimgdataformat(buffstr(&format));
       if (!fmt) {
           LitWhy("Invalid format");
+          fail;
+      }
+      if (fmt->palette_size > 0) {
+          LitWhy("Can't convert to a paletted format");
           fail;
       }
       imd = initimgdata(self_id->width, self_id->height, fmt);
@@ -2438,7 +2515,7 @@ end
 
 function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       int i, j, r, g, b, a;
       GetSelfPixels();
 
@@ -2468,7 +2545,7 @@ end
 
 function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       tended struct descrip tmp;
       int i, j, r, g, b, a;
       GetSelfPixels();

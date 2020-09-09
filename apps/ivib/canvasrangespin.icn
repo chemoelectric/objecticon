@@ -42,6 +42,7 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
       c.set_range(self.lo, self.hi)
       c.value := self.value
       c.set_value(c.value)
+      c.set_increment_size(self.increment_size)
       return c
    end
 

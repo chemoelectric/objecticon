@@ -329,7 +329,7 @@ int parsefilter(wbp w, char *s, struct filter *res)
     return 0;
 }
 
-int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height)
+int reducerect(wbp w, int clip, int *x, int *y, int *width, int *height)
 {
     wcp wc = w->context;
     wsp ws = w->window;
@@ -370,17 +370,62 @@ int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height)
     return 1;
 }
 
-int int_reducerect(wbp w, int clip, int *x0, int *y0, int *width0, int *height0)
+int reducehline(wbp w, int clip, int *x, int *width)
 {
-#if IntBits == WordBits
-    return reducerect(w, clip, (word *)x0, (word *)y0, (word *)width0, (word *)height0);
-#else
-    int res;
-    word x = *x0, y = *y0, width = *width0, height = *height0;
-    res = reducerect(w, clip, &x, &y, &width, &height);
-    *x0 = x; *y0 = y; *width0 = width; *height0 = height;
-    return res;
-#endif
+    wcp wc = w->context;
+    wsp ws = w->window;
+    if (*x < 0)  { 
+        *width += *x; 
+        *x = 0; 
+    }
+    if (*x + *width > ws->width)
+        *width = ws->width - *x; 
+
+    if (*width <= 0)
+        return 0;
+
+    if (clip && wc->clipw >= 0) {
+        /* Further reduce the line to the clipping region */
+        if (*x < wc->clipx) {
+            *width += *x - wc->clipx;
+            *x = wc->clipx;
+        }
+        if (*x + *width > wc->clipx + wc->clipw)
+            *width = wc->clipx + wc->clipw - *x;
+
+        if (*width <= 0)
+            return 0;
+    }
+    return 1;
+}
+
+int reducevline(wbp w, int clip, int *y, int *height)
+{
+    wcp wc = w->context;
+    wsp ws = w->window;
+    if (*y < 0)  { 
+        *height += *y; 
+        *y = 0; 
+    }
+    if (*y + *height > ws->height)
+        *height = ws->height - *y; 
+
+    if (*height <= 0)
+        return 0;
+
+    if (clip && wc->clipw >= 0) {
+        /* Further reduce the line to the clipping region */
+        if (*y < wc->clipy) {
+            *height += *y - wc->clipy; 
+            *y = wc->clipy;
+        }
+        if (*y + *height > wc->clipy + wc->cliph)
+            *height = wc->clipy + wc->cliph - *y;
+
+        if (*height <= 0)
+            return 0;
+    }
+    return 1;
 }
 
 static int tryimagedata(dptr data, struct imgdata *imd)
@@ -1554,19 +1599,22 @@ int writeimagefile(char *filename, struct imgdata *imd)
  *
  *  Returns Error on problem, setting errval etc.
  */
-int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
+int rectargs(wbp w, dptr argv, int *px, int *py, int *pw, int *ph)
 {
     wcp wc = w->context;
     wsp ws = w->window;
+    word t;
 
     /*
      * Get x and y, defaulting to -dx and -dy.
      */
-    if (!def:C_integer(argv[0], -wc->dx, *px))
+    if (!def:C_integer(argv[0], -wc->dx, t))
         ReturnErrVal(101, argv[0], Error);
+    *px = t;
 
-    if (!def:C_integer(argv[1], -wc->dy, *py))
+    if (!def:C_integer(argv[1], -wc->dy, t))
         ReturnErrVal(101, argv[1], Error);
+    *py = t;
 
     *px += wc->dx;
     *py += wc->dy;
@@ -1574,11 +1622,13 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
     /*
      * Get w and h, defaulting to extend to the edge
      */
-    if (!def:C_integer(argv[2], ws->width - *px, *pw))
+    if (!def:C_integer(argv[2], ws->width - *px, t))
         ReturnErrVal(101, argv[2], Error);
+    *pw = t;
 
-    if (!def:C_integer(argv[3], ws->height - *py, *ph))
+    if (!def:C_integer(argv[3], ws->height - *py, t))
         ReturnErrVal(101, argv[3], Error);
+    *ph = t;
 
     /*
      * Correct negative w/h values.
@@ -1591,18 +1641,21 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
     return Succeeded;
 }
 
-int pointargs(wbp w, dptr argv, word *px, word *py)
+int pointargs(wbp w, dptr argv, int *px, int *py)
 {
     wcp wc = w->context;
+    word t;
 
     /*
      * Get x and y
      */
-    if (!cnv:C_integer(argv[0], *px))
+    if (!cnv:C_integer(argv[0], t))
         ReturnErrVal(101, argv[0], Error);
+    *px = t;
 
-    if (!cnv:C_integer(argv[1], *py))
+    if (!cnv:C_integer(argv[1], t))
         ReturnErrVal(101, argv[1], Error);
+    *py = t;
 
     *px += wc->dx;
     *py += wc->dy;
@@ -1610,18 +1663,21 @@ int pointargs(wbp w, dptr argv, word *px, word *py)
     return Succeeded;
 }
 
-int pointargs_def(wbp w, dptr argv, word *px, word *py)
+int pointargs_def(wbp w, dptr argv, int *px, int *py)
 {
     wcp wc = w->context;
+    word t;
 
     /*
      * Get x and y, defaulting to -dx and -dy.
      */
-    if (!def:C_integer(argv[0], -wc->dx, *px))
+    if (!def:C_integer(argv[0], -wc->dx, t))
         ReturnErrVal(101, argv[0], Error);
+    *px = t;
 
-    if (!def:C_integer(argv[1], -wc->dy, *py))
+    if (!def:C_integer(argv[1], -wc->dy, t))
         ReturnErrVal(101, argv[1], Error);
+    *py = t;
 
     *px += wc->dx;
     *py += wc->dy;
@@ -1629,7 +1685,7 @@ int pointargs_def(wbp w, dptr argv, word *px, word *py)
     return Succeeded;
 }
 
-int dpointargs(wbp w, dptr argv, double *px, double *py)
+int dpointargs_def(wbp w, dptr argv, double *px, double *py)
 {
     wcp wc = w->context;
 
@@ -2936,20 +2992,27 @@ static unsigned int distance_rgb(struct palentry *pe, int r, int g, int b)
 
 static void set_PALETTE(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
 {
-    unsigned int best_rgb;
-    struct palentry *best;
+    unsigned int best_d, d;
+    struct palentry *best, *pe;
     int i;
+
+    #define Bullseye (best_d == 0 && best->a == a)
     best = imd->paltbl;
-    best_rgb = distance_rgb(imd->paltbl, r, g, b);
-    for (i = 1; i < imd->format->palette_size; ++i) {
-        struct palentry *pe = &imd->paltbl[i];
-        unsigned int d1 = distance_rgb(pe, r, g, b);
-        if (d1 < best_rgb) {
-            best_rgb = d1;
-            best = pe;
-        } else if (d1 == best_rgb) {
-            if (Abs(best->a - a) > Abs(pe->a - a))
+    best_d = distance_rgb(imd->paltbl, r, g, b);
+    if (!Bullseye) {
+        for (i = 1; i < imd->format->palette_size; ++i) {
+            pe = &imd->paltbl[i];
+            d = distance_rgb(pe, r, g, b);
+            if (d < best_d) {
+                best_d = d;
                 best = pe;
+                if (Bullseye) break;
+            } else if (d == best_d) {
+                if (Abs(best->a - a) > Abs(pe->a - a)) {
+                    best = pe;
+                    if (Bullseye) break;
+                }
+            }
         }
     }
     imd->format->setpaletteindex(imd, x, y, best - imd->paltbl);
@@ -3081,25 +3144,31 @@ struct imgdataformat *parseimgdataformat(char *s)
     return 0;
 }
 
-int pixels_rectargs(struct imgdata *img, dptr argv, word *px, word *py, word *pw, word *ph)
+int pixels_rectargs(struct imgdata *img, dptr argv, int *px, int *py, int *pw, int *ph)
 {
+    word t;
+
     /*
      * Get x and y, defaulting to 0.
      */
-    if (!def:C_integer(argv[0], 0, *px))
+    if (!def:C_integer(argv[0], 0, t))
         ReturnErrVal(101, argv[0], Error);
+    *px = t;
 
-    if (!def:C_integer(argv[1], 0, *py))
+    if (!def:C_integer(argv[1], 0, t))
         ReturnErrVal(101, argv[1], Error);
+    *py = t;
 
     /*
      * Get w and h, defaulting to extend to the edge
      */
-    if (!def:C_integer(argv[2], img->width - *px, *pw))
+    if (!def:C_integer(argv[2], img->width - *px, t))
         ReturnErrVal(101, argv[2], Error);
+    *pw = t;
 
-    if (!def:C_integer(argv[3], img->height - *py, *ph))
+    if (!def:C_integer(argv[3], img->height - *py, t))
         ReturnErrVal(101, argv[3], Error);
+    *ph = t;
 
     /*
      * Correct negative w/h values.
@@ -3112,7 +3181,25 @@ int pixels_rectargs(struct imgdata *img, dptr argv, word *px, word *py, word *pw
     return Succeeded;
 }
 
-int pixels_reducerect(struct imgdata *img, word *x, word *y, word *width, word *height)
+int pixels_pointargs_def(dptr argv, int *px, int *py)
+{
+    word t;
+
+    /*
+     * Get x and y, defaulting to 0.
+     */
+    if (!def:C_integer(argv[0], 0, t))
+        ReturnErrVal(101, argv[0], Error);
+    *px = t;
+
+    if (!def:C_integer(argv[1], 0, t))
+        ReturnErrVal(101, argv[1], Error);
+    *py = t;
+
+    return Succeeded;
+}
+
+int pixels_reducerect(struct imgdata *img, int *x, int *y, int *width, int *height)
 {
     if (*x < 0)  { 
         *width += *x; 

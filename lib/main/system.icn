@@ -160,7 +160,7 @@ $elsif _SOLARIS
    end
 $elsif _BSD
    # Helper for FreeBSD.
-   private static getcwd1(t, pid)
+   private static freebsd_getcwd1(t, pid)
       local e
       t := walk(t, "procstat", "files", string(pid), "files") | fail
       type(t) == "list" | fail
@@ -174,31 +174,44 @@ $elsif _BSD
       }
    end
 
-   public static getcwd(pid)
+   private static freebsd_getcwd(pid)
       local s, f, t
+      s := use {
+         f := ProgInputStream("/usr/bin/procstat", ["--libxo=json", "-f", pid],,, get_null()),
+         f.read_all()
+      } | fail
+      t := JSONParser().parse(s) | return whyf("Invalid json from procstat: %w")
+      return freebsd_getcwd1(t, pid) | error("No such pid or permission denied")
+   end
+
+   private static openbsd_getcwd(pid)
+      local s, f
+      static header, o_opt
+      initial {
+         # The header dictates the maximum length of the output, so
+         # make it the same size as PATH_MAX.
+         header := repl("#", 1024)
+         o_opt := "cwd=" || header
+      }
+      s := use {
+         f := ProgInputStream("/bin/ps", ["-p", pid, "-o", o_opt], ["LC_CTYPE=C.UTF-8"]),
+         f.read_all()
+      } | fail
+      return s ? 4(=header, ="\n", any('/'), tab(-1), ="\n") | error("No such pid or permission denied")
+   end
+
+   public static getcwd(pid)
       static kind
       initial
          kind := uname().sysname
       pid := need_integer(pid, 0)
-      case kind of {
-         "OpenBSD": {
-            s := use {
-               f := ProgInputStream("ps", ["-p", pid, "-o", "cwd"]),
-               f.read_all()
-            } | fail
-            return s ? 3(="CWD\n", any('/'), tab(-1), ="\n") | error("No such pid or permission denied")
-         }
-         "FreeBSD": {
-            s := use {
-               f := ProgInputStream("procstat", ["--libxo=json", "-f", pid],,, get_null()),
-               f.read_all()
-            } | fail
-            t := JSONParser().parse(s) | return whyf("Invalid json from procstat: %w")
-            return getcwd1(t, pid) | error("No such pid or permission denied")
-         }
-         default: {
-            return Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")
-         }
+      return case kind of {
+         "OpenBSD":
+            openbsd_getcwd(pid)
+         "FreeBSD":
+            freebsd_getcwd(pid)
+         default: 
+            Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")
       }
    end
 $elsif _DARWIN

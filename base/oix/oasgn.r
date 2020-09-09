@@ -10,11 +10,11 @@ static int overlap      (struct b_tvsubs *tv1, struct b_tvsubs *tv2);
 
 /*
  * GeneralAsgn - perform the assignment x := y, where x is known to be
- *  a variable and y is has been dereferenced.
+ *  a variable and y has been dereferenced.
  */
 #begdef GeneralAsgn(x, y)
 {
-   EVValD(&x, E_Assign);
+   EVValD(&y, E_Assign);
 
    type_case x of {
       named_var: {
@@ -76,10 +76,6 @@ static int overlap      (struct b_tvsubs *tv1, struct b_tvsubs *tv2);
          syserr("Unknown variable type");
       }
    }
-
-
-   EVValD(&y, E_Value);
-
 }
 #enddef
 

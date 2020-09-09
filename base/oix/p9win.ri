@@ -779,7 +779,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     y = cy -ry - 1 - thick;
     width = 2 * rx + 2 * thick + 2;
     height = 2 * ry + 2 * thick + 2;
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
     clip(w);
     if (needmask(wc, 0)) {
@@ -835,7 +835,7 @@ void drawlines(wbp w, struct point *points0, int npoints)
     y -= thick;
     width += 2 * thick;
     height += 2 * thick;
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
     points = convert_points(points0, npoints);
@@ -906,7 +906,7 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     if (npoints < 3)
         return;
     points_extent(points0, npoints, &x, &y, &width, &height);
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
     points = convert_points(points0, npoints);
     clip(w);
@@ -979,7 +979,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     wcp wc = w->context;
     int x, y, width, height, i;
     triangles_extent(tris, ntris, &x, &y, &width, &height);
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
     clip(w);
     if (needmask(wc, 1)) {
@@ -1189,7 +1189,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     y = cy -ry - 1;
     width = 2 * rx + 2;
     height = 2 * ry + 2;
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
     clip(w);
     if (needmask(wc, 0)) {

@@ -18,10 +18,7 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
 
    public override set_vals()
       CanvasComponentDialog.set_vals()
-      if *contents.get_contents_str() = 0 then
-         c.set_contents([])
-      else
-         c.set_contents(contents.get_contents())
+      c.set_contents(trim_trailing_empty(contents.get_contents()))
       c.invalidate_line_height()
    end
 

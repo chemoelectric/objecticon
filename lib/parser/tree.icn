@@ -555,11 +555,11 @@ class Body(SimpleLList)
                   "class" :  Class(t)
                   "proc" :  Procedure(t)
                   "global": Global(t)
-                  default: syserr("Unknown body node:" || t2.label)
+                  default: syserr("Unknown body node: " || t2.label)
                }
             }
             "invocable": Invocable(t)
-            default: syserr("Unknown declaration node:" || t.label)
+            default: syserr("Unknown declaration node: " || t.label)
          })
          n := n.child(1)
       }

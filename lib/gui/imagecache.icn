@@ -253,8 +253,7 @@ final abstract class ImageCache()
       key ||:= "#Resized to " || width || "x" || height
       if member(imap, key) then
          return key
-      w2 := Window().set_size(width, height)
-      zoom_win(w, w2)
+      w2 := zoom_win(w, width, height)
       insert(imap, key, w2)
       return key
    end

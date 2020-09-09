@@ -6,7 +6,7 @@ import gui, io, lang, util, graphics(Window,Key,Selection,Mouse,Canvas),
    net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
 # Current attributes.  Treated as immutable (except the font field), to alter a copy() is taken first.
-package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
+package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url)
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
 
@@ -269,8 +269,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       hide_cursor_mode,
       text_selection,             # Current text selection, or null
       links_selection,            # Current links selection (a list of URLs), or null
-      font_family,                # Font details
-      font_size,
       primary,                    # Primary selection string, or null
       history_size,               # Size of history scroll lines; 0 -> no vsb
       vt_width,                   # Default width in chars, used by get_default_width()
@@ -624,17 +622,14 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public override initially()
-      local s, l
+      local s
       s := get_wattrib(WAttrib.FONT)
-      l := check_font(s) | runerr(&why, self)
-      font_family := l[1]
-      font_size := l[2]
-      char_w := l[3]
+      char_w := check_font(s) | runerr(&why, self)
       LineBasedScrollArea.initially()
       cursor_ticker.start()
    end
 
-   private static calc_font_width(W, s)
+   private static check_font1(W, s)
       local m, m2
       W.set_font(s) | fail
       m := W.text_width("m")
@@ -643,49 +638,27 @@ class Vt(LineBasedScrollArea, MenuMode)
       return if m2 = m * 1000 then m else m2 / 1000.0
    end
 
-   private check_font(s)
-      local fam, size, width, W, t
-      s ? {
-         fam := tab(upto(',') | 0)
-         (*fam > 0) | return error("Font not in required format")
-         if ="," then {
-            t := tab(0)
-            size := real(t) | return error("Font not in required format")
-            if any('+\-', t) then
-               size +:= Window.get_default_font_size()
-            size <:= 3.0
-            size >:= 40.0
-         } else
-            size := Window.get_default_font_size()
-      }
-      s := fam || "," || size
-      width := use {
+   # Check the font s is monospaced; if so return the average char
+   # width (which may be a real).
+   private static check_font(s)
+      local W
+      return use {
          W := Window(),
-         calc_font_width(W, s)
-      } | fail
-      return [fam, size, width]
+         check_font1(W, s)
+      }
    end
 
    # A wrapper around `set_font()`, which validates `s` as a valid
    # font and resets the component if necessary.
    #
    public set_vt_font(s)
-      local seg, l
       s := need_string(s)
-      l := check_font(s) | fail
-      set_font(s)
-      if is_live() & not(l[1] == font_family & l[2] = font_size) then {
-         invalidate_line_height()
-         reset()
-         # Update the font entry in all Attr records
-         synch_font()
-         every seg := !((!contents).l) do
-            synch_font(seg.attr)
-         synch_font((\saved_cursor).attr)
-         if \saved_buffer then {
-            synch_font(saved_buffer.attr)
-            every seg := !((!saved_buffer.contents).l) do
-               synch_font(seg.attr)
+      check_font(s) | fail
+      if s ~=== get_wattrib(WAttrib.FONT) then {
+         set_font(s)
+         if is_live() then {
+            invalidate_line_height()
+            reset()
          }
       }
       link
@@ -1509,20 +1482,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private synch_font(a)
-      local s
-      /a := attr
-      if \ (a.bold | a.italic) then {
-         s := font_family
-         if \a.bold then
-            s ||:= ",bold"
-         if \a.italic then
-            s ||:= ",italic"
-         s ||:= "," || font_size
-      }
-      a.font := s
-   end
-
    # ESC[{n}m
    private do_set_attr(n)
       if n = 0 then
@@ -1531,26 +1490,14 @@ class Vt(LineBasedScrollArea, MenuMode)
       else {
          attr := copy(attr)
          case n of {
-            1 : {
-               attr.bold := &yes
-               synch_font()
-            }
-            3 : {
-               attr.italic := &yes
-               synch_font()
-            }
+            1 : attr.bold := &yes
+            3 : attr.italic := &yes
             4 : attr.underline := &yes
             7 : attr.inverse := &yes
             8 : attr.invisible := &yes
             9 : attr.crossed := &yes
-            22 : {
-               attr.bold := &no
-               synch_font()
-            }
-            23 : {
-               attr.italic := &no
-               synch_font()
-            }
+            22 : attr.bold := &no
+            23 : attr.italic := &no
             24 : attr.underline := &no
             27 : attr.inverse := &no
             28 : attr.invisible := &no
@@ -1984,7 +1931,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    public override draw()
       local n, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
          default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i,
-         cursor_i, leading
+         cursor_i, leading, bold_font, italic_font, bold_italic_font
 
       cr := view.get_cbwin_clip()
       info := get_line_info(cr) | fail
@@ -2019,11 +1966,31 @@ class Vt(LineBasedScrollArea, MenuMode)
                      want_bg := \a.bg | default_bg
                      if \a.inverse then
                         want_fg :=: want_bg
-                     want_font := \a.font | default_font
-
                      W.set_fg(fg ~===:= want_fg)
                      W.set_bg(bg ~===:= want_bg)
-                     W.set_font(font ~===:= want_font)
+
+                     # Figure out which font we want
+                     want_font := if /a.bold & /a.italic then
+                        default_font
+                     else if /a.bold then {
+                        /italic_font := default_font || ",italic"
+                        italic_font
+                     } else if /a.italic then {
+                        /bold_font := default_font || ",bold"
+                        bold_font
+                     } else {
+                        /bold_italic_font := default_font || ",italic,bold"
+                        bold_italic_font
+                     }
+                     # Note that want_font may be invalid; eg if we
+                     # had a base of "typewriter,light", then on bold,
+                     # "typewriter,light,bold" is invalid.  So if that
+                     # happens, for consistency, display the base
+                     # font, rather than whatever went just before (eg
+                     # it might be "typewriter,light,italic" which is
+                     # legal).
+                     if font ~=== want_font then
+                        W.set_font(font := want_font | default_font)
 
                      w1 := char_w * *ss
                      if want_bg ~=== default_bg then

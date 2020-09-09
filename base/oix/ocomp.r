@@ -73,15 +73,10 @@ NumComp( < , numlt, IntNumLt, RealNumLt)
 #define IntNumNe(x,y) (bigcmp(&x,&y) != 0)
 NumComp( ~=, numne, IntNumNe, RealNumNe)
 
-
-#define StrLenEq(x,y) (x == y) &&
-#define StrLenNe(x,y) (x != y) ||
-#define StrLenNone(x,y)
-
 /*
  * StrComp is a macro that defines the form of a string comparisons.
  */
-#begdef StrComp(icon_op, func_name, special_test, c_comp, comp_value)
+#begdef StrComp(icon_op, func_name, test)
 
 operator icon_op func_name(x, y)
    body {
@@ -92,7 +87,7 @@ operator icon_op func_name(x, y)
          if (is_ascii_string(&x)) {
              if (!cnv:ucs(y, y))
                  runerr(128, y);
-             if (special_test(StrLen(x), StrLen(UcsBlk(y).utf8)) (lexcmp(&x, &UcsBlk(y).utf8) c_comp comp_value))
+             if (test(x, UcsBlk(y).utf8))
                  return y;
              else
                  fail;
@@ -100,7 +95,7 @@ operator icon_op func_name(x, y)
          if (is_ascii_string(&y)) {
              if (!cnv:ucs(x, x))
                  runerr(128, x);
-             if (special_test(StrLen(UcsBlk(x).utf8), StrLen(y)) (lexcmp(&UcsBlk(x).utf8, &y) c_comp comp_value))
+             if (test(UcsBlk(x).utf8, y))
                  LazyReturn(ucs(make_ucs_block(&y, StrLen(y))));
              else
                  fail;
@@ -114,8 +109,7 @@ operator icon_op func_name(x, y)
          /*
           * lexcmp does the work.
           */
-         if (special_test(StrLen(UcsBlk(x).utf8), StrLen(UcsBlk(y).utf8)) (lexcmp(&UcsBlk(x).utf8, 
-                                      &UcsBlk(y).utf8) c_comp comp_value))
+         if (test(UcsBlk(x).utf8, UcsBlk(y).utf8))
              return y;
          else
              fail;
@@ -130,7 +124,7 @@ operator icon_op func_name(x, y)
          /*
           * lexcmp does the work.
           */
-         if (special_test(StrLen(x), StrLen(y)) (lexcmp(&x, &y) c_comp comp_value))
+         if (test(x, y))
              return y;
          else
              fail;
@@ -140,12 +134,23 @@ operator icon_op func_name(x, y)
 end
 #enddef
 
-StrComp(==,  lexeq, StrLenEq,   ==, Equal) 
-StrComp(~==, lexne, StrLenNe,   !=, Equal)
-StrComp(>>=, lexge, StrLenNone, !=, Less    ) 
-StrComp(>>,  lexgt, StrLenNone, ==, Greater )
-StrComp(<<=, lexle, StrLenNone, !=, Greater )
-StrComp(<<,  lexlt, StrLenNone, ==, Less    )
+#define StrEq(x,y) (StrLen(x) == StrLen(y) && memcmp(StrLoc(x), StrLoc(y), StrLen(x)) == 0)
+StrComp(==,  lexeq, StrEq) 
+
+#define StrNe(x,y) (StrLen(x) != StrLen(y) || memcmp(StrLoc(x), StrLoc(y), StrLen(x)) != 0)
+StrComp(~==, lexne, StrNe)
+
+#define StrGe(x,y) (lexcmp(&x, &y) != Less)
+StrComp(>>=, lexge, StrGe)
+
+#define StrGt(x,y) (lexcmp(&x, &y) == Greater)
+StrComp(>>,  lexgt, StrGt)
+
+#define StrLe(x,y) (lexcmp(&x, &y) != Greater)
+StrComp(<<=, lexle, StrLe)
+
+#define StrLt(x,y) (lexcmp(&x, &y) == Less)
+StrComp(<<,  lexlt, StrLt)
 
 
 "x === y - test equivalence of x and y."

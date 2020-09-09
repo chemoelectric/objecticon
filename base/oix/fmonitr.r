@@ -28,8 +28,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
    /*
     * Most instrumentation functions depend on a single event.
     */
-   p->Deref =
-      ((Testb(E_Deref, bits)) ? deref_1 : deref_0);
    p->Alcbignum =
       ((Testb(E_Lrgint,bits)) ? alcbignum_1:alcbignum_0);
    p->Alccoexp =

@@ -261,7 +261,11 @@ typedef struct _wfont {
   int           descent;
   int           maxwidth;               /* max width of one char */
 #if XWindows
-  XftFont     * fsp;
+  XftFont       *fsp;
+  FcPattern     *base;                  /* base pattern for fallback setup */
+  XftFontSet    *fbpatterns;            /* ordered list of fallback patterns */
+  XftFont       **fbfonts;              /* corresponding fallback fonts */
+  FcCharSet     *fbcoverage;            /* coverage set of fallback fonts */
 #elif PLAN9
   Font          *font;
 #elif MSWIN32

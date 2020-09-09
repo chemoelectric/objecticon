@@ -28,6 +28,18 @@ final abstract class Prog()
 
    # Load and return a program from file `s`.
    #
+   # :Parameters :
+   # :  `s` - the file name of the program.
+   # :  `arglist` - an optional list of arguments to pass to the
+   #                program's `main` procedure; they need not be
+   #                strings.
+   # :  `blocksize` - the optional size of the program's block region.
+   #                If omitted, then the top-level program's block region
+   #                size is used; if zero then the program shares its
+   #                loader's block region.
+   # :  `stringsize` - the size of the string region, with similar
+   #                defaults to `blocksize`.
+   #
    public static native load(s, arglist, blocksize, stringsize)
 
    #

@@ -65,7 +65,7 @@
     */
 #define	E_Lbang		'\301'		/* List generation */
 #define	E_Lcreate	'\302'		/* List creation */
-#define	E_Lget		'\356'		/* List get/pop -- only E_Lget used */
+#define	E_Lget		'\356'		/* List get/pop */
 #define	E_Lpop		'\356'		/* List get/pop */
 #define	E_Lpull		'\304'		/* List pull */
 #define	E_Lpush		'\305'		/* List push */
@@ -111,8 +111,6 @@
     */
 
 #define E_Assign	'\347'		/* Assignment */
-#define	E_Value		'\350'		/* Value assigned */
-#define E_Deref		'\363'		/* Dereference */
 
 
    /*
@@ -128,7 +126,7 @@
 #define E_Coact		'\101'		/* Co-expression activation */
 #define E_Coret		'\102'		/* Co-expression return */
 #define E_Cofail	'\104'		/* Co-expression failure */
-#define E_Cocreate	'\110'		/* Co-expression create operation */
+#define E_Cocreate	'\110'		/* Co-expression create */
 #define	E_Cobang	'\222'		/* Co-expression generation */
 
    /*
@@ -193,8 +191,8 @@
 276 277
 
 341 342 343 344 345 346
-351
-364 365 366 370
+350 351
+363 364 365 366 370
 371 372 373 374 375 376 377
 
  

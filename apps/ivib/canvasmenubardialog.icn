@@ -319,12 +319,12 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
 
       add_label := TextButton().set_constraint("eol", &yes)
       add_label.connect(self.on_add_label, Event.ACTION)
-      add_label.set_label("Add label")
+      add_label.set_label("Add Text")
       q.add(add_label)
 
       add_separator := TextButton().set_constraint("eol", &yes)
       add_separator.connect(self.on_add_separator, Event.ACTION)
-      add_separator.set_label("Add separator")
+      add_separator.set_label("Add Separator")
       q.add(add_separator)
  
       add_menu := TextButton().set_constraint("eol", &yes)
@@ -334,7 +334,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
      
       add_checkbox := TextButton().set_constraint("eol", &yes)
       add_checkbox.connect(self.on_add_checkbox, Event.ACTION)
-      add_checkbox.set_label("Add checkbox")
+      add_checkbox.set_label("Add CheckBox")
       q.add(add_checkbox)
 
       delete := TextButton().set_constraint("eol", &yes)

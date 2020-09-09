@@ -335,12 +335,14 @@ char *canonicalize(char *path)
         sscpy(&buf, path);
     else {
         char *cwd = getcachedcwd();
-        int l = strlen(cwd);
-        ssreserve(&buf, l + 1 + strlen(path) + 1);
-        strcpy(buf.s, cwd);
+        size_t l, m;
+        l = strlen(cwd);
+        m = strlen(path);
+        ssreserve(&buf, l + 1 + m + 1);
+        memcpy(buf.s, cwd, l);
         if (!strchr(FILEPREFIX, buf.s[l - 1]))
             buf.s[l++] = FILESEP;
-        strcpy(&buf.s[l], path);
+        memcpy(&buf.s[l], path, m + 1);
     }
     normalize(buf.s);
     return buf.s;
@@ -1286,8 +1288,9 @@ char *buffvprintf(char *fmt, va_list ap)
 char *salloc(char *s)
 {
     char *s1;
-    s1 = safe_malloc(strlen(s) + 1);
-    return strcpy(s1, s);
+    size_t n = strlen(s) + 1;
+    s1 = safe_malloc(n);
+    return memcpy(s1, s, n);
 }
 
 /*
@@ -1327,8 +1330,9 @@ void ssexpand(struct staticstr *ss, size_t n)
  */
 char *sscpy(struct staticstr *ss, char *val)
 {
-    ssreserve(ss, strlen(val) + 1);
-    return strcpy(ss->s, val);
+    size_t n = strlen(val) + 1;
+    ssreserve(ss, n);
+    return memcpy(ss->s, val, n);
 }
 
 /*
@@ -1337,8 +1341,12 @@ char *sscpy(struct staticstr *ss, char *val)
  */
 char *sscat(struct staticstr *ss, char *val)
 {
-    ssexpand(ss, strlen(ss->s) + strlen(val) + 1);
-    return strcat(ss->s, val);
+    size_t sn, vn;
+    sn = strlen(ss->s);
+    vn = strlen(val);
+    ssexpand(ss, sn + vn + 1);
+    memcpy(ss->s + sn, val, vn + 1);
+    return ss->s;
 }
 
 /*

@@ -706,8 +706,11 @@ function map(s1,s2,s3)
               }
           }
 
-          if (UcsBlk(s1).length == 0)
-              return ucs(emptystr_ucs);
+          /*
+           * Check for simple cases, empty mapping or input.
+           */
+          if (maptab_len == 0 || UcsBlk(s1).length == 0)
+              return s1;
 
           /*
            * Calculate the result's size
@@ -750,10 +753,10 @@ function map(s1,s2,s3)
           return ucs(make_ucs_block(&utf8, UcsBlk(s1).length));
       } else {
           tended struct descrip result;
-          int i;
-          word slen;
-          char *str1, *str2, *str3;
+          word i, slen;
+          char *str1, *str2, *str3, *p;
           static char maptab[256];
+          static word mappings = 0;
 
           /*
            * If s2 and s3 are the same as for the last call of map,
@@ -781,6 +784,7 @@ function map(s1,s2,s3)
                   maps2 = maps3 = nulldesc;
                   runerr(208);
               }
+              mappings = StrLen(s2);
 
               /*
                * The array maptab is used to perform the mapping.  First,
@@ -792,15 +796,16 @@ function map(s1,s2,s3)
                */
               str2 = StrLoc(s2);
               str3 = StrLoc(s3);
-              for (i = 0; i <= 255; i++)
-                  maptab[i] = i;
-              for (slen = 0; slen < StrLen(s2); slen++)
-                  maptab[str2[slen]&0377] = str3[slen];
+              memcpy(maptab, allchars, 256);
+              for (i = 0; i < mappings; i++)
+                  maptab[str2[i] & 0xff] = str3[i];
           }
 
-          if (StrLen(s1) == 0) {
-              return emptystr;
-          }
+          /*
+           * Check for simple cases, empty mapping or input.
+           */
+          if (mappings == 0 || StrLen(s1) == 0)
+              return s1;
 
           /*
            * The result is a string the size of s1; create the result
@@ -809,15 +814,14 @@ function map(s1,s2,s3)
           slen = StrLen(s1);
           MakeStrMemProtect(alcstr(NULL, slen), slen, &result); 
           str1 = StrLoc(s1);
-          str2 = StrLoc(result);
+          p = StrLoc(result);
 
           /*
            * Run through the string, using values in maptab to do the
            *  mapping.
            */
-          while (slen-- > 0)
-              *str2++ = maptab[(*str1++)&0377];
-
+          for (i = 0; i < slen; i++)
+              p[i] = maptab[str1[i] & 0xff];
           return result;
       }
     }

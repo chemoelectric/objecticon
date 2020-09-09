@@ -8,7 +8,7 @@
 
 package gui
 
-import util, graphics(Window)
+import util
 
 #
 # This class scales and displays an image.  The image source can
@@ -191,8 +191,7 @@ class Image(Component)
                zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          else {
             (\zoom_win).close()
-            zoom_win := Window().set_size(zoom_w, zoom_h) | syserr("Couldn't open temp window")
-            gui.zoom_win(win, zoom_win)
+            zoom_win := gui.zoom_win(win, zoom_w, zoom_h)
             zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          }
       }

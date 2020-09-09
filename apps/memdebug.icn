@@ -481,7 +481,7 @@ procedure next_event()
             do_stop()
          }
       }
-      MonitorCode.Pcall : {
+      MonitorCode.Pcall | MonitorCode.Presum : {
          if Proc.get_name(e.value) == \break_proc then {
             output.write("Procedure break hit")
             do_stop()
@@ -500,7 +500,7 @@ procedure synch_mask()
    if \break_line then
       c ++:= MonitorCode.File ++ MonitorCode.Line
    if \break_proc then
-      c ++:= MonitorCode.Pcall
+      c ++:= MonitorCode.Pcall ++ MonitorCode.Presum
    Prog.set_event_mask(c, prog)
 end
 

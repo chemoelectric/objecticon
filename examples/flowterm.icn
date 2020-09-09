@@ -1338,11 +1338,6 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             output.set_vt_font(param) | return whyf("Invalid parameter to font: %w")
          }
-         "font-size" : {
-            check_live(s) | fail
-            check_param(s, param) | fail 
-            do_change_vt_font_size(param) | fail
-         }
          "key" : {
             check_param(s, param) | fail
             do_custom_key(param) | fail
@@ -1754,16 +1749,6 @@ class Terminal(TabItem, VtUI)
       send_tty(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
-   private do_change_vt_font_size(s)
-      local n
-      n := real(s) | return error("Real number expected to font-size")
-      if any('+\-', s) then
-         n +:= output.font_size
-      n <:= 1.0
-      output.set_vt_font(output.font_family || "," || n)
-      link
-   end
-
    private next_index_right()
       return parent.get_index(self) % *parent.children + 1
    end
@@ -2019,6 +2004,9 @@ $endif
          tty.close()
          Files.chdir(cwd)
          Files.bulk_close(50)
+$if _LINUX
+         system("stty iutf8")
+$endif
          System.exec(sh, shell_args, env) | stop(&why)
          syserr("Not reached")
       }
@@ -2956,7 +2944,7 @@ $endif
             set_normal_bg(other.output.normal_bg).
             set_reverse_fg(other.output.reverse_fg).
             set_reverse_bg(other.output.reverse_bg).
-            set_font(other.output.font_family || "," || other.output.font_size).
+            set_font(other.output.get_wattrib(WAttrib.FONT)).
             set_history_size(other.output.get_actual_history_size()) | syserr("Clone output setting failed: " || &why)
          set_shell(other.shell)
          shell_args := copy(other.shell_args)
@@ -3554,7 +3542,6 @@ procedure usage(opts)
    write()
    help_line(":start-log=DEST", "Start logging to file DEST")
    help_line(":end-log", "End logging")
-   help_line(":font-size=REAL", "Set the font size.  If the parameter starts with + or -, the value is relative to the present size")
    help_line(":url=URL", "Activate a URL as though clicked by the user")
    help_line(":copy-cwd", "Copy the current directory to the clipboard")
    help_line(":copy", "Copy the current selection to the clipboard")

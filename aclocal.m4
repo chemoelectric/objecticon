@@ -26,9 +26,35 @@ dnl http://www.nongnu.org/autoconf-archive/ax_lib_socket_nsl.html
 dnl
 AC_DEFUN([AX_LIB_SOCKET_NSL],
 [
-        AC_SEARCH_LIBS([gethostbyname], [nsl])
-        AC_SEARCH_LIBS([socket], [socket], [], [
-                AC_CHECK_LIB([socket], [socket], [LIBS="-lsocket -lnsl $LIBS"], [], [-lnsl])])
+        AC_SEARCH_LIBS(gethostbyname, nsl)
+        AC_SEARCH_LIBS(socket, socket, [], [
+                AC_CHECK_LIB(socket, socket, [LIBS="-lsocket -lnsl $LIBS"], [], [-lnsl])])
+])
+
+dnl
+dnl A simple helper macro to start the check for a package or library,
+dnl setting with_$1 to yes or no.
+dnl
+AC_DEFUN([AX_OPT_HEADER],
+[
+    AC_MSG_CHECKING([if $1 is wanted])
+    AC_ARG_WITH([$1],
+    ifelse([$2],,
+       [AS_HELP_STRING([--with-$1], [enable $1 if available (the default)])
+AS_HELP_STRING([--without-$1], [disable $1 usage completely])],
+       [AS_HELP_STRING([--with-$1], [enable $2 if available (the default)])
+AS_HELP_STRING([--without-$1], [disable $2 usage completely])]),
+    [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+    [
+       with_$1=yes
+       AC_MSG_RESULT(yes)
+    ]
+    )
 ])
 
 AC_DEFUN([AX_STRUCT_TIMEZONE_GMTOFF],
@@ -87,7 +113,7 @@ AC_DEFUN([AX_VAR_TIMEZONE_EXTERNALS],
 
 AC_DEFUN([AX_CHECK_MSG_NOSIGNAL],
 [
-  AC_CACHE_CHECK(for MSG_NOSIGNAL,  ax_cv_flag_msg_nosignal,
+  AC_CACHE_CHECK(for MSG_NOSIGNAL, ax_cv_flag_msg_nosignal,
      [AC_TRY_COMPILE([#include <sys/types.h>
                       #include <sys/socket.h>],[int flags = MSG_NOSIGNAL;],
         [ax_cv_flag_msg_nosignal=yes],
@@ -346,21 +372,7 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
 
 AC_DEFUN([AX_CHECK_CAIRO],
 [
-    AC_MSG_CHECKING(if cairo is wanted)
-    AC_ARG_WITH(cairo,
-    [  --with-cairo to enable cairo if available (the default)
-  --without-cairo to disable cairo usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_cairo=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
+    AX_OPT_HEADER(cairo)
     unset CAIRO_VERSION CAIRO_CPPFLAGS CAIRO_LDFLAGS CAIRO_LIBS
     if test "$with_cairo" != "no"; then
            CAIRO_CONFIG="cairo >= 1.13 pangocairo >= 1.36 librsvg-2.0 >= 2.40"
@@ -387,21 +399,7 @@ AC_DEFUN([AX_CHECK_CAIRO],
 
 AC_DEFUN([AX_CHECK_OPENSSL],
 [
-    AC_MSG_CHECKING(if OpenSSL is wanted)
-    AC_ARG_WITH(openssl,
-    [  --with-openssl to enable OpenSSL if available (the default)
-  --without-openssl to disable OpenSSL usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_openssl=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
+    AX_OPT_HEADER(openssl, OpenSSL)
     unset OPENSSL_VERSION OPENSSL_CPPFLAGS OPENSSL_LDFLAGS OPENSSL_LIBS
     if test "$with_openssl" != "no"; then
            OPENSSL_CONFIG="openssl >= 1.0"
@@ -428,22 +426,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
 
 AC_DEFUN([AX_CHECK_PNG],
 [
-    AC_MSG_CHECKING(if png is wanted)
-    AC_ARG_WITH(png,
-    [  --with-png to enable png usage if available (the default)
-  --without-png to disable png usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_png=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER(png)
     unset found_png
     if test "$with_png" != "no"; then
            PNG_CONFIG="libpng >= 1.2.37"
@@ -465,22 +448,7 @@ AC_DEFUN([AX_CHECK_PNG],
 
 AC_DEFUN([AX_CHECK_ZLIB],
 [
-    AC_MSG_CHECKING(if zlib is wanted)
-    AC_ARG_WITH(zlib,
-    [  --with-zlib to enable zlib usage if available (the default)
-  --without-zlib to disable zlib usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_zlib=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER(zlib)
     unset found_zlib
     if test "$with_zlib" != "no"; then
            ZLIB_CONFIG="zlib >= 1.2.7"
@@ -502,22 +470,7 @@ AC_DEFUN([AX_CHECK_ZLIB],
 
 AC_DEFUN([AX_CHECK_X11],
 [
-    AC_MSG_CHECKING(if X11 graphics are wanted)
-    AC_ARG_WITH(X11,
-    [  --with-X11 to enable X11 usage if available (the default)
-  --without-X11 to disable X11 usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_X11=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER(X11, [X11 graphics])
     unset found_x11
     if test "$with_X11" != "no"; then
            X11_CONFIG="x11 >= 1.5 xrender >= 0.9.7 xft >= 2.3.1 fontconfig >= 2.8.0 freetype2 >= 14.1.8"
@@ -539,22 +492,7 @@ AC_DEFUN([AX_CHECK_X11],
 
 AC_DEFUN([AX_CHECK_JPEG],
 [
-    AC_MSG_CHECKING(if jpeg is wanted)
-    AC_ARG_WITH(jpeg,
-    [  --with-jpeg to enable jpeg usage if available (the default)
-  --without-jpeg to disable jpeg usage completely],
-   [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-   [
-       with_jpeg=yes
-       AC_MSG_RESULT(yes)
-   ]
-   )
-
+   AX_OPT_HEADER(jpeg)
    unset found_jpeg
    if test "$with_jpeg" != "no"; then
            JPEG_CONFIG="libjpeg"
@@ -576,22 +514,7 @@ AC_DEFUN([AX_CHECK_JPEG],
 
 AC_DEFUN([AX_LIB_MYSQL],
 [
-    AC_MSG_CHECKING(if mysql is wanted)
-    AC_ARG_WITH(mysql,
-    [  --with-mysql to enable MySQL if available (the default)
-  --without-mysql to disable MySQL usage completely],
-    [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-    [
-       with_mysql=yes
-       AC_MSG_RESULT(yes)
-    ]
-    )
-
+    AX_OPT_HEADER(mysql, MySQL)
     unset MYSQL_CPPFLAGS MYSQL_LDFLAGS MYSQL_VERSION MYSQL_LIBS
     if test "$with_mysql" != "no"; then
            MYSQL_CONFIG="mysqlclient >= 1.0"
@@ -615,3 +538,118 @@ AC_DEFUN([AX_LIB_MYSQL],
     AC_SUBST(MYSQL_LDFLAGS)
     AC_SUBST(MYSQL_LIBS)
 ])
+
+
+dnl This redefines the _AC_INIT_HELP macro, in order to remove unwanted and
+dnl misleading messages, particularly about installation steps.  Apart from
+dnl this macro, the help output is also altered by clearing tge  HELP_CANON and
+dnl HELP_ENABLE diversions, at the bottom of configure.ac.
+dnl 
+m4_define([_AC_INIT_HELP],
+[m4_divert_push([HELP_BEGIN])dnl
+
+#
+# Report the --help message.
+#
+if test "$ac_init_help" = "long"; then
+  # Omit some internal or obsolete options to make the list less imposing.
+  # This message is too long to be a string in the A/UX 3.1 sh.
+  cat <<_ACEOF
+\`configure' configures m4_ifset([AC_PACKAGE_STRING],
+			[AC_PACKAGE_STRING],
+			[this package]) to adapt to many kinds of systems.
+
+Usage: $[0] [[OPTION]]... [[VAR=VALUE]]...
+
+[To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
+
+Defaults for the options are specified in brackets.
+
+Configuration:
+  -h, --help              display this help and exit
+      --help=short        display options specific to this package
+      --help=recursive    display the short help of all the included packages
+  -V, --version           display version information and exit
+  -q, --quiet, --silent   do not print \`checking ...' messages
+      --cache-file=FILE   cache test results in FILE [disabled]
+  -C, --config-cache      alias for \`--cache-file=config.cache'
+  -n, --no-create         do not create output files
+      --srcdir=DIR        find the sources in DIR [configure dir or \`..']
+
+Please note that Object Icon runs from the directory you compile it in (there
+is no make install step).][
+_ACEOF
+
+  cat <<\_ACEOF]
+m4_divert_pop([HELP_BEGIN])dnl
+dnl The order of the diversions here is
+dnl - HELP_BEGIN
+dnl   which may be extended by extra generic options such as with X or
+dnl   AC_ARG_PROGRAM.  Displayed only in long --help.
+dnl
+dnl - HELP_CANON
+dnl   Support for cross compilation (--build, --host and --target).
+dnl   Display only in long --help.
+dnl
+dnl - HELP_ENABLE
+dnl   which starts with the trailer of the HELP_BEGIN, HELP_CANON section,
+dnl   then implements the header of the non generic options.
+dnl
+dnl - HELP_WITH
+dnl
+dnl - HELP_VAR
+dnl
+dnl - HELP_VAR_END
+dnl
+dnl - HELP_END
+dnl   initialized below, in which we dump the trailer (handling of the
+dnl   recursion for instance).
+m4_divert_push([HELP_ENABLE])dnl
+_ACEOF
+fi
+
+if test -n "$ac_init_help"; then
+m4_ifset([AC_PACKAGE_STRING],
+[  case $ac_init_help in
+     short | recursive ) echo "Configuration of AC_PACKAGE_STRING:";;
+   esac])
+  cat <<\_ACEOF
+m4_divert_pop([HELP_ENABLE])dnl
+m4_divert_push([HELP_END])dnl
+
+Report bugs to m4_ifset([AC_PACKAGE_BUGREPORT], [<AC_PACKAGE_BUGREPORT>],
+  [the package provider]).dnl
+m4_ifdef([AC_PACKAGE_NAME], [m4_ifset([AC_PACKAGE_URL], [
+AC_PACKAGE_NAME home page: <AC_PACKAGE_URL>.])dnl
+m4_if(m4_index(m4_defn([AC_PACKAGE_NAME]), [GNU ]), [0], [
+General help using GNU software: <http://www.gnu.org/gethelp/>.])])
+_ACEOF
+ac_status=$?
+fi
+
+if test "$ac_init_help" = "recursive"; then
+  # If there are subdirs, report their specific --help.
+  for ac_dir in : $ac_subdirs_all; do test "x$ac_dir" = x: && continue
+    test -d "$ac_dir" ||
+      { cd "$srcdir" && ac_pwd=`pwd` && srcdir=. && test -d "$ac_dir"; } ||
+      continue
+    _AC_SRCDIRS(["$ac_dir"])
+    cd "$ac_dir" || { ac_status=$?; continue; }
+    # Check for guested configure.
+    if test -f "$ac_srcdir/configure.gnu"; then
+      echo &&
+      $SHELL "$ac_srcdir/configure.gnu" --help=recursive
+    elif test -f "$ac_srcdir/configure"; then
+      echo &&
+      $SHELL "$ac_srcdir/configure" --help=recursive
+    else
+      AC_MSG_WARN([no configuration information is in $ac_dir])
+    fi || ac_status=$?
+    cd "$ac_pwd" || { ac_status=$?; break; }
+  done
+fi
+
+test -n "$ac_init_help" && exit $ac_status
+m4_divert_pop([HELP_END])dnl
+])# _AC_INIT_HELP

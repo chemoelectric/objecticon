@@ -92,12 +92,9 @@ procedure imag2lst(seqimage)
 
    seq := []
 
-   seqimage[2:-1] ? {
-      while term := tab(upto(',') | 0) do {
-         term := numeric(term)			# special interest
-         put(seq, term)
-         move(1) | break
-         }
+   every term := separate(seqimage[2:-1]) do {
+      term := numeric(term)			# special interest
+      put(seq, term)
       }
 
    return seq
