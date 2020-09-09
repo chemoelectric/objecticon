@@ -2082,7 +2082,7 @@ function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
       }
 
       /*
-       * x1, y1, width, and height follow standard conventions.
+       * x, y, width, and height follow standard conventions.
        */
       if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
@@ -2107,6 +2107,75 @@ function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
               id2->format->setpixel(id2, x2 + i, y2 + j, r, g, b, a);
           }
 
+      return self;
+   }
+end
+
+static float inter(float s, float e, float t)
+{
+    return s + (e - s) * t;
+}
+ 
+static int bl_inter(float c00, float c10, float c01, float c11, float tx, float ty)
+{
+    return (int)inter(inter(c00, c10, tx), inter(c01, c11, tx), ty) & 0xffff;
+}
+
+function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
+   body {
+      int i2, j2, r, g, b, a;
+      word x, y, width, height, x2, y2, width2, height2;
+      struct imgdata *id2;
+      float mw, mh, gx, gy;
+      int gxi, gyi;
+      int r00, g00, b00, a00;
+      int r01, g01, b01, a01;
+      int r10, g10, b10, a10;
+      int r11, g11, b11, a11;
+      GetSelfPixels();
+
+      if (is:null(dest))
+          id2 = self_id;
+      else {
+          PixelsStaticParam(dest, tmp);
+          id2 = tmp;
+      }
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (pixels_rectargs(id2, &a0, &x2, &y2, &width2, &height2) == Error)
+          runerr(0);
+
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          return self;
+
+      if (!pixels_reducerect(id2, &x2, &y2, &width2, &height2))
+          return self;
+
+      mw = (float)width / width2;
+      mh = (float)height / height2;
+      for (j2 = 0; j2 < height2; ++j2) {
+          gy = j2 * mh;
+          gyi = (int)gy;
+          for (i2 = 0; i2 < width2; ++i2) {
+              gx = i2 * mw;
+              gxi = (int)gx;
+              #define ClampW(i) Min(i, width - 1)
+              #define ClampH(i) Min(i, height - 1)
+              self_id->format->getpixel(self_id, ClampW(x + gxi     ), ClampH(y + gyi     ), &r00, &g00, &b00, &a00);
+              self_id->format->getpixel(self_id, ClampW(x + gxi + 1 ), ClampH(y + gyi     ), &r10, &g10, &b10, &a10);
+              self_id->format->getpixel(self_id, ClampW(x + gxi     ), ClampH(y + gyi + 1 ), &r01, &g01, &b01, &a01);
+              self_id->format->getpixel(self_id, ClampW(x + gxi + 1 ), ClampH(y + gyi + 1 ), &r11, &g11, &b11, &a11);
+
+              r = bl_inter(r00, r10, r01, r11, gx - gxi, gy - gyi);
+              g = bl_inter(g00, g10, g01, g11, gx - gxi, gy - gyi);
+              b = bl_inter(b00, b10, b01, b11, gx - gxi, gy - gyi);
+              a = bl_inter(a00, a10, a01, a11, gx - gxi, gy - gyi);
+
+              id2->format->setpixel(id2, x2 + i2, y2 + j2, r, g, b, a);
+          }
+      }
       return self;
    }
 end

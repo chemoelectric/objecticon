@@ -160,6 +160,12 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    #
    public native copy_to(x1, y1, width, height, dest, x2, y2)
 
+   # Copy a rectangular area from this instance to another, scaling
+   # the result to fit in the destination rectangle.
+   #
+   public native scale_to(x1, y1, width1, height1,
+                          dest, x2, y2, width2, height2)
+
    #
    # Encode the image to a file.
    #

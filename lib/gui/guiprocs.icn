@@ -9,8 +9,7 @@
 package gui
 
 import graphics(Mouse,Window,Pixels,Selection,need_Window),
-   lang, util, io, xdg, ipl.strings, ipl.graphics, cairo,
-   ipl.numbers
+   lang, util, io, xdg, ipl.strings, ipl.numbers
 
 final abstract class Event()
    public static const
@@ -1089,27 +1088,20 @@ $endif
 end
 
 #
-# Zoom from window `src` to `dest`.  If the cairo library is
-# available, then that is used; otherwise the `Zoom` procedure is
-# used.
+# Zoom (scale) the contents of window `src` to an new window of size
+# `w` x `h`, and return that window.
 #
-procedure zoom_win(src, dest)
-   local c
+procedure zoom_win(src, w, h)
+   local p, q
    need_Window(src)
-   need_Window(dest)
-   if \Context.LOADED then {
+   return use {
+      p := src.get_pixels(),
       use {
-         c := Context(dest),
+         q := Pixels(w, h, src.get_format()),
          {
-            c.set_operator("source").
-               identity_matrix().   # Just in case dx or dy non-zero
-               scale(real(dest.get_width()) / src.get_width(), 
-                     real(dest.get_height()) / src.get_height()).
-               set_source(src).
-               paint()
+            p.scale_to(,,,, q)
+            Window.open_image(q)
          }
       }
-   } else
-      Zoom(src, dest)
-   return
+   } | runerr("Couldn't open new zoom window: " || &why)
 end
