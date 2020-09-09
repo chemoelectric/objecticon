@@ -113,7 +113,7 @@ end
 
 function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy)
    body {
-      word ox, oy, x, y, width, height, x2, y2;
+      int ox, oy, x, y, width, height, x2, y2;
       wbp w2;
 
       GetSelfW();
@@ -174,7 +174,7 @@ function graphics_Window_draw_arc(self, x0, y0, rx0, ry0, ang1, ang2)
 
       GetSelfW();
 
-      if (dpointargs(self_w, &x0, &x, &y) == Error)
+      if (dpointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
 
       if (!cnv:C_double(rx0, rx))
@@ -274,7 +274,7 @@ end
 
 function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
-      word x, y;
+      int x, y;
       GetSelfW();
       if (pointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
@@ -314,7 +314,8 @@ end
 
 function graphics_Window_draw_rectangle(self, x0, y0, w0, h0, thick0)
    body {
-      word x, y, width, height, thick;
+      word thick;
+      int x, y, width, height;
 
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
@@ -332,7 +333,7 @@ end
 
 function graphics_Window_draw_string(self, x0, y0, str)
    body {
-      word x, y;
+      int x, y;
       GetSelfW();
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
@@ -345,7 +346,7 @@ end
 
 function graphics_Window_erase_area(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
@@ -407,7 +408,7 @@ end
 
 function graphics_Window_restore(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       if (!self_w->window->holding)
           runerr(155);
@@ -426,7 +427,7 @@ function graphics_Window_fill_arc(self, x0, y0, rx0, ry0, ang1, ang2)
 
       GetSelfW();
 
-      if (dpointargs(self_w, &x0, &x, &y) == Error)
+      if (dpointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
 
       if (!cnv:C_double(rx0, rx))
@@ -527,7 +528,7 @@ end
 
 function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
@@ -548,7 +549,7 @@ end
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
@@ -596,7 +597,7 @@ end
 
 function graphics_Window_filter(self, x0, y0, w0, h0, spec)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       struct filter *filter;
       struct imgdata *imd;
       int i, nfilter;
@@ -845,7 +846,7 @@ function graphics_Window_drawable_impl(self, x0, y0, w0, h0)
       tended struct descrip result;
       struct descrip t;
       wcp wc;
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       wc = self_w->context;
 
@@ -874,7 +875,7 @@ function graphics_Window_viewable_impl(self, x0, y0, w0, h0)
       tended struct descrip result;
       struct descrip t;
       wcp wc;
-      word x, y, width, height;
+      int x, y, width, height;
       GetSelfW();
       wc = self_w->context;
 
@@ -1170,7 +1171,7 @@ end
 
 function graphics_Window_clip(self, x0, y0, w0, h0)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       wcp wc;
       GetSelfW();
 
@@ -2062,14 +2063,10 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
    }
 end
 
-function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
-   if !def:C_integer(x2, 0) then
-      runerr(101, x2)
-   if !def:C_integer(y2, 0) then
-      runerr(101, y2)
+function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, a2, b2)
    body {
       int i, j, r, g, b, a;
-      word ox, oy, x, y, width, height;
+      int ox, oy, x, y, width, height, x2, y2;
       struct imgdata *id2;
 
       GetSelfPixels();
@@ -2085,6 +2082,12 @@ function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
        * x, y, width, and height follow standard conventions.
        */
       if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      /*
+       * x2 and y2 default to 0.
+       */
+      if (pixels_pointargs_def(&a2, &x2, &y2) == Error)
           runerr(0);
 
       ox = x;
@@ -2124,7 +2127,7 @@ static int bl_inter(float c00, float c10, float c01, float c11, float tx, float 
 function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
    body {
       int i2, j2, r, g, b, a;
-      word x, y, width, height, x2, y2, width2, height2;
+      int x, y, width, height, x2, y2, width2, height2;
       struct imgdata *id2;
       float mw, mh, gx, gy;
       int gxi, gyi;
@@ -2511,7 +2514,7 @@ end
 
 function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       int i, j, r, g, b, a;
       GetSelfPixels();
 
@@ -2541,7 +2544,7 @@ end
 
 function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
    body {
-      word x, y, width, height;
+      int x, y, width, height;
       tended struct descrip tmp;
       int i, j, r, g, b, a;
       GetSelfPixels();

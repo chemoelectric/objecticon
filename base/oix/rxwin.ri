@@ -3323,7 +3323,7 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
         return;
 
     calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
     init_traplist(&tl, nlis * 3);
@@ -3478,7 +3478,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     if (npoints < 3)
         return;
     points_extent(points, npoints, &x, &y, &width, &height);
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
     clip(w);
     if (needmask(wc, 0)) {
@@ -3516,7 +3516,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     int x, y, width, height, i;
 
     triangles_extent(tris, ntris, &x, &y, &width, &height);
-    if (!int_reducerect(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
     init_traplist(&tl, 2 * ntris);
@@ -4157,7 +4157,7 @@ static int y_outside(wbp w, int y)
     y -= wc->font->ascent + fh;
     h = 3 * fh;
 
-    return !int_reducevline(w, 1, &y, &h);
+    return !reducevline(w, 1, &y, &h);
 }
 
 /*
@@ -4187,7 +4187,7 @@ static int reduce_extents(wbp w, int x, int y, XGlyphInfo *extents, int *xr, int
     *wr = extents->width;
     *yr = y - extents->y;
     *hr = extents->height;
-    return int_reducerect(w, 1, xr, yr, wr, hr);
+    return reducerect(w, 1, xr, yr, wr, hr);
 }
 
 /*
