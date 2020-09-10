@@ -39,7 +39,7 @@ AC_DEFUN([AX_OPT_HEADER],
 [
     AC_MSG_CHECKING([if $1 is wanted])
     AC_ARG_WITH([$1],
-    ifelse([$2],,
+    m4_if([$2],,
        [AS_HELP_STRING([--with-$1], [enable $1 if available (the default)])
 AS_HELP_STRING([--without-$1], [disable $1 usage completely])],
        [AS_HELP_STRING([--with-$1], [enable $2 if available (the default)])
