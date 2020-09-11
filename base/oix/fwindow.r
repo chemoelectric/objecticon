@@ -2127,6 +2127,7 @@ static int bl_inter(float c00, float c10, float c01, float c11, float tx, float 
 function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
    body {
       int r, g, b, a;
+      int ox, oy, ow, oh;
       int x, y, width, height;
       int x2, y2, width2, height2;
       struct imgdata *id2;
@@ -2151,11 +2152,49 @@ function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
       if (pixels_rectargs(id2, &a0, &x2, &y2, &width2, &height2) == Error)
           runerr(0);
 
+      /*
+       * All the following work around reducerect ensures that
+       * out-of-range pixels are treated correctly (they are
+       * effectively skipped), and that scale_to works uniformly with
+       * copy_to.  In fact, if the dest size is the same as the
+       * source, the entire algorithm should produce the same result
+       * as copy_to.
+       */
+
+      ox = x; oy = y; ow = width; oh = height;
       if (!pixels_reducerect(self_id, &x, &y, &width, &height))
           return self;
+      y2 += ((y - oy) * height2) / oh;
+      height2 += ((height - oh) * height2) / oh;
+      x2 += ((x - ox) * width2) / ow;
+      width2 += ((width - ow) * width2) / ow;
 
+      ox = x2; oy = y2; ow = width2; oh = height2;
       if (!pixels_reducerect(id2, &x2, &y2, &width2, &height2))
           return self;
+
+      y += ((y2 - oy) * height) / oh;                   // (1)
+      height += ((height2 - oh) * height) / oh;         // (2)
+      x += ((x2 - ox) * width) / ow;
+      width += ((width2 - ow) * width) / ow;
+
+      /* Note that since, after reducerect() succeeds,
+       * oh > 0, height2 > 0, and height2 <= oh  (by reducedrect)
+       *       0 <= oh - height2 < oh
+       * So    0 <= height * (oh - height2) < height * oh      (since height > 0)
+       *       0 <= (height * (oh - height2)) / oh < height     (since a < b*c => a/b < c for a>=0, b>0, c>0)
+       *       0 >= (height * (height2 - oh )) / oh > -height  by negation
+       * And adding this quantity to height in (2) will reduce it, but leave
+       * height > 0.
+       * We also note that (1) and (2) leave [y, y+height) a valid range, since
+       *  reducerect(.. &y2, .. &height2) either leaves y2 unchanged or
+       * sets it to zero with a commensurate decrease in height2; so
+       *       y2 - oy = 0  OR  y2 - oy = -oy  = oh - height2
+       * in the first case, y does not change so (1) and (2) can only
+       * reduce y + height; in the second case (1) and (2) add with opposite
+       * amounts, so the net effect on y + height is zero.
+       * All the above applies to x and width too of course.
+       */
 
       rw = (float)width / width2;
       rh = (float)height / height2;
@@ -2165,12 +2204,12 @@ function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
           for (i2 = 0; i2 < width2; ++i2) {
               fi = i2 * rw;
               i = (int)fi;
-              #define ClampW(i) Min(i, width - 1)
-              #define ClampH(i) Min(i, height - 1)
-              self_id->format->getpixel(self_id, ClampW(x + i     ), ClampH(y + j     ), &r00, &g00, &b00, &a00);
-              self_id->format->getpixel(self_id, ClampW(x + i + 1 ), ClampH(y + j     ), &r10, &g10, &b10, &a10);
-              self_id->format->getpixel(self_id, ClampW(x + i     ), ClampH(y + j + 1 ), &r01, &g01, &b01, &a01);
-              self_id->format->getpixel(self_id, ClampW(x + i + 1 ), ClampH(y + j + 1 ), &r11, &g11, &b11, &a11);
+              #define ClampW(v) Min(v, width - 1)
+              #define ClampH(v) Min(v, height - 1)
+              self_id->format->getpixel(self_id, x + ClampW(i    ), y + ClampH(j    ), &r00, &g00, &b00, &a00);
+              self_id->format->getpixel(self_id, x + ClampW(i + 1), y + ClampH(j    ), &r10, &g10, &b10, &a10);
+              self_id->format->getpixel(self_id, x + ClampW(i    ), y + ClampH(j + 1), &r01, &g01, &b01, &a01);
+              self_id->format->getpixel(self_id, x + ClampW(i + 1), y + ClampH(j + 1), &r11, &g11, &b11, &a11);
 
               r = bl_inter(r00, r10, r01, r11, fi - i, fj - j);
               g = bl_inter(g00, g10, g01, g11, fi - i, fj - j);

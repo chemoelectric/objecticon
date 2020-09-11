@@ -38,12 +38,10 @@ dnl
 AC_DEFUN([AX_OPT_HEADER],
 [
     AC_MSG_CHECKING([if $1 is wanted])
+    m4_define([$0_T],m4_if([$2],,[$1],[$2]))dnl
     AC_ARG_WITH([$1],
-    ifelse([$2],,
-       [AS_HELP_STRING([--with-$1], [enable $1 if available (the default)])
-AS_HELP_STRING([--without-$1], [disable $1 usage completely])],
-       [AS_HELP_STRING([--with-$1], [enable $2 if available (the default)])
-AS_HELP_STRING([--without-$1], [disable $2 usage completely])]),
+    [AS_HELP_STRING([--with-$1], enable $0_T if available [(the default)])
+AS_HELP_STRING([--without-$1], disable $0_T usage completely)],
     [
       if test "$withval" != "no"; then
          AC_MSG_RESULT(yes)
