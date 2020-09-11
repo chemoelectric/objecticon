@@ -2161,26 +2161,22 @@ function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
        * as copy_to.
        */
 
-      over_flow = 0;
-
+      #define OverChk   if (over_flow) return self;
       ox = x; oy = y; ow = width; oh = height;
       if (!pixels_reducerect(self_id, &x, &y, &width, &height))
           return self;
-      y2 += mul(y - oy, height2) / oh;
-      height2 += mul(height - oh, height2) / oh;
-      x2 += mul(x - ox, width2) / ow;
-      width2 += mul(width - ow, width2) / ow;
+      y2 += mul(y - oy, height2) / oh; OverChk
+      height2 += mul(height - oh, height2) / oh; OverChk
+      x2 += mul(x - ox, width2) / ow; OverChk
+      width2 += mul(width - ow, width2) / ow; OverChk
 
       ox = x2; oy = y2; ow = width2; oh = height2;
       if (!pixels_reducerect(id2, &x2, &y2, &width2, &height2))
           return self;
-      y += mul(y2 - oy, height) / oh;                   // (1)
-      height += mul(height2 - oh, height) / oh;         // (2)
-      x += mul(x2 - ox, width) / ow;
-      width += mul(width2 - ow, width) / ow;
-
-      if (over_flow)
-          return self;
+      y += mul(y2 - oy, height) / oh;  OverChk                  // (1)
+      height += mul(height2 - oh, height) / oh; OverChk         // (2)
+      x += mul(x2 - ox, width) / ow; OverChk
+      width += mul(width2 - ow, width) / ow; OverChk
 
       /* Note that since, after reducerect() succeeds,
        * oh > 0, height2 > 0, and height2 <= oh  (by reducedrect)
