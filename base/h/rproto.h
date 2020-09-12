@@ -196,6 +196,7 @@ char *tocolorstring(int r, int g, int b, int a);
 int pixels_rectargs(struct imgdata *img, dptr argv, int *px, int *py, int *pw, int *ph);
 int pixels_pointargs_def(dptr argv, int *px, int *py);
 int pixels_reducerect(struct imgdata *img, int *x, int *y, int *width, int *height);
+int safe_imul(int x, int y, int z);
 
 struct imgdataformat *parseimgdataformat(char *s);
 void registerimgdataformat(struct imgdataformat *fmt);

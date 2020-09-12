@@ -1312,6 +1312,8 @@ function graphics_Window_set_geometry(self, x, y, width, height)
            if (!cnv:C_integer(y, j))
                runerr(101, y);
        }
+       CheckDim(width);
+       CheckDim(height);
        self_w->window->reqx = i;
        self_w->window->reqy = j;
        self_w->window->width = width;
@@ -1326,8 +1328,7 @@ function graphics_Window_set_height(self, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(height);
        self_w->window->height = height;
        SimpleAttr(C_SIZE);
        return self;
@@ -1401,8 +1402,7 @@ function graphics_Window_set_max_height(self, height)
        else {
            if (!cnv:C_integer(height, i))
                runerr(101, height);
-           if (i < 1)
-               runerr(148, height);
+           CheckDim(i);
        }
        self_w->window->maxheight = i;
        SimpleAttr(C_MAXSIZE);
@@ -1419,16 +1419,14 @@ function graphics_Window_set_max_size(self, width, height)
        else {
            if (!cnv:C_integer(width, i))
                runerr(101, width);
-           if (i < 1)
-               runerr(148, width);
+           CheckDim(i);
        }
        if (is:null(height))
            j = INT_MAX;
        else {
            if (!cnv:C_integer(height, j))
                runerr(101, height);
-           if (j < 1)
-               runerr(148, height);
+           CheckDim(j);
        }
        self_w->window->maxwidth = i;
        self_w->window->maxheight = j;
@@ -1446,8 +1444,7 @@ function graphics_Window_set_max_width(self, width)
        else {
            if (!cnv:C_integer(width, i))
                runerr(101, width);
-           if (i < 1)
-               runerr(148, width);
+           CheckDim(i);
        }
        self_w->window->maxwidth = i;
        SimpleAttr(C_MAXSIZE);
@@ -1460,8 +1457,7 @@ function graphics_Window_set_min_height(self, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(height);
        self_w->window->minheight = height;
        SimpleAttr(C_MINSIZE);
        return self;
@@ -1475,10 +1471,8 @@ function graphics_Window_set_min_size(self, width, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (width < 1)
-           Irunerr(148, width);
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(width);
+       CheckDim(height);
        self_w->window->minwidth = width;
        self_w->window->minheight = height;
        SimpleAttr(C_MINSIZE);
@@ -1491,8 +1485,7 @@ function graphics_Window_set_min_width(self, width)
       runerr(101, width)
    body {
        GetSelfW();
-       if (width < 1)
-           Irunerr(148, width);
+       CheckDim(width);
        self_w->window->minwidth = width;
        SimpleAttr(C_MINSIZE);
        return self;
@@ -1504,8 +1497,7 @@ function graphics_Window_set_base_height(self, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (height < 0)
-           Irunerr(148, height);
+       CheckDim0(height);
        self_w->window->baseheight = height;
        SimpleAttr(C_BASESIZE);
        return self;
@@ -1519,10 +1511,8 @@ function graphics_Window_set_base_size(self, width, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (width < 0)
-           Irunerr(148, width);
-       if (height < 0)
-           Irunerr(148, height);
+       CheckDim0(width);
+       CheckDim0(height);
        self_w->window->basewidth = width;
        self_w->window->baseheight = height;
        SimpleAttr(C_BASESIZE);
@@ -1535,8 +1525,7 @@ function graphics_Window_set_base_width(self, width)
       runerr(101, width)
    body {
        GetSelfW();
-       if (width < 0)
-           Irunerr(148, width);
+       CheckDim0(width);
        self_w->window->basewidth = width;
        SimpleAttr(C_BASESIZE);
        return self;
@@ -1548,8 +1537,7 @@ function graphics_Window_set_increment_height(self, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(height);
        self_w->window->incheight = height;
        SimpleAttr(C_INCSIZE);
        return self;
@@ -1563,10 +1551,8 @@ function graphics_Window_set_increment_size(self, width, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (width < 1)
-           Irunerr(148, width);
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(width);
+       CheckDim(height);
        self_w->window->incwidth = width;
        self_w->window->incheight = height;
        SimpleAttr(C_INCSIZE);
@@ -1579,8 +1565,7 @@ function graphics_Window_set_increment_width(self, width)
       runerr(101, width)
    body {
        GetSelfW();
-       if (width < 1)
-           Irunerr(148, width);
+       CheckDim(width);
        self_w->window->incwidth = width;
        SimpleAttr(C_INCSIZE);
        return self;
@@ -1752,10 +1737,8 @@ function graphics_Window_set_size(self, width, height)
       runerr(101, height)
    body {
        GetSelfW();
-       if (width < 1)
-           Irunerr(148, width);
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(width);
+       CheckDim(height);
        self_w->window->width = width;
        self_w->window->height = height;
        SimpleAttr(C_SIZE);
@@ -1768,8 +1751,7 @@ function graphics_Window_set_width(self, width)
       runerr(101, width)
    body {
        GetSelfW();
-       if (width < 1)
-           Irunerr(148, width);
+       CheckDim(width);
        self_w->window->width = width;
        SimpleAttr(C_SIZE);
        return self;
@@ -1958,10 +1940,8 @@ function graphics_Pixels_new_blank_impl(width, height, format)
    body {
        struct imgdata *imd;
        struct imgdataformat *fmt;
-       if (width < 1)
-           Irunerr(148, width);
-       if (height < 1)
-           Irunerr(148, height);
+       CheckDim(width);
+       CheckDim(height);
        if (is:null(format))
            fmt = &imgdataformat_RGBA64;
        else {
@@ -2124,6 +2104,20 @@ static int bl_inter(float c00, float c10, float c01, float c11, float tx, float 
     return (int)inter(inter(c00, c10, tx), inter(c01, c11, tx), ty) & 0xffff;
 }
 
+/*
+ * Perform other += (delta * dim1) / dim2, dim2 > 0
+ * exiting the function on overflow.
+ */
+#begdef Adj(other, delta, dim1, dim2)
+   do {
+      word t;
+      t = mul(delta, dim1) / dim2;
+      if (over_flow || (int)t != t)
+         return self;
+      other += t;
+   } while(0)
+#enddef
+
 function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
    body {
       int r, g, b, a;
@@ -2161,22 +2155,21 @@ function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
        * as copy_to.
        */
 
-      #define OverChk   if (over_flow) return self;
       ox = x; oy = y; ow = width; oh = height;
       if (!pixels_reducerect(self_id, &x, &y, &width, &height))
           return self;
-      y2 += mul(y - oy, height2) / oh; OverChk
-      height2 += mul(height - oh, height2) / oh; OverChk
-      x2 += mul(x - ox, width2) / ow; OverChk
-      width2 += mul(width - ow, width2) / ow; OverChk
+      Adj(y2, y - oy, height2, oh);
+      Adj(height2, height - oh, height2, oh);
+      Adj(x2, x - ox, width2, ow);
+      Adj(width2, width - ow, width2, ow);
 
       ox = x2; oy = y2; ow = width2; oh = height2;
       if (!pixels_reducerect(id2, &x2, &y2, &width2, &height2))
           return self;
-      y += mul(y2 - oy, height) / oh;  OverChk                  // (1)
-      height += mul(height2 - oh, height) / oh; OverChk         // (2)
-      x += mul(x2 - ox, width) / ow; OverChk
-      width += mul(width2 - ow, width) / ow; OverChk
+      Adj(y, y2 - oy, height, oh);                 // (1)
+      Adj(height, height2 - oh, height, oh);       // (2)
+      Adj(x, x2 - ox, width, ow);
+      Adj(width, width2 - ow, width, ow);
 
       /* Note that since, after reducerect() succeeds,
        * oh > 0, height2 > 0, and height2 <= oh  (by reducedrect)

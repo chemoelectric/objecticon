@@ -332,6 +332,27 @@ if (is:null(*w##_dptr))
 #enddef
 
 /*
+ * Check an integer value is a valid, reasonable size for a Window or
+ * Pixels dimension.
+ */
+#begdef CheckDim(v)
+   do {
+      if ((v) < 1 || (v) > 32767)
+          Irunerr(148, v);
+   } while(0)
+#enddef
+
+/*
+ * Like CheckDim(), but allow 0 as a valid value. 
+ */
+#begdef CheckDim0(v)
+   do {
+      if ((v) < 0 || (v) > 32767)
+          Irunerr(148, v);
+   } while(0)
+#enddef
+
+/*
  * Op that can succeed or fail setting &why, with default value for
  * &why if none set by op.
  */
