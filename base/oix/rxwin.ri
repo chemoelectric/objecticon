@@ -962,6 +962,10 @@ int setwindowicon(wbp w, struct imgdata *imd)
 {
     wsp ws = w->window;
     int i, j, k;
+    if (imd && (imd->width > 512 || imd->height > 512)) {
+        LitWhy("Icon too big");
+        return Failed;
+    }
     free(ws->icondata);
     if (imd) {
         ws->iconlen = 2 + imd->width * imd->height;
