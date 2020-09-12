@@ -1578,7 +1578,7 @@ int requestselection(wbp w, char *selname, char *targetname)
      * without the results getting mixed up.  Obviously this isn't
      * perfect, but is better than nothing.
      */
-    property = wd->atoms[ATOM__OBJECTICON_PROP0 + (ws->propcount++) % NUM_PROP_ATOMS];
+    property = wd->atoms[ATOM__OBJECTICON_PROP0 + (wd->propcount++) % NUM_PROP_ATOMS];
     if (selection_debug) {
         printf("getselectioncontent: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
         printf(" target=%s", get_atom_name(wd, target));

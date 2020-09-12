@@ -310,6 +310,7 @@ typedef struct _wdisplay {
   struct wcursor *cursors[CURSORHASH_SIZE];
   Time   recent;                      /* most recent Time reported by server */
   Atom   atoms[NUM_ATOMS];            /* interned atoms */
+  int           propcount;            /* counter for selection requests*/
   struct selection_helper selection_helpers[NUM_PROP_ATOMS];
   struct _wdisplay *previous, *next;
 } *wdp;
@@ -419,7 +420,6 @@ typedef struct _wstate {
   int           iconlen;
   XftDraw       *pxft;
   struct _wstate *transientfor;         /* transient-for hint */
-  int           propcount;              /* counter for selection requests*/
 #elif MSWIN32
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */
