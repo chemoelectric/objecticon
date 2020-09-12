@@ -803,10 +803,9 @@ static int gfmap()
  */
 static int gfsetup()
 {
-    int i;
-    word len;
+    int i, len;
 
-    len = gf_width * gf_height;
+    len = safe_imul(1, gf_width, gf_height);
     gf_string = safe_malloc(len);
     gf_prefix = safe_malloc(GifTableSize * sizeof(short));
     gf_suffix = safe_malloc(GifTableSize * sizeof(short));
@@ -978,7 +977,7 @@ static void gfput(int b)
             gf_step = 0;
             return;			/* too much data; ignore it */
         }
-        gf_nxt = gf_string + ((word)gf_row * (word)gf_width);
+        gf_nxt = gf_string + (gf_row * gf_width);
         gf_lim = gf_nxt + gf_width;
     }
 
@@ -1043,7 +1042,7 @@ static int readjpegfile(char *filename, struct imgdata *imd)
     jpeg_start_decompress(&cinfo);
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
 
-    data = safe_malloc(row_stride * cinfo.output_height);
+    data = safe_malloc(safe_imul(1, row_stride, cinfo.output_height));
 	
     while (cinfo.output_scanline < cinfo.image_height) {
         JSAMPROW row_pointer[1];
@@ -1286,7 +1285,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
     height = png_get_image_height(png_ptr, info_ptr);
 
     row_pointers = safe_malloc(sizeof(png_bytep) * height);
-    data = safe_malloc(png_get_rowbytes(png_ptr, info_ptr) * height);
+    data = safe_malloc(safe_imul(1, png_get_rowbytes(png_ptr, info_ptr), height));
     p = (png_bytep)data;
     for (i = 0; i < height; ++i) {
         row_pointers[i] = p;
