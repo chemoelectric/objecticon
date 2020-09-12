@@ -1209,7 +1209,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     wsp ws = w->window;
     int i, j;
     gb_Color *p;
-    imd->data = safe_malloc(imd->width * imd->height * sizeof(gb_Color));
+    imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
     p = (gb_Color *)imd->data;
     for(i = y; i < y + imd->height; i++)
         for(j = x; j < x + imd->width; j++)
@@ -1744,7 +1744,7 @@ static void bitmap_to_imgdata(gb_Bitmap *bm, struct imgdata *imd)
     imd->format = &imgdataformat_MSBGRA32;
     imd->width = width;
     imd->height = height;
-    imd->data = safe_malloc(imd->width * imd->height * sizeof(gb_Color));
+    imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
     p = (gb_Color *)imd->data;
     for(j = 0; j < imd->height; j++) {
         for(i = 0; i < imd->width; i++)

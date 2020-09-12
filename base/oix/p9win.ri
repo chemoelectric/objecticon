@@ -1342,7 +1342,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     int len;
     uchar *data;
     wsp ws = w->window;
-    len = imd->width * imd->height * 4;
+    len = safe_imul(imd->width, imd->height, 4);
     data = safe_malloc(len);
     unloadimage(ws->pix, MkRect(x, y, imd->width, imd->height), data, len);
     imd->format = &imgdataformat_P9ABGR32;
@@ -1355,7 +1355,7 @@ static Image *imgdata_to_Image1(struct imgdata *imd, ulong chan)
     int len, depth;
     depth = imd->format->alpha_depth + imd->format->color_depth;
     MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), chan, 1, DNofill));
-    len = imd->width * imd->height * (depth / 8);
+    len = safe_imul(imd->width, imd->height, depth / 8);
     loadimage(im, im->r, imd->data, len);
     return im;
 }
@@ -2506,7 +2506,7 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     imd->width = Dx(m->r);
     imd->height = Dy(m->r);
     imd->format = format;
-    ndata = imd->width * imd->height * m->nchan;
+    ndata = safe_imul(imd->width, imd->height, m->nchan);
     imd->data = safe_malloc(ndata);
     unloadmemimage(m, m->r, imd->data, ndata);
     freememimage(m);
@@ -2602,7 +2602,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
 
     /* Transparency only works for png (not gifs it seems) */
     if (!imd->format->alpha_depth || strcmp(cmd, "topng") != 0) {
-        ndata = 3 * imd->width * imd->height;
+        ndata = safe_imul(3, imd->width, imd->height);
         data = safe_malloc(ndata);
         p = data;
         for (j = 0; j < imd->height; j++) {
@@ -2616,7 +2616,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         }
         MemProtect(m = allocmemimage(Rect(0, 0, imd->width, imd->height), RGB24));
     } else {
-        ndata = 4 * imd->width * imd->height;
+        ndata = safe_imul(4, imd->width, imd->height);
         data = safe_malloc(ndata);
         p = data;
         for (j = 0; j < imd->height; j++) {

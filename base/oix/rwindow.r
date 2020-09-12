@@ -1106,7 +1106,7 @@ int writejpegfile(char *filename, struct imgdata *imd)
 
     quality = 95;
     
-    data = safe_malloc(imd->width * imd->height * 3);
+    data = safe_malloc(safe_imul(imd->width, imd->height, 3));
     p = data;
     for (j = 0; j < imd->height; j++) {
         for (i = 0; i < imd->width; i++) {
@@ -1352,7 +1352,7 @@ static int writepngfile(char *filename, struct imgdata *imd)
         png_set_tRNS(png_ptr, info_ptr, trans, imd->format->palette_size, 0);
         png_write_info(png_ptr, info_ptr);
         row_pointers = safe_malloc(sizeof(png_bytep) * imd->height);
-        data = safe_malloc(imd->width * imd->height);
+        data = safe_malloc(safe_imul(imd->width, imd->height, 1));
         p = (png_bytep)data;
         for (i = 0; i < imd->height; ++i) {
             row_pointers[i] = p;
@@ -1370,7 +1370,7 @@ static int writepngfile(char *filename, struct imgdata *imd)
         png_write_info(png_ptr, info_ptr);
 
         row_pointers = safe_malloc(sizeof(png_bytep) * imd->height);
-        data = safe_malloc(imd->width * imd->height * 8);
+        data = safe_malloc(safe_imul(imd->width, imd->height, 8));
         p = (png_bytep)data;
         for (i = 0; i < imd->height; ++i) {
             row_pointers[i] = p;
@@ -1398,7 +1398,7 @@ static int writepngfile(char *filename, struct imgdata *imd)
         png_write_info(png_ptr, info_ptr);
 
         row_pointers = safe_malloc(sizeof(png_bytep) * imd->height);
-        data = safe_malloc(imd->width * imd->height * 6);
+        data = safe_malloc(safe_imul(imd->width, imd->height, 6));
         p = (png_bytep)data;
         for (i = 0; i < imd->height; ++i) {
             row_pointers[i] = p;
@@ -2713,41 +2713,60 @@ static void get_RGB24(struct imgdata *imd, int x, int y, int *r, int *g, int *b,
     *a = 65535;
 }
 
+/*
+ * Multiply 3 ints, raising a fatalerr on overflow.
+ */
+int safe_imul(int x, int y, int z)
+{
+    word r;
+    r = mul(x, y);
+    if (!over_flow) {
+        r = mul(r, z);
+        if (!over_flow) {
+            if ((int)r == r)
+                return r;
+        }
+    }
+    fatalerr(203, NULL);
+    /* Not reached */
+    return 0;
+}
+
 int getlength_1(struct imgdata *imd)
 {
-    return 1 + (imd->width * imd->height)/8;
+    return 1 + safe_imul(1, imd->width, imd->height) / 8;
 }
 int getlength_2(struct imgdata *imd)
 {
-    return 1 + (imd->width * imd->height)/4;
+    return 1 + safe_imul(1, imd->width, imd->height) / 4;
 }
 int getlength_4(struct imgdata *imd)
 {
-    return 1 + (imd->width * imd->height)/2;
+    return 1 + safe_imul(1, imd->width, imd->height) / 2;
 }
 int getlength_8(struct imgdata *imd)
 {
-    return imd->width * imd->height;
+    return safe_imul(1, imd->width, imd->height);
 }
 int getlength_16(struct imgdata *imd)
 {
-    return 2 * (imd->width * imd->height);
+    return safe_imul(2, imd->width, imd->height);
 }
 int getlength_24(struct imgdata *imd)
 {
-    return 3 * (imd->width * imd->height);
+    return safe_imul(3, imd->width, imd->height);
 }
 int getlength_32(struct imgdata *imd)
 {
-    return 4 * (imd->width * imd->height);
+    return safe_imul(4, imd->width, imd->height);
 }
 int getlength_48(struct imgdata *imd)
 {
-    return 6 * (imd->width * imd->height);
+    return safe_imul(6, imd->width, imd->height);
 }
 int getlength_64(struct imgdata *imd)
 {
-    return 8 * (imd->width * imd->height);
+    return safe_imul(8, imd->width, imd->height);
 }
 
 static void set_A8(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
