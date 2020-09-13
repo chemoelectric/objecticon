@@ -48,6 +48,7 @@ class Untitled(Dialog)
 
    public on_get_data(ev)
       local ty
+      data_area.set_contents([])
       ty := target_list.object_first_selection() | fail
       parent_dialog.request_selection(which_selection(),
                                       [ty],
