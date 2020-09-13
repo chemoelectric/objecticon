@@ -278,40 +278,55 @@ typedef struct _wfont {
  * in incremental chunks.  There are NUM_PROP_ATOMS helpers, one for
  * each of the ATOM__OBJECTICON_PROP destination properties.
  */
-struct selection_helper {
+struct receiving_helper {
     char *result;                  /* Accumulating result */
     word expect;                   /* Expected total size */
     word size;                     /* Actual size so far */
     Atom selection;                /* Selection and target atoms */
     Atom target;
+    Window receiver;               /* Receiving window */
+};
+
+/*
+ * The equivalent for helping with sending incremental selections.
+ */
+#define NUM_SENDING_HELPERS 8
+
+struct sending_helper {
+    struct descrip data;           /* Remaining data to send (this is a tended descriptor). */
+    Atom property;                 /* Destination property atom */
+    Atom target;                   /* Target atom */
+    Window receiver;               /* Requesting window */
 };
 
 #define FONTHASH_SIZE 64
 #define CURSORHASH_SIZE 128
 
 /*
- * Displays are maintained in a global list in rwinrsc.r.
+ * Displays are maintained in a global list in rxwin.ri.
  */
 typedef struct _wdisplay {
-  char    *name;
-  Display *display;
-  struct _wbinding *wbndngs;          /* List of current window bindings */
-  struct _wstate *vwstates;           /* List of windows with win non-null */
+  char                *name;
+  Display             *display;
+  struct _wbinding    *wbndngs;       /* List of current window bindings */
+  struct _wstate      *vwstates;      /* List of windows with win non-null */
   struct imgdataformat *format;       /* imgdata format */
-  struct progstate *program;          /* owning program */
+  struct progstate   *program;        /* owning program */
   struct SharedColor *black,
                      *white,
                      *transparent;
-  wfp	fonts[FONTHASH_SIZE],
-        defaultfont;
-  XRenderPictFormat *pixfmt,
-                    *winfmt,
-                    *maskfmt;
-  struct wcursor *cursors[CURSORHASH_SIZE];
-  Time   recent;                      /* most recent Time reported by server */
-  Atom   atoms[NUM_ATOMS];            /* interned atoms */
-  int           propcount;            /* counter for selection requests*/
-  struct selection_helper selection_helpers[NUM_PROP_ATOMS];
+  wfp                fonts[FONTHASH_SIZE],
+                     defaultfont;
+  XRenderPictFormat  *pixfmt,
+                     *winfmt,
+                     *maskfmt;
+  struct wcursor     *cursors[CURSORHASH_SIZE];
+  Time               recent;                  /* most recent Time reported by server */
+  Atom               atoms[NUM_ATOMS];        /* interned atoms */
+  unsigned int       prop_count;              /* counter for selection requests*/
+  struct receiving_helper receiving_helpers[NUM_PROP_ATOMS];
+  unsigned int       sending_helper_count;
+  struct sending_helper sending_helpers[NUM_SENDING_HELPERS];
   struct _wdisplay *previous, *next;
 } *wdp;
 
