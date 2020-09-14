@@ -740,7 +740,7 @@ static void handle_selection_request(wsp ws, XSelectionRequestEvent *event)
     tended struct descrip tmp;
     wdp wd = ws->display;
     if (selection_debug) {
-        printf("SelectionRequest event:\n\towner=%lx requestor=%lx property=%s",
+        printf("handle_selection_request:\n\towner=%lx requestor=%lx property=%s",
                (long)event->owner,
                (long)event->requestor,
                get_atom_name(wd, event->property));
@@ -767,7 +767,7 @@ static void handle_selection_clear(wsp ws, XSelectionClearEvent *event)
     tended struct descrip tmp;
     wdp wd = ws->display;
     if (selection_debug)
-        printf("SelectionClear event win=%lx selection=%s\n",
+        printf("handle_selection_clear: win=%lx selection=%s\n",
                (long)event->window,
                get_atom_name(wd, event->selection));
     MakeInt(SELECTIONCLEAR, &tmp);
@@ -789,7 +789,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     char *conv_str;
 
     if (selection_debug) {
-        printf("SelectionNotify: requestor=%lx selection=%s",
+        printf("handle_selection_notify: requestor=%lx selection=%s",
                (long)event->requestor, get_atom_name(wd, event->selection));
         printf(" target=%s", get_atom_name(wd, event->target));
         printf(" property=%s\n", get_atom_name(wd, event->property));
@@ -798,7 +798,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     pn = which_selection_property(wd, event->property);
     if (pn < 0) {
         if (selection_debug)
-            printf("XGetWindowProperty xselection.property == None or other unknown\n");
+            printf("\tXGetWindowProperty xselection.property == None or other unknown\n");
         MakeInt(SELECTIONRESPONSE, &tmp);
         list_put(&ws->listp, &tmp);
         get_atom_descriptor(wd, event->selection, &tmp);
@@ -827,26 +827,26 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     err = 0;
     if (status != Success) {
         if (selection_debug)
-            printf("XGetWindowProperty failed\n");
+            printf("\tXGetWindowProperty failed\n");
         err = 1;
     } else if (actual_type == None) {
         if (selection_debug)
-            printf("XGetWindowProperty returned actual_type == None\n");
+            printf("\tXGetWindowProperty returned actual_type == None\n");
         err = 1;
     } else if (!prop) {
         if (selection_debug)
-            printf("XGetWindowProperty set prop to null\n");
+            printf("\tXGetWindowProperty set prop to null\n");
         err = 1;
     } else if (bytes_after > 0) {
         if (selection_debug)
-            printf("Selection too big, bytes_after=%lu\n", bytes_after);
+            printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
         err = 1;
     } else if (actual_type == ATOM(wd, INCR)) {
         long expect = *((long *)prop);
         if (expect > 0 && expect <= max_selection_size) {
             struct receiving_helper *h;
             if (selection_debug)
-                printf("Incremental selection started, expected size=%ld\n", expect);
+                printf("\tIncremental selection started, expected size=%ld\n", expect);
             h = &wd->receiving_helpers[pn];
             reset_receiving_helper(h);
             h->selection = event->selection;
@@ -857,7 +857,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
             return;
         }
         if (selection_debug)
-            printf("Incremental selection expected size out of range (%ld)\n", expect);
+            printf("\tIncremental selection expected size out of range (%ld)\n", expect);
         err = 1;
     }
 
@@ -873,7 +873,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     else {
         bytes_read = nitems * (actual_format / 8);
         if (selection_debug)
-            printf("Got %lu items x %d bits -> %ld bytes actual_type=%s\n",
+            printf("\tGot %lu items x %d bits -> %ld bytes actual_type=%s\n",
                    nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
 
         conv_str = property_to_string(wd,
@@ -1519,6 +1519,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     tended struct b_lelem *le;
     tended char *cstr_target;
     int target_cnt = 1;
+    struct sending_helper *h;
     wsp ws = w->window;
     wdp wd = ws->display;
 
@@ -1530,6 +1531,19 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     property_atom = XInternAtom(wd->display, property, False);
     target_atom = XInternAtom(wd->display, target, False);
     selection_atom = XInternAtom(wd->display, selection, False);
+
+    /* Check for an existing matching helper; we must not have more
+     * than one helper with the same receiver/property combination,
+     * and even if this response isn't an incremental one, we don't
+     * want the property changes below to get muddled up with an
+     * incremental send to the same destination.
+     */
+    h = match_sending_helper(wd, requestor, property_atom);
+    if (h) {
+        if (selection_debug)
+            printf("\tSplushing existing sending_helper matching requestor, property pair (no %d)\n", (int)(h - wd->sending_helpers));
+        reset_sending_helper(wd, h);
+    }
 
     if (target_atom == ATOM(wd, TARGETS)) {
         if (!is:list(*data))
@@ -1588,7 +1602,6 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
                 printf("\tSelection too big; setting property to None\n");
             ev.xselection.property = None;
         } else if (StrLen(*data) > max_selection_chunk) {
-            struct sending_helper *x;
             long l;
             if (selection_debug)
                 printf("\tStarting INCR transfer, total %d bytes of data\n", (int)StrLen(*data));
@@ -1601,23 +1614,17 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
                             PropModeReplace,
                             (unsigned char *)&l,
                             1);
-            /* Check for an existing matching helper; we must not have
-             * more than one helper with the same receiver/property
-             * combination.  If not found, choose one in a simple
-             * round-robin fashion.
-             */
-            x = match_sending_helper(wd, requestor, property_atom);
-            if (!x)
-                x = &wd->sending_helpers[(wd->sending_helper_count++) % NUM_SENDING_HELPERS];
+            /* Choose a helper in a simple round-robin fashion. */
+            h = &wd->sending_helpers[(wd->sending_helper_count++) % NUM_SENDING_HELPERS];
             if (selection_debug) {
                 show_sending_helpers(wd);
-                printf("\tUsing sending_helper %d\n", (int)(x - wd->sending_helpers));
+                printf("\tUsing sending_helper %d\n", (int)(h - wd->sending_helpers));
             }
-            reset_sending_helper(wd, x);
-            x->data = *data;
-            x->property = property_atom;
-            x->receiver = requestor;
-            x->target = target_atom;
+            reset_sending_helper(wd, h);
+            h->data = *data;
+            h->property = property_atom;
+            h->receiver = requestor;
+            h->target = target_atom;
             /* Note that we mustn't check here whether we seem to be
              * already listening by checking the other helpers; those
              * Window IDs may be stale ones that have since been
@@ -1675,11 +1682,11 @@ int ownselection(wbp w, char *selname, word *time)
     /* Check for no change in selection */
     if (curr == ws->win) {
         if (selection_debug)
-            printf("Ownership of selection %s retained by %lx\n",
+            printf("ownselection: Ownership of selection %s retained by %lx\n",
                    get_atom_name(wd, selection), (long)ws->win);
     } else {
         if (selection_debug)
-            printf("Owner of selection %s set from %lx -> %lx\n",
+            printf("ownselection: Owner of selection %s set from %lx -> %lx\n",
                    get_atom_name(wd, selection), (long)curr, (long)ws->win);
 
         /*
@@ -1693,7 +1700,7 @@ int ownselection(wbp w, char *selname, word *time)
                 if (x->win == curr) {
                     tended struct descrip tmp;
                     if (selection_debug)
-                        printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n", (long)curr);
+                        printf("\tEnqueueing artificial SELECTIONCLEAR to current owner %lx\n", (long)curr);
                     MakeInt(SELECTIONCLEAR, &tmp);
                     list_put(&x->listp, &tmp);
                     get_atom_descriptor(wd, selection, &tmp);
@@ -1717,7 +1724,7 @@ int ownselection(wbp w, char *selname, word *time)
     *time = (word)(INT32)wd->recent;
 
     if (selection_debug)
-        printf("Selection time was %lu, converted to " WordFmt "\n", 
+        printf("\tSelection time was %lu, converted to " WordFmt "\n", 
                (unsigned long)wd->recent, *time);
 
     return Succeeded;
@@ -1740,7 +1747,7 @@ int requestselection(wbp w, char *selname, char *targetname)
     pn = (wd->prop_count++) % NUM_PROP_ATOMS;
     property = wd->atoms[ATOM__OBJECTICON_PROP0 + pn];
     if (selection_debug) {
-        printf("getselectioncontent: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
+        printf("requestselection: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
         printf(" target=%s", get_atom_name(wd, target));
         printf(" property=%s", get_atom_name(wd, property));
         printf(" requestor=%lx\n", (long)ws->win);
@@ -2345,7 +2352,7 @@ static void do_selection_increment(wsp ws, int pn)
     h = &wd->receiving_helpers[pn];
 
     if (selection_debug)
-        printf("Incremental selection data property=%s\n", get_atom_name(wd, property));
+        printf("do_selection_increment: Incremental selection data property=%s\n", get_atom_name(wd, property));
 
     prop = 0;
     status = XGetWindowProperty(wd->display,
@@ -2365,25 +2372,25 @@ static void do_selection_increment(wsp ws, int pn)
     err = 0;
     if (status != Success) {
         if (selection_debug)
-            printf("XGetWindowProperty failed\n");
+            printf("\tXGetWindowProperty failed\n");
         err = 1;
     } else if (actual_type == None) {
         if (selection_debug)
-            printf("XGetWindowProperty returned actual_type == None\n");
+            printf("\tXGetWindowProperty returned actual_type == None\n");
         err = 1;
     } else if (!prop) {
         if (selection_debug)
-            printf("XGetWindowProperty set prop to null\n");
+            printf("\tXGetWindowProperty set prop to null\n");
         err = 1;
     } else if (bytes_after > 0) {
         if (selection_debug)
-            printf("Selection too big, bytes_after=%lu\n", bytes_after);
+            printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
         err = 1;
     } else {
         bytes_read = nitems * (actual_format / 8);
         if (bytes_read == 0) {
             if (selection_debug)
-                printf("Incremental selection complete with size=%ld\n",
+                printf("\tIncremental selection complete with size=%ld\n",
                        (long)h->size);
             MakeInt(SELECTIONRESPONSE, &tmp);
             list_put(&ws->listp, &tmp);
@@ -2397,7 +2404,7 @@ static void do_selection_increment(wsp ws, int pn)
         } else {
             word new_size;
             if (selection_debug)
-                printf("Incremental selection got %lu items x %d bits -> %ld bytes actual_type=%s\n",
+                printf("\tIncremental selection got %lu items x %d bits -> %ld bytes actual_type=%s\n",
                        nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
             conv_str = property_to_string(wd,
                                           actual_type,
@@ -2410,7 +2417,7 @@ static void do_selection_increment(wsp ws, int pn)
                 new_size = h->size + len;
                 if (new_size >= max_selection_size) {
                     if (selection_debug)
-                        printf("Incremental selection size grew too big (%ld)\n", (long)new_size);
+                        printf("\tIncremental selection size grew too big (%ld)\n", (long)new_size);
                     err = 1;
                 } else {
                     h->result = safe_realloc(h->result, Max(new_size, h->expect));
@@ -2422,7 +2429,7 @@ static void do_selection_increment(wsp ws, int pn)
                 new_size = h->size + bytes_read;
                 if (new_size >= max_selection_size) {
                     if (selection_debug)
-                        printf("Incremental selection size grew too big (%ld)\n", (long)new_size);
+                        printf("\tIncremental selection size grew too big (%ld)\n", (long)new_size);
                     err = 1;
                 } else {
                     h->result = safe_realloc(h->result, Max(new_size, h->expect));
@@ -2460,7 +2467,7 @@ static int handle_incr_property(wdp wd, XPropertyEvent *event)
         if (x) {
             len = Min(max_selection_chunk, StrLen(x->data));
             if (selection_debug) {
-                printf("Ongoing INCR send, got PropertyDelete event receiver=%lx property=%s sending %ld bytes\n",
+                printf("handle_incr_property: receiver=%lx property=%s sending %ld bytes\n",
                        (long)x->receiver, get_atom_name(wd, x->property), (long)len);
             }
             XChangeProperty(wd->display,
