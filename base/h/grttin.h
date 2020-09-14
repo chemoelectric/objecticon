@@ -515,8 +515,8 @@ int convert_to_##TYPE(dptr src, TYPE *dest)
 {
     struct descrip bits, int65535;
     tended struct descrip i, t, u, pwr;
-    TYPE res = 0;
-    int pos = 0, k;
+    TYPE res;
+    int pos, k;
 
     if ((TYPE)-1 < 0) {     /* TYPE signed */
         if (sizeof(TYPE) <= sizeof(word)) {
@@ -581,6 +581,8 @@ int convert_to_##TYPE(dptr src, TYPE *dest)
      * Copy the bits in the converted source (it is now in two's
      * complement form) into the target.
      */
+    pos = 0;
+    res = 0;
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         bigand(&i, &int65535, &bits);
         bigshift(&i, -16, &i);
@@ -595,9 +597,9 @@ int convert_to_##TYPE(dptr src, TYPE *dest)
 #begdef convert_from_macro(TYPE)
 void convert_from_##TYPE(TYPE src, dptr dest)
 {
-    TYPE j = src;
+    TYPE j;
     int k;
-    word pos = 0;
+    word pos;
     tended struct descrip res, chunk, pwr;
 
     /* See if it fits in a word.  For an unsigned type, just compare
@@ -612,6 +614,8 @@ void convert_from_##TYPE(TYPE src, dptr dest)
      * converted below
      */
     res = zerodesc;
+    pos = 0;
+    j = src;
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         int bits = j & 0xffff;
         j = j >> 16;
