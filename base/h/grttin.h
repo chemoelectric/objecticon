@@ -518,15 +518,37 @@ int convert_to_##TYPE(dptr src, TYPE *dest)
     TYPE res = 0;
     int pos = 0, k;
 
-    /*
-     * If we have a normal integer, try a conversion to the target type.
-     */
-    if (Type(*src) == T_Integer &&
-        sizeof(TYPE) >= sizeof(word) &&
-        (((TYPE)-1 < 0) || IntVal(*src) >= 0))   /* TYPE signed, or src +ve */
-    {
-        *dest = IntVal(*src);
-        return 1;
+    if ((TYPE)-1 < 0) {     /* TYPE signed */
+        if (sizeof(TYPE) <= sizeof(word)) {
+            if (IsCInteger(*src) && (word)(TYPE)IntVal(*src) == IntVal(*src)) {
+                *dest = IntVal(*src);
+                return 1;
+            } else
+                ReturnErrVal(101, *src, 0);
+        } else {
+            if (IsCInteger(*src)) {
+                *dest = IntVal(*src);
+                return 1;
+            }
+            /* Fall through, big int may fit */
+        }
+    } else {  /* TYPE unsigned */
+        if (sizeof(TYPE) < sizeof(word)) {
+            if (IsCInteger(*src) && IntVal(*src) >= 0 && (word)(TYPE)IntVal(*src) == IntVal(*src)) {
+                *dest = IntVal(*src);
+                return 1;
+            } else
+                ReturnErrVal(101, *src, 0);
+        } else {
+            if (IsCInteger(*src)) {
+                if (IntVal(*src) >= 0) {
+                    *dest = IntVal(*src);
+                    return 1;
+                } else
+                    ReturnErrVal(101, *src, 0);
+            }
+            /* Fall through, big int may fit */
+        }
     }
 
     MakeInt(65535, &int65535);
