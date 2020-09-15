@@ -285,6 +285,7 @@ struct receiving_helper {
     Atom selection;                /* Selection and target atoms */
     Atom target;
     Window receiver;               /* Receiving window */
+    time_t active;                 /* Time last active (seconds) */
 };
 
 /*
@@ -297,6 +298,7 @@ struct sending_helper {
     Atom property;                 /* Destination property atom */
     Atom target;                   /* Target atom */
     Window receiver;               /* Requesting window */
+    time_t active;                 /* Time last active (seconds) */
 };
 
 #define FONTHASH_SIZE 64
@@ -323,9 +325,8 @@ typedef struct _wdisplay {
   struct wcursor     *cursors[CURSORHASH_SIZE];
   Time               recent;                  /* most recent Time reported by server */
   Atom               atoms[NUM_ATOMS];        /* interned atoms */
-  unsigned int       prop_count;              /* counter for selection requests*/
+  unsigned int       propcount;               /* counter for selection requests*/
   struct receiving_helper receiving_helpers[NUM_PROP_ATOMS];
-  unsigned int       sending_helper_count;
   struct sending_helper sending_helpers[NUM_SENDING_HELPERS];
   struct _wdisplay *previous, *next;
 } *wdp;

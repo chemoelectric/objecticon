@@ -515,6 +515,14 @@ do {
 } while(0)
 #enddef
 
+static time_t curr_secs()
+{
+    struct timeval tp;
+    if (gettimeofday(&tp, 0) < 0)
+        return 0;
+    return tp.tv_sec;
+}
+
 /*
  * A convenient wrapper around XGetAtomName, which returns a pointer
  * to a static string.
@@ -633,18 +641,36 @@ static wsp wsp_for_Window(wdp wd, Window w)
     return 0;
 }
 
-static void show_sending_helpers(wdp wd)
+static void show_helpers(wdp wd)
 {
     int i;
-    struct sending_helper *x;
+    time_t now;
+    now = curr_secs();
+    printf("\tSending helpers:\n");
     for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        struct sending_helper *x;
         x = &wd->sending_helpers[i];
         if (x->target == None)
             printf("\t%d: is free\n", i);
         else {
-            printf("\t%d: is occupied, receiver=%lx data=(%p, %d) ", i,
-                   (long)x->receiver, StrLoc(x->data), (int)StrLen(x->data));
+            printf("\t%d: receiver=%lx data=(%p, %d) age=%d ", i,
+                   (long)x->receiver, StrLoc(x->data), (int)StrLen(x->data),
+                   (int)(now - x->active));
             printf("property=%s ", get_atom_name(wd, x->property));
+            printf("target=%s\n", get_atom_name(wd, x->target));
+        }
+    }
+    printf("\tReceiving helpers:\n");
+    for (i = 0; i < NUM_PROP_ATOMS; ++i) {
+        struct receiving_helper *x;
+        x = &wd->receiving_helpers[i];
+        if (x->target == None)
+            printf("\t%d: is free\n", i);
+        else {
+            printf("\t%d: receiver=%lx expect=%d size=%d age=%d ", i,
+                   (long)x->receiver, (int)x->expect, (int)x->size,
+                   (int)(now - x->active));
+            printf("selection=%s ", get_atom_name(wd, x->selection));
             printf("target=%s\n", get_atom_name(wd, x->target));
         }
     }
@@ -671,7 +697,7 @@ static int should_stop_property_listener(wdp wd, struct sending_helper *x)
     if (wsp_for_Window(wd, x->receiver))
         return 0;
     /* Check if we must keep listening because of another helper. */
-    for (i = 0; i < NUM_PROP_ATOMS; ++i) {
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
         y = &wd->sending_helpers[i];
         if (y != x && y->receiver == x->receiver) 
             return 0;
@@ -687,6 +713,7 @@ static void init_sending_helper(struct sending_helper *x)
     x->data = nulldesc;
     x->property = x->target = None;
     x->receiver = None;
+    x->active = 0;
     add_gc_global(&x->data);
 }
 
@@ -697,6 +724,7 @@ static void reset_sending_helper(wdp wd, struct sending_helper *x)
 {
     x->data = nulldesc;
     x->property = x->target = None;
+    x->active = 0;
     if (x->receiver != None) {
         if (should_stop_property_listener(wd, x)) {
             if (selection_debug)
@@ -708,6 +736,52 @@ static void reset_sending_helper(wdp wd, struct sending_helper *x)
 }
 
 /*
+ * Reset any helpers that haven't been active for over 60 seconds.
+ */
+static void purge_stale_helpers(wdp wd)
+{
+    int i;
+    time_t now;
+    now = curr_secs();
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        struct sending_helper *x;
+        x = &wd->sending_helpers[i];
+        if (x->active != 0 && now - x->active > 60) {
+            if (selection_debug)
+                printf("\tPurging stale sending helper entry %d\n", i);
+            reset_sending_helper(wd, x);
+        }
+    }        
+    for (i = 0; i < NUM_PROP_ATOMS; ++i) {
+        struct receiving_helper *x;
+        x = &wd->receiving_helpers[i];
+        if (x->active != 0 && now - x->active > 60) {
+            if (selection_debug)
+                printf("\tPurging stale receiving helper entry %d\n", i);
+            reset_receiving_helper(x);
+        }
+    }
+}
+
+/*
+ * Choose a free helper; if one can't be found, evict one, and return
+ * that.
+ */
+static struct sending_helper *get_free_sending_helper(wdp wd)
+{
+    int i;
+    struct sending_helper *x;
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        x = &wd->sending_helpers[i];
+        if (x->target == None)
+            return x;
+    }
+    x = &wd->sending_helpers[0];
+    reset_sending_helper(wd, x);
+    return x;
+}
+
+/*
  * Search for a helper with matching receiver and property fields;
  * there must be at most one such entry.
  */
@@ -715,7 +789,7 @@ static struct sending_helper *match_sending_helper(wdp wd, Window receiver, Atom
 {
     int i;
     struct sending_helper *x;
-    for (i = 0; i < NUM_PROP_ATOMS; ++i) {
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
         x = &wd->sending_helpers[i];
         if (x->receiver == receiver && x->property == property)
             return x;
@@ -733,6 +807,7 @@ static void reset_receiving_helper(struct receiving_helper *h)
     h->size = h->expect = 0;
     h->target = h->selection = None;
     h->receiver = None;
+    h->active = 0;
 }
 
 static void handle_selection_request(wsp ws, XSelectionRequestEvent *event)
@@ -853,6 +928,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
             h->target = event->target;
             h->expect = expect;
             h->receiver = ws->win;
+            h->active = curr_secs();
             XFree(prop);
             return;
         }
@@ -1532,6 +1608,9 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     target_atom = XInternAtom(wd->display, target, False);
     selection_atom = XInternAtom(wd->display, selection, False);
 
+    if (selection_debug)
+        show_helpers(wd);
+
     /* Check for an existing matching helper; we must not have more
      * than one helper with the same receiver/property combination,
      * and even if this response isn't an incremental one, we don't
@@ -1541,9 +1620,10 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     h = match_sending_helper(wd, requestor, property_atom);
     if (h) {
         if (selection_debug)
-            printf("\tSplushing existing sending_helper matching requestor, property pair (no %d)\n", (int)(h - wd->sending_helpers));
+            printf("\tResetting existing sending_helper matching requestor, property pair (no %d)\n", (int)(h - wd->sending_helpers));
         reset_sending_helper(wd, h);
     }
+    purge_stale_helpers(wd);
 
     if (target_atom == ATOM(wd, TARGETS)) {
         if (!is:list(*data))
@@ -1614,17 +1694,15 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
                             PropModeReplace,
                             (unsigned char *)&l,
                             1);
-            /* Choose a helper in a simple round-robin fashion. */
-            h = &wd->sending_helpers[(wd->sending_helper_count++) % NUM_SENDING_HELPERS];
-            if (selection_debug) {
-                show_sending_helpers(wd);
+            /* Choose a free helper. */
+            h = get_free_sending_helper(wd);
+            if (selection_debug)
                 printf("\tUsing sending_helper %d\n", (int)(h - wd->sending_helpers));
-            }
-            reset_sending_helper(wd, h);
             h->data = *data;
             h->property = property_atom;
             h->receiver = requestor;
             h->target = target_atom;
+            h->active = curr_secs();
             /* Note that we mustn't check here whether we seem to be
              * already listening by checking the other helpers; those
              * Window IDs may be stale ones that have since been
@@ -1744,7 +1822,7 @@ int requestselection(wbp w, char *selname, char *targetname)
      * without the results getting mixed up.  Obviously this isn't
      * perfect, but is better than nothing.
      */
-    pn = (wd->prop_count++) % NUM_PROP_ATOMS;
+    pn = (wd->propcount++) % NUM_PROP_ATOMS;
     property = wd->atoms[ATOM__OBJECTICON_PROP0 + pn];
     if (selection_debug) {
         printf("requestselection: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
@@ -1753,11 +1831,20 @@ int requestselection(wbp w, char *selname, char *targetname)
         printf(" requestor=%lx\n", (long)ws->win);
     }
 
-    /* Clear any stale receiving_helper to stop the SelectionNotify
-     * response property being mistaken for part of some dead INCR
+    if (selection_debug)
+        show_helpers(wd);
+
+    purge_stale_helpers(wd);
+
+    /* Clear any receiving_helper which would mistake the
+     * SelectionNotify response property for part of an INCR
      * selection.
      */
-    reset_receiving_helper(&wd->receiving_helpers[pn]);
+    if (wd->receiving_helpers[pn].receiver == ws->win) {
+        if (selection_debug)
+            printf("\tResetting existing receiving_helper with matching window (no %d)\n", pn);
+        reset_receiving_helper(&wd->receiving_helpers[pn]);
+    }
 
     XConvertSelection(wd->display,
                       selection, 
@@ -2423,6 +2510,7 @@ static void do_selection_increment(wsp ws, int pn)
                     h->result = safe_realloc(h->result, Max(new_size, h->expect));
                     memcpy(h->result + h->size, conv_str, len);
                     h->size = new_size;
+                    h->active = curr_secs();
                 }
                 free(conv_str);
             } else {
@@ -2435,6 +2523,7 @@ static void do_selection_increment(wsp ws, int pn)
                     h->result = safe_realloc(h->result, Max(new_size, h->expect));
                     memcpy(h->result + h->size, prop, bytes_read);
                     h->size = new_size;
+                    h->active = curr_secs();
                 }
             }
         }
@@ -2485,6 +2574,7 @@ static int handle_incr_property(wdp wd, XPropertyEvent *event)
             } else {
                 /* Move the data field along len bytes. */
                 MakeStr(StrLoc(x->data) + len, StrLen(x->data) - len, &x->data);
+                x->active = curr_secs();
             }
             return 1;
         }
