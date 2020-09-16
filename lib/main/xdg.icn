@@ -64,12 +64,12 @@ end
 #   Type=Threshold
 #
 # This is represented by a ThemeDirectory.  Then, each element from
-# gen_data_dirs() is appended to the theme name to give an actual
-# directory :-
+# gen_data_dirs() is taken and "icons" and the theme name are appended
+# to give an actual directory :-
 #
-#   "/home/rparlett/.local/share/16x16/intl"
-#   "/usr/local/share/16x16/intl"
-#   "/usr/share/16x16/intl"
+#   "/home/rparlett/.local/share/icons/theme/16x16/intl"
+#   "/usr/local/share/icons/theme/16x16/intl"
+#   "/usr/share/icons/theme/16x16/intl"
 #  
 # and the cached contents of those directories are stored in CachedDir
 # instances in the cached_dirs list.
