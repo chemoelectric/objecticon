@@ -734,10 +734,6 @@ final abstract class IconTheme()
       }
    end
 
-   private static scale_dist(scale, x)
-      return abs(scale - x.scale)
-   end
-
    private static lookup_icon(theme_index, icon, size, scale)
       local subdir, f, minimal_size, closest_filename, ms
       # Exact match search.
