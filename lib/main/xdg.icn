@@ -13,8 +13,7 @@ import
    ipl.strings,
    ipl.wildcard,
    ipl.sort,
-   ipl.pdco,
-   ipl.functional
+   ipl.pdco
 
 # An object for parsing and holding the parts of a locale string, like
 # "en_GB.utf8".
@@ -85,43 +84,38 @@ package class ThemeDirectory()
       threshold,
       cached_dirs   # A list of CachedDir objects
 
-   #
-   # The following two methods deliberately ignore the scale value,
-   # and follow an earlier (pre 2013) version of the spec.  scale is
-   # only used once in IconTheme.lookup_icon() below, in a non-spec
-   # fashion.
-   #
-
-   public matches_size(desired_size, scalable_flag)
-      case type of {
-         "Fixed": succeed desired_size = size
-         "Threshold": {
-            succeed size - threshold <= desired_size <= size + threshold
+   public matches_size(desired_size, desired_scale, scalable_flag)
+      succeed scale = desired_scale &
+         case type of {
+            "Fixed": desired_size = size * scale
+            "Threshold":
+               (size - threshold) * scale <= desired_size <= (size + threshold) * scale
+            "Scalable": {
+               if \scalable_flag then
+                  minsize * scale <= desired_size <= maxsize * scale
+            }
          }
-         "Scalable": {
-            if \scalable_flag then
-               succeed minsize <= desired_size <= maxsize
-         }
-      }
    end
 
    public directory_size_distance(desired_size, scalable_flag)
-      case type of {
-         "Fixed": return abs(desired_size - size)
+      return case type of {
+         "Fixed": abs(desired_size - size * scale)
          "Threshold": {
-            if desired_size < size - threshold then 
-               return minsize - desired_size
-            if desired_size > size + threshold then 
-               return desired_size - maxsize
-            return 0
+            if desired_size < (size - threshold) * scale then 
+               minsize * scale - desired_size
+            else if desired_size > (size + threshold) * scale then 
+               desired_size - maxsize * scale
+            else
+               0
          }
          "Scalable": {
             if \scalable_flag then {
-               if desired_size < minsize then
-                  return minsize - desired_size
-               if desired_size > maxsize then
-                  return desired_size - maxsize
-               return 0
+               if desired_size < minsize * scale then
+                  minsize * scale - desired_size
+               else if desired_size > maxsize * scale  then
+                  desired_size - maxsize * scale 
+               else
+                  0
             }
          }
       }
@@ -759,23 +753,17 @@ final abstract class IconTheme()
    end
 
    private static lookup_icon(theme_index, icon, size, scale)
-      local subdir, f, minimal_size, closest_filename, ms, l
-
-      # This is the only limited, non-standard use of scale.  We alter
-      # the search order so that theme directories with the closest
-      # scale to the desired one get priority.
-      l := isort(theme_index.directories, lpartial(scale_dist, scale))
-
+      local subdir, f, minimal_size, closest_filename, ms
       # Exact match search.
-      every subdir := !l do {
-         if subdir.matches_size(size, scalable_flag) then {
+      every subdir := !theme_index.directories do {
+         if subdir.matches_size(size, scale, scalable_flag) then {
             # Search in all the CachedDirs in the subdir
             if f := has_icon(!subdir.cached_dirs, icon) then
                return f
          }
       }
       # Nearest distance search.
-      every subdir := !l do {
+      every subdir := !theme_index.directories do {
          ms := subdir.directory_size_distance(size, scalable_flag)
          if /minimal_size | (ms < minimal_size) then {
             if f := has_icon(!subdir.cached_dirs, icon) then {
