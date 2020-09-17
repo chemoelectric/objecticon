@@ -80,50 +80,50 @@ package class ThemeDirectory()
       size,         # Sizes etc, all integers
       minsize,      #         
       maxsize,
-      scale,
       threshold,
+      scale,
       cached_dirs   # A list of CachedDir objects
 
    public matches_size(desired_size, desired_scale)
       succeed scale = desired_scale &
          case type of {
-            "Fixed": desired_size = size * scale
+            "Fixed": desired_size = size
             "Threshold":
-               (size - threshold) * scale <= desired_size <= (size + threshold) * scale
+               size - threshold <= desired_size <= size + threshold
             "Scalable":
-               minsize * scale <= desired_size <= maxsize * scale
+               minsize <= desired_size <= maxsize
          }
    end
 
    public directory_size_distance(desired_size)
       return case type of {
-         "Fixed": abs(desired_size - size * scale)
+         "Fixed": abs(desired_size - size)
          "Threshold": {
-            if desired_size < (size - threshold) * scale then 
-               minsize * scale - desired_size
-            else if desired_size > (size + threshold) * scale then 
-               desired_size - maxsize * scale
+            if desired_size < size - threshold then 
+               minsize - desired_size
+            else if desired_size > size + threshold then 
+               desired_size - maxsize
             else
                0
          }
          "Scalable": {
-            if desired_size < minsize * scale then
-               minsize * scale - desired_size
-            else if desired_size > maxsize * scale  then
-               desired_size - maxsize * scale 
+            if desired_size < minsize then
+               minsize - desired_size
+            else if desired_size > maxsize  then
+               desired_size - maxsize 
             else
                0
          }
       }
    end
 
-   public new(type, size, minsize, maxsize, scale, threshold, cached_dirs)
+   public new(type, size, minsize, maxsize, threshold, scale, cached_dirs)
       self.type := type
-      self.size := size
-      self.minsize := minsize
-      self.maxsize := maxsize
+      self.size := size * scale
+      self.minsize := minsize * scale
+      self.maxsize := maxsize * scale
+      self.threshold := threshold * scale
       self.scale := scale
-      self.threshold := threshold
       self.cached_dirs := cached_dirs
       return
    end
@@ -631,7 +631,7 @@ final abstract class IconTheme()
                   put(cd, CachedDir(f, ds))
             }
             if *cd > 0 then
-               put(dirs, ThemeDirectory(type, size, minsize, maxsize, scale, threshold, cd))
+               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, scale, cd))
          }
       }
       return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
