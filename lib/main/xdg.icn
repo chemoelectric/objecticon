@@ -84,20 +84,18 @@ package class ThemeDirectory()
       threshold,
       cached_dirs   # A list of CachedDir objects
 
-   public matches_size(desired_size, desired_scale, scalable_flag)
+   public matches_size(desired_size, desired_scale)
       succeed scale = desired_scale &
          case type of {
             "Fixed": desired_size = size * scale
             "Threshold":
                (size - threshold) * scale <= desired_size <= (size + threshold) * scale
-            "Scalable": {
-               if \scalable_flag then
-                  minsize * scale <= desired_size <= maxsize * scale
-            }
+            "Scalable":
+               minsize * scale <= desired_size <= maxsize * scale
          }
    end
 
-   public directory_size_distance(desired_size, scalable_flag)
+   public directory_size_distance(desired_size)
       return case type of {
          "Fixed": abs(desired_size - size * scale)
          "Threshold": {
@@ -109,14 +107,12 @@ package class ThemeDirectory()
                0
          }
          "Scalable": {
-            if \scalable_flag then {
-               if desired_size < minsize * scale then
-                  minsize * scale - desired_size
-               else if desired_size > maxsize * scale  then
-                  desired_size - maxsize * scale 
-               else
-                  0
-            }
+            if desired_size < minsize * scale then
+               minsize * scale - desired_size
+            else if desired_size > maxsize * scale  then
+               desired_size - maxsize * scale 
+            else
+               0
          }
       }
    end
@@ -559,8 +555,7 @@ final abstract class IconTheme()
       DEFAULT_SCALE       # Default value for scale parameter in lookup functions
 
    private static readable
-      theme,
-      scalable_flag
+      theme
 
    private static init()
       DEFAULT_SCALE := scale(1)
@@ -575,7 +570,6 @@ final abstract class IconTheme()
       FIND_ICON_CACHE := table()
       theme := get_current_theme()
       ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
-      scalable_flag := &yes
    end
 
    #
@@ -734,17 +728,9 @@ final abstract class IconTheme()
       local ex, f
       if f := cached_dir.access(icon || ".png") then
          return f
-      if \scalable_flag then {
-         every ex := ".svg" | ".svgz" do {
-            if f := cached_dir.access(icon || ex) then {
-               # Try to load cairo; if fail then don't look for svg files again.
-               if /Context.LOADED then {
-                  scalable_flag := &null
-                  fail
-               }
-               return f
-            }
-         }
+      every ex := ".svg" | ".svgz" do {
+         if f := cached_dir.access(icon || ex) then
+            return \Context.LOADED & f
       }
    end
 
@@ -756,7 +742,7 @@ final abstract class IconTheme()
       local subdir, f, minimal_size, closest_filename, ms
       # Exact match search.
       every subdir := !theme_index.directories do {
-         if subdir.matches_size(size, scale, scalable_flag) then {
+         if subdir.matches_size(size, scale) then {
             # Search in all the CachedDirs in the subdir
             if f := has_icon(!subdir.cached_dirs, icon) then
                return f
@@ -764,7 +750,7 @@ final abstract class IconTheme()
       }
       # Nearest distance search.
       every subdir := !theme_index.directories do {
-         ms := subdir.directory_size_distance(size, scalable_flag)
+         ms := subdir.directory_size_distance(size)
          if /minimal_size | (ms < minimal_size) then {
             if f := has_icon(!subdir.cached_dirs, icon) then {
                closest_filename := f
