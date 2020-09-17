@@ -149,7 +149,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       m := TextMenuItem().
          set_label(de.name).
          connect(create de.launch_prog(subst), Event.ACTION)
-      m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE,, &yes)))
       return m
    end
 

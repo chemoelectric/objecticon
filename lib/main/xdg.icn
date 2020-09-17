@@ -13,7 +13,8 @@ import
    ipl.strings,
    ipl.wildcard,
    ipl.sort,
-   ipl.pdco
+   ipl.pdco,
+   ipl.functional
 
 # An object for parsing and holding the parts of a locale string, like
 # "en_GB.utf8".
@@ -80,8 +81,16 @@ package class ThemeDirectory()
       size,         # Sizes etc, all integers
       minsize,      #         
       maxsize,
+      scale,
       threshold,
       cached_dirs   # A list of CachedDir objects
+
+   #
+   # The following two methods deliberately ignore the scale value,
+   # and follow an earlier (pre 2013) version of the spec.  scale is
+   # only used once in IconTheme.lookup_icon() below, in a non-spec
+   # fashion.
+   #
 
    public matches_size(desired_size, scalable_flag)
       case type of {
@@ -118,11 +127,12 @@ package class ThemeDirectory()
       }
    end
 
-   public new(type, size, minsize, maxsize, threshold, cached_dirs)
+   public new(type, size, minsize, maxsize, scale, threshold, cached_dirs)
       self.type := type
       self.size := size
       self.minsize := minsize
       self.maxsize := maxsize
+      self.scale := scale
       self.threshold := threshold
       self.cached_dirs := cached_dirs
       return
@@ -528,6 +538,7 @@ package final abstract class Util()
       return parse_ini_file(ucs(Files.file_to_string(f)))
    end
 
+
    public static cache_icon(f, size, exact)
       # If it's an SVG file, then simply scale to the desired size and
       # return the key.
@@ -550,11 +561,15 @@ final abstract class IconTheme()
                           #   name (string)
       ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
 
+   public static const
+      DEFAULT_SCALE       # Default value for scale parameter in lookup functions
+
    private static readable
       theme,
       scalable_flag
 
    private static init()
+      DEFAULT_SCALE := scale(1)
       refresh()
    end
 
@@ -600,7 +615,7 @@ final abstract class IconTheme()
    end
 
    private static gen_theme_directories(tm)
-      suspend separate(member(member(tm, u"Icon Theme"), u"Directories"))
+      suspend separate(member(member(tm, u"Icon Theme"), u"Directories" | u"ScaledDirectories"))
    end
 
    private static gen_theme_parents(tm)
@@ -610,7 +625,7 @@ final abstract class IconTheme()
    # Build a ThemeIndex object given the name and the ini table.
    private static build_theme_index(theme, tm)
       local d, subdir, f, dirs, ds, m, cd,
-         type, size, minsize, maxsize, threshold
+         type, size, minsize, maxsize, threshold, scale
       dirs := []
       every subdir := gen_theme_directories(tm) do {
          if m := member(tm, subdir) &
@@ -618,6 +633,7 @@ final abstract class IconTheme()
          {
             type := string(member(m, u"Type")) | "Threshold"
             threshold := integer(member(m, u"Threshold")) | 2
+            scale := integer(member(m, u"Scale")) | 1
             minsize := integer(member(m, u"MinSize")) | size
             maxsize := integer(member(m, u"MaxSize")) | size
             cd := []
@@ -627,7 +643,7 @@ final abstract class IconTheme()
                   put(cd, CachedDir(f, ds))
             }
             if *cd > 0 then
-               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, cd))
+               put(dirs, ThemeDirectory(type, size, minsize, maxsize, scale, threshold, cd))
          }
       }
       return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
@@ -662,15 +678,22 @@ final abstract class IconTheme()
    end
 
    #
-   # Find an icon given the icon name (string) and integer size.
+   # Find an icon given the icon name (string), integer size, and
+   # optional integer scale.
+   # 
+   # `scale` defaults to `gui.scale(1)`, and is a partial
+   # implementation of the scale selector in the desktop icon theme
+   # spec.  icons with an exactly matching scale will be preferred
+   # over those with different scales.
    #
-   public static find_icon(icon, size)
+   public static find_icon(icon, size, scale)
       local k, v
       icon := need_string(icon)
-      size := need_integer(size)
-      k := icon || "/" || size
+      size := need_integer(size, 1)
+      scale := need_integer(\scale, 1) | DEFAULT_SCALE
+      k := icon || "/" || size || "/" || scale
       if not(v := member(FIND_ICON_CACHE, k)) then {
-         v := find_icon_helper(icon, size, theme, set()) | lookup_fallback_icon(icon)
+         v := find_icon_helper(icon, size, scale, theme, set()) | lookup_fallback_icon(icon)
          insert(FIND_ICON_CACHE, k, v)
       }
       return \v
@@ -681,8 +704,8 @@ final abstract class IconTheme()
    # returns the cache key.  The parameter `exact` flag indicates
    # whether the found icon should be resized to exactly `size`.
    #
-   public static find_icon_and_cache(icon, size, exact)
-      return Util.cache_icon(find_icon(icon, size), size, exact)
+   public static find_icon_and_cache(icon, size, scale, exact)
+      return Util.cache_icon(find_icon(icon, size, scale), size, exact)
    end
 
    private static get_current_theme()
@@ -697,7 +720,7 @@ final abstract class IconTheme()
       return "hicolor"
    end
 
-   private static find_icon_helper(icon, size, theme, tried)
+   private static find_icon_helper(icon, size, scale, theme, tried)
       local theme_index
       if member(tried, theme) then
          fail
@@ -705,8 +728,8 @@ final abstract class IconTheme()
       theme_index := get_theme_index(theme) | fail
 
       # Try this theme, failing that try recursively with the theme's parents.
-      return lookup_icon(theme_index, icon, size) | 
-         find_icon_helper(icon, size, !theme_index.parents, tried)
+      return lookup_icon(theme_index, icon, size, scale) | 
+         find_icon_helper(icon, size, scale, !theme_index.parents, tried)
    end
 
    private static lookup_fallback_icon(icon)
@@ -731,18 +754,30 @@ final abstract class IconTheme()
       }
    end
 
-   private static lookup_icon(theme_index, icon, size)
-      local subdir, f, minimal_size, closest_filename, ms
-      every subdir := !theme_index.directories do {
+   private static scale_dist(scale, x)
+      return abs(scale - x.scale)
+   end
+
+   private static lookup_icon(theme_index, icon, size, scale)
+      local subdir, f, minimal_size, closest_filename, ms, l
+
+      # This is the only limited, non-standard use of scale.  We alter
+      # the search order so that theme directories with the closest
+      # scale to the desired one get priority.
+      l := isort(theme_index.directories, lpartial(scale_dist, scale))
+
+      # Exact match search.
+      every subdir := !l do {
          if subdir.matches_size(size, scalable_flag) then {
             # Search in all the CachedDirs in the subdir
             if f := has_icon(!subdir.cached_dirs, icon) then
                return f
          }
       }
-      minimal_size := lang.Limit.MaxWord
-      every subdir := !theme_index.directories do {
-         if (ms := subdir.directory_size_distance(size, scalable_flag)) < minimal_size then {
+      # Nearest distance search.
+      every subdir := !l do {
+         ms := subdir.directory_size_distance(size, scalable_flag)
+         if /minimal_size | (ms < minimal_size) then {
             if f := has_icon(!subdir.cached_dirs, icon) then {
                closest_filename := f
                minimal_size := ms
@@ -872,8 +907,8 @@ final abstract class Mime()
    # The `exact` parameter has the same effect as in
    # `find_icon_and_cache`.
    #
-   public static find_icon_for_file_and_cache(file, size, exact)
-      return Util.cache_icon(find_icon_for_file(file, size), size, exact)
+   public static find_icon_for_file_and_cache(file, size, scale, exact)
+      return Util.cache_icon(find_icon_for_file(file, size, scale), size, exact)
    end
 
    private static read_generic_icons()
@@ -959,11 +994,12 @@ final abstract class Mime()
    end
 
    #
-   # Find an icon given a filename (not a path) and integer size.
+   # Find an icon given a filename (not a path), integer size, and
+   # optional scale (see `IconTheme.find_icon()`).
    #
-   public static find_icon_for_file(file, size)
+   public static find_icon_for_file(file, size, scale)
       return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
-                                 size)
+                                 size, scale)
    end
 
    private static true_key(dm, key)

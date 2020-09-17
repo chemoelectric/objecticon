@@ -2431,7 +2431,7 @@ $endif
       m := OpenWithMenuItem(r).
          set_label(de.name).
          connect(on_open_with, Event.ACTION)
-      m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE,, &yes)))
       return m
    end
 
