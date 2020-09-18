@@ -55,13 +55,16 @@ package class ThemeIndex()
       return abs(scale - x.scale)
    end
 
+   # Generate the directories, ordered by distance from scale (a
+   # real).
+   #
    public ordered_directories(scale)
       local l
       if not(l := member(ordered_directories_cache, scale)) then {
          l := isort(directories, lpartial(scale_dist, scale))
          insert(ordered_directories_cache, scale, l)
       }
-      return l
+      suspend !.l
    end
 
    public new(directories, parents)
@@ -737,11 +740,9 @@ final abstract class IconTheme()
    end
 
    private static lookup_icon(theme_index, icon, size, scale)
-      local subdir, f, minimal_size, closest_filename, ms, l
-      # Get the theme directories ordered by distance from scale
-      l := theme_index.ordered_directories(scale)
+      local subdir, f, minimal_size, closest_filename, ms
       # Search for best match
-      every subdir := !l do {
+      every subdir := theme_index.ordered_directories(scale) do {
          ms := subdir.directory_size_distance(size)
          if /minimal_size | (ms < minimal_size) then {
             if f := has_icon(!subdir.cached_dirs, icon) then {
