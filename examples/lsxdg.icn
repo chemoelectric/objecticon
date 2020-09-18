@@ -28,9 +28,9 @@ procedure need_pair(a)
    if *a >= 2 then {
       p := pair()
       (p.name := ucs(a[1]) &
-       p.size := (0 < integer(a[2]))) | help_stop("This option needs a UTF-8 string and an integer second parameter")
+       p.size := (0 < integer(a[2]))) | help_stop("This option needs a UTF-8 string and a positive integer second parameter")
       if *a >= 3 then
-         p.scale := (0 < integer(a[3])) | help_stop("This option needs an optional integer third parameter")
+         p.scale := (1.0 <= real(a[3])) | help_stop("This option needs an optional real third parameter >= 1.0")
       return p
    } else
       help_stop("This option needs at least two parameters")

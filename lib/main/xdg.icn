@@ -13,7 +13,8 @@ import
    ipl.strings,
    ipl.wildcard,
    ipl.sort,
-   ipl.pdco
+   ipl.pdco,
+   ipl.functional
 
 # An object for parsing and holding the parts of a locale string, like
 # "en_GB.utf8".
@@ -44,9 +45,29 @@ package class ThemeIndex()
       directories,   # A list of ThemeDirectory objects
       parents        # A list of parent theme names (strings)
 
+   private const
+      ordered_directories_cache  # A table mapping a scale (real) to
+                                 # copies of directories sorted
+                                 # according to that scale
+
+   private static scale_dist(scale, x)
+      # Note that scale is a real, x.scale an integer.
+      return abs(scale - x.scale)
+   end
+
+   public ordered_directories(scale)
+      local l
+      if not(l := member(ordered_directories_cache, scale)) then {
+         l := isort(directories, lpartial(scale_dist, scale))
+         insert(ordered_directories_cache, scale, l)
+      }
+      return l
+   end
+
    public new(directories, parents)
       self.directories := directories
       self.parents := parents
+      ordered_directories_cache := table()
       return
    end   
 end
@@ -84,25 +105,14 @@ package class ThemeDirectory()
       scale,
       cached_dirs   # A list of CachedDir objects
 
-   public matches_size(desired_size, desired_scale)
-      succeed scale = desired_scale &
-         case type of {
-            "Fixed": desired_size = size
-            "Threshold":
-               size - threshold <= desired_size <= size + threshold
-            "Scalable":
-               minsize <= desired_size <= maxsize
-         }
-   end
-
    public directory_size_distance(desired_size)
       return case type of {
          "Fixed": abs(desired_size - size)
          "Threshold": {
             if desired_size < size - threshold then 
-               minsize - desired_size
+               size - desired_size
             else if desired_size > size + threshold then 
-               desired_size - maxsize
+               desired_size - size
             else
                0
          }
@@ -551,14 +561,10 @@ final abstract class IconTheme()
                           #   name (string)
       ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
 
-   public static const
-      DEFAULT_SCALE       # Default value for scale parameter in lookup functions
-
    private static readable
       theme
 
    private static init()
-      DEFAULT_SCALE := scale(1)
       refresh()
    end
 
@@ -617,13 +623,13 @@ final abstract class IconTheme()
       dirs := []
       every subdir := gen_theme_directories(tm) do {
          if m := member(tm, subdir) &
-            size := integer(member(m, u"Size")) then 
+            size := (0 < integer(member(m, u"Size"))) then 
          {
             type := string(member(m, u"Type")) | "Threshold"
-            threshold := integer(member(m, u"Threshold")) | 2
-            scale := integer(member(m, u"Scale")) | 1
-            minsize := integer(member(m, u"MinSize")) | size
-            maxsize := integer(member(m, u"MaxSize")) | size
+            threshold := (0 <= integer(member(m, u"Threshold"))) | 2
+            scale := (0 < integer(member(m, u"Scale"))) | 1
+            minsize := (0 < integer(member(m, u"MinSize"))) | size
+            maxsize := (0 < integer(member(m, u"MaxSize"))) | size
             cd := []
             every d := BaseDir.gen_data_dirs() do {
                f := FilePath(d).walk("icons", theme).append(FilePath(subdir))
@@ -667,18 +673,14 @@ final abstract class IconTheme()
 
    #
    # Find an icon given the icon name (string), integer size, and
-   # optional integer scale.
-   # 
-   # `scale` defaults to `gui.scale(1)`, and is a partial
-   # implementation of the scale selector in the desktop icon theme
-   # spec.  icons with an exactly matching scale will be preferred
-   # over those with different scales.
+   # optional real scale, which defaults to `Gui.SCALE`.  Note that
+   # `size` is treated as an already-scaled value.
    #
    public static find_icon(icon, size, scale)
       local k, v
       icon := need_string(icon)
       size := need_integer(size, 1)
-      scale := need_integer(\scale, 1) | DEFAULT_SCALE
+      scale := need_real(\scale, 1.0) | Gui.SCALE
       k := icon || "/" || size || "/" || scale
       if not(v := member(FIND_ICON_CACHE, k)) then {
          v := find_icon_helper(icon, size, scale, theme, set()) | lookup_fallback_icon(icon)
@@ -735,20 +737,17 @@ final abstract class IconTheme()
    end
 
    private static lookup_icon(theme_index, icon, size, scale)
-      local subdir, f, minimal_size, closest_filename, ms
-      # Exact match search.
-      every subdir := !theme_index.directories do {
-         if subdir.matches_size(size, scale) then {
-            # Search in all the CachedDirs in the subdir
-            if f := has_icon(!subdir.cached_dirs, icon) then
-               return f
-         }
-      }
-      # Nearest distance search.
-      every subdir := !theme_index.directories do {
+      local subdir, f, minimal_size, closest_filename, ms, l
+      # Get the theme directories ordered by distance from scale
+      l := theme_index.ordered_directories(scale)
+      # Search for best match
+      every subdir := !l do {
          ms := subdir.directory_size_distance(size)
          if /minimal_size | (ms < minimal_size) then {
             if f := has_icon(!subdir.cached_dirs, icon) then {
+               # Early exit on an exact match
+               if ms = 0 then
+                  return f
                closest_filename := f
                minimal_size := ms
             }
