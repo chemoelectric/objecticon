@@ -141,7 +141,7 @@ class IconFilesItemPaint(ItemPaint)
    public static const ICON_SIZE
 
    private static init()
-      ICON_SIZE := scale(16)
+      ICON_SIZE := env_scale("OI_GUI_FILE_ICON_SIZE") | scale(16)
       ImageCache.
          name_image("fi.PDF_16", PDF_16).
          name_image("fi.IMAGE_16", IMAGE_16).
@@ -189,7 +189,7 @@ class IconFilesItemPaint(ItemPaint)
    end
 
    public override get_constant_height(W)
-      return max(W.get_line_height(), ICON_SIZE)
+      return max(W.get_line_height(), 2 * Gui.Y_INSET + ICON_SIZE)
    end
 
    public override get_size(W, data)
@@ -244,7 +244,8 @@ class IconFilesItemPaint(ItemPaint)
       i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
-      W.draw_string(x, y + W.get_line_ascent(), limit_text(W, get_string(data), w))
+      W.draw_string(x, y + (h + W.get_font_ascent() - W.get_font_descent()) / 2,
+                    limit_text(W, get_string(data), w))
    end
 end
 
