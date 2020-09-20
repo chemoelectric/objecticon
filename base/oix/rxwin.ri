@@ -4375,50 +4375,58 @@ static XftFont *fallback(wbp w, int ch)
              /* Get the list of fallback patterns. */
              font->fbpatterns = FcFontSort(NULL, font->base, FcTrue, &font->fbcoverage, &status);
          }
-         /* Set missing empty values, to avoid going through this
-          * setup again, and null test of fbcoverage below. */
-         if (!font->fbcoverage)
-             MemProtect(font->fbcoverage = FcCharSetCreate());
-         if (!font->fbpatterns)
+         /* Set missing empty value, to avoid going through this setup
+          * again.  Note that if font->fbcoverage is NULL, then that
+          * is okay, since FcCharSetHasChar() treats NULL as the empty
+          * set. */
+         if (!font->fbpatterns) {
              MemProtect(font->fbpatterns = FcFontSetCreate());
+             font->fbcoverage = NULL;
+         }
          /* An array to store the fonts corresponding to the
           * patterns. */
          font->fbfonts = safe_zalloc(font->fbpatterns->nfont * sizeof(XftFont *));
+         /* An array for quick lookup of the patterns' charsets.  The
+          * same comment above about a NULL fbcoverage applies to
+          * these sets too. */
+         font->fbcs = safe_zalloc(font->fbpatterns->nfont * sizeof(FcCharSet *));
+         for (i = 0; i < font->fbpatterns->nfont; i++)
+             FcPatternGetCharSet(font->fbpatterns->fonts[i],
+                                 FC_CHARSET, 0, &font->fbcs[i]);
     }
 
     /* Now font->fbpatterns has the fallback font patterns list, and
      * font->fbcoverage has the set of characters in those fonts. */
+
     if (FcCharSetHasChar(font->fbcoverage, ch)) {
         /* ch should be in the list somewhere. */
         for (i = 0; i < font->fbpatterns->nfont; i++) {
-            if (!font->fbfonts[i]) {
-                XftFont *f = NULL;
-                FcPattern *munge;
-                /* Now we munge the base pattern + the returned
-                 * pattern together to get the font to open. */
-                munge = FcFontRenderPrepare(NULL,
-                                            font->base,
-                                            font->fbpatterns->fonts[i]);
-                if (munge) {
-                    /* munge must only be destroyed if the following
-                     * call returns null; see libXft's xftfont.c for
-                     * several precedents.
-                     */
-                    f = XftFontOpenPattern(wd->display, munge);
+            if (FcCharSetHasChar(font->fbcs[i], ch)) {
+                if (!font->fbfonts[i]) {
+                    XftFont *f = NULL;
+                    FcPattern *munge;
+                    /* Now we munge the base pattern + the returned
+                     * pattern together to get the font to open. */
+                    munge = FcFontRenderPrepare(NULL,
+                                                font->base,
+                                                font->fbpatterns->fonts[i]);
+                    if (munge) {
+                        /* munge must only be destroyed if the following
+                         * call returns null; see libXft's xftfont.c for
+                         * several precedents.
+                         */
+                        f = XftFontOpenPattern(wd->display, munge);
+                        if (!f)
+                            FcPatternDestroy(munge);
+                    }
+                    /* If we failed to get a font somehow, just insert the
+                     * base font as a placeholder instead. */
                     if (!f)
-                        FcPatternDestroy(munge);
+                        f = font->fsp;
+                    font->fbfonts[i] = f;
                 }
-                /* If we failed to get a font somehow, just insert the
-                 * base font as a placeholder instead. */
-                if (!f)
-                    f = font->fsp;
-                font->fbfonts[i] = f;
-                /* The pattern is no longer needed. */
-                FcPatternDestroy(font->fbpatterns->fonts[i]);
-                font->fbpatterns->fonts[i] = 0;
-            }
-            if (XftGlyphExists(wd->display, font->fbfonts[i], ch))
                 return font->fbfonts[i];
+            }
         }
     }
 

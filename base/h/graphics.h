@@ -264,8 +264,10 @@ typedef struct _wfont {
   XftFont       *fsp;
   FcPattern     *base;                  /* base pattern for fallback setup */
   XftFontSet    *fbpatterns;            /* ordered list of fallback patterns */
-  XftFont       **fbfonts;              /* corresponding fallback fonts */
-  FcCharSet     *fbcoverage;            /* coverage set of fallback fonts */
+  FcCharSet     **fbcs;                 /* charsets of corresponding fallback
+                                         * patterns */
+  XftFont       **fbfonts;              /* corresponding loaded fallback fonts */
+  FcCharSet     *fbcoverage;            /* total coverage set of all fallback fonts */
 #elif MSWIN32
   gb_Font	*font;
 #endif
