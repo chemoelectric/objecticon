@@ -4348,8 +4348,8 @@ static XftFont *fallback(wbp w, int ch)
     wdp wd = ws->display;
     wfp font = wc->font;
 
-    /* For consistency with the all-ascii check in drawstring() below,
-     * assume any ascii character is in the base font. */
+    /* For consistency with the all-ascii check in drawstring() and
+     * textwidth(), assume any ascii character is in the base font. */
     if (ch < 128 || XftGlyphExists(wd->display, font->fsp, ch))
         return font->fsp;
 
