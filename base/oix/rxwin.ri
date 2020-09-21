@@ -160,6 +160,7 @@ static stringint canvastypes[] = {
 static int max_selection_size = 2 * 1024 * 1024;
 static int max_selection_chunk = 64 * 1024;
 static int selection_debug = 0;
+static int font_debug = 0;
 
 #if 0
 static void dump_all(void)
@@ -4395,6 +4396,8 @@ static XftFont *fallback(wbp w, int ch)
          for (i = 0; i < font->fbpatterns->nfont; i++)
              FcPatternGetCharSet(font->fbpatterns->fonts[i],
                                  FC_CHARSET, 0, &font->fbcs[i]);
+         if (font_debug)
+             printf("Font %s has %d fallbacks\n", font->name, font->fbpatterns->nfont);
     }
 
     /* Now font->fbpatterns has the fallback font patterns list, and
@@ -4420,6 +4423,17 @@ static XftFont *fallback(wbp w, int ch)
                         f = XftFontOpenPattern(wd->display, munge);
                         if (!f)
                             FcPatternDestroy(munge);
+                    }
+                    if (font_debug) {
+                        printf("Font %s loading fallback %d for char U+%04X\n", font->name, i, ch);
+                        if (f) {
+                            FcChar8 *t1, *t2;
+                            t1 = t2 = (FcChar8 *)"?";
+                            FcPatternGetString(f->pattern, FC_FAMILY, 0, &t1);
+                            FcPatternGetString(f->pattern, FC_FILE, 0, &t2);
+                            printf("\tResult: '%s' from %s\n", t1, t2);
+                        } else
+                            printf("\tFailed to load\n");
                     }
                     /* If we failed to get a font somehow, just insert the
                      * base font as a placeholder instead. */
@@ -4790,6 +4804,7 @@ static wdp alcdisplay(char *s)
         env_int("OI_MAX_X_SELECTION_SIZE", &max_selection_size, 1024 * 512, INT_MAX);
         env_int("OI_MAX_X_SELECTION_CHUNK", &max_selection_chunk, 1024, INT_MAX);
         env_int("OI_X_SELECTION_DEBUG", &selection_debug, 0, 1);
+        env_int("OI_X_FONT_DEBUG", &font_debug, 0, 1);
         default_XErrorHandler = XSetErrorHandler(custom_XErrorHandler);
         inited = 1;
     }
