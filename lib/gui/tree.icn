@@ -165,7 +165,7 @@ abstract class BaseTree(SelectableScrollArea)
    # Use a fixed column width, and let the node draw the icons
    #
    public set_fixed_col_w(w)
-      self.fixed_col_w := w
+      self.fixed_col_w := need_integer(w, 0)
       link
    end
 
