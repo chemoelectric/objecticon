@@ -38,6 +38,7 @@ struct traplist
  */
 static void handle_config(wsp ws, XConfigureEvent *event);
 static void handle_client_message(wsp ws, XClientMessageEvent *event);
+static int handle_incr_property(wdp wd, XPropertyEvent *event);
 static void handle_property(wsp ws, XPropertyEvent *event);
 static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
@@ -87,7 +88,7 @@ static int needmask(wcp wc, int overlap);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res);
 static int which_selection_property(wdp wd, Atom a);
-static void reset_selection_helper(struct selection_helper *h);
+static void reset_receiving_helper(struct receiving_helper *h);
 static wcp clonecontext(wcp wc);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
@@ -110,6 +111,7 @@ static void add_tri(struct traplist *l, XPointDouble *p1, XPointDouble *p2, XPoi
 static void CompositeDoublePoly(wdp wd, int op, Picture src, Picture dst,
                                 struct point *points, int npoints, int winding);
 static XftFont *fallback(wbp w, int ch);
+static void reset_sending_helper(wdp wd, struct sending_helper *x);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -155,9 +157,10 @@ static stringint canvastypes[] = {
     {"withdrawn",   WithdrawnState},
 };
 
-#define MaxSelectionSize     (2 * 1024 * 1024)
-
-static const int selection_debug = 0;
+static int max_selection_size = 2 * 1024 * 1024;
+static int max_selection_chunk = 64 * 1024;
+static int selection_debug = 0;
+static int font_debug = 0;
 
 #if 0
 static void dump_all(void)
@@ -513,6 +516,14 @@ do {
 } while(0)
 #enddef
 
+static time_t curr_secs()
+{
+    struct timeval tp;
+    if (gettimeofday(&tp, 0) < 0)
+        return 0;
+    return tp.tv_sec;
+}
+
 /*
  * A convenient wrapper around XGetAtomName, which returns a pointer
  * to a static string.
@@ -631,6 +642,41 @@ static wsp wsp_for_Window(wdp wd, Window w)
     return 0;
 }
 
+static void show_helpers(wdp wd)
+{
+    int i;
+    time_t now;
+    now = curr_secs();
+    printf("\tSending helpers:\n");
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        struct sending_helper *x;
+        x = &wd->sending_helpers[i];
+        if (x->target == None)
+            printf("\t%d: is free\n", i);
+        else {
+            printf("\t%d: receiver=%lx data=(%p, %d) age=%d ", i,
+                   (long)x->receiver, StrLoc(x->data), (int)StrLen(x->data),
+                   (int)(now - x->active));
+            printf("property=%s ", get_atom_name(wd, x->property));
+            printf("target=%s\n", get_atom_name(wd, x->target));
+        }
+    }
+    printf("\tReceiving helpers:\n");
+    for (i = 0; i < NUM_PROP_ATOMS; ++i) {
+        struct receiving_helper *x;
+        x = &wd->receiving_helpers[i];
+        if (x->target == None)
+            printf("\t%d: is free\n", i);
+        else {
+            printf("\t%d: receiver=%lx expect=%d size=%d age=%d ", i,
+                   (long)x->receiver, (int)x->expect, (int)x->size,
+                   (int)(now - x->active));
+            printf("selection=%s ", get_atom_name(wd, x->selection));
+            printf("target=%s\n", get_atom_name(wd, x->target));
+        }
+    }
+}
+
 static int which_selection_property(wdp wd, Atom a)
 {
     int i;
@@ -641,12 +687,128 @@ static int which_selection_property(wdp wd, Atom a)
     return -1;
 }
 
-static void reset_selection_helper(struct selection_helper *h)
+/*
+ * Check whether we should stop listening for property changes when
+ * resetting the given helper.
+ */
+static int should_stop_property_listener(wdp wd, struct sending_helper *x)
+{
+    int i;
+    struct sending_helper *y;
+    if (wsp_for_Window(wd, x->receiver))
+        return 0;
+    /* Check if we must keep listening because of another helper. */
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        y = &wd->sending_helpers[i];
+        if (y != x && y->receiver == x->receiver) 
+            return 0;
+    }
+    return 1;
+}
+
+/*
+ * Called only once for each helper.
+ */
+static void init_sending_helper(struct sending_helper *x)
+{
+    x->data = nulldesc;
+    x->property = x->target = None;
+    x->receiver = None;
+    x->active = 0;
+    add_gc_global(&x->data);
+}
+
+/*
+ * Called to reset a helper to its unused condition.
+ */
+static void reset_sending_helper(wdp wd, struct sending_helper *x)
+{
+    x->data = nulldesc;
+    x->property = x->target = None;
+    x->active = 0;
+    if (x->receiver != None) {
+        if (should_stop_property_listener(wd, x)) {
+            if (selection_debug)
+                printf("\tNo longer listening for PropertyNotify events on %lx\n", (long)x->receiver);
+            XSelectInput(wd->display, x->receiver, 0);
+        }
+        x->receiver = None;
+    }
+}
+
+/*
+ * Reset any helpers that haven't been active for over 60 seconds.
+ */
+static void purge_stale_helpers(wdp wd)
+{
+    int i;
+    time_t now;
+    now = curr_secs();
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        struct sending_helper *x;
+        x = &wd->sending_helpers[i];
+        if (x->active != 0 && now - x->active > 60) {
+            if (selection_debug)
+                printf("\tPurging stale sending helper entry %d\n", i);
+            reset_sending_helper(wd, x);
+        }
+    }        
+    for (i = 0; i < NUM_PROP_ATOMS; ++i) {
+        struct receiving_helper *x;
+        x = &wd->receiving_helpers[i];
+        if (x->active != 0 && now - x->active > 60) {
+            if (selection_debug)
+                printf("\tPurging stale receiving helper entry %d\n", i);
+            reset_receiving_helper(x);
+        }
+    }
+}
+
+/*
+ * Choose a free helper; if one can't be found, evict one, and return
+ * that.
+ */
+static struct sending_helper *get_free_sending_helper(wdp wd)
+{
+    int i;
+    struct sending_helper *x;
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        x = &wd->sending_helpers[i];
+        if (x->target == None)
+            return x;
+    }
+    x = &wd->sending_helpers[0];
+    reset_sending_helper(wd, x);
+    return x;
+}
+
+/*
+ * Search for a helper with matching receiver and property fields;
+ * there must be at most one such entry.
+ */
+static struct sending_helper *match_sending_helper(wdp wd, Window receiver, Atom property)
+{
+    int i;
+    struct sending_helper *x;
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
+        x = &wd->sending_helpers[i];
+        if (x->receiver == receiver && x->property == property)
+            return x;
+    }        
+    return 0;
+}
+
+/*
+ * Called to reset a helper to its unused condition.
+ */
+static void reset_receiving_helper(struct receiving_helper *h)
 {
     free(h->result);
     h->result = 0;
     h->size = h->expect = 0;
     h->target = h->selection = None;
+    h->receiver = None;
+    h->active = 0;
 }
 
 static void handle_selection_request(wsp ws, XSelectionRequestEvent *event)
@@ -654,7 +816,7 @@ static void handle_selection_request(wsp ws, XSelectionRequestEvent *event)
     tended struct descrip tmp;
     wdp wd = ws->display;
     if (selection_debug) {
-        printf("SelectionRequest event:\n\towner=%lx requestor=%lx property=%s",
+        printf("handle_selection_request:\n\towner=%lx requestor=%lx property=%s",
                (long)event->owner,
                (long)event->requestor,
                get_atom_name(wd, event->property));
@@ -681,7 +843,7 @@ static void handle_selection_clear(wsp ws, XSelectionClearEvent *event)
     tended struct descrip tmp;
     wdp wd = ws->display;
     if (selection_debug)
-        printf("SelectionClear event win=%lx selection=%s\n",
+        printf("handle_selection_clear: win=%lx selection=%s\n",
                (long)event->window,
                get_atom_name(wd, event->selection));
     MakeInt(SELECTIONCLEAR, &tmp);
@@ -703,7 +865,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     char *conv_str;
 
     if (selection_debug) {
-        printf("SelectionNotify: requestor=%lx selection=%s",
+        printf("handle_selection_notify: requestor=%lx selection=%s",
                (long)event->requestor, get_atom_name(wd, event->selection));
         printf(" target=%s", get_atom_name(wd, event->target));
         printf(" property=%s\n", get_atom_name(wd, event->property));
@@ -712,7 +874,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     pn = which_selection_property(wd, event->property);
     if (pn < 0) {
         if (selection_debug)
-            printf("XGetWindowProperty xselection.property == None or other unknown\n");
+            printf("\tXGetWindowProperty xselection.property == None or other unknown\n");
         MakeInt(SELECTIONRESPONSE, &tmp);
         list_put(&ws->listp, &tmp);
         get_atom_descriptor(wd, event->selection, &tmp);
@@ -728,7 +890,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
                                 ws->win,
                                 event->property,
                                 0,
-                                MaxSelectionSize / 4,
+                                max_selection_size / 4,
                                 True,
                                 AnyPropertyType,
                                 &actual_type,
@@ -741,36 +903,38 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     err = 0;
     if (status != Success) {
         if (selection_debug)
-            printf("XGetWindowProperty failed\n");
+            printf("\tXGetWindowProperty failed\n");
         err = 1;
     } else if (actual_type == None) {
         if (selection_debug)
-            printf("XGetWindowProperty returned actual_type == None\n");
+            printf("\tXGetWindowProperty returned actual_type == None\n");
         err = 1;
     } else if (!prop) {
         if (selection_debug)
-            printf("XGetWindowProperty set prop to null\n");
+            printf("\tXGetWindowProperty set prop to null\n");
         err = 1;
     } else if (bytes_after > 0) {
         if (selection_debug)
-            printf("Selection too big, bytes_after=%lu\n", bytes_after);
+            printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
         err = 1;
     } else if (actual_type == ATOM(wd, INCR)) {
         long expect = *((long *)prop);
-        if (expect > 0 && expect <= MaxSelectionSize) {
-            struct selection_helper *h;
+        if (expect > 0 && expect <= max_selection_size) {
+            struct receiving_helper *h;
             if (selection_debug)
-                printf("Incremental selection started, expected size=%ld\n", expect);
-            h = &wd->selection_helpers[pn];
-            reset_selection_helper(h);
+                printf("\tIncremental selection started, expected size=%ld\n", expect);
+            h = &wd->receiving_helpers[pn];
+            reset_receiving_helper(h);
             h->selection = event->selection;
             h->target = event->target;
             h->expect = expect;
+            h->receiver = ws->win;
+            h->active = curr_secs();
             XFree(prop);
             return;
         }
         if (selection_debug)
-            printf("Incremental selection expected size out of range (%ld)\n", expect);
+            printf("\tIncremental selection expected size out of range (%ld)\n", expect);
         err = 1;
     }
 
@@ -786,7 +950,7 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
     else {
         bytes_read = nitems * (actual_format / 8);
         if (selection_debug)
-            printf("Got %lu items x %d bits -> %ld bytes actual_type=%s\n",
+            printf("\tGot %lu items x %d bits -> %ld bytes actual_type=%s\n",
                    nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
 
         conv_str = property_to_string(wd,
@@ -816,6 +980,11 @@ void pollevent(wbp w)
     wsp ws;
     while (XPending(wd->display)) {
         XNextEvent(wd->display, &event);
+        /* Incremental selections may cause PropertyNotify events that
+         * must be handled specially. */
+        if (event.type == PropertyNotify && handle_incr_property(wd, (XPropertyEvent *)&event))
+            continue;
+
         evwin = event.xexpose.window;  /* go ahead, criticize all you like */
         ws = wsp_for_Window(wd, evwin);
         if (!ws)
@@ -962,6 +1131,10 @@ int setwindowicon(wbp w, struct imgdata *imd)
 {
     wsp ws = w->window;
     int i, j, k;
+    if (imd && (imd->width > 512 || imd->height > 512)) {
+        LitWhy("Icon too big");
+        return Failed;
+    }
     free(ws->icondata);
     if (imd) {
         ws->iconlen = 2 + imd->width * imd->height;
@@ -1392,6 +1565,24 @@ void doconfig(wbp w, int status)
         resizepixmap(w);
 }
 
+static int (*default_XErrorHandler)(Display *, XErrorEvent *);
+
+static int custom_XErrorHandler(Display *display, XErrorEvent *err)
+{
+    /*
+     * A BadWindow can occur when handling selections, when a window
+     * closes unexpectedly.  The three problematic calls are
+     * XChangeProperty(), XSendEvent() or a XSelectInput().
+     */
+    if (err->error_code == BadWindow && 
+         (err->request_code == X_ChangeProperty ||
+          err->request_code == X_SendEvent ||
+          err->request_code == X_ChangeWindowAttributes)) {
+        return 0;
+    }
+    return default_XErrorHandler(display, err);
+}
+
 static convert_to_macro(INT32)
 
 /*
@@ -1405,6 +1596,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     tended struct b_lelem *le;
     tended char *cstr_target;
     int target_cnt = 1;
+    struct sending_helper *h;
     wsp ws = w->window;
     wdp wd = ws->display;
 
@@ -1416,6 +1608,23 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     property_atom = XInternAtom(wd->display, property, False);
     target_atom = XInternAtom(wd->display, target, False);
     selection_atom = XInternAtom(wd->display, selection, False);
+
+    if (selection_debug)
+        show_helpers(wd);
+
+    /* Check for an existing matching helper; we must not have more
+     * than one helper with the same receiver/property combination,
+     * and even if this response isn't an incremental one, we don't
+     * want the property changes below to get muddled up with an
+     * incremental send to the same destination.
+     */
+    h = match_sending_helper(wd, requestor, property_atom);
+    if (h) {
+        if (selection_debug)
+            printf("\tResetting existing sending_helper matching requestor, property pair (no %d)\n", (int)(h - wd->sending_helpers));
+        reset_sending_helper(wd, h);
+    }
+    purge_stale_helpers(wd);
 
     if (target_atom == ATOM(wd, TARGETS)) {
         if (!is:list(*data))
@@ -1469,17 +1678,56 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     } else {
         if (!cnv:string(*data, *data))
             ReturnErrVal(103, *data, Error);
-        if (selection_debug)
-            printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
-        XChangeProperty(wd->display,
-                        requestor,
-                        property_atom,
-                        target_atom,
-                        8,
-                        PropModeReplace,
-                        (unsigned char *)StrLoc(*data),
-                        StrLen(*data));
-        ev.xselection.property = property_atom;
+        if (StrLen(*data) > max_selection_size) {
+            if (selection_debug)
+                printf("\tSelection too big; setting property to None\n");
+            ev.xselection.property = None;
+        } else if (StrLen(*data) > max_selection_chunk) {
+            long l;
+            if (selection_debug)
+                printf("\tStarting INCR transfer, total %d bytes of data\n", (int)StrLen(*data));
+            l = StrLen(*data);
+            XChangeProperty(wd->display,
+                            requestor,
+                            property_atom,
+                            ATOM(wd, INCR),
+                            32,
+                            PropModeReplace,
+                            (unsigned char *)&l,
+                            1);
+            /* Choose a free helper. */
+            h = get_free_sending_helper(wd);
+            if (selection_debug)
+                printf("\tUsing sending_helper %d\n", (int)(h - wd->sending_helpers));
+            h->data = *data;
+            h->property = property_atom;
+            h->receiver = requestor;
+            h->target = target_atom;
+            h->active = curr_secs();
+            /* Note that we mustn't check here whether we seem to be
+             * already listening by checking the other helpers; those
+             * Window IDs may be stale ones that have since been
+             * reused.
+             */
+            if (!wsp_for_Window(wd, requestor)) {
+                if (selection_debug)
+                    printf("\tListening for PropertyNotify events on %lx\n", (long)requestor);
+                XSelectInput(wd->display, requestor, PropertyChangeMask);
+            }
+            ev.xselection.property = property_atom;
+        } else {
+            if (selection_debug)
+                printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
+            XChangeProperty(wd->display,
+                            requestor,
+                            property_atom,
+                            target_atom,
+                            8,
+                            PropModeReplace,
+                            (unsigned char *)StrLoc(*data),
+                            StrLen(*data));
+            ev.xselection.property = property_atom;
+        }
     }
 
     ev.type = SelectionNotify;
@@ -1513,11 +1761,11 @@ int ownselection(wbp w, char *selname, word *time)
     /* Check for no change in selection */
     if (curr == ws->win) {
         if (selection_debug)
-            printf("Ownership of selection %s retained by %lx\n",
+            printf("ownselection: Ownership of selection %s retained by %lx\n",
                    get_atom_name(wd, selection), (long)ws->win);
     } else {
         if (selection_debug)
-            printf("Owner of selection %s set from %lx -> %lx\n",
+            printf("ownselection: Owner of selection %s set from %lx -> %lx\n",
                    get_atom_name(wd, selection), (long)curr, (long)ws->win);
 
         /*
@@ -1531,7 +1779,7 @@ int ownselection(wbp w, char *selname, word *time)
                 if (x->win == curr) {
                     tended struct descrip tmp;
                     if (selection_debug)
-                        printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n", (long)curr);
+                        printf("\tEnqueueing artificial SELECTIONCLEAR to current owner %lx\n", (long)curr);
                     MakeInt(SELECTIONCLEAR, &tmp);
                     list_put(&x->listp, &tmp);
                     get_atom_descriptor(wd, selection, &tmp);
@@ -1555,7 +1803,7 @@ int ownselection(wbp w, char *selname, word *time)
     *time = (word)(INT32)wd->recent;
 
     if (selection_debug)
-        printf("Selection time was %lu, converted to " WordFmt "\n", 
+        printf("\tSelection time was %lu, converted to " WordFmt "\n", 
                (unsigned long)wd->recent, *time);
 
     return Succeeded;
@@ -1564,6 +1812,7 @@ int ownselection(wbp w, char *selname, word *time)
 int requestselection(wbp w, char *selname, char *targetname)
 {
     Atom selection, target, property;
+    int pn;
     wsp ws = w->window;
     wdp wd = ws->display;
     CheckUnhidden(ws);
@@ -1574,12 +1823,28 @@ int requestselection(wbp w, char *selname, char *targetname)
      * without the results getting mixed up.  Obviously this isn't
      * perfect, but is better than nothing.
      */
-    property = wd->atoms[ATOM__OBJECTICON_PROP0 + (ws->propcount++) % NUM_PROP_ATOMS];
+    pn = (wd->propcount++) % NUM_PROP_ATOMS;
+    property = wd->atoms[ATOM__OBJECTICON_PROP0 + pn];
     if (selection_debug) {
-        printf("getselectioncontent: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
+        printf("requestselection: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
         printf(" target=%s", get_atom_name(wd, target));
         printf(" property=%s", get_atom_name(wd, property));
         printf(" requestor=%lx\n", (long)ws->win);
+    }
+
+    if (selection_debug)
+        show_helpers(wd);
+
+    purge_stale_helpers(wd);
+
+    /* Clear any receiving_helper which would mistake the
+     * SelectionNotify response property for part of an INCR
+     * selection.
+     */
+    if (wd->receiving_helpers[pn].receiver == ws->win) {
+        if (selection_debug)
+            printf("\tResetting existing receiving_helper with matching window (no %d)\n", pn);
+        reset_receiving_helper(&wd->receiving_helpers[pn]);
     }
 
     XConvertSelection(wd->display,
@@ -2169,20 +2434,20 @@ static void do_selection_increment(wsp ws, int pn)
     tended struct descrip tmp;
     int status, err;
     char *conv_str;
-    struct selection_helper *h;
+    struct receiving_helper *h;
 
     property = wd->atoms[ATOM__OBJECTICON_PROP0 + pn];
-    h = &wd->selection_helpers[pn];
+    h = &wd->receiving_helpers[pn];
 
     if (selection_debug)
-        printf("Incremental selection data property=%s\n", get_atom_name(wd, property));
+        printf("do_selection_increment: Incremental selection data property=%s\n", get_atom_name(wd, property));
 
     prop = 0;
     status = XGetWindowProperty(wd->display,
                                 ws->win,
                                 property,
                                 0,
-                                MaxSelectionSize / 4,
+                                max_selection_size / 4,
                                 True,
                                 AnyPropertyType,
                                 &actual_type,
@@ -2195,25 +2460,25 @@ static void do_selection_increment(wsp ws, int pn)
     err = 0;
     if (status != Success) {
         if (selection_debug)
-            printf("XGetWindowProperty failed\n");
+            printf("\tXGetWindowProperty failed\n");
         err = 1;
     } else if (actual_type == None) {
         if (selection_debug)
-            printf("XGetWindowProperty returned actual_type == None\n");
+            printf("\tXGetWindowProperty returned actual_type == None\n");
         err = 1;
     } else if (!prop) {
         if (selection_debug)
-            printf("XGetWindowProperty set prop to null\n");
+            printf("\tXGetWindowProperty set prop to null\n");
         err = 1;
     } else if (bytes_after > 0) {
         if (selection_debug)
-            printf("Selection too big, bytes_after=%lu\n", bytes_after);
+            printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
         err = 1;
     } else {
         bytes_read = nitems * (actual_format / 8);
         if (bytes_read == 0) {
             if (selection_debug)
-                printf("Incremental selection complete with size=%ld\n",
+                printf("\tIncremental selection complete with size=%ld\n",
                        (long)h->size);
             MakeInt(SELECTIONRESPONSE, &tmp);
             list_put(&ws->listp, &tmp);
@@ -2223,11 +2488,11 @@ static void do_selection_increment(wsp ws, int pn)
             list_put(&ws->listp, &tmp);
             bytes2string(h->result, h->size, &tmp);
             list_put(&ws->listp, &tmp);
-            reset_selection_helper(h);
+            reset_receiving_helper(h);
         } else {
             word new_size;
             if (selection_debug)
-                printf("Incremental selection got %lu items x %d bits -> %ld bytes actual_type=%s\n",
+                printf("\tIncremental selection got %lu items x %d bits -> %ld bytes actual_type=%s\n",
                        nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
             conv_str = property_to_string(wd,
                                           actual_type,
@@ -2238,26 +2503,28 @@ static void do_selection_increment(wsp ws, int pn)
                 size_t len;
                 len = strlen(conv_str);
                 new_size = h->size + len;
-                if (new_size >= MaxSelectionSize) {
+                if (new_size >= max_selection_size) {
                     if (selection_debug)
-                        printf("Incremental selection size grew too big (%ld)\n", (long)new_size);
+                        printf("\tIncremental selection size grew too big (%ld)\n", (long)new_size);
                     err = 1;
                 } else {
                     h->result = safe_realloc(h->result, Max(new_size, h->expect));
                     memcpy(h->result + h->size, conv_str, len);
                     h->size = new_size;
+                    h->active = curr_secs();
                 }
                 free(conv_str);
             } else {
                 new_size = h->size + bytes_read;
-                if (new_size >= MaxSelectionSize) {
+                if (new_size >= max_selection_size) {
                     if (selection_debug)
-                        printf("Incremental selection size grew too big (%ld)\n", (long)new_size);
+                        printf("\tIncremental selection size grew too big (%ld)\n", (long)new_size);
                     err = 1;
                 } else {
                     h->result = safe_realloc(h->result, Max(new_size, h->expect));
                     memcpy(h->result + h->size, prop, bytes_read);
                     h->size = new_size;
+                    h->active = curr_secs();
                 }
             }
         }
@@ -2271,10 +2538,49 @@ static void do_selection_increment(wsp ws, int pn)
         get_atom_descriptor(wd, h->target, &tmp);
         list_put(&ws->listp, &tmp);
         list_put(&ws->listp, &nulldesc);
-        reset_selection_helper(h);
+        reset_receiving_helper(h);
     }
     if (prop)
         XFree(prop);
+}
+
+/*
+ * Possibly handle a property event related to an incremental
+ * selection send; return 1 if it was handled, 0 if not.
+ */
+static int handle_incr_property(wdp wd, XPropertyEvent *event)
+{
+    word len;
+    if (event->state == PropertyDelete) {
+        struct sending_helper *x;
+        x = match_sending_helper(wd, event->window, event->atom);
+        if (x) {
+            len = Min(max_selection_chunk, StrLen(x->data));
+            if (selection_debug) {
+                printf("handle_incr_property: receiver=%lx property=%s sending %ld bytes\n",
+                       (long)x->receiver, get_atom_name(wd, x->property), (long)len);
+            }
+            XChangeProperty(wd->display,
+                            x->receiver,
+                            x->property,
+                            x->target,
+                            8,
+                            PropModeAppend,
+                            (unsigned char *)StrLoc(x->data),
+                            len);
+            if (len == 0) {
+                reset_sending_helper(wd, x);
+                if (selection_debug)
+                    printf("\tFinished INCR send\n");
+            } else {
+                /* Move the data field along len bytes. */
+                MakeStr(StrLoc(x->data) + len, StrLen(x->data) - len, &x->data);
+                x->active = curr_secs();
+            }
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void handle_property(wsp ws, XPropertyEvent *event)
@@ -2283,7 +2589,7 @@ static void handle_property(wsp ws, XPropertyEvent *event)
     if (event->state == PropertyNewValue) {
         int pn = which_selection_property(wd, event->atom);
         if (pn >= 0) {
-            if (wd->selection_helpers[pn].selection != None)
+            if (wd->receiving_helpers[pn].receiver == ws->win)
                 do_selection_increment(ws, pn);
             return;
         }
@@ -4043,7 +4349,9 @@ static XftFont *fallback(wbp w, int ch)
     wdp wd = ws->display;
     wfp font = wc->font;
 
-    if (XftGlyphExists(wd->display, font->fsp, ch))
+    /* For consistency with the all-ascii check in drawstring() and
+     * textwidth(), assume any ascii character is in the base font. */
+    if (ch < 128 || XftGlyphExists(wd->display, font->fsp, ch))
         return font->fsp;
 
     if (!font->fbpatterns) {
@@ -4070,50 +4378,71 @@ static XftFont *fallback(wbp w, int ch)
              /* Get the list of fallback patterns. */
              font->fbpatterns = FcFontSort(NULL, font->base, FcTrue, &font->fbcoverage, &status);
          }
-         /* Set missing empty values, to avoid going through this
-          * setup again, and null test of fbcoverage below. */
-         if (!font->fbcoverage)
-             MemProtect(font->fbcoverage = FcCharSetCreate());
-         if (!font->fbpatterns)
+         /* Set missing empty value, to avoid going through this setup
+          * again.  Note that if font->fbcoverage is NULL, then that
+          * is okay, since FcCharSetHasChar() treats NULL as the empty
+          * set. */
+         if (!font->fbpatterns) {
              MemProtect(font->fbpatterns = FcFontSetCreate());
+             font->fbcoverage = NULL;
+         }
          /* An array to store the fonts corresponding to the
           * patterns. */
          font->fbfonts = safe_zalloc(font->fbpatterns->nfont * sizeof(XftFont *));
+         /* An array for quick lookup of the patterns' charsets.  The
+          * same comment above about a NULL fbcoverage applies to
+          * these sets too. */
+         font->fbcs = safe_zalloc(font->fbpatterns->nfont * sizeof(FcCharSet *));
+         for (i = 0; i < font->fbpatterns->nfont; i++)
+             FcPatternGetCharSet(font->fbpatterns->fonts[i],
+                                 FC_CHARSET, 0, &font->fbcs[i]);
+         if (font_debug)
+             printf("Font %s has %d fallbacks\n", font->name, font->fbpatterns->nfont);
     }
 
     /* Now font->fbpatterns has the fallback font patterns list, and
      * font->fbcoverage has the set of characters in those fonts. */
+
     if (FcCharSetHasChar(font->fbcoverage, ch)) {
         /* ch should be in the list somewhere. */
         for (i = 0; i < font->fbpatterns->nfont; i++) {
-            if (!font->fbfonts[i]) {
-                XftFont *f = NULL;
-                FcPattern *munge;
-                /* Now we munge the base pattern + the returned
-                 * pattern together to get the font to open. */
-                munge = FcFontRenderPrepare(NULL,
-                                            font->base,
-                                            font->fbpatterns->fonts[i]);
-                if (munge) {
-                    /* munge must only be destroyed if the following
-                     * call returns null; see libXft's xftfont.c for
-                     * several precedents.
-                     */
-                    f = XftFontOpenPattern(wd->display, munge);
+            if (FcCharSetHasChar(font->fbcs[i], ch)) {
+                if (!font->fbfonts[i]) {
+                    XftFont *f = NULL;
+                    FcPattern *munge;
+                    /* Now we munge the base pattern + the returned
+                     * pattern together to get the font to open. */
+                    munge = FcFontRenderPrepare(NULL,
+                                                font->base,
+                                                font->fbpatterns->fonts[i]);
+                    if (munge) {
+                        /* munge must only be destroyed if the following
+                         * call returns null; see libXft's xftfont.c for
+                         * several precedents.
+                         */
+                        f = XftFontOpenPattern(wd->display, munge);
+                        if (!f)
+                            FcPatternDestroy(munge);
+                    }
+                    if (font_debug) {
+                        printf("Font %s loading fallback %d for char U+%04X\n", font->name, i, ch);
+                        if (f) {
+                            FcChar8 *t1, *t2;
+                            t1 = t2 = (FcChar8 *)"?";
+                            FcPatternGetString(f->pattern, FC_FAMILY, 0, &t1);
+                            FcPatternGetString(f->pattern, FC_FILE, 0, &t2);
+                            printf("\tResult: '%s' from %s\n", t1, t2);
+                        } else
+                            printf("\tFailed to load\n");
+                    }
+                    /* If we failed to get a font somehow, just insert the
+                     * base font as a placeholder instead. */
                     if (!f)
-                        FcPatternDestroy(munge);
+                        f = font->fsp;
+                    font->fbfonts[i] = f;
                 }
-                /* If we failed to get a font somehow, just insert the
-                 * base font as a placeholder instead. */
-                if (!f)
-                    f = font->fsp;
-                font->fbfonts[i] = f;
-                /* The pattern is no longer needed. */
-                FcPatternDestroy(font->fbpatterns->fonts[i]);
-                font->fbpatterns->fonts[i] = 0;
-            }
-            if (XftGlyphExists(wd->display, font->fbfonts[i], ch))
                 return font->fbfonts[i];
+            }
         }
     }
 
@@ -4472,6 +4801,11 @@ static wdp alcdisplay(char *s)
         env_string("OI_RESOURCE_NAME", &resource_name);
         env_string("OI_RESOURCE_CLASS", &resource_class);
         env_string("DISPLAY", &display);
+        env_int("OI_MAX_X_SELECTION_SIZE", &max_selection_size, 1024 * 512, INT_MAX);
+        env_int("OI_MAX_X_SELECTION_CHUNK", &max_selection_chunk, 1024, INT_MAX);
+        env_int("OI_X_SELECTION_DEBUG", &selection_debug, 0, 1);
+        env_int("OI_X_FONT_DEBUG", &font_debug, 0, 1);
+        default_XErrorHandler = XSetErrorHandler(custom_XErrorHandler);
         inited = 1;
     }
 
@@ -4524,7 +4858,10 @@ static wdp alcdisplay(char *s)
     XInternAtoms(wd->display, atom_names, NUM_ATOMS, False, wd->atoms);
     setup_cursors(wd);
     for (i = 0; i < NUM_PROP_ATOMS; ++i)
-        reset_selection_helper(&wd->selection_helpers[i]);
+        reset_receiving_helper(&wd->receiving_helpers[i]);
+
+    for (i = 0; i < NUM_SENDING_HELPERS; ++i)
+        init_sending_helper(&wd->sending_helpers[i]);
 
     GLink(wd, wdsplys);
     return wd;

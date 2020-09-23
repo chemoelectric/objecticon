@@ -21,13 +21,19 @@ procedure need_one(a)
       help_stop("This option needs a single parameter")
 end
 
-record pair(name, size)
+record pair(name, size, scale)
 
 procedure need_pair(a)
-   if *a = 2 then
-      return pair(ucs(a[1]), integer(a[2])) | help_stop("This option needs a UTF-8 string and an integer second parameter")
-   else
-      help_stop("This option needs two parameters")
+   local p
+   if *a >= 2 then {
+      p := pair()
+      (p.name := ucs(a[1]) &
+       p.size := (0 < integer(a[2]))) | help_stop("This option needs a UTF-8 string and a positive integer second parameter")
+      if *a >= 3 then
+         p.scale := (1.0 <= real(a[3])) | help_stop("This option needs an optional real third parameter >= 1.0")
+      return p
+   } else
+      help_stop("This option needs at least two parameters")
 end
 
 procedure no_path(s)
@@ -53,8 +59,8 @@ procedure usage()
    help_line("generic-icons", "List generic icons for mime type")
    help_line("all-icons", "List all icons for mime type")
    help_line("icons", "List icons for mime type")
-   help_line("icon-file", "Find icon for file and size")
-   help_line("find-icon", "Find icon for icon name and size")
+   help_line("icon-file", "Find icon for file, size and optional scale")
+   help_line("find-icon", "Find icon for icon name, size and optional scale")
    help_line("de", "List desktop entries for mime type")
    help_line("de-file", "List desktop entries for file")
    help_line("dir", "Show config and data directories")
@@ -100,12 +106,12 @@ procedure main(a)
 
       "icon-file": {
          p := need_pair(a)
-         write(file_link(Mime.find_icon_for_file(no_path(p.name), p.size)))
+         write(file_link(Mime.find_icon_for_file(no_path(p.name), p.size, p.scale)))
       }
 
       "find-icon": {
          p := need_pair(a)
-         write(file_link(IconTheme.find_icon(p.name, p.size)))
+         write(file_link(IconTheme.find_icon(p.name, p.size, p.scale)))
       }
 
       "de": {

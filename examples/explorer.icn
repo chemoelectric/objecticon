@@ -150,7 +150,7 @@ class Explorer(Dialog)
    end
 
    public override component_setup()
-      local root_node, split, w, bw, p, d, c
+      local root_node, split, w, bw, d, c
 
       set_size(scale(900),scale(600)).set_resize(&yes).set_label("Explorer")
       connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
@@ -158,14 +158,13 @@ class Explorer(Dialog)
 
       set_layout(GridLayout())
 
-      p := scale(2)
       tree := ItemPaintTree().
          set_size(scale(250),scale(420)).
          set_select_mode("one").
-         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * p).
+         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * Tree.COL_PAD).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
-                            set_insets(p, Gui.TEXT_INSET, 0, 0).
+                            set_insets(Tree.COL_PAD, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L)).
          connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION).
          connect(self.handle_tree_selection, Event.SELECTION_CHANGED)

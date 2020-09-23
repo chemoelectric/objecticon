@@ -16,7 +16,7 @@ class Untitled(Dialog)
    end
 
    public on_quit(ev)
-      dispose()
+      exit()
    end
 
    public update_grey()
@@ -48,6 +48,7 @@ class Untitled(Dialog)
 
    public on_get_data(ev)
       local ty
+      data_area.set_contents([])
       ty := target_list.object_first_selection() | fail
       parent_dialog.request_selection(which_selection(),
                                       [ty],
@@ -204,10 +205,14 @@ class Untitled(Dialog)
 end
 
 
-procedure main()
-   local d
-   d := Untitled()
-   d.show_modal()
+procedure main(a)
+   local d, i
+   i := integer(a[1]) | 1
+   every 1 to i do {
+      d := Untitled()
+      d.show()
+   }
+   Dispatcher.message_loop()
 end
 
 ### Ivib-v2 layout: layouts/$.layout

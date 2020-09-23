@@ -29,10 +29,14 @@ abstract class BaseTree(SelectableScrollArea)
       show_root_flag,
       show_root_handles_flag
 
+   public static const
+      COL_PAD               # X spacing around node images (if used)
+
    private static init()
       ImageCache.copy_key_with_resize("tree.CLOSED_FOLDER", "gui.CLOSED_FOLDER_16")
       ImageCache.copy_key_with_resize("tree.OPEN_FOLDER", "gui.OPEN_FOLDER_16")
       ImageCache.copy_key_with_resize("tree.FILE", "gui.FILE_16")
+      COL_PAD := scale(2)
    end
    
    public abstract get_node_data_width(n)
@@ -165,7 +169,7 @@ abstract class BaseTree(SelectableScrollArea)
    # Use a fixed column width, and let the node draw the icons
    #
    public set_fixed_col_w(w)
-      self.fixed_col_w := w
+      self.fixed_col_w := need_integer(w, 0)
       link
    end
 
@@ -186,7 +190,7 @@ abstract class BaseTree(SelectableScrollArea)
          #
          # The column width is slightly wider than the bitmap width
          #
-         col_w := img_w + scale(4)
+         col_w := img_w + 2 * COL_PAD
       } else
          col_w := fixed_col_w
    end
@@ -356,7 +360,7 @@ class Tree(BaseTree)
       # Ensure the line height is slightly greater than the
       # bitmap height
       #
-      res <:= \img_h + scale(4)
+      res <:= \img_h + 2 * Gui.Y_INSET
       return res
    end
 
@@ -382,7 +386,7 @@ class Tree(BaseTree)
       local W
       W := view.cbwin
       W.draw_string(xp + Gui.TEXT_INSET,
-                    yp + W.get_line_ascent() + (line_height - W.get_line_height()) / 2,
+                    yp + (line_height + W.get_font_ascent() - W.get_font_descent()) / 2,
                     n.label)
    end
 end
@@ -442,11 +446,11 @@ class ItemPaintTree(BaseTree)
          # Ensure the line height is slightly greater than the
          # bitmap height
          #
-         h <:= \img_h + scale(4)
+         h <:= \img_h + 2 * Gui.Y_INSET
       } else {
          h := []
          every h1 := item_paint.get_height(view.cbwin, (!self.contents).label) + bh do {
-            h1 <:= \img_h + scale(4)
+            h1 <:= \img_h + 2 * Gui.Y_INSET
             put(h, h1)
          }
       }

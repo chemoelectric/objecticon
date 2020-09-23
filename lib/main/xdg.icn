@@ -15,7 +15,8 @@ $endif
    ipl.strings,
    ipl.wildcard,
    ipl.sort,
-   ipl.pdco
+   ipl.pdco,
+   ipl.functional
 
 # An object for parsing and holding the parts of a locale string, like
 # "en_GB.utf8".
@@ -46,9 +47,32 @@ package class ThemeIndex()
       directories,   # A list of ThemeDirectory objects
       parents        # A list of parent theme names (strings)
 
+   private const
+      ordered_directories_cache  # A table mapping a scale (real) to
+                                 # copies of directories sorted
+                                 # according to that scale
+
+   private static scale_dist(scale, x)
+      # Note that scale is a real, x.scale an integer.
+      return abs(scale - x.scale)
+   end
+
+   # Generate the directories, ordered by distance from scale (a
+   # real).
+   #
+   public ordered_directories(scale)
+      local l
+      if not(l := member(ordered_directories_cache, scale)) then {
+         l := isort(directories, lpartial(scale_dist, scale))
+         insert(ordered_directories_cache, scale, l)
+      }
+      suspend !.l
+   end
+
    public new(directories, parents)
       self.directories := directories
       self.parents := parents
+      ordered_directories_cache := table()
       return
    end   
 end
@@ -66,12 +90,12 @@ end
 #   Type=Threshold
 #
 # This is represented by a ThemeDirectory.  Then, each element from
-# gen_data_dirs() is appended to the theme name to give an actual
-# directory :-
+# gen_data_dirs() is taken and "icons" and the theme name are appended
+# to give an actual directory :-
 #
-#   "/home/rparlett/.local/share/16x16/intl"
-#   "/usr/local/share/16x16/intl"
-#   "/usr/share/16x16/intl"
+#   "/home/rparlett/.local/share/icons/theme/16x16/intl"
+#   "/usr/local/share/icons/theme/16x16/intl"
+#   "/usr/share/icons/theme/16x16/intl"
 #  
 # and the cached contents of those directories are stored in CachedDir
 # instances in the cached_dirs list.
@@ -83,49 +107,38 @@ package class ThemeDirectory()
       minsize,      #         
       maxsize,
       threshold,
+      scale,
       cached_dirs   # A list of CachedDir objects
 
-   public matches_size(desired_size, scalable_flag)
-      case type of {
-         "Fixed": succeed desired_size = size
-         "Threshold": {
-            succeed size - threshold <= desired_size <= size + threshold
-         }
-         "Scalable": {
-            if \scalable_flag then
-               succeed minsize <= desired_size <= maxsize
-         }
-      }
-   end
-
-   public directory_size_distance(desired_size, scalable_flag)
-      case type of {
-         "Fixed": return abs(desired_size - size)
+   public directory_size_distance(desired_size)
+      return case type of {
+         "Fixed": abs(desired_size - size)
          "Threshold": {
             if desired_size < size - threshold then 
-               return minsize - desired_size
-            if desired_size > size + threshold then 
-               return desired_size - maxsize
-            return 0
+               size - desired_size
+            else if desired_size > size + threshold then 
+               desired_size - size
+            else
+               0
          }
          "Scalable": {
-            if \scalable_flag then {
-               if desired_size < minsize then
-                  return minsize - desired_size
-               if desired_size > maxsize then
-                  return desired_size - maxsize
-               return 0
-            }
+            if desired_size < minsize then
+               minsize - desired_size
+            else if desired_size > maxsize  then
+               desired_size - maxsize 
+            else
+               0
          }
       }
    end
 
-   public new(type, size, minsize, maxsize, threshold, cached_dirs)
+   public new(type, size, minsize, maxsize, threshold, scale, cached_dirs)
       self.type := type
-      self.size := size
-      self.minsize := minsize
-      self.maxsize := maxsize
-      self.threshold := threshold
+      self.size := size * scale
+      self.minsize := minsize * scale
+      self.maxsize := maxsize * scale
+      self.threshold := threshold * scale
+      self.scale := scale
       self.cached_dirs := cached_dirs
       return
    end
@@ -558,6 +571,7 @@ package final abstract class Util()
       return parse_ini_file(ucs(Files.file_to_string(f)))
    end
 
+
    public static cache_icon(f, size, exact)
       # If it's an SVG file, then simply scale to the desired size and
       # return the key.
@@ -581,8 +595,7 @@ final abstract class IconTheme()
       ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
 
    private static readable
-      theme,
-      scalable_flag
+      theme
 
    private static init()
       refresh()
@@ -596,7 +609,6 @@ final abstract class IconTheme()
       FIND_ICON_CACHE := table()
       theme := get_current_theme()
       ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
-      scalable_flag := &yes
    end
 
    #
@@ -630,7 +642,7 @@ final abstract class IconTheme()
    end
 
    private static gen_theme_directories(tm)
-      suspend separate(member(member(tm, u"Icon Theme"), u"Directories"))
+      suspend separate(member(member(tm, u"Icon Theme"), u"Directories" | u"ScaledDirectories"))
    end
 
    private static gen_theme_parents(tm)
@@ -640,16 +652,17 @@ final abstract class IconTheme()
    # Build a ThemeIndex object given the name and the ini table.
    private static build_theme_index(theme, tm)
       local d, subdir, f, dirs, ds, m, cd,
-         type, size, minsize, maxsize, threshold
+         type, size, minsize, maxsize, threshold, scale
       dirs := []
       every subdir := gen_theme_directories(tm) do {
          if m := member(tm, subdir) &
-            size := integer(member(m, u"Size")) then 
+            size := (0 < integer(member(m, u"Size"))) then 
          {
             type := string(member(m, u"Type")) | "Threshold"
-            threshold := integer(member(m, u"Threshold")) | 2
-            minsize := integer(member(m, u"MinSize")) | size
-            maxsize := integer(member(m, u"MaxSize")) | size
+            threshold := (0 <= integer(member(m, u"Threshold"))) | 2
+            scale := (0 < integer(member(m, u"Scale"))) | 1
+            minsize := (0 < integer(member(m, u"MinSize"))) | size
+            maxsize := (0 < integer(member(m, u"MaxSize"))) | size
             cd := []
             every d := BaseDir.gen_data_dirs() do {
                f := FilePath(d).walk("icons", theme).append(FilePath(subdir))
@@ -657,7 +670,7 @@ final abstract class IconTheme()
                   put(cd, CachedDir(f, ds))
             }
             if *cd > 0 then
-               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, cd))
+               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, scale, cd))
          }
       }
       return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
@@ -692,15 +705,18 @@ final abstract class IconTheme()
    end
 
    #
-   # Find an icon given the icon name (string) and integer size.
+   # Find an icon given the icon name (string), integer size, and
+   # optional real scale, which defaults to `Gui.SCALE`.  Note that
+   # `size` is treated as an already-scaled value.
    #
-   public static find_icon(icon, size)
+   public static find_icon(icon, size, scale)
       local k, v
       icon := need_string(icon)
-      size := need_integer(size)
-      k := icon || "/" || size
+      size := need_integer(size, 1)
+      scale := need_real(\scale, 1.0) | Gui.SCALE
+      k := icon || "/" || size || "/" || scale
       if not(v := member(FIND_ICON_CACHE, k)) then {
-         v := find_icon_helper(icon, size, theme, set()) | lookup_fallback_icon(icon)
+         v := find_icon_helper(icon, size, scale, theme, set()) | lookup_fallback_icon(icon)
          insert(FIND_ICON_CACHE, k, v)
       }
       return \v
@@ -711,8 +727,8 @@ final abstract class IconTheme()
    # returns the cache key.  The parameter `exact` flag indicates
    # whether the found icon should be resized to exactly `size`.
    #
-   public static find_icon_and_cache(icon, size, exact)
-      return Util.cache_icon(find_icon(icon, size), size, exact)
+   public static find_icon_and_cache(icon, size, scale, exact)
+      return Util.cache_icon(find_icon(icon, size, scale), size, exact)
    end
 
    private static get_current_theme()
@@ -727,7 +743,7 @@ final abstract class IconTheme()
       return "hicolor"
    end
 
-   private static find_icon_helper(icon, size, theme, tried)
+   private static find_icon_helper(icon, size, scale, theme, tried)
       local theme_index
       if member(tried, theme) then
          fail
@@ -735,8 +751,8 @@ final abstract class IconTheme()
       theme_index := get_theme_index(theme) | fail
 
       # Try this theme, failing that try recursively with the theme's parents.
-      return lookup_icon(theme_index, icon, size) | 
-         find_icon_helper(icon, size, !theme_index.parents, tried)
+      return lookup_icon(theme_index, icon, size, scale) | 
+         find_icon_helper(icon, size, scale, !theme_index.parents, tried)
    end
 
    private static lookup_fallback_icon(icon)
@@ -747,33 +763,22 @@ final abstract class IconTheme()
       local ex, f
       if f := cached_dir.access(icon || ".png") then
          return f
-      if \scalable_flag then {
-         every ex := ".svg" | ".svgz" do {
-            if f := cached_dir.access(icon || ex) then {
-               # Try to load cairo; if fail then don't look for svg files again.
-               if /Context.LOADED then {
-                  scalable_flag := &null
-                  fail
-               }
-               return f
-            }
-         }
+      every ex := ".svg" | ".svgz" do {
+         if f := cached_dir.access(icon || ex) then
+            return \Context.LOADED & f
       }
    end
 
-   private static lookup_icon(theme_index, icon, size)
+   private static lookup_icon(theme_index, icon, size, scale)
       local subdir, f, minimal_size, closest_filename, ms
-      every subdir := !theme_index.directories do {
-         if subdir.matches_size(size, scalable_flag) then {
-            # Search in all the CachedDirs in the subdir
-            if f := has_icon(!subdir.cached_dirs, icon) then
-               return f
-         }
-      }
-      minimal_size := lang.Limit.MaxWord
-      every subdir := !theme_index.directories do {
-         if (ms := subdir.directory_size_distance(size, scalable_flag)) < minimal_size then {
+      # Search for best match
+      every subdir := theme_index.ordered_directories(scale) do {
+         ms := subdir.directory_size_distance(size)
+         if /minimal_size | (ms < minimal_size) then {
             if f := has_icon(!subdir.cached_dirs, icon) then {
+               # Early exit on an exact match
+               if ms = 0 then
+                  return f
                closest_filename := f
                minimal_size := ms
             }
@@ -902,8 +907,8 @@ final abstract class Mime()
    # The `exact` parameter has the same effect as in
    # `find_icon_and_cache`.
    #
-   public static find_icon_for_file_and_cache(file, size, exact)
-      return Util.cache_icon(find_icon_for_file(file, size), size, exact)
+   public static find_icon_for_file_and_cache(file, size, scale, exact)
+      return Util.cache_icon(find_icon_for_file(file, size, scale), size, exact)
    end
 
    private static read_generic_icons()
@@ -989,11 +994,12 @@ final abstract class Mime()
    end
 
    #
-   # Find an icon given a filename (not a path) and integer size.
+   # Find an icon given a filename (not a path), integer size, and
+   # optional scale (see `IconTheme.find_icon()`).
    #
-   public static find_icon_for_file(file, size)
+   public static find_icon_for_file(file, size, scale)
       return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
-                                 size)
+                                 size, scale)
    end
 
    private static true_key(dm, key)

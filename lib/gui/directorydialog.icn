@@ -429,7 +429,6 @@ class DirectoryDialog(Dialog)
    end
 
    public override new()
-      local p
       Dialog.new()
       self.setup()
       tools_menu.set_border_mid(NullBorder())
@@ -437,12 +436,11 @@ class DirectoryDialog(Dialog)
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(up_button, "go-up")
       theme_toolbar_button(tools_menu_button, "applications-system")
-      p := scale(2)
       tree.
-         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * p).
+         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * Tree.COL_PAD).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
-                            set_insets(p, Gui.TEXT_INSET, 0, 0).
+                            set_insets(Tree.COL_PAD, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
          
       existing_file_mode := IGNORE
