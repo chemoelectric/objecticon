@@ -118,6 +118,9 @@ $load SYMLINK_16 "fileicons/symlink.png"
 $load SOCKET_16 "fileicons/socket.png"
 $load PIPE_16 "fileicons/pipe.png"
 $load HTML_16 "fileicons/html.png"
+$load TEXT_16 "fileicons/text.png"
+$load FILE_16 "fileicons/file.png"
+$load FOLDER_16 "fileicons/folder.png"
 $else
 $load PDF_16 "fileicons/pdf.gif"
 $load IMAGE_16 "fileicons/image.gif"
@@ -131,6 +134,9 @@ $load SYMLINK_16 "fileicons/symlink.gif"
 $load SOCKET_16 "fileicons/socket.gif"
 $load PIPE_16 "fileicons/pipe.gif"
 $load HTML_16 "fileicons/html.gif"
+$load TEXT_16 "fileicons/text.gif"
+$load FILE_16 "fileicons/file.gif"
+$load FOLDER_16 "fileicons/folder.gif"
 $endif
 
 #
@@ -154,9 +160,12 @@ class IconFilesItemPaint(ItemPaint)
          name_image("fi.SYMLINK_16", SYMLINK_16).
          name_image("fi.SOCKET_16", SOCKET_16).
          name_image("fi.PIPE_16", PIPE_16).
-         name_image("fi.HTML_16", HTML_16)
+         name_image("fi.HTML_16", HTML_16).
+         name_image("fi.TEXT_16", TEXT_16).
+         name_image("fi.FILE_16", FILE_16).
+         name_image("fi.FOLDER_16", FOLDER_16)
 
-      try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER_16")
+      try_xdg("fi.folder", "folder", "fi.FOLDER_16")
       try_xdg("fi.symlink", "emblem-symbolic-link", "fi.SYMLINK_16")
       try_xdg("fi.exe", "application-x-executable", "fi.EXE_16")
       resize("fi.pdf", "fi.PDF_16")
@@ -169,7 +178,8 @@ class IconFilesItemPaint(ItemPaint)
       resize("fi.socket", "fi.SOCKET_16")
       resize("fi.pipe", "fi.PIPE_16")
       resize("fi.html", "fi.HTML_16")
-      resize("fi.file", "gui.FILE_16")
+      resize("fi.text", "fi.TEXT_16")
+      resize("fi.file", "fi.FILE_16")
    end
 
    private static resize(dest, src)
@@ -227,6 +237,7 @@ class IconFilesItemPaint(ItemPaint)
                   "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "fi.video"
                   "mp3"|"wav"|"mid"|"rm": "fi.audio"
                   "htm"|"html": "fi.html"
+                  "txt"|"doc"|"rtf": "fi.text"
                }
             }
          }
