@@ -1113,7 +1113,7 @@ class TabHeaderPaint(Paint)
    public override initially(c)
       local iw
       iw := Window.open_image(\icon)
-      self.h := max(ICON_SIZE, c.cbwin.get_font_height())
+      self.h := max(2 * Gui.Y_INSET + ICON_SIZE, c.cbwin.get_line_height())
       if \iw then {
          if iw.get_height() ~= ICON_SIZE then {
             icon_win := zoom_win(iw,
@@ -1133,13 +1133,15 @@ class TabHeaderPaint(Paint)
    end
 
    public override draw(W, x, y, w, h)
+      local d
       if \icon_win then {
          icon_win.copy_to(,,,, W, x, y + (h - icon_win.get_height()) / 2)
-         x +:= icon_win.get_width() + Gui.TEXT_INSET
-         w -:= icon_win.get_width() + Gui.TEXT_INSET
-         W.draw_string(x, y + W.get_font_ascent(), limit_text(W, str, w))
-      } else
-         W.draw_string(x, y + W.get_font_ascent(), limit_text(W, str, w))
+         d := icon_win.get_width() + Gui.TEXT_INSET
+         x +:= d
+         w -:= d
+      }
+      W.draw_string(x, y + (h + W.get_font_ascent() - W.get_font_descent()) / 2,
+                    limit_text(W, str, w))
    end
 
    public label_will_fit(W, w)
