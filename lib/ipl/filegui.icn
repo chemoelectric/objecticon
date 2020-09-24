@@ -246,15 +246,16 @@ class IconFilesItemPaint(ItemPaint)
    end
 
    public override draw(W, data, x, y, w, h)
-      local i
+      local i, d
       if is(data, ListEntryWithIcon) then {
          if not(i := \data.icon) then
             i := data.icon := get_icon(data)
       } else
          i := get_icon(data)
       i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
-      x +:= ICON_SIZE + Gui.TEXT_INSET
-      w -:= ICON_SIZE + Gui.TEXT_INSET
+      d := ICON_SIZE + Gui.TEXT_INSET
+      x +:= d
+      w -:= d
       W.draw_string(x, y + (h + W.get_font_ascent() - W.get_font_descent()) / 2,
                     limit_text(W, get_string(data), w))
    end
