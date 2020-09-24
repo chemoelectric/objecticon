@@ -95,12 +95,22 @@ function ssl_SslStream_new_impl(other, host)
    }
 end
 
+static void io_set_whyf(struct sslstream *ss, char *fun, int rc)
+{
+    int se;
+    se = SSL_get_error(ss->ssl, rc);
+    if (se == SSL_ERROR_SYSCALL || se == SSL_ERROR_SSL)
+        whyf("%s: SSL_get_error:%d %s", fun, se, ERR_error_string(ERR_peek_last_error(), 0));
+    else
+        whyf("%s: SSL_get_error:%d", fun, se);
+}
+
 function ssl_SslStream_connect(self)
    body {
        int rc;
        GetSelfSsl();
        if ((rc = SSL_connect(self_ssl->ssl)) <= 0) {
-           whyf("SSL_connect: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
+           io_set_whyf(self_ssl, "SSL_connect", rc);
            fail;
        }
        return self;
@@ -210,7 +220,7 @@ function ssl_SslStream_in(self, i)
            dealcstr(s);
 
            if (nread < 0 || SSL_get_error(self_ssl->ssl, nread) != SSL_ERROR_ZERO_RETURN) {
-               whyf("SSL_read: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, nread), 0));
+               io_set_whyf(self_ssl, "SSL_read", nread);
                fail;
            } else   /* nread == 0 */
                return nulldesc;
@@ -233,7 +243,7 @@ function ssl_SslStream_out(self, s)
        GetSelfSsl();
        rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
        if (rc < 0 || (rc == 0 && SSL_get_error(self_ssl->ssl, rc) != SSL_ERROR_ZERO_RETURN)) {
-           whyf("SSL_write: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
+           io_set_whyf(self_ssl, "SSL_write", rc);
            fail;
        }
        return C_integer rc;
@@ -246,7 +256,7 @@ function ssl_SslStream_shutdown(self)
        GetSelfSsl();
        rc = SSL_shutdown(self_ssl->ssl);
        if (rc < 0) {
-           whyf("SSL_shutdown: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
+           io_set_whyf(self_ssl, "SSL_shutdown", rc);
            fail;
        }
        return self;

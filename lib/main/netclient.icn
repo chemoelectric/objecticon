@@ -372,7 +372,7 @@ $endif
       local err, r
       # Extract the ssl error no.
       &why ? {
-         if tab(past("error:")) then
+         if tab(past("SSL_get_error:")) then
             err := integer(tab(many(&digits)))
       }
       case err of {
