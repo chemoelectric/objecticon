@@ -241,10 +241,19 @@ function ssl_SslStream_out(self, s)
    body {
        word rc;
        GetSelfSsl();
-       rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
-       if (rc < 0 || (rc == 0 && SSL_get_error(self_ssl->ssl, rc) != SSL_ERROR_ZERO_RETURN)) {
-           io_set_whyf(self_ssl, "SSL_write", rc);
-           fail;
+       /*
+        * Calling SSL_write with a length of 0 is invalid; so for
+        * consistency with other streams, make this a no-op and return
+        * 0.
+        */
+       if (StrLen(s) == 0)
+           rc = 0;
+       else {
+           rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
+           if (rc <= 0) {
+               io_set_whyf(self_ssl, "SSL_write", rc);
+               fail;
+           }
        }
        return C_integer rc;
    }
