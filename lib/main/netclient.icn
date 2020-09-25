@@ -20,7 +20,6 @@ import
    lang,
    util, 
    ipl.base64,
-   ipl.scan,
    ipl.printf,
    ipl.functional
 
@@ -369,14 +368,9 @@ $endif
    # If so, poll the connection and return (so the ssl call can be
    # retried); otherwise fail.
    private ssl_maybe_poll()
-      local err, r
-      # Extract the ssl error no.
-      &why ? {
-         if tab(past("SSL_get_error:")) then
-            err := integer(tab(many(&digits)))
-      }
-      case err of {
-         2 : {  # SSL_ERROR_WANT_READ
+      local r
+      case ssl_error() of {
+         SslStream.ERROR_WANT_READ : {
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed: Timeout")
             DescStream.poll_in_test(r[1]) | {
@@ -385,7 +379,7 @@ $endif
             }
             return
          }
-         3 : {  # SSL_ERROR_WANT_WRITE 
+         SslStream.ERROR_WANT_WRITE: {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
             DescStream.poll_out_test(r[1]) | {

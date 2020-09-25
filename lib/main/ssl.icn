@@ -1,12 +1,23 @@
 package ssl
 
-import io, lang, util
+import io, lang, util, ipl.scan
 
-# Succeed if the ssl library is available, or fail and set &why if
+#
+# Succeed if the ssl library is available, or fail and set `&why` if
 # it isn't.
 #
 procedure ssl_available()
    succeed \SslStream.LOADED | error(SslStream.WHY)
+end
+
+#
+# Extract the SSL_get_error value from `&why`, or fail if not found.
+#
+procedure ssl_error()
+   &why ? {
+      if tab(past("SSL_get_error:")) then
+         return integer(tab(many(&digits)))
+   }
 end
 
 #
@@ -17,10 +28,26 @@ final class SslStream(Stream, HasCloseUnderlying, NoCopy)
       ptr,
       other
 
-   public static const LOADED, WHY
+   public static const
+      ERROR_NONE,
+      ERROR_SSL,
+      ERROR_WANT_READ,
+      ERROR_WANT_WRITE,
+      ERROR_SYSCALL,
+      ERROR_ZERO_RETURN,
+      LOADED,
+      WHY
 
    private static init()
       local t
+
+      ERROR_NONE                 := 0
+      ERROR_SSL                  := 1
+      ERROR_WANT_READ            := 2
+      ERROR_WANT_WRITE           := 3
+      ERROR_SYSCALL              := 5
+      ERROR_ZERO_RETURN          := 6
+
       if t := Files.find_native_lib("objecticonssllib") then {
          if Class.load_library(t) then
             LOADED := t
