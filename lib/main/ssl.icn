@@ -61,12 +61,22 @@ final class SslStream(Stream, HasCloseUnderlying, NoCopy)
 
    public native verify()
 
-   public native shutdown()
+   #
+   # Perform a shutdown on the connection; `full` is a flag; if set then
+   # the shutdown will wait for a reply to the "close notify" from the
+   # server.
+   #
+   public native shutdown(full)
 
    public override native in(n)
 
    public override native out(s)
 
+   #
+   # Close this connection, and if the close underlying flag has been
+   # set, the underlying connection.  Note that `shutdown()` is not
+   # called on the connection.
+   #
    public override close()
       local f
       close_impl() | (f := &why)

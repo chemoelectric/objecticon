@@ -69,6 +69,7 @@ abstract class NetClient(Connectable, HasTask, HasClose)
    private
       connection,
       ssl_connection,
+      ssl_want_shutdown,
       sbuff
 
    # Note an address to avoid for the next `AVOID_TIMEOUT`
@@ -217,6 +218,7 @@ $if _MS_WIN32
                return whyf("Couldn't perform SSL connection: %w")
             }
          }
+         ssl_want_shutdown := &yes
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                quietly_close_connection()
@@ -349,6 +351,7 @@ $else
                return whyf("Couldn't perform SSL connection: %w")
             }
          }
+         ssl_want_shutdown := &yes
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                quietly_close_connection()
@@ -389,6 +392,9 @@ $endif
             return
          }
       }
+      # Don't send a ssl shutdown after any ssl error; see
+      # https://www.openssl.org/docs/man1.0.2/man3/SSL_get_error.html
+      ssl_want_shutdown := &no
    end
 
    public static valid_port(i)
@@ -516,9 +522,11 @@ $endif
    protected close_connection()
       local f
       if \ssl_connection then {
+         if \ssl_want_shutdown then
+            ssl_connection.shutdown()
          ssl_connection.close() | (f := &why)
          connection.close() | (f := &why)
-         ssl_connection := connection := &null
+         ssl_connection := connection := ssl_want_shutdown := &null
          fire(CLOSED_EVENT)
       } else if \connection then {
          connection.close() | (f := &why)

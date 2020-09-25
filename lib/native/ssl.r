@@ -250,11 +250,15 @@ function ssl_SslStream_out(self, s)
    }
 end
 
-function ssl_SslStream_shutdown(self)
+function ssl_SslStream_shutdown(self, full)
    body {
        int rc;
        GetSelfSsl();
-       rc = SSL_shutdown(self_ssl->ssl);
+       if (!is_flag(&full))
+          runerr(171, full);
+       do {
+           rc = SSL_shutdown(self_ssl->ssl);
+       } while (rc == 0 && !is:null(full));
        if (rc < 0) {
            io_set_whyf(self_ssl, "SSL_shutdown", rc);
            fail;
@@ -266,8 +270,6 @@ end
 function ssl_SslStream_close_impl(self)
    body {
        GetSelfSsl();
-       SSL_set_quiet_shutdown(self_ssl->ssl, 1);
-       SSL_shutdown(self_ssl->ssl);
        SSL_free(self_ssl->ssl);
        SSL_CTX_free(self_ssl->ctx);
        free(self_ssl->host);
