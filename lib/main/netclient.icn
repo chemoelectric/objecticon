@@ -391,10 +391,12 @@ $endif
             }
             return
          }
+         SslStream.ERROR_SSL | SslStream.ERROR_SYSCALL: {
+            # Don't send a ssl shutdown after these errors; see
+            # https://www.openssl.org/docs/man1.1.1/man3/SSL_get_error.html
+            ssl_want_shutdown := &no
+         }
       }
-      # Don't send a ssl shutdown after any ssl error; see
-      # https://www.openssl.org/docs/man1.0.2/man3/SSL_get_error.html
-      ssl_want_shutdown := &no
    end
 
    public static valid_port(i)
