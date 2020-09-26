@@ -109,7 +109,8 @@ function ssl_SslStream_connect(self)
    body {
        int rc;
        GetSelfSsl();
-       if ((rc = SSL_connect(self_ssl->ssl)) <= 0) {
+       SigPipeProtect(rc = SSL_connect(self_ssl->ssl));
+       if (rc <= 0) {
            io_set_whyf(self_ssl, "SSL_connect", rc);
            fail;
        }
@@ -214,7 +215,7 @@ function ssl_SslStream_in(self, i)
         */
        MemProtect(s = alcstr(NULL, i));
 
-       nread = SSL_read(self_ssl->ssl, s, i);
+       SigPipeProtect(nread = SSL_read(self_ssl->ssl, s, i));
        if (nread <= 0) {
            /* Reset the memory just allocated */
            dealcstr(s);
@@ -249,7 +250,7 @@ function ssl_SslStream_out(self, s)
        if (StrLen(s) == 0)
            rc = 0;
        else {
-           rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
+           SigPipeProtect(rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s)));
            if (rc <= 0) {
                io_set_whyf(self_ssl, "SSL_write", rc);
                fail;
@@ -266,7 +267,7 @@ function ssl_SslStream_shutdown(self, full)
        if (!is_flag(&full))
           runerr(171, full);
        do {
-           rc = SSL_shutdown(self_ssl->ssl);
+           SigPipeProtect(rc = SSL_shutdown(self_ssl->ssl));
        } while (rc == 0 && !is:null(full));
        if (rc < 0) {
            io_set_whyf(self_ssl, "SSL_shutdown", rc);
