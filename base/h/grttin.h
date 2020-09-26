@@ -492,6 +492,24 @@ if (is:null(*m##_dptr))
 #endif
 
 /*
+ * Enclose an statement in a block with the SIGPIPE handler
+ * temporarily set to SIG_IGN.
+ */
+#begdef SigPipeProtect(thing)
+{
+#if UNIX
+    struct sigaction pp_saved, pp_tmp;
+    pp_tmp.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &pp_tmp, &pp_saved);
+    thing;
+    sigaction(SIGPIPE, &pp_saved, NULL);
+#else
+    thing;
+#endif
+}
+#enddef
+
+/*
  * Check and convert to class/record field specifier - integer or string.
  */
 
