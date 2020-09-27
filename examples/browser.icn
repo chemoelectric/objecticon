@@ -30,6 +30,8 @@ $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
 $load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
+$load INCREASE_FONT_SVG "rpp.INCREASE_FONT_24.svgz"
+$load DECREASE_FONT_SVG "rpp.DECREASE_FONT_24.svgz"
 
 class Settings2()
    public
@@ -941,7 +943,7 @@ class DownloadTab(TabItem)
       label_border.set_x_align(Align.L)
       setup()
       theme_toolbar_button(paste_url_button, "edit-paste")
-      theme_toolbar_button(destination_button, "go-up")
+      theme_toolbar_button(destination_button, "go-up", "gui.UP_SVG")
       theme_toolbar_button(clear_done_button)
       ticker := Dispatcher.new_task{tick()}
       dl := []
@@ -1714,17 +1716,17 @@ class BrowserTab(TabItem, BrowserUI)
       set_remembered_focus(browser)
       # Try themed icon buttons
       theme_toolbar_button(close_button, "window-close")
-      theme_toolbar_button(prev_button, "go-previous")
-      theme_toolbar_button(next_button, "go-next")
+      theme_toolbar_button(prev_button, "go-previous", "gui.PREV_SVG")
+      theme_toolbar_button(next_button, "go-next", "gui.NEXT_SVG")
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(stop_button)
-      theme_toolbar_button(refresh_button, "view-refresh")
+      theme_toolbar_button(refresh_button, "view-refresh", "gui.REFRESH_SVG")
       theme_toolbar_button(paste_url_button, "edit-paste")
       theme_toolbar_button(search_close_button, "window-close")
-      theme_toolbar_button(search_prev_button, "go-previous")
-      theme_toolbar_button(search_next_button, "go-next")
-      theme_toolbar_button(increase_font_button, "format-font-size-more")
-      theme_toolbar_button(decrease_font_button, "format-font-size-less")
+      theme_toolbar_button(search_prev_button, "go-previous", "gui.PREV_SVG")
+      theme_toolbar_button(search_next_button, "go-next", "gui.NEXT_SVG")
+      theme_toolbar_button(increase_font_button, "format-font-size-more", "rpp.INCREASE_FONT_SVG")
+      theme_toolbar_button(decrease_font_button, "format-font-size-less", "rpp.DECREASE_FONT_SVG")
       start_url := url
       start_referer_url := referer_url
       return
@@ -1932,7 +1934,9 @@ procedure main(a)
       name_image("rpp.STOP_24", STOP).
       name_image("rpp.CLEAR_24", CLEAR).
       name_image("rpp.INCREASE_FONT_24", INCREASE_FONT).
-      name_image("rpp.DECREASE_FONT_24", DECREASE_FONT)
+      name_image("rpp.DECREASE_FONT_24", DECREASE_FONT).
+      name_image("rpp.INCREASE_FONT_SVG", INCREASE_FONT_SVG).
+      name_image("rpp.DECREASE_FONT_SVG", DECREASE_FONT_SVG)
    insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, Pixels(BROWSER_LOGO))
    d := BrowserDialog(cookies, settings)
    if *a = 0 then

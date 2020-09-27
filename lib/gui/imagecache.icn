@@ -46,6 +46,10 @@ $load WINDOW_ICONIFY "images/gui.WINDOW_ICONIFY_16.gif"
 $load CLOCK_SVG "images/gui.CLOCK_SVG.svgz"
 $load FILESIZE_SVG "images/gui.FILESIZE_SVG.svgz"
 $load FONT_SVG "images/gui.FONT_SVG.svgz"
+$load REFRESH_SVG "images/gui.REFRESH.svgz"
+$load UP_SVG "images/gui.UP.svgz"
+$load PREV_SVG "images/gui.PREV.svgz"
+$load NEXT_SVG "images/gui.NEXT.svgz"
 
 final abstract class ImageCache()
    public static 
@@ -79,6 +83,10 @@ final abstract class ImageCache()
       name_image("gui.CLOCK_SVG", CLOCK_SVG)
       name_image("gui.FILESIZE_SVG", FILESIZE_SVG)
       name_image("gui.FONT_SVG", FONT_SVG)
+      name_image("gui.REFRESH_SVG", REFRESH_SVG)
+      name_image("gui.UP_SVG", UP_SVG)
+      name_image("gui.NEXT_SVG", NEXT_SVG)
+      name_image("gui.PREV_SVG", PREV_SVG)
 
       i := scale_odd(13)
       j := scale(2)
