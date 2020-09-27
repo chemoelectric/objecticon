@@ -116,7 +116,7 @@ class TextButton(Button, BorderWhilstEntered)
    end
 
    public override initially()
-      \self.paint | runerr("no label specified")
+      \self.paint | runerr("No label specified")
       Button.initially()
       self.paint.initially(self, self.accel)
       (\self.paint_down).initially(self, self.accel)
