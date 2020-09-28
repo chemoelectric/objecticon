@@ -1501,7 +1501,7 @@ void *padded_malloc(size_t size)
  * The following are simple wrappers around malloc and free which
  * cache allocations returned via small_free() for recycling by
  * future small_alloc() calls.  Only allocations of small sizes are
- * cached (< 1K on 64-bit, 512KB on 32-bit); sizes larger than this
+ * cached (< 1K on 64-bit, 512B on 32-bit); sizes larger than this
  * just use malloc/free as usual.
  */
 
@@ -1531,7 +1531,7 @@ struct sa_row {
 /*
  * The cache itself has 8 rows.  At a step size of 128 bytes per row
  * this means allocs < 1KB are subject to being cached; at 64 bytes,
- * the limit is 512KB.
+ * the limit is 512B.
  */
 static struct sa_row sa_rows[8];
 
