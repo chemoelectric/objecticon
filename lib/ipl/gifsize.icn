@@ -13,33 +13,27 @@
 #   This file is in the public domain.
 #
 ############################################################################
-#
-#  This procedure returns the logical screen size of a GIF file in the
-#  form width,height.  It fails if the file does not exist or is not a
-#  valid GIF file.
-#
-############################################################################
-#
-#  Links:  bincvt
-#
-############################################################################
 
 package ipl.gifsize
 
 import
    io(open),
-   ipl.bincvt(unsigned),
+   ipl.bincvt(le_unsigned),
    util(use)
 
-# size of GIF file logical screen size
+#
+#  This procedure returns the logical screen size of a GIF file in the
+#  form width,height.  It fails if the file does not exist or is not a
+#  valid GIF file.
+#
 procedure gifsize(name)			
    local gif, width, height
    return use {
       gif := open(name),
       gif.reads(10) ? {
          =("GIF87a" | "GIF89a") &
-         width := unsigned(reverse(move(2))) &
-         height := unsigned(reverse(move(2))) &
+         width := le_unsigned(move(2)) &
+         height := le_unsigned(move(2)) &
          width || "," || height
       }
    }
