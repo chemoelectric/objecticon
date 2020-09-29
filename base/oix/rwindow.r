@@ -585,6 +585,7 @@ static int readgiffile(char *filename, struct imgdata *imd)
         gf_paltbl = NULL;
         free(gf_string);
         gf_string = NULL;
+        whyf("readgiffile: Failed to read GIF file %s", filename);
         return Failed;
     }
 
@@ -619,6 +620,7 @@ static int readgifdata(dptr data, struct imgdata *imd)
         gf_paltbl = NULL;
         free(gf_string);
         gf_string = NULL;
+        LitWhy("readgifdata: Failed to interpret GIF data");
         return Failed;
     }
 
@@ -1024,7 +1026,7 @@ static int readjpegfile(char *filename, struct imgdata *imd)
         jpeg_destroy_decompress(&cinfo);
         free(data);
         fclose(fp);
-        whyf("readjpegfile: Failed to read file %s", filename);
+        whyf("readjpegfile: Failed to read JPEG file %s", filename);
         return Failed;
     }
 
@@ -1185,7 +1187,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
         return Failed;
     }
     if (fread(header, 1, 8, fp) != 8) {
-        errno2why();
+        whyf("readpngfile: Couldn't read header from PNG file %s", filename);
         fclose(fp);
         return Failed;
     }
@@ -1204,7 +1206,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
         free(row_pointers);
         free(data);
         fclose(fp);
-        whyf("readpngfile: Failed to read file %s", filename);
+        whyf("readpngfile: Failed to read PNG file %s", filename);
         return Failed;
     }
 
