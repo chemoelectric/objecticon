@@ -20,11 +20,11 @@ package class Diversion()
       subject, 
       pos
 
-   public new(base, id, subject, pos)
+   public new(base, id)
       self.base := base
       self.id := id
-      self.subject := subject
-      self.pos := pos
+      self.subject := &subject
+      self.pos := &pos
       return
    end
 end
@@ -1964,7 +1964,7 @@ class XmlParser(Connectable)
    end
 
    private start_divert(base, id) 
-      push(divert_stack, Diversion(current_base, current_divert_id, &subject, &pos))
+      push(divert_stack, Diversion(current_base, current_divert_id))
       current_divert_id := id
       current_base := base
    end
@@ -1979,7 +1979,7 @@ class XmlParser(Connectable)
    private where()
       local stack
       stack := copy(divert_stack)
-      push(stack, Diversion(current_base, current_divert_id, &subject, &pos))
+      push(stack, Diversion(current_base, current_divert_id))
       return stack
    end
 
