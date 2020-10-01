@@ -2910,11 +2910,11 @@ $endif
       history_list.set_size().set_selection_list([])
       input := []
       theme_toolbar_button(close_button, "window-close")
-      theme_toolbar_button(prev_button, "go-previous")
-      theme_toolbar_button(next_button, "go-next")
-      theme_toolbar_button(up_button, "go-up")
+      theme_toolbar_button(prev_button, "go-previous", "gui.PREV_SVG")
+      theme_toolbar_button(next_button, "go-next", "gui.NEXT_SVG")
+      theme_toolbar_button(up_button, "go-up", "gui.UP_SVG")
       theme_toolbar_button(home_button, "go-home")
-      theme_toolbar_button(refresh_button, "view-refresh")
+      theme_toolbar_button(refresh_button, "view-refresh", "gui.REFRESH_SVG")
       theme_toolbar_button(focus_columns_button, "key-enter")
 
       if \other then {
@@ -3248,8 +3248,8 @@ $endif
       search_panel.add(search_label)
 
       theme_toolbar_button(search_close_button, "window-close")
-      theme_toolbar_button(search_prev_button, "go-previous")
-      theme_toolbar_button(search_next_button, "go-next")
+      theme_toolbar_button(search_prev_button, "go-previous", "gui.PREV_SVG")
+      theme_toolbar_button(search_next_button, "go-next", "gui.NEXT_SVG")
    end
 
    private setup()

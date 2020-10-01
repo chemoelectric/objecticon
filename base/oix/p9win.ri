@@ -1337,6 +1337,11 @@ int setmask(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+int ishidden(wbp w)
+{
+    return w->window->win == 0;
+}
+
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     int len;

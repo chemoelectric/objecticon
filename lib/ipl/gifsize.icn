@@ -2,7 +2,7 @@
 #
 #	File:     gifsize.icn
 #
-#	Subject:  Procedure to return size of GIF file
+#	Subject:  Procedure to return logical screen size of GIF file
 #
 #	Author:   Ralph E. Griswold
 #
@@ -13,44 +13,28 @@
 #   This file is in the public domain.
 #
 ############################################################################
-#
-#  This procedure returns the size of a GIF file in the form
-#  width,height.  It fails if the file does not exist or is
-#  not a valid GIF file.
-#
-############################################################################
-#
-#  Links:  bincvt
-#
-############################################################################
 
 package ipl.gifsize
 
 import
-   io(close, open, read),
-   ipl.bincvt(unsigned)
+   io(open),
+   ipl.bincvt(le_unsigned),
+   util(use)
 
-# size of GIF file
+#
+#  This procedure returns the logical screen size of a GIF file in the
+#  form width,height.  It fails if the file does not exist or is not a
+#  valid GIF file.
+#
 procedure gifsize(name)			
    local gif, width, height
-
-   gif := open(name) | fail
-
-   repeat {			# only to provide a loop to break out of ...
-      read(gif) ? {
-         =("GIF87a" | "GIF89a") | break
-         width := move(1)
-         width := move(1) || width
-         width := unsigned(width) | break
-         height := move(1)
-         height := move(1) || height
-         height := unsigned(height) | break
-         close(gif)
-         return width || "," || height
-         } | break
+   return use {
+      gif := open(name),
+      gif.reads(10) ? {
+         =("GIF87a" | "GIF89a") &
+         width := le_unsigned(move(2)) &
+         height := le_unsigned(move(2)) &
+         width || "," || height
       }
-
-   close(gif)
-   fail
-
+   }
 end

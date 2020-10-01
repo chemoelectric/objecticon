@@ -66,7 +66,7 @@ package class ThemeIndex()
          l := isort(directories, lpartial(scale_dist, scale))
          insert(ordered_directories_cache, scale, l)
       }
-      suspend !.l
+      suspend .!l
    end
 
    public new(directories, parents)
@@ -881,7 +881,7 @@ final abstract class Mime()
          alternative_mime_types1(mt, l, set())
          insert(MIME_ALTERNATIVES, mt, l)
       }
-      suspend !.l
+      suspend .!l
    end
 
    private static alternative_mime_types1(mt, l, seen)

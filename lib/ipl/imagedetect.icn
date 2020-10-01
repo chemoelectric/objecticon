@@ -1,5 +1,7 @@
 package ipl.imagedetect
 
+import ipl.bincvt
+
 #
 # The return value of the `detect` procedure.
 #
@@ -22,48 +24,50 @@ procedure detect(s)
    return jpeg_detect(s) | png_detect(s) | gif_detect(s)
 end
 
-# See http://www.64lines.com/jpeg-width-height
+# See <http://www.64lines.com/jpeg-width-height>
 procedure jpeg_detect(s)
    local length, width, height, ty
    s ? {
       ="\xFF\xD8" | fail
       repeat {
-         ="\xFF" | fail
-         ty := ord(move(1)) | fail
+         (="\xFF" &
+          ty := ord(move(1))) | fail
          # See: http://en.wikibooks.org/wiki/JPEG_-_Idea_and_Practice/The_header_part
          if 192 <= ty <= 207 & ty ~= 196 & ty ~= 200 & ty ~= 204 then {
-            move(3)
-            height := 256 * ord(move(1)) + ord(move(1)) | fail
-            width := 256 * ord(move(1)) + ord(move(1)) | fail
+            (move(3) &
+             height := be_unsigned(move(2)) &
+             width := be_unsigned(move(2))) | fail
             return ImageDetect(width, height, "jpeg")
          } else {
-            length := 256 * ord(move(1)) + ord(move(1)) | fail
-            move(length - 2) | fail
+            (length := be_unsigned(move(2)) &
+             move(length - 2)) | fail
          }
       }
    }
 end
 
+# See <https://en.wikipedia.org/wiki/Portable_Network_Graphics#File_format>
 procedure png_detect(s)
    local width, height
    s ? {
-      ="\x89PNG\x0D\x0A\x1A\x0A" | fail
-      move(4)
-      ="IHDR" | fail
-      width := 16777216 * ord(move(1)) + 65536 * ord(move(1)) + 256 * ord(move(1)) + ord(move(1)) | fail
-      height := 16777216 * ord(move(1)) + 65536 * ord(move(1)) + 256 * ord(move(1)) + ord(move(1)) | fail
-      return ImageDetect(width, height, "png")
+      if ="\x89PNG\x0D\x0A\x1A\x0A" &
+         move(4) &
+         ="IHDR" &
+         width := be_unsigned(move(4)) &
+         height := be_unsigned(move(4))
+      then
+         return ImageDetect(width, height, "png")
    }
 end
 
-# See http://giflib.sourceforge.net/whatsinagif/bits_and_bytes.html
+# See <http://giflib.sourceforge.net/whatsinagif/bits_and_bytes.html>
 procedure gif_detect(s)
    local width, height, b, depth, n, ch
    s ? {
-      =("GIF87a" | "GIF89a") | fail
-      move(4)
-      b := ord(move(1)) | fail
-      move(2) | fail
+      (=("GIF87a" | "GIF89a") &
+       move(4) &
+       b := ord(move(1)) &
+       move(2)) | fail
       if iand(b, 128) = 128 then {
          depth := iand(b, 7) + 1
          move(3 * (2 ^ depth)) | fail
@@ -71,9 +75,9 @@ procedure gif_detect(s)
       repeat {
          ch := move(1) | fail
          if ch == "," then {
-            move(4) | fail
-            width := ord(move(1)) + 256 * ord(move(1)) | fail
-            height := ord(move(1)) + 256 * ord(move(1)) | fail
+            (move(4) &
+             width := le_unsigned(move(2)) &
+             height := le_unsigned(move(2))) | fail
             return ImageDetect(width, height, "gif")
          }
          if ch == "!" then {

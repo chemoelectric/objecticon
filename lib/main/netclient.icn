@@ -20,7 +20,6 @@ import
    lang,
    util, 
    ipl.base64,
-   ipl.scan,
    ipl.printf,
    ipl.functional
 
@@ -70,6 +69,7 @@ abstract class NetClient(Connectable, HasTask, HasClose)
    private
       connection,
       ssl_connection,
+      ssl_want_shutdown,
       sbuff
 
    # Note an address to avoid for the next `AVOID_TIMEOUT`
@@ -261,6 +261,7 @@ $elsif _MS_WIN32
                return whyf("Couldn't perform SSL connection: %w")
             }
          }
+         ssl_want_shutdown := &yes
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                quietly_close_connection()
@@ -393,6 +394,7 @@ $else
                return whyf("Couldn't perform SSL connection: %w")
             }
          }
+         ssl_want_shutdown := &yes
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
                quietly_close_connection()
@@ -406,19 +408,19 @@ $else
    end
 $endif
 
+$if _PLAN9
+   private ssl_maybe_poll()
+      syserr("Not reached")
+   end
+$else
    # After an error to an ssl function, check if it is because the
    # ssl layer needs to read/write from the underlying connection.
    # If so, poll the connection and return (so the ssl call can be
    # retried); otherwise fail.
    private ssl_maybe_poll()
-      local err, r
-      # Extract the ssl error no.
-      &why ? {
-         if tab(past("error:")) then
-            err := integer(tab(many(&digits)))
-      }
-      case err of {
-         2 : {  # SSL_ERROR_WANT_READ
+      local r
+      case ssl_error() of {
+         SslStream.ERROR_WANT_READ : {
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed: Timeout")
             DescStream.poll_in_test(r[1]) | {
@@ -427,7 +429,7 @@ $endif
             }
             return
          }
-         3 : {  # SSL_ERROR_WANT_WRITE 
+         SslStream.ERROR_WANT_WRITE: {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
             DescStream.poll_out_test(r[1]) | {
@@ -436,8 +438,14 @@ $endif
             }
             return
          }
+         SslStream.ERROR_SSL | SslStream.ERROR_SYSCALL: {
+            # Don't send a ssl shutdown after these errors; see
+            # https://www.openssl.org/docs/man1.1.1/man3/SSL_get_error.html
+            ssl_want_shutdown := &no
+         }
       }
    end
+$endif
 
    public static valid_port(i)
       succeed 0 < i < 65536
@@ -564,9 +572,11 @@ $endif
    protected close_connection()
       local f
       if \ssl_connection then {
+         if \ssl_want_shutdown then
+            ssl_connection.shutdown()
          ssl_connection.close() | (f := &why)
          connection.close() | (f := &why)
-         ssl_connection := connection := &null
+         ssl_connection := connection := ssl_want_shutdown := &null
          fire(CLOSED_EVENT)
       } else if \connection then {
          connection.close() | (f := &why)

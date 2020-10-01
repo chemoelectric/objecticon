@@ -1955,13 +1955,7 @@ function io_PipeStream_out(self, s)
    body {
        word rc;
        GetSelfFd();
-       {
-       struct sigaction saved, tmp;
-       tmp.sa_handler = SIG_IGN;
-       sigaction(SIGPIPE, &tmp, &saved);
-       rc = write(self_fd, StrLoc(s), StrLen(s));
-       sigaction(SIGPIPE, &saved, NULL);
-       }
+       SigPipeProtect(rc = write(self_fd, StrLoc(s), StrLen(s)));
        if (rc < 0) {
            errno2why();
            fail;
@@ -2129,13 +2123,7 @@ function io_SocketStream_out(self, s)
 #if HAVE_MSG_NOSIGNAL
        rc = send(self_fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
 #else
-       {
-       struct sigaction saved, tmp;
-       tmp.sa_handler = SIG_IGN;
-       sigaction(SIGPIPE, &tmp, &saved);
-       rc = send(self_fd, StrLoc(s), StrLen(s), 0);
-       sigaction(SIGPIPE, &saved, NULL);
-       }
+       SigPipeProtect(rc = send(self_fd, StrLoc(s), StrLen(s), 0));
 #endif
        if (rc < 0) {
            errno2why();

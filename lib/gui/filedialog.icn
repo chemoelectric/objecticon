@@ -825,10 +825,10 @@ class FileDialog(Dialog)
       self.setup()
       tools_menu.set_border_mid(NullBorder())
       # Try themed icon buttons
-      theme_toolbar_button(prev_button, "go-previous")
-      theme_toolbar_button(next_button, "go-next")
+      theme_toolbar_button(prev_button, "go-previous", "gui.PREV_SVG")
+      theme_toolbar_button(next_button, "go-next", "gui.NEXT_SVG")
       theme_toolbar_button(home_button, "go-home")
-      theme_toolbar_button(up_button, "go-up")
+      theme_toolbar_button(up_button, "go-up", "gui.UP_SVG")
       theme_toolbar_button(tools_menu_button, "applications-system")
 
       trail.

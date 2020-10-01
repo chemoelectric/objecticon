@@ -1419,6 +1419,11 @@ int setmask(wbp w, struct imgdata *imd)
     return Failed;
 }
 
+int ishidden(wbp w)
+{
+    return w->window->win == 0;
+}
+
 static int get_outer_width(wsp ws)
 {
     if (ws->state->i == PopupCanvas)

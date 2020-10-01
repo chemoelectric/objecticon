@@ -1097,8 +1097,10 @@ end
 function graphics_Window_get_x(self)
    body {
        GetSelfW();
-       if (self_w->window->x == -INT_MAX)
+       if (self_w->window->x == -INT_MAX) {
+           LitWhy("Window has no position");
            fail;
+       }
        return C_integer self_w->window->x;
    }
 end
@@ -1106,8 +1108,10 @@ end
 function graphics_Window_get_y(self)
    body {
        GetSelfW();
-       if (self_w->window->y == -INT_MAX)
+       if (self_w->window->y == -INT_MAX) {
+           LitWhy("Window has no position");
            fail;
+       }
        return C_integer self_w->window->y;
    }
 end
@@ -1300,13 +1304,13 @@ function graphics_Window_set_geometry(self, x, y, width, height)
    body {
        word i, j;
        GetSelfW();
-       if (is:null(x) && is_hidden(self_w))
+       if (is:null(x) && ishidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
                runerr(101, x);
        }
-       if (is:null(y) && is_hidden(self_w))
+       if (is:null(y) && ishidden(self_w))
            j = -INT_MAX;
        else {
            if (!cnv:C_integer(y, j))
@@ -1668,13 +1672,13 @@ function graphics_Window_set_pos(self, x, y)
    body {
        word i, j;
        GetSelfW();
-       if (is:null(x) && is_hidden(self_w))
+       if (is:null(x) && ishidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
                runerr(101, x);
        }
-       if (is:null(y) && is_hidden(self_w))
+       if (is:null(y) && ishidden(self_w))
            j = -INT_MAX;
        else {
            if (!cnv:C_integer(y, j))
@@ -1691,7 +1695,7 @@ function graphics_Window_set_x(self, x)
    body {
        word i;
        GetSelfW();
-       if (is:null(x) && is_hidden(self_w))
+       if (is:null(x) && ishidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
@@ -1707,7 +1711,7 @@ function graphics_Window_set_y(self, y)
    body {
        word i;
        GetSelfW();
-       if (is:null(y) && is_hidden(self_w))
+       if (is:null(y) && ishidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(y, i))
@@ -2479,7 +2483,6 @@ function graphics_Pixels_set_palette(self, i, v)
       e->b = b;
       e->a = a;
       return self;
-      fail;
    }
 end
 

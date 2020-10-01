@@ -972,28 +972,36 @@ $endif
    end
 end
 
-# This standardizes a toolbar button, and attempts to apply the
-# optional Xdg icon (overwriting the one already set for the button).
-# Failing that, or if `icon` is not given, the existing image is
-# scaled to the standard size.  The button is then set to the standard
-# toolbar button size.
 #
-procedure theme_toolbar_button(b, icon)
+# This standardizes a toolbar button.  If the button `b` is an
+# `IconButton` or a `MenuButton`, then this procedure will try to
+# replace its `Paint` in three ways :-
+#   1. if `icon` is given, then with the matching Xdg icon with that
+#      name, appropriately resized;
+#   2. if `svg` is given (it should be an `ImageCache` key), then with
+#      the corresponding svg image, appropriately scaled;
+#   3. if the `Paint` has an `ImageCache` key, then with a resized
+#      version of that image, if necessary.
+# Finally, `b`'s size is set to the standard toolbar icon size.
+#
+procedure theme_toolbar_button(b, icon, svg)
    local sz
    if is(b, IconButton) then
-      b.set_paint(get_toolbar_theme_paint(b.paint, icon))
+      b.set_paint(get_toolbar_theme_paint(b.paint, icon, svg))
    else if is(b, MenuButton) then
-      b.menu.set_paint_mid(get_toolbar_theme_paint(b.menu.paint_mid, icon))
+      b.menu.set_paint_mid(get_toolbar_theme_paint(b.menu.paint_mid, icon, svg))
    sz := Gui.TOOLBAR_ICON_SIZE + 2 * Gui.BORDER_WIDTH
    b.set_size(sz, sz)
    return b
 end
 
-package procedure get_toolbar_theme_paint(paint, icon)
+package procedure get_toolbar_theme_paint(paint, icon, svg)
    local k, sz
    sz := Gui.TOOLBAR_ICON_SIZE
-   if (k := IconTheme.find_icon_and_cache(\icon, sz,, &yes)) | 
-      (is(paint, ImagePaint) & k := ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
+   if k := (IconTheme.find_icon_and_cache(\icon, sz,, &yes) |
+            ImageCache.get_scaled_svg_key(\svg, sz, sz) |
+            if is(paint, ImagePaint) then
+               ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
    then
       return ImagePaint().set_cache(k)
 end

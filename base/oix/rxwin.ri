@@ -1184,6 +1184,11 @@ int setmask(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+int ishidden(wbp w)
+{
+    return w->window->win == 0;
+}
+
 /*
  * Return an allocated string giving the part of the prog name after the last '/'.
  */

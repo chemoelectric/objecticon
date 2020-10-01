@@ -132,7 +132,7 @@ class MD5()
    public final_str()
       local s
       s := ""
-      every s ||:= Format.int_to_string(ord(!finally()), 16, 2)
+      every s ||:= Format.int_to_string(ord(finally()), 16, 2)
       return map(s)
    end
 

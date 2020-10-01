@@ -320,6 +320,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void registerplatformimgdataformats(void);
    int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y);
    int copypointer(wbp w, char *dest, char *src);
+   int ishidden(wbp w);
 
 #if XWindows
    struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
@@ -338,7 +339,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
 void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height);
 void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height);
 void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
-int is_hidden(wbp w);
 
 #endif                                  /* Graphics */
 
