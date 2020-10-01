@@ -58,7 +58,7 @@ tar :
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find examples \
-		-regex ".*\.\(icn\|layout\|gif\|jpg\|png\)" ) ; do \
+		-regex ".*\.\(icn\|layout\|gif\|jpg\|png\|svg\|svgz\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find misc -type f ) ; do \
