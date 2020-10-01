@@ -1097,8 +1097,10 @@ end
 function graphics_Window_get_x(self)
    body {
        GetSelfW();
-       if (self_w->window->x == -INT_MAX)
+       if (self_w->window->x == -INT_MAX) {
+           LitWhy("Window has no position");
            fail;
+       }
        return C_integer self_w->window->x;
    }
 end
@@ -1106,8 +1108,10 @@ end
 function graphics_Window_get_y(self)
    body {
        GetSelfW();
-       if (self_w->window->y == -INT_MAX)
+       if (self_w->window->y == -INT_MAX) {
+           LitWhy("Window has no position");
            fail;
+       }
        return C_integer self_w->window->y;
    }
 end
