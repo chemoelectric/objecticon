@@ -4,21 +4,19 @@
 
 package net
 
-$if _MS_WIN32
+$if _UNIX
 import 
-   ssl,
-   ipl.pdco
-$elsif _UNIX
-import 
-   ssl,
-   posix,
-   ipl.pdco
+   posix
 $endif
 
 import
    io,
    lang,
    util, 
+   ssl,
+$if ~ _PLAN9
+   ipl.pdco,
+$endif
    ipl.base64,
    ipl.printf,
    ipl.functional
@@ -408,11 +406,6 @@ $else
    end
 $endif
 
-$if _PLAN9
-   private ssl_maybe_poll()
-      syserr("Not reached")
-   end
-$else
    # After an error to an ssl function, check if it is because the
    # ssl layer needs to read/write from the underlying connection.
    # If so, poll the connection and return (so the ssl call can be
@@ -445,7 +438,6 @@ $else
          }
       }
    end
-$endif
 
    public static valid_port(i)
       succeed 0 < i < 65536
