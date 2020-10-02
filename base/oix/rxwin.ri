@@ -157,6 +157,8 @@ static stringint canvastypes[] = {
     {"withdrawn",   WithdrawnState},
 };
 
+#define SelectionHelperPurgeTime 20
+
 static int max_selection_size = 2 * 1024 * 1024;
 static int max_selection_chunk = 64 * 1024;
 static int selection_debug = 0;
@@ -737,7 +739,7 @@ static void reset_sending_helper(wdp wd, struct sending_helper *x)
 }
 
 /*
- * Reset any helpers that haven't been active for over 60 seconds.
+ * Reset any helpers that haven't been active for a while.
  */
 static void purge_stale_helpers(wdp wd)
 {
@@ -747,7 +749,7 @@ static void purge_stale_helpers(wdp wd)
     for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
         struct sending_helper *x;
         x = &wd->sending_helpers[i];
-        if (x->active != 0 && now - x->active > 60) {
+        if (x->active != 0 && now - x->active > SelectionHelperPurgeTime) {
             if (selection_debug)
                 printf("\tPurging stale sending helper entry %d\n", i);
             reset_sending_helper(wd, x);
@@ -756,7 +758,7 @@ static void purge_stale_helpers(wdp wd)
     for (i = 0; i < NUM_PROP_ATOMS; ++i) {
         struct receiving_helper *x;
         x = &wd->receiving_helpers[i];
-        if (x->active != 0 && now - x->active > 60) {
+        if (x->active != 0 && now - x->active > SelectionHelperPurgeTime) {
             if (selection_debug)
                 printf("\tPurging stale receiving helper entry %d\n", i);
             reset_receiving_helper(x);
@@ -2558,6 +2560,12 @@ static int handle_incr_property(wdp wd, XPropertyEvent *event)
     word len;
     if (event->state == PropertyDelete) {
         struct sending_helper *x;
+        /*
+         * Purge before seeking a match, to reduce the risk of
+         * matching a stale Window/Atom being used for other purposes
+         * by its owner.
+         */
+        purge_stale_helpers(wd);
         x = match_sending_helper(wd, event->window, event->atom);
         if (x) {
             len = Min(max_selection_chunk, StrLen(x->data));
@@ -2565,12 +2573,18 @@ static int handle_incr_property(wdp wd, XPropertyEvent *event)
                 printf("handle_incr_property: receiver=%lx property=%s sending %ld bytes\n",
                        (long)x->receiver, get_atom_name(wd, x->property), (long)len);
             }
+            /*
+             * The ICCCM suggests we should append rather than replace
+             * here; but as the property is supposed to have been
+             * deleted, replace is preferable, since it can't give a
+             * BadMatch error.
+             */
             XChangeProperty(wd->display,
                             x->receiver,
                             x->property,
                             x->target,
                             8,
-                            PropModeAppend,
+                            PropModeReplace,
                             (unsigned char *)StrLoc(x->data),
                             len);
             if (len == 0) {
