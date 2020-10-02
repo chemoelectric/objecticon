@@ -4,21 +4,17 @@
 
 package net
 
-$if _MS_WIN32
+$if _UNIX
 import 
-   ssl,
-   ipl.pdco
-$else
-import 
-   ssl,
-   posix,
-   ipl.pdco
+   posix
 $endif
 
 import
    io,
    lang,
    util, 
+   ssl,
+   ipl.pdco,
    ipl.base64,
    ipl.printf,
    ipl.functional
