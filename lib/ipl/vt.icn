@@ -2387,7 +2387,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_mpress_response(target_type, data)
-      send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
+      if is_initialized() then
+         send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
    end
 
    private handle_mpress(e)

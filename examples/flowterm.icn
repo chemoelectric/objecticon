@@ -1732,6 +1732,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private handle_paste_response(ev, target_type, data)
+      is_initialized() | fail
       if target_type == Selection.URI_LIST_TARGET then
          every insert_link(split_url_response(data), ev)
       else
@@ -1746,7 +1747,8 @@ class Terminal(TabItem, VtUI)
    end
 
    private handle_paste_escaped_response(ev, target_type, data)
-      send_tty(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
+      if is_initialized() then
+         send_tty(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
    private next_index_right()
