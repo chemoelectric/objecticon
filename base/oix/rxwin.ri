@@ -1619,6 +1619,8 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     if (selection_debug)
         show_helpers(wd);
 
+    purge_stale_helpers(wd);
+
     /* Check for an existing matching helper; we must not have more
      * than one helper with the same receiver/property combination,
      * and even if this response isn't an incremental one, we don't
@@ -1631,7 +1633,6 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
             printf("\tResetting existing sending_helper matching requestor, property pair (no %d)\n", (int)(h - wd->sending_helpers));
         reset_sending_helper(wd, h);
     }
-    purge_stale_helpers(wd);
 
     if (target_atom == ATOM(wd, TARGETS)) {
         if (!is:list(*data))
@@ -2608,6 +2609,10 @@ static void handle_property(wsp ws, XPropertyEvent *event)
     if (event->state == PropertyNewValue) {
         int pn = which_selection_property(wd, event->atom);
         if (pn >= 0) {
+            /* Purge helpers for consistency, so that this function
+             * isn't dependent on other unrelated selection
+             * activities. */
+            purge_stale_helpers(wd);
             if (wd->receiving_helpers[pn].receiver == ws->win)
                 do_selection_increment(ws, pn);
             return;
