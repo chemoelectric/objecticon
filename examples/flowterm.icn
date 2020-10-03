@@ -1264,7 +1264,7 @@ class Terminal(TabItem, VtUI)
 
    public override vt_size_changed(cols, rows)
       if \opts["v"] then
-         write("Vt size changed to: ", cols, ",", rows)
+         ewrite("Vt size changed to: ", cols, ",", rows)
       tty.set_size(cols, rows)
    end
 
@@ -2016,7 +2016,7 @@ $endif
 
    private static on_shell_exit(r)
       if \opts["v"] then
-         write("Shell process exited: ", to_string(r))
+         ewrite("Shell process exited: ", to_string(r))
    end
 
    public get_pats()
@@ -2082,14 +2082,14 @@ $endif
             if n < *s then
                push(input, s[n + 1:0])
             if \opts["v"] then
-               write("Out: ", image(s[1:n + 1]))
+               ewrite("Out: ", image(s[1:n + 1]))
          } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
 $if _LINUX
                # See notes for explanation
                if x[1] = Poll.IN & errno() = Errno.EAGAIN then {
                   if \opts["v"] then
-                     write("Got Poll.IN and EAGAIN reading tty: continuing")
+                     ewrite("Got Poll.IN and EAGAIN reading tty: continuing")
                   next
                }
 $endif
@@ -2101,7 +2101,7 @@ $endif
                break
             }
             if \opts["v"] then
-               write("In: ", image(s))
+               ewrite("In: ", image(s))
             (\log).writes1(s)
             send_vt(s)
             check_cwd_change()
@@ -2120,7 +2120,7 @@ $endif
 
    public static launch_prog(runner)
       local pid, cmd, args
-      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, &yes))
+      if \opts["v"] then ewrite("Launch runner: ", to_string(runner, 3, &yes))
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -2141,7 +2141,7 @@ $endif
 
    private static on_prog_exit(r)
       if \opts["v"] then
-         write("Child application exited: ",to_string(r))
+         ewrite("Child application exited: ",to_string(r))
    end
 
    private do_clone(l)
@@ -3613,7 +3613,7 @@ procedure main(a)
    t := \d.tabs.which_one | d.tabs.children[1]
    d.set_focus(t.remembered_focus)
    d.show_modal()
-   if \opts["v"] then write("Exiting")
+   if \opts["v"] then ewrite("Exiting")
 end
 
 ### Ivib-v2 layout: layouts/$.layout
