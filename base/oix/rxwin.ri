@@ -96,6 +96,7 @@ static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
+static void synch_pos1(wsp ws, int new_x, int new_y);
 static void synch_pos(wsp ws);
 static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
@@ -1209,17 +1210,22 @@ static char *get_progname()
     return m;
 }
 
+static void synch_pos1(wsp ws, int newx, int newy)
+{
+    if ((newx != ws->x) || (newy != ws->y)) {
+        ws->x = newx;
+        ws->y = newy;
+        qeventcode(ws, WINDOWMOVED);
+    }
+}
+
 static void synch_pos(wsp ws)
 {
     Window junk;
-    int new_x, new_y;
+    int newx, newy;
     wdp wd = ws->display;
-    XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &new_x, &new_y, &junk);
-    if ((new_x != ws->x) || (new_y != ws->y)) {
-        ws->x = new_x;
-        ws->y = new_y;
-        qeventcode(ws, WINDOWMOVED);
-    }
+    XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &newx, &newy, &junk);
+    synch_pos1(ws, newx, newy);
 }
 
 /*
@@ -2637,7 +2643,34 @@ static void handle_client_message(wsp ws, XClientMessageEvent *event)
 
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    synch_pos(ws);
+    wdp wd = ws->display;
+    /*
+     * See if another XConfigureEvent is just around the corner for
+     * this window; if so, then just return.  This avoids some
+     * expensive work, namely synching the position (which can involve
+     * a round-trip), or resizing the pixmap.
+     */
+    _XQEvent *q;
+    LockDisplay(wd->display);
+    for (q = wd->display->head; q; q = q->next) {
+        if (q->event.type == ConfigureNotify &&
+            q->event.xconfigure.window == event->window)
+            break;
+    }
+    UnlockDisplay(wd->display);
+    if (q)
+        return;
+
+    /*
+     * If the send_event field is set, then the x and y fields are the
+     * correct absolute position; this seems to be consistent across
+     * window managers.  Using these avoids the expensive round-trip
+     * call used in synch_pos().
+     */
+    if (event->send_event)
+        synch_pos1(ws, event->x, event->y);
+    else
+        synch_pos(ws);
     if ((event->width != ws->width) || (event->height != ws->height)) {
         ws->width = event->width;
         ws->height = event->height;
