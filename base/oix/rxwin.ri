@@ -6,7 +6,14 @@
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
 #define GetRoot(wd) DefaultRootWindow((wd)->display)
 
-#define UpdateRecent(ws, ev) (ws)->display->recent = (ev)->time
+/*
+ * Update the server time and window position, given one of the
+ * various types of event carrying that information.
+ */
+#define UpdateCommon(ws, ev)  do {\
+        (ws)->display->recent = (ev)->time; \
+        synch_pos((ws), (ev)->x_root - (ev)->x, (ev)->y_root - (ev)->y); \
+ } while (0)
 
 /*
  * Poly edge and mode attributes to use with Pictures we draw onto
@@ -2634,13 +2641,10 @@ static void handle_client_message(wsp ws, XClientMessageEvent *event)
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
     /*
-     * If the send_event field is set, then the x and y fields are the
-     * correct absolute position; this seems to be consistent across
-     * window managers.  Otherwise, they relate to the parent Window.
-     * Unfortunately, in this case it is too expensive to ascertain
-     * the actual position (with XTranslateCoordinates()), so the
-     * position may go out of synch (for example, on a resize from the
-     * top-left corner).
+     * According to the ICCCM ("Configuring the Window"), the x, y of
+     * events with send_event False ("real" events) are in the parent
+     * Window's co-ordinate space; with True ("synthetic events") they
+     * are in the root space.
      */
     if (event->send_event)
         synch_pos(ws, event->x, event->y);
@@ -2678,7 +2682,7 @@ static int make_mod(unsigned int state)
 static void handle_crossing(wsp ws, XCrossingEvent *event)
 {
     struct descrip d;
-    UpdateRecent(ws, event);
+    UpdateCommon(ws, event);
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, 
@@ -2695,7 +2699,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     tended struct descrip d;
     KeySym k;
 
-    UpdateRecent(ws, event);
+    UpdateCommon(ws, event);
     fl = make_mod(event->state);
     if (event->type == KeyRelease)
         fl |= MOD_RELEASE;
@@ -2745,7 +2749,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
 static void handle_mouse(wsp ws, XButtonEvent *event)
 {
     int state = 0;
-    UpdateRecent(ws, event);
+    UpdateCommon(ws, event);
     /* Initialize state based on the three buttons that can be
      * held. */
     if (event->state & Button1Mask) state |= 1;
