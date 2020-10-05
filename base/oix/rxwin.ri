@@ -96,8 +96,7 @@ static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
-static void synch_pos1(wsp ws, int new_x, int new_y);
-static void synch_pos(wsp ws);
+static void synch_pos(wsp ws, int new_x, int new_y);
 static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
@@ -1210,22 +1209,13 @@ static char *get_progname()
     return m;
 }
 
-static void synch_pos1(wsp ws, int newx, int newy)
+static void synch_pos(wsp ws, int newx, int newy)
 {
     if ((newx != ws->x) || (newy != ws->y)) {
         ws->x = newx;
         ws->y = newy;
         qeventcode(ws, WINDOWMOVED);
     }
-}
-
-static void synch_pos(wsp ws)
-{
-    Window junk;
-    int newx, newy;
-    wdp wd = ws->display;
-    XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &newx, &newy, &junk);
-    synch_pos1(ws, newx, newy);
 }
 
 /*
@@ -1419,7 +1409,7 @@ static void wmap(wbp w)
 
     XSync(wd->display, False);
 
-    synch_pos(ws);
+    synch_pos(ws, 0, 0);
 }
 
 static void synch_net_wm_state(wsp ws, int desired_state)
@@ -2643,34 +2633,17 @@ static void handle_client_message(wsp ws, XClientMessageEvent *event)
 
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    wdp wd = ws->display;
-    /*
-     * See if another XConfigureEvent is just around the corner for
-     * this window; if so, then just return.  This avoids some
-     * expensive work, namely synching the position (which can involve
-     * a round-trip), or resizing the pixmap.
-     */
-    _XQEvent *q;
-    LockDisplay(wd->display);
-    for (q = wd->display->head; q; q = q->next) {
-        if (q->event.type == ConfigureNotify &&
-            q->event.xconfigure.window == event->window)
-            break;
-    }
-    UnlockDisplay(wd->display);
-    if (q)
-        return;
-
     /*
      * If the send_event field is set, then the x and y fields are the
      * correct absolute position; this seems to be consistent across
-     * window managers.  Using these avoids the expensive round-trip
-     * call used in synch_pos().
+     * window managers.  Otherwise, they relate to the parent Window.
+     * Unfortunately, in this case it is too expensive to ascertain
+     * the actual position (with XTranslateCoordinates()), so the
+     * position may go out of synch (for example, on a resize from the
+     * top-left corner).
      */
     if (event->send_event)
-        synch_pos1(ws, event->x, event->y);
-    else
-        synch_pos(ws);
+        synch_pos(ws, event->x, event->y);
     if ((event->width != ws->width) || (event->height != ws->height)) {
         ws->width = event->width;
         ws->height = event->height;
