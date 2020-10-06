@@ -880,71 +880,65 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
         printf(" property=%s\n", get_atom_name(wd, event->property));
     }
 
+    prop = 0;
+    err = 0;
+
     pn = which_selection_property(wd, event->property);
     if (pn < 0) {
         if (selection_debug)
             printf("\tXGetWindowProperty xselection.property == None or other unknown\n");
-        MakeInt(SELECTIONRESPONSE, &tmp);
-        list_put(&ws->listp, &tmp);
-        get_atom_descriptor(wd, event->selection, &tmp);
-        list_put(&ws->listp, &tmp);
-        get_atom_descriptor(wd, event->target, &tmp);
-        list_put(&ws->listp, &tmp);
-        list_put(&ws->listp, &nulldesc);
-        return;
-    }
+        err = 1;
+    } else {
+        status = XGetWindowProperty(wd->display,
+                                    ws->win,
+                                    event->property,
+                                    0,
+                                    max_selection_size / 4,
+                                    True,
+                                    AnyPropertyType,
+                                    &actual_type,
+                                    &actual_format,
+                                    &nitems,
+                                    &bytes_after,
+                                    &prop);
 
-    prop = 0;
-    status = XGetWindowProperty(wd->display,
-                                ws->win,
-                                event->property,
-                                0,
-                                max_selection_size / 4,
-                                True,
-                                AnyPropertyType,
-                                &actual_type,
-                                &actual_format,
-                                &nitems,
-                                &bytes_after,
-                                &prop);
-
-    /* Check for various error conditions. */
-    err = 0;
-    if (status != Success) {
-        if (selection_debug)
-            printf("\tXGetWindowProperty failed\n");
-        err = 1;
-    } else if (actual_type == None) {
-        if (selection_debug)
-            printf("\tXGetWindowProperty returned actual_type == None\n");
-        err = 1;
-    } else if (!prop) {
-        if (selection_debug)
-            printf("\tXGetWindowProperty set prop to null\n");
-        err = 1;
-    } else if (bytes_after > 0) {
-        if (selection_debug)
-            printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
-        err = 1;
-    } else if (actual_type == ATOM(wd, INCR)) {
-        long expect = *((long *)prop);
-        if (expect > 0 && expect <= max_selection_size) {
-            struct receiving_helper *h;
+        /* Check for various error conditions. */
+        if (status != Success) {
             if (selection_debug)
-                printf("\tIncremental selection started, expected size=%ld\n", expect);
-            h = &wd->receiving_helpers[pn];
-            reset_receiving_helper(h);
-            h->selection = event->selection;
-            h->target = event->target;
-            h->expect = expect;
-            h->receiver = ws->win;
-            h->active = curr_secs();
-            XFree(prop);
-            return;
+                printf("\tXGetWindowProperty failed\n");
+            err = 1;
+        } else if (actual_type == None) {
+            if (selection_debug)
+                printf("\tXGetWindowProperty returned actual_type == None\n");
+            err = 1;
+        } else if (!prop) {
+            if (selection_debug)
+                printf("\tXGetWindowProperty set prop to null\n");
+            err = 1;
+        } else if (bytes_after > 0) {
+            if (selection_debug)
+                printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
+            err = 1;
+        } else if (actual_type == ATOM(wd, INCR)) {
+            long expect = *((long *)prop);
+            if (expect > 0 && expect <= max_selection_size) {
+                struct receiving_helper *h;
+                if (selection_debug)
+                    printf("\tIncremental selection started, expected size=%ld\n", expect);
+                h = &wd->receiving_helpers[pn];
+                reset_receiving_helper(h);
+                h->selection = event->selection;
+                h->target = event->target;
+                h->expect = expect;
+                h->receiver = ws->win;
+                h->active = curr_secs();
+                XFree(prop);
+                return;
+            }
+            if (selection_debug)
+                printf("\tIncremental selection expected size out of range (%ld)\n", expect);
+            err = 1;
         }
-        if (selection_debug)
-            printf("\tIncremental selection expected size out of range (%ld)\n", expect);
-        err = 1;
     }
 
     MakeInt(SELECTIONRESPONSE, &tmp);
