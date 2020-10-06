@@ -932,44 +932,49 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
                 h->expect = expect;
                 h->receiver = ws->win;
                 h->active = curr_secs();
-                XFree(prop);
-                return;
+            } else {
+                if (selection_debug)
+                    printf("\tIncremental selection expected size out of range (%ld)\n", expect);
+                err = 1;
             }
+        } else {
+            /* Success */
+            MakeInt(SELECTIONRESPONSE, &tmp);
+            list_put(&ws->listp, &tmp);
+            get_atom_descriptor(wd, event->selection, &tmp);
+            list_put(&ws->listp, &tmp);
+            get_atom_descriptor(wd, event->target, &tmp);
+            list_put(&ws->listp, &tmp);
+            bytes_read = nitems * (actual_format / 8);
             if (selection_debug)
-                printf("\tIncremental selection expected size out of range (%ld)\n", expect);
-            err = 1;
+                printf("\tGot %lu items x %d bits -> %ld bytes actual_type=%s\n",
+                       nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
+
+            conv_str = property_to_string(wd,
+                                          actual_type,
+                                          nitems,
+                                          prop,
+                                          0);
+            if (conv_str) {
+                /* Make an Icon string out of the data */
+                cstr2string(conv_str, &tmp);
+                free(conv_str);
+            } else {
+                /* Make an Icon string out of the data */
+                bytes2string((char *)prop, bytes_read, &tmp);
+            }
+            list_put(&ws->listp, &tmp);
         }
     }
 
-    MakeInt(SELECTIONRESPONSE, &tmp);
-    list_put(&ws->listp, &tmp);
-    get_atom_descriptor(wd, event->selection, &tmp);
-    list_put(&ws->listp, &tmp);
-    get_atom_descriptor(wd, event->target, &tmp);
-    list_put(&ws->listp, &tmp);
-
-    if (err)
-        list_put(&ws->listp, &nulldesc);
-    else {
-        bytes_read = nitems * (actual_format / 8);
-        if (selection_debug)
-            printf("\tGot %lu items x %d bits -> %ld bytes actual_type=%s\n",
-                   nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
-
-        conv_str = property_to_string(wd,
-                                      actual_type,
-                                      nitems,
-                                      prop,
-                                      0);
-        if (conv_str) {
-            /* Make an Icon string out of the data */
-            cstr2string(conv_str, &tmp);
-            free(conv_str);
-        } else {
-            /* Make an Icon string out of the data */
-            bytes2string((char *)prop, bytes_read, &tmp);
-        }
+    if (err) {
+        MakeInt(SELECTIONRESPONSE, &tmp);
         list_put(&ws->listp, &tmp);
+        get_atom_descriptor(wd, event->selection, &tmp);
+        list_put(&ws->listp, &tmp);
+        get_atom_descriptor(wd, event->target, &tmp);
+        list_put(&ws->listp, &tmp);
+        list_put(&ws->listp, &nulldesc);
     }
     if (prop)
         XFree(prop);
