@@ -96,12 +96,11 @@ package ipl.graphics
 
 import util(Math)
 
-global hilite_table, shadow_table
-
 procedure GetHiliteColor(win)
    local c, hls, r
-
-   /hilite_table := table()
+   static hilite_table
+   initial
+      hilite_table := table()
    c := win.get_bg()
    if r := member(hilite_table, c) then
       return r
@@ -120,8 +119,9 @@ end
 
 procedure GetShadowColor(win)
    local c, hls, r
-
-   /shadow_table := table()
+   static shadow_table
+   initial
+      shadow_table := table()
    c := win.get_bg()
    if r := member(shadow_table, c) then
       return r
