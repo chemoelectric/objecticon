@@ -37,7 +37,8 @@ final abstract class Format()
       local r, c, d, neg
       static dig
       initial {
-         dig := table()
+         # The default value makes error checking a little faster.
+         dig := table(99)
          every c := !"0123456789abcdefABCDEF" do
             dig[c] := integer("16r" || c)
       }
@@ -49,7 +50,7 @@ final abstract class Format()
       }
       r := 0
       every c := !s do {
-         d := (base > member(dig, c)) | fail
+         d := (base > dig[c]) | fail
          r := r * base + d
       }
       return if /neg then r else -r
