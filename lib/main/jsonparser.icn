@@ -82,7 +82,7 @@ class JSONParser()
                   else
                      char(i | 63)
                }
-               default: err("Invalid escape char in string: " || ch)
+               default: err("Invalid escape char in string: " || image(ch))
             }
          } else
             err("Invalid char in string: " || image(&subject[&pos]))
@@ -106,7 +106,7 @@ class JSONParser()
       else if any('\"') then
          parse_string()
       else
-         err("Unexpected char: " || &subject[&pos])
+         err("Unexpected char: " || image(&subject[&pos]))
    end
 
    private next_token()
@@ -156,7 +156,7 @@ class JSONParser()
 
    private end_check(o)
       next_token()
-      pos(0) | err("Extraneous input: " || tab(0))
+      pos(0) | err("Extraneous input: " || image(&subject[&pos]))
       return o
    end
 
