@@ -478,16 +478,16 @@ class HtmlParser()
       local s, i, t
       s := ""
       repeat {
-         s ||:= tab(upto('<') | 0)
+         s ||:= string(tab(upto('<') | 0))
          if pos(0) then
             break
          i := &pos
          if t := parse_tag() & \t.closed & start_tag.name == t.name then
             break
          &pos := i
-         s ||:= move(1)
+         s ||:= string(move(1))
       }
-      return s
+      return if \utf8_flag then ucs(s) else s
    end
 
    #
@@ -497,7 +497,7 @@ class HtmlParser()
       local s, i
       s := ""
       repeat {
-         s ||:= tab(upto('<') | 0)
+         s ||:= string(tab(upto('<') | 0))
          if pos(0) then
             break
          i := &pos
@@ -512,12 +512,10 @@ class HtmlParser()
          # Not a valid node, so tab back and continue
          #
          &pos := i
-         s ||:= move(1)
+         s ||:= string(move(1))
       }
-
-      return s
+      return if \utf8_flag then ucs(s) else s
    end
-
    #
    # Match an entity character, eg "&#xff;", returning the matched character value.
    #
@@ -530,11 +528,11 @@ class HtmlParser()
                  else
                      integer(tab(many(&digits)))
               } else
-                  member(ENTITIES, string(tab(many(&letters))))) &
+                  member(ENTITIES, tab(many(&letters)))) &
          =";"
       then
          return if \utf8_flag then
-                   uchar(i | 63)
+                   Text.utf8_seq(i | 63)
                 else
                    char(i | 63)
    end
@@ -545,10 +543,15 @@ class HtmlParser()
    private remove_entities(s)
       local res
       res := ""
-      s ? {
-         while res ||:= tab(upto('&')) || match_entity()
-         return res || tab(0)
+      string(s) ? {
+         # I want to write
+         #     while res ||:= tab(upto('&')) || match_entity()
+         # but this does the utf8_seq allocation above before the catenation, which
+         # breaks the catenation optimization.
+         while res ||:= tab(upto('&')) do res ||:= (match_entity() | move(1))
+         res ||:= tab(0)
       }
+      return if \utf8_flag then ucs(res) else res
    end
 
    #
