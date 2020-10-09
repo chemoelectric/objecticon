@@ -970,7 +970,7 @@ class XmlParser(Connectable)
 
       if =">" then {
          parse_content(res)
-         res.compact()
+         res.children := res.get_compacted_children()
          parse_etag(res)
       } else {
          ="/>" | throw("'>' or '/>' expected")
@@ -1832,7 +1832,7 @@ class XmlParser(Connectable)
       }
 
       if not(element_decl.content_spec.pattern_match_element(el)) then
-         invalid(el.name || " does not match the declared pattern : " || to_string(element_decl.content_spec))
+         invalid(el.name || " does not match the declared pattern: " || element_decl.content_spec.str())
 
       #
       # If appropriate, put the children back to equal to the original whitespace_children;

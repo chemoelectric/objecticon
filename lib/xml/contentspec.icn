@@ -148,43 +148,45 @@ class ContentSpec(ObjectOutput)
    end
 
    #
-   # Output object
+   # Return a readable representation of this `ContentSpec` (and its
+   # children).
    #
-   private override object_output(oo)
+   public str()
       local s, x
-      oo.object_start(self)
       case op of {
          "ANY" | "EMPTY" | "#PCDATA" :
-            oo.writes1(op)
+            return op
 
          "name" :
-            oo.writes1(arg1)
+            return arg1
 
          "," | "|" : {
             s := ""
             x := self
             repeat {
-               s ||:= to_string(x.arg1)
+               s ||:= x.arg1.str()
                s ||:= op
                if x.arg2.op ~== op then
                   break
                x := x.arg2
             }
-            oo.writes("(", s).
-               traverse(x.arg2).
-               writes1(")")
+            return "(" || s || x.arg2.str() || ")"
          }
 
          "+" | "*" | "?" :  {
-            oo.traverse(arg1).
-               writes1(op)
+            return arg1.str() || op
          }
 
          default:
-            oo.writes1("?")
+            runerr("Bad ContentSpec op", op)
       }
+   end
 
-      oo.object_end(self)
+   #
+   # Output object
+   #
+   private override object_output(oo)
+      oo.object_string(self, str())
    end
 
    public new(op, arg1, arg2)
