@@ -79,10 +79,10 @@ abstract class Node()
    end
 
    #
-   # Edits the children of this `Node`, so that adjacent text children
-   # are combined together.
+   # Returns a copy of the children of this `Node`, in which adjacent
+   # text children are combined together.
    #
-   public compact()
+   public get_compacted_children()
       local i, j, r
       r := []
       i := 1
@@ -101,8 +101,7 @@ abstract class Node()
             i +:= 1
          }
       }
-      children := r
-      link
+      return r
    end
 
    #
@@ -151,14 +150,6 @@ abstract class Node()
             e.traverse_all_postorder()
       }
       coact(self)
-   end
-
-   #
-   # Clean out any whitespace-only strings from the children list.
-   #
-   public remove_whitespace_children()
-      self.children := get_children_no_whitespace()
-      link
    end
 
    #
