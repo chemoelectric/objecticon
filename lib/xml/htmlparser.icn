@@ -516,6 +516,7 @@ class HtmlParser()
       }
       return if \utf8_flag then ucs(s) else s
    end
+
    #
    # Match an entity character, eg "&#xff;", returning the matched character value.
    #
@@ -528,7 +529,7 @@ class HtmlParser()
                  else
                      integer(tab(many(&digits)))
               } else
-                  member(ENTITIES, tab(many(&letters)))) &
+                  member(ENTITIES, string(tab(many(&letters))))) &
          =";"
       then
          return if \utf8_flag then
@@ -543,15 +544,10 @@ class HtmlParser()
    private remove_entities(s)
       local res
       res := ""
-      string(s) ? {
-         # I want to write
-         #     while res ||:= tab(upto('&')) || match_entity()
-         # but this does the utf8_seq allocation above before the catenation, which
-         # breaks the catenation optimization.
-         while res ||:= tab(upto('&')) do res ||:= (match_entity() | move(1))
-         res ||:= tab(0)
+      s ? {
+         while res ||:= string(tab(upto('&'))) do res ||:= (match_entity() | string(move(1)))
+         return res || tab(0)
       }
-      return if \utf8_flag then ucs(res) else res
    end
 
    #
