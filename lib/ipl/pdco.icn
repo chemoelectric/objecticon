@@ -26,7 +26,7 @@ import
    numbers(Rat),
    lang(equals),
    util(save_state, HandlerState, ce_param, need_integer,
-        need_ucs, use, need_text, need_callable, same_string_type,
+        need_ucs, need_text, need_callable, same_string_type,
         need_numeric)
 
 # Adds tabby to treadling sequence
@@ -686,29 +686,25 @@ end
 procedure String2(e, sep)
    local t, f, rs, s
    sep := ce_param(sep) | fail
-   use {
-      rs := RamStream(),
-      {
-         if /sep then {
-            while t := @e do {
-               if /f & type(t) == "ucs" then f := &yes
-               rs.out(t)
-            }
-            s := rs.str()
-         } else {
-            sep := need_text(sep)
-            if type(sep) == "ucs" then {
-               f := &yes
-               sep := string(sep)
-            }
-            while t := @e do {
-               if /f & type(t) == "ucs" then f := &yes
-               rs.out(t); rs.out(sep)
-            }
-            s := rs.str()
-            s[-*sep:0] := ""
-         }
+   rs := RamStream()
+   if /sep then {
+      while t := @e do {
+         if /f & type(t) == "ucs" then f := &yes
+         rs.out(t)
       }
+      s := rs.done()
+   } else {
+      sep := need_text(sep)
+      if type(sep) == "ucs" then {
+         f := &yes
+         sep := string(sep)
+      }
+      while t := @e do {
+         if /f & type(t) == "ucs" then f := &yes
+         rs.out(t); rs.out(sep)
+      }
+      s := rs.done()
+      s[-*sep:0] := ""
    }
    return if /f then s else need_ucs(s)
 end
