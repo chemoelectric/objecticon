@@ -528,7 +528,7 @@ class XmlParser(Connectable)
       local res
       res := ""
       s ? {
-         while res ||:= tab(upto('\r')) do {
+         while res ||:= string(tab(upto('\r'))) do {
             move(1)
             if any('\n') then
                move(1)
@@ -970,6 +970,7 @@ class XmlParser(Connectable)
 
       if =">" then {
          parse_content(res)
+         res.compact()
          parse_etag(res)
       } else {
          ="/>" | throw("'>' or '/>' expected")
@@ -1030,7 +1031,7 @@ class XmlParser(Connectable)
       until pos(0) do {
          if any('&') then {
             if match("&#") then
-               parent.add_string(parse_char_ref(&yes))
+               parent.add(parse_char_ref(&yes))
             else {
                ref := parse_entity_ref()
                if member(\circle, ref) then
@@ -1084,7 +1085,7 @@ class XmlParser(Connectable)
 
             check_is_char_data(cd, "content character data")
 
-            parent.add_string(cd)
+            parent.add(cd)
          }
       }
       return parent
