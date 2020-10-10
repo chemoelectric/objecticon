@@ -75,6 +75,7 @@ procedure save_why(e)
    suspend save_state(e, WhyState())
 end
 
+#
 # This function saves `&why` before evaluating `e`.  If `e` succeeds,
 # `&why` is restored, and the result returned; otherwise `&why` is not
 # restored and the procedure fails.
@@ -85,6 +86,7 @@ procedure protect_why(e)
    return 1(@e, &why := t)
 end
 
+#
 # Produce a string showing a min, max range (one of the two params may
 # be &null).
 #
@@ -102,6 +104,7 @@ procedure range_string(min, max)
    return s
 end
 
+#
 # Convert to an integer or signal a runtime error
 #
 procedure need_integer(x, min, max)
@@ -111,6 +114,7 @@ procedure need_integer(x, min, max)
    return x
 end
 
+#
 # Convert to a real or signal a runtime error
 #
 procedure need_real(x, min, max)
@@ -120,6 +124,7 @@ procedure need_real(x, min, max)
    return x
 end
 
+#
 # Convert to a numeric (real or integer) or signal a runtime error
 #
 procedure need_numeric(x, min, max)
@@ -129,30 +134,35 @@ procedure need_numeric(x, min, max)
    return x
 end
 
+#
 # Convert to a string or signal a runtime error
 #
 procedure need_string(x)
    return string(x) | runerr(103, x)
 end
 
+#
 # Convert to a ucs or signal a runtime error
 #
 procedure need_ucs(x)
    return ucs(x) | runerr(128, x)
 end
 
+#
 # Convert to text (string or ucs) or signal a runtime error
 #
 procedure need_text(x)
    return text(x) | runerr(129, x)
 end
 
+#
 # Convert to a cset or signal a runtime error
 #
 procedure need_cset(x)
    return cset(x) | runerr(104, x)
 end
 
+#
 # Check that x is a list, signalling a runtime error otherwise.
 #
 procedure need_list(x)
@@ -160,6 +170,7 @@ procedure need_list(x)
    return x
 end
 
+#
 # Check that x is a set, signalling a runtime error otherwise.
 #
 procedure need_set(x)
@@ -167,6 +178,7 @@ procedure need_set(x)
    return x
 end
 
+#
 # Check that x is a table, signalling a runtime error otherwise.
 #
 procedure need_table(x)
@@ -174,6 +186,7 @@ procedure need_table(x)
    return x
 end
 
+#
 # Check that x is a co-expression, signalling a runtime error otherwise.
 #
 procedure need_coexpression(x)
@@ -181,6 +194,7 @@ procedure need_coexpression(x)
    return x
 end
 
+#
 # Check that x is a weak reference, signalling a runtime error otherwise.
 #
 procedure need_weakref(x)
@@ -188,6 +202,7 @@ procedure need_weakref(x)
    return x
 end
 
+#
 # Check that x is a class, signalling a runtime error otherwise.
 #
 procedure need_class(x)
@@ -195,6 +210,7 @@ procedure need_class(x)
    return x
 end
 
+#
 # Check that x is a record constructor, signalling a runtime error otherwise.
 #
 procedure need_constructor(x)
@@ -202,6 +218,7 @@ procedure need_constructor(x)
    return x
 end
 
+#
 # Check that x is an instance of cl (a class or constructor),
 # signalling a runtime error otherwise.
 #
@@ -210,6 +227,7 @@ procedure need_instance(x, cl)
    return x
 end
 
+#
 # Convert to a callable or signal a runtime error
 #
 # :Parameters :
@@ -220,6 +238,7 @@ procedure need_callable(x, n)
    return callable(x, n) | runerr("Callable expected", x)
 end
 
+#
 # Convert and return `s1` so that it has the same type as `s2`, which
 # is assumed to be string or ucs, giving a runerr if conversion is not
 # possible.
@@ -231,6 +250,7 @@ procedure same_string_type(s1, s2)
       need_ucs(s1)
 end
 
+#
 # This is like `same_string_type`, but if `s2` is a `ucs` and `s1` is
 # an ascii string, then `s1` is returned as-is, rather than converted
 # to a `ucs`.
@@ -244,6 +264,7 @@ procedure similar_string_type(s1, s2)
       need_ucs(s1)
 end
 
+#
 # Stores a list of cleanup expressions to be run.  See `use` and `clean`.
 #
 package global cleanup
@@ -255,23 +276,31 @@ package global cleanup
 # The result of `e2` is returned, if all three expressions succeed,
 # otherwise the procedure fails.
 #
-# `e3` is optional and defaults to calling `close` on the resource.
+# Each co-expression is optional, but if `e1` is omitted `e3` must be
+# provided; otherwise `e3` defaults to calling `close` on the
+# resource.
 #
 # Example :-
 # ~
 #     s := use { f := open("some.txt"),
 #                do_something_with(f) }
 # ~
+#
+# See also `clean()` below.
+#
 procedure use(e1, e2, e3)
    local x, v, f
-   if \e1 then {
-      x := @e1 | fail
+   /e1 | (x := @e1) | fail
+   if \cleanup & \e2 then {
       /e3 := create x.close()
-   }
-   push(\cleanup, e3)
-   /e2 | (v := @e2) | (f := &why)
-   ldel1(\cleanup, e3)
-   @e3 | (/f := &why)
+      push(cleanup, e3)
+      (v := @e2) | (f := &why)
+      ldel1(cleanup, e3)
+      @e3 | (/f := &why)
+   } else {
+      /e2 | (v := @e2) | (f := &why)
+      (if /e3 then x.close() else @e3) | (/f := &why)
+   }      
    return if /f then v else error(f)
 end
 
@@ -283,16 +312,20 @@ end
 #
 procedure use_seq(e1, e2, e3)
    local x
-   if \e1 then {
-      x := @e1 | fail
+   /e1 | (x := @e1) | fail
+   if \cleanup & \e2 then {
       /e3 := create x.close()
+      push(cleanup, e3)
+      suspend |@e2
+      ldel1(cleanup, e3)
+      @e3
+   } else {
+      suspend |@\e2
+      if /e3 then x.close() else @e3
    }
-   push(\cleanup, e3)
-   suspend |@\e2
-   ldel1(\cleanup, e3)
-   @e3
 end
 
+#
 # This procedure can be used in conjunction with `use` to ensure that
 # all cleanup expressions are performed.  `e` is evaluated for its
 # first result only.  Then any outstanding cleanup expressions are
@@ -311,6 +344,7 @@ procedure clean(e)
    return if /f then v else error(f)
 end
 
+#
 # Convert an index position based on a length, to an absolute index,
 # using Icon semantics of indices <= 0.  Fails if pos is out of range.
 #
@@ -325,6 +359,7 @@ procedure cvpos(pos, len)
       pos + len + 1
 end
 
+#
 # Convert an index position based on a length, to an absolute index,
 # using Icon semantics of indices <= 0.  Fails if pos is out of range,
 # or points at the end of the range (pos = 0 or equivalent).
@@ -365,6 +400,7 @@ procedure cvslice_def(pos1, pos2, len)
    return cvslice(pos1, pos2, len)
 end
 
+#
 # This class can be used by a class which has various capabilities or
 # permitted operations, and needs to give clients a simple way of
 # seeing what it is capable of, by way of an integer bit flag
@@ -426,6 +462,7 @@ procedure lclose(l)
    return /f | error(f)
 end
 
+#
 # This class is used to save and restore some arbitrary global state.
 #
 abstract class State()
@@ -473,6 +510,7 @@ class ScanState(State)
    end
 end
 
+#
 # A `State` which saves &pos.  An initial value may be specified.
 #
 class PosState(State)
@@ -488,6 +526,7 @@ class PosState(State)
    end
 end
 
+#
 # A `State` to save the global cleanup list used by `clean` and `use`.
 #
 class CleanupState(State)
@@ -498,6 +537,8 @@ class CleanupState(State)
    end
 end
 
+
+#
 # A `State` to save `&why`.
 #
 class WhyState(State)
@@ -513,6 +554,7 @@ class WhyState(State)
    end
 end
 
+#
 # A `State` to save `&trace`.
 #
 class TraceState(State)
@@ -528,6 +570,7 @@ class TraceState(State)
    end
 end
 
+#
 # A `State` to save `&handler`.  An initial value may be specified.
 #
 class HandlerState(State)
@@ -543,6 +586,7 @@ class HandlerState(State)
    end
 end
 
+#
 # A `State` with `swap` implemented by a function.
 #
 class FuncState(State)
@@ -558,6 +602,8 @@ class FuncState(State)
    end
 end
 
+
+#
 # A `State` which just brings a list of several other `State`s together.
 #
 class States(State)
@@ -573,6 +619,7 @@ class States(State)
    end
 end
 
+#
 # Evaluate the given co-expression `e`, suspending its results, whilst
 # invoking function `f` before and after each result of `e` is
 # generated, in order to save and restore some particular state.
@@ -632,6 +679,7 @@ procedure env_int(s, min, max)
    return v
 end
 
+#
 # Helper function to convert an optional parameter specified in a pdco
 # invocation.  `v` is the parameter (the value itself or a
 # coexpression giving the value, or &null).
