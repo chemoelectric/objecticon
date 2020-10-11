@@ -27,8 +27,7 @@ import
    ipl.imagedetect,
    ipl.charset,
    ipl.dataurl,
-   ipl.functional,
-   ipl.printf
+   ipl.functional
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -570,9 +569,8 @@ class HttpSubWorker(SubWorker)
             hreq.set_referer(req.referer)
 
          if req.kind === Worker.DOWNLOAD then {
-            tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stopf("Couldn't create temp file: %w")
             use {
-               s := BufferStream(FileStream(tmp_file, 
+               s := BufferStream(FileStream(tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin"),
                                             ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
                   set_buff_size(8192),
                {
@@ -606,7 +604,7 @@ class HttpSubWorker(SubWorker)
                         Resp(req, &why, req.url)
                   }
                }
-            }
+            } | Resp(req, "Temporary download file problem: " || &why, req.url)
          } else use {
             s := RamStream(),
             {
@@ -2571,7 +2569,7 @@ class Form()
          }
       }
       m.set_header("Content-Type", "multipart/form-data")
-      m.set_content_object(mp) | stopf("Failed to set_content_object: %w")
+      m.set_content_object(mp) | syserr("Failed to set_content_object")
       return m
    end
 
