@@ -541,7 +541,6 @@ package final abstract class Util()
       return parse_ini_file(ucs(Files.file_to_string(f)))
    end
 
-
    public static cache_icon(f, size, exact)
       # If it's an SVG file, then simply scale to the desired size and
       # return the key.
@@ -693,12 +692,32 @@ final abstract class IconTheme()
    end
 
    #
+   # This is like `find_icon()`, but `icon` may optionally be an
+   # absolute path.  This is permitted in the case of a desktop file's
+   # "Icon" entry.
+   #
+   public static find_absolute_path_or_icon(icon, size, scale)
+      return if FilePath(icon).is_absolute() then
+                icon
+             else
+                find_icon(icon, size, scale)
+   end
+
+   #
    # This calls `find_icon`, caches the result in `ImageCache`, and
    # returns the cache key.  The parameter `exact` flag indicates
    # whether the found icon should be resized to exactly `size`.
    #
    public static find_icon_and_cache(icon, size, scale, exact)
       return Util.cache_icon(find_icon(icon, size, scale), size, exact)
+   end
+
+   #
+   # This is like `find_icon_and_cache()`, but calls
+   # `find_absolute_path_or_icon()` instead.
+   #
+   public static find_absolute_path_or_icon_and_cache(icon, size, scale, exact)
+      return Util.cache_icon(find_absolute_path_or_icon(icon, size, scale), size, exact)
    end
 
    private static get_current_theme()
