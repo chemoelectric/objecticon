@@ -11,7 +11,6 @@ import
    ipl.options,
    ipl.browser,
    ipl.strings,
-   ipl.lists,
    ipl.pdco,
    ipl.printf,
    ipl.numbers
@@ -708,7 +707,7 @@ class Download()
             status := "Downloading (" || Format.numeric_to_string(w.read() / 1048576.0, 1) || "MB)"
          }
       }
-      return [req.url.liberal_ucs(), size, status, self]
+      return [req.url.liberal_ucs(), size, status]
    end
 
    public retrying()
@@ -777,10 +776,8 @@ class DownloadTab(TabItem)
                                       handle_paste_response)
    end
 
-   private on_copy_urls()
-      local l
-      l := []
-      every put(l, (!url_table.table_content.object_get_gesture_selections())[-1].req.url)
+   private on_copy_urls(l)
+      l := ipl.pdco.List{ dl[!l].req.url }
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
    end
 
@@ -798,15 +795,19 @@ class DownloadTab(TabItem)
                                   StaticTextSelectionOwner(Format.shell_escape(s)))
    end
 
-   private on_delete(d)
-      parent_dialog.pool.cancel_req(d.req)
-      ldel1(dl, d)
+   private on_delete(l)
+      local d
+      every d := dl[!l] do
+         parent_dialog.pool.cancel_req(d.req)
+      while delete(dl, pull(l))
+      url_table.clear_selections()
       refresh()
    end
 
    private on_retry(d)
       d.retrying()
       refresh()
+      ticker.interrupt()
    end
 
    public msg(s, n)
@@ -830,12 +831,13 @@ class DownloadTab(TabItem)
          else
             i +:= 1
       }
+      url_table.clear_selections()
       refresh()
    end
 
    private refresh()
       msg()
-      ticker.interrupt()
+      update_status()
    end
 
    private on_table_rpress(ev)
@@ -845,17 +847,17 @@ class DownloadTab(TabItem)
 
       # Ensure something is there to popup onto...
       url_table.get_line_under_pointer(ev) | fail
-      l := url_table.table_content.object_get_gesture_selections() | fail
+      l := url_table.table_content.get_gesture_selections() | fail
 
       menu := Menu()
       if *l = 1 then {
-         d := l[1][-1]
+         d := dl[l[1]]
          menu.add(TextMenuItem().
             set_label("Log...").
             connect(create d.dialog.show(parent_dialog), Event.ACTION))
          menu.add(TextMenuItem().
             set_label("Copy URL").
-            connect(self.on_copy_urls, Event.ACTION))
+            connect(create on_copy_urls(l), Event.ACTION))
          if \d.full_path then {
             menu.add(TextMenuItem().
                set_label("Copy result").
@@ -870,17 +872,20 @@ class DownloadTab(TabItem)
             if *m.children > 0 then 
                menu.add(m)
          }
-         if l[1][-1].status == "Failed" then
+         if d.status == "Failed" then
             menu.add(TextMenuItem().
                set_label("Retry").
                connect(create on_retry(d), Event.ACTION))
          menu.add(TextMenuItem().
                set_label("Delete").
-               connect(create on_delete(d), Event.ACTION))
+               connect(create on_delete(l), Event.ACTION))
       } else {
          menu.add(TextMenuItem().
             set_label("Copy URLs").
-            connect(self.on_copy_urls, Event.ACTION))
+            connect(create on_copy_urls(l), Event.ACTION))
+         menu.add(TextMenuItem().
+               set_label("Delete").
+               connect(create on_delete(l), Event.ACTION))
       }
 
       popup := PopupMenu()
@@ -936,6 +941,7 @@ class DownloadTab(TabItem)
    public download(url, referer, dest)
       put(dl, Download(self, url, referer, dest))
       refresh()
+      ticker.interrupt()
    end
 
    public override new()
