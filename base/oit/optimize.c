@@ -2947,7 +2947,7 @@ static void fold_subsc(struct lnode *n)
     switch (l1.type) {
         case UCS: {
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
-            char *p = l1.u.str.s, *t;
+            char *p, *t;
             i = cvpos_item(l2.u.i, len);
             if (i == CvtFail) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
