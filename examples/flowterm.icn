@@ -432,16 +432,13 @@ class Columns(LineBasedScrollArea)
       n_rows,
       prev_columnize_dw
 
-   public static 
-      FOCUS_DASHED_WIDTH
+   public static const
+      FOCUS_WIDTH,
+      GUTTER_WIDTH
 
    private static init()
-      local v
-      if v := scale(\opts["lfw"]) then {
-         if v < 1 then
-            help_stop("Invalid -lfw: scaled value >= 1 required")
-      }
-      FOCUS_DASHED_WIDTH := \v | Gui.DASHED_WIDTH
+      FOCUS_WIDTH := env_scale("OI_FLOWTERM_LIST_FOCUS_WIDTH") | Gui.DASHED_WIDTH
+      GUTTER_WIDTH := env_scale("OI_FLOWTERM_LIST_GUTTER_WIDTH") | scale(8)
    end
 
    public override initially()
@@ -511,7 +508,7 @@ class Columns(LineBasedScrollArea)
          }
          if k === cursor then {
             if should_draw_focus() then
-               item_border.draw_focus_rect(view.cbwin, r, FOCUS_DASHED_WIDTH)
+               item_border.draw_focus_rect(view.cbwin, r, FOCUS_WIDTH)
             else
                item_border.draw_dashed_rect(view.cbwin, r)
          }
@@ -899,11 +896,6 @@ class Columns(LineBasedScrollArea)
       link
    end
 
-   public set_gutter(n)
-      self.gutter := n
-      link
-   end
-
    public override keeps(e)
       succeed member(Key.CURSOR, e.code)
    end
@@ -911,7 +903,7 @@ class Columns(LineBasedScrollArea)
    public override new()
       LineBasedScrollArea.new()
       data := []
-      gutter := scale(8)
+      gutter := GUTTER_WIDTH
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
       view.
@@ -1212,8 +1204,8 @@ class Terminal(TabItem, VtUI)
       SHOW_DATE := "date"
       SHOW_SIZE := "size"
       DEFAULT_HISTORY_SIZE := env_int("OI_FLOWTERM_DEFAULT_HISTORY_SIZE", 1) | 100
-      DEFAULT_LIST_WIDTH := env_real("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | 300
-      DEFAULT_LIST_HEIGHT := env_real("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | 300
+      DEFAULT_LIST_WIDTH := env_scale("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | scale(300)
+      DEFAULT_LIST_HEIGHT := env_scale("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | scale(300)
    end
 
    public set_select(f)
@@ -1312,6 +1304,10 @@ class Terminal(TabItem, VtUI)
       return (min <= integer(param)) | return whyf("Integer >= %d expected to %s", min, s)
    end
 
+   private check_real_param(s, param, min)
+      return (min <= real(param)) | return whyf("Number >= %i expected to %s", min, s)
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
@@ -1363,23 +1359,23 @@ class Terminal(TabItem, VtUI)
          "reverse-fg": output.set_reverse_fg(param) | return whyf("Invalid parameter to reverse-fg: %w")
          "reverse-bg": output.set_reverse_bg(param) | return whyf("Invalid parameter to reverse-bg: %w")
          "scroll": {
-            /param := Vt.DEFAULT_HISTORY_SIZE
-            param := check_int_param(s, param, 0) | fail
+            (/param := Vt.DEFAULT_HISTORY_SIZE) |
+               (param := check_int_param(s, param, 0)) | fail
             output.set_history_size(param)
          }
          "list-width": {
-            /param := DEFAULT_LIST_WIDTH
-            param := check_int_param(s, param, 0) | fail
-            set_list_width(scale(param))
+            (/param := DEFAULT_LIST_WIDTH) |
+               (param := scale(check_real_param(s, param, 0))) | fail
+            set_list_width(param)
          }
          "list-height": {
-            /param := DEFAULT_LIST_HEIGHT
-            param := check_int_param(s, param, 0) | fail
-            set_list_height(scale(param))
+            (/param := DEFAULT_LIST_HEIGHT) |
+               (param := scale(check_real_param(s, param, 0))) | fail
+            set_list_height(param)
          }
          "auto-close" : {
-            /param := &yes
-            param := check_flag_param(s, param) | fail
+            (/param := &yes) |
+               (param := check_flag_param(s, param)) | fail
             set_auto_close(param)
          }
          "dont-quieten" : {
@@ -1425,8 +1421,8 @@ class Terminal(TabItem, VtUI)
          }
          "adjacent" : {
             check_new(s) | fail
-            /param := &yes
-            param := check_flag_param(s, param) | fail
+            (/param := &yes) |
+               (param := check_flag_param(s, param)) | fail
             set_adjacent(param)
          }
          "list-focus" : {
@@ -1536,13 +1532,13 @@ class Terminal(TabItem, VtUI)
          }
          "select" : {
             check_new(s) | fail
-            /param := &yes
-            param := check_flag_param(s, param) | fail
+            (/param := &yes) |
+               (param := check_flag_param(s, param)) | fail
             set_select(param)
          }
          "history": {
-            /param := DEFAULT_HISTORY_SIZE
-            param := check_int_param(s, param, 1) | fail
+            (/param := DEFAULT_HISTORY_SIZE) |
+               (param := check_int_param(s, param, 1)) | fail
             history_size := param
          }
          "search" : {
@@ -2968,7 +2964,7 @@ $endif
          added_favourites := clone(other.added_favourites)
          set_cwd(other.cwd)
       } else {
-         columns.set_size(scale(DEFAULT_LIST_WIDTH), scale(DEFAULT_LIST_HEIGHT))
+         columns.set_size(DEFAULT_LIST_WIDTH, DEFAULT_LIST_HEIGHT)
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
          set_remembered_focus(output)
@@ -3591,7 +3587,6 @@ procedure main(a)
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
-                       Opt("lfw",real,"REAL#Use the given width in unscaled pixels for the focus rectangle in the file list"),
                        Opt("width",integer_range(1),"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab"),
                        Opt("height",integer_range(1),"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab"),
                        Opt("t",string,"The window title, by default \"FlowTerm\"")],
