@@ -84,7 +84,9 @@ end
 #
 procedure columnize(l, screen_width, gutter, rowwise)
    local cols, rows, w, mean, est, widths, mx
-   screen_width := need_integer(screen_width, 0)
+   # Note that we explicitly allow -ve screen_width; this is helpful
+   # for some gui components (which can legally have -ve widths).
+   screen_width := need_integer(screen_width)
    mx := MaxNN{!l}
    if *l >= 2 & mx < screen_width then {
       gutter := need_integer(\gutter, 0) | 2
