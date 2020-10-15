@@ -37,7 +37,8 @@ final abstract class Format()
       local r, c, d, neg
       static dig
       initial {
-         dig := table()
+         # The default value makes error checking a little faster.
+         dig := table(99)
          every c := !"0123456789abcdefABCDEF" do
             dig[c] := integer("16r" || c)
       }
@@ -49,7 +50,7 @@ final abstract class Format()
       }
       r := 0
       every c := !s do {
-         d := (base > member(dig, c)) | fail
+         d := (base > dig[c]) | fail
          r := r * base + d
       }
       return if /neg then r else -r
@@ -260,12 +261,9 @@ final abstract class Format()
       local res
       s := need_text(s)
       s ? {
-         # Shortcut for common case
-         upto('\\') | return s
          res := ""
-         repeat {
-            res ||:= string(tab(upto('\\') | 0))
-            move(1) | break
+         while res ||:= string(tab(upto('\\'))) do {
+            move(1)
             res ||:= (if any('0-7') then
                     char(oct_dig())
                  else if ="x" then
@@ -281,6 +279,9 @@ final abstract class Format()
                  else 
                     string(unescape_char())) | fail
          }
+         # Shortcut for common case
+         if pos(1) then return s
+         res ||:= string(tab(0))
          return if type(s) == "ucs" then ucs(res) | error("Invalid UTF-8 escape sequence") else res
       }
    end

@@ -228,14 +228,16 @@ class Style()
    end
 
    public create_tooltip_label()
-      return Label().
-         set_bg(TOOLTIP_BG).
+      local l
+      l := Label()
+      l. set_bg(TOOLTIP_BG).
          set_font(TOOLTIP_FONT).
          set_fg(TOOLTIP_FG).
          set_border(CompoundBorder().
                       set_outer(PlainBorder().set_line_width(Gui.FINE_WIDTH)).
                       set_inner(EmptyBorder().set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 
                                                          Gui.Y_INSET, Gui.Y_INSET)))
+      return l
    end
 
    public polish(obj)

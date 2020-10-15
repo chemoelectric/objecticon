@@ -231,6 +231,7 @@ $endif
    #
    public abort()
       self.abort_flag := &yes
+      link
    end
 
    #
@@ -1132,6 +1133,7 @@ $endif
    end
 
    private add_some(s)
+      if \abort_flag then fail
       read +:= *s
       some_data_flag := &yes
       fire(PROGRESS_EVENT)

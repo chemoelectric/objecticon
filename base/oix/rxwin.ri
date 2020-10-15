@@ -6,7 +6,14 @@
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
 #define GetRoot(wd) DefaultRootWindow((wd)->display)
 
-#define UpdateRecent(ws, ev) (ws)->display->recent = (ev)->time
+/*
+ * Update the server time and window position, given one of the
+ * various types of event carrying that information.
+ */
+#define UpdateCommon(ws, ev)  do {\
+        (ws)->display->recent = (ev)->time; \
+        synch_pos((ws), (ev)->x_root - (ev)->x, (ev)->y_root - (ev)->y); \
+ } while (0)
 
 /*
  * Poly edge and mode attributes to use with Pictures we draw onto
@@ -96,7 +103,7 @@ static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
-static void synch_pos(wsp ws);
+static void synch_pos(wsp ws, int new_x, int new_y);
 static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
@@ -156,6 +163,8 @@ static stringint canvastypes[] = {
     {"shaded",      ShadedState},
     {"withdrawn",   WithdrawnState},
 };
+
+#define SelectionHelperPurgeTime 20
 
 static int max_selection_size = 2 * 1024 * 1024;
 static int max_selection_chunk = 64 * 1024;
@@ -737,7 +746,7 @@ static void reset_sending_helper(wdp wd, struct sending_helper *x)
 }
 
 /*
- * Reset any helpers that haven't been active for over 60 seconds.
+ * Reset any helpers that haven't been active for a while.
  */
 static void purge_stale_helpers(wdp wd)
 {
@@ -747,7 +756,7 @@ static void purge_stale_helpers(wdp wd)
     for (i = 0; i < NUM_SENDING_HELPERS; ++i) {
         struct sending_helper *x;
         x = &wd->sending_helpers[i];
-        if (x->active != 0 && now - x->active > 60) {
+        if (x->active != 0 && now - x->active > SelectionHelperPurgeTime) {
             if (selection_debug)
                 printf("\tPurging stale sending helper entry %d\n", i);
             reset_sending_helper(wd, x);
@@ -756,7 +765,7 @@ static void purge_stale_helpers(wdp wd)
     for (i = 0; i < NUM_PROP_ATOMS; ++i) {
         struct receiving_helper *x;
         x = &wd->receiving_helpers[i];
-        if (x->active != 0 && now - x->active > 60) {
+        if (x->active != 0 && now - x->active > SelectionHelperPurgeTime) {
             if (selection_debug)
                 printf("\tPurging stale receiving helper entry %d\n", i);
             reset_receiving_helper(x);
@@ -871,10 +880,94 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
         printf(" property=%s\n", get_atom_name(wd, event->property));
     }
 
+    prop = 0;
+    err = 0;
+
     pn = which_selection_property(wd, event->property);
     if (pn < 0) {
         if (selection_debug)
             printf("\tXGetWindowProperty xselection.property == None or other unknown\n");
+        err = 1;
+    } else {
+        status = XGetWindowProperty(wd->display,
+                                    ws->win,
+                                    event->property,
+                                    0,
+                                    max_selection_size / 4,
+                                    True,
+                                    AnyPropertyType,
+                                    &actual_type,
+                                    &actual_format,
+                                    &nitems,
+                                    &bytes_after,
+                                    &prop);
+
+        /* Check for various error conditions. */
+        if (status != Success) {
+            if (selection_debug)
+                printf("\tXGetWindowProperty failed\n");
+            err = 1;
+        } else if (actual_type == None) {
+            if (selection_debug)
+                printf("\tXGetWindowProperty returned actual_type == None\n");
+            err = 1;
+        } else if (!prop) {
+            if (selection_debug)
+                printf("\tXGetWindowProperty set prop to null\n");
+            err = 1;
+        } else if (bytes_after > 0) {
+            if (selection_debug)
+                printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
+            err = 1;
+        } else if (actual_type == ATOM(wd, INCR)) {
+            long expect = *((long *)prop);
+            if (expect > 0 && expect <= max_selection_size) {
+                struct receiving_helper *h;
+                if (selection_debug)
+                    printf("\tIncremental selection started, expected size=%ld\n", expect);
+                h = &wd->receiving_helpers[pn];
+                reset_receiving_helper(h);
+                h->selection = event->selection;
+                h->target = event->target;
+                h->expect = expect;
+                h->receiver = ws->win;
+                h->active = curr_secs();
+            } else {
+                if (selection_debug)
+                    printf("\tIncremental selection expected size out of range (%ld)\n", expect);
+                err = 1;
+            }
+        } else {
+            /* Success */
+            MakeInt(SELECTIONRESPONSE, &tmp);
+            list_put(&ws->listp, &tmp);
+            get_atom_descriptor(wd, event->selection, &tmp);
+            list_put(&ws->listp, &tmp);
+            get_atom_descriptor(wd, event->target, &tmp);
+            list_put(&ws->listp, &tmp);
+            bytes_read = nitems * (actual_format / 8);
+            if (selection_debug)
+                printf("\tGot %lu items x %d bits -> %ld bytes actual_type=%s\n",
+                       nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
+
+            conv_str = property_to_string(wd,
+                                          actual_type,
+                                          nitems,
+                                          prop,
+                                          0);
+            if (conv_str) {
+                /* Make an Icon string out of the data */
+                cstr2string(conv_str, &tmp);
+                free(conv_str);
+            } else {
+                /* Make an Icon string out of the data */
+                bytes2string((char *)prop, bytes_read, &tmp);
+            }
+            list_put(&ws->listp, &tmp);
+        }
+    }
+
+    if (err) {
         MakeInt(SELECTIONRESPONSE, &tmp);
         list_put(&ws->listp, &tmp);
         get_atom_descriptor(wd, event->selection, &tmp);
@@ -882,91 +975,6 @@ static void handle_selection_notify(wsp ws, XSelectionEvent *event)
         get_atom_descriptor(wd, event->target, &tmp);
         list_put(&ws->listp, &tmp);
         list_put(&ws->listp, &nulldesc);
-        return;
-    }
-
-    prop = 0;
-    status = XGetWindowProperty(wd->display,
-                                ws->win,
-                                event->property,
-                                0,
-                                max_selection_size / 4,
-                                True,
-                                AnyPropertyType,
-                                &actual_type,
-                                &actual_format,
-                                &nitems,
-                                &bytes_after,
-                                &prop);
-
-    /* Check for various error conditions. */
-    err = 0;
-    if (status != Success) {
-        if (selection_debug)
-            printf("\tXGetWindowProperty failed\n");
-        err = 1;
-    } else if (actual_type == None) {
-        if (selection_debug)
-            printf("\tXGetWindowProperty returned actual_type == None\n");
-        err = 1;
-    } else if (!prop) {
-        if (selection_debug)
-            printf("\tXGetWindowProperty set prop to null\n");
-        err = 1;
-    } else if (bytes_after > 0) {
-        if (selection_debug)
-            printf("\tSelection too big, bytes_after=%lu\n", bytes_after);
-        err = 1;
-    } else if (actual_type == ATOM(wd, INCR)) {
-        long expect = *((long *)prop);
-        if (expect > 0 && expect <= max_selection_size) {
-            struct receiving_helper *h;
-            if (selection_debug)
-                printf("\tIncremental selection started, expected size=%ld\n", expect);
-            h = &wd->receiving_helpers[pn];
-            reset_receiving_helper(h);
-            h->selection = event->selection;
-            h->target = event->target;
-            h->expect = expect;
-            h->receiver = ws->win;
-            h->active = curr_secs();
-            XFree(prop);
-            return;
-        }
-        if (selection_debug)
-            printf("\tIncremental selection expected size out of range (%ld)\n", expect);
-        err = 1;
-    }
-
-    MakeInt(SELECTIONRESPONSE, &tmp);
-    list_put(&ws->listp, &tmp);
-    get_atom_descriptor(wd, event->selection, &tmp);
-    list_put(&ws->listp, &tmp);
-    get_atom_descriptor(wd, event->target, &tmp);
-    list_put(&ws->listp, &tmp);
-
-    if (err)
-        list_put(&ws->listp, &nulldesc);
-    else {
-        bytes_read = nitems * (actual_format / 8);
-        if (selection_debug)
-            printf("\tGot %lu items x %d bits -> %ld bytes actual_type=%s\n",
-                   nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
-
-        conv_str = property_to_string(wd,
-                                      actual_type,
-                                      nitems,
-                                      prop,
-                                      0);
-        if (conv_str) {
-            /* Make an Icon string out of the data */
-            cstr2string(conv_str, &tmp);
-            free(conv_str);
-        } else {
-            /* Make an Icon string out of the data */
-            bytes2string((char *)prop, bytes_read, &tmp);
-        }
-        list_put(&ws->listp, &tmp);
     }
     if (prop)
         XFree(prop);
@@ -1207,15 +1215,11 @@ static char *get_progname()
     return m;
 }
 
-static void synch_pos(wsp ws)
+static void synch_pos(wsp ws, int newx, int newy)
 {
-    Window junk;
-    int new_x, new_y;
-    wdp wd = ws->display;
-    XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &new_x, &new_y, &junk);
-    if ((new_x != ws->x) || (new_y != ws->y)) {
-        ws->x = new_x;
-        ws->y = new_y;
+    if ((newx != ws->x) || (newy != ws->y)) {
+        ws->x = newx;
+        ws->y = newy;
         qeventcode(ws, WINDOWMOVED);
     }
 }
@@ -1411,7 +1415,7 @@ static void wmap(wbp w)
 
     XSync(wd->display, False);
 
-    synch_pos(ws);
+    synch_pos(ws, 0, 0);
 }
 
 static void synch_net_wm_state(wsp ws, int desired_state)
@@ -1617,6 +1621,8 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     if (selection_debug)
         show_helpers(wd);
 
+    purge_stale_helpers(wd);
+
     /* Check for an existing matching helper; we must not have more
      * than one helper with the same receiver/property combination,
      * and even if this response isn't an incremental one, we don't
@@ -1629,7 +1635,6 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
             printf("\tResetting existing sending_helper matching requestor, property pair (no %d)\n", (int)(h - wd->sending_helpers));
         reset_sending_helper(wd, h);
     }
-    purge_stale_helpers(wd);
 
     if (target_atom == ATOM(wd, TARGETS)) {
         if (!is:list(*data))
@@ -2558,6 +2563,12 @@ static int handle_incr_property(wdp wd, XPropertyEvent *event)
     word len;
     if (event->state == PropertyDelete) {
         struct sending_helper *x;
+        /*
+         * Purge before seeking a match, to reduce the risk of
+         * matching a stale Window/Atom being used for other purposes
+         * by its owner.
+         */
+        purge_stale_helpers(wd);
         x = match_sending_helper(wd, event->window, event->atom);
         if (x) {
             len = Min(max_selection_chunk, StrLen(x->data));
@@ -2565,12 +2576,18 @@ static int handle_incr_property(wdp wd, XPropertyEvent *event)
                 printf("handle_incr_property: receiver=%lx property=%s sending %ld bytes\n",
                        (long)x->receiver, get_atom_name(wd, x->property), (long)len);
             }
+            /*
+             * The ICCCM suggests we should append rather than replace
+             * here; but as the property is supposed to have been
+             * deleted, replace is preferable, since it can't give a
+             * BadMatch error.
+             */
             XChangeProperty(wd->display,
                             x->receiver,
                             x->property,
                             x->target,
                             8,
-                            PropModeAppend,
+                            PropModeReplace,
                             (unsigned char *)StrLoc(x->data),
                             len);
             if (len == 0) {
@@ -2594,6 +2611,10 @@ static void handle_property(wsp ws, XPropertyEvent *event)
     if (event->state == PropertyNewValue) {
         int pn = which_selection_property(wd, event->atom);
         if (pn >= 0) {
+            /* Purge helpers for consistency, so that this function
+             * isn't dependent on other unrelated selection
+             * activities. */
+            purge_stale_helpers(wd);
             if (wd->receiving_helpers[pn].receiver == ws->win)
                 do_selection_increment(ws, pn);
             return;
@@ -2618,7 +2639,14 @@ static void handle_client_message(wsp ws, XClientMessageEvent *event)
 
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    synch_pos(ws);
+    /*
+     * According to the ICCCM ("Configuring the Window"), the x, y of
+     * events with send_event False ("real" events) are in the parent
+     * Window's co-ordinate space; with True ("synthetic events") they
+     * are in the root space.
+     */
+    if (event->send_event)
+        synch_pos(ws, event->x, event->y);
     if ((event->width != ws->width) || (event->height != ws->height)) {
         ws->width = event->width;
         ws->height = event->height;
@@ -2653,7 +2681,7 @@ static int make_mod(unsigned int state)
 static void handle_crossing(wsp ws, XCrossingEvent *event)
 {
     struct descrip d;
-    UpdateRecent(ws, event);
+    UpdateCommon(ws, event);
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
            (word)event->time, 
@@ -2670,7 +2698,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     tended struct descrip d;
     KeySym k;
 
-    UpdateRecent(ws, event);
+    UpdateCommon(ws, event);
     fl = make_mod(event->state);
     if (event->type == KeyRelease)
         fl |= MOD_RELEASE;
@@ -2720,7 +2748,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
 static void handle_mouse(wsp ws, XButtonEvent *event)
 {
     int state = 0;
-    UpdateRecent(ws, event);
+    UpdateCommon(ws, event);
     /* Initialize state based on the three buttons that can be
      * held. */
     if (event->state & Button1Mask) state |= 1;

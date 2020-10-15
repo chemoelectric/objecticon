@@ -448,7 +448,8 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    private handle_paste_response(e, target_type, data)
-      insert_string(selection_convert(target_type, \data), e)
+      if is_initialized() then
+         insert_string(selection_convert(target_type, \data), e)
    end
 
    public handle_paste(e)
@@ -459,6 +460,8 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Insert a string as though it had been pasted via the clipboard.
+   # Fails if no string was inserted, either because the field is not
+   # editable, or the filtered string was empty.
    #
    public insert_string(s, e)
       local ce, ed
@@ -717,8 +720,9 @@ class EditableTextList(LineBasedScrollArea)
 
    private handle_mpress_response(e, target_type, data)
       local s, ed
-      \data | fail
-      \self.is_editable_flag | fail
+      (\data &
+       \is_editable_flag &
+       is_initialized()) | fail
 
       start_handle(e)
 

@@ -528,7 +528,7 @@ class XmlParser(Connectable)
       local res
       res := ""
       s ? {
-         while res ||:= tab(upto('\r')) do {
+         while res ||:= string(tab(upto('\r'))) do {
             move(1)
             if any('\n') then
                move(1)
@@ -970,6 +970,7 @@ class XmlParser(Connectable)
 
       if =">" then {
          parse_content(res)
+         res.children := res.get_compacted_children()
          parse_etag(res)
       } else {
          ="/>" | throw("'>' or '/>' expected")
@@ -1030,7 +1031,7 @@ class XmlParser(Connectable)
       until pos(0) do {
          if any('&') then {
             if match("&#") then
-               parent.add_string(parse_char_ref(&yes))
+               parent.add(parse_char_ref(&yes))
             else {
                ref := parse_entity_ref()
                if member(\circle, ref) then
@@ -1084,7 +1085,7 @@ class XmlParser(Connectable)
 
             check_is_char_data(cd, "content character data")
 
-            parent.add_string(cd)
+            parent.add(cd)
          }
       }
       return parent
@@ -1831,7 +1832,7 @@ class XmlParser(Connectable)
       }
 
       if not(element_decl.content_spec.pattern_match_element(el)) then
-         invalid(el.name || " does not match the declared pattern : " || to_string(element_decl.content_spec))
+         invalid(el.name || " does not match the declared pattern: " || element_decl.content_spec.str())
 
       #
       # If appropriate, put the children back to equal to the original whitespace_children;

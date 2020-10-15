@@ -863,7 +863,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "?l" : do_dec_reset(int_param(param, 1))
          "!p" : do_soft_reset()
          "g" : do_tab_clear(int_param(param, 1, 0))
-         default : if \verbose_flag then write("csi not implemented: cmd=", image(cmd), "  params=", to_string(param))
+         default : if \verbose_flag then ewrite("CSI not implemented: cmd=", image(cmd), "  params=", to_string(param))
       }
    end
 
@@ -1538,7 +1538,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "P" : do_dcs()
          "]" : do_osc()
          "X" : do_sos()
-         default : if \verbose_flag then write("Unknown ESC char: ", c)
+         default : if \verbose_flag then ewrite("Unknown ESC char: ", c)
       }
    end
 
@@ -1665,7 +1665,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       c := get_ch()
       case string(c) of {
          "8" : do_decaln()
-         default : if \verbose_flag then write("Unkown ESC# char: ", c)
+         default : if \verbose_flag then ewrite("Unkown ESC# char: ", c)
       }
    end
 
@@ -2387,7 +2387,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_mpress_response(target_type, data)
-      send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
+      if is_initialized() then
+         send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
    end
 
    private handle_mpress(e)

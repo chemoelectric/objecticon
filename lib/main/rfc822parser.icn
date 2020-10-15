@@ -109,7 +109,7 @@ class RFC822Parser()
       t := "\""
       /c := '\"\\\r'
       s ? {
-         while t ||:= tab(upto(c)) || "\\" || move(1)
+         while t ||:= string(tab(upto(c))) || "\\" || string(move(1))
          return t || tab(0) || "\""
       }
    end

@@ -696,7 +696,6 @@ end
 procedure remove_surrogate_pairs(s)
    local t, c1, c2
    s := need_text(s)
-   upto('\ud800-\udfff', s) | return s
    t := ""
    s ? {
       while t ||:= string(tab(upto('\ud800-\udfff'))) do {
@@ -717,7 +716,6 @@ end
 procedure add_surrogate_pairs(s)
    local t, c, i
    s := need_text(s)
-   upto('\U10000-\U10FFFF', s) | return s
    t := ""
    s ? {
       while t ||:= string(tab(upto('\U10000-\U10FFFF'))) do {

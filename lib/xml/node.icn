@@ -8,7 +8,7 @@
 
 package xml
 
-import lang, io, ipl.pdco
+import lang, io, util, ipl.pdco
 
 #
 # This is the base class for all objects in the document, including
@@ -44,9 +44,12 @@ abstract class Node()
    # :  If pos is out of range
    #
    public add(obj, pos)
+      local fl
       /pos := 0
+      if obj := text(obj) then
+         fl := &yes
       insert(children, pos, obj) | fail
-      if not text(obj) then
+      if /fl then
          obj.parent := self
       link
    end
@@ -71,8 +74,34 @@ abstract class Node()
       else if text(children[pos]) then
          children[pos] := s || children[pos]
       else
-         insert(children, pos, s) | fail
+         insert(children, pos, need_text(s)) | fail
       link
+   end
+
+   #
+   # Returns a copy of the children of this `Node`, in which adjacent
+   # text children are combined together.
+   #
+   public get_compacted_children()
+      local i, j, r
+      r := []
+      i := 1
+      while i <= *children do {
+         if text(children[i]) then {
+            j := i + 1
+            while text(children[j]) do
+               j +:= 1
+            if j - i > 1 then
+               put(r, String2{ children[i to j - 1] })
+            else 
+               put(r, children[i])
+            i := j
+         } else {
+            put(r, children[i])
+            i +:= 1
+         }
+      }
+      return r
    end
 
    #
@@ -124,14 +153,6 @@ abstract class Node()
    end
 
    #
-   # Clean out any whitespace-only strings from the children list.
-   #
-   public remove_whitespace_children()
-      self.children := get_children_no_whitespace()
-      link
-   end
-
-   #
    # Get a copy list of the children elements, but with any whitespace-only string elements
    # removed.  This leaves the children list intact.
    #
@@ -156,7 +177,7 @@ abstract class Node()
    # all the string children.
    #
    public get_string_content()
-      return String{ text(!self.children) }
+      return String2{ text(!self.children) }
    end
 
    #
@@ -164,7 +185,7 @@ abstract class Node()
    # all the trimmed string children.
    #
    public get_trimmed_string_content()
-      return String{ xml_trim(text(!self.children)) }
+      return String2{ xml_trim(text(!self.children)) }
    end
 
    #
@@ -172,8 +193,8 @@ abstract class Node()
    #
    public get_string_content_with_cdata()
       local e
-      return String{ (e := !self.children,
-                      if is(e, CData) then e.get_content() else text(e)) }
+      return String2{ (e := !self.children,
+                       if is(e, CData) then e.get_content() else text(e)) }
    end
 
    #
@@ -182,8 +203,8 @@ abstract class Node()
    #
    public get_trimmed_string_content_with_cdata()
       local e
-      return String{ (e := !self.children,
-                      if is(e, CData) then e.get_content() else xml_trim(text(e))) }
+      return String2{ (e := !self.children,
+                       if is(e, CData) then e.get_content() else xml_trim(text(e))) }
    end
 
    #

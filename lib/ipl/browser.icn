@@ -29,8 +29,7 @@ $endif
    ipl.imagedetect,
    ipl.charset,
    ipl.dataurl,
-   ipl.functional,
-   ipl.printf
+   ipl.functional
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -472,13 +471,22 @@ class HttpSubWorker(SubWorker)
 
    public override cancel()
       httpc.abort()
+      # Call this now in case the worker's Task is never resumed (eg
+      # if the application is closing).  Otherwise, it will be called
+      # again from get_data() after the file is closed (at which point
+      # Win32 will allow its removal).
       rm_tmp()
    end
 
    private rm_tmp()
       if \tmp_file then {
-         save_why{Files.remove(tmp_file)}
-         tmp_file := &null
+         # Win32 doesn't allow an open file to be removed, but it can
+         # be truncated (better to leave an empty temp file behind).
+$if _MS_WIN32
+         save_why{Files.truncate(tmp_file, 0)}
+$endif
+         if save_why{Files.remove(tmp_file)} then
+            tmp_file := &null
       }
    end
 
@@ -563,7 +571,7 @@ class HttpSubWorker(SubWorker)
    end
 
    public override get_data(worker)
-      local req, s, data, hreq, hres, fname, ct, cd, ce, sc, req_url_no_frag, helper
+      local req, s, data, hreq, hres, fname, ct, cd, ce, sc, req_url_no_frag, helper, resp
       httpc := worker.httpc
       req := worker.req
       # The request URL without the fragment
@@ -583,43 +591,48 @@ class HttpSubWorker(SubWorker)
             hreq.set_referer(req.referer)
 
          if req.kind === Worker.DOWNLOAD then {
-            tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stopf("Couldn't create temp file: %w")
-            use {
-               s := BufferStream(FileStream(tmp_file, 
-                                            ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
-                  set_buff_size(8192),
-               {
-                  hreq.set_output_stream(s)
-                  if /ce then 
-                     hreq.set_url(req_url_no_frag)
-                  else {
-                     hreq.set_url(ce.url)
-                     # At least one of these should succeed
-                     hreq.set_header("if-modified-since", \ce.last_modified)
-                     hreq.set_header("if-none-match", \ce.etag)
+            if tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") then {
+               resp := use {
+                  s := BufferStream(FileStream(tmp_file,
+                                               ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
+                     set_buff_size(8192),
+                  {
+                     hreq.set_output_stream(s)
+                     if /ce then 
+                        hreq.set_url(req_url_no_frag)
+                     else {
+                        hreq.set_url(ce.url)
+                        # At least one of these should succeed
+                        hreq.set_header("if-modified-since", \ce.last_modified)
+                        hreq.set_header("if-none-match", \ce.etag)
+                     }
+                     if hres := httpc.retrieve(hreq) then {
+                        fname := hres.get_filename()
+                        ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                        cd := ContentDisposition.parse_rfc2616(hres.get_first_header("Content-Disposition"))
+                        Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, cd, tmp_file)
+                     } else {
+                        if httpc.get_http_error() & 
+                           hres := httpc.get_response() &
+                           sc := hres.get_status_code() &
+                           ce := helper.get_cache_entry() &
+                           sc = (304 | 999) then 
+                        {
+                           # Redirect or 304 not modified with a cache entry, so return
+                           # the cached data.
+                           update_cache_with_entry(worker.pool, hres, ce)
+                           Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type, ce.content_disposition)
+                        } else
+                           Resp(req, &why, req.url)
+                     }
                   }
-                  if hres := httpc.retrieve(hreq) then {
-                     fname := hres.get_filename()
-                     ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                     cd := ContentDisposition.parse_rfc2616(hres.get_first_header("Content-Disposition"))
-                     Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, cd, tmp_file)
-                  } else {
-                     rm_tmp()
-                     if httpc.get_http_error() & 
-                        hres := httpc.get_response() &
-                        sc := hres.get_status_code() &
-                        ce := helper.get_cache_entry() &
-                        sc = (304 | 999) then 
-                     {
-                        # Redirect or 304 not modified with a cache entry, so return
-                        # the cached data.
-                        update_cache_with_entry(worker.pool, hres, ce)
-                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type, ce.content_disposition)
-                     } else
-                        Resp(req, &why, req.url)
-                  }
-               }
-            }
+               } | Resp(req, "Problem with temporary download file: " || &why, req.url)
+               if \resp.err then
+                  rm_tmp()
+               tmp_file := &null
+               resp
+            } else
+               Resp(req, "Couldn't create temporary download file: " || &why, req.url)
          } else use {
             s := RamStream(),
             {
@@ -2600,7 +2613,7 @@ class Form()
          }
       }
       m.set_header("Content-Type", "multipart/form-data")
-      m.set_content_object(mp) | stopf("Failed to set_content_object: %w")
+      m.set_content_object(mp) | syserr("Failed to set_content_object")
       return m
    end
 
