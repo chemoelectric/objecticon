@@ -791,11 +791,9 @@ class RenameDialog(NameDialog)
    public override on_okay_button(ev)
       local s
       s := name_field.get_contents()
-      if upto(Files.PATH_SPECIALS, s) then {
+      if upto(Files.PATH_SPECIALS, s) then
          msg("Invalid character in filename entered")
-         fail
-      }
-      if p.size() = 1 then
+      else if p.size() = 1 then
          msg("Can't rename a root directory")
       else {
          s := p.sibling(s).ucs()
