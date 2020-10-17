@@ -475,7 +475,7 @@ final abstract class Gui()
       REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
       CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400
       TAB_WIDTH := env_int("OI_GUI_TAB_WIDTH", 1) | 8
-      IDLE_SLEEP := 50
+      IDLE_SLEEP := env_int("OI_GUI_IDLE_SLEEP", 0) | 50
       TOOLBAR_ICON_SIZE := env_scale("OI_GUI_TOOLBAR_ICON_SIZE") | scale(24)
       MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
       ALLOW_INTERNAL_POPUPS := env_flag("OI_GUI_ALLOW_INTERNAL_POPUPS") | &yes
