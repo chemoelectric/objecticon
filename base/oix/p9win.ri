@@ -1463,6 +1463,12 @@ int getwindowid(wbp w, char **s)
     return Succeeded;
 }
 
+int getwindowfd(wbp w, int *v)
+{
+    LitWhy("Not implemented");
+    return Failed;
+}
+
 int focuswindow(wbp w)
 {
     wsp ws = w->window;

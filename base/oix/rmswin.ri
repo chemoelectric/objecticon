@@ -1079,6 +1079,12 @@ int getwindowid(wbp w, char **s)
     return Failed;
 }
 
+int getwindowfd(wbp w, int *v)
+{
+    LitWhy("Not implemented");
+    return Failed;
+}
+
 int setlineend(wbp w, char *val)
 {
     stringint *e;

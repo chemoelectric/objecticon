@@ -4240,6 +4240,12 @@ int getwindowid(wbp w, char **s)
     return Succeeded;
 }
 
+int getwindowfd(wbp w, int *v)
+{
+    *v = XConnectionNumber(w->window->display->display);
+    return Succeeded;
+}
+
 int walert(wbp w, int volume)
 {
     wsp ws = w->window;

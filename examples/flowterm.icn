@@ -1134,7 +1134,8 @@ class Terminal(TabItem, VtUI)
       SHOW_SIZE,
       DEFAULT_HISTORY_SIZE,
       DEFAULT_LIST_WIDTH,
-      DEFAULT_LIST_HEIGHT
+      DEFAULT_LIST_HEIGHT,
+      EXTRAS_DIR
 
    private
       prev_button,
@@ -1206,6 +1207,8 @@ class Terminal(TabItem, VtUI)
       DEFAULT_HISTORY_SIZE := env_int("OI_FLOWTERM_DEFAULT_HISTORY_SIZE", 1) | 100
       DEFAULT_LIST_WIDTH := env_scale("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | scale(300)
       DEFAULT_LIST_HEIGHT := env_scale("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | scale(300)
+      EXTRAS_DIR := \opts["x"] | env_string("OI_FLOWTERM_EXTRAS") |
+                          (Files.get_home() || "/flowterm-extras")
    end
 
    public set_select(f)
@@ -1948,7 +1951,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private setup_shell()
-      local env, sh, xd, fp, s, sh2, t, v
+      local env, sh, xd, fp, sh2, t, v
       env := System.environ()
       every v := !shell_vars do
          env_put(env, v.key, v.value)
@@ -1958,8 +1961,7 @@ class Terminal(TabItem, VtUI)
       if /sh | *sh = 0 then
          sh := "/bin/sh"
       if /opts["nx"] then {
-         s := \opts["x"] | Files.get_home() || "/flowterm-extras"
-         fp := FilePath(s).child("bin").canonical()
+         fp := FilePath(EXTRAS_DIR).child("bin").canonical()
          xd := fp.str()
          if Files.access(xd) then {
             env_put(env, "PATH", xd || ":" || System.getenv("PATH"))
@@ -3503,7 +3505,7 @@ procedure usage(opts)
    help_line(":show-hidden=FLAG", "Toggle or set whether or not to show hidden files and directories in the list")
    help_line(":sort-dirs=FLAG", "Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name)")
    help_line(":filter-dirs=FLAG", "Toggle or set whether or not to filter directories using the filter setting (by default, the directories are not filtered)")
-   help_line(":dont-quieten=FLAG", "Toggle or set whether to turn off the default cursor quietening behaviour.")
+   help_line(":dont-quieten=FLAG", "Toggle or set whether to turn off the default cursor quietening behaviour")
    help_line(":select=FLAG", "Set whether to make this tab the selected tab.  The default is \"yes\"")
    help_line(":history=INTEGER", "Specify the directory history size.  The default is 100")
    help_line(":adjacent=FLAG", "Set whether to add this tab adjacent to the current tab, rather than at the end of all the tabs.  The default is \"yes\"")
@@ -3523,8 +3525,8 @@ procedure usage(opts)
    help_line(":title=STRING" , "Set the title of the tab.  The default is null, meaning show the shell's current directory")
    help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details")
    help_line(":terminal-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the terminal menu.  See the full documentation page for details")
-   help_line(":list-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the list menu.")
-   help_line(":misc-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the misc menu.")
+   help_line(":list-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the list menu")
+   help_line(":misc-menu=LABEL,COMMAND", "Set/clear a custom menu setting in the misc menu")
    help_line(":reset-keys", "Reset custom key settings back to their default state")
    help_line(":reset-terminal-menus", "Reset (clear) custom terminal menu settings")
    help_line(":reset-list-menus", "Reset (clear) custom list menu settings")

@@ -966,6 +966,15 @@ function graphics_Window_get_id(self)
    }
 end
 
+function graphics_Window_get_fd(self)
+   body {
+       int v;
+       GetSelfW();
+       AttemptOp(getwindowfd(self_w, &v));
+       return C_integer v;
+   }
+end
+
 function graphics_Window_get_draw_op(self)
    body {
        GetSelfW();

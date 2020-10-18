@@ -716,7 +716,9 @@ $endif
    # has indicated an error.  `v` is an optional default value of
    # `&why`.
    #
-   public abstract improve_why(v)
+   public improve_why(v)
+      &why := \v | "I/O error"
+   end
 
    #
    # Turn the specified flags on or off, and return the new set of
@@ -969,10 +971,6 @@ class FileStream(DescStream)
    #
    public dup()
       return create_for_fd(dup_impl(), mode)
-   end
-
-   public override improve_why(v)
-      &why := \v | "I/O error"
    end
 
 $if _PLAN9
