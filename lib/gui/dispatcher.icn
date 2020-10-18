@@ -48,25 +48,42 @@ final abstract class Dispatcher()
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
 $if _X_WINDOW_SYSTEM
-      poll_task := new_task{ poller() }.start()
+      poll_task := new_task{ poller() }
       poll_list := []
 $endif
    end
    
    private static poller()
-      repeat {
-         if *poll_list > 0 then
-            poll_task.poll(poll_list)
-         else
-            poll_task.sleep()
-      }
+      repeat
+         poll_task.poll(poll_list)
+   end
+
+   private static setup_poll_task()
+      if (*poll_list = 0) | (scheduler.poll_timeout = 0) then
+         poll_task.stop()
+      else
+         poll_task.start().notify()
    end
 
    private static setup_poll_list()
       local fd
       poll_list := ipl.pdco.List{ (fd := Unique{ (!dialogs).cbwin.get_fd() },
                                    EventStream(fd) | Poll.IN) }
-      poll_task.notify()
+      setup_poll_task()
+   end
+
+   #
+   # Indicate whether the `Dispatcher`'s `Scheduler` should use a poll
+   # timeout or not. `fl` is a flag value, with `&yes` indicating a
+   # timeout should be used (the default initial setting).  If a poll
+   # timeout is not used, then `work()` will never sleep.
+   #
+   public static use_poll_timeout(fl)
+      scheduler.set_poll_timeout(if /fl then 0 else Gui.IDLE_SLEEP)
+$if _X_WINDOW_SYSTEM
+      setup_poll_task()
+$endif
+      link
    end
 
    #
@@ -119,8 +136,8 @@ $endif
    # will also return when it first finds it has no work to do,
    # allowing the caller to undertake some activity before calling it
    # again.  When using this method, it is best to configure the
-   # `Dispatcher`'s scheduler so that it does not sleep in poll, by
-   # setting its poll timeout to 0.  This prevents `work` from ever
+   # `Dispatcher`'s scheduler so that it does not sleep in poll, (with
+   # `use_poll_timeout`(&no)).  This prevents `work` from ever
    # sleeping.
    #
    public static service(r)
