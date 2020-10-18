@@ -70,7 +70,10 @@ end
 procedure do_stop()
    if /stopped then {
       stopped := &yes
-      sched.set_poll_timeout(Gui.IDLE_SLEEP)
+      if /sched then
+         Dispatcher.use_poll_timeout(&yes)
+      else
+         sched.set_poll_timeout(Gui.IDLE_SLEEP)
       output.write("Stopped")
    }
 end
@@ -80,7 +83,10 @@ procedure do_start()
       output.write("Can't restart exited program")
    else if \stopped then {
       stopped := &no
-      sched.set_poll_timeout(0)
+      if /sched then
+         Dispatcher.use_poll_timeout(&no)
+      else
+         sched.set_poll_timeout(0)
       output.write("Started")
    }
 end
@@ -369,8 +375,7 @@ procedure do_gui()
       d.set_popup_on_tab(&no)
 
    input := output := d
-   sched := Dispatcher.scheduler
-   sched.set_poll_timeout(0)
+   Dispatcher.use_poll_timeout(&no)
    d.show()
    prelim()
    repeat {
