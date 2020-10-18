@@ -8,7 +8,17 @@
 
 package gui
 
-import graphics, io
+import graphics, io, ipl.pdco
+
+#
+# Helper class to wrap an X11 display connection file descriptor.
+#
+package class EventStream(DescStream)
+   public new(fd)
+      setup(fd, 0)
+      return
+   end
+end
 
 #
 #
@@ -20,6 +30,10 @@ final abstract class Dispatcher()
    public static const 
       dialogs,
       scheduler
+
+   private static
+      poll_list,
+      poll_task
 
    private static const
       BLOCKED_ALLOW,
@@ -33,6 +47,26 @@ final abstract class Dispatcher()
       REPEATING := Mouse.DRAG_OR_MOVEMENT ++ set(Window.RESIZE, Window.STATE, Window.MOVE)
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
+$if _X_WINDOW_SYSTEM
+      poll_task := new_task{ poller() }.start()
+      poll_list := []
+$endif
+   end
+   
+   private static poller()
+      repeat {
+         if *poll_list > 0 then
+            poll_task.poll(poll_list)
+         else
+            poll_task.sleep()
+      }
+   end
+
+   private static setup_poll_list()
+      local fd
+      poll_list := ipl.pdco.List{ (fd := Unique{ (!dialogs).cbwin.get_fd() },
+                                   EventStream(fd) | Poll.IN) }
+      poll_task.notify()
    end
 
    #
@@ -40,6 +74,9 @@ final abstract class Dispatcher()
    #
    public static add_dialog(d)
       insert(dialogs, d)
+$if _X_WINDOW_SYSTEM
+      setup_poll_list()
+$endif
       link
    end
 
@@ -48,6 +85,9 @@ final abstract class Dispatcher()
    #
    public static remove_dialog(d)
       delete(dialogs, d)
+$if _X_WINDOW_SYSTEM
+      setup_poll_list()
+$endif
       link
    end
 
@@ -73,6 +113,7 @@ final abstract class Dispatcher()
       link
    end
 
+   #
    # This is similar to the normal `message_loop` method, but instead
    # of returning only when there are no dialogs open, this method
    # will also return when it first finds it has no work to do,
@@ -192,10 +233,17 @@ final abstract class Dispatcher()
       }
    end
 
+   #
+   # Helpful method to create a new `Task` using the `Dispatcher`'s
+   # `Scheduler`.
+   #
    public static new_task(e, v)
       return Task(scheduler, e, v)
    end
 
+   #
+   # Return the `Scheduler`'s current task (if any).
+   #
    public static get_curr_task()
       return \scheduler.curr_task
    end
