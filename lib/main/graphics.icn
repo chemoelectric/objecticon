@@ -432,6 +432,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native get_id()
 
+   # Return a system-dependent integer which represents the connection
+   # to the window system.
+   #
+   public native get_fd()
+
    # Return the drawing operator as set by `set_draw_op()`.
    #
    public native get_draw_op()
