@@ -47,10 +47,8 @@ final abstract class Dispatcher()
       REPEATING := Mouse.DRAG_OR_MOVEMENT ++ set(Window.RESIZE, Window.STATE, Window.MOVE)
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
-$if _X_WINDOW_SYSTEM
       poll_task := new_task{ poller() }
       poll_list := []
-$endif
    end
    
    private static poller()
@@ -80,9 +78,7 @@ $endif
    #
    public static use_poll_timeout(fl)
       scheduler.set_poll_timeout(if /fl then 0 else Gui.IDLE_SLEEP)
-$if _X_WINDOW_SYSTEM
       setup_poll_task()
-$endif
       link
    end
 
@@ -91,9 +87,7 @@ $endif
    #
    public static add_dialog(d)
       insert(dialogs, d)
-$if _X_WINDOW_SYSTEM
       setup_poll_list()
-$endif
       link
    end
 
@@ -102,9 +96,7 @@ $endif
    #
    public static remove_dialog(d)
       delete(dialogs, d)
-$if _X_WINDOW_SYSTEM
       setup_poll_list()
-$endif
       link
    end
 
