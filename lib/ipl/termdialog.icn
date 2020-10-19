@@ -8,6 +8,13 @@ class TermTextField(CompleteField)
       return
    end
 
+   public override handle_copy(e)
+      if has_region() then
+         CompleteField.handle_copy(e)
+      else
+         parent.text.handle_copy(e)
+   end
+
    protected override do_request()
       return (\parent.complete_function)(contents, cursor)
    end
@@ -79,6 +86,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       if text.get_current_text_selection() then {
          m.add(TextMenuItem().
                set_label("Copy").
+               set_label_right("^C").
                connect(text.handle_copy, Event.ACTION))
       }
       m. add(TextMenuItem().
