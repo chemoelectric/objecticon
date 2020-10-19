@@ -1945,6 +1945,12 @@ function graphics_Window_get_default_font_size()
    }
 end
 
+function graphics_Window_get_default_leading()
+   body {
+       return C_double defaultleading;
+   }
+end
+
 function graphics_Pixels_new_blank_impl(width, height, format)
    if !cnv:C_integer(width) then
       runerr(101, width)

@@ -1139,6 +1139,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public static native get_default_font_size()
 
+   # Get the default leading, as optionally specified with the
+   # OI_LEADING environment variable.
+   #
+   public static native get_default_leading()
+
    # Return the `Pixels` format this window uses internally.
    #
    public native get_format()
