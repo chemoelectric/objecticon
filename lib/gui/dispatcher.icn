@@ -154,10 +154,11 @@ final abstract class Dispatcher()
 
    #
    # Convenient method to call work(), and if no work is done, to
-   # sleep for the idle period.
+   # sleep for the idle period, possibly adjusted downwards to account
+   # for any sleeping or polling `Task`s.
    #
    public static work_or_sleep()
-      work() | delay(Gui.IDLE_SLEEP)
+      work() | delay(scheduler.calc_sleep(Gui.IDLE_SLEEP))
       link
    end
 

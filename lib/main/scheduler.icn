@@ -340,7 +340,11 @@ class Scheduler()
       ready,
       sleeping,
       polling
-   
+
+   #
+   # Create a new instance, using the given poll timeout (see
+   # `set_poll_timeout()`).
+   #
    public new(n)
       set_poll_timeout(n)
       ready := set()
@@ -349,6 +353,11 @@ class Scheduler()
       return
    end
 
+   #
+   # Set the timeout to use when invoking `DescStream.poll` with any
+   # polling tasks.  The actual interval used may in fact be smaller,
+   # as determined by `calc_sleep()`.  `n` defaults to 0.
+   #
    public set_poll_timeout(n)
       poll_timeout := need_integer(\n, 0) | 0
       link
@@ -445,10 +454,30 @@ class Scheduler()
    end
 
    #
+   # Calculate a suitable time to sleep for.  The number returned will
+   # be at most `lim`, but may be lower if any sleeping or polling
+   # task will be ready to resume in a shorter period of time.
+   #
+   public calc_sleep(lim)
+      local curr_time, t, d
+      if lim > 0 then {
+         curr_time := Prog.get_runtime_millis()
+         every t := !sleeping | !polling do {
+            if d := \t.time_until - curr_time then {
+               if d <= 0 then
+                  return 0
+               lim >:= d
+            }
+         }
+      }
+      return lim
+   end
+
+   #
    # Perhaps do some work; succeed if some was done, fail if not.
    #
    public work()
-      local t, r, curr_time, poll_l, x
+      local t, r, curr_time, poll_l, x, poll_t
       repeat {
          if t := ?ready then {
             run(t)
@@ -467,8 +496,9 @@ class Scheduler()
 
          if *polling > 0 then {
             poll_l := List{ !(!polling).poll_req }
-            curr_time := Prog.get_runtime_millis() + poll_timeout
-            if r := DescStream.poll(poll_l, poll_timeout) then {
+            poll_t := calc_sleep(poll_timeout)
+            if r := DescStream.poll(poll_l, poll_t) then {
+               curr_time := Prog.get_runtime_millis()
                if /r then {
                   # Process timeout for each task.
                   every t := !polling do {
@@ -496,8 +526,8 @@ class Scheduler()
                   t.poll_err := &why
                }
             }
-            # If we have a poll_timeout, the poll counts as work; otherwise it does not
-            if poll_timeout > 0 then
+            # If we slept in poll(), that counts as work; otherwise it does not
+            if poll_t > 0 then
                return
             if *ready > 0 then
                next
@@ -509,9 +539,10 @@ class Scheduler()
 
    #
    # Convenient method to call work(), and if no work is done, to
-   # sleep for the poll timeout period.
+   # sleep for the poll timeout period, possibly adjusted by
+   # `calc_sleep()`.
    #
    public work_or_sleep()
-      work() | delay(poll_timeout)
+      work() | delay(calc_sleep(poll_timeout))
    end
 end
