@@ -35,7 +35,7 @@ class Style()
       SELECTION_COLOR := env_color("OI_STYLE_SELECTION_COLOR") | "blue 30%"
       OVER_COLOR := env_color("OI_STYLE_OVER_COLOR") | "blue 8%"
       SHADE_FILTER := env_filter("OI_STYLE_SHADE_FILTER") | "shade,4,5000,40000"
-      TICK_RATE_FACTOR := env_real("OI_STYLE_TICK_RATE_FACTOR", 1.0) | 6.0
+      TICK_RATE_FACTOR := env_real("OI_STYLE_TICK_RATE_FACTOR", 1.0) | 3.0
       TICK_RATE_MAX := env_int("OI_STYLE_TICK_RATE_MAX", 10) | 200
       TICK_RATE_MIN := env_int("OI_STYLE_TICK_RATE_MIN", 5) | 20
    end
