@@ -211,17 +211,15 @@ end
 # "Decimate" e1 by deleting e2-numbered terms (e2 is assumed to be an
 # increasing sequence).  See also `Index`.
 procedure Decimate(e1, e2)	
-   local i, j, count
+   local j, count
 
    count := 0
 
    every j := IncreasingFrom(1, e2) do {
-      repeat {
-         i := @e1 | fail
-         count +:= 1
-         if count = j then break
-         suspend i
-         }
+      every count to j - 2 do
+         suspend (@e1 | fail)\1
+      @e1 | fail
+      count := j
       }
 
    suspend |@e1
@@ -490,19 +488,15 @@ end
 # PDCO to produce `e2`-th terms from `e1`.  `e2` should generate
 # ascending indices.  See also `Decimate`.
 procedure Index(e1, e2)		
-   local i, j, count
+   local j, count
 
    count := 0
 
    every j := IncreasingFrom(1, e2) do {
-      repeat {
-         i := @e1 | fail
-         count +:= 1
-         if count = j then {
-            suspend i
-            break
-            }
-         }
+      every count to j - 2 do
+         @e1 | fail
+      suspend (@e1 | fail)\1
+      count := j
       }
 
 end
