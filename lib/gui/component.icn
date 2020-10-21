@@ -404,10 +404,7 @@ class Component(Rect,XYAlign,Connectable)
    # Swap the shaded status of the component.
    #
    public toggle_is_shaded()
-      is_shaded_flag := toggle_flag(is_shaded_flag)
-      shaded_change()
-      invalidate()
-      link
+      return set_is_shaded(toggle_flag(is_shaded_flag))
    end
 
    #
