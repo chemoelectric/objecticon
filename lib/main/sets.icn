@@ -107,6 +107,13 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
+   # Return a random member (cf ?s for a set).
+   #
+   public random()
+      return Index{gen(), ?(0 < size())}
+   end
+
+   #
    # Return a list of the members, in the order produced by `gen()`.
    #
    public member_list()
@@ -197,6 +204,10 @@ class UnmodifiableSet(Set)
 
    public override size()
       return s.size()
+   end
+
+   public override random()
+      return s.random()
    end
 
    public override get_mode()
@@ -347,6 +358,10 @@ class BuiltinSet(Set)
       link
    end
 
+   public override random()
+      return ?s
+   end
+
    public override get_mode()
       return INSERT + DELETE
    end
@@ -383,6 +398,10 @@ class UnmodifiableBuiltinSet(Set)
 
    public override size()
       return *s
+   end
+
+   public override random()
+      return ?s
    end
 
    public override get_mode()

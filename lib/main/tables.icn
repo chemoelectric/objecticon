@@ -156,7 +156,8 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Generate the values (cf !t for a table).  If the table has MODIFY
-   # capability, variables are generated, otherwise values.
+   # capability, variables are generated, otherwise values are
+   # generated.
    #
    public gen()
       suspend member(key())
@@ -165,7 +166,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Generate the values in reverse order.  Only implemented with
    # ORDER capability.  If the table has MODIFY capability, variables
-   # are generated, otherwise values.
+   # are generated, otherwise values are generated.
    #
    public back()
       suspend member(back_key())
@@ -183,6 +184,23 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    public empty()
       succeed size() = 0
+   end
+
+   #
+   # Return a random value (cf ?t for a table).  If the table has MODIFY
+   # capability, a variable is returned, otherwise a value is returned.
+   #
+   public random()
+      return Index{gen(), ?(0 < size())}
+   end
+
+   #
+   # Return a random key.
+   #
+   public random_key()
+      local r
+      if r := ?(0 < size()) then
+         return if can(ORDER) then select(r) else Index{key(), r}
    end
 
    #
@@ -361,6 +379,10 @@ class UnmodifiableTable(Table)
 
    public override size()
       return t.size()
+   end
+
+   public override random()
+      return .t.random()
    end
 
    public override get_mode()
@@ -904,6 +926,10 @@ class BuiltinTable(Table)
       return *t
    end
 
+   public override random()
+      return ?t
+   end
+
    public override get_mode()
       return MODIFY + INSERT + DELETE
    end
@@ -1124,6 +1150,10 @@ class UnmodifiableBuiltinTable(Table)
 
    public override size()
       return *t
+   end
+
+   public override random()
+      return .?t
    end
 
    public override get_mode()
