@@ -115,14 +115,14 @@ class ErnDialog(Dialog)
          set_align(Align.L, Align.B).
          clear_constraints().
          connect(self.on_okay_button, Event.ACTION).
-         set_accepts_focus(&no).
+         set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_1)
       paint_8 := TextPaint("Skip")
       skip_button := TextButton().
          clear_constraints().
          connect(self.on_skip_button, Event.ACTION).
-         set_accepts_focus(&no).
+         set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_8)
       paint_2 := TextPaint("Exit")
@@ -130,7 +130,7 @@ class ErnDialog(Dialog)
          set_align(Align.L, Align.B).
          clear_constraints().
          connect(self.on_exit_button, Event.ACTION).
-         set_accepts_focus(&no).
+         set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_2)
       paint_7 := TextPaint("")
