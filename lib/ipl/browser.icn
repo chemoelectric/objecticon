@@ -1005,8 +1005,9 @@ class WorkerPool()
       else
          insert(queue, req.client, [req])
       # Wake up a sleeping task if possible.  Take care not to notify
-      # a sleeping task that is processing a request, or to notify a
-      # non-sleeping task (may be in ready state).
+      # a sleeping task that is processing a request, or one which we
+      # have already started, but has yet to be run (and hence its
+      # request field is still null, and its state ready).
       every w := !workers do
          if /w.req & w.task.is_sleeping() then {
             w.task.notify()
@@ -1100,7 +1101,8 @@ class WorkerPool()
          else if t.is_polling() then "polling"
          else if t.is_ready() then "ready"
          else if t.is_active() then "active"
-         else "stopped"
+         else if t.is_dormant() then "dormant"
+         else "unknown"
          s ||:= "<tr><td>" || serial(w) || "</td><td>" || st || "</td>"
          if r := \w.req then
             s ||:= "<td>" || Class.get_name(r.client) || "#" || serial(r.client) || "</td><td>" ||
