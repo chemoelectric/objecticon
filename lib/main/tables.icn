@@ -418,6 +418,10 @@ class TableKeyList(List)
       suspend t.back_key()
    end
 
+   public override random()
+      return t.random_key()
+   end
+
    public override size()
       return t.size()
    end

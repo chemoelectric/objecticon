@@ -110,7 +110,9 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Return a random member (cf ?s for a set).
    #
    public random()
-      return Index{gen(), ?(0 < size())}
+      local r
+      if r := ?(0 < size()) then
+         return if can(ORDER) then select(r) else Index{gen(), r}
    end
 
    #
@@ -258,6 +260,10 @@ class TableSet(Set)
 
    public override select(i)
       return t.select(i)
+   end
+
+   public override random()
+      return t.random_key()
    end
 
    public override size()
