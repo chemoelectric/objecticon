@@ -5,6 +5,7 @@ import
        PTableColumn, SuggestField),
    http(HttpClient, HttpRequest),
    io(StringStream),
+   util(need_string),
    json(JSONParser),
    net(URL),
    xml(HtmlParser)
@@ -22,7 +23,7 @@ abstract class GSuggestField(SuggestField)
    end
 
    public set_domain(s)
-      domain := s
+      domain := need_string(s)
       link
    end
 
@@ -47,7 +48,7 @@ class GoogleSuggestField(GSuggestField)
 
    # Set the language, by default "en"
    public set_lang(s)
-      lang := s
+      lang := need_string(s)
       link
    end
 
