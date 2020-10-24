@@ -477,8 +477,9 @@ end
 class Scheduler()
    private readable 
       poll_timeout,
-      coex,
       curr_task
+   private
+      coex
    package const
       ready,
       sleeping,
