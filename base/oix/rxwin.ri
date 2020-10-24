@@ -1415,7 +1415,14 @@ static void wmap(wbp w)
 
     XSync(wd->display, False);
 
-    synch_pos(ws, 0, 0);
+    /*
+     * This is a guess, but it is indispensable for popups, since
+     * those will never receive an update, even via UpdateCommon
+     * (because of mouse/keyboard grabs).
+     */
+    synch_pos(ws,
+              ws->reqx == -INT_MAX ? 0 : ws->reqx,
+              ws->reqy == -INT_MAX ? 0 : ws->reqy);
 }
 
 static void synch_net_wm_state(wsp ws, int desired_state)
