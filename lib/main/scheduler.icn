@@ -342,7 +342,7 @@ end
 # interface of Bag2 below.
 #
 package class Bag1()
-   package const
+   public const
       s
 
    public add(t)
@@ -372,7 +372,7 @@ end
 # A data structure for storing the polling and sleeping sets.
 #
 package class Bag2()
-   package const
+   public const
       # Tasks with time_util set, stored in a sorted list with
       # ascending time_until.
       l,
@@ -585,8 +585,7 @@ class Scheduler()
    # Check the data structures for internal consistency.
    #
    public check()
-      return ready.check() & sleeping.check() &
-             polling.check()
+      return ready.check() & sleeping.check() & polling.check()
    end
 
    private run(t)
