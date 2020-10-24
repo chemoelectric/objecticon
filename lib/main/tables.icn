@@ -716,7 +716,7 @@ class SortTable(Table)
       is_rank_consistent(root)  | return error("Ranks not consistent")
       is_23(root) | return error("Not a 2-3 tree")
       is_balanced() | return error("Not balanced")
-      link
+      return
    end
 
    private is_balanced()
