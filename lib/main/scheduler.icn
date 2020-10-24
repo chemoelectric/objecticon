@@ -1,6 +1,6 @@
 package io
 
-import lang, util, ipl.printf, ipl.pdco
+import lang, util, ipl.printf
 
 # This stream wraps another stream (normally a `SocketStream`).  The
 # `in` and `out` methods are invoked from the co-expression of the
@@ -108,8 +108,11 @@ class Task()
    public change_time(n)
       \coex | runerr("change_time() called on a currently active task")
       n := need_integer(\n, 0)
-      if is_sleeping() | is_polling() then
+      if is_sleeping() | is_polling() then {
+         state.remove(self)
          time_until := (time_from + \n) | &null
+         state.add(self)
+      }
       link
    end
 
@@ -123,8 +126,11 @@ class Task()
    public change_time_from_now(n)
       \coex | runerr("change_time_from_now() called on a currently active task")
       n := need_integer(\n, 0)
-      if is_sleeping() | is_polling() then
+      if is_sleeping() | is_polling() then {
+         state.remove(self)
          time_until := (Prog.get_runtime_millis() + \n) | &null
+         state.add(self)
+      }
       link
    end
 
@@ -331,6 +337,143 @@ class Task()
    end
 end
 
+#
+# A data structure for storing the ready set; it just mirrors the
+# interface of Bag2 below.
+#
+package class Bag1()
+   package const
+      s
+
+   public add(t)
+      insert(s, t)
+      link
+   end
+
+   public remove(t)
+      delete(s, t)
+      link
+   end
+
+   public check()
+      local t
+      every t := !s do
+         t.state === self | return error("State wrong")
+      return
+   end
+ 
+   public new()
+      s := set()
+      return
+   end
+end
+
+#
+# A data structure for storing the polling and sleeping sets.
+#
+package class Bag2()
+   package const
+      # Tasks with time_util set, stored in a sorted list with
+      # ascending time_until.
+      l,
+      # A set of Tasks with time_until null.
+      s
+
+   public add(t)
+      local i, j, m, v, w
+      v := t.time_until
+      if /v then
+         insert(s, t)
+      else if *l = 0 then
+         put(l, t)
+      else {
+         i := 1
+         j := *l
+         while i <= j do {
+            m := (i + j) / 2
+            w := l[m].time_until
+            if w > v then
+               j := m - 1
+            else if w < v then
+               i := m + 1
+            else {
+               insert(l, m, t)
+               link
+            }
+         }
+         insert(l, if w < v then m + 1 else m, t)
+      }
+      link
+   end
+
+   public remove(t)
+      local i, j, m, v, w
+      v := t.time_until
+      if /v then
+         delete(s, t)
+      else if t === l[1] then
+         # Common case of getting the "most ready" Task.
+         get(l)
+      else {
+         i := 1
+         j := *l
+         while i <= j do {
+            m := (i + j) / 2
+            w := l[m].time_until
+            if w > v then
+               j := m - 1
+            else if w < v then
+               i := m + 1
+            else {
+               if l[m] === t then {
+                  delete(l, m)
+                  link
+               }
+               i := m - 1
+               while l[i].time_until = v do {
+                  if l[i] === t then {
+                     delete(l, i)
+                     link
+                  }
+                  i -:= 1
+               }
+               i := m + 1
+               while l[i].time_until = v do {
+                  if l[i] === t then {
+                     delete(l, i)
+                     link
+                  }
+                  i +:= 1
+               }
+               break
+            }
+         }
+         syserr("remove() failed")
+      }
+      link
+   end
+
+   public check()
+      local t, x
+      every t := !l do {
+         \t.time_until | return error("Time until not set")
+         if t.time_until < \x then return error("Times out of order")
+         x := t.time_until
+      }
+      every t := !s do
+         /t.time_until | return error("Time until set")
+      every t := !l | !s do
+         t.state === self | return error("State wrong")
+      return
+   end
+
+   public new()
+      l := []
+      s := set()
+      return
+   end
+end
+
 class Scheduler()
    private readable 
       poll_timeout,
@@ -347,9 +490,9 @@ class Scheduler()
    #
    public new(n)
       set_poll_timeout(n)
-      ready := set()
-      sleeping := set()
-      polling := set()
+      ready := Bag1()
+      sleeping := Bag2()
+      polling := Bag2()
       return
    end
 
@@ -365,35 +508,37 @@ class Scheduler()
 
    package start(t)
       if /t.state then {
-         t.state := \t.old_state | ready
-         t.old_state := &null
-         insert(t.state, t)
+         if /t.old_state then
+            set_state(t, ready)
+         else {
+            set_state(t, t.old_state)
+            t.old_state := &null
+         }
       }
    end
 
    package stop(t)
       if \t.state then {
          t.old_state := t.state
-         delete(t.state, t)
-         t.state := &null
+         set_state(t)
       }
    end
 
    private set_state(t, x)
-      delete(\t.state, t)
+      (\t.state).remove(t)
       t.state := x
-      insert(t.state, t)
+      (\t.state).add(t)
    end
 
    package interrupt(t, why)
-      if t.state === (sleeping | polling) then {
+      if \t.state ~=== ready then {
          t.interrupt_why := \why | "Interrupted"
          set_state(t, ready)
       }
    end
 
    package notify(t)
-      if t.state === (sleeping | polling) then {
+      if \t.state ~=== ready then {
          t.notify_flag := &yes
          set_state(t, ready)
       }
@@ -423,16 +568,30 @@ class Scheduler()
    end
 
    #
-   # Test whether there are any tasks in the internal lists.
+   # Test whether there are any `Task`s in the internal lists.
    #
    public empty()
-      succeed not(*(ready | sleeping | polling) > 0)
+      succeed *ready.s = *sleeping.l = *sleeping.s = *polling.l = *polling.s = 0
+   end
+
+   #
+   # Return the number of `Task`s in the internal lists.
+   #
+   public size()
+      return *ready.s + *sleeping.l + *sleeping.s + *polling.l + *polling.s
+   end
+
+   #
+   # Check the data structures for internal consistency.
+   #
+   public check()
+      return ready.check() & sleeping.check() &
+             polling.check()
    end
 
    private run(t)
       local sc, st, te
-      delete(t.state, t)
-      t.state := &null
+      set_state(t)
       sc := coex
       st := curr_task
       coex := &current
@@ -462,8 +621,8 @@ class Scheduler()
       local curr_time, t, d
       if lim > 0 then {
          curr_time := Prog.get_runtime_millis()
-         every t := !sleeping | !polling do {
-            if d := \t.time_until - curr_time then {
+         every t := (sleeping | polling).l[1] do {
+            if d := t.time_until - curr_time then {
                if d <= 0 then
                   return 0
                lim >:= d
@@ -477,59 +636,71 @@ class Scheduler()
    # Perhaps do some work; succeed if some was done, fail if not.
    #
    public work()
-      local t, r, curr_time, poll_l, x, poll_t
+      local t, r, curr_time, poll_l, x, poll_t, l
       repeat {
-         if t := ?ready then {
+         if t := ?ready.s then {
             run(t)
             return
          }
 
-         if *sleeping > 0 then {
+         if *sleeping.l > 0 then {
             curr_time := Prog.get_runtime_millis()
-            every t := !sleeping do {
-               if curr_time >= \t.time_until then
-                  set_state(t, ready)
-            }
-            if *ready > 0 then
+            while curr_time >= sleeping.l[1].time_until do
+               set_state(sleeping.l[1], ready)
+            if *ready.s > 0 then
                next
          }
 
-         if *polling > 0 then {
-            poll_l := List{ !(!polling).poll_req }
+         (*polling.l = *polling.s = 0) | {
+            l := []
+            poll_l := [] ; every put(poll_l, !(!polling.l | !polling.s).poll_req)
             poll_t := calc_sleep(poll_timeout)
             if r := DescStream.poll(poll_l, poll_t) then {
                curr_time := Prog.get_runtime_millis()
                if /r then {
                   # Process timeout for each task.
-                  every t := !polling do {
-                     if curr_time >= \t.time_until then
-                        set_state(t, ready)
+                  every t := !polling.l do {
+                     if curr_time >= t.time_until then
+                        put(l, t)
+                     else
+                        break
                   }
                } else {
-                  every t := !polling do {
+                  every t := !polling.l do {
                      # Extract relevant part of result
                      x := []
                      every 1 to *t.poll_req / 2 do
                         put(x, pop(r))
                      # If all zeros, it's the same as a timeout.
                      if !x ~= 0 then {
-                        set_state(t, ready)
+                        put(l, t)
                         t.poll_res := x
-                     } else if curr_time >= \t.time_until then
-                        set_state(t, ready)
+                     } else if curr_time >= t.time_until then
+                        put(l, t)
+                  }
+                  # As above, but no timeouts
+                  every t := !polling.s do {
+                     x := []
+                     every 1 to *t.poll_req / 2 do
+                        put(x, pop(r))
+                     if !x ~= 0 then {
+                        put(l, t)
+                        t.poll_res := x
+                     }
                   }
                }
             } else {
                # poll error; forward error to each Task
-               every t := !polling do {
-                  set_state(t, ready)
+               every t := !polling.l | !polling.s do {
+                  put(l, t)
                   t.poll_err := &why
                }
             }
+            every set_state(!l, ready)
             # If we slept in poll(), that counts as work; otherwise it does not
             if poll_t > 0 then
                return
-            if *ready > 0 then
+            if *ready.s > 0 then
                next
          }
 
