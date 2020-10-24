@@ -384,8 +384,6 @@ package class Bag2()
       v := t.time_until
       if /v then
          insert(s, t)
-      else if *l = 0 then
-         put(l, t)
       else {
          i := 1
          j := *l
@@ -401,7 +399,9 @@ package class Bag2()
                link
             }
          }
-         insert(l, if w < v then m + 1 else m, t)
+         # Now i = j+1 and l[k] < v for k < i and l[k] > v for k > j,
+         # ie k >= i so the correct insertion point is i.
+         insert(l, i, t)
       }
       link
    end
