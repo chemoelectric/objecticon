@@ -414,6 +414,10 @@ class LinkedList(List)
       return node_at(i).val
    end
 
+   public override empty()
+      return /nhead
+   end
+
    public override pull()
       local v, n
       \nhead | fail
