@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics(Mouse,Window,Pixels,Selection,need_Window),
+import graphics(Mouse,Window,Pixels,Selection,need_Window,need_Pixels),
    lang, util, io, xdg, ipl.strings, ipl.numbers
 
 final abstract class Event()
@@ -1100,16 +1100,26 @@ end
 # `w` x `h`, and return that window.
 #
 procedure zoom_win(src, w, h)
-   local p, q
+   local p
    need_Window(src)
    return use {
       p := src.get_pixels(),
-      use {
-         q := Pixels(w, h, src.get_format()),
-         {
-            p.scale_to(,,,, q)
-            Window.open_image(q)
-         }
+      zoom_pix(p, w, h)
+   }
+end
+
+#
+# Zoom (scale) the contents of `Pixels` `src` to an new window of size
+# `w` x `h`, and return that window.
+#
+procedure zoom_pix(src, w, h)
+   local q
+   need_Pixels(src)
+   return use {
+      q := Pixels(w, h, src.get_format()),
+      {
+         src.scale_to(,,,, q)
+         Window.open_image(q)
       }
    } | runerr("Couldn't open new zoom window: " || &why)
 end
