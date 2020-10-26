@@ -22,6 +22,7 @@ class Image(Component)
       image_cache,
       win,
       zoom_win,
+      win_pix,
       fill_dimensions
 
    #
@@ -117,7 +118,8 @@ class Image(Component)
    public close_image()
       (\win).close()
       (\zoom_win).close()
-      win := zoom_win := &null
+      (\win_pix).close()
+      win := zoom_win := win_pix := &null
    end
 
    public override get_default_width()
@@ -191,7 +193,8 @@ class Image(Component)
                zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          else {
             (\zoom_win).close()
-            zoom_win := gui.zoom_win(win, zoom_w, zoom_h)
+            /win_pix := win.get_pixels()
+            zoom_win := gui.zoom_pix(win_pix, zoom_w, zoom_h)
             zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          }
       }
