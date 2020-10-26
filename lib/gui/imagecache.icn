@@ -227,6 +227,7 @@ final abstract class ImageCache()
    #
    public static load(s, win)
       local p
+      s := need_string(s)
       s := member(names, s)
       return if is_image_string(s) then {
          use {
