@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, graphics(Window)
 
 #
 # This class scales and displays an image.  The image source can
@@ -20,6 +20,7 @@ class Image(Component)
       image_str,
       image_window,
       image_cache,
+      image_pixels,
       win,
       zoom_win,
       win_pix,
@@ -30,14 +31,14 @@ class Image(Component)
    # to load the image.
    #
    public set_image(x)
-      self.image_str := self.image_cache := self.image_window := &null
+      image_str := image_cache := image_window := image_pixels := &null
       if is_initialized() then {
          close_image()
-         self.image_str := x
+         image_str := x
          load_image()
-         self.invalidate()
+         invalidate()
       } else
-         self.image_str := x
+         image_str := x
       link
    end
 
@@ -46,30 +47,46 @@ class Image(Component)
    # to load the image.
    #
    public set_cache(x)
-      self.image_str := self.image_cache := self.image_window := &null
+      image_str := image_cache := image_window := image_pixels := &null
       if is_initialized() then {
          close_image()
-         self.image_cache := x
+         image_cache := x
          load_image()
-         self.invalidate()
+         invalidate()
       } else
-         self.image_cache := x
+         image_cache := x
       link
    end
 
    #
-   # Set a window to use as the image source.  It will not be closed
+   # Set a `Window` to use as the image source.  It will not be closed
    # by this Component.
    #
    public set_window(x)
-      self.image_str := self.image_cache := self.image_window := &null
+      image_str := image_cache := image_window := image_pixels := &null
       if is_initialized() then {
          close_image()
-         self.image_window := x
+         image_window := x
          load_image()
-         self.invalidate()
+         invalidate()
       } else
-         self.image_window := x
+         image_window := x
+      link
+   end
+
+   #
+   # Set a `Pixels` to use as the image source.  It will not be closed
+   # by this Component.
+   #
+   public set_pixels(x)
+      image_str := image_cache := image_window := image_pixels := &null
+      if is_initialized() then {
+         close_image()
+         image_pixels := x
+         load_image()
+         invalidate()
+      } else
+         image_pixels := x
       link
    end
 
@@ -77,10 +94,10 @@ class Image(Component)
    # Blank the image
    #
    public clear_image()
-      self.image_str := self.image_cache := self.image_window := &null
+      image_str := image_cache := image_window := image_pixels := &null
       if is_initialized() then {
          close_image()
-         self.invalidate()
+         invalidate()
       }
       link
    end
@@ -91,12 +108,14 @@ class Image(Component)
    end
 
    public load_image()
-      win := if \self.image_str then
-         ImageCache.load(self.image_str, self.cbwin)
-      else if \self.image_cache then
-         ImageCache.get(self.image_cache, self.cbwin).shared_copy()
-      else if \self.image_window then
-         self.image_window.shared_copy()
+      if \image_str then
+         win_pix := ImageCache.load_pixels(image_str, cbwin)
+      else if \image_pixels then
+         win_pix := image_pixels.shared_copy()
+      else if \image_cache then
+         win := ImageCache.get(image_cache, cbwin).shared_copy()
+      else if \image_window then
+         win := image_window.shared_copy()
    end
 
    # This controls how the image will be expanded if its size is less
@@ -124,19 +143,27 @@ class Image(Component)
 
    public override get_default_width()
       local ww
-      ww := (\win).get_width() | 0
+      ww := get_image_width() | 0
       return ww + border.get_total_width()
    end
 
    public override get_default_height(dw)
       local t, wh, ww
-      ww := (\win).get_width() | 0
-      wh := (\win).get_height() | 0
+      ww := get_image_width() | 0
+      wh := get_image_height() | 0
       dw -:= border.get_total_width()
       t := if fill_dimensions < 2 & ww <= dw then
          wh
       else if ww > 0 then (dw * wh) / ww else 0
       return t + border.get_total_height()
+   end
+
+   public get_image_width()
+      return (\win).get_width() | (\win_pix).get_width()
+   end
+
+   public get_image_height()
+      return (\win).get_height() | (\win_pix).get_height()
    end
 
    public override display()
@@ -145,16 +172,17 @@ class Image(Component)
 
       border.draw_rect(self.cbwin, self)
 
-      \win | fail
+      \win | \win_pix | fail
 
       ir := border.get_inner_rect(self)
       if ir.empty() then
          fail
 
-      img_w := win.get_width()
-      img_h := win.get_height()
+      img_w := get_image_width()
+      img_h := get_image_height()
 
       if img_w = ir.w & img_h = ir.h then {
+         /win := Window.open_image(win_pix)
          win.copy_to(,,,, 
                      self.cbwin,
                      self.x + border.get_l_inset(),
@@ -194,7 +222,7 @@ class Image(Component)
          else {
             (\zoom_win).close()
             /win_pix := win.get_pixels()
-            zoom_win := gui.zoom_pix(win_pix, zoom_w, zoom_h)
+            zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)
             zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          }
       }

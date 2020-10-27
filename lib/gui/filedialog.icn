@@ -253,9 +253,9 @@ class FileDialog(Dialog)
             img.set_image(f)
          else
             img.set_image()
-         if \img.win then
-            img_label.set_label(".cell\nHeight: " || img.win.get_height() || "\n.br\n" ||
-                                "Width: " || img.win.get_width() || "\n.br\n")
+         if \img.win_pix then
+            img_label.set_label(".cell\nHeight: " || img.get_image_height() || "\n.br\n" ||
+                                "Width: " || img.get_image_width() || "\n.br\n")
          else
             img_label.set_label("")
       }

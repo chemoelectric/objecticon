@@ -2,6 +2,7 @@ package gui
 
 import 
    util,
+   graphics(Window),
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
@@ -500,7 +501,9 @@ class ImagePaint(Paint)
       image_str,
       image_window,
       image_cache,
+      image_pixels,
       win,
+      win_pix,
       fill_dimensions,
       max_w,
       max_h
@@ -524,10 +527,19 @@ class ImagePaint(Paint)
    end
 
    #
-   # Set a window to use as the image source.  It will not be closed.
+   # Set a `Window` to use as the image source.  It will not be closed.
    #
    public set_window(x)
       self.image_window := x
+      link
+   end
+
+   #
+   # Set a `Pixels` to use as the image source.  It will not be closed
+   # by this Component.
+   #
+   public set_pixels(x)
+      self.image_pixels := x
       link
    end
 
@@ -580,11 +592,20 @@ class ImagePaint(Paint)
       /win | runerr("initially() called out of sequence")
       load_image(c)
       zoom_image()
+      just_win()
       if \win then {
          self.w := win.get_width()
          self.h := win.get_height()
       } else
          self.w := self.h := 0
+   end
+
+   public just_win()
+      if \win_pix then {
+         /win := Window.open_image(win_pix)
+         win_pix.close()
+         win_pix := &null
+      }
    end
 
    public override finally()
@@ -597,23 +618,31 @@ class ImagePaint(Paint)
    end
 
    public load_image(c)
-      win := if \self.image_str then
-         ImageCache.load(self.image_str, c.cbwin)
-      else if \self.image_cache then
-         ImageCache.get(self.image_cache, c.cbwin).shared_copy()
-      else if \self.image_window then
-         self.image_window.shared_copy()
+      if \image_str then
+         win_pix := ImageCache.load_pixels(image_str, c.cbwin)
+      else if \image_pixels then
+         win_pix := image_pixels.shared_copy()
+      else if \image_cache then
+         win := ImageCache.get(image_cache, c.cbwin).shared_copy()
+      else if \image_window then
+         win := image_window.shared_copy()
    end
 
    public zoom_image()
       local zoom_win, img_w, img_h,
          asp_r, asp_max, zoom_w, zoom_h
 
-      if /win | (/max_w & /max_h) then
+      if (/win & /win_pix) | (/max_w & /max_h) then
          fail
 
-      img_w := win.get_width()
-      img_h := win.get_height()
+      if \win then {
+         img_w := win.get_width()
+         img_h := win.get_height()
+      } else {
+         img_w := win_pix.get_width()
+         img_h := win_pix.get_height()
+      }
+
       if (fill_dimensions = 0) &
          (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= max_h)\1 then
          fail
@@ -648,7 +677,8 @@ class ImagePaint(Paint)
       zoom_w <:= 1
       zoom_h <:= 1
 
-      zoom_win := gui.zoom_win(win, zoom_w, zoom_h)
+      /win_pix := win.get_pixels()
+      zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)
 
       # Now swap the zoomed window into win.
       close_image()

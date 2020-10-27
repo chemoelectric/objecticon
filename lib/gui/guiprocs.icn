@@ -597,7 +597,7 @@ end
 # Convert an image string to a `Pixels` object, based on the window
 # `W` for hilite, shadow colours etc.
 #
-procedure image_string_to_Pixels(s, W)
+procedure image_string_to_pixels(s, W)
    local q, k, v, r, w
    r := ImageStringInfo(s) | fail
 
@@ -1121,5 +1121,5 @@ procedure zoom_pix(src, w, h)
          src.scale_to(,,,, q)
          Window.open_image(q)
       }
-   } | runerr("Couldn't open new zoom window: " || &why)
+   }
 end

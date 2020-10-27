@@ -1223,7 +1223,7 @@ class Img(Image, HasLastHighlight)
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
       } else {
          set_image(res.data)
-         if /win then {
+         if /win_pix then {
             err := &why
             set_cache("rpp.BROKEN_LINK")
             every remove_constraint("fix_w" | "fix_h" | "pct_w")
@@ -1242,7 +1242,7 @@ class Img(Image, HasLastHighlight)
                set_width(1 + border.get_total_width())
             if ih := integer(member(constraints, "fix_h")) then {
                if /w_spec then 
-                  set_width(ih * win.get_width() / win.get_height() + border.get_total_width())
+                  set_width(ih * get_image_width() / get_image_height() + border.get_total_width())
                else 
                   set_height(ih + border.get_total_height())
             }
@@ -1253,7 +1253,7 @@ class Img(Image, HasLastHighlight)
       # If neither set (/w_spec should imply /h_spec), ensure a
       # scaled image with the true ratio.
       if /w_spec then
-         set_width(scale(win.get_width()) + border.get_total_width())
+         set_width(scale(get_image_width()) + border.get_total_width())
       set_fill_dimensions(2)
    end
 
