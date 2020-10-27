@@ -10,7 +10,7 @@ import
    net,
    xml,
    posix,
-   graphics(Window,Key,Selection,Mouse),
+   graphics(Window,Pixels,Key,Selection,Mouse),
    xdg,
    ipl.childwait,
    ipl.lists,
@@ -1216,39 +1216,38 @@ class Img(Image, HasLastHighlight)
       over, img_data, img_name, map, map_id, held, err, highlight, last_highlight
 
    package got_data(res)
-      local iw, ih
+      local iw, ih, px
       if \res.err then {
          err := res.err
          set_cache("rpp.BROKEN_LINK")
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
-      } else {
-         set_image(res.data)
-         if /win_pix then {
-            err := &why
-            set_cache("rpp.BROKEN_LINK")
-            every remove_constraint("fix_w" | "fix_h" | "pct_w")
-         } else {
-            # Set width and perhaps height based on constraints.
-            #
-            # If pct_w is set, then set a small minimal value, since
-            # otherwise the actual width of the image would be the
-            # preferred width, and hence the minimum size which
-            # TextFlow would allocate, whereas we want to allow the
-            # image to shrink below its actual width.
-            #
-            if iw := integer(member(constraints, "fix_w")) then
-               set_width(iw + border.get_total_width())
-            else if integer(member(constraints, "pct_w")) then
-               set_width(1 + border.get_total_width())
-            if ih := integer(member(constraints, "fix_h")) then {
-               if /w_spec then 
-                  set_width(ih * get_image_width() / get_image_height() + border.get_total_width())
-               else 
-                  set_height(ih + border.get_total_height())
-            }
-            img_name := res.fname
-            img_data := res.data
+      } else if px := Pixels(res.data) then {
+         set_pixels(px)
+         px.close()
+         # Set width and perhaps height based on constraints.
+         #
+         # If pct_w is set, then set a small minimal value, since
+         # otherwise the actual width of the image would be the
+         # preferred width, and hence the minimum size which
+         # TextFlow would allocate, whereas we want to allow the
+         # image to shrink below its actual width.
+         #
+         if iw := integer(member(constraints, "fix_w")) then
+            set_width(iw + border.get_total_width())
+         else if integer(member(constraints, "pct_w")) then
+            set_width(1 + border.get_total_width())
+         if ih := integer(member(constraints, "fix_h")) then {
+            if /w_spec then 
+               set_width(ih * get_image_width() / get_image_height() + border.get_total_width())
+            else 
+               set_height(ih + border.get_total_height())
          }
+         img_name := res.fname
+         img_data := res.data
+      } else {
+         err := &why
+         set_cache("rpp.BROKEN_LINK")
+         every remove_constraint("fix_w" | "fix_h" | "pct_w")
       }
       # If neither set (/w_spec should imply /h_spec), ensure a
       # scaled image with the true ratio.
