@@ -702,17 +702,14 @@ end
 # A `Surface` which reads and writes from a `Pixels`.
 #
 final class ImageSurface(Surface)
-   # The only supported format, as a `Pixels` format string.
+   # The only supported format, as a `Pixels` format string.  This
+   # will be `&null` if cairo is not available.
    #
    public static const FORMAT
 
    private static init()
-      local t
-      Class.load_library(\Context.LOADED)
-      use {
-         t := Window(),
-         FORMAT := t.get_format()
-      }
+      if Class.load_library(\Context.LOADED) then
+         FORMAT := get_format()
    end
 
    package static create_for_ptr(ptr)
@@ -732,6 +729,8 @@ final class ImageSurface(Surface)
    public get_size()
       return Size(get_width(), get_height())
    end
+
+   private static native get_format()
 
    private static native new_impl(pix)
 
