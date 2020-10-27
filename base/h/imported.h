@@ -209,6 +209,7 @@
 #define oi_tolower (*(imported->oi_tolower))
 #define buffstr (*(imported->buffstr))
 #define buffnstr (*(imported->buffnstr))
+#define is_little_endian (*(imported->is_little_endian))
 #define safe_calloc (*(imported->safe_calloc))
 #define safe_zalloc (*(imported->safe_zalloc))
 #define safe_malloc (*(imported->safe_malloc))

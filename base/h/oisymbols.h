@@ -205,6 +205,7 @@ struct oisymbols {
     int (*oi_tolower)(int c);
     char * (*buffstr)(dptr d);
     void (*buffnstr)(dptr d, char **s, ...);
+    int (*is_little_endian)(void);
     void * (*safe_calloc)(size_t m, size_t n);
     void * (*safe_zalloc)(size_t size);
     void * (*safe_malloc)(size_t size);

@@ -1656,3 +1656,16 @@ int match_delim(char *s)
     return strncmp(s, IcodeDelim, sizeof(IcodeDelim) - 1) == 0 && s[sizeof(IcodeDelim) - 1] == '\n';
 }
 
+/*
+ * Return true if this program is running on a little-endian
+ * architecture, or false if it is big-endian.
+ */
+int is_little_endian()
+{
+    union {
+        unsigned char c[4];
+        uint32_t i;
+    } u;
+    u.i = 0x01020304;
+    return (0x04 == u.c[0]);
+}
