@@ -1221,9 +1221,7 @@ class Img(Image, HasLastHighlight)
          err := res.err
          set_cache("rpp.BROKEN_LINK")
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
-      } else if px := Pixels(res.data) then {
-         set_pixels(px)
-         px.close()
+      } else if use{ px := Pixels(res.data), set_pixels(px) } then {
          # Set width and perhaps height based on constraints.
          #
          # If pct_w is set, then set a small minimal value, since
