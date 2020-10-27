@@ -1116,7 +1116,7 @@ procedure zoom_pix(src, w, h)
    local q
    need_Pixels(src)
    return use {
-      q := Pixels(w, h, src.get_format()),
+      q := Pixels(w, h, Window.FORMAT),
       {
          src.scale_to(,,,, q)
          Window.open_image(q)
