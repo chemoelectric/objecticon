@@ -181,50 +181,46 @@ class Image(Component)
       img_w := get_image_width()
       img_h := get_image_height()
 
-      if img_w = ir.w & img_h = ir.h then {
-         /win := Window.open_image(win_pix)
-         win.copy_to(,,,, 
-                     self.cbwin,
-                     self.x + border.get_l_inset(),
-                     self.y + border.get_t_inset())
+      #
+      # Scale the image to the desired size
+      #
+      if (fill_dimensions = 0) & (img_w <= ir.w) & (img_h <= ir.h) then {
+         zoom_w := img_w
+         zoom_h := img_h
+      } else if fill_dimensions = 2 then { 
+         zoom_w := ir.w
+         zoom_h := ir.h
       } else {
-         #
-         # Scale the image to the desired size
-         #
-         if (fill_dimensions = 0) & (img_w <= ir.w) & (img_h <= ir.h) then {
-            zoom_w := img_w
-            zoom_h := img_h
-         } else if fill_dimensions = 2 then { 
+         asp_r := real(img_w) / img_h
+         asp_max := real(ir.w) / ir.h
+
+         if asp_r > asp_max then {
             zoom_w := ir.w
-            zoom_h := ir.h
+            zoom_h := integer(ir.w / asp_r)
          } else {
-            asp_r := real(img_w) / img_h
-            asp_max := real(ir.w) / ir.h
-
-            if asp_r > asp_max then {
-               zoom_w := ir.w
-               zoom_h := integer(ir.w / asp_r)
-            } else {
-               zoom_w := integer(ir.h * asp_r)
-               zoom_h := ir.h
-            }
+            zoom_w := integer(ir.h * asp_r)
+            zoom_h := ir.h
          }
+      }
 
-         pt := ir.float(Size(zoom_w, zoom_h), border)
+      pt := ir.float(Size(zoom_w, zoom_h), border)
 
-         zoom_w <:= 1
-         zoom_h <:= 1
+      zoom_w <:= 1
+      zoom_h <:= 1
 
-         if \zoom_win &
-            zoom_win.get_width() = zoom_w & 
-            zoom_win.get_height() = zoom_h then
-               zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
-         else {
-            (\zoom_win).close()
-            /win_pix := win.get_pixels()
-            zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)
-            zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
-         }
+      if img_w = zoom_w & img_h = zoom_h then {
+         /win := Window.open_image(win_pix)
+         win.copy_to(,,,, self.cbwin, pt.x, pt.y)
+      } else if \zoom_win &
+         zoom_win.get_width() = zoom_w & 
+         zoom_win.get_height() = zoom_h
+      then
+         zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
+      else {
+         (\zoom_win).close()
+         /win_pix := win.get_pixels()
+         zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)
+         zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
       }
    end
 
