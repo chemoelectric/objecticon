@@ -1121,18 +1121,19 @@ class TabHeaderPaint(Paint)
    public override initially(c)
       local ip
       self.h := max(2 * Gui.Y_INSET + ICON_SIZE, c.cbwin.get_line_height())
-      if ip := Pixels(\icon) then {
+      use {
+         ip := Pixels(\icon),
          icon_win := if ip.get_height() = ICON_SIZE then
             Window.open_image(ip)
-         else {
+         else
             zoom_pix(ip,
                      (ip.get_width() * ICON_SIZE) / ip.get_height(),
                      ICON_SIZE)
-         }
-         ip.close()
-         self.w := icon_win.get_width() + Gui.TEXT_INSET + c.cbwin.text_width(str)
-      } else
-         self.w := c.cbwin.text_width(str)
+      }
+      self.w := if \icon_win then
+         icon_win.get_width() + Gui.TEXT_INSET + c.cbwin.text_width(str)
+      else
+         c.cbwin.text_width(str)
    end
 
    public override finally()
