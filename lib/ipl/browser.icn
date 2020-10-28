@@ -3052,7 +3052,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       t := Window.get_default_font_size()
       SIZES := [0.5 * t, 0.75 * t, t, 1.25 * t, 1.5 * t, 1.75 * t, 2.0 * t]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
-      default_font_clone := Window().set_font("sans")
+      default_font_clone := new_win().set_font("sans")
       SCROLL_INCREMENT := env_scale("OI_BROWSER_SCROLL_INCREMENT") | scale(20)
       DEFAULT_HISTORY_SIZE := env_int("OI_BROWSER_DEFAULT_HISTORY_SIZE", 0) | 100
    end
@@ -3738,15 +3738,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return (0 < \i <= 7, i)
    end
 
-   private static valid_family(fam)
+   private valid_family(fam)
       local w
       return use {
-         w := Window(),
+         w := cbwin.clone(),
          w.set_font(fam) & fam
       }
    end
 
-   private static select_family(faces)
+   private select_family(faces)
       local e
       every e := map(trim(separate(string(faces)))) do {
          # If we have one of the four standard families (or their html
