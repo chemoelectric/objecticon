@@ -1675,7 +1675,8 @@ class BrowserTab(TabItem, BrowserUI)
       # Only produce a tab tooltip if the title will be limited.
       if paint.label_will_fit(cbwin, tab_w - label_border.get_total_width()) then
          fail
-      /title_tt := split_string(paint.str, 
+      /title_tt := split_string(cbwin,
+                                paint.str, 
                                 Style.TOOLTIP_FONT,
                                 scale(500))
       return title_tt

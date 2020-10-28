@@ -832,11 +832,12 @@ end
 # which splits the string up into multiple lines broken at the given
 # width.
 #
-procedure split_string(s, f, n)
-   local W, w, l, r
+procedure split_string(W, s, f, n)
+   local w, l, r
    use {
-      W := Window().set_font(f),
+      W := W.clone(),
       {
+         W.set_font(f)
          r := ".cell\n.x_ialign l\n"
          l := ""
          every w := words(s) do {
