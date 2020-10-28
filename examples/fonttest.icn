@@ -32,7 +32,7 @@ class FontTestDialog(Dialog)
       local t
       self.setup()
       # Work out what the underlying font system is.
-      t := Window()
+      t := new_win()
       t.get_font() ? (fsys := tab(upto(':')))
       t.close()
       case fsys of {

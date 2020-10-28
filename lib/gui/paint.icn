@@ -2,7 +2,6 @@ package gui
 
 import 
    util,
-   graphics(Window),
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
@@ -225,7 +224,7 @@ class GridPaint(Paint)
       attribs := copy(c.get_effective_wattribs()) | runerr("Couldn't get effective wattribs in GridPaint", c)
       attribs[WAttrib.SIZE] := [1, 1]
       attribs[WAttrib.CANVAS] := "hidden"
-      win := open_win_with(attribs) | runerr("Couldn't open window: " || &why)
+      win := open_win_with(attribs)
       g := Grid().set_extra(Grid.EXTRA_IGNORE)
       pass := 1
       x_ialign := y_ialign := Align.C
@@ -242,7 +241,7 @@ class GridPaint(Paint)
       h := g.get_preferred_height()
       if (w > 0) & (h > 0) then {
          attribs["size"] := [w, h]
-         win := open_win_with(attribs) | runerr("Couldn't open window: " || &why)
+         win := open_win_with(attribs)
          pass := 2
          curr_cell := &null
          ii := 0
@@ -602,7 +601,7 @@ class ImagePaint(Paint)
 
    public just_win()
       if \win_pix then {
-         /win := Window.open_image(win_pix)
+         /win := open_image(win_pix)
          win_pix.close()
          win_pix := &null
       }

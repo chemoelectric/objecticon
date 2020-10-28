@@ -8,7 +8,7 @@
 
 package gui
 
-import util, graphics(Window)
+import util
 
 #
 # This class scales and displays an image.  The image source can
@@ -209,7 +209,7 @@ class Image(Component)
       zoom_h <:= 1
 
       if img_w = zoom_w & img_h = zoom_h then {
-         /win := Window.open_image(win_pix)
+         /win := open_image(win_pix)
          win.copy_to(,,,, self.cbwin, pt.x, pt.y)
       } else if \zoom_win &
          zoom_win.get_width() = zoom_w & 

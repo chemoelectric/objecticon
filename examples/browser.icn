@@ -1004,7 +1004,7 @@ class DownloadTab(TabItem)
          set_contents(u"")
       self.add(url_field)
       use {
-         w := Window(),
+         w := new_win(),
          url_table := gui.Table().
             set_size(scale(600), scale(260)).
             set_select_mode(Select.MANY).
@@ -1124,7 +1124,7 @@ class TabHeaderPaint(Paint)
       use {
          ip := Pixels(\icon),
          icon_win := if ip.get_height() = ICON_SIZE then
-            Window.open_image(ip)
+            open_image(ip)
          else
             zoom_pix(ip,
                      (ip.get_width() * ICON_SIZE) / ip.get_height(),

@@ -644,7 +644,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private static check_font(s)
       local W
       return use {
-         W := Window(),
+         W := new_win(),
          check_font1(W, s)
       }
    end

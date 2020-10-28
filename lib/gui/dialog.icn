@@ -417,7 +417,7 @@ class Dialog(Component)
       t := table()
       every k := WAttrib.DISPLAY | WAttrib.DX | WAttrib.DY do
          t[k] := get_wattrib(k)
-      self.win := open_win_with(t) | runerr("Couldn't open buffer window: " || &why)
+      self.win := open_win_with(t)
    end
 
    #
@@ -452,7 +452,7 @@ class Dialog(Component)
       if pw := (\owning_dialog).win then
          t[WAttrib.TRANSIENT_FOR] := pw
       /t[WAttrib.CANVAS] := "normal"
-      apply_window_table(win, t) | runerr("Couldn't open window: " || &why)
+      apply_window_table(win, t)
    end
 
    public close_win()

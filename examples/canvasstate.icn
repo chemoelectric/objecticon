@@ -1,7 +1,7 @@
 $load BABBAGE "babbage.gif"
 
 import
-   io, gui, graphics, ipl.options
+   io, gui, ipl.options
 
 global init_canvas, opts
 
@@ -20,7 +20,7 @@ class Untitled(Dialog)
    end
 
    public override init_dialog()
-      other := Window().
+      other := new_win().
          set_pos(500,200).
          set_resize(&yes).
          set_label("Babbage").
