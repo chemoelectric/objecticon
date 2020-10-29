@@ -529,6 +529,9 @@ package procedure tab_ws()
    return tab(many(' \t\n\r'))
 end
 
+#
+# Test if the given string is (probably) a classic Icon image string.
+#
 procedure is_image_string(v)
    string(v) ? {
       tab_ws()
@@ -715,10 +718,16 @@ procedure selection_convert(target_type, data)
    }
 end
 
+#
+# Return a new `Window` with the attributes in table `t` applied.
+#
 procedure open_win_with(t)
    return apply_window_table(new_win(t[WAttrib.DISPLAY]), t)
 end
 
+#
+# Apply the attributes from table `t` to `Window` w.
+#
 procedure apply_window_table(w, t)
    local e, v
    every e := !sort(t) do {
@@ -773,6 +782,10 @@ procedure apply_window_table(w, t)
    return w
 end
 
+#
+# Apply just the context attributes (except `dx` and `dy`) from table
+# `t` to `Window` w.
+#
 procedure apply_context_table(w, t)
    local e, v
    every e := !sort(t) do {
@@ -793,10 +806,18 @@ procedure apply_context_table(w, t)
    return w
 end
 
+#
+# Return a clone of `Window` w, with additional context attributes
+# from table `t` applied.
+#
 procedure clone_win_with(w, t)
    return apply_context_table(w.clone(), t)
 end
 
+#
+# Return a new `Window` which shares just the canvas of `w`, its `dx`
+# and `dy` offset, and context attributes from table `t`.
+#
 procedure fresh_clone_win_with(w, t)
    local wt
    return use {
@@ -1000,6 +1021,9 @@ package procedure get_toolbar_theme_paint(paint, icon, svg)
       return ImagePaint().set_cache(k)
 end
 
+#
+# Return record for `range`.
+#
 record Range(lo, hi)
 
 #
