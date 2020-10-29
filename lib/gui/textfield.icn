@@ -441,7 +441,8 @@ class TextField(Component)
 
    public override initially()
       Component.initially()
-      cursor_ticker.start()
+      if has_focus() then
+         cursor_ticker.start()
    end
 
    public override finally()
@@ -836,6 +837,8 @@ class TextField(Component)
       connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(handle_key, Event.KEY_PRESS)
       connect(handle_interrupted, Event.INTERRUPTED)
+      connect(create cursor_ticker.start(), Event.GOT_FOCUS)
+      connect(create cursor_ticker.stop(), Event.LOST_FOCUS)
       return
    end
 end

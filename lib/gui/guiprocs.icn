@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics(Mouse,Window,Pixels,Selection,need_Window),
+import graphics(Mouse,Window,Pixels,Selection,need_Window,need_Pixels),
    lang, util, io, xdg, ipl.strings, ipl.numbers
 
 final abstract class Event()
@@ -368,7 +368,7 @@ end
 procedure env_font(s)
    local f, w
    f := env_string(s) | fail
-   use{ w := Window(), w.set_font(f) } | runerr("Font value " || f || " of " || s || " is invalid")
+   use{ w := new_win(), w.set_font(f) } | runerr("Font value " || f || " of " || s || " is invalid")
    return f
 end
 
@@ -378,7 +378,7 @@ end
 procedure env_pattern(s)
    local p, w
    p := env_string(s) | fail
-   use{ w := Window(), w.set_masked_pattern(p) } | runerr("Pattern value " || p || " of " || s || " is invalid")
+   use{ w := new_win(), w.set_masked_pattern(p) } | runerr("Pattern value " || p || " of " || s || " is invalid")
    return p
 end
 
@@ -388,7 +388,7 @@ end
 procedure env_filter(s)
    local f, w
    f := env_string(s) | fail
-   use{ w := Window(), w.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
+   use{ w := new_win(), w.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
    return f
 end
 
@@ -398,7 +398,7 @@ end
 procedure env_pointer(s)
    local p, w
    p := env_string(s) | fail
-   use{ w := Window(), w.set_pointer(p) } | runerr("Pointer value " || p || " of " || s || " is invalid")
+   use{ w := new_win(), w.set_pointer(p) } | runerr("Pointer value " || p || " of " || s || " is invalid")
    return p
 end
 
@@ -597,7 +597,7 @@ end
 # Convert an image string to a `Pixels` object, based on the window
 # `W` for hilite, shadow colours etc.
 #
-procedure image_string_to_Pixels(s, W)
+procedure image_string_to_pixels(s, W)
    local q, k, v, r, w
    r := ImageStringInfo(s) | fail
 
@@ -716,7 +716,7 @@ procedure selection_convert(target_type, data)
 end
 
 procedure open_win_with(t)
-   return apply_window_table(Window(t[WAttrib.DISPLAY]), t)
+   return apply_window_table(new_win(t[WAttrib.DISPLAY]), t)
 end
 
 procedure apply_window_table(w, t)
@@ -768,12 +768,8 @@ procedure apply_window_table(w, t)
       }
    }
    w.erase_area()
-   if v := member(t, WAttrib.CANVAS) then {
-      w.set_canvas(v) | {
-         w.close()
-         fail
-      }
-   }
+   if v := member(t, WAttrib.CANVAS) then
+      w.set_canvas(v) | runerr(&why, v)
    return w
 end
 
@@ -804,10 +800,11 @@ end
 procedure fresh_clone_win_with(w, t)
    local wt
    return use {
-      wt := Window(w.get_display()).
-         set_dx(w.get_dx()).
-         set_dy(w.get_dy()),
-      apply_context_table(w.couple(wt), t)
+      wt := new_win(w.get_display()),
+      {
+         wt.set_dx(w.get_dx()).set_dy(w.get_dy())
+         apply_context_table(w.couple(wt), t)
+      }
    }
 end
 
@@ -832,11 +829,12 @@ end
 # which splits the string up into multiple lines broken at the given
 # width.
 #
-procedure split_string(s, f, n)
-   local W, w, l, r
+procedure split_string(W, s, f, n)
+   local w, l, r
    use {
-      W := Window().set_font(f),
+      W := W.clone(),
       {
+         W.set_font(f)
          r := ".cell\n.x_ialign l\n"
          l := ""
          every w := words(s) do {
@@ -1104,16 +1102,60 @@ end
 # `w` x `h`, and return that window.
 #
 procedure zoom_win(src, w, h)
-   local p, q
+   local p
    need_Window(src)
    return use {
       p := src.get_pixels(),
-      use {
-         q := Pixels(w, h, src.get_format()),
-         {
-            p.scale_to(,,,, q)
-            Window.open_image(q)
-         }
+      zoom_pix(p, w, h)
+   }
+end
+
+#
+# Zoom (scale) the contents of `Pixels` `src` to an new window of size
+# `w` x `h`, and return that window.
+#
+procedure zoom_pix(src, w, h)
+   local q
+   need_Pixels(src)
+   return use {
+      q := Pixels(w, h, Window.FORMAT),
+      {
+         src.scale_to(,,,, q)
+         open_image(q)
       }
-   } | runerr("Couldn't open new zoom window: " || &why)
+   }
+end
+
+#
+# This calls `Window(d)`, but causes a runtime error on failure, in
+# order to simplify error handling in the caller.
+#
+procedure new_win(d)
+   return Window(d) | runerr("Couldn't open window: " || &why)
+end
+
+#
+# Convenient method to open an image and return a hidden window with
+# its contents.  A runtime error occurs if the window couldn't be
+# opened.  Otherwise, failure occurs if `img` is a string which
+# couldn't be interpreted as an image.  If `img` is a `Pixels`, this
+# procedure should never fail.
+#
+# :Parameters :
+# :  `img` - the image
+#
+procedure open_image(img)
+   local w, t
+   w := new_win()
+   use {
+      t := w.clone(),
+      {
+         t.set_draw_op("source")
+         t.set_image(img)
+      }
+   } | {
+      w.close()
+      fail
+   }
+   return w
 end

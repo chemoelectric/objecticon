@@ -169,6 +169,15 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
+   # Return a random value (cf ?l for a list).  If the list has MODIFY
+   # capability, a variable is returned, otherwise a value is
+   # returned.
+   #
+   public random()
+      return at(?(0 < size()))
+   end
+
+   #
    # Custom equals mirrors the `equals()` behaviour for builtin lists.
    #
    private override object_equals(other, seen)
@@ -246,6 +255,10 @@ class UnmodifiableList(List)
       return l.size()
    end
 
+   public override random()
+      return .l.random()
+   end
+
    public override get_mode()
       return 0
    end
@@ -310,6 +323,10 @@ class BuiltinList(List)
 
    public override size()
       return *l
+   end
+
+   public override random()
+      return ?l
    end
 
    public override clear()
@@ -395,6 +412,10 @@ class LinkedList(List)
 
    public override at(i)
       return node_at(i).val
+   end
+
+   public override empty()
+      return /nhead
    end
 
    public override pull()
@@ -721,6 +742,10 @@ class UnmodifiableBuiltinList(List)
 
    public override size()
       return *l
+   end
+
+   public override random()
+      return .?l
    end
 
    public override get_mode()

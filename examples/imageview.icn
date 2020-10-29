@@ -1,7 +1,8 @@
-import gui, graphics, io
+import gui, io
 
 class ImageViewTest(Dialog)
    public iv, img
+
    public override component_setup()
       self.setup()
       iv.set_image(img)
@@ -12,7 +13,7 @@ class ImageViewTest(Dialog)
    end
 
    public set_file(f)
-      self.img := Window().set_image(f) | stop("Couldn't load image:", &why)
+      self.img := open_image(f) | stop("Couldn't load image: ", &why)
       (\iv).set_image(img)
    end
 

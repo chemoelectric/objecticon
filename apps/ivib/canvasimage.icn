@@ -51,7 +51,7 @@ class CanvasImage(CanvasComponent,Image)
    # Overrides Image.display() 
    #
    public override display()
-      if in_preview() | \self.win then
+      if in_preview() | \win | \win_pix then
          Image.display()
       else {
          self.cbwin.draw_rectangle(self.x, self.y, self.w, self.h)

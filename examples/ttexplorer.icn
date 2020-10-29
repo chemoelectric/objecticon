@@ -1,4 +1,4 @@
-import gui, io, ipl.sort, util, graphics, ipl.filegui
+import gui, io, ipl.sort, util, ipl.filegui
 
 class TTExplorer(Dialog)
    public
@@ -116,7 +116,7 @@ class TTExplorer(Dialog)
       bw := TableColumn().border.get_total_width()
       set_size(scale(800), scale(600))
       use {
-         w := Window(),
+         w := new_win(),
          {
             size_col.set_column_width(bw + w.text_width("000,000,000,000"))
             date_col.set_column_width(bw + w.text_width("  MMM 00 00:00"))

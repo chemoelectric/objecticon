@@ -698,7 +698,7 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
+void copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
 {
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
@@ -714,7 +714,6 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
               wc2->drawop->i);
     pix_to_win(ws2, x2, y2, w, h);
     flushimage(display, 1);
-    return Succeeded;
 }
 
 /*

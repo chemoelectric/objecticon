@@ -244,9 +244,7 @@ abstract class MenuComponent(Rect,Connectable)
    # displayed in a filtered way and will not accept input.
    #
    public toggle_is_shaded()
-      self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
-      possibly_invalidate()
-      link
+      return set_is_shaded(toggle_flag(is_shaded_flag))
    end
 
    #

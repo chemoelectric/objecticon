@@ -1,4 +1,4 @@
-import gui, ipl.filegui, ipl.sort, io, util, graphics
+import gui, ipl.filegui, ipl.sort, io, util
 
 #
 # A very simple filesystem explorer with a tree and a table.
@@ -171,7 +171,7 @@ class Explorer(Dialog)
 
       bw := TableColumn().border.get_total_width()
       use {
-         w := Window(),
+         w := new_win(),
          tbl := Table().
             set_size(scale(470),scale(420)).
             set_select_mode("none").

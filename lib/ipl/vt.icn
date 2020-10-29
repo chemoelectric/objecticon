@@ -626,7 +626,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       s := get_wattrib(WAttrib.FONT)
       char_w := check_font(s) | runerr(&why, self)
       LineBasedScrollArea.initially()
-      cursor_ticker.start()
+      if has_focus() then
+         cursor_ticker.start()
    end
 
    private static check_font1(W, s)
@@ -643,7 +644,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private static check_font(s)
       local W
       return use {
-         W := Window(),
+         W := new_win(),
          check_font1(W, s)
       }
    end
@@ -2969,6 +2970,8 @@ class Vt(LineBasedScrollArea, MenuMode)
          connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(handle_key, Event.KEY_PRESS)
       connect(handle_interrupted, Event.INTERRUPTED)
+      connect(create cursor_ticker.start(), Event.GOT_FOCUS)
+      connect(create cursor_ticker.stop(), Event.LOST_FOCUS)
       input_handler_coex := create input_handler()
       history_size := DEFAULT_HISTORY_SIZE
       set_font(DEFAULT_FONT)

@@ -154,7 +154,7 @@ class Map(Panel)
    public override display()
       if /I | (I.get_height() ~= h) | (I.get_width() ~= w) then {
          close_win()
-         I := Window().set_size(w, h).set_line_join("miter")
+         I := new_win().set_size(w, h).set_line_join("miter")
          draw_all()
       }
       if \drag_off then

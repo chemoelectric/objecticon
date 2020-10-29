@@ -1009,7 +1009,7 @@ $endif
          set_contents(u"")
       self.add(url_field)
       use {
-         w := Window(),
+         w := new_win(),
          url_table := gui.Table().
             set_size(scale(600), scale(260)).
             set_select_mode(Select.MANY).
@@ -1124,20 +1124,21 @@ class TabHeaderPaint(Paint)
    end
    
    public override initially(c)
-      local iw
-      iw := Window.open_image(\icon)
+      local ip
       self.h := max(2 * Gui.Y_INSET + ICON_SIZE, c.cbwin.get_line_height())
-      if \iw then {
-         if iw.get_height() ~= ICON_SIZE then {
-            icon_win := zoom_win(iw,
-                                 (iw.get_width() * ICON_SIZE) / iw.get_height(),
-                                 ICON_SIZE)
-            iw.close()
-         } else
-            icon_win := iw
-         self.w := icon_win.get_width() + Gui.TEXT_INSET + c.cbwin.text_width(str)
-      } else
-         self.w := c.cbwin.text_width(str)
+      use {
+         ip := Pixels(\icon),
+         icon_win := if ip.get_height() = ICON_SIZE then
+            open_image(ip)
+         else
+            zoom_pix(ip,
+                     (ip.get_width() * ICON_SIZE) / ip.get_height(),
+                     ICON_SIZE)
+      }
+      self.w := if \icon_win then
+         icon_win.get_width() + Gui.TEXT_INSET + c.cbwin.text_width(str)
+      else
+         c.cbwin.text_width(str)
    end
 
    public override finally()
@@ -1679,7 +1680,8 @@ class BrowserTab(TabItem, BrowserUI)
       # Only produce a tab tooltip if the title will be limited.
       if paint.label_will_fit(cbwin, tab_w - label_border.get_total_width()) then
          fail
-      /title_tt := split_string(paint.str, 
+      /title_tt := split_string(cbwin,
+                                paint.str, 
                                 Style.TOOLTIP_FONT,
                                 scale(500))
       return title_tt

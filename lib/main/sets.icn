@@ -36,7 +36,9 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Succeed with `x` if it is a member of the set.
    #
-   public abstract member(x)
+   public member(x)
+      return gen() === x 
+   end
 
    #
    # Delete `x` from the set.  Fails if the key was not present,
@@ -104,6 +106,15 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
       while size() > 0 do
          delete(gen())
       link
+   end
+
+   #
+   # Return a random member (cf ?s for a set).
+   #
+   public random()
+      local r
+      if r := ?(0 < size()) then
+         return if can(ORDER) then select(r) else Index{gen(), r}
    end
 
    #
@@ -199,6 +210,10 @@ class UnmodifiableSet(Set)
       return s.size()
    end
 
+   public override random()
+      return s.random()
+   end
+
    public override get_mode()
       return iand(ORDER, s.get_mode())
    end
@@ -249,6 +264,10 @@ class TableSet(Set)
       return t.select(i)
    end
 
+   public override random()
+      return t.random_key()
+   end
+
    public override size()
       return t.size()
    end
@@ -296,9 +315,6 @@ end
 # An empty set.  An instance of this class is `Set.EMPTY_SET`.
 #
 class EmptySet(Set)
-   public override member(x)
-   end
-
    public override gen()
    end
 
@@ -347,6 +363,10 @@ class BuiltinSet(Set)
       link
    end
 
+   public override random()
+      return ?s
+   end
+
    public override get_mode()
       return INSERT + DELETE
    end
@@ -383,6 +403,10 @@ class UnmodifiableBuiltinSet(Set)
 
    public override size()
       return *s
+   end
+
+   public override random()
+      return ?s
    end
 
    public override get_mode()

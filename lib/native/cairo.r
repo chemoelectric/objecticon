@@ -2229,6 +2229,15 @@ function cairo_ImageSurface_new_impl(pix)
     }
 end
 
+function cairo_ImageSurface_get_format()
+    body {
+       if (is_little_endian())
+           return C_string imgdataformat_X11BGRA32.name;
+       else
+           return C_string imgdataformat_X11ARGB32.name;
+    }
+end
+
 function cairo_ImageSurface_get_width(self)
     body {
         GetSelfSurface();

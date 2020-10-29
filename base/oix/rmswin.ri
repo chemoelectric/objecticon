@@ -1202,12 +1202,11 @@ void erasearea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
+void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
 {
     gb_Draw d;
     mk_Draw(w2, &d);
     gb_copyarea(w->window->pix, x, y, width, height, &d, x2, y2);
-    return Succeeded;
 }
 
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)

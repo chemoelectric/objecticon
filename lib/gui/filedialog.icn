@@ -8,6 +8,7 @@ import
    ipl.functional,
    util,
    io,
+   graphics,
    ipl.strings
 
 class FileDialogPos()
@@ -234,7 +235,7 @@ class FileDialog(Dialog)
    end
 
    public check_current_selection()
-      local f
+      local f, px
       if /multiple_files_flag then {
          f := get_current_selection().str()
          warned := &null
@@ -249,15 +250,15 @@ class FileDialog(Dialog)
             f := loaded_dir_path.child(flist.object_get_cursor().name).str()
       }
       if \img then {
-         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
-            img.set_image(f)
-         else
-            img.set_image()
-         if \img.win then
-            img_label.set_label(".cell\nHeight: " || img.win.get_height() || "\n.br\n" ||
-                                "Width: " || img.win.get_width() || "\n.br\n")
-         else
+         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") &
+            use{ px := Pixels(f), img.set_pixels(px) }
+         then {
+            img_label.set_label(".cell\nHeight: " || img.get_image_height() || "\n.br\n" ||
+                                "Width: " || img.get_image_width() || "\n.br\n")
+         } else {
+            img.clear_image()
             img_label.set_label("")
+         }
       }
    end
 

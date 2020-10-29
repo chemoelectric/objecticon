@@ -304,12 +304,16 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       FOCUS_IN,
       FOCUS_OUT,
       CLOSE_BUTTON,
-      INVOKE_LATER
+      INVOKE_LATER,
+      # The format of a `Window` constructed with empty display
+      # parameter.  This will be `&null` if no window could be created.
+      FORMAT
 
    private static const
       PATTERNS
 
    private static init()
+      local t
       STATE :=         -8
       MOVE :=          -9
       RESIZE :=       -10
@@ -334,6 +338,10 @@ final class Window(NoCopy, ObjectOutput, HasClose)
                         Pattern.GRAINS, Pixels(8, 8, Pixels.PALETTE1).set_data("\e\x18\x81\xb16\x06`c\x00"),
                         Pattern.SCALES, Pixels(8, 8, Pixels.PALETTE1).set_data("\x02\x02\x05\xf8  P\x8f\x00"),
                         Pattern.WAVES, Pixels(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
+      use {
+         t := Window(),
+         FORMAT := t.get_format()
+      }
    end
 
    private static create_for_ptr(ptr)
@@ -1138,6 +1146,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # with the OI_FONT_SIZE environment variable.
    #
    public static native get_default_font_size()
+
+   # Get the default leading, as optionally specified with the
+   # OI_LEADING environment variable.
+   #
+   public static native get_default_leading()
 
    # Return the `Pixels` format this window uses internally.
    #

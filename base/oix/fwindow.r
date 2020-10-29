@@ -148,7 +148,7 @@ function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy)
       x += (x2 - ox);
       y += (y2 - oy);
       
-      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2, y2));
+      copyarea(self_w, x, y, width, height, w2, x2, y2);
 
       return self;
    }
@@ -1942,6 +1942,12 @@ end
 function graphics_Window_get_default_font_size()
    body {
        return C_double defaultfontsize;
+   }
+end
+
+function graphics_Window_get_default_leading()
+   body {
+       return C_double defaultleading;
    }
 end
 

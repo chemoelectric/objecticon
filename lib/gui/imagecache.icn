@@ -206,14 +206,14 @@ final abstract class ImageCache()
             return key
          \fl | return error("Invalid key for ImageCache")
          w := use {
-            p := image_string_to_Pixels(s, win),
-            Window.open_image(p)
+            p := image_string_to_pixels(s, win),
+            open_image(p)
          } | fail
       } else {
          if member(imap, key) then
             return key
          \fl | Files.access(key) | return error("Invalid key for ImageCache")
-         w := Window.open_image(s) | fail
+         w := open_image(s) | fail
       }
       insert(imap, key, w)
       return key
@@ -227,14 +227,23 @@ final abstract class ImageCache()
    #
    public static load(s, win)
       local p
+      return use {
+         p := load_pixels(s, win),
+         open_image(p)
+      }
+   end
+
+   #
+   # This is like `load`, but a `Pixels` is returned instead of a
+   # `Window`.
+   #
+   public static load_pixels(s, win)
+      s := need_string(s)
       s := member(names, s)
-      return if is_image_string(s) then {
-         use {
-            p := image_string_to_Pixels(s, win),
-            Window.open_image(p)
-         }
-      } else
-         Window.open_image(s)
+      return if is_image_string(s) then
+         image_string_to_pixels(s, win)
+      else
+         Pixels(s)
    end
 
    #
@@ -298,10 +307,10 @@ final abstract class ImageCache()
       use {
          svg := SVG(s),
          {
-            w := Window().
-               set_size(width, height).
-               set_bg("transparent").
-               erase_area()
+            w := new_win()
+            w.set_size(width, height).
+              set_bg("transparent").
+              erase_area()
             use {
                cc := Context(w).
                   scale(real(width) / svg.get_width(), real(height) / svg.get_height()),

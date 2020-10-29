@@ -1415,7 +1415,14 @@ static void wmap(wbp w)
 
     XSync(wd->display, False);
 
-    synch_pos(ws, 0, 0);
+    /*
+     * This is a guess, but it is indispensable for popups, since
+     * those will never receive an update, even via UpdateCommon
+     * (because of mouse/keyboard grabs).
+     */
+    synch_pos(ws,
+              ws->reqx == -INT_MAX ? 0 : ws->reqx,
+              ws->reqy == -INT_MAX ? 0 : ws->reqy);
 }
 
 static void synch_net_wm_state(wsp ws, int desired_state)
@@ -4072,7 +4079,7 @@ void erasearea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
+void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
 {
     wsp ws1 = w->window;
     wsp ws2 = w2->window;
@@ -4080,31 +4087,42 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
     wdp wd1 = ws1->display;
     wdp wd2 = ws2->display;
 
-    if (wd1->display != wd2->display) {
-        LitWhy("Can't copy between different displays");
-        return Failed;
+    if (wd1 == wd2) {
+
+        /*
+         * Copying is between windows on one display, perhaps the same window.
+         */
+        no_clip(ws1, 0);
+        clip(w2);
+
+        /*
+         * Copy the area.
+         */
+        XRenderComposite(wd1->display,
+                         wc2->drawop->i,
+                         ws1->ppic,    /* src */
+                         get_mask_picture(wc2), /* mask */
+                         ws2->ppic,    /* dest */
+                         x, y,         /* src x,y */
+                         x2, y2,       /* mask x,y */
+                         x2, y2,       /* dst x,y */
+                         width, height);
+        pix_to_win(ws2, x2, y2, width, height);
+
+    } else {
+
+        /*
+         * Copying is between different displays, and requires an intermediate buffer.
+         */
+
+        struct imgdata *imd;
+        imd = newimgdata();
+        imd->width = width;
+        imd->height = height;
+        captureimgdata(w, x, y, imd);
+        drawimgdata(w2, x2, y2, imd, 0);
+        unlinkimgdata(imd);
     }
-
-    /*
-     * Copying is between windows on one display, perhaps the same window.
-     */
-    no_clip(ws1, 0);
-    clip(w2);
-
-    /*
-     * Copy the area.
-     */
-    XRenderComposite(wd1->display,
-                     wc2->drawop->i,
-                     ws1->ppic,    /* src */
-                     get_mask_picture(wc2),/* mask */
-                     ws2->ppic,    /* dest */
-                     x, y,         /* src_x,y */
-                     x2, y2,         /* mask x,y */
-                     x2, y2,       /* dst x,y */
-                     width, height);
-    pix_to_win(ws2, x2, y2, width, height);
-    return Succeeded;
 }
 
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
