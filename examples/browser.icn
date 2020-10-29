@@ -697,14 +697,20 @@ class Download()
    end
 
    public get_status()
-      local w, l
+      local w, l, r
       if w := parent.parent_dialog.pool.get_worker(req) then {
-         if l := (0 < w.length()) then {
-            size := Format.numeric_to_string(l / 1048576.0, 1)
-            status := "Downloading (" || ((w.read() * 100) / l) || "%)"
+         if r := w.read() then {
+            if l := (0 < w.length()) then {
+               size := Format.numeric_to_string(l / 1048576.0, 1)
+               status := "Downloading (" || ((w.read() * 100) / l) || "%)"
+            } else {
+               size := ""
+               status := "Downloading (" || Format.numeric_to_string(w.read() / 1048576.0, 1) || "MB)"
+            }
          } else {
+            # w.read() will fail whilst we're connecting, sending headers, etc.
             size := ""
-            status := "Downloading (" || Format.numeric_to_string(w.read() / 1048576.0, 1) || "MB)"
+            status := "Downloading"
          }
       }
       return [req.url.liberal_ucs(), size, status]
