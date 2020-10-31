@@ -14,11 +14,12 @@ operator ~ compl(x)
    body {
        struct rangeset *rs;
        struct b_cset *blk;
-       word i, prev = 0;
+       word i, from, to, prev;
        rs = init_rangeset();
+       prev = 0;
        for (i = 0; i < CsetBlk(x).n_ranges; ++i) {
-           word from = CsetBlk(x).range[i].from;
-           word to = CsetBlk(x).range[i].to;
+           from = CsetBlk(x).range[i].from;
+           to = CsetBlk(x).range[i].to;
            if (from > prev)
                add_range(rs, prev, from - 1);
            prev = to + 1;
@@ -92,16 +93,17 @@ operator -- diff(x,y)
       body {
           struct rangeset *rs, *y_comp;
           struct b_cset *blk;
-          word i_x, i_y, prev = 0;
+          word i_x, i_y, m, to_x, to_y, from, to, prev;
 
           y_comp = init_rangeset();
           rs = init_rangeset();
           /*
            * Calculate ~y
            */
+          prev = 0;
           for (i_y = 0; i_y < CsetBlk(y).n_ranges; ++i_y) {
-              word from = CsetBlk(y).range[i_y].from;
-              word to = CsetBlk(y).range[i_y].to;
+              from = CsetBlk(y).range[i_y].from;
+              to = CsetBlk(y).range[i_y].to;
               if (from > prev)
                   add_range(y_comp, prev, from - 1);
               prev = to + 1;
@@ -115,16 +117,14 @@ operator -- diff(x,y)
           i_x = i_y = 0;
           while (i_x < CsetBlk(x).n_ranges &&
                  i_y < y_comp->n_ranges) {
-              word from_x = CsetBlk(x).range[i_x].from;
-              word to_x = CsetBlk(x).range[i_x].to;
-              word from_y = y_comp->range[i_y].from;
-              word to_y = y_comp->range[i_y].to;
+              to_x = CsetBlk(x).range[i_x].to;
+              to_y = y_comp->range[i_y].to;
+              m = Max(CsetBlk(x).range[i_x].from, y_comp->range[i_y].from);
               if (to_x < to_y) {
-                  add_range(rs, Max(from_x, from_y), to_x);
+                  add_range(rs, m, to_x);
                   ++i_x;
-              }
-              else {
-                  add_range(rs, Max(from_x, from_y), to_y);
+              } else {
+                  add_range(rs, m, to_y);
                   ++i_y;
               }
           }
@@ -196,7 +196,6 @@ operator ** inter(x,y)
          }
       }
    else {
-
       if !cnv:cset(x) then
          runerr(120, x)
       if !cnv:cset(y) then
@@ -205,21 +204,19 @@ operator ** inter(x,y)
       body {
           struct rangeset *rs;
           struct b_cset *blk;
-          word i_x, i_y;
+          word i_x, i_y, m, to_x, to_y;
           rs = init_rangeset();
           i_x = i_y = 0;
           while (i_x < CsetBlk(x).n_ranges &&
                  i_y < CsetBlk(y).n_ranges) {
-              word from_x = CsetBlk(x).range[i_x].from;
-              word to_x = CsetBlk(x).range[i_x].to;
-              word from_y = CsetBlk(y).range[i_y].from;
-              word to_y = CsetBlk(y).range[i_y].to;
+              to_x = CsetBlk(x).range[i_x].to;
+              to_y = CsetBlk(y).range[i_y].to;
+              m = Max(CsetBlk(x).range[i_x].from, CsetBlk(y).range[i_y].from);
               if (to_x < to_y) {
-                  add_range(rs, Max(from_x, from_y), to_x);
+                  add_range(rs, m, to_x);
                   ++i_x;
-              }
-              else {
-                  add_range(rs, Max(from_x, from_y), to_y);
+              } else {
+                  add_range(rs, m, to_y);
                   ++i_y;
               }
           }
@@ -300,14 +297,29 @@ operator ++ union(x,y)
       body {
           struct rangeset *rs;
           struct b_cset *blk;
-          word i;
+          word i_x, i_y, from_x, from_y;
           rs = init_rangeset();
-          for (i = 0; i < CsetBlk(x).n_ranges; ++i) 
-              add_range(rs, CsetBlk(x).range[i].from, CsetBlk(x).range[i].to);
-          
-          for (i = 0; i < CsetBlk(y).n_ranges; ++i) 
-              add_range(rs, CsetBlk(y).range[i].from, CsetBlk(y).range[i].to);
-          
+          i_x = i_y = 0;
+          while (i_x < CsetBlk(x).n_ranges &&
+                 i_y < CsetBlk(y).n_ranges) {
+              from_x = CsetBlk(x).range[i_x].from;
+              from_y = CsetBlk(y).range[i_y].from;
+              if (from_x < from_y) {
+                  add_range(rs, from_x, CsetBlk(x).range[i_x].to);
+                  ++i_x;
+              } else {
+                  add_range(rs, from_y, CsetBlk(y).range[i_y].to);
+                  ++i_y;
+              }
+          }
+          while (i_x < CsetBlk(x).n_ranges) {
+              add_range(rs, CsetBlk(x).range[i_x].from, CsetBlk(x).range[i_x].to);
+              ++i_x;
+          }
+          while (i_y < CsetBlk(y).n_ranges) {
+              add_range(rs, CsetBlk(y).range[i_y].from, CsetBlk(y).range[i_y].to);
+              ++i_y;
+          }
           blk = rangeset_to_block(rs);
           free_rangeset(rs);
           return cset(blk);

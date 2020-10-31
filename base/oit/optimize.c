@@ -979,16 +979,17 @@ static int need_ucs(struct literal *s)
 static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
 {
     struct rangeset *rs, *y_comp;
-    word i_x, i_y, prev = 0;
+    word i_x, i_y, m, to_x, to_y, from, to, prev;
 
     y_comp = init_rangeset();
     rs = init_rangeset();
     /*
      * Calculate ~y
      */
+    prev = 0;
     for (i_y = 0; i_y < y->n_ranges; ++i_y) {
-        word from = y->range[i_y].from;
-        word to = y->range[i_y].to;
+        from = y->range[i_y].from;
+        to = y->range[i_y].to;
         if (from > prev)
             add_range(y_comp, prev, from - 1);
         prev = to + 1;
@@ -1002,16 +1003,14 @@ static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
     i_x = i_y = 0;
     while (i_x < x->n_ranges &&
            i_y < y_comp->n_ranges) {
-        word from_x = x->range[i_x].from;
-        word to_x = x->range[i_x].to;
-        word from_y = y_comp->range[i_y].from;
-        word to_y = y_comp->range[i_y].to;
+        to_x = x->range[i_x].to;
+        to_y = y_comp->range[i_y].to;
+        m = Max(x->range[i_x].from, y_comp->range[i_y].from);
         if (to_x < to_y) {
-            add_range(rs, Max(from_x, from_y), to_x);
+            add_range(rs, m, to_x);
             ++i_x;
-        }
-        else {
-            add_range(rs, Max(from_x, from_y), to_y);
+        } else {
+            add_range(rs, m, to_y);
             ++i_y;
         }
     }
@@ -1022,35 +1021,48 @@ static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
 static struct rangeset *rangeset_union(struct rangeset *x, struct rangeset *y)
 {
     struct rangeset *rs;
-    word i;
+    word i_x, i_y, from_x, from_y;
     rs = init_rangeset();
-    for (i = 0; i < x->n_ranges; ++i) 
-        add_range(rs, x->range[i].from, x->range[i].to);
-          
-    for (i = 0; i < y->n_ranges; ++i) 
-        add_range(rs, y->range[i].from, y->range[i].to);
-
+    i_x = i_y = 0;
+    while (i_x < x->n_ranges &&
+           i_y < y->n_ranges) {
+        from_x = x->range[i_x].from;
+        from_y = y->range[i_y].from;
+        if (from_x < from_y) {
+            add_range(rs, from_x, x->range[i_x].to);
+            ++i_x;
+        } else {
+            add_range(rs, from_y, y->range[i_y].to);
+            ++i_y;
+        }
+    }
+    while (i_x < x->n_ranges) {
+        add_range(rs, x->range[i_x].from, x->range[i_x].to);
+        ++i_x;
+    }
+    while (i_y < y->n_ranges) {
+        add_range(rs, y->range[i_y].from, y->range[i_y].to);
+        ++i_y;
+    }
     return rs;
 }
 
 static struct rangeset *rangeset_inter(struct rangeset *x, struct rangeset *y)
 {
     struct rangeset *rs;
-    word i_x, i_y;
+    word i_x, i_y, m, to_x, to_y;
     rs = init_rangeset();
     i_x = i_y = 0;
     while (i_x < x->n_ranges &&
            i_y < y->n_ranges) {
-        word from_x = x->range[i_x].from;
-        word to_x = x->range[i_x].to;
-        word from_y = y->range[i_y].from;
-        word to_y = y->range[i_y].to;
+        to_x = x->range[i_x].to;
+        to_y = y->range[i_y].to;
+        m = Max(x->range[i_x].from, y->range[i_y].from);
         if (to_x < to_y) {
-            add_range(rs, Max(from_x, from_y), to_x);
+            add_range(rs, m, to_x);
             ++i_x;
-        }
-        else {
-            add_range(rs, Max(from_x, from_y), to_y);
+        } else {
+            add_range(rs, m, to_y);
             ++i_y;
         }
     }
@@ -1060,11 +1072,12 @@ static struct rangeset *rangeset_inter(struct rangeset *x, struct rangeset *y)
 static struct rangeset *rangeset_compl(struct rangeset *x)
 {
     struct rangeset *rs;
-    word i, prev = 0;
+    word i, from, to, prev;
     rs = init_rangeset();
+    prev = 0;
     for (i = 0; i < x->n_ranges; ++i) {
-        word from = x->range[i].from;
-        word to = x->range[i].to;
+        from = x->range[i].from;
+        to = x->range[i].to;
         if (from > prev)
             add_range(rs, prev, from - 1);
         prev = to + 1;
