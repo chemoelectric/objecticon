@@ -40,7 +40,7 @@ class Size()
    end
 
    public empty()
-      succeed (w|h) <= 0
+      succeed (w | h) <= 0
    end
 
    public new(w, h)
@@ -60,7 +60,11 @@ class Rect(Point,Size)
    end
 
    public contains(r)
-      succeed (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
+      succeed (w > 0 & h > 0) & (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
+   end
+
+   public touches(r)
+      succeed (x <= r.x + r.w) & (x + w >= r.x) & (y <= r.y + r.h) & (y + h >= r.y)
    end
 
    public center()
@@ -86,7 +90,7 @@ class Rect(Point,Size)
       local ix, iw, iy, ih
 
       if r === self then
-         link
+         link w > 0 & h > 0
 
       ix := max(self.x, r.x)
       iw := min(self.x + self.w, r.x + r.w) - ix
@@ -99,25 +103,6 @@ class Rect(Point,Size)
          fail
 
       return Rect(ix, iy, iw, ih)
-   end
-
-   public touches(r)
-      local ix, iw, iy, ih
-
-      if r === self then
-         return
-
-      ix := max(self.x, r.x)
-      iw := min(self.x + self.w, r.x + r.w) - ix
-      if iw < 0 then
-         fail
-
-      iy := max(self.y, r.y)
-      ih := min(self.y + self.h, r.y + r.h) - iy
-      if ih < 0 then
-         fail
-
-      return
    end
 
    #
