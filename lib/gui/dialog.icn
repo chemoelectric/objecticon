@@ -151,14 +151,16 @@ class Dialog(Component)
    #
    public invalidate_rect(r)
       local t, i
-      /invalid_rects := []
-      every t := invalid_rects[i := 1 to *invalid_rects] do {
-         if t.touches(r) then {
-            invalid_rects[i] := t.union(r)
-            link
+      if not r.empty() then {
+         /invalid_rects := []
+         every t := invalid_rects[i := 1 to *invalid_rects] do {
+            if t.touches(r) then {
+               invalid_rects[i] := t.union(r)
+               link
+            }
          }
+         put(invalid_rects, r)
       }
-      put(invalid_rects, r)
       link
    end
 
