@@ -26,7 +26,7 @@ final class Sem(NoCopy, HasClose)
 
    #
    # If this flag is set then `semop()` and `semop_nowait()` will use
-   # the `SEM_UNDO` flag.  By default this flag is on.  Note that this
+   # the `SEM_UNDO` flag.  By default this flag is off.  Note that this
    # flag is an attribute of this instance, rather than the underlying
    # semaphore.
    #
@@ -134,7 +134,6 @@ final class Sem(NoCopy, HasClose)
 
    private new(id)
       self.id := id
-      self.undo_flag := &yes
       return
    end
 
