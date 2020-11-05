@@ -4850,7 +4850,7 @@ wbp findwbp(wsp ws)
  */
 static wdp alcdisplay(char *s)
 {
-    static int inited = 0;
+    static int inited;
     wdp wd;
     int i, major_version, minor_version;
 
