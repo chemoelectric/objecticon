@@ -245,7 +245,7 @@ function ipc_Shm_set_value_impl(self, str)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        shmctl(tp->data_id, IPC_STAT, &shminfo);
        if (size <= shminfo.shm_segsz) {
@@ -279,7 +279,7 @@ function ipc_Shm_set_value_impl(self, str)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
    
        shmdt(tp);
 
@@ -305,7 +305,7 @@ function ipc_Shm_get_value_impl(self)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        data = (char*)shmat(tp->data_id, 0, 0);
        if ((void*)data == (void*)-1)
@@ -317,7 +317,7 @@ function ipc_Shm_get_value_impl(self)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
 
        shmdt(tp);
 
@@ -424,30 +424,34 @@ function ipc_Sem_get_value(self)
    }
 end
 
-function ipc_Sem_semop(self, n)
+function ipc_Sem_semop_impl(self, n, uf)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
        struct sembuf p_buf;
        GetSelfId();
+       if (!is_flag(&uf))
+           runerr(171, uf);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
-       p_buf.sem_flg = SEM_UNDO;
+       p_buf.sem_flg = (is:null(uf) ? 0 : SEM_UNDO);
        if (semop_ex(self_id, &p_buf, 1) == -1)
            aborted("semop failed");
        return self;
    }
 end
 
-function ipc_Sem_semop_nowait(self, n)
+function ipc_Sem_semop_nowait_impl(self, n, uf)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
        struct sembuf p_buf;
        GetSelfId();
+       if (!is_flag(&uf))
+           runerr(171, uf);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
-       p_buf.sem_flg = SEM_UNDO | IPC_NOWAIT;
+       p_buf.sem_flg = (is:null(uf) ? 0 : SEM_UNDO) | IPC_NOWAIT;
        if (semop_ex(self_id, &p_buf, 1) == -1) {
            if (errno == EAGAIN) {
                /* Okay, it's not ready,so fail */
@@ -457,7 +461,7 @@ function ipc_Sem_semop_nowait(self, n)
            /* A runtime error. */
            aborted("semop failed");
        }
-       return self;
+       return nulldesc;
    }
 end
 
@@ -632,7 +636,7 @@ function ipc_Msg_send_impl(self, str)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->snd_sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        mh.u.size = size;
        mh.mtype = 1;
@@ -657,7 +661,7 @@ function ipc_Msg_send_impl(self, str)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->snd_sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
 
        shmdt(tp);
 
@@ -685,7 +689,7 @@ function ipc_Msg_receive_impl(self)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, 0) == -1) {
            aborted("Failed to do header msgrcv");
@@ -714,7 +718,7 @@ function ipc_Msg_receive_impl(self)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
    
        shmdt(tp);
 
@@ -743,14 +747,14 @@ function ipc_Msg_attempt_impl(self)
        p_buf.sem_flg = SEM_UNDO;
 
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, IPC_NOWAIT) == -1) {
            if (errno == ENOMSG) {
                /* Okay, it's not ready,so fail.  First signal. */
                errno2why();
                p_buf.sem_op = 1;
                if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-                   aborted("signal failed");
+                   aborted("Signal failed");
                fail;
            }
            aborted("Failed to do header msgrcv");
@@ -779,7 +783,7 @@ function ipc_Msg_attempt_impl(self)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
    
        shmdt(tp);
 
