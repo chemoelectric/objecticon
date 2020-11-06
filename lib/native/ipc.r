@@ -37,10 +37,10 @@ typedef struct {
     char mtext[1024];
 } msgblock;
 
-typedef struct {
-    pid_t pid;
+typedef struct _resource {
     int type;
     int id;
+    struct _resource *next;
 } resource;
 
 static void aborted(char *s);
@@ -48,12 +48,13 @@ static void cleanup(void);
 static void handler(int signo);
 static void add_resource(int id, int type);
 static void remove_resource(int id, int type);
+static void freshen_resource_hash(void);
+static void clear_resource_hash(void);
 static int msgsnd_ex(int msqid, void *msgp, size_t msgsz, int msgflg);
 static ssize_t msgrcv_ex(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 
-static resource *resources;
-static int num_resources;
+static resource *resource_hash[24];
 
 static struct sdescrip idf = {2, "id"};
 
@@ -827,16 +828,38 @@ static int semop_ex(int semid, struct sembuf *sops, size_t nsops) {
     return i;
 }
 
-static void add_resource(int id, int type) {
-    static int inited, max_resources;
-    pid_t pid;
+static void clear_resource_hash() {
     int i;
+    resource *r, *t;
+    for (i = 0; i < ElemCount(resource_hash); ++i) {
+        r = resource_hash[i];
+        while (r) {
+            t = r->next;
+            free(r);
+            r = t;
+        }
+        resource_hash[i] = 0;
+    }
+}
+
+/*
+ * If the resource hash was populated by a parent process, clear it.
+ */
+static void freshen_resource_hash() {
+    static pid_t pid = -1;
+    if (pid != getpid()) {
+        pid = getpid();
+        clear_resource_hash();
+    }
+}
+
+static void add_resource(int id, int type) {
+    static int inited;
+    int i;
+    resource *r;
 
     if (!inited) {
         struct sigaction sigact;
-
-        max_resources = 8;
-        resources = safe_malloc(max_resources * sizeof(resource));
 
         /* Signals to handle */
         sigact.sa_handler = handler;
@@ -850,31 +873,28 @@ static void add_resource(int id, int type) {
         inited = 1;
     }
 
-    pid = getpid();
-    /* Search for an existing free or irrelevant slot */
-    for (i = 0; i < num_resources; ++i) {
-        if (resources[i].pid != pid) {
-            resources[i].pid = pid;
-            resources[i].type = type;
-            resources[i].id = id;
-            return;
-        }
-    }
-    if (num_resources >= max_resources) {
-        max_resources *= 2;
-        resources = safe_realloc(resources, max_resources * sizeof(resource));
-    }
-    resources[num_resources].pid = pid;
-    resources[num_resources].type = type;
-    resources[num_resources].id = id;
-    ++num_resources;
+    freshen_resource_hash();
+
+    i = hasher(id, resource_hash);
+    r = safe_malloc(sizeof(resource));
+    r->type = type;
+    r->id = id;
+    r->next = resource_hash[i];
+    resource_hash[i] = r;
 }
 
 static void remove_resource(int id, int type) {
     int i;
-    for (i = 0; i < num_resources; ++i) {
-        if (resources[i].type == type && resources[i].id == id)
-            resources[i].pid = -1;
+    resource **rp, *r;
+    i = hasher(id, resource_hash);
+    rp = &resource_hash[i];
+    while ((r = *rp)) {
+        if (r->type == type && r->id == id) {
+            *rp = r->next;
+            free(r);
+            return;
+        }
+        rp = &r->next;
     }
 }
 
@@ -883,43 +903,43 @@ static void aborted(char *s) {
 }
 
 static void cleanup() {
-    pid_t pid;
     int i;
+    resource *r;
 
-    pid = getpid();
-    for (i = 0; i < num_resources; ++i) {
-        if (resources[i].pid == pid) {
-            fprintf(stderr, "ipc: Removing resource type %d id=%d\n", resources[i].type, resources[i].id);
-            switch (resources[i].type) {
+    freshen_resource_hash();
+    for (i = 0; i < ElemCount(resource_hash); ++i) {
+        for (r = resource_hash[i]; r; r = r->next) {
+            fprintf(stderr, "ipc: Removing resource type %d id=%d\n", r->type, r->id);
+            switch (r->type) {
                 case 0: {
-                    shm_top *tp = (shm_top*)shmat(resources[i].id, 0, 0);
-                    if ((void*)tp == (void*)-1)
-                        break;
-                    shmctl(tp->data_id, IPC_RMID, 0);
-                    semctl(tp->sem_id, -1, IPC_RMID, 0);
-                    shmctl(resources[i].id, IPC_RMID, 0);
-                    shmdt(tp);
+                    shm_top *tp = (shm_top*)shmat(r->id, 0, 0);
+                    if ((void*)tp != (void*)-1) {
+                        shmctl(tp->data_id, IPC_RMID, 0);
+                        semctl(tp->sem_id, -1, IPC_RMID, 0);
+                        shmctl(r->id, IPC_RMID, 0);
+                        shmdt(tp);
+                    }
                     break;
                 }
                 case 1:
-                    semctl(resources[i].id, -1, IPC_RMID, 0);
+                    semctl(r->id, -1, IPC_RMID, 0);
                     break;
                 case 2: {
-                    msg_top *tp = (msg_top*)shmat(resources[i].id, 0, 0);
-                    if ((void*)tp == (void*)-1)
-                        break;
-                    semctl(tp->rcv_sem_id, -1, IPC_RMID, 0);
-                    semctl(tp->snd_sem_id, -1, IPC_RMID, 0);
-                    msgctl(tp->msg_id, IPC_RMID, 0);
-                    shmctl(resources[i].id, IPC_RMID, 0);
-                    shmdt(tp);
+                    msg_top *tp = (msg_top*)shmat(r->id, 0, 0);
+                    if ((void*)tp != (void*)-1) {
+                        semctl(tp->rcv_sem_id, -1, IPC_RMID, 0);
+                        semctl(tp->snd_sem_id, -1, IPC_RMID, 0);
+                        msgctl(tp->msg_id, IPC_RMID, 0);
+                        shmctl(r->id, IPC_RMID, 0);
+                        shmdt(tp);
+                    }
                     break;
                 }
             }
-            resources[i].pid = -1;
         }
     }
-   
+    /* Ensure the hash is only cleaned up once. */
+    clear_resource_hash();
 }
 
 static void handler(int signo) {
