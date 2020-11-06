@@ -42,6 +42,9 @@ procedure main(a)
    if \opts["ip"] then
       d.add_image_preview()
 
+   if \opts["l"] then
+      d.set_remember_size(&yes)
+
    d.set_path(a[1])
    repeat{
       d.show_modal()
