@@ -38,7 +38,7 @@ typedef struct {
 } msgblock;
 
 typedef struct {
-    int pid;
+    pid_t pid;
     int type;
     int id;
 } resource;
@@ -52,10 +52,8 @@ static int msgsnd_ex(int msqid, void *msgp, size_t msgsz, int msgflg);
 static ssize_t msgrcv_ex(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 
-#define MAX_RESOURCES 500
-
-static resource resources[MAX_RESOURCES];
-static int num_resources = 0;
+static resource *resources;
+static int num_resources;
 
 static struct sdescrip idf = {2, "id"};
 
@@ -830,11 +828,15 @@ static int semop_ex(int semid, struct sembuf *sops, size_t nsops) {
 }
 
 static void add_resource(int id, int type) {
-    static int inited = 0;
+    static int inited, max_resources;
+    pid_t pid;
     int i;
 
     if (!inited) {
         struct sigaction sigact;
+
+        max_resources = 8;
+        resources = safe_malloc(max_resources * sizeof(resource));
 
         /* Signals to handle */
         sigact.sa_handler = handler;
@@ -848,17 +850,21 @@ static void add_resource(int id, int type) {
         inited = 1;
     }
 
+    pid = getpid();
+    /* Search for an existing free or irrelevant slot */
     for (i = 0; i < num_resources; ++i) {
-        if (resources[i].pid == -1) {
-            resources[i].pid = getpid();
+        if (resources[i].pid != pid) {
+            resources[i].pid = pid;
             resources[i].type = type;
             resources[i].id = id;
             return;
         }
     }
-    if (num_resources >= MAX_RESOURCES)
-        return;
-    resources[num_resources].pid = getpid();
+    if (num_resources >= max_resources) {
+        max_resources *= 2;
+        resources = safe_realloc(resources, max_resources * sizeof(resource));
+    }
+    resources[num_resources].pid = pid;
     resources[num_resources].type = type;
     resources[num_resources].id = id;
     ++num_resources;
@@ -867,10 +873,8 @@ static void add_resource(int id, int type) {
 static void remove_resource(int id, int type) {
     int i;
     for (i = 0; i < num_resources; ++i) {
-        if (resources[i].type == type && resources[i].id == id) {
+        if (resources[i].type == type && resources[i].id == id)
             resources[i].pid = -1;
-            return;
-        }
     }
 }
 
@@ -879,7 +883,7 @@ static void aborted(char *s) {
 }
 
 static void cleanup() {
-    int pid;
+    pid_t pid;
     int i;
 
     pid = getpid();
