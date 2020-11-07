@@ -616,6 +616,13 @@ class ImagePaint(Paint)
       win := &null
    end
 
+   #
+   # Succeed if an image is currently loaded.
+   #
+   public has_image()
+      succeed \win
+   end
+
    public load_image(c)
       if \image_str then
          win_pix := ImageCache.load_pixels(image_str, c.cbwin)
