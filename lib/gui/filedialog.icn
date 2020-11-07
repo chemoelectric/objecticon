@@ -255,7 +255,7 @@ class FileDialog(Dialog)
             img.set_image(f)
          else
             img.clear_image()
-         s := if \img.win_pix then
+         s := if img.has_image() then
                  ".cell\nHeight: " || img.get_image_height() || "\n.br\n" ||
                                 "Width: " || img.get_image_width() || "\n.br\n"
               else ""
