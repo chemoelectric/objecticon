@@ -1209,6 +1209,34 @@ abstract class HasLastHighlight()
    package abstract restore_last_highlight(n, url)
 end
 
+class ImgPlainBorder(LineBorder)
+   private
+      img
+
+   public override initially(c)
+      LineBorder.initially(c)
+      self.img := c
+   end
+
+   public override draw(W, x, y, w, h)
+      use {
+         W := W.clone(),
+         {
+            if \img.highlight then
+               W.set_fg(img.browser.page_alink_color)
+            W.draw_rectangle(x, y, w, h, line_width)
+            if \img.over then {
+               # Make the border colour consistent with foreground link text colour.
+               use {
+                  W := Gui.style.get_over_clone(W),
+                  W.draw_rectangle(x, y, w, h, line_width)
+               }
+            }
+         }
+      }
+   end
+end
+
 class Img(Image, HasLastHighlight)
    public const
       browser, context, form, img_url, alt, bg_area
@@ -1223,11 +1251,7 @@ class Img(Image, HasLastHighlight)
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
       } else {
          set_image(res.data)
-         if /win_pix then {
-            err := &why
-            set_cache("rpp.BROKEN_LINK")
-            every remove_constraint("fix_w" | "fix_h" | "pct_w")
-         } else {
+         if has_image() then {
             # Set width and perhaps height based on constraints.
             #
             # If pct_w is set, then set a small minimal value, since
@@ -1248,6 +1272,10 @@ class Img(Image, HasLastHighlight)
             }
             img_name := res.fname
             img_data := res.data
+         } else {
+            err := &why
+            set_cache("rpp.BROKEN_LINK")
+            every remove_constraint("fix_w" | "fix_h" | "pct_w")
          }
       }
       # If neither set (/w_spec should imply /h_spec), ensure a
@@ -1385,12 +1413,9 @@ class Img(Image, HasLastHighlight)
    private set_highlight(u)
       if u ~=== highlight then {
          browser.set_last_highlight(self, \u)
-         # Avoid resetting since that will reload the image data, which is slow.
-         if visible_border() then {
-            set_fg(if \u then browser.page_alink_color else context.fg)
-            reset()
-         }
          highlight := u
+         if visible_border() then
+            invalidate()
       }
       link
    end
@@ -1434,19 +1459,11 @@ class Img(Image, HasLastHighlight)
    end
 
    public override display()
-      local W
       Image.display()
       if browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
       if \last_highlight then
          Gui.style.draw_dashed_rectangle(cbwin, x, y, w, h)
-      if \over & visible_border() then {
-         # Make the border colour consistent with foreground link text colour.
-         use {
-            W := Gui.style.get_over_clone(cbwin),
-            border.draw_rect(W, self)
-         }
-      }
    end
 
    public override new(browser, context, img_url, alt, form, map_id)
@@ -3965,11 +3982,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          if border > 0 then
             q.set_border(CompoundBorder().
                             set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
-                            set_inner(PlainBorder().set_line_width(border)))
+                            set_inner(ImgPlainBorder().set_line_width(border)))
          else
             q.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
       } else if border > 0 then
-         q.set_border(PlainBorder().set_line_width(border))
+         q.set_border(ImgPlainBorder().set_line_width(border))
       enqueue(Req(self, url, page_url, q.got_data, page_resp.req.kind))
       align := convert_comp_align(e, u"ALIGN") | Align.B
       add_component(p, q, context, align)
