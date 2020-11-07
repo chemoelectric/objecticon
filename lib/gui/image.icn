@@ -158,10 +158,23 @@ class Image(Component)
       return t + border.get_total_height()
    end
 
+   #
+   # Succeed if an image is currently loaded.
+   #
+   public has_image()
+      succeed \win | \win_pix
+   end
+
+   #
+   # Return the loaded image width, or fail if no image is loaded.
+   #
    public get_image_width()
       return (\win).get_width() | (\win_pix).get_width()
    end
 
+   #
+   # Return the loaded image height, or fail if no image is loaded.
+   #
    public get_image_height()
       return (\win).get_height() | (\win_pix).get_height()
    end
