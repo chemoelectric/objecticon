@@ -33,9 +33,11 @@ abstract class BaseTree(SelectableScrollArea)
       COL_PAD               # X spacing around node images (if used)
 
    private static init()
-      ImageCache.copy_key_with_resize("tree.CLOSED_FOLDER", "gui.CLOSED_FOLDER_16")
-      ImageCache.copy_key_with_resize("tree.OPEN_FOLDER", "gui.OPEN_FOLDER_16")
-      ImageCache.copy_key_with_resize("tree.FILE", "gui.FILE_16")
+      local sz
+      sz := scale(16)
+      ImageCache.copy_key_with_resize("gui.CLOSED_FOLDER", "gui.CLOSED_FOLDER_16", sz, sz)
+      ImageCache.copy_key_with_resize("gui.OPEN_FOLDER", "gui.OPEN_FOLDER_16", sz, sz)
+      ImageCache.copy_key_with_resize("gui.FILE", "gui.FILE_16", sz, sz)
       COL_PAD := scale(2)
    end
    
@@ -339,9 +341,9 @@ abstract class BaseTree(SelectableScrollArea)
       SelectableScrollArea.new()
       set_handle_paint(ImagePaint().set_cache("gui.PLUS"),
                        ImagePaint().set_cache("gui.MINUS"))
-      set_default_icon_paint(ImagePaint().set_cache("tree.CLOSED_FOLDER"), 
-                             ImagePaint().set_cache("tree.OPEN_FOLDER"),
-                             ImagePaint().set_cache("tree.FILE"))
+      set_default_icon_paint(ImagePaint().set_cache("gui.CLOSED_FOLDER"), 
+                             ImagePaint().set_cache("gui.OPEN_FOLDER"),
+                             ImagePaint().set_cache("gui.FILE"))
       show_root_flag := show_root_handles_flag := &yes
       return
    end

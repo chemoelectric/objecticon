@@ -441,9 +441,10 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    private do_image(req)
-      local n
+      local n, v
       (n := member(req.url.extract_cgi_parameters(), "name")[1]) | return error("Bad request")
-      return ImageCache.get_named_image(n) | return error("Unknown image")
+      v := ImageCache.get_named_image(n) | return error("Unknown image")
+      return string(v) | error("Cached image not a string")
    end
 
    private clipboard_handler(worker)

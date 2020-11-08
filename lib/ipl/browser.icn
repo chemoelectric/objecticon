@@ -5844,9 +5844,10 @@ class SimpleBrowser(Browser)
    end
 
    private img_handler(worker)
-      local n
+      local n, v
       n := string(worker.req.url.get_path())
-      return ImageCache.get_named_image(n) | error("Unknown image")
+      v := ImageCache.get_named_image(n) | error("Unknown image")
+      return string(v) | error("Cached image not a string")
    end
 
    public override new()

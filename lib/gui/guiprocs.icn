@@ -603,6 +603,7 @@ end
 procedure image_string_to_pixels(s, W)
    local q, k, v, r, w
    r := ImageStringInfo(s) | fail
+   need_Window(W)
 
    q := Pixels(r.width, r.height, Pixels.PALETTE8).
       set_data(r.data)
@@ -1115,19 +1116,6 @@ $endif
       p.read_all()
    } & p.succeeded() then
       return r
-end
-
-#
-# Zoom (scale) the contents of window `src` to an new window of size
-# `w` x `h`, and return that window.
-#
-procedure zoom_win(src, w, h)
-   local p
-   need_Window(src)
-   return use {
-      p := src.get_pixels(),
-      zoom_pix(p, w, h)
-   }
 end
 
 #

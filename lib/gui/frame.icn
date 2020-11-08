@@ -161,7 +161,9 @@ class FrameBar(Component)
    public lab
 
    private static init()
-      ImageCache.copy_key_with_resize("frame.WINDOW_CLOSE", "gui.WINDOW_CLOSE_16")
+      local sz
+      sz := scale(16)
+      ImageCache.copy_key_with_resize("gui.WINDOW_CLOSE", "gui.WINDOW_CLOSE_16", sz, sz)
    end
 
    public on_close()
@@ -191,7 +193,7 @@ class FrameBar(Component)
          set_constraint("r_inset", scale(3)).
          set_tooltip("Close")
       b.set_border(NullBorder())
-      b.set_paint(ImagePaint().set_cache("frame.WINDOW_CLOSE"))
+      b.set_paint(ImagePaint().set_cache("gui.WINDOW_CLOSE"))
       b.connect(self.on_close, Event.ACTION)
       self.add(b)
    end

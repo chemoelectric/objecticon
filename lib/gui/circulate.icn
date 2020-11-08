@@ -47,6 +47,12 @@ class Circulate(SelectionList, Component, HasUseWheel)
       b,
       l
 
+   private static init()
+      local sz
+      sz := scale(12)
+      ImageCache.copy_key_with_resize("gui.CIRCULATE", "gui.CIRCULATE_12", sz, sz)
+   end
+
    public override apply_selection()
       local s
       s := self.selection_list[\self.selection] | ""
@@ -151,7 +157,7 @@ class Circulate(SelectionList, Component, HasUseWheel)
                     set_inner(EmptyBorder().
                               set_insets(scale(2), scale(2), Gui.UNIT, Gui.UNIT))).
          set_paint(ImagePaint().
-                   set_cache(ImageCache.get_key_with_resize("gui.CIRCULATE_12"))).
+                   set_cache("gui.CIRCULATE")).
          connect(self.on_button_pressed, Event.ACTION)
       add(self.b)
       set_use_wheel(&yes)
