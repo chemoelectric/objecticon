@@ -1637,10 +1637,7 @@ class BrowserTab(TabItem, BrowserUI)
 
    private static convert_ico_to_png(data)
       return run_convert(StringStream(data),
-                         ["-resize", 
-                          "x" || TabHeaderPaint.ICON_SIZE,
-                          "ico:-[0]",
-                          "png:-"])
+                         ["ico:-[-1]", "png:-"])
    end
 
    private update_title(fres)
