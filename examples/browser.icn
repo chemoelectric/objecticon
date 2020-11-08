@@ -1130,12 +1130,9 @@ class TabHeaderPaint(Paint)
       self.h := max(2 * Gui.Y_INSET + ICON_SIZE, c.cbwin.get_line_height())
       use {
          ip := Pixels(\icon),
-         icon_win := if ip.get_height() = ICON_SIZE then
-            open_image(ip)
-         else
-            zoom_pix(ip,
-                     (ip.get_width() * ICON_SIZE) / ip.get_height(),
-                     ICON_SIZE)
+         icon_win := zoom_pix(ip,
+                              (ip.get_width() * ICON_SIZE) / ip.get_height(),
+                              ICON_SIZE)
       }
       self.w := if \icon_win then
          icon_win.get_width() + Gui.TEXT_INSET + c.cbwin.text_width(str)

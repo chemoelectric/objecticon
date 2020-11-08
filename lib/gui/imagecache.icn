@@ -305,11 +305,11 @@ final abstract class ImageCache()
          return key
       use {
          p := load_pixels(s, win),
-         w := if p.get_width() = width & p.get_height() = height then {
-            key := key1
-            open_image(p)
-         } else
-            zoom_pix(p, width, height)
+         {
+            if p.get_width() = width & p.get_height() = height then
+               key := key1
+            w := zoom_pix(p, width, height)
+         }
       } | fail
 
       insert(imap, key, w)
