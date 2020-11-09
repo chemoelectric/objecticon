@@ -233,7 +233,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void qeventcode      (wsp, int);
    void qmouseevents    (wsp ws, int state, int x, int y, word t, int mod);
    void wgetevent       (wbp w, dptr res);
-   int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, int *px, int *py, int *pw, int *ph);
    int pointargs_def(wbp w, dptr argv, int *px, int *py);

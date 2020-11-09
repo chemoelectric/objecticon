@@ -10,20 +10,19 @@ static struct palentry *palsetup_palette;	/* current palette */
 #if Graphics
 
 #if HAVE_LIBJPEG
-static int  readjpegdata       (dptr data, struct imgdata *d);
-static int  writejpegfile       (char *filename, struct imgdata *imd);
-static int  readjpegfile        (char *fname, struct imgdata *d);
+static int readjpeg            (struct imgdata *imd);
+static int writejpegfile       (char *filename, struct imgdata *imd);
 #endif                                  /* HAVE_LIBJPEG */
 #if HAVE_LIBPNG
-static int readpngdata         (dptr data, struct imgdata *imd);
-static int readpngfile          (char *filename, struct imgdata *imd);
-static int writepngfile         (char *filename, struct imgdata *imd);
+static int readpng             (struct imgdata *imd);
+static int writepngfile        (char *filename, struct imgdata *imd);
 #endif
-static int readgifdata        (dptr data, struct imgdata *imd);
-static int readgiffile         (char *fname, struct imgdata *d);
+static int readgif             (struct imgdata *imd);
 static  void wgetq(wbp w, dptr res);
 static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
+static int readimagedata(dptr data, struct imgdata *imd, int (*fun)(struct imgdata *));
+static int readimagefile(char *filename, struct imgdata *imd, int (*fun)(struct imgdata *));
 
 static void wgetq(wbp w, dptr res)
 {
@@ -434,16 +433,16 @@ static int tryimagedata(dptr data, struct imgdata *imd)
     if ((r = readimagedataimpl(data, imd)) != NoCvt)
         return r;
     if (is_gif(data))
-        return readgifdata(data, imd);
+        return readimagedata(data, imd, readgif);
 
 #if HAVE_LIBPNG
     if (is_png(data))
-        return readpngdata(data, imd);
+        return readimagedata(data, imd, readpng);
 #endif
 
 #if HAVE_LIBJPEG
     if (is_jpeg(data))
-        return readjpegdata(data, imd);
+        return readimagedata(data, imd, readjpeg);
 #endif
 
     return NoCvt;
@@ -460,16 +459,16 @@ static int tryimagefile(char *filename, struct imgdata *imd)
     ext = getext(filename);
 
     if (strcasecmp(ext, ".gif") == 0)
-        return readgiffile(filename, imd);
+        return readimagefile(filename, imd, readgif);
 
 #if HAVE_LIBPNG
     if (strcasecmp(ext, ".png") == 0)
-        return readpngfile(filename, imd);
+        return readimagefile(filename, imd, readpng);
 #endif
 
 #if HAVE_LIBJPEG
     if (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)
-        return readjpegfile(filename, imd);
+        return readimagefile(filename, imd, readjpeg);
 #endif
 
     return NoCvt;
@@ -477,7 +476,7 @@ static int tryimagefile(char *filename, struct imgdata *imd)
 
 #define MaxTryImageFile 1024
 
-int interpimage(dptr d,  struct imgdata *imd)
+int interpimage(dptr d, struct imgdata *imd)
 {
     int r;
     if ((r = tryimagedata(d, imd)) != NoCvt)
@@ -489,6 +488,69 @@ int interpimage(dptr d,  struct imgdata *imd)
     LitWhy("Unable to interpret string as image");
     return Failed;
 }
+
+/*
+ * Some helper functions for reading image data either from a file or
+ * from memory.
+ */
+
+static FILE *imagefile;
+static char *imagedata, *imagedata_eof, *imagefile_name;
+static size_t imagedata_len;
+
+static int readimagedata(dptr data, struct imgdata *imd, int (*fun)(struct imgdata *))
+{
+    int r;
+    imagedata = StrLoc(*data);
+    imagedata_len = StrLen(*data);
+    imagedata_eof = imagedata + imagedata_len;
+    imagefile_name = "(memory)";
+    r = fun(imd);
+    imagefile_name = imagedata = imagedata_eof = 0;
+    imagedata_len = 0;
+    return r;
+}
+
+static int readimagefile(char *filename, struct imgdata *imd, int (*fun)(struct imgdata *))
+{
+    int r;
+    imagefile = fopen(filename, "rb");
+    if (!imagefile) {
+        errno2why();
+        return Failed;
+    }
+    imagefile_name = filename;
+    r = fun(imd);
+    fclose(imagefile);
+    imagefile = 0;
+    imagefile_name = 0;
+    return r;
+}
+
+static size_t imageread(void *ptr, size_t len)
+{
+    if (imagefile)
+        return fread(ptr, 1, len, imagefile);
+    else {
+        len = Min(len, UDiffPtrsBytes(imagedata_eof,imagedata));
+        memcpy(ptr, imagedata, len);
+        imagedata += len;
+        return len;
+    }
+}
+
+static int imagegetc()
+{
+    if (imagefile)
+        return getc(imagefile);
+    else {
+        if (imagedata >= imagedata_eof)
+            return EOF;
+        else
+            return *imagedata++ & 0xff;
+    }
+}
+
 
 /*
  *  Functions and data for reading and writing GIF and JPEG images
@@ -509,15 +571,6 @@ typedef struct lzwnode {	/* structure of LZW encoding tree node */
     unsigned short sibling;	/* next sibling */
 } lzwnode;
 
-#if HAVE_LIBJPEG
-struct my_error_mgr { /* a part of JPEG error handling */
-    struct jpeg_error_mgr pub;	/* "public" fields */
-    jmp_buf setjmp_buffer;	/* for return to caller */
-};
-
-typedef struct my_error_mgr * my_error_ptr; /* a part of error handling */
-#endif					/* HAVE_LIBJPEG */
-
 static	int	gfread		(void);
 static	int	gfheader	(void);
 static	int	gfskip		(void);
@@ -531,11 +584,6 @@ static	void	gfinsert	(int prev, int c);
 static	int	gffirst		(int c);
 static	void	gfgen		(int c);
 static	void	gfput		(int b);
-static  int     gffread         (void *ptr, size_t size, size_t nmemb);
-static  int     gfgetc          (void);
-
-static FILE *gf_file;
-static char *gf_data, *gf_data_eof;
 
 static int gf_gcmap, gf_lcmap;		/* global color map? local color map? */
 static int gf_nbits;			/* number of bits per pixel */
@@ -558,22 +606,11 @@ static unsigned long gf_curr;		/* current partial byte(s) */
 static int gf_valid;			/* number of valid bits */
 static int gf_rem;			/* remaining bytes in this block */
 
-/*
- * readgiffile(filename, imd) - read GIF file into image data structure
- */
-static int readgiffile(char *filename, struct imgdata *imd)
+static int readgif(struct imgdata *imd)
 {
     int r;
 
-    gf_data = gf_data_eof = 0;
-    if ((gf_file = fopen(filename, "rb")) == NULL) {
-        errno2why();
-        return Failed;
-    }
-
     r = gfread();			/* read image */
-    fclose(gf_file);
-    gf_file = 0;
 
     free(gf_prefix);
     gf_prefix = NULL;
@@ -585,7 +622,7 @@ static int readgiffile(char *filename, struct imgdata *imd)
         gf_paltbl = NULL;
         free(gf_string);
         gf_string = NULL;
-        whyf("readgiffile: Failed to read GIF file %s", filename);
+        whyf("readgif: Failed to read GIF file %s", imagefile_name);
         return Failed;
     }
 
@@ -599,42 +636,7 @@ static int readgiffile(char *filename, struct imgdata *imd)
 }
 
 /*
- * readgifdata(filename, imd) - parse GIF data into image data structure
- */
-static int readgifdata(dptr data, struct imgdata *imd)
-{
-    int r;
-    gf_file = 0;
-    gf_data = StrLoc(*data);
-    gf_data_eof = gf_data + StrLen(*data);
-    r = gfread();			/* read image */
-    gf_data = gf_data_eof = 0;
-
-    free(gf_prefix);
-    gf_prefix = NULL;
-    free(gf_suffix);
-    gf_suffix = NULL;
-
-    if (!r) {			/* if no success, free mem */
-        free(gf_paltbl);
-        gf_paltbl = NULL;
-        free(gf_string);
-        gf_string = NULL;
-        LitWhy("readgifdata: Failed to interpret GIF data");
-        return Failed;
-    }
-
-    imd->width = gf_width;			/* set return variables */
-    imd->height = gf_height;
-    imd->paltbl = gf_paltbl;
-    imd->data = gf_string;
-    imd->format = &imgdataformat_PALETTE8;
-
-    return Succeeded;				/* return success */
-}
-
-/*
- * gfread(filename, p) - read GIF file, setting gf_ globals
+ * gfread() - read GIF file, setting gf_ globals
  */
 static int gfread()
 {
@@ -666,31 +668,6 @@ static int gfread()
     return 1;
 }
 
-static int gffread(void *ptr, size_t size, size_t nmemb)
-{
-    if (gf_file)
-        return fread(ptr, size, nmemb, gf_file);
-    else {
-        int n = size * nmemb;
-        n = Min(n, gf_data_eof - gf_data);
-        memcpy(ptr, gf_data, n);
-        gf_data += n;
-        return n;
-    }
-}
-
-static int gfgetc()
-{
-    if (gf_file)
-        return getc(gf_file);
-    else {
-        if (gf_data >= gf_data_eof)
-            return EOF;
-        else
-            return *gf_data++ & 0xff;
-    }
-}
-
 /*
  * gfheader(f) - read GIF file header; return nonzero if successful
  */
@@ -699,7 +676,7 @@ static int gfheader()
     unsigned char hdr[13];		/* size of a GIF header */
     int b;
 
-    if (gffread(hdr, sizeof(char), sizeof(hdr)) != sizeof(hdr))
+    if (imageread(hdr, sizeof(hdr)) != sizeof(hdr))
         return 0;				/* header short or missing */
     if (strncmp((char *)hdr, "GIF", 3) != 0 ||
         !oi_isdigit(hdr[3]) || !oi_isdigit(hdr[4]))
@@ -718,19 +695,19 @@ static int gfskip()
 {
     int c, n;
 
-    while ((c = gfgetc()) != GifSeparator) { /* look for start-of-image flag */
+    while ((c = imagegetc()) != GifSeparator) { /* look for start-of-image flag */
         if (c == EOF)
             return 0;
         if (c == GifExtension) {		/* if extension block is present */
-            c = gfgetc();				/* get label */
+            c = imagegetc();				/* get label */
             if ((c & 0xFF) == GifControlExt)
                 gfcontrol();			/* process control subblock */
-            while ((n = gfgetc()) != 0) {		/* read blks until empty one */
+            while ((n = imagegetc()) != 0) {		/* read blks until empty one */
                 if (n == EOF)
                     return 0;
                 n &= 0xFF;				/* ensure positive count */
                 while (n--)				/* skip block contents */
-                    gfgetc();
+                    imagegetc();
             }
         }
     }
@@ -744,9 +721,9 @@ static void gfcontrol()
 {
     int i, n, c, t;
 
-    n = gfgetc() & 0xFF;				/* subblock length (s/b 4) */
+    n = imagegetc() & 0xFF;				/* subblock length (s/b 4) */
     for (i = t = 0; i < n; i++) {
-        c = gfgetc() & 0xFF;
+        c = imagegetc() & 0xFF;
         if (i == 0)
             t = c & 1;				/* transparency flag */
         else if (i == 3 && t != 0) {
@@ -763,7 +740,7 @@ static int gfimhdr()
     unsigned char hdr[9];		/* size of image hdr excl separator */
     int b;
 
-    if (gffread(hdr, sizeof(char), sizeof(hdr)) != sizeof(hdr))
+    if (imageread(hdr, sizeof(hdr)) != sizeof(hdr))
         return 0;				/* header short or missing */
     gf_width = hdr[4] + 256 * hdr[5];
     gf_height = hdr[6] + 256 * hdr[7];
@@ -785,9 +762,9 @@ static int gfmap()
     ncolors = 1 << gf_nbits;
 
     for (i = 0; i < ncolors; i++) {
-        r = gfgetc();
-        g = gfgetc();
-        b = gfgetc();
+        r = imagegetc();
+        g = imagegetc();
+        b = imagegetc();
         if (r == EOF || g == EOF || b == EOF)
             return 0;
         gf_paltbl[i].r  = 257 * r;	/* 257 * 255 -> 65535 */
@@ -838,7 +815,7 @@ static int gfrdata()
 {
     int curr, prev, c;
 
-    if ((gf_cdsize = gfgetc()) == EOF)
+    if ((gf_cdsize = imagegetc()) == EOF)
         return 0;
     gf_clear = 1 << gf_cdsize;
     gf_eoi = gf_clear + 1;
@@ -893,10 +870,10 @@ static int gfrcode()
 
     while (gf_valid < gf_lzwbits) {
         if (--gf_rem <= 0) {
-            if ((gf_rem = gfgetc()) == EOF)
+            if ((gf_rem = imagegetc()) == EOF)
                 return gf_eoi;
         }
-        if ((c = gfgetc()) == EOF)
+        if ((c = imagegetc()) == EOF)
             return gf_eoi;
         gf_curr |= ((c & 0xFF) << gf_valid);
         gf_valid += 8;
@@ -989,35 +966,19 @@ static void gfput(int b)
 
 #if HAVE_LIBJPEG
 
-void my_error_exit (j_common_ptr cinfo);
+struct my_error_mgr { /* a part of JPEG error handling */
+    struct jpeg_error_mgr pub;	/* "public" fields */
+    jmp_buf setjmp_buffer;	/* for return to caller */
+};
 
-static int readjpegdata(dptr data, struct imgdata *imd)
-{
-    char *fn;
-    int r;
-    if (!(fn = datatofile(data)))
-        return Failed;
-    r = readjpegfile(fn, imd);
-    remove(fn);
-    return r;
-}
+static void my_error_exit(j_common_ptr cinfo);
 
-/*
- * readjpegfile(filename, imd) - read JPEG file into image data structure
- */
-static int readjpegfile(char *filename, struct imgdata *imd)
+static int readjpeg(struct imgdata *imd)
 {
     struct jpeg_decompress_struct cinfo; /* libjpeg struct */
     struct my_error_mgr jerr;
     int row_stride;
     unsigned char *data = 0;
-    FILE *fp;
-
-    fp = fopen(filename, "rb");
-    if (!fp) {
-        errno2why();
-        return Failed;
-    }
 
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = my_error_exit;
@@ -1025,13 +986,17 @@ static int readjpegfile(char *filename, struct imgdata *imd)
     if (setjmp(jerr.setjmp_buffer)) {
         jpeg_destroy_decompress(&cinfo);
         free(data);
-        fclose(fp);
-        whyf("readjpegfile: Failed to read JPEG file %s", filename);
+        whyf("readjpegfile: Failed to read JPEG file %s", imagefile_name);
         return Failed;
     }
 
     jpeg_create_decompress(&cinfo);
-    jpeg_stdio_src(&cinfo, fp);
+
+    if (imagefile)
+        jpeg_stdio_src(&cinfo, imagefile);
+    else
+        jpeg_mem_src(&cinfo, (unsigned char *)imagedata, imagedata_len);
+
     jpeg_read_header(&cinfo, TRUE);
 
     /*
@@ -1052,7 +1017,6 @@ static int readjpegfile(char *filename, struct imgdata *imd)
         jpeg_read_scanlines(&cinfo, row_pointer, 1);
     }
 
-
     jpeg_finish_decompress(&cinfo);
 
     /*
@@ -1060,14 +1024,12 @@ static int readjpegfile(char *filename, struct imgdata *imd)
      */
     jpeg_destroy_decompress(&cinfo);
 
-    fclose(fp);
-
     switch (cinfo.out_color_space) {
         case JCS_GRAYSCALE: imd->format = &imgdataformat_G8; break;
         case JCS_RGB: imd->format = &imgdataformat_RGB24; break;
         default: {
             free(data);
-            whyf("readjpegfile: Unknown color_space");
+            whyf("readjpegfile: Unknown color_space in file %s", imagefile_name);
             return Failed;
         }
     }
@@ -1079,15 +1041,13 @@ static int readjpegfile(char *filename, struct imgdata *imd)
     return Succeeded;
 }
 
-
 /* a part of error handling */
-void my_error_exit (j_common_ptr cinfo)
+static void my_error_exit(j_common_ptr cinfo)
 {
-    my_error_ptr myerr = (my_error_ptr) cinfo->err;
+    struct my_error_mgr *myerr = (struct my_error_mgr *) cinfo->err;
     (*cinfo->err->output_message) (cinfo);
     longjmp(myerr->setjmp_buffer, 1);
 }
-
 
 int writejpegfile(char *filename, struct imgdata *imd)
 {
@@ -1156,19 +1116,15 @@ int writejpegfile(char *filename, struct imgdata *imd)
 
 #if HAVE_LIBPNG
 
-static int readpngdata(dptr data, struct imgdata *imd)
+static void png_user_read(png_structp png_ptr, png_bytep data, png_size_t len)
 {
-    char *fn;
-    int r;
-    if (!(fn = datatofile(data)))
-        return Failed;
-    r = readpngfile(fn, imd);
-    remove(fn);
-    return r;
+    size_t r;
+    r = imageread(data, len);
+    if (r != len)
+        png_error(png_ptr, "png: Unexpected end of file");
 }
 
-
-static int readpngfile(char *filename, struct imgdata *imd)
+static int readpng(struct imgdata *imd)
 {
     png_structp png_ptr;
     png_infop info_ptr;
@@ -1177,24 +1133,16 @@ static int readpngfile(char *filename, struct imgdata *imd)
     png_bytep *row_pointers = 0, p;
     unsigned char *data = 0;
     struct imgdataformat *format;
-    FILE *fp;
     int pixel_depth, color_type;
 
-    /* open file and test for it being a png */
-    fp = fopen(filename, "rb");
-    if (!fp) {
-        errno2why();
-        return Failed;
-    }
-    if (fread(header, 1, 8, fp) != 8) {
-        whyf("readpngfile: Couldn't read header from PNG file %s", filename);
-        fclose(fp);
+    /* test for it being a png */
+    if (imageread(header, 8) != 8) {
+        whyf("readpngfile: Couldn't read header from PNG file %s", imagefile_name);
         return Failed;
     }
 
     if (png_sig_cmp(header, 0, 8)) {
-        fclose(fp);
-        whyf("readpngfile: File %s is not recognized as a PNG file", filename);
+        whyf("readpngfile: File %s is not recognized as a PNG file", imagefile_name);
         return Failed;
     }
 
@@ -1205,12 +1153,11 @@ static int readpngfile(char *filename, struct imgdata *imd)
         png_destroy_read_struct(&png_ptr, &info_ptr, 0);
         free(row_pointers);
         free(data);
-        fclose(fp);
-        whyf("readpngfile: Failed to read PNG file %s", filename);
+        whyf("readpngfile: Failed to read PNG file %s", imagefile_name);
         return Failed;
     }
 
-    png_init_io(png_ptr, fp);
+    png_set_read_fn(png_ptr, NULL, png_user_read);
 
     png_set_sig_bytes(png_ptr, 8);
     png_read_info(png_ptr, info_ptr);
@@ -1229,7 +1176,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
         if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
             png_set_tRNS_to_alpha(png_ptr);
     }
-
 
     if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7)
         png_set_interlace_handling(png_ptr);
@@ -1276,9 +1222,8 @@ static int readpngfile(char *filename, struct imgdata *imd)
         else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 32)
             format = &imgdataformat_GA32;
         else {
-            fclose(fp);
             png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-            whyf("readpngfile: File %s, unsupported format/depth", filename);
+            whyf("readpngfile: File %s, unsupported format/depth", imagefile_name);
             return Failed;
         }
     }
@@ -1297,7 +1242,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
     png_read_end(png_ptr, 0);
     png_destroy_read_struct(&png_ptr, &info_ptr, 0);
     free(row_pointers);
-    fclose(fp);
 
     imd->width = width;
     imd->height = height;
@@ -1306,7 +1250,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
 
     return Succeeded;
 }
-
 
 static int writepngfile(char *filename, struct imgdata *imd)
 {
@@ -1331,7 +1274,7 @@ static int writepngfile(char *filename, struct imgdata *imd)
         free(row_pointers);
         free(data);
         fclose(fp);
-        LitWhy("readpngfile: libpng failed to write image");
+        whyf("writepngfile: libpng failed to write image to file %s", filename);
         return Failed;
     }
 
