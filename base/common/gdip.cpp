@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <objidl.h>
 #include <gdiplus.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <math.h>
 #include "../h/gdip.h"
@@ -577,7 +578,23 @@ void gb_get_metrics(HDC dc, gb_Font *fin, int *ascent, int *descent, int *maxwid
 }
 
 extern "C"
-gb_Bitmap *gb_load_Bitmap(char *filename)
+gb_Bitmap *gb_load_Bitmap_data(BYTE *data, UINT length)
+{
+    Bitmap *b;
+    IStream *stream = SHCreateMemStream(data, length);
+    b = Bitmap::FromStream(stream);
+    stream->Release();
+    if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
+        if (draw_debug) dbg("Failed to Load bitmap from data\n");
+        delete b;
+        return 0;
+    }
+    if (draw_debug) dbg("Loaded bitmap from data %dx%d\n",b->GetWidth(),b->GetHeight());
+    return (gb_Bitmap *)b;
+}
+
+extern "C"
+gb_Bitmap *gb_load_Bitmap_file(char *filename)
 {
     Bitmap *b;
     WCHAR *t = utf8_to_wchar(filename);
@@ -588,7 +605,7 @@ gb_Bitmap *gb_load_Bitmap(char *filename)
         delete b;
         return 0;
     }
-    if (draw_debug) dbg("Loaded bitmap %dx%d\n",b->GetWidth(),b->GetHeight());
+    if (draw_debug) dbg("Loaded bitmap from file %s %dx%d\n",filename,b->GetWidth(),b->GetHeight());
     return (gb_Bitmap *)b;
 }
 

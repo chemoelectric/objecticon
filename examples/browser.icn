@@ -1636,8 +1636,12 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private static convert_ico_to_png(data)
+$if _MS_WIN32
+      return data
+$else
       return run_convert(StringStream(data),
                          ["ico:-[-1]", "png:-"])
+$endif
    end
 
    private update_title(fres)

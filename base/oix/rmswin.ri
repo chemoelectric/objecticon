@@ -1575,7 +1575,7 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
      */
     ensure_inited();
 
-    bm = gb_load_Bitmap(filename);
+    bm = gb_load_Bitmap_file(filename);
     if (!bm)
         return NoCvt;
     bitmap_to_imgdata(bm, imd);
@@ -1590,16 +1590,17 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
 
 int readimagedataimpl(dptr data, struct imgdata *imd)
 {
-    int rv;
-    char *fn;
-    if (!(is_png(data) || is_jpeg(data)))
+    gb_Bitmap *bm;
+
+    /* See above */
+    ensure_inited();
+
+    bm = gb_load_Bitmap_data(StrLoc(*data), StrLen(*data));
+    if (!bm)
         return NoCvt;
-    fn = datatofile(data);
-    if (!fn)
-        return Failed;
-    rv = readimagefileimpl(fn, imd);
-    remove(fn);
-    return rv;
+    bitmap_to_imgdata(bm, imd);
+    gb_free_Bitmap(bm);
+    return Succeeded;
 }
 
 int settransientfor(wbp w, wbp other)
