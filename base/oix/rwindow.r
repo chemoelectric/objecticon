@@ -2376,7 +2376,7 @@ static colorname *lookup_color(char *s, int ish)
 static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
 {
     int len, very, n, pct;
-    char eof, c, *p, *ebuf, cbuffer[MAXCOLORNAME];
+    char eof, c, *p, *ebuf, cbuffer[128];
     float lgt, sat, blend, bl2, m1, m2;
     float h1, l1, s1, h2, l2, s2, r2, g2, b2;
     stringint *e;
