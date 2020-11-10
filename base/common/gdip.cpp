@@ -3,6 +3,7 @@
 #include <gdiplus.h>
 #include <shlwapi.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "../h/gdip.h"
 
@@ -21,15 +22,16 @@ static void dbg(char *fmt, ...)
 }
 
 static ULONG_PTR gdiplusToken;
-static gb_fatalerr_func ffatalerr;
+
+static struct gb_funcs *funcs;
 
 extern "C"
-void gb_initialize(gb_fatalerr_func f)
+void gb_initialize(struct gb_funcs *fs)
 {
     GdiplusStartupInput gdiplusStartupInput;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+    funcs = fs;
     if (draw_debug) dbg("gb_initialize: hello from gdip.cpp\n");
-    ffatalerr = f;
 }
 
 extern "C"
@@ -43,7 +45,7 @@ gb_Bitmap *gb_create_Bitmap(int width, int height, gb_Color bg, gb_Bitmap *cp)
     g.FillRectangle(&br, 0, 0, width, height);
     if (cp)
         g.DrawImage((Bitmap *)cp, 0, 0);
-    if (draw_debug) dbg("Returning new bitmap %p filled with %x\n",bm,(int)bg);
+    if (draw_debug) dbg("Returning new Bitmap %p filled with %x\n",bm,(int)bg);
     return (gb_Bitmap*)bm;
 }
 
@@ -58,7 +60,7 @@ extern "C"
 void gb_free_Bitmap(gb_Bitmap *bm)
 {
     Bitmap *b = (Bitmap *)bm;
-    if (draw_debug) dbg("Deleting bitmap %p\n",b);
+    if (draw_debug) dbg("Deleting Bitmap %p\n",b);
     delete b;
 }
 
@@ -123,7 +125,7 @@ void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *src, int copy)
 {
     Graphics *g = get_graphics(d);
     Bitmap *bm = (Bitmap *)src;
-    if (draw_debug) dbg("Draw bitmap at %d, %d\n", x, y);
+    if (draw_debug) dbg("Draw Bitmap at %d, %d\n", x, y);
     if (copy)
         g->SetCompositingMode(CompositingModeSourceCopy);
     g->DrawImage(bm, x, y);
@@ -584,11 +586,11 @@ gb_Bitmap *gb_load_Bitmap_data(BYTE *data, UINT length)
     b = Bitmap::FromStream(stream);
     stream->Release();
     if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
-        if (draw_debug) dbg("Failed to Load bitmap from data\n");
+        if (draw_debug) dbg("Failed to Load Bitmap from data\n");
         delete b;
         return 0;
     }
-    if (draw_debug) dbg("Loaded bitmap from data %dx%d\n",b->GetWidth(),b->GetHeight());
+    if (draw_debug) dbg("Loaded Bitmap from data %dx%d\n",b->GetWidth(),b->GetHeight());
     return (gb_Bitmap *)b;
 }
 
@@ -600,11 +602,11 @@ gb_Bitmap *gb_load_Bitmap_file(char *filename)
     b = Bitmap::FromFile(t);
     delete[] t;
     if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
-        if (draw_debug) dbg("Failed to Load bitmap from file %s\n", filename);
+        if (draw_debug) dbg("Failed to Load Bitmap from file %s\n", filename);
         delete b;
         return 0;
     }
-    if (draw_debug) dbg("Loaded bitmap from file %s %dx%d\n",filename,b->GetWidth(),b->GetHeight());
+    if (draw_debug) dbg("Loaded Bitmap from file %s %dx%d\n",filename,b->GetWidth(),b->GetHeight());
     return (gb_Bitmap *)b;
 }
 
@@ -619,4 +621,201 @@ HICON gb_get_HICON(gb_Bitmap *bm)
         return res;
     else
         return 0;
+}
+
+static char *PixelFormatString(PixelFormat i)
+{
+    switch (i) {
+        case PixelFormat1bppIndexed: return "PixelFormat1bppIndexed";
+        case PixelFormat4bppIndexed: return "PixelFormat4bppIndexed";
+        case PixelFormat8bppIndexed: return "PixelFormat8bppIndexed";
+        case PixelFormat16bppGrayScale: return "PixelFormat16bppGrayScale";
+        case PixelFormat16bppRGB555: return "PixelFormat16bppRGB555";
+        case PixelFormat16bppRGB565: return "PixelFormat16bppRGB565";
+        case PixelFormat16bppARGB1555: return "PixelFormat16bppARGB1555";
+        case PixelFormat24bppRGB: return "PixelFormat24bppRGB";
+        case PixelFormat32bppRGB: return "PixelFormat32bppRGB";
+        case PixelFormat32bppARGB: return "PixelFormat32bppARGB";
+        case PixelFormat32bppPARGB: return "PixelFormat32bppPARGB";
+        case PixelFormat48bppRGB: return "PixelFormat48bppRGB";
+        case PixelFormat64bppARGB: return "PixelFormat64bppARGB";
+        case PixelFormat64bppPARGB: return "PixelFormat64bppPARGB";
+        default: return "?";
+    }    
+}
+
+struct palentry *build_paltbl(Bitmap *b)
+{
+    ColorPalette *pal;
+    struct palentry *pt;
+    int i, sz;
+    sz = b->GetPaletteSize();
+    if (sz <= 0)
+        return 0;
+    pal = (ColorPalette *)funcs->safe_malloc(sz);
+    b->GetPalette(pal, sz);
+    if (pal->Count <= 0 || pal->Count > 256) {
+        free(pal);
+        return 0;
+    }
+    if (draw_debug) 
+        dbg("\tPalette data Flags=%x Count=%d\n", pal->Flags, pal->Count);
+    pt = (struct palentry *)funcs->safe_zalloc(256 * sizeof(struct palentry));
+    for (i = 0; i < pal->Count; ++i) {
+        Color c = Color(pal->Entries[i]);
+        pt[i].r = 257 * c.GetR();
+        pt[i].g = 257 * c.GetG();
+        pt[i].b = 257 * c.GetB();
+        pt[i].a = 257 * c.GetA();
+    }
+    free(pal);
+    return pt;
+}
+
+extern "C"
+int gb_get_Bitmap_data(gb_Bitmap *bm,
+                       int x, int y, int width, int height,
+                       unsigned char **data, struct palentry **paltbl, char **format)
+{
+    Bitmap *b = (Bitmap *)bm;
+    PixelFormat pf;
+    int bpp, rowsize, size;
+    char *fmt;
+    unsigned char *p;
+
+    switch (b->GetPixelFormat()) {
+        case PixelFormat1bppIndexed:
+        case PixelFormat4bppIndexed:
+        case PixelFormat8bppIndexed:
+            if (!paltbl)
+                return 0;
+            pf = PixelFormat8bppIndexed;
+            bpp = 1;
+            fmt = "PALETTE8";
+            break;
+        case PixelFormat16bppGrayScale:
+        case PixelFormat16bppRGB555:
+        case PixelFormat16bppRGB565:
+        case PixelFormat24bppRGB:
+        case PixelFormat32bppRGB:
+        case PixelFormat48bppRGB:
+            pf = PixelFormat24bppRGB;
+            bpp = 3;
+            fmt = "BGR24";
+            break;
+        case PixelFormat16bppARGB1555:
+        case PixelFormat32bppARGB:
+        case PixelFormat32bppPARGB:
+        case PixelFormat64bppARGB:
+        case PixelFormat64bppPARGB:
+            pf = PixelFormat32bppARGB;
+            bpp = 4;
+            fmt = "MSBGRA32";
+            break;
+        default:
+            return 0;
+    }    
+    if (draw_debug) 
+        dbg("Bitmap Format %s (%x)\n",
+            PixelFormatString(b->GetPixelFormat()), b->GetPixelFormat());
+
+    rowsize = width * bpp;
+    size = funcs->safe_imul(1, height, rowsize);
+    p = (unsigned char *)funcs->safe_malloc(size);
+
+    BitmapData bd;
+    bd.Width = width;
+    bd.Height = height;
+    bd.Stride = rowsize;
+    bd.PixelFormat = pf;
+    bd.Scan0 = p;
+    bd.Reserved = NULL;
+    Rect r(x, y, width, height);
+    Status st;
+    st = b->LockBits(&r,
+                     ImageLockModeRead|ImageLockModeUserInputBuf,
+                     pf, &bd);
+    if (st != Ok) {
+        free(p);
+        return 0;
+    }
+    b->UnlockBits(&bd);
+    
+    if (draw_debug) 
+        dbg("\tBitmapData %dx%d Format=%s Stride=%d Scan0=%p\n",
+            bd.Width, bd.Height, PixelFormatString(bd.PixelFormat),
+            bd.Stride, bd.Scan0);
+
+    if (pf == PixelFormat8bppIndexed) {
+        struct palentry *pt;
+        pt = build_paltbl(b);
+        if (!pt) {
+            free(p);
+            return 0;
+        }
+        *paltbl = pt;
+    } else {
+        if (paltbl)
+            *paltbl = 0;
+    }
+
+    *data = p;
+    *format = fmt;
+
+    if (draw_debug) dbg("\tSuccessfully created data from Bitmap, format=%s\n", fmt);
+    return 1;
+}
+
+gb_Bitmap *gb_create_Bitmap_from_data(int width, int height,
+                                      unsigned char *data, char *format)
+{
+    int bpp;
+    PixelFormat pf;
+
+    if (strcmp(format, "MSBGRA32") == 0) {
+        pf = PixelFormat32bppARGB;
+        bpp = 4;
+    } else if (strcmp(format, "BGR24") == 0) {
+        pf = PixelFormat24bppRGB;
+        bpp = 3;
+    } else
+        return 0;
+
+    Bitmap *b = new Bitmap(width, height, pf);
+    BitmapData bd;
+    bd.Width = width;
+    bd.Height = height;
+    bd.Stride = bpp * width;
+    bd.PixelFormat = pf;
+    bd.Scan0 = data;
+    bd.Reserved = NULL;
+    Rect r(0, 0, width, height);
+    Status st;
+    st = b->LockBits(&r, 
+                     ImageLockModeWrite|ImageLockModeUserInputBuf,
+                     pf, &bd);
+    if (st != Ok) {
+        delete b;
+        return 0;
+    }
+    b->UnlockBits(&bd);
+    if (draw_debug) dbg("Successfully created Bitmap from data, format=%s\n", format);
+    return (gb_Bitmap*)b;
+}
+
+extern "C"
+gb_Bitmap *gb_create_temp_Bitmap_from_data(int width, int height,
+                                           unsigned char *data, char *format)
+{
+    if (strcmp(format, "MSBGRA32") == 0) {
+        /*
+         * NB - this constructor doesn't copy the data.
+         */
+        Bitmap *b = new Bitmap(width, height,
+                               4 * width, PixelFormat32bppARGB, data);
+        if (draw_debug) dbg("Successfully created temp Bitmap from data, format=%s\n", format);
+        return (gb_Bitmap*)b;
+    }
+    if (draw_debug) dbg("Don't know how to create temp Bitmap from data for format=%s\n", format);
+    return 0;
 }
