@@ -62,7 +62,7 @@ static void note_time(char *s);
 static void copy_pix_to_win(wsp ws);
 static void pix_to_win(wsp ws, int x, int y, int width, int height);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
-static Image *imgdata_to_Image(struct imgdata *imd, int cv_depth);
+static Image *imgdata_to_Image(struct imgdata *imd, int ix, int iy, int iw, int ih, int cv_depth);
 static void fill1(wbp w, int x, int y, int width, int height);
 static int get_thick(wcp wc);
 static Point *convert_points(struct point *points0, int npoints);
@@ -236,7 +236,7 @@ static struct SharedImage *new_sharedimage(struct imgdata *imd, int depth)
 {
     struct SharedImage *res;
     GAlloc(res, SharedImage);
-    res->i = imgdata_to_Image(imd, depth);
+    res->i = imgdata_to_Image(imd, 0, 0, imd->width, imd->height, depth);
     return res;
 }
 
@@ -1353,35 +1353,55 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->data = data;
 }
 
-static Image *imgdata_to_Image1(struct imgdata *imd, ulong chan)
+static Image *imgdata_to_Image1(struct imgdata *imd, int ix, int iy, int iw, int ih, ulong chan)
 {
     Image *im;
-    int len, depth;
+    int y, bpp, depth, stride;
+    unsigned char *p;
+
     depth = imd->format->alpha_depth + imd->format->color_depth;
-    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), chan, 1, DNofill));
-    len = safe_imul(imd->width, imd->height, depth / 8);
-    loadimage(im, im->r, imd->data, len);
+    bpp = depth / 8;
+    p = imd->data + bpp * (iy * imd->width + ix);
+    stride = bpp * imd->width;
+    MemProtect(im = allocimage(display, Rect(0, 0, iw, ih), chan, 1, DNofill));
+    if (iw == imd->width) {
+        /*
+         * The data is contiguous so can be done in one loadimage()
+         * call.
+         */
+        loadimage(im, im->r, p, safe_imul(iw, ih, bpp));
+    } else {
+        /*
+         * Since loadimage() doesn't have a stride parameter, we have
+         * to iterate through line by line.
+         */
+        for (y = 0; y < ih; ++y) {
+            loadimage(im, Rect(0, y, iw, y + 1), p, stride);
+            p += stride;
+        }
+    }
     return im;
 }
 
 /*
- * Convert the given imgdata to an Image.  depth (8 or 32) indicates
- * the required depth if a transformation of the imgdata has to be
- * done; the returned Image won't necessarily be of this depth if it
- * is already in a known format.
+ * Convert the given interior rectangle of the given imgdata to an
+ * Image.  depth (8 or 32) indicates the required depth if a
+ * transformation of the imgdata has to be done; the returned Image
+ * won't necessarily be of this depth if it is already in a known
+ * format.
  */
-static Image *imgdata_to_Image(struct imgdata *imd, int depth)
+static Image *imgdata_to_Image(struct imgdata *imd, int ix, int iy, int iw, int ih, int depth)
 {
     struct imgdata *tmp;
     struct imgdataformat *cv_fmt = 0;
     ulong cv_chan = 0;
     Image *im;
     if (imd->format == &imgdataformat_P9ABGR32)
-        return imgdata_to_Image1(imd, RGBA32);
+        return imgdata_to_Image1(imd, ix, iy, iw, ih, RGBA32);
     if (imd->format == &imgdataformat_A8)
-        return imgdata_to_Image1(imd, CHAN1(CAlpha, 8));
+        return imgdata_to_Image1(imd, ix, iy, iw, ih, CHAN1(CAlpha, 8));
     if (imd->format == &imgdataformat_BGR24)
-        return imgdata_to_Image1(imd, RGB24);
+        return imgdata_to_Image1(imd, ix, iy, iw, ih, RGB24);
 
     /* Conversion needed */
     switch (depth) {
@@ -1390,9 +1410,9 @@ static Image *imgdata_to_Image(struct imgdata *imd, int depth)
         default: syserr("Invalid depth"); break;
     }
 
-    tmp = initimgdata(imd->width, imd->height, cv_fmt);
-    copyimgdata(tmp, imd, 0, 0);
-    im = imgdata_to_Image1(tmp, cv_chan);
+    tmp = initimgdata(iw, ih, cv_fmt);
+    copyimgdata(tmp, imd, ix, iy);
+    im = imgdata_to_Image1(tmp, 0, 0, iw, ih, cv_chan);
     unlinkimgdata(tmp);
     return im;
 }
@@ -1409,23 +1429,23 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
         return;
 
     /* Allocate a temp win to represent the imgdata */
-    im = imgdata_to_Image(imd, 32);
+    im = imgdata_to_Image(imd, ix - x, iy - y, iw, ih, 32);
     /* Copy tmp image back to screen */
     clip(w);
     if (copy)
         gendrawop(ws->pix,
-                  MkRect(x, y, imd->width, imd->height),
+                  MkRect(ix, iy, iw, ih),
                   im, ZP, 
                   0, ZP,
                   S);
     else
         gendrawop(ws->pix,
-                  MkRect(x, y, imd->width, imd->height),
+                  MkRect(ix, iy, iw, ih),
                   im, ZP, 
-                  get_mask_img(wc), Pt(x, y),
+                  get_mask_img(wc), Pt(ix, iy),
                   wc->drawop->i);
 
-    pix_to_win(ws, x, y, imd->width, imd->height);
+    pix_to_win(ws, ix, iy, iw, ih);
     freeimage(im);
     flushimage(display, 1);
 }
