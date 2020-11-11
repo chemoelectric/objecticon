@@ -210,6 +210,7 @@ struct oisymbols {
     void * (*safe_zalloc)(size_t size);
     void * (*safe_malloc)(size_t size);
     void * (*safe_realloc)(void *ptr, size_t size);
+    int (*safe_imul)(int x, int y, int z);
     char * (*salloc)(char *s);
     void * (*padded_malloc)(size_t size);
 #if MSWIN32
