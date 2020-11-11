@@ -1,5 +1,8 @@
 package gui
 
+#
+# This class represents an integer x, y location.
+#
 class Point()
    public x, y
 
@@ -28,6 +31,9 @@ class Point()
    end
 end
 
+#
+# This class represents an integer width and height size.
+#
 class Size()
    public w, h
 
@@ -39,8 +45,11 @@ class Size()
       return h
    end
 
+   #
+   # Succeed if either dimension is zero or negative.
+   #
    public empty()
-      succeed (w|h) <= 0
+      succeed (w | h) <= 0
    end
 
    public new(w, h)
@@ -50,82 +59,117 @@ class Size()
    end
 end
 
+#
+# This class combines `Point` and `Size` to represent a rectangle.
+#
 class Rect(Point,Size)
    public str()
       return self.x || "," || self.y || "," || self.w || "," || self.h
    end
 
+   #
+   # Succeed iff the given point is inside this `Rect`.
+   #
    public inside(x1, y1)
       succeed (x <= x1 < x + w) & (y <= y1 < y + h)
    end
 
+   #
+   # Succeed iff this `Rect` contains `r`.  An empty `Rect` can
+   # neither contain, or be contained by, another `Rect`.
+   #
    public contains(r)
-      succeed (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
+      succeed (w > 0 & h > 0) & (r.w > 0 & r.h > 0) &
+         (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
    end
 
+   #
+   # Succeed iff this `Rect` touches `r`, ie intersects or abuts it.
+   # An empty `Rect` can neither touch, or be touched by, another
+   # `Rect`.
+   #
+   public touches(r)
+      succeed (w > 0 & h > 0) & (r.w > 0 & r.h > 0) &
+         (x <= r.x + r.w) & (x + w >= r.x) & (y <= r.y + r.h) & (y + h >= r.y)
+   end
+
+   #
+   # Return the center `Point` of this `Rect`, which is assumed to be
+   # non-empty.
+   #
    public center()
       return Point(x + w / 2, y + h / 2)
    end
 
+   #
+   # Return the union of this `Rect` and another.  A new `Rect` is
+   # returned.  Note that the union of a non-empty `Rect` and an empty
+   # `Rect` is equal to the former.
+   #
+   #
    public union(r)
-      local ux, uw, uy, uh
+      local tx1, ty1, tx2, ty2, rx1, ry1, rx2, ry2
 
-      if r === self then
-         link
+      (rx2 := 0 < r.w & ry2 := 0 < r.h) |
+         return Rect(x, y, w, h)
+      (tx2 := 0 < w & ty2 := 0 < h) |
+         return Rect(r.x, r.y, r.w, r.h)
 
-      ux := min(self.x, r.x)
-      uw := max(self.x + self.w, r.x + r.w) - ux
+      tx1 := x
+      tx2 +:= tx1
+      rx1 := r.x
+      rx2 +:= rx1
+      tx1 >:= rx1
+      tx2 <:= rx2
+      tx2 -:= tx1
 
-      uy := min(self.y, r.y)
-      uh := max(self.y + self.h, r.y + r.h) - uy
+      ty1 := y
+      ty2 +:= ty1
+      ry1 := r.y
+      ry2 +:= ry1
+      ty1 >:= ry1
+      ty2 <:= ry2
+      ty2 -:= ty1
 
-      return Rect(ux, uy, uw, uh)
+      return Rect(tx1, ty1, tx2, ty2)
    end
 
+   #
+   # Return the intersection of this `Rect` and another, or fail if
+   # there is no intersection.  A new non-empty `Rect` is returned.
+   #
    public intersect(r)
-      local ix, iw, iy, ih
+      local tx1, ty1, tx2, ty2, rx1, ry1, rx2, ry2
 
-      if r === self then
-         link
-
-      ix := max(self.x, r.x)
-      iw := min(self.x + self.w, r.x + r.w) - ix
-      if iw <= 0 then
+      tx1 := x
+      rx1 := r.x
+      tx2 := tx1 + w
+      rx2 := rx1 + r.w
+      tx1 <:= rx1
+      tx2 >:= rx2
+      tx2 -:= tx1
+      if tx2 <= 0 then
          fail
 
-      iy := max(self.y, r.y)
-      ih := min(self.y + self.h, r.y + r.h) - iy
-      if ih <= 0 then
+      ty1 := y
+      ry1 := r.y
+      ty2 := ty1 + h
+      ry2 := ry1 + r.h
+      ty1 <:= ry1
+      ty2 >:= ry2
+      ty2 -:= ty1
+      if ty2 <= 0 then
          fail
 
-      return Rect(ix, iy, iw, ih)
-   end
-
-   public touches(r)
-      local ix, iw, iy, ih
-
-      if r === self then
-         return
-
-      ix := max(self.x, r.x)
-      iw := min(self.x + self.w, r.x + r.w) - ix
-      if iw < 0 then
-         fail
-
-      iy := max(self.y, r.y)
-      ih := min(self.y + self.h, r.y + r.h) - iy
-      if ih < 0 then
-         fail
-
-      return
+      return Rect(tx1, ty1, tx2, ty2)
    end
 
    #
    # Float the given `Size` within this `Rect`, according to the given
-   # `Align`, but limit the result so that it lies within this `Rect`.
-   # A `Rect` is returned, with width and height set to the input
-   # values, or this `Rect`'s values, depending on whether the result
-   # was so limited.
+   # `XYAlign`, but limit the result so that it lies within this
+   # `Rect`.  A `Rect` is returned, with width and height set to the
+   # input values, or this `Rect`'s values, depending on whether the
+   # result was so limited.
    #
    public float(s, a)
       local x1, y1, w1, h1
@@ -158,7 +202,8 @@ class Rect(Point,Size)
       return Rect(x1, y1, w1, h1)
    end
 
-   # Return a new Rect, being this Rect surrounded by the given
+   #
+   # Return a new `Rect`, being this `Rect` surrounded by the given
    # padding in the x and y directions.
    #
    public pad(xa, ya)
@@ -174,13 +219,21 @@ class Rect(Point,Size)
    end
 end
 
+#
+# This class represents four insets, typically used around the four
+# sides of a rectangle.
+#
 class Insets()
    public 
       l_inset, 
       r_inset,
       t_inset,
       b_inset
-   
+
+   #
+   # Given a `Rect` r, return the inner `Rect` obtained by applying
+   # the four insets.
+   #
    public get_inner_rect(r)
       return Rect(r.x + l_inset, 
                   r.y + t_inset,
@@ -188,10 +241,16 @@ class Insets()
                   r.h - t_inset - b_inset)
    end
 
+   #
+   # The total width, being the sum of the left and right insets.
+   #
    public get_total_width()
       return l_inset + r_inset
    end
 
+   #
+   # The total width, being the sum of the top and bottom insets.
+   #
    public get_total_height()
       return t_inset + b_inset
    end
@@ -213,6 +272,10 @@ class Insets()
    end
 end
 
+#
+# A class for storing x and y alignments.  Each value will be one of
+# those enumerated in `Align`.
+#
 class XYAlign()
    public x_align,
           y_align

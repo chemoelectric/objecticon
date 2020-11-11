@@ -619,23 +619,24 @@ static int ensure_rangeset_size(struct rangeset *rs, int n)
 }
 
 /*
- * Does the rangeset have a range which includes the given from-to.
+ * Search for a range which from..to touches.
  */
-static int has_range(struct rangeset *rs, int from, int to)
+static int touches_range(struct rangeset *rs, int from, int to)
 {
     int l, r, m;
     l = 0;
     r = rs->n_ranges - 1;
     while (l <= r) {
         m = (l + r) / 2;
-        if (from < rs->range[m].from)
+        if (to < rs->range[m].from - 1)
             r = m - 1;
-        else if (from > rs->range[m].to)
+        else if (from > rs->range[m].to + 1)
             l = m + 1;
-        else  /* from >= rs->range[m].from && from <= rs->range[m].to */
-            return to <= rs->range[m].to;
+        else
+            /* from <= rs->range[m].to + 1 && to >= rs->range[m].from - 1 */
+            return m;
     }
-    return 0;
+    return -1;
 }
 
 void add_range(struct rangeset *rs, int from, int to)
@@ -660,14 +661,34 @@ void add_range(struct rangeset *rs, int from, int to)
         ++rs->n_ranges;
         return;
     }
+    /*
+     * See if we can expand the last range.  Just this and the above
+     * case can handle csets built up from ranges with ascending from
+     * values, which covers the four basic set operations in oset.r.
+     */
+    if (from >= rs->range[rs->n_ranges - 1].from) {
+        if (to > rs->range[rs->n_ranges - 1].to)
+            rs->range[rs->n_ranges - 1].to = to;
+        return;
+    }
 
     /*
-     * Use binary search to see if this range is already contained within
-     * an existing range; if so no need to do anything.
+     * Use binary search to see if a current range can be expanded to
+     * accommodate the new range.  It must touch an existing range,
+     * and also not touch the adjacent ranges.
      */
-    if (has_range(rs, from, to))
+    n = touches_range(rs, from, to);
+    if (n >= 0 &&
+        (n == 0 || from > rs->range[n - 1].to + 1) &&
+        (n == rs->n_ranges-1 || to < rs->range[n + 1].from - 1))
+    {
+        if (to > rs->range[n].to)
+            rs->range[n].to = to;
+        if (from < rs->range[n].from)
+            rs->range[n].from = from;
         return;
-
+    }
+    
     /* Allocates room for rs->n_ranges + 1 ranges: it can grow by at most one range */
     ensure_rangeset_size(rs, 1 + rs->n_ranges);
 

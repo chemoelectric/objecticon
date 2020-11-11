@@ -37,10 +37,10 @@ typedef struct {
     char mtext[1024];
 } msgblock;
 
-typedef struct {
-    int pid;
+typedef struct _resource {
     int type;
     int id;
+    struct _resource *next;
 } resource;
 
 static void aborted(char *s);
@@ -48,14 +48,13 @@ static void cleanup(void);
 static void handler(int signo);
 static void add_resource(int id, int type);
 static void remove_resource(int id, int type);
+static void freshen_resource_hash(void);
+static void clear_resource_hash(void);
 static int msgsnd_ex(int msqid, void *msgp, size_t msgsz, int msgflg);
 static ssize_t msgrcv_ex(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 
-#define MAX_RESOURCES 500
-
-static resource resources[MAX_RESOURCES];
-static int num_resources = 0;
+static resource *resource_hash[24];
 
 static struct sdescrip idf = {2, "id"};
 
@@ -245,7 +244,7 @@ function ipc_Shm_set_value_impl(self, str)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        shmctl(tp->data_id, IPC_STAT, &shminfo);
        if (size <= shminfo.shm_segsz) {
@@ -279,7 +278,7 @@ function ipc_Shm_set_value_impl(self, str)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
    
        shmdt(tp);
 
@@ -305,7 +304,7 @@ function ipc_Shm_get_value_impl(self)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        data = (char*)shmat(tp->data_id, 0, 0);
        if ((void*)data == (void*)-1)
@@ -317,7 +316,7 @@ function ipc_Shm_get_value_impl(self)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
 
        shmdt(tp);
 
@@ -424,30 +423,34 @@ function ipc_Sem_get_value(self)
    }
 end
 
-function ipc_Sem_semop(self, n)
+function ipc_Sem_semop_impl(self, n, uf)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
        struct sembuf p_buf;
        GetSelfId();
+       if (!is_flag(&uf))
+           runerr(171, uf);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
-       p_buf.sem_flg = SEM_UNDO;
+       p_buf.sem_flg = (is:null(uf) ? 0 : SEM_UNDO);
        if (semop_ex(self_id, &p_buf, 1) == -1)
            aborted("semop failed");
        return self;
    }
 end
 
-function ipc_Sem_semop_nowait(self, n)
+function ipc_Sem_semop_nowait_impl(self, n, uf)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
        struct sembuf p_buf;
        GetSelfId();
+       if (!is_flag(&uf))
+           runerr(171, uf);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
-       p_buf.sem_flg = SEM_UNDO | IPC_NOWAIT;
+       p_buf.sem_flg = (is:null(uf) ? 0 : SEM_UNDO) | IPC_NOWAIT;
        if (semop_ex(self_id, &p_buf, 1) == -1) {
            if (errno == EAGAIN) {
                /* Okay, it's not ready,so fail */
@@ -457,7 +460,7 @@ function ipc_Sem_semop_nowait(self, n)
            /* A runtime error. */
            aborted("semop failed");
        }
-       return self;
+       return nulldesc;
    }
 end
 
@@ -632,7 +635,7 @@ function ipc_Msg_send_impl(self, str)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->snd_sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        mh.u.size = size;
        mh.mtype = 1;
@@ -657,7 +660,7 @@ function ipc_Msg_send_impl(self, str)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->snd_sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
 
        shmdt(tp);
 
@@ -685,7 +688,7 @@ function ipc_Msg_receive_impl(self)
        p_buf.sem_op = -1;
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
 
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, 0) == -1) {
            aborted("Failed to do header msgrcv");
@@ -714,7 +717,7 @@ function ipc_Msg_receive_impl(self)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
    
        shmdt(tp);
 
@@ -743,14 +746,14 @@ function ipc_Msg_attempt_impl(self)
        p_buf.sem_flg = SEM_UNDO;
 
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("wait failed");
+           aborted("Wait failed");
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, IPC_NOWAIT) == -1) {
            if (errno == ENOMSG) {
                /* Okay, it's not ready,so fail.  First signal. */
                errno2why();
                p_buf.sem_op = 1;
                if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-                   aborted("signal failed");
+                   aborted("Signal failed");
                fail;
            }
            aborted("Failed to do header msgrcv");
@@ -779,7 +782,7 @@ function ipc_Msg_attempt_impl(self)
        /* Signal */
        p_buf.sem_op = 1;
        if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
-           aborted("signal failed");
+           aborted("Signal failed");
    
        shmdt(tp);
 
@@ -825,9 +828,35 @@ static int semop_ex(int semid, struct sembuf *sops, size_t nsops) {
     return i;
 }
 
-static void add_resource(int id, int type) {
-    static int inited = 0;
+static void clear_resource_hash() {
     int i;
+    resource *r, *t;
+    for (i = 0; i < ElemCount(resource_hash); ++i) {
+        r = resource_hash[i];
+        while (r) {
+            t = r->next;
+            free(r);
+            r = t;
+        }
+        resource_hash[i] = 0;
+    }
+}
+
+/*
+ * If the resource hash was populated by a parent process, clear it.
+ */
+static void freshen_resource_hash() {
+    static pid_t pid = -1;
+    if (pid != getpid()) {
+        pid = getpid();
+        clear_resource_hash();
+    }
+}
+
+static void add_resource(int id, int type) {
+    static int inited;
+    int i;
+    resource *r;
 
     if (!inited) {
         struct sigaction sigact;
@@ -844,29 +873,28 @@ static void add_resource(int id, int type) {
         inited = 1;
     }
 
-    for (i = 0; i < num_resources; ++i) {
-        if (resources[i].pid == -1) {
-            resources[i].pid = getpid();
-            resources[i].type = type;
-            resources[i].id = id;
-            return;
-        }
-    }
-    if (num_resources >= MAX_RESOURCES)
-        return;
-    resources[num_resources].pid = getpid();
-    resources[num_resources].type = type;
-    resources[num_resources].id = id;
-    ++num_resources;
+    freshen_resource_hash();
+
+    i = hasher(id, resource_hash);
+    r = safe_malloc(sizeof(resource));
+    r->type = type;
+    r->id = id;
+    r->next = resource_hash[i];
+    resource_hash[i] = r;
 }
 
 static void remove_resource(int id, int type) {
     int i;
-    for (i = 0; i < num_resources; ++i) {
-        if (resources[i].type == type && resources[i].id == id) {
-            resources[i].pid = -1;
+    resource **rp, *r;
+    i = hasher(id, resource_hash);
+    rp = &resource_hash[i];
+    while ((r = *rp)) {
+        if (r->type == type && r->id == id) {
+            *rp = r->next;
+            free(r);
             return;
         }
+        rp = &r->next;
     }
 }
 
@@ -875,43 +903,43 @@ static void aborted(char *s) {
 }
 
 static void cleanup() {
-    int pid;
     int i;
+    resource *r;
 
-    pid = getpid();
-    for (i = 0; i < num_resources; ++i) {
-        if (resources[i].pid == pid) {
-            fprintf(stderr, "ipc: Removing resource type %d id=%d\n", resources[i].type, resources[i].id);
-            switch (resources[i].type) {
+    freshen_resource_hash();
+    for (i = 0; i < ElemCount(resource_hash); ++i) {
+        for (r = resource_hash[i]; r; r = r->next) {
+            fprintf(stderr, "ipc: Removing resource type %d id=%d\n", r->type, r->id);
+            switch (r->type) {
                 case 0: {
-                    shm_top *tp = (shm_top*)shmat(resources[i].id, 0, 0);
-                    if ((void*)tp == (void*)-1)
-                        break;
-                    shmctl(tp->data_id, IPC_RMID, 0);
-                    semctl(tp->sem_id, -1, IPC_RMID, 0);
-                    shmctl(resources[i].id, IPC_RMID, 0);
-                    shmdt(tp);
+                    shm_top *tp = (shm_top*)shmat(r->id, 0, 0);
+                    if ((void*)tp != (void*)-1) {
+                        shmctl(tp->data_id, IPC_RMID, 0);
+                        semctl(tp->sem_id, -1, IPC_RMID, 0);
+                        shmctl(r->id, IPC_RMID, 0);
+                        shmdt(tp);
+                    }
                     break;
                 }
                 case 1:
-                    semctl(resources[i].id, -1, IPC_RMID, 0);
+                    semctl(r->id, -1, IPC_RMID, 0);
                     break;
                 case 2: {
-                    msg_top *tp = (msg_top*)shmat(resources[i].id, 0, 0);
-                    if ((void*)tp == (void*)-1)
-                        break;
-                    semctl(tp->rcv_sem_id, -1, IPC_RMID, 0);
-                    semctl(tp->snd_sem_id, -1, IPC_RMID, 0);
-                    msgctl(tp->msg_id, IPC_RMID, 0);
-                    shmctl(resources[i].id, IPC_RMID, 0);
-                    shmdt(tp);
+                    msg_top *tp = (msg_top*)shmat(r->id, 0, 0);
+                    if ((void*)tp != (void*)-1) {
+                        semctl(tp->rcv_sem_id, -1, IPC_RMID, 0);
+                        semctl(tp->snd_sem_id, -1, IPC_RMID, 0);
+                        msgctl(tp->msg_id, IPC_RMID, 0);
+                        shmctl(r->id, IPC_RMID, 0);
+                        shmdt(tp);
+                    }
                     break;
                 }
             }
-            resources[i].pid = -1;
         }
     }
-   
+    /* Ensure the hash is only cleaned up once. */
+    clear_resource_hash();
 }
 
 static void handler(int signo) {

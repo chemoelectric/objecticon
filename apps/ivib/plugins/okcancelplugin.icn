@@ -2,7 +2,7 @@ import ivib.plugin, lang
 
 $load IMG "okcancel.gif"
 
-global IC, error
+global IC, error, scale
 
 invocable OkCancelPlugin
 
@@ -68,7 +68,7 @@ class OkCancelPlugin(Plugin)
    end
 
    private get_icon(obj)
-      return IC.get_with_resize("okcancel")
+      return IC.get_with_resize("okcancel", scale(100), scale(25))
    end
 end
 
@@ -79,5 +79,6 @@ procedure main(m)
    IC := Prog.get_global("gui.ImageCache", e)
    # and error, so &why is set correctly
    error := Prog.get_global("util.error", e)
+   scale := Prog.get_global("gui.scale", e)
    return OkCancelPlugin()
 end

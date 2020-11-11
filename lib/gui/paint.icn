@@ -616,6 +616,13 @@ class ImagePaint(Paint)
       win := &null
    end
 
+   #
+   # Succeed if an image is currently loaded.
+   #
+   public has_image()
+      succeed \win
+   end
+
    public load_image(c)
       if \image_str then
          win_pix := ImageCache.load_pixels(image_str, c.cbwin)
@@ -675,6 +682,9 @@ class ImagePaint(Paint)
 
       zoom_w <:= 1
       zoom_h <:= 1
+
+      if img_w = zoom_w & img_h = zoom_h then
+         fail
 
       /win_pix := win.get_pixels()
       zoom_win := zoom_pix(win_pix, zoom_w, zoom_h)

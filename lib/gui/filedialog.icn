@@ -8,7 +8,6 @@ import
    ipl.functional,
    util,
    io,
-   graphics,
    ipl.strings
 
 class FileDialogPos()
@@ -208,6 +207,8 @@ class FileDialog(Dialog)
       /init_files := []
       /init_filters := [u"*"]
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
+      # Save needlessly reloading an image from a previous show()
+      (\img).clear_image()
       synch_pats()
       file.
          set_selection_list(ucs_list(init_files)).
@@ -230,12 +231,12 @@ class FileDialog(Dialog)
          if x := Files.get_extension(s) then
             file.view.move_cursor(*s - *x, &yes)
       }
-      win.set_min_size(win.get_width(), win.get_height())
+      win.set_min_size(scale(500), scale(400))
       goto_dir(gen_favourites_directories())
    end
 
    public check_current_selection()
-      local f, px
+      local f, s
       if /multiple_files_flag then {
          f := get_current_selection().str()
          warned := &null
@@ -250,15 +251,15 @@ class FileDialog(Dialog)
             f := loaded_dir_path.child(flist.object_get_cursor().name).str()
       }
       if \img then {
-         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") &
-            use{ px := Pixels(f), img.set_pixels(px) }
-         then {
-            img_label.set_label(".cell\nHeight: " || img.get_image_height() || "\n.br\n" ||
-                                "Width: " || img.get_image_width() || "\n.br\n")
-         } else {
+         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
+            img.set_image(f)
+         else
             img.clear_image()
-            img_label.set_label("")
-         }
+         s := if img.has_image() then
+                 ".cell\nHeight: " || img.get_image_height() || "\n.br\n" ||
+                                "Width: " || img.get_image_width() || "\n.br\n"
+              else ""
+         img_label.set_label(s)
       }
    end
 
@@ -775,6 +776,7 @@ class FileDialog(Dialog)
       if /img then {
          img := Image().
             set_constraint(Grid.EOL, &yes).
+            set_height(scale(100)).
             set_border(NullBorder())
          img_label := Label().
             set_label("").

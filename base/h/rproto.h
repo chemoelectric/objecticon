@@ -229,7 +229,7 @@ struct imgdata *newimgdata(void);
 struct imgdata *initimgdata(int width, int height, struct imgdataformat *fmt);
 struct imgdata *linkimgdata(struct imgdata *imd);
 void unlinkimgdata(struct imgdata *imd);
-void copyimgdata(struct imgdata *dest, struct imgdata *src);
+void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y);
 
 #if Graphics
    /*
@@ -248,7 +248,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void qeventcode      (wsp, int);
    void qmouseevents    (wsp ws, int state, int x, int y, word t, int mod);
    void wgetevent       (wbp w, dptr res);
-   int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, int *px, int *py, int *pw, int *ph);
    int pointargs_def(wbp w, dptr argv, int *px, int *py);
@@ -332,7 +331,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void unlink_sharedpicture(struct SharedPicture *x);
    wfp loadfont(wdp wd, char *s);
    char *tofcpatternstr(char *s);
-   Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int depth, XRenderPictFormat **format);
+   Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int ix, int iy, int iw, int ih, int depth, XRenderPictFormat **format);
    wbp alcwbinding(wdp wd);
    wbp findwbp(wsp ws);
 #endif

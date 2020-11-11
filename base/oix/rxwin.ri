@@ -256,7 +256,7 @@ struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd, int depth)
     XRenderPictFormat *format;
     GAlloc(res, SharedPicture);
     res->wd = wd;
-    res->pix = imgdata_to_Pixmap(wd, imd, depth, &format);
+    res->pix = imgdata_to_Pixmap(wd, imd, 0, 0, imd->width, imd->height, depth, &format);
     pa.repeat = 1;
     res->i = XRenderCreatePicture(wd->display, res->pix, format, CPRepeat, &pa);
     res->width = imd->width;
@@ -377,7 +377,7 @@ int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
     Cursor nc;
     XRenderPictFormat *format;
 
-    pix = imgdata_to_Pixmap(wd, imd, 32, &format);
+    pix = imgdata_to_Pixmap(wd, imd, 0, 0, imd->width, imd->height, 32, &format);
     pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     nc = XRenderCreateCursor(wd->display, pic, x, y);
     rv = ensure_wcursor(wd, name);
@@ -3962,26 +3962,32 @@ static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, i
     pix_to_win(ws, x, y, width, height);
 }
 
-static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
+static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd, int ix, int iy, int iw, int ih)
 {
     XImage *xi;
     Pixmap pix;
     GC gc;
-    int depth;
+    int bpp, depth, stride;
+    unsigned char *p;
+
     depth = imd->format->alpha_depth + imd->format->color_depth;
+    bpp = depth / 8;
+    p = imd->data + bpp * (iy * imd->width + ix);
+    stride = bpp * imd->width;
+
     MemProtect(xi = XCreateImage(wd->display, 
                                  NULL,
                                  depth,            /* depth */
                                  ZPixmap, 
                                  0, 
-                                 (char *)imd->data, 
-                                 imd->width, imd->height, 
+                                 (char *)p, 
+                                 iw, ih,
                                  depth,            /* bitmap_pad */
-                                 0));
+                                 stride));
 
     pix = XCreatePixmap(wd->display, GetRoot(wd),
-                      imd->width, imd->height,
-                      depth);
+                        imd->width, imd->height,
+                        depth);
     gc = XCreateGC(wd->display, pix, 0, NULL);
     XPutImage(wd->display, pix, gc, xi,
               0,0, 0,0, imd->width, imd->height);
@@ -3992,24 +3998,27 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
 }
 
 /*
- * Convert the given imgdata to a Pixmap.  depth (8 or 32) indicates
- * the required depth if a transformation of the imgdata has to be
- * done; the returned Pixmap won't necessarily be of this depth if it
- * is already in a known format.  The picture format matching the
- * returned Pixmap is returned in format.
+ * Convert the given interior rectangle of the given imgdata to a
+ * Pixmap.  depth (8 or 32) indicates the required depth if a
+ * transformation of the imgdata has to be done; the returned Pixmap
+ * won't necessarily be of this depth if it is already in a known
+ * format.  The picture format matching the returned Pixmap is
+ * returned in format.
  */
-Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int depth, XRenderPictFormat **format)
+Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd,
+                         int ix, int iy, int iw, int ih,
+                         int depth, XRenderPictFormat **format)
 {
     struct imgdata *tmp;
     struct imgdataformat *cv_fmt = 0;
     Pixmap pix;
     if (imd->format == wd->format) {
         *format = wd->pixfmt;
-        return imgdata_to_Pixmap1(wd, imd);
+        return imgdata_to_Pixmap1(wd, imd, ix, iy, iw, ih);
     }
     if (imd->format == &imgdataformat_A8) {
         *format = wd->maskfmt;
-        return imgdata_to_Pixmap1(wd, imd);
+        return imgdata_to_Pixmap1(wd, imd, ix, iy, iw, ih);
     }
     /* Conversion needed */
     switch (depth) {
@@ -4017,9 +4026,9 @@ Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int depth, XRenderPictForm
         case 32: *format = wd->pixfmt; cv_fmt = wd->format; break;
         default: syserr("Invalid depth"); break;
     }
-    tmp = initimgdata(imd->width, imd->height, cv_fmt);
-    copyimgdata(tmp, imd);
-    pix = imgdata_to_Pixmap1(wd, tmp);
+    tmp = initimgdata(iw, ih, cv_fmt);
+    copyimgdata(tmp, imd, ix, iy);
+    pix = imgdata_to_Pixmap1(wd, tmp, 0, 0, iw, ih);
     unlinkimgdata(tmp);
     return pix;
 }
@@ -4144,10 +4153,16 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
+    int ix, iy, iw, ih;
     Pixmap pix;
     Picture pic;
     XRenderPictFormat *format;
-    pix = imgdata_to_Pixmap(wd, imd, 32, &format);
+
+    ix = x; iy = y; iw = imd->width; ih = imd->height;
+    if (!reducerect(w, 1, &ix, &iy, &iw, &ih))
+        return;
+
+    pix = imgdata_to_Pixmap(wd, imd, ix - x, iy - y, iw, ih, 32, &format);
     pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     clip(w);
 
@@ -4159,8 +4174,8 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
                          ws->ppic,     /* dest */
                          0,0,          /* src x,y */
                          0,0,          /* mask x,y */
-                         x, y,         /* dst x,y */
-                         imd->width, imd->height);
+                         ix, iy,       /* dst x,y */
+                         iw, ih);
     else
         XRenderComposite(wd->display,
                          wc->drawop->i,  /* op */
@@ -4168,11 +4183,11 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
                          get_mask_picture(wc),  /* mask */
                          ws->ppic,       /* dest */
                          0,0,            /* src x,y */
-                         x,y,            /* mask x,y */
-                         x,y,            /* dst x,y */
-                         imd->width, imd->height);
+                         ix, iy,         /* mask x,y */
+                         ix, iy,         /* dst x,y */
+                         iw, ih);
 
-    pix_to_win(ws, x, y, imd->width, imd->height);
+    pix_to_win(ws, ix, iy, iw, ih);
 
     XFreePixmap(wd->display, pix);
     XRenderFreePicture(wd->display, pic);
@@ -4850,7 +4865,7 @@ wbp findwbp(wsp ws)
  */
 static wdp alcdisplay(char *s)
 {
-    static int inited = 0;
+    static int inited;
     wdp wd;
     int i, major_version, minor_version;
 

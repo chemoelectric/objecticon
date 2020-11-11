@@ -1689,10 +1689,11 @@ $load ICN9 "icon/icn9.gif"
 $load ICON "icon/icon.gif"
 
 procedure load_icon(key, data)
-   local k
+   local k, sz
    k := key || ".raw"
+   sz := scale(44)
    ImageCache.name_image(k, data)
-   ImageCache.copy_key_with_resize(key, k)
+   ImageCache.copy_key_with_resize(key, k, sz, sz)
 end
 
 procedure load_icons()

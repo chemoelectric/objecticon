@@ -28,6 +28,10 @@ typedef struct gb_Draw {
 #define JoinMiter    3   // LineJoinMiterClipped
 
 #ifdef __cplusplus
+struct palentry {
+   int r, g, b, a;                         /* RGBA value of color */
+};
+
 struct point {
     double x;
     double y;
@@ -66,15 +70,19 @@ struct triangle {
 
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef void (*gb_fatalerr_func)(char *fmt, ...);
-void gb_initialize(gb_fatalerr_func f);
+struct gb_funcs {
+    void *(*safe_malloc)(size_t size);
+    void *(*safe_zalloc)(size_t size);
+    int (*safe_imul)(int x, int y, int z);
+};
+void gb_initialize(struct gb_funcs *fs);
 gb_Bitmap *gb_create_Bitmap(int width, int height, gb_Color bg, gb_Bitmap *cp);
 gb_Bitmap *gb_create_empty_Bitmap(int width, int height);
-gb_Bitmap *gb_load_Bitmap(char *filename);
+gb_Bitmap *gb_load_Bitmap_file(char *filename);
+gb_Bitmap *gb_load_Bitmap_data(BYTE *data, UINT length);
 void gb_free_Bitmap(gb_Bitmap *bm);
 void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *bm, int copy);
 void gb_drawrectangle(gb_Draw *d, int x, int y, int width, int height, int thick);
@@ -95,7 +103,15 @@ void gb_setpixel(gb_Bitmap *bm, int x, int y, BYTE a, BYTE r, BYTE g, BYTE b);
 void gb_pix_to_win(gb_Draw *d, int x, int y, int width, int height);
 gb_Font *gb_create_Font(HDC hdc, HFONT hfont);
 void gb_get_Bitmap_size(gb_Bitmap *bm, UINT *width, UINT *height);
-
+int gb_get_Bitmap_data(gb_Bitmap *bm,
+                       int x, int y, int width, int height,
+                       unsigned char **data, struct palentry **paltbl, char **format);
+gb_Bitmap *gb_create_temp_Bitmap_from_data(int width, int height,
+                                           unsigned char *data, char *format,
+                                           int ix, int iy, int iw, int ih);
+gb_Bitmap *gb_create_Bitmap_from_data(int width, int height,
+                                      unsigned char *data, char *format,
+                                      int ix, int iy, int iw, int ih);
 gb_Font *gb_find_Font(char *family, int flags, double size);
 void gb_get_metrics(HDC dc, gb_Font *f, int *ascent, int *descent, int *maxwidth);
 HICON gb_get_HICON(gb_Bitmap *bm);

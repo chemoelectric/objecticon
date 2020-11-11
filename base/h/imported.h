@@ -214,6 +214,7 @@
 #define safe_zalloc (*(imported->safe_zalloc))
 #define safe_malloc (*(imported->safe_malloc))
 #define safe_realloc (*(imported->safe_realloc))
+#define safe_imul (*(imported->safe_imul))
 #define salloc (*(imported->salloc))
 #define padded_malloc (*(imported->padded_malloc))
 #if MSWIN32

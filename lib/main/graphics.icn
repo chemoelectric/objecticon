@@ -60,31 +60,37 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
       PALETTE8  :=  "PALETTE8"
    end
 
+   #
    # Get the width of the block
    #
    public native get_width()
 
+   #
    # Get the height of the block
    #
    public native get_height()
 
+   #
    # Get the size, as a `Size` record.
    #
    public get_size()
       return Size(get_width(), get_height())
    end
 
+   #
    # Get the pixel at the given position as an Icon colour string;
    # indices run from 0 to width-1 and 0 to height-1 respectively.
    #
    public native get(x, y)
 
+   #
    # Set the pixel to the given Icon colour string value.  Note that
    # the value actually stored may only be an approximation of the
    # value given, depending on the underlying data format.
    #
    public native set(x, y, v)
 
+   #
    # Get the given pixel as an `Color` record, giving the rgba values.
    #
    public get_rgba(x, y)
@@ -93,33 +99,41 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
 
    private native get_rgba_impl(x, y)
 
+   #
    # Set the given pixel to the given rgba integer values.
    #
    public native set_rgba(x, y, r, g, b, a)
 
+   #
    # Dispose of the object, freeing the memory used by the block
    #
    public override native close()
 
-   # Get the format of the underlying data, which will be one of the constant values listed above.
+   #
+   # Get the format of the underlying data, which will be one of the
+   # constant values listed above, or a platform-specific value.
    #
    public native get_format()
 
+   #
    # Get the raw underlying data as a string.
    #
    public native get_data()
 
+   #
    # Set the raw underlying data from a string, padding with zeroes if
    # the string is too short.
    #
    public native set_data(s)
 
+   #
    # Convenient method to generate 0 to get_width() - 1
    #
    public x_range()
       suspend 0 to get_width() - 1
    end
 
+   #
    # Convenient method to generate 0 to get_height() - 1
    #
    public y_range()
@@ -152,14 +166,17 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
 
    private native gen_impl(x, y, width, height, rec)
 
+   #
    # Copy a single pixel from this instance to another.
    #
    public native copy_pixel(x1, y1, dest, x2, y2)
 
+   #
    # Copy a rectangular area from this instance to another.
    #
    public native copy_to(x1, y1, width, height, dest, x2, y2)
 
+   #
    # Copy a rectangular area from this instance to another, scaling
    # the result to fit in the destination rectangle.
    #
@@ -171,19 +188,23 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    #
    public native to_file(fname)
 
+   #
    # Return the number of bits of alpha depth (zero if the format
    # doesn't support storage of an alpha channel).
    #
    public native get_alpha_depth()
 
+   #
    # Return the number of bits of color depth.
    #
    public native get_color_depth()
 
+   #
    # Get the palette size, or fail if this is not a PALETTE format.
    #
    public native get_palette_size()
 
+   #
    # Get the palette entry at index i, as a `Color` record.  This and
    # similar methods give a runerr unless the format is PALETTEx.  The
    # number of palette entries depends on the format; eg PALETTE4 has
@@ -195,26 +216,32 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
 
    private native get_palette_rgba_impl(i)
 
+   #
    # Set the palette entry at index i to the given rgba values.
    #
    public native set_palette_rgba(i, r, g, b, a)
 
+   #
    # Get the palette entry at index i as an icon colour value.
    #
    public native get_palette(i)
 
+   #
    # Set the palette entry at index i to the given icon colour value.
    #
    public native set_palette(i, v)
 
+   #
    # Get the palette index contained at the given pixel location.
    #
    public native get_palette_index(x, y)
 
+   #
    # Set the palette index contained at the given pixel location.
    #
    public native set_palette_index(x, y, i)
 
+   #
    # Return a new instance which is an exact copy of this instance.
    # No data is shared.
    #
@@ -222,6 +249,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
       return create_for_ptr(clone_impl())
    end
 
+   #
    # Convert this instance to one of the same dimensions in the given
    # format.  The format may not be a paletted format (since no
    # palette would have been set up).
@@ -230,6 +258,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
       return create_for_ptr(convert_impl(format))
    end
 
+   #
    # Return a new `Pixels` instance which shares the data of this
    # instance.  The underlying data is freed when the last enclosing
    # `Pixels` is closed.
@@ -238,6 +267,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
       return create_for_ptr(shared_copy_impl())
    end
 
+   #
    # Return the number of references to the underlying data.
    #
    public native get_references()
@@ -250,6 +280,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    private native shared_copy_impl()
    private native clone_impl()
 
+   #
    # Set entries in the palette according to one of the standard
    # palettes (c1,c2 etc).  Only allowed for PALETTE8 format.
    #
@@ -265,9 +296,6 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    private static native new_open_impl(s)
    private static native new_blank_impl(width, height, format)
 
-   #
-   # Output object
-   #
    private override object_output(oo)
       local s
       s := if /ptr then "closed" else
@@ -275,6 +303,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
       oo.object_string(self, s)
    end
 
+   #
    # The constructor for Pixels takes two formats.  With one parameter
    # a new instance is created based on the given image string, which
    # can be raw image data, or a filename.
@@ -351,6 +380,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return i
    end
 
+   #
    # Open a new window.  The meaning of the optional parameter
    # `display` (a string) is system dependent; on X11 it specifies the
    # display to connect to.
@@ -367,6 +397,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       oo.object_string(self, s)
    end
 
+   #
    # Produces a new window value that combines the canvas of `self`
    # with a new graphics context. The new graphics attributes are
    # copied from `self`.
@@ -375,6 +406,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return create_for_ptr(clone_impl())
    end
 
+   #
    # Return a new instance which shares both canvas and context of
    # `self`.
    #
@@ -382,6 +414,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return couple(self)
    end
 
+   #
    # Produces a new window value that binds the canvas of `self` with
    # the graphics context of `other`.
    #
@@ -393,157 +426,195 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    private native clone_impl()
    private native couple_impl(other)
 
+   #
    # Grab the pointer so that all mouse events are directed to this
    # window.
    #
    public native grab_pointer()
 
+   #
    # Undoes the effect of `grab_pointer()`.
    #
    public native ungrab_pointer()
 
+   #
    # Grab the keyboard so that all key events are directed to this
    # window.
    #
    public native grab_keyboard()
 
+   #
    # Undoes the effect of `grab_keyboard()`.
    #
    public native ungrab_keyboard()
 
+   #
    # Return the ascent height of the font in pixels.
    #
    public native get_font_ascent()
 
+   #
    # Return the background colour as set by `set_bg()`
    #
    public native get_bg()
 
+   #
    # Return the canvas type as set by `set_canvas()`
    #
    public native get_canvas()
 
+   #
    # Return the depth in bits used by the window system for this window.
+   #
    public native get_depth()
 
+   #
    # Return the descent height of the font in pixels.
    #
    public native get_font_descent()
 
+   #
    # Return the display value used when this window was constructed,
    # or the default setting if no display parameter was used.
    #
    public native get_display()
 
+   #
    # Return a system-dependent string which can identify the visible
    # window to external programs.  Fails if the window is hidden.
    #
    public native get_id()
 
+   #
    # Return a system-dependent integer which represents the connection
    # to the window system.
    #
    public native get_fd()
 
+   #
    # Return the drawing operator as set by `set_draw_op()`.
    #
    public native get_draw_op()
 
+   #
    # Return the x offset, as set by `set_dx()`.
    #
    public native get_dx()
 
+   #
    # Return the y offset, as set by `set_dy()`.
    #
    public native get_dy()
 
+   #
    # Return the font leading value, as set by `set_leading()`.
    #
    public native get_leading()
 
+   #
    # Return the foreground colour as set by `set_fg()`
    #
    public native get_fg()
 
+   #
    # Return the font as set by `set_font()`.  Note that the system's
    # identifier of the font will be returned, rather than the exact
    # value passed to `set_font()`.
    #
    public native get_font()
 
+   #
    # Return the font width in pixels of the current font; for a
    # proportional font this is the maximum width of one character.
    #
    public native get_font_width()
 
+   #
    # Return the height of this window; see `get_size()`.
    #
    public native get_height()
 
+   #
    # Return the window label as set by `set_label()`.
    #
    public native get_label()
 
+   #
    # Return the line style setting as set by `set_line_end()`.
    #
    public native get_line_end()
 
+   #
    # Return the line style setting as set by `set_line_join()`.
    #
    public native get_line_join()
 
+   #
    # Return the line width (a real), as set by `set_line_width()`.
    #
    public native get_line_width()
 
+   #
    # Return the maximum allowed height of this window, see `get_max_size()`.
    #
    public native get_max_height()
 
+   #
    # Return the maximum allowed width of this window, see `get_max_size()`.
    #
    public native get_max_width()
 
+   #
    # Return the minimum allowed height of this window; see `get_min_size()`.
    #
    public native get_min_height()
 
+   #
    # Return the minimum allowed width of this window; see `get_min_size()`.
    #
    public native get_min_width()
 
+   #
    # Return the mouse pointer as set by `set_pointer()`.
    #
    public native get_pointer()
 
+   #
    # Return the window's x position on the screen; see `get_pos()`.
    #
    public native get_x()
 
+   #
    # Return the window's y position on the screen; see `get_pos()`.
    #
    public native get_y()
 
+   #
    # Succeed iff the window is resizable, according to the flag set
    # with `set_resize()`.
+   #
    public native can_resize()
 
+   #
    # Return the width of this window; see `get_size()`.
    #
    public native get_width()
 
+   #
    # Return the `dx, dy` offset as a `Vector` record.
    #
    public get_offset()
       return Vector(get_dx(), get_dy())
    end
 
+   #
    # Set the `dx, dy` offset; see `set_dx()` and `set_dy()`.
    #
    public set_offset(dx, dy)
       return set_dx(dx).set_dy(dy)
    end
 
+   #
    # Return the current clip as a `Rectangle` record, or fail if there
    # is no clip set.
    #
@@ -553,12 +624,14 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native get_clip_impl()
 
+   #
    # Temporarily stop copying graphic operations from the backing
    # image to the visible window.  This call must be followed by a
    # call to `restore()`.
    #
    public native hold()
 
+   #
    # After a call to `hold()`, update the visible window with the
    # drawing that has taken place since `hold()`, by copying the given
    # region from the off-screen buffer to the visible window.  This
@@ -567,24 +640,28 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native restore(x, y, width, height)
 
+   #
    # Return the size of the window as a `Size` record.
    #
    public get_size()
       return Size(get_width(), get_height())
    end
 
+   #
    # Return the maximum size of the window as a `Size` record.
    #
    public get_max_size()
       return Size(get_max_width(), get_max_height())
    end
 
+   #
    # Return the minimum size of the window as a `Size` record.
    #
    public get_min_size()
       return Size(get_min_width(), get_min_height())
    end
 
+   #
    # Return the position of this window as a `Size` record.  If the
    # window is hidden, or the position is unavailable, this method
    # fails.
@@ -597,6 +674,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return Point(get_x(), get_y())
    end
 
+   #
    # Return the geometry of this window as a `Rectangle` record; see
    # `get_pos()` and `get_size()`.
    #
@@ -604,6 +682,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return Rectangle(get_x(), get_y(), get_width(), get_height())
    end
 
+   #
    # Return the number of references to this window's canvas and
    # context, as a `References` record.
    #
@@ -613,10 +692,12 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native get_references_impl()
 
+   #
    # Set the current background color.
    #
    public native set_bg(v)
 
+   #
    # The canvas attribute canvas specifies the window visibility.
    # Possible values are system dependent, but include "hidden",
    # "normal", and "popup".  The X11 implementation also provides
@@ -625,6 +706,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_canvas(v)
 
+   #
    # Set the drawing operator, which specifies the way in which newly
    # drawn pixels are combined with the pixels that are already in a
    # window.  Possible values are system dependent, but include "over"
@@ -634,6 +716,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_draw_op(v)
 
+   #
    # Set the line leading, which specifies extra space to add to font
    # ascent, descent and height, to calculate line ascent, descent and
    # height.  It is specified as a real number, being the proportion
@@ -642,33 +725,40 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_leading(v)
 
+   #
    # Set `dx`, a horizontal offset that is added to the x value of
    # every coordinate pair before interpretation.
    #
    public native set_dx(v)
 
+   #
    # Set `dy`, a vertical offset that is added to the y value of every
    # coordinate pair before interpretation.
    #
    public native set_dy(v)
 
+   #
    # Set the current foreground color.
    #
    public native set_fg(v)
 
+   #
    # Set the current text font.
    #
    public native set_font(v)
 
+   #
    # Specifies the position and size of the window; see `set_pos()`
    # and `set_size()`.
    #
    public native set_geometry(x, y, width, height)
 
+   #
    # Set the height of the window in pixels; see `set_size()`.
    #
    public native set_height(height)
 
+   #
    # Specifies an image to load into the window.  On success, the
    # window is resized to the size of the image.  The given parameter
    # `v` may be raw binary image data (eg a gif file), or the name of
@@ -692,6 +782,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       }
    end
 
+   #
    # Specify an image used to identify the window.  If null, then the
    # setting is cleared.  The parameter takes the same format as
    # `set_image()`.
@@ -707,57 +798,68 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native set_icon_impl(id)
 
+   #
    # The canvas attribute label specifies a title used to identify the
    # window.
    #
    public native set_label(v)
 
+   #
    # Set the line style, which specifies how `draw_line()` draws the
    # ends of a line.  Possible values are "flat", "point", "round",
    # and "square".  (See `LineEnd` for symbolic constants).
    #
    public native set_line_end(v)
 
+   #
    # Set the line style, which specifies how `draw_line()` draws the
    # joins of a line.  Possible values are "bevel", "miter" "round".  (See
    # `LineJoin` for symbolic constants).
    #
    public native set_line_join(v)
 
+   #
    # Set the width of drawn lines.
    #
    public native set_line_width(v)
 
+   #
    # Set the maximum height of the window in pixels.  This only
    # affects visible windows, not hidden windows.
    #
    public native set_max_height(height)
 
+   #
    # Set the maximum size of the window in pixels.  This only affects
    # visible windows, not hidden windows.
    #
    public native set_max_size(width, height)
 
+   #
    # Set the maximum width of the window in pixels.  This only affects
    # visible windows, not hidden windows.
    #
    public native set_max_width(width)
 
+   #
    # Set the minimum height of the window in pixels.  This only
    # affects visible windows, not hidden windows.
    #
    public native set_min_height(height)
 
+   #
    # Set the minimum size of the window in pixels.  This only affects
    # visible windows, not hidden windows.
    #
    public native set_min_size(width, height)
 
+   #
    # Set the minimum width of the window in pixels.  This only affects
    # visible windows, not hidden windows.
    #
    public native set_min_width(width)
 
+   #
    # Set the base height to use in aspect ratio and resize increment
    # calculations.
    # 
@@ -765,6 +867,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_base_height(height)
 
+   #
    # Set the base width to use in aspect ratio and resize increment
    # calculations.
    # 
@@ -772,6 +875,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_base_width(width)
 
+   #
    # Set the base size to use in aspect ratio and resize increment
    # calculations.
    # 
@@ -779,74 +883,88 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_base_size(width, height)
 
+   #
    # Return the base height; see `set_base_height()`.
    #
    public native get_base_height()
 
+   #
    # Return the base width; see `set_base_width()`.
    #
    public native get_base_width()
 
+   #
    # Return the base size as a `Size` record; see `set_base_size()`.
    #
    public get_base_size()
       return Size(get_base_width(), get_base_height())
    end
 
+   #
    # Set the resize increment height to use during resizing.
    # 
    # This value is currently only effective on X11.
    #
    public native set_increment_height(height)
 
+   #
    # Set the resize increment width to use during resizing.
    # 
    # This value is currently only effective on X11.
    #
    public native set_increment_width(width)
 
+   #
    # Set the resize increment size to use during resizing.
    # 
    # This value is currently only effective on X11.
    #
    public native set_increment_size(width, height)
 
+   #
    # Get the resize increment height; see `set_increment_height()`.
    #
    public native get_increment_height()
 
+   #
    # Get the resize increment width; see `set_increment_width()`.
    #
    public native get_increment_width()
 
+   #
    # Return the increment size as a `Size` record; see `set_increment_size()`.
    #
    public get_increment_size()
       return Size(get_increment_width(), get_increment_height())
    end
 
+   #
    # Set the maximum aspect ratio allowed during resizing.
    # 
    # This value is currently only effective on X11.
    #
    public native set_max_aspect_ratio(r)
 
+   #
    # Return the maximum aspect ratio allowed during resizing, or fail
    # if no value is set; see `set_max_aspect_ratio()`.
    #
    public native get_max_aspect_ratio()
 
+   #
    # Set the minimum aspect ratio allowed during resizing.
    # 
    # This value is currently only effective on X11.
    #
    public native set_min_aspect_ratio(r)
 
+   #
    # Return the minimum aspect ratio allowed during resizing, or fail
    # if no value is set; see `set_min_aspect_ratio()`.
    #
    public native get_min_aspect_ratio()
 
+   #
    # A helpful method to set the pattern to something equivalent to
    # the old Icon pattern of the same name using a textured fill
    # style.  (See `Pattern` for symbolic constant pattern names).
@@ -859,6 +977,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       }
    end
 
+   #
    # A helpful method to set the pattern to something equivalent to
    # the old Icon pattern of the same name using a masked fill
    # style.  (See `Pattern` for symbolic constant pattern names).
@@ -871,6 +990,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       }
    end
 
+   #
    # Return a new `Pixels` instance with a paletted image which
    # represents the classic Icon pattern of the given name, with the
    # given foreground and background colours.
@@ -883,6 +1003,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
          set_palette(1, bg)
    end
 
+   #
    # Set the fill pattern (texture) to fill shapes (instead of the
    # foreground colour).  If no parameter is given, the setting is
    # cleared and the foreground colour is used again.  Otherwise, the
@@ -900,6 +1021,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native set_pattern_impl(v)
 
+   #
    # Set a mask to use with certain drawing operations.
    #
    # If no parameter is given, the setting is cleared and the
@@ -917,12 +1039,14 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native set_mask_impl(v)
 
+   #
    # Set the shape of the figure that represents the mouse position.
    # The recognised values for string `v` are system dependent; see
    # the `cursors` example program for the available pointer shapes.
    #
    public native set_pointer(v)
 
+   #
    # Set the position of the window on the screen.  If the window is
    # currently hidden, then either `x` or `y` may be null, meaning
    # that the underlying window system will place the window at a
@@ -938,27 +1062,33 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_pos(x, y)
 
+   #
    # Set the x position of the window on the screen; see `set_pos()`.
    #
    public native set_x(v)
 
+   #
    # Set the y position of the window on the screen; see `set_pos()`.
    #
    public native set_y(v)
 
+   #
    # Configure whether the window can or cannot be resized by the
    # user.  The parameter should be a flag value.
    #
    public native set_resize(v)
 
+   #
    # Set the size of the window in pixels.
    #
    public native set_size(width, height)
 
+   #
    # Set the width of the window in pixels; see `set_size()`.
    #
    public native set_width(width)
 
+   #
    # Configure this window so that it is transient in respect of the
    # given window `w`.  This generally means that the transient window
    # stays on top of the other window, although the exact behaviour
@@ -970,25 +1100,30 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native set_transient_for(w)
 
+   #
    # Produces a beep or other signal to attract attention.
    #
    public native alert(volume)
 
+   #
    # Sets the clipping region to the specified rectangle; subsequent
    # output extending outside its bounds is discarded. To disable
    # clipping, use `unclip()`.
    #
    public native clip(x, y, width, height)
 
+   #
    # Clear the clip settings
    #
    public native unclip()
 
+   #
    # Return the r,g,b values (plus possibly a if not opaque) of the
    # given color, as a color string
    #
    public static native color_value(k)
 
+   #
    # Return the r,g,b,a values of the given color string, as a `Color`
    # record.
    #
@@ -998,6 +1133,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private static native parse_color_impl(k)
 
+   #
    # Draw the given arc of an ellipse (centre `x`, `y`, major radius
    # `rx`, minor radius `ry`), starting at `angle1` radians (default
    # `0`), and going round clockwise `angle2` radians (default
@@ -1005,10 +1141,12 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native draw_arc(x, y, rx, ry, angle1, angle2)
 
+   #
    # Return an event from this window, failing if none is available.
    #
    public native event()
 
+   #
    # Draw the given circle (centre `x`, `y` with radius `r`) between
    # the given angles `angle1` and `angle2`.
    #
@@ -1016,11 +1154,13 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return draw_arc(x, y, r, r, angle1, angle2)
    end
 
+   #
    # Draw a smooth curve through the given points `(x1,y1,...xN,yN)`.
    # At least 3 points (6 parameters) must be given.
    #
    public native draw_curve(a[])
 
+   #
    # Draw an image at `x`, `y`.  The image `v` can be raw image data,
    # a filename, or a `Pixels` instance.
    #
@@ -1035,22 +1175,26 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native draw_image_impl(x, y, pix)
 
+   #
    # Copy a rectangular area from this window to another window, `dest`, at `x2`.
    # `y2`.
    #
    public native copy_to(x1, y1, width, height, dest, x2, y2)
 
+   #
    # Draw a line through the points `(x1,y1,...xN,yN)`.  At least 2
    # points (4 parameters) must be given.
    #
    public native draw_line(a[])
 
+   #
    # Fill a single pixel at x, y
    #
    public draw_point(x, y)
       return fill_rectangle(x, y, 1, 1)
    end
 
+   #
    # Draw a polygon defined by the points `(x1,y1,...xN,yN)`.
    #
    public draw_polygon(a[])
@@ -1059,6 +1203,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return draw_line!a
    end
 
+   #
    # A boundary of the given thickness (default 1 pixel) is filled
    # inside the given rectangle, so that the area drawn is always
    # bounded by exactly that rectangle.  If the thickness is too wide
@@ -1067,15 +1212,18 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native draw_rectangle(x, y, width, height, thickness)
 
+   #
    # Draw a string (or ucs) `s` at `x`, `y`.
    #
    public native draw_string(x, y, s)
 
+   #
    # Clear an area of the window by filling with the background
    # colour.
    #
    public native erase_area(x, y, width, height)
 
+   #
    # Return the window's event queue (a list) after bringing it
    # up-to-date with any events from the window system.
    #
@@ -1086,6 +1234,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native pending()
 
+   #
    # Return the event code of the next event (without removing it), or
    # fail if there is no event available.  It will give the same
    # result as
@@ -1095,11 +1244,13 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native peek()
 
+   #
    # Fill the given arc of an ellipse; the parameters are as for
    # `draw_arc()`.
    #
    public native fill_arc(x, y, rx, ry, angle1, angle2)
 
+   #
    # Fill the given circle (centre `x`, `y` with radius `r`) between
    # the given angles `angle1` and `angle2`.
    #
@@ -1107,55 +1258,67 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return fill_arc(x, y, r, r, angle1, angle2)
    end
 
+   #
    # Fill a polygon given by the points `(x1, y1, ...xN, yN)`.  At
    # least 3 points (6 parameters) must be given.
    #
    public native fill_polygon(a[])
 
+   #
    # Fill triangles defined by `(topx1, topy1, leftx1, lefty1,
    # rightx1, righty1, ...)`.
    #
    public native fill_triangles(a[])
 
+   #
    # Fill the given rectangle.
    #
    public native fill_rectangle(x, y, width, height)
 
+   #
    # Lower this window to the bottom of the window stack
    #
    public native lower()
 
+   #
    # Return the characters forming keys to palette p
    #
    public static native palette_chars(p)
 
+   #
    # Return color of key s2 in palette s1
    #
    public static native palette_color(s1, s2)
 
+   #
    # Return key of closest color to s2 in palette s1
    #
    public static native palette_key(s1, s2)
 
+   #
    # Get the default font for a window, as optionally specified with
    # the OI_FONT environment variable.
    #
    public static native get_default_font()
 
+   #
    # Get the default font size for a font, as optionally specified
    # with the OI_FONT_SIZE environment variable.
    #
    public static native get_default_font_size()
 
+   #
    # Get the default leading, as optionally specified with the
    # OI_LEADING environment variable.
    #
    public static native get_default_leading()
 
+   #
    # Return the `Pixels` format this window uses internally.
    #
    public native get_format()
 
+   #
    # Get the contents of some pixels as a `Pixels` object.
    #
    public get_pixels(x, y, width, height)
@@ -1164,10 +1327,12 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native get_pixels_impl(x, y, width, height)
 
+   #
    # Filter the given pixels according to the given filter spec.
    #
    public native filter(x, y, width, height, filter)
 
+   #
    # Return a `Rectangle` record, representing that part of the given
    # rectangle which would be drawable on the canvas; ie the
    # intersection of the rectangle, the window and the clip area if
@@ -1179,6 +1344,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native drawable_impl(x, y, width, height)
 
+   #
    # This is the same as `drawable`, but ignores the clip region.
    #
    public viewable(x, y, width, height)
@@ -1187,6 +1353,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native viewable_impl(x, y, width, height)
 
+   #
    # Return the current root pointer position as a `Point` record.
    #
    public query_root_pointer()
@@ -1195,6 +1362,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native query_root_pointer_impl()
 
+   #
    # Return the current display size in pixels, as a `Size` record.
    #
    public get_display_size()
@@ -1203,6 +1371,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native get_display_size_impl()
 
+   #
    # Return the current display size in millimeters, as a `Size`
    # record.
    #
@@ -1212,6 +1381,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native get_display_size_mm_impl()
 
+   #
    # Return the pointer's current position as a `Point` record,
    # relative to this window.
    #
@@ -1221,14 +1391,17 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native query_pointer_impl()
 
+   #
    # Warp the pointer to the given location, relative to this window.
    #
    public native warp_pointer(x, y)
 
+   #
    # Raise window to the top of the window stack
    #
    public native raise()
 
+   #
    # Give the window the input focus
    #
    public native focus()
@@ -1275,6 +1448,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    private native define_pointer_impl(name, v, x, y)
 
+   #
    # Make the destination pointer be the same as the src.
    # :Parameters :
    # :  `dest` - the destination name, which need not currently be defined
@@ -1282,6 +1456,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native copy_pointer(dest, src)
 
+   #
    # Close this binding to the window.  If no other bindings to the
    # same canvas exist, the underlying window is closed.
    #
@@ -1294,6 +1469,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    public native get_absolute_leading()
 
+   #
    # Return the font height, which is always the sum of the font
    # ascent and the descent.
    #
@@ -1301,6 +1477,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return get_font_ascent() + get_font_descent()
    end
 
+   #
    # Return the line height, which is always the sum of the font
    # ascent, the font descent, and two amounts of the absolute leading
    # (notionally one for the top and one for the bottom of the line).
@@ -1310,6 +1487,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return get_font_ascent() + get_font_descent() + 2 * get_absolute_leading()
    end
 
+   #
    # Return the line ascent, which is the font ascent plus the
    # absolute leading.
    #
@@ -1317,6 +1495,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return get_font_ascent() + get_absolute_leading()
    end
 
+   #
    # Return the line descent, which is the font descent plus the
    # absolute leading.
    #
@@ -1324,6 +1503,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       return get_font_descent() + get_absolute_leading()
    end
 
+   #
    # Convenient method to open an image and return a hidden window with
    # its contents.
    # :Parameters :
@@ -1346,6 +1526,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    end
 end
 
+#
 # Check that x is a `Window`, signalling a runtime error otherwise.
 #
 procedure need_Window(x)
@@ -1353,6 +1534,7 @@ procedure need_Window(x)
    return x
 end
 
+#
 # Check that x is a `Pixels`, signalling a runtime error otherwise.
 #
 procedure need_Pixels(x)

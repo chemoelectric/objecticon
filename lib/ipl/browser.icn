@@ -10,7 +10,7 @@ import
    net,
    xml,
    posix,
-   graphics(Window,Pixels,Key,Selection,Mouse),
+   graphics(Window,Key,Selection,Mouse),
    xdg,
 $if ~ _PLAN9
    ipl.childwait,
@@ -1238,6 +1238,34 @@ abstract class HasLastHighlight()
    package abstract restore_last_highlight(n, url)
 end
 
+class ImgPlainBorder(LineBorder)
+   private
+      img
+
+   public override initially(c)
+      LineBorder.initially(c)
+      self.img := c
+   end
+
+   public override draw(W, x, y, w, h)
+      use {
+         W := W.clone(),
+         {
+            if \img.highlight then
+               W.set_fg(img.browser.page_alink_color)
+            W.draw_rectangle(x, y, w, h, line_width)
+            if \img.over then {
+               # Make the border colour consistent with foreground link text colour.
+               use {
+                  W := Gui.style.get_over_clone(W),
+                  W.draw_rectangle(x, y, w, h, line_width)
+               }
+            }
+         }
+      }
+   end
+end
+
 class Img(Image, HasLastHighlight)
    public const
       browser, context, form, img_url, alt, bg_area
@@ -1245,36 +1273,39 @@ class Img(Image, HasLastHighlight)
       over, img_data, img_name, map, map_id, held, err, highlight, last_highlight
 
    package got_data(res)
-      local iw, ih, px
+      local iw, ih
       if \res.err then {
          err := res.err
          set_cache("rpp.BROKEN_LINK")
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
-      } else if use{ px := Pixels(res.data), set_pixels(px) } then {
-         # Set width and perhaps height based on constraints.
-         #
-         # If pct_w is set, then set a small minimal value, since
-         # otherwise the actual width of the image would be the
-         # preferred width, and hence the minimum size which
-         # TextFlow would allocate, whereas we want to allow the
-         # image to shrink below its actual width.
-         #
-         if iw := integer(member(constraints, "fix_w")) then
-            set_width(iw + border.get_total_width())
-         else if integer(member(constraints, "pct_w")) then
-            set_width(1 + border.get_total_width())
-         if ih := integer(member(constraints, "fix_h")) then {
-            if /w_spec then 
-               set_width(ih * get_image_width() / get_image_height() + border.get_total_width())
-            else 
-               set_height(ih + border.get_total_height())
-         }
-         img_name := res.fname
-         img_data := res.data
       } else {
-         err := &why
-         set_cache("rpp.BROKEN_LINK")
-         every remove_constraint("fix_w" | "fix_h" | "pct_w")
+         set_image(res.data)
+         if has_image() then {
+            # Set width and perhaps height based on constraints.
+            #
+            # If pct_w is set, then set a small minimal value, since
+            # otherwise the actual width of the image would be the
+            # preferred width, and hence the minimum size which
+            # TextFlow would allocate, whereas we want to allow the
+            # image to shrink below its actual width.
+            #
+            if iw := integer(member(constraints, "fix_w")) then
+               set_width(iw + border.get_total_width())
+            else if integer(member(constraints, "pct_w")) then
+               set_width(1 + border.get_total_width())
+            if ih := integer(member(constraints, "fix_h")) then {
+               if /w_spec then 
+                  set_width(ih * get_image_width() / get_image_height() + border.get_total_width())
+               else 
+                  set_height(ih + border.get_total_height())
+            }
+            img_name := res.fname
+            img_data := res.data
+         } else {
+            err := &why
+            set_cache("rpp.BROKEN_LINK")
+            every remove_constraint("fix_w" | "fix_h" | "pct_w")
+         }
       }
       # If neither set (/w_spec should imply /h_spec), ensure a
       # scaled image with the true ratio.
@@ -1411,12 +1442,9 @@ class Img(Image, HasLastHighlight)
    private set_highlight(u)
       if u ~=== highlight then {
          browser.set_last_highlight(self, \u)
-         # Avoid resetting since that will reload the image data, which is slow.
-         if visible_border() then {
-            set_fg(if \u then browser.page_alink_color else context.fg)
-            reset()
-         }
          highlight := u
+         if visible_border() then
+            invalidate()
       }
       link
    end
@@ -1460,19 +1488,11 @@ class Img(Image, HasLastHighlight)
    end
 
    public override display()
-      local W
       Image.display()
       if browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
       if \last_highlight then
          Gui.style.draw_dashed_rectangle(cbwin, x, y, w, h)
-      if \over & visible_border() then {
-         # Make the border colour consistent with foreground link text colour.
-         use {
-            W := Gui.style.get_over_clone(cbwin),
-            border.draw_rect(W, self)
-         }
-      }
    end
 
    public override new(browser, context, img_url, alt, form, map_id)
@@ -3081,7 +3101,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       t := Window.get_default_font_size()
       SIZES := [0.5 * t, 0.75 * t, t, 1.25 * t, 1.5 * t, 1.75 * t, 2.0 * t]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
-      default_font_clone := Window().set_font("sans")
+      default_font_clone := new_win().set_font("sans")
       SCROLL_INCREMENT := env_scale("OI_BROWSER_SCROLL_INCREMENT") | scale(20)
       DEFAULT_HISTORY_SIZE := env_int("OI_BROWSER_DEFAULT_HISTORY_SIZE", 0) | 100
    end
@@ -3767,15 +3787,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return (0 < \i <= 7, i)
    end
 
-   private static valid_family(fam)
+   private valid_family(fam)
       local w
       return use {
-         w := Window(),
+         w := cbwin.clone(),
          w.set_font(fam) & fam
       }
    end
 
-   private static select_family(faces)
+   private select_family(faces)
       local e
       every e := map(trim(separate(string(faces)))) do {
          # If we have one of the four standard families (or their html
@@ -3991,11 +4011,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          if border > 0 then
             q.set_border(CompoundBorder().
                             set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
-                            set_inner(PlainBorder().set_line_width(border)))
+                            set_inner(ImgPlainBorder().set_line_width(border)))
          else
             q.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
       } else if border > 0 then
-         q.set_border(PlainBorder().set_line_width(border))
+         q.set_border(ImgPlainBorder().set_line_width(border))
       enqueue(Req(self, url, page_url, q.got_data, page_resp.req.kind))
       align := convert_comp_align(e, u"ALIGN") | Align.B
       add_component(p, q, context, align)
@@ -5853,9 +5873,10 @@ class SimpleBrowser(Browser)
    end
 
    private img_handler(worker)
-      local n
+      local n, v
       n := string(worker.req.url.get_path())
-      return ImageCache.get_named_image(n) | error("Unknown image")
+      v := ImageCache.get_named_image(n) | error("Unknown image")
+      return string(v) | error("Cached image not a string")
    end
 
    public override new()

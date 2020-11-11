@@ -38,7 +38,10 @@ static struct wcursor *lookup_wcursor(char *name);
 static struct wcursor *ensure_wcursor(char *name);
 static void synch_cursor(wsp ws);
 static void synch_cursors(struct wcursor *c);
-static gb_Bitmap *imgdata_to_bitmap(struct imgdata *imd);
+static gb_Bitmap *imgdata_to_bitmap(struct imgdata *imd,
+                                    int ix, int iy, int iw, int ih);
+static gb_Bitmap *imgdata_to_temp_bitmap(struct imgdata *imd,
+                                         int ix, int iy, int iw, int ih);
 static void bitmap_to_imgdata(gb_Bitmap *bm, struct imgdata *imd);
 static wbp findwbp(wsp ws);
 static void handle_paint(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
@@ -1212,23 +1215,36 @@ void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
-    int i, j;
-    gb_Color *p;
-    imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
-    p = (gb_Color *)imd->data;
-    for(i = y; i < y + imd->height; i++)
-        for(j = x; j < x + imd->width; j++)
-            *p++ = gb_getpixel(ws->pix, j, i);
-    imd->format = &imgdataformat_MSBGRA32;
+    unsigned char *data;
+    char *format;
+    if (gb_get_Bitmap_data(ws->pix,
+                           x, y, imd->width, imd->height,
+                           &data, NULL, &format)) {
+        imd->format = parseimgdataformat(format);
+        imd->data = data;
+    } else {
+        int i, j;
+        gb_Color *p;
+        imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
+        p = (gb_Color *)imd->data;
+        for(i = y; i < y + imd->height; i++)
+            for(j = x; j < x + imd->width; j++)
+                *p++ = gb_getpixel(ws->pix, j, i);
+        imd->format = &imgdataformat_MSBGRA32;
+    }
 }
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
 {
     gb_Bitmap *bm;
     gb_Draw d;
+    int ix, iy, iw, ih;
+    ix = x; iy = y; iw = imd->width; ih = imd->height;
+    if (!reducerect(w, 1, &ix, &iy, &iw, &ih))
+        return;
     mk_Draw(w, &d);
-    bm = imgdata_to_bitmap(imd);
-    gb_draw_Bitmap(&d, x, y, bm, copy);
+    bm = imgdata_to_temp_bitmap(imd, ix - x, iy - y, iw, ih);
+    gb_draw_Bitmap(&d, ix, iy, bm, copy);
     gb_free_Bitmap(bm);
 }
 
@@ -1575,7 +1591,7 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
      */
     ensure_inited();
 
-    bm = gb_load_Bitmap(filename);
+    bm = gb_load_Bitmap_file(filename);
     if (!bm)
         return NoCvt;
     bitmap_to_imgdata(bm, imd);
@@ -1590,16 +1606,17 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
 
 int readimagedataimpl(dptr data, struct imgdata *imd)
 {
-    int rv;
-    char *fn;
-    if (!(is_png(data) || is_jpeg(data)))
+    gb_Bitmap *bm;
+
+    /* See above */
+    ensure_inited();
+
+    bm = gb_load_Bitmap_data(StrLoc(*data), StrLen(*data));
+    if (!bm)
         return NoCvt;
-    fn = datatofile(data);
-    if (!fn)
-        return Failed;
-    rv = readimagefileimpl(fn, imd);
-    remove(fn);
-    return rv;
+    bitmap_to_imgdata(bm, imd);
+    gb_free_Bitmap(bm);
+    return Succeeded;
 }
 
 int settransientfor(wbp w, wbp other)
@@ -1747,33 +1764,74 @@ static struct wcursor *ensure_wcursor(char *name)
 
 static void bitmap_to_imgdata(gb_Bitmap *bm, struct imgdata *imd)
 {
-    int i, j;
     UINT width, height;
-    gb_Color *p;
+    unsigned char *data;
+    struct palentry *paltbl;
+    char *format;
     gb_get_Bitmap_size(bm, &width, &height);
-    imd->format = &imgdataformat_MSBGRA32;
-    imd->width = width;
-    imd->height = height;
-    imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
-    p = (gb_Color *)imd->data;
-    for(j = 0; j < imd->height; j++) {
-        for(i = 0; i < imd->width; i++)
-            *p++ = gb_getpixel(bm, i, j);
+    if (gb_get_Bitmap_data(bm,
+                           0, 0, width, height,
+                           &data, &paltbl, &format)) {
+        imd->format = parseimgdataformat(format);
+        imd->width = width;
+        imd->height = height;
+        imd->data = data;
+        imd->paltbl = paltbl;
+    } else {
+        int i, j;
+        gb_Color *p;
+        imd->format = &imgdataformat_MSBGRA32;
+        imd->width = width;
+        imd->height = height;
+        imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
+        p = (gb_Color *)imd->data;
+        for(j = 0; j < imd->height; j++) {
+            for(i = 0; i < imd->width; i++)
+                *p++ = gb_getpixel(bm, i, j);
+        }
     }
 }
 
-static gb_Bitmap *imgdata_to_bitmap(struct imgdata *imd)
+/*
+ * Create a Bitmap from the given internal rectangle of the imgdata
+ * imd.
+ */
+static gb_Bitmap *imgdata_to_bitmap(struct imgdata *imd,
+                                    int ix, int iy, int iw, int ih)
 {
     gb_Bitmap *bm;
-    int i, j;
-    bm = gb_create_empty_Bitmap(imd->width, imd->height);
-    for(j = 0; j < imd->height; j++) {
-        for(i = 0; i < imd->width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            gb_setpixel(bm, i, j, a / 256, r / 256, g / 256, b / 256);
+    bm = gb_create_Bitmap_from_data(imd->width, imd->height,
+                                    imd->data,
+                                    imd->format->name,
+                                    ix, iy, iw, ih);
+    if (!bm) {
+        int i, j;
+        bm = gb_create_empty_Bitmap(iw, ih);
+        for(j = 0; j < ih; j++) {
+            for(i = 0; i < iw; i++) {
+                int r, g, b, a;
+                imd->format->getpixel(imd, ix + i, iy + j, &r, &g, &b, &a);
+                gb_setpixel(bm, i, j, a / 256, r / 256, g / 256, b / 256);
+            }
         }
     }
+    return bm;
+}
+
+/*
+ * As above, but we know the Bitmap will be destroyed before the
+ * imgdata.
+ */
+static gb_Bitmap *imgdata_to_temp_bitmap(struct imgdata *imd,
+                                         int ix, int iy, int iw, int ih)
+{
+    gb_Bitmap *bm;
+    bm = gb_create_temp_Bitmap_from_data(imd->width, imd->height,
+                                         imd->data,
+                                         imd->format->name,
+                                         ix, iy, iw, ih);
+    if (!bm)
+        bm = imgdata_to_bitmap(imd, ix, iy, iw, ih);
     return bm;
 }
 
@@ -1781,7 +1839,7 @@ static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd)
 {
     struct SharedBitmap *res;
     GAlloc(res, SharedBitmap);
-    res->bitmap = imgdata_to_bitmap(imd);
+    res->bitmap = imgdata_to_bitmap(imd, 0, 0, imd->width, imd->height);
     return res;
 }
 
@@ -1849,7 +1907,7 @@ int definepointer(wbp w, char *name, struct imgdata *imd, int x, int y)
     BOOL res;
     if (cursor_debug) dbg("definepointer %s %dx%d, hotspot %d,%d\n", name, imd->width,
                           imd->height, x, y);
-    bm = imgdata_to_bitmap(imd);
+    bm = imgdata_to_temp_bitmap(imd, 0, 0, imd->width, imd->height);
     icon = gb_get_HICON(bm);
     gb_free_Bitmap(bm);
     if (!icon) {
@@ -1929,6 +1987,7 @@ static void setup_cursor(char *name, LPCTSTR cid)
 
 static void init_window_system(void)
 {
+    static struct gb_funcs fs;
     WNDCLASSEXW wc;
     RECT r;
     wc.cbSize =         sizeof(WNDCLASSEXW);
@@ -1948,7 +2007,10 @@ static void init_window_system(void)
     AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
     BORDER_WIDTH = r.right - r.left;
     BORDER_HEIGHT = r.bottom - r.top;
-    gb_initialize(ffatalerr);
+    fs.safe_malloc = safe_malloc;
+    fs.safe_zalloc = safe_zalloc;
+    fs.safe_imul = safe_imul;
+    gb_initialize(&fs);
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);
     white = new_sharedcolor("white", 0xffff,0xffff,0xffff, 0xffff);

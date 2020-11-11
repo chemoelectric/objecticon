@@ -5,6 +5,7 @@ import
    util,
    cairo,
    io,
+   lang,
    ipl.imagedetect
 
 $if _PNG
@@ -118,15 +119,20 @@ final abstract class ImageCache()
       name_image("gui.HORIZ_GRID", mk_h_grid(i, j))
    end
 
-   # Associate arbitrary image data (eg gif file data), with a name.
+   #
+   # Associate image data (eg gif file data), with a name.  The data
+   # must be either a string, or a `Pixels` instance.  In the latter
+   # case, the instance must never be closed.
+   #
    # The name can then be passed to `get` or `load` to retrieve a
-   # window with the corresponding image.   It is a runtime error
-   # if the key already exists in the table.
+   # window with the corresponding image.  It is a runtime error if
+   # the key already exists in the table.
    #
    public static name_image(name, data)
       name := need_string(name)
       if member(names, name) then
          runerr("ImageCache duplicate name key", name)
+      is(data, Pixels) | (data := need_string(data))
       insert(names, name, data)
       link
    end
@@ -157,7 +163,7 @@ final abstract class ImageCache()
       key := need_string(key)
       if member(imap, key) then
          runerr("ImageCache duplicate image key", key)
-      insert(imap, key, win)
+      insert(imap, key, need_Window(win))
       link
    end
 
@@ -184,6 +190,11 @@ final abstract class ImageCache()
    # `name_image()`.  On a successful load, the image is stored in the
    # cache for future use, and thus should not be closed after use.
    #
+   # In this and subsequent methods, `win` is a `Window`.  This
+   # parameter is only required if the image data in question is an
+   # image string.  The window is then used to provide the foreground
+   # and background palette colours.
+   #
    public static get(s, win)
       return member(imap, get_key(s, win))
    end
@@ -200,8 +211,8 @@ final abstract class ImageCache()
       if s := member(names, key) then
          fl := &yes
       if is_image_string(s) then {
-         if \win then
-            key ||:= "#With colour "|| Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
+         need_Window(win)
+         key ||:= "#With colour "|| Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
          if member(imap, key) then
             return key
          \fl | return error("Invalid key for ImageCache")
@@ -240,7 +251,9 @@ final abstract class ImageCache()
    public static load_pixels(s, win)
       s := need_string(s)
       s := member(names, s)
-      return if is_image_string(s) then
+      return if is(s, Pixels) then
+         s.shared_copy()
+      else if is_image_string(s) then
          image_string_to_pixels(s, win)
       else
          Pixels(s)
@@ -254,9 +267,8 @@ final abstract class ImageCache()
    end
 
    #
-   # This is like `get`, but if the resulting window is not of the
-   # given dimensions, then another window is created (and cached),
-   # which is the result of resizing to the desired size.
+   # This is like `get`, but the resulting cached window will be of
+   # the given dimensions.
    #
    public static get_with_resize(s, width, height, win)
       return member(imap, get_key_with_resize(s, width, height, win))
@@ -264,22 +276,43 @@ final abstract class ImageCache()
 
    #
    # Like `get_with_resize`, but returns the key rather than the
-   # window.  `width` and `height` default to the value of `scale()`
-   # applied to the raw image's dimensions.
+   # window.
    #
    public static get_key_with_resize(s, width, height, win)
-      local w, key, w2
-      key := get_key(s, win) | fail
-      w := member(imap, key)
-      width := need_integer(\width, 1) | scale(w.get_width())
-      height := need_integer(\height, 1) | scale(w.get_height())
-      if w.get_width() = width & w.get_height() = height then
+      local w, key, key1, s1, p, fl
+      key := s := need_string(s)
+      width := need_integer(width, 1)
+      height := need_integer(height, 1)
+      s1 := s
+      if s1 := member(names, key) then
+         fl := &yes
+      if is_image_string(s1) then {
+         need_Window(win)
+         \fl | return error("Invalid key for ImageCache")
+         key ||:= "#With colour "|| Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
+      } else {
+         \fl | Files.access(key) | return error("Invalid key for ImageCache")
+      }
+
+      if w := member(imap, key) &
+         w.get_width() = width & w.get_height() = height
+      then
          return key
+
+      key1 := key
       key ||:= "#Resized to " || width || "x" || height
       if member(imap, key) then
          return key
-      w2 := zoom_win(w, width, height)
-      insert(imap, key, w2)
+      use {
+         p := load_pixels(s, win),
+         {
+            if p.get_width() = width & p.get_height() = height then
+               key := key1
+            w := zoom_pix(p, width, height)
+         }
+      } | fail
+
+      insert(imap, key, w)
       return key
    end
 
@@ -343,18 +376,22 @@ final abstract class ImageCache()
       write("Cache name table\n----------------")
       every k := key(names) do {
          v := names[k]
-         writes("\t", k, " -> ", *v, " bytes ")
-         if i := ImageStringInfo(v) then
-            write("image string ", i.width, "x", i.height)
-         else if i := detect(v) then
-            write(i.format, " ", i.width, "x", i.height)
-         else
-            write("data")
+         if is(v, Pixels) then
+            write("\t", k, " -> ", to_string(v))
+         else {
+            writes("\t", k, " -> ", *v, " bytes ")
+            if i := ImageStringInfo(v) then
+               write("image string ", i.width, "x", i.height)
+            else if i := detect(v) then
+               write(i.format, " ", i.width, "x", i.height)
+            else
+               write("data")
+         }
       }
       write("\nCache image table\n-----------------")
       every k := key(imap) do {
          v := imap[k]
-         write("\t", k, " -> Window#", serial(v), " ", v.get_width(), "x", v.get_height())
+         write("\t", k, " -> ", to_string(v))
       }
    end
 end

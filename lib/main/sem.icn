@@ -11,18 +11,32 @@ package ipc
 import lang, util
 
 #
-# This class provides a semaphore facility.  The implementation requires
-# the accompanying C library uniipclib.so to be on the library path.
+# This class provides a semaphore facility.  The implementation
+# requires the accompanying native library to be on the library path.
 #
-# Instances of this class should not be created directly, but rather using the static
-# methods `open_public`, `create_public` and `create_private`
+# Instances of this class should not be created directly, but rather
+# using the static methods `open_public`, `create_public` and
+# `create_private`
 #
 final class Sem(NoCopy, HasClose)
    private 
       id
+   private readable
+      undo_flag
 
    #
-   # Set the value of the semaphore to x
+   # If this flag is set then `semop()` and `semop_nowait()` will use
+   # the `SEM_UNDO` flag.  By default this flag is off.  Note that this
+   # flag is an attribute of this instance, rather than the underlying
+   # semaphore.
+   #
+   public set_undo(s)
+      self.undo_flag := need_flag(s)
+      link
+   end
+
+   #
+   # Set the value of the semaphore to `x`.
    #
    public native set_value(x)
 
@@ -32,57 +46,66 @@ final class Sem(NoCopy, HasClose)
    public native get_value()
 
    #
-   # Perform the wait operation, defined as `semop(-1)`
+   # Perform the wait operation, defined as `semop(-1)`.
    #
    public wait()
-      semop(-1)
+      return semop(-1)
    end
 
    #
-   # Attempt a wait, defined as `semop_nowait(-1)`
+   # Attempt a wait, defined as `semop_nowait(-1)`.
    #
    public attempt()
       return semop_nowait(-1)
    end
 
    #
-   # Perform the signal operation, defined as `semop(1)`
+   # Perform the signal operation, defined as `semop(1)`.
    #
    public signal()
-      semop(1)
+      return semop(1)
    end
 
    #
-   # Perform a semop on the underlying sempahore.  If n is >0 then n is
-   # added to the value.  If it is <0 then the process is suspended until
-   # the value is >= abs(n), then abs(n) is subtracted.  If n is zero,
-   # then the process suspends until the semaphore value is zero.
+   # Perform a semop on the underlying sempahore.  If n is >0 then n
+   # is added to the value.  If it is <0 then the process is suspended
+   # until the value is >= `abs(n)`, then `abs(n)` is subtracted.  If
+   # n is zero, then the process suspends until the semaphore value is
+   # zero.  This call always succeeds with `self`.
    #
-   public native semop(n)
+   public semop(n)
+      return semop_impl(n, undo_flag)
+   end
 
    # 
-   # Peform a semop with the IPC_NOWAIT flag set.  This is the same as
-   # `semop()`, but instead of suspending the call will fail.
+   # Peform a semop with the `IPC_NOWAIT` flag set.  This is like
+   # `semop()`, but instead of suspending the process, the call will
+   # fail, otherwise it succeeds with `&null`.
    #
-   public native semop_nowait(n)
+   public semop_nowait(n)
+      return semop_nowait_impl(n, undo_flag)
+   end
 
    # 
-   # Repeatedly peform `semop_nowait()`, sleeping for a short period between each try
-   # until t milliseconds or `semop_nowait()` succeeds.  Fails on a timeout; otherwise
-   # succeeds.
+   # Repeatedly peform `semop_nowait()`, sleeping for a short period
+   # between each try until t milliseconds or `semop_nowait()`
+   # succeeds.  Fails on a timeout; otherwise succeeds with `&null`.
+   #
    # :Parameters :
    # :  `n` - the parameter to semop_nowait
    # :  `t` - the timeout in milliseconds
    #
    public semop_poll(n, t)
-      local c
-      c := Prog.get_runtime_millis()
+      local i
+      t := Prog.get_runtime_millis() + need_integer(t, 0)
       repeat {
          if semop_nowait(n) then
-            return 
-         if Prog.get_runtime_millis() - c >= t then
+            return
+         i := t - Prog.get_runtime_millis()
+         if i <= 0 then
             fail
-         delay(50)
+         i >:= 50
+         delay(i)
       }
    end
 
@@ -99,6 +122,8 @@ final class Sem(NoCopy, HasClose)
       return .\id
    end
 
+   private native semop_impl(n, f)
+   private native semop_nowait_impl(n, f)
    private static native open_public_impl()
    private static native create_public_impl()
    private static native create_private_impl()

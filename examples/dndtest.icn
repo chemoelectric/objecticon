@@ -200,7 +200,7 @@ class DNDTest(Dialog)
       folder_paint
 
    public override init_dialog()
-      folder_paint := ImagePaint().set_cache("tree.CLOSED_FOLDER")
+      folder_paint := ImagePaint().set_cache("gui.CLOSED_FOLDER")
       folder_paint.initially(self)
       tree.set_root_node(create_tree())
    end

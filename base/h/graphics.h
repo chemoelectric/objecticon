@@ -18,30 +18,7 @@ struct triangle {
     struct point p1, p2, p3;
 };
 
-#define TCH1 '~'			/* usual transparent character */
-#define TCH2 0377			/* alternate transparent character */
-
 #define MIN_FONT_SIZE 1.0
-
-#define MAXCOLORNAME 50
-
-#define IMGDATA_RGB24      1
-#define IMGDATA_BGR24      2
-#define IMGDATA_RGBA32     3
-#define IMGDATA_ABGR32     4
-#define IMGDATA_RGB48      5
-#define IMGDATA_RGBA64     6
-#define IMGDATA_G8         7
-#define IMGDATA_GA16       8
-#define IMGDATA_AG16       9
-#define IMGDATA_G16        10
-#define IMGDATA_GA32       11
-#define IMGDATA_XRGB32     12
-#define IMGDATA_BGRX32     13
-#define IMGDATA_PALETTE1   21
-#define IMGDATA_PALETTE2   22
-#define IMGDATA_PALETTE4   24
-#define IMGDATA_PALETTE8   28
 
 #define Mul16(v, a) (((unsigned)(v) * (a)) / 65535)
 #define Div16(v, a) (((unsigned)(v) * 65535) / (a))

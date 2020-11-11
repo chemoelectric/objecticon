@@ -1391,7 +1391,7 @@ static Image *imgdata_to_Image(struct imgdata *imd, int depth)
     }
 
     tmp = initimgdata(imd->width, imd->height, cv_fmt);
-    copyimgdata(tmp, imd);
+    copyimgdata(tmp, imd, 0, 0);
     im = imgdata_to_Image1(tmp, cv_chan);
     unlinkimgdata(tmp);
     return im;
@@ -1401,7 +1401,13 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
 {
     wcp wc = w->context;
     wsp ws = w->window;
+    int ix, iy, iw, ih;
     Image *im;
+
+    ix = x; iy = y; iw = imd->width; ih = imd->height;
+    if (!reducerect(w, 1, &ix, &iy, &iw, &ih))
+        return;
+
     /* Allocate a temp win to represent the imgdata */
     im = imgdata_to_Image(imd, 32);
     /* Copy tmp image back to screen */
