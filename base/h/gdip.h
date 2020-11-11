@@ -107,9 +107,11 @@ int gb_get_Bitmap_data(gb_Bitmap *bm,
                        int x, int y, int width, int height,
                        unsigned char **data, struct palentry **paltbl, char **format);
 gb_Bitmap *gb_create_temp_Bitmap_from_data(int width, int height,
-                                           unsigned char *data, char *format);
+                                           unsigned char *data, char *format,
+                                           int ix, int iy, int iw, int ih);
 gb_Bitmap *gb_create_Bitmap_from_data(int width, int height,
-                                      unsigned char *data, char *format);
+                                      unsigned char *data, char *format,
+                                      int ix, int iy, int iw, int ih);
 gb_Font *gb_find_Font(char *family, int flags, double size);
 void gb_get_metrics(HDC dc, gb_Font *f, int *ascent, int *descent, int *maxwidth);
 HICON gb_get_HICON(gb_Bitmap *bm);

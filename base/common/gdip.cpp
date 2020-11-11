@@ -733,7 +733,7 @@ int gb_get_Bitmap_data(gb_Bitmap *bm,
     Rect r(x, y, width, height);
     Status st;
     st = b->LockBits(&r,
-                     ImageLockModeRead|ImageLockModeUserInputBuf,
+                     ImageLockModeRead | ImageLockModeUserInputBuf,
                      pf, &bd);
     if (st != Ok) {
         free(p);
@@ -767,7 +767,8 @@ int gb_get_Bitmap_data(gb_Bitmap *bm,
 }
 
 gb_Bitmap *gb_create_Bitmap_from_data(int width, int height,
-                                      unsigned char *data, char *format)
+                                      unsigned char *data, char *format,
+                                      int ix, int iy, int iw, int ih)
 {
     int bpp;
     PixelFormat pf;
@@ -781,18 +782,18 @@ gb_Bitmap *gb_create_Bitmap_from_data(int width, int height,
     } else
         return 0;
 
-    Bitmap *b = new Bitmap(width, height, pf);
+    Bitmap *b = new Bitmap(iw, ih, pf);
     BitmapData bd;
-    bd.Width = width;
-    bd.Height = height;
+    bd.Width = iw;
+    bd.Height = ih;
     bd.Stride = bpp * width;
     bd.PixelFormat = pf;
-    bd.Scan0 = data;
+    bd.Scan0 = data + bpp * (iy * width + ix);
     bd.Reserved = NULL;
-    Rect r(0, 0, width, height);
+    Rect r(0, 0, iw, ih);
     Status st;
     st = b->LockBits(&r, 
-                     ImageLockModeWrite|ImageLockModeUserInputBuf,
+                     ImageLockModeWrite | ImageLockModeUserInputBuf,
                      pf, &bd);
     if (st != Ok) {
         delete b;
@@ -805,14 +806,17 @@ gb_Bitmap *gb_create_Bitmap_from_data(int width, int height,
 
 extern "C"
 gb_Bitmap *gb_create_temp_Bitmap_from_data(int width, int height,
-                                           unsigned char *data, char *format)
+                                           unsigned char *data, char *format,
+                                           int ix, int iy, int iw, int ih)
 {
     if (strcmp(format, "MSBGRA32") == 0) {
         /*
          * NB - this constructor doesn't copy the data.
          */
-        Bitmap *b = new Bitmap(width, height,
-                               4 * width, PixelFormat32bppARGB, data);
+        Bitmap *b = new Bitmap(iw, ih,
+                               4 * width,
+                               PixelFormat32bppARGB,
+                               data + 4 * (iy * width + ix));
         if (draw_debug) dbg("Successfully created temp Bitmap from data, format=%s\n", format);
         return (gb_Bitmap*)b;
     }
