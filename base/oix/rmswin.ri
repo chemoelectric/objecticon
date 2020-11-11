@@ -1213,17 +1213,16 @@ void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
-    int i, j;
-    gb_Color *p;
     unsigned char *data;
     char *format;
-
     if (gb_get_Bitmap_data(ws->pix,
                            x, y, imd->width, imd->height,
                            &data, NULL, &format)) {
         imd->format = parseimgdataformat(format);
         imd->data = data;
     } else {
+        int i, j;
+        gb_Color *p;
         imd->data = safe_malloc(safe_imul(imd->width, imd->height, sizeof(gb_Color)));
         p = (gb_Color *)imd->data;
         for(i = y; i < y + imd->height; i++)
