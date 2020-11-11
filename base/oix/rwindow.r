@@ -539,7 +539,7 @@ static size_t imageread(void *ptr, size_t len)
     }
 }
 
-static int imagegetc()
+static int imagegetc(void)
 {
     if (imagefile)
         return getc(imagefile);
