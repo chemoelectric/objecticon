@@ -2374,7 +2374,7 @@ function graphics_Pixels_convert_impl(self, format)
           fail;
       }
       imd = initimgdata(self_id->width, self_id->height, fmt);
-      copyimgdata(imd, self_id);
+      copyimgdata(imd, self_id, 0, 0);
       return C_integer((word)imd);
    }
 end

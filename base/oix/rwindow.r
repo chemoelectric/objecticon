@@ -2602,15 +2602,15 @@ struct imgdata *initimgdata(int width, int height, struct imgdataformat *fmt)
     return imd;
 }
 
-void copyimgdata(struct imgdata *dest, struct imgdata *src)
+void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y)
 {
     int i, j, width, height;
-    width = Min(src->width, dest->width);
-    height = Min(src->height, dest->height);
+    width = dest->width;
+    height = dest->height;
     for (j = 0; j < height; j++) {
         for (i = 0; i < width; i++) {
             int sr, sg, sb, sa;
-            src->format->getpixel(src, i, j, &sr, &sg, &sb, &sa);
+            src->format->getpixel(src, x + i, y + j, &sr, &sg, &sb, &sa);
             dest->format->setpixel(dest, i, j, sr, sg, sb, sa);
         }
     }
