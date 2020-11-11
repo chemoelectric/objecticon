@@ -3986,11 +3986,11 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd, int ix, int iy, in
                                  stride));
 
     pix = XCreatePixmap(wd->display, GetRoot(wd),
-                        imd->width, imd->height,
+                        iw, ih,
                         depth);
     gc = XCreateGC(wd->display, pix, 0, NULL);
     XPutImage(wd->display, pix, gc, xi,
-              0,0, 0,0, imd->width, imd->height);
+              0,0, 0,0, iw, ih);
     xi->data = 0;
     XDestroyImage(xi);
     XFreeGC(wd->display, gc);
