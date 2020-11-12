@@ -546,7 +546,7 @@ end
 # A simple helper class for parsing an image string.
 #
 class ImageStringInfo()
-   public
+   public const
      width, height, pal, extra, data
 
    public new(s)
@@ -577,7 +577,7 @@ class ImageStringInfo()
 
    public static from_parts(width, pal, extra, data)
       local i
-      i := Class.create_instance()
+      i := Class.create_raw_instance()
       i.width := need_integer(width, 1)
       i.pal := need_string(\pal)
       i.extra := need_string(\extra)
@@ -585,7 +585,7 @@ class ImageStringInfo()
       if *data = 0 | *data % width ~= 0 then
          return error("Wrong number of image characters")
       i.height := *data / width
-      return i
+      return Class.complete_raw_instance(i)
    end
 
    public to_image_string()

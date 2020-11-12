@@ -101,18 +101,15 @@ package procedure mk_v_arrow(d)
       j := (d - i) / 2
       s ||:= repl("~", j) || m || repl("~", d - j - i)
    }
-   return ImageStringInfo.from_parts(d,, "b=black;c=black 50%;~=transparent", s)
+   return s
 end
 
 package procedure mk_arrow_up(d)
-   return mk_v_arrow(d).to_image_string()
+   return ImageStringInfo.from_parts(d,, "b=black;c=black 50%;~=transparent", mk_v_arrow(d)).to_image_string()
 end
 
 package procedure mk_arrow_down(d)
-   local i
-   i := mk_v_arrow(d)
-   i.data := reverse(i.data)
-   return i.to_image_string()
+   return ImageStringInfo.from_parts(d,, "b=black;c=black 50%;~=transparent", reverse(mk_v_arrow(d))).to_image_string()
 end
 
 package procedure mk_h_arrow(d)
@@ -123,18 +120,15 @@ package procedure mk_h_arrow(d)
       m[1] := "c"
       s ||:= repl("~", d - i) || m
    }
-   return ImageStringInfo.from_parts(d,, "b=black;c=black 50%;~=transparent", s)
+   return s
 end
 
 package procedure mk_arrow_left(d)
-   return mk_h_arrow(d).to_image_string()
+   return ImageStringInfo.from_parts(d,, "b=black;c=black 50%;~=transparent", mk_h_arrow(d)).to_image_string()
 end
 
 package procedure mk_arrow_right(d)
-   local i
-   i := mk_h_arrow(d)
-   i.data := reverse(i.data)
-   return i.to_image_string()
+   return ImageStringInfo.from_parts(d,, "b=black;c=black 50%;~=transparent", reverse(mk_h_arrow(d))).to_image_string()
 end
 
 package procedure mk_handle(d, b, fl)
