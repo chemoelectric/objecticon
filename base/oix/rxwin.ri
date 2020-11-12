@@ -84,6 +84,9 @@ static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, 
 static void pat1(wbp w, int x, int y, int width, int height);
 static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
+static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd,
+                                int ix, int iy, int iw, int ih,
+                                int depth, XRenderPictFormat **format);
 static Picture get_draw_picture(wcp wc);
 static Picture get_mask_picture(wcp wc);
 static void pix_to_win(wsp ws, int x, int y, int width, int height);
@@ -4005,9 +4008,9 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd, int ix, int iy, in
  * format.  The picture format matching the returned Pixmap is
  * returned in format.
  */
-Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd,
-                         int ix, int iy, int iw, int ih,
-                         int depth, XRenderPictFormat **format)
+static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd,
+                                int ix, int iy, int iw, int ih,
+                                int depth, XRenderPictFormat **format)
 {
     struct imgdata *tmp;
     struct imgdataformat *cv_fmt = 0;
@@ -4565,7 +4568,7 @@ static int y_outside(wbp w, int y)
  * The drawstring functions below address several problems with Xft's
  * string drawing functions :-
  * 
- * 1) the absence of fallback font substitution (see falback() above).
+ * 1) the absence of fallback font substitution (see fallback() above).
  * 
  * 2) incorrect behaviour if a very long string is drawn.  Hence it must be
  *    split up into several chunks to be given to Xft separately.

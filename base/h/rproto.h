@@ -316,7 +316,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y);
    void unlink_sharedpicture(struct SharedPicture *x);
    wfp loadfont(wdp wd, char *s);
    char *tofcpatternstr(char *s);
-   Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd, int ix, int iy, int iw, int ih, int depth, XRenderPictFormat **format);
    wbp alcwbinding(wdp wd);
    wbp findwbp(wsp ws);
 #endif
