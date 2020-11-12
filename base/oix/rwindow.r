@@ -5,7 +5,6 @@
 
 static int colorphrase(char *buf, int *r, int *g, int *b, int *a);
 static double rgbval(double n1, double n2, double hue);
-static struct palentry *palsetup_palette;	/* current palette */
 
 #if Graphics
 
@@ -2200,17 +2199,18 @@ struct palentry *palsetup(int p)
     double m;
     struct palentry *e;
 
-    static int palnumber;		/* current palette number */
+    static int palnumber;               /* current palette number */
+    static struct palentry *palette;    /* current palette */
 
     if (palnumber == p)
-        return palsetup_palette;
-    if (palsetup_palette == NULL)
-        palsetup_palette = safe_malloc(256 * sizeof(struct palentry));
+        return palette;
+    if (palette == NULL)
+        palette = safe_malloc(256 * sizeof(struct palentry));
 
-    memset(palsetup_palette, 0, 256 * sizeof(struct palentry));
+    memset(palette, 0, 256 * sizeof(struct palentry));
     palnumber = p;
 
-    if (p < 0) {				/* grayscale palette */
+    if (p < 0) {                                /* grayscale palette */
         n = -p;
         if (n <= 64)
             s = (unsigned char *)c4list;
@@ -2219,33 +2219,33 @@ struct palentry *palsetup(int p)
         m = 1.0 / (n - 1);
 
         for (i = 0; i < n; i++) {
-            e = &palsetup_palette[*s++];
+            e = &palette[*s++];
             gg = 65535 * m * i;
             e->r = e->g = e->b = gg;
             e->a = 65535;
         }
-        return palsetup_palette;
+        return palette;
     }
 
-    if (p == 1) {			/* special c1 palette */
+    if (p == 1) {                       /* special c1 palette */
         s = (unsigned char *)c1list;
         t = c1rgb;
         while ((c = *s++) != 0) {
-            e = &palsetup_palette[c];
+            e = &palette[c];
             e->r   = 65535 * (((int)*t++) / 48.0);
             e->g = 65535 * (((int)*t++) / 48.0);
             e->b  = 65535 * (((int)*t++) / 48.0);
             e->a = 65535;
         }
-        return palsetup_palette;
+        return palette;
     }
 
-    switch (p) {				/* color cube plus extra grays */
-        case  2:  s = (unsigned char *)c2list;	break;	/* c2 */
-        case  3:  s = (unsigned char *)c3list;	break;	/* c3 */
-        case  4:  s = (unsigned char *)c4list;	break;	/* c4 */
-        case  5:  s = (unsigned char *)allchars;break;	/* c5 */
-        case  6:  s = (unsigned char *)allchars;break;	/* c6 */
+    switch (p) {                                /* color cube plus extra grays */
+        case  2:  s = (unsigned char *)c2list;  break;  /* c2 */
+        case  3:  s = (unsigned char *)c3list;  break;  /* c3 */
+        case  4:  s = (unsigned char *)c4list;  break;  /* c4 */
+        case  5:  s = (unsigned char *)allchars;break;  /* c5 */
+        case  6:  s = (unsigned char *)allchars;break;  /* c6 */
     }
     m = 1.0 / (p - 1);
     for (r = 0; r < p; r++) {
@@ -2254,7 +2254,7 @@ struct palentry *palsetup(int p)
             gg = 65535 * m * g;
             for (b = 0; b < p; b++) {
                 bb = 65535 * m * b;
-                e = &palsetup_palette[*s++];
+                e = &palette[*s++];
                 e->r = rr;
                 e->g = gg;
                 e->b = bb;
@@ -2266,11 +2266,11 @@ struct palentry *palsetup(int p)
     for (g = 0; g < p * (p - 1); g++)
         if (g % p != 0) {
             gg = 65535 * m * g;
-            e = &palsetup_palette[*s++];
+            e = &palette[*s++];
             e->r = e->g = e->b = gg;
             e->a = 65535;
         }
-    return palsetup_palette;
+    return palette;
 }
 
 /*
