@@ -529,6 +529,10 @@ package procedure tab_ws()
    return tab(many(' \t\n\r'))
 end
 
+package procedure trim_ws(s)
+   return trim(s, ' \t\n\r')
+end
+
 #
 # Test if the given string is (probably) a classic Icon image string.
 #
@@ -597,52 +601,45 @@ class ImageStringInfo()
    end
 end
 
+package procedure image_string_to_pixels1(q, r, W)
+   local t, k, v
+   # Add chars from palette, if specified.
+   if \r.pal then
+      q.load_palette(r.pal) | fail
+
+   # Add extra chars
+   every t := separate(\r.extra, ';') do trim_ws(t) ? {
+      k := move(1) | return error("Char expected")
+      ="=" | return error("= expected")
+      v := tab(upto(', ') | 0)
+      v := case v of {
+         "hilite" : Gui.style.get_hilite_color(W)
+         "shadow" : Gui.style.get_shadow_color(W)
+         "fg" : W.get_fg()
+         "bg" : W.get_bg()
+      }
+      v ||:= tab(0)
+      q.set_palette(ord(k), v) |
+         return error("Invalid colour in image spec: " || v)
+   }
+   return
+end
+
 # Convert an image string to a `Pixels` object, based on the window
 # `W` for hilite, shadow colours etc.
 #
 procedure image_string_to_pixels(s, W)
-   local q, k, v, r, w
+   local q, r
    r := ImageStringInfo(s) | fail
    need_Window(W)
 
    q := Pixels(r.width, r.height, Pixels.PALETTE8).
       set_data(r.data)
-   # Add chars from palette, if specified.
-   if \r.pal then {
-      q.load_palette(r.pal) | {
-         q.close()
-         fail
-      }
-   }
-   # Add extra chars
-   if \r.extra then {
-      r.extra ? repeat {
-         tab_ws()
-         k := move(1) | break
-         ="=" | {
-            q.close()
-            return error("= expected")
-         }
-         v := tab(upto(';') | 0)
-         v ? {
-            w := tab(upto(', ') | 0)
-            case w of {
-               "hilite" : v := Gui.style.get_hilite_color(W)
-               "shadow" : v := Gui.style.get_shadow_color(W)
-               "fg" : v := W.get_fg()
-               "bg" : v := W.get_bg()
-               default : v := w
-            }
-            v ||:= tab(0)
-         }
-         move(1)
-         q.set_palette(ord(k), v) | {
-            q.close()
-            return error("Invalid colour in image spec: " || v)
-         }
-      }
-   }
-   return q
+
+   if image_string_to_pixels1(q, r, W) then
+      return q
+
+   q.close()
 end
 
 #
