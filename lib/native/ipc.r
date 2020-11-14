@@ -791,11 +791,10 @@ function ipc_Msg_attempt_impl(self)
 end
 
 /*
- * These wrappers are needed because msgsnd, msgrcv and semop return
- * -1 (errno=EINTR) if a signal is received during execution.  In
- * particular, SIGPROF seems to do this.  Setting SA_RESTART on the
- * handler's flags doesn't seem to work.  Ignoring the signal does
- * work, but that prevents anyone else actually trapping the signal.
+ * These wrappers are needed because msgsnd, msgrcv and semop may
+ * return (at least on Linux) -1 (errno=EINTR), even for a signal that
+ * isn't being handled.  Example: SIGWINCH whilst running under
+ * strace.
  */
 
 static int msgsnd_ex(int msqid, void *msgp, size_t msgsz, int msgflg) {
