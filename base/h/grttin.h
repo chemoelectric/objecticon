@@ -199,7 +199,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
       typedef int Colormap, XVisualInfo, XCrossingEvent, XPropertyEvent;
       typedef int *Display, Cursor, GC, Window, Pixmap, Picture, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
-      typedef int XGlyphInfo, XftColor, Region, XftDraw, FcChar8, FcPattern, FcResult;
+      typedef int XGlyphInfo, FcChar8, FcPattern, FcResult;
       typedef int Cardinal,String,XtResource,XtPointer,XArc,CARD32,INT32;
       typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;

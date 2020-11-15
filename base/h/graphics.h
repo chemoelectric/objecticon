@@ -413,7 +413,6 @@ typedef struct _wstate {
   int		pixwidth;		/* pixmap width, in pixels */
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
-  XftDraw       *pxft;
   struct _wstate *transientfor;         /* transient-for hint */
 #elif MSWIN32
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */

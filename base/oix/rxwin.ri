@@ -1099,7 +1099,6 @@ wbp wopen(char *display)
     ws->basewidth = ws->baseheight = 0;
     ws->incwidth = ws->incheight = 1;
     ws->minaspect = ws->maxaspect = 0.0;
-    ws->pxft = NULL;
     ws->display = wd;
     w->window = ws;
     create_list(64, &ws->listp);
@@ -2263,8 +2262,15 @@ static void synch_pix_and_win(wsp ws, int x, int y, int width, int height)
     wdp wd = ws->display;
     if (ws->win && !ws->holding) {
         no_clip(ws, 1);
-        XRenderComposite(wd->display, PictOpSrc, ws->ppic, None, ws->wpic,
-                         x, y, 0, 0, x, y, width, height);
+        XRenderComposite(wd->display,
+                         PictOpSrc,
+                         ws->ppic,          /* src */
+                         None,              /* mask */
+                         ws->wpic,          /* dest */
+                         x,y,               /* src x,y */
+                         0,0,               /* mask x,y */
+                         x,y,               /* dest x,y */
+                         width, height);
     }
 }
 
@@ -2276,8 +2282,15 @@ static void pix_to_win(wsp ws, int x, int y, int width, int height)
 {
     wdp wd = ws->display;
     if (ws->win && !ws->holding)
-        XRenderComposite(wd->display, PictOpSrc, ws->ppic, None, ws->wpic,
-                         x, y, 0, 0, x, y, width, height);
+        XRenderComposite(wd->display,
+                         PictOpSrc,
+                         ws->ppic,           /* src */
+                         None,               /* mask */
+                         ws->wpic,           /* dest */
+                         x,y,                /* src x,y */
+                         0,0,                /* mask x,y */
+                         x,y,                /* dest x,y */
+                         width, height);
 }
 
 /*
@@ -2326,17 +2339,20 @@ static void resizepixmap(wbp w)
                          0, 0, ws->pixwidth, ws->pixheight);
 
     no_clip(ws, 0);
-    XRenderComposite(wd->display, PictOpSrc, ws->ppic, None, pp,
-                     0,0,0,0,0,0, old_w, old_h);
+    XRenderComposite(wd->display,
+                     PictOpSrc,
+                     ws->ppic,          /* src */
+                     None,              /* mask */
+                     pp,                /* dest */
+                     0,0,               /* src x,y */
+                     0,0,               /* mask x,y */
+                     0,0,               /* dest x,y */
+                     old_w, old_h);
 
     XFreePixmap(wd->display, ws->pix);	/* free old pixmap */
     XRenderFreePicture(wd->display, ws->ppic);
     ws->pix = p;
     ws->ppic = pp;
-    if (ws->pxft) {
-        XftDrawDestroy(ws->pxft);
-        ws->pxft = NULL;
-    }
 }
 
 static void synch_state(wsp ws)
@@ -3096,12 +3112,12 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 
             XRenderComposite(wd->display,
                              op,
-                             wedge1,          /* src */
+                             wedge1,         /* src */
                              wedge2,         /* mask */
                              mask,           /* dest */
                              0,0,            /* src x,y */
                              0,0,            /* mask x,y */
-                             0, 0,           /* dst x,y */
+                             0,0,            /* dest x,y */
                              width, height);
 
             XRenderFreePicture(wd->display, wedge1);
@@ -3166,7 +3182,14 @@ static void show_traplist(struct traplist *l)
 
 static void draw_traplist(struct traplist *l, wdp wd, int op, Picture src, Picture dest)
 {
-    XRenderCompositeTrapezoids(wd->display, op, src, dest, wd->maskfmt, 0, 0, l->traps, l->n);
+    XRenderCompositeTrapezoids(wd->display,
+                               op,
+                               src,
+                               dest,
+                               wd->maskfmt,
+                               0,0,               /* src x,y */
+                               l->traps,
+                               l->n);
 }
 
 static void ensure_traps(struct traplist *l, int need)
@@ -3910,22 +3933,22 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
     if (wc->mask) {
         XRenderComposite(wd->display,
                          PictOpInReverse,
-                         get_mask_picture(wc),          /* src */
-                         None,         /* mask */
-                         mask,         /* dest */
-                         x,y,          /* src x,y */
-                         0,0,          /* mask x,y */
-                         0,0,          /* dst x,y */
+                         get_mask_picture(wc),     /* src */
+                         None,                     /* mask */
+                         mask,                     /* dest */
+                         x,y,                      /* src x,y */
+                         0,0,                      /* mask x,y */
+                         0,0,                      /* dest x,y */
                          width, height);
     }
     XRenderComposite(wd->display,
                      wc->drawop->i,
-                     get_draw_picture(wc),          /* src */
-                     mask,         /* mask */
-                     ws->ppic,     /* dest */
-                     x,y,          /* src x,y */
-                     0,0,          /* mask x,y */
-                     x, y,         /* dst x,y */
+                     get_draw_picture(wc),         /* src */
+                     mask,                         /* mask */
+                     ws->ppic,                     /* dest */
+                     x,y,                          /* src x,y */
+                     0,0,                          /* mask x,y */
+                     x,y,                          /* dest x,y */
                      width, height);
     pix_to_win(ws, x, y, width, height);
 }
@@ -3935,15 +3958,14 @@ static void pat1(wbp w, int x, int y, int width, int height)
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
-
     XRenderComposite(wd->display,
                      wc->drawop->i,
-                     get_draw_picture(wc),  /* src */
+                     get_draw_picture(wc),         /* src */
                      get_mask_picture(wc),         /* mask */
-                     ws->ppic,     /* dest */
-                     x,y,          /* src x,y */
-                     x,y,          /* mask x,y */
-                     x, y,         /* dst x,y */
+                     ws->ppic,                     /* dest */
+                     x,y,                          /* src x,y */
+                     x,y,                          /* mask x,y */
+                     x,y,                          /* dest x,y */
                      width, height);
 }
 
@@ -4391,26 +4413,6 @@ int textwidth(wbp w, dptr str)
         return textwidthUtf8(w, str);
 }
 
-static void prepare_xft(wbp w)
-{
-    XRectangle rec;
-    wcp wc = w->context;
-    wsp ws = w->window;
-    wdp wd = ws->display;
-
-    if (!ws->pxft)
-        MemProtect(ws->pxft = XftDrawCreateAlpha(wd->display, ws->pix, 32));
-
-    if (wc->clipw >= 0) {
-        rec.x = wc->clipx;
-        rec.y = wc->clipy;
-        rec.width = wc->clipw;
-        rec.height = wc->cliph;
-        XftDrawSetClipRectangles(ws->pxft, 0, 0, &rec, 1);
-    } else
-        XftDrawSetClip(ws->pxft, 0);
-}
-
 /*
  * Given a character and a window, return a suitable font for drawing
  * it, which will either be the context's font or a fallback based
@@ -4601,7 +4603,6 @@ static int reduce_extents(wbp w, int x, int y, XGlyphInfo *extents, int *xr, int
  */
 static void drawstring8(wbp w, int x, int y, dptr str)
 {
-    XftColor color;
     XGlyphInfo extents; 
     word len;
     char *p;
@@ -4616,10 +4617,6 @@ static void drawstring8(wbp w, int x, int y, dptr str)
     if (len == 0 || y_outside(w, y) || gone_right(w, x))
         return;
 
-    prepare_xft(w);
-    color.pixel = 0;
-    color.color = wc->fg->color;
-
     clip(w);
 
     while (len > MaxXftChunk) {
@@ -4630,11 +4627,13 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                         &extents);
         wx = extents.xOff & 0xffff;
         if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
-            XftDrawString8(ws->pxft,
-                           &color,
-                           wc->font->fsp,
-                           x,
-                           y,
+            XftTextRender8(wd->display,
+                           wc->drawop->i,         /* op */
+                           get_draw_picture(wc),  /* src */
+                           wc->font->fsp,         /* font */
+                           ws->ppic,              /* dest */
+                           0,0,                   /* src x,y */
+                           x,y,                   /* dest x,y */
                            (FcChar8 *)p,
                            MaxXftChunk);
             pix_to_win(ws, x1, y1, w1, h1);
@@ -4649,11 +4648,13 @@ static void drawstring8(wbp w, int x, int y, dptr str)
 
     /* len > 0 */
     if ((!ws->win || ws->holding) && x >= 0) {
-        XftDrawString8(ws->pxft,
-                       &color,
-                       wc->font->fsp,
-                       x,
-                       y,
+        XftTextRender8(wd->display,
+                       wc->drawop->i,         /* op */
+                       get_draw_picture(wc),  /* src */
+                       wc->font->fsp,         /* font */
+                       ws->ppic,              /* dest */
+                       0,0,                   /* src x,y */
+                       x,y,                   /* dest x,y */
                        (FcChar8 *)p,
                        len);
     } else {
@@ -4663,11 +4664,13 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                         len,
                         &extents);
         if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
-            XftDrawString8(ws->pxft,
-                           &color,
-                           wc->font->fsp,
-                           x,
-                           y,
+            XftTextRender8(wd->display,
+                           wc->drawop->i,         /* op */
+                           get_draw_picture(wc),  /* src */
+                           wc->font->fsp,         /* font */
+                           ws->ppic,              /* dest */
+                           0,0,                   /* src x,y */
+                           x,y,                   /* dest x,y */
                            (FcChar8 *)p,
                            len);
             pix_to_win(ws, x1, y1, w1, h1);
@@ -4677,7 +4680,6 @@ static void drawstring8(wbp w, int x, int y, dptr str)
 
 static void drawstringUtf8(wbp w, int x, int y, dptr str)
 {
-    XftColor color;
     XGlyphInfo extents; 
     word len, cn;
     int x1, y1, w1, h1, wx;
@@ -4695,10 +4697,6 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
      * output. */
     if (len == 0 || y_outside(w, y) || gone_right(w, x))
         return;
-
-    prepare_xft(w);
-    color.pixel = 0;
-    color.color = wc->fg->color;
 
     clip(w);
 
@@ -4724,11 +4722,13 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
              * values. */
             wx = extents.xOff & 0xffff;
             if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
-                XftDrawStringUtf8(ws->pxft,
-                                  &color,
-                                  f1,
-                                  x,
-                                  y,
+                XftTextRenderUtf8(wd->display,
+                                  wc->drawop->i,         /* op */
+                                  get_draw_picture(wc),  /* src */
+                                  f1,                    /* font */
+                                  ws->ppic,              /* dest */
+                                  0,0,                   /* src x,y */
+                                  x,y,                   /* dest x,y */
                                   (FcChar8 *)start,
                                   p1 - start);
                 pix_to_win(ws, x1, y1, w1, h1);
@@ -4756,11 +4756,13 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
      * is a reasonable size, <= MaxXftChunk).
      */
     if ((!ws->win || ws->holding) && x >= 0) {
-        XftDrawStringUtf8(ws->pxft,
-                          &color,
-                          font,
-                          x,
-                          y,
+        XftTextRenderUtf8(wd->display,
+                          wc->drawop->i,         /* op */
+                          get_draw_picture(wc),  /* src */
+                          font,                  /* font */
+                          ws->ppic,              /* dest */
+                          0,0,                   /* src x,y */
+                          x,y,                   /* dest x,y */
                           (FcChar8 *)start,
                           p - start);
     } else {
@@ -4770,11 +4772,13 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
                            p - start,
                            &extents);
         if (reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1)) {
-            XftDrawStringUtf8(ws->pxft,
-                              &color,
-                              font,
-                              x,
-                              y,
+            XftTextRenderUtf8(wd->display,
+                              wc->drawop->i,         /* op */
+                              get_draw_picture(wc),  /* src */
+                              font,                  /* font */
+                              ws->ppic,              /* dest */
+                              0,0,                   /* src x,y */
+                              x,y,                   /* dest x,y */
                               (FcChar8 *)start,
                               p - start);
             pix_to_win(ws, x1, y1, w1, h1);
@@ -5150,8 +5154,6 @@ static void freewindow(wsp ws)
     if(ws->refcount == 0) {
         if (ws->win)
             close_screen_win(ws);
-        if (ws->pxft)
-            XftDrawDestroy(ws->pxft);
         XFreePixmap(ws->display->display, ws->pix);
         XRenderFreePicture(ws->display->display, ws->ppic);
         free(ws->icondata);
