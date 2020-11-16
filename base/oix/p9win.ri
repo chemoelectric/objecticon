@@ -1045,53 +1045,103 @@ static void no_clip(wsp ws, int and_win)
 
 void drawstring(wbp w, int x, int y, dptr str)
 {
-    int width, fl;
+    int x1, y1, w1, h1;
     wsp ws = w->window;
     wcp wc = w->context;
-    Point p = Pt(x, y - wc->font->ascent);
+    Point p;
 
-    /* Flag indicating whether pix_to_win() does anything; this can save
-     * some calls to stringnwidth etc. */
-    fl = (ws->win && !ws->holding);
-    width = 0;
+    x1 = x;
+    y1 = y - wc->font->ascent;
+    h1 = wc->font->ascent + wc->font->descent;
+    p = Pt(x1, y1);
 
     clip(w);
+
+    /*
+     * There are 3 cases, each following the same pattern:- non-ascii
+     * string, ascii string, and ucs.
+     */
     if (is:string(*str)) {
         Rune *r;
-        /*
-         * stringnop & co. expect utf-8 format strings (with n as the
-         * number of codepoints, not the length of the utf-8 string).
-         * Therefore convert any non-ascii strings into Rune strings
-         * and use the runestring functions.
-         */
         if ((r = iso8859_to_runes(str))) {
-            runestringnop(ws->pix, p,
-                          get_draw_img(wc), p,
-                          wc->font->font, r, StrLen(*str), wc->drawop->i);
-            if (fl)
-                width = runestringnwidth(wc->font->font, r, StrLen(*str));
+            /*
+             * Non-ascii string.  These must be done as Runes since
+             * stringnop & co. expect utf-8 format strings (with n as
+             * the number of codepoints, not the length of the utf-8
+             * string).
+             */
+
+            if (wc->mask && needmask(wc, 0)) {
+                Image *mask;
+                /* Here and below, we add 1 x width for italics */
+                w1 = runestringnwidth(wc->font->font, r, StrLen(*str)) + wc->font->font->width;
+                if (!reducerect(w, 1, &x1, &y1, &w1, &h1))
+                    return;
+                mask = getmask(w1, h1);
+                runestringnop(mask, Pt(x - x1, 0),
+                              white->i, ZP,
+                              wc->font->font, r, StrLen(*str), SoverD);
+                maskimage2(w, mask, x1, y1, w1, h1);
+                freeimage(mask);
+            } else {
+                runestringnop(ws->pix, p,
+                              get_draw_img(wc), p,
+                              wc->font->font, r, StrLen(*str), wc->drawop->i);
+                if (ws->win && !ws->holding) {
+                    w1 = runestringnwidth(wc->font->font, r, StrLen(*str)) + wc->font->font->width;
+                    pix_to_win(ws, x1, y1, w1, h1);
+                }
+            }
             free(r);
+        } else {
+            /* ascii string */
+
+            if (wc->mask && needmask(wc, 0)) {
+                Image *mask;
+                w1 = stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width;
+                if (!reducerect(w, 1, &x1, &y1, &w1, &h1))
+                    return;
+                mask = getmask(w1, h1);
+                stringnop(mask, Pt(x - x1, 0),
+                          white->i, ZP,
+                          wc->font->font, StrLoc(*str), StrLen(*str), SoverD);
+                maskimage2(w, mask, x1, y1, w1, h1);
+                freeimage(mask);
+            } else {
+                stringnop(ws->pix, p,
+                          get_draw_img(wc), p,
+                          wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
+                if (ws->win && !ws->holding) {
+                    w1 = stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width;
+                    pix_to_win(ws, x1, y1, w1, h1);
+                }
+            }
+        }
+    } else {
+        /* ucs */
+
+        if (wc->mask && needmask(wc, 0)) {
+            Image *mask;
+            w1 = stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length) + wc->font->font->width;
+            if (!reducerect(w, 1, &x1, &y1, &w1, &h1))
+                return;
+            mask = getmask(w1, h1);
+            stringnop(mask, Pt(x - x1, 0),
+                      white->i, ZP,
+                      wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length, SoverD);
+
+            maskimage2(w, mask, x1, y1, w1, h1);
+            freeimage(mask);
         } else {
             stringnop(ws->pix, p,
                       get_draw_img(wc), p,
-                      wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
-            if (fl)
-                width = stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str));
+                      wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length, wc->drawop->i);
+            if (ws->win && !ws->holding) {
+                w1 = stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length) + wc->font->font->width;
+                pix_to_win(ws, x1, y1, w1, h1);
+            }
         }
-    } else {
-        stringnop(ws->pix, p,
-                  get_draw_img(wc), p,
-                  wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length, wc->drawop->i);
-        if (fl)
-            width = stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length);
     }
-
-    if (fl)
-        pix_to_win(ws, 
-                   p.x, 
-                   p.y, 
-                   width + wc->font->font->width,   /* Add 1xwidth for italics */
-                   wc->font->ascent + wc->font->descent);
 
     flushimage(display, 1);
 }
