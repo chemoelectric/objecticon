@@ -5,7 +5,7 @@ package ipl.vt
 import gui, io, lang, util, graphics(Window,Key,Selection,Mouse,Canvas), 
    net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
-# Current attributes.  Treated as immutable (except the font field), to alter a copy() is taken first.
+# Current attributes.  Treated as immutable, to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url)
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)

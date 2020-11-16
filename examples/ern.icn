@@ -22,7 +22,7 @@ class ErnDialog(Dialog)
             msg("File already exists")
          else if Files.rename(path.str(), s) then {
             msg("OK")
-            writes(s, " -> ")
+            writes(path.str(), " -> ")
             if FileStream.stdout.is_flowterm_tty() then
                write(Files.begin_link(s), s, Files.end_link())
             else

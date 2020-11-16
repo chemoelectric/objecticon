@@ -540,7 +540,7 @@ AC_DEFUN([AX_LIB_MYSQL],
 
 dnl This redefines the _AC_INIT_HELP macro, in order to remove unwanted and
 dnl misleading messages, particularly about installation steps.  Apart from
-dnl this macro, the help output is also altered by clearing tge  HELP_CANON and
+dnl this macro, the help output is also altered by clearing the HELP_CANON and
 dnl HELP_ENABLE diversions, at the bottom of configure.ac.
 dnl 
 m4_define([_AC_INIT_HELP],

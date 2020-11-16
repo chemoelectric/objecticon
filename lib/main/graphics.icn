@@ -341,6 +341,10 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    private static const
       PATTERNS
 
+   private static mk_pattern(s)
+      return Pixels(8, 8, Pixels.PALETTE1).set_data(s)
+   end
+
    private static init()
       local t
       STATE :=         -8
@@ -351,22 +355,22 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       FOCUS_IN :=     -25
       FOCUS_OUT :=    -26
       PATTERNS := table(,
-                        Pattern.BLACK, Pixels(8, 8, Pixels.PALETTE1).set_data("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
-                        Pattern.VERY_DARK, Pixels(8, 8, Pixels.PALETTE1).set_data("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
-                        Pattern.DARK_GRAY, Pixels(8, 8, Pixels.PALETTE1).set_data("w\xddw\xddw\xddw\xdd\x00"),
-                        Pattern.GRAY, Pixels(8, 8, Pixels.PALETTE1).set_data("U\xaaU\xaaU\xaaU\xaa\x00"),
-                        Pattern.LIGHT_GRAY, Pixels(8, 8, Pixels.PALETTE1).set_data("\x11D\x11D\x11D\x11D\x00"),
-                        Pattern.VERY_LIGHT, Pixels(8, 8, Pixels.PALETTE1).set_data("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
-                        Pattern.WHITE, Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
-                        Pattern.VERTICAL, Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
-                        Pattern.DIAGONAL, Pixels(8, 8, Pixels.PALETTE1).set_data("\x80@ \x10\b\x04\x02\x01\x00"),
-                        Pattern.HORIZONTAL, Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
-                        Pattern.GRID, Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
-                        Pattern.TRELLIS, Pixels(8, 8, Pixels.PALETTE1).set_data("\x82D(\x10(D\x82\x01\x00"),
-                        Pattern.CHECKERS, Pixels(8, 8, Pixels.PALETTE1).set_data("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
-                        Pattern.GRAINS, Pixels(8, 8, Pixels.PALETTE1).set_data("\e\x18\x81\xb16\x06`c\x00"),
-                        Pattern.SCALES, Pixels(8, 8, Pixels.PALETTE1).set_data("\x02\x02\x05\xf8  P\x8f\x00"),
-                        Pattern.WAVES, Pixels(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
+                        Pattern.BLACK, mk_pattern("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
+                        Pattern.VERY_DARK, mk_pattern("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
+                        Pattern.DARK_GRAY, mk_pattern("w\xddw\xddw\xddw\xdd\x00"),
+                        Pattern.GRAY, mk_pattern("U\xaaU\xaaU\xaaU\xaa\x00"),
+                        Pattern.LIGHT_GRAY, mk_pattern("\x11D\x11D\x11D\x11D\x00"),
+                        Pattern.VERY_LIGHT, mk_pattern("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
+                        Pattern.WHITE, mk_pattern("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+                        Pattern.VERTICAL, mk_pattern("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
+                        Pattern.DIAGONAL, mk_pattern("\x80@ \x10\b\x04\x02\x01\x00"),
+                        Pattern.HORIZONTAL, mk_pattern("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
+                        Pattern.GRID, mk_pattern("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
+                        Pattern.TRELLIS, mk_pattern("\x82D(\x10(D\x82\x01\x00"),
+                        Pattern.CHECKERS, mk_pattern("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
+                        Pattern.GRAINS, mk_pattern("\e\x18\x81\xb16\x06`c\x00"),
+                        Pattern.SCALES, mk_pattern("\x02\x02\x05\xf8  P\x8f\x00"),
+                        Pattern.WAVES, mk_pattern("\x03\x84H0\x03\x84H0\x00"))
       use {
          t := Window(),
          FORMAT := t.get_format()
