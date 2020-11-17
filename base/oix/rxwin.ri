@@ -3182,6 +3182,8 @@ static void show_traplist(struct traplist *l)
 
 static void draw_traplist(struct traplist *l, wdp wd, int op, Picture src, Picture dest)
 {
+    /* src is either a white brush, or the foreground brush (never a
+     * pattern), so 0,0 is the correct source pos. */
     XRenderCompositeTrapezoids(wd->display,
                                op,
                                src,
@@ -4619,7 +4621,7 @@ static void text8(wbp w,
     if (!reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1))
         return;
 
-    if (wc->mask && needmask(wc, 0)) {
+    if (needmask(wc, 0)) {
         Picture mask;
         mask = getmask(wd, w1, h1);
         XftTextRender8(wd->display,
@@ -4683,7 +4685,7 @@ static void drawstring8(wbp w, int x, int y, dptr str)
     }
 
     /* len > 0 */
-    if (!(wc->mask && needmask(wc, 0)) &&
+    if (!needmask(wc, 0) &&
         (!ws->win || ws->holding) && x >= 0)
     {
         XftTextRender8(wd->display,
@@ -4737,8 +4739,14 @@ static void textUtf8(wbp w,
     if (!reduce_extents(w, x, y, &extents, &x1, &y1, &w1, &h1))
         return;
 
-    /* Draw the reduced area with or without a mask as needed. */
-    if (wc->mask && needmask(wc, 0)) {
+    /* Draw the reduced area with or without a mask as needed.  We
+     * shouldn't actually need a mask if we have a context pattern and
+     * no context mask, but there is a bug/inconsistency in the intel
+     * X driver, which gets the source x,y parameters wrong (they are
+     * added to dest x,y it seems).  So in that case a mask is used
+     * anyway.
+     */
+    if (needmask(wc, 0)) {
         Picture mask;
         mask = getmask(wd, w1, h1);
         XftTextRenderUtf8(wd->display,
@@ -4825,7 +4833,7 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
      * expect reducerect to return false (since we know p-start is a
      * reasonable size, <= MaxXftChunk).
      */
-    if (!(wc->mask && needmask(wc, 0)) &&
+    if (!needmask(wc, 0) &&
         (!ws->win || ws->holding) && x >= 0)
     {
         XftTextRenderUtf8(wd->display,
