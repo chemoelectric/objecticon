@@ -11,19 +11,11 @@ using namespace Gdiplus;
 
 static const int draw_debug = 0;
 
-static void dbg(char *fmt, ...);
-
-static void dbg(char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fflush(stderr);
-}
-
 static ULONG_PTR gdiplusToken;
 
 static struct gb_funcs *funcs;
+
+#define dbg (funcs->dbg)
 
 extern "C"
 void gb_initialize(struct gb_funcs *fs)
@@ -430,56 +422,6 @@ void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris)
     delete g;
 }
 
-static
-WCHAR *utf8_to_wchar(char *s)
-{
-    WCHAR *mbs;
-    int n;
-    if (!s)
-        return NULL;
-    n = MultiByteToWideChar(CP_UTF8,
-                            0,
-                            s,
-                            -1,
-                            0,
-                            0);
-    mbs = new WCHAR[n];
-    MultiByteToWideChar(CP_UTF8,
-                        0,
-                        s,
-                        -1,
-                        mbs,
-                        n);
-    return mbs;
-}
-
-static
-char *wchar_to_utf8(WCHAR *s)
-{
-    char *u;
-    int n;
-    if (!s)
-        return NULL;
-    n = WideCharToMultiByte(CP_UTF8,
-                            0,
-                            s,
-                            -1,
-                            0,
-                            0,
-                            NULL,
-                            NULL);
-    u = new char[n];
-    WideCharToMultiByte(CP_UTF8,
-                        0,
-                        s,
-                        -1,
-                        u,
-                        n,
-                        NULL,
-                        NULL);
-    return u;
-}
-
 extern "C"
 gb_Font *gb_find_Font(char *family, int flags, double size)
 {
@@ -494,9 +436,9 @@ gb_Font *gb_find_Font(char *family, int flags, double size)
     else if (!strcmp(family, "serif"))
         ff = FontFamily::GenericSerif()->Clone();
     else {
-        WCHAR *t = utf8_to_wchar(family);
+        WCHAR *t = funcs->utf8_to_wchar(family);
         ff = new FontFamily(t);
-        delete[] t;
+        free(t);
     }
 
     if (!ff->IsAvailable()) {
@@ -542,9 +484,9 @@ void gb_get_metrics(HDC dc, gb_Font *fin, int *ascent, int *descent, int *maxwid
     *descent = ceil(desc_pix);
 
     if (draw_debug) {
-        char *t = wchar_to_utf8(familyName);
+        char *t = funcs->wchar_to_utf8(familyName);
         dbg("f=%p family name: %s\n",f,t);
-        delete[] t;
+        free(t);
         dbg("\tsize = %f points\n",f->GetSize());
         dbg("\t     = %d design units\n", (int)ff.GetEmHeight(f->GetStyle()));
         dbg("\tppdu   = %f\n", pts_per_du);
@@ -598,9 +540,9 @@ extern "C"
 gb_Bitmap *gb_load_Bitmap_file(char *filename)
 {
     Bitmap *b;
-    WCHAR *t = utf8_to_wchar(filename);
+    WCHAR *t = funcs->utf8_to_wchar(filename);
     b = Bitmap::FromFile(t);
-    delete[] t;
+    free(t);
     if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
         if (draw_debug) dbg("Failed to Load Bitmap from file %s\n", filename);
         delete b;
@@ -644,7 +586,7 @@ static char *PixelFormatString(PixelFormat i)
     }    
 }
 
-struct palentry *build_paltbl(Bitmap *b)
+static struct palentry *build_paltbl(Bitmap *b)
 {
     ColorPalette *pal;
     struct palentry *pt;

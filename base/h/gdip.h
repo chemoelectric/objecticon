@@ -77,6 +77,9 @@ struct gb_funcs {
     void *(*safe_malloc)(size_t size);
     void *(*safe_zalloc)(size_t size);
     int (*safe_imul)(int x, int y, int z);
+    WCHAR *(*utf8_to_wchar)(char *s);
+    char *(*wchar_to_utf8)(WCHAR *s);
+    void (*dbg)(char *fmt, ...);
 };
 void gb_initialize(struct gb_funcs *fs);
 gb_Bitmap *gb_create_Bitmap(int width, int height, gb_Color bg, gb_Bitmap *cp);
