@@ -5044,32 +5044,37 @@ char *tofcpatternstr(char *s)
     if (!strcmp(family, "fixed")) {
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon fixed");
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"mono");
-        flags |= FONTFLAG_MONO;
+        if ((flags & FONTATT_SPACING) == 0) flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "mono")) {
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon mono");
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"mono");
-        flags |= FONTFLAG_MONO;
+        if ((flags & FONTATT_SPACING) == 0) flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "typewriter")) {
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon typewriter");
-        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"courier");
-        flags |= FONTFLAG_MONO;
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Courier");
+        if ((flags & FONTATT_SPACING) == 0) flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "sans")) {
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon sans");
-        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"helvetica");
-        flags |= FONTFLAG_PROPORTIONAL;
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Helvetica");
+        if ((flags & FONTATT_SPACING) == 0) flags |= FONTFLAG_PROPORTIONAL;
     }
     else if (!strcmp(family, "serif")) {
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon serif");
-        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"times");
-        flags |= FONTFLAG_PROPORTIONAL;
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Times");
+        if ((flags & FONTATT_SPACING) == 0) flags |= FONTFLAG_PROPORTIONAL;
     }
     else
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)family);
 
     FcPatternAddDouble(p, FC_SIZE, size);
+
+    if (flags & FONTFLAG_SANS)
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"sans");
+    else if (flags & FONTFLAG_SERIF)
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"serif");
 
     if (flags & FONTFLAG_THIN)
         FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_THIN);
@@ -5091,7 +5096,7 @@ char *tofcpatternstr(char *s)
 
     if (flags & FONTFLAG_PROPORTIONAL)
         FcPatternAddInteger(p, FC_SPACING, FC_PROPORTIONAL);
-    if (flags & FONTFLAG_MONO)
+    else if (flags & FONTFLAG_MONO)
         FcPatternAddInteger(p, FC_SPACING, FC_MONO);
 
     if (flags & FONTFLAG_CONDENSED)
