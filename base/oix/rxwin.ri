@@ -3512,11 +3512,9 @@ static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
 }
 
 /*
- * Output a segment.  It is important to output a vertical or
- * horizontal segment as a single trapezoid to avoid some bugs in
- * Xrender.
+ * Output a segment.
  */
-static void drawlineinfo1(struct lineinfo *u, struct traplist *tl)
+static void drawlineinfo1(wcp wc, struct lineinfo *u, struct traplist *tl)
 {
     if (u->dx == 0) {
         if (u->p1.y < u->q1.y)
@@ -3529,8 +3527,148 @@ static void drawlineinfo1(struct lineinfo *u, struct traplist *tl)
         else
             add_rect(tl, &u->q1, &u->p2);
     } else {
-        add_tri(tl, &u->p2, &u->p1, &u->q2);
-        add_tri(tl, &u->q1, &u->p1, &u->q2);
+        /*
+         * Each of the four orientations has two cases, depending on
+         * which of the two middle points is higher.  The following
+         * shows the first orientation and second case (p1.y < q2.y).
+         *
+         *            p2 /----
+         *              /     ----                     
+         *             /          ---- 
+         *         w  /               ----             
+         *           /                    ----
+         *          /          s             ---- 
+         *         p1----.........................X---
+         *          |    ----                         ----
+         *          |        --Y-....................... ./ q2
+         *          |            ----         s          /
+         *        dy|                ----               /
+         *          |                len ----          /
+         *          |                        ----     /
+         *          ____________________________ ----/ q1
+         *                        dx
+         *
+         * 
+         * p1 is extended horizontally rightwards to intersect p2-q2
+         * at X, to give distance s, which is easily found since
+         * p1-p2-X is similar to the triangle with sides dx, dy and
+         * len, so s/w = len/dy.
+         * 
+         * This gives the top triangle (p1-p2-X).  The bottom one is
+         * (q1-q2-Y), which is congruent to the top one, and (q2-Y) is
+         * also of length s.
+         * 
+         * The middle trapezoid (p1-X-q2-Y) is empty if p1 and q2 are
+         * the same height, but because those points are calculated
+         * using hypot(), this doesn't occur at all frequently and
+         * isn't worth testing for.
+         * 
+         * The first case is very similar, but there q2 is extended
+         * leftwards to intersect p1-p2.  The length of this line (s)
+         * is found from s/len = len/dx.
+         */
+        double s;
+        if (u->dx > 0) {
+            if (u->dy > 0) {
+                if (u->p1.y > u->q2.y) {
+                    s = (u->len * u->len) / u->dx;
+                    add_trap(tl,
+                             u->p2.y, u->p2.x, u->p2.x,
+                             u->q2.y, u->q2.x - s, u->q2.x);
+                    add_trap(tl,
+                             u->q2.y, u->q2.x - s, u->q2.x,
+                             u->p1.y, u->p1.x, u->p1.x + s);
+                    add_trap(tl,
+                             u->p1.y, u->p1.x, u->p1.x + s,
+                             u->q1.y, u->q1.x, u->q1.x);
+                } else {
+                    s = (wc->linewidth * u->len) / u->dy;
+                    add_trap(tl,
+                             u->p2.y, u->p2.x, u->p2.x,
+                             u->p1.y, u->p1.x, u->p1.x + s);
+                    add_trap(tl,
+                             u->p1.y, u->p1.x, u->p1.x + s,
+                             u->q2.y, u->q2.x - s, u->q2.x);
+                    add_trap(tl,
+                             u->q2.y, u->q2.x - s, u->q2.x,
+                             u->q1.y, u->q1.x, u->q1.x);
+                }
+            } else {           /* dx > 0, dy < 0 */
+                if (u->p2.y < u->q1.y) {
+                    s = (u->len * u->len) / u->dx;
+                    add_trap(tl,
+                             u->q2.y, u->q2.x, u->q2.x,
+                             u->p2.y, u->p2.x, u->p2.x + s);
+                    add_trap(tl,
+                             u->p2.y, u->p2.x, u->p2.x + s,
+                             u->q1.y, u->q1.x - s, u->q1.x);
+                    add_trap(tl,
+                             u->q1.y, u->q1.x - s, u->q1.x,
+                             u->p1.y, u->p1.x, u->p1.x);
+                } else {
+                    s = (wc->linewidth * u->len) / -u->dy;
+                    add_trap(tl,
+                             u->q2.y, u->q2.x, u->q2.x,
+                             u->q1.y, u->q1.x - s, u->q1.x);
+                    add_trap(tl,
+                             u->q1.y, u->q1.x - s, u->q1.x,
+                             u->p2.y, u->p2.x, u->p2.x + s);
+                    add_trap(tl,
+                             u->p2.y, u->p2.x, u->p2.x + s,
+                             u->p1.y, u->p1.x, u->p1.x);
+                }
+            }
+        } else {             /* dx < 0 */
+            if (u->dy > 0) {
+                if (u->p2.y > u->q1.y) {
+                    s = (u->len * u->len) / -u->dx;
+                    add_trap(tl,
+                             u->p1.y, u->p1.x, u->p1.x,
+                             u->q1.y, u->q1.x, u->q1.x + s);
+                    add_trap(tl,
+                             u->q1.y, u->q1.x, u->q1.x + s,
+                             u->p2.y, u->p2.x - s, u->p2.x);
+                    add_trap(tl,
+                             u->p2.y, u->p2.x - s, u->p2.x,
+                             u->q2.y, u->q2.x, u->q2.x);
+                } else {
+                    s = (wc->linewidth * u->len) / u->dy;
+                    add_trap(tl,
+                             u->p1.y, u->p1.x, u->p1.x,
+                             u->p2.y, u->p2.x - s, u->p2.x);
+                    add_trap(tl,
+                             u->p2.y, u->p2.x - s, u->p2.x,
+                             u->q1.y, u->q1.x, u->q1.x + s);
+                    add_trap(tl,
+                             u->q1.y, u->q1.x, u->q1.x + s,
+                             u->q2.y, u->q2.x, u->q2.x);
+                }
+            } else {         /* dx < 0, dy < 0 */
+                if (u->p1.y < u->q2.y) {
+                    s = (u->len * u->len) / -u->dx;
+                    add_trap(tl,
+                             u->q1.y, u->q1.x, u->q1.x,
+                             u->p1.y, u->p1.x - s, u->p1.x);
+                    add_trap(tl,
+                             u->p1.y, u->p1.x - s, u->p1.x,
+                             u->q2.y, u->q2.x, u->q2.x + s);
+                    add_trap(tl,
+                             u->q2.y, u->q2.x, u->q2.x + s,
+                             u->p2.y, u->p2.x, u->p2.x);
+                } else {
+                    s = (wc->linewidth * u->len) / -u->dy;
+                    add_trap(tl,
+                             u->q1.y, u->q1.x, u->q1.x,
+                             u->q2.y, u->q2.x, u->q2.x + s);
+                    add_trap(tl,
+                             u->q2.y, u->q2.x, u->q2.x + s,
+                             u->p1.y, u->p1.x - s, u->p1.x);
+                    add_trap(tl,
+                             u->p1.y, u->p1.x - s, u->p1.x,
+                             u->p2.y, u->p2.x, u->p2.x);
+                }
+            }
+        }
     }
 }
 
@@ -3570,7 +3708,7 @@ static void drawlineend(wcp wc,
         }
         case EndSquare: {
             getlineinfo(wc, A0, &N, &li);
-            drawlineinfo1(&li, tl);
+            drawlineinfo1(wc, &li, tl);
             break;
         }
         default:
@@ -3585,7 +3723,7 @@ static void drawlineinfo(wcp wc,
                          struct traplist *tl)
 {
     /* Output the current segment. */
-    drawlineinfo1(curr, tl);
+    drawlineinfo1(wc, curr, tl);
 
     if (prev) {
         /*
