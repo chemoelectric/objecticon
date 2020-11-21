@@ -468,7 +468,7 @@ function graphics_Window_fill_polygon(self, argv[argc])
    body {
       int i, n;
       struct point *points;
-      int dx, dy;
+      double dx, dy;
       GetSelfW();
       CheckArgMultipleOf(2, 3);
       points = safe_malloc(sizeof(struct point) * (argc / 2));
@@ -494,7 +494,7 @@ function graphics_Window_fill_triangles(self, argv[argc])
    body {
       int i, n;
       struct triangle *tris;
-      int dx, dy;
+      double dx, dy;
       GetSelfW();
       CheckArgMultipleOf(6, 0);
       if (argc == 0)
