@@ -375,7 +375,7 @@ wbp wopen(char *display)
     wc->leading = defaultleading;
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linewidth = 1;
-    wc->linejoin = stringint_lookup(linejoins, "round");
+    wc->linejoin = stringint_lookup(linejoins, "bevel");
     wc->lineend = stringint_lookup(lineends, "flat");
 
     w->context = wc;
