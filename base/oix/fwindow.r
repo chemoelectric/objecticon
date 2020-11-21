@@ -234,23 +234,23 @@ function graphics_Window_draw_curve(self, argv[argc])
 
       points = safe_malloc(sizeof(struct point) * (n + 2));
 
-      CnvCDouble(argv[0], x0)
-          CnvCDouble(argv[1], y0)
-          CnvCDouble(argv[argc - 2], xN)
-          CnvCDouble(argv[argc - 1], yN)
-          if ((x0 == xN) && (y0 == yN)) {
-              closed = 1;               /* duplicate the next to last point */
-              CnvCDouble(argv[argc-4], t);
-              points[0].x = t + self_w->context->dx;
-              CnvCDouble(argv[argc-3], t);
-              points[0].y = t + self_w->context->dy;
-          }
-          else {                       /* duplicate the first point */
-              CnvCDouble(argv[0], t);
-              points[0].x = t + self_w->context->dx;
-              CnvCDouble(argv[1], t);
-              points[0].y = t + self_w->context->dy;
-          }
+      CnvCDouble(argv[0], x0);
+      CnvCDouble(argv[1], y0);
+      CnvCDouble(argv[argc - 2], xN);
+      CnvCDouble(argv[argc - 1], yN);
+      if ((x0 == xN) && (y0 == yN)) {
+          closed = 1;               /* duplicate the next to last point */
+          CnvCDouble(argv[argc-4], t);
+          points[0].x = t + dx;
+          CnvCDouble(argv[argc-3], t);
+          points[0].y = t + dy;
+      }
+      else {                       /* duplicate the first point */
+          CnvCDouble(argv[0], t);
+          points[0].x = t + dx;
+          CnvCDouble(argv[1], t);
+          points[0].y = t + dy;
+      }
       for (i = 1; i <= n; i++) {
           int base = (i-1) * 2;
           CnvCDouble(argv[base], t);
@@ -290,7 +290,7 @@ function graphics_Window_draw_line(self, argv[argc])
    body {
       int i, n;
       struct point *points;
-      int dx, dy;
+      double dx, dy;
       GetSelfW();
       CheckArgMultipleOf(2, 2);
       points = safe_malloc(sizeof(struct point) * (argc / 2));
