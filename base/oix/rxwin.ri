@@ -36,7 +36,6 @@ struct lineinfo {
 struct traplist
 {
     XTrapezoid *traps;
-    XTriangle *tris;
     int n;
     int alloc;
 };
@@ -94,7 +93,6 @@ static void pix_to_win(wsp ws, int x, int y, int width, int height);
 static void synch_pix_and_win(wsp ws, int x, int y, int width, int height);
 static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
-static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
 static int needmask(wcp wc, int overlap);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
@@ -113,10 +111,11 @@ static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
 static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
-static void init_traplist(struct traplist *l, int alloc, int traps);
+static void init_traplist(struct traplist *l, int alloc);
 static void free_traplist(struct traplist *l);
 static void draw_traplist(struct traplist *l, wdp wd, int op, Picture src, Picture dest);
 static void add_trap(struct traplist *l, double top, double x1, double x2, double bottom, double x3, double x4);
+static void add_xtrap(struct traplist *l, XTrapezoid *t);
 static void add_rect(struct traplist *l, XPointDouble *tl, XPointDouble *br);
 static void add_tri(struct traplist *l, XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
 static void CompositeDoublePoly(wdp wd, int op, Picture src, Picture dst,
@@ -2962,7 +2961,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 
     has_wedge = (angle1 != 0 || angle2 != 2 * Pi);
 
-    init_traplist(&tl, 100, 1);
+    init_traplist(&tl, 100);
 
     if (has_wedge || needmask(wc, 0)) {
         Picture mask;
@@ -3148,25 +3147,17 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
  * Some simple functions for accumulating an array of XTrapezoids.
  */
 
-static void init_traplist(struct traplist *l, int alloc, int traps)
+static void init_traplist(struct traplist *l, int alloc)
 {
     l->n = 0;
-    if (traps) {
-        l->traps = safe_malloc(alloc * sizeof(XTrapezoid));
-        l->tris = 0;
-    } else {
-        l->traps = 0;
-        l->tris = safe_malloc(alloc * sizeof(XTriangle));
-    }
+    l->traps = safe_malloc(alloc * sizeof(XTrapezoid));
     l->alloc = alloc;
 }
 
 static void free_traplist(struct traplist *l)
 {
     free(l->traps);
-    free(l->tris);
     l->traps = 0;
-    l->tris = 0;
     l->alloc = l->n = 0;
 }
 
@@ -3174,26 +3165,16 @@ static void free_traplist(struct traplist *l)
 static void show_traplist(struct traplist *l)
 {
     int i;
-    printf("traplist %p n=%d alloc=%d %s\n", l, l->n, l->alloc, l->tris ? "triangles":"trapezoids");
-    if (l->tris) {
-        for (i = 0; i < l->n; ++i) {
-            XTriangle t;
-            t = l->tris[i];
-            printf("%2d:\tp1 = %d,%d (%f,%f)\n ", i, (int)t.p1.x, (int)t.p1.y, XFixedToDouble(t.p1.x), XFixedToDouble(t.p1.y));
-            printf("\tp2 = %d,%d (%f,%f)\n", (int)t.p2.x, (int)t.p2.y, XFixedToDouble(t.p2.x), XFixedToDouble(t.p2.y));
-            printf("\tp3 = %d,%d (%f,%f)\n", (int)t.p3.x, (int)t.p3.y, XFixedToDouble(t.p3.x), XFixedToDouble(t.p3.y));
-        }
-    } else {
-        for (i = 0; i < l->n; ++i) {
-            XTrapezoid t;
-            t = l->traps[i];
-            printf("%2d:\ttop      = %d (%f)\n ", i, (int)t.top, XFixedToDouble(t.top));
-            printf("\tbottom   = %d (%f)\n", (int)t.bottom, XFixedToDouble(t.bottom));
-            printf("\tleft  p1 = %d,%d (%f,%f)\n", (int)t.left.p1.x, (int)t.left.p1.y, XFixedToDouble(t.left.p1.x), XFixedToDouble(t.left.p1.y));
-            printf("\t      p2 = %d,%d (%f,%f)\n", (int)t.left.p2.x, (int)t.left.p2.y, XFixedToDouble(t.left.p2.x), XFixedToDouble(t.left.p2.y));
-            printf("\tright p1 = %d,%d (%f,%f)\n", (int)t.right.p1.x, (int)t.right.p1.y, XFixedToDouble(t.right.p1.x), XFixedToDouble(t.right.p1.y));
-            printf("\t      p2 = %d,%d (%f,%f)\n", (int)t.right.p2.x, (int)t.right.p2.y, XFixedToDouble(t.right.p2.x), XFixedToDouble(t.right.p2.y));
-        }
+    printf("traplist %p n=%d alloc=%d\n", l, l->n, l->alloc);
+    for (i = 0; i < l->n; ++i) {
+        XTrapezoid t;
+        t = l->traps[i];
+        printf("%2d:\ttop      = %d (%f)\n ", i, (int)t.top, XFixedToDouble(t.top));
+        printf("\tbottom   = %d (%f)\n ", (int)t.bottom, XFixedToDouble(t.bottom));
+        printf("\tleft  p1 = %d,%d (%f,%f)\n ", (int)t.left.p1.x, (int)t.left.p1.y, XFixedToDouble(t.left.p1.x), XFixedToDouble(t.left.p1.y));
+        printf("\t      p2 = %d,%d (%f,%f)\n ", (int)t.left.p2.x, (int)t.left.p2.y, XFixedToDouble(t.left.p2.x), XFixedToDouble(t.left.p2.y));
+        printf("\tright p1 = %d,%d (%f,%f)\n ", (int)t.right.p1.x, (int)t.right.p1.y, XFixedToDouble(t.right.p1.x), XFixedToDouble(t.right.p1.y));
+        printf("\t      p2 = %d,%d (%f,%f)\n ", (int)t.right.p2.x, (int)t.right.p2.y, XFixedToDouble(t.right.p2.x), XFixedToDouble(t.right.p2.y));
     }
     printf("============\n");
 }
@@ -3202,35 +3183,22 @@ static void show_traplist(struct traplist *l)
 static void draw_traplist(struct traplist *l, wdp wd, int op, Picture src, Picture dest)
 {
     /* src is either a white brush, or the foreground brush (never a
-     * pattern). */
-    if (l->traps)
-        XRenderCompositeTrapezoids(wd->display,
-                                   op,
-                                   src,
-                                   dest,
-                                   wd->maskfmt,
-                                   0, 0,              /* src x,y */
-                                   l->traps,
-                                   l->n);
-    else
-        XRenderCompositeTriangles(wd->display,
-                                   op,
-                                   src,
-                                   dest,
-                                   wd->maskfmt,
-                                   0, 0,              /* src x,y */
-                                   l->tris,
-                                   l->n);
+     * pattern), so 0,0 is the correct source pos. */
+    XRenderCompositeTrapezoids(wd->display,
+                               op,
+                               src,
+                               dest,
+                               wd->maskfmt,
+                               0, 0,              /* src x,y */
+                               l->traps,
+                               l->n);
 }
 
 static void ensure_traps(struct traplist *l, int need)
 {
     if (l->n + need > l->alloc) {
         l->alloc = 2 * (l->n + need);
-        if (l->traps)
-            l->traps = safe_realloc(l->traps, l->alloc * sizeof(XTrapezoid) );
-        else
-            l->tris = safe_realloc(l->tris, l->alloc * sizeof(XTriangle) );
+        l->traps = safe_realloc(l->traps, l->alloc * sizeof(XTrapezoid) );
     }
 }
 
@@ -3245,12 +3213,6 @@ static void add_tri(struct traplist *l,
     if ((p1->x == p2->x && p2->x == p3->x) ||
         (p1->y == p2->y && p2->y == p3->y))
         return;
-
-    if (l->tris) {
-        ensure_traps(l, 1);
-        l->tris[l->n++] = triangle(p1->x, p1->y, p2->x, p2->y, p3->x, p3->y);
-        return;
-    }
 
     /* Sort the points into ascending y order. */
     if (p1->y > p3->y) { Swap(p1,p3); }
@@ -3335,16 +3297,14 @@ static void add_tri(struct traplist *l,
 static void add_trap(struct traplist *l,
                      double top, double x1, double x2, double bottom, double x3, double x4)
 {
-    if (l->tris) {
-        ensure_traps(l, 2);
-        if (x1 != x2)
-            l->tris[l->n++] = triangle(x1, top, x2, top, x4, bottom);
-        if (x3 != x4)
-            l->tris[l->n++] = triangle(x1, top, x3, bottom, x4, bottom);
-    } else {
-        ensure_traps(l, 1);
-        l->traps[l->n++] = trapezoid(top, x1, x2, bottom, x3, x4);
-    }
+    ensure_traps(l, 1);
+    l->traps[l->n++] = trapezoid(top, x1, x2, bottom, x3, x4);
+}
+
+static void add_xtrap(struct traplist *l, XTrapezoid *t)
+{
+    ensure_traps(l, 1);
+    l->traps[l->n++] = *t;
 }
 
 static void add_rect(struct traplist *l, XPointDouble *tl, XPointDouble *br)
@@ -3475,18 +3435,6 @@ static XPointDouble doublept(double x, double y)
     return t;
 }
 
-static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3)
-{
-    XTriangle t;
-    t.p1.x = XDoubleToFixed(x1);
-    t.p1.y = XDoubleToFixed(y1);
-    t.p2.x = XDoubleToFixed(x2);
-    t.p2.y = XDoubleToFixed(y2);
-    t.p3.x = XDoubleToFixed(x3);
-    t.p3.y = XDoubleToFixed(y3);
-    return t;
-}
-
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4)
 {
     XTrapezoid t;
@@ -3568,10 +3516,7 @@ static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
  */
 static void drawlineinfo1(wcp wc, struct lineinfo *u, struct traplist *tl)
 {
-    if (tl->tris) {
-        add_tri(tl, &u->p2, &u->p1, &u->q2);
-        add_tri(tl, &u->q1, &u->p1, &u->q2);
-    } else if (u->dx == 0) {
+    if (u->dx == 0) {
         if (u->p1.y < u->q1.y)
             add_rect(tl, &u->p1, &u->q2);
         else
@@ -3893,9 +3838,8 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_traplist(&tl,
-                  nlis * 3,
-                  wc->linejoin->i == JoinRound || wc->lineend->i == EndRound);
+    init_traplist(&tl, nlis * 3);
+
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask = getmask(wd, width, height);
@@ -4087,7 +4031,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_traplist(&tl, 2 * ntris, 0);
+    init_traplist(&tl, 2 * ntris);
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -5730,8 +5674,7 @@ ComputeTrapezoids (struct Edge   *edges,
             t.bottom = next_y;
             t.left = e->edge;
             t.right = en->edge;
-            ensure_traps(tl, 1);
-            tl->traps[tl->n++] = t;
+            add_xtrap(tl, &t);
         }
 
         y = next_y;
@@ -5819,7 +5762,7 @@ CompositeDoublePoly(wdp                 wd,
         prevy = y;
     }
 
-    init_traplist(&tl, 100, 1);
+    init_traplist(&tl, 100);
     ComputeTrapezoids (edges, nedges, winding, &tl, maxtraps);
     draw_traplist(&tl, wd, op, src, dst);
     free_traplist(&tl);
