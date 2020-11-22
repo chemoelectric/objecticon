@@ -2905,22 +2905,6 @@ static void traps_mk_ellipse(double cx, double cy, double rx, double ry, struct 
 {
     double th, r, pf, x, y, t1x, b, b1, t, t1, b1x;
 
-    /* Very small radius circles just add a single square trap of
-     * equivalent area. */
-    if (rx == ry && rx <= 1 && ry <= 1) {
-        double sq;
-        /* sq is half the side of a square with the same area as the circle, ie
-         *  (2*sq)^2 = Pi*rx^2
-         * sq is then reduced slightly since the ellipse algorithm draws
-         * within the outline (and thus leaves small gaps).
-         */
-        sq = 0.98 * rx * sqrt(Pi) / 2;
-        add_trap(tl,
-                 cy - sq, cx - sq, cx + sq,
-                 cy + sq, cx - sq, cx + sq);
-        return;
-    }
-    
     pf = calc_progress_factor(rx, ry);
     th = 0.0;
     t1x = b1x = rx;
@@ -2957,7 +2941,7 @@ static void traps_mk_ellipse(double cx, double cy, double rx, double ry, struct 
 static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle1, double angle2, struct drawlist *tl)
 {
     double th, r, pf;
-    XPointDouble C, P, Q;
+    XPointDouble C, P, Q, F;
 
     pf = calc_progress_factor(rx, ry);
     C.x = cx;
@@ -2966,6 +2950,7 @@ static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle
     r = calc_pt(&Q.x, &Q.y, rx, ry, angle1);
     Q.x += cx;
     Q.y += cy;
+    F = Q;
 
     th = angle1 + pf / r;
     while (th < angle1 + angle2) {
@@ -2980,14 +2965,14 @@ static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle
     }
 
     /* Ensure the last triangle abuts the first, if we have a closed
-     * arc. */
+     * arc; otherwise end with the exact last angle. */
     if (angle2 == TwoPi)
-        th = angle1;
-    else
-        th = angle1 + angle2;
-    r = calc_pt(&P.x, &P.y, rx, ry, th);
-    P.x += cx;
-    P.y += cy;
+        P = F;
+    else {
+        calc_pt(&P.x, &P.y, rx, ry, angle1 + angle2);
+        P.x += cx;
+        P.y += cy;
+    }
     add_tri(tl, &C, &P, &Q);
 }
 
