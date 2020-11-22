@@ -179,21 +179,18 @@ static int arcargs(wbp w, dptr argv, double *x, double *y, double *rx, double *r
         ReturnErrVal(102, argv[3], Error);
     if (!def:C_double(argv[4], 0.0, *a1))
         ReturnErrVal(102, argv[4], Error);
-    if (!def:C_double(argv[5], 2 * Pi, *a2))
+    if (!def:C_double(argv[5], TwoPi, *a2))
         ReturnErrVal(102, argv[5], Error);
 
-    if (fabs(*a2) > 2 * Pi)
-        *a2 = 2 * Pi;
+    if (fabs(*a2) > TwoPi)
+        *a2 = TwoPi;
     else {
         if (*a2 < 0) {
             *a1 += *a2;
             *a2 = -*a2;
         }
     }
-    if (*a1 < 0)
-        *a1 = 2 * Pi - fmod(-*a1, 2 * Pi);
-    else
-          *a1 = fmod(*a1, 2 * Pi);
+    *a1 = norm_angle(*a1);
 
     return Succeeded;
 }

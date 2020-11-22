@@ -2113,6 +2113,20 @@ char *datatofile(dptr data)
     return path;
 }
 
+
+/*
+ * Normalize an angle, so that it is in the range 0 <= a < 2*Pi.
+ */
+double norm_angle(double a)
+{
+    if (a < 0)
+        a = TwoPi - fmod(-a, TwoPi);
+    else
+        a = fmod(a, TwoPi);
+    return a;
+}
+
+
 /*
  * Convenient wrappers around malloc, etc, that do the appropriate out
  * of memory error checks.

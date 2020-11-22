@@ -2885,7 +2885,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         pts = safe_realloc(pts, maxpts * sizeof(struct point));
     }
 
-    if (angle2 == 2 * Pi)
+    if (angle2 == TwoPi)
         pts[npts] = pts[0];  /* Ensure drawlines recognizes a closed arc */
     else {
         calc_pt(&x, &y, rx, ry, angle1 + angle2);
@@ -2959,7 +2959,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     int has_wedge;
     struct traplist tl;
 
-    has_wedge = (angle1 != 0 || angle2 != 2 * Pi);
+    has_wedge = (angle1 != 0 || angle2 != TwoPi);
 
     init_traplist(&tl, 100);
 
@@ -2994,14 +2994,14 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
             Picture wedge1, wedge2;
             double x1, x2, y1, y2, a1, a2;
             int op;
-            if (angle1 + angle2 < 2 * Pi) {
+            if (angle1 + angle2 < TwoPi) {
                 /* Calculate a wedge to include */
                 a1 = angle1;
                 a2 = angle1 + angle2;
                 op = PictOpInReverse;
             } else {
                 /* Calculate a wedge to exclude */
-                a1 = angle1 + angle2 - 2 * Pi;
+                a1 = angle1 + angle2 - TwoPi;
                 a2 = angle1;
                 op = PictOpOutReverse;
             }
@@ -3017,7 +3017,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
              */
             wedge1 = getmask(wd, width, height);
             wedge2 = getmask(wd, width, height);
-            if (NearZero(a1 - 2*Pi, 1)) ;
+            if (NearZero(a1 - TwoPi, 1)) ;
             else if (NearZero(a1, 1))
                 XRenderFillRectangle(wd->display, PictOpOver, wedge1, &wd->white->color, 0, 0, width ,height); 
             else if (NearZero(a1 - Pi, 1))
@@ -3030,7 +3030,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
                     traps[1] = trapezoid(y1,0,width, h2, w2, width);
                     XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge1, wd->maskfmt, 0, 0, traps, 2);
                 } else if (x1 > width) {
-                    y1 = h2 - w2 * tan(2 * Pi - a1);
+                    y1 = h2 - w2 * tan(TwoPi - a1);
                     traps[0] = trapezoid(y1,width,width, h2, w2, width);
                     XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge1, wd->maskfmt, 0, 0, traps, 1);
                 } else {
@@ -3065,7 +3065,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
             */
 
             if (NearZero(a2, 1)) ;
-            else if (NearZero(a2 - 2*Pi, 1))
+            else if (NearZero(a2 - TwoPi, 1))
                 XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, 0, width ,height); 
             else if (NearZero(a2 - Pi, 1))
                 XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2, width ,h2); 
@@ -3077,7 +3077,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
                     traps[1] = trapezoid(h2,0,width, height,0,width);
                     XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, wd->maskfmt, 0, 0, traps, 2);
                 } else if (x2 > width) {
-                    y2 = h2 - w2 * tan(2 * Pi - a2);
+                    y2 = h2 - w2 * tan(TwoPi - a2);
                     traps[0] = trapezoid(0,0,width, y2,0,width);
                     traps[1] = trapezoid(y2,0,width, h2, 0, w2);
                     traps[2] = trapezoid(h2,0,width, height, 0, width);
