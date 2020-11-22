@@ -2922,7 +2922,7 @@ static void mk_ellipse(double cx, double cy, double rx, double ry, struct trapli
     th = 0.0;
     t1x = b1x = rx;
     b1 = t1 = cy;
-    while (th < Pi / 2.0) {
+    while (th < HalfPi) {
         r = calc_pt(&x, &y, rx, ry, th);
         t = cy - y;
         if (t < t1) {
@@ -2940,7 +2940,7 @@ static void mk_ellipse(double cx, double cy, double rx, double ry, struct trapli
         th += pf / r;
     }
 
-    /* Fill in top/bottom, by setting th = Pi/2 (calc_pt would give
+    /* Fill in top/bottom, by setting th = HalfPi (calc_pt would give
      * r=y=ry, x=0) */
     t = cy - ry;
     if (t < t1)
@@ -3038,7 +3038,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
                     XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge1, wd->maskfmt, 0, 0, traps, 1);
                 }
             } else {
-                x1 = w2 - h2 * tan(a1 - Pi/2);
+                x1 = w2 - h2 * tan(a1 - HalfPi);
                 if (x1 < 0) {
                     y1 = h2 + w2 * tan(Pi - a1);
                     traps[0] = trapezoid(0,0,width, h2,0,width);
@@ -3088,7 +3088,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
                     XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, wd->maskfmt, 0, 0, traps, 2);
                 }
             } else {
-                x2 = w2 - h2 * tan(a2 - Pi/2);
+                x2 = w2 - h2 * tan(a2 - HalfPi);
                 if (x2 < 0) {
                     y2 = h2 + w2 * tan(Pi - a2);
                     traps[0] = trapezoid(h2,w2,width,  y2, 0, width);
