@@ -14,6 +14,8 @@
 #define RandVal (RandScale * NextRand)
 
 #define Pi 3.14159265358979323846264338327950288419716939937511
+#define TwoPi (2 * Pi)
+#define HalfPi (Pi / 2)
 
 /*
  * Initialization states for classes and objects.

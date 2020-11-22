@@ -513,6 +513,7 @@ void synch_ipc(void);
 int is_flag(dptr d);
 int is_ascii_string(dptr d);
 char *datatofile(dptr data);
+double norm_angle(double a);
 
 void *safe_calloc(size_t m, size_t n);
 void *safe_zalloc(size_t size);
