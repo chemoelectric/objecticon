@@ -2893,7 +2893,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         pts = safe_realloc(pts, maxpts * sizeof(struct point));
     }
 
-    if (angle2 == 2 * Pi)
+    if (angle2 == TwoPi)
         pts[npts] = pts[0];  /* Ensure drawlines recognizes a closed arc */
     else {
         calc_pt(&x, &y, rx, ry, angle1 + angle2);
@@ -2912,28 +2912,35 @@ static void mk_arc(double cx, double cy, double rx, double ry, double angle1, do
     XPointDouble C, P, Q;
 
     pf = calc_progress_factor(rx, ry);
-    th = angle1;
     C.x = cx;
     C.y = cy;
+
+    r = calc_pt(&Q.x, &Q.y, rx, ry, angle1);
+    Q.x += cx;
+    Q.y += cy;
+
+    th = angle1 + pf / r;
     while (th < angle1 + angle2) {
         r = calc_pt(&P.x, &P.y, rx, ry, th);
         P.x += cx;
         P.y += cy;
-        if (tl->n == 0 || fabs(Q.x - P.x) >= 1.0 || fabs(Q.y - P.y) >= 1.0) {
-            if (th != angle1)
-                add_tri(tl, &C, &P, &Q);
+        if (fabs(Q.x - P.x) >= 1.0 || fabs(Q.y - P.y) >= 1.0) {
+            add_tri(tl, &C, &P, &Q);
             Q = P;
         }
         th += pf / r;
     }
-    th = angle1 + angle2;
+
+    /* Ensure the last triangle abuts the first, if we have a closed
+     * arc. */
+    if (angle2 == TwoPi)
+        th = angle1;
+    else
+        th = angle1 + angle2;
     r = calc_pt(&P.x, &P.y, rx, ry, th);
     P.x += cx;
     P.y += cy;
-    if (tl->n == 0 || fabs(Q.x - P.x) >= 1.0 || fabs(Q.y - P.y) >= 1.0) {
-        if (th != angle1)
-            add_tri(tl, &C, &P, &Q);
-    }
+    add_tri(tl, &C, &P, &Q);
 }
 
 void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
@@ -2952,7 +2959,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 
     init_trilist(&tl, 100);
     clip(w);
-    if (needmask(wc, 1)) {
+    if (needmask(wc, 0)) {
         Picture mask;
         /*
          * Calculate width and height for the masks, and their x, y
@@ -3029,7 +3036,9 @@ static void show_traplist(struct traplist *l)
     }
     printf("============\n");
 }
+#endif
 
+#if 0
 static void show_trilist(struct trilist *l)
 {
     int i;
@@ -3089,15 +3098,9 @@ static void ensure_tris(struct trilist *l, int need)
     }
 }
 
-#define Swap(a,b) { XPointDouble *v; v = a; a = b; b = v; }
-
 static void add_tri(struct trilist *l,
                     XPointDouble *p1, XPointDouble *p2, XPointDouble *p3)
 {
-    if ((p1->x == p2->x && p2->x == p3->x) ||
-        (p1->y == p2->y && p2->y == p3->y))
-        return;
-
     ensure_tris(l, 1);
     l->tris[l->n++] = triangle(p1->x, p1->y, p2->x, p2->y, p3->x, p3->y);
 }
@@ -3146,7 +3149,7 @@ static double dotprod(struct lineinfo *u, struct lineinfo *v)
 }
 
 /*
- * Get the angle between two line segments.
+ * Return the angle between two line segments.
  * 
  *  https://math.stackexchange.com/questions/1858274/how-to-determine-if-two-lines-are-parallel-almost-parallel
  */
@@ -3156,6 +3159,18 @@ static double anglediff(struct lineinfo *u, struct lineinfo *v)
     det = u->dx * v->dy - u->dy * v->dx;
     s = det / (u->len * v->len);
     return asin(s);
+}
+
+/*
+ * Return the angle a segment is pointing in.
+ */
+static double line_angle(struct lineinfo *u)
+{
+    double a;
+    a = atan2(u->dy, u->dx);
+    if (a < 0)
+        a += TwoPi;
+    return a;
 }
 
 static int almost_straight(struct lineinfo *u, struct lineinfo *v)
@@ -3237,16 +3252,6 @@ static XTriangle triangle(double x1, double y1, double x2, double y2, double x3,
     return t;
 }
 
-static void roundjoin(wcp wc, XPointDouble *r, struct trilist *tl)
-{
-    double radius;
-    radius = wc->linewidth / 2.0;
-    mk_arc(r->x, r->y,
-           radius, radius,
-           0.0, 2 * Pi,
-           tl);
-}
-
 /*
  * Return the intersection of the two straight lines defined by the
  * pairs of points (a1,a2) and (b1,b2).
@@ -3301,7 +3306,7 @@ static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
 /*
  * Output a segment.
  */
-static void drawlineinfo1(wcp wc, struct lineinfo *u, struct trilist *tl)
+static void drawlineinfo1(struct lineinfo *u, struct trilist *tl)
 {
     add_tri(tl, &u->p2, &u->p1, &u->q2);
     add_tri(tl, &u->q1, &u->p1, &u->q2);
@@ -3331,7 +3336,17 @@ static void drawlineend(wcp wc,
     }
 
     if (wc->lineend->i == EndRound) {
-        roundjoin(wc, A0, tl);
+        double a, radius;
+        radius = wc->linewidth / 2.0;
+        a = line_angle(u);
+        if (end)
+            a = norm_angle(a - HalfPi);
+        else
+            a = norm_angle(a + HalfPi);
+        mk_arc(A0->x, A0->y,
+               radius, radius,
+               a, Pi,
+               tl);
         return;
     }
 
@@ -3343,7 +3358,7 @@ static void drawlineend(wcp wc,
         }
         case EndSquare: {
             getlineinfo(wc, A0, &N, &li);
-            drawlineinfo1(wc, &li, tl);
+            drawlineinfo1(&li, tl);
             break;
         }
         default:
@@ -3358,7 +3373,7 @@ static void drawlineinfo(wcp wc,
                          struct trilist *tl)
 {
     /* Output the current segment. */
-    drawlineinfo1(wc, curr, tl);
+    drawlineinfo1(curr, tl);
 
     if (prev) {
         /*
@@ -3403,8 +3418,26 @@ static void drawlineinfo(wcp wc,
                 XPointDouble m = get_miter_point(prev, curr);
                 add_tri(tl, &m, A1, A2);
             }
-        } else
-            roundjoin(wc, &curr->p0, tl);
+        } else {
+            double radius, a1, a2;
+            /*
+             * Add an arc between the segments, in about the same
+             * region as occupied by the bevel triangle above.
+             */
+            if (curr->dx * prev->dy > curr->dy * prev->dx) {
+                a1 = norm_angle(line_angle(curr) + HalfPi);
+                a2 = norm_angle(line_angle(prev) + HalfPi);
+            } else {
+                a1 = norm_angle(line_angle(prev) - HalfPi);
+                a2 = norm_angle(line_angle(curr) - HalfPi);
+            }
+            a2 = norm_angle(a2 - a1);
+            radius = wc->linewidth / 2.0;
+            mk_arc(curr->p0.x, curr->p0.y,
+                   radius, radius,
+                   a1, a2,
+                   tl);
+        }
     } else
         drawlineend(wc, curr, 0, tl);
 
