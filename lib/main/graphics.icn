@@ -1139,9 +1139,9 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    #
    # Draw the given arc of an ellipse (centre `x`, `y`, major radius
-   # `rx`, minor radius `ry`), starting at `angle1` radians (default
-   # `0`), and going round clockwise `angle2` radians (default
-   # `2*pi`).
+   # `rx`, minor radius `ry`), starting at `angle1` radians clockwise
+   # from the positive x-axis (default `0`), and going round clockwise
+   # `angle2` further radians (default `2*pi`).
    #
    public native draw_arc(x, y, rx, ry, angle1, angle2)
 
@@ -1151,8 +1151,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public native event()
 
    #
-   # Draw the given circle (centre `x`, `y` with radius `r`) between
-   # the given angles `angle1` and `angle2`.
+   # Draw the given circle (centre `x`, `y` with radius `r`), starting
+   # at `angle1` radians clockwise from the positive x-axis (default
+   # `0`), and going round clockwise `angle2` further radians (default
+   # `2*pi`).
+   #
    #
    public draw_circle(x, y, r, angle1, angle2)
       return draw_arc(x, y, r, r, angle1, angle2)
@@ -1255,8 +1258,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public native fill_arc(x, y, rx, ry, angle1, angle2)
 
    #
-   # Fill the given circle (centre `x`, `y` with radius `r`) between
-   # the given angles `angle1` and `angle2`.
+   # Fill the given circle; the parameters are as for `draw_circle()`.
    #
    public fill_circle(x, y, r, angle1, angle2)
       return fill_arc(x, y, r, r, angle1, angle2)
