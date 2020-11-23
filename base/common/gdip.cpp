@@ -17,6 +17,8 @@ static struct gb_funcs *funcs;
 
 #define dbg (funcs->dbg)
 
+#define Copying(d) ((d)->win && !(d)->holding)
+
 extern "C"
 void gb_initialize(struct gb_funcs *fs)
 {
@@ -257,7 +259,7 @@ void gb_drawstring(gb_Draw *d, int x, int y, WCHAR *str, int length)
                         0);
 
     /* Avoid unnecessary call to MeasureDriverString if gb_pix_to_win() is a no-op. */
-    if (d->win && !d->holding) {
+    if (Copying(d)) {
         g->MeasureDriverString((UINT16 *)str, 
                                length, f, &pf, 
                                DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
@@ -298,6 +300,15 @@ static REAL to_degrees(double rad)
     return 180.0 * (rad / 3.14159265359);
 }
 
+static void path_to_win(gb_Draw *d, GraphicsPath &path, Pen *p)
+{
+    if (Copying(d)) {
+        Rect bound;
+        path.GetBounds(&bound, NULL, p);
+        gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    }
+}
+
 extern "C"
 void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
@@ -305,7 +316,6 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
     Brush *b = get_fg_brush(d);
     Pen *p = get_fg_pen(d, b);
     GraphicsPath path;
-    Rect bound;
     path.AddArc((REAL)cx - (REAL)rx,
                 cy - ry,
                 2 * rx,
@@ -314,8 +324,7 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
                 to_degrees(angle2)); 
 
     g->DrawPath(p, &path);
-    path.GetBounds(&bound, NULL, p);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, p);
 
     delete p;
     delete b;
@@ -328,7 +337,6 @@ void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     GraphicsPath path;
-    Rect bound;
     path.AddPie((REAL)cx - (REAL)rx,
                 cy - ry,
                 2 * rx,
@@ -337,8 +345,7 @@ void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
                 to_degrees(angle2)); 
 
     g->FillPath(b, &path);
-    path.GetBounds(&bound, NULL, NULL);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, NULL);
 
     delete b;
     delete g;
@@ -364,7 +371,6 @@ void gb_drawlines(gb_Draw *d, struct point *points0, int npoints)
     Pen *p = get_fg_pen(d, b);
     PointF *points = convert_points(points0, npoints);
     GraphicsPath path;
-    Rect bound;
     if (draw_debug) dbg("doing %d points\n",npoints);
     if (points0[0].x == points0[npoints - 1].x &&
         points0[0].y == points0[npoints - 1].y)
@@ -372,8 +378,7 @@ void gb_drawlines(gb_Draw *d, struct point *points0, int npoints)
     else
         path.AddLines(points, npoints);
     g->DrawPath(p, &path);
-    path.GetBounds(&bound, NULL, p);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, p);
 
     delete[] points;
     delete p;
@@ -388,11 +393,9 @@ void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints)
     Brush *b = get_fg_brush(d);
     PointF *points = convert_points(points0, npoints);
     GraphicsPath path;
-    Rect bound;
     path.AddPolygon(points, npoints);
     g->FillPath(b, &path);
-    path.GetBounds(&bound, NULL, NULL);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, NULL);
 
     delete[] points;
     delete b;
@@ -405,7 +408,6 @@ void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris)
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     GraphicsPath path;
-    Rect bound;
     int i;
     for (i = 0; i < ntris; ++i) {
         PointF p[3];
@@ -415,8 +417,7 @@ void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris)
         path.AddPolygon(p, 3);
     }
     g->FillPath(b, &path);
-    path.GetBounds(&bound, NULL, NULL);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, NULL);
 
     delete b;
     delete g;
