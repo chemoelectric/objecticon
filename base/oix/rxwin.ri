@@ -22,6 +22,8 @@
 #define PolyEdge PolyEdgeSmooth
 #define PolyMode PolyModeImprecise
 
+#define Copying(ws) ((ws)->win && !(ws)->holding)
+
 /*
  * Global variables specific to X
  */
@@ -1991,7 +1993,7 @@ static void clip(wbp w)
         XRenderSetPictureClipRectangles(wd->display,
                                         ws->ppic,
                                         0, 0, &rec, 1);
-        if (ws->wpic && !ws->holding)
+        if (Copying(ws))
             XRenderSetPictureClipRectangles(wd->display,
                                             ws->wpic,
                                             0, 0, &rec, 1);
@@ -2008,7 +2010,7 @@ static void no_clip(wsp ws, int and_win)
                          ws->ppic,
                          CPClipMask,
                          &attr);
-    if (and_win && ws->wpic && !ws->holding)
+    if (and_win && Copying(ws))
         XRenderChangePicture(wd->display,
                              ws->wpic,
                              CPClipMask,
@@ -2263,7 +2265,7 @@ int setfont(wbp w, char *s)
 static void synch_pix_and_win(wsp ws, int x, int y, int width, int height)
 {
     wdp wd = ws->display;
-    if (ws->win && !ws->holding) {
+    if (Copying(ws)) {
         no_clip(ws, 1);
         XRenderComposite(wd->display,
                          PictOpSrc,
@@ -2284,7 +2286,7 @@ static void synch_pix_and_win(wsp ws, int x, int y, int width, int height)
 static void pix_to_win(wsp ws, int x, int y, int width, int height)
 {
     wdp wd = ws->display;
-    if (ws->win && !ws->holding)
+    if (Copying(ws))
         XRenderComposite(wd->display,
                          PictOpSrc,
                          ws->ppic,           /* src */
@@ -3801,9 +3803,12 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     if (nlis == 0)
         return;
 
-    calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
+    if (needmask(wc, 1) || Copying(ws)) {
+        calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
+        if (!reducerect(w, 1, &x, &y, &width, &height))
+            return;
+    } else
+        x = y = width = height = 0;
 
     init_drawlist(&tl, nlis * 3, triangles);
 
@@ -3956,9 +3961,14 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     int x, y, width, height, i;
     if (npoints < 3)
         return;
-    points_extent(points, npoints, &x, &y, &width, &height);
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
+
+    if (needmask(wc, 0) || Copying(ws)) {
+        points_extent(points, npoints, &x, &y, &width, &height);
+        if (!reducerect(w, 1, &x, &y, &width, &height))
+            return;
+    } else
+        x = y = width = height = 0;
+
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -3994,9 +4004,12 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     wdp wd = ws->display;
     int x, y, width, height, i;
 
-    triangles_extent(tris, ntris, &x, &y, &width, &height);
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
+    if (needmask(wc, 1) || Copying(ws)) {
+        triangles_extent(tris, ntris, &x, &y, &width, &height);
+        if (!reducerect(w, 1, &x, &y, &width, &height))
+            return;
+    } else
+        x = y = width = height = 0;
 
     init_drawlist(&tl, 2 * ntris, triangles);
     clip(w);
@@ -4790,9 +4803,14 @@ static void drawstring8(wbp w, int x, int y, dptr str)
     }
 
     /* len > 0 */
-    if (!needmask(wc, 0) &&
-        (!ws->win || ws->holding) && x >= 0)
-    {
+    if (needmask(wc, 0) || Copying(ws) || x < 0) {
+        text8(w,
+              wc->font->fsp,
+              x, y,
+              (FcChar8 *)p,
+              len,
+              NULL);
+    } else {
         XftTextRender8(wd->display,
                        wc->drawop->i,         /* op */
                        get_draw_picture(wc),  /* src */
@@ -4802,13 +4820,6 @@ static void drawstring8(wbp w, int x, int y, dptr str)
                        x, y,                  /* dest x,y */
                        (FcChar8 *)p,
                        len);
-    } else {
-        text8(w,
-              wc->font->fsp,
-              x, y,
-              (FcChar8 *)p,
-              len,
-              NULL);
     }
 }
 
@@ -4938,9 +4949,14 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
      * expect reducerect to return false (since we know p-start is a
      * reasonable size, <= MaxXftChunk).
      */
-    if (!needmask(wc, 0) &&
-        (!ws->win || ws->holding) && x >= 0)
-    {
+    if (needmask(wc, 0) || Copying(ws) || x < 0) {
+        textUtf8(w,
+                 font,
+                 x, y,
+                 (FcChar8 *)start,
+                 p - start,
+                 NULL);
+    } else {
         XftTextRenderUtf8(wd->display,
                           wc->drawop->i,         /* op */
                           get_draw_picture(wc),  /* src */
@@ -4950,13 +4966,6 @@ static void drawstringUtf8(wbp w, int x, int y, dptr str)
                           x, y,                  /* dest x,y */
                           (FcChar8 *)start,
                           p - start);
-    } else {
-        textUtf8(w,
-                 font,
-                 x, y,
-                 (FcChar8 *)start,
-                 p - start,
-                 NULL);
     }
 }
 
@@ -5676,8 +5685,7 @@ CompositeDoublePoly(wdp                 wd,
 {
     struct Edge     *edges;
     int             i, nedges, maxtraps;
-    XFixed          x, y, prevx = 0, prevy = 0, firstx = 0, firsty = 0,
-                    top = 0, bottom = 0;
+    XFixed          x, y, prevx = 0, prevy = 0, firstx = 0, firsty = 0;
     struct drawlist tl;
 
     maxtraps = npoints * npoints;
@@ -5698,10 +5706,6 @@ CompositeDoublePoly(wdp                 wd,
         }
         if (i)
         {
-            if (y < top)
-                top = y;
-            else if (y > bottom)
-                bottom = y;
             if (prevy < y)
             {
                 edges[nedges].edge.p1.x = prevx;
@@ -5722,8 +5726,6 @@ CompositeDoublePoly(wdp                 wd,
         }
         else
         {
-            top = y;
-            bottom = y;
             firstx = x;
             firsty = y;
         }
