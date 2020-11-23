@@ -91,6 +91,8 @@ static struct imgdataformat imgdataformat_P9AG16;
 #define IconicCanvas 3
 #define PopupCanvas  4
 
+#define Copying(ws) ((ws)->win && !(ws)->holding)
+
 /* Provides info about a font available on the system. */
 struct FontInfo {
    char *path;
@@ -398,7 +400,7 @@ static void copy_to(Image *dest, Image *src)
 
 static void pix_to_win(wsp ws, int x, int y, int width, int height)
 {
-    if (ws->win && !ws->holding)
+    if (Copying(ws))
         gendrawop(ws->win, 
                   InnerRect(ws->win, x, y, width, height),
                   ws->pix, 
@@ -544,7 +546,7 @@ static void handle_reshape(wsp ws)
  */
 static void copy_pix_to_win(wsp ws)
 {
-    if (ws->win && !ws->holding) {
+    if (Copying(ws)) {
         no_clip(ws, 1);
         copy_to(ws->win, ws->pix);
         flushimage(display, 1);
@@ -829,13 +831,17 @@ void drawlines(wbp w, struct point *points0, int npoints)
         return;
     closed = points0[npoints - 1].x == points0[0].x && points0[npoints - 1].y == points0[0].y;
     thick = get_thick(wc);
-    points_extent(points0, npoints, &x, &y, &width, &height);
-    x -= thick;
-    y -= thick;
-    width += 2 * thick;
-    height += 2 * thick;
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
+
+    if (needmask(wc, 1) || Copying(ws)) {
+        points_extent(points0, npoints, &x, &y, &width, &height);
+        x -= thick;
+        y -= thick;
+        width += 2 * thick;
+        height += 2 * thick;
+        if (!reducerect(w, 1, &x, &y, &width, &height))
+            return;
+    } else
+        x = y = width = height = 0;
 
     points = convert_points(points0, npoints);
     if (closed)
@@ -904,9 +910,14 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     Point *points;
     if (npoints < 3)
         return;
-    points_extent(points0, npoints, &x, &y, &width, &height);
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
+
+    if (needmask(wc, 0) || Copying(ws)) {
+        points_extent(points0, npoints, &x, &y, &width, &height);
+        if (!reducerect(w, 1, &x, &y, &width, &height))
+            return;
+    } else
+        x = y = width = height = 0;
+
     points = convert_points(points0, npoints);
     clip(w);
     if (needmask(wc, 0)) {
@@ -977,9 +988,14 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     wsp ws = w->window;
     wcp wc = w->context;
     int x, y, width, height, i;
-    triangles_extent(tris, ntris, &x, &y, &width, &height);
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
+
+    if (needmask(wc, 1) || Copying(ws)) {
+        triangles_extent(tris, ntris, &x, &y, &width, &height);
+        if (!reducerect(w, 1, &x, &y, &width, &height))
+            return;
+    } else
+        x = y = width = height = 0;
+
     clip(w);
     if (needmask(wc, 1)) {
         Image *mask = getmask(width, height);
@@ -1030,7 +1046,7 @@ static void clip(wbp w)
     wcp wc = w->context;
     if (wc->clipw >= 0) {
         replclipr(ws->pix, 0, MkRect(wc->clipx, wc->clipy, wc->clipw, wc->cliph));
-        if (ws->win && !ws->holding)
+        if (Copying(ws))
             replclipr(ws->win, 0, InnerRect(ws->win, wc->clipx, wc->clipy, wc->clipw, wc->cliph));
     } else
         no_clip(ws, 1);
@@ -1039,7 +1055,7 @@ static void clip(wbp w)
 static void no_clip(wsp ws, int and_win)
 {
     replclipr(ws->pix, 0, max_rect);
-    if (and_win && ws->win && !ws->holding)
+    if (and_win && Copying(ws))
         replclipr(ws->win, 0, max_rect);
 }
 
@@ -1087,7 +1103,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                 runestringnop(ws->pix, p,
                               get_draw_img(wc), p,
                               wc->font->font, r, StrLen(*str), wc->drawop->i);
-                if (ws->win && !ws->holding) {
+                if (Copying(ws)) {
                     w1 = runestringnwidth(wc->font->font, r, StrLen(*str)) + wc->font->font->width;
                     pix_to_win(ws, x1, y1, w1, h1);
                 }
@@ -1111,7 +1127,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                 stringnop(ws->pix, p,
                           get_draw_img(wc), p,
                           wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
-                if (ws->win && !ws->holding) {
+                if (Copying(ws)) {
                     w1 = stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width;
                     pix_to_win(ws, x1, y1, w1, h1);
                 }
@@ -1136,7 +1152,7 @@ void drawstring(wbp w, int x, int y, dptr str)
             stringnop(ws->pix, p,
                       get_draw_img(wc), p,
                       wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length, wc->drawop->i);
-            if (ws->win && !ws->holding) {
+            if (Copying(ws)) {
                 w1 = stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length) + wc->font->font->width;
                 pix_to_win(ws, x1, y1, w1, h1);
             }
