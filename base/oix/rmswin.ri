@@ -1344,7 +1344,7 @@ static wcp alccontext(wbp w)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->drawop = stringint_lookup(drawops, "over");
-    wc->linejoin = stringint_lookup(linejoins, "round");
+    wc->linejoin = stringint_lookup(linejoins, "bevel");
     wc->lineend = stringint_lookup(lineends, "flat");
     wc->linewidth = 1.0;
     wc->font = default_font;
@@ -2010,6 +2010,9 @@ static void init_window_system(void)
     fs.safe_malloc = safe_malloc;
     fs.safe_zalloc = safe_zalloc;
     fs.safe_imul = safe_imul;
+    fs.utf8_to_wchar = utf8_to_wchar;
+    fs.wchar_to_utf8 = wchar_to_utf8;
+    fs.dbg = dbg;
     gb_initialize(&fs);
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);

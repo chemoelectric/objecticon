@@ -831,17 +831,13 @@ void drawlines(wbp w, struct point *points0, int npoints)
         return;
     closed = points0[npoints - 1].x == points0[0].x && points0[npoints - 1].y == points0[0].y;
     thick = get_thick(wc);
-
-    if (needmask(wc, 1) || Copying(ws)) {
-        points_extent(points0, npoints, &x, &y, &width, &height);
-        x -= thick;
-        y -= thick;
-        width += 2 * thick;
-        height += 2 * thick;
-        if (!reducerect(w, 1, &x, &y, &width, &height))
-            return;
-    } else
-        x = y = width = height = 0;
+    points_extent(points0, npoints, &x, &y, &width, &height);
+    x -= thick;
+    y -= thick;
+    width += 2 * thick;
+    height += 2 * thick;
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
 
     points = convert_points(points0, npoints);
     if (closed)
@@ -910,14 +906,9 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     Point *points;
     if (npoints < 3)
         return;
-
-    if (needmask(wc, 0) || Copying(ws)) {
-        points_extent(points0, npoints, &x, &y, &width, &height);
-        if (!reducerect(w, 1, &x, &y, &width, &height))
-            return;
-    } else
-        x = y = width = height = 0;
-
+    points_extent(points0, npoints, &x, &y, &width, &height);
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
     points = convert_points(points0, npoints);
     clip(w);
     if (needmask(wc, 0)) {
@@ -988,14 +979,9 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     wsp ws = w->window;
     wcp wc = w->context;
     int x, y, width, height, i;
-
-    if (needmask(wc, 1) || Copying(ws)) {
-        triangles_extent(tris, ntris, &x, &y, &width, &height);
-        if (!reducerect(w, 1, &x, &y, &width, &height))
-            return;
-    } else
-        x = y = width = height = 0;
-
+    triangles_extent(tris, ntris, &x, &y, &width, &height);
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
     clip(w);
     if (needmask(wc, 1)) {
         Image *mask = getmask(width, height);

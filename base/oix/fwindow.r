@@ -168,50 +168,43 @@ function graphics_Window_couple_impl(self, other)
    }
 end
 
+static int arcargs(wbp w, dptr argv, double *x, double *y, double *rx, double *ry, double *a1, double *a2)
+{
+    if (dpointargs_def(w, argv, x, y) == Error)
+        return Error;
+
+    if (!cnv:C_double(argv[2], *rx))
+        ReturnErrVal(102, argv[2], Error);
+    if (!cnv:C_double(argv[3], *ry))
+        ReturnErrVal(102, argv[3], Error);
+    if (!def:C_double(argv[4], 0.0, *a1))
+        ReturnErrVal(102, argv[4], Error);
+    if (!def:C_double(argv[5], TwoPi, *a2))
+        ReturnErrVal(102, argv[5], Error);
+
+    if (fabs(*a2) > TwoPi)
+        *a2 = TwoPi;
+    else {
+        if (*a2 < 0) {
+            *a1 += *a2;
+            *a2 = -*a2;
+        }
+    }
+    *a1 = norm_angle(*a1);
+
+    return Succeeded;
+}
+
 function graphics_Window_draw_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
       double x, y, rx, ry, a1, a2;
 
       GetSelfW();
 
-      if (dpointargs_def(self_w, &x0, &x, &y) == Error)
+      if (arcargs(self_w, &x0, &x, &y, &rx, &ry, &a1, &a2) == Error)
           runerr(0);
 
-      if (!cnv:C_double(rx0, rx))
-          runerr(102, rx0);
-      if (!cnv:C_double(ry0, ry))
-          runerr(102, ry0);
-
-      /*
-       * Angle 1 processing.  Computes in radians and 64'ths of a degree,
-       *  bounds checks, and handles wraparound.
-       */
-      if (!def:C_double(ang1, 0.0, a1))
-          runerr(102, ang1);
-      if (a1 >= 0.0)
-          a1 = fmod(a1, 2 * Pi);
-      else
-          a1 = -fmod(-a1, 2 * Pi);
-
-      /*
-       * Angle 2 processing
-       */
-      if (!def:C_double(ang2, 2 * Pi, a2))
-          runerr(102, ang2);
-      if (fabs(a2) >= 2 * Pi)
-          a2 = 2 * Pi;
-      else {
-          if (a2 < 0.0) {
-              a1 += a2;
-              a2 = fabs(a2);
-          }
-      }
-      if (a1 < 0.0)
-          a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
-      else
-          a1 = fmod(a1, 2 * Pi);
-
-      if (rx > 0 && ry > 0)
+      if (rx > 0 && ry > 0 && a2 > 0)
           drawarc(self_w, x, y, rx, ry, a1, a2);
 
       return self;
@@ -234,23 +227,23 @@ function graphics_Window_draw_curve(self, argv[argc])
 
       points = safe_malloc(sizeof(struct point) * (n + 2));
 
-      CnvCDouble(argv[0], x0)
-          CnvCDouble(argv[1], y0)
-          CnvCDouble(argv[argc - 2], xN)
-          CnvCDouble(argv[argc - 1], yN)
-          if ((x0 == xN) && (y0 == yN)) {
-              closed = 1;               /* duplicate the next to last point */
-              CnvCDouble(argv[argc-4], t);
-              points[0].x = t + self_w->context->dx;
-              CnvCDouble(argv[argc-3], t);
-              points[0].y = t + self_w->context->dy;
-          }
-          else {                       /* duplicate the first point */
-              CnvCDouble(argv[0], t);
-              points[0].x = t + self_w->context->dx;
-              CnvCDouble(argv[1], t);
-              points[0].y = t + self_w->context->dy;
-          }
+      CnvCDouble(argv[0], x0);
+      CnvCDouble(argv[1], y0);
+      CnvCDouble(argv[argc - 2], xN);
+      CnvCDouble(argv[argc - 1], yN);
+      if ((x0 == xN) && (y0 == yN)) {
+          closed = 1;               /* duplicate the next to last point */
+          CnvCDouble(argv[argc-4], t);
+          points[0].x = t + dx;
+          CnvCDouble(argv[argc-3], t);
+          points[0].y = t + dy;
+      }
+      else {                       /* duplicate the first point */
+          CnvCDouble(argv[0], t);
+          points[0].x = t + dx;
+          CnvCDouble(argv[1], t);
+          points[0].y = t + dy;
+      }
       for (i = 1; i <= n; i++) {
           int base = (i-1) * 2;
           CnvCDouble(argv[base], t);
@@ -290,7 +283,7 @@ function graphics_Window_draw_line(self, argv[argc])
    body {
       int i, n;
       struct point *points;
-      int dx, dy;
+      double dx, dy;
       GetSelfW();
       CheckArgMultipleOf(2, 2);
       points = safe_malloc(sizeof(struct point) * (argc / 2));
@@ -427,37 +420,10 @@ function graphics_Window_fill_arc(self, x0, y0, rx0, ry0, ang1, ang2)
 
       GetSelfW();
 
-      if (dpointargs_def(self_w, &x0, &x, &y) == Error)
+      if (arcargs(self_w, &x0, &x, &y, &rx, &ry, &a1, &a2) == Error)
           runerr(0);
 
-      if (!cnv:C_double(rx0, rx))
-          runerr(102, rx0);
-      if (!cnv:C_double(ry0, ry))
-          runerr(102, ry0);
-
-      if (!def:C_double(ang1, 0.0, a1))
-          runerr(102, ang1);
-      if (a1 >= 0.0)
-          a1 = fmod(a1, 2 * Pi);
-      else
-          a1 = -fmod(-a1, 2 * Pi);
-
-      if (!def:C_double(ang2, 2 * Pi, a2))
-          runerr(102, ang2);
-      if (fabs(a2) >= 2 * Pi)
-          a2 = 2 * Pi;
-      else {
-          if (a2 < 0.0) {
-              a1 += a2;
-              a2 = fabs(a2);
-          }
-      }
-      if (a1 < 0.0)
-          a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
-      else
-          a1 = fmod(a1, 2 * Pi);
-      
-      if (rx > 0 && ry > 0)
+      if (rx > 0 && ry > 0 && a2 > 0)
           fillarc(self_w, x, y, rx, ry, a1, a2);
       
       return self;
@@ -468,7 +434,7 @@ function graphics_Window_fill_polygon(self, argv[argc])
    body {
       int i, n;
       struct point *points;
-      int dx, dy;
+      double dx, dy;
       GetSelfW();
       CheckArgMultipleOf(2, 3);
       points = safe_malloc(sizeof(struct point) * (argc / 2));
@@ -494,7 +460,7 @@ function graphics_Window_fill_triangles(self, argv[argc])
    body {
       int i, n;
       struct triangle *tris;
-      int dx, dy;
+      double dx, dy;
       GetSelfW();
       CheckArgMultipleOf(6, 0);
       if (argc == 0)

@@ -11,19 +11,13 @@ using namespace Gdiplus;
 
 static const int draw_debug = 0;
 
-static void dbg(char *fmt, ...);
-
-static void dbg(char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fflush(stderr);
-}
-
 static ULONG_PTR gdiplusToken;
 
 static struct gb_funcs *funcs;
+
+#define dbg (funcs->dbg)
+
+#define Copying(d) ((d)->win && !(d)->holding)
 
 extern "C"
 void gb_initialize(struct gb_funcs *fs)
@@ -265,7 +259,7 @@ void gb_drawstring(gb_Draw *d, int x, int y, WCHAR *str, int length)
                         0);
 
     /* Avoid unnecessary call to MeasureDriverString if gb_pix_to_win() is a no-op. */
-    if (d->win && !d->holding) {
+    if (Copying(d)) {
         g->MeasureDriverString((UINT16 *)str, 
                                length, f, &pf, 
                                DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
@@ -306,6 +300,15 @@ static REAL to_degrees(double rad)
     return 180.0 * (rad / 3.14159265359);
 }
 
+static void path_to_win(gb_Draw *d, GraphicsPath &path, Pen *p)
+{
+    if (Copying(d)) {
+        Rect bound;
+        path.GetBounds(&bound, NULL, p);
+        gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    }
+}
+
 extern "C"
 void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
@@ -313,7 +316,6 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
     Brush *b = get_fg_brush(d);
     Pen *p = get_fg_pen(d, b);
     GraphicsPath path;
-    Rect bound;
     path.AddArc((REAL)cx - (REAL)rx,
                 cy - ry,
                 2 * rx,
@@ -322,8 +324,7 @@ void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
                 to_degrees(angle2)); 
 
     g->DrawPath(p, &path);
-    path.GetBounds(&bound, NULL, p);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, p);
 
     delete p;
     delete b;
@@ -336,7 +337,6 @@ void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     GraphicsPath path;
-    Rect bound;
     path.AddPie((REAL)cx - (REAL)rx,
                 cy - ry,
                 2 * rx,
@@ -345,8 +345,7 @@ void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double a
                 to_degrees(angle2)); 
 
     g->FillPath(b, &path);
-    path.GetBounds(&bound, NULL, NULL);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, NULL);
 
     delete b;
     delete g;
@@ -372,7 +371,6 @@ void gb_drawlines(gb_Draw *d, struct point *points0, int npoints)
     Pen *p = get_fg_pen(d, b);
     PointF *points = convert_points(points0, npoints);
     GraphicsPath path;
-    Rect bound;
     if (draw_debug) dbg("doing %d points\n",npoints);
     if (points0[0].x == points0[npoints - 1].x &&
         points0[0].y == points0[npoints - 1].y)
@@ -380,8 +378,7 @@ void gb_drawlines(gb_Draw *d, struct point *points0, int npoints)
     else
         path.AddLines(points, npoints);
     g->DrawPath(p, &path);
-    path.GetBounds(&bound, NULL, p);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, p);
 
     delete[] points;
     delete p;
@@ -396,11 +393,9 @@ void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints)
     Brush *b = get_fg_brush(d);
     PointF *points = convert_points(points0, npoints);
     GraphicsPath path;
-    Rect bound;
     path.AddPolygon(points, npoints);
     g->FillPath(b, &path);
-    path.GetBounds(&bound, NULL, NULL);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, NULL);
 
     delete[] points;
     delete b;
@@ -413,7 +408,6 @@ void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris)
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     GraphicsPath path;
-    Rect bound;
     int i;
     for (i = 0; i < ntris; ++i) {
         PointF p[3];
@@ -423,61 +417,10 @@ void gb_filltriangles(gb_Draw *d, struct triangle *tris, int ntris)
         path.AddPolygon(p, 3);
     }
     g->FillPath(b, &path);
-    path.GetBounds(&bound, NULL, NULL);
-    gb_pix_to_win(d, bound.X, bound.Y, bound.Width, bound.Height);
+    path_to_win(d, path, NULL);
 
     delete b;
     delete g;
-}
-
-static
-WCHAR *utf8_to_wchar(char *s)
-{
-    WCHAR *mbs;
-    int n;
-    if (!s)
-        return NULL;
-    n = MultiByteToWideChar(CP_UTF8,
-                            0,
-                            s,
-                            -1,
-                            0,
-                            0);
-    mbs = new WCHAR[n];
-    MultiByteToWideChar(CP_UTF8,
-                        0,
-                        s,
-                        -1,
-                        mbs,
-                        n);
-    return mbs;
-}
-
-static
-char *wchar_to_utf8(WCHAR *s)
-{
-    char *u;
-    int n;
-    if (!s)
-        return NULL;
-    n = WideCharToMultiByte(CP_UTF8,
-                            0,
-                            s,
-                            -1,
-                            0,
-                            0,
-                            NULL,
-                            NULL);
-    u = new char[n];
-    WideCharToMultiByte(CP_UTF8,
-                        0,
-                        s,
-                        -1,
-                        u,
-                        n,
-                        NULL,
-                        NULL);
-    return u;
 }
 
 extern "C"
@@ -494,9 +437,9 @@ gb_Font *gb_find_Font(char *family, int flags, double size)
     else if (!strcmp(family, "serif"))
         ff = FontFamily::GenericSerif()->Clone();
     else {
-        WCHAR *t = utf8_to_wchar(family);
+        WCHAR *t = funcs->utf8_to_wchar(family);
         ff = new FontFamily(t);
-        delete[] t;
+        free(t);
     }
 
     if (!ff->IsAvailable()) {
@@ -542,9 +485,9 @@ void gb_get_metrics(HDC dc, gb_Font *fin, int *ascent, int *descent, int *maxwid
     *descent = ceil(desc_pix);
 
     if (draw_debug) {
-        char *t = wchar_to_utf8(familyName);
+        char *t = funcs->wchar_to_utf8(familyName);
         dbg("f=%p family name: %s\n",f,t);
-        delete[] t;
+        free(t);
         dbg("\tsize = %f points\n",f->GetSize());
         dbg("\t     = %d design units\n", (int)ff.GetEmHeight(f->GetStyle()));
         dbg("\tppdu   = %f\n", pts_per_du);
@@ -598,9 +541,9 @@ extern "C"
 gb_Bitmap *gb_load_Bitmap_file(char *filename)
 {
     Bitmap *b;
-    WCHAR *t = utf8_to_wchar(filename);
+    WCHAR *t = funcs->utf8_to_wchar(filename);
     b = Bitmap::FromFile(t);
-    delete[] t;
+    free(t);
     if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
         if (draw_debug) dbg("Failed to Load Bitmap from file %s\n", filename);
         delete b;
@@ -644,7 +587,7 @@ static char *PixelFormatString(PixelFormat i)
     }    
 }
 
-struct palentry *build_paltbl(Bitmap *b)
+static struct palentry *build_paltbl(Bitmap *b)
 {
     ColorPalette *pal;
     struct palentry *pt;
