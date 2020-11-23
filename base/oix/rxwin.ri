@@ -3291,21 +3291,25 @@ static double angle_diff(struct lineinfo *u, struct lineinfo *v)
     return asin(s);
 }
 
-/*
- * Return the angle a segment is pointing in.
- */
-static double line_angle(struct lineinfo *u)
-{
-    double a;
-    a = atan2(u->dy, u->dx);
-    if (a < 0)
-        a += TwoPi;
-    return a;
-}
-
 static int almost_straight(struct lineinfo *u, struct lineinfo *v)
 {
     return fabs(angle_diff(u, v)) < 0.1;
+}
+
+/*
+ * Return the angle a between two points, normalized to the
+ * range 0 <= a < 2*Pi.
+ * 
+ *          p ---------+
+ *         / a |
+ *        /---/
+ *       /
+ *      /
+ *     q      
+ */
+static double point_angle(XPointDouble *p, XPointDouble *q)
+{
+    return norm_angle(atan2(p->y - q->y, p->x - q->x));
 }
 
 static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x, int *y, int *width, int *height)
@@ -3632,18 +3636,14 @@ static void drawlineend(wcp wc,
     } else {
         A0 = &u->p0;
         C0 = &u->q0;
-        A1 = &u->p1;
-        A2 = &u->p2;
+        A1 = &u->p2;
+        A2 = &u->p1;
     }
 
     if (wc->lineend->i == EndRound) {
         double a, radius;
         radius = wc->linewidth / 2.0;
-        a = line_angle(u);
-        if (end)
-            a = norm_angle(a - HalfPi);
-        else
-            a = norm_angle(a + HalfPi);
+        a = point_angle(A0, A1);
         mk_arc(A0->x, A0->y,
                radius, radius,
                a, Pi,
@@ -3677,40 +3677,43 @@ static void drawlineinfo(wcp wc,
     drawlineinfo1(wc, curr, tl);
 
     if (prev) {
+        XPointDouble *A1, *A2, *C;
+
+        /*
+         *                  A1      A2
+         *                  /\      /\
+         *                 /   \   /   \
+         *                /      \/C     \ 
+         *               /       / \       \
+         *              /       /    \       \
+         *             /       /     /         \
+         *            /         \   /            \
+         *           /  prev      \/     curr      \
+         *                        / \
+         *                       /   \ 
+         *                               
+         * A1, A2 will be in clockwise order.
+         * 
+         */
+
+        C = &curr->p0;
+        if (curr->dx * prev->dy > curr->dy * prev->dx) {
+            A1 = &curr->p1;
+            A2 = &prev->q1;
+        } else {
+            A1 = &prev->q2;
+            A2 = &curr->p2;
+        }
+
         /*
          * dotprod() determines whether the segments are aligned
          * end-to-end rather than overlapping.
          */
         if (wc->linejoin->i != JoinRound || (almost_straight(prev, curr) && dotprod(prev, curr) > 0)) {
-            XPointDouble *A1, *A2;
-
-            /*
-             *                  A2      A1
-             *                  /\      /\
-             *                 /   \   /   \
-             *                /      \/P0    \ 
-             *               /       / \       \
-             *              /       /    \       \
-             *             /       /     /         \
-             *            /         \   /            \
-             *           /  prev      \/     curr      \
-             *                        / \
-             *                       /   \ 
-             *                               
-             */
-
-            if (curr->dx * prev->dy > curr->dy * prev->dx) {
-                A1 = &curr->p1;
-                A2 = &prev->q1;
-            } else {
-                A1 = &curr->p2;
-                A2 = &prev->q2;
-            }
-
             /*
              * The bevel triangle.
              */
-            add_tri(tl, &curr->p0, A1, A2);
+            add_tri(tl, C, A1, A2);
 
             /*
              * The miter triangle.
@@ -3725,16 +3728,11 @@ static void drawlineinfo(wcp wc,
              * Add an arc between the segments, in about the same
              * region as occupied by the bevel triangle above.
              */
-            if (curr->dx * prev->dy > curr->dy * prev->dx) {
-                a1 = norm_angle(line_angle(curr) + HalfPi);
-                a2 = norm_angle(line_angle(prev) + HalfPi);
-            } else {
-                a1 = norm_angle(line_angle(prev) - HalfPi);
-                a2 = norm_angle(line_angle(curr) - HalfPi);
-            }
+            a1 = point_angle(A1, C);
+            a2 = point_angle(A2, C);
             a2 = norm_angle(a2 - a1);
             radius = wc->linewidth / 2.0;
-            mk_arc(curr->p0.x, curr->p0.y,
+            mk_arc(C->x, C->y,
                    radius, radius,
                    a1, a2,
                    tl);
