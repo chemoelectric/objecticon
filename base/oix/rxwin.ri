@@ -123,7 +123,7 @@ static void add_trap(struct drawlist *l, double top, double x1, double x2, doubl
 static void add_rect(struct drawlist *l, XPointDouble *tl, XPointDouble *br);
 static void add_tri(struct drawlist *l, XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
 static void CompositeDoublePoly(wdp wd, int op, Picture src, Picture dst,
-                                struct point *points, int npoints, int winding);
+                                struct point *points, int npoints);
 static XftFont *fallback(wbp w, int ch);
 static void reset_sending_helper(wdp wd, struct sending_helper *x);
 
@@ -3974,7 +3974,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
                             PictOpOver,
                             wd->white->brush,
                             mask, 
-                            points, npoints, 0);
+                            points, npoints);
 
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
@@ -3983,7 +3983,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
                             wc->drawop->i,
                             get_draw_picture(wc),
                             ws->ppic, 
-                            points, npoints, 0);
+                            points, npoints);
         pix_to_win(ws, x, y, width, height);
     }
 }
@@ -5530,7 +5530,6 @@ ComputeIntersect (XLineFixed *l1, XLineFixed *l2)
 static void
 ComputeTrapezoids (struct Edge   *edges,
                    int           nedges,
-                   int           winding,
                    struct drawlist *tl,
                    int           maxtraps)
 {
@@ -5669,8 +5668,7 @@ CompositeDoublePoly(wdp                 wd,
                     Picture             src,
                     Picture             dst,
                     struct point        *points,
-                    int                 npoints,
-                    int                 winding)
+                    int                 npoints)
 {
     struct Edge     *edges;
     int             i, nedges, maxtraps;
@@ -5723,7 +5721,7 @@ CompositeDoublePoly(wdp                 wd,
     }
 
     init_drawlist(&tl, 100, 0);
-    ComputeTrapezoids (edges, nedges, winding, &tl, maxtraps);
+    ComputeTrapezoids (edges, nedges, &tl, maxtraps);
     draw_drawlist(&tl, wd, op, src, dst);
     free_drawlist(&tl);
     free (edges);
