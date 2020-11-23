@@ -3803,12 +3803,9 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     if (nlis == 0)
         return;
 
-    if (needmask(wc, 1) || Copying(ws)) {
-        calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
-        if (!reducerect(w, 1, &x, &y, &width, &height))
-            return;
-    } else
-        x = y = width = height = 0;
+    calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
 
     init_drawlist(&tl, nlis * 3, triangles);
 
@@ -3961,14 +3958,9 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     int x, y, width, height, i;
     if (npoints < 3)
         return;
-
-    if (needmask(wc, 0) || Copying(ws)) {
-        points_extent(points, npoints, &x, &y, &width, &height);
-        if (!reducerect(w, 1, &x, &y, &width, &height))
-            return;
-    } else
-        x = y = width = height = 0;
-
+    points_extent(points, npoints, &x, &y, &width, &height);
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -4004,12 +3996,9 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     wdp wd = ws->display;
     int x, y, width, height, i;
 
-    if (needmask(wc, 1) || Copying(ws)) {
-        triangles_extent(tris, ntris, &x, &y, &width, &height);
-        if (!reducerect(w, 1, &x, &y, &width, &height))
-            return;
-    } else
-        x = y = width = height = 0;
+    triangles_extent(tris, ntris, &x, &y, &width, &height);
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
 
     init_drawlist(&tl, 2 * ntris, triangles);
     clip(w);
