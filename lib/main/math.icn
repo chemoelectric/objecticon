@@ -1,5 +1,9 @@
 package util
 
+#
+# This class provides some mathematical constants and static methods
+# to call some C library math functions.
+#
 final abstract class Math()
    public static const
       E, PHI, PI
@@ -10,15 +14,25 @@ final abstract class Math()
       E := 2.71828182845904523536028747135266249775724709369996
    end
 
-   public static native acos()
-   public static native asin()
-   public static native atan()
-   public static native cos()
-   public static native dtor()
-   public static native rtod()
-   public static native tan()
-   public static native exp()
-   public static native log()
-   public static native sin()
-   public static native sqrt()
+   #
+   # With two parameters, return the result of `atan2`; with one
+   # return `atan`.
+   #
+   public static native atan(a, b)
+
+   #
+   # Return the natural logarithm of `x`, or optionally the logarithm
+   # to base `b`.
+   #
+   public static native log(x, b)
+
+   public static native acos(x)
+   public static native asin(x)
+   public static native cos(x)
+   public static native dtor(x)
+   public static native rtod(x)
+   public static native tan(x)
+   public static native exp(x)
+   public static native sin(x)
+   public static native sqrt(x)
 end
