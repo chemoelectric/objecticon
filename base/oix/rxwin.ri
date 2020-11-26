@@ -2999,6 +2999,8 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     y = floor(cy - ry);
     width = 2 * ceil(cx - x);
     height = 2 * ceil(cy - y);
+    if (!reducerect(w, 1, &x, &y, &width, &height))
+        return;
 
     init_drawlist(&tl, 100, triangles);
     clip(w);
