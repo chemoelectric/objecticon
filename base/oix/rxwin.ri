@@ -3285,7 +3285,7 @@ static double dotprod(struct lineinfo *u, struct lineinfo *v)
 /*
  * Get the angle between two line segments.
  * 
- *  https://math.stackexchange.com/questions/1858274/how-to-determine-if-two-lines-are-parallel-almost-parallel
+ * This follows easily from the formula for sin(a - b).
  */
 static double angle_diff(struct lineinfo *u, struct lineinfo *v)
 {
