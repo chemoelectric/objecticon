@@ -288,6 +288,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y);
    int  setlineend      (wbp w, char *s);
    int  setlinejoin     (wbp w, char *s);
    int  setlinewidth    (wbp w, double linewid);
+   int  setfillrule     (wbp w, char *s);
    int  setpointer      (wbp w, char *val);
    int  ownselection    (wbp w, char *selection, word *time);
    int  requestselection(wbp w, char *selection, char *targetname);

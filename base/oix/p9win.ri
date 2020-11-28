@@ -140,6 +140,12 @@ static stringint lineends[] = {
     {"square",    Enddisc},
 };
 
+static stringint fillrules[] = {
+    {0, 2},
+    {"even-odd",   1},
+    {"non-zero",   ~0},
+};
+
 static stringint canvastypes[] = {
     {0, 4},
     {"hidden",      HiddenCanvas},
@@ -379,6 +385,7 @@ wbp wopen(char *display)
     wc->linewidth = 1;
     wc->linejoin = stringint_lookup(linejoins, "bevel");
     wc->lineend = stringint_lookup(lineends, "flat");
+    wc->fillrule = stringint_lookup(fillrules, "even-odd");
 
     w->context = wc;
 
@@ -917,11 +924,11 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
             points[i].x -= x;
             points[i].y -= y;
         }
-        fillpolyop(mask, points, npoints, 0, white->i, ZP, SoverD);
+        fillpolyop(mask, points, npoints, wc->fillrule->i, white->i, ZP, SoverD);
         maskimage2(w, mask, x, y, width, height);
         freeimage(mask);
     } else
-        fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
+        fillpolyop(ws->pix, points, npoints, wc->fillrule->i, get_draw_img(wc), ZP, wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
     free(points);
     flushimage(display, 1);
@@ -2242,6 +2249,20 @@ int setlinewidth(wbp w, double linewid)
     return Succeeded;
 }
 
+/*
+ * Set the context's fillrule style by name.
+ */
+int setfillrule(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(fillrules, val);
+    if (!e)
+        return Failed;
+    wc->fillrule = e;
+    return Succeeded;
+}
+
 static void synch_cursor(wsp ws)
 {
     struct Cursor *c;
@@ -2460,6 +2481,7 @@ static wcp clonecontext(wcp src)
     wc->drawop = src->drawop;
     wc->lineend = src->lineend;
     wc->linejoin = src->linejoin;
+    wc->fillrule = src->fillrule;
     return wc;
 }
 

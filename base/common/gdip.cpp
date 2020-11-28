@@ -101,17 +101,17 @@ static Brush *get_bg_brush(gb_Draw *d)
 extern "C"
 void gb_pix_to_win(gb_Draw *d, int x, int y, int width, int height)
 {
-    if (!d->win || d->holding)
-        return;
-    Graphics h(d->win);
-    if (draw_debug) dbg("gb_pix_to_win %d %d %dx%d\n",x,y,width,height);
-    if (d->clipw >= 0) {
-        Rect r(d->clipx, d->clipy, d->clipw, d->cliph);
-        h.SetClip(r);
+    if (Copying(d)) {
+        Graphics h(d->win);
+        if (draw_debug) dbg("gb_pix_to_win %d %d %dx%d\n",x,y,width,height);
+        if (d->clipw >= 0) {
+            Rect r(d->clipx, d->clipy, d->clipw, d->cliph);
+            h.SetClip(r);
+        }
+        Bitmap *b = (Bitmap *)d->pix;
+        h.SetCompositingMode(CompositingModeSourceCopy);
+        h.DrawImage(b, x, y, x, y, width, height, UnitPixel);
     }
-    Bitmap *b = (Bitmap *)d->pix;
-    h.SetCompositingMode(CompositingModeSourceCopy);
-    h.DrawImage(b, x, y, x, y, width, height, UnitPixel);
 }
 
 extern "C"
@@ -392,7 +392,7 @@ void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints)
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     PointF *points = convert_points(points0, npoints);
-    GraphicsPath path;
+    GraphicsPath path((FillMode)d->fillrule);
     path.AddPolygon(points, npoints);
     g->FillPath(b, &path);
     path_to_win(d, path, NULL);

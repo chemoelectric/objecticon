@@ -1034,6 +1034,13 @@ function graphics_Window_get_line_width(self)
    }
 end
 
+function graphics_Window_get_fill_rule(self)
+   body {
+       GetSelfW();
+       return C_string self_w->context->fillrule->s;
+   }
+end
+
 function graphics_Window_get_max_height(self)
    body {
        GetSelfW();
@@ -1368,6 +1375,16 @@ function graphics_Window_set_line_width(self, val)
        if (d <= 0.0)
            Drunerr(148, d);
        AttemptAttr(setlinewidth(self_w, d), "Invalid line_width");
+       return self;
+   }
+end
+
+function graphics_Window_set_fill_rule(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setfillrule(self_w, buffstr(&val)), "Invalid fill rule style");
        return self;
    }
 end

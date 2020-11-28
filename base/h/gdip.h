@@ -16,6 +16,7 @@ typedef struct gb_Draw {
    int drawop;
    int linejoin;
    int lineend;
+   int fillrule;
 } gb_Draw;
 
 #define EndFlat      0   // LineCapFlat

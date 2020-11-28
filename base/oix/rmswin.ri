@@ -131,6 +131,12 @@ stringint lineends[] = {
     {"square",    EndSquare},
 };
 
+static stringint fillrules[] = {
+    {0, 2},
+    {"even-odd",   0},           /* gdi+ FillModeAlternate */
+    {"non-zero",   1},           /* gdi+ FillModeWinding */
+};
+
 #define NormalCanvas 1
 #define HiddenCanvas 2
 #define IconicCanvas 3
@@ -273,6 +279,7 @@ static void mk_Draw(wbp w, gb_Draw *d)
     d->drawop = wc->drawop->i;
     d->lineend = wc->lineend->i;
     d->linejoin = wc->linejoin->i;
+    d->fillrule = wc->fillrule->i;
     d->holding = ws->holding;
 }
 
@@ -1110,6 +1117,17 @@ int setlinejoin(wbp w, char *val)
     return Succeeded;
 }
 
+int setfillrule(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(fillrules, val);
+    if (!e)
+        return Failed;
+    wc->fillrule = e;
+    return Succeeded;
+}
+
 int setlinewidth(wbp w, double linewid)
 {
     wcp wc = w->context;
@@ -1346,6 +1364,7 @@ static wcp alccontext(wbp w)
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linejoin = stringint_lookup(linejoins, "bevel");
     wc->lineend = stringint_lookup(lineends, "flat");
+    wc->fillrule = stringint_lookup(fillrules, "even-odd");
     wc->linewidth = 1.0;
     wc->font = default_font;
     wc->leading = defaultleading;
@@ -1378,6 +1397,7 @@ static wcp clonecontext(wcp src)
     wc->linewidth = src->linewidth;
     wc->lineend = src->lineend;
     wc->linejoin = src->linejoin;
+    wc->fillrule = src->fillrule;
     wc->font = src->font;
     return wc;
 }

@@ -793,8 +793,7 @@ class Map(Panel)
       st.loc.east := x
       st.loc.south := y
       pk := pod_key(st.loc)
-      /stop_pod[pk] := set()
-      insert(stop_pod[pk], st)
+      inserts_set(stop_pod, pk, st)
       every calc_arc_geometry(st, key(st.arcs))         
       every calc_arc_geometry(!st.ptrs, st)
 
@@ -803,8 +802,7 @@ class Map(Panel)
          every delete(arc_pod[!arc.pods], arc)
          arc.pods := []
          every pk := inter_pods(st, other, 0) do {
-            /arc_pod[pk] := set()
-            insert(arc_pod[pk], arc)
+            inserts_set(arc_pod, pk, arc)
             put(arc.pods, pk)
          }
       }
@@ -813,8 +811,7 @@ class Map(Panel)
          every delete(arc_pod[!arc.pods], arc)
          arc.pods := []
          every pk := inter_pods(other, st, 0) do {
-            /arc_pod[pk] := set()
-            insert(arc_pod[pk], arc)
+            inserts_set(arc_pod, pk, arc)
             put(arc.pods, pk)
          }
       }
@@ -836,8 +833,7 @@ class Map(Panel)
    private put_pod(st)
       local pk
       pk := pod_key(st.loc)
-      /stop_pod[pk] := set()
-      insert(stop_pod[pk], st)
+      inserts_set(stop_pod, pk, st)
    end
 
    private nearby(loc, dist)
@@ -1433,8 +1429,7 @@ class Map(Panel)
             arc := st.arcs[other]
             arc.pods := []
             every pk := inter_pods(st, other, 0) do {
-               /arc_pod[pk] := set()
-               insert(arc_pod[pk], arc)
+               inserts_set(arc_pod, pk, arc)
                put(arc.pods, pk)
             }
          }

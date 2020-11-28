@@ -386,6 +386,7 @@ typedef struct _wcontext {
   stringint     *lineend;
   stringint     *linejoin;
   double	linewidth;
+  stringint     *fillrule;
   stringint     *drawop;
 #if XWindows
   wdp		display;
