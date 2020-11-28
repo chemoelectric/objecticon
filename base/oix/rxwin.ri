@@ -158,6 +158,12 @@ static stringint lineends[] = {
     {"square",    EndSquare},
 };
 
+static stringint fillrules[] = {
+    {0, 2},
+    {"even-odd",   0},
+    {"non-zero",   1},
+};
+
 static stringint canvastypes[] = {
     {0, 9},
     {"fullscreen",  FullScreenState},
@@ -1120,6 +1126,7 @@ wbp wopen(char *display)
     wc->linewidth = 1;
     wc->linejoin = stringint_lookup(linejoins, "bevel");
     wc->lineend = stringint_lookup(lineends, "flat");
+    wc->fillrule = stringint_lookup(fillrules, "even-odd");
 
     w->context = wc;
 
@@ -2132,6 +2139,20 @@ int setlinewidth(wbp w, double linewid)
 {
     wcp wc = w->context;
     wc->linewidth = linewid;
+    return Succeeded;
+}
+
+/*
+ * Set the context's fillrule style by name.
+ */
+int setfillrule(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(fillrules, val);
+    if (!e)
+        return Failed;
+    wc->fillrule = e;
     return Succeeded;
 }
 
@@ -5321,6 +5342,7 @@ static wcp clonecontext(wcp wc)
     rv->lineend = wc->lineend;
     rv->linejoin = wc->linejoin;
     rv->linewidth = wc->linewidth;
+    rv->fillrule = wc->fillrule;
     rv->drawop = wc->drawop;
     return rv;
 }

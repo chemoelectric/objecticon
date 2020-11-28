@@ -392,7 +392,7 @@ void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints)
     Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
     PointF *points = convert_points(points0, npoints);
-    GraphicsPath path;
+    GraphicsPath path((FillMode)d->fillrule);
     path.AddPolygon(points, npoints);
     g->FillPath(b, &path);
     path_to_win(d, path, NULL);

@@ -559,6 +559,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public native get_line_width()
 
    #
+   # Return the fill rule setting as set by `set_fill_rule()`.
+   #
+   public native get_fill_rule()
+
+   #
    # Return the maximum allowed height of this window, see `get_max_size()`.
    #
    public native get_max_height()
@@ -817,8 +822,8 @@ final class Window(NoCopy, ObjectOutput, HasClose)
 
    #
    # Set the line style, which specifies how `draw_line()` draws the
-   # joins of a line.  Possible values are "bevel", "miter" "round".  (See
-   # `LineJoin` for symbolic constants).
+   # joins of a line.  Possible values are "bevel", "miter", "round".
+   # (See `LineJoin` for symbolic constants).
    #
    public native set_line_join(v)
 
@@ -826,6 +831,13 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # Set the width of drawn lines.
    #
    public native set_line_width(v)
+
+   #
+   # Set the fill rule, which specifies how `fill_polygon()` fills
+   # polygons with overlapping edges.  Possible values are "even-odd",
+   # "non-zero".  (See `FillRule` for symbolic constants).
+   #
+   public native set_fill_rule(v)
 
    #
    # Set the maximum height of the window in pixels.  This only
@@ -2096,6 +2108,21 @@ final abstract class LineJoin()
       BEVEL := "bevel"
       MITER := "miter"
       ROUND := "round"
+   end
+end
+
+#
+# This class provides symbolic names for the styles supported by
+# `Window.set_fill_rule()`.
+#
+final abstract class FillRule()
+   public static const
+      EVEN_ODD,
+      NON_ZERO
+
+   private static init()
+      EVEN_ODD := "even-odd"
+      NON_ZERO := "non-zero"
    end
 end
 

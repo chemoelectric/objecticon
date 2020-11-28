@@ -511,6 +511,10 @@ function cairo_Context_new_impl(sur)
                case JoinRound: cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND); break;
                case JoinBevel: cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL); break;
            }
+           /* The cairo default is WINDING. */
+           switch (wc->fillrule->i) {
+               case 0: cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD); break;
+           }
            cairo_set_operator(cr, convert_op(wc->drawop->i));
        }
        }
