@@ -94,13 +94,12 @@ int anycmp(dptr dp1, dptr dp2)
          return lexcmp(&(UcsBlk(*dp1).utf8), &(UcsBlk(*dp2).utf8));
 
       real: {
-         double rres1, rres2, rresult;
-         DGetReal(*dp1,rres1);
-         DGetReal(*dp2,rres2);
-         rresult = rres1 - rres2;
-         if (rresult == 0.0)
+         double r1, r2;
+         DGetReal(*dp1, r1);
+         DGetReal(*dp2, r2);
+         if (r1 == r2)
             return Equal;
-         return ((rresult > 0.0) ? Greater : Less);
+         return (r1 > r2) ? Greater : Less;
       }
 
       class:
@@ -177,7 +176,6 @@ int equiv(dptr dp1, dptr dp2)
    {
    int result;
    word i;
-   double rres1, rres2;
 
    result = 0;
 
@@ -209,11 +207,13 @@ int equiv(dptr dp1, dptr dp2)
 	    result = (bigcmp(dp1, dp2) == 0);
 	    break;
 
-	 case T_Real:
-            DGetReal(*dp1, rres1);
-            DGetReal(*dp2, rres2);
-            result = (rres1 == rres2);
+	 case T_Real: {
+            double r1, r2;
+            DGetReal(*dp1, r1);
+            DGetReal(*dp2, r2);
+            result = (r1 == r2);
 	    break;
+         }
 
           case T_Ucs:
               /* Compare the utf8 strings */
