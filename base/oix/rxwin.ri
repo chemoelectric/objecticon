@@ -183,6 +183,8 @@ static int max_selection_size = 2 * 1024 * 1024;
 static int max_selection_chunk = 64 * 1024;
 static int selection_debug = 0;
 static int font_debug = 0;
+static int poly_debug = 0;
+static int draw_debug = 0;
 static int triangles = 0;
 
 #if 0
@@ -3023,7 +3025,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, 100, triangles);
+    init_drawlist(&tl, 100, triangles > 0);
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -3079,7 +3081,6 @@ static void free_drawlist(struct drawlist *l)
     l->alloc = l->n = 0;
 }
 
-#if 0
 static void show_drawlist(struct drawlist *l)
 {
     int i;
@@ -3106,10 +3107,12 @@ static void show_drawlist(struct drawlist *l)
     }
     printf("============\n");
 }
-#endif
 
 static void draw_drawlist(struct drawlist *l, wdp wd, int op, Picture src, Picture dest)
 {
+    if (draw_debug)
+        show_drawlist(l);
+
     /* src is either a white brush, or the foreground brush (never a
      * pattern). */
     if (l->traps)
@@ -3833,7 +3836,7 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, nlis * 3, triangles);
+    init_drawlist(&tl, nlis * 3, triangles > 0);
 
     clip(w);
     if (needmask(wc, 1)) {
@@ -3989,7 +3992,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, 100, 0);
+    init_drawlist(&tl, 100, triangles > 1);
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -4027,7 +4030,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, 2 * ntris, triangles);
+    init_drawlist(&tl, 2 * ntris, triangles > 0);
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -5083,7 +5086,9 @@ static wdp alcdisplay(char *s)
         env_int("OI_MAX_X_SELECTION_CHUNK", &max_selection_chunk, 1024, INT_MAX);
         env_int("OI_X_SELECTION_DEBUG", &selection_debug, 0, 1);
         env_int("OI_X_FONT_DEBUG", &font_debug, 0, 1);
-        env_int("OI_X_TRIANGLES", &triangles, 0, 1);
+        env_int("OI_X_POLY_DEBUG", &poly_debug, 0, 1);
+        env_int("OI_X_DRAW_DEBUG", &draw_debug, 0, 1);
+        env_int("OI_X_TRIANGLES", &triangles, 0, 2);
         default_XErrorHandler = XSetErrorHandler(custom_XErrorHandler);
         inited = 1;
     }
@@ -5516,12 +5521,33 @@ static struct segment *segs;
 static struct eventtree *Q;
 static struct segment **L;
 static int Ln, Lmax;
-static int poly_debug = 1;
 
 static int segment_num(struct segment *seg)
 {
     return 1 + (seg - segs);
 }
+
+#if 0
+static void show_eventtree(struct eventtree *tree, int level)
+{
+    int i;
+    struct event *ev;
+    char *tn[] = {"CROSS", "TOP", "BOTTOM"};
+    if (tree == NULL)
+        return;
+    show_eventtree(tree->right, level + 1);
+    for (i = 0; i < level; ++i)
+        printf("   ");
+    ev = tree->ev;
+    printf("Event type = %s  pt = %f, %f", tn[ev->type], ev->pt.x, ev->pt.y);
+    printf("  seg1 = %d  ", segment_num(ev->seg1));
+    if (ev->seg2)
+        printf("  seg2 = %d\n", segment_num(ev->seg2));
+    else
+        printf("  seg2 = -\n");
+    show_eventtree(tree->left, level + 1);
+}
+#endif    
 
 static double seg_x_at(struct segment *seg, double y)
 {
@@ -5550,7 +5576,7 @@ static int compare_points(XPointDouble *p, XPointDouble *q)
     return i;
 }
 
-void eventtree_insert(struct eventtree **tree0, struct event *ev)
+static void eventtree_insert(struct eventtree **tree0, struct event *ev)
 {
     struct eventtree *tree, *nt;
     tree = *tree0;
@@ -5576,7 +5602,7 @@ void eventtree_insert(struct eventtree **tree0, struct event *ev)
     }
 }
 
-int eventtree_contains(struct eventtree *tree, struct event *ev)
+static int eventtree_contains(struct eventtree *tree, struct event *ev)
 {
     if (tree) {
         int i;
@@ -5585,23 +5611,17 @@ int eventtree_contains(struct eventtree *tree, struct event *ev)
             return eventtree_contains(tree->left, ev);
         else if (i > 0)
             return eventtree_contains(tree->right, ev);
-        else {
-            struct eventtree *nt;
-            nt = tree;
-            while (nt) {
-                if (ev->type == nt->ev->type &&
-                    ev->pt.x == nt->ev->pt.x &&
-                    ev->pt.y == nt->ev->pt.y &&
-                    ev->seg1 == nt->ev->seg1 &&
-                    ev->seg2 == nt->ev->seg2)
+        else do {   /* Entries with the same key are contiguous leftwards */
+                if (ev->type == tree->ev->type &&
+                    ev->seg1 == tree->ev->seg1 &&
+                    ev->seg2 == tree->ev->seg2)
                 {
-                    if (poly_debug)
-                        printf("Duplicate found\n");
                     return 1;
                 }
-                nt = nt->left;
+                tree = tree->left;
             }
-        }
+            while (tree && 
+                   compare_points(&ev->pt, &tree->ev->pt) == 0);
     }
     return 0;
 }
@@ -5664,7 +5684,7 @@ static void cross_check(double y, struct segment *a, struct segment *b)
         t = a; a = b; b = t;
     }
     if (poly_debug)
-        printf("Cross check y=%f segs %d %d\n", y, segment_num(a), segment_num(b));
+        printf("Cross check y = %f segs = %d %d\n", y, segment_num(a), segment_num(b));
 
     if (segment_intersect(&p, a, b) && p.y > y) {
         if (poly_debug)
@@ -5814,6 +5834,8 @@ static void process_line(struct drawlist *tl, int rule, double y0, double y1)
     int i, fl;
     double x1, x2, x3, x4;
     struct segment *s0, *s1;
+    if (poly_debug)
+        printf("Process lines %f to %f\n", y0, y1);
     fl = 0;
     for (i = 1; i < Ln; ++i) {
         s0 = L[i - 1];
@@ -5828,7 +5850,7 @@ static void process_line(struct drawlist *tl, int rule, double y0, double y1)
             --fl;
         if ((rule & fl)) {
             if (poly_debug)
-                printf("Trap top=%f (%f, %f)  bottom=%f (%f, %f)\n", y0, x1, x2, y1, x3, x4);
+                printf("\tTrap top=%f (%f, %f)  bottom=%f (%f, %f)\n", y0, x1, x2, y1, x3, x4);
             add_trap(tl, y0, x1, x2, y1, x3, x4);
         }
     }
@@ -5887,7 +5909,8 @@ static void mk_polygon(struct point *points, int npoints, int rule, struct drawl
         free(ev);
         y0 = y1;
         fl = 1;
-        show_L();
+        if (poly_debug)
+            show_L();
     }
 
     free(L);
