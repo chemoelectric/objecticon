@@ -110,11 +110,12 @@ static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
+static int almost_straight(struct lineinfo *u, struct lineinfo *v);
 static void synch_pos(wsp ws, int new_x, int new_y);
 static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
-static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
+static int intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
 static void init_drawlist(struct drawlist *l, int alloc, int tris);
 static void ensure_drawlist(struct drawlist *l, int need);
 static void free_drawlist(struct drawlist *l);
@@ -3289,12 +3290,14 @@ static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct linei
     res->q2 = doublept(q0->x + ex, q0->y + ey);
 }
 
-static XPointDouble get_miter_point(struct lineinfo *prev, struct lineinfo *curr)
+static int get_miter_point(XPointDouble *res, struct lineinfo *prev, struct lineinfo *curr)
 {
+    if (almost_straight(prev, curr))
+        return 0;
     if (curr->dx * prev->dy > curr->dy * prev->dx)
-        return intersect(&curr->p1, &curr->q1, &prev->p1, &prev->q1);
+        return intersect(res, &curr->p1, &curr->q1, &prev->p1, &prev->q1);
     else
-        return intersect(&curr->p2, &curr->q2, &prev->p2, &prev->q2);
+        return intersect(res, &curr->p2, &curr->q2, &prev->p2, &prev->q2);
 }
 
 static double dotprod(struct lineinfo *u, struct lineinfo *v)
@@ -3342,14 +3345,13 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
     double x1, x2, y1, y2;
     x1 = x2 = y1 = y2 = 0.0;
     for (i = 0; i < n; ++i) {
+        XPointDouble m;
         struct lineinfo *li = &lis[i]; 
         if (i == 0) {
             x1 = x2 = li->p1.x;
             y1 = y2 = li->p1.y;
 
-            if (closed && wc->linejoin->i == JoinMiter && !almost_straight(&lis[n - 1], &lis[i])) {
-                XPointDouble m;
-                m = get_miter_point(&lis[n - 1], &lis[i]);
+            if (closed && wc->linejoin->i == JoinMiter && get_miter_point(&m, &lis[n - 1], &lis[i])) {
                 if (m.x < x1) x1 = m.x;
                 if (m.x > x2) x2 = m.x;
                 if (m.y < y1) y1 = m.y;
@@ -3361,9 +3363,7 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
             if (li->p1.x > x2) x2 = li->p1.x;
             if (li->p1.y < y1) y1 = li->p1.y;
             if (li->p1.y > y2) y2 = li->p1.y;
-            if (wc->linejoin->i == JoinMiter && !almost_straight(&lis[i - 1], &lis[i])) {
-                XPointDouble m;
-                m = get_miter_point(&lis[i - 1], &lis[i]);
+            if (wc->linejoin->i == JoinMiter && get_miter_point(&m, &lis[i - 1], &lis[i])) {
                 if (m.x < x1) x1 = m.x;
                 if (m.x > x2) x2 = m.x;
                 if (m.y < y1) y1 = m.y;
@@ -3427,19 +3427,22 @@ static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, dou
 }
 
 /*
- * Return the intersection of the two straight lines defined by the
- * pairs of points (a1,a2) and (b1,b2).
+ * Attempt to find the intersection of the two straight lines defined
+ * by the pairs of points (a1,a2) and (b1,b2).  If successful, the
+ * result is set in res, and 1 is returned.
  */
-static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
+static int intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
 {
     double a, b, d;
 
     a = (a1->x * a2->y - a1->y * a2->x);
     b = (b1->x * b2->y - b1->y * b2->x);
     d = ( (a1->x - a2->x) * (b1->y - b2->y) - (a1->y - a2->y) * (b1->x -b2->x) );
-
-    return doublept((a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d,
+    if (d == 0)
+        return 0;
+    *res = doublept((a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d,
                     (a * (b1->y- b2->y) - (a1->y - a2->y) * b ) / d);
+    return 1;
 }
 
 /*
@@ -3734,6 +3737,8 @@ static void drawlineinfo(wcp wc,
          * end-to-end rather than overlapping.
          */
         if (wc->linejoin->i != JoinRound || (almost_straight(prev, curr) && dotprod(prev, curr) > 0)) {
+            XPointDouble m;
+
             /*
              * The bevel triangle.
              */
@@ -3742,10 +3747,9 @@ static void drawlineinfo(wcp wc,
             /*
              * The miter triangle.
              */
-            if (wc->linejoin->i == JoinMiter && !almost_straight(prev, curr)) {
-                XPointDouble m = get_miter_point(prev, curr);
+            if (wc->linejoin->i == JoinMiter && get_miter_point(&m, prev, curr))
                 add_tri(tl, &m, A1, A2);
-            }
+
         } else {
             double radius, a1, a2;
             /*
@@ -5546,17 +5550,18 @@ static int compare_points(XPointDouble *p, XPointDouble *q)
     return i;
 }
 
-struct eventtree *eventtree_insert(struct eventtree *tree, struct event *ev)
+void eventtree_insert(struct eventtree **tree0, struct event *ev)
 {
+    struct eventtree *tree, *nt;
+    tree = *tree0;
     if (tree) {
         int i;
         i = compare_points(&ev->pt, &tree->ev->pt);
         if (i < 0)
-            tree->left = eventtree_insert(tree->left, ev);
+            eventtree_insert(&tree->left, ev);
         else if (i > 0)
-            tree->right = eventtree_insert(tree->right, ev);
+            eventtree_insert(&tree->right, ev);
         else {
-            struct eventtree *nt;
             nt = safe_malloc(sizeof(struct eventtree));
             nt->ev = ev;
             nt->left = tree->left;
@@ -5567,9 +5572,8 @@ struct eventtree *eventtree_insert(struct eventtree *tree, struct event *ev)
         tree = safe_malloc(sizeof(struct eventtree));
         tree->ev = ev;
         tree->left = tree->right = NULL;
+        *tree0 = tree;
     }
-
-    return tree;
 }
 
 int eventtree_contains(struct eventtree *tree, struct event *ev)
@@ -5602,17 +5606,16 @@ int eventtree_contains(struct eventtree *tree, struct event *ev)
     return 0;
 }
 
-static struct eventtree *eventtree_pop(struct eventtree *tree, struct event **ev)
+static void eventtree_pop(struct eventtree **tree0, struct event **ev)
 {
+    struct eventtree *tree;
+    tree = *tree0;
     if (tree->left == NULL) {
-        static struct eventtree *t;
         *ev = tree->ev;
-        t = tree->right;
+        *tree0 = tree->right;
         free(tree);
-        tree = t;
     } else
-        tree->left = eventtree_pop(tree->left, ev);
-    return tree;
+        eventtree_pop(&tree->left, ev);
 }
 
 static void show_L(void)
@@ -5644,13 +5647,9 @@ static int segment_in_range(struct segment *s, XPointDouble *p)
 
 static int segment_intersect(XPointDouble *res, struct segment *a, struct segment *b)
 {
-    XPointDouble p;
-    p = intersect(&a->p0, &a->p1, &b->p0, &b->p1);
-    if (segment_in_range(a, &p) && segment_in_range(b, &p)) {
-        *res = p;
-        return 1;
-    } else
-        return 0;
+    return intersect(res, &a->p0, &a->p1, &b->p0, &b->p1) &&
+        segment_in_range(a, res) &&
+        segment_in_range(b, res);
 }
 
 static void cross_check(double y, struct segment *a, struct segment *b)
@@ -5680,7 +5679,7 @@ static void cross_check(double y, struct segment *a, struct segment *b)
                 printf("\tDuplicate Cross event, discarding this one\n");
             free(ev);
         } else
-            eventtree_insert(Q, ev);
+            eventtree_insert(&Q, ev);
     }
 }
 
@@ -5806,8 +5805,8 @@ static void add_segment_events(struct segment *seg)
         ev2->type = TOP;
     }
 
-    Q = eventtree_insert(Q, ev1);
-    Q = eventtree_insert(Q, ev2);
+    eventtree_insert(&Q, ev1);
+    eventtree_insert(&Q, ev2);
 }
 
 static void process_line(struct drawlist *tl, int rule, double y0, double y1)
@@ -5863,19 +5862,17 @@ static void mk_polygon(struct point *points, int npoints, int rule, struct drawl
         if (a < 0)
             a += Pi;
         segs[i].angle = a;
-
         add_segment_events(&segs[i]);
     }
+
     fl = 0;
     y0 = 0;
     while (Q) {
         struct event *ev;
-        Q = eventtree_pop(Q, &ev);
+        eventtree_pop(&Q, &ev);
         y1 = ev->pt.y;
-        if (fl) {
-            if (y0 != y1)
-                process_line(tl, rule, y0, y1);
-        }
+        if (fl && y0 != y1)
+            process_line(tl, rule, y0, y1);
         switch (ev->type) {
             case CROSS:
                 handle_event_CROSS(ev);
