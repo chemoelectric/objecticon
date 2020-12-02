@@ -5549,7 +5549,7 @@ static void show_eventtree(struct eventtree *tree, int level)
 }
 #endif    
 
-static double seg_x_at(struct segment *seg, double y)
+static double segment_x_at(struct segment *seg, double y)
 {
     if (y == seg->p0.y)
         return seg->p0.x;
@@ -5558,21 +5558,17 @@ static double seg_x_at(struct segment *seg, double y)
     return seg->p0.x + ((y - seg->p0.y) * seg->dx) / seg->dy;
 }
 
-static int doublecmp(double a, double b)
+static int double_cmp(double a, double b)
 {
-    if (a == b)
-        return 0;
-    if (a < b)
-        return -1;
-    return 1;
+    return (a > b) - (a < b);
 }
 
 static int compare_points(XPointDouble *p, XPointDouble *q)
 {
     int i;
-    i = doublecmp(p->y, q->y);
+    i = double_cmp(p->y, q->y);
     if (i == 0)
-        i = doublecmp(p->x, q->x);
+        i = double_cmp(p->x, q->x);
     return i;
 }
 
@@ -5626,16 +5622,18 @@ static int eventtree_contains(struct eventtree *tree, struct event *ev)
     return 0;
 }
 
-static void eventtree_pop(struct eventtree **tree0, struct event **ev)
+static struct event *eventtree_pop(struct eventtree **tree0)
 {
     struct eventtree *tree;
     tree = *tree0;
     if (tree->left == NULL) {
-        *ev = tree->ev;
+        struct event *res;
+        res = tree->ev;
         *tree0 = tree->right;
         free(tree);
+        return res;
     } else
-        eventtree_pop(&tree->left, ev);
+        return eventtree_pop(&tree->left);
 }
 
 static void show_L(void)
@@ -5647,15 +5645,15 @@ static void show_L(void)
     printf("]\n");
 }
 
-static int Lcmp(struct event *ev, struct segment *seg)
+static int compare_event_segment(struct event *ev, struct segment *seg)
 {
     int i;
     double x, y;
     x = ev->pt.x;
     y = ev->pt.y;
-    i = doublecmp(x, seg_x_at(seg, y));
+    i = double_cmp(x, segment_x_at(seg, y));
     if (i == 0)
-        i = doublecmp(seg->angle, ev->seg1->angle);
+        i = double_cmp(seg->angle, ev->seg1->angle);
     return i;
 }
 
@@ -5734,14 +5732,14 @@ static void handle_event_CROSS(struct event *ev)
     }
 }
 
-static int Lsearch(struct event *ev)
+static int search_L(struct event *ev)
 {
     int i, l, r, m;
     l = 0;
     r = Ln - 1;
     while (l <= r) {
         m = (l + r) / 2;
-        i = Lcmp(ev, L[m]);
+        i = compare_event_segment(ev, L[m]);
         if (i < 0)
             r = m - 1;
         else if (i > 0)
@@ -5763,7 +5761,7 @@ static void handle_event_TOP(struct event *ev)
         return;
     }
 
-    i = Lsearch(ev);
+    i = search_L(ev);
     if (poly_debug)
         printf("\tInserting segment %d into L at position %d\n", segment_num(ev->seg1), i);
     for (j = Ln; j > i; --j)
@@ -5781,11 +5779,6 @@ static void handle_event_BOTTOM(struct event *ev)
     int i, j;
     if (poly_debug)
         printf("BOTTOM Event (%f, %f) seg = %d\n", ev->pt.x, ev->pt.y, segment_num(ev->seg1));
-    if (Ln == 0) {
-        if (poly_debug)
-            printf("\tL unexpectedly empty\n");
-        return;
-    }
     i = 0;
     while (i < Ln && L[i] != ev->seg1)
         ++i;
@@ -5840,10 +5833,10 @@ static void process_line(struct drawlist *tl, int rule, double y0, double y1)
     for (i = 1; i < Ln; ++i) {
         s0 = L[i - 1];
         s1 = L[i];
-        x1 = seg_x_at(s0, y0);
-        x2 = seg_x_at(s1, y0);
-        x3 = seg_x_at(s0, y1);
-        x4 = seg_x_at(s1, y1);
+        x1 = segment_x_at(s0, y0);
+        x2 = segment_x_at(s1, y0);
+        x3 = segment_x_at(s0, y1);
+        x4 = segment_x_at(s1, y1);
         if (s0->dy < 0)
             ++fl;
         else
@@ -5891,7 +5884,7 @@ static void mk_polygon(struct point *points, int npoints, int rule, struct drawl
     y0 = 0;
     while (Q) {
         struct event *ev;
-        eventtree_pop(&Q, &ev);
+        ev = eventtree_pop(&Q);
         y1 = ev->pt.y;
         if (fl && y0 != y1)
             process_line(tl, rule, y0, y1);
