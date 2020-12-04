@@ -5532,6 +5532,12 @@ static void show_eventtree(struct eventtree *tree, int level)
 
 static double segment_x_at(struct segment *seg, double y)
 {
+    /* These tests ensure that the same point in two different
+     * adjacent segments will return an identical x value, and thus
+     * will compare correctly in compare_event_segment() (consider
+     * processing two TOP events with the same point from two adjacent
+     * segments forming a peak).
+     */
     if (y == seg->p0.y)
         return seg->p0.x;
     if (y == seg->p1.y)
@@ -5806,7 +5812,6 @@ static void add_segment_events(struct segment *seg)
 static void process_line(int rule, double y0, double y1)
 {
     int i, fl;
-    double x1, x2, x3, x4;
     struct segment *s0, *s1;
     if (poly_debug)
         printf("Process lines %f to %f\n", y0, y1);
@@ -5814,15 +5819,16 @@ static void process_line(int rule, double y0, double y1)
     for (i = 1; i < Ln; ++i) {
         s0 = L[i - 1];
         s1 = L[i];
-        x1 = segment_x_at(s0, y0);
-        x2 = segment_x_at(s1, y0);
-        x3 = segment_x_at(s0, y1);
-        x4 = segment_x_at(s1, y1);
         if (s0->dy < 0)
             ++fl;
         else
             --fl;
         if ((rule & fl)) {
+            double x1, x2, x3, x4;
+            x1 = segment_x_at(s0, y0);
+            x2 = segment_x_at(s1, y0);
+            x3 = segment_x_at(s0, y1);
+            x4 = segment_x_at(s1, y1);
             if (poly_debug)
                 printf("\tTrap top=%f (%f, %f)  bottom=%f (%f, %f)\n", y0, x1, x2, y1, x3, x4);
             add_trap(y0, x1, x2, y1, x3, x4);
