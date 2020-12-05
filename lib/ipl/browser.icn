@@ -126,6 +126,13 @@ class CacheData(CacheEntry, StaticData)
       succeed \ (last_modified | etag)
    end
 
+   #
+   # Indicates whether this is a local "cache:" URL.
+   #
+   public is_local()
+      succeed url.scheme == "cache"
+   end
+
    public override new(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
       self.url := url
       self.data := data
@@ -205,29 +212,39 @@ class Cache()
       id
 
    public set_size(x)
-      self.size := x
+      self.size := need_integer(x, 0)
       link
    end
 
    public tidy()
-      local now, ce, total
+      local now, ce, total, nv
       now := Time.get_system_seconds()
       total := 0
+      # Data entries we can evict to free up space.  We exclude local
+      # (cache:) URLs, since these cannot be reloaded.
+      nv := set()
       every ce := !t do {
          if ce.is_valid(now) then {
             case classof(ce) of {
-               CacheData: total +:= *ce.data
-               CacheAlias: member(t, ce.dest.str()) | delete(t, ce.url.str())
+               CacheData: {
+                  total +:= *ce.data
+                  ce.is_local() | insert(nv, ce)
+               }
+               CacheAlias: member(t, ce.dest.str()) | delete_entry(ce)
             }
          } else
-            delete(t, ce.url.str())
+            delete_entry(ce)
       }
-      while *t > 0 & total > size do {
-         ce := ?t
-         delete(t, ce.url.str())
-         if is(ce, CacheData) then
-            total -:= *ce.data
+      while total > size & ce := ?nv do {
+         delete(nv, ce)
+         delete_entry(ce)
+         total -:= *ce.data
       }
+      link
+   end
+
+   public delete_entry(ce)
+      delete(t, ce.url.str())
       link
    end
 
@@ -244,6 +261,15 @@ class Cache()
 
    public clear()
       default.clear(t)
+      link
+   end
+
+   public clear_local()
+      local ce
+      every ce := !t do {
+         if is(ce, CacheData) & ce.is_local() then
+            delete_entry(ce)
+      }
       link
    end
 
@@ -328,7 +354,7 @@ class Cache()
    public new(size)
       /size := 4 * 1024*1024
       t := table()
-      self.size := size
+      set_size(size)
       id := 0
       return
    end
