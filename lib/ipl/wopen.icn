@@ -49,7 +49,7 @@ package ipl.graphics
 
 import
    graphics(Window),
-   util(Time)
+   util(Time, toggle_flag)
 
 
 procedure QuitEvents()
@@ -72,6 +72,7 @@ procedure WQuit(win)
    fail
 end
 
+#
 # Get the next event from `win`, waiting if necessary. `timeout` gives
 # the max time to wait; if omitted wait forever.
 #
@@ -79,11 +80,32 @@ procedure WEvent(win, timeout)
    local e, lim
    lim := \timeout + Time.get_system_millis()
    until e := win.event() do {
-      delay(50)
       if \lim < Time.get_system_millis() then
          fail
+      delay(50)
    }
    return e
+end
+
+#
+# A helpful procedure to delay for the given time, whilst processing
+# window events from `win`, and checking for quit events (see
+# `QuitEvent()`).  If the user presses "p", then the program pauses
+# until "p" is pressed again.
+#
+procedure WDelay(win, time)
+   local e, lim, pause
+   lim := time + Time.get_system_millis()
+   repeat {
+      while e := win.event() do {
+         QuitCheck(e[1])
+         if e[1] === "p" & e[5] = 0 then
+            pause := toggle_flag(pause)
+      }
+      if /pause & (lim < Time.get_system_millis()) then
+         return
+      delay(50)
+   }
 end
 
 procedure WDone(win)
