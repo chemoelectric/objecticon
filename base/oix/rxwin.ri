@@ -24,6 +24,8 @@
 
 #define Copying(ws) ((ws)->win && !(ws)->holding)
 
+#define EqPoint(p, q) ((p).x == (q).x && (p).y == (q).y)
+
 /*
  * Global variables specific to X
  */
@@ -117,12 +119,13 @@ static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
 static int intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
+static int in_range(XPointDouble *a, XPointDouble *p0, XPointDouble *p1);
+static int ls_intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
 static void init_drawlist(int alloc, int tris);
 static void ensure_drawlist(int need);
 static void free_drawlist(void);
 static void draw_drawlist(wdp wd, int op, Picture src, Picture dest);
 static void add_trap(double top, double x1, double x2, double bottom, double x3, double x4);
-static void add_rect(XPointDouble *tl, XPointDouble *br);
 static void add_tri(XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
 static void mk_polygon(struct point *points, int npoints, int rule);
 static XftFont *fallback(wbp w, int ch);
@@ -3265,11 +3268,6 @@ static void add_trap(double top0, double x10, double x20, double bottom0, double
     }
 }
 
-static void add_rect(XPointDouble *tl, XPointDouble *br)
-{
-    add_trap(tl->y, tl->x, br->x,  br->y, tl->x, br->x);
-}
-
 /*
  * The orientation of the computed corner points is always the same
  * (p0 and q0 are the given input points, linewidth comes from the
@@ -3282,6 +3280,9 @@ static void add_rect(XPointDouble *tl, XPointDouble *br)
  *   p1 ---------------------q1      v
  *
  *   <-------- len ---------->
+ * 
+ * The four corner points may be adjusted by adustlineinfo() to avoid
+ * overlapping drawing.
  */
 
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res)
@@ -3455,16 +3456,51 @@ static XTrapezoid trapezoid(XFixed top, XFixed x1, XFixed x2, XFixed bottom, XFi
  */
 static int intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
 {
-    double a, b, d;
+    double a, b, d, x, y;
 
     a = (a1->x * a2->y - a1->y * a2->x);
     b = (b1->x * b2->y - b1->y * b2->x);
     d = ( (a1->x - a2->x) * (b1->y - b2->y) - (a1->y - a2->y) * (b1->x -b2->x) );
     if (d == 0)
         return 0;
-    *res = doublept((a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d,
-                    (a * (b1->y- b2->y) - (a1->y - a2->y) * b ) / d);
+
+    if (a1->x == a2->x)
+        x = a1->x;
+    else if (b1->x == b2->x)
+        x = b1->x;
+    else
+        x = (a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d;
+
+    if (a1->y == a2->y)
+        y = a1->y;
+    else if (b1->y == b2->y)
+        y = b1->y;
+    else
+        y = (a * (b1->y- b2->y) - (a1->y - a2->y) * b ) / d;
+
+    *res = doublept(x, y);
+
     return 1;
+}
+
+/*
+ * Given a is on the line through p0-p1, we ask whether a falls within
+ * the line segment itself.
+ */
+static int in_range(XPointDouble *a, XPointDouble *p0, XPointDouble *p1)
+{
+    return ( (p0->y <= a->y && a->y <= p1->y ) || (p1->y <= a->y && a->y <= p0->y) ) ||
+         ( (p0->x <= a->x && a->x <= p1->x) || (p1->x <= a->x && a->x <= p0->x) );
+}
+
+/*
+ * Does line segment a1-a2 intersect b1-b2?  If so, res is set to the
+ * intersection point.
+ */
+static int ls_intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
+{
+    return intersect(res, a1, a2, b1, b2) &&
+        in_range(res, a1, a2) && in_range(res, b1, b2);
 }
 
 /*
@@ -3507,138 +3543,8 @@ static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
  */
 static void drawlineinfo1(wcp wc, struct lineinfo *u)
 {
-    if (drawlist.tris) {
-        add_tri(&u->p2, &u->p1, &u->q2);
-        add_tri(&u->q1, &u->p1, &u->q2);
-    } else if (u->dx == 0) {
-        if (u->p1.y < u->q1.y)
-            add_rect(&u->p1, &u->q2);
-        else
-            add_rect(&u->q2, &u->p1);
-    } else if (u->dy == 0) {
-        if (u->p1.x < u->q1.x)
-            add_rect(&u->p2, &u->q1);
-        else
-            add_rect(&u->q1, &u->p2);
-    } else {
-        /*
-         * Each of the four orientations has two cases, depending on
-         * which of the two middle points is higher.  The following
-         * shows the first orientation and second case (p1.y < q2.y).
-         *
-         *            p2 /----
-         *              /     ----                     
-         *             /          ---- 
-         *         w  /               ----             
-         *           /                    ----
-         *          /          s             ---- 
-         *         p1----.........................X---
-         *          |    ----                         ----
-         *          |        --Y-....................... ./ q2
-         *          |            ----         s          /
-         *        dy|                ----               /
-         *          |                len ----          /
-         *          |                        ----     /
-         *          ____________________________ ----/ q1
-         *                        dx
-         *
-         * 
-         * p1 is extended horizontally rightwards to intersect p2-q2
-         * at X, to give distance s, which is easily found since
-         * p1-p2-X is similar to the triangle with sides dx, dy and
-         * len, so s/w = len/dy.
-         * 
-         * This gives the top triangle (p1-p2-X).  The bottom one is
-         * (q1-q2-Y), which is congruent to the top one, and (q2-Y) is
-         * also of length s.
-         * 
-         * The middle trapezoid (p1-X-q2-Y) is empty if p1 and q2 are
-         * the same height, but because those points are calculated
-         * using hypot(), this doesn't occur at all frequently.
-         * 
-         * The first case is very similar, but there q2 is extended
-         * leftwards to intersect p1-p2.  The length of this line (s)
-         * is found from s/len = len/dx.
-         */
-        double s;
-        if (u->dx > 0) {
-            if (u->dy > 0) {
-                if (u->p1.y > u->q2.y) {
-                    s = (u->len * u->len) / u->dx;
-                    add_trap(u->p2.y, u->p2.x, u->p2.x,
-                             u->q2.y, u->q2.x - s, u->q2.x);
-                    add_trap(u->q2.y, u->q2.x - s, u->q2.x,
-                             u->p1.y, u->p1.x, u->p1.x + s);
-                    add_trap(u->p1.y, u->p1.x, u->p1.x + s,
-                             u->q1.y, u->q1.x, u->q1.x);
-                } else {
-                    s = (wc->linewidth * u->len) / u->dy;
-                    add_trap(u->p2.y, u->p2.x, u->p2.x,
-                             u->p1.y, u->p1.x, u->p1.x + s);
-                    add_trap(u->p1.y, u->p1.x, u->p1.x + s,
-                             u->q2.y, u->q2.x - s, u->q2.x);
-                    add_trap(u->q2.y, u->q2.x - s, u->q2.x,
-                             u->q1.y, u->q1.x, u->q1.x);
-                }
-            } else {           /* dx > 0, dy < 0 */
-                if (u->p2.y < u->q1.y) {
-                    s = (u->len * u->len) / u->dx;
-                    add_trap(u->q2.y, u->q2.x, u->q2.x,
-                             u->p2.y, u->p2.x, u->p2.x + s);
-                    add_trap(u->p2.y, u->p2.x, u->p2.x + s,
-                             u->q1.y, u->q1.x - s, u->q1.x);
-                    add_trap(u->q1.y, u->q1.x - s, u->q1.x,
-                             u->p1.y, u->p1.x, u->p1.x);
-                } else {
-                    s = (wc->linewidth * u->len) / -u->dy;
-                    add_trap(u->q2.y, u->q2.x, u->q2.x,
-                             u->q1.y, u->q1.x - s, u->q1.x);
-                    add_trap(u->q1.y, u->q1.x - s, u->q1.x,
-                             u->p2.y, u->p2.x, u->p2.x + s);
-                    add_trap(u->p2.y, u->p2.x, u->p2.x + s,
-                             u->p1.y, u->p1.x, u->p1.x);
-                }
-            }
-        } else {             /* dx < 0 */
-            if (u->dy > 0) {
-                if (u->p2.y > u->q1.y) {
-                    s = (u->len * u->len) / -u->dx;
-                    add_trap(u->p1.y, u->p1.x, u->p1.x,
-                             u->q1.y, u->q1.x, u->q1.x + s);
-                    add_trap(u->q1.y, u->q1.x, u->q1.x + s,
-                             u->p2.y, u->p2.x - s, u->p2.x);
-                    add_trap(u->p2.y, u->p2.x - s, u->p2.x,
-                             u->q2.y, u->q2.x, u->q2.x);
-                } else {
-                    s = (wc->linewidth * u->len) / u->dy;
-                    add_trap(u->p1.y, u->p1.x, u->p1.x,
-                             u->p2.y, u->p2.x - s, u->p2.x);
-                    add_trap(u->p2.y, u->p2.x - s, u->p2.x,
-                             u->q1.y, u->q1.x, u->q1.x + s);
-                    add_trap(u->q1.y, u->q1.x, u->q1.x + s,
-                             u->q2.y, u->q2.x, u->q2.x);
-                }
-            } else {         /* dx < 0, dy < 0 */
-                if (u->p1.y < u->q2.y) {
-                    s = (u->len * u->len) / -u->dx;
-                    add_trap(u->q1.y, u->q1.x, u->q1.x,
-                             u->p1.y, u->p1.x - s, u->p1.x);
-                    add_trap(u->p1.y, u->p1.x - s, u->p1.x,
-                             u->q2.y, u->q2.x, u->q2.x + s);
-                    add_trap(u->q2.y, u->q2.x, u->q2.x + s,
-                             u->p2.y, u->p2.x, u->p2.x);
-                } else {
-                    s = (wc->linewidth * u->len) / -u->dy;
-                    add_trap(u->q1.y, u->q1.x, u->q1.x,
-                             u->q2.y, u->q2.x, u->q2.x + s);
-                    add_trap(u->q2.y, u->q2.x, u->q2.x + s,
-                             u->p1.y, u->p1.x - s, u->p1.x);
-                    add_trap(u->p1.y, u->p1.x - s, u->p1.x,
-                             u->p2.y, u->p2.x, u->p2.x);
-                }
-            }
-        }
-    }
+    add_tri(&u->p2, &u->p1, &u->q2);
+    add_tri(&u->q1, &u->p1, &u->q2);
 }
 
 static void drawlineend(wcp wc,
@@ -3698,7 +3604,8 @@ static void drawlineinfo(wcp wc,
     drawlineinfo1(wc, curr);
 
     if (prev) {
-        XPointDouble *A1, *A2, *C;
+        XPointDouble *A1, *A2, *A3, *C;
+        int no;
 
         /*
          *                  A1      A2
@@ -3709,21 +3616,28 @@ static void drawlineinfo(wcp wc,
          *              /       /    \       \
          *             /       /     /         \
          *            /         \   /            \
-         *           /  prev      \/     curr      \
+         *           /  prev      \/A3   curr      \
          *                        / \
          *                       /   \ 
          *                               
-         * A1, A2 will be in clockwise order.
-         * 
+         * A1, A2 will be in clockwise order.  A3 is only needed if
+         * the other two corners were moved (to A3) to avoid overlap.
+         * The flag no ("no overlap") is set in this case, and the
+         * triangle A1-A2-A3 will be empty.  Otherwise only the
+         * triangle A1-A2-C will be empty.
          */
 
         C = &curr->p0;
         if (crossprod(prev, curr) > 0) {
             A1 = &prev->q2;
             A2 = &curr->p2;
+            A3 = &curr->p1;
+            no = EqPoint(prev->q1, curr->p1);
         } else {
             A1 = &curr->p1;
             A2 = &prev->q1;
+            A3 = &curr->p2;
+            no = EqPoint(prev->q2, curr->p2);
         }
 
         /*
@@ -3736,7 +3650,10 @@ static void drawlineinfo(wcp wc,
             /*
              * The bevel triangle.
              */
-            add_tri(C, A1, A2);
+            if (no)
+                add_tri(A1, A2, A3);
+            else
+                add_tri(A1, A2, C);
 
             /*
              * The miter triangle.
@@ -3746,6 +3663,13 @@ static void drawlineinfo(wcp wc,
 
         } else {
             double radius, a1, a2;
+
+            if (no) {
+                /* Fill in the gaps around C */
+                add_tri(A1, A3, C);
+                add_tri(A2, A3, C);
+            }
+
             /*
              * Add an arc between the segments, in about the same
              * region as occupied by the bevel triangle above.
@@ -3851,6 +3775,49 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     free_drawlist();
 }
 
+/*
+ * Perhaps adjust two of the points of the given lineinfos to try to
+ * avoid overlapping drawing areas.  The intersection of the
+ * overlapping line is found and the two points moved.  In the
+ * following example, corresponding to the second if, prev.q2 is moved
+ * left and curr.p2 right to *.  The areas then drawn will not
+ * overlap: for prev, p2->*->q1->p1 and for curr p2->*->p1->q1.  The
+ * area thus left undrawn is prev.q1->*->curr->p1.
+ * 
+ *                              /
+ *                            /        
+ *                          /         ^
+ *   p2 ------------------*- q2    curr
+ *   |                   /   |  
+ *   |                  p2\  |        
+ *   p0       -->--          q0       /
+ *   |        prev           |\     /
+ *   |                       |  \ /
+ *   p1 ---------------------q1   p1
+ *
+ * 
+ * Overlapping drawing can't always be avoided, and can still occur in
+ * two ways.  Firstly, the two edges may not intersect, if the two
+ * segments are almost overlapping; then the shape is too complex to
+ * draw without overlapping.  Secondly, in extreme cases the corner
+ * points might be adjusted so far that they cross; for example a very
+ * thick horizontal segments with two segments below it forming a
+ * triangle.
+  */
+static void adjustlineinfo(struct lineinfo *prev, struct lineinfo *curr)
+{
+    double x;
+    XPointDouble p;
+    x = crossprod(prev, curr);
+    if (x > 0) {
+        if (ls_intersect(&p, &curr->p1, &curr->q1, &prev->p1, &prev->q1))
+            curr->p1 = prev->q1 = p;
+    } else if (x < 0) {
+        if (ls_intersect(&p, &curr->p2, &curr->q2, &prev->p2, &prev->q2))
+            curr->p2 = prev->q2 = p;
+    }
+}
+
 void drawlines(wbp w, struct point *points, int npoints)
 {
     wcp wc = w->context;
@@ -3860,19 +3827,23 @@ void drawlines(wbp w, struct point *points, int npoints)
 
     if (npoints < 2)
         return;
-    closed = points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y;
+    closed = EqPoint(points[npoints - 1], points[0]);
 
     lis = safe_malloc((npoints - 1) * sizeof(struct lineinfo));
     pd1 = adjustpoint(wc, points, npoints, 0, closed);
     nlis = 0;
     for (i = 1; i < npoints; ++i) {
         pd2 = adjustpoint(wc, points, npoints, i, closed);
-        if (pd1.x != pd2.x || pd1.y != pd2.y) {
+        if (!EqPoint(pd1, pd2)) {
             getlineinfo(wc, &pd1, &pd2, &lis[nlis]);
+            if (nlis > 0)
+                adjustlineinfo(&lis[nlis - 1], &lis[nlis]);
             nlis++;
             pd1 = pd2;
         }
     }
+    if (closed && nlis > 1)
+        adjustlineinfo(&lis[nlis - 1], &lis[0]);
 
     drawlineinfos(w, lis, nlis, closed);
     free(lis);
@@ -5644,19 +5615,6 @@ static int compare_event_segment(struct event *ev, struct segment *seg)
     return i;
 }
 
-static int segment_in_range(struct segment *s, XPointDouble *p)
-{
-    return ( (s->p0.y <= p->y && p->y <= s->p1.y ) || (s->p1.y <= p->y && p->y <= s->p0.y) ) &&
-         ( (s->p0.x <= p->x && p->x <= s->p1.x) || (s->p1.x <= p->x && p->x <= s->p0.x) );
-}
-
-static int segment_intersect(XPointDouble *res, struct segment *a, struct segment *b)
-{
-    return intersect(res, &a->p0, &a->p1, &b->p0, &b->p1) &&
-        segment_in_range(a, res) &&
-        segment_in_range(b, res);
-}
-
 static void cross_check(double y, struct segment *a, struct segment *b)
 {
     XPointDouble p;
@@ -5671,7 +5629,7 @@ static void cross_check(double y, struct segment *a, struct segment *b)
     if (poly_debug)
         printf("Cross check y = %f segs = %d %d\n", y, segment_num(a), segment_num(b));
 
-    if (segment_intersect(&p, a, b) && p.y > y) {
+    if (ls_intersect(&p, &a->p0, &a->p1, &b->p0, &b->p1) && p.y > y) {
         if (poly_debug)
             printf("\tIntersection found at (%f, %f)\n", p.x, p.y);
         ev = safe_malloc(sizeof(struct event));
