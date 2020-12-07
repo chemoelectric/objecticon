@@ -91,6 +91,10 @@ function ssl_SslStream_new_impl(other, host)
 
        p->ssl = ssl;
 
+       /* Limit security level to a maximum of 1 */
+       if (SSL_get_security_level(ssl) > 1)
+           SSL_set_security_level(ssl, 1);
+
        return C_integer((word)p);
    }
 end
