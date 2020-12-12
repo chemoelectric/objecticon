@@ -3707,34 +3707,6 @@ static void drawlineinfos_impl(wbp w, struct lineinfo *lis, int nlis, int closed
     }
 }
 
-static XPointDouble adjustpoint(wcp wc, struct point *points, int npoints, int i, int closed)
-{
-    XPointDouble pd;
-    pd.x = points[i].x;
-    pd.y = points[i].y;
-    /*
-     * If the linewidth is odd, shift exactly horizontal and vertical
-     * segments lying on exact pixel lines by 0.5 pixel so that they
-     * are not output with anti-aliased edges.
-     */
-    if (fmod(wc->linewidth, 2) == 1) {
-        struct point *next, *prev;
-        if (i > 0)
-            prev = &points[i - 1];
-        else
-            prev = closed ? &points[npoints - 1] : 0;
-        if (i < npoints - 1)
-            next = &points[i + 1];
-        else
-            next = closed ? &points[0] : 0;
-        if ((prev && prev->x == points[i].x && fmod(prev->x, 1.0) == 0) || (next && next->x == points[i].x && fmod(next->x, 1.0) == 0))
-            pd.x += 0.5;
-        if ((prev && prev->y == points[i].y && fmod(prev->y, 1.0) == 0) || (next && next->y == points[i].y && fmod(next->y, 1.0) == 0))
-            pd.y += 0.5;
-    }
-    return pd;
-}
- 
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
 {
     wsp ws = w->window;
@@ -3823,19 +3795,19 @@ void drawlines(wbp w, struct point *points, int npoints)
     wcp wc = w->context;
     struct lineinfo *lis;
     int nlis, i, closed;
-    XPointDouble pd1, pd2;
+    XPointDouble *pd1, *pd2;
 
     if (npoints < 2)
         return;
     closed = EqPoint(points[npoints - 1], points[0]);
 
     lis = safe_malloc((npoints - 1) * sizeof(struct lineinfo));
-    pd1 = adjustpoint(wc, points, npoints, 0, closed);
+    pd1 = (XPointDouble *)&points[0];
     nlis = 0;
     for (i = 1; i < npoints; ++i) {
-        pd2 = adjustpoint(wc, points, npoints, i, closed);
-        if (!EqPoint(pd1, pd2)) {
-            getlineinfo(wc, &pd1, &pd2, &lis[nlis]);
+        pd2 = (XPointDouble *)&points[i];
+        if (!EqPoint(*pd1, *pd2)) {
+            getlineinfo(wc, pd1, pd2, &lis[nlis]);
             if (nlis > 0)
                 adjustlineinfo(&lis[nlis - 1], &lis[nlis]);
             nlis++;
