@@ -436,8 +436,8 @@ typedef struct _wbinding {
 } wbinding, *wbp;
 
 struct filter {
-   wbp w;
    struct imgdata *imd;
+   int x, y, width, height;
    void (*f)(struct filter *);
    union {
       struct {
@@ -449,6 +449,7 @@ struct filter {
       } coerce;
       struct {
          int nband, c, m;
+         int br, bb, bg;
       } shade;
    } p;
 };

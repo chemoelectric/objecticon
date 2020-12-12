@@ -561,72 +561,6 @@ function graphics_Pixels_to_file(self, fname)
    }
 end
 
-function graphics_Window_filter(self, x0, y0, w0, h0, spec)
-   body {
-      int x, y, width, height;
-      struct filter *filter;
-      struct imgdata *imd;
-      int i, nfilter;
-      GetSelfW();
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      if (is:list(spec)) {
-          struct lgstate state;
-          tended struct b_lelem *le;
-          tended struct descrip elem;
-          nfilter = ListBlk(spec).size;
-          filter = safe_malloc(nfilter * sizeof(struct filter));
-          for (le = lgfirst(&ListBlk(spec), &state); le;
-               le = lgnext(&ListBlk(spec), &state, le)) {
-              elem = le->lslots[state.result];
-              if (!cnv:string(elem, elem)) {
-                  free(filter);
-                  runerr(103, elem);
-              }
-              if (!parsefilter(self_w, buffstr(&elem), &filter[state.listindex - 1])) {
-                  LitWhy("Invalid filter");
-                  free(filter);
-                  fail;
-              }
-          }
-      } else {
-          if (!cnv:string(spec, spec))
-              runerr(103, spec);
-
-          filter = safe_malloc(sizeof(struct filter));
-          nfilter = 1;
-          if (!parsefilter(self_w, buffstr(&spec), &filter[0])) {
-              LitWhy("Invalid filter");
-              free(filter);
-              fail;
-          }
-      }
-
-      if (!reducerect(self_w, 1, &x, &y, &width, &height)) {
-          free(filter);
-          return self;
-      }
-
-      imd = newimgdata();
-      imd->width = width;
-      imd->height = height;
-      captureimgdata(self_w, x, y, imd);
-
-      for (i = 0; i < nfilter; ++i) {
-          filter[i].imd = imd;
-          filter[i].f(&filter[i]);
-      }
-
-      drawimgdata(self_w, x, y, imd, 1);
-      unlinkimgdata(imd);
-      free(filter);
-
-      return self;
-   }
-end
-
 function graphics_Window_query_root_pointer_impl(self)
    body {
       int x, y;
@@ -2237,6 +2171,37 @@ function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
               id2->format->setpixel(id2, x2 + i2, y2 + j2, r, g, b, a);
           }
       }
+      return self;
+   }
+end
+
+function graphics_Pixels_filter(self, x0, y0, w0, h0, spec)
+   body {
+      int x, y, width, height;
+      struct filter filter;
+      GetSelfPixels();
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (!cnv:string(spec, spec))
+          runerr(103, spec);
+
+      if (!parsefilter(buffstr(&spec), &filter)) {
+          LitWhy("Invalid filter");
+          fail;
+      }
+
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          return self;
+
+      filter.imd = self_id;
+      filter.x = x;
+      filter.y = y;
+      filter.width = width;
+      filter.height = height;
+      filter.f(&filter);
+
       return self;
    }
 end

@@ -386,9 +386,9 @@ end
 # Return a valid icon filter string value from the environment.
 #
 procedure env_filter(s)
-   local f, w
+   local f, p
    f := env_string(s) | fail
-   use{ w := new_win(), w.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
+   use{ p := Pixels(1, 1), p.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
    return f
 end
 

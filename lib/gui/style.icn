@@ -121,7 +121,7 @@ class Style()
    end
 
    public shade_rectangle(W, x, y, w, h)
-      W.filter(x, y, w, h, SHADE_FILTER)
+      W.filter(x, y, w, h, SHADE_FILTER || ":" || W.get_bg())
       link
    end
 

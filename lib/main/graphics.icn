@@ -184,6 +184,12 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
                           dest, x2, y2, width2, height2)
 
    #
+   # Filter the given set of pixels according to the given filter
+   # spec.
+   #
+   public native filter(x, y, width, height, filter)
+
+   #
    # Encode the image to a file.
    #
    public native to_file(fname)
@@ -1353,7 +1359,17 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    # Filter the given pixels according to the given filter spec.
    #
-   public native filter(x, y, width, height, filter)
+   public filter(x, y, width, height, filter)
+      local r, p
+      return if r := drawable(x, y, width, height) then
+         use {
+            p := get_pixels!r,
+            if p.filter(,,,, filter) then
+               draw_image(r.x, r.y, p)
+         }
+      else
+         self
+   end
 
    #
    # Return a `Rectangle` record, representing that part of the given

@@ -227,7 +227,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y);
    wbp  couplewindows   (wbp w1, wbp w2);
    void freewbinding(wbp w);
    void drawcurve       (wbp w, struct point *p, int n);
-   int  parsefilter     (wbp w, char *s, struct filter *res);
+   int  parsefilter     (char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, double *sz);
    void qevent          (wsp ws, dptr e, int x, int y, word t, int mod);
    void qeventcode      (wsp, int);
