@@ -1916,6 +1916,29 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
+function graphics_Window_palette_key_rgb(s1, r, g, b)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   body {
+      int p;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
+          fail;
+      }
+      if (r < 0 || r > 65535 || g < 0 || g > 65535 || b < 0 || b > 65535) {
+          LitWhy("Invalid RGB value");
+          fail;
+      }
+      return string(1, rgbkey(p, r, g, b));
+   }
+end
+
 function graphics_Window_get_default_font()
    body {
        return C_string defaultfont;
@@ -2256,7 +2279,11 @@ function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
           LitWhy("Out of range");
           fail;
       }
-      self_id->format->setpixel(self_id, x, y, r & 0xffff, g & 0xffff, b & 0xffff, a & 0xffff);
+      if (r < 0 || r > 65535 || g < 0 || g > 65535 || b < 0 || b > 65535 || a < 0 || a > 65535) {
+          LitWhy("Invalid RGBA value");
+          fail;
+      }
+      self_id->format->setpixel(self_id, x, y, r, g, b, a);
       return self;
    }
 end
@@ -2449,11 +2476,15 @@ function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
           LitWhy("Out of range");
           fail;
       }
+      if (r < 0 || r > 65535 || g < 0 || g > 65535 || b < 0 || b > 65535 || a < 0 || a > 65535) {
+          LitWhy("Invalid RGBA value");
+          fail;
+      }
       e = &self_id->paltbl[i];
-      e->r = r & 0xffff;
-      e->g = g & 0xffff;
-      e->b = b & 0xffff;
-      e->a = a & 0xffff;
+      e->r = r;
+      e->g = g;
+      e->b = b;
+      e->a = a;
       return self;
    }
 end

@@ -1314,6 +1314,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public static native palette_key(s1, s2)
 
    #
+   # Like `palette_key()`, but takes integer color values.
+   #
+   public static native palette_key_rgb(s1, r, g, b)
+
+   #
    # Get the default font for a window, as optionally specified with
    # the OI_FONT environment variable.
    #
