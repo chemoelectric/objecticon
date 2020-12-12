@@ -253,7 +253,8 @@ static void shadefilter(struct filter *f)
             k = grey_band(f->p.shade.nband, r, g, b);
             if (k != bk) {
                 v = f->p.shade.c + f->p.shade.m * k;
-                if (v > 65535) v = 65535;
+                if (v < 0) v = 0;
+                else if (v > 65535) v = 65535;
                 imd->format->setpixel(imd, i, j, v, v, v, a);
             }
         }
