@@ -790,10 +790,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
          draw_image(,, v)
       } else use {
          v := Pixels(v),
-         {
-            set_size(v.get_width(), v.get_height())
-            draw_image(,, v)
-         }
+         set_image(v)
       }
    end
 
@@ -1553,10 +1550,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       w := Window() | fail
       use {
          t := w.clone(),
-         {
-            t.set_draw_op("source")
-            t.set_image(img)
-         }
+         t.set_draw_op("source").set_image(img)
       } | {
          w.close()
          fail

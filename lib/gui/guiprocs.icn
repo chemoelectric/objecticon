@@ -1158,10 +1158,7 @@ procedure open_image(img)
    w := new_win()
    use {
       t := w.clone(),
-      {
-         t.set_draw_op("source")
-         t.set_image(img)
-      }
+      t.set_draw_op("source").set_image(img)
    } | {
       w.close()
       fail

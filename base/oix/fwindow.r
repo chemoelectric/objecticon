@@ -1124,7 +1124,7 @@ function graphics_Window_set_draw_op(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid draw_op");
+       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid draw op");
        return self;
    }
 end
