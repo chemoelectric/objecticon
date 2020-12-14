@@ -1252,7 +1252,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     }
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     gb_Bitmap *bm;
     gb_Draw d;
@@ -1262,7 +1262,7 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
         return;
     mk_Draw(w, &d);
     bm = imgdata_to_temp_bitmap(imd, ix - x, iy - y, iw, ih);
-    gb_draw_Bitmap(&d, ix, iy, bm, copy);
+    gb_draw_Bitmap(&d, ix, iy, bm);
     gb_free_Bitmap(bm);
 }
 

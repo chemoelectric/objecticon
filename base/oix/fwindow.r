@@ -273,7 +273,7 @@ function graphics_Window_draw_image_impl(self, x0, y0, d)
           runerr(0);
       {
       PixelsStaticParam(d, id);
-      drawimgdata(self_w, x, y, id, 0);
+      drawimgdata(self_w, x, y, id);
       }
       return self;
    }

@@ -4217,7 +4217,7 @@ void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2
         imd->width = width;
         imd->height = height;
         captureimgdata(w, x, y, imd);
-        drawimgdata(w2, x2, y2, imd, 0);
+        drawimgdata(w2, x2, y2, imd);
         unlinkimgdata(imd);
     }
 }
@@ -4236,7 +4236,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     wcp wc = w->context;
@@ -4254,26 +4254,15 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
     pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     clip(w);
 
-    if (copy)
-        XRenderComposite(wd->display,
-                         PictOpSrc,             /* op */
-                         pic,                   /* src */
-                         None,                  /* mask */
-                         ws->ppic,              /* dest */
-                         0, 0,                  /* src x,y */
-                         0, 0,                  /* mask x,y */
-                         ix, iy,                /* dst x,y */
-                         iw, ih);
-    else
-        XRenderComposite(wd->display,
-                         wc->drawop->i,         /* op */
-                         pic,                   /* src */
-                         get_mask_picture(wc),  /* mask */
-                         ws->ppic,              /* dest */
-                         0, 0,                  /* src x,y */
-                         ix, iy,                /* mask x,y */
-                         ix, iy,                /* dst x,y */
-                         iw, ih);
+    XRenderComposite(wd->display,
+                     wc->drawop->i,         /* op */
+                     pic,                   /* src */
+                     get_mask_picture(wc),  /* mask */
+                     ws->ppic,              /* dest */
+                     0, 0,                  /* src x,y */
+                     ix, iy,                /* mask x,y */
+                     ix, iy,                /* dst x,y */
+                     iw, ih);
 
     pix_to_win(ws, ix, iy, iw, ih);
 

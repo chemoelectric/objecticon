@@ -243,7 +243,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y);
    int reducehline(wbp w, int clip, int *x, int *width);
    int reducevline(wbp w, int clip, int *y, int *height);
    void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
-   void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy);
+   void drawimgdata(wbp w, int x, int y, struct imgdata *imd);
    struct imgdataformat *getimgdataformat(wbp w);
    int is_png(dptr data);
    int is_jpeg(dptr data);

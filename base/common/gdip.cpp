@@ -115,13 +115,11 @@ void gb_pix_to_win(gb_Draw *d, int x, int y, int width, int height)
 }
 
 extern "C"
-void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *src, int copy)
+void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *src)
 {
     Graphics *g = get_graphics(d);
     Bitmap *bm = (Bitmap *)src;
     if (draw_debug) dbg("Draw Bitmap at %d, %d\n", x, y);
-    if (copy)
-        g->SetCompositingMode(CompositingModeSourceCopy);
     g->DrawImage(bm, x, y);
     gb_pix_to_win(d, x, y, bm->GetWidth(), bm->GetHeight());
     delete g;
