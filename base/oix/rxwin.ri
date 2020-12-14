@@ -4217,7 +4217,7 @@ void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2
         imd->width = width;
         imd->height = height;
         captureimgdata(w, x, y, imd);
-        drawimgdata(w2, x2, y2, imd);
+        drawimgdata(w2, x2, y2, imd, 0, 0, width, height);
         unlinkimgdata(imd);
     }
 }
@@ -4236,21 +4236,16 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int x2, int y2, int w2, int h2)
 {
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
-    int ix, iy, iw, ih;
     Pixmap pix;
     Picture pic;
     XRenderPictFormat *format;
 
-    ix = x; iy = y; iw = imd->width; ih = imd->height;
-    if (!reducerect(w, 1, &ix, &iy, &iw, &ih))
-        return;
-
-    pix = imgdata_to_Pixmap(wd, imd, ix - x, iy - y, iw, ih, 32, &format);
+    pix = imgdata_to_Pixmap(wd, imd, x2, y2, w2, h2, 32, &format);
     pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     clip(w);
 
@@ -4260,11 +4255,11 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
                      get_mask_picture(wc),  /* mask */
                      ws->ppic,              /* dest */
                      0, 0,                  /* src x,y */
-                     ix, iy,                /* mask x,y */
-                     ix, iy,                /* dst x,y */
-                     iw, ih);
+                     x, y,                  /* mask x,y */
+                     x, y,                  /* dst x,y */
+                     w2, h2);
 
-    pix_to_win(ws, ix, iy, iw, ih);
+    pix_to_win(ws, x, y, w2, h2);
 
     XFreePixmap(wd->display, pix);
     XRenderFreePicture(wd->display, pic);

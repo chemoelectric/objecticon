@@ -265,15 +265,31 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_image_impl(self, x0, y0, d)
+function graphics_Window_draw_image_impl(self, dx, dy, src, sx, sy, sw, sh)
    body {
-      int x, y;
+      int ox, oy, x, y, x2, y2, w2, h2;
       GetSelfW();
-      if (pointargs_def(self_w, &x0, &x, &y) == Error)
+      if (pointargs_def(self_w, &dx, &x, &y) == Error)
           runerr(0);
       {
-      PixelsStaticParam(d, id);
-      drawimgdata(self_w, x, y, id);
+      PixelsStaticParam(src, id);
+      if (pixels_rectargs(id, &sx, &x2, &y2, &w2, &h2) == Error)
+          runerr(0);
+      ox = x2;
+      oy = y2;
+      if (!pixels_reducerect(id, &x2, &y2, &w2, &h2))
+          return self;
+      x += (x2 - ox);
+      y += (y2 - oy);
+
+      ox = x;
+      oy = y;
+      if (!reducerect(self_w, 1, &x, &y, &w2, &h2))
+          return self;
+      x2 += (x - ox);
+      y2 += (y - oy);
+
+      drawimgdata(self_w, x, y, id, x2, y2, w2, h2);
       }
       return self;
    }

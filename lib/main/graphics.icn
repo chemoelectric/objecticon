@@ -1183,19 +1183,22 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public native draw_curve(a[])
 
    #
-   # Draw an image at `x`, `y`.  The image `v` can be raw image data,
+   # Draw an image at `x1`, `y1`.  The image `src` can be raw image data,
    # a filename, or a `Pixels` instance.
    #
-   public draw_image(x, y, v)
-      return if is(v, Pixels) then
-         draw_image_impl(x, y, v)
+   # The optional parameters after `src` specify a region of the source
+   # image to copy; they default to the whole image.
+   #
+   public draw_image(x1, y1, src, x2, y2, width, height)
+      return if is(src, Pixels) then
+         draw_image_impl(x1, y1, src, x2, y2, width, height)
       else use {
-         v := Pixels(v),
-         draw_image_impl(x, y, v)
+         src := Pixels(src),
+         draw_image_impl(x1, y1, src, x2, y2, width, height)
       }
    end
 
-   private native draw_image_impl(x, y, pix)
+   private native draw_image_impl(x1, y1, src, x2, y2, width, height)
 
    #
    # Copy a rectangular area from this window to another window, `dest`, at `x2`.
