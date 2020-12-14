@@ -1357,15 +1357,20 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # Filter the given pixels according to the given filter spec.
    #
    public filter(x, y, width, height, filter)
-      local r, p
-      return if r := drawable(x, y, width, height) then
+      local r, p, t
+      if r := drawable(x, y, width, height) then
          use {
             p := get_pixels!r,
-            if p.filter(,,,, filter) then
-               draw_image(r.x, r.y, p)
-         }
-      else
-         self
+            if p.filter(,,,, filter) then {
+               use {
+                  t := clone(),
+                  t.set_draw_op("source").
+                     set_mask().
+                     draw_image(r.x, r.y, p)
+               }
+            }
+         } | fail
+      link
    end
 
    #
