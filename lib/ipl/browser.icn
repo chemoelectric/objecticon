@@ -5169,9 +5169,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       cursor_x := e.x - view.inner.x
       cursor_y := e.y - view.inner.y
       cursor_x <:= get_area_x()
-      cursor_x >:= get_area_x() + view.w
+      cursor_x >:= get_area_x() + view.w - 1
       cursor_y <:= get_area_y()
-      cursor_y >:= get_area_y() + view.h
+      cursor_y >:= get_area_y() + view.h - 1
    end
 
    private handle_ldrag(e)
@@ -5187,7 +5187,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if cursor_y > 0 & e.y < self.view.y then {
          v_direction := "up"
          check_scroll_ticker(self.view.y - e.y)
-      } else if cursor_y < view.inner.h & e.y >= self.view.y + self.view.h then {
+      } else if cursor_y < view.inner.h - 1 & e.y >= self.view.y + self.view.h then {
          v_direction := "down"
          check_scroll_ticker(e.y - (self.view.y + self.view.h))
       } else
@@ -5196,7 +5196,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if cursor_x > 0 & e.x < self.view.x then {
          h_direction := "left"
          check_scroll_ticker(self.view.x - e.x)
-      } else if cursor_x < view.inner.w & e.x >= self.view.x + self.view.w then {
+      } else if cursor_x < view.inner.w - 1 & e.x >= self.view.x + self.view.w then {
          h_direction := "right"
          check_scroll_ticker(e.x - (self.view.x + self.view.w))
       } else
@@ -5209,21 +5209,19 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public get_band_rect()
       local x1, y1, x2, y2
       \mark_x | fail
-      if mark_x = mark_y & cursor_x = cursor_y then
+      # A 1x1 pixel drawn with the "gray" pattern is invisible 50% of
+      # the time, so require that we have more than one pixel.
+      if mark_x = cursor_x & mark_y = cursor_y then
          fail
       y1 := mark_y
       y2 := cursor_y
       if y2 < y1 then
          y1 :=: y2
-      else if y2 = y1 then
-         y2 +:= 1
       x1 := mark_x
       x2 := cursor_x
       if x2 < x1 then
          x1 :=: x2
-      else if x2 = x1 then
-         x2 +:= 1
-      return Rect(view.inner.x + x1, view.inner.y + y1, x2 - x1, y2 - y1)
+      return Rect(view.inner.x + x1, view.inner.y + y1, x2 - x1 + 1, y2 - y1 + 1)
    end
 
    public override layout()
@@ -5282,9 +5280,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                }
             }
             "down": {
-               if cursor_y < view.inner.h then {
-                  cursor_y := min(view.inner.h, cursor_y + SCROLL_INCREMENT)
-                  set_area_y(cursor_y - view.h)
+               if cursor_y < view.inner.h - 1 then {
+                  cursor_y := min(view.inner.h - 1, cursor_y + SCROLL_INCREMENT)
+                  set_area_y(cursor_y - view.h + 1)
                   f := &yes
                }
             }
@@ -5298,9 +5296,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                }
             }
             "right": {
-               if cursor_x < view.inner.w then {
-                  cursor_x := min(view.inner.w, cursor_x + SCROLL_INCREMENT)
-                  set_area_x(cursor_x - view.w)
+               if cursor_x < view.inner.w - 1 then {
+                  cursor_x := min(view.inner.w - 1, cursor_x + SCROLL_INCREMENT)
+                  set_area_x(cursor_x - view.w + 1)
                   f := &yes
                }
             }
