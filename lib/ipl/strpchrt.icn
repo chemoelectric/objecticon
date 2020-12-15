@@ -62,18 +62,12 @@ record StripChart_Rec(win, x0, y, w, h, x, n, last)
 
 # create stripchart
 procedure stripchart(win, x, y, w, h)		
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
+   local r
 
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
+   r := win.canonical(x, y, w, h)
 
-   win.erase_area(x, y, w, h)
-   return StripChart_Rec(win, x, y, w, h, x, 0, list(y + h, -1))
+   win.erase_area!r
+   return StripChart_Rec(win, r.x, r.y, r.width, r.height, r.x, 0, list(r.y + r.height, -1))
 end
 
 

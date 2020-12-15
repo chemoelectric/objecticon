@@ -76,11 +76,7 @@ end
 
 # check point within rectangle
 procedure InBounds(x, y, w, h, AmperX, AmperY)			
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
-   return (x <= AmperX <= x + w) & (y <= AmperY <= y + h) & &null
+   succeed (x <= AmperX < x + w) & (y <= AmperY < y + h)
 end
 
 
@@ -97,15 +93,10 @@ procedure ScratchCanvas(win, w, h, id)
 
    /w := win.get_width()
    /h := win.get_height()
-   w <:= 100				# if too teeny, can't open
-   h <:= 100
 
    d := win.get_display()
    s := d || "," || image(id)
-   /dpytab[s] := Window(d).set_size(w, h)
-   win := dpytab[s]
-   if /win then
-      fail
+   (win := member(dpytab, s)) | insert(dpytab, s, win := Window(d)) | fail
    if win.get_width() < w | win.get_height() < h then
       win.set_size(w, h)
    return win

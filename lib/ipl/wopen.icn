@@ -117,41 +117,35 @@ end
 #  ZDone(win) -- like WDone(), but zoom window if resized while waiting
 
 procedure ZDone(win)
-   local org, e, w, h, ww, hh, x0, y0
+   local org, e, w, h, ww, hh
 
-   x0 := -win.get_dx()
-   y0 := -win.get_dy()
    w := win.get_width()
    h := win.get_height()
    org := Window().set_size(w, h) | WDone()
-   win.copy_to(x0, y0,,, org)
+   win.copy_to(,,,, org)
    win.set_resize(&yes)
-   while e := WEvent(win)[1] do case e of {
+   while e := WEvent(win) do case e[1] of {
       QuitEvents():
          exit()
       Window.RESIZE:
-         Zoom(org, win, , , , , x0, y0)
+         Zoom(org,,,,, win)
       !"123456789": {
-         ww := e * w
-         hh := e * h
-         win.set_size(ww, hh)
-         Zoom(org, win, , , , , x0, y0, ww, hh)
+         if e[5] = 0 then {
+            ww := e[1] * w
+            hh := e[1] * h
+            win.set_size(ww, hh)
+            Zoom(org,,,,, win)
+            }
          }
       }
 end
 
 procedure SubWindow(win, x, y, w, h)
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
+   local r
 
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
+   r := win.canonical(x, y, w, h)
 
-   win := win.clone().set_dx(win.get_dx() + x).set_dy(win.get_dy() + y)
-   win.clip( 0, 0, w, h)
+   win := win.clone().set_dx(win.get_dx() + r.x).set_dy(win.get_dy() + r.y)
+   win.clip( 0, 0, r.width, r.height)
    return win
 end
