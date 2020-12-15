@@ -757,7 +757,9 @@ function graphics_Window_get_canvas(self)
    }
 end
 
-function graphics_Window_drawable_impl(self, x0, y0, w0, h0)
+function graphics_Window_rectangle_impl(self, mode, x0, y0, w0, h0)
+   if !cnv:C_integer(mode) then
+       runerr(101, mode)
    body {
       tended struct descrip result;
       struct descrip t;
@@ -769,37 +771,10 @@ function graphics_Window_drawable_impl(self, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!reducerect(self_w, 1, &x, &y, &width, &height))
-          fail;
-
-      create_list(4, &result);
-      MakeInt(x - wc->dx, &t);
-      list_put(&result, &t);
-      MakeInt(y - wc->dy, &t);
-      list_put(&result, &t);
-      MakeInt(width, &t);
-      list_put(&result, &t);
-      MakeInt(height, &t);
-      list_put(&result, &t);
-
-      return result;
-   }
-end
-
-function graphics_Window_viewable_impl(self, x0, y0, w0, h0)
-   body {
-      tended struct descrip result;
-      struct descrip t;
-      wcp wc;
-      int x, y, width, height;
-      GetSelfW();
-      wc = self_w->context;
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      if (!reducerect(self_w, 0, &x, &y, &width, &height))
-          fail;
+      if (mode < 2) {
+          if (!reducerect(self_w, mode, &x, &y, &width, &height))
+              fail;
+      }
 
       create_list(4, &result);
       MakeInt(x - wc->dx, &t);

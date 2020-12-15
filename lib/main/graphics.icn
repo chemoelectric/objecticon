@@ -1382,20 +1382,34 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # intersection of the rectangle, the window and the clip area if
    # set.  If the result would be an empty area, the method fails.
    #
+   # `x` and `y` default to the top left of the window, whilst `width`
+   # and `height` default to extending to the right or bottom edge
+   # respectively.
+   #
    public drawable(x, y, width, height)
-      return Rectangle!drawable_impl(x, y, width, height)
+      return Rectangle!rectangle_impl(1, x, y, width, height)
    end
-
-   private native drawable_impl(x, y, width, height)
 
    #
    # This is the same as `drawable`, but ignores the clip region.
    #
    public viewable(x, y, width, height)
-      return Rectangle!viewable_impl(x, y, width, height)
+      return Rectangle!rectangle_impl(0, x, y, width, height)
    end
 
-   private native viewable_impl(x, y, width, height)
+   #
+   # Return a `Rectangle` created from the given parameters, after
+   # applying the same defaults as `drawable()`.  Negative width or
+   # height values are set to zero.
+   #
+   # The resulting rectangle may be partially or fully off-screen, or
+   # empty.
+   #
+   public canonical(x, y, width, height)
+      return Rectangle!rectangle_impl(2, x, y, width, height)
+   end
+
+   private native rectangle_impl(mode, x, y, width, height)
 
    #
    # Return the current root pointer position as a `Point` record.
