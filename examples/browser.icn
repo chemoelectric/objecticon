@@ -1971,7 +1971,8 @@ procedure main(a)
    # Save cookies
    atomic_encode_to_file(cookies_file, Cookie.expire_cookies(cookies)) | 
       stopf("Couldn't encode to cookies file %s: %w", cookies_file)
-   # Save settings
+   # Save settings.  Clear any local "cache:" data first.
+   (\settings.cache).clear_local()
    encode_to_file(settings_file, settings,, &yes) |
       stopf("Couldn't encode to settings file %s: %w", settings_file)
 end

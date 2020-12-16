@@ -24,6 +24,8 @@
 
 #define Copying(ws) ((ws)->win && !(ws)->holding)
 
+#define EqPoint(p, q) ((p).x == (q).x && (p).y == (q).y)
+
 /*
  * Global variables specific to X
  */
@@ -35,13 +37,13 @@ struct lineinfo {
     XPointDouble p0, q0, p1, p2, q1, q2;
 };
 
-struct drawlist
+static struct
 {
     XTrapezoid *traps;
     XTriangle *tris;
     int n;
     int alloc;
-};
+} drawlist;
 
 /*
  * function prototypes
@@ -96,8 +98,9 @@ static void pix_to_win(wsp ws, int x, int y, int width, int height);
 static void synch_pix_and_win(wsp ws, int x, int y, int width, int height);
 static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
-static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
-static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
+static XPointFixed fixedpt(XPointDouble *p);
+static XTriangle triangle(XFixed x1, XFixed y1, XFixed x2, XFixed y2, XFixed x3, XFixed y3);
+static XTrapezoid trapezoid(XFixed top, XFixed x1, XFixed x2, XFixed bottom, XFixed x3, XFixed x4);
 static int needmask(wcp wc, int overlap);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res);
@@ -110,20 +113,21 @@ static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
+static int almost_straight(struct lineinfo *u, struct lineinfo *v);
 static void synch_pos(wsp ws, int new_x, int new_y);
 static char *get_atom_name(wdp wd, Atom a);
 static void mk_hints(wsp ws, XSizeHints *h);
 static char *resource_name, *resource_class, *display;
-static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
-static void init_drawlist(struct drawlist *l, int alloc, int tris);
-static void ensure_drawlist(struct drawlist *l, int need);
-static void free_drawlist(struct drawlist *l);
-static void draw_drawlist(struct drawlist *l, wdp wd, int op, Picture src, Picture dest);
-static void add_trap(struct drawlist *l, double top, double x1, double x2, double bottom, double x3, double x4);
-static void add_rect(struct drawlist *l, XPointDouble *tl, XPointDouble *br);
-static void add_tri(struct drawlist *l, XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
-static void CompositeDoublePoly(wdp wd, int op, Picture src, Picture dst,
-                                struct point *points, int npoints);
+static int intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
+static int in_range(XPointDouble *a, XPointDouble *p0, XPointDouble *p1);
+static int ls_intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2);
+static void init_drawlist(int alloc, int tris);
+static void ensure_drawlist(int need);
+static void free_drawlist(void);
+static void draw_drawlist(wdp wd, int op, Picture src, Picture dest);
+static void add_trap(double top, double x1, double x2, double bottom, double x3, double x4);
+static void add_tri(XPointDouble *p1, XPointDouble *p2, XPointDouble *p3);
+static void mk_polygon(struct point *points, int npoints, int rule);
 static XftFont *fallback(wbp w, int ch);
 static void reset_sending_helper(wdp wd, struct sending_helper *x);
 
@@ -160,8 +164,8 @@ static stringint lineends[] = {
 
 static stringint fillrules[] = {
     {0, 2},
-    {"even-odd",   0},
-    {"non-zero",   1},
+    {"even-odd",   1},
+    {"non-zero",   ~0},
 };
 
 static stringint canvastypes[] = {
@@ -183,6 +187,8 @@ static int max_selection_size = 2 * 1024 * 1024;
 static int max_selection_chunk = 64 * 1024;
 static int selection_debug = 0;
 static int font_debug = 0;
+static int poly_debug = 0;
+static int draw_debug = 0;
 static int triangles = 0;
 
 #if 0
@@ -2924,7 +2930,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     free(pts);
 }
 
-static void traps_mk_ellipse(double cx, double cy, double rx, double ry, struct drawlist *tl)
+static void traps_mk_ellipse(double cx, double cy, double rx, double ry)
 {
     double th, r, pf, x, y, t1x, b, b1, t, t1, b1x;
 
@@ -2936,14 +2942,14 @@ static void traps_mk_ellipse(double cx, double cy, double rx, double ry, struct 
         r = calc_pt(&x, &y, rx, ry, th);
         t = cy - y;
         if (t < t1) {
-            add_trap(tl, t, cx - x, cx + x, t1, cx - t1x, cx + t1x);
+            add_trap(t, cx - x, cx + x, t1, cx - t1x, cx + t1x);
             t1 = t;
             t1x = x;
         }
 
         b = cy + y;
         if (b > b1) {
-            add_trap(tl, b1, cx - b1x, cx + b1x, b, cx - x,  cx + x);
+            add_trap(b1, cx - b1x, cx + b1x, b, cx - x,  cx + x);
             b1 = b;
             b1x = x;
         }
@@ -2954,14 +2960,14 @@ static void traps_mk_ellipse(double cx, double cy, double rx, double ry, struct 
      * r=y=ry, x=0) */
     t = cy - ry;
     if (t < t1)
-        add_trap(tl, t, cx, cx, t1, cx - t1x, cx + t1x);
+        add_trap(t, cx, cx, t1, cx - t1x, cx + t1x);
 
     b = cy + ry;
     if (b > b1)
-        add_trap(tl, b1, cx - b1x, cx + b1x, b, cx,  cx);
+        add_trap(b1, cx - b1x, cx + b1x, b, cx,  cx);
 }
 
-static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle1, double angle2, struct drawlist *tl)
+static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     double th, r, pf;
     XPointDouble C, P, Q, F;
@@ -2981,7 +2987,7 @@ static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle
         P.x += cx;
         P.y += cy;
         if (fabs(Q.x - P.x) >= 1.0 || fabs(Q.y - P.y) >= 1.0) {
-            add_tri(tl, &C, &P, &Q);
+            add_tri(&C, &P, &Q);
             Q = P;
         }
         th += pf / r;
@@ -2996,21 +3002,20 @@ static void tris_mk_arc(double cx, double cy, double rx, double ry, double angle
         P.x += cx;
         P.y += cy;
     }
-    add_tri(tl, &C, &P, &Q);
+    add_tri(&C, &P, &Q);
 }
 
-static void mk_arc(double cx, double cy, double rx, double ry, double angle1, double angle2, struct drawlist *tl)
+static void mk_arc(double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-    if (tl->traps && angle2 == TwoPi)
-        traps_mk_ellipse(cx, cy, rx, ry, tl);
+    if (drawlist.traps && angle2 == TwoPi)
+        traps_mk_ellipse(cx, cy, rx, ry);
     else
-        tris_mk_arc(cx, cy, rx, ry, angle1, angle2, tl);
+        tris_mk_arc(cx, cy, rx, ry, angle1, angle2);
 }
 
 void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     int x, y, width, height;
-    struct drawlist tl;
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
@@ -3023,7 +3028,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, 100, triangles);
+    init_drawlist(100, triangles > 0);
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -3033,69 +3038,64 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
          */
         mk_arc(cx - x, cy - y,    /* centre */
                rx, ry,            /* x/y radius */
-               angle1, angle2, 
-               &tl);
+               angle1, angle2);
         mask = getmask(wd, width, height);
-        draw_drawlist(&tl,
-                      wd, PictOpOver, wd->white->brush,  mask);
+        draw_drawlist(wd, PictOpOver, wd->white->brush,  mask);
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
-        mk_arc(cx, cy, rx, ry, angle1, angle2, &tl);
-        draw_drawlist(&tl,
-                      wd,
+        mk_arc(cx, cy, rx, ry, angle1, angle2);
+        draw_drawlist(wd,
                       wc->drawop->i,
                       get_draw_picture(wc),
                       ws->ppic);
         pix_to_win(ws, x, y, width, height);
     }
 
-    free_drawlist(&tl);
+    free_drawlist();
 }
 
 /*
  * Some simple functions for accumulating an array of XTrapezoids or XTriangles.
  */
 
-static void init_drawlist(struct drawlist *l, int alloc, int tris)
+static void init_drawlist(int alloc, int tris)
 {
-    l->n = 0;
-    if (tris) {
-        l->traps = 0;
-        l->tris = safe_malloc(alloc * sizeof(XTriangle));
-    } else {
-        l->traps = safe_malloc(alloc * sizeof(XTrapezoid));
-        l->tris = 0;
-    }
-    l->alloc = alloc;
+    if (drawlist.traps || drawlist.tris)
+        syserr("init_drawlist() called out of sequence");
+    drawlist.n = 0;
+    if (tris)
+        drawlist.tris = safe_malloc(alloc * sizeof(XTriangle));
+    else
+        drawlist.traps = safe_malloc(alloc * sizeof(XTrapezoid));
+    drawlist.alloc = alloc;
 }
 
-static void free_drawlist(struct drawlist *l)
+static void free_drawlist(void)
 {
-    free(l->traps);
-    free(l->tris);
-    l->traps = 0;
-    l->tris = 0;
-    l->alloc = l->n = 0;
+    free(drawlist.traps);
+    free(drawlist.tris);
+    drawlist.traps = 0;
+    drawlist.tris = 0;
+    drawlist.alloc = drawlist.n = 0;
 }
 
-#if 0
-static void show_drawlist(struct drawlist *l)
+static void show_drawlist(void)
 {
     int i;
-    printf("drawlist %p n=%d alloc=%d %s\n", l, l->n, l->alloc, l->tris ? "triangles":"trapezoids");
-    if (l->tris) {
-        for (i = 0; i < l->n; ++i) {
+    printf("drawlist n=%d alloc=%d %s\n", drawlist.n, drawlist.alloc, drawlist.tris ? "triangles":"trapezoids");
+    if (drawlist.tris) {
+        for (i = 0; i < drawlist.n; ++i) {
             XTriangle t;
-            t = l->tris[i];
+            t = drawlist.tris[i];
             printf("%2d:\tp1 = %d,%d (%f,%f)\n ", i, (int)t.p1.x, (int)t.p1.y, XFixedToDouble(t.p1.x), XFixedToDouble(t.p1.y));
             printf("\tp2 = %d,%d (%f,%f)\n", (int)t.p2.x, (int)t.p2.y, XFixedToDouble(t.p2.x), XFixedToDouble(t.p2.y));
             printf("\tp3 = %d,%d (%f,%f)\n", (int)t.p3.x, (int)t.p3.y, XFixedToDouble(t.p3.x), XFixedToDouble(t.p3.y));
         }
     } else {
-        for (i = 0; i < l->n; ++i) {
+        for (i = 0; i < drawlist.n; ++i) {
             XTrapezoid t;
-            t = l->traps[i];
+            t = drawlist.traps[i];
             printf("%2d:\ttop      = %d (%f)\n ", i, (int)t.top, XFixedToDouble(t.top));
             printf("\tbottom   = %d (%f)\n", (int)t.bottom, XFixedToDouble(t.bottom));
             printf("\tleft  p1 = %d,%d (%f,%f)\n", (int)t.left.p1.x, (int)t.left.p1.y, XFixedToDouble(t.left.p1.x), XFixedToDouble(t.left.p1.y));
@@ -3106,21 +3106,26 @@ static void show_drawlist(struct drawlist *l)
     }
     printf("============\n");
 }
-#endif
 
-static void draw_drawlist(struct drawlist *l, wdp wd, int op, Picture src, Picture dest)
+static void draw_drawlist(wdp wd, int op, Picture src, Picture dest)
 {
+    if (draw_debug)
+        show_drawlist();
+
+    if (drawlist.n == 0)
+        return;
+
     /* src is either a white brush, or the foreground brush (never a
      * pattern). */
-    if (l->traps)
+    if (drawlist.traps)
         XRenderCompositeTrapezoids(wd->display,
                                    op,
                                    src,
                                    dest,
                                    wd->maskfmt,
                                    0, 0,              /* src x,y */
-                                   l->traps,
-                                   l->n);
+                                   drawlist.traps,
+                                   drawlist.n);
     else
         XRenderCompositeTriangles(wd->display,
                                   op,
@@ -3128,42 +3133,50 @@ static void draw_drawlist(struct drawlist *l, wdp wd, int op, Picture src, Pictu
                                   dest,
                                   wd->maskfmt,
                                   0, 0,              /* src x,y */
-                                  l->tris,
-                                  l->n);
+                                  drawlist.tris,
+                                  drawlist.n);
 }
 
-static void ensure_drawlist(struct drawlist *l, int need)
+static void ensure_drawlist(int need)
 {
-    if (l->n + need > l->alloc) {
-        l->alloc = 2 * (l->n + need);
-        if (l->traps)
-            l->traps = safe_realloc(l->traps, l->alloc * sizeof(XTrapezoid) );
+    if (drawlist.n + need > drawlist.alloc) {
+        drawlist.alloc = 2 * (drawlist.n + need);
+        if (drawlist.traps)
+            drawlist.traps = safe_realloc(drawlist.traps, drawlist.alloc * sizeof(XTrapezoid) );
+        else if (drawlist.tris)
+            drawlist.tris = safe_realloc(drawlist.tris, drawlist.alloc * sizeof(XTriangle) );
         else
-            l->tris = safe_realloc(l->tris, l->alloc * sizeof(XTriangle) );
+            syserr("ensure_drawlist() called out of sequence");
     }
 }
 
-#define Swap(a,b) { XPointDouble *v; v = a; a = b; b = v; }
+#define Swap(a,b) { XPointFixed v; v = a; a = b; b = v; }
 
-static void add_tri(struct drawlist *l,
-                    XPointDouble *p1, XPointDouble *p2, XPointDouble *p3)
+static void add_tri(XPointDouble *p10, XPointDouble *p20, XPointDouble *p30)
 {
+    XPointFixed p1, p2, p3;
     XTrapezoid t1, t2;
-    double i;
+    int64_t i;
 
-    if (l->tris) {
-        ensure_drawlist(l, 1);
-        l->tris[l->n++] = triangle(p1->x, p1->y, p2->x, p2->y, p3->x, p3->y);
+    p1 = fixedpt(p10);
+    p2 = fixedpt(p20);
+    p3 = fixedpt(p30);
+
+    /* Compare the gradients of two of the three sides. */
+    i = (int64_t)(p2.x - p1.x) * (int64_t)(p3.y - p2.y) - ((int64_t)(p3.x - p2.x) * (int64_t)(p2.y - p1.y));
+    if (i == 0)     /* The triangle is a straight line. */
+        return;
+
+    if (drawlist.tris) {
+        ensure_drawlist(1);
+        drawlist.tris[drawlist.n++] = triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
         return;
     }
-
-    if (p1->y == p2->y && p2->y == p3->y)
-        return;
 
     /* Sort the points into ascending y order. */
-    if (p1->y > p3->y) { Swap(p1,p3); }
-    if (p1->y > p2->y) { Swap(p1,p2); }
-    if (p2->y > p3->y) { Swap(p2,p3); }
+    if (p1.y > p3.y) { Swap(p1,p3); i = -i; }
+    if (p1.y > p2.y) { Swap(p1,p2); i = -i; }
+    if (p2.y > p3.y) { Swap(p2,p3); i = -i; }
 
     /*
      * Turning a triangle into 2 trapezoids falls into two cases.  In
@@ -3199,65 +3212,60 @@ static void add_tri(struct drawlist *l,
      *        -------------------------x3---------- y3
      * 
      * 
-     * To distinguish the cases, calculate the point i at which the
-     * line p1->p3 crosses the horizontal line y2, and see which side
-     * of x2 it is on.
+     * To distinguish the cases, decide if the point at which the line
+     * p1->p3 crosses the horizontal line y2 is to the left or right
+     * of x2.  This can be determined by comparing the gradients of
+     * p1->p2 and p2->p3, which was calculated above.
      */
 
-    i = p1->x + (p3->x - p1->x) * ((p2 -> y - p1->y) / (p3->y - p1->y));
-    if (i == p2->x)    /* The triangle is a straight line. */
-        return;
-    t1.top = XDoubleToFixed(p1->y);
-    t1.bottom = t2.top = XDoubleToFixed(p2->y);
-    t2.bottom = XDoubleToFixed(p3->y);
-    t1.left.p1.x = XDoubleToFixed(p1->x);
-    t1.left.p1.y = t1.top;          // p1->y
-    t1.right.p1 = t1.left.p1;
-    if (i < p2->x)
+    t1.top = p1.y;
+    t1.bottom = t2.top = p2.y;
+    t2.bottom = p3.y;
+    t1.right.p1 = t1.left.p1 = p1;
+    if (i > 0)
     {
-        t1.left.p2.x = XDoubleToFixed(p3->x);
-        t1.left.p2.y = t2.bottom;   // p3->y
-        t1.right.p2.x = XDoubleToFixed(p2->x);
-        t1.right.p2.y = t1.bottom;  // p2->y
+        t1.left.p2 = p3;
+        t1.right.p2 = t2.right.p1 = p2;
         t2.left = t1.left;
-        t2.right.p1 = t1.right.p2;
         t2.right.p2 = t2.left.p2;
     }
-    else {
-        t1.left.p2.x = XDoubleToFixed(p2->x);
-        t1.left.p2.y = t1.bottom;   // p2->y
-        t1.right.p2.x = XDoubleToFixed(p3->x);
-        t1.right.p2.y = t2.bottom;  // p3->y
+    else {    /* i < 0 */
+        t1.left.p2 = p2;
+        t1.right.p2 = t2.left.p2 = p3;
         t2.left.p1 = t1.left.p2;
-        t2.left.p2 = t1.right.p2;
         t2.right = t1.right;
     }
 
-    ensure_drawlist(l, 2);
+    ensure_drawlist(2);
     if (t1.top != t1.bottom)
-        l->traps[l->n++] = t1;
+        drawlist.traps[drawlist.n++] = t1;
     if (t2.top != t2.bottom)
-        l->traps[l->n++] = t2;
+        drawlist.traps[drawlist.n++] = t2;
 }
 
-static void add_trap(struct drawlist *l,
-                     double top, double x1, double x2, double bottom, double x3, double x4)
+static void add_trap(double top0, double x10, double x20, double bottom0, double x30, double x40)
 {
-    if (l->tris) {
-        ensure_drawlist(l, 2);
+    XFixed top, bottom, x1, x2, x3, x4;
+    top = XDoubleToFixed(top0);
+    bottom = XDoubleToFixed(bottom0);
+    x1 = XDoubleToFixed(x10);
+    x2 = XDoubleToFixed(x20);
+    x3 = XDoubleToFixed(x30);
+    x4 = XDoubleToFixed(x40);
+
+    if (top == bottom || x1 > x2 || x3 > x4 || (x1 == x2 && x3 == x4))
+       return;
+    
+    if (drawlist.tris) {
+        ensure_drawlist(2);
         if (x1 != x2)
-            l->tris[l->n++] = triangle(x1, top, x2, top, x4, bottom);
+            drawlist.tris[drawlist.n++] = triangle(x1, top, x2, top, x4, bottom);
         if (x3 != x4)
-            l->tris[l->n++] = triangle(x1, top, x3, bottom, x4, bottom);
+            drawlist.tris[drawlist.n++] = triangle(x1, top, x3, bottom, x4, bottom);
     } else {
-        ensure_drawlist(l, 1);
-        l->traps[l->n++] = trapezoid(top, x1, x2, bottom, x3, x4);
+        ensure_drawlist(1);
+        drawlist.traps[drawlist.n++] = trapezoid(top, x1, x2, bottom, x3, x4);
     }
-}
-
-static void add_rect(struct drawlist *l, XPointDouble *tl, XPointDouble *br)
-{
-    add_trap(l, tl->y, tl->x, br->x,  br->y, tl->x, br->x);
 }
 
 /*
@@ -3272,6 +3280,9 @@ static void add_rect(struct drawlist *l, XPointDouble *tl, XPointDouble *br)
  *   p1 ---------------------q1      v
  *
  *   <-------- len ---------->
+ * 
+ * The four corner points may be adjusted by adustlineinfo() to avoid
+ * overlapping drawing.
  */
 
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res)
@@ -3290,30 +3301,24 @@ static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct linei
     res->q2 = doublept(q0->x + ex, q0->y + ey);
 }
 
-static XPointDouble get_miter_point(struct lineinfo *prev, struct lineinfo *curr)
-{
-    if (curr->dx * prev->dy > curr->dy * prev->dx)
-        return intersect(&curr->p1, &curr->q1, &prev->p1, &prev->q1);
-    else
-        return intersect(&curr->p2, &curr->q2, &prev->p2, &prev->q2);
-}
-
 static double dotprod(struct lineinfo *u, struct lineinfo *v)
 {
     return u->dx * v->dx + u->dy * v->dy;
 }
 
+static double crossprod(struct lineinfo *u, struct lineinfo *v)
+{
+    return u->dx * v->dy - u->dy * v->dx;
+}
+
 /*
  * Get the angle between two line segments.
  * 
- * This follows easily from the formula for sin(a - b).
+ * This follows from the formula for sin(a - b).
  */
 static double angle_diff(struct lineinfo *u, struct lineinfo *v)
 {
-    double det, s;
-    det = u->dx * v->dy - u->dy * v->dx;
-    s = det / (u->len * v->len);
-    return asin(s);
+    return asin(crossprod(u, v) / (u->len * v->len));
 }
 
 static int almost_straight(struct lineinfo *u, struct lineinfo *v)
@@ -3337,20 +3342,33 @@ static double point_angle(XPointDouble *p, XPointDouble *q)
     return norm_angle(atan2(p->y - q->y, p->x - q->x));
 }
 
+/*
+ * Get the miter point to draw, returning 0 if no point should be
+ * drawn because the segments are too straight.
+ */
+static int get_miter_point(XPointDouble *res, struct lineinfo *prev, struct lineinfo *curr)
+{
+    if (almost_straight(prev, curr))
+        return 0;
+    if (crossprod(prev, curr) > 0)
+        return intersect(res, &curr->p2, &curr->q2, &prev->p2, &prev->q2);
+    else
+        return intersect(res, &curr->p1, &curr->q1, &prev->p1, &prev->q1);
+}
+
 static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x, int *y, int *width, int *height)
 {
     int i;
     double x1, x2, y1, y2;
     x1 = x2 = y1 = y2 = 0.0;
     for (i = 0; i < n; ++i) {
+        XPointDouble m;
         struct lineinfo *li = &lis[i]; 
         if (i == 0) {
             x1 = x2 = li->p1.x;
             y1 = y2 = li->p1.y;
 
-            if (closed && wc->linejoin->i == JoinMiter && !almost_straight(&lis[n - 1], &lis[i])) {
-                XPointDouble m;
-                m = get_miter_point(&lis[n - 1], &lis[i]);
+            if (closed && wc->linejoin->i == JoinMiter && get_miter_point(&m, &lis[n - 1], &lis[i])) {
                 if (m.x < x1) x1 = m.x;
                 if (m.x > x2) x2 = m.x;
                 if (m.y < y1) y1 = m.y;
@@ -3362,9 +3380,7 @@ static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x,
             if (li->p1.x > x2) x2 = li->p1.x;
             if (li->p1.y < y1) y1 = li->p1.y;
             if (li->p1.y > y2) y2 = li->p1.y;
-            if (wc->linejoin->i == JoinMiter && !almost_straight(&lis[i - 1], &lis[i])) {
-                XPointDouble m;
-                m = get_miter_point(&lis[i - 1], &lis[i]);
+            if (wc->linejoin->i == JoinMiter && get_miter_point(&m, &lis[i - 1], &lis[i])) {
                 if (m.x < x1) x1 = m.x;
                 if (m.x > x2) x2 = m.x;
                 if (m.y < y1) y1 = m.y;
@@ -3399,48 +3415,92 @@ static XPointDouble doublept(double x, double y)
     return t;
 }
 
-static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3)
+static XPointFixed fixedpt(XPointDouble *p)
 {
-    XTriangle t;
-    t.p1.x = XDoubleToFixed(x1);
-    t.p1.y = XDoubleToFixed(y1);
-    t.p2.x = XDoubleToFixed(x2);
-    t.p2.y = XDoubleToFixed(y2);
-    t.p3.x = XDoubleToFixed(x3);
-    t.p3.y = XDoubleToFixed(y3);
+    XPointFixed t;
+    t.x = XDoubleToFixed(p->x);
+    t.y = XDoubleToFixed(p->y);
     return t;
 }
 
-static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4)
+static XTriangle triangle(XFixed x1, XFixed y1, XFixed x2, XFixed y2, XFixed x3, XFixed y3)
+{
+    XTriangle t;
+    t.p1.x = x1;
+    t.p1.y = y1;
+    t.p2.x = x2;
+    t.p2.y = y2;
+    t.p3.x = x3;
+    t.p3.y = y3;
+    return t;
+}
+
+static XTrapezoid trapezoid(XFixed top, XFixed x1, XFixed x2, XFixed bottom, XFixed x3, XFixed x4)
 {
     XTrapezoid t;
-    t.top = XDoubleToFixed(top);
-    t.left.p1.x = XDoubleToFixed(x1);
-    t.left.p1.y = t.top;
-    t.right.p1.x = XDoubleToFixed(x2);
-    t.right.p1.y = t.top;
-    t.bottom = XDoubleToFixed(bottom);
-    t.left.p2.x = XDoubleToFixed(x3);
-    t.left.p2.y = t.bottom;
-    t.right.p2.x = XDoubleToFixed(x4);
-    t.right.p2.y = t.bottom;
+    t.top = top;
+    t.left.p1.x = x1;
+    t.left.p1.y = t.right.p1.y= t.top;
+    t.right.p1.x = x2;
+    t.bottom = bottom;
+    t.left.p2.x = x3;
+    t.left.p2.y = t.right.p2.y = t.bottom;
+    t.right.p2.x = x4;
     return t;
 }
 
 /*
- * Return the intersection of the two straight lines defined by the
- * pairs of points (a1,a2) and (b1,b2).
+ * Attempt to find the intersection of the two straight lines defined
+ * by the pairs of points (a1,a2) and (b1,b2).  If successful, the
+ * result is set in res, and 1 is returned.
  */
-static XPointDouble intersect(XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
+static int intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
 {
-    double a, b, d;
+    double a, b, d, x, y;
 
     a = (a1->x * a2->y - a1->y * a2->x);
     b = (b1->x * b2->y - b1->y * b2->x);
     d = ( (a1->x - a2->x) * (b1->y - b2->y) - (a1->y - a2->y) * (b1->x -b2->x) );
+    if (d == 0)
+        return 0;
 
-    return doublept((a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d,
-                    (a * (b1->y- b2->y) - (a1->y - a2->y) * b ) / d);
+    if (a1->x == a2->x)
+        x = a1->x;
+    else if (b1->x == b2->x)
+        x = b1->x;
+    else
+        x = (a * (b1->x -b2->x) - (a1->x - a2->x) * b ) / d;
+
+    if (a1->y == a2->y)
+        y = a1->y;
+    else if (b1->y == b2->y)
+        y = b1->y;
+    else
+        y = (a * (b1->y- b2->y) - (a1->y - a2->y) * b ) / d;
+
+    *res = doublept(x, y);
+
+    return 1;
+}
+
+/*
+ * Given a is on the line through p0-p1, we ask whether a falls within
+ * the line segment itself.
+ */
+static int in_range(XPointDouble *a, XPointDouble *p0, XPointDouble *p1)
+{
+    return ( (p0->y <= a->y && a->y <= p1->y ) || (p1->y <= a->y && a->y <= p0->y) ) ||
+         ( (p0->x <= a->x && a->x <= p1->x) || (p1->x <= a->x && a->x <= p0->x) );
+}
+
+/*
+ * Does line segment a1-a2 intersect b1-b2?  If so, res is set to the
+ * intersection point.
+ */
+static int ls_intersect(XPointDouble *res, XPointDouble *a1, XPointDouble *a2, XPointDouble *b1, XPointDouble *b2)
+{
+    return intersect(res, a1, a2, b1, b2) &&
+        in_range(res, a1, a2) && in_range(res, b1, b2);
 }
 
 /*
@@ -3481,171 +3541,15 @@ static XPointDouble nudge(XPointDouble *a, XPointDouble *b, double d)
 /*
  * Output a segment.
  */
-static void drawlineinfo1(wcp wc, struct lineinfo *u, struct drawlist *tl)
+static void drawlineinfo1(wcp wc, struct lineinfo *u)
 {
-    if (tl->tris) {
-        add_tri(tl, &u->p2, &u->p1, &u->q2);
-        add_tri(tl, &u->q1, &u->p1, &u->q2);
-    } else if (u->dx == 0) {
-        if (u->p1.y < u->q1.y)
-            add_rect(tl, &u->p1, &u->q2);
-        else
-            add_rect(tl, &u->q2, &u->p1);
-    } else if (u->dy == 0) {
-        if (u->p1.x < u->q1.x)
-            add_rect(tl, &u->p2, &u->q1);
-        else
-            add_rect(tl, &u->q1, &u->p2);
-    } else {
-        /*
-         * Each of the four orientations has two cases, depending on
-         * which of the two middle points is higher.  The following
-         * shows the first orientation and second case (p1.y < q2.y).
-         *
-         *            p2 /----
-         *              /     ----                     
-         *             /          ---- 
-         *         w  /               ----             
-         *           /                    ----
-         *          /          s             ---- 
-         *         p1----.........................X---
-         *          |    ----                         ----
-         *          |        --Y-....................... ./ q2
-         *          |            ----         s          /
-         *        dy|                ----               /
-         *          |                len ----          /
-         *          |                        ----     /
-         *          ____________________________ ----/ q1
-         *                        dx
-         *
-         * 
-         * p1 is extended horizontally rightwards to intersect p2-q2
-         * at X, to give distance s, which is easily found since
-         * p1-p2-X is similar to the triangle with sides dx, dy and
-         * len, so s/w = len/dy.
-         * 
-         * This gives the top triangle (p1-p2-X).  The bottom one is
-         * (q1-q2-Y), which is congruent to the top one, and (q2-Y) is
-         * also of length s.
-         * 
-         * The middle trapezoid (p1-X-q2-Y) is empty if p1 and q2 are
-         * the same height, but because those points are calculated
-         * using hypot(), this doesn't occur at all frequently and
-         * isn't worth testing for.
-         * 
-         * The first case is very similar, but there q2 is extended
-         * leftwards to intersect p1-p2.  The length of this line (s)
-         * is found from s/len = len/dx.
-         */
-        double s;
-        if (u->dx > 0) {
-            if (u->dy > 0) {
-                if (u->p1.y > u->q2.y) {
-                    s = (u->len * u->len) / u->dx;
-                    add_trap(tl,
-                             u->p2.y, u->p2.x, u->p2.x,
-                             u->q2.y, u->q2.x - s, u->q2.x);
-                    add_trap(tl,
-                             u->q2.y, u->q2.x - s, u->q2.x,
-                             u->p1.y, u->p1.x, u->p1.x + s);
-                    add_trap(tl,
-                             u->p1.y, u->p1.x, u->p1.x + s,
-                             u->q1.y, u->q1.x, u->q1.x);
-                } else {
-                    s = (wc->linewidth * u->len) / u->dy;
-                    add_trap(tl,
-                             u->p2.y, u->p2.x, u->p2.x,
-                             u->p1.y, u->p1.x, u->p1.x + s);
-                    add_trap(tl,
-                             u->p1.y, u->p1.x, u->p1.x + s,
-                             u->q2.y, u->q2.x - s, u->q2.x);
-                    add_trap(tl,
-                             u->q2.y, u->q2.x - s, u->q2.x,
-                             u->q1.y, u->q1.x, u->q1.x);
-                }
-            } else {           /* dx > 0, dy < 0 */
-                if (u->p2.y < u->q1.y) {
-                    s = (u->len * u->len) / u->dx;
-                    add_trap(tl,
-                             u->q2.y, u->q2.x, u->q2.x,
-                             u->p2.y, u->p2.x, u->p2.x + s);
-                    add_trap(tl,
-                             u->p2.y, u->p2.x, u->p2.x + s,
-                             u->q1.y, u->q1.x - s, u->q1.x);
-                    add_trap(tl,
-                             u->q1.y, u->q1.x - s, u->q1.x,
-                             u->p1.y, u->p1.x, u->p1.x);
-                } else {
-                    s = (wc->linewidth * u->len) / -u->dy;
-                    add_trap(tl,
-                             u->q2.y, u->q2.x, u->q2.x,
-                             u->q1.y, u->q1.x - s, u->q1.x);
-                    add_trap(tl,
-                             u->q1.y, u->q1.x - s, u->q1.x,
-                             u->p2.y, u->p2.x, u->p2.x + s);
-                    add_trap(tl,
-                             u->p2.y, u->p2.x, u->p2.x + s,
-                             u->p1.y, u->p1.x, u->p1.x);
-                }
-            }
-        } else {             /* dx < 0 */
-            if (u->dy > 0) {
-                if (u->p2.y > u->q1.y) {
-                    s = (u->len * u->len) / -u->dx;
-                    add_trap(tl,
-                             u->p1.y, u->p1.x, u->p1.x,
-                             u->q1.y, u->q1.x, u->q1.x + s);
-                    add_trap(tl,
-                             u->q1.y, u->q1.x, u->q1.x + s,
-                             u->p2.y, u->p2.x - s, u->p2.x);
-                    add_trap(tl,
-                             u->p2.y, u->p2.x - s, u->p2.x,
-                             u->q2.y, u->q2.x, u->q2.x);
-                } else {
-                    s = (wc->linewidth * u->len) / u->dy;
-                    add_trap(tl,
-                             u->p1.y, u->p1.x, u->p1.x,
-                             u->p2.y, u->p2.x - s, u->p2.x);
-                    add_trap(tl,
-                             u->p2.y, u->p2.x - s, u->p2.x,
-                             u->q1.y, u->q1.x, u->q1.x + s);
-                    add_trap(tl,
-                             u->q1.y, u->q1.x, u->q1.x + s,
-                             u->q2.y, u->q2.x, u->q2.x);
-                }
-            } else {         /* dx < 0, dy < 0 */
-                if (u->p1.y < u->q2.y) {
-                    s = (u->len * u->len) / -u->dx;
-                    add_trap(tl,
-                             u->q1.y, u->q1.x, u->q1.x,
-                             u->p1.y, u->p1.x - s, u->p1.x);
-                    add_trap(tl,
-                             u->p1.y, u->p1.x - s, u->p1.x,
-                             u->q2.y, u->q2.x, u->q2.x + s);
-                    add_trap(tl,
-                             u->q2.y, u->q2.x, u->q2.x + s,
-                             u->p2.y, u->p2.x, u->p2.x);
-                } else {
-                    s = (wc->linewidth * u->len) / -u->dy;
-                    add_trap(tl,
-                             u->q1.y, u->q1.x, u->q1.x,
-                             u->q2.y, u->q2.x, u->q2.x + s);
-                    add_trap(tl,
-                             u->q2.y, u->q2.x, u->q2.x + s,
-                             u->p1.y, u->p1.x - s, u->p1.x);
-                    add_trap(tl,
-                             u->p1.y, u->p1.x - s, u->p1.x,
-                             u->p2.y, u->p2.x, u->p2.x);
-                }
-            }
-        }
-    }
+    add_tri(&u->p2, &u->p1, &u->q2);
+    add_tri(&u->q1, &u->p1, &u->q2);
 }
 
 static void drawlineend(wcp wc,
                         struct lineinfo *u,
-                        int end,
-                        struct drawlist *tl)
+                        int end)
 {
     XPointDouble *A0, *A1, *A2, *C0, N;
     struct lineinfo li;
@@ -3671,20 +3575,19 @@ static void drawlineend(wcp wc,
         a = point_angle(A0, A1);
         mk_arc(A0->x, A0->y,
                radius, radius,
-               a, Pi,
-               tl);
+               a, Pi);
         return;
     }
 
     N = nudge(C0, A0, wc->linewidth / 2);
     switch (wc->lineend->i) {
         case EndPoint: {
-            add_tri(tl, A1, A2, &N);
+            add_tri(A1, A2, &N);
             break;
         }
         case EndSquare: {
             getlineinfo(wc, A0, &N, &li);
-            drawlineinfo1(wc, &li, tl);
+            drawlineinfo1(wc, &li);
             break;
         }
         default:
@@ -3695,14 +3598,14 @@ static void drawlineend(wcp wc,
 static void drawlineinfo(wcp wc,
                          struct lineinfo *prev,
                          struct lineinfo *curr,
-                         struct lineinfo *next,
-                         struct drawlist *tl)
+                         struct lineinfo *next)
 {
     /* Output the current segment. */
-    drawlineinfo1(wc, curr, tl);
+    drawlineinfo1(wc, curr);
 
     if (prev) {
-        XPointDouble *A1, *A2, *C;
+        XPointDouble *A1, *A2, *A3, *C;
+        int no;
 
         /*
          *                  A1      A2
@@ -3713,21 +3616,28 @@ static void drawlineinfo(wcp wc,
          *              /       /    \       \
          *             /       /     /         \
          *            /         \   /            \
-         *           /  prev      \/     curr      \
+         *           /  prev      \/A3   curr      \
          *                        / \
          *                       /   \ 
          *                               
-         * A1, A2 will be in clockwise order.
-         * 
+         * A1, A2 will be in clockwise order.  A3 is only needed if
+         * the other two corners were moved (to A3) to avoid overlap.
+         * The flag no ("no overlap") is set in this case, and the
+         * triangle A1-A2-A3 will be empty.  Otherwise only the
+         * triangle A1-A2-C will be empty.
          */
 
         C = &curr->p0;
-        if (curr->dx * prev->dy > curr->dy * prev->dx) {
-            A1 = &curr->p1;
-            A2 = &prev->q1;
-        } else {
+        if (crossprod(prev, curr) > 0) {
             A1 = &prev->q2;
             A2 = &curr->p2;
+            A3 = &curr->p1;
+            no = EqPoint(prev->q1, curr->p1);
+        } else {
+            A1 = &curr->p1;
+            A2 = &prev->q1;
+            A3 = &curr->p2;
+            no = EqPoint(prev->q2, curr->p2);
         }
 
         /*
@@ -3735,20 +3645,31 @@ static void drawlineinfo(wcp wc,
          * end-to-end rather than overlapping.
          */
         if (wc->linejoin->i != JoinRound || (almost_straight(prev, curr) && dotprod(prev, curr) > 0)) {
+            XPointDouble m;
+
             /*
              * The bevel triangle.
              */
-            add_tri(tl, C, A1, A2);
+            if (no)
+                add_tri(A1, A2, A3);
+            else
+                add_tri(A1, A2, C);
 
             /*
              * The miter triangle.
              */
-            if (wc->linejoin->i == JoinMiter && !almost_straight(prev, curr)) {
-                XPointDouble m = get_miter_point(prev, curr);
-                add_tri(tl, &m, A1, A2);
-            }
+            if (wc->linejoin->i == JoinMiter && get_miter_point(&m, prev, curr))
+                add_tri(&m, A1, A2);
+
         } else {
             double radius, a1, a2;
+
+            if (no) {
+                /* Fill in the gaps around C */
+                add_tri(A1, A3, C);
+                add_tri(A2, A3, C);
+            }
+
             /*
              * Add an arc between the segments, in about the same
              * region as occupied by the bevel triangle above.
@@ -3759,17 +3680,16 @@ static void drawlineinfo(wcp wc,
             radius = wc->linewidth / 2.0;
             mk_arc(C->x, C->y,
                    radius, radius,
-                   a1, a2,
-                   tl);
+                   a1, a2);
         }
     } else
-        drawlineend(wc, curr, 0, tl);
+        drawlineend(wc, curr, 0);
 
     if (!next)
-        drawlineend(wc, curr, 1, tl);
+        drawlineend(wc, curr, 1);
 }
 
-static void drawlineinfos_impl(wbp w, struct lineinfo *lis, int nlis, int closed, struct drawlist *tl)
+static void drawlineinfos_impl(wbp w, struct lineinfo *lis, int nlis, int closed)
 {
     wcp wc = w->context;
     int i;
@@ -3783,45 +3703,16 @@ static void drawlineinfos_impl(wbp w, struct lineinfo *lis, int nlis, int closed
             next = &lis[i + 1];
         else
             next = closed ? &lis[0] : 0;
-        drawlineinfo(wc, prev, &lis[i], next, tl);
+        drawlineinfo(wc, prev, &lis[i], next);
     }
 }
 
-static XPointDouble adjustpoint(wcp wc, struct point *points, int npoints, int i, int closed)
-{
-    XPointDouble pd;
-    pd.x = points[i].x;
-    pd.y = points[i].y;
-    /*
-     * If the linewidth is odd, shift exactly horizontal and vertical
-     * segments lying on exact pixel lines by 0.5 pixel so that they
-     * are not output with anti-aliased edges.
-     */
-    if (fmod(wc->linewidth, 2) == 1) {
-        struct point *next, *prev;
-        if (i > 0)
-            prev = &points[i - 1];
-        else
-            prev = closed ? &points[npoints - 1] : 0;
-        if (i < npoints - 1)
-            next = &points[i + 1];
-        else
-            next = closed ? &points[0] : 0;
-        if ((prev && prev->x == points[i].x && fmod(prev->x, 1.0) == 0) || (next && next->x == points[i].x && fmod(next->x, 1.0) == 0))
-            pd.x += 0.5;
-        if ((prev && prev->y == points[i].y && fmod(prev->y, 1.0) == 0) || (next && next->y == points[i].y && fmod(next->y, 1.0) == 0))
-            pd.y += 0.5;
-    }
-    return pd;
-}
- 
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
     int i, x, y, width, height;
-    struct drawlist tl;
 
     if (nlis == 0)
         return;
@@ -3830,7 +3721,7 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, nlis * 3, triangles);
+    init_drawlist(nlis * 3, triangles > 0);
 
     clip(w);
     if (needmask(wc, 1)) {
@@ -3843,17 +3734,60 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
             lis[i].q1.x -= x; lis[i].q1.y -= y;
             lis[i].q2.x -= x; lis[i].q2.y -= y;
         }
-        drawlineinfos_impl(w, lis, nlis, closed, &tl);
-        draw_drawlist(&tl, wd, PictOpOver, wd->white->brush, mask);
+        drawlineinfos_impl(w, lis, nlis, closed);
+        draw_drawlist(wd, PictOpOver, wd->white->brush, mask);
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
-        drawlineinfos_impl(w, lis, nlis, closed, &tl);
-        draw_drawlist(&tl, wd, wc->drawop->i, get_draw_picture(wc), ws->ppic);
+        drawlineinfos_impl(w, lis, nlis, closed);
+        draw_drawlist(wd, wc->drawop->i, get_draw_picture(wc), ws->ppic);
         pix_to_win(ws, x, y, width, height);
     }
 
-    free_drawlist(&tl);
+    free_drawlist();
+}
+
+/*
+ * Perhaps adjust two of the points of the given lineinfos to try to
+ * avoid overlapping drawing areas.  The intersection of the
+ * overlapping line is found and the two points moved.  In the
+ * following example, corresponding to the second if, prev.q2 is moved
+ * left and curr.p2 right to *.  The areas then drawn will not
+ * overlap: for prev, p2->*->q1->p1 and for curr p2->*->p1->q1.  The
+ * area thus left undrawn is prev.q1->*->curr->p1.
+ * 
+ *                              /
+ *                            /        
+ *                          /         ^
+ *   p2 ------------------*- q2    curr
+ *   |                   /   |  
+ *   |                  p2\  |        
+ *   p0       -->--          q0       /
+ *   |        prev           |\     /
+ *   |                       |  \ /
+ *   p1 ---------------------q1   p1
+ *
+ * 
+ * Overlapping drawing can't always be avoided, and can still occur in
+ * two ways.  Firstly, the two edges may not intersect, if the two
+ * segments are almost overlapping; then the shape is too complex to
+ * draw without overlapping.  Secondly, in extreme cases the corner
+ * points might be adjusted so far that they cross; for example a very
+ * thick horizontal segments with two segments below it forming a
+ * triangle.
+  */
+static void adjustlineinfo(struct lineinfo *prev, struct lineinfo *curr)
+{
+    double x;
+    XPointDouble p;
+    x = crossprod(prev, curr);
+    if (x > 0) {
+        if (ls_intersect(&p, &curr->p1, &curr->q1, &prev->p1, &prev->q1))
+            curr->p1 = prev->q1 = p;
+    } else if (x < 0) {
+        if (ls_intersect(&p, &curr->p2, &curr->q2, &prev->p2, &prev->q2))
+            curr->p2 = prev->q2 = p;
+    }
 }
 
 void drawlines(wbp w, struct point *points, int npoints)
@@ -3861,23 +3795,27 @@ void drawlines(wbp w, struct point *points, int npoints)
     wcp wc = w->context;
     struct lineinfo *lis;
     int nlis, i, closed;
-    XPointDouble pd1, pd2;
+    XPointDouble *pd1, *pd2;
 
     if (npoints < 2)
         return;
-    closed = points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y;
+    closed = EqPoint(points[npoints - 1], points[0]);
 
     lis = safe_malloc((npoints - 1) * sizeof(struct lineinfo));
-    pd1 = adjustpoint(wc, points, npoints, 0, closed);
+    pd1 = (XPointDouble *)&points[0];
     nlis = 0;
     for (i = 1; i < npoints; ++i) {
-        if (points[i - 1].x != points[i].x || points[i - 1].y != points[i].y) {
-            pd2 = adjustpoint(wc, points, npoints, i, closed);
-            getlineinfo(wc, &pd1, &pd2, &lis[nlis]);
+        pd2 = (XPointDouble *)&points[i];
+        if (!EqPoint(*pd1, *pd2)) {
+            getlineinfo(wc, pd1, pd2, &lis[nlis]);
+            if (nlis > 0)
+                adjustlineinfo(&lis[nlis - 1], &lis[nlis]);
             nlis++;
             pd1 = pd2;
         }
     }
+    if (closed && nlis > 1)
+        adjustlineinfo(&lis[nlis - 1], &lis[0]);
 
     drawlineinfos(w, lis, nlis, closed);
     free(lis);
@@ -3984,6 +3922,8 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     points_extent(points, npoints, &x, &y, &width, &height);
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
+
+    init_drawlist(npoints * 5, triangles > 1);
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -3992,28 +3932,23 @@ void fillpolygon(wbp w, struct point *points, int npoints)
             points[i].y -= y;
         }
         mask = getmask(wd, width, height);
-
-        CompositeDoublePoly(wd, 
-                            PictOpOver,
-                            wd->white->brush,
-                            mask, 
-                            points, npoints);
-
+        mk_polygon(points, npoints, wc->fillrule->i);
+        draw_drawlist(wd, PictOpOver, wd->white->brush,  mask);
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
-        CompositeDoublePoly(wd, 
-                            wc->drawop->i,
-                            get_draw_picture(wc),
-                            ws->ppic, 
-                            points, npoints);
+        mk_polygon(points, npoints, wc->fillrule->i);
+        draw_drawlist(wd,
+                      wc->drawop->i,
+                      get_draw_picture(wc),
+                      ws->ppic);
         pix_to_win(ws, x, y, width, height);
     }
+    free_drawlist();
 }
 
 void filltriangles(wbp w, struct triangle *tris, int ntris)
 {
-    struct drawlist tl;
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
@@ -4023,7 +3958,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    init_drawlist(&tl, 2 * ntris, triangles);
+    init_drawlist(2 * ntris, triangles > 0);
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -4031,30 +3966,26 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
             tris[i].p1.x -= x; tris[i].p1.y -= y;
             tris[i].p2.x -= x; tris[i].p2.y -= y;
             tris[i].p3.x -= x; tris[i].p3.y -= y;
-            add_tri(&tl,
-                    (XPointDouble *)&tris[i].p1,
+            add_tri((XPointDouble *)&tris[i].p1,
                     (XPointDouble *)&tris[i].p2,
                     (XPointDouble *)&tris[i].p3);
         }
         mask = getmask(wd, width, height);
-        draw_drawlist(&tl,
-                      wd, PictOpOver, wd->white->brush,  mask);
+        draw_drawlist(wd, PictOpOver, wd->white->brush,  mask);
         maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
         for (i = 0; i < ntris; ++i)
-            add_tri(&tl,
-                    (XPointDouble *)&tris[i].p1,
+            add_tri((XPointDouble *)&tris[i].p1,
                     (XPointDouble *)&tris[i].p2,
                     (XPointDouble *)&tris[i].p3);
-        draw_drawlist(&tl,
-                      wd,
+        draw_drawlist(wd,
                       wc->drawop->i,
                       get_draw_picture(wc),
                       ws->ppic);
         pix_to_win(ws, x, y, width, height);
     }
-    free_drawlist(&tl);
+    free_drawlist();
 }
 
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
@@ -4286,7 +4217,7 @@ void copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2
         imd->width = width;
         imd->height = height;
         captureimgdata(w, x, y, imd);
-        drawimgdata(w2, x2, y2, imd, 0);
+        drawimgdata(w2, x2, y2, imd, 0, 0, width, height);
         unlinkimgdata(imd);
     }
 }
@@ -4305,46 +4236,30 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int x2, int y2, int w2, int h2)
 {
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
-    int ix, iy, iw, ih;
     Pixmap pix;
     Picture pic;
     XRenderPictFormat *format;
 
-    ix = x; iy = y; iw = imd->width; ih = imd->height;
-    if (!reducerect(w, 1, &ix, &iy, &iw, &ih))
-        return;
-
-    pix = imgdata_to_Pixmap(wd, imd, ix - x, iy - y, iw, ih, 32, &format);
+    pix = imgdata_to_Pixmap(wd, imd, x2, y2, w2, h2, 32, &format);
     pic = XRenderCreatePicture(wd->display, pix, format, 0, 0);
     clip(w);
 
-    if (copy)
-        XRenderComposite(wd->display,
-                         PictOpSrc,             /* op */
-                         pic,                   /* src */
-                         None,                  /* mask */
-                         ws->ppic,              /* dest */
-                         0, 0,                  /* src x,y */
-                         0, 0,                  /* mask x,y */
-                         ix, iy,                /* dst x,y */
-                         iw, ih);
-    else
-        XRenderComposite(wd->display,
-                         wc->drawop->i,         /* op */
-                         pic,                   /* src */
-                         get_mask_picture(wc),  /* mask */
-                         ws->ppic,              /* dest */
-                         0, 0,                  /* src x,y */
-                         ix, iy,                /* mask x,y */
-                         ix, iy,                /* dst x,y */
-                         iw, ih);
+    XRenderComposite(wd->display,
+                     wc->drawop->i,         /* op */
+                     pic,                   /* src */
+                     get_mask_picture(wc),  /* mask */
+                     ws->ppic,              /* dest */
+                     0, 0,                  /* src x,y */
+                     x, y,                  /* mask x,y */
+                     x, y,                  /* dst x,y */
+                     w2, h2);
 
-    pix_to_win(ws, ix, iy, iw, ih);
+    pix_to_win(ws, x, y, w2, h2);
 
     XFreePixmap(wd->display, pix);
     XRenderFreePicture(wd->display, pic);
@@ -5079,7 +4994,9 @@ static wdp alcdisplay(char *s)
         env_int("OI_MAX_X_SELECTION_CHUNK", &max_selection_chunk, 1024, INT_MAX);
         env_int("OI_X_SELECTION_DEBUG", &selection_debug, 0, 1);
         env_int("OI_X_FONT_DEBUG", &font_debug, 0, 1);
-        env_int("OI_X_TRIANGLES", &triangles, 0, 1);
+        env_int("OI_X_POLY_DEBUG", &poly_debug, 0, 1);
+        env_int("OI_X_DRAW_DEBUG", &draw_debug, 0, 1);
+        env_int("OI_X_TRIANGLES", &triangles, 0, 2);
         default_XErrorHandler = XSetErrorHandler(custom_XErrorHandler);
         inited = 1;
     }
@@ -5486,267 +5403,410 @@ void registerplatformimgdataformats()
     registerimgdataformat(&imgdataformat_X11BGRA32);
 }
 
+enum EventType { CROSS = 0, TOP, BOTTOM };
 
-
-
-/*
- * This is a modified version of the code in libXrender (Poly.c),
- * which contains an array overrun bug.  This code doesn't work very
- * well, but at least it doesn't crash.
- */
-
-
-struct Edge {
-    XLineFixed  edge;
-    XFixed      current_x;
-    struct Edge *next, *prev;
+struct segment
+{
+    double dx, dy, angle;
+    XPointDouble p0, p1;
+    struct segment *ps, *ns;
 };
 
-static int
-CompareEdge (const void *o1, const void *o2)
+struct event
 {
-    const struct Edge  *e1 = o1, *e2 = o2;
+    int type;
+    XPointDouble pt;
+    struct segment *seg1, *seg2;
+};
 
-    return e1->edge.p1.y - e2->edge.p1.y;
+struct eventtree
+{
+    struct event *ev;
+    struct eventtree *left, *right;
+};
+
+static struct segment *segs;
+static struct eventtree *Q;
+static struct segment **L;
+static int Ln, Lmax;
+
+static int segment_num(struct segment *seg)
+{
+    return 1 + (seg - segs);
 }
 
-static XFixed
-ComputeX (XLineFixed *line, XFixed y)
+#if 0
+static void show_eventtree(struct eventtree *tree, int level)
 {
-    XFixed  dx = line->p2.x - line->p1.x;
-    double  ex = (double) (y - line->p1.y) * (double) dx;
-    XFixed  dy = line->p2.y - line->p1.y;
-
-    return (XFixed) line->p1.x + (XFixed) (ex / dy);
+    int i;
+    struct event *ev;
+    char *tn[] = {"CROSS", "TOP", "BOTTOM"};
+    if (tree == NULL)
+        return;
+    show_eventtree(tree->right, level + 1);
+    for (i = 0; i < level; ++i)
+        printf("   ");
+    ev = tree->ev;
+    printf("Event type = %s  pt = %f, %f", tn[ev->type], ev->pt.x, ev->pt.y);
+    printf("  seg1 = %d  ", segment_num(ev->seg1));
+    if (ev->seg2)
+        printf("  seg2 = %d\n", segment_num(ev->seg2));
+    else
+        printf("  seg2 = -\n");
+    show_eventtree(tree->left, level + 1);
 }
+#endif    
 
-static double
-ComputeInverseSlope (XLineFixed *l)
+static double segment_x_at(struct segment *seg, double y)
 {
-    return (XFixedToDouble (l->p2.x - l->p1.x) /
-            XFixedToDouble (l->p2.y - l->p1.y));
-}
-
-static double
-ComputeXIntercept (XLineFixed *l, double inverse_slope)
-{
-    return XFixedToDouble (l->p1.x) - inverse_slope * XFixedToDouble (l->p1.y);
-}
-
-static XFixed
-ComputeIntersect (XLineFixed *l1, XLineFixed *l2)
-{
-    /*
-     * x = m1y + b1
-     * x = m2y + b2
-     * m1y + b1 = m2y + b2
-     * y * (m1 - m2) = b2 - b1
-     * y = (b2 - b1) / (m1 - m2)
+    /* These tests ensure that the same point in two different
+     * adjacent segments will return an identical x value, and thus
+     * will compare correctly in compare_event_segment() (consider
+     * processing two TOP events with the same point from two adjacent
+     * segments forming a peak).
      */
-    double  m1 = ComputeInverseSlope (l1);
-    double  b1 = ComputeXIntercept (l1, m1);
-    double  m2 = ComputeInverseSlope (l2);
-    double  b2 = ComputeXIntercept (l2, m2);
-
-    return XDoubleToFixed ((b2 - b1) / (m1 - m2));
+    if (y == seg->p0.y)
+        return seg->p0.x;
+    if (y == seg->p1.y)
+        return seg->p1.x;
+    return seg->p0.x + ((y - seg->p0.y) * seg->dx) / seg->dy;
 }
 
-static void
-ComputeTrapezoids (struct Edge   *edges,
-                   int           nedges,
-                   struct drawlist *tl,
-                   int           maxtraps)
+static int double_cmp(double a, double b)
 {
-    int inactive;
-    struct Edge *active, *e, *en, *next;
-    XFixed y, next_y, intersect;
+    return (a > b) - (a < b);
+}
 
-    qsort (edges, nedges, sizeof (struct Edge), CompareEdge);
+static int compare_points(XPointDouble *p, XPointDouble *q)
+{
+    int i;
+    i = double_cmp(p->y, q->y);
+    if (i == 0)
+        i = double_cmp(p->x, q->x);
+    return i;
+}
 
-    y = edges[0].edge.p1.y;
-    active = NULL;
-    inactive = 0;
-    while (active || inactive < nedges)
-    {
-        /* insert new active edges into list */
-        while (inactive < nedges)
-        {
-            e = &edges[inactive];
-            if (e->edge.p1.y > y)
-                break;
-            /* move this edge into the active list */
-            inactive++;
-            e->next = active;
-            e->prev = NULL;
-            if (active)
-                active->prev = e;
-            active = e;
+static void eventtree_insert(struct eventtree **tree0, struct event *ev)
+{
+    struct eventtree *tree, *nt;
+    tree = *tree0;
+    if (tree) {
+        int i;
+        i = compare_points(&ev->pt, &tree->ev->pt);
+        if (i < 0)
+            eventtree_insert(&tree->left, ev);
+        else if (i > 0)
+            eventtree_insert(&tree->right, ev);
+        else {
+            nt = safe_malloc(sizeof(struct eventtree));
+            nt->ev = ev;
+            nt->left = tree->left;
+            nt->right = NULL;
+            tree->left = nt;
         }
-        /* compute x coordinates along this group */
-        for (e = active; e; e = e->next)
-            e->current_x = ComputeX (&e->edge, y);
+    } else {
+        tree = safe_malloc(sizeof(struct eventtree));
+        tree->ev = ev;
+        tree->left = tree->right = NULL;
+        *tree0 = tree;
+    }
+}
 
-        /* sort active list */
-        for (e = active; e; e = next)
-        {
-            next = e->next;
-            /*
-             * Find one later in the list that belongs before the
-             * current one
-             */
-            for (en = next; en; en = en->next)
-            {
-                if (en->current_x < e->current_x ||
-                    (en->current_x == e->current_x &&
-                     en->edge.p2.x < e->edge.p2.x))
+static int eventtree_contains(struct eventtree *tree, struct event *ev)
+{
+    if (tree) {
+        int i;
+        i = compare_points(&ev->pt, &tree->ev->pt);
+        if (i < 0)
+            return eventtree_contains(tree->left, ev);
+        else if (i > 0)
+            return eventtree_contains(tree->right, ev);
+        else do {   /* Entries with the same key are contiguous leftwards */
+                if (ev->type == tree->ev->type &&
+                    ev->seg1 == tree->ev->seg1 &&
+                    ev->seg2 == tree->ev->seg2)
                 {
-                    /*
-                     * insert en before e
-                     *
-                     * extract en
-                     */
-                    en->prev->next = en->next;
-                    if (en->next)
-                        en->next->prev = en->prev;
-                    /*
-                     * insert en
-                     */
-                    if (e->prev)
-                        e->prev->next = en;
-                    else
-                        active = en;
-                    en->prev = e->prev;
-                    e->prev = en;
-                    en->next = e;
-                    /*
-                     * start over at en
-                     */
-                    next = en;
-                    break;
+                    return 1;
                 }
+                tree = tree->left;
             }
-        }
+            while (tree && 
+                   compare_points(&ev->pt, &tree->ev->pt) == 0);
+    }
+    return 0;
+}
 
-        /* find next inflection point */
-        next_y = active->edge.p2.y;
-        for (e = active; e; e = en)
-        {
-            if (e->edge.p2.y < next_y)
-                next_y = e->edge.p2.y;
-            en = e->next;
-            /* check intersect */
-            if (en && e->edge.p2.x > en->edge.p2.x)
-            {
-                intersect = ComputeIntersect (&e->edge, &e->next->edge);
-                /* make sure this point is below the actual intersection */
-                intersect = intersect + 1;
-                if (intersect < next_y)
-                    next_y = intersect;
-            }
-        }
-        /* check next inactive point */
-        if (inactive < nedges && edges[inactive].edge.p1.y < next_y)
-            next_y = edges[inactive].edge.p1.y;
+static struct event *eventtree_pop(struct eventtree **tree0)
+{
+    struct eventtree *tree;
+    tree = *tree0;
+    if (tree->left == NULL) {
+        struct event *res;
+        res = tree->ev;
+        *tree0 = tree->right;
+        free(tree);
+        return res;
+    } else
+        return eventtree_pop(&tree->left);
+}
 
-        /* walk the list generating trapezoids */
-        for (e = active; e && (en = e->next); e = en->next)
-        {
-            XTrapezoid t;
-            /*
-             * (RPP) This is the only consequential change - the
-             * version in libXrender just goes sailing right out
-             * there.
-             */
-            if (tl->n == maxtraps)
-                return;
-            t.top = y;
-            t.bottom = next_y;
-            t.left = e->edge;
-            t.right = en->edge;
-            ensure_drawlist(tl, 1);
-            tl->traps[tl->n++] = t;
-        }
+static void show_L(void)
+{
+    int i;
+    printf("L = [ ");
+    for (i = 0; i < Ln; ++i)
+        printf("%d ", segment_num(L[i]));
+    printf("]\n");
+}
 
-        y = next_y;
+static int compare_event_segment(struct event *ev, struct segment *seg)
+{
+    int i;
+    double x, y;
+    x = ev->pt.x;
+    y = ev->pt.y;
+    i = double_cmp(x, segment_x_at(seg, y));
+    if (i == 0)
+        i = double_cmp(seg->angle, ev->seg1->angle);
+    return i;
+}
 
-        /* delete inactive edges from list */
-        for (e = active; e; e = next)
-        {
-            next = e->next;
-            if (e->edge.p2.y <= y)
-            {
-                if (e->prev)
-                    e->prev->next = e->next;
-                else
-                    active = e->next;
-                if (e->next)
-                    e->next->prev = e->prev;
-            }
+static void cross_check(double y, struct segment *a, struct segment *b)
+{
+    XPointDouble p;
+    struct event *ev;
+
+    if (a->ns == b || a->ps == b)
+        return;
+    if (a > b) {
+        struct segment *t;
+        t = a; a = b; b = t;
+    }
+    if (poly_debug)
+        printf("Cross check y = %f segs = %d %d\n", y, segment_num(a), segment_num(b));
+
+    if (ls_intersect(&p, &a->p0, &a->p1, &b->p0, &b->p1) && p.y > y) {
+        if (poly_debug)
+            printf("\tIntersection found at (%f, %f)\n", p.x, p.y);
+        ev = safe_malloc(sizeof(struct event));
+        ev->pt = p;
+        ev->seg1 = a;
+        ev->seg2 = b;
+        ev->type = CROSS;
+        if (eventtree_contains(Q, ev)) {
+            if (poly_debug)
+                printf("\tDuplicate Cross event, discarding this one\n");
+            free(ev);
+        } else
+            eventtree_insert(&Q, ev);
+    }
+}
+
+static void handle_event_CROSS(struct event *ev)
+{
+    int i, i1, i2;
+    if (poly_debug)
+        printf("CROSS Event (%f, %f) segs = %d %d\n", ev->pt.x, ev->pt.y, segment_num(ev->seg1), segment_num(ev->seg2));
+    i1 = i2 = -1;
+    for (i = 0; i < Ln; ++i) {
+        if (L[i] == ev->seg1)
+            i1 = i;
+        else if (L[i] == ev->seg2)
+            i2 = i;
+    }
+    if (i1 >= 0 && i2 >= 0) {
+        struct segment *t;
+        if (poly_debug)
+            printf("\tFound segments at positions %d and %d respectively\n", i1, i2);
+        t = L[i1]; L[i1] = L[i2]; L[i2] = t;
+        if (i1 > 0)
+            cross_check(ev->pt.y, L[i1 - 1], L[i1]);
+        if (i1 + 1 < Ln)
+            cross_check(ev->pt.y, L[i1 + 1], L[i1]);
+        if (i2 > 0)
+            cross_check(ev->pt.y, L[i2 - 1], L[i2]);
+        if (i2 + 1 < Ln)
+            cross_check(ev->pt.y, L[i2 + 1], L[i2]);
+    } else {
+        if (poly_debug)
+            printf("\tFailed to find both segments\n");
+    }
+}
+
+static int search_L(struct event *ev)
+{
+    int i, l, r, m;
+    l = 0;
+    r = Ln - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        i = compare_event_segment(ev, L[m]);
+        if (i < 0)
+            r = m - 1;
+        else if (i > 0)
+            l = m + 1;
+        else
+            return m;
+    }
+    return l;
+}
+
+static void handle_event_TOP(struct event *ev)
+{
+    int i, j;
+    if (poly_debug)
+        printf("TOP Event (%f, %f) seg = %d\n", ev->pt.x, ev->pt.y, segment_num(ev->seg1));
+    if (Ln == Lmax) {
+        if (poly_debug)
+            printf("Too many segments in L\n");
+        return;
+    }
+
+    i = search_L(ev);
+    if (poly_debug)
+        printf("\tInserting segment %d into L at position %d\n", segment_num(ev->seg1), i);
+    for (j = Ln; j > i; --j)
+        L[j] = L[j - 1];
+    L[i] = ev->seg1;
+    ++Ln;
+    if (i > 0)
+        cross_check(ev->pt.y, L[i - 1], L[i]);
+    if (i + 1 < Ln)
+        cross_check(ev->pt.y, L[i], L[i + 1]);
+}
+
+static void handle_event_BOTTOM(struct event *ev)
+{
+    int i, j;
+    if (poly_debug)
+        printf("BOTTOM Event (%f, %f) seg = %d\n", ev->pt.x, ev->pt.y, segment_num(ev->seg1));
+    i = 0;
+    while (i < Ln && L[i] != ev->seg1)
+        ++i;
+    if (i < Ln) {
+        if (poly_debug)
+            printf("\tDeleting segment %d from L in position %d\n", segment_num(ev->seg1), i);
+        for (j = i; j < Ln -1; ++j)
+            L[j] = L[j + 1];
+        --Ln;
+        if (i > 0 && i < Ln)
+            cross_check(ev->pt.y, L[i - 1], L[i]);
+    } else {
+        if (poly_debug)
+            printf("\tSegment not found in L\n");
+    }
+}
+
+static void add_segment_events(struct segment *seg)
+{
+    struct event *ev1, *ev2;
+
+    if (seg->dy == 0)
+        return;
+
+    ev1 = safe_malloc(sizeof(struct event));
+    ev2 = safe_malloc(sizeof(struct event));
+
+    ev1->pt = seg->p0;
+    ev2->pt = seg->p1;
+    ev1->seg1 = ev2->seg1 = seg;
+    ev1->seg2 = ev2->seg2 = NULL;
+    if (seg->dy > 0) {
+        ev1->type = TOP;
+        ev2->type = BOTTOM;
+    } else {             /* seg->dy < 0 */
+        ev1->type = BOTTOM;
+        ev2->type = TOP;
+    }
+
+    eventtree_insert(&Q, ev1);
+    eventtree_insert(&Q, ev2);
+}
+
+static void process_line(int rule, double y0, double y1)
+{
+    int i, fl;
+    struct segment *s0, *s1;
+    if (poly_debug)
+        printf("Process lines %f to %f\n", y0, y1);
+    fl = 0;
+    for (i = 1; i < Ln; ++i) {
+        s0 = L[i - 1];
+        s1 = L[i];
+        if (s0->dy < 0)
+            ++fl;
+        else
+            --fl;
+        if ((rule & fl)) {
+            double x1, x2, x3, x4;
+            x1 = segment_x_at(s0, y0);
+            x2 = segment_x_at(s1, y0);
+            x3 = segment_x_at(s0, y1);
+            x4 = segment_x_at(s1, y1);
+            if (poly_debug)
+                printf("\tTrap top=%f (%f, %f)  bottom=%f (%f, %f)\n", y0, x1, x2, y1, x3, x4);
+            add_trap(y0, x1, x2, y1, x3, x4);
         }
     }
 }
 
-static void
-CompositeDoublePoly(wdp                 wd,
-                    int                 op,
-                    Picture             src,
-                    Picture             dst,
-                    struct point        *points,
-                    int                 npoints)
+static void mk_polygon(struct point *points, int npoints, int rule)
 {
-    struct Edge     *edges;
-    int             i, nedges, maxtraps;
-    XFixed          x, y, prevx = 0, prevy = 0, firstx = 0, firsty = 0;
-    struct drawlist tl;
+    int i, fl;
+    double a, y0, y1;
 
-    maxtraps = npoints * npoints;
-    edges = safe_malloc(npoints * sizeof (struct Edge));
+    Q = NULL;
+    L = safe_malloc(npoints * sizeof(struct segment *));
+    Ln = 0;
+    Lmax = npoints;
+    segs = safe_malloc(npoints * sizeof(struct segment));
 
-    nedges = 0;
-    for (i = 0; i <= npoints; i++)
-    {
-        if (i == npoints)
-        {
-            x = firstx;
-            y = firsty;
+    for (i = 0; i < npoints; ++i) {
+        if (i == 0) {
+            segs[0].p0 = *(XPointDouble *)&points[npoints - 1];
+            segs[0].ps = &segs[npoints - 1];
+            segs[npoints - 1].ns = &segs[0];
+        } else {
+            segs[i].p0 = *(XPointDouble *)&points[i - 1];
+            segs[i].ps = &segs[i - 1];
+            segs[i - 1].ns = &segs[i];
         }
-        else
-        {
-            x = XDoubleToFixed (points[i].x);
-            y = XDoubleToFixed (points[i].y);
-        }
-        if (i)
-        {
-            if (prevy < y)
-            {
-                edges[nedges].edge.p1.x = prevx;
-                edges[nedges].edge.p1.y = prevy;
-                edges[nedges].edge.p2.x = x;
-                edges[nedges].edge.p2.y = y;
-                nedges++;
-            }
-            else if (prevy > y)
-            {
-                edges[nedges].edge.p1.x = x;
-                edges[nedges].edge.p1.y = y;
-                edges[nedges].edge.p2.x = prevx;
-                edges[nedges].edge.p2.y = prevy;
-                nedges++;
-            }
-            /* drop horizontal edges */
-        }
-        else
-        {
-            firstx = x;
-            firsty = y;
-        }
-        prevx = x;
-        prevy = y;
+        segs[i].p1 = *(XPointDouble *)&points[i];
+        segs[i].dy = segs[i].p1.y - segs[i].p0.y;
+        segs[i].dx = segs[i].p1.x - segs[i].p0.x;
+        a = atan2(segs[i].dy, segs[i].dx);
+        if (a < 0)
+            a += Pi;
+        segs[i].angle = a;
+        add_segment_events(&segs[i]);
     }
 
-    init_drawlist(&tl, 100, 0);
-    ComputeTrapezoids (edges, nedges, &tl, maxtraps);
-    draw_drawlist(&tl, wd, op, src, dst);
-    free_drawlist(&tl);
-    free (edges);
+    fl = 0;
+    y0 = 0;
+    while (Q) {
+        struct event *ev;
+        ev = eventtree_pop(&Q);
+        y1 = ev->pt.y;
+        if (fl && y0 != y1)
+            process_line(rule, y0, y1);
+        switch (ev->type) {
+            case CROSS:
+                handle_event_CROSS(ev);
+                break;
+            case TOP:
+                handle_event_TOP(ev);
+                break;
+            case BOTTOM:
+                handle_event_BOTTOM(ev);
+                break;
+        }
+        free(ev);
+        y0 = y1;
+        fl = 1;
+        if (poly_debug)
+            show_L();
+    }
+
+    free(L);
+    free(segs);
 }

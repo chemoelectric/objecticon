@@ -265,15 +265,31 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_image_impl(self, x0, y0, d)
+function graphics_Window_draw_image_impl(self, dx, dy, src, sx, sy, sw, sh)
    body {
-      int x, y;
+      int ox, oy, x, y, x2, y2, w2, h2;
       GetSelfW();
-      if (pointargs_def(self_w, &x0, &x, &y) == Error)
+      if (pointargs_def(self_w, &dx, &x, &y) == Error)
           runerr(0);
       {
-      PixelsStaticParam(d, id);
-      drawimgdata(self_w, x, y, id, 0);
+      PixelsStaticParam(src, id);
+      if (pixels_rectargs(id, &sx, &x2, &y2, &w2, &h2) == Error)
+          runerr(0);
+      ox = x2;
+      oy = y2;
+      if (!pixels_reducerect(id, &x2, &y2, &w2, &h2))
+          return self;
+      x += (x2 - ox);
+      y += (y2 - oy);
+
+      ox = x;
+      oy = y;
+      if (!reducerect(self_w, 1, &x, &y, &w2, &h2))
+          return self;
+      x2 += (x - ox);
+      y2 += (y - oy);
+
+      drawimgdata(self_w, x, y, id, x2, y2, w2, h2);
       }
       return self;
    }
@@ -561,72 +577,6 @@ function graphics_Pixels_to_file(self, fname)
    }
 end
 
-function graphics_Window_filter(self, x0, y0, w0, h0, spec)
-   body {
-      int x, y, width, height;
-      struct filter *filter;
-      struct imgdata *imd;
-      int i, nfilter;
-      GetSelfW();
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      if (is:list(spec)) {
-          struct lgstate state;
-          tended struct b_lelem *le;
-          tended struct descrip elem;
-          nfilter = ListBlk(spec).size;
-          filter = safe_malloc(nfilter * sizeof(struct filter));
-          for (le = lgfirst(&ListBlk(spec), &state); le;
-               le = lgnext(&ListBlk(spec), &state, le)) {
-              elem = le->lslots[state.result];
-              if (!cnv:string(elem, elem)) {
-                  free(filter);
-                  runerr(103, elem);
-              }
-              if (!parsefilter(self_w, buffstr(&elem), &filter[state.listindex - 1])) {
-                  LitWhy("Invalid filter");
-                  free(filter);
-                  fail;
-              }
-          }
-      } else {
-          if (!cnv:string(spec, spec))
-              runerr(103, spec);
-
-          filter = safe_malloc(sizeof(struct filter));
-          nfilter = 1;
-          if (!parsefilter(self_w, buffstr(&spec), &filter[0])) {
-              LitWhy("Invalid filter");
-              free(filter);
-              fail;
-          }
-      }
-
-      if (!reducerect(self_w, 1, &x, &y, &width, &height)) {
-          free(filter);
-          return self;
-      }
-
-      imd = newimgdata();
-      imd->width = width;
-      imd->height = height;
-      captureimgdata(self_w, x, y, imd);
-
-      for (i = 0; i < nfilter; ++i) {
-          filter[i].imd = imd;
-          filter[i].f(&filter[i]);
-      }
-
-      drawimgdata(self_w, x, y, imd, 1);
-      unlinkimgdata(imd);
-      free(filter);
-
-      return self;
-   }
-end
-
 function graphics_Window_query_root_pointer_impl(self)
    body {
       int x, y;
@@ -807,7 +757,9 @@ function graphics_Window_get_canvas(self)
    }
 end
 
-function graphics_Window_drawable_impl(self, x0, y0, w0, h0)
+function graphics_Window_rectangle_impl(self, mode, x0, y0, w0, h0)
+   if !cnv:C_integer(mode) then
+       runerr(101, mode)
    body {
       tended struct descrip result;
       struct descrip t;
@@ -819,37 +771,10 @@ function graphics_Window_drawable_impl(self, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!reducerect(self_w, 1, &x, &y, &width, &height))
-          fail;
-
-      create_list(4, &result);
-      MakeInt(x - wc->dx, &t);
-      list_put(&result, &t);
-      MakeInt(y - wc->dy, &t);
-      list_put(&result, &t);
-      MakeInt(width, &t);
-      list_put(&result, &t);
-      MakeInt(height, &t);
-      list_put(&result, &t);
-
-      return result;
-   }
-end
-
-function graphics_Window_viewable_impl(self, x0, y0, w0, h0)
-   body {
-      tended struct descrip result;
-      struct descrip t;
-      wcp wc;
-      int x, y, width, height;
-      GetSelfW();
-      wc = self_w->context;
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      if (!reducerect(self_w, 0, &x, &y, &width, &height))
-          fail;
+      if (mode < 2) {
+          if (!reducerect(self_w, mode, &x, &y, &width, &height))
+              fail;
+      }
 
       create_list(4, &result);
       MakeInt(x - wc->dx, &t);
@@ -1190,7 +1115,7 @@ function graphics_Window_set_draw_op(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid draw_op");
+       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid draw op");
        return self;
    }
 end
@@ -1916,6 +1841,29 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
+function graphics_Window_palette_key_rgb(s1, r, g, b)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   body {
+      int p;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
+          fail;
+      }
+      if (r < 0 || r > 65535 || g < 0 || g > 65535 || b < 0 || b > 65535) {
+          LitWhy("Invalid RGB value");
+          fail;
+      }
+      return string(1, rgbkey(p, r, g, b));
+   }
+end
+
 function graphics_Window_get_default_font()
    body {
        return C_string defaultfont;
@@ -2218,6 +2166,37 @@ function graphics_Pixels_scale_to(self, x0, y0, w0, h0, dest, a0, b0, c0, d0)
    }
 end
 
+function graphics_Pixels_filter(self, x0, y0, w0, h0, spec)
+   body {
+      int x, y, width, height;
+      struct filter filter;
+      GetSelfPixels();
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (!cnv:string(spec, spec))
+          runerr(103, spec);
+
+      if (!parsefilter(buffstr(&spec), &filter)) {
+          LitWhy("Invalid filter");
+          fail;
+      }
+
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          return self;
+
+      filter.imd = self_id;
+      filter.x = x;
+      filter.y = y;
+      filter.width = width;
+      filter.height = height;
+      filter.f(&filter);
+
+      return self;
+   }
+end
+
 function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(x) then
       runerr(101, x)
@@ -2256,7 +2235,11 @@ function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
           LitWhy("Out of range");
           fail;
       }
-      self_id->format->setpixel(self_id, x, y, r & 0xffff, g & 0xffff, b & 0xffff, a & 0xffff);
+      if (r < 0 || r > 65535 || g < 0 || g > 65535 || b < 0 || b > 65535 || a < 0 || a > 65535) {
+          LitWhy("Invalid RGBA value");
+          fail;
+      }
+      self_id->format->setpixel(self_id, x, y, r, g, b, a);
       return self;
    }
 end
@@ -2449,11 +2432,15 @@ function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
           LitWhy("Out of range");
           fail;
       }
+      if (r < 0 || r > 65535 || g < 0 || g > 65535 || b < 0 || b > 65535 || a < 0 || a > 65535) {
+          LitWhy("Invalid RGBA value");
+          fail;
+      }
       e = &self_id->paltbl[i];
-      e->r = r & 0xffff;
-      e->g = g & 0xffff;
-      e->b = b & 0xffff;
-      e->a = a & 0xffff;
+      e->r = r;
+      e->g = g;
+      e->b = b;
+      e->a = a;
       return self;
    }
 end

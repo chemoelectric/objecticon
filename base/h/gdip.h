@@ -88,7 +88,7 @@ gb_Bitmap *gb_create_empty_Bitmap(int width, int height);
 gb_Bitmap *gb_load_Bitmap_file(char *filename);
 gb_Bitmap *gb_load_Bitmap_data(BYTE *data, UINT length);
 void gb_free_Bitmap(gb_Bitmap *bm);
-void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *bm, int copy);
+void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *bm);
 void gb_drawrectangle(gb_Draw *d, int x, int y, int width, int height, int thick);
 void gb_fillrectangle(gb_Draw *d, int x, int y, int width, int height);
 void gb_erasearea(gb_Draw *d, int x, int y, int width, int height);

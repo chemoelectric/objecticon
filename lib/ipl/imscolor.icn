@@ -190,25 +190,18 @@ end
 
 # draw palette
 procedure drawpalette(win, p, x, y, w, h, f, n)	
-   local nh, c, s, colr, x1, x2, y1, y2, i, j, ret
+   local nh, c, s, colr, x1, x2, y1, y2, i, j, ret, r
    static cs
    initial cs := &ascii[33+:95] -- '\\'
 
-   win := win.clone().set_fg("black")
    ret := win
+   win := win.clone().set_fg("black")
 
    /p := "c1"
    /f := ""
 
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
-
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
+   r := win.canonical(x, y, w, h)
+   x := r.x; y := r.y; w := r.width; h := r.height
 
    s := PAL_Order(p) | fail
    /n := PAL_Columns(p, s, w, h)

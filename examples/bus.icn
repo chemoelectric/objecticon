@@ -1176,10 +1176,11 @@ class Map(Panel)
    end
 
    private draw_labels()
-      local lab_sort, st, areas, r
+      local lab_sort, st, areas, r, fs
       if /labels_flag then fail
       lab_sort := isort(vis_stops, label_weight_sort)
       areas := []
+      fs := "shade,4,5000,40000:" || I.get_bg()
       every st := back(lab_sort) do {
          if *areas > 20 then break
          r := Rect(st.px + stop_size, st.py - I.get_font_ascent(), I.text_width(st.name), I.get_font_height())
@@ -1191,7 +1192,7 @@ class Map(Panel)
                   I.set_fg("light gray")
             } else
                I.set_fg("black")
-            I.filter(r.x, r.y, r.w, r.h, "shade,4,5000,40000")
+            I.filter(r.x, r.y, r.w, r.h, fs)
             I.draw_string(st.px + stop_size, st.py, st.name)
             put(areas, r)
          }

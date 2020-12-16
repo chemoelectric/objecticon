@@ -3,15 +3,14 @@
  */
 
 /*
- * Entry in palette table.
+ * Entry in imgdata palette table.
  */
 struct palentry {
    int r, g, b, a;                         /* RGBA value of color */
 };
 
 struct point {
-    double x;
-    double y;
+    double x, y;
 };
 
 struct triangle {
@@ -188,10 +187,6 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 #define SELECTIONRESPONSE  (-32)
 #define INVOKELATER     (-40)
 
-/*
- * mode bits for the Icon window context (as opposed to X context)
- */
-
 #if MSWIN32
 
 struct SharedColor {
@@ -218,22 +213,13 @@ struct wcursor {
 };
 #endif
 
-/*
- * Window Resources
- * Icon "Resources" are a layer on top of the window system resources,
- * provided in order to facilitate resource sharing and minimize the
- * number of calls to the window system.  Resources are reference counted.
- * These data structures are simple sets of pointers
- * into internal window system structures.
- */
-
 
 /*
- * Fonts are allocated within displays.
+ * Font structure.
  */
 typedef struct _wfont {
   struct _wfont *next;
-  char	        *name;			/* name for WAttrib and fontsearch */
+  char	        *name;			/* font name for get_font() */
   int           ascent;                 /* font dimensions */
   int           descent;
   int           maxwidth;               /* max width of one char */
@@ -367,15 +353,9 @@ struct wcursor {
 #endif
 
 /*
- * Texture management requires that we be able to lookup and reuse
- * existing textures, as well as support dynamic window-based textures.
- */
-
-/*
- * "Context" comprises the graphics context, and the font (i.e. text context).
- * Foreground and background colors (pointers into the display color table)
- * are stored here to reduce the number of window system queries.
- * Contexts are allocated out of a global array in rwinrsrc.c.
+ * The context structure contains settings related to drawing.  A
+ * context goes together with a state (see below) to make up the
+ * Icon-level idea of a Window.
  */
 typedef struct _wcontext {
   int		refcount;
@@ -406,7 +386,7 @@ typedef struct _wcontext {
 
 
 /*
- * "Window state" structure.
+ * Window state (canvas) structure.
  */
 typedef struct _wstate {
   int		refcount;		/* reference count */
@@ -481,8 +461,8 @@ typedef struct _wbinding {
 } wbinding, *wbp;
 
 struct filter {
-   wbp w;
    struct imgdata *imd;
+   int x, y, width, height;
    void (*f)(struct filter *);
    union {
       struct {
@@ -494,6 +474,7 @@ struct filter {
       } coerce;
       struct {
          int nband, c, m;
+         int br, bb, bg;
       } shade;
    } p;
 };

@@ -1476,35 +1476,23 @@ static Image *imgdata_to_Image(struct imgdata *imd, int ix, int iy, int iw, int 
     return im;
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int copy)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd, int x2, int y2, int w2, int h2)
 {
     wcp wc = w->context;
     wsp ws = w->window;
-    int ix, iy, iw, ih;
     Image *im;
 
-    ix = x; iy = y; iw = imd->width; ih = imd->height;
-    if (!reducerect(w, 1, &ix, &iy, &iw, &ih))
-        return;
-
     /* Allocate a temp win to represent the imgdata */
-    im = imgdata_to_Image(imd, ix - x, iy - y, iw, ih, 32);
+    im = imgdata_to_Image(imd, x2, y2, w2, h2, 32);
     /* Copy tmp image back to screen */
     clip(w);
-    if (copy)
-        gendrawop(ws->pix,
-                  MkRect(ix, iy, iw, ih),
-                  im, ZP, 
-                  0, ZP,
-                  S);
-    else
-        gendrawop(ws->pix,
-                  MkRect(ix, iy, iw, ih),
-                  im, ZP, 
-                  get_mask_img(wc), Pt(ix, iy),
-                  wc->drawop->i);
+    gendrawop(ws->pix,
+              MkRect(x, y, w2, h2),
+              im, ZP, 
+              get_mask_img(wc), Pt(x, y),
+              wc->drawop->i);
 
-    pix_to_win(ws, ix, iy, iw, ih);
+    pix_to_win(ws, x, y, w2, h2);
     freeimage(im);
     flushimage(display, 1);
 }

@@ -4,7 +4,7 @@
 
 package mail
 
-import net, util(error)
+import net, util
 
 class SmtpClient(NetClient)
    private static const 
@@ -27,7 +27,7 @@ class SmtpClient(NetClient)
    # Set the hostname to use with the EHLO command; by default `&host`.
    #
    public set_hostname(s)
-      hostname := s
+      hostname := need_string(s)
       link
    end
 

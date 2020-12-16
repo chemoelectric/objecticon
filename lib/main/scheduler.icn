@@ -1,6 +1,6 @@
 package io
 
-import lang, util, ipl.printf
+import lang, util, ipl.printf, ipl.sort
 
 # This stream wraps another stream (normally a `SocketStream`).  The
 # `in` and `out` methods are invoked from the co-expression of the
@@ -379,77 +379,42 @@ package class Bag2()
       # A set of Tasks with time_until null.
       s
 
+   #
+   # Compare Tasks by time_until, using Internal.compare() as a
+   # tie-breaker.
+   #
+   private static cmp(x, y)
+      local i
+      i := x.time_until - y.time_until
+      if i = 0 then
+         i := Internal.compare(x, y)
+      return i
+   end
+
    public add(t)
-      local i, j, m, v, w
+      local i, v
       v := t.time_until
       if /v then
          insert(s, t)
       else {
-         i := 1
-         j := *l
-         while i <= j do {
-            m := (i + j) / 2
-            w := l[m].time_until
-            if w > v then
-               j := m - 1
-            else if w < v then
-               i := m + 1
-            else {
-               insert(l, m, t)
-               link
-            }
-         }
-         # Now i = j+1 and l[k] < v for k < i and l[k] > v for k > j,
-         # ie k >= i so the correct insertion point is i.
+         i := bsearch(l, t, cmp,,, &yes)
          insert(l, i, t)
       }
       link
    end
 
    public remove(t)
-      local i, j, m, v, w
+      local i, v
       v := t.time_until
       if /v then
          delete(s, t)
       else if t === l[1] then
          # Common case of getting the "most ready" Task.
          get(l)
-      else {
-         i := 1
-         j := *l
-         while i <= j do {
-            m := (i + j) / 2
-            w := l[m].time_until
-            if w > v then
-               j := m - 1
-            else if w < v then
-               i := m + 1
-            else {
-               if l[m] === t then {
-                  delete(l, m)
-                  link
-               }
-               i := m - 1
-               while l[i].time_until = v do {
-                  if l[i] === t then {
-                     delete(l, i)
-                     link
-                  }
-                  i -:= 1
-               }
-               i := m + 1
-               while l[i].time_until = v do {
-                  if l[i] === t then {
-                     delete(l, i)
-                     link
-                  }
-                  i +:= 1
-               }
-               break
-            }
-         }
+      else if i := bsearch(l, t, cmp) then
+         delete(l, i)
+      else
          syserr("remove() failed")
-      }
       link
    end
 
@@ -457,8 +422,8 @@ package class Bag2()
       local t, x
       every t := !l do {
          \t.time_until | return error("Time until not set")
-         if t.time_until < \x then return error("Times out of order")
-         x := t.time_until
+         if cmp(\x, t) >= 0 then return error("List items out of order")
+         x := t
       }
       every t := !s do
          /t.time_until | return error("Time until set")

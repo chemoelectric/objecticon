@@ -184,6 +184,12 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
                           dest, x2, y2, width2, height2)
 
    #
+   # Filter the given set of pixels according to the given filter
+   # spec.
+   #
+   public native filter(x, y, width, height, filter)
+
+   #
    # Encode the image to a file.
    #
    public native to_file(fname)
@@ -784,10 +790,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
          draw_image(,, v)
       } else use {
          v := Pixels(v),
-         {
-            set_size(v.get_width(), v.get_height())
-            draw_image(,, v)
-         }
+         set_image(v)
       }
    end
 
@@ -1180,19 +1183,22 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public native draw_curve(a[])
 
    #
-   # Draw an image at `x`, `y`.  The image `v` can be raw image data,
+   # Draw an image at `x1`, `y1`.  The image `src` can be raw image data,
    # a filename, or a `Pixels` instance.
    #
-   public draw_image(x, y, v)
-      return if is(v, Pixels) then
-         draw_image_impl(x, y, v)
+   # The optional parameters after `src` specify a region of the source
+   # image to copy; they default to the whole image.
+   #
+   public draw_image(x1, y1, src, x2, y2, width, height)
+      return if is(src, Pixels) then
+         draw_image_impl(x1, y1, src, x2, y2, width, height)
       else use {
-         v := Pixels(v),
-         draw_image_impl(x, y, v)
+         src := Pixels(src),
+         draw_image_impl(x1, y1, src, x2, y2, width, height)
       }
    end
 
-   private native draw_image_impl(x, y, pix)
+   private native draw_image_impl(x1, y1, src, x2, y2, width, height)
 
    #
    # Copy a rectangular area from this window to another window, `dest`, at `x2`.
@@ -1314,6 +1320,11 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public static native palette_key(s1, s2)
 
    #
+   # Like `palette_key()`, but takes integer color values.
+   #
+   public static native palette_key_rgb(s1, r, g, b)
+
+   #
    # Get the default font for a window, as optionally specified with
    # the OI_FONT environment variable.
    #
@@ -1348,7 +1359,22 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    #
    # Filter the given pixels according to the given filter spec.
    #
-   public native filter(x, y, width, height, filter)
+   public filter(x, y, width, height, filter)
+      local r, p, t
+      if r := drawable(x, y, width, height) then
+         use {
+            p := get_pixels!r,
+            if p.filter(,,,, filter) then {
+               use {
+                  t := clone(),
+                  t.set_draw_op("source").
+                     set_mask().
+                     draw_image(r.x, r.y, p)
+               }
+            }
+         } | fail
+      link
+   end
 
    #
    # Return a `Rectangle` record, representing that part of the given
@@ -1356,20 +1382,34 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # intersection of the rectangle, the window and the clip area if
    # set.  If the result would be an empty area, the method fails.
    #
+   # `x` and `y` default to the top left of the window, whilst `width`
+   # and `height` default to extending to the right or bottom edge
+   # respectively.
+   #
    public drawable(x, y, width, height)
-      return Rectangle!drawable_impl(x, y, width, height)
+      return Rectangle!rectangle_impl(1, x, y, width, height)
    end
-
-   private native drawable_impl(x, y, width, height)
 
    #
    # This is the same as `drawable`, but ignores the clip region.
    #
    public viewable(x, y, width, height)
-      return Rectangle!viewable_impl(x, y, width, height)
+      return Rectangle!rectangle_impl(0, x, y, width, height)
    end
 
-   private native viewable_impl(x, y, width, height)
+   #
+   # Return a `Rectangle` created from the given parameters, after
+   # applying the same defaults as `drawable()`.  Negative width or
+   # height values are set to zero.
+   #
+   # The resulting rectangle may be partially or fully off-screen, or
+   # empty.
+   #
+   public canonical(x, y, width, height)
+      return Rectangle!rectangle_impl(2, x, y, width, height)
+   end
+
+   private native rectangle_impl(mode, x, y, width, height)
 
    #
    # Return the current root pointer position as a `Point` record.
@@ -1532,10 +1572,7 @@ final class Window(NoCopy, ObjectOutput, HasClose)
       w := Window() | fail
       use {
          t := w.clone(),
-         {
-            t.set_draw_op("source")
-            t.set_image(img)
-         }
+         t.set_draw_op("source").set_image(img)
       } | {
          w.close()
          fail

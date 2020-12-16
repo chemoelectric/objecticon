@@ -61,11 +61,8 @@
 #  reverse-mode outline rectangle indicates the selected area.  The
 #  pixels underneath the rectangle outline are considered part of this
 #  rectangle, implying a minimum width/height of 1, and the rectangle
-#  is clipped to the window  boundary.  Sweep returns a list of four
-#  integers [x,y,w,h] giving the rectangle bounds in canonical form
-#  (w and h always positive).  Note that w and h give the width as
-#  measured in FillRectangle terms (number of pixels included) rather
-#  than DrawRectangle terms (coordinate difference).
+#  is clipped to the window  boundary.  Sweep returns a Rectangle instance
+#  giving the rectangle bounds in canonical form (w and h always positive).
 #
 #  Capture(palette, x, y, w, h) converts a window region into an
 #  image string using the specified palette, and returns the string.
@@ -84,7 +81,7 @@
 
 package ipl.graphics
 
-import graphics(Mouse,Window), io(RamStream), util(use)
+import graphics(Mouse,Window,Rectangle), io(RamStream), util(use)
 
 #   LeftString(x, y, s) -- draw string left-justified at (x,y).
 
@@ -119,19 +116,7 @@ end
 
 # draw and clear rectangle
 procedure ClearOutline(win, x, y, w, h)		
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
-
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
-
-   win.draw_rectangle( x, y, w, h)
-   win.erase_area( x+1, y+1, w-1, h-1)
-   return win
+   return win.erase_area(x, y, w, h).draw_rectangle(x, y, w, h)
 end
 
 
@@ -149,74 +134,71 @@ end
 
 # sweep area with mouse
 procedure Sweep(win)				
-   local l, e, x, y, w, h, wmin, wmax, hmin, hmax
+   local p, e, x, y, tmp, x1, y1, x2, y2, r, sz, off
 
-   win := win.clone().set_draw_op("xor").set_fg(win.get_bg()) | fail
+   sz := win.get_size()
+   off := win.get_offset()
+   p := win.query_pointer()
 
-   l := win.query_pointer()
-   x := l[1]                                      # set initial rect bounds
-   y := l[2]
-   w := h := 0
+   x := p.x                                      # set initial rect bounds
+   x <:= -off.dx
+   x >:= sz.width - off.dx - 1
+   y := p.y
+   y <:= -off.dy
+   y >:= sz.height - off.dy - 1
 
-   wmin := -win.get_dx() - x              # calc coordinate limits
-   hmin := -win.get_dy() - y
-   wmax := wmin + win.get_width() - 1
-   hmax := hmin + win.get_height() - 1
+   r := Rectangle(x, y, 1, 1)
+   tmp := (Window().set_size!sz).set_offset!off
+   win.copy_to(,,,, tmp)
 
-   win.draw_rectangle(x, y, w, h)               # draw initial bounding rect
-   until member(Mouse.RELEASE, (e := WEvent(win))[1]) do {
-      win.draw_rectangle(x, y, w, h)            # erase old bounds
-      w := e[2] - x                               # calc new width & height
-      h := e[3] - y
-      w <:= wmin                                # clip to stay on window
-      w >:= wmax
-      h <:= hmin
-      h >:= hmax
-      win.draw_rectangle(x, y, w, h)            # draw new bounds
+   win := win.clone()
+   win.set_draw_op("source").set_pattern().set_mask().clip()
+   win.draw_rectangle!r                          # draw initial bounding rect
+
+   repeat {
+      e := WEvent(win)
+      if member(Mouse.RELEASE, e[1]) then
+         break
+      if e[1] === Mouse.DRAG then {
+         win.hold()
+         tmp.copy_to(r.x, r.y, r.width, r.height, win, r.x, r.y)      # erase old bounds
+         # calc new width & height
+         x1 := x; x2 := e[2]
+         y1 := y; y2 := e[3]
+         if x1 > x2 then x1 :=: x2
+         if y1 > y2 then y1 :=: y2
+         r := win.viewable(x1, y1, x2 - x1 + 1, y2 - y1 + 1)
+         win.draw_rectangle!r       # draw new bounds
+         win.restore()   
+         }
       }
-   win.draw_rectangle(x, y, w, h)               # erase bounding rectangle
+   tmp.copy_to(r.x, r.y, r.width, r.height, win, r.x, r.y)      # erase bounding rectangle
 
-   if w < 0 then x -:= (w := -w)                # ensure nonnegative sizes
-   if h < 0 then y -:= (h := -h)
-
+   tmp.close()
    win.close()
-   return [x, y, w + 1, h + 1]                  # return FillRectangle bounds
+   return r                                   # return bounds
 end
 
 
-#  Zoom(win1, win2, x1, y1, w1, h1, x2, y2, w2, h2) -- copy and distort.
+#  Zoom(win1, x1, y1, w1, h1, win2, x2, y2, w2, h2) -- copy and distort.
 
 # zoom image
-procedure Zoom(args[])				
-   local win1, x1, y1, w1, h1
-   local win2, x2, y2, w2, h2
-   local x, y, scr
+procedure Zoom(win1, x1, y1, w1, h1, win2, x2, y2, w2, h2)
+   local r, x, y, scr
 
-   win1 := get(args)
-   win2 := get(args)
+   r := win1.canonical(x1, y1, w1, h1)
+   x1 := r.x; y1 := r.y; w1 := r.width; h1 := r.height
 
-   x1 := \get(args) | -win1.get_dx()
-   y1 := \get(args) | -win1.get_dy()
-   w1 := \get(args) | win1.get_width() - (x1 + win1.get_dx())
-   h1 := \get(args) | win1.get_height() - (y1 + win1.get_dy())
-   if w1 < 0 then
-      x1 -:= (w1 := -w1)
-   if h1 < 0 then
-      y1 -:= (h1 := -h1)
+   r := win2.canonical(x2, y2, w2, h2)
+   x2 := r.x; y2 := r.y; w2 := r.width; h2 := r.height
 
-   x2 := \get(args) | -win2.get_dx()
-   y2 := \get(args) | -win2.get_dy()
-   w2 := \get(args) | win2.get_width() - (x2 + win2.get_dx())
-   h2 := \get(args) | win2.get_height() - (y2 + win2.get_dy())
-   if w2 < 0 then
-      x2 -:= (w2 := -w2)
-   if h2 < 0 then
-      y2 -:= (h2 := -h2)
+   if (w1 | w2 | h1 | h2) = 0 then
+      return win1
 
-   if w1 = 0 | w2 = 0 | h1 = 0 | h2 = 0 then
-      return
+   scr := ScratchCanvas(win2, w2, h1, Zoom) | fail
+   scr.set_draw_op("source").
+      erase_area()
 
-   scr := ScratchCanvas(win2, w2, h1, "__Zoom__").set_draw_op("source") | fail
    win2 := win2.clone().set_draw_op("source")
    every x := 0 to w2 - 1 do
       win1.copy_to(x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, scr, x, 0)
@@ -231,19 +213,11 @@ end
 
 # capture image as string
 procedure Capture(win, pal, x, y, w, h)		
-   local c, k, s, cmap, px
+   local c, k, s, cmap, px, r
 
    /pal := "c1"
 
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
-
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
+   r := win.viewable(x, y, w, h) | fail
 
    Window.palette_chars(pal) | runerr(205, pal)
 
@@ -254,9 +228,9 @@ procedure Capture(win, pal, x, y, w, h)
    return use {
       s := RamStream(),
       {
-         s.out(w || "," || pal || ",")
+         s.out(r.width || "," || pal || ",")
          use {
-            px := win.get_pixels(x, y, w, h),
+            px := win.get_pixels!r,
             every k := px.gen().pixel do {
                c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
                s.out(c)
