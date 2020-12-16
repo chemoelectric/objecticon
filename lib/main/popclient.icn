@@ -4,7 +4,11 @@
 
 package mail
 
-import net, util(error)
+import net, util
+
+record PopStat(number, size)
+record PopList(number, size)
+record PopUID(number, uid)
 
 class PopClient(NetClient)
    private
@@ -16,7 +20,7 @@ class PopClient(NetClient)
    # :  `n` - the message number
    #
    public dele(n)
-      send_command("DELE " || n) | fail
+      send_command("DELE " || need_integer(n)) | fail
       link
    end
 
@@ -73,7 +77,7 @@ class PopClient(NetClient)
    #
    public retr(n)
       local l, m, s
-      send_command("RETR " || n) | fail
+      send_command("RETR " || need_integer(n)) | fail
       l := read_multi_lines() | fail
 
       s := ""
@@ -84,78 +88,82 @@ class PopClient(NetClient)
       return m
    end
 
-   #
-   # Return a table of integer to integer mappings, of message numbers
-   # to sizes.
-   #
-   # :Parameters :
-   # :  `n` - optionally return only this message number
-   #
-   public list(n)
-      local l, r, num, size, s
-
-      r := table()
-      
-      if /n then {
-         send_command("LIST") | fail
-         l := read_multi_lines() | fail
-         every s := !l do {
-            s ? {
-               num := integer(tab(many(&digits))) | return error("Bad list: " || s)
-               =" "
-               size := integer(tab(many(&digits))) | return error("Bad list: " || s)
-            }
-            insert(r, num, size)
-         }
+   private list1(s)
+      local num, size
+      s ? {
+         (num := integer(tab(many(&digits))) &
+          =" " &
+          size := integer(tab(many(&digits)))) | return error("Bad list: " || s)
       }
-      else {
-         s := send_command("LIST " || n) | fail
-         s ? {
-            num := integer(tab(many(&digits))) | return error("Bad list: " || s)
-            =" "
-            size := integer(tab(many(&digits))) | return error("Bad list: " || s)
-         }
-         insert(r, num, size)
-      }
-
-      return r
+      return PopList(num, size)
    end
 
    #
-   # Return a table of integer to integer mappings, of message numbers
-   # to unique ids, using the UIDL command.
+   # Return a list of `PopList` records, giving the current list of
+   # message numbers and sizes.
    #
    # :Parameters :
-   # :  `n` - optionally return only this message number
+   # :  `n` - optionally return the size of this message
+   #          number
+   #
+   public list(n)
+      local l, r, s
+      if /n then {
+         send_command("LIST") | fail
+         l := read_multi_lines() | fail
+         r := []
+         every s := !l do
+            put(r, list1(s)) | fail
+         return r
+      }
+      else {
+         n := need_integer(n)
+         s := send_command("LIST " || n) | fail
+         r := list1(s) | fail
+         return if r.number = n then
+            r.size
+         else
+            error("Mismatch in number of message")
+      }
+   end
+
+   private uidl1(s)
+      local num, id
+      s ? {
+         (num := integer(tab(many(&digits))) &
+          =" " &
+          id := tab(0)) | return error("Bad UIDL list: " || s)
+      }
+      return PopUID(num, id)
+   end
+
+   #
+   # Return a list of `PopUID` records, giving the current list of
+   # message numbers and unique ids, using the UIDL command.
+   #
+   # :Parameters :
+   # :  `n` - optionally return the UID for this message
+   #          number
    #
    public uidl(n)
-      local l, r, num, id, s
-
-      r := table()
-      
+      local l, r, s
       if /n then {
          send_command("UIDL") | fail
          l := read_multi_lines() | fail
-         every s := !l do {
-            s ? {
-               num := integer(tab(many(&digits))) | return error("Bad list: " || s)
-               =" "
-               id := tab(0)
-            }
-            insert(r, num, id)
-         }
+         r := []
+         every s := !l do
+            put(r, uidl1(s)) | fail
+         return r
       }
       else {
+         n := need_integer(n)
          s := send_command("UIDL " || n) | fail
-         s ? {
-            num := integer(tab(many(&digits))) | return error("Bad list: " || s)
-            =" "
-            id := tab(0)
-         }
-         insert(r, num, id)
+         r := uidl1(s) | fail
+         return if r.number = n then
+            r.uid
+         else
+            error("Mismatch in number of message")
       }
-
-      return r
    end
 
    #
@@ -184,7 +192,7 @@ class PopClient(NetClient)
    end
 
    #
-   # Return a two-item list being the number of messages followed by the
+   # Return a `PopStat` record giving the number of messages followed by the
    # total size, obtained using the STAT command.
    #
    public stat()
@@ -192,12 +200,12 @@ class PopClient(NetClient)
 
       s := send_command("STAT") | fail
       s ? {
-         num_messages := integer(tab(many(&digits))) | return error("Bad stat listing: " || s)
-         =" "
-         total_size := integer(tab(many(&digits))) | return error("Bad stat listing: " || s)
+         (num_messages := integer(tab(many(&digits))) &
+          =" " &
+          total_size := integer(tab(many(&digits)))) | return error("Bad stat listing: " || s)
       }
 
-      return [num_messages, total_size]
+      return PopStat(num_messages, total_size)
    end
 
    #
