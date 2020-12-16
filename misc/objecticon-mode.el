@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1989 Free Software Foundation, Inc.
 
-;; Author: Robert Parlett <parlett@dial.pipex.com>
+;; Author: Robert Parlett <2parlett@gmail.com>
 ;;         -very substantially based on icon.el by
 ;;          Chris Smith <csmith@convex.com>
 ;; Created: 15 Mar 99
