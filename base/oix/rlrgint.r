@@ -957,7 +957,7 @@ int bigpow(dptr da, dptr db, dptr dx)
             *dx = onedesc;
             for ( n = 0; n < blen; ++n ) {
                 nth_dig = *DIG ( b, n );
-                for ( mask = 1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
+                for ( mask = (DIGIT)1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
                     bigmul( dx, dx, dx);
                     if ( nth_dig & mask )
                         bigmul ( dx, da, dx );
@@ -1030,7 +1030,7 @@ int bigpowri(double a, dptr db, dptr dx)
         retval = 1.0;
         for ( n = 0; n < blen; ++n ) {
             nth_dig = *DIG ( b, n );
-            for ( mask = 1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
+            for ( mask = (DIGIT)1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
                 retval *= retval;
                 if ( nth_dig & mask )
                     retval *= a;
