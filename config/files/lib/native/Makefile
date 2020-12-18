@@ -18,7 +18,7 @@ endif
 all : $(TARGET)
 
 objecticonmysqllib.so : mysql.o
-	$(CC) @MYSQL_LDFLAGS@  $(DYNAMIC_LIB_LDFLAGS) -o objecticonmysqllib.so mysql.o @MYSQL_LIBS@
+	$(CC) $(CFLAGS) @MYSQL_LDFLAGS@  $(DYNAMIC_LIB_LDFLAGS) -o objecticonmysqllib.so mysql.o @MYSQL_LIBS@
 
 mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
@@ -26,7 +26,7 @@ mysql.o : mysql.r
 	$(RM) mysql.c
 
 objecticonipclib.so : ipc.o
-	$(CC) $(LDFLAGS) $(DYNAMIC_LIB_LDFLAGS) -o objecticonipclib.so ipc.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DYNAMIC_LIB_LDFLAGS) -o objecticonipclib.so ipc.o
 
 ipc.o : ipc.r
 	$(RTT) -h gipc.h ipc.r
@@ -34,7 +34,7 @@ ipc.o : ipc.r
 	$(RM) ipc.c
 
 objecticoncairolib.so : cairo.o
-	$(CC) @CAIRO_LDFLAGS@ $(DYNAMIC_LIB_LDFLAGS) -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
+	$(CC) $(CFLAGS)  @CAIRO_LDFLAGS@ $(DYNAMIC_LIB_LDFLAGS) -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
 
 cairo.o : cairo.r
 	$(RTT) -h gcairo.h cairo.r
@@ -42,7 +42,7 @@ cairo.o : cairo.r
 	$(RM) cairo.c
 
 objecticonssllib.so : ssl.o
-	$(CC) @OPENSSL_LDFLAGS@ $(DYNAMIC_LIB_LDFLAGS) -o objecticonssllib.so ssl.o @OPENSSL_LIBS@
+	$(CC) $(CFLAGS)  @OPENSSL_LDFLAGS@ $(DYNAMIC_LIB_LDFLAGS) -o objecticonssllib.so ssl.o @OPENSSL_LIBS@
 
 ssl.o : ssl.r
 	$(RTT) -h gssl.h ssl.r
@@ -50,7 +50,7 @@ ssl.o : ssl.r
 	$(RM) ssl.c
 
 objecticonmemdebug.so : memdebug.o
-	$(CC) $(DYNAMIC_LIB_LDFLAGS) -o objecticonmemdebug.so memdebug.o
+	$(CC) $(CFLAGS) $(DYNAMIC_LIB_LDFLAGS) -o objecticonmemdebug.so memdebug.o
 
 memdebug.o : memdebug.r
 	$(RTT) memdebug.r

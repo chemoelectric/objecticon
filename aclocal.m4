@@ -313,8 +313,8 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
                              int func3(int x) { return 2*x*var1*var2*func2()*func1(20); }]])]
          )
         _AS_ECHO_LOG([Trying to create dloadtest.so (2 commands follow)])
-        AX_RUN_PROG([$CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c])
-        AX_RUN_PROG([$CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o])
+        AX_RUN_PROG([$CC $CFLAGS $DYNAMIC_LIB_CFLAGS -c conftest.c -o conftest.o])
+        AX_RUN_PROG([$CC $CFLAGS $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o])
         rm -f ./conftest.o ./conftest.c
 
         dnl Now try to link a program with the shared library, and have each half call the other.
