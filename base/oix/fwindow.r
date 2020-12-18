@@ -577,66 +577,52 @@ function graphics_Pixels_to_file(self, fname)
    }
 end
 
-function graphics_Window_query_root_pointer_impl(self)
+function graphics_Window_query_root_pointer_impl(self, con)
    body {
       int x, y;
       tended struct descrip result;
-      struct descrip t;
       GetSelfW();
       AttemptOp(queryrootpointer(self_w, &x, &y));
-      create_list(2, &result);
-      MakeInt(x, &t);
-      list_put(&result, &t);
-      MakeInt(y, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 2, result);
+      ints_to_record(&result, 2, x, y);
       return result;
    }
 end
 
-function graphics_Window_query_pointer_impl(self)
+function graphics_Window_query_pointer_impl(self, con)
    body {
       int x, y;
       tended struct descrip result;
-      struct descrip t;
       GetSelfW();
       AttemptOp(querypointer(self_w, &x, &y));
-      create_list(2, &result);
-      MakeInt(x - self_w->context->dx, &t);
-      list_put(&result, &t);
-      MakeInt(y - self_w->context->dy, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 2, result);
+      ints_to_record(&result, 2,
+                     x - self_w->context->dx,
+                     y - self_w->context->dy);
       return result;
    }
 end
 
-function graphics_Window_get_display_size_impl(self)
+function graphics_Window_get_display_size_impl(self, con)
    body {
       int width, height;
       tended struct descrip result;
-      struct descrip t;
       GetSelfW();
       AttemptOp(getdisplaysize(self_w, &width, &height));
-      create_list(2, &result);
-      MakeInt(width, &t);
-      list_put(&result, &t);
-      MakeInt(height, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 2, result);
+      ints_to_record(&result, 2, width, height);
       return result;
    }
 end
 
-function graphics_Window_get_display_size_mm_impl(self)
+function graphics_Window_get_display_size_mm_impl(self, con)
    body {
       int width, height;
       tended struct descrip result;
-      struct descrip t;
       GetSelfW();
       AttemptOp(getdisplaysizemm(self_w, &width, &height));
-      create_list(2, &result);
-      MakeInt(width, &t);
-      list_put(&result, &t);
-      MakeInt(height, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 2, result);
+      ints_to_record(&result, 2, width, height);
       return result;
    }
 end
@@ -757,12 +743,11 @@ function graphics_Window_get_canvas(self)
    }
 end
 
-function graphics_Window_rectangle_impl(self, mode, x0, y0, w0, h0)
+function graphics_Window_rectangle_impl(self, mode, x0, y0, w0, h0, con)
    if !cnv:C_integer(mode) then
        runerr(101, mode)
    body {
       tended struct descrip result;
-      struct descrip t;
       wcp wc;
       int x, y, width, height;
       GetSelfW();
@@ -776,38 +761,31 @@ function graphics_Window_rectangle_impl(self, mode, x0, y0, w0, h0)
               fail;
       }
 
-      create_list(4, &result);
-      MakeInt(x - wc->dx, &t);
-      list_put(&result, &t);
-      MakeInt(y - wc->dy, &t);
-      list_put(&result, &t);
-      MakeInt(width, &t);
-      list_put(&result, &t);
-      MakeInt(height, &t);
-      list_put(&result, &t);
-
+      MakeReturnRecord(con, 4, result);
+      
+      ints_to_record(&result, 4, 
+                     x - wc->dx,
+                     y - wc->dy,
+                     width,
+                     height);
       return result;
    }
 end
 
-function graphics_Window_get_clip_impl(self)
+function graphics_Window_get_clip_impl(self, con)
    body {
        tended struct descrip result;
-       struct descrip t;
        wcp wc;
        GetSelfW();
        wc = self_w->context;
        if (wc->clipw < 0)
            fail;
-       create_list(4, &result);
-       MakeInt(wc->clipx - wc->dx, &t);
-       list_put(&result, &t);
-       MakeInt(wc->clipy - wc->dy, &t);
-       list_put(&result, &t);
-       MakeInt(wc->clipw, &t);
-       list_put(&result, &t);
-       MakeInt(wc->cliph, &t);
-       list_put(&result, &t);
+       MakeReturnRecord(con, 4, result);
+       ints_to_record(&result, 4,
+                      wc->clipx - wc->dx,
+                      wc->clipy - wc->dy,
+                      wc->clipw,
+                      wc->cliph);
        return result;
    }
 end
@@ -1033,17 +1011,14 @@ function graphics_Window_can_resize(self)
    }
 end
 
-function graphics_Window_get_references_impl(self)
+function graphics_Window_get_references_impl(self, rec)
    body {
-       tended struct descrip result;
-       struct descrip t;
        GetSelfW();
-       create_list(2, &result);
-       MakeInt(self_w->window->refcount, &t);
-       list_put(&result, &t);
-       MakeInt(self_w->context->refcount, &t);
-       list_put(&result, &t);
-       return result;
+       CheckReturnRecord(rec, 2);
+       ints_to_record(&rec, 2,
+                      self_w->window->refcount,
+                      self_w->context->refcount);
+       return rec;
    }
 end
 
@@ -1748,24 +1723,16 @@ function graphics_Window_color_value(s)
    }
 end
 
-function graphics_Window_parse_color_impl(s)
+function graphics_Window_parse_color_impl(s, con)
     if !cnv:string(s) then
        runerr(103, s);
    body {
       int r, g, b, a;
       tended struct descrip result;
-      struct descrip t;
       if (!parsecolor(buffstr(&s), &r, &g, &b, &a))
           fail;
-      create_list(4, &result);
-      MakeInt(r, &t);
-      list_put(&result, &t);
-      MakeInt(g, &t);
-      list_put(&result, &t);
-      MakeInt(b, &t);
-      list_put(&result, &t);
-      MakeInt(a, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 4, result);
+      ints_to_record(&result, 4, r, g, b, a);
       return result;
    }
 end
@@ -1818,6 +1785,33 @@ function graphics_Window_palette_color(s1, s2)
           fail;
       }
       cstr2string(tocolorstring(e->r, e->g, e->b, e->a), &result);
+      return result;
+   }
+end
+
+function graphics_Window_palette_color_rgb_impl(s1, s2, con)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:string(s2) then
+       runerr(103, s2)
+   body {
+      int p;
+      struct palentry *e;
+      tended struct descrip result;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
+          fail;
+      }
+      if (StrLen(s2) != 1)
+          runerr(205, s2);
+      e = palsetup(p); 
+      e += *StrLoc(s2) & 0xFF;
+      if (!e->a) {
+          LitWhy("Invalid character");
+          fail;
+      }
+      MakeReturnRecord(con, 4, result);
+      ints_to_record(&result, 4, e->r, e->g, e->b, e->a);
       return result;
    }
 end
@@ -1936,7 +1930,7 @@ function graphics_Pixels_close(self)
    }
 end
 
-function graphics_Pixels_get_rgba_impl(self, x, y)
+function graphics_Pixels_get_rgba_impl(self, x, y, con)
    if !cnv:C_integer(x) then
       runerr(101, x)
    if !cnv:C_integer(y) then
@@ -1944,22 +1938,14 @@ function graphics_Pixels_get_rgba_impl(self, x, y)
    body {
       int r, g, b, a;
       tended struct descrip result;
-      struct descrip t;
       GetSelfPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
       }
       self_id->format->getpixel(self_id, x, y, &r, &g, &b, &a);
-      create_list(4, &result);
-      MakeInt(r, &t);
-      list_put(&result, &t);
-      MakeInt(g, &t);
-      list_put(&result, &t);
-      MakeInt(b, &t);
-      list_put(&result, &t);
-      MakeInt(a, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 4, result);
+      ints_to_record(&result, 4, r, g, b, a);
       return result;
    }
 end
@@ -2388,28 +2374,20 @@ function graphics_Pixels_get_palette(self, i)
    }
 end
 
-function graphics_Pixels_get_palette_rgba_impl(self, i)
+function graphics_Pixels_get_palette_rgba_impl(self, i, con)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
       struct palentry *e;
       tended struct descrip result;
-      struct descrip t;
       GetSelfPalettedPixels();
       if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
       e = &self_id->paltbl[i];
-      create_list(4, &result);
-      MakeInt(e->r, &t);
-      list_put(&result, &t);
-      MakeInt(e->g, &t);
-      list_put(&result, &t);
-      MakeInt(e->b, &t);
-      list_put(&result, &t);
-      MakeInt(e->a, &t);
-      list_put(&result, &t);
+      MakeReturnRecord(con, 4, result);
+      ints_to_record(&result, 4, e->r, e->g, e->b, e->a);
       return result;
    }
 end
@@ -2533,9 +2511,10 @@ function graphics_Pixels_get_references(self)
    }
 end
 
-function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
+function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, con)
    body {
       int x, y, width, height;
+      tended struct descrip result;
       int i, j, r, g, b, a;
       GetSelfPixels();
 
@@ -2544,6 +2523,7 @@ function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
       if (!pixels_reducerect(self_id, &x, &y, &width, &height))
           fail;
 
+      MakeReturnRecord(con, 6, result);
       for (j = y; j < y + height; ++j)
           for (i = x; i < x + width; ++i) {
               /* Refresh self_id, since the Pixels may have been closed. */
@@ -2551,22 +2531,17 @@ function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
               if (!self_id)
                   runerr(219, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
-              MakeInt(i, &RecordBlk(rec).fields[0]);
-              MakeInt(j, &RecordBlk(rec).fields[1]);
-              MakeInt(r, &RecordBlk(rec).fields[2]);
-              MakeInt(g, &RecordBlk(rec).fields[3]);
-              MakeInt(b, &RecordBlk(rec).fields[4]);
-              MakeInt(a, &RecordBlk(rec).fields[5]);
-              suspend rec;
+              ints_to_record(&result, 6, i, j, r, g, b, a);
+              suspend result;
           }
       fail;
    }
 end
 
-function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
+function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, con)
    body {
       int x, y, width, height;
-      tended struct descrip tmp;
+      tended struct descrip tmp, result;
       int i, j, r, g, b, a;
       GetSelfPixels();
 
@@ -2575,6 +2550,7 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
       if (!pixels_reducerect(self_id, &x, &y, &width, &height))
           fail;
 
+      MakeReturnRecord(con, 3, result);
       for (j = y; j < y + height; ++j)
           for (i = x; i < x + width; ++i) {
               /* Refresh self_id, since the Pixels may have been closed. */
@@ -2583,10 +2559,10 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
                   runerr(219, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
               cstr2string(tocolorstring(r, g, b, a), &tmp);
-              MakeInt(i, &RecordBlk(rec).fields[0]);
-              MakeInt(j, &RecordBlk(rec).fields[1]);
-              RecordBlk(rec).fields[2] = tmp;
-              suspend rec;
+              MakeInt(i, &RecordBlk(result).fields[0]);
+              MakeInt(j, &RecordBlk(result).fields[1]);
+              RecordBlk(result).fields[2] = tmp;
+              suspend result;
           }
       fail;
    }
