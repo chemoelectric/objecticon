@@ -404,6 +404,11 @@ void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to);
 
 void xdisp(struct b_coexpr *ce, int count, FILE *f);
 
+void ints_to_list(dptr result, int n, ...);
+void doubles_to_list(dptr result, int n, ...);
+void ints_to_record(dptr result, int n, ...);
+void doubles_to_record(dptr result, int n, ...);
+
 void create_list(word nslots, dptr d);
 void create_table(word nslots, word nelem, dptr d);
 void create_set(word nslots, word nelem, dptr d);
