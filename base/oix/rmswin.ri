@@ -1452,8 +1452,12 @@ int setpattern(wbp w, struct imgdata *imd)
 
 int setmask(wbp w, struct imgdata *imd)
 {
-    LitWhy("Not implemented");
-    return Failed;
+    /* Allow set_mask() to succeed as a no-op. */
+    if (imd) {
+        LitWhy("Not implemented");
+        return Failed;
+    } else
+        return Succeeded;
 }
 
 int ishidden(wbp w)

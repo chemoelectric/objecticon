@@ -555,7 +555,7 @@ function posix_System_getegid()
 end
 
 #if UNIX
-static void passwd2list(struct passwd *pw, dptr result)
+static void passwd_to_list(struct passwd *pw, dptr result)
 {
    tended struct descrip tmp;
    create_list(6, result);
@@ -573,7 +573,7 @@ static void passwd2list(struct passwd *pw, dptr result)
    list_put(result, &tmp);
 }
 
-static void group2list(struct group *gr, dptr result)
+static void group_to_list(struct group *gr, dptr result)
 {
    tended struct descrip tmp, mem;
    int i;
@@ -612,7 +612,7 @@ function posix_System_getpw_impl(v)
     }
     if (!pw)
         fail;
-    passwd2list(pw, &result);
+    passwd_to_list(pw, &result);
     return result;
 #else
      Unsupported;
@@ -637,7 +637,7 @@ function posix_System_getgr_impl(v)
     }
     if (!gr)
         fail;
-    group2list(gr, &result);
+    group_to_list(gr, &result);
     return result;
 #else
      Unsupported;
