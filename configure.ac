@@ -54,7 +54,7 @@ dnl Set compiler-specific flags
 case $CCVER in
     gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing -Wno-deprecated-declarations" ;;
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
-    *clang*) CFLAGS="$CFLAGS -Wall -Wno-unused-const-variable -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations -Wno-misleading-indentation" ;;
+    *clang*) CFLAGS="$CFLAGS -Wall -Wno-unknown-warning-option -Wno-unused-const-variable -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations -Wno-misleading-indentation" ;;
     *Sun\ C*) CFLAGS="$CFLAGS -errtags=yes -erroff=E_STATEMENT_NOT_REACHED -erroff=E_INVALID_CAST_EXPRESSION -erroff=E_ASSIGNMENT_TYPE_MISMATCH" ;;
     *IBM\ XL*) if test "$CFLAGS" = "-g -O2" ; then CFLAGS=-g ; fi
                CFLAGS="$CFLAGS -O0" ;;
