@@ -1925,7 +1925,6 @@ function io_FileStream_pipe_impl()
    body {
 #if UNIX || PLAN9
        int fds[2];
-       struct descrip t;
        tended struct descrip result;
 
        if (pipe(fds) < 0) {
@@ -1933,17 +1932,10 @@ function io_FileStream_pipe_impl()
            fail;
        }
 
-       create_list(2, &result);
-
-      MakeInt(fds[0], &t);
-      list_put(&result, &t);
-
-      MakeInt(fds[1], &t);
-      list_put(&result, &t);
-
-      return result;
+       ints_to_list(&result, 2, fds[0], fds[1]);
+       return result;
 #else
-      Unsupported;
+       Unsupported;
 #endif
    }
 end
@@ -2165,7 +2157,6 @@ function io_SocketStream_socketpair_impl(typ)
 
    body {
        int fds[2];
-       struct descrip t;
        tended struct descrip result;
 
        if (socketpair(AF_UNIX, typ, 0, fds) < 0) {
@@ -2173,15 +2164,8 @@ function io_SocketStream_socketpair_impl(typ)
            fail;
        }
 
-       create_list(2, &result);
-
-      MakeInt(fds[0], &t);
-      list_put(&result, &t);
-
-      MakeInt(fds[1], &t);
-      list_put(&result, &t);
-
-      return result;
+       ints_to_list(&result, 2, fds[0], fds[1]);
+       return result;
    }
 end
 
@@ -2612,16 +2596,16 @@ function io_SocketStream_recvfrom_impl(self, i, flags)
         * We may not have used the entire amount of storage we reserved.
         */
        dealcstr(s + nread);
-       MakeStr(s, nread, &tmp);
-
-       create_list(2, &result);
-       list_put(&result, &tmp);
 
        ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
            LitWhy("No name information available");
            fail;
        }
+
+       create_list(2, &result);
+       MakeStr(s, nread, &tmp);
+       list_put(&result, &tmp);
        cstr2string(ip, &tmp);
        list_put(&result, &tmp);
 
@@ -6084,16 +6068,16 @@ function io_WinsockStream_recvfrom_impl(self, i, flags)
         * We may not have used the entire amount of storage we reserved.
         */
        dealcstr(s + nread);
-       MakeStr(s, nread, &tmp);
-
-       create_list(2, &result);
-       list_put(&result, &tmp);
 
        ip = sockaddr_string((struct sockaddr *)&iss);
        if (!ip) {
            LitWhy("No name information available");
            fail;
        }
+
+       create_list(2, &result);
+       MakeStr(s, nread, &tmp);
+       list_put(&result, &tmp);
        cstr2string(ip, &tmp);
        list_put(&result, &tmp);
 

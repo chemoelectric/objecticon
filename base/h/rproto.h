@@ -201,6 +201,7 @@ char *buffstr(dptr d);
 void buffnstr(dptr d, char **s, ...);
 
 
+int  parsefilter     (char *s, struct filter *res);
 int  parsecolor      (char *s, int *r, int *g, int *b, int *a);
 int  parseopaquecolor(char *s, int *r, int *g, int *b);
 int  parsepalette    (char *s, int *p);
@@ -242,7 +243,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src, int x, int y);
    wbp  couplewindows   (wbp w1, wbp w2);
    void freewbinding(wbp w);
    void drawcurve       (wbp w, struct point *p, int n);
-   int  parsefilter     (char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, double *sz);
    void qevent          (wsp ws, dptr e, int x, int y, word t, int mod);
    void qeventcode      (wsp, int);
@@ -418,6 +418,11 @@ void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
 void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to);
 
 void xdisp(struct b_coexpr *ce, int count, FILE *f);
+
+void ints_to_list(dptr result, int n, ...);
+void doubles_to_list(dptr result, int n, ...);
+void ints_to_record(dptr result, int n, ...);
+void doubles_to_record(dptr result, int n, ...);
 
 void create_list(word nslots, dptr d);
 void create_table(word nslots, word nelem, dptr d);

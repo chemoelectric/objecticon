@@ -94,10 +94,10 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    # Get the given pixel as an `Color` record, giving the rgba values.
    #
    public get_rgba(x, y)
-      return Color!get_rgba_impl(x, y)
+      return get_rgba_impl(x, y, Color)
    end
 
-   private native get_rgba_impl(x, y)
+   private native get_rgba_impl(x, y, con)
 
    #
    # Set the given pixel to the given rgba integer values.
@@ -148,10 +148,10 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    # suspended each time.
    #
    public gen_rgba(x, y, width, height)
-      suspend gen_rgba_impl(x, y, width, height, XYColor())
+      suspend gen_rgba_impl(x, y, width, height, XYColor)
    end
 
-   private native gen_rgba_impl(x, y, width, height, rec)
+   private native gen_rgba_impl(x, y, width, height, con)
 
    #
    # Generate all the pixels in the given rectangle, which defaults to
@@ -161,10 +161,10 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    # suspended each time.
    #
    public gen(x, y, width, height)
-      suspend gen_impl(x, y, width, height, XYPixel())
+      suspend gen_impl(x, y, width, height, XYPixel)
    end
 
-   private native gen_impl(x, y, width, height, rec)
+   private native gen_impl(x, y, width, height, con)
 
    #
    # Copy a single pixel from this instance to another.
@@ -217,10 +217,10 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable, HasClose)
    # 2^4=16 possible entries, indexed 0..15.
    #
    public get_palette_rgba(i)
-      return Color!get_palette_rgba_impl(i)
+      return get_palette_rgba_impl(i, Color)
    end
 
-   private native get_palette_rgba_impl(i)
+   private native get_palette_rgba_impl(i, con)
 
    #
    # Set the palette entry at index i to the given rgba values.
@@ -634,10 +634,10 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # is no clip set.
    #
    public get_clip()
-      return Rectangle!get_clip_impl()
+      return get_clip_impl(Rectangle)
    end
 
-   private native get_clip_impl()
+   private native get_clip_impl(r)
 
    #
    # Temporarily stop copying graphic operations from the backing
@@ -702,10 +702,10 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # context, as a `References` record.
    #
    public get_references()
-      return References!get_references_impl()
+      return get_references_impl(References())
    end
 
-   private native get_references_impl()
+   private native get_references_impl(r)
 
    #
    # Set the current background color.
@@ -1147,10 +1147,10 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # record.
    #
    public static parse_color(k)
-      return Color!parse_color_impl(k)
+      return parse_color_impl(k, Color)
    end
 
-   private static native parse_color_impl(k)
+   private static native parse_color_impl(k, con)
 
    #
    # Draw the given arc of an ellipse (centre `x`, `y`, major radius
@@ -1315,6 +1315,15 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    public static native palette_color(s1, s2)
 
    #
+   # Like `palette_color()`, but returns a `Color` record.
+   #
+   public static palette_color_rgb(s1, s2)
+      return palette_color_rgb_impl(s1, s2, Color)
+   end
+
+   private static native palette_color_rgb_impl(s1, s2, con)
+
+   #
    # Return key of closest color to s2 in palette s1
    #
    public static native palette_key(s1, s2)
@@ -1387,14 +1396,14 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # respectively.
    #
    public drawable(x, y, width, height)
-      return Rectangle!rectangle_impl(1, x, y, width, height)
+      return rectangle_impl(1, x, y, width, height, Rectangle)
    end
 
    #
    # This is the same as `drawable`, but ignores the clip region.
    #
    public viewable(x, y, width, height)
-      return Rectangle!rectangle_impl(0, x, y, width, height)
+      return rectangle_impl(0, x, y, width, height, Rectangle)
    end
 
    #
@@ -1406,48 +1415,48 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # empty.
    #
    public canonical(x, y, width, height)
-      return Rectangle!rectangle_impl(2, x, y, width, height)
+      return rectangle_impl(2, x, y, width, height, Rectangle)
    end
 
-   private native rectangle_impl(mode, x, y, width, height)
+   private native rectangle_impl(mode, x, y, width, height, con)
 
    #
    # Return the current root pointer position as a `Point` record.
    #
    public query_root_pointer()
-      return Point!query_root_pointer_impl()
+      return query_root_pointer_impl(Point)
    end
 
-   private native query_root_pointer_impl()
+   private native query_root_pointer_impl(con)
 
    #
    # Return the current display size in pixels, as a `Size` record.
    #
    public get_display_size()
-      return Size!get_display_size_impl()
+      return get_display_size_impl(Size)
    end
 
-   private native get_display_size_impl()
+   private native get_display_size_impl(con)
 
    #
    # Return the current display size in millimeters, as a `Size`
    # record.
    #
    public get_display_size_mm()
-      return Size!get_display_size_mm_impl()
+      return get_display_size_mm_impl(Size)
    end
 
-   private native get_display_size_mm_impl()
+   private native get_display_size_mm_impl(con)
 
    #
    # Return the pointer's current position as a `Point` record,
    # relative to this window.
    #
    public query_pointer()
-      return Point!query_pointer_impl()
+      return query_pointer_impl(Point)
    end
 
-   private native query_pointer_impl()
+   private native query_pointer_impl(con)
 
    #
    # Warp the pointer to the given location, relative to this window.

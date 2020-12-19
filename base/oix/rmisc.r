@@ -2178,3 +2178,79 @@ void *safe_realloc(void *ptr, size_t size)
         fatalerr(309, NULL);
     return a;
 }
+
+/*
+ * Create a list from n C ints.  result must point to a tended
+ * descriptor.
+ */
+#passthru #define _INT int
+void ints_to_list(dptr result, int n, ...)
+{
+    struct descrip tmp;
+    va_list argp;
+    int i;
+    va_start(argp, n);
+    create_list(n, result);
+    for (i = 0; i < n; ++i) {
+        int j = va_arg(argp, _INT);
+        MakeInt(j, &tmp);
+        list_put(result, &tmp);
+    }
+    va_end(argp);
+}
+
+/*
+ * Set the first n elements of record result from n C ints.  result
+ * must point to a tended record descriptor of sufficient size.
+ */
+void ints_to_record(dptr result, int n, ...)
+{
+    struct descrip tmp;
+    va_list argp;
+    int i;
+    va_start(argp, n);
+    for (i = 0; i < n; ++i) {
+        int j = va_arg(argp, _INT);
+        MakeInt(j, &tmp);
+        RecordBlk(*result).fields[i] = tmp;
+    }
+    va_end(argp);
+}
+
+/*
+ * Create a list from n C doubles.  result must point to a tended
+ * descriptor.
+ */
+#passthru #define _DOUBLE double
+void doubles_to_list(dptr result, int n, ...)
+{
+    tended struct descrip tmp;
+    va_list argp;
+    int i;
+    va_start(argp, n);
+    create_list(n, result);
+    for (i = 0; i < n; ++i) {
+        double d = va_arg(argp, _DOUBLE);
+        MakeReal(d, &tmp);
+        list_put(result, &tmp);
+    }
+    va_end(argp);
+}
+
+/*
+ * Set the first n elements of record result from n C doubles.  result
+ * must point to a tended record descriptor of sufficient size.
+ */
+void doubles_to_record(dptr result, int n, ...)
+{
+    tended struct descrip tmp;
+    va_list argp;
+    int i;
+    va_start(argp, n);
+    for (i = 0; i < n; ++i) {
+        double d = va_arg(argp, _DOUBLE);
+        MakeReal(d, &tmp);
+        RecordBlk(*result).fields[i] = tmp;
+    }
+    va_end(argp);
+}

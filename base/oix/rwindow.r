@@ -209,131 +209,6 @@ void qmouseevents(wsp ws,             /* canvas */
     }
 }
 
-static void linearfilter_impl(int *val, float m, int c)
-{
-    *val = *val * m + c;
-    if (*val < 0) *val = 0;
-    else if (*val > 65535) *val = 65535;
-}
-
-static void linearfilter(struct filter *f)
-{
-    int i, j;
-    struct imgdata *imd = f->imd;
-    for (j = f->y; j < f->y + f->height; j++) {
-        for (i = f->x; i < f->x + f->width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
-            linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
-            linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
-            linearfilter_impl(&a, f->p.linear.ma, f->p.linear.ca);
-            imd->format->setpixel(imd, i, j, r, g, b, a);
-        }
-    }
-}
-
-static int grey_band(int nb, int r, int g, int b)
-{
-    return (int)(nb * Gray(r, g, b) / 65536.0);
-}
-
-static void shadefilter(struct filter *f)
-{
-    int i, j, bk;
-    struct imgdata *imd = f->imd;
-
-    bk = grey_band(f->p.shade.nband,
-                   f->p.shade.br, f->p.shade.bg, f->p.shade.bb);
-    for (j = f->y; j < f->y + f->height; j++) {
-        for (i = f->x; i < f->x + f->width; i++) {
-            int r, g, b, a, k, v;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            k = grey_band(f->p.shade.nband, r, g, b);
-            if (k != bk) {
-                v = f->p.shade.c + f->p.shade.m * k;
-                if (v < 0) v = 0;
-                else if (v > 65535) v = 65535;
-                imd->format->setpixel(imd, i, j, v, v, v, a);
-            }
-        }
-    }
-}
-
-static void coercefilter(struct filter *f)
-{
-    int i, j;
-    struct imgdata *imd = f->imd;
-    struct palentry *pal = palsetup(f->p.coerce.p);
-    for (j = f->y; j < f->y + f->height; j++) {
-        for (i = f->x; i < f->x + f->width; i++) {
-            int r, g, b, a;
-            char *s;
-            struct palentry *e;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            s = rgbkey(f->p.coerce.p, r, g, b);
-            e = pal + (*s & 0xff);
-            imd->format->setpixel(imd, i, j, e->r, e->g, e->b, a);
-        }
-    }
-}
-
-static void invertfilter(struct filter *f)
-{
-    int i, j;
-    struct imgdata *imd = f->imd;
-    for (j = f->y; j < f->y + f->height; j++) {
-        for (i = f->x; i < f->x + f->width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            imd->format->setpixel(imd, i, j, 65535 - r, 65535 - g, 65535 - b, a);
-        }
-    }
-}
-
-int parsefilter(char *s, struct filter *res)
-{
-    char eof;
-    int n;
-    if (strncmp(s, "linear,", 7) == 0) {
-        res->f = linearfilter;
-        n = sscanf(s + 7, "%f,%f,%f,%f,%d,%d,%d,%d%c", 
-                   &res->p.linear.mr, &res->p.linear.mg, &res->p.linear.mb, &res->p.linear.ma,
-                   &res->p.linear.cr, &res->p.linear.cg, &res->p.linear.cb, &res->p.linear.ca, 
-                   &eof);
-        if (n != 4 && n != 8)
-            return 0;
-        if (n == 4)
-            res->p.linear.cr = res->p.linear.cg = res->p.linear.cb = res->p.linear.ca = 0;
-        return 1;
-    }
-    if (strncmp(s, "shade,", 6) == 0) {
-        res->f = shadefilter;
-        n = sscanf(s + 6, "%d,%d,%d%c", &res->p.shade.nband,
-                   &res->p.shade.m, &res->p.shade.c, &eof);
-        if (n == 3) {
-            res->p.shade.br = res->p.shade.bg =res->p.shade.bb = 65535;
-            return 1;
-        }
-        if (eof != ':')
-            return 0;
-        s = strchr(s, ':');
-        if (!s)
-            return 0;
-        return parsecolor(s + 1, &res->p.shade.br, &res->p.shade.bg, &res->p.shade.bb, 0);
-    }
-    if (strncmp(s, "coerce,", 7) == 0) {
-        res->f = coercefilter;
-        return parsepalette(s + 7, &res->p.coerce.p);
-    }
-    if (strncmp(s, "invert", 6) == 0) {
-        res->f = invertfilter;
-        return 1;
-    }
-
-    return 0;
-}
-
 int reducerect(wbp w, int clip, int *x, int *y, int *width, int *height)
 {
     wcp wc = w->context;
@@ -1810,6 +1685,130 @@ void points_extent(struct point *points, int npoints, int *x, int *y, int *width
 
 #endif					/* Graphics */
 
+static void linearfilter_impl(int *val, float m, int c)
+{
+    *val = *val * m + c;
+    if (*val < 0) *val = 0;
+    else if (*val > 65535) *val = 65535;
+}
+
+static void linearfilter(struct filter *f)
+{
+    int i, j;
+    struct imgdata *imd = f->imd;
+    for (j = f->y; j < f->y + f->height; j++) {
+        for (i = f->x; i < f->x + f->width; i++) {
+            int r, g, b, a;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
+            linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
+            linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
+            linearfilter_impl(&a, f->p.linear.ma, f->p.linear.ca);
+            imd->format->setpixel(imd, i, j, r, g, b, a);
+        }
+    }
+}
+
+static int grey_band(int nb, int r, int g, int b)
+{
+    return (int)(nb * Gray(r, g, b) / 65536.0);
+}
+
+static void shadefilter(struct filter *f)
+{
+    int i, j, bk;
+    struct imgdata *imd = f->imd;
+
+    bk = grey_band(f->p.shade.nband,
+                   f->p.shade.br, f->p.shade.bg, f->p.shade.bb);
+    for (j = f->y; j < f->y + f->height; j++) {
+        for (i = f->x; i < f->x + f->width; i++) {
+            int r, g, b, a, k, v;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            k = grey_band(f->p.shade.nband, r, g, b);
+            if (k != bk) {
+                v = f->p.shade.c + f->p.shade.m * k;
+                if (v < 0) v = 0;
+                else if (v > 65535) v = 65535;
+                imd->format->setpixel(imd, i, j, v, v, v, a);
+            }
+        }
+    }
+}
+
+static void coercefilter(struct filter *f)
+{
+    int i, j;
+    struct imgdata *imd = f->imd;
+    struct palentry *pal = palsetup(f->p.coerce.p);
+    for (j = f->y; j < f->y + f->height; j++) {
+        for (i = f->x; i < f->x + f->width; i++) {
+            int r, g, b, a;
+            char *s;
+            struct palentry *e;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            s = rgbkey(f->p.coerce.p, r, g, b);
+            e = pal + (*s & 0xff);
+            imd->format->setpixel(imd, i, j, e->r, e->g, e->b, a);
+        }
+    }
+}
+
+static void invertfilter(struct filter *f)
+{
+    int i, j;
+    struct imgdata *imd = f->imd;
+    for (j = f->y; j < f->y + f->height; j++) {
+        for (i = f->x; i < f->x + f->width; i++) {
+            int r, g, b, a;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            imd->format->setpixel(imd, i, j, 65535 - r, 65535 - g, 65535 - b, a);
+        }
+    }
+}
+
+int parsefilter(char *s, struct filter *res)
+{
+    char eof;
+    int n;
+    if (strncmp(s, "linear,", 7) == 0) {
+        res->f = linearfilter;
+        n = sscanf(s + 7, "%f,%f,%f,%f,%d,%d,%d,%d%c", 
+                   &res->p.linear.mr, &res->p.linear.mg, &res->p.linear.mb, &res->p.linear.ma,
+                   &res->p.linear.cr, &res->p.linear.cg, &res->p.linear.cb, &res->p.linear.ca, 
+                   &eof);
+        if (n != 4 && n != 8)
+            return 0;
+        if (n == 4)
+            res->p.linear.cr = res->p.linear.cg = res->p.linear.cb = res->p.linear.ca = 0;
+        return 1;
+    }
+    if (strncmp(s, "shade,", 6) == 0) {
+        res->f = shadefilter;
+        n = sscanf(s + 6, "%d,%d,%d%c", &res->p.shade.nband,
+                   &res->p.shade.m, &res->p.shade.c, &eof);
+        if (n == 3) {
+            res->p.shade.br = res->p.shade.bg =res->p.shade.bb = 65535;
+            return 1;
+        }
+        if (eof != ':')
+            return 0;
+        s = strchr(s, ':');
+        if (!s)
+            return 0;
+        return parsecolor(s + 1, &res->p.shade.br, &res->p.shade.bg, &res->p.shade.bb, 0);
+    }
+    if (strncmp(s, "coerce,", 7) == 0) {
+        res->f = coercefilter;
+        return parsepalette(s + 7, &res->p.coerce.p);
+    }
+    if (strncmp(s, "invert", 6) == 0) {
+        res->f = invertfilter;
+        return 1;
+    }
+
+    return 0;
+}
 
 /*
  * Structures and tables used for color parsing.

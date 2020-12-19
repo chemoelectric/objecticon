@@ -572,10 +572,10 @@ final class MeshPattern(Pattern)
    # `Point` record.
    #
    public get_control_point(patch_num, point_num)
-      return Point!get_control_point_impl(patch_num, point_num)
+      return get_control_point_impl(patch_num, point_num, Point)
    end
 
-   private native get_control_point_impl(patch_num, point_num)
+   private native get_control_point_impl(patch_num, point_num, con)
 
    # Gets the color information in corner `corner_num` of patch
    # `patch_num` as an icon colour string.
@@ -640,18 +640,18 @@ abstract class Surface(NoCopy, HasClose)
    # `DeviceOffset` record.
    #
    public get_device_offset()
-      return DeviceOffset!get_device_offset_impl()
+      return get_device_offset_impl(DeviceOffset())
    end
 
    # Return the device offset set by `set_device_scale()`, as a
    # `DeviceScale` record.
    #
    public get_device_scale()
-      return DeviceScale!get_device_scale_impl()
+      return get_device_scale_impl(DeviceScale())
    end
 
-   private native get_device_offset_impl()
-   private native get_device_scale_impl()
+   private native get_device_offset_impl(r)
+   private native get_device_scale_impl(r)
 
    # Close this instance, releasing the reference to the underlying
    # cairo object.
@@ -885,18 +885,18 @@ final class RecordingSurface(Surface)
    # record.
    #
    public get_extents()
-      return Rectangle!get_extents_impl()
+      return get_extents_impl(Rectangle)
    end
 
    # Measures the extents of the operations stored within the
    # recording-surface.  A `Rectangle` record is returned.
    #
    public ink_extents()
-      return Rectangle!ink_extents_impl()
+      return ink_extents_impl(Rectangle())
    end
 
-   private native get_extents_impl()
-   private native ink_extents_impl()
+   private native get_extents_impl(con)
+   private native ink_extents_impl(r)
 
    private static native new_impl()
 
@@ -1084,7 +1084,7 @@ final class Context(NoCopy, HasClose)
    # rendered, as a `Size` record, in real user space units.
    #
    public text_size(s)
-      return Size!text_size_impl(s)
+      return text_size_impl(s, Size())
    end
 
    # Return the Pango baseline value for this context, as a real
@@ -1188,7 +1188,7 @@ final class Context(NoCopy, HasClose)
    # Gets the current point of the current path, as a `Point` record,
    # or fail if there is no defined current point.
    public get_current_point()
-      return Point!get_current_point_impl()
+      return get_current_point_impl(Point)
    end
 
    # Makes a copy of the current state of this `Context` and saves it
@@ -1210,7 +1210,7 @@ final class Context(NoCopy, HasClose)
    # into account.
    #
    public get_stroke_extents()
-      return Rectangle!get_stroke_extents_impl()
+      return get_stroke_extents_impl(Rectangle())
    end
 
    # Returns a `Rectangle` record, which is a bounding box in user
@@ -1221,14 +1221,14 @@ final class Context(NoCopy, HasClose)
    # account.
    #
    public get_fill_extents()
-      return Rectangle!get_fill_extents_impl()
+      return get_fill_extents_impl(Rectangle())
    end
 
    # Returns a `Rectangle` record, which is a bounding box in user
    # coordinates covering the area inside the current clip.
    #
    public get_clip_extents()
-      return Rectangle!get_clip_extents_impl()
+      return get_clip_extents_impl(Rectangle())
    end
 
    # Returns a `Rectangle` record, which is a bounding box in
@@ -1238,7 +1238,7 @@ final class Context(NoCopy, HasClose)
    # clipping are not taken into account.
    #
    public get_path_extents()
-      return Rectangle!get_path_extents_impl()
+      return get_path_extents_impl(Rectangle())
    end
 
    # Transform a coordinate from user space to device space by
@@ -1246,7 +1246,7 @@ final class Context(NoCopy, HasClose)
    # (CTM).  A `Point` record is returned.
    #
    public user_to_device(x, y)
-      return Point!user_to_device_impl(x, y)
+      return user_to_device_impl(x, y, Point())
    end
 
    # Transform a coordinate from device space to user space by
@@ -1254,7 +1254,7 @@ final class Context(NoCopy, HasClose)
    # transformation matrix (CTM).  A `Point` record is returned.
    #
    public device_to_user(x, y)
-      return Point!device_to_user_impl(x, y)
+      return device_to_user_impl(x, y, Point())
    end
 
    # Transform a distance vector from user space to device space. This
@@ -1263,7 +1263,7 @@ final class Context(NoCopy, HasClose)
    # transforming `(dx, dy)`.  A `Vector` record is returned.
    #
    public user_to_device_distance(dx, dy)
-      return Vector!user_to_device_distance_impl(dx, dy)
+      return user_to_device_distance_impl(dx, dy, Vector())
    end
 
    # Transform a distance vector from device space to user space. This
@@ -1272,7 +1272,7 @@ final class Context(NoCopy, HasClose)
    # transforming `(dx, dy)`.  A `Vector` record is returned.
    #
    public device_to_user_distance(dx, dy)
-      return Vector!device_to_user_distance_impl(dx, dy)
+      return device_to_user_distance_impl(dx, dy, Vector())
    end
 
    # Modifies the current transformation matrix (CTM) by translating
@@ -1432,18 +1432,18 @@ final class Context(NoCopy, HasClose)
       return Matrix!get_matrix_impl()
    end
 
-   private native get_current_point_impl()
+   private native get_current_point_impl(con)
    private native append_path_impl(l)
    private native get_path_impl()
    private native get_flat_path_impl()
-   private native get_stroke_extents_impl()
-   private native get_clip_extents_impl()
-   private native get_fill_extents_impl()
-   private native get_path_extents_impl()
-   private native user_to_device_impl(x, y)
-   private native device_to_user_impl(x, y)
-   private native user_to_device_distance_impl(dx, dy)
-   private native device_to_user_distance_impl(dx, dy)
+   private native get_stroke_extents_impl(r)
+   private native get_clip_extents_impl(r)
+   private native get_fill_extents_impl(r)
+   private native get_path_extents_impl(r)
+   private native user_to_device_impl(x, y, r)
+   private native device_to_user_impl(x, y, r)
+   private native user_to_device_distance_impl(dx, dy, r)
+   private native device_to_user_distance_impl(dx, dy, r)
    private native get_clip_rectangles_impl()
    private native set_source_rgba(r, g, b, a)
    private native set_source_pattern(pat)
@@ -1453,7 +1453,7 @@ final class Context(NoCopy, HasClose)
    private native get_target_impl()
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
    private native get_matrix_impl()
-   private native text_size_impl(s)
+   private native text_size_impl(s, r)
    private static native new_impl(sur)
 
    # Create a new instance using a `Surface` based on `v`, which may

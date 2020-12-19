@@ -38,6 +38,25 @@ struct imgdataformat {
     struct imgdataformat *next;      /* Used for hashing */
 };
 
+struct filter {
+   struct imgdata *imd;
+   int x, y, width, height;
+   void (*f)(struct filter *);
+   union {
+      struct {
+         float mr, mb, mg, ma;
+         int cr, cb, cg, ca;
+      } linear;
+      struct {
+         int p;
+      } coerce;
+      struct {
+         int nband, c, m;
+         int br, bb, bg;
+      } shade;
+   } p;
+};
+
 extern struct imgdataformat imgdataformat_A8;
 extern struct imgdataformat imgdataformat_A16;
 extern struct imgdataformat imgdataformat_RGB24;
@@ -459,25 +478,6 @@ typedef struct _wbinding {
   wcp context;
   wsp window;
 } wbinding, *wbp;
-
-struct filter {
-   struct imgdata *imd;
-   int x, y, width, height;
-   void (*f)(struct filter *);
-   union {
-      struct {
-         float mr, mb, mg, ma;
-         int cr, cb, cg, ca;
-      } linear;
-      struct {
-         int p;
-      } coerce;
-      struct {
-         int nband, c, m;
-         int br, bb, bg;
-      } shade;
-   } p;
-};
 
 
 /*

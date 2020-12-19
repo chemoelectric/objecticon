@@ -104,7 +104,7 @@ char *oihomewalk(char *e, ...)
  */
 char *findoiexe(char *name) 
 {
-    char *t = oihomewalk("bin", 0);
+    char *t = oihomewalk("bin", NULL);
     return t ? tryexe(t, name) : 0;
 }
 

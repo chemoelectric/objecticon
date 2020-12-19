@@ -246,12 +246,37 @@ if (!cnv:string(din,dout)) runerr(103,din);
 if (!cnv:tmp_string(din,dout)) runerr(103,din);
    
 #begdef CheckArgMultipleOf(mult, min)
-   {
+   do {
        if ((argc) % (mult) || (argc) / (mult) < (min))
           runerr(168);
-   }
+   } while(0)
 #enddef				/* CheckArgMultiple */
    
+/*
+ * Check val is a record with at least min fields.
+ */
+#begdef CheckReturnRecord(val, min)
+   do {
+       if (!is:record(val))
+           runerr(107, val);
+       if (RecordBlk(val).constructor->n_fields < min)
+           runerr(123, val);
+   } while(0)
+#enddef
+
+/*
+ * Check val is a constructor with at least min fields.  If so, create
+ * a record instance of that type and store in rec.
+ */
+#begdef MakeReturnRecord(val, min, rec)
+   do {
+       if (!is:constructor(val))
+           runerr(604, val);
+       if (ConstructorBlk(val).n_fields < min)
+           runerr(123, val);
+       MakeDescMemProtect(D_Record, alcrecd(&ConstructorBlk(val)), &rec);
+   } while(0)
+#enddef
 
 /*
  * Macros used for graphics structures.
