@@ -1,7 +1,7 @@
 #if MSWIN32
-static void stat2list(struct _stat64 *st, dptr res);
+static void stat_to_list(struct _stat64 *st, dptr res);
 #else
-static void stat2list(struct stat *st, dptr res);
+static void stat_to_list(struct stat *st, dptr res);
 #endif
 
 /*
@@ -2724,7 +2724,7 @@ function io_DescStream_stat_impl(self)
            errno2why();
            fail;
        }
-       stat2list(&st, &result);
+       stat_to_list(&st, &result);
 #else
        struct stat st;
        GetSelfFd();
@@ -2732,7 +2732,7 @@ function io_DescStream_stat_impl(self)
            errno2why();
            fail;
        }
-       stat2list(&st, &result);
+       stat_to_list(&st, &result);
 #endif
        return result;
    }
@@ -3277,7 +3277,7 @@ function io_Files_truncate(s, len)
 end
 
 #if MSWIN32
-static void stat2list(struct _stat64 *st, dptr result)
+static void stat_to_list(struct _stat64 *st, dptr result)
 {
    tended struct descrip tmp;
    char mode[12];
@@ -3328,7 +3328,7 @@ static void stat2list(struct _stat64 *st, dptr result)
    list_put(result, &zerodesc);
 }
 #else
-static void stat2list(struct stat *st, dptr result)
+static void stat_to_list(struct stat *st, dptr result)
 {
    tended struct descrip tmp;
    char mode[12];
@@ -3417,14 +3417,14 @@ function io_Files_stat_impl(s)
           errno2why();
           fail;
       }
-      stat2list(&st, &result);
+      stat_to_list(&st, &result);
 #else
       struct stat st;
       if (stat(s, &st) < 0) {
           errno2why();
           fail;
       }
-      stat2list(&st, &result);
+      stat_to_list(&st, &result);
 #endif
       return result;
    }
@@ -3441,14 +3441,14 @@ function io_Files_lstat_impl(s)
           errno2why();
           fail;
       }
-      stat2list(&st, &result);
+      stat_to_list(&st, &result);
 #else
       struct stat st;
       if (lstat(s, &st) < 0) {
           errno2why();
           fail;
       }
-      stat2list(&st, &result);
+      stat_to_list(&st, &result);
 #endif
       return result;
    }
