@@ -2541,7 +2541,7 @@ end
 function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, con)
    body {
       int x, y, width, height;
-      tended struct descrip tmp, result;
+      tended struct descrip result;
       int i, j, r, g, b, a;
       GetSelfPixels();
 
@@ -2558,10 +2558,7 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, con)
               if (!self_id)
                   runerr(219, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
-              cstr2string(tocolorstring(r, g, b, a), &tmp);
-              MakeInt(i, &RecordBlk(result).fields[0]);
-              MakeInt(j, &RecordBlk(result).fields[1]);
-              RecordBlk(result).fields[2] = tmp;
+              C_to_record(&result, "iis", i, j, tocolorstring(r, g, b, a));
               suspend result;
           }
       fail;
