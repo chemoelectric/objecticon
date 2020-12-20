@@ -4379,7 +4379,7 @@ function io_PttyStream_new_impl()
 #if UNIX
        int fd;
        char *sn;
-       tended struct descrip result, tmp;
+       tended struct descrip result;
 
        if ((fd = posix_openpt(O_RDWR | O_NOCTTY)) < 0) {
            errno2why();
