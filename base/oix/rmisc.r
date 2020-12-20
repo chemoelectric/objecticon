@@ -2177,78 +2177,98 @@ void *safe_realloc(void *ptr, size_t size)
     return a;
 }
 
-/*
- * Create a list from n C ints.  result must point to a tended
- * descriptor.
- */
 #passthru #define _INT int
-void ints_to_list(dptr result, int n, ...)
-{
-    struct descrip tmp;
-    va_list argp;
-    int i;
-    va_start(argp, n);
-    create_list(n, result);
-    for (i = 0; i < n; ++i) {
-        int j = va_arg(argp, _INT);
-        MakeInt(j, &tmp);
-        list_put(result, &tmp);
-    }
-    va_end(argp);
-}
-
-/*
- * Set the first n elements of record result from n C ints.  result
- * must point to a tended record descriptor of sufficient size.
- */
-void ints_to_record(dptr result, int n, ...)
-{
-    struct descrip tmp;
-    va_list argp;
-    int i;
-    va_start(argp, n);
-    for (i = 0; i < n; ++i) {
-        int j = va_arg(argp, _INT);
-        MakeInt(j, &tmp);
-        RecordBlk(*result).fields[i] = tmp;
-    }
-    va_end(argp);
-}
-
-/*
- * Create a list from n C doubles.  result must point to a tended
- * descriptor.
- */
 #passthru #define _DOUBLE double
-void doubles_to_list(dptr result, int n, ...)
+#passthru #define _WORD word
+#passthru #define _LONG long
+#passthru #define _CHARP char*
+#passthru #define _DPTR dptr
+
+static void interp_format(char ch, va_list argp, dptr res)
+{
+    switch (ch) {
+        case 'i': {
+            int i = va_arg(argp, _INT);
+            MakeInt(i, res);
+            break;
+        }
+        case 'l': {
+            long l = va_arg(argp, _LONG);
+            MakeInt(l, res);
+            break;
+        }
+        case 'f': {
+            double d = va_arg(argp, _DOUBLE);
+            MakeReal(d, res);
+            break;
+        }
+        case 'w': {
+            word w = va_arg(argp, _WORD);
+            MakeInt(w, res);
+            break;
+        }
+        case 's': {
+            char *s = va_arg(argp, _CHARP);
+            cstr2string(s, res);
+            break;
+        }
+        case 'p': {
+            dptr p = va_arg(argp, _DPTR);
+            *res = *p;
+            break;
+        }
+        default: {
+            syserr("interp_format: Unknown format char");
+            break;
+        }
+    }
+}
+
+/*
+ * Create a list from simple C objects specified in a spec string,
+ * whose chars specify a single vararg parameter, as follows :-
+ * 
+ *       i - An int (or short or char).
+ *       l - A long int
+ *       f - A double (or float)
+ *       w - A word
+ *       s - A null-terminated C string, which will be copied into the
+ *           string region.
+ *       p - A pointer to a descriptor, which will be copied; its
+ *           contents are not examined.
+ * 
+ * result must point to a tended descriptor.
+ */
+void C_to_list(dptr result, char *spec, ...)
 {
     tended struct descrip tmp;
     va_list argp;
-    int i;
-    va_start(argp, n);
-    create_list(n, result);
-    for (i = 0; i < n; ++i) {
-        double d = va_arg(argp, _DOUBLE);
-        MakeReal(d, &tmp);
+    char ch;
+    va_start(argp, spec);
+    create_list(strlen(spec), result);
+    while ((ch = *spec++)) {
+        interp_format(ch, argp, &tmp);
         list_put(result, &tmp);
     }
     va_end(argp);
 }
 
 /*
- * Set the first n elements of record result from n C doubles.  result
+ * Set the first strlen(spec) elements of record result, according to
+ * the spec string, taking the same form as C_to_list above.  result
  * must point to a tended record descriptor of sufficient size.
  */
-void doubles_to_record(dptr result, int n, ...)
+void C_to_record(dptr result, char *spec, ...)
 {
     tended struct descrip tmp;
     va_list argp;
+    char ch;
     int i;
-    va_start(argp, n);
-    for (i = 0; i < n; ++i) {
-        double d = va_arg(argp, _DOUBLE);
-        MakeReal(d, &tmp);
-        RecordBlk(*result).fields[i] = tmp;
+    va_start(argp, spec);
+    i = 0;
+    while ((ch = *spec++)) {
+        interp_format(ch, argp, &tmp);
+        RecordBlk(*result).fields[i++] = tmp;
     }
     va_end(argp);
 }

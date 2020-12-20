@@ -671,7 +671,7 @@ end
 
 static void matrix_to_list(cairo_matrix_t *m, dptr result)
 {
-    doubles_to_list(result, 6, m->xx, m->yx, m->xy, m->yy, m->x0, m->y0);
+    C_to_list(result, "ffffff", m->xx, m->yx, m->xy, m->yy, m->x0, m->y0);
 }
 
 static void path_to_list(cairo_path_t *path, dptr result)
@@ -735,7 +735,7 @@ function cairo_Context_get_clip_rectangles_impl(self)
        create_list(rl->num_rectangles, &result);
        for (i = 0; i < rl->num_rectangles; ++i) {
            cairo_rectangle_t *r = &rl->rectangles[i];
-           doubles_to_list(&tmp, 4, r->x, r->y, r->width, r->height);
+           C_to_list(&tmp, "ffff", r->x, r->y, r->width, r->height);
            list_put(&result, &tmp);
        }
        cairo_rectangle_list_destroy(rl);
@@ -820,7 +820,7 @@ function cairo_Context_text_size_impl(self, s, rec)
        pango_cairo_update_layout(self_cr, layout);
        pango_layout_set_text(layout, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
        pango_layout_get_size(layout, &width, &height);
-       doubles_to_record(&rec, 2, pango_units_to_double(width), pango_units_to_double(height));
+       C_to_record(&rec, "ff", pango_units_to_double(width), pango_units_to_double(height));
        return rec;
     }
 end
@@ -1215,7 +1215,7 @@ function cairo_Context_get_stroke_extents_impl(self, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 4);
        cairo_stroke_extents(self_cr, &x1, &y1, &x2, &y2);
-       doubles_to_record(&rec, 4, x1, y1, x2 - x1, y2 - y1);
+       C_to_record(&rec, "ffff", x1, y1, x2 - x1, y2 - y1);
        return rec;
     }
 end
@@ -1226,7 +1226,7 @@ function cairo_Context_get_fill_extents_impl(self, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 4);
        cairo_fill_extents(self_cr, &x1, &y1, &x2, &y2);
-       doubles_to_record(&rec, 4, x1, y1, x2 - x1, y2 - y1);
+       C_to_record(&rec, "ffff", x1, y1, x2 - x1, y2 - y1);
        return rec;
     }
 end
@@ -1237,7 +1237,7 @@ function cairo_Context_get_clip_extents_impl(self, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 4);
        cairo_clip_extents(self_cr, &x1, &y1, &x2, &y2);
-       doubles_to_record(&rec, 4, x1, y1, x2 - x1, y2 - y1);
+       C_to_record(&rec, "ffff", x1, y1, x2 - x1, y2 - y1);
        return rec;
     }
 end
@@ -1248,7 +1248,7 @@ function cairo_Context_get_path_extents_impl(self, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 4);
        cairo_path_extents(self_cr, &x1, &y1, &x2, &y2);
-       doubles_to_record(&rec, 4, x1, y1, x2 - x1, y2 - y1);
+       C_to_record(&rec, "ffff", x1, y1, x2 - x1, y2 - y1);
        return rec;
     }
 end
@@ -1262,7 +1262,7 @@ function cairo_Context_user_to_device_impl(self, x, y, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 2);
        cairo_user_to_device(self_cr, &x, &y);
-       doubles_to_record(&rec, 2, x, y);
+       C_to_record(&rec, "ff", x, y);
        return rec;
     }
 end
@@ -1276,7 +1276,7 @@ function cairo_Context_device_to_user_impl(self, x, y, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 2);
        cairo_device_to_user(self_cr, &x, &y);
-       doubles_to_record(&rec, 2, x, y);
+       C_to_record(&rec, "ff", x, y);
        return rec;
     }
 end
@@ -1290,7 +1290,7 @@ function cairo_Context_user_to_device_distance_impl(self, dx, dy, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 2);
        cairo_user_to_device_distance(self_cr, &dx, &dy);
-       doubles_to_record(&rec, 2, dx, dy);
+       C_to_record(&rec, "ff", dx, dy);
        return rec;
     }
 end
@@ -1304,7 +1304,7 @@ function cairo_Context_device_to_user_distance_impl(self, dx, dy, rec)
        GetSelfCr();
        CheckReturnRecord(rec, 2);
        cairo_device_to_user_distance(self_cr, &dx, &dy);
-       doubles_to_record(&rec, 2, dx, dy);
+       C_to_record(&rec, "ff", dx, dy);
        return rec;
     }
 end
@@ -1551,7 +1551,7 @@ function cairo_Context_get_current_point_impl(self, con)
            fail;
        cairo_get_current_point(self_cr, &x, &y);
        MakeReturnRecord(con, 2, result);
-       doubles_to_record(&result, 2, x, y);
+       C_to_record(&result, "ff", x, y);
        return result;
     }
 end
@@ -1732,7 +1732,7 @@ function cairo_Gradient_get_color_stop_impl(self, index)
            fail;
        }
        cairo_pattern_get_color_stop_rgba(self_pattern, index, &offset, &r, &g, &b, &a);
-       doubles_to_list(&result, 5, offset, r, g, b, a);
+       C_to_list(&result, "fffff", offset, r, g, b, a);
        return result;
     }
 end
@@ -1760,7 +1760,7 @@ function cairo_LinearGradient_get_points_impl(self)
        double x0, y0, x1, y1;
        GetSelfPattern();
        cairo_pattern_get_linear_points(self_pattern, &x0, &y0, &x1, &y1);
-       doubles_to_list(&result, 4, x0, y0, x1, y1);
+       C_to_list(&result, "ffff", x0, y0, x1, y1);
        return result;
     }
 end
@@ -1792,7 +1792,7 @@ function cairo_RadialGradient_get_circles_impl(self)
        double x0, y0, r0, x1, y1, r1;
        GetSelfPattern();
        cairo_pattern_get_radial_circles(self_pattern, &x0, &y0, &r0, &x1, &y1, &r1);
-       doubles_to_list(&result, 6, x0, y0, r0, x1, y1, r1);
+       C_to_list(&result, "ffffff", x0, y0, r0, x1, y1, r1);
        return result;
     }
 end
@@ -1985,7 +1985,7 @@ function cairo_Surface_get_device_offset_impl(self, rec)
        GetSelfSurface();
        CheckReturnRecord(rec, 2);
        cairo_surface_get_device_offset(self_surface, &x, &y);
-       doubles_to_record(&rec, 2, x, y);
+       C_to_record(&rec, "ff", x, y);
        return rec;
     }
 end
@@ -1996,7 +1996,7 @@ function cairo_Surface_get_device_scale_impl(self, rec)
        GetSelfSurface();
        CheckReturnRecord(rec, 2);
        cairo_surface_get_device_scale(self_surface, &x, &y);
-       doubles_to_record(&rec, 2, x, y);
+       C_to_record(&rec, "ff", x, y);
        return rec;
     }
 end
@@ -2125,7 +2125,7 @@ function cairo_SolidPattern_get_rgba(self)
        double r, g, b, a;
        GetSelfPattern();
        cairo_pattern_get_rgba(self_pattern, &r, &g, &b, &a);
-       doubles_to_list(&result, 4, r, g, b, a);
+       C_to_list(&result, "ffff", r, g, b, a);
        return result;
     }
 end
@@ -2160,7 +2160,7 @@ function cairo_RecordingSurface_get_extents_impl(self, con)
        if (!cairo_recording_surface_get_extents(self_surface, &r))
            fail;
        MakeReturnRecord(con, 4, result);
-       doubles_to_record(&result, 4, r.x, r.y, r.width, r.height);
+       C_to_record(&result, "ffff", r.x, r.y, r.width, r.height);
        return result;
     }
 end
@@ -2171,7 +2171,7 @@ function cairo_RecordingSurface_ink_extents_impl(self, rec)
        GetSelfSurface();
        CheckReturnRecord(rec, 4);
        cairo_recording_surface_ink_extents(self_surface, &x, &y, &width, &height);
-       doubles_to_record(&rec, 4, x, y, width, height);
+       C_to_record(&rec, "ffff", x, y, width, height);
        return rec;
     }
 end
@@ -2397,7 +2397,7 @@ function cairo_MeshPattern_get_control_point_impl(self, patch_num, point_num, co
        }
        cairo_mesh_pattern_get_control_point(self_pattern, patch_num, point_num, &x, &y);
        MakeReturnRecord(con, 2, result);
-       doubles_to_record(&result, 2, x, y);
+       C_to_record(&result, "ff", x, y);
        return result;
     }
 end
@@ -2420,7 +2420,7 @@ function cairo_MeshPattern_get_corner_color_rgba(self, patch_num, corner_num)
            fail;
        }
        cairo_mesh_pattern_get_corner_color_rgba(self_pattern, patch_num, corner_num, &r, &g, &b, &a);
-       doubles_to_list(&result, 4, r, g, b, a);
+       C_to_list(&result, "ffff", r, g, b, a);
        return result;
     }
 end

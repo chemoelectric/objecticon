@@ -313,23 +313,18 @@ end
 function posix_System_uname_impl()
     body {
 #if HAVE_UNAME
-       tended struct descrip tmp, result;
+       tended struct descrip result;
        struct utsname utsn;
        if (uname(&utsn) < 0) {
            errno2why();
            fail;
        }
-       create_list(5, &result);
-       cstr2string(utsn.sysname, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.nodename, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.release, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.version, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.machine, &tmp);
-       list_put(&result, &tmp);
+       C_to_list(&result, "sssss",
+                 utsn.sysname,
+                 utsn.nodename,
+                 utsn.release,
+                 utsn.version,
+                 utsn.machine);
        return result;
 #else
      Unsupported;

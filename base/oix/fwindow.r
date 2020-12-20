@@ -584,7 +584,7 @@ function graphics_Window_query_root_pointer_impl(self, con)
       GetSelfW();
       AttemptOp(queryrootpointer(self_w, &x, &y));
       MakeReturnRecord(con, 2, result);
-      ints_to_record(&result, 2, x, y);
+      C_to_record(&result, "ii", x, y);
       return result;
    }
 end
@@ -596,9 +596,9 @@ function graphics_Window_query_pointer_impl(self, con)
       GetSelfW();
       AttemptOp(querypointer(self_w, &x, &y));
       MakeReturnRecord(con, 2, result);
-      ints_to_record(&result, 2,
-                     x - self_w->context->dx,
-                     y - self_w->context->dy);
+      C_to_record(&result, "ii",
+                  x - self_w->context->dx,
+                  y - self_w->context->dy);
       return result;
    }
 end
@@ -610,7 +610,7 @@ function graphics_Window_get_display_size_impl(self, con)
       GetSelfW();
       AttemptOp(getdisplaysize(self_w, &width, &height));
       MakeReturnRecord(con, 2, result);
-      ints_to_record(&result, 2, width, height);
+      C_to_record(&result, "ii", width, height);
       return result;
    }
 end
@@ -622,7 +622,7 @@ function graphics_Window_get_display_size_mm_impl(self, con)
       GetSelfW();
       AttemptOp(getdisplaysizemm(self_w, &width, &height));
       MakeReturnRecord(con, 2, result);
-      ints_to_record(&result, 2, width, height);
+      C_to_record(&result, "ii", width, height);
       return result;
    }
 end
@@ -763,11 +763,11 @@ function graphics_Window_rectangle_impl(self, mode, x0, y0, w0, h0, con)
 
       MakeReturnRecord(con, 4, result);
       
-      ints_to_record(&result, 4, 
-                     x - wc->dx,
-                     y - wc->dy,
-                     width,
-                     height);
+      C_to_record(&result, "iiii", 
+                  x - wc->dx,
+                  y - wc->dy,
+                  width,
+                  height);
       return result;
    }
 end
@@ -781,11 +781,11 @@ function graphics_Window_get_clip_impl(self, con)
        if (wc->clipw < 0)
            fail;
        MakeReturnRecord(con, 4, result);
-       ints_to_record(&result, 4,
-                      wc->clipx - wc->dx,
-                      wc->clipy - wc->dy,
-                      wc->clipw,
-                      wc->cliph);
+       C_to_record(&result, "iiii",
+                   wc->clipx - wc->dx,
+                   wc->clipy - wc->dy,
+                   wc->clipw,
+                   wc->cliph);
        return result;
    }
 end
@@ -1015,9 +1015,9 @@ function graphics_Window_get_references_impl(self, rec)
    body {
        GetSelfW();
        CheckReturnRecord(rec, 2);
-       ints_to_record(&rec, 2,
-                      self_w->window->refcount,
-                      self_w->context->refcount);
+       C_to_record(&rec, "ii",
+                   self_w->window->refcount,
+                   self_w->context->refcount);
        return rec;
    }
 end
@@ -1732,7 +1732,7 @@ function graphics_Window_parse_color_impl(s, con)
       if (!parsecolor(buffstr(&s), &r, &g, &b, &a))
           fail;
       MakeReturnRecord(con, 4, result);
-      ints_to_record(&result, 4, r, g, b, a);
+      C_to_record(&result, "iiii", r, g, b, a);
       return result;
    }
 end
@@ -1811,7 +1811,7 @@ function graphics_Window_palette_color_rgb_impl(s1, s2, con)
           fail;
       }
       MakeReturnRecord(con, 4, result);
-      ints_to_record(&result, 4, e->r, e->g, e->b, e->a);
+      C_to_record(&result, "iiii", e->r, e->g, e->b, e->a);
       return result;
    }
 end
@@ -1945,7 +1945,7 @@ function graphics_Pixels_get_rgba_impl(self, x, y, con)
       }
       self_id->format->getpixel(self_id, x, y, &r, &g, &b, &a);
       MakeReturnRecord(con, 4, result);
-      ints_to_record(&result, 4, r, g, b, a);
+      C_to_record(&result, "iiii", r, g, b, a);
       return result;
    }
 end
@@ -2387,7 +2387,7 @@ function graphics_Pixels_get_palette_rgba_impl(self, i, con)
       }
       e = &self_id->paltbl[i];
       MakeReturnRecord(con, 4, result);
-      ints_to_record(&result, 4, e->r, e->g, e->b, e->a);
+      C_to_record(&result, "iiii", e->r, e->g, e->b, e->a);
       return result;
    }
 end
@@ -2531,7 +2531,7 @@ function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, con)
               if (!self_id)
                   runerr(219, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
-              ints_to_record(&result, 6, i, j, r, g, b, a);
+              C_to_record(&result, "iiiiii", i, j, r, g, b, a);
               suspend result;
           }
       fail;

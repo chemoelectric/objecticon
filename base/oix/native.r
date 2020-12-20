@@ -81,11 +81,7 @@ struct b_coexpr *get_coexpr_for(dptr x)
 
 static void loc_to_list(struct loc *p, dptr res)
 {
-    struct descrip t;
-    create_list(2, res);
-    list_put(res, p->fname);
-    MakeInt(p->line, &t);
-    list_put(res, &t);
+    C_to_list(res, "pw", p->fname, p->line);
 }
 
 function classof(o)
@@ -686,21 +682,17 @@ end
 function lang_Prog_get_collection_info_impl(c)
    body {
        struct progstate *prog;
-       struct descrip tmp;
        tended struct descrip result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       create_list(4, &result);
-       MakeInt(prog->collected_user, &tmp);
-       list_put(&result, &tmp);
-       MakeInt(prog->collected_stack, &tmp);
-       list_put(&result, &tmp);
-       MakeInt(prog->collected_string, &tmp);
-       list_put(&result, &tmp);
-       MakeInt(prog->collected_block, &tmp);
-       list_put(&result, &tmp);
+       C_to_list(&result, "iiii",
+                 prog->collected_user,
+                 prog->collected_stack,
+                 prog->collected_string,
+                 prog->collected_block);
+
        return result;
    }
 end
@@ -1822,7 +1814,7 @@ function io_FileStream_pipe_impl()
            fail;
        }
 
-       ints_to_list(&result, 2, fds[0], fds[1]);
+       C_to_list(&result, "ii", fds[0], fds[1]);
        return result;
 #else
        Unsupported;
@@ -2037,7 +2029,7 @@ function io_SocketStream_socketpair_impl(typ)
            fail;
        }
 
-       ints_to_list(&result, 2, fds[0], fds[1]);
+       C_to_list(&result, "ii", fds[0], fds[1]);
        return result;
    }
 end
@@ -2469,6 +2461,7 @@ function io_SocketStream_recvfrom_impl(self, i, flags)
         * We may not have used the entire amount of storage we reserved.
         */
        dealcstr(s + nread);
+       MakeStr(s, nread, &tmp);
 
        ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
        if (!ip) {
@@ -2476,11 +2469,7 @@ function io_SocketStream_recvfrom_impl(self, i, flags)
            fail;
        }
 
-       create_list(2, &result);
-       MakeStr(s, nread, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(ip, &tmp);
-       list_put(&result, &tmp);
+       C_to_list(&result, "ps", &tmp, ip);
 
        return result;
    }
@@ -4413,12 +4402,7 @@ function io_PttyStream_new_impl()
            fail;
        }
 
-       create_list(2, &result);
-       MakeInt(fd, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(sn, &tmp);
-       list_put(&result, &tmp);
-
+       C_to_list(&result, "is", fd, sn);
        return result;
 #else
        Unsupported;
@@ -4998,6 +4982,7 @@ function io_WinsockStream_recvfrom_impl(self, i, flags)
         * We may not have used the entire amount of storage we reserved.
         */
        dealcstr(s + nread);
+       MakeStr(s, nread, &tmp);
 
        ip = sockaddr_string((struct sockaddr *)&iss);
        if (!ip) {
@@ -5005,11 +4990,7 @@ function io_WinsockStream_recvfrom_impl(self, i, flags)
            fail;
        }
 
-       create_list(2, &result);
-       MakeStr(s, nread, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(ip, &tmp);
-       list_put(&result, &tmp);
+       C_to_list(&result, "ps", &tmp, ip);
 
        return result;
    }
