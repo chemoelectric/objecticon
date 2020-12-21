@@ -138,7 +138,7 @@ int main(argc, argv)
         }
 
     if (!refpath) {
-        refpath = oihomewalk("base", "h", NULL);
+        refpath = oihomewalk("base", "h", NullPtr);
         if (!refpath)
             err1("OI_HOME is not defined");
         refpath = salloc(refpath);

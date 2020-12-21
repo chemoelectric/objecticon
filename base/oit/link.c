@@ -136,13 +136,13 @@ char *function_name(struct lfunction *f)
     if (f->proc)
         return join("procedure ", 
                     f->proc->name,
-                    NULL);
+                    NullPtr);
     else
         return join("method ",
                     f->method->class->global->name, 
                     ".",
                     f->method->name,
-                    NULL);
+                    NullPtr);
 }
 
 /*

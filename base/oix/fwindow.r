@@ -698,7 +698,7 @@ function graphics_Window_send_selection_response(self, requestor, property, sele
    body {
        char *t1, *t2, *t3;
        GetSelfW();
-       buffnstr(&property, &t1, &selection, &t2, &target, &t3, NULL);
+       buffnstr(&property, &t1, &selection, &t2, &target, &t3, NullPtr);
        AttemptOpCanErr(sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data));
        return self;
    }
@@ -714,7 +714,7 @@ function graphics_Window_request_selection(self, selection, target_type)
    body {
        char *t1, *t2;
        GetSelfW();
-       buffnstr(&selection, &t1, &target_type, &t2, NULL);
+       buffnstr(&selection, &t1, &target_type, &t2, NullPtr);
        AttemptOp(requestselection(self_w, t1, t2));
        return self;
    }
@@ -1696,7 +1696,7 @@ function graphics_Window_copy_pointer(self, dest, src)
    body {
        char *t1, *t2;
        GetSelfW();
-       buffnstr(&dest, &t1, &src, &t2, NULL);
+       buffnstr(&dest, &t1, &src, &t2, NullPtr);
        AttemptAttr(copypointer(self_w, t1, t2), "Invalid pointer");
        return self;
    }

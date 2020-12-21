@@ -62,7 +62,7 @@ struct membuff ir_func_mb = {"Per func IR membuff", 64000, 0,0,0 };
 #define chunk3(lab, I1, I2, I3) chunk(__LINE__, #lab, lab, 3, I1, I2, I3)
 #define chunk4(lab, I1, I2, I3, I4) chunk(__LINE__, #lab, lab, 4, I1, I2, I3, I4)
 #define chunk5(lab, I1, I2, I3, I4, I5) chunk(__LINE__, #lab, lab, 5, I1, I2, I3, I4, I5)
-#define OptIns(cond, inst) ((cond) ? (inst):0)
+#define OptIns(cond, inst) ((cond) ? (inst):NullPtr)
 
 static void indentf(char *fmt, ...)
 {

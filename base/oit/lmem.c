@@ -131,7 +131,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
             }
             found = pd->path;
             for (pf = pk->files; pf; pf = pf->next)
-                ensure_lfile(join(pd->path, pf->name, USuffix, NULL));
+                ensure_lfile(join(pd->path, pf->name, USuffix, NullPtr));
         }
     }
     /* Check if we found it */

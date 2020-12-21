@@ -124,6 +124,13 @@ struct str_buf {
 #define WordRound(x) (((x) + WordSize - 1) & -WordSize)
 
 /*
+ * NULL cast to a void *; this is useful in vararg lists, where we
+ * need to be certain that we are using a true pointer (NULL might be
+ * defined as "0", an int, and hence of a different size).
+ */
+#define NullPtr ((void *)NULL)
+
+/*
  * Miscellaneous definitions
  */
 
