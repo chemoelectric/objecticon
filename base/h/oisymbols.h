@@ -190,7 +190,7 @@ struct oisymbols {
     struct rangeset * (*init_rangeset)(void);
     void (*free_rangeset)(struct rangeset *rs);
     void (*add_range)(struct rangeset *cs, int from, int to);
-    long (*millisec)(void);
+    word (*millisec)(void);
     struct descrip (*block_to_descriptor)(union block *ptr);
     int (*is_flag)(dptr d);
     int (*is_ascii_string)(dptr d);
