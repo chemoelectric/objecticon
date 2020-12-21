@@ -113,14 +113,14 @@ static struct gentry *try_import_lookup(struct lfile *lf, struct fimport *fp, ch
 
     switch (fp->mode) {
         case I_All: {
-            abs = join(fp->name, ".", name, NULL);
+            abs = join(fp->name, ".", name, NullPtr);
             return check_package_access(lf, glocate(abs));
         }
         case I_Some: {
             is = lookup_fimport_symbol(fp, name);
             if (!is)
                 return 0;
-            abs = join(fp->name, ".", name, NULL);
+            abs = join(fp->name, ".", name, NullPtr);
             gl = check_package_access(lf, glocate(abs));
             if (!gl)
                 return 0;
@@ -128,7 +128,7 @@ static struct gentry *try_import_lookup(struct lfile *lf, struct fimport *fp, ch
             return gl;
         }
         case I_Except: {
-            abs = join(fp->name, ".", name, NULL);
+            abs = join(fp->name, ".", name, NullPtr);
             gl = check_package_access(lf, glocate(abs));
             if (!gl)
                 return 0;
@@ -195,7 +195,7 @@ static void resolve_global(struct lfile *lf, char *name)
      * toplevel first.
      */
     if (lf->package)
-        rres_found = glocate(join(lf->package, ".", name, NULL));
+        rres_found = glocate(join(lf->package, ".", name, NullPtr));
     else
         rres_found = gb_locate(name);
 

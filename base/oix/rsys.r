@@ -26,21 +26,21 @@ int putn(FILE *f, char *s, size_t n)
 /*
  * millisec - returns execution time in milliseconds. Time is measured
  *  from the function's first call. The granularity of the time is
- *  generally more than one millisecond and on some systems it my only
+ *  generally more than one millisecond and on some systems it may only
  *  be accurate to the second.
  */
 
-#if UNIX
+#if UNIX && SIZEOF_CLOCK_T < 8
 
 /*
  * For some unfathomable reason, the Open Group's "Single Unix Specification"
  *  requires that the ANSI C clock() function be defined in units of 1/1000000
  *  second.  This means that the result overflows a 32-bit signed clock_t
  *  value after only about 35 minutes.  So, under UNIX, we use the POSIX standard
- *  times() function instead.
+ *  times() function instead, unless clock_t is 64 bits.
  */
 
-long millisec()
+word millisec()
    {
    static long clockres = 0;
    struct tms tp;
@@ -49,28 +49,28 @@ long millisec()
        clockres = sysconf(_SC_CLK_TCK);
 
    times(&tp);
-   return (long) ((1000.0 / clockres) * (tp.tms_utime + tp.tms_stime));
+   return (word) ((1000.0 / clockres) * (tp.tms_utime + tp.tms_stime));
    }
 
 #elif PLAN9
 
-long millisec()
+word millisec()
 {
     long t[4];
     times(t);
     return t[0] + t[1];
 }
 
-
 #else
 
 /*
- * On anything other than UNIX, just use the ANSI C clock() function.
+ * On anything other than UNIX (or if clock_t is big enough), just use
+ * the ANSI C clock() function.
  */
 
-long millisec()
+word millisec()
    {
-   return (long) ((1000.0 / CLOCKS_PER_SEC) * clock());
+   return (word) ((1000.0 / CLOCKS_PER_SEC) * clock());
    }
 
-#endif					/* UNIX */
+#endif

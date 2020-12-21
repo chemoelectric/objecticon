@@ -88,7 +88,7 @@ int add_package_file(struct package *p, struct package_file *new)
 
 char *get_packages_file(struct package_dir *d)
 {
-    return join(d->path, "packages.txt", NULL);
+    return join(d->path, "packages.txt", NullPtr);
 }
 
 static char *read_package_line(FILE *f)

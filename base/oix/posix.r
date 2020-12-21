@@ -369,23 +369,18 @@ end
 function posix_System_uname_impl()
     body {
 #if HAVE_UNAME
-       tended struct descrip tmp, result;
+       tended struct descrip result;
        struct utsname utsn;
        if (uname(&utsn) < 0) {
            errno2why();
            fail;
        }
-       create_list(5, &result);
-       cstr2string(utsn.sysname, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.nodename, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.release, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.version, &tmp);
-       list_put(&result, &tmp);
-       cstr2string(utsn.machine, &tmp);
-       list_put(&result, &tmp);
+       C_to_list(&result, "sssss",
+                 utsn.sysname,
+                 utsn.nodename,
+                 utsn.release,
+                 utsn.version,
+                 utsn.machine);
        return result;
 #else
      Unsupported;
@@ -557,41 +552,35 @@ end
 #if UNIX
 static void passwd_to_list(struct passwd *pw, dptr result)
 {
-   tended struct descrip tmp;
-   create_list(6, result);
-   cstr2string(pw->pw_name, &tmp);
-   list_put(result, &tmp);
-   cstr2string(pw->pw_passwd, &tmp);
-   list_put(result, &tmp);
-   convert_from_uid_t(pw->pw_uid, &tmp);
-   list_put(result, &tmp);
-   convert_from_gid_t(pw->pw_gid, &tmp);
-   list_put(result, &tmp);
-   cstr2string(pw->pw_dir, &tmp);
-   list_put(result, &tmp);
-   cstr2string(pw->pw_shell, &tmp);
-   list_put(result, &tmp);
+   tended struct descrip uid, gid;
+   convert_from_uid_t(pw->pw_uid, &uid);
+   convert_from_gid_t(pw->pw_gid, &gid);
+   C_to_list(result, "ssppss",
+             pw->pw_name,
+             pw->pw_passwd,
+             &uid,
+             &gid,
+             pw->pw_dir,
+             pw->pw_shell);
 }
 
 static void group_to_list(struct group *gr, dptr result)
 {
-   tended struct descrip tmp, mem;
+   tended struct descrip tmp, mem, gid;
    int i;
-   create_list(4, result);
-   cstr2string(gr->gr_name, &tmp);
-   list_put(result, &tmp);
-   cstr2string(gr->gr_passwd, &tmp);
-   list_put(result, &tmp);
-   convert_from_gid_t(gr->gr_gid, &tmp);
-   list_put(result, &tmp);
+   convert_from_gid_t(gr->gr_gid, &gid);
    create_list(0, &mem);
-   list_put(result, &mem);
    i = 0;
    while (gr->gr_mem[i]) {
        cstr2string(gr->gr_mem[i], &tmp);
        list_put(&mem, &tmp);
        ++i;
    }
+   C_to_list(result, "sspp",
+             gr->gr_name,
+             gr->gr_passwd,
+             &gid,
+             &mem);
 }
 #endif
 
