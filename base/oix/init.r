@@ -200,7 +200,7 @@ char *allchars =
  */
 
 int set_up = 0;				/* set-up switch */
-long starttime;                         /* used with millisec() for calculating &time */
+word starttime;                         /* used with millisec() for calculating &time */
 char *currend = NULL;			/* current end of memory region */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */

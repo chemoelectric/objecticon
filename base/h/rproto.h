@@ -451,7 +451,7 @@ void cset_to_string(struct b_cset *b, word pos, word len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len);
 int cset_range_of_pos(struct b_cset *b, word pos);
 int need_ucs(dptr s);
-long millisec(void);
+word millisec(void);
 struct descrip block_to_descriptor(union block *ptr);
 
 struct b_class *get_class_for(dptr x);

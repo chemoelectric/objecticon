@@ -102,6 +102,7 @@ fi
 AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork mmap uname truncate pread pwrite utimensat futimens)
 AC_CHECK_GLOBALS(sys_nerr sys_errlist _etext)
+AC_CHECK_SIZEOF([clock_t], [], [[#include <time.h>]])
 AX_VAR_TIMEZONE_EXTERNALS()
 AC_STRUCT_TIMEZONE()
 AX_STRUCT_TIMEZONE_GMTOFF()

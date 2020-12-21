@@ -99,6 +99,9 @@
 /* define as 1 if nanosecond file stat times are available */
 #undef HAVE_NS_FILE_STAT
 
+/* size of clock_t */
+#undef SIZEOF_CLOCK_T
+
 /* sizes of various fundamental types */
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT
