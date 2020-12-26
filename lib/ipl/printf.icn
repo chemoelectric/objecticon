@@ -21,53 +21,54 @@
 package ipl.printf
 
 import
-   io(stop, ewrites, writes),
+   io(stop, FileStream, need_Stream),
    util(Format, need_integer, need_text, need_real, need_list),
-   lang(to_string)
+   lang(to_string),
+   ipl.pdco(String)
 
-# Returns a `printf` format as a string result.
+#
+# Returns a `printf` format as a string or ucs result.
+#
 procedure sprintf(format, args[])
-   return doprnt(format, args)
+   return lsprintf(format, args)
 end
 
-# Outputs a `printf` format to the given file.
+#
+# Outputs a `printf` format to the given `io.Stream`.
+#
 procedure fprintf(file, format, args[])
-   return writes(file, doprnt(format, args))
+   return lfprintf(file, format, args)
 end
 
+#
 # Outputs a `printf` format to stderr.
+#
 procedure eprintf(format, args[])
-   return ewrites(doprnt(format, args))
+   return lfprintf(FileStream.stderr, format, args)
 end
 
+#
 # Set `&why` from a `printf` format, and fail.
+#
 procedure whyf(format, args[])
-   &why := doprnt(format, args)
+   &why := lsprintf(format, args)
 end
 
+#
 # Call `stop()` with the result of a `printf` format.
+#
 procedure stopf(format, args[])
-   stop(doprnt(format, args))
+   stop(lsprintf(format, args))
 end
 
 #
-# This is like `sprintf`, but the second argument is a list of the
-# arguments used by the format string.  Thus
+# Performs a `printf` format, with the output produced as a result
+# sequence of string (or ucs) chunks, some of which may be empty.
 #
-# ~
-#    sprintf("%d %d", 100, 200)
-# ~
-# and
-# ~
-#    lprintf("%d %d", [100, 200])
-# ~
-#
-# are equivalent.
-#
-procedure lprintf(format, args)
-   return doprnt(format, need_list(args))
+procedure gprintf(format, args[])
+   suspend lgprintf(format, args)
 end
-
+ 
 #
 # Outputs a C-style `printf` format to stdout.
 #
@@ -104,7 +105,7 @@ end
 #
 # The formats are :-
 # *   %d  decimal number
-# *   %s  string
+# *   %s  string or ucs
 # *   %x  hex lower case
 # *   %X  hex upper case
 # *   %o  octal
@@ -120,7 +121,7 @@ end
 #         table alignment)
 #
 procedure printf(format, args[])
-   return writes(doprnt(format, args))
+   return lfprintf(FileStream.stdout, format, args)
 end
 
 # Get a positional param of the form <int>$, or fail.
@@ -149,64 +150,85 @@ package class Args()
    end
 
    public new(x)
-      a := x
+      a := need_list(x)
       e := create !a
       return
    end
 end
 
-package procedure one(args)  
+#
+# This is like `gprintf`, but the second argument is a list of the
+# arguments used by the format string.
+#
+procedure lgprintf(format, args)
    local v, a, just, width, conv, prec, pad, flag, apos
-   move(1)     # Move over %
-   # Get the optional positional specifier, eg "3$"
-   apos := optpos()
-   flag := cset(tab(many('0\'\-+SZ'))) | ''
-   # Convert flags to those used by Format.numeric_to_string
-   if any(flag, "'") then flag ++:= ','
-   if any(flag, "S") then flag ++:= 's'
-   if any(flag, "Z") then flag ++:= 'z'
-   just := if any(flag, "-") then left else right
-   if any(flag, "0") then pad := "0"
-   width := args.intparam()
-   if ="." then prec := args.intparam()
-   conv := move(1) | ""
-   # Formats that take an argument.
-   if any('dsxXobitreE', conv) then
-      a := args.get(apos)
-   v := case string(conv) of {
-      "d": decimal(a, prec, flag)
-      "s": str(a, prec)
-      "x": map(intstr(a, prec, flag))
-      "X": intstr(a, prec, flag)
-      "o": intstr(a, prec, flag, 8)
-      "b": intstr(a, prec, flag, 2)
-      "i": str(image(a), prec)
-      "t": str(to_string(a), prec)
-      "r": fixnum(a, prec, flag)
-      "e": eformatstr(a, prec, flag ++ 'e')
-      "E": eformatstr(a, prec, flag ++ 'E')
-      "w": str(&why, prec)
-      "n": str("", prec)
-      default: str(conv, prec)
-   }
-   if \width & *v < width then
-      v := just(v, width, pad)
-   return v
-end
-
-package procedure doprnt(format, args)
-   local out
-   out := ""
    args := Args(args)
    format ? {
-      while out ||:= tab(upto('%')) || one(args)
-      return out || tab(0)
+      while v := tab(upto('%')) do {
+         suspend v
+         move(1)     # Move over %
+         # Get the optional positional specifier, eg "3$"
+         apos := optpos()
+         flag := cset(tab(many('0\'\-+SZ'))) | ''
+         # Convert flags to those used by Format.numeric_to_string
+         if any(flag, "'") then flag ++:= ','
+         if any(flag, "S") then flag ++:= 's'
+         if any(flag, "Z") then flag ++:= 'z'
+         just := if any(flag, "-") then left else right
+         if any(flag, "0") then pad := "0"
+         width := args.intparam()
+         if ="." then prec := args.intparam()
+         conv := move(1) | ""
+         # Formats that take an argument.
+         if any('dsxXobitreE', conv) then
+            a := args.get(apos)
+         v := case string(conv) of {
+            "d": decimal(a, prec, flag)
+            "s": str(a, prec)
+            "x": map(intstr(a, prec, flag))
+            "X": intstr(a, prec, flag)
+            "o": intstr(a, prec, flag, 8)
+            "b": intstr(a, prec, flag, 2)
+            "i": str(image(a), prec)
+            "t": str(to_string(a), prec)
+            "r": fixnum(a, prec, flag)
+            "e": eformatstr(a, prec, flag ++ 'e')
+            "E": eformatstr(a, prec, flag ++ 'E')
+            "w": str(&why, prec)
+            "n": str("", prec)
+            default: str(conv, prec)
+         }
+         if \width & *v < width then
+            v := just(v, width, pad)
+         suspend v
+      }
+      return tab(0)
    }
+end
+
+#
+# This is like `sprintf`, but the second argument is a list of the
+# arguments used by the format string.
+#
+procedure lsprintf(format, args)
+   return String{ lgprintf(format, args) }
+end
+
+#
+# This is like `fprintf`, but the second argument is a list of the
+# arguments used by the format string.
+#
+procedure lfprintf(file, format, args)
+   local s
+   need_Stream(file)
+   every s := lgprintf(format, args) do
+      file.writes1(s) | fail
+   return file
 end
 
 package procedure str(x, prec)
    x := need_text(x)
-   return x[1:(\prec+1)|0]
+   return x[1:(\prec + 1) | 0]
 end
 
 package procedure intstr(x, prec, flag, base)
