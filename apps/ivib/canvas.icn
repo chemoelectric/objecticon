@@ -1555,13 +1555,13 @@ class Canvas(Component,SelectiveObjectCodec)
       /self.held_flag | fail
       if i := self.which_cursor_over(e) then {
          self.select(i, e.ctrl)
-         if not(\e.ctrl) then {
+         if /e.ctrl then {
             pm := PopupMenu()
             pm.popup(self.parent_dialog, i.create_menu(), e.x, e.y)
          }
       } else if self.in_region(e) then {
          self.clear_selections()
-         if not(\e.ctrl) then {
+         if /e.ctrl then {
             pm := PopupMenu()
             pm.popup(self.parent_dialog, self.create_menu(), e.x, e.y)
          }
@@ -1647,8 +1647,7 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public select(c, add)
       if \add then {
-         if not(keyof(selections, c)) then
-            put(selections, c)
+         keyof(selections, c) | put(selections, c)
          /selected := c
       } else {
          selected := c
@@ -1694,7 +1693,7 @@ class Canvas(Component,SelectiveObjectCodec)
       # Check all selections are CheckBoxes.
       #
       every e := !selections do {
-         if not is(e, CanvasButton) then
+         unless is(e, CanvasButton) then
             return alert_error(parent_dialog, "You can only have subclasses of Button in a CheckBoxGroup")
       }
 
@@ -1744,7 +1743,7 @@ class Canvas(Component,SelectiveObjectCodec)
       # Check all selections are buttons.
       #
       every e := !selections do {
-         if not is(e, CanvasButton) then
+         unless is(e, CanvasButton) then
             return alert_error(parent_dialog, "You can only have subclasses of Button in a ButtonGroup")
       }
 

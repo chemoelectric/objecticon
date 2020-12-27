@@ -67,6 +67,7 @@ class Lex(Connectable)
       reswords["suspend"] := [Beginner+Ender, YY.SUSPEND]
       reswords["then"] := [0, YY.THEN]
       reswords["to"] := [0, YY.TO]
+      reswords["unless"] := [Beginner, YY.UNLESS]
       reswords["until"] := [Beginner, YY.UNTIL]
       reswords["while"] := [Beginner, YY.WHILE]
    end

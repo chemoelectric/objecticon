@@ -1979,13 +1979,12 @@ class Terminal(TabItem, VtUI)
       tty := PttyStream() | fail
 $if _DARWIN
       # Darwin doesn't seem to allow NONBLOCK flag on a tty
-      (pid := System.fork()) | {
+      unless pid := System.fork() then {
          save_why{ tty.close() }
          fail
       }
 $else
-      (tty.flag(FileOpt.NONBLOCK) &
-       pid := System.fork()) | {
+      unless tty.flag(FileOpt.NONBLOCK) & pid := System.fork() then {
           save_why{ tty.close() }
           fail
       }
@@ -2392,7 +2391,7 @@ $endif
          m.add(TextMenuItem().
                set_label("Restore").
                connect(on_restore, Event.ACTION))
-      if not search_panel.is_live() then
+      unless search_panel.is_live() then
          m.add(TextMenuItem().
                set_label("Search").
                connect(open_search_panel, Event.ACTION))
@@ -2678,7 +2677,7 @@ $endif
 
    private load_cwd_list()
       cwd_mtime := get_ns_mtime(cwd) | 0
-      (cwd_list := Files.ucs_list(cwd, AnnotatedListEntryWithIcon)) | {
+      unless cwd_list := Files.ucs_list(cwd, AnnotatedListEntryWithIcon) then {
          info_msg("Failed to read cwd: " || &why)
          cwd_list := []
       }
@@ -2819,7 +2818,7 @@ $endif
          parent_dialog.resynch_pointer()
       }
 
-      (cwd == history[history_pos].dir) | {
+      unless cwd == history[history_pos].dir then {
          every 1 to history_pos - 1 do
             pop(history)
          push(history, default.HistoryEntry(cwd))
@@ -3076,7 +3075,7 @@ $endif
          if parent.which_one === self then {
             # We're closing the currently selected tab, so choose a new
             # one to be the current tab.
-            (i := parent.get_index(\revert_tab)) | {
+            unless i := parent.get_index(\revert_tab) then {
                i := parent.get_index(self)
                if i > 1 then
                   i -:= 1

@@ -162,7 +162,7 @@ end
 procedure do_method(csym, f)
    local loc, id
    loc := get_locals(f)
-   if not(f.get_access().gen().str() == "static") then
+   unless f.get_access().gen().str() == "static" then
       insert(loc, "self")
    every id := gen_idents(f.get_initial_node() | f.get_body_node()) do {
       member(loc, id) | csym.get_implemented_field(id) | seen(id)
@@ -182,7 +182,7 @@ procedure do_invocable(o)
    every i := o.gen() do {
       if is(i, Id) then {
          id := i.str()
-         (id == ("all"|"methods")) | {
+         unless id == ("all"|"methods") then {
             if id[1] == "\"" then
                id := id[2:-1]
             (id[1] == ".") | seen(id)

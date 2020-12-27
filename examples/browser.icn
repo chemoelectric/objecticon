@@ -751,7 +751,7 @@ class DownloadTab(TabItem)
       s := "Downloads"
       n := 0
       every e := !dl do {
-         if not(e.status == ("Done" | "Failed")) then
+         unless e.status == ("Done" | "Failed") then
             n +:= 1
       }         
       if n > 0 then
@@ -1221,7 +1221,7 @@ class BrowserTab(TabItem, BrowserUI)
       if parent.which_one === self then {
          # Note that parent.get_index may fail even if \revert_tab, since
          # revert_tab may have been removed from the TabSet previously.
-         (i := parent.get_index(\revert_tab)) | {
+         unless i := parent.get_index(\revert_tab) then {
             i := parent.get_index(self)
             # If i=1, there will always be a tab to the right of this one (it may be the download tab).
             if i > 1 then
@@ -1394,7 +1394,7 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Save page...").
                connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
-         if not search_panel.is_live() then
+         unless search_panel.is_live() then
             m.add(TextMenuItem().
                   set_label("Search").
                   set_label_right("^F").

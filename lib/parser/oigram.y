@@ -52,6 +52,7 @@
 %token  SUSPEND     /* suspend   */
 %token  THEN        /* then      */
 %token  TO          /* to        */
+%token  UNLESS      /* unless    */
 %token  UNTIL       /* until     */
 %token  WHILE       /* while     */
 
@@ -439,6 +440,8 @@ return  : FAIL { $$ := Node("fail", $1);} ;
 
 if      : IF expr THEN expr { $$ := Node("if", $1,$2,$3,$4);} ;
         | IF expr THEN expr ELSE expr { $$ := Node("ifelse", $1,$2,$3,$4,$5,$6);} ;
+        | UNLESS expr THEN expr { $$ := Node("unless", $1,$2,$3,$4);} ;
+        | UNLESS expr THEN expr ELSE expr { $$ := Node("unlesselse", $1,$2,$3,$4,$5,$6);} ;
 
 case    : CASE expr OF LBRACE caselist RBRACE { $$ := Node("case", $1,$2,$3,$4,$5,$6);} ;
 

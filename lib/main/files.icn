@@ -1247,7 +1247,7 @@ package class UnixFileSystem(FileSystem)
             next
          else if e == ".." then {
             # /.. -> /
-            (*r = 1 & filepath_is_absolute(fp)) | {
+            unless *r = 1 & filepath_is_absolute(fp) then {
                if *r = 0 | (r[-1] == "..") then
                   put(r, e)
                else
@@ -1444,7 +1444,7 @@ package class WindowsFileSystem(FileSystem)
             next
          else if e == ".." then {
             # Avoid, eg, c:\.. -> empty; c:\.. is in fact invalid.
-            (*r = 1 & filepath_is_absolute(fp)) | {
+            unless *r = 1 & filepath_is_absolute(fp) then {
                if *r = 0 | (r[-1] == "..") then
                   put(r, e)
                else

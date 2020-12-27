@@ -188,7 +188,7 @@ procedure dif(stream,compare,eof,group)
 	      #
 	      m := i - 1
 	      if not every n := 1 to gf do {
-	        if not compare(test[k][n],difflist[l][m +:= 1]) then break
+	        compare(test[k][n],difflist[l][m +:= 1]) | break
 	      } then {
 	        synclist[k][l] := i	# store current position
 	        if (nsyncs[k] +:= 1) = *stream then break break break break

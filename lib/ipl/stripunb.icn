@@ -79,7 +79,7 @@ procedure stripunb(c1,c2,s,i,j,t)
     s ? {
 	while s2 ||:= tab(upto(lookinfor)) do {
 	    if ="\\" then {
-		if not any(bothcs) then
+		unless any(bothcs) then
 		    s2 ||:= "\\"
 		&pos+1 > j & (return s2)
 		s2 ||:= move(1)

@@ -111,7 +111,7 @@ procedure gedload(f)
       if *line = 0 then
          next
 
-      if not (r := gedscan(line)) then {
+      unless r := gedscan(line) then {
          ewrite("ERR, line ", lnum, ": ", line)
          next
       }
@@ -359,7 +359,7 @@ procedure gedhi(r)
 
    bdate := geddate(gedsub(r, "BIRT")) | ""
    bd := bdate[-2:0] | "00"
-   if not (bd ? (tab(many(&digits)) & pos(0))) then
+   unless bd ? (tab(many(&digits)) & pos(0)) then
       bd := "99" 
    s ||:= bd || gedh3a(name || bdate)
    return map(s, lc, uc)
@@ -375,7 +375,7 @@ procedure gedh3a(s)
 
    n := 0
    every c := !map(s) do
-      if not upto(' \t\f\r\n', c) then
+      unless upto(' \t\f\r\n', c) then
          n := 37 * n + ord(c) - 32
    d1 := 97 + (n / 676) % 26
    d2 := 97 + (n / 26) % 26

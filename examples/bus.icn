@@ -405,7 +405,7 @@ class Map(Panel)
          m2 := Menu().set_label("Filter")
          routes := filter_sort_routes(st.routes)
          if *routes > 1 then {
-            if not setle(st.routes, \filter) then
+            unless setle(st.routes, \filter) then
                m2.add(create_filter_all_menu_item(st.routes))
             if *(\filter ** st.routes) > 0 then
                m2.add(create_filter_none_menu_item(st.routes))
@@ -429,7 +429,7 @@ class Map(Panel)
          m2 := Menu().set_label("Filter")
          routes := filter_sort_routes(va.routes)
          if *routes > 1 then {
-            if not setle(va.routes, \filter) then
+            unless setle(va.routes, \filter) then
                m2.add(create_filter_all_menu_item(va.routes))
             if *(\filter ** va.routes) > 0 then
                m2.add(create_filter_none_menu_item(va.routes))
@@ -1184,7 +1184,7 @@ class Map(Panel)
       every st := back(lab_sort) do {
          if *areas > 20 then break
          r := Rect(st.px + stop_size, st.py - I.get_font_ascent(), I.text_width(st.name), I.get_font_height())
-         if not r.intersect(!areas) then {
+         unless r.intersect(!areas) then {
             if \filter then {
                if member(st.routes, !filter) then
                   I.set_fg("black")
@@ -1282,7 +1282,7 @@ class Map(Panel)
       every other := key(st.arcs) do {
          qx := other.scale_times_east - scale_times_origin_east
          qy := other.scale_times_south - scale_times_origin_south
-         if not ((px < 0 & qx < 0) | (py < 0 & qy < 0) | (px > mw & qx > mw) | (py > mh & qy > mh)) then {
+         unless (px < 0 & qx < 0) | (py < 0 & qy < 0) | (px > mw & qx > mw) | (py > mh & qy > mh) then {
             if scale < 8 then {
                if member(other.arcs, st) then {
                   if serial(other) < serial(st) then

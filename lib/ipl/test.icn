@@ -139,7 +139,7 @@ procedure cmp_seq(s, e1, e2)
    local x1
    writes(@s, ": ")
    while x1 := @e1 do {
-      (x1 === @e2) | {
+      unless x1 === @e2 then {
          write("different")
          fail
       }

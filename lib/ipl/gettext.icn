@@ -182,7 +182,7 @@ procedure get_offsets(KEY, inidx)
    # search routine at the next byte after this line.
 
    inidx.seek(1)
-   if not (inidx === \old_inidx) then {
+   unless inidx === \old_inidx then {
 
       # Get first line.
       firstline := !inidx

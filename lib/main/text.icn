@@ -85,7 +85,7 @@ final abstract class Text()
          t ||:= tab(many(&ascii))
          if pos(0) then
             return ucs(t)
-         (n := get_utf8_seq_len(&subject[&pos]) & t ||:= string(ucs(move(n)))) | {
+         unless n := get_utf8_seq_len(&subject[&pos]) & t ||:= string(ucs(move(n))) then {
             t ||:= subst
             move(1)
          }

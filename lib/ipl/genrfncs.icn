@@ -741,20 +741,20 @@ end
 procedure srpseq(n, m)		
    local iter, count, okay, rat, j, pal
 
-   if not (1 <= m <= 2 * n) then fail
+   unless 1 <= m <= 2 * n then fail
 
    iter := 5
 
    repeat {
       pal := []
       count := 0
-      okay := 1
+      okay := &yes
       rat := Sqrt(n ^ 2 + m, iter)
       every j := cfseq(rat.numer, rat.denom) do {
          count +:= 1
          if count = 1 then next	# don't examine first term
          if j = 2 * n then {	# presumed end
-            if not lequiv(pal, lreverse(pal)) then break
+            lequiv(pal, lreverse(pal)) | break
             okay := &null
             break
             }

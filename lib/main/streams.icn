@@ -1616,7 +1616,7 @@ $if _MS_WIN32
          return error("Empty path")
       if any('\\/:', path[-1]) then
          path ||:= "*"
-      else if not upto('*?', path) then
+      else unless upto('*?', path) then
          path ||:= "\\*"
 $endif
       self.ptr := new_impl(path) | fail
@@ -2004,7 +2004,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    public override new(cmd, args, env, stdin, stderr)
       local l
       l := one_way_socketpair() | fail
-      (pid := System.fork()) | {
+      unless pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -3415,7 +3415,7 @@ class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
       local t
       if /coex then
          return
-      (t := @coex) | {
+      unless t := @coex then {
          coex := &null
          fail
       }
@@ -3460,7 +3460,7 @@ class GeneratorStream(Stream, NoCopy)
       if /coex then
          return
       while *buff = 0 do {
-         (t := @coex) | {
+         unless t := @coex then {
             coex := &null
             fail
          }

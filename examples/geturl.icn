@@ -158,7 +158,7 @@ class Worker()
 
       total +:= 1
 
-      (url := URL(a).normal()) | {
+      unless url := URL(a).normal() then {
          whyf("Invalid url: %s: %w", a)
          if /opts["q"] then
             write(&why)
@@ -166,7 +166,7 @@ class Worker()
          fail
       }
 
-      (url.scheme == ("http" | "https")) | {
+      unless url.scheme == ("http" | "https") then {
          whyf("Unsupported scheme: %s", url.scheme)
          if /opts["q"] then
             write(pp_url(url), ": ", &why)

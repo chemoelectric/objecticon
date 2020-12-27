@@ -614,7 +614,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          invalidate_line(\self.old_over, i)
          invalidate_line(\self.over, i)
       }
-      if not lang.equals(self.old_selections, self.selections) then {
+      unless lang.equals(self.old_selections, self.selections) then {
          every invalidate_line(!(old_selections -- selections) | !(selections -- old_selections), i)
          selection_changed := &yes
       }

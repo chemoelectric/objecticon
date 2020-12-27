@@ -266,7 +266,7 @@ procedure get_splace(seq)
    every i := divisors(*seq) do {
       motif := seq[1+:i]
       every j := i + 1 to *seq by i do
-         if not sequiv(motif, sground(seq[j+:i], seq[1])) then break next
+         unless sequiv(motif, sground(seq[j+:i], seq[1])) then break next
       path := []
       every put(path, seq[1 to *seq by i])
       return "splace(" || get_analysis(motif) || ", " || get_analysis(path) || ")"
@@ -766,7 +766,7 @@ procedure slayer(xargs[])
 
    new_xargs := [xargs[1], xargs[2]] | fail
 
-   if not integer(xargs[2][1]) then return scollate ! xargs
+   integer(xargs[2][1]) | return scollate ! xargs
 
    shift := sbound ! xargs[2]
 
@@ -1101,7 +1101,7 @@ procedure sreflectv(xargs[])
 
    x := spromote(xargs[1])
 
-   if not integer(x[1]) then return x
+   integer(x[1]) | return x
 
    m := sbound ! x
 
@@ -1180,7 +1180,7 @@ procedure srotatev(xargs[])
 
    x := spromote(xargs[1])
 
-   if not integer(x[1]) then return x
+   integer(x[1]) | return x
 
    m := sbound ! x
 
@@ -1316,7 +1316,7 @@ procedure sunmod(x)
 
    x := copy(spromote(x))
 
-   if not integer(x[1]) then return x
+   integer(x[1]) | return x
 
    base := 0
 

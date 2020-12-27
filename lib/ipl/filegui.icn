@@ -248,7 +248,7 @@ class IconFilesItemPaint(ItemPaint)
    public override draw(W, data, x, y, w, h)
       local i, d
       if is(data, ListEntryWithIcon) then {
-         if not(i := \data.icon) then
+         unless i := \data.icon then
             i := data.icon := get_icon(data)
       } else
          i := get_icon(data)
@@ -340,7 +340,7 @@ class FileSuggestField(SuggestField)
       if /show_hidden_files_flag & Files.is_hidden(n) then
          fail
       if e.stat.mode_str[1] == "d" then {
-         if not Files.is_relative_dir(n) then
+         unless Files.is_relative_dir(n) then
             return
       } else {
          n := Files.standard_case(n)

@@ -1022,7 +1022,7 @@ abstract class Function()
    public set_varargs(f)
       need_flag(f)
       if \f then {
-         if not has_varargs() then
+         unless has_varargs() then
             fpos.set(arglist_index, Node("arglist",
                                          fpos.child(arglist_index),
                                          Token(YY.LBRACK, "[", "["),

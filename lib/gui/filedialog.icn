@@ -421,7 +421,7 @@ class FileDialog(Dialog)
          }
          case existing_file_mode of {
             REQUIRE: {
-               if not Files.access(fs) then {
+               unless Files.access(fs) then {
                   msg("Selected file doesn't exist")
                   fail
                }
@@ -694,7 +694,7 @@ class FileDialog(Dialog)
       restore_pos()
       if /nav then {
          ds := loaded_dir_path.ucs()
-         (ds == history[history_pos]) | {
+         unless ds == history[history_pos] then {
             every 1 to history_pos - 1 do
                pop(history)
             push(history, ds)
@@ -726,7 +726,7 @@ class FileDialog(Dialog)
    end
 
    public load_dir_list()
-      (loaded_dir_list := Files.ucs_list(loaded_dir_path.str(), AnnotatedListEntryWithIcon)) | {
+      unless loaded_dir_list := Files.ucs_list(loaded_dir_path.str(), AnnotatedListEntryWithIcon) then {
          msg(&why)
          loaded_dir_list := []
       }

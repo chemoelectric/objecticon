@@ -115,7 +115,7 @@ class BorderEdit(Dialog)
       } else
          q := p
 
-      if not is(c, CanvasNullBorder) then {
+      unless is(c, CanvasNullBorder) then {
          set_l_inset_cb := CheckBox().set_label("Left inset : ")
          set_l_inset_cb.connect(self.on_set_l_inset, Event.ACTION)
          q.add(set_l_inset_cb)

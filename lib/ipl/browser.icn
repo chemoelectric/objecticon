@@ -5459,7 +5459,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             }
          } else if is(c, Img) then {
             every u := \c.gen_areas().url do {
-               if not member(seen, u) then {
+               unless member(seen, u) then {
                   insert(seen, u)
                   put(l, PointResult(c.x, c.y, u))
                }
@@ -5631,7 +5631,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       every c := Seq{traverse_postorder()} do {
          if is(c,TextFlow) then {
             every i := !c.input do {
-               if not member(seen, i.attr) then {
+               unless member(seen, i.attr) then {
                   insert(seen, i.attr)
                   i.attr.font := scale_font(i.attr.font, f)
                }

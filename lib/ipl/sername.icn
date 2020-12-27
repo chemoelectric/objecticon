@@ -49,7 +49,7 @@ procedure sername(p, s, n, i)
 
    # See if anything has changed.
 
-   if not(p === prefix & s === suffix & n === cols & first === i) then {
+   unless p === prefix & s === suffix & n === cols & first === i then {
       prefix := \p
       suffix := \s
       cols := \n

@@ -24,12 +24,16 @@ package ipl.options
 
 import
    io, lang, util, ipl.scan, ipl.lists, ipl.pdco, ipl.tables(inserts),
-   ipl.functional
+   ipl.functional, ipl.printf
 
+#
 # The result of the `Opt.format` method.
+#
 package record OptFormat(names, help)
 
+#
 # This class encapsulates a single option.
+#
 class Opt()
    public const
       # A list of the names of this option.
@@ -61,7 +65,9 @@ class Opt()
       # procedure.
       param_err
 
+   #
    # A utility function to help format an option string.
+   #
    public format()
       local ns, h, ph
       ns := String{ "-" || !names, ", " }
@@ -94,6 +100,7 @@ class Opt()
       }
    end
 
+   #
    # Create a new Opt instance.
    # :Parameters :
    # :  `s` - the name of the option; may be a list of several synonymous names 
@@ -116,11 +123,13 @@ class Opt()
    end
 end
 
+#
 # Output help for a list of `Opt`s.  This procedure may be useful if a
 # custom "usage" procedure is provided to `options`.
 #
 # :Parameters :
 # :  `opts` - a list of `Opt`s
+#
 procedure options_help(opts)
    local o, t
    if *opts > 0 then {
@@ -128,19 +137,21 @@ procedure options_help(opts)
       every o := !opts do {
          if is(o, Opt) then {
             t := o.format()
-            help_line(t.names, t.help)
+            help_line!t
          } else
             help_line(o)
       }
    }
 end
 
+#
 # Output a formatted two column help line; this is also useful if a
 # custom "usage" procedure is provided.
 #
 # :Parameters :
 # :  `ns` - the left hand (option) column
 # :  `h` - the descriptive help string.
+#
 procedure help_line(ns, h)
    static cols
    local i
@@ -214,6 +225,21 @@ end
 #  An argument of `-` is treated as a non-option.  The special argument
 #  `--` terminates option processing.  Non-option arguments are returned
 #  in the original argument list for interpretation by the caller.
+#
+#     Two special options exist.  The first is "?" (alias "help"),
+#  described below with the `usage` parameter.  The second is "clear",
+#  which takes a string argument.  Its effect is to remove that key
+#  from the results table.  If the key is "all", then the results
+#  table is cleared entirely.  This can be useful if an unwanted
+#  option defined in a shell alias needs to be deleted.  Thus
+#  ~
+#       prog -a -b -clear a -c
+#  ~
+#  is equivalent to
+#  ~
+#       prog -b -c
+#  ~
+#  (assuming a, b and c are valid no-argument options).
 #
 #     An argument of the form `@filename` (a `@` immediately followed
 #  by a file name) causes options() to replace that argument with
@@ -301,7 +327,7 @@ end
 #
 procedure options(arg, opts, usage, errproc, ignoreproc)
    local fList, fileArg, fn, ignore, optname, opttable, x,
-      option, k, v, p, opt, opttype, convert
+      option, v, p, opt, opttype, convert
    #
    #  Initialize.
    #
@@ -332,7 +358,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
       }
    }
 
-   every opt := !opts | Opt(["help", "?"]) do {
+   every opt := !opts | Opt("clear", lpartial(clear_opt, opttable)) | Opt(["help", "?"]) do {
       if is(opt, Opt) then {
          every optname := string(!opt.names) do {
             if member(opttable, optname) then
@@ -371,12 +397,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
                         return errproc("No parameter following --" || optname)
                      v := opt.convert(p) | return errproc("--" || optname || ": " || opt.build_param_err())
                   }
-
-                  k := opt.names[1]
-                  if /opt.multiple_flag then
-                     insert(option, k, v)
-                  else
-                     inserts(option, k, v)
+                  add_option(option, opt, v)
                }
             } else {
                tab(0) ? until pos(0) do {
@@ -388,7 +409,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
                   else {
                      pos(*optname + 1) | return errproc("An option taking a parameter cannot be combined: -" || optname)
 
-                     p := if not pos(0) then
+                     p := unless pos(0) then
                         tab(0)
                      else if \arg[1] then
                         get(arg)
@@ -396,12 +417,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
                         return errproc("No parameter following -" || optname)
                      v := opt.convert(p) | return errproc("-" || optname || ": " || opt.build_param_err())
                   }
-                  
-                  k := opt.names[1]
-                  if /opt.multiple_flag then
-                     insert(option, k, v)
-                  else
-                     inserts(option, k, v)
+                  add_option(option, opt, v)
                }
             }
          }
@@ -421,7 +437,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
    }
    every push(arg, back(fList))
 
-   if member(option, "help" | "?") then {
+   if member(option, "help") then {
       /usage := "Usage: " || Files.get_program_name() || " [OPTIONS...]"
       if type(usage) == "list" then
          usage := cat_lines(usage)
@@ -438,8 +454,28 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
    return option
 end
 
+#
+# Add value v from Opt opt into the result table option.
+#
+package procedure add_option(option, opt, v)
+   local k
+   k := opt.names[1]
+   if k == "clear" then {
+      # v is either null ("all") or the Opt to remove.
+      if /v then
+         clear(option)
+      else
+         delete(option, v.names[1])
+   } else if /opt.multiple_flag then
+      insert(option, k, v)
+   else
+      inserts(option, k, v)
+end
+
+#
 # Return the given builtin converter function's name, with its first
 # letter capitalized (eg integer->"Integer").
+#
 package procedure capitalize_cnv(f)
    local s
    s := Proc.get_name(f)
@@ -454,6 +490,7 @@ package procedure range_impl(cnv, min, max, x)
    return x
 end
 
+#
 # Converter function for an integer which must lie within the given
 # min-max range.
 #
@@ -461,6 +498,7 @@ procedure integer_range(min, max)
    return lpartial(range_impl, integer, min, max)
 end
 
+#
 # Converter function for a real which must lie within the given
 # min-max range.
 #
@@ -476,21 +514,35 @@ package procedure text_with_impl(cnv, q, i, s)
       if j >= i then
          s
       else
-         error(image(q) || " in invalid position")
+         whyf("%i in invalid position", q)
    } else
-      error(capitalize_cnv(cnv) || " containing " || image(q) || " expected")
+      whyf("%s containing %i expected", capitalize_cnv(cnv), q)
 end
 
+#
 # Converter function for a string option which must contain a char in
 # `q` (if q is a cset), or the substring `q`, otherwise.  `i` is an
 # optional integer giving a minimum index for `q`.
+#
 procedure string_with(q, i)
    return lpartial(text_with_impl, string, q, i)
 end
 
+#
 # Same as `string_with`, but returns a ucs.
+#
 procedure ucs_with(q, i)
    return lpartial(text_with_impl, ucs, q, i)
+end
+
+#
+# Converter function for the builtin "clear" option.
+#
+package procedure clear_opt(opttable, v)
+   return if v == "all" then
+      &null
+   else
+      member(opttable, string(v)) | error("Unrecognized option name: " || v)
 end
 
 package class IgnoreAfterImpl(New)
@@ -504,15 +556,19 @@ package class IgnoreAfterImpl(New)
    end
 end
 
+#
 # A helpful procedure to use as an ignoreproc to `option`.  The
 # given function `f` is used to test each argument; when it succeeds
 # then option processing ceases, and all further arguments are treated
 # as-is.
+#
 procedure ignore_after(f)
    return IgnoreAfterImpl(need_callable(f)).call
 end
 
+#
 # Used with ignore_after to ignore options after first non-flag argument
+#
 procedure non_flag(x)
    succeed any(~'\-@', x)
 end

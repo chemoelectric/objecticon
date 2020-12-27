@@ -74,7 +74,7 @@ procedure allof(expr1, expr2)
    #  Loop until backtracking over all expr2s has failed.
    #
    while i > 0 do {
-      if not (x := elist[i]) then
+      unless x := elist[i] then
          #
          #  If we're at the end of the list of expressions, attempt an
          #  iteration to produce another expression.

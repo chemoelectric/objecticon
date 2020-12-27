@@ -268,7 +268,7 @@ abstract class RandomWithModulus(Random)
       local r, m1
       n := need_integer(n, 1)
       # See if we have to update the various cached fields.
-      (n === n1) | {
+      unless n === n1 then {
          # Establish the smallest p1 for which m1 = m^p1 and m1 >= n.
          # m1 will thus be a modulus big enough to encompass n, and
          # formed from combining p1 results from `get()`.

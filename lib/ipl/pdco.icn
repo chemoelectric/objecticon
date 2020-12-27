@@ -41,17 +41,21 @@ end
 procedure Allpar(L[])	
    local i, L1, done
 
+   if *L = 0 then fail
+
    L1 := list(*L)
 
-   done := list(*L,1)
+   done := list(*L, &no)
 
    every i := 1 to *L do L1[i] := @L[i] | fail
 
    repeat {
       suspend L1
       every i := 1 to *L do
-         if done[i] = 1 then ((L1[i] := @L[i]) | (done[i] := 0))
-      if not(!done = 1) then fail
+         if /done[i] & not( L1[i] := @L[i] ) then {
+            done[i] := &yes
+            /!done | fail
+            }
       }
 
 end
@@ -187,22 +191,22 @@ end
 procedure Cyclepar(L[])	
    local i, L1, done
 
+   if *L = 0 then fail
+
    L1 := list(*L)
 
-   done := list(*L,1)
+   done := list(*L, &no)
 
    every i := 1 to *L do L1[i] := @L[i] | fail
 
    repeat {
       suspend L1
       every i := 1 to *L do {
-         if not(L1[i] := @L[i]) then {
-            done[i] := 0
-            if !done = 1 then {
-               L[i] := ^L[i]
-               L1[i] := @L[i] | fail
-               }
-            else fail
+         unless L1[i] := @L[i] then {
+            done[i] := &yes
+            /!done | fail
+            L[i] := ^L[i]
+            L1[i] := @L[i] | fail
             }
          }
       }
@@ -1188,7 +1192,7 @@ procedure Unique(e)
    done := set()
 
    while x := @e do
-      if not member(done, x) then {
+      unless member(done, x) then {
          insert(done, x)
          suspend x
          }
@@ -1205,7 +1209,7 @@ procedure UniqueEq(e)
    done := EqSet()
 
    while x := @e do
-      if not done.member(x) then {
+      unless done.member(x) then {
          done.insert(x)
          suspend x
          }
@@ -1220,7 +1224,7 @@ procedure UpperTrim(e)
    done := set()
 
    while i := @e do {
-      if not member(done, i) then
+      unless member(done, i) then
          insert(done, i)
       else suspend i
       }

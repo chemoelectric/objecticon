@@ -195,7 +195,7 @@ final abstract class Format()
       m := if n < 1.0 then 1.0 / n else n
       e := 0
 
-      if not(pwr[1 + (ve := 1 to *pwr)] > m) then {
+      unless pwr[1 + (ve := 1 to *pwr)] > m then {
          while m /:= (m >= pwr[ve]) do
             e +:= 2 ^ (ve - 1)
          ve -:= 1

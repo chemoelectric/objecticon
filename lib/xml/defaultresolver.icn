@@ -86,7 +86,7 @@ class DefaultResolver(Resolver)
 
       sys_id := string(sys_id)
 
-      (sys_url := URL(sys_id) & sys_url.scheme == ("http" | "https" | "file")) | {
+      unless sys_url := URL(sys_id) & sys_url.scheme == ("http" | "https" | "file") then {
          sys_url := if u := URL(string(base)) &
                        u.scheme == ("http" | "https" | "file")
          then

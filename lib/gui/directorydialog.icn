@@ -272,7 +272,7 @@ class DirectoryDialog(Dialog)
       if p.is_unc() &
          v := p.slice(1, 4).ucs()
       then {
-         (n := find_child(root, v)) | {
+         unless n := find_child(root, v) then {
             if l := get_entry(Files.standard_case(v)) then {
                n := TreeNode().
                   set_label(l).
@@ -362,7 +362,7 @@ class DirectoryDialog(Dialog)
       }
       case existing_file_mode of {
          REQUIRE: {
-            if not Files.access(fs) then {
+            unless Files.access(fs) then {
                msg("Selected directory doesn't exist")
                fail
             }

@@ -585,7 +585,7 @@ class EditableTextList(LineBasedScrollArea)
          fire(Event.CONTENT_CHANGED, e)
       if \cursor_moved then
          fire(Event.CURSOR_MOVED, e)
-      if not equals(old_region, r) then
+      unless equals(old_region, r) then
          fire(Event.SELECTION_CHANGED, e)
    end
 

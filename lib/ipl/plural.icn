@@ -47,7 +47,7 @@ procedure plural(word)
 
    if member(plural_s,lcword) then return word || "s"
 
-   (lcword := \plural_map[lcword]) | {
+   unless lcword := \plural_map[lcword] then {
       lcword ?:= {
          (tab(-3) || (match("man") & "men")) |
          (tab(-3) || (match("sis") & "ses")) |

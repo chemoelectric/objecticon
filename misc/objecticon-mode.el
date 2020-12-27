@@ -131,7 +131,7 @@ regardless of where in the line point is when the TAB command is used.")
                    "invocable" "link" "local" "native" "next" "not" "of" "optional" "override"
                    "package" "private" "procedure" "protected" "public" "readable" "record"
                    "repeat" "return" "static" "succeed" "suspend" "then" "to"
-                   "until" "while"))
+                   "unless" "until" "while"))
      "\\_>")
     'font-lock-keyword-face)
 
@@ -482,7 +482,7 @@ Returns nil if line starts inside a string, t if in a comment."
 
 (defconst objecticon-resword-alist
   '(("by" . t) ("case" . t) ("create") ("do") ("else")
-    ("every" . t) ("if" . t) ("global" . t) ("initial" . t)
+    ("every" . t) ("if" . t) ("unless" . t) ("global" . t) ("initial" . t)
     ("local" . t) ("of") ("record" . t) ("repeat" . t)
     ("static" . t) ("then") ("to" . t) ("until" . t) ("while" . t)
     ("const" . t) ("readable" . t) ("public" . t) ("private" . t)

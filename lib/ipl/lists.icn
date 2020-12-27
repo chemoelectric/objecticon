@@ -262,7 +262,7 @@ procedure lequiv(x,y)
    if type(x) == type(y) == "list" then {
       if *x ~= *y then fail
       every i := 1 to *x do
-         if not lequiv(x[i],y[i]) then fail
+         lequiv(x[i],y[i]) | fail
       return y
      }
 
@@ -473,7 +473,7 @@ procedure lmap(L1,L2,L3)
 
    L1 := copy(L1)
 
-   if not(lmem2 === L2 & lmem3 === L3) then {	# if an argument is new, rebuild
+   unless lmem2 === L2 & lmem3 === L3 then {	# if an argument is new, rebuild
       lmem2 := L2				# save for future reference
       lmem3 := L3
       lmaptbl := table(tdefault)		# new mapping table

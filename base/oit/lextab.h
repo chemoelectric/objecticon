@@ -63,8 +63,9 @@ struct toktab toktab[] = {
    { "suspend",          SUSPEND,       Beginner+Ender},   /*  45 */
    { "then",             THEN,          0},                /*  46 */
    { "to",               TO,            0},                /*  47 */
-   { "until",            UNTIL,         Beginner},         /*  48 */
-   { "while",            WHILE,         Beginner},         /*  49 */
+   { "unless",           UNLESS,        Beginner},         /*  48 */
+   { "until",            UNTIL,         Beginner},         /*  49 */
+   { "while",            WHILE,         Beginner},         /*  50 */
    { "end-of-file",      0,             0},
    };
 
@@ -79,7 +80,7 @@ struct toktab *restab[] = {
    &toktab[22], NULL,        NULL,        &toktab[26], /* 69-6C ijkl */
    NULL,        &toktab[28], &toktab[31], &toktab[34], /* 6D-70 mnop */
    NULL,        &toktab[39], &toktab[43], &toktab[46], /* 71-74 qrst */
-   &toktab[48], NULL,        &toktab[49], NULL,        /* 75-78 uvwx */
+   &toktab[48], NULL,        &toktab[50], NULL,        /* 75-78 uvwx */
    NULL,        NULL,                                  /* 79-7A yz */
    };
 

@@ -739,7 +739,7 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       f := need_cset(\f) | ''
       if \dp then {
          dp := need_integer(dp, 0)
-         if not any(f, "z") then
+         unless any(f, "z") then
             zch := if any(f, "s") then " " else "0"
       }
 

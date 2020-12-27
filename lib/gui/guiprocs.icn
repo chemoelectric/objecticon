@@ -655,7 +655,7 @@ procedure text_width_ex(win, s, i, j, tw)
       if j <= 0 then
          j +:= *s + 1
    }
-   if not upto('\t', s) then
+   unless upto('\t', s) then
       return win.text_width(s[i:j])
    /tw := 8
    return win.text_width(detab(s[1:j], tw + 1)) - win.text_width(detab(s[1:i], tw + 1))

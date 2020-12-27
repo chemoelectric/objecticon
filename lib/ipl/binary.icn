@@ -896,11 +896,11 @@ procedure UUDecodeString(s)
     len := UUDecodeChar(move(1))
     s := ""
     while s ||:= UUDecodeQuad(move(4))
-    if not pos(0) then {
+    unless pos(0) then {
       UUErrorText := "not multiple of 4 encoded characters"
       fail
     }
-    if not (0 <= *s - len < 3) then {
+    unless 0 <= *s - len < 3 then {
       UUErrorText := "actual length, " || *s ||
       " doesn't jive with length character, " || len
       fail

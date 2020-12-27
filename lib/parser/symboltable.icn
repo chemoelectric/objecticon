@@ -486,7 +486,7 @@ class SymbolTable(Connectable)
             sf.add_import(ImportDec(e.str(), ImportDec.All))
          else {
             s := e.get_package().str()
-            if not(i := sf.get_import(s)) then {
+            unless i := sf.get_import(s) then {
                mode := if e.pos.size() = 4 then 
                   ImportDec.Some else ImportDec.Except
                i := ImportDec(s, mode)

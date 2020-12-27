@@ -132,7 +132,7 @@ class CanvasComponent(CanvasObject)
       #
       # Output alignment unless using default of "l", "t"
       #
-      if not(self.x_align == "l" & self.y_align == "t") then
+      unless self.x_align == "l" & self.y_align == "t" then
          c.chain("set_align(" || c.align_str(self.x_align) || ", " || c.align_str(self.y_align) || ")")
 
       if \self.is_shaded_flag then

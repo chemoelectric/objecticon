@@ -378,7 +378,7 @@ $endif
       if /auth then {
          # First 401 response, so see if we have a cached
          # authentication; if not then ask for one.
-         (auth := member(authentications, k)) | {
+         unless auth := member(authentications, k) then {
             if auth := (\request.helper).get_authentication(self, dom, realm) then
                insert(authentications, k, auth)
             else
@@ -905,7 +905,7 @@ $endif
       request.set_header("user-agent", user_agent)
       h := URL.bracket_host(request.url.get_decoded_host())
       p := request.url.get_port()
-      if not(p = URL.get_default_port(request.url.get_scheme())) then
+      unless p = URL.get_default_port(request.url.get_scheme()) then
          h ||:= ":" || p
       request.set_header("host", h)
       if v := \request.referer then {
@@ -990,7 +990,7 @@ $endif
 
    private close_inflater()
       if \inflater_stream then {
-         (inflater_stream.close() & inflater_stream.succeeded()) | {
+         unless inflater_stream.close() & inflater_stream.succeeded() then {
             inflater_stream := &null
             fail
          }
@@ -1028,7 +1028,7 @@ $endif
       # attempt.  Otherwise, they are reset and the output stream
       # truncated.
       #
-      if not(\self.read & response.get_status_code() = 206) then {
+      unless \self.read & response.get_status_code() = 206 then {
          close_inflater()
          request.output_stream.truncate(0).seek(1) | return whyf_dont_retry("Couldn't reset request output stream: %w")
          open_inflater() | fail

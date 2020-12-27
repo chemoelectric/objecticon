@@ -90,7 +90,7 @@ procedure pfl2str(pattern)
          result ||:= \optbl[op](expr1, expr2) | return error("4", pattern)
          move(1)
          }
-      if not pos(0) then result ||:= tab(0)
+      unless pos(0) then result ||:= tab(0)
       }
 
    return result
@@ -139,7 +139,7 @@ procedure pfl2pwl(pattern)
             return error()
          move(1)
          }
-      if not pos(0) then result ||:= "," || tab(0)
+      unless pos(0) then result ||:= "," || tab(0)
       }
 
    return result[2:0]
@@ -215,7 +215,7 @@ procedure pfl2gxp(pattern, arg)
             }
          move(1)
          }
-      if not pos(0) then result ||:= arg(tab(0))
+      unless pos(0) then result ||:= arg(tab(0))
       }
 
    return trim(result, '| ')

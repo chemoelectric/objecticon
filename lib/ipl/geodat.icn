@@ -321,7 +321,7 @@ end
 procedure gdt_nadcon_fwdPoint(p, a, xpt, ypt)
    local g, latf, lonf, xgrid, ygrid, xcol, yrow, t, dlas, dlos
 
-   if not(g := gdt_nadcon_findGrid(p.grids, xpt, ypt)) then {
+   unless g := gdt_nadcon_findGrid(p.grids, xpt, ypt) then {
       runerr(205, [xpt, ypt])		# point not in available areas
       fail
       }

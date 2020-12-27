@@ -65,7 +65,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       every e := !n.children do {
          if text(e) then
             writes1(xml_escape(e, '\n\r\t&<>\"'))
-         else if not is(e, Comment) then
+         else unless is(e, Comment) then
             format_node(e)
       }
 

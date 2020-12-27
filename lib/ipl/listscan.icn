@@ -298,7 +298,7 @@ procedure l_any(l1,l2,i,j)
 
     (i+1) > j & i :=: j
     every sub_l := !l1 do {
-	if not (type(sub_l) == "list", *sub_l = 1) then
+	unless type(sub_l) == "list" & *sub_l = 1 then
 	    runerr("l_any:  Elements of l1 must be lists of length 1.")
 	# Let l_match check to see if i+1 is out of range.
 	if x := l_match(sub_l,l2,i,i+1) then

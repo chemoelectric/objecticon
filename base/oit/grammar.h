@@ -299,6 +299,8 @@ return	: FAIL {Fail($1);} ;
 
 if	: IF expr THEN expr {If0($1,$2,$3,$4);} ;
 	| IF expr THEN expr ELSE expr {If1($1,$2,$3,$4,$5,$6);} ;
+	| UNLESS expr THEN expr {Unless0($1,$2,$3,$4);} ;
+	| UNLESS expr THEN expr ELSE expr {Unless1($1,$2,$3,$4,$5,$6);} ;
 
 case	: CASE expr OF LBRACE caselist RBRACE {Case($1,$2,$3,$4,$5,$6);} ;
 

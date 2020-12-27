@@ -466,6 +466,8 @@ class Evaluator()
    private do_field(n) suspend Class_get(E(n.child(1)), n.child(3).s) end
    private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
    private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
+   private do_unless(n) suspend unless E(n.child(2)) then E(n.child(4)) end
+   private do_unlesselse(n) suspend unless E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
    private do_whiledo(n) suspend E( loop(n, create  while E(n.child(2)) do E(n.child(4)) )) end
    private do_while(n) suspend E( loop(n, create  while E(n.child(2)) )) end
    private do_untildo(n) suspend E( loop(n, create  until E(n.child(2)) do E(n.child(4)) )) end
@@ -638,6 +640,8 @@ class Evaluator()
                              "swap", do_swap,
                              "to", do_to,
                              "toby", do_toby,
+                             "unless", do_unless,
+                             "unlesselse", do_unlesselse,
                              "until", do_until,
                              "untildo", do_untildo,
                              "while", do_while,

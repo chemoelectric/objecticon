@@ -84,12 +84,12 @@ class TTExplorer(Dialog)
    #
    public get_directory_list(s)
       local e, dir_list, file_list, l
-      if not(l := Files.ucs_list(s, ListEntryWithIcon)) then
+      unless l := Files.ucs_list(s, ListEntryWithIcon) then
          return [[],[]]
       dir_list := []
       file_list := []
       every e := !l do {
-         if not(Files.is_hidden(e.name) | Files.is_relative_dir(e.name)) then {
+         unless Files.is_hidden(e.name) | Files.is_relative_dir(e.name) then {
             if e.stat.mode_str[1] == "d" then
                put(dir_list, e)
             else

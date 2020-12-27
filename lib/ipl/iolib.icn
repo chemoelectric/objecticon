@@ -240,7 +240,7 @@ procedure getname()
         term := System.getenv("TERM") | "mono"
     }
     else {
-	if not (term := System.getenv("TERM")) then {
+	unless term := System.getenv("TERM") then {
 	    tset_output := open("tset -","pr") |
 		er("getname","can't find tset command",1)
 	    term := tset_output.read()

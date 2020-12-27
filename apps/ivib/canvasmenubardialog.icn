@@ -97,7 +97,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       }
 
       every e := struct.get_rec(!l) do {
-         if not is(e.owner, CanvasCheckBoxMenuItem) then {
+         unless is(e.owner, CanvasCheckBoxMenuItem) then {
             flag := &yes
             break
          }

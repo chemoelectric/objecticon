@@ -91,9 +91,8 @@ class QuotedPrintableHandler(EncodingHandler)
             if any('=') then {
                move(1)
                # If not a soft line break, then unescape the =XX format.
-               if not ="\r\n" then {
+               unless ="\r\n" then
                   res ||:= char(Format.string_to_int(move(2))) | return error("Bad quoted-printable data")
-               }
             } else
                res ||:= ="\r\n" | return error("Bad quoted-printable data")
          }

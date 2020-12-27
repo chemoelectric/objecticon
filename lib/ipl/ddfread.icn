@@ -342,7 +342,7 @@ end
 procedure ddf_oneof(tabproc, moveproc, quantum)
    local d, n
 
-   if not ="(" then
+   ="(" |
       return ddf_decoder(tabproc, EitherSep)
 
    if any(&digits) then {

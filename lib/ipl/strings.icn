@@ -299,7 +299,7 @@ procedure ochars(w)
    out := w[1:1]
 
    every c := !w do
-	if not find(c, out) then
+	unless find(c, out) then
 	    out ||:= c
 
    return out
