@@ -1941,11 +1941,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (!bounded)
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
-            chunk2(expr->failure, 
-                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+            chunk1(expr->failure, 
                    ir_goto(n, expr->start));
-            chunk1(expr->success, 
-                  ir_goto(n, res->failure));
+            chunk2(expr->success, 
+                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, res->failure));
             break;
         }
 
@@ -1973,11 +1973,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (!bounded)
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
-            chunk2(expr->failure, 
-                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+            chunk1(expr->failure, 
                    ir_goto(n, body->start));
-            chunk1(expr->success, 
-                  ir_goto(n, res->failure));
+            chunk2(expr->success, 
+                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, res->failure));
 
             chunk2(body->success, 
                    OptIns(body->uses_stack, ir_unmark(n, res->loop->loop_mk)),
