@@ -295,7 +295,6 @@ static struct lnode *buildtree(void)
         case Uop_Augactivate:
         case Uop_If: 
         case Uop_Whiledo: 
-        case Uop_Untildo: 
         case Uop_Suspenddo:
         case Uop_To:
         case Uop_Limit:
@@ -304,6 +303,22 @@ static struct lnode *buildtree(void)
             struct lnode *c1 = buildtree();
             struct lnode *c2 = buildtree();
             return (struct lnode *)lnode_2(op, &t, c1, c2);
+        }
+
+        case Uop_Untildo: {
+            struct loc t = curr_loc;
+            struct lnode *c1 = buildtree();
+            struct lnode *c2 = buildtree();
+            struct lnode_1 *d1 = lnode_1(Uop_Not, &c1->loc, c1);
+            return (struct lnode *)lnode_2(Uop_Whiledo, &t, (struct lnode *)d1, c2);
+        }
+
+        case Uop_Unless: {
+            struct loc t = curr_loc;
+            struct lnode *c1 = buildtree();
+            struct lnode *c2 = buildtree();
+            struct lnode_1 *d1 = lnode_1(Uop_Not, &c1->loc, c1);
+            return (struct lnode *)lnode_2(Uop_If, &t, (struct lnode *)d1, c2);
         }
 
         case Uop_Augconj: {
@@ -333,7 +348,6 @@ static struct lnode *buildtree(void)
         case Uop_Uactivate:
         case Uop_Create:
         case Uop_Suspendexpr:
-        case Uop_Until: 
         case Uop_Returnexpr: 
         case Uop_Succeedexpr: 
         case Uop_Linkexpr: 
@@ -341,6 +355,13 @@ static struct lnode *buildtree(void)
             struct loc t = curr_loc;
             struct lnode *c = buildtree();
             return (struct lnode *)lnode_1(op, &t, c);
+        }
+
+        case Uop_Until: {
+            struct loc t = curr_loc;
+            struct lnode *c = buildtree();
+            struct lnode_1 *d = lnode_1(Uop_Not, &c->loc, c);
+            return (struct lnode *)lnode_1(Uop_While, &t, (struct lnode *)d);
         }
 
         case Uop_Sect:
@@ -353,6 +374,15 @@ static struct lnode *buildtree(void)
             struct lnode *c2 = buildtree();
             struct lnode *c3 = buildtree();
             return (struct lnode *)lnode_3(op, &t, c1, c2, c3);
+        }
+
+        case Uop_Unlesselse: {
+            struct loc t = curr_loc;
+            struct lnode *c1 = buildtree();
+            struct lnode *c2 = buildtree();
+            struct lnode *c3 = buildtree();
+            struct lnode_1 *d1 = lnode_1(Uop_Not, &c1->loc, c1);
+            return (struct lnode *)lnode_3(Uop_Ifelse, &t, (struct lnode *)d1, c2, c3);
         }
 
         case Uop_Field: {			/* field reference */
@@ -609,7 +639,6 @@ void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Repeat: 
         case Uop_While: 
         case Uop_Null: 
-        case Uop_Until: 
         case Uop_Every: 
         case Uop_Suspendexpr: 
         case Uop_Returnexpr: 
@@ -684,7 +713,6 @@ void visitnode_pre(struct lnode *n, visitf v)
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Alt: 
-        case Uop_Untildo: 
         case Uop_Everydo: 
         case Uop_Suspenddo: 
         case Uop_Bactivate: 
@@ -718,7 +746,6 @@ void visitnode_pre(struct lnode *n, visitf v)
             break;
         }
 
-        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             int i;
@@ -906,7 +933,6 @@ void visitnode_post(struct lnode *n, visitf v)
             break;
         }
 
-        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             int i;
@@ -1193,7 +1219,6 @@ void replace_node(struct lnode *old, struct lnode *new)
             break;
         }
 
-        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             int i;

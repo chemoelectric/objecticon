@@ -161,6 +161,8 @@ int globalflag;
 #define Idlist(x1,x2,x3)	install(Str0(x3),x3)
 #define If0(x1,x2,x3,x4)	$$ = tree4(N_If,x1,x2,x4) 
 #define If1(x1,x2,x3,x4,x5,x6)	$$ = tree5(N_Ifelse,x1,x2,x4,x6) 
+#define Unless0(x1,x2,x3,x4)	$$ = tree4(N_Unless,x1,x2,x4) 
+#define Unless1(x1,x2,x3,x4,x5,x6)	$$ = tree5(N_Unlesselse,x1,x2,x4,x6) 
 #define Iliter(x)		if (x->n_type == N_Int)\
                                    Val0(x) = putlit(Str0(x),F_IntLit,(int)Val1(x));\
                                 else \

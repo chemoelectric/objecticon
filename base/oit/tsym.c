@@ -701,6 +701,21 @@ static void nodegen(nodeptr t)
             break;
         }
 
+        case N_Unless: {
+            uout_op(Uop_Unless);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Unlesselse: {
+            uout_op(Uop_Unlesselse);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            break;
+        }
+
         case N_Repeat: {
             uout_op(Uop_Repeat);
             ++in_loop;

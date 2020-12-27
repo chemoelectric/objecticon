@@ -58,8 +58,6 @@ static void fold_null(struct lnode *n);
 static void fold_nonnull(struct lnode *n);
 static void fold_if(struct lnode *n);
 static void fold_ifelse(struct lnode *n);
-static void fold_until(struct lnode *n);
-static void fold_untildo(struct lnode *n);
 static void fold_not(struct lnode *n);
 static void fold_alt(struct lnode *n);
 static void fold_conj(struct lnode *n);
@@ -219,16 +217,6 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Ifelse: {
             fold_ifelse(n);
-            break;
-        }
-
-        case Uop_Until: {
-            fold_until(n);
-            break;
-        }
-
-        case Uop_Untildo: {
-            fold_untildo(n);
             break;
         }
 
@@ -525,8 +513,6 @@ static int changes(struct lnode *n)
             case Uop_Repeat: 
             case Uop_Every: 
             case Uop_Everydo: 
-            case Uop_Until: 
-            case Uop_Untildo:
                 return 0;
 
             case Uop_Subsc:
@@ -1309,10 +1295,8 @@ static int is_repeatable(struct lnode *n, int top)
         case Uop_Rptalt: 
         case Uop_Repeat: 
         case Uop_While: 
-        case Uop_Until: 
         case Uop_Every: 
         case Uop_Whiledo: 
-        case Uop_Untildo: 
         case Uop_Everydo: 
         case Uop_Asgn:
         case Uop_Rasgn:
@@ -1363,7 +1347,6 @@ static int is_repeatable(struct lnode *n, int top)
         case Uop_Return:
         case Uop_Link:
         case Uop_Fail:
-        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke:                       /* e(x1, x2.., xn) */
         case Uop_Apply:			/* application e!l */
         case Uop_Case:			/* case expression */
@@ -1854,28 +1837,6 @@ static void fold_ifelse(struct lnode *n)
         replace_node(n, x->child3);
     else
         replace_node(n, x->child2);
-    free_literal(&l);
-}
-
-static void fold_until(struct lnode *n)
-{
-    struct lnode_1 *x = (struct lnode_1 *)n;
-    struct literal l;
-    if (!get_literal(x->child, &l))
-        return;
-    if (l.type != FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
-    free_literal(&l);
-}
-
-static void fold_untildo(struct lnode *n)
-{
-    struct lnode_2 *x = (struct lnode_2 *)n;
-    struct literal l;
-    if (!get_literal(x->child1, &l))
-        return;
-    if (l.type != FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
     free_literal(&l);
 }
 
