@@ -76,7 +76,7 @@ abstract class Outputter()
    protected get_others_in(p)
       local e
       every e := get_symbols_in(p) do
-         if not is(e, ClassSymbol) then
+         unless is(e, ClassSymbol) then
             suspend e
    end
 

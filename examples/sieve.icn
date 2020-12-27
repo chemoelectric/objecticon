@@ -63,7 +63,7 @@ class Sieve(Dialog)
       prime_count := 0
 
       every prime_candidate := 2 to  PRIME_LIMIT do {
-         if not member(non_prime_set, prime_candidate) then {
+         unless member(non_prime_set, prime_candidate) then {
             #
             # Update the UI
             #

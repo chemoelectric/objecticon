@@ -116,13 +116,12 @@ class ComponentTreeDialog(Dialog)
             put(l2, e)
       }
       every e := !l do {
-         if not(keyof(l2, e)) then
-            put(l2, e)
+         keyof(l2, e) | put(l2, e)
       }
 
       main.canvas.selections := l2
       # Don't change selected unless necessary
-      if not(keyof(l2, main.canvas.selected)) then
+      unless keyof(l2, main.canvas.selected) then
          main.canvas.selected := \sel | l2[1] | &null
       main.update_grey()
       main.canvas.update_pos_label()

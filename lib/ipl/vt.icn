@@ -1702,7 +1702,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          content_delete(1)
       # Adjust the vsb so that if we are above the bottom then the
       # line we're looking at stays the same.
-      if not at_bottom() then
+      unless at_bottom() then
          vsb.set_value(vsb.value - n * line_height)
    end
 

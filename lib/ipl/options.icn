@@ -409,7 +409,7 @@ procedure options(arg, opts, usage, errproc, ignoreproc)
                   else {
                      pos(*optname + 1) | return errproc("An option taking a parameter cannot be combined: -" || optname)
 
-                     p := if not pos(0) then
+                     p := unless pos(0) then
                         tab(0)
                      else if \arg[1] then
                         get(arg)

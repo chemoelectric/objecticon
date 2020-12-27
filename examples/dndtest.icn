@@ -11,7 +11,7 @@ class CustomList(TextList)
    #
    public override can_drop(drag, e)
       if is( drag.get_source(),CustomTree) then {
-         if not( /(!drag.get_content()).is_folder_flag ) then
+         unless /(!drag.get_content()).is_folder_flag then
             fail
       }
       return TextList.can_drop(drag, e)

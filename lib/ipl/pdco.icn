@@ -1188,7 +1188,7 @@ procedure Unique(e)
    done := set()
 
    while x := @e do
-      if not member(done, x) then {
+      unless member(done, x) then {
          insert(done, x)
          suspend x
          }
@@ -1205,7 +1205,7 @@ procedure UniqueEq(e)
    done := EqSet()
 
    while x := @e do
-      if not done.member(x) then {
+      unless done.member(x) then {
          done.insert(x)
          suspend x
          }
@@ -1220,7 +1220,7 @@ procedure UpperTrim(e)
    done := set()
 
    while i := @e do {
-      if not member(done, i) then
+      unless member(done, i) then
          insert(done, i)
       else suspend i
       }

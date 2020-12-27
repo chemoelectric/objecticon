@@ -273,7 +273,7 @@ class HtmlParser()
                res.add("" ~== remove_entities(move_past_end_tag(start_tag)))
          }
          default: {
-            if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
+            unless \start_tag.empty | is_standalone_tag(start_tag.name) then {
                push(node_stack, string(start_tag.name))
                repeat {
                   s := move_to_node()

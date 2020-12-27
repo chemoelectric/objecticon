@@ -512,7 +512,7 @@ class SortTable(Table)
 
    public override delete(key)
       member(key) | fail
-      if not(is_red(root.l | root.r)) then
+      unless is_red(root.l | root.r) then
          root.is_red_flag := &yes
       root := delete1(root, key)
       (\root).is_red_flag := &no
@@ -522,7 +522,7 @@ class SortTable(Table)
    private delete1(n, key)
       local x
       if cmp(key, n.key) < 0 then {
-         if not(is_red(n.l | n.l.l)) then
+         unless is_red(n.l | n.l.l) then
             n := move_red_left(n)
          n.l := delete1(n.l, key)
       } else {
@@ -530,7 +530,7 @@ class SortTable(Table)
             n := rotate_right(n)
          if cmp(key, n.key) = 0 & /n.r then
             return
-         if not(is_red(n.r | n.r.l)) then
+         unless is_red(n.r | n.r.l) then
             n := move_red_right(n)
          if cmp(key, n.key) = 0 then {
             x := min1(n.r)
@@ -552,7 +552,7 @@ class SortTable(Table)
    private delete_min1(n)
       if /n.l then
          return
-      if not(is_red(n.l | n.l.l)) then
+      unless is_red(n.l | n.l.l) then
          n := move_red_left(n)
       n.l := delete_min1(n.l)
       return balance(n)

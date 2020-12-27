@@ -712,7 +712,7 @@ class TabSet(Component)
       l2 := how_many_lines(pad, self.w)
 
       # Do we need a new line break?
-      if not(keep_current_break(l2)) then {
+      unless keep_current_break(l2) then {
          # We do need a new line break.
          self.line_break := l2
          self.tab_h :=  (self.label_h + Gui.BORDER_WIDTH) * (*self.line_break)

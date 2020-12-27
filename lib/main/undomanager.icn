@@ -66,7 +66,7 @@ class UndoManager(CompoundEdit)
       while *l >= index do
          pull(l)
 
-      if not l[-1].add_edit(other) then {
+      unless l[-1].add_edit(other) then {
          put(l, other)
          index +:= 1
       }

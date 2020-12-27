@@ -68,7 +68,7 @@ class HtmlFormatter(Formatter)
             format_node(e)
       }
 
-      if not(HtmlParser.is_standalone_tag(n.name)) then
+      unless HtmlParser.is_standalone_tag(n.name) then
          writes("</", n.name, ">")
    end
 

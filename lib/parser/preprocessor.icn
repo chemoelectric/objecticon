@@ -116,7 +116,7 @@ class Preprocessor(Connectable)
       print_encoding := &null
       nest_level := 0
       encoding := "ASCII"
-      if not(file := open(fname)) then {
+      unless file := open(fname) then {
          err("Cannot open " || image(fname) || ": " || &why)
          fail
       }
@@ -283,7 +283,7 @@ class Preprocessor(Connectable)
                err("No corresponding $if...")
                return ""
             }
-            if not at_end() then
+            unless at_end() then
                err()      # extraneous stuff is reported, but the else is processed as if it were OK.
             if_state := if \if_state then &null else "false"
             if /if_state then

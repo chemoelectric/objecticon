@@ -616,7 +616,7 @@ class Scheduler()
                next
          }
 
-         (*polling.l = *polling.s = 0) | {
+         unless *polling.l = *polling.s = 0 then {
             l := []
             poll_l := [] ; every put(poll_l, !(!polling.l | !polling.s).poll_req)
             poll_t := calc_sleep(poll_timeout)

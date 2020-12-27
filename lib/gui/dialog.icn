@@ -151,7 +151,7 @@ class Dialog(Component)
    #
    public invalidate_rect(r)
       local t, i
-      if not r.empty() then {
+      unless r.empty() then {
          /invalid_rects := []
          every t := invalid_rects[i := 1 to *invalid_rects] do {
             if t.touches(r) then {
@@ -1185,7 +1185,7 @@ $endif
       # We should in fact not get events in the blocked state.
       if \is_blocked_flag then
          fail
-      if not((e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code))) then {
+      unless (e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code)) then {
          if tooltip_state = 2 then
             hide_tooltip()
          tooltip_state := 0
@@ -1311,7 +1311,7 @@ $endif
 
       if (ec === Mouse.DRAG) | member(Mouse.WHEEL, ec) then {
          # Try the drag holder's drag_event method first...
-         if not((\curr_drag_holder).drag_event(curr_drag, e)) then {
+         unless (\curr_drag_holder).drag_event(curr_drag, e) then {
             # No luck with the drag holder, so try to search for a new drag holder.
             curr_drag_holder := invoke_drag_event(curr_drag, e) | &null
          }

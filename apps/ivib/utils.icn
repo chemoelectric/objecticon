@@ -26,9 +26,9 @@ procedure util_check_attribs(dialog, t, valid_set)
    local s
    # Check for attrib names
    every s := !sort(t) do {
-      if not member(valid_set, s[1]) then
+      unless member(valid_set, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
-      if not normalize_wattrib(s[1], s[2]) then
+      unless normalize_wattrib(s[1], s[2]) then
          return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
    }
    return

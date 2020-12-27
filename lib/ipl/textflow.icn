@@ -1041,7 +1041,7 @@ class TextFlow(Component, HasLastHighlight)
                   # (see Img), we set it to the actual image size +
                   # the border, so the max width is calculated on that
                   # basis.
-                  if not is_top_level() then
+                  unless is_top_level() then
                      maxw := (\cmd.c.win).get_width() + cmd.c.border.get_total_width()
                }
             }

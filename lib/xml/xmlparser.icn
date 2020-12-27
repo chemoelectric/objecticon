@@ -466,7 +466,7 @@ class XmlParser(Connectable)
          while res ||:= tab(upto(' ')) do {
             tab(many(' '))
             # No trailing spaces.
-            if not(pos(0)) then
+            unless pos(0) then
                res ||:= " "
          }
          res ||:= tab(0)
@@ -691,8 +691,7 @@ class XmlParser(Connectable)
 
       res := parse_version_num()
 
-      if not(=c) then
-         throw(c || " expected")
+      =c | throw(c || " expected")
 
       return res
    end
@@ -917,8 +916,7 @@ class XmlParser(Connectable)
       if res == "yes" then
          doc.standalone := &yes
 
-      if not(=c) then
-         throw(c || " expected")
+      =c | throw(c || " expected")
 
       return res
    end
@@ -1428,11 +1426,11 @@ class XmlParser(Connectable)
                   invalid("Default attribute value " || val || " must be comprised of valid nmtokens")
             }
             "ENUMERATION" : { 
-               if not(member(attribute_def.def_set, val)) then
+               member(attribute_def.def_set, val) |
                   invalid("Default attribute value " || val || " is not one of the declared enumerations")
             }
             "NOTATION" : { 
-               if not(member(attribute_def.def_set, val)) then
+               member(attribute_def.def_set, val) |
                   invalid("Default attribute value " || val || " is not one of the declared notations")
             }
          }
@@ -1727,8 +1725,7 @@ class XmlParser(Connectable)
 
       res := parse_enc_name()
 
-      if not(=c) then
-         throw(c || " expected")
+      =c | throw(c || " expected")
 
       return res
    end
@@ -1803,7 +1800,7 @@ class XmlParser(Connectable)
       #
       # Validate the element structure
       #
-      if not member(doc.element_declarations, el.name) then {
+      unless member(doc.element_declarations, el.name) then {
          invalid(el.name || " is an undeclared element name")
          return 
       }
@@ -1831,7 +1828,7 @@ class XmlParser(Connectable)
          }
       }
 
-      if not(element_decl.content_spec.pattern_match_element(el)) then
+      element_decl.content_spec.pattern_match_element(el) |
          invalid(el.name || " does not match the declared pattern: " || element_decl.content_spec.str())
 
       #
@@ -1849,7 +1846,7 @@ class XmlParser(Connectable)
    private validate_attributes(el)
       local attlist, x
 
-      if not(member(doc.attribute_lists, el.name)) then {
+      unless member(doc.attribute_lists, el.name) then {
          if *el.attributes ~= 0 then
             invalid(el.name || " has attributes but none were declared")
          return
@@ -1954,11 +1951,11 @@ class XmlParser(Connectable)
                invalid("Attribute value " || val || " must be comprised of valid nmtokens")
          }
          "ENUMERATION" : { 
-            if not(member(attdef.def_set, val)) then
+            member(attdef.def_set, val) |
                invalid("Attribute value " || val || " is not one of the declared enumerations")
          }
          "NOTATION" : { 
-            if not(member(attdef.def_set, val)) then
+            member(attdef.def_set, val) |
                invalid("Attribute value " || val || " is not one of the declared notations")
          }
       }
@@ -2189,7 +2186,7 @@ class XmlParser(Connectable)
       #
       # Could be comment, cdata
       #
-      if not is(el, Element) then
+      unless is(el, Element) then
          return
 
       #

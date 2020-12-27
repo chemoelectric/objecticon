@@ -60,7 +60,7 @@ package class ThemeIndex()
    #
    public ordered_directories(scale)
       local l
-      if not(l := member(ordered_directories_cache, scale)) then {
+      unless l := member(ordered_directories_cache, scale) then {
          l := isort(directories, lpartial(scale_dist, scale))
          insert(ordered_directories_cache, scale, l)
       }
@@ -666,7 +666,7 @@ final abstract class IconTheme()
 
    private static get_theme_index(name)
       local m
-      if not(m := member(THEMES, name)) then {
+      unless m := member(THEMES, name) then {
          m := get_theme_index1(name)
          insert(THEMES, name, m)
       }
@@ -684,7 +684,7 @@ final abstract class IconTheme()
       size := need_integer(size, 1)
       scale := need_real(\scale, 1.0) | Gui.SCALE
       k := icon || "/" || size || "/" || scale
-      if not(v := member(FIND_ICON_CACHE, k)) then {
+      unless v := member(FIND_ICON_CACHE, k) then {
          v := find_icon_helper(icon, size, scale, theme, set()) | lookup_fallback_icon(icon)
          insert(FIND_ICON_CACHE, k, v)
       }
@@ -865,7 +865,7 @@ final abstract class Mime()
    public static alternative_mime_types(mt)
       local l
       mt := need_string(mt)
-      if not(l := member(MIME_ALTERNATIVES, mt)) then {
+      unless l := member(MIME_ALTERNATIVES, mt) then {
          l := []
          alternative_mime_types1(mt, l, set())
          insert(MIME_ALTERNATIVES, mt, l)
@@ -885,7 +885,7 @@ final abstract class Mime()
          every alternative_mime_types1(!sub, l, seen)
       else if match("text/", mmt) then
          alternative_mime_types1("text/plain", l, seen)
-      else if not match("inode/", mmt) then
+      else unless match("inode/", mmt) then
          alternative_mime_types1("application/octet-stream", l, seen)
    end
 
@@ -1023,7 +1023,7 @@ final abstract class Mime()
       local l, e, de, mt, dm, src, key
       l := qsort(Files.ucs_list(p.str()), Files.name_cmp) | fail
       every e := !l do {
-         if not(Files.is_hidden(e.name)) then {
+         unless Files.is_hidden(e.name) then {
             if e.stat.mode_str[1] == "d" then {
                scan_application_dir(p.child(e.name), prefix || e.name || "-", t, u)
             } else if endswith(e.name, ".desktop") then {

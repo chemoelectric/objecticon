@@ -227,7 +227,7 @@ class Code()
          # Output the encoded canvas to the layout file.
          #
          l_temp_name :=  l_name || ".temp"
-         if not encode_to_file(l_temp_name, parent_Canvas) then {
+         unless encode_to_file(l_temp_name, parent_Canvas) then {
             close(f)
             return alert_error(["Couldn't encode to " || l_temp_name || ":", &why])
          }
