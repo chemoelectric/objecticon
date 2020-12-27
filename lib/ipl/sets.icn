@@ -100,7 +100,7 @@ procedure seteq(set1, set2)
 
    if *set1 ~= *set2 then fail
    every x := !set1 do
-      if not member(set2, x) then fail
+      member(set2, x) | fail
    return set2
 
 end
@@ -111,7 +111,7 @@ procedure setlt(set1, set2)
 
    if *set1 >= *set2 then fail
    every x := !set1 do
-      if not member(set2, x) then fail
+      member(set2, x) | fail
    return set2
 
 end
@@ -122,7 +122,7 @@ procedure setle(set1, set2)
 
    if *set1 > *set2 then fail
    every x := !set1 do
-      if not member(set2, x) then fail
+      member(set2, x) | fail
    return set2
 
 end

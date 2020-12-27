@@ -197,7 +197,7 @@ procedure XBF_weights(tokens)
    cklist := []
    pf := *tokens * XFW_posn
    every tk := !tokens do {
-      if not (XBF_wantsize := integer(tk)) then {
+      unless XBF_wantsize := integer(tk) then {
          pf -:= XFW_posn
          case tk of {
             "m" | "mono" | "monospaced":

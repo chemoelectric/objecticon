@@ -247,7 +247,7 @@ procedure Directive(p,e,mi,mx)
       default          :  /mi := 1
    }
 
-   if not ( integer(mi) >= 0 ) then runerr(101,mi)
+   unless integer(mi) >= 0 then runerr(101,mi)
    if \mx & not ( integer(mx) >= mi ) then runerr(101,mx)
 
    return _DirectivesSpec_(p,e,mi,mx)
@@ -317,7 +317,7 @@ procedure ReadDirectives(
       wip := ""
       repeat 
       {
-         if not ( line := read(f) ) then eof := line := ""
+         unless line := read(f) then eof := line := ""
          else
          {
             put(fL,line)                                  # save original line

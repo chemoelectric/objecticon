@@ -214,7 +214,7 @@ procedure sentence(infile)
          # if it _could_ be a sentence end.  Trim leading and trailing spaces
          # from the new line--if it's empty, toss the line so far and restart;
          # otherwise, tack it onto the end of the current line.
-         if not (newline := read (infile)) then {
+         unless newline := read (infile) then {
             if \possentp then {
                suspend (sentence)
                }

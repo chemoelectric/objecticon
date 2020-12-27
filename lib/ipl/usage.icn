@@ -62,7 +62,7 @@ procedure Feature(s)
 end
 
 procedure Requires(s)
-   if not(Feature(s)) then stop(s," required")
+   Feature(s) | stop(s," required")
 end
 
 procedure Signature()

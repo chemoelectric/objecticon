@@ -222,7 +222,7 @@ procedure getse(s)
     static BS
     initial {
 	BS := getval("bc") | "\b"
-	if not getval("bs") then {
+	unless getval("bs") then {
 	    reset_tty()
 	    stop("Your terminal can't backspace!")
 	}

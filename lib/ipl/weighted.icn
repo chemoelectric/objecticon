@@ -78,7 +78,7 @@ local lcv, pairs, weight, size, newlist, legal, illegal
         lcv +:= weight
       }
       every lcv := 1 to size do            # Whatever isn't bad is good.
-        if not member (illegal, lcv) then put (legal, lcv)
+        member (illegal, lcv) | put (legal, lcv)
     }
   }
   every newlist[!legal] :=: newlist[?legal]

@@ -65,10 +65,10 @@ end
 procedure ngramset(s, i, c)		
    local line, grams
 
-   if not (integer(i) > 0) then runerr("*** invalid ngrams specification", i)
+   unless integer(i) > 0 then runerr("Invalid ngrams specification", i)
 
    /c := &lcase || &ucase
-   if not (c := cset(c)) then runerr("*** invalid cset specification", c)
+   unless c := cset(c) then runerr("Invalid cset specification", c)
 
    grams := set()
 

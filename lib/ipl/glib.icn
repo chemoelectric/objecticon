@@ -153,7 +153,7 @@ procedure Convex_clip(poly, line[])
       D := dot(n,p)
       
       if (nc := dot(n,c)) = 0 then {	# parallel to edge
-         if not inside_line(p1,p,n) then {fail}
+         unless inside_line(p1,p,n) then fail
                                     else next
         
          } 

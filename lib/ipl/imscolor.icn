@@ -223,7 +223,7 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('l', f) then {
          win.set_fg(Contrast(win, colr))
-         if not upto(cs, c) then
+         unless upto(cs, c) then
             c := image(c)[-3:-1]
          CenterString(win, (x1 + x2) / 2, (y1 + y2) / 2, c)
          }
@@ -316,7 +316,7 @@ procedure PAL_Order(p)
    palchars := Window.palette_chars(p) | fail
 
    p ? {
-      if not (="c" & any('23456')) then return palchars
+      unless ="c" & any('23456') then return palchars
       n := integer(move(1))
       }
 

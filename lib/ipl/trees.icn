@@ -102,7 +102,7 @@ procedure teq(L1,L2)
    if *L1 ~= *L2 then fail
    if L1[1] ~== L2[1] then fail
    every i := 2 to *L1 do
-      if not teq(L1[i],L2[i]) then fail
+      teq(L1[i],L2[i]) | fail
    return L2
 
 end

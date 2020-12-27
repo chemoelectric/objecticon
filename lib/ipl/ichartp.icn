@@ -221,7 +221,7 @@ procedure parse_sentence(s, filename, start_symbol)
     #
     # Initialize and store stats for filename (if not already stored).
     #
-    if not (filename == \old_filename) then {
+    unless filename == \old_filename then {
         file := open(filename, "r") | p_err(filename, 7)
         #
         # Read BNFs from file; turn them into edge structs, and
@@ -258,7 +258,7 @@ procedure parse_sentence(s, filename, start_symbol)
     token_set := elementset(tokens)
     every i := 1 to *tokens do {
         # Flag words not in the grammar as errors.
-        if not member(tset, tokens[i]) then
+        unless member(tset, tokens[i]) then
             suspend retval(1, tokens[i])
         # Now, give us an inactive edge corresponding to word i.
         insert(ch.inactive, e := edge(tokens[i], &null, 1, 1, i, i+1))
@@ -554,7 +554,7 @@ procedure do_parends(s)
 
     local chunk, i, j
     s ? {
-	if not (i := slashupto('(')) then {
+	unless i := slashupto('(') then {
 	    chunk := tab(0)
 	    slashupto(')') & p_err(s, 8)
 	    suspend chunk

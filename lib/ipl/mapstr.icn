@@ -57,7 +57,7 @@ procedure mapstrs(s, l1, l2)
 
     if /l1 | *l1 = 0 then return s
 
-    if not (last_l1 === l1, last_l2 === l2) then {
+    unless last_l1 === l1 & last_l2 === l2 then {
 	cs := ''
 	every cs ++:= (!l1)[1]
 	tbl := table()

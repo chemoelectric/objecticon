@@ -35,7 +35,7 @@ procedure exbase10(i, j)
 
    initial digits := &digits || &lcase || &ucase
 
-   if not(2 <= j <= *digits) then runerr("*** base out of range", j)
+   unless 2 <= j <= *digits then runerr("Base out of range", j)
 
    if i = 0 then return 0
 

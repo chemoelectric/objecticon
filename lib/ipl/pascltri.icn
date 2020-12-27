@@ -38,7 +38,7 @@ procedure PascalsTriangle(level)
 static tri
 local row, elem, temp
 initial tri := [[1], [1, 1]]               # Start with first two rows stored
-  if not (level = integer(level)) then fail
+  unless level = integer(level) then fail
   if level < 1 then fail
   if level > *tri then                     # If we haven't calculated this
                                            # row before, then do so and keep
