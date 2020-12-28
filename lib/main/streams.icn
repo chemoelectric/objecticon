@@ -1867,7 +1867,7 @@ class FilterInputStream(FilterStreamBase)
    public override in(n)
       local x, i, t
       repeat {
-         x := do_poll() | {
+         unless x := do_poll() then {
             if \cout then {
                # The child has exited, but the data has yet to reach
                # the input pipes; close cout and go round again to
@@ -1900,7 +1900,7 @@ class FilterInputStream(FilterStreamBase)
                      next
                   }
                }
-               i := cout.out(buff) | {
+               unless i := cout.out(buff) then {
                   # Broken pipe; this is caused by the command exiting
                   # between the do_poll() and the out() call.
                   close_cout()
@@ -2262,7 +2262,7 @@ class PttyStream(FileStream)
    public open_slave()
       local f
       f := FileStream(slave_name, FileOpt.RDWR) | fail
-      prepare_slave(f) | {
+      unless prepare_slave(f) then {
          save_why{ f.close() }
          fail
       }
