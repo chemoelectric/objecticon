@@ -43,11 +43,11 @@ procedure eval(expr)
    local p, args, tok
 
    expr ? {
-      p := trim(tab(upto('(')), '\t ') | {
+      unless p := trim(tab(upto('(')), '\t ') then {
          ewrite("*** syntax error")
          fail
          }
-      p := proc(p, 2 | 1 | 3) | {
+      unless p := proc(p, 2 | 1 | 3) then {
          ewrite("*** invalid operation")
          fail
          }

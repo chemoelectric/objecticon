@@ -27,12 +27,14 @@ class Process(HasTask, HasBgProc, HasClose)
       local l
       /pid | runerr("start() called out of sequence")
       l := SocketStream.socketpair() | fail
-      (l[1].dflag(DescOpt.CLOEXEC) &
-       l[2].dflag(DescOpt.CLOEXEC) &
-       pid := System.fork()) | {
+      unless
+         l[1].dflag(DescOpt.CLOEXEC) &
+         l[2].dflag(DescOpt.CLOEXEC) &
+         pid := System.fork()
+      then {
          save_why{ lclose(l) }
          fail
-       }
+      }
       if pid > 0 then {
          # Parent
          sock := l[2]

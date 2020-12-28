@@ -405,7 +405,7 @@ class FileDialog(Dialog)
    public on_okay_button()
       local f, fs, sel
       if /multiple_files_flag then {
-         f := get_current_selection() | {
+         unless f := get_current_selection() then {
             msg("Please enter a filename")
             fail
          }

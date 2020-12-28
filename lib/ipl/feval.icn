@@ -37,11 +37,11 @@ procedure feval(s)
    local fnc, argl
 
    s ? {
-      fnc := tab(upto('(')) | {
+      unless fnc := tab(upto('(')) then {
          ewrite("*** syntax error")
          fail
          }
-      fnc := proc(fnc, 3 to 1 by -1) | {
+      unless fnc := proc(fnc, 3 to 1 by -1) then {
          ewrite("*** invalid function or operation")
          fail
          }

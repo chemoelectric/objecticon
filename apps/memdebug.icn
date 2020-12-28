@@ -309,7 +309,7 @@ procedure do_line(s)
          mode := ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)
       } else
          mode := ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)
-      cmd_out := FileStream(redir, mode) | {
+      unless cmd_out := FileStream(redir, mode) then {
          output.write("Couldn't open ", redir, ": ", &why)
          fail
       }
@@ -466,7 +466,7 @@ end
 
 procedure next_event()
    local e
-   e := Prog.get_event(prog) | {
+   unless e := Prog.get_event(prog) then {
       output.write("Monitored program exited.")
       do_stop()
       exited := &yes

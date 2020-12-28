@@ -594,7 +594,7 @@ class SymbolTable(Connectable)
          s := p.str()
          if /package_db[s] then {
             if f := open(p.child("packages.txt").str(), "r") then {
-               package_db[s] := scan_packtxt(f) | {
+               unless package_db[s] := scan_packtxt(f) then {
                   f.close()
                   fail
                }

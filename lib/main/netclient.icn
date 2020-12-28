@@ -172,7 +172,7 @@ $if _MS_WIN32
 
       connection.connect(addr) | {
          if errno() = WSAError.EWOULDBLOCK then {
-            r := do_poll(Poll.OUT) | {
+            unless r := do_poll(Poll.OUT) then {
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -204,7 +204,7 @@ $if _MS_WIN32
 
       if \ssl_flag then {
          ssl_available() | return error_dont_retry(&why)
-         ssl_connection := SslStream(connection, server) | {
+         unless ssl_connection := SslStream(connection, server) then {
             quietly_close_connection()
             return whyf("Couldn't create SslStream: %w")
          }
@@ -305,7 +305,7 @@ $else
 
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
-            r := do_poll(Poll.OUT) | {
+            unless r := do_poll(Poll.OUT) then {
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -337,7 +337,7 @@ $else
 
       if \ssl_flag then {
          ssl_available() | return error_dont_retry(&why)
-         ssl_connection := SslStream(connection, server) | {
+         unless ssl_connection := SslStream(connection, server) then {
             quietly_close_connection()
             return whyf("Couldn't create SslStream: %w")
          }
