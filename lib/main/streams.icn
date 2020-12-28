@@ -1540,11 +1540,10 @@ class ProgOutputStream(SocketStream, HasBgProc)
    public override new(cmd, args, env, stdout, stderr)
       local l
       l := one_way_socketpair() | fail
-      (l[2].dflag(DescOpt.CLOEXEC) &
-       pid := System.fork()) | {
-          save_why{ lclose(l) }
-          fail
-       }
+      unless l[2].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
+         save_why{ lclose(l) }
+         fail
+      }
       if pid > 0 then {
          # Parent
          l[1].close()
@@ -1595,8 +1594,7 @@ class ProgInputOutputStream(SocketStream, HasBgProc)
    public override new(cmd, args, env, stderr)
       local l
       l := SocketStream.socketpair() | fail
-      (l[1].dflag(DescOpt.CLOEXEC) &
-       pid := System.fork()) | {
+      unless l[1].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -1716,13 +1714,15 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
       /err_sink := StringStream()
       self.err_sink := err_sink
       l := SocketStream.one_way_socketpair() | fail
-      (l |||:= SocketStream.one_way_socketpair() &
-       l |||:= SocketStream.one_way_socketpair() &
-       l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(DescOpt.CLOEXEC) &
-       l[4].flag(FileOpt.NONBLOCK) & 
-       l[5].flag(FileOpt.NONBLOCK) &
-       pid := System.fork()) | {
+      unless
+         l |||:= SocketStream.one_way_socketpair() &
+         l |||:= SocketStream.one_way_socketpair() &
+         l[1].flag(FileOpt.NONBLOCK) & 
+         l[4].dflag(DescOpt.CLOEXEC) &
+         l[4].flag(FileOpt.NONBLOCK) & 
+         l[5].flag(FileOpt.NONBLOCK) &
+         pid := System.fork()
+      then {
           save_why{ lclose(l) }
           fail
        }
