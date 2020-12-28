@@ -921,7 +921,7 @@ class DownloadTab(TabItem)
    private update_status()
       local l
       l := ipl.pdco.List{ (!dl).get_status() }
-      equals(l, url_table.get_contents()) | {
+      unless equals(l, url_table.get_contents()) then {
          url_table.set_contents(l)
          update_title()
       }

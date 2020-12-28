@@ -509,7 +509,7 @@ class Evaluator()
       loops := table()
       scans := table()
       node := n
-      try1 { compute_loops(n) } | {
+      unless try1 { compute_loops(n) } then {
          node := loops := scans := &null
          fail
       }

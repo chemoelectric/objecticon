@@ -38,7 +38,7 @@ class PopClient(NetClient)
    #
    public open()
       open_connection() | fail
-      read_response() | {
+      unless read_response() then {
          close_connection()
          fail
       }

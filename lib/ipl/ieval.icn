@@ -107,7 +107,7 @@ class Ieval(MinimalObjectOutput)
    private merge1_c3(l, r, depth)
       local h, e
       every h := (!l)[1] do {
-         in_tail(l, h) | {
+         unless in_tail(l, h) then {
             put(r, h)
             output.write(repl(" ", depth * 3), "Added: ", Class.get_name(h))
             # Pop h off any of the lists

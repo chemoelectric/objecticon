@@ -484,7 +484,7 @@ class Dialog(Component)
             put(menu_mode_stack, menu_mode)
          else {
             win.grab_pointer() | fail
-            win.grab_keyboard() | {
+            unless win.grab_keyboard() then {
                win.ungrab_pointer()
                fail
             }

@@ -112,9 +112,9 @@ procedure atomic_encode_to_file(fn, o, fast, bin)
    p := FilePath(fn).canonical()
    if p.size() < 2 then
       return error("Destination path too short")
-   tmp := Files.make_temp_filename(p.get(-1), ".tmp", p.parent().str()) |
+   unless tmp := Files.make_temp_filename(p.get(-1), ".tmp", p.parent().str()) then
       return whyf("Couldn't create temporary file: %w")
-   encode_to_file(tmp, o, fast, bin) | {
+   unless encode_to_file(tmp, o, fast, bin) then {
       save_why{ Files.remove(tmp) }
       return whyf("Couldn't encode to temporary file %s: %w", tmp)
    }

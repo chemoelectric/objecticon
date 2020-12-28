@@ -117,8 +117,8 @@ procedure BitStringGet(bitString, nbits)
     #
     save := copy(bitString)
     while nbits < 0 | bitString.bufferBits < nbits do {
-	 (bitString.buffer :=
-		  ior(ishift(bitString.buffer, 8), ord(bitString.s[1]))) | {
+	 unless bitString.buffer :=
+		  ior(ishift(bitString.buffer, 8), ord(bitString.s[1])) then {
 	     #
 	     #  There aren't enough bits left in the file.  Restore the
 	     #  BitString to its state before the call (in case he wants to

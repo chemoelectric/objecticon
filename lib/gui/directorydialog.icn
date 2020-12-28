@@ -289,7 +289,7 @@ class DirectoryDialog(Dialog)
          if /err then {
             every s := p.slice(4).gen() do {
                n := find_child(n, s) | break
-               load_subtree(n) | {
+               unless load_subtree(n) then {
                   err := &why
                   break
                }
@@ -299,7 +299,7 @@ class DirectoryDialog(Dialog)
       } else {
          every s := p.gen() do {
             n := find_child(n, s) | break
-            load_subtree(n) | {
+            unless load_subtree(n) then {
                err := &why
                break
             }

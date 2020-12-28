@@ -191,7 +191,7 @@ class FileDialog(Dialog)
       seen := set()
       every f := FilePath(ucs(|@e)) do {
          k := f.standard_case().str()
-         member(seen, k) | {
+         unless member(seen, k) then {
             insert(seen, k)
             put(res, f.ucs())
          }

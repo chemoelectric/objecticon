@@ -82,7 +82,7 @@ procedure outbits(i, len)
 	}
     } else {
 	new_part := ishift(i, window-len)
-	len -:= (len >= window) | {
+	unless len -:= (len >= window) then {
 	    old_len +:= len
 	    old_i := ior(ishift(old_part, len-window), i)
 	    fail
