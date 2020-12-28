@@ -1030,7 +1030,7 @@ $if _PLAN9
       if /m1 then
          adjust_mode()
       if iand(flags, FileOpt.APPEND) ~= 0 then {
-         seek(0) | {
+         unless seek(0) then {
             close()
             fail
          }
@@ -1126,8 +1126,11 @@ $if _PLAN9
          /m2 := 0
          dir := "/n/pipe." || System.getpid() || "." || (ser +:= 1)
          Files.bind("#|", dir, MountOpt.MREPL) | fail
-         (p1 := open9(dir || "/data", ior(m1, FileOpt9.ORDWR), READ_WRITE) &
-          p2 := open9(dir || "/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)) | (f := &why)
+         unless
+            p1 := open9(dir || "/data", ior(m1, FileOpt9.ORDWR), READ_WRITE) &
+            p2 := open9(dir || "/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)
+         then
+            f := &why
          Files.unmount(, dir)
          if \f then {
             (\p1).close()
@@ -1714,7 +1717,7 @@ class ProgInputStream(PipeStream, HasBgProc)
    public override new(cmd, args, env, stdin, stderr)
       local l
       l := pipe() | fail
-      pid := System.fork() | {
+      unless pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -1772,7 +1775,7 @@ class ProgOutputStream(PipeStream, HasBgProc)
    public override new(cmd, args, env, stdout, stderr)
       local l
       l := pipe(, FileOpt9.OCEXEC) | fail
-      pid := System.fork() | {
+      unless pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -1824,7 +1827,7 @@ class ProgInputOutputStream(PipeStream, HasBgProc)
    public override new(cmd, args, env, stderr)
       local l
       l := pipe(FileOpt9.OCEXEC) | fail
-      pid := System.fork() | {
+      unless pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -1941,12 +1944,14 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
       /err_sink := StringStream()
       self.err_sink := err_sink
       l := FileStream.pipe() | fail
-      (l |||:= FileStream.pipe(, FileOpt9.OCEXEC) &
-       l |||:= FileStream.pipe() &
-       pid := System.fork()) | {
-          save_why{ lclose(l) }
-          fail
-       }
+      unless
+         l |||:= FileStream.pipe(, FileOpt9.OCEXEC) &
+         l |||:= FileStream.pipe() &
+         pid := System.fork()
+      then {
+         save_why{ lclose(l) }
+         fail
+      }
       if pid > 0 then {
          # Parent
          cin := NonBlockStream(l[1], Stream.READ, 65536)
@@ -2063,11 +2068,10 @@ class ProgOutputStream(SocketStream, HasBgProc)
    public override new(cmd, args, env, stdout, stderr)
       local l
       l := one_way_socketpair() | fail
-      (l[2].dflag(DescOpt.CLOEXEC) &
-       pid := System.fork()) | {
-          save_why{ lclose(l) }
-          fail
-       }
+      unless l[2].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
+         save_why{ lclose(l) }
+         fail
+      }
       if pid > 0 then {
          # Parent
          l[1].close()
@@ -2118,8 +2122,7 @@ class ProgInputOutputStream(SocketStream, HasBgProc)
    public override new(cmd, args, env, stderr)
       local l
       l := SocketStream.socketpair() | fail
-      (l[1].dflag(DescOpt.CLOEXEC) &
-       pid := System.fork()) | {
+      unless l[1].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -2239,13 +2242,15 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
       /err_sink := StringStream()
       self.err_sink := err_sink
       l := SocketStream.one_way_socketpair() | fail
-      (l |||:= SocketStream.one_way_socketpair() &
-       l |||:= SocketStream.one_way_socketpair() &
-       l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(DescOpt.CLOEXEC) &
-       l[4].flag(FileOpt.NONBLOCK) & 
-       l[5].flag(FileOpt.NONBLOCK) &
-       pid := System.fork()) | {
+      unless
+         l |||:= SocketStream.one_way_socketpair() &
+         l |||:= SocketStream.one_way_socketpair() &
+         l[1].flag(FileOpt.NONBLOCK) & 
+         l[4].dflag(DescOpt.CLOEXEC) &
+         l[4].flag(FileOpt.NONBLOCK) & 
+         l[5].flag(FileOpt.NONBLOCK) &
+         pid := System.fork()
+      then {
           save_why{ lclose(l) }
           fail
        }
@@ -2392,7 +2397,7 @@ class FilterInputStream(FilterStreamBase)
    public override in(n)
       local x, i, t
       repeat {
-         x := do_poll() | {
+         unless x := do_poll() then {
             if \cout then {
                # The child has exited, but the data has yet to reach
                # the input pipes; close cout and go round again to
@@ -2425,7 +2430,7 @@ class FilterInputStream(FilterStreamBase)
                      next
                   }
                }
-               i := cout.out(buff) | {
+               unless i := cout.out(buff) then {
                   # Broken pipe; this is caused by the command exiting
                   # between the do_poll() and the out() call.
                   close_cout()
@@ -2724,12 +2729,12 @@ class NetStream(FileStream)
       }
       res := clone(clone_file) | fail
       # Try to connect
-      res.write_ctrl("connect " || dest, timeout, task) | {
+      unless res.write_ctrl("connect " || dest, timeout, task) then {
          save_why{ res.close() }
          # &why should be set appropriately by the response to the connect
          fail
       }
-      res.open_data() | {
+      unless res.open_data() then {
          save_why{ res.close() }
          fail
       }
@@ -2787,7 +2792,7 @@ class NetStream(FileStream)
          arg := tab(0)
       }
       res := clone(clone_file) | fail
-      res.write_ctrl("announce " || arg) | {
+      unless res.write_ctrl("announce " || arg) then {
          save_why{ res.close() }
          # &why should be set appropriately by the response to the announce
          fail
@@ -3576,7 +3581,7 @@ class PttyStream(FileStream)
    public open_slave()
       local f
       f := FileStream(slave_name, FileOpt.RDWR) | fail
-      prepare_slave(f) | {
+      unless prepare_slave(f) then {
          save_why{ f.close() }
          fail
       }
