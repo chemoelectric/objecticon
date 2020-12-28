@@ -57,7 +57,7 @@ procedure pixelmap(name, p, args[])
 
    every y := 0 to height - 1 do
       every x := 0 to width - 1 do {
-         args[1] := read(input) | {
+         unless args[1] := read(input) then {
             input.close()
             return error("*** short data in pixel list")
          }

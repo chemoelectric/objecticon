@@ -80,7 +80,7 @@ procedure pfl2str(pattern)
       while result ||:= tab(upto('[')) do {
          move(1)
 #        expr1 := pfl2str(tab(bal(operator, '[', ']'))) | return error("1", pattern)
-         expr1 := pfl2str(tab(bal(operator, '[', ']'))) | {
+         unless expr1 := pfl2str(tab(bal(operator, '[', ']'))) then {
             result ||:= pfl2str(tab(bal(']', '[', ']')))
             move(1)
             next
@@ -201,7 +201,7 @@ procedure pfl2gxp(pattern, arg)
    pattern ? {
       while result ||:= arg(tab(upto('['))) do {
          move(1)
-         expr1 := pfl2gxp(tab(bal(operator, '[', ']')), arg) | {
+         unless expr1 := pfl2gxp(tab(bal(operator, '[', ']')), arg) then {
             result ||:= tab(bal(']', '[', ']')) || " | "	# no operator
             move(1)
             next

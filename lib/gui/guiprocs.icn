@@ -1160,10 +1160,10 @@ end
 procedure open_image(img)
    local w, t
    w := new_win()
-   use {
+   unless use {
       t := w.clone(),
       t.set_draw_op("source").set_image(img)
-   } | {
+   } then {
       w.close()
       fail
    }

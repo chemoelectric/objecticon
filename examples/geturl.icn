@@ -245,10 +245,10 @@ class Worker()
             close_input_stream() | clean_stopf("Couldn't close input_stream: %w")
             close_output_stream() | clean_stopf("Couldn't close output_stream: %w")
             if \opts["c"] then {
-               use {
+               unless use {
                   f := FileStream(tmp_file),
                   f.copy_to(FileStream.stdout)
-               } | {
+               } then {
                   clean_stopf("Couldn't copy %s to stdout: %w", tmp_file)
                }
             } else {
@@ -258,12 +258,12 @@ class Worker()
                if out == Files.NULL_FILE then {
                   msg ||:= " -> " || out
                } else if \opts["n"] then {
-                  Files.append(tmp_file, out) | {
+                  unless Files.append(tmp_file, out) then {
                      clean_stopf("Unable to append %s to %s: %w", tmp_file, out)
                   }
                   msg ||:= " ->> " || pp_out()
                } else if \opts["over"] then {
-                  Files.move(tmp_file, out) | {
+                  unless Files.move(tmp_file, out) then {
                      save_why{ Files.remove(out) }
                      clean_stopf("Unable to move %s to %s: %w", tmp_file, out)
                   }
@@ -273,7 +273,7 @@ class Worker()
                   msg ||:= " : Existing file " || pp_out() || " is identical."
                } else {
                   out := Files.ensure_unique_filename(out)
-                  Files.move(tmp_file, out) | {
+                  unless Files.move(tmp_file, out) then {
                      save_why{ Files.remove(out) }
                      clean_stopf("Unable to move %s to %s: %w", tmp_file, out)
                   }

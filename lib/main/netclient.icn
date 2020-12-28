@@ -148,7 +148,7 @@ $if _PLAN9
          msg_addr := server || " (" || cs || ")"
       }
 
-      connection := NetStream.connect(cs, timeout, task) | {
+      unless connection := NetStream.connect(cs, timeout, task) then {
          avoid_addr(cs)
          return whyf("Couldn't connect to " || msg_addr || ": %w")
       }
@@ -156,7 +156,7 @@ $if _PLAN9
          set_write_on_close(NonBlockStream.DISCARD)
 
       if \proxy then {
-         establish_proxy_connection() | {
+         unless establish_proxy_connection() then {
             quietly_close_connection()
             fail
          }
@@ -210,14 +210,14 @@ $elsif _MS_WIN32
       }
 
       connection := WinsockStream(domain)
-      connection.set_blocking_mode(&no) | {
+      unless connection.set_blocking_mode(&no) then {
          quietly_close_connection()
          return whyf_dont_retry("Couldn't put socket in non-blocking mode: %w")
       }
 
-      connection.connect(addr) | {
+      unless connection.connect(addr) then {
          if errno() = WSAError.EWOULDBLOCK then {
-            r := do_poll(Poll.OUT) | {
+            unless r := do_poll(Poll.OUT) then {
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -227,7 +227,7 @@ $elsif _MS_WIN32
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
-            DescStream.poll_out_test(r[1]) | {
+            unless DescStream.poll_out_test(r[1]) then {
                improve_why()
                quietly_close_connection()
                avoid_addr(addr)
@@ -241,7 +241,7 @@ $elsif _MS_WIN32
       }
 
       if \proxy then {
-         establish_proxy_connection() | {
+         unless establish_proxy_connection() then {
             quietly_close_connection()
             fail
          }
@@ -249,19 +249,19 @@ $elsif _MS_WIN32
 
       if \ssl_flag then {
          ssl_available() | return error_dont_retry(&why)
-         ssl_connection := SslStream(connection, server) | {
+         unless ssl_connection := SslStream(connection, server) then {
             quietly_close_connection()
             return whyf("Couldn't create SslStream: %w")
          }
          until ssl_connection.connect() do {
-            ssl_maybe_poll() | {
+            unless ssl_maybe_poll() then {
                quietly_close_connection()
                return whyf("Couldn't perform SSL connection: %w")
             }
          }
          ssl_want_shutdown := &yes
          if \ssl_verify_flag then {
-            ssl_connection.verify() | {
+            unless ssl_connection.verify() then {
                quietly_close_connection()
                return whyf_dont_retry("Couldn't verify SSL connection: %w")
             }
@@ -343,14 +343,14 @@ $else
       }
 
       connection := SocketStream(domain)
-      connection.flag(FileOpt.NONBLOCK) | {
+      unless connection.flag(FileOpt.NONBLOCK) then {
          quietly_close_connection()
          return whyf_dont_retry("Couldn't put socket in non-blocking mode: %w")
       }
 
-      connection.connect(addr) | {
+      unless connection.connect(addr) then {
          if errno() = Errno.EINPROGRESS then {
-            r := do_poll(Poll.OUT) | {
+            unless r := do_poll(Poll.OUT) then {
                quietly_close_connection()
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: %w", msg_addr)
@@ -360,7 +360,7 @@ $else
                avoid_addr(addr)
                return whyf("Couldn't connect to %s: Timeout", msg_addr)
             }
-            DescStream.poll_out_test(r[1]) | {
+            unless DescStream.poll_out_test(r[1]) then {
                improve_why()
                quietly_close_connection()
                avoid_addr(addr)
@@ -374,7 +374,7 @@ $else
       }
 
       if \proxy then {
-         establish_proxy_connection() | {
+         unless establish_proxy_connection() then {
             quietly_close_connection()
             fail
          }
@@ -382,19 +382,19 @@ $else
 
       if \ssl_flag then {
          ssl_available() | return error_dont_retry(&why)
-         ssl_connection := SslStream(connection, server) | {
+         unless ssl_connection := SslStream(connection, server) then {
             quietly_close_connection()
             return whyf("Couldn't create SslStream: %w")
          }
          until ssl_connection.connect() do {
-            ssl_maybe_poll() | {
+            unless ssl_maybe_poll() then {
                quietly_close_connection()
                return whyf("Couldn't perform SSL connection: %w")
             }
          }
          ssl_want_shutdown := &yes
          if \ssl_verify_flag then {
-            ssl_connection.verify() | {
+            unless ssl_connection.verify() then {
                quietly_close_connection()
                return whyf_dont_retry("Couldn't verify SSL connection: %w")
             }
@@ -416,7 +416,7 @@ $endif
          SslStream.ERROR_WANT_READ : {
             r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
             if /r then return error("Receive failed: Timeout")
-            DescStream.poll_in_test(r[1]) | {
+            unless DescStream.poll_in_test(r[1]) then {
                improve_why()
                return whyf("Receive failed: %w")
             }
@@ -425,7 +425,7 @@ $endif
          SslStream.ERROR_WANT_WRITE: {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
-            DescStream.poll_out_test(r[1]) | {
+            unless DescStream.poll_out_test(r[1]) then {
                improve_why()
                return whyf("Send failed: %w")
             }
@@ -653,7 +653,7 @@ $endif
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return whyf("Send poll failed: %w")
             if /r then return error("Send failed: Timeout")
-            DescStream.poll_out_test(r[1]) | {
+            unless DescStream.poll_out_test(r[1]) then {
                improve_why()
                return whyf("Send failed: %w")
             }
@@ -678,7 +678,7 @@ $endif
       } else {
          r := do_poll(Poll.IN) | return whyf("Receive poll failed: %w")
          if /r then return error("Receive failed: Timeout")
-         DescStream.poll_in_test(r[1]) | {
+         unless DescStream.poll_in_test(r[1]) then {
             improve_why()
             return whyf("Receive failed: %w")
          }

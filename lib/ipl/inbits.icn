@@ -46,14 +46,14 @@ procedure inbits(f, len)
     old_byte := iand(old_byte, old_byte_mask)
     i := ishift(old_byte, len-old_len)
 
-    len -:= (len > old_len) | {
+    unless len -:= (len > old_len) then {
 	old_len -:= len
 	return i
     }
     
     while byte := ord(reads(f)) do {
 	i := ior(i, ishift(byte, len-byte_length))
-	len -:= (len > byte_length) | {
+	unless len -:= (len > byte_length) then {
 	    old_len := byte_length-len
 	    old_byte := byte
 	    return i

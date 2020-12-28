@@ -14,7 +14,7 @@ class PopupEditor(Component, MenuMode)
       set_wattrib_ancestor(comp)
       set_z(comp.parent_dialog.get_top_z())
       comp.parent_dialog.add(self)
-      parent_dialog.enter_menu_mode(self) | {
+      unless parent_dialog.enter_menu_mode(self) then {
          parent.remove(self)
          self.comp := &null
          fail

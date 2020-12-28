@@ -220,7 +220,7 @@ class FlowTermDialog(Dialog)
 
    public new_tab(sel, dir, other, adjacent)
       local t
-      t := Terminal(dir, other, tabs.which_one) | {
+      unless t := Terminal(dir, other, tabs.which_one) then {
          tabs.which_one.info_msg(&why)
          fail
       }
@@ -2060,7 +2060,7 @@ $endif
          # starts up, muddling up \n with \r, because readline clears the
          # ICRNL bit in the termios c_iflag structure (see rltty.c).
          i := if *input > 0 & \some_in then Poll.IN + Poll.OUT else Poll.IN
-         x := io_task.poll([tty, i]) | {
+         unless x := io_task.poll([tty, i]) then {
             if /io_task.interrupt_why then {
                err_msg("IO problem polling tty: " || &why)
                break
@@ -2072,7 +2072,7 @@ $endif
          }
          if DescStream.poll_out_test(x[1]) then {
             s := get(input) | syserr("Poll out, but input buffer empty")
-            n := tty.out(s) | {
+            unless n := tty.out(s) then {
                err_msg("IO problem on tty output: " || &why)
                break
             }
@@ -2081,7 +2081,7 @@ $endif
             if \opts["v"] then
                ewrite("Out: ", image(s[1:n + 1]))
          } else if DescStream.poll_in_test(x[1]) then {
-            s := tty.in(1048576) | {
+            unless s := tty.in(1048576) then {
 $if _LINUX
                # See notes for explanation
                if x[1] = Poll.IN & errno() = Errno.EAGAIN then {

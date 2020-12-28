@@ -64,7 +64,7 @@ procedure traverse_header(f, x_only)
    s := ""
    while l := f.read() do {
       s ||:= l
-      incomplete(s) | {
+      unless incomplete(s) then {
          one_line(s, x_only)
          s := ""
       }

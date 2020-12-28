@@ -191,7 +191,7 @@ class FileDialog(Dialog)
       seen := set()
       every f := FilePath(ucs(|@e)) do {
          k := f.standard_case().str()
-         member(seen, k) | {
+         unless member(seen, k) then {
             insert(seen, k)
             put(res, f.ucs())
          }
@@ -405,7 +405,7 @@ class FileDialog(Dialog)
    public on_okay_button()
       local f, fs, sel
       if /multiple_files_flag then {
-         f := get_current_selection() | {
+         unless f := get_current_selection() then {
             msg("Please enter a filename")
             fail
          }

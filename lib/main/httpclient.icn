@@ -792,7 +792,7 @@ $endif
       repeat {
          if tryone() then {
             store_cookies()
-            close_inflater() | {
+            unless close_inflater() then {
                fire(FAILED_EVENT)
                fail
             }

@@ -2671,7 +2671,7 @@ class Form()
       \url | fail
       # Validate form.
       every c := !items do
-         c.validate_form() | {
+         unless c.validate_form() then {
             if is(c, Component) then
                browser.parent_dialog.set_focus(c.gen_focusable())
             browser.msg("Invalid form: " || &why)
@@ -3490,7 +3490,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                return
             # Expect html comment (see htmlparser.icn)
             ="<!" | fail
-            =(">" | "->" | "-->" | "--->") | {
+            unless =(">" | "->" | "-->" | "--->") then {
                ="--"
                tab(find("-->")) | fail
             }
@@ -5174,7 +5174,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private handle_lpress(e)
       parent_dialog.get_held_count() = 1 | fail
       running === 0 | fail
-      can_lpress(e) | {
+      unless can_lpress(e) then {
          clear_mark()
          fail
       }

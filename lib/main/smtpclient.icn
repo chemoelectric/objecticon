@@ -35,7 +35,7 @@ class SmtpClient(NetClient)
       local s
       open_connection() | fail
       sent_helo := &null
-      s := read_response() | {
+      unless s := read_response() then {
          close_connection()
          fail
       }

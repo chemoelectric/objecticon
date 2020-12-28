@@ -85,7 +85,7 @@ class PopupMenu(Component, MenuSystem)
       set_wattrib_ancestor(comp.parent_dialog.popup_manager)
       comp.parent_dialog.add(self)
       self.resize()
-      self.parent_dialog.enter_menu_mode(self) | {
+      unless self.parent_dialog.enter_menu_mode(self) then {
          parent.remove(self)
          self.comp := &null
          fail

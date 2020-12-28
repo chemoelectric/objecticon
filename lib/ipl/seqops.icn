@@ -331,7 +331,7 @@ procedure get_sruns(seq)
    seq2 := []
 
    repeat {
-      i := get(seq) | {
+      unless i := get(seq) then {
          put(seq2, j)
          break					# end of road
          }

@@ -227,7 +227,7 @@ procedure imropen(imr)
 
    win := Window().set_size(imr.width, *imr.pixels / imr.width)
 
-   imrdraw(win, 0, 0, imr) | {
+   unless imrdraw(win, 0, 0, imr) then {
       win.close()
       fail
       }

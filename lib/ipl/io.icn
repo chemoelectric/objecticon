@@ -127,7 +127,7 @@ end
 procedure ReadAhead(n)			
 
    while *buffer_in < n do
-      put(buffer_in,read()) | {
+      unless put(buffer_in,read()) then {
          Eof := 1
          fail
          }

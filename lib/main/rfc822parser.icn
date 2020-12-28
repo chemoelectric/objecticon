@@ -317,7 +317,7 @@ class RFC822Parser()
       # first, and if that fails try the more complex alternative.
       #
       x := &pos
-      try { parse_addr_spec(mb) } | {
+      unless try { parse_addr_spec(mb) } then {
          eclear()
          tab(x)
          if any('\"' ++ ATOM_CHAR) then
@@ -340,7 +340,7 @@ class RFC822Parser()
       next_token()
       =":" | throw("':' expected")
       next_token()
-      =";" | {      # ; here implies an empty group
+      unless =";" then {      # ; here implies an empty group
          repeat {
             mb := parse_mailbox_impl()
             put(t, mb)

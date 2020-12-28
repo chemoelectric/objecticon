@@ -594,7 +594,7 @@ class SymbolTable(Connectable)
          s := p.str()
          if /package_db[s] then {
             if f := open(p.child("packages.txt").str(), "r") then {
-               package_db[s] := scan_packtxt(f) | {
+               unless package_db[s] := scan_packtxt(f) then {
                   f.close()
                   fail
                }
@@ -797,7 +797,7 @@ class SymbolTable(Connectable)
    private static merge1_c3(l, r)
       local h, e
       every h := (!l)[1] do {
-         in_tail(l, h) | {
+         unless in_tail(l, h) then {
             put(r, h)
             # Pop h off any of the lists
             every e := !l do {

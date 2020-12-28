@@ -691,7 +691,7 @@ $endif
    #
    public static begin_link(f, line, col)
       local t
-      is(f, URL) | {
+      unless is(f, URL) then {
          f := URL(file_to_url(f)).
             set_host(&host) | runerr("Failed to convert to URL: " || &why, f)
          if \line then {

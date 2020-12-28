@@ -28,7 +28,7 @@ class Process(HasTask, HasBgProc, HasClose)
       /pid | runerr("start() called out of sequence")
 $if _PLAN9
       l := FileStream.pipe(FileOpt9.OCEXEC, FileOpt9.OCEXEC) | fail
-      pid := System.fork() | {
+      unless pid := System.fork() then {
          save_why{ lclose(l) }
          fail
       }
@@ -50,12 +50,14 @@ $if _PLAN9
       }
 $else
       l := SocketStream.socketpair() | fail
-      (l[1].dflag(DescOpt.CLOEXEC) &
-       l[2].dflag(DescOpt.CLOEXEC) &
-       pid := System.fork()) | {
+      unless
+         l[1].dflag(DescOpt.CLOEXEC) &
+         l[2].dflag(DescOpt.CLOEXEC) &
+         pid := System.fork()
+      then {
          save_why{ lclose(l) }
          fail
-       }
+      }
       if pid > 0 then {
          # Parent
          sock := l[2]

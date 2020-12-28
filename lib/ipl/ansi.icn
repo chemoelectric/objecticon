@@ -89,7 +89,7 @@ procedure CUD(i)
     if _isANSI()
     then writes("\^[[",i,"B")
     else {
-	iputs(igoto(getval("DO"),i)) | {
+       unless iputs(igoto(getval("DO"),i)) then {
 	    every 1 to i do
 		iputs(getval("do")) | stop("CUD:  no do capability")
 	}
@@ -101,7 +101,7 @@ procedure CUB(i)
     if _isANSI()
     then writes("\^[[",i,"D")
     else {
-	iputs(igoto(getval("LE"),i)) | {
+       unless iputs(igoto(getval("LE"),i)) then {
 	    every 1 to i do
 		iputs(getval("le")) | stop("CUB:  no le capability")
 	}
@@ -113,7 +113,7 @@ procedure CUF(i)
     if _isANSI()
     then writes("\^[[",i,"C")
     else {
-	iputs(igoto(getval("RI"),i)) | {
+       unless iputs(igoto(getval("RI"),i)) then {
 	    every 1 to i do
 		iputs(getval("nd")) | stop("CUF:  no nd capability")
 	}
@@ -132,7 +132,7 @@ procedure CUU(i)
     if _isANSI()
     then writes("\^[[",i,"A")
     else {
-	iputs(igoto(getval("UP"),i)) | {
+       unless iputs(igoto(getval("UP"),i)) then {
 	    every 1 to i do
 		iputs(getval("up")) | stop("CUU:  no up capability")
 	}
