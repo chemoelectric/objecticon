@@ -3049,10 +3049,6 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
-        /*
-         * Calculate width and height for the masks, and their x, y
-         * position to draw onto the screen.
-         */
         mk_arc(cx - x, cy - y,    /* centre */
                rx, ry,            /* x/y radius */
                angle1, angle2);
