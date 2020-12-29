@@ -1542,7 +1542,24 @@ final abstract class DrawOp()
       OUT,
       OVER,
       SOURCE,
-      XOR
+      XOR,
+      ADD,
+      COLOR_BURN,
+      COLOR_DODGE,
+      DARKEN,
+      DIFFERENCE,
+      EXCLUSION,
+      HARD_LIGHT,
+      HSL_COLOR,
+      HSL_HUE,
+      HSL_LUMINOSITY,
+      HSL_SATURATION,
+      LIGHTEN,
+      MULTIPLY,
+      OVERLAY,
+      SATURATE,
+      SCREEN,
+      SOFT_LIGHT
 
    private static init()
       ATOP := "atop"
@@ -1557,6 +1574,23 @@ final abstract class DrawOp()
       OVER := "over"
       SOURCE := "source"
       XOR := "xor"
+      ADD := "add"
+      COLOR_BURN := "color burn"
+      COLOR_DODGE := "color dodge"
+      DARKEN := "darken"
+      DIFFERENCE := "difference"
+      EXCLUSION := "exclusion"
+      HARD_LIGHT := "hard light"
+      HSL_COLOR := "hsl color"
+      HSL_HUE := "hsl hue"
+      HSL_LUMINOSITY := "hsl luminosity"
+      HSL_SATURATION := "hsl saturation"
+      LIGHTEN := "lighten"
+      MULTIPLY := "multiply"
+      OVERLAY := "overlay"
+      SATURATE := "saturate"
+      SCREEN := "screen"
+      SOFT_LIGHT := "soft light"
    end
 end
 

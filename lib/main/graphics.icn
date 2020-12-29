@@ -725,9 +725,10 @@ final class Window(NoCopy, ObjectOutput, HasClose)
    # Set the drawing operator, which specifies the way in which newly
    # drawn pixels are combined with the pixels that are already in a
    # window.  Possible values are system dependent, but include "over"
-   # and "source".  The X11 implementation also allows "atop",
-   # "clear", "dest", "dest atop", "dest in", "dest out", "dest over",
-   # "in", "out", and "xor".  (See `DrawOp` for symbolic constants).
+   # and "source".  The X11 implementation also allows the Porter-Duff
+   # operators "atop", "clear", "dest", "dest atop", "dest in", "dest
+   # out", "dest over", "in", "out", and several other more exotic
+   # ones.  (See `DrawOp` for these, as well as symbolic constants).
    #
    public native set_draw_op(v)
 
@@ -2103,7 +2104,24 @@ final abstract class DrawOp()
       OUT,
       OVER,
       SOURCE,
-      XOR
+      XOR,
+      ADD,
+      COLOR_BURN,
+      COLOR_DODGE,
+      DARKEN,
+      DIFFERENCE,
+      EXCLUSION,
+      HARD_LIGHT,
+      HSL_COLOR,
+      HSL_HUE,
+      HSL_LUMINOSITY,
+      HSL_SATURATION,
+      LIGHTEN,
+      MULTIPLY,
+      OVERLAY,
+      SATURATE,
+      SCREEN,
+      SOFT_LIGHT
 
    private static init()
       ATOP := "atop"
@@ -2118,6 +2136,23 @@ final abstract class DrawOp()
       OVER := "over"
       SOURCE := "source"
       XOR := "xor"
+      ADD := "add"
+      COLOR_BURN := "color burn"
+      COLOR_DODGE := "color dodge"
+      DARKEN := "darken"
+      DIFFERENCE := "difference"
+      EXCLUSION := "exclusion"
+      HARD_LIGHT := "hard light"
+      HSL_COLOR := "hsl color"
+      HSL_HUE := "hsl hue"
+      HSL_LUMINOSITY := "hsl luminosity"
+      HSL_SATURATION := "hsl saturation"
+      LIGHTEN := "lighten"
+      MULTIPLY := "multiply"
+      OVERLAY := "overlay"
+      SATURATE := "saturate"
+      SCREEN := "screen"
+      SOFT_LIGHT := "soft light"
    end
 end
 

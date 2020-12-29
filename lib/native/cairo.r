@@ -163,19 +163,36 @@ do {
 #define CheckContextStatus(context) CheckStatus(cairo_status(context))
 
 static stringint drawops[] = {
-   { 0, 12},
+   { 0, 29},
+   {"add", CAIRO_OPERATOR_ADD},
    {"atop",  CAIRO_OPERATOR_ATOP},
-   {"clear", CAIRO_OPERATOR_CLEAR },
-   {"dest", CAIRO_OPERATOR_DEST },
+   {"clear",  CAIRO_OPERATOR_CLEAR},
+   {"color burn", CAIRO_OPERATOR_COLOR_BURN},
+   {"color dodge", CAIRO_OPERATOR_COLOR_DODGE},
+   {"darken", CAIRO_OPERATOR_DARKEN},
+   {"dest",  CAIRO_OPERATOR_DEST},
    {"dest atop", CAIRO_OPERATOR_DEST_ATOP },
    {"dest in", CAIRO_OPERATOR_DEST_IN },
    {"dest out", CAIRO_OPERATOR_DEST_OUT},
    {"dest over", CAIRO_OPERATOR_DEST_OVER },
+   {"difference", CAIRO_OPERATOR_DIFFERENCE},
+   {"exclusion", CAIRO_OPERATOR_EXCLUSION},
+   {"hard light", CAIRO_OPERATOR_HARD_LIGHT},
+   {"hsl color", CAIRO_OPERATOR_HSL_COLOR},
+   {"hsl hue", CAIRO_OPERATOR_HSL_HUE},
+   {"hsl luminosity", CAIRO_OPERATOR_HSL_LUMINOSITY},
+   {"hsl saturation", CAIRO_OPERATOR_HSL_SATURATION},
    {"in",  CAIRO_OPERATOR_IN},
-   {"out", CAIRO_OPERATOR_OUT},
-   {"over", CAIRO_OPERATOR_OVER},
-   {"source", CAIRO_OPERATOR_SOURCE},
-   {"xor", CAIRO_OPERATOR_XOR},
+   {"lighten", CAIRO_OPERATOR_LIGHTEN},
+   {"multiply", CAIRO_OPERATOR_MULTIPLY},
+   {"out",  CAIRO_OPERATOR_OUT},
+   {"over",  CAIRO_OPERATOR_OVER},
+   {"overlay", CAIRO_OPERATOR_OVERLAY},
+   {"saturate", CAIRO_OPERATOR_SATURATE},
+   {"screen", CAIRO_OPERATOR_SCREEN},
+   {"soft light", CAIRO_OPERATOR_SOFT_LIGHT},
+   {"source",  CAIRO_OPERATOR_SOURCE},
+   {"xor",  CAIRO_OPERATOR_XOR},
 };
 
 static stringint linejoins[] = {
@@ -279,6 +296,41 @@ static cairo_operator_t convert_op(int op)
             return CAIRO_OPERATOR_SOURCE;
         case PictOpXor: 
             return CAIRO_OPERATOR_XOR;
+        case PictOpAdd:
+            return CAIRO_OPERATOR_ADD;
+        case PictOpSaturate:
+            return CAIRO_OPERATOR_SATURATE;
+        case PictOpMultiply:
+            return CAIRO_OPERATOR_MULTIPLY;
+        case PictOpScreen:
+            return CAIRO_OPERATOR_SCREEN;
+        case PictOpOverlay:
+            return CAIRO_OPERATOR_OVERLAY;
+        case PictOpDarken:
+            return CAIRO_OPERATOR_DARKEN;
+        case PictOpLighten:
+            return CAIRO_OPERATOR_LIGHTEN;
+        case PictOpColorDodge:
+            return CAIRO_OPERATOR_COLOR_DODGE;
+        case PictOpColorBurn:
+            return CAIRO_OPERATOR_COLOR_BURN;
+        case PictOpHardLight:
+            return CAIRO_OPERATOR_HARD_LIGHT;
+        case PictOpSoftLight:
+            return CAIRO_OPERATOR_SOFT_LIGHT;
+        case PictOpDifference:
+            return CAIRO_OPERATOR_DIFFERENCE;
+        case PictOpExclusion:
+            return CAIRO_OPERATOR_EXCLUSION;
+        case PictOpHSLHue:
+            return CAIRO_OPERATOR_HSL_HUE;
+        case PictOpHSLSaturation:
+            return CAIRO_OPERATOR_HSL_SATURATION;
+        case PictOpHSLColor:
+            return CAIRO_OPERATOR_HSL_COLOR;
+        case PictOpHSLLuminosity:
+            return CAIRO_OPERATOR_HSL_LUMINOSITY;
+
         default: {
             syserr("Unexpected operator");
             return 0;
