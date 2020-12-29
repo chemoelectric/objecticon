@@ -303,7 +303,7 @@ procedure geddate(r)
    s := trim(gedval(r, "DATE"), WHITESPACE) | fail
    t := ""
 
-   s ? while not pos(0) do {
+   s ? until pos(0) do {
       tab(many(WHITESPACE))
       w := tab(upto(WHITESPACE) | 0)
       t ||:= " " || (\ftab[w] | w)
@@ -427,7 +427,7 @@ procedure gedlcw(s, c)
    /c := '/ \t\r\n\v\f'
    map(s) ? {
       tab(many(c))
-      while not pos(0) do {
+      until pos(0) do {
          suspend tab(upto(c) | 0) \ 1
          tab(many(c))
          }
