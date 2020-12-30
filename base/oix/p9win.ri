@@ -1243,10 +1243,10 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     wcp wc = w->context;
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
-    x = cx - rx - 1;
-    y = cy -ry - 1;
-    width = 2 * rx + 2;
-    height = 2 * ry + 2;
+    /* Calculate the bounding box. */
+    range_extent(cx - rx, cy - ry, cx + rx, cy + ry,
+                 &x, &y, &width, &height);
+
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
     clip(w);
