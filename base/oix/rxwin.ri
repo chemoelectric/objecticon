@@ -3038,10 +3038,9 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     wcp wc = w->context;
 
     /* Calculate the bounding box. */
-    x = floor(cx - rx);
-    y = floor(cy - ry);
-    width = 2 * ceil(cx - x);
-    height = 2 * ceil(cy - y);
+    range_extent(cx - rx, cy - ry, cx + rx, cy + ry,
+                 &x, &y, &width, &height);
+
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
