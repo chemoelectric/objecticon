@@ -1,0 +1,131 @@
+Simple integer
+line 30
+	error: "-i: Integer expected"
+	(failed)
+line 31
+	v=table#*{"i"->234}
+	args=list#*["one","two","three"]
+line 32
+	error: "-i: Integer expected"
+	(failed)
+line 33
+	v=table#*{"i"->123}
+	args=list#*["one","two","three"]
+line 34
+	v=table#*{}
+	args=list#*["one","two","three","four"]
+line 35
+	v=table#*{}
+	args=list#*["one","two","-i","123","three"]
+line 36
+	v=table#*{}
+	args=list#*["one","two","run","-i","123","three"]
+line 37
+	v=table#*{"i"->-123}
+	args=list#*["one","two","three"]
+line 38
+	usage: list#*(1)
+	(failed)
+
+Multiple integer
+line 41
+	v=table#*{"i"->list#*[123,234]}
+	args=list#*["one","two","three"]
+line 42
+	error: "-i: Integer expected"
+	(failed)
+line 43
+	v=table#*{"i"->list#*[100,123,234,200]}
+	args=list#*["one","two","three"]
+line 44
+	v=table#*{"i"->list#*[100,123,234,200]}
+	args=list#*["one","two","three"]
+line 45
+	v=table#*{"i"->list#*[100,123,234]}
+	args=list#*["one","two","run","three","--alt2=200"]
+line 46
+	v=table#*{"i"->list#*[200]}
+	args=list#*["one","two","three","four"]
+line 47
+	v=table#*{"i"->list#*[200]}
+	args=list#*["one","two","three","four"]
+
+Flags
+line 50
+	v=table#*{"a"->&yes;"b"->&yes;"c"->&yes}
+	args=list#*["one","two"]
+line 51
+	v=table#*{"ab"->"c"}
+	args=list#*["one","two"]
+line 52
+	v=table#*{"a"->&yes;"b"->&yes}
+	args=list#*["one","c","two"]
+line 53
+	error: "Unrecognized option: --abc"
+	(failed)
+line 54
+	v=table#*{"ab"->"c"}
+	args=list#*["one","two"]
+line 55
+	error: "An option taking a parameter cannot be combined: -c"
+	(failed)
+line 56
+	v=table#*{"a"->"bc100"}
+	args=list#*["one","two"]
+line 57
+	v=table#*{"a"->"bc"}
+	args=list#*["one","two"]
+line 58
+	error: "An option taking a parameter cannot be combined: -a"
+	(failed)
+line 59
+	v=table#*{"abc"->"two"}
+	args=list#*["one"]
+
+String opts
+line 62
+	error: "-a: String containing \"cat\" expected"
+	(failed)
+line 63
+	v=table#*{"a"->"xyzcatpqr"}
+	args=list#*["one","two"]
+line 64
+	v=table#*{"a"->"cat"}
+	args=list#*["one","two"]
+line 65
+	error: "-a: \"cat\" in invalid position"
+	(failed)
+line 66
+	v=table#*{"a"->"abccat"}
+	args=list#*["one","two"]
+line 67
+	v=table#*{"a"->u"abccat"}
+	args=list#*["one","two"]
+
+Number opts
+line 70
+	error: "-a: Integer expected"
+	(failed)
+line 71
+	error: "-a: Integer value out of valid range (>= 1 and <= 10)"
+	(failed)
+line 72
+	v=table#*{"a"->5}
+	args=list#*["one","two"]
+line 73
+	v=table#*{"a"->-5}
+	args=list#*["one","two"]
+line 74
+	v=table#*{"a"->-5.0}
+	args=list#*["one","two"]
+line 75
+	v=table#*{"a"->list#*[5,5.1,-4.2]}
+	args=list#*["one","two"]
+
+Flag opts
+line 78
+	error: "-a: Flag expected"
+	(failed)
+line 79
+	v=table#*{"a"->list#*[&yes,&null,&yes,&null,&yes,&null]}
+	args=list#*["one","two"]
