@@ -29,9 +29,10 @@ import
    util(use)
 
 procedure ftype(file)
-   local f
-   return use { 
+   local f, r
+   if r := use {
       f := ProgInputStream("file", ["-b", file]),
       f.read()
-   }
+   } & f.succeeded() then
+      return r
 end

@@ -383,14 +383,11 @@ class ProgSubWorker(SubWorker)
       if (\worker.req.referer).scheme == ("http" | "https") then
          return error("Can't run a prog from an http page")
       f := worker.req.url.get_decoded_path()
-      d := use {
+      if d := use {
          ts := TaskStream(ps := ProgInputStream("/bin/sh", ["-c", f]), worker.task),
          StaticData(read_all(ts), "")     # Return StaticData in order to set a blank filename.
-      } | fail
-      return if ps.get_exit_info().succeeded() then
-         d
-      else
-         error("Program failed: " || &why)
+      } & ps.succeeded() then
+         return d
    end
 
    private read_all(ts)

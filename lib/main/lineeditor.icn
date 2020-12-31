@@ -149,14 +149,11 @@ $endif
 
    private static run_stty(params[])
       local f, s
-      s := use {                         
+      if s := use {                         
          f := ProgInputStream("stty", params,,, get_null()),
          f.read_all()
-      } | fail                                              
-      return if f.get_exit_info().succeeded() then
-         s
-      else                                                  
-         error("stty failed: " || &why)
+      } & f.succeeded() then
+         return s
    end                                                      
 
    private static read_terminfo_escape()
@@ -225,9 +222,10 @@ $endif
       params := ["-L"]
       put(params, \name)
       out := StringStream()
-      use { f := FilterOutputStream(out, "infocmp", params) } | fail
-      f.succeeded() | fail
-      return parse_terminfo(out.str())
+      if use { f := FilterOutputStream(out, "infocmp", params) } &
+         f.succeeded()
+      then
+         return parse_terminfo(out.str())
    end
 
    protected override read_line_impl()
