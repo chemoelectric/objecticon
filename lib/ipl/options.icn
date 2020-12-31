@@ -506,6 +506,14 @@ procedure real_range(min, max)
    return lpartial(range_impl, real, min, max)
 end
 
+#
+# Converter function for a numeric which must lie within the given
+# min-max range.
+#
+procedure numeric_range(min, max)
+   return lpartial(range_impl, numeric, min, max)
+end
+
 package procedure text_with_impl(cnv, q, i, s)
    local j
    i := need_integer(\i) | 1
