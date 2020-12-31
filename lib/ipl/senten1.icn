@@ -109,7 +109,7 @@ procedure sentence(infile)
       # Try to find the start of a sentence in the current input string.
       # If there are none, read more from file; fail if file exhausted.
       # Trim trailing space from line (leading skipped by sentence start)
-      while not (line ?:= (tab (upto (&ucase)) & tab (0))) do {
+      until line ?:= (tab (upto (&ucase)) & tab (0)) do {
          line := trim (read (infile), wspace) | fail
          }
 

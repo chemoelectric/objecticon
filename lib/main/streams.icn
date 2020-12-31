@@ -1686,10 +1686,31 @@ end
 
 $if _PLAN9
 #
+# Base class for ProgOutputStream, ProgInputStream and
+# ProgInputOutputStream
+#
+package abstract class ProgStreamBase(PipeStream, HasBgProc)
+   protected
+      cmd
+
+   #
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets `&why` appropriately, based on the exit code.
+   #
+   public succeeded()
+      local x
+      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+      return x.succeeded() |
+         whyf("%s failed: %w", cmd)
+   end
+end
+
+#
 # This stream represents a pipe to a command running in a forked child
 # process.
 #
-class ProgInputStream(PipeStream, HasBgProc)
+class ProgInputStream(ProgStreamBase)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -1723,6 +1744,7 @@ class ProgInputStream(PipeStream, HasBgProc)
       }
       if pid > 0 then {
          # Parent
+         self.cmd := cmd
          l[2].close()
          return setup(l[1].get_fd(), READ)
       } else {
@@ -1747,7 +1769,7 @@ end
 # This stream represents a pipe from a command running in a forked child
 # process.
 #
-class ProgOutputStream(PipeStream, HasBgProc)
+class ProgOutputStream(ProgStreamBase)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -1781,6 +1803,7 @@ class ProgOutputStream(PipeStream, HasBgProc)
       }
       if pid > 0 then {
          # Parent
+         self.cmd := cmd
          l[1].close()
          return setup(l[2].get_fd(), WRITE)
       } else {
@@ -1800,7 +1823,7 @@ end
 # This stream represents a bi-directional pipe to a command running in
 # a forked child process.
 #
-class ProgInputOutputStream(PipeStream, HasBgProc)
+class ProgInputOutputStream(ProgStreamBase)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -1833,6 +1856,7 @@ class ProgInputOutputStream(PipeStream, HasBgProc)
       }
       if pid > 0 then {
          # Parent
+         self.cmd := cmd
          l[2].close()
          return setup(l[1].get_fd(), READ_WRITE)
       } else {
@@ -1873,9 +1897,8 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
       local x
       is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
       x := get_exit_info() | runerr("succeeded() can only be called after close()")
-      if x.succeeded() then
-         return
-      return whyf("%s failed: %w: %s", cmd, trim(replace(err_sink.str(), "\n", " ")))
+      return x.succeeded() |
+         whyf("%s failed: %w: %s", cmd, trim(replace(err_sink.str(), "\n", " ")))
    end
 
    protected do_poll()
@@ -1977,10 +2000,31 @@ end
 $else
 
 #
+# Base class for ProgOutputStream, ProgInputStream and
+# ProgInputOutputStream
+#
+package abstract class ProgStreamBase(SocketStream, HasBgProc)
+   protected
+      cmd
+
+   #
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets `&why` appropriately, based on the exit code.
+   #
+   public succeeded()
+      local x
+      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+      return x.succeeded() |
+         whyf("%s failed: %w", cmd)
+   end
+end
+
+#
 # This stream represents a pipe to a command running in a forked child
 # process.
 #
-class ProgInputStream(SocketStream, HasBgProc)
+class ProgInputStream(ProgStreamBase)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -2015,6 +2059,7 @@ class ProgInputStream(SocketStream, HasBgProc)
       }
       if pid > 0 then {
          # Parent
+         self.cmd := cmd
          l[2].close()
          return setup(l[1].get_fd(), READ)
       } else {
@@ -2039,7 +2084,7 @@ end
 # This stream represents a pipe from a command running in a forked child
 # process.
 #
-class ProgOutputStream(SocketStream, HasBgProc)
+class ProgOutputStream(ProgStreamBase)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -2074,6 +2119,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
       }
       if pid > 0 then {
          # Parent
+         self.cmd := cmd
          l[1].close()
          return setup(l[2].get_fd(), WRITE)
       } else {
@@ -2094,7 +2140,7 @@ end
 # This stream represents a bi-directional pipe to a command running in
 # a forked child process.
 #
-class ProgInputOutputStream(SocketStream, HasBgProc)
+class ProgInputOutputStream(ProgStreamBase)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
@@ -2128,6 +2174,7 @@ class ProgInputOutputStream(SocketStream, HasBgProc)
       }
       if pid > 0 then {
          # Parent
+         self.cmd := cmd
          l[2].close()
          return setup(l[1].get_fd(), READ_WRITE)
       } else {
@@ -2168,9 +2215,8 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
       local x
       is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
       x := get_exit_info() | runerr("succeeded() can only be called after close()")
-      if x.succeeded() then
-         return
-      return whyf("%s failed: %w: %s", cmd, trim(replace(err_sink.str(), "\n", " ")))
+      return x.succeeded() |
+         whyf("%s failed: %w: %s", cmd, trim(replace(err_sink.str(), "\n", " ")))
    end
 
    protected do_poll()

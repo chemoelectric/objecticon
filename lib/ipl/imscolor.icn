@@ -172,7 +172,7 @@ procedure imswrite(f, s, n)
       tab(upto(',') + 1)
       ="#" | tab(upto(',') + 1)
       write(f, "\"", w, ",", (\p || ",") | "#", "_")
-      while not pos(0) do IWR_Row(f, move(d) | tab(0), ll)
+      until pos(0) do IWR_Row(f, move(d) | tab(0), ll)
       write(f, "\"")
       }
    return
@@ -180,7 +180,7 @@ end
 
 # write one row, max n bytes per line
 procedure IWR_Row(f, s, n)	
-   s ? while not pos(0) do
+   s ? until pos(0) do
       write(f, image(move(n) | tab(0)) [2:-1], "_")
    return
 end

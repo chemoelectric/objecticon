@@ -156,52 +156,55 @@ package class Args()
    end
 end
 
+package procedure one(args)  
+   local v, a, just, width, conv, prec, pad, flag, apos
+   move(1)     # Move over %
+   # Get the optional positional specifier, eg "3$"
+   apos := optpos()
+   flag := cset(tab(many('0\'\-+SZ'))) | ''
+   # Convert flags to those used by Format.numeric_to_string
+   if any(flag, "'") then flag ++:= ','
+   if any(flag, "S") then flag ++:= 's'
+   if any(flag, "Z") then flag ++:= 'z'
+   just := if any(flag, "-") then left else right
+   if any(flag, "0") then pad := "0"
+   width := args.intparam()
+   if ="." then prec := args.intparam()
+   conv := move(1) | ""
+   # Formats that take an argument.
+   if any('dsxXobitreE', conv) then
+      a := args.get(apos)
+   v := case string(conv) of {
+      "d": decimal(a, prec, flag)
+      "s": str(a, prec)
+      "x": map(intstr(a, prec, flag))
+      "X": intstr(a, prec, flag)
+      "o": intstr(a, prec, flag, 8)
+      "b": intstr(a, prec, flag, 2)
+      "i": str(image(a), prec)
+      "t": str(to_string(a), prec)
+      "r": fixnum(a, prec, flag)
+      "e": eformatstr(a, prec, flag ++ 'e')
+      "E": eformatstr(a, prec, flag ++ 'E')
+      "w": str(&why, prec)
+      "n": str("", prec)
+      default: str(conv, prec)
+   }
+   if \width & *v < width then
+      v := just(v, width, pad)
+   return v
+end
+
 #
 # This is like `gprintf`, but the second argument is a list of the
 # arguments used by the format string.
 #
 procedure lgprintf(format, args)
-   local v, a, just, width, conv, prec, pad, flag, apos
+   local v
    args := Args(args)
    format ? {
-      while v := tab(upto('%')) do {
-         suspend v
-         move(1)     # Move over %
-         # Get the optional positional specifier, eg "3$"
-         apos := optpos()
-         flag := cset(tab(many('0\'\-+SZ'))) | ''
-         # Convert flags to those used by Format.numeric_to_string
-         if any(flag, "'") then flag ++:= ','
-         if any(flag, "S") then flag ++:= 's'
-         if any(flag, "Z") then flag ++:= 'z'
-         just := if any(flag, "-") then left else right
-         if any(flag, "0") then pad := "0"
-         width := args.intparam()
-         if ="." then prec := args.intparam()
-         conv := move(1) | ""
-         # Formats that take an argument.
-         if any('dsxXobitreE', conv) then
-            a := args.get(apos)
-         v := case string(conv) of {
-            "d": decimal(a, prec, flag)
-            "s": str(a, prec)
-            "x": map(intstr(a, prec, flag))
-            "X": intstr(a, prec, flag)
-            "o": intstr(a, prec, flag, 8)
-            "b": intstr(a, prec, flag, 2)
-            "i": str(image(a), prec)
-            "t": str(to_string(a), prec)
-            "r": fixnum(a, prec, flag)
-            "e": eformatstr(a, prec, flag ++ 'e')
-            "E": eformatstr(a, prec, flag ++ 'E')
-            "w": str(&why, prec)
-            "n": str("", prec)
-            default: str(conv, prec)
-         }
-         if \width & *v < width then
-            v := just(v, width, pad)
-         suspend v
-      }
+      while v := tab(upto('%')) do
+         suspend v | one(args)
       return tab(0)
    }
 end

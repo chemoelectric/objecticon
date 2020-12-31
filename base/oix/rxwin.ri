@@ -132,17 +132,34 @@ static XftFont *fallback(wbp w, int ch);
 static void reset_sending_helper(wdp wd, struct sending_helper *x);
 
 static stringint drawops[] = {
-   { 0, 12},
+   { 0, 29},
+   {"add", PictOpAdd},
    {"atop",  PictOpAtop},
    {"clear",  PictOpClear},
+   {"color burn", PictOpColorBurn},
+   {"color dodge", PictOpColorDodge},
+   {"darken", PictOpDarken},
    {"dest",  PictOpDst},
    {"dest atop",  PictOpAtopReverse},
    {"dest in",  PictOpInReverse},
    {"dest out",  PictOpOutReverse},
    {"dest over",  PictOpOverReverse},
+   {"difference", PictOpDifference},
+   {"exclusion", PictOpExclusion},
+   {"hard light", PictOpHardLight},
+   {"hsl color", PictOpHSLColor},
+   {"hsl hue", PictOpHSLHue},
+   {"hsl luminosity", PictOpHSLLuminosity},
+   {"hsl saturation", PictOpHSLSaturation},
    {"in",  PictOpIn},
+   {"lighten", PictOpLighten},
+   {"multiply", PictOpMultiply},
    {"out",  PictOpOut},
    {"over",  PictOpOver},
+   {"overlay", PictOpOverlay},
+   {"saturate", PictOpSaturate},
+   {"screen", PictOpScreen},
+   {"soft light", PictOpSoftLight},
    {"source",  PictOpSrc},
    {"xor",  PictOpXor},
 };
@@ -3021,10 +3038,9 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     wcp wc = w->context;
 
     /* Calculate the bounding box. */
-    x = floor(cx - rx);
-    y = floor(cy - ry);
-    width = 2 * ceil(cx - x);
-    height = 2 * ceil(cy - y);
+    range_extent(cx - rx, cy - ry, cx + rx, cy + ry,
+                 &x, &y, &width, &height);
+
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
@@ -3032,10 +3048,6 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
-        /*
-         * Calculate width and height for the masks, and their x, y
-         * position to draw onto the screen.
-         */
         mk_arc(cx - x, cy - y,    /* centre */
                rx, ry,            /* x/y radius */
                angle1, angle2);
