@@ -1453,7 +1453,7 @@ end
 # ProgInputOutputStream
 #
 package abstract class ProgStreamBase(SocketStream, HasBgProc)
-   protected
+   protected const
       cmd
 
    #
@@ -1501,6 +1501,7 @@ class ProgInputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdin, stderr)
       local l
+      self.cmd := cmd
       l := one_way_socketpair() | fail
       unless pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1508,7 +1509,6 @@ class ProgInputStream(ProgStreamBase)
       }
       if pid > 0 then {
          # Parent
-         self.cmd := cmd
          l[2].close()
          return setup(l[1].get_fd(), READ)
       } else {
@@ -1561,6 +1561,7 @@ class ProgOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdout, stderr)
       local l
+      self.cmd := cmd
       l := one_way_socketpair() | fail
       unless l[2].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1568,7 +1569,6 @@ class ProgOutputStream(ProgStreamBase)
       }
       if pid > 0 then {
          # Parent
-         self.cmd := cmd
          l[1].close()
          return setup(l[2].get_fd(), WRITE)
       } else {
@@ -1616,6 +1616,7 @@ class ProgInputOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stderr)
       local l
+      self.cmd := cmd
       l := SocketStream.socketpair() | fail
       unless l[1].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1623,7 +1624,6 @@ class ProgInputOutputStream(ProgStreamBase)
       }
       if pid > 0 then {
          # Parent
-         self.cmd := cmd
          l[2].close()
          return setup(l[1].get_fd(), READ_WRITE)
       } else {
@@ -1647,9 +1647,10 @@ end
 # Base class for FilterOutputStream and FilterInputStream
 #
 package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, HasTask, NoCopy)
-   protected
+   protected const
       cmd,
-      err_sink,
+      err_sink
+   protected
       cin,
       cout,
       cerr
@@ -1782,7 +1783,7 @@ end
 #   g.write(s)
 # ~
 class FilterOutputStream(FilterStreamBase)
-   private 
+   private const
       sink
 
    private cp_cin()
@@ -1883,8 +1884,9 @@ end
 #   res := g.read_all()
 # ~
 class FilterInputStream(FilterStreamBase)
-   private 
-      source,
+   private const
+      source
+   private
       buff
 
    public override in(n)
