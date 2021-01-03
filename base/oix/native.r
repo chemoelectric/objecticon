@@ -5221,12 +5221,17 @@ end
 
 WCHAR *ucs_to_wchar(dptr str, int nullterm, word *len)
 {
+    return utf8_string_to_wchar(&UcsBlk(*str).utf8, nullterm, len);
+}
+
+WCHAR *utf8_string_to_wchar(dptr str, int nullterm, word *len)
+{
     WCHAR *mbs;
     int n;
     n = MultiByteToWideChar(CP_UTF8,
                             0,
-                            StrLoc(UcsBlk(*str).utf8),
-                            StrLen(UcsBlk(*str).utf8),
+                            StrLoc(*str),
+                            StrLen(*str),
                             0,
                             0);
     if (nullterm)
@@ -5234,8 +5239,8 @@ WCHAR *ucs_to_wchar(dptr str, int nullterm, word *len)
     mbs = safe_malloc(n * sizeof(WCHAR));
     MultiByteToWideChar(CP_UTF8,
                         0,
-                        StrLoc(UcsBlk(*str).utf8),
-                        StrLen(UcsBlk(*str).utf8),
+                        StrLoc(*str),
+                        StrLen(*str),
                         mbs,
                         n);
     if (nullterm)

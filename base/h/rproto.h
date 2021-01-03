@@ -331,6 +331,7 @@ void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, in
 #if MSWIN32
 LRESULT_CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 WCHAR *ucs_to_wchar(dptr str, int nullterm, word *len);
+WCHAR *utf8_string_to_wchar(dptr str, int nullterm, word *len);
 void wchar_to_utf8_string(WCHAR *src, dptr res);
 void wchar_to_ucs(WCHAR *src, dptr res);
 WCHAR *string_to_wchar(dptr str, int nullterm, word *len);
