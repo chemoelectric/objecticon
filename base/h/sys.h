@@ -47,6 +47,7 @@
    #define ftruncate _chsize_s
    typedef int mode_t;
    #define O_ACCMODE 3
+   #define WNOHANG 1
    #include <sys/timeb.h>
    #include <io.h>
    #include <time.h>

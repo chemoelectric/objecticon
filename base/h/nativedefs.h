@@ -404,6 +404,10 @@ NativeDef(posix.System,getpgid,posix_System_getpgid)
 #if OS_DARWIN
 NativeDef(posix.System,getcwd,posix_System_getcwd)
 #endif
+#if MSWIN32
+NativeDef(posix.System,create_process,posix_System_create_process)
+NativeDef(posix.System,close_handle,posix_System_close_handle)
+#endif
 NativeDef(util.Math,acos,util_Math_acos)
 NativeDef(util.Math,asin,util_Math_asin)
 NativeDef(util.Math,atan,util_Math_atan)

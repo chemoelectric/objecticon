@@ -238,21 +238,36 @@ function posix_System_wait_impl(pid, options)
 #elif MSWIN32
       struct descrip tmp;
       tended struct descrip result;
-      word i;
-      int wpid, termstat;
-      if (!cnv:C_integer(pid, i))
+      word h;
+      DWORD r, t, rc;
+      if (!cnv:C_integer(pid, h))
           runerr(101, pid);
-      if ((wpid = _cwait(&termstat, i, options)) < 0) {
-         errno2why();
-         fail;
+      if ((options & WNOHANG))
+          t = 0;
+      else
+          t = INFINITE;
+      r = WaitForSingleObject((HANDLE)h, t);
+      if (r == WAIT_FAILED) {
+          win32error2why();
+          fail;
       }
       create_list(3, &result);
-      MakeInt(wpid, &tmp);
-      list_put(&result, &tmp);
-      LitStr("terminated", &tmp);
-      list_put(&result, &tmp);
-      MakeInt(termstat, &tmp);
-      list_put(&result, &tmp);
+      list_put(&result, &pid);
+      if (r == WAIT_TIMEOUT) {
+          /* Means we were called with WNOHANG, and the exit status is not yet available. */
+          LitStr("unavailable", &tmp);
+          list_put(&result, &tmp);
+      } else if (r == 0) {
+          LitStr("terminated", &tmp);
+          list_put(&result, &tmp);
+          rc = 0;
+          GetExitCodeProcess((HANDLE)h, &rc);
+          MakeInt(rc, &tmp);
+          list_put(&result, &tmp);
+      } else {
+          LitStr("unknown", &tmp);
+          list_put(&result, &tmp);
+      }
       return result;
 #else
       Unsupported;
@@ -660,4 +675,98 @@ function posix_System_getcwd(pid)
         return result;
    }
 end
+#endif
+
+#if MSWIN32
+function posix_System_create_process(app_name, cmd_line, cwd, in, out, err)
+   body {
+       STARTUPINFOW si; 
+       PROCESS_INFORMATION pi; 
+       WCHAR *w_app_name, *w_cmd_line, *w_cwd;
+       BOOL b;
+
+       if (is:null(app_name) && is:null(cmd_line))
+           runerr(103, cmd_line);
+
+       StructClear(pi); 
+       StructClear(si); 
+       si.cb = sizeof(si);
+
+       if (!is:null(in) || !is:null(out) || !is:null(err)) {
+           si.dwFlags = STARTF_USESTDHANDLES;
+           {
+               FdStaticParam(in, fd);
+               si.hStdInput = (HANDLE)_get_osfhandle(fd);
+           }
+           {
+               FdStaticParam(out, fd);
+               si.hStdOutput = (HANDLE)_get_osfhandle(fd);
+           }
+           {
+               FdStaticParam(err, fd);
+               si.hStdError = (HANDLE)_get_osfhandle(fd);
+           }
+       }
+
+       if (is:null(app_name))
+           w_app_name = NULL;
+       else if (cnv:string(app_name, app_name))
+           w_app_name = utf8_string_to_wchar(&app_name, 1, NULL);
+       else
+           runerr(103, app_name);
+
+       if (is:null(cmd_line))
+           w_cmd_line = NULL;
+       else if (cnv:string(cmd_line, cmd_line))
+           w_cmd_line = utf8_string_to_wchar(&cmd_line, 1, NULL);
+       else {
+           free(w_app_name);
+           runerr(103, cmd_line);
+       }
+
+       if (is:null(cwd))
+           w_cwd = NULL;
+       else if (cnv:string(cwd, cwd))
+           w_cwd = utf8_string_to_wchar(&cwd, 1, NULL);
+       else {
+           free(w_app_name);
+           free(w_cmd_line);
+           runerr(103, cwd);
+       }
+
+       b = CreateProcessW(w_app_name,
+                          w_cmd_line,
+                          NULL,           /* lpProcessAttributes */
+                          NULL,           /* lpThreadAttributes */
+                          TRUE,           /* bInheritHandles */
+                          0,              /* dwCreationFlags */
+                          NULL,           /* lpEnvironment */
+                          w_cwd,          /* lpCurrentDirectory */
+                          &si,
+                          &pi);
+       free(w_app_name);
+       free(w_cmd_line);
+       free(w_cwd);
+       if (b) {
+           CloseHandle(pi.hThread);
+           return C_integer((word)pi.hProcess);
+       } else {
+           win32error2why();
+           fail;
+       }
+   }
+end
+
+function posix_System_close_handle(h)
+   if !cnv:C_integer(h) then
+      runerr(101, h)
+   body {
+       if (!CloseHandle((HANDLE)h)) {
+           win32error2why();
+           fail;
+       }
+       ReturnDefiningClass;
+   }
+end
+
 #endif

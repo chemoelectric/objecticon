@@ -204,6 +204,28 @@ $else
       return Files.readlink("/proc/" || need_integer(pid, 0) || "/cwd") | error("No such pid or permission denied")
    end
 $endif
+
+$if _MS_WIN32
+   #
+   # Create a child process using CreateProcessW().  `app_name` and
+   # `cmd_line` provide the application name and command line
+   # respectively; at least one must be non-null.  `cwd` optionally
+   # gives the working directory.  The last three parameters provide
+   # the standard file handles for the new process.  They must all be
+   # null, or must all be non-null `FileStream`s.
+   #
+   # On success, an integer handle value is returned.  This may be
+   # used with `wait()` to wait for the process to finish.  In any
+   # case the handle must be disposed of with `close_handle()`.
+   #
+   public static native create_process(app_name, cmd_line, cwd, in, out, err)
+
+   #
+   # Free a handle previously returned by `create_process()`.
+   #
+   public static native close_handle(h)
+$endif
+
 end
 
 # A structure returned by the `System.uname` method.
