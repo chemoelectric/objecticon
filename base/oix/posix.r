@@ -229,7 +229,7 @@ function posix_System_wait_impl(pid, options)
           runerr(101, pid);
       w = waitforpid(i);
       if (!w) {
-          LitWhy("process has no children");
+          LitWhy("Process has no children");
           fail;
       }
       create_list(3, &result);
