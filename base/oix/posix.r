@@ -185,8 +185,6 @@ function posix_System_execve(f, argv, envp)
 end
 
 function posix_System_wait_impl(pid, options)
-   if !def:integer(pid, -1) then
-      runerr(101, pid)
    if !def:C_integer(options, 0) then 
       runerr(101, options)
    body {
@@ -194,6 +192,8 @@ function posix_System_wait_impl(pid, options)
       pid_t i, j;
       tended struct descrip result, tmp;
       int status = 0;
+      if (!def:integer(pid, -1, pid))
+          runerr(101, pid);
       if (!convert_to_pid_t(&pid, &i))
           runerr(0);
       if ((j = waitpid(i, &status, options)) < 0) {
