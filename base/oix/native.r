@@ -1179,9 +1179,6 @@ static void *get_handle(char *filename)
     struct oisymbols **imported;
     int *version;
 
-    /* NB filename points into the string region, and should not be
-     * used after an allocation. */
-
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1222,7 +1219,7 @@ static void *get_handle(char *filename)
 }
 
 function lang_Class_load_library(lib)
-   if !cnv:C_string(lib) then
+   if !cnv:string(lib) then
       runerr(103, lib)
    body {
         struct p_proc *caller_proc;
@@ -1237,7 +1234,7 @@ function lang_Class_load_library(lib)
         if (class0->init_state != Initializing)
             runerr(617);
 
-        handle = get_handle(lib);
+        handle = get_handle(buffstr(&lib));
         if (!handle)
            /* &why already set by get_handle */
             fail;
@@ -1267,7 +1264,7 @@ function lang_Class_load_library(lib)
 end
 
 function lang_Proc_load(filename, funcname)
-    if !cnv:C_string(filename) then
+    if !cnv:string(filename) then
         runerr(103, filename)
     if !cnv:C_string(funcname) then
         runerr(103, funcname)
@@ -1276,7 +1273,7 @@ function lang_Proc_load(filename, funcname)
        char *tname;
        void *handle;
 
-       handle = get_handle(filename);
+       handle = get_handle(buffstr(&filename));
        if (!handle)
            /* &why already set by get_handle */
            fail;
@@ -1350,9 +1347,6 @@ static HMODULE get_handle(char *filename)
     struct oisymbols **imported;
     int *version;
 
-    /* NB filename points into the string region, and should not be
-     * used after an allocation. */
-
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1399,7 +1393,7 @@ static HMODULE get_handle(char *filename)
 }
 
 function lang_Class_load_library(lib)
-   if !cnv:C_string(lib) then
+   if !cnv:string(lib) then
       runerr(103, lib)
    body {
         struct p_proc *caller_proc;
@@ -1414,7 +1408,7 @@ function lang_Class_load_library(lib)
         if (class0->init_state != Initializing)
             runerr(617);
 
-        handle = get_handle(lib);
+        handle = get_handle(buffstr(&lib));
         if (!handle)
            /* &why already set by get_handle */
             fail;
@@ -1444,7 +1438,7 @@ function lang_Class_load_library(lib)
 end
 
 function lang_Proc_load(filename, funcname)
-    if !cnv:C_string(filename) then
+    if !cnv:string(filename) then
         runerr(103, filename)
     if !cnv:C_string(funcname) then
         runerr(103, funcname)
@@ -1453,7 +1447,7 @@ function lang_Proc_load(filename, funcname)
        char *tname;
        HMODULE handle;
 
-       handle = get_handle(filename);
+       handle = get_handle(buffstr(&filename));
        if (!handle)
            /* &why already set by get_handle */
            fail;
