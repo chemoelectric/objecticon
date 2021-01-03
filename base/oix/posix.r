@@ -258,7 +258,7 @@ function posix_System_wait_impl(pid, options)
           LitStr("unavailable", &tmp);
           list_put(&result, &tmp);
       } else if (r == 0) {
-          LitStr("terminated", &tmp);
+          LitStr("exited", &tmp);
           list_put(&result, &tmp);
           rc = 0;
           GetExitCodeProcess((HANDLE)h, &rc);
