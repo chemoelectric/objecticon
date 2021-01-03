@@ -856,6 +856,10 @@ $elsif _PLAN9
       "p"|"pr" : ProgInputStream("/bin/rc", ["-c", name])
       "pw" : ProgOutputStream("/bin/rc", ["-c", name])
       "prw" : ProgInputOutputStream("/bin/rc", ["-c", name])
+$elsif _MS_WIN32
+      "p"|"pr" : WProgInputStream(, name)
+      "pw" : WProgOutputStream(, name)
+      "prw" : error("Mode not supported")
 $else
       "p"|"pr"|"pw"|"prw" : error("Mode not supported")
 $endif
@@ -1641,6 +1645,9 @@ abstract class HasBgProc()
       \pid | runerr("do_wait() called out of sequence")
       # wait should never fail (even if the child crashed).
       exit_info := System.wait(pid) | syserr("System.wait failed unexpectedly: " || &why)
+$if _MS_WIN32
+      System.close_handle(pid)
+$endif
       pid := &null
       return
    end
@@ -1694,6 +1701,20 @@ package abstract class ProgStreamBase(PipeStream, HasBgProc)
       cmd
 
    #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public override close()
+      PipeStream.close()
+      do_wait()
+      link
+   end
+
+   protected set_cmd(cmd)
+      self.cmd := need_string(cmd)
+      link
+   end
+
+   #
    # Convenient function to check that the command exited
    # successfully.  If it did, this function returns, otherwise it
    # fails and sets `&why` appropriately, based on the exit code.
@@ -1712,14 +1733,6 @@ end
 #
 class ProgInputStream(ProgStreamBase)
    #
-   # Close the stream.  This waits for the child process to terminate.
-   #
-   public override close()
-      FileStream.close()
-      do_wait()
-      link
-   end
-
    # Open a new readable `Stream` based on the given command.  The
    # first three parameters are the same as for the method
    # `posix.System.exec`;  the last two optionally give the standard
@@ -1737,7 +1750,7 @@ class ProgInputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdin, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := pipe() | fail
       unless pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1759,7 +1772,7 @@ class ProgInputStream(ProgStreamBase)
          }
          l[2].dup2(FileStream.stdout) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -1771,14 +1784,6 @@ end
 #
 class ProgOutputStream(ProgStreamBase)
    #
-   # Close the stream.  This waits for the child process to terminate.
-   #
-   public override close()
-      FileStream.close()
-      do_wait()
-      link
-   end
-
    # Open a new writeable `Stream` based on the given command. The
    # first three parameters are the same as for the method
    # `posix.System.exec`; the last two optionally give the standard
@@ -1796,7 +1801,7 @@ class ProgOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdout, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := pipe(, FileOpt9.OCEXEC) | fail
       unless pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1813,7 +1818,7 @@ class ProgOutputStream(ProgStreamBase)
             stderr.dup2(FileStream.stderr) | stop(&why)
          l[1].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -1825,14 +1830,6 @@ end
 #
 class ProgInputOutputStream(ProgStreamBase)
    #
-   # Close the stream.  This waits for the child process to terminate.
-   #
-   public override close()
-      FileStream.close()
-      do_wait()
-      link
-   end
-
    # Open a new readable and writeable `Stream` based on the given
    # command.  The first three parameters are the same as for the
    # method `posix.System.exec`; `stderr` optionally gives the
@@ -1849,7 +1846,7 @@ class ProgInputOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := pipe(FileOpt9.OCEXEC) | fail
       unless pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1870,7 +1867,7 @@ class ProgInputOutputStream(ProgStreamBase)
          l[2].dup2(FileStream.stdout) | stop(&why)
          l[2].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -1964,7 +1961,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
 
    protected setup(cmd, args, env, err_sink)
       local l
-      self.cmd := cmd
+      self.cmd := need_string(cmd)
       /err_sink := StringStream()
       self.err_sink := err_sink
       l := FileStream.pipe() | fail
@@ -1992,7 +1989,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
          l[3].dup2(FileStream.stdin) | stop(&why)
          l[6].dup2(FileStream.stderr) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -2007,6 +2004,11 @@ $else
 package abstract class ProgStreamBase(SocketStream, HasBgProc)
    protected const
       cmd
+
+   protected set_cmd(cmd)
+      self.cmd := need_string(cmd)
+      link
+   end
 
    #
    # Convenient function to check that the command exited
@@ -2036,6 +2038,7 @@ class ProgInputStream(ProgStreamBase)
       link
    end
 
+   #
    # Open a new readable `Stream` based on the given command.  The
    # first three parameters are the same as for the method
    # `posix.System.exec`;  the last two optionally give the standard
@@ -2053,7 +2056,7 @@ class ProgInputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdin, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := one_way_socketpair() | fail
       unless pid := System.fork() then {
          save_why{ lclose(l) }
@@ -2075,7 +2078,7 @@ class ProgInputStream(ProgStreamBase)
          }
          l[2].dup2(FileStream.stdout) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -2096,6 +2099,7 @@ class ProgOutputStream(ProgStreamBase)
       link
    end
 
+   #
    # Open a new writeable `Stream` based on the given command. The
    # first three parameters are the same as for the method
    # `posix.System.exec`; the last two optionally give the standard
@@ -2113,7 +2117,7 @@ class ProgOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdout, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := one_way_socketpair() | fail
       unless l[2].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
@@ -2131,7 +2135,7 @@ class ProgOutputStream(ProgStreamBase)
             stderr.dup2(FileStream.stderr) | stop(&why)
          l[1].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -2168,7 +2172,7 @@ class ProgInputOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := SocketStream.socketpair() | fail
       unless l[1].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
@@ -2189,7 +2193,7 @@ class ProgInputOutputStream(ProgStreamBase)
          l[2].dup2(FileStream.stdout) | stop(&why)
          l[2].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -2286,7 +2290,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
 
    protected setup(cmd, args, env, err_sink)
       local l
-      self.cmd := cmd
+      self.cmd := need_string(cmd)
       /err_sink := StringStream()
       self.err_sink := err_sink
       l := SocketStream.one_way_socketpair() | fail
@@ -2317,7 +2321,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
          l[3].dup2(FileStream.stdin) | stop(&why)
          l[6].dup2(FileStream.stderr) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -3821,6 +3825,118 @@ class WinsockStream(Stream, NoCopy)
    public override native close()
 
    private static native new_impl(domain, typ)
+end
+
+#
+# Base class for WProgOutputStream and WProgInputStream.
+#
+package abstract class WProgStreamBase(PipeStream, HasBgProc)
+   protected const
+      cmd
+
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public override close()
+      PipeStream.close()
+      do_wait()
+      link
+   end
+
+   protected set_cmd(cmd)
+      self.cmd := need_string(\cmd) | "program"
+      link
+   end
+
+   #
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets `&why` appropriately, based on the exit code.
+   #
+   public succeeded()
+      local x
+      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+      return x.succeeded() |
+         whyf("%s failed: %w", cmd)
+   end
+end
+
+#
+# This stream represents a pipe to a command running in a child
+# process.
+#
+class WProgInputStream(WProgStreamBase)
+   #
+   # Open a new readable `Stream` based on the given app and/or
+   # command line.  The first three parameters are the same as for the
+   # method `posix.System.create_process`; the last two optionally
+   # give the standard input and standard error of the command; by
+   # default the command inherits these from the parent.  If the
+   # stderr param is the string "pipe", then stderr is sent to the
+   # pipe along with stdout.
+   #
+   # For example :-
+   # ~
+   #     f := WProgInputStream(, "netstat") | stop(&why)
+   #     while write(f.read())
+   #     f.close()
+   # ~
+   public override new(app_name, cmd_line, cwd, stdin, stderr)
+      local l
+      set_cmd(app_name)
+      l := pipe() | fail
+      /stdin := FileStream.stdin
+      if \stderr then {
+         if stderr === "pipe" then
+            stderr := l[2]
+      } else
+         stderr := FileStream.stderr
+      unless pid := System.create_process(app_name, cmd_line,
+                                          cwd,
+                                          stdin, l[2], stderr)
+      then {
+         save_why{ lclose(l) }
+         fail
+      }
+      l[2].close()
+      return setup(l[1].get_fd(), READ)
+   end
+end
+
+#
+# This stream represents a pipe to a command running in a child
+# process.
+#
+class WProgOutputStream(WProgStreamBase)
+   #
+   # Open a new writeable `Stream` based on the given command. The
+   # first three parameters are the same as for the method
+   # `posix.System.create_process`; the last two optionally give the
+   # standard output and standard error of the command; by default the
+   # command inherits these from the parent.
+   #
+   # For example :-
+   # ~
+   #      f := ProgOutputStream(, "prog arg1 arg2") | stop(&why)
+   #      f.write("data")
+   #      f.close()
+   # ~
+   public override new(app_name, cmd_line, cwd, stdout, stderr)
+      local l
+      set_cmd(app_name)
+      l := pipe() | fail
+      /stdout := FileStream.stdout
+      /stderr := FileStream.stderr
+      unless pid := System.create_process(app_name, cmd_line,
+                                          cwd,
+                                          l[1], stdout, stderr)
+      then {
+         save_why{ lclose(l) }
+         fail
+      }
+      l[1].close()
+      return setup(l[2].get_fd(), WRITE)
+   end
 end
 
 $endif

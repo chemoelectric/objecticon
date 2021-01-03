@@ -150,6 +150,7 @@
    #define ftruncate _chsize_s
    typedef int mode_t;
    #define O_ACCMODE 3
+   #define WNOHANG 1
    #include <sys/timeb.h>
    #include <io.h>
    #include <time.h>
@@ -171,6 +172,7 @@
    #define system(x) system_utf8(x)
    #define chdir(x) chdir_utf8(x)
    #define getcwd(x, y) getcwd_utf8(x, y)
+   #define pipe(x) _pipe(x, 4096, O_BINARY)
 #endif					/* MSWIN32 */
 
 #if UNIX

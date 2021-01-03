@@ -221,6 +221,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
    typedef int WNDCLASSEXW, LONG, ULONG_PTR, LPCTSTR, TRACKMOUSEEVENT;
    typedef int WCHAR, WSADATA, WORD, HANDLE, MEMORYSTATUS;
    typedef int PVOID, WIN32_FIND_DATAW, ICONINFO;
+   typedef int STARTUPINFOW, PROCESS_INFORMATION;
    typedef int INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64;
    typedef int SOCKET, SIZE_T, INT_PTR, LPWSTR, SHORT, HICON, LONG_PTR;
    typedef int gb_Bitmap, gb_Draw, gb_Color, gb_Font;

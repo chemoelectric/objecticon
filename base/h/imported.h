@@ -223,6 +223,7 @@
 #define socketf (*(imported->socketf))
 #define wsclassname (*(imported->wsclassname))
 #define ucs_to_wchar (*(imported->ucs_to_wchar))
+#define utf8_string_to_wchar (*(imported->utf8_string_to_wchar))
 #define wchar_to_utf8_string (*(imported->wchar_to_utf8_string))
 #define wchar_to_ucs (*(imported->wchar_to_ucs))
 #define string_to_wchar (*(imported->string_to_wchar))

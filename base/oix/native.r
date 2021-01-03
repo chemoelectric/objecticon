@@ -1246,7 +1246,7 @@ static void *get_handle(char *filename)
 }
 
 function lang_Class_load_library(lib)
-   if !cnv:C_string(lib) then
+   if !cnv:string(lib) then
       runerr(103, lib)
    body {
         struct p_proc *caller_proc;
@@ -1261,7 +1261,7 @@ function lang_Class_load_library(lib)
         if (class0->init_state != Initializing)
             runerr(617);
 
-        handle = get_handle(lib);
+        handle = get_handle(buffstr(&lib));
         if (!handle)
            /* &why already set by get_handle */
             fail;
@@ -1291,7 +1291,7 @@ function lang_Class_load_library(lib)
 end
 
 function lang_Proc_load(filename, funcname)
-    if !cnv:C_string(filename) then
+    if !cnv:string(filename) then
         runerr(103, filename)
     if !cnv:C_string(funcname) then
         runerr(103, funcname)
@@ -1300,7 +1300,7 @@ function lang_Proc_load(filename, funcname)
        char *tname;
        void *handle;
 
-       handle = get_handle(filename);
+       handle = get_handle(buffstr(&filename));
        if (!handle)
            /* &why already set by get_handle */
            fail;
@@ -1420,7 +1420,7 @@ static HMODULE get_handle(char *filename)
 }
 
 function lang_Class_load_library(lib)
-   if !cnv:C_string(lib) then
+   if !cnv:string(lib) then
       runerr(103, lib)
    body {
         struct p_proc *caller_proc;
@@ -1435,7 +1435,7 @@ function lang_Class_load_library(lib)
         if (class0->init_state != Initializing)
             runerr(617);
 
-        handle = get_handle(lib);
+        handle = get_handle(buffstr(&lib));
         if (!handle)
            /* &why already set by get_handle */
             fail;
@@ -1465,7 +1465,7 @@ function lang_Class_load_library(lib)
 end
 
 function lang_Proc_load(filename, funcname)
-    if !cnv:C_string(filename) then
+    if !cnv:string(filename) then
         runerr(103, filename)
     if !cnv:C_string(funcname) then
         runerr(103, funcname)
@@ -1474,7 +1474,7 @@ function lang_Proc_load(filename, funcname)
        char *tname;
        HMODULE handle;
 
-       handle = get_handle(filename);
+       handle = get_handle(buffstr(&filename));
        if (!handle)
            /* &why already set by get_handle */
            fail;
@@ -1915,7 +1915,6 @@ end
 
 function io_FileStream_pipe_impl()
    body {
-#if UNIX || PLAN9
        int fds[2];
        tended struct descrip result;
 
@@ -1926,9 +1925,6 @@ function io_FileStream_pipe_impl()
 
        C_to_list(&result, "ii", fds[0], fds[1]);
        return result;
-#else
-       Unsupported;
-#endif
    }
 end
 
@@ -6291,12 +6287,17 @@ end
 
 WCHAR *ucs_to_wchar(dptr str, int nullterm, word *len)
 {
+    return utf8_string_to_wchar(&UcsBlk(*str).utf8, nullterm, len);
+}
+
+WCHAR *utf8_string_to_wchar(dptr str, int nullterm, word *len)
+{
     WCHAR *mbs;
     int n;
     n = MultiByteToWideChar(CP_UTF8,
                             0,
-                            StrLoc(UcsBlk(*str).utf8),
-                            StrLen(UcsBlk(*str).utf8),
+                            StrLoc(*str),
+                            StrLen(*str),
                             0,
                             0);
     if (nullterm)
@@ -6304,8 +6305,8 @@ WCHAR *ucs_to_wchar(dptr str, int nullterm, word *len)
     mbs = safe_malloc(n * sizeof(WCHAR));
     MultiByteToWideChar(CP_UTF8,
                         0,
-                        StrLoc(UcsBlk(*str).utf8),
-                        StrLen(UcsBlk(*str).utf8),
+                        StrLoc(*str),
+                        StrLen(*str),
                         mbs,
                         n);
     if (nullterm)
