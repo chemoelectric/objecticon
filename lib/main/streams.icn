@@ -796,6 +796,10 @@ $if _UNIX
       "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
       "pw" : ProgOutputStream("/bin/sh", ["-c", name])
       "prw" : ProgInputOutputStream("/bin/sh", ["-c", name])
+$elsif _MS_WIN32
+      "p"|"pr" : WProgInputStream(, name)
+      "pw" : WProgOutputStream(, name)
+      "prw" : error("Mode not supported")
 $else
       "p"|"pr"|"pw"|"prw" : error("Mode not supported")
 $endif
@@ -1405,6 +1409,9 @@ abstract class HasBgProc()
       \pid | runerr("do_wait() called out of sequence")
       # wait should never fail (even if the child crashed).
       exit_info := System.wait(pid) | syserr("System.wait failed unexpectedly: " || &why)
+$if _MS_WIN32
+      System.close_handle(pid)
+$endif
       pid := &null
       return
    end
@@ -1489,6 +1496,7 @@ class ProgInputStream(ProgStreamBase)
       link
    end
 
+   #
    # Open a new readable `Stream` based on the given command.  The
    # first three parameters are the same as for the method
    # `posix.System.exec`;  the last two optionally give the standard
@@ -1549,6 +1557,7 @@ class ProgOutputStream(ProgStreamBase)
       link
    end
 
+   #
    # Open a new writeable `Stream` based on the given command. The
    # first three parameters are the same as for the method
    # `posix.System.exec`; the last two optionally give the standard
@@ -2483,6 +2492,118 @@ class WinsockStream(Stream, NoCopy)
    public override native close()
 
    private static native new_impl(domain, typ)
+end
+
+#
+# Base class for WProgOutputStream and WProgInputStream.
+#
+package abstract class WProgStreamBase(PipeStream, HasBgProc)
+   protected const
+      cmd
+
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public override close()
+      PipeStream.close()
+      do_wait()
+      link
+   end
+
+   protected set_cmd(cmd)
+      self.cmd := need_string(\cmd) | "program"
+      link
+   end
+
+   #
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets `&why` appropriately, based on the exit code.
+   #
+   public succeeded()
+      local x
+      x := get_exit_info() | runerr("succeeded() can only be called after close()")
+      return x.succeeded() |
+         whyf("%s failed: %w", cmd)
+   end
+end
+
+#
+# This stream represents a pipe to a command running in a child
+# process.
+#
+class WProgInputStream(WProgStreamBase)
+   #
+   # Open a new readable `Stream` based on the given app and/or
+   # command line.  The first three parameters are the same as for the
+   # method `posix.System.create_process`; the last two optionally
+   # give the standard input and standard error of the command; by
+   # default the command inherits these from the parent.  If the
+   # stderr param is the string "pipe", then stderr is sent to the
+   # pipe along with stdout.
+   #
+   # For example :-
+   # ~
+   #     f := WProgInputStream(, "netstat") | stop(&why)
+   #     while write(f.read())
+   #     f.close()
+   # ~
+   public override new(app_name, cmd_line, cwd, stdin, stderr)
+      local l
+      set_cmd(app_name)
+      l := pipe() | fail
+      /stdin := FileStream.stdin
+      if \stderr then {
+         if stderr === "pipe" then
+            stderr := l[2]
+      } else
+         stderr := FileStream.stderr
+      unless pid := System.create_process(app_name, cmd_line,
+                                          cwd,
+                                          stdin, l[2], stderr)
+      then {
+         save_why{ lclose(l) }
+         fail
+      }
+      l[2].close()
+      return setup(l[1].get_fd(), READ)
+   end
+end
+
+#
+# This stream represents a pipe to a command running in a child
+# process.
+#
+class WProgOutputStream(WProgStreamBase)
+   #
+   # Open a new writeable `Stream` based on the given command. The
+   # first three parameters are the same as for the method
+   # `posix.System.create_process`; the last two optionally give the
+   # standard output and standard error of the command; by default the
+   # command inherits these from the parent.
+   #
+   # For example :-
+   # ~
+   #      f := ProgOutputStream(, "prog arg1 arg2") | stop(&why)
+   #      f.write("data")
+   #      f.close()
+   # ~
+   public override new(app_name, cmd_line, cwd, stdout, stderr)
+      local l
+      set_cmd(app_name)
+      l := pipe() | fail
+      /stdout := FileStream.stdout
+      /stderr := FileStream.stderr
+      unless pid := System.create_process(app_name, cmd_line,
+                                          cwd,
+                                          l[1], stdout, stderr)
+      then {
+         save_why{ lclose(l) }
+         fail
+      }
+      l[1].close()
+      return setup(l[2].get_fd(), WRITE)
+   end
 end
 
 $endif
