@@ -448,12 +448,13 @@ static void execute(char **args)
 #if MSWIN32
    int len;
    WCHAR *cl, *wofile, *cmd, *xp;
-   STARTUPINFOW siStartupInfo; 
-   PROCESS_INFORMATION piProcessInfo; 
+   STARTUPINFOW si; 
+   PROCESS_INFORMATION pi; 
+   DWORD r;
 
-   StructClear(siStartupInfo); 
-   StructClear(piProcessInfo); 
-   siStartupInfo.cb = sizeof(siStartupInfo); 
+   StructClear(si); 
+   StructClear(pi); 
+   si.cb = sizeof(si); 
 
    cl = GetCommandLineW();
    wofile = utf8_to_wchar(ofile);
@@ -480,12 +481,15 @@ static void execute(char **args)
 
    if (!CreateProcessW(utf8_to_wchar(oixloc), cmd,
                        NULL, NULL, FALSE, 0, NULL, NULL, 
-                       &siStartupInfo, &piProcessInfo)) {
+                       &si, &pi)) {
       quit("CreateProcess failed GetLastError=%d\n", GetLastError());
    }
-   WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
-   CloseHandle( piProcessInfo.hProcess );
-   CloseHandle( piProcessInfo.hThread );
+   WaitForSingleObject(pi.hProcess, INFINITE);
+   r = 0;
+   GetExitCodeProcess(pi.hProcess, &r);
+   CloseHandle(pi.hProcess);
+   CloseHandle(pi.hThread);
+   exit(r);
 #else
    int n;
    char **argv, **p;

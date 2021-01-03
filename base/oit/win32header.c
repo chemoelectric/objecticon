@@ -21,24 +21,28 @@ static char *find_oixloc(void)
 int main(void)
 {
     char *oixloc;
-    STARTUPINFOW siStartupInfo; 
-    PROCESS_INFORMATION piProcessInfo; 
-    StructClear(siStartupInfo); 
-    StructClear(piProcessInfo); 
-    siStartupInfo.cb = sizeof(siStartupInfo); 
+    STARTUPINFOW si; 
+    PROCESS_INFORMATION pi; 
+    DWORD r;
+    StructClear(si); 
+    StructClear(pi); 
+    si.cb = sizeof(si); 
     oixloc = find_oixloc();
     if (!oixloc) {
         fprintf(stderr, "Couldn't find oix on PATH\n");
         exit(EXIT_FAILURE);
     }
 
-    if (!CreateProcessW(utf8_to_wchar(oixloc), GetCommandLineW(), NULL, NULL, TRUE, 0, NULL, NULL, 
-		      &siStartupInfo, &piProcessInfo)) {
+    if (!CreateProcessW(utf8_to_wchar(oixloc), GetCommandLineW(),
+                        NULL, NULL, TRUE, 0, NULL, NULL, 
+                        &si, &pi)) {
       fprintf(stderr, "CreateProcess failed GetLastError=%d\n", GetLastError());
       exit(EXIT_FAILURE);
    }
-   WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
-   CloseHandle( piProcessInfo.hProcess );
-   CloseHandle( piProcessInfo.hThread );
-   return 0;
+   WaitForSingleObject(pi.hProcess, INFINITE);
+   r = 0;
+   GetExitCodeProcess(pi.hProcess, &r);
+   CloseHandle(pi.hProcess);
+   CloseHandle(pi.hThread);
+   return r;
 }
