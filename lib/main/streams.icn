@@ -1456,6 +1456,11 @@ package abstract class ProgStreamBase(SocketStream, HasBgProc)
    protected const
       cmd
 
+   protected set_cmd(cmd)
+      self.cmd := need_string(cmd)
+      link
+   end
+
    #
    # Convenient function to check that the command exited
    # successfully.  If it did, this function returns, otherwise it
@@ -1501,7 +1506,7 @@ class ProgInputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdin, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := one_way_socketpair() | fail
       unless pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1523,7 +1528,7 @@ class ProgInputStream(ProgStreamBase)
          }
          l[2].dup2(FileStream.stdout) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -1561,7 +1566,7 @@ class ProgOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stdout, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := one_way_socketpair() | fail
       unless l[2].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1579,7 +1584,7 @@ class ProgOutputStream(ProgStreamBase)
             stderr.dup2(FileStream.stderr) | stop(&why)
          l[1].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -1616,7 +1621,7 @@ class ProgInputOutputStream(ProgStreamBase)
    # ~
    public override new(cmd, args, env, stderr)
       local l
-      self.cmd := cmd
+      set_cmd(cmd)
       l := SocketStream.socketpair() | fail
       unless l[1].dflag(DescOpt.CLOEXEC) & pid := System.fork() then {
          save_why{ lclose(l) }
@@ -1637,7 +1642,7 @@ class ProgInputOutputStream(ProgStreamBase)
          l[2].dup2(FileStream.stdout) | stop(&why)
          l[2].dup2(FileStream.stdin) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -1734,7 +1739,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
 
    protected setup(cmd, args, env, err_sink)
       local l
-      self.cmd := cmd
+      self.cmd := need_string(cmd)
       /err_sink := StringStream()
       self.err_sink := err_sink
       l := SocketStream.one_way_socketpair() | fail
@@ -1765,7 +1770,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasCloseUnderlying, H
          l[3].dup2(FileStream.stdin) | stop(&why)
          l[6].dup2(FileStream.stderr) | stop(&why)
          lclose(l)
-         System.exec(cmd, args, env) | stop(&why)
+         System.exec(self.cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
    end
