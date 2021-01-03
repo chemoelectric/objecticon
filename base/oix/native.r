@@ -1179,6 +1179,9 @@ static void *get_handle(char *filename)
     struct oisymbols **imported;
     int *version;
 
+    /* NB filename points into the string region, and should not be
+     * used after an allocation. */
+
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
     for (x = tbl[i]; x; x = x->next) {
@@ -1346,6 +1349,9 @@ static HMODULE get_handle(char *filename)
     WCHAR *wfilename;
     struct oisymbols **imported;
     int *version;
+
+    /* NB filename points into the string region, and should not be
+     * used after an allocation. */
 
     i = hasher(hashcstr(filename), tbl);
     /* Search list for match. */
