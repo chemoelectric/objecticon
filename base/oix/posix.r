@@ -188,7 +188,7 @@ function posix_System_wait_impl(pid, options)
    if !def:integer(pid, -1) then
       runerr(101, pid)
    if !def:C_integer(options, 0) then 
-      runerr(103, options)
+      runerr(101, options)
    body {
 #if UNIX
       pid_t i, j;
