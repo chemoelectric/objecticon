@@ -1805,7 +1805,6 @@ end
 
 function io_FileStream_pipe_impl()
    body {
-#if UNIX
        int fds[2];
        tended struct descrip result;
 
@@ -1816,9 +1815,6 @@ function io_FileStream_pipe_impl()
 
        C_to_list(&result, "ii", fds[0], fds[1]);
        return result;
-#else
-       Unsupported;
-#endif
    }
 end
 
