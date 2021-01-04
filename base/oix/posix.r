@@ -216,8 +216,6 @@ function posix_System_execve(f, argv, envp)
 end
 
 function posix_System_wait_impl(pid, options)
-   if !def:integer(pid, -1) then
-      runerr(101, pid)
    if !def:C_integer(options, 0) then 
       runerr(101, options)
    body {
@@ -225,7 +223,7 @@ function posix_System_wait_impl(pid, options)
       tended struct descrip result, tmp;
       word i;
       Waitmsg *w;
-      if (!cnv:C_integer(pid, i))
+      if (!def:C_integer(pid, -1, i))
           runerr(101, pid);
       w = waitforpid(i);
       if (!w) {
@@ -250,6 +248,8 @@ function posix_System_wait_impl(pid, options)
       pid_t i, j;
       tended struct descrip result, tmp;
       int status = 0;
+      if (!def:integer(pid, -1, pid))
+          runerr(101, pid);
       if (!convert_to_pid_t(&pid, &i))
           runerr(0);
       if ((j = waitpid(i, &status, options)) < 0) {
@@ -449,7 +449,7 @@ static Waitmsg *lookpid(int pid)
     Waitmsg *msg;
 
     for(wl = &wd; (w = *wl) != nil; wl = &w->next)
-        if(pid <= 0 || w->msg->pid == pid){
+        if(pid <= 0 || w->msg->pid == pid) {
             msg = w->msg;
             *wl = w->next;
             free(w);
@@ -480,7 +480,7 @@ Waitmsg *waitforpid(int pid)
         w = wait();
         if (!w)
             return 0;
-        if (pid == -1 || w->pid == pid)
+        if (pid <= 0 || w->pid == pid)
             break;
         addpid(w);
     }
