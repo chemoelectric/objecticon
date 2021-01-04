@@ -1818,7 +1818,6 @@ function io_FileStream_pipe_impl()
    }
 end
 
-#if UNIX
 function io_PipeStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
@@ -1833,7 +1832,6 @@ function io_PipeStream_out(self, s)
        return C_integer rc;
    }
 end
-#endif
 
 function io_FileStream_pread(self, i, offset)
    if !cnv:C_integer(i) then
