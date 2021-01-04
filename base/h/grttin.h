@@ -533,6 +533,10 @@ if (is:null(*m##_dptr))
     sigaction(SIGPIPE, &pp_tmp, &pp_saved);
     thing;
     sigaction(SIGPIPE, &pp_saved, NULL);
+#elif PLAN9
+    notify(catchpipe);
+    thing;
+    notify(nil);
 #else
     thing;
 #endif
