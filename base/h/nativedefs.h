@@ -225,8 +225,8 @@ NativeDef(io.RamStream,seek,io_RamStream_seek)
 NativeDef(io.RamStream,str,io_RamStream_str)
 NativeDef(io.RamStream,tell,io_RamStream_tell)
 NativeDef(io.RamStream,truncate,io_RamStream_truncate)
-#if UNIX
 NativeDef(io.PipeStream,out,io_PipeStream_out)
+#if UNIX
 NativeDef(io.SocketStream,accept_impl,io_SocketStream_accept_impl)
 NativeDef(io.SocketStream,bind,io_SocketStream_bind)
 NativeDef(io.SocketStream,close,io_SocketStream_close)
