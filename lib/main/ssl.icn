@@ -82,7 +82,7 @@ final class SslStream(Stream, HasCloseUnderlying, NoCopy)
       close_impl() | (f := &why)
       if \close_underlying_flag then
          other.close() | (/f := &why)
-      return if /f then self else error(f)
+      link error_if(f)
    end
 
    private native close_impl()

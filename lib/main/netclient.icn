@@ -576,7 +576,7 @@ $endif
          fire(CLOSED_EVENT)
       }
       sbuff := ""
-      return if /f then self else error(f)
+      link error_if(f)
    end
 
    #

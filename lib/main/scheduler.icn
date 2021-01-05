@@ -196,6 +196,7 @@ class Task()
    # :  `timeout` - The optional timeout
    #
    public poll(l, timeout)
+      local f
       is_current() | runerr("poll() called on task which is not current")
       need_list(l)
       if *l % 2 ~= 0 then
@@ -207,12 +208,8 @@ class Task()
       poll_req := l
       poll_err := poll_res := notify_flag := interrupt_why := &null
       scheduler.now_poll(self)
-      return if \interrupt_why then
-         error(interrupt_why)
-      else if \poll_err then
-         error(poll_err)
-      else
-         .self.poll_res
+      f := \interrupt_why | \poll_err
+      return error_if(f, poll_res)
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -242,7 +239,7 @@ class Task()
       time_until := (time_from + \n) | &null
       notify_flag := interrupt_why := &null
       scheduler.now_sleep(self)
-      return if \interrupt_why then error(interrupt_why) else self
+      link error_if(interrupt_why)
    end
 
    # Interrupt the task, which may not be currently active.  If the

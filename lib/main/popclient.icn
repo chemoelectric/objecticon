@@ -61,7 +61,7 @@ class PopClient(NetClient)
       local f
       send_command("QUIT") | (f := &why)
       close_connection() | (/f := &why)
-      return if /f then self else error(f)
+      link error_if(f)
    end
 
    #
