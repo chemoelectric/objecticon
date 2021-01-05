@@ -27,6 +27,19 @@ procedure error(s)
 end
 
 #
+# Like `error`, but if `s` is `&null`, succeed with `v`; otherwise set
+# `&why` and fail.
+#
+# This is useful in procedures which accumulate a possible error
+# condition.
+#
+procedure error_if(s, v)
+   if /s then
+      return v
+   &why := s
+end
+
+#
 # Extract an error code number from `&why`.
 #
 # If `&why` was set by a native method which failed due to an error
@@ -301,7 +314,7 @@ procedure use(e1, e2, e3)
       /e2 | (v := @e2) | (f := &why)
       (if /e3 then x.close() else @e3) | (/f := &why)
    }      
-   return if /f then v else error(f)
+   return error_if(f, v)
 end
 
 #
@@ -341,7 +354,7 @@ procedure clean(e)
    while x := pop(cleanup) do
       @x | (/f := &why)
    cleanup := t
-   return if /f then v else error(f)
+   return error_if(f, v)
 end
 
 #

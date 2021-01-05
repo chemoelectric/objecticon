@@ -3,7 +3,7 @@ package io
 import
    util(error, need_flag, need_integer, need_string,
         save_why, HasMode, HasCloseUnderlying, HasClose,
-        lclose, need_coexpression),
+        error_if, lclose, need_coexpression),
    lang(Class, NoCopy),
    posix(System),
    ipl.strings(replace),
@@ -581,7 +581,7 @@ class BufferStream(Stream, HasCloseUnderlying)
       if \close_underlying_flag then
          other.close() | (/f := &why)
       rbuff := wbuff := &null
-      return if /f then self else error(f)
+      link error_if(f)
    end
 
    public override seek(offset)
@@ -1859,7 +1859,7 @@ class FilterOutputStream(FilterStreamBase)
          (err_sink === sink) | err_sink.close() | (/f := &why)
       }
       do_wait()
-      return if /f then self else error(f)
+      link error_if(f)
    end
 
    public override get_mode()
@@ -1998,7 +1998,7 @@ class FilterInputStream(FilterStreamBase)
       }
       do_wait()
       self.buff := &null
-      return if /f then self else error(f)
+      link error_if(f)
    end
 
    public override get_mode()
