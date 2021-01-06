@@ -22,7 +22,6 @@ struct errtab errtab[] = {
     {106, "Procedure or other invocable expected"},
     {107, "Record expected"},
     {108, "List expected"},
-    {109, "String or file expected"},
     {110, "String or list expected"},
     {111, "Variable expected"},
     {112, "Invalid type to size operation"},
