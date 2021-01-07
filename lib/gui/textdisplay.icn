@@ -19,7 +19,6 @@ import
 class TextDisplay(LineBasedScrollArea)
    public
       contents, 
-      wrap_mode,
       split_words_flag,
       view_list,
       view_list_split_width,
@@ -32,7 +31,7 @@ class TextDisplay(LineBasedScrollArea)
       local s, i, pos, j, p, l, ll, v
 
       if \last_split &
-         (/wrap_mode | wrap_mode ~== "width" | last_split.width === sw) then
+         not(is(line_splitter, WidthLineSplitter) & last_split.width ~=== sw) then
          return last_split
 
       l := []
@@ -96,7 +95,7 @@ class TextDisplay(LineBasedScrollArea)
    # :  `x` - The list of data.
    #
    public set_contents(x)
-      self.contents := x
+      self.contents := need_list(x)
       contents_changed()
       link
    end
@@ -208,6 +207,8 @@ class TextDisplay(LineBasedScrollArea)
    #
    public log(l, max)
       local n
+      need_list(l)
+      max := need_integer(\max)
       every put(self.contents, !l)
       if is_live() then {
          update_view_list(*self.contents - *l + 1, 0, *l)
@@ -234,6 +235,8 @@ class TextDisplay(LineBasedScrollArea)
    #
    public log_str(s, max)
       local t, n, fl
+      s := need_text(s)
+      max := need_integer(\max)
       n := *contents
       if n = 0 then
          fl := &yes
@@ -326,7 +329,7 @@ class TextDisplay(LineBasedScrollArea)
       local had_vsb
       had_vsb := self.vsb
       LineBasedScrollArea.set_internal_fields()
-      if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
+      if is(line_splitter, WidthLineSplitter) & had_vsb ~=== self.vsb then {
          clear_split_list()
          set_internal_fields()
       }
@@ -345,7 +348,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public override layout()
-      if \wrap_mode == "width" then
+      if is(line_splitter, WidthLineSplitter) then
          clear_view_list()
       ScrollArea.layout()
    end
@@ -362,7 +365,6 @@ class TextDisplay(LineBasedScrollArea)
    #
    public set_wrap_mode(s)
       local wc
-      self.wrap_mode := s
       if /flag(s) then
          line_splitter := DefaultLineSplitter(self)
       else if wc := integer(s) then

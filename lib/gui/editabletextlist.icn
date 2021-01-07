@@ -50,7 +50,6 @@ class EditableTextList(LineBasedScrollArea)
       view_list,
       view_list_split_width,
       tab_width,
-      wrap_mode,
       split_words_flag,
       line_splitter,
       last_split,
@@ -67,7 +66,7 @@ class EditableTextList(LineBasedScrollArea)
       local s, i, pos, j, p, l, ll, v
 
       if \last_split &
-         (/wrap_mode | wrap_mode ~== "width" | last_split.width === sw) then
+         not(is(line_splitter, WidthLineSplitter) & last_split.width ~=== sw) then
          return last_split
 
       l := []
@@ -158,7 +157,7 @@ class EditableTextList(LineBasedScrollArea)
    # :  `x` - the contents, as a list of strings
    #
    public set_contents(x)
-      self.contents := x
+      self.contents := need_list(x)
       contents_changed()
       link
    end
@@ -168,7 +167,7 @@ class EditableTextList(LineBasedScrollArea)
    # set with `set_contents()`, has changed.
    #
    public contents_changed()
-      local t
+      local t, a
 
       if *self.contents = 0 then
          #
@@ -180,8 +179,8 @@ class EditableTextList(LineBasedScrollArea)
       # Ensure elements all of the same (text) type
       #
       t := type(text(self.contents[1]))
-      if type(!self.contents) ~== t then
-         runerr("Contents of EditableTextList must be all string or all ucs")
+      if type(a := !self.contents) ~=== t then
+         runerr("Contents of EditableTextList must be all string or all ucs", a)
 
       if is_live() then {
          clear_split_list()
@@ -226,7 +225,9 @@ class EditableTextList(LineBasedScrollArea)
    # :  `max` - optional maximum length of resulting contents
    #
    public log(l, max)
-      local n, t
+      local n, t, a
+      need_list(l)
+      max := need_integer(\max)
       # Overwite an initial empty line, otherwise append.
       if *self.contents = 1 & *self.contents[1] = 0 then {
          if *l > \max then
@@ -242,8 +243,8 @@ class EditableTextList(LineBasedScrollArea)
       } else {
          # Check type
          t := type(self.contents[1])
-         if type(!l) ~== t then
-            runerr("Type of log list inconsistent with contents - must be all string or all ucs")
+         if type(a := !l) ~== t then
+            runerr("Type of log list inconsistent with contents - must be all string or all ucs", a)
 
          every put(self.contents, !l)
          if is_live() then {
@@ -278,9 +279,11 @@ class EditableTextList(LineBasedScrollArea)
    public log_str(s, max)
       local t, n, fl
 
-      # Check type unless we have empty contents.
-      (*self.contents = 1 & *self.contents[1] = 0) | type(self.contents[1]) == type(s) |
-            runerr("Type of log_str string inconsistent with contents - must be all string or all ucs")
+      s := need_text(s)
+      max := need_integer(\max)
+
+      type(self.contents[1]) == type(s) |
+         runerr("Type of log_str string inconsistent with contents - must be all string or all ucs", s)
 
       n := *contents
       every t := separate_lines(s) do {
@@ -1126,7 +1129,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public override layout()
-      if \wrap_mode == "width" then
+      if is(line_splitter, WidthLineSplitter) then
          clear_view_list()
       ScrollArea.layout()
       self.constrain_line()
@@ -1138,7 +1141,7 @@ class EditableTextList(LineBasedScrollArea)
       LineBasedScrollArea.set_internal_fields()
       self.tx := self.view.x + Gui.TEXT_INSET
       self.tw := self.view.w - 2 * Gui.TEXT_INSET
-      if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
+      if is(line_splitter, WidthLineSplitter) & had_vsb ~=== self.vsb then {
          clear_split_list()
          set_internal_fields()
       }
@@ -1389,7 +1392,6 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_wrap_mode(s)
       local wc
-      self.wrap_mode := s
       if /flag(s) then
          line_splitter := DefaultLineSplitter(self)
       else if wc := integer(s) then
@@ -1903,7 +1905,7 @@ end
 class WidthLineSplitter(LineSplitter)
    public override split(s, width)
       local ch, ds, p
-      \width | runerr("Need to specify width with 'width' wrap mode")
+      width := need_integer(width)
       ds := ""
       s ? {
          while ch := move(1) do {
