@@ -339,7 +339,7 @@ class FileDialog(Dialog)
    # Set the initial directory.
    #
    public set_directory(s)
-      self.init_dirs := [s]
+      self.init_dirs := [ need_text(s) ]
       link
    end
 
@@ -348,7 +348,7 @@ class FileDialog(Dialog)
    # initially shown.
    #
    public set_directories(l)
-      self.init_dirs := l
+      self.init_dirs := need_list(l)
       link
    end
 
@@ -356,7 +356,7 @@ class FileDialog(Dialog)
    # Set the initial file
    #
    public set_file(s)
-      self.init_files := [s]
+      self.init_files := [ need_text(s) ]
       link
    end
 
@@ -364,7 +364,7 @@ class FileDialog(Dialog)
    # Set the initial files
    #
    public set_files(l)
-      self.init_files := l
+      self.init_files := need_list(l)
       link
    end
 
@@ -372,7 +372,7 @@ class FileDialog(Dialog)
    # Set the file filter pattern list.
    #
    public set_filters(l)
-      self.init_filters := l
+      self.init_filters := need_list(l)
       link
    end
 

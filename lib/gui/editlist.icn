@@ -8,7 +8,9 @@
 
 package gui
 
-import ipl.pdco
+import
+   util,
+   ipl.pdco
 
 #
 # This component functions in the same way as List above, but
@@ -62,7 +64,7 @@ class EditList(SelectionDropDown)
    # :  `The` - list of items
    #
    public synch_set_selection_list(x)
-      self.selection_list := x
+      self.selection_list := need_list(x)
       /self.selection := 1
       constrain_selection()
       synch_selection()

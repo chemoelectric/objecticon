@@ -8,7 +8,9 @@
 
 package gui
 
-import ipl.pdco(MaxNN)
+import
+   util,
+   ipl.pdco(MaxNN)
 
 #
 #
@@ -53,7 +55,7 @@ class List(SelectionDropDown)
    # component, rather than the currently selected item.
    #
    public set_constant_label(x)
-      self.constant_label := x
+      self.constant_label := need_text(x)
       apply_selection()
       link
    end
@@ -100,7 +102,7 @@ abstract class ButtonOnlyList(List)
       # &null.  Since we can't see the label, it makes no sense to set
       # the selection to 1.  If we did that, and opened the list, and
       # selected the first item, we wouldn't fire an event.
-      self.selection_list := x
+      self.selection_list := need_list(x)
       constrain_selection()
       apply_selection()
       link
