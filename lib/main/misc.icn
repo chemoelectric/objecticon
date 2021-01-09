@@ -3,6 +3,7 @@ package util
 import
    lang(Text,callable),
    ipl.lists(ldel1),
+   ipl.pdco(Set),
    posix(System)
 
 
@@ -12,10 +13,8 @@ import
 #
 procedure has_feature(x)
    static s
-   initial {
-      s := set()
-      every insert(s, &features)
-   }
+   initial
+      s := Set{ &features }
    succeed member(s, x)
 end
 
