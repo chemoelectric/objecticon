@@ -98,7 +98,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # :  `x` - The list of data.
    #
    public set_contents(x)
-      self.contents := x
+      self.contents := need_list(x)
       contents_changed()
       link
    end

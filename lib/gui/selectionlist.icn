@@ -1,6 +1,8 @@
 package gui
 
-import ipl.numbers
+import
+   util,
+   ipl.numbers
 
 abstract class SelectionList()
    public 
@@ -13,7 +15,7 @@ abstract class SelectionList()
    # :  `x` - The list of items
    #
    public set_selection_list(x)
-      self.selection_list := x
+      self.selection_list := need_list(x)
       /self.selection := 1
       constrain_selection()
       apply_selection()
@@ -26,7 +28,7 @@ abstract class SelectionList()
    # :  `x` - An index into the list of selectable items.
    #
    public set_selection(x, ev)
-      self.selection := x
+      self.selection := need_integer(\x)
       constrain_selection()
       apply_selection(ev)
       link
@@ -80,7 +82,7 @@ abstract class SelectionList()
    # :  `x` - The list of items
    #
    public set_selection_list_only(x)
-      self.selection_list := x
+      self.selection_list := need_list(x)
       constrain_selection()
       link
    end
@@ -93,7 +95,7 @@ abstract class SelectionList()
    # :  `x` - An index into the list of selectable items.
    #
    public set_selection_only(x)
-      self.selection := x
+      self.selection := need_integer(\x)
       constrain_selection()
       link
    end

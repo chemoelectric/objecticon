@@ -689,6 +689,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public set_cursor(n)
+      n := need_integer(\n)
       if cursor ~=== n then {
          invalidate_line(get_row_for_index(\cursor))
          cursor := n
@@ -699,6 +700,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public set_highlight(n)
+      n := need_integer(\n)
       if highlight ~=== n then {
          set_cursor(\n)
          invalidate_line(get_row_for_index(\highlight))
@@ -891,7 +893,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public set_data(l)
-      self.data := l
+      self.data := need_list(l)
       data_changed()
       link
    end

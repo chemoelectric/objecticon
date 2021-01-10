@@ -8,7 +8,9 @@
 
 package gui
 
-import ipl.pdco
+import
+   util,
+   ipl.pdco
 
 #
 # Selection from a list with edit
@@ -78,7 +80,7 @@ class EditListSpin(SelectionSpin)
    # :  `The` - list of items
    #
    public synch_set_selection_list(x)
-      self.selection_list := x
+      self.selection_list := need_list(x)
       /self.selection := 1
       constrain_selection()
       synch_selection()

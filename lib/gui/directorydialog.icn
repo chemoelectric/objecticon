@@ -4,6 +4,7 @@ import
    ipl.sort,
    ipl.filegui,
    io,
+   util,
    lang
 
 package class DirEditList(EditList)
@@ -238,7 +239,7 @@ class DirectoryDialog(Dialog)
    # Set the initial directory.
    #
    public set_directory(s)
-      self.init_dirs := [s]
+      self.init_dirs := [ need_text(s) ]
       link
    end
 
@@ -247,7 +248,7 @@ class DirectoryDialog(Dialog)
    # initially shown.
    #
    public set_directories(l)
-      self.init_dirs := l
+      self.init_dirs := need_list(l)
       link
    end
 
