@@ -217,7 +217,10 @@ procedure messtest()
    write()
    every write(imagex(!sort(L1)))
 
+   write("-- wsortf 2")
    wsortf(L1, 2)
+
+   write("-- wsortf -1")
    wsortf(L1, -1)
    return
 end
@@ -228,7 +231,7 @@ procedure wsortf(L, n)
    write()
    every e := !sortf(L,n) do {
       s := imagex(e)
-      if (s ? =("list" | "record")) & not (s ?= "record constructor") then
+      if (s ? =("list#" | "record ")) then
          writes("key=", imagex(e[n]), " ")	# may fail
       write(s)
       }
