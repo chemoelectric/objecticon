@@ -808,12 +808,12 @@ end
  */
 static int nthcmp(dptr d1, dptr d2)
    {
-   int t1, t2, rv;
+   int rv;
    dptr e1, e2;
 
-   t1 = Type(*d1);
-   t2 = Type(*d2);
-   if (t1 == t2 && (t1 == T_Record || t1 == T_List)) {
+   if (d1->dword == d2->dword &&
+       (is:list(*d1) || is:record(*d1)))
+   {
       e1 = nth(d1);		/* get nth field, or NULL if none such */
       e2 = nth(d2);
       if (e1 == NULL) {
@@ -826,7 +826,7 @@ static int nthcmp(dptr d1, dptr d2)
 	 /*
 	  *  Both had an nth field.  If they're unequal, that decides.
 	  */
-         rv = anycmp(nth(d1), nth(d2));
+         rv = anycmp(e1, e2);
          if (rv != 0)
             return rv;
          }
@@ -843,40 +843,7 @@ static int nthcmp(dptr d1, dptr d2)
  */
 static dptr nth(dptr d)
 {
-    word i;
-    dptr rv;
-
-    rv = NULL;
-    if (d->dword == D_Record) {
-        union block *bp;
-        /*
-         * Find the nth field of a record.
-         */
-        bp = BlkLoc(*d);
-        i = cvpos_item(sort_field, bp->record.constructor->n_fields);
-        if (i != CvtFail)
-            rv = &bp->record.fields[i-1];
-    }
-    else if (d->dword == D_List) {
-        struct b_list *lp;
-        /*
-         * Find the nth element of a list.
-         */
-        lp = &ListBlk(*d);
-        i = cvpos_item(sort_field, lp->size);
-        if (i != CvtFail) {
-            struct b_lelem *le;
-            word pos;
-            le = get_lelem_for_index(lp, i, &pos);
-            if (!le)
-                syserr("Failed to find lelem for valid index");
-            pos += le->first;
-            if (pos >= le->nslots)
-                pos -= le->nslots;
-            rv = &le->lslots[pos];
-        }
-    }
-    return rv;
+    return get_element(d, sort_field);
 }
 
 
