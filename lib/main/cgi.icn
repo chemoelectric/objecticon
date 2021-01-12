@@ -10,7 +10,7 @@ class CgiParams()
       query_params
 
    private static env(k)
-      return System.getenv(k) | error("Missing environment variable " || k)
+      return System.getenv(k) | error("Missing environment variable: " || k)
    end
 
    public process()
