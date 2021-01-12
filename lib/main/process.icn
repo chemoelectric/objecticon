@@ -16,8 +16,9 @@ import lang, posix, io, ipl.printf
 # fashion.
 #
 class Process(HasTask, HasBgProc, HasClose)
+   private
+      e
    private readable
-      e,
       sock
 
    #
@@ -39,6 +40,7 @@ class Process(HasTask, HasBgProc, HasClose)
          # Parent
          sock := l[2]
          l[1].close()
+         e := &null
          link
       } else {
          # Child
