@@ -16,8 +16,9 @@ import lang, posix, io, ipl.printf
 # fashion.
 #
 class Process(HasTask, HasBgProc, HasClose)
+   private
+      e
    private readable
-      e,
       sock
 
    #
@@ -37,6 +38,7 @@ $if _PLAN9
          sock := NonBlockStream(l[2],, 65536, 65536).
             set_write_on_close(NonBlockStream.BACKGROUND_FLUSH)
          l[1].close()
+         e := &null
          link
       } else {
          # Child
@@ -62,6 +64,7 @@ $else
          # Parent
          sock := l[2]
          l[1].close()
+         e := &null
          link
       } else {
          # Child
