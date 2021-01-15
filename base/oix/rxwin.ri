@@ -1045,7 +1045,6 @@ void pollevent(wbp w)
             case SelectionNotify:
                 handle_selection_notify(ws, (XSelectionEvent *)&event);
                 break;
-
             case KeyRelease:
             case KeyPress:
                 handle_keypress(ws, (XKeyEvent *)&event);
@@ -1059,16 +1058,11 @@ void pollevent(wbp w)
             case EnterNotify:
                 handle_crossing(ws, (XCrossingEvent *)&event);
                 break;
-            case NoExpose:
-                break;
             case Expose:
                 handle_exposures(ws, (XExposeEvent *)&event);
                 break;
             case PropertyNotify:
                 handle_property(ws, (XPropertyEvent *)&event);
-                break;
-            case UnmapNotify:
-            case MapNotify:
                 break;
             case ConfigureNotify:
                 handle_config(ws, (XConfigureEvent *)&event);
@@ -1081,8 +1075,6 @@ void pollevent(wbp w)
                 break;
             case ClientMessage:
                 handle_client_message(ws, (XClientMessageEvent *)&event);
-                break;
-            default:
                 break;
         }
     }
