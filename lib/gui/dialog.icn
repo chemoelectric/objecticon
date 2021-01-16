@@ -313,7 +313,8 @@ class Dialog(Component)
          popup_manager.change_pointer(s)
       else {
          /s := POINTER
-         (curr_pointer === s) | win.set_pointer(curr_pointer := s)
+         if curr_pointer ~===:= s then
+            win.set_pointer(curr_pointer)
       }
       link
    end
