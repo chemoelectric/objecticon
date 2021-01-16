@@ -588,32 +588,6 @@ class TextFlow(Component, HasLastHighlight)
       }
    end
 
-   private static find_text_pos(W, o, d)
-      local s, l, r, m, t1, t2, t3
-
-      s := o.s
-      l := 1
-      r := *s + 1
-
-      while l <= r do {
-         m := (l + r) / 2
-         t2 := W.text_width(s[1:m])
-         if m > 1 &
-            t1 := W.text_width(s[1:m - 1]) &
-            d <= (t1 + t2) / 2
-         then
-            r := m - 1
-         else if m < *s + 1 &
-            t3 := W.text_width(s[1:m + 1]) &
-            d > (t2 + t3) / 2
-         then
-            l := m + 1
-         else
-            return m
-      }
-      syserr("Loop exit in find_text_pos()")
-   end
-
    package calculate_banded(br, bs)
       local i, j, or, o, W, font, x1, y1, t, first, last, first_r, last_r, l, ts
       x1 := x + border.get_l_inset()
@@ -644,11 +618,11 @@ class TextFlow(Component, HasLastHighlight)
                TextOut: {
                   W.set_font(font ~===:= o.attr.font)
                   i := if o === first then
-                     find_text_pos(W, o, first_r.x - x1 - o.x)
+                     find_cursor_pos(W, o.s, first_r.x - x1 - o.x)
                   else
                      1
                   j := if o === last then
-                     find_text_pos(W, o, last_r.x - x1 - o.x + last_r.w)
+                     find_cursor_pos(W, o.s, last_r.x - x1 - o.x + last_r.w)
                   else
                      *o.s + 1
 
