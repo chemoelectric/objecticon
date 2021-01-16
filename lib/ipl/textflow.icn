@@ -1479,8 +1479,13 @@ class TextFlow(Component, HasLastHighlight)
       set_tooltip(a)
       if /f & (u := \ (\t).attr.url) then
          set_over(u)
-      else
+      else {
          set_over()
+         if \t then
+            set_pointer("xterm")
+         else
+            set_pointer()
+      }
    end
 
    private handle_lmdrag(e)
