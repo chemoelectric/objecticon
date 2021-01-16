@@ -19,7 +19,7 @@ end
 
 class Editor(Dialog)
    public curr_file_name, text, open_item, quit_item,
-      split_words_item,
+      split_words_item, constrain_cursor_item,
       close_button, save_button, save_item, message_label,
       save_as_item, new_item
 
@@ -129,6 +129,13 @@ class Editor(Dialog)
          text.set_split_words(&no)
    end
 
+   private handle_constrain_cursor()
+      if constrain_cursor_item.is_checked() then
+         text.set_constrain_cursor_on_scroll(&yes)
+      else
+         text.set_constrain_cursor_on_scroll(&no)
+   end
+
    public override init_dialog()
       set_focus(text)
    end
@@ -206,6 +213,9 @@ class Editor(Dialog)
       split_words_item := CheckBoxMenuItem().set_label("Split words")
       split_words_item.connect(self.handle_split_words, Event.ACTION)
       menu_3.add(split_words_item)
+      constrain_cursor_item := CheckBoxMenuItem().set_label("Constrain cursor")
+      constrain_cursor_item.connect(self.handle_constrain_cursor, Event.ACTION)
+      menu_3.add(constrain_cursor_item)
 
       menu_bar_1.add(menu_3)
 
