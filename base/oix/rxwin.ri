@@ -211,38 +211,31 @@ static int triangles = 0;
 #if 0
 static void dump_all(void)
 {
-    int i,j,k;
+    int i, k;
+    wdp wd;
     wsp x;
     wbp y;
     i = 0;
-    for (y = wbndngs; y; y = y->next) {
-        printf("Binding %p\n",y);
-        printf("\tcanvas %p\n",y->window);
-        printf("\tcontext %p\n",y->context);
-        ++i;
-    }
-    printf("============\n");
-    j = 0;
-    for (x = wstates; x; x = x->next) {
-        printf("Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++j; 
-    }
-    printf("============\n");
-    k = 0;
-    for (x = vwstates; x; x = x->vnext) {
-        printf("Non-hidden Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++k; 
-    }
+    for(wd = wdsplys; wd; wd = wd->next) {
+        for (y = wd->wbndngs; y; y = y->next) {
+            printf("Binding %p\n",y);
+            printf("\tcanvas %p\n",y->window);
+            printf("\tcontext %p\n",y->context);
+            ++i;
+        }
+        printf("============\n");
+        k = 0;
+        for (x = wd->vwstates; x; x = x->vnext) {
+            printf("Non-hidden Canvas %p\n",x);
+            printf("\trefcount=%d\n", x->refcount);
+            printf("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
+            printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+            printf("\twin=%d\n", (int)x->win);
+            ++k; 
+        }
 
-    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+        printf("Total %d bindings (%d non-hidden canvases)\n", i, k);
+    }
 }
 #endif
 #if 0

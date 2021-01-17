@@ -157,7 +157,7 @@ static stringint canvastypes[] = {
 #if 0
 static void dump_all(void)
 {
-    int i,j,k;
+    int i, k;
     wsp x;
     wbp y;
     i = 0;
@@ -168,27 +168,17 @@ static void dump_all(void)
         ++i;
     }
     printf("============\n");
-    j = 0;
-    for (x = wstates; x; x = x->next) {
-        printf("Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++j; 
-    }
-    printf("============\n");
     k = 0;
     for (x = vwstates; x; x = x->vnext) {
         printf("Non-hidden Canvas %p\n",x);
         printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
         printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
         printf("\twin=%d\n", (int)x->win);
         ++k; 
     }
 
-    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+    printf("Total %d bindings (%d non-hidden canvases)\n", i, k);
     fflush(stdout);
 }
 #endif
