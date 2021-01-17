@@ -1578,7 +1578,7 @@ class FormButton(TextButton, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset()
    end
 
    public override new(value)
@@ -1717,7 +1717,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + tf.border.get_t_inset()
+      return cbwin.get_line_ascent() + tf.border.get_t_inset()
    end
 
    public override reset_form()
@@ -1784,7 +1784,7 @@ class FormSuggestField(SuggestField, FormEntry, HasAscent)
       datalist_id
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset()
    end
 
    public override reset_form()
@@ -1839,7 +1839,7 @@ class FormTextField(TextField, FormEntry, HasAscent)
       init_val
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset()
    end
 
    public override reset_form()
@@ -1871,7 +1871,7 @@ class FormURLField(TextField, FormEntry, HasAscent)
       init_val
 
    public override get_ascent()
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset()
    end
 
    public override reset_form()
@@ -1907,7 +1907,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
       init_val
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public override reset_form()
@@ -1942,7 +1942,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
       init_val
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public override reset_form()
@@ -2010,7 +2010,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public static parse(s)
@@ -2101,7 +2101,7 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public override new(init_val)
@@ -2136,7 +2136,7 @@ class FormYearField(YearField, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public override new(init_val)
@@ -2168,7 +2168,7 @@ class FormMonthField(MonthField, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public override new(init_val)
@@ -2341,7 +2341,7 @@ class FormNumberField(RangeSpin, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
+      return cbwin.get_line_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public override new(init_val)
@@ -2381,7 +2381,7 @@ class FormColorField(ColorField, FormEntry, HasAscent)
    end
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + b.border.get_t_inset()
+      return cbwin.get_line_ascent() + b.border.get_t_inset()
    end
 
    public static parse(s)
@@ -2506,7 +2506,7 @@ class FormList(gui.List, FormEntry, HasAscent)
       init_val
 
    public override get_ascent() 
-      return cbwin.get_font_ascent() + view.border.get_t_inset() + border.get_t_inset()
+      return cbwin.get_line_ascent() + view.border.get_t_inset() + border.get_t_inset()
    end
 
    private find_value(seq, e)
