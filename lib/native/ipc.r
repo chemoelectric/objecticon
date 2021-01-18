@@ -55,7 +55,7 @@ static ssize_t msgrcv_ex(int msqid, void *msgp, size_t msgsz, long msgtyp, int m
 static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 
 #passthru DefineHash(resource_table, struct _resource);
-static uword resource_hash_func(struct _resource *p) { return ptrhasher1(p->id); }
+static uword resource_hash_func(struct _resource *p) { return hashptr(p->id); }
 
 static struct resource_table resource_hash = { 10, resource_hash_func };
 
@@ -890,7 +890,7 @@ static void remove_resource(int id, int type) {
      * resource. */
     if (resource_hash.nbuckets == 0)
         return;
-    i = ptrhasher1(id) % resource_hash.nbuckets;
+    i = hashptr(id) % resource_hash.nbuckets;
     rp = &resource_hash.l[i];
     while ((r = *rp)) {
         if (r->type == type && r->id == id) {

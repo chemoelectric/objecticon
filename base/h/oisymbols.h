@@ -194,7 +194,7 @@ struct oisymbols {
     struct descrip (*block_to_descriptor)(union block *ptr);
     int (*is_flag)(dptr d);
     int (*is_ascii_string)(dptr d);
-    unsigned int (*hashcstr)(char *s);
+    uword (*hashcstr)(char *s);
     char * (*get_hostname)(void);
     char    * (*maketemp)(char *fn);
     int (*is_flowterm_tty)(FILE *f);

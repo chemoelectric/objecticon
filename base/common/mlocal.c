@@ -1134,11 +1134,13 @@ char *word2cstr(word n)
 /*
  * Simple hash function for C strings.
  */
-unsigned int hashcstr(char *s)
+uword hashcstr(char *s)
 {
-    unsigned int h;
+    int j;
+    uword h;
     h = 0;
-    while (*s) {
+    j = 10;   /* limit scan to first ten characters */
+    while (*s && j-- > 0) {
         h = 13 * h + (*s & 0377);
         ++s;
     }

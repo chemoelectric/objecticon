@@ -6,7 +6,7 @@ struct marked_block {
 
 #passthru DefineHash(marked_block_tbl, struct marked_block);
 
-static uword marked_block_hash_func(struct marked_block *p) {  return ptrhasher1(p->addr); }
+static uword marked_block_hash_func(struct marked_block *p) {  return hashptr(p->addr); }
 
 static struct marked_block_tbl marked_blocks = { 512, marked_block_hash_func };
 
@@ -1055,7 +1055,7 @@ static int is_marked(void *addr)
 {
     struct marked_block *m;
     int h;
-    h = ptrhasher1(addr) % marked_blocks.nbuckets;
+    h = hashptr(addr) % marked_blocks.nbuckets;
     m = marked_blocks.l[h];
     while (m) {
         if (m->addr == addr)

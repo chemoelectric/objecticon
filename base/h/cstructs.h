@@ -80,9 +80,9 @@ struct str_buf {
  * narrower type.
  */
 #define hasher(x,obj)   (((uword)(x))%ElemCount(obj))
-/* If x is a pointer */
-#define ptrhasher1(x)   ((((uword)(x))>>5 ^ ((uword)(x))))
-#define ptrhasher(x,obj)   (ptrhasher1(x)%ElemCount(obj))
+
+/* Hash calculation for a pointer (or any large number) */
+#define hashptr(x)   ((((uword)(x))>>5 ^ ((uword)(x))))
 
 /*
  * Define a hash table structure to use with the functions in

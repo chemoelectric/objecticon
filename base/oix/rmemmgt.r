@@ -306,7 +306,7 @@ uword segsize[] = {
       stk_add(&BlkLoc(d));
 
 
-static uword og_hash_func(struct dptr_list *p) { return ptrhasher1(p->dp); }
+static uword og_hash_func(struct dptr_list *p) { return hashptr(p->dp); }
 
  /*
   * A table of additional descriptors which are traversed during
@@ -359,7 +359,7 @@ void add_gc_global(dptr d)
 {
     int h;
     ensure_hash(&og_table);
-    h = ptrhasher1(d) % og_table.nbuckets;
+    h = hashptr(d) % og_table.nbuckets;
     dptr_list_add(&og_table.l[h], d);
     ++og_table.size;
 }
@@ -367,7 +367,7 @@ void add_gc_global(dptr d)
 void del_gc_global(dptr d)
 {
     int h;
-    h = ptrhasher1(d) % og_table.nbuckets;
+    h = hashptr(d) % og_table.nbuckets;
     dptr_list_rm(&og_table.l[h], d);
     --og_table.size;
 }

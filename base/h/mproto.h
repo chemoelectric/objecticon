@@ -90,7 +90,7 @@ int system_utf8(char *cmd);
 
 char *double2cstr(double n);
 char *word2cstr(word n);
-unsigned int hashcstr(char *s);
+uword hashcstr(char *s);
 
 char *get_hostname(void);
 int is_flowterm_tty(FILE *f);

@@ -82,7 +82,7 @@ char *spec_str(char *s)
     struct str_entry *se;
     char *s1;
     int l;
-    unsigned int h;
+    uword h;
 
     h = 0;
     l = 0;
@@ -114,7 +114,7 @@ char *spec_str(char *s)
  */
 char *str_install(struct str_buf *sbuf)
 {
-    unsigned int h;
+    uword h;
     struct str_entry *se;
     char *s;
     char *e;
