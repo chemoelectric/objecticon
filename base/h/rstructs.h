@@ -379,8 +379,8 @@ struct ipc_line {
  * Structure for holding a list of descriptor pointers.
  */
 struct dptr_list {
-    dptr dp;
     struct dptr_list *next;
+    dptr dp;
 };
 
 struct prog_event {
@@ -388,6 +388,12 @@ struct prog_event {
     struct descrip eventval;
     struct prog_event *next;
 };
+
+/*
+ * A structure representing a table of pointers to descriptors subject
+ * to garbage collection (see rmemmgt.r).
+ */
+DefineHash(og_table, struct dptr_list);
 
 /*
  * Program state encapsulation.  This consists of the VARIABLE parts of

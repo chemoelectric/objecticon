@@ -79,9 +79,25 @@ struct str_buf {
  * is never -ve, and avoid compiler warnings about casting pointer to
  * narrower type.
  */
-#define hasher(x,obj)   (((uword)x)%ElemCount(obj))
+#define hasher(x,obj)   (((uword)(x))%ElemCount(obj))
 /* If x is a pointer */
-#define ptrhasher(x,obj)   ((((uword)x)>>5 ^ ((uword)x))%ElemCount(obj))
+#define ptrhasher1(x)   ((((uword)(x))>>5 ^ ((uword)(x))))
+#define ptrhasher(x,obj)   (ptrhasher1(x)%ElemCount(obj))
+
+/*
+ * Define a hash table structure to use with the functions in
+ * mlocal.c.  "type" is the list structure type of the elements in the
+ * buckets and must include a linked list "next" field as its first
+ * element.
+ */
+#define DefineHash(name, type) \
+struct name { \
+    int init;                   /* Initial desired number of bucket lists */ \
+    uword (*hash)(type *);      /* Hash function */ \
+    int size;                   /* Number of entries */ \
+    int nbuckets;               /* Number of bucket lists */ \
+    type **l;                   /* Bucket lists */ \
+};
 
 /*
  * Clear an object

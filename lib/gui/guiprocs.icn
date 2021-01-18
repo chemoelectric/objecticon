@@ -873,6 +873,33 @@ procedure split_string(W, s, f, n)
 end
 
 #
+# Given a Window W, string/ucs s and pixel offset d, find the
+# appropriate corresponding cursor position.
+#
+procedure find_cursor_pos(W, s, d)
+   local l, r, m, t1, t2, t3
+   l := 1
+   r := *s + 1
+   while l <= r do {
+      m := (l + r) / 2
+      t2 := W.text_width(s[1:m])
+      if m > 1 &
+         t1 := W.text_width(s[1:m - 1]) &
+         d <= (t1 + t2) / 2
+      then
+         r := m - 1
+      else if m < *s + 1 &
+         t3 := W.text_width(s[1:m + 1]) &
+         d > (t2 + t3) / 2
+      then
+         l := m + 1
+      else
+         return m
+   }
+   syserr("Loop exit in find_cursor_pos()")
+end
+
+#
 # Helpful mixin-style class for a `Component` which has a horizontal
 # or vertical orientation.
 #

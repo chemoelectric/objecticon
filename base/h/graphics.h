@@ -287,8 +287,10 @@ struct sending_helper {
     time_t active;                 /* Time last active (seconds) */
 };
 
-#define FONTHASH_SIZE 64
-#define CURSORHASH_SIZE 128
+struct wcursor;
+
+DefineHash(fonttable, struct _wfont);
+DefineHash(cursortable, struct wcursor);
 
 /*
  * Displays are maintained in a global list in rxwin.ri.
@@ -303,12 +305,12 @@ typedef struct _wdisplay {
   struct SharedColor *black,
                      *white,
                      *transparent;
-  wfp                fonts[FONTHASH_SIZE],
-                     defaultfont;
+  struct fonttable   fonts;
+  wfp                defaultfont;
   XRenderPictFormat  *pixfmt,
                      *winfmt,
                      *maskfmt;
-  struct wcursor     *cursors[CURSORHASH_SIZE];
+  struct cursortable cursors;
   Time               recent;                  /* most recent Time reported by server */
   Atom               atoms[NUM_ATOMS];        /* interned atoms */
   unsigned int       propcount;               /* counter for selection requests*/

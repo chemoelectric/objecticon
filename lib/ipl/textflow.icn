@@ -6,7 +6,8 @@ import
    net,
    graphics(Key),
    ipl.strings,
-   ipl.tables(inserts)
+   ipl.tables(inserts),
+   ipl.pdco()
 
 abstract class HasAscent()
    public abstract get_ascent(dw, dh)
@@ -588,7 +589,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    package calculate_banded(br, bs)
-      local d, i, u, j, or, o, W, font, x1, y1, t, first, last, first_r, last_r, l, ts
+      local i, j, or, o, W, font, x1, y1, t, first, last, first_r, last_r, l, ts
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       l := []
@@ -616,21 +617,14 @@ class TextFlow(Component, HasLastHighlight)
             case classof(o) of {
                TextOut: {
                   W.set_font(font ~===:= o.attr.font)
-                  i := 1
-                  if o === first then {
-                     d := first_r.x - x1 - o.x
-                     u := 0
-                     while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-                        i +:= 1
-                  }
-                  if o === last then {
-                     d := last_r.x - x1 - o.x + last_r.w
-                     j := i
-                     u := W.text_width(o.s[1:i])
-                     while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-                        j +:= 1
-                  } else
-                     j := *o.s + 1
+                  i := if o === first then
+                     find_cursor_pos(W, o.s, first_r.x - x1 - o.x)
+                  else
+                     1
+                  j := if o === last then
+                     find_cursor_pos(W, o.s, last_r.x - x1 - o.x + last_r.w)
+                  else
+                     *o.s + 1
 
                   if i < j then {
                      ts := TextSelection(o, self, 
@@ -1321,12 +1315,7 @@ class TextFlow(Component, HasLastHighlight)
 
    private compute_pre_txt(W, cmd)
       local s, l, i, tw, rb
-      l := []
-      every s := detab(separate_lines(cmd.s)) do {
-         # Xft can't measure/display very long strings, so just truncate them.
-         s[1000:0] := u""
-         put(l, s)
-      }
+      l := ipl.pdco.List{ detab(separate_lines(cmd.s)) }
       need_spc := &null
 
       if \calculating then {
@@ -1464,8 +1453,13 @@ class TextFlow(Component, HasLastHighlight)
       set_tooltip(a)
       if /f & (u := \ (\t).attr.url) then
          set_over(u)
-      else
+      else {
          set_over()
+         if \t then
+            set_pointer("xterm")
+         else
+            set_pointer()
+      }
    end
 
    private handle_lmdrag(e)

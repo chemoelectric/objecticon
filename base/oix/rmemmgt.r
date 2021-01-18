@@ -306,23 +306,29 @@ uword segsize[] = {
       stk_add(&BlkLoc(d));
 
 
+static uword og_hash_func(struct dptr_list *p) { return ptrhasher1(p->dp); }
+
  /*
   * A table of additional descriptors which are traversed during
   * garbage collection.
   */
-struct dptr_list *og_hash[OGHASH_SIZE];
+struct og_table og_table = { 14, og_hash_func };
 
 #if 0
 static void dump_gc_global()
 {
     int i;
     struct dptr_list *dl;
-    for (i = 0; i < ElemCount(og_hash); ++i) {
-        printf("Bucket %d\n", i);
-        for (dl = og_hash[i]; dl; dl = dl->next) {
-            printf("\tEntry %p = ", dl->dp);
-            print_desc(stdout, dl->dp);
-            printf("\n");
+    printf("og_table size=%d nbuckets=%d\n",
+           og_table.size, og_table.nbuckets);
+    for (i = 0; i < og_table.nbuckets; ++i) {
+        if (og_table.l[i]) {
+            printf("Bucket %d\n", i);
+            for (dl = og_table.l[i]; dl; dl = dl->next) {
+                printf("\tEntry %p = ", dl->dp);
+                print_desc(stdout, dl->dp);
+                printf("\n");
+            }
         }
     }
     printf("=============\n");
@@ -351,22 +357,27 @@ void dptr_list_rm(struct dptr_list **head, dptr d)
 
 void add_gc_global(dptr d)
 {
-    int i = ptrhasher(d, og_hash);
-    dptr_list_add(&og_hash[i], d);
+    int h;
+    ensure_hash(&og_table);
+    h = ptrhasher1(d) % og_table.nbuckets;
+    dptr_list_add(&og_table.l[h], d);
+    ++og_table.size;
 }
 
 void del_gc_global(dptr d)
 {
-    int i = ptrhasher(d, og_hash);
-    dptr_list_rm(&og_hash[i], d);
+    int h;
+    h = ptrhasher1(d) % og_table.nbuckets;
+    dptr_list_rm(&og_table.l[h], d);
+    --og_table.size;
 }
 
 static void mark_others()
 {
    struct dptr_list *dl;
    int i;
-   for (i = 0; i < ElemCount(og_hash); ++i)
-       for (dl = og_hash[i]; dl; dl = dl->next)
+   for (i = 0; i < og_table.nbuckets; ++i)
+       for (dl = og_table.l[i]; dl; dl = dl->next)
            PostDescrip(*dl->dp);
 }
 

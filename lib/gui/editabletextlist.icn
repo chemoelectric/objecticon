@@ -30,7 +30,8 @@ class EditableTextList(LineBasedScrollArea)
       menu_on_rpress_flag,     # Show context menu on mouse right press event?
       move_on_rpress_flag,     # Move on mouse right press event?
       constrain_cursor_on_scroll_flag,
-      need_constrain_line,     # Indicate next end_handle to always constrain_line
+      need_constrain_line,     # Indicate to end_handle whether to constrain_line()
+                               # 0=if cursor moved; 1=never; 2=always.
       cursor_x,                #                
       cursor_y,                #                
       mark_x,                  #
@@ -337,18 +338,24 @@ class EditableTextList(LineBasedScrollArea)
       else
          v := view_list[vi]
       s := v.str
-      i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
+      i := text_width_ex(view.cbwin, s, 1, cursor_x - v.first + 1, tab_width)
       ax := get_area_x()
       if ax > i then {
-         while (self.cursor_x < v.last) & (ax > i) do {
-            self.cursor_x +:= 1
-            i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
-         }
-      } else { 
-         while (self.cursor_x > v.first) & (ax + self.tw < i) do {
-            self.cursor_x -:= 1
-            i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
-         }
+         # Put the cursor in the nearest position to the area x
+         # offset; then adjust if necessary to ensure it is to the
+         # right of ax (in practice the loop should only need one
+         # iteration).
+         cursor_x := find_view_line_pos(v, ax)
+         while cursor_x < v.last &
+            ax > text_width_ex(view.cbwin, s, 1, cursor_x - v.first + 1, tab_width)
+         do
+            cursor_x +:= 1
+      } else if ax + tw < i then {
+         cursor_x := find_view_line_pos(v, ax + tw)
+         while cursor_x > v.first &
+            ax + tw < text_width_ex(view.cbwin, s, 1, cursor_x - v.first + 1, tab_width)
+         do
+            cursor_x -:= 1
       }
    end
 
@@ -493,9 +500,10 @@ class EditableTextList(LineBasedScrollArea)
       if \constrain_cursor_on_scroll_flag then {
          start_handle(ev)
          constrain_cursor()
+         need_constrain_line := 1
          end_handle(ev)
-      } else
-         need_constrain_line := &yes
+      }
+      need_constrain_line := 2
       refresh()
       #
       # Simulate a drag event if appropriate in order to keep the
@@ -509,9 +517,10 @@ class EditableTextList(LineBasedScrollArea)
       if \constrain_cursor_on_scroll_flag then {
          start_handle(ev)
          constrain_cursor()
+         need_constrain_line := 1
          end_handle(ev)
-      } else
-         need_constrain_line := &yes
+      }
+      need_constrain_line := 2
       refresh()
    end
 
@@ -556,14 +565,13 @@ class EditableTextList(LineBasedScrollArea)
       }
 
       if (cursor_x ~= old_cursor_x) | (cursor_y ~= old_cursor_y) then {
-         if /changed then
+         if /changed & need_constrain_line ~= 1 then
             constrain_line()
          cursor_on := -1
          cursor_moved := &yes
-      } else if \need_constrain_line then {
+      } else if need_constrain_line = 2 then
          constrain_line()
-         need_constrain_line := &no
-      }
+      need_constrain_line := 0
 
       # Invalidate on cursor/mark changes
       if /changed & 
@@ -619,18 +627,42 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Given a ViewLine v and a pixel offset d in that line (which may extend past the end),
-   # calculate the new cursor_x and cursor_y.
+   # Given a ViewLine v and a pixel offset d in that line (which may
+   # extend past the end), calculate the corresponding x cursor
+   # position.
+   #
+   public find_view_line_pos(v, d)
+      local s, l, r, m, t1, t2, t3
+      s := v.str
+      l := v.first
+      r := v.last
+      while l <= r do {
+         m := (l + r) / 2
+         t2 := text_width_ex(view.cbwin, s, 1, m - v.first + 1, tab_width)
+         if m > v.first &
+            t1 := text_width_ex(view.cbwin, s, 1, m - v.first, tab_width) &
+            d <= (t1 + t2) / 2
+         then
+            r := m - 1
+         else if m < v.last &
+            t3 := text_width_ex(view.cbwin, s, 1, m - v.first + 2, tab_width) &
+            d > (t2 + t3) / 2
+         then
+            l := m + 1
+         else
+            return m
+      }
+      syserr("Loop exit in find_view_line_pos()")
+   end
+
+   #
+   # Given a ViewLine v and a pixel offset d in that line (which may
+   # extend past the end), calculate and set the new cursor_x and
+   # cursor_y.
    #
    public set_cursor_in_view_line(v, d)
-      local s, i, t
       self.cursor_y := v.index
-      s := v.str
-      i := v.first
-      t := 0
-      while (i < v.last) & ((.t + (t := text_width_ex(view.cbwin, s, 1, i - v.first + 2, self.tab_width))) / 2  < d) do
-         i +:= 1
-      self.cursor_x := i
+      self.cursor_x := find_view_line_pos(v, d)
    end
 
    #
@@ -1447,6 +1479,7 @@ class EditableTextList(LineBasedScrollArea)
       set_wrap_mode("off")
       self.cursor_x := self.cursor_y := 1
       self.is_editable_flag := &yes
+      self.need_constrain_line := 0
       self.menu_on_rpress_flag := &yes
       self.move_on_rpress_flag := &yes
       self.primary_selection_owner := EditableTextListPrimarySelectionOwner(self)

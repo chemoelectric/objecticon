@@ -211,38 +211,31 @@ static int triangles = 0;
 #if 0
 static void dump_all(void)
 {
-    int i,j,k;
+    int i, k;
+    wdp wd;
     wsp x;
     wbp y;
     i = 0;
-    for (y = wbndngs; y; y = y->next) {
-        printf("Binding %p\n",y);
-        printf("\tcanvas %p\n",y->window);
-        printf("\tcontext %p\n",y->context);
-        ++i;
-    }
-    printf("============\n");
-    j = 0;
-    for (x = wstates; x; x = x->next) {
-        printf("Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++j; 
-    }
-    printf("============\n");
-    k = 0;
-    for (x = vwstates; x; x = x->vnext) {
-        printf("Non-hidden Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++k; 
-    }
+    for(wd = wdsplys; wd; wd = wd->next) {
+        for (y = wd->wbndngs; y; y = y->next) {
+            printf("Binding %p\n",y);
+            printf("\tcanvas %p\n",y->window);
+            printf("\tcontext %p\n",y->context);
+            ++i;
+        }
+        printf("============\n");
+        k = 0;
+        for (x = wd->vwstates; x; x = x->vnext) {
+            printf("Non-hidden Canvas %p\n",x);
+            printf("\trefcount=%d\n", x->refcount);
+            printf("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
+            printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+            printf("\twin=%d\n", (int)x->win);
+            ++k; 
+        }
 
-    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+        printf("Total %d bindings (%d non-hidden canvases)\n", i, k);
+    }
 }
 #endif
 #if 0
@@ -375,8 +368,9 @@ static struct wcursor *lookup_wcursor(wdp wd, char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), wd->cursors);
-    for(rv = wd->cursors[i]; rv; rv = rv->next) {
+    /* the cursor table can't be empty; see setup_cursors() */
+    i = hashcstr(name) % wd->cursors.nbuckets;
+    for(rv = wd->cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
@@ -387,15 +381,15 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), wd->cursors);
-    for(rv = wd->cursors[i]; rv; rv = rv->next) {
+    ensure_hash(&wd->cursors);
+    i = hashcstr(name) % wd->cursors.nbuckets;
+    for(rv = wd->cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    rv->next = wd->cursors[i];
-    wd->cursors[i] = rv;
+    add_to_hash_pre(&wd->cursors, rv, i);
     return rv;
 }
 
@@ -462,18 +456,20 @@ int copypointer(wbp w, char *dest, char *src)
 
 static void setup_cursor(wdp wd, char *name, int id)
 {
-    int i;
     struct wcursor *rv;
-    i = hasher(hashcstr(name), wd->cursors);
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     rv->shared_cursor = new_sharedcursor(wd, XCreateFontCursor(wd->display, id));
-    rv->next = wd->cursors[i];
-    wd->cursors[i] = rv;
+    add_to_hash(&wd->cursors, rv);
 }
+
+static uword font_hash_func(wfp p) { return hashcstr(p->name); }
+static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
 static void setup_cursors(wdp wd)
 {
+    wd->cursors.init = 32;
+    wd->cursors.hash = cursor_hash_func;
     setup_cursor(wd, "X cursor",	XC_X_cursor);
     setup_cursor(wd, "arrow",		XC_arrow);
     setup_cursor(wd, "based arrow down",XC_based_arrow_down);
@@ -1045,7 +1041,6 @@ void pollevent(wbp w)
             case SelectionNotify:
                 handle_selection_notify(ws, (XSelectionEvent *)&event);
                 break;
-
             case KeyRelease:
             case KeyPress:
                 handle_keypress(ws, (XKeyEvent *)&event);
@@ -1059,16 +1054,11 @@ void pollevent(wbp w)
             case EnterNotify:
                 handle_crossing(ws, (XCrossingEvent *)&event);
                 break;
-            case NoExpose:
-                break;
             case Expose:
                 handle_exposures(ws, (XExposeEvent *)&event);
                 break;
             case PropertyNotify:
                 handle_property(ws, (XPropertyEvent *)&event);
-                break;
-            case UnmapNotify:
-            case MapNotify:
                 break;
             case ConfigureNotify:
                 handle_config(ws, (XConfigureEvent *)&event);
@@ -1081,8 +1071,6 @@ void pollevent(wbp w)
                 break;
             case ClientMessage:
                 handle_client_message(ws, (XClientMessageEvent *)&event);
-                break;
-            default:
                 break;
         }
     }
@@ -5046,10 +5034,14 @@ static wdp alcdisplay(char *s)
     wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
     wd->maskfmt = XRenderFindStandardFormat(wd->display, PictStandardA8);
     wd->winfmt = XRenderFindVisualFormat(wd->display, GetVisual(wd));
+    wd->fonts.init = 50;
+    wd->fonts.hash = font_hash_func;
+    
     wd->defaultfont = loadfont(wd, defaultfont);
     if (wd->defaultfont == NULL) {
         LitWhy("Couldn't load default font");
         XCloseDisplay(wd->display);
+        free(wd->fonts.l);
         free(wd);
         return NULL;
     }
@@ -5189,11 +5181,13 @@ wfp loadfont(wdp wd, char *s)
     if (!s)
         return 0;
 
+    ensure_hash(&wd->fonts);
+
     /*
      * see if the font is already loaded on this display
      */
-    i = hasher(hashcstr(s), wd->fonts);
-    for(rv = wd->fonts[i]; rv; rv = rv->next) {
+    i = hashcstr(s) % wd->fonts.nbuckets;
+    for(rv = wd->fonts.l[i]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name + 3))
             return rv;
     }
@@ -5208,8 +5202,7 @@ wfp loadfont(wdp wd, char *s)
     /*
      * link the font into this display's fontlist
      */
-    rv->next = wd->fonts[i];
-    wd->fonts[i] = rv;
+    add_to_hash_pre(&wd->fonts, rv, i);
 
     return rv;
 }

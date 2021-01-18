@@ -36,8 +36,7 @@ extern int bsizes[];		/* sizes of blocks */
 extern int firstd[];		/* offset (words) of first descrip. */
 extern uword segsize[];		/* size of hash bucket segment */
 
-#define OGHASH_SIZE 32
-extern struct dptr_list *og_hash[OGHASH_SIZE];
+extern struct og_table og_table;
 
 extern struct progstate *progs; /* list of progstates */
 extern struct b_cset *emptycs;   /* '' */

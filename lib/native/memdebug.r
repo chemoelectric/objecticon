@@ -1,10 +1,14 @@
 
 struct marked_block {
-    void *addr;
     struct marked_block *next;
+    void *addr;
 };
 
-static struct marked_block *marked_blocks[4096];
+#passthru DefineHash(marked_block_tbl, struct marked_block);
+
+static uword marked_block_hash_func(struct marked_block *p) {  return ptrhasher1(p->addr); }
+
+static struct marked_block_tbl marked_blocks = { 512, marked_block_hash_func };
 
 enum { AddrQuery=1, TitleQuery };
 
@@ -1050,8 +1054,13 @@ static void print_stk_element(struct stk_element *e)
 static int is_marked(void *addr)
 {
     struct marked_block *m;
-    int i = ptrhasher(addr, marked_blocks);
-    m = marked_blocks[i];
+    int h;
+
+    if (marked_blocks.size == 0)
+        return 0;
+
+    h = ptrhasher1(addr) % marked_blocks.nbuckets;
+    m = marked_blocks.l[h];
     while (m) {
         if (m->addr == addr)
             return 1;
@@ -1063,26 +1072,9 @@ static int is_marked(void *addr)
 static void mark(void *addr)
 {
     struct marked_block *m;
-    int i = ptrhasher(addr, marked_blocks);
     m = safe_malloc(sizeof(struct marked_block));
     m->addr = addr;
-    m->next = marked_blocks[i];
-    marked_blocks[i] = m;
-}
-
-static void marked_blocks_dispose()
-{
-    int i;
-    for (i = 0; i < ElemCount(marked_blocks); ++i) {
-        struct marked_block *m, *n;
-        m = marked_blocks[i];
-        while (m) {
-            n = m;
-            m = m->next;
-            free(n);
-        }
-        marked_blocks[i] = 0;
-    }
+    add_to_hash(&marked_blocks, m);
 }
 
 #if 0
@@ -1090,11 +1082,13 @@ static void dump_marked_blocks()
 {
     int i;
     struct marked_block *m;
-    for (i = 0; i < ElemCount(marked_blocks); ++i) {
-        if (marked_blocks[i]) {
+    printf("marked_blocks size=%d nbuckets=%d\n",
+           marked_blocks.size, marked_blocks.nbuckets);
+    for (i = 0; i < marked_blocks.nbuckets; ++i) {
+        if (marked_blocks.l[i]) {
             printf("Bucket %d\n", i);
-            for (m = marked_blocks[i]; m; m = m->next) {
-                printf("\tEntry %p = ", m->blk);
+            for (m = marked_blocks.l[i]; m; m = m->next) {
+                printf("\tEntry %p = %p", m, m->addr);
                 printf("\n");
             }
         }
@@ -1102,6 +1096,22 @@ static void dump_marked_blocks()
     printf("=============\n");
 }
 #endif
+
+static void marked_blocks_dispose()
+{
+    int i;
+    for (i = 0; i < marked_blocks.nbuckets; ++i) {
+        struct marked_block *m, *n;
+        m = marked_blocks.l[i];
+        while (m) {
+            n = m;
+            m = m->next;
+            free(n);
+        }
+        marked_blocks.l[i] = 0;
+    }
+    marked_blocks.size = 0;
+}
 
 static void traverse_class(struct b_class *class)
 {
@@ -1202,8 +1212,8 @@ static void traverse_others()
     int i, j;
     /* Mark any other global descriptors which have been noted. */
     j = 0;
-    for (i = 0; i < ElemCount(og_hash); ++i)
-        for (dl = og_hash[i]; dl; dl = dl->next) {
+    for (i = 0; i < og_table.nbuckets; ++i)
+        for (dl = og_table.l[i]; dl; dl = dl->next) {
             stk_add_desc(0, "Other global", j, dl->dp);
             ++j;
         }

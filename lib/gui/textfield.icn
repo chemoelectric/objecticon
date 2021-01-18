@@ -327,16 +327,7 @@ class TextField(Component)
    end
 
    public whereis_x(e)
-      local i, s, d, t
-
-      s := get_view()
-      d := e.x - self.tx + loff
-      i := 1
-      t := 0
-      while (i <= *s) & ((.t + (t :=  self.cbwin.text_width(s[1+:i]))) / 2 < d) do
-         i +:= 1
-
-      return i
+      return find_cursor_pos(cbwin, get_view(), e.x - self.tx + loff)
    end
 
    public handle_ldrag(e)

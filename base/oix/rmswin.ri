@@ -3,8 +3,14 @@
  *
  */
 
-#define FONTHASH_SIZE 64
-#define CURSORHASH_SIZE 128
+#passthru DefineHash(fonttable, struct _wfont);
+#passthru DefineHash(cursortable, struct wcursor);
+
+static uword font_hash_func(wfp p) { return hashcstr(p->name); }
+static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
+
+struct fonttable fonts = { 50, font_hash_func };
+struct cursortable cursors = { 32, cursor_hash_func };
 
 static struct SharedCursor *null_cursor;
 static wcp alccontext(wbp w);
@@ -14,8 +20,7 @@ static void setup_cursors(void);
 static int inited;
 static void open_screen_win(wsp ws);
 static void close_screen_win(wsp ws);
-static wfp fonts[FONTHASH_SIZE], default_font;
-static struct wcursor *cursors[CURSORHASH_SIZE];
+static wfp default_font;
 static wfp load_font(char *s);
 static gb_Font *mkfont(char *s);
 static HDC dummy_hdc;
@@ -157,7 +162,7 @@ static stringint canvastypes[] = {
 #if 0
 static void dump_all(void)
 {
-    int i,j,k;
+    int i, k;
     wsp x;
     wbp y;
     i = 0;
@@ -168,27 +173,17 @@ static void dump_all(void)
         ++i;
     }
     printf("============\n");
-    j = 0;
-    for (x = wstates; x; x = x->next) {
-        printf("Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++j; 
-    }
-    printf("============\n");
     k = 0;
     for (x = vwstates; x; x = x->vnext) {
         printf("Non-hidden Canvas %p\n",x);
         printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
         printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
         printf("\twin=%d\n", (int)x->win);
         ++k; 
     }
 
-    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+    printf("Total %d bindings (%d non-hidden canvases)\n", i, k);
     fflush(stdout);
 }
 #endif
@@ -1030,11 +1025,13 @@ static wfp load_font(char *s)
     int i;
     gb_Font *f;
 
+    ensure_hash(&fonts);
+
     /*
      * See if the font is already loaded.
      */
-    i = hasher(hashcstr(s), fonts);
-    for(rv = fonts[i]; rv; rv = rv->next) {
+    i = hashcstr(s) % fonts.nbuckets;
+    for(rv = fonts.l[i]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name))
             return rv;
     }
@@ -1048,8 +1045,8 @@ static wfp load_font(char *s)
     gb_get_metrics(dummy_hdc, f, &rv->ascent, &rv->descent, &rv->maxwidth);
     /*dbg("ascent=%d descent=%d maxwidth=%d\n", rv->ascent,rv->descent,rv->maxwidth);*/
     rv->font = f;
-    rv->next = fonts[i];
-    fonts[i] = rv;
+    add_to_hash_pre(&fonts, rv, i);
+
     return rv;
 }
 
@@ -1758,8 +1755,8 @@ static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), cursors);
-    for(rv = cursors[i]; rv; rv = rv->next) {
+    i = hashcstr(name) % cursors.nbuckets;
+    for(rv = cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
@@ -1770,15 +1767,14 @@ static struct wcursor *ensure_wcursor(char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), cursors);
-    for(rv = cursors[i]; rv; rv = rv->next) {
+    i = hashcstr(name) % cursors.nbuckets;
+    for(rv = cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    rv->next = cursors[i];
-    cursors[i] = rv;
+    add_to_hash_pre(&cursors, rv, i);
     return rv;
 }
 
@@ -1992,17 +1988,14 @@ static wbp findwbp(wsp ws)
 
 static void setup_cursor(char *name, LPCTSTR cid)
 {
-    int i;
     struct wcursor *rv;
-    i = hasher(hashcstr(name), cursors);
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     if (cid)
         rv->shared_cursor = new_sharedcursor(LoadCursor(NULL, cid), 0);
     else
         rv->shared_cursor = link_sharedcursor(null_cursor);
-    rv->next = cursors[i];
-    cursors[i] = rv;
+    add_to_hash(&cursors, rv);
 }
 
 static void init_window_system(void)

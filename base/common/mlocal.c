@@ -1735,3 +1735,69 @@ int is_little_endian()
     u.i = 0x01020304;
     return (0x04 == u.c[0]);
 }
+
+struct hash_item {
+    struct hash_item *next;
+};
+
+DefineHash(hash_proto, struct hash_item);
+
+void ensure_hash(void *tbl0)
+{
+    struct hash_proto *tbl;
+    struct hash_item **ipp, *ip;
+    int i, h, old;
+
+    tbl = tbl0;
+    if (tbl->nbuckets == 0) {
+        tbl->nbuckets = tbl->init;
+        tbl->l = safe_zalloc(tbl->nbuckets * sizeof(struct dptr_list *));
+    } else if (tbl->size >= 3 * tbl->nbuckets) {
+        /* Expand the table */
+        old = tbl->nbuckets;
+        tbl->nbuckets *= 2;
+        tbl->l = safe_realloc(tbl->l,
+                              tbl->nbuckets * sizeof(struct dptr_list *));
+        /* Clear the new entries */
+        memset(&tbl->l[old], 0, (tbl->nbuckets - old) * sizeof(struct dptr_list *));
+        /* Re-calculate the hash of all entries */
+        for (i = 0; i < old; ++i) {
+            ipp = &tbl->l[i];
+            while ((ip = *ipp)) {
+                h = tbl->hash(ip) % tbl->nbuckets;
+                if (h == i)
+                    /* Entry stays in this bucket */
+                    ipp = &ip->next;
+                else {
+                    /* Move entry to a new bucket */
+                    *ipp = ip->next;
+                    ip->next = tbl->l[h];
+                    tbl->l[h] = ip;
+                }
+            }
+        }
+    }
+}
+
+void add_to_hash_pre(void *tbl0, void *item0, int h)
+{
+    struct hash_proto *tbl;
+    struct hash_item *item;
+    tbl = tbl0;
+    item = item0;
+    item->next = tbl->l[h];
+    tbl->l[h] = item;
+    ++tbl->size;
+}
+
+void add_to_hash(void *tbl0, void *item0)
+{
+    struct hash_proto *tbl;
+    struct hash_item *item;
+    int h;
+    ensure_hash(tbl0);
+    tbl = tbl0;
+    item = item0;
+    h = tbl->hash(item) % tbl->nbuckets;
+    add_to_hash_pre(tbl, item, h);
+}
