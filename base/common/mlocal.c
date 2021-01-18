@@ -1734,6 +1734,17 @@ void ensure_hash(void *tbl0)
     }
 }
 
+void add_to_hash_pre(void *tbl0, void *item0, int h)
+{
+    struct hash_proto *tbl;
+    struct hash_item *item;
+    tbl = tbl0;
+    item = item0;
+    item->next = tbl->l[h];
+    tbl->l[h] = item;
+    ++tbl->size;
+}
+
 void add_to_hash(void *tbl0, void *item0)
 {
     struct hash_proto *tbl;
@@ -1743,7 +1754,5 @@ void add_to_hash(void *tbl0, void *item0)
     tbl = tbl0;
     item = item0;
     h = tbl->hash(item) % tbl->nbuckets;
-    item->next = tbl->l[h];
-    tbl->l[h] = item;
-    ++tbl->size;
+    add_to_hash_pre(tbl, item, h);
 }

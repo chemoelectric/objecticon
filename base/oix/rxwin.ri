@@ -389,9 +389,7 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    rv->next = wd->cursors.l[i];
-    wd->cursors.l[i] = rv;
-    ++wd->cursors.size;
+    add_to_hash_pre(&wd->cursors, rv, i);
     return rv;
 }
 
@@ -5204,9 +5202,7 @@ wfp loadfont(wdp wd, char *s)
     /*
      * link the font into this display's fontlist
      */
-    rv->next = wd->fonts.l[i];
-    wd->fonts.l[i] = rv;
-    ++wd->fonts.size;
+    add_to_hash_pre(&wd->fonts, rv, i);
 
     return rv;
 }
