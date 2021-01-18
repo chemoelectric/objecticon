@@ -5397,8 +5397,8 @@ static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int
     }
 }
 
-struct imgdataformat imgdataformat_X11ARGB32 =   {set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,8,24,0,"X11ARGB32"};
-struct imgdataformat imgdataformat_X11BGRA32 =   {set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,8,24,0,"X11BGRA32"};
+struct imgdataformat imgdataformat_X11ARGB32 =   {0,set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,8,24,0,"X11ARGB32"};
+struct imgdataformat imgdataformat_X11BGRA32 =   {0,set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,8,24,0,"X11BGRA32"};
 
 void registerplatformimgdataformats()
 {

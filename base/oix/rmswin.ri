@@ -2153,7 +2153,7 @@ static void get_MSBGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int 
     *a = 257 * (*s++);
 }
 
-static struct imgdataformat imgdataformat_MSBGRA32 = {set_MSBGRA32,get_MSBGRA32,0,0,getlength_32,8,24,0,"MSBGRA32"};
+static struct imgdataformat imgdataformat_MSBGRA32 = {0,set_MSBGRA32,get_MSBGRA32,0,0,getlength_32,8,24,0,"MSBGRA32"};
 
 void registerplatformimgdataformats()
 {
