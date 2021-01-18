@@ -208,6 +208,10 @@ struct oisymbols {
     char * (*buffstr)(dptr d);
     void (*buffnstr)(dptr d, char **s, ...);
     int (*is_little_endian)(void);
+    void (*ensure_hash)(void *tbl0);
+    void (*add_to_hash_pre)(void *tbl0, void *item0, uword h);
+    void (*add_to_hash)(void *tbl0, void *item0);
+    void (*check_hash)(void *tbl0);
     void * (*safe_calloc)(size_t m, size_t n);
     void * (*safe_zalloc)(size_t size);
     void * (*safe_malloc)(size_t size);
