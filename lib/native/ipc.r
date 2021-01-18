@@ -38,9 +38,9 @@ typedef struct {
 } msgblock;
 
 typedef struct _resource {
+    struct _resource *next;
     int type;
     int id;
-    struct _resource *next;
 } resource;
 
 static void aborted(char *s);
@@ -54,7 +54,10 @@ static int msgsnd_ex(int msqid, void *msgp, size_t msgsz, int msgflg);
 static ssize_t msgrcv_ex(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 
-static resource *resource_hash[24];
+#passthru DefineHash(resource_table, struct _resource);
+static uword resource_hash_func(struct _resource *p) { return ptrhasher1(p->id); }
+
+static struct resource_table resource_hash = { 10, resource_hash_func };
 
 static struct sdescrip idf = {2, "id"};
 
@@ -830,15 +833,16 @@ static int semop_ex(int semid, struct sembuf *sops, size_t nsops) {
 static void clear_resource_hash() {
     int i;
     resource *r, *t;
-    for (i = 0; i < ElemCount(resource_hash); ++i) {
-        r = resource_hash[i];
+    for (i = 0; i < resource_hash.nbuckets; ++i) {
+        r = resource_hash.l[i];
         while (r) {
             t = r->next;
             free(r);
             r = t;
         }
-        resource_hash[i] = 0;
+        resource_hash.l[i] = 0;
     }
+    resource_hash.size = 0;
 }
 
 /*
@@ -854,7 +858,6 @@ static void freshen_resource_hash() {
 
 static void add_resource(int id, int type) {
     static int inited;
-    int i;
     resource *r;
 
     if (!inited) {
@@ -874,23 +877,22 @@ static void add_resource(int id, int type) {
 
     freshen_resource_hash();
 
-    i = hasher(id, resource_hash);
     r = safe_malloc(sizeof(resource));
     r->type = type;
     r->id = id;
-    r->next = resource_hash[i];
-    resource_hash[i] = r;
+    add_to_hash(&resource_hash, r);
 }
 
 static void remove_resource(int id, int type) {
     int i;
     resource **rp, *r;
-    i = hasher(id, resource_hash);
-    rp = &resource_hash[i];
+    i = ptrhasher1(id) % resource_hash.nbuckets;
+    rp = &resource_hash.l[i];
     while ((r = *rp)) {
         if (r->type == type && r->id == id) {
             *rp = r->next;
             free(r);
+            --resource_hash.size;
             return;
         }
         rp = &r->next;
@@ -906,8 +908,8 @@ static void cleanup() {
     resource *r;
 
     freshen_resource_hash();
-    for (i = 0; i < ElemCount(resource_hash); ++i) {
-        for (r = resource_hash[i]; r; r = r->next) {
+    for (i = 0; i < resource_hash.nbuckets; ++i) {
+        for (r = resource_hash.l[i]; r; r = r->next) {
             fprintf(stderr, "ipc: Removing resource type %d id=%d\n", r->type, r->id);
             switch (r->type) {
                 case 0: {
