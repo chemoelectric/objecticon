@@ -1,7 +1,7 @@
 #passthru DefineHash(fonttable, struct _wfont);
 #passthru DefineHash(cursortable, struct wcursor);
 
-static uword font_hash_func(wfp p) { return hashcstr(p->name); }
+static uword font_hash_func(wfp p) { return hashcstr(p->name + 3); }
 static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
 struct fonttable fonts = { 50, font_hash_func };

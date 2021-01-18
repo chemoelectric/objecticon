@@ -1192,23 +1192,28 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
 }
 
 struct handle_list {
+    struct handle_list *next;
     char *filename;
     void *handle;
-    struct handle_list *next;
 };
+
+#passthru DefineHash(handle_table, struct handle_list);
+static uword handle_hash_func(struct handle_list *p) { return hashcstr(p->filename); }
 
 static void *get_handle(char *filename)
 {
-    static struct handle_list *tbl[16];
+    static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
     int i;
     void *handle;
     struct oisymbols **imported;
     int *version;
 
-    i = hasher(hashcstr(filename), tbl);
+    ensure_hash(&tbl);
+
+    i = hashcstr(filename) % tbl.nbuckets;
     /* Search list for match. */
-    for (x = tbl[i]; x; x = x->next) {
+    for (x = tbl.l[i]; x; x = x->next) {
         if (strcmp(filename, x->filename) == 0)
             return x->handle;
     }
@@ -1237,11 +1242,10 @@ static void *get_handle(char *filename)
     if (imported)
         *imported = &oiexported;
 
-    x = safe_zalloc(sizeof(struct handle_list));
+    x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    x->next = tbl[i];
-    tbl[i] = x;
+    add_to_hash_pre(&tbl, x, i);
     return handle;
 }
 
@@ -1359,14 +1363,17 @@ static struct b_proc *try_load(HMODULE handle, struct b_class *class0,  struct c
 }
 
 struct handle_list {
+    struct handle_list *next;
     char *filename;
     HMODULE handle;
-    struct handle_list *next;
 };
+
+#passthru DefineHash(handle_table, struct handle_list);
+static uword handle_hash_func(struct handle_list *p) { return hashcstr(p->filename); }
 
 static HMODULE get_handle(char *filename)
 {
-    static struct handle_list *tbl[16];
+    static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
     int i;
     HMODULE handle;
@@ -1374,9 +1381,11 @@ static HMODULE get_handle(char *filename)
     struct oisymbols **imported;
     int *version;
 
-    i = hasher(hashcstr(filename), tbl);
+    ensure_hash(&tbl);
+
+    i = hashcstr(filename) % tbl.nbuckets;
     /* Search list for match. */
-    for (x = tbl[i]; x; x = x->next) {
+    for (x = tbl.l[i]; x; x = x->next) {
         if (strcmp(filename, x->filename) == 0)
             return x->handle;
     }
@@ -1411,11 +1420,10 @@ static HMODULE get_handle(char *filename)
     }
     *imported = &oiexported;
 
-    x = safe_zalloc(sizeof(struct handle_list));
+    x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    x->next = tbl[i];
-    tbl[i] = x;
+    add_to_hash_pre(&tbl, x, i);
     return handle;
 }
 

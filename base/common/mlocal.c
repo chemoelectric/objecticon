@@ -1742,6 +1742,10 @@ struct hash_item {
 
 DefineHash(hash_proto, struct hash_item);
 
+/*
+ * Ensure a hash table is initialized, and if it is too crowded,
+ * expand and recalculate the bucket lists.
+ */
 void ensure_hash(void *tbl0)
 {
     struct hash_proto *tbl;
@@ -1779,6 +1783,10 @@ void ensure_hash(void *tbl0)
     }
 }
 
+/*
+ * Given an already-calculated hash value, add the given item to the
+ * hash table.
+ */
 void add_to_hash_pre(void *tbl0, void *item0, int h)
 {
     struct hash_proto *tbl;
@@ -1790,6 +1798,11 @@ void add_to_hash_pre(void *tbl0, void *item0, int h)
     ++tbl->size;
 }
 
+/*
+ * Ensure the given hash table is initialized and if necessary
+ * expanded, then calculate the hash for the given new item, and add
+ * it into the table.
+ */
 void add_to_hash(void *tbl0, void *item0)
 {
     struct hash_proto *tbl;
@@ -1800,4 +1813,45 @@ void add_to_hash(void *tbl0, void *item0)
     item = item0;
     h = tbl->hash(item) % tbl->nbuckets;
     add_to_hash_pre(tbl, item, h);
+}
+
+/*
+ * Check the given hash table for errors, and output some statistics
+ * about it.
+ */
+void check_hash(void *tbl0)
+{
+    int h, i, l, ll, tl, sz, errs, mc;
+    struct hash_proto *tbl;
+    struct hash_item *ip;
+
+    tbl = tbl0;
+    printf("Hash table size=%d nbuckets=%d\n",
+           tbl->size, tbl->nbuckets);
+    mc = errs = sz = tl = ll = 0;
+    for (i = 0; i < tbl->nbuckets; ++i) {
+        l = 0;
+        for (ip = tbl->l[i]; ip; ip = ip->next) {
+            h = tbl->hash(ip) % tbl->nbuckets;
+            if (h != i) {
+                printf("\tHash wrong %d vs %d\n", h, i);
+                ++errs;
+            }
+            ++l;
+            ++sz;
+        }
+        if (l > ll) {
+            ll = l;
+            mc = 1;
+        } else if (l == ll)
+            ++mc;
+        tl += l;
+    }
+    if (sz != tbl->size) {
+        printf("\tSize wrong %d vs %d\n", sz, tbl->size);
+        ++errs;
+    }
+
+    printf("\tMaximum length=%d (%d times) Average length=%3.1f Errors=%d\n",
+           ll, mc, (tbl->nbuckets == 0) ? 0.0 : ((double)tl) / tbl->nbuckets, errs);
 }
