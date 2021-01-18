@@ -1182,13 +1182,13 @@ static void *get_handle(char *filename)
     struct oisymbols **imported;
     int *version;
 
-    ensure_hash(&tbl);
-
     u = hashcstr(filename);
     /* Search list for match. */
-    for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
-        if (strcmp(filename, x->filename) == 0)
-            return x->handle;
+    if (tbl.nbuckets > 0) {
+        for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
+            if (strcmp(filename, x->filename) == 0)
+                return x->handle;
+        }
     }
     /* Not found, try to open library and add a new element. */
     handle = dlopen(filename, RTLD_LAZY);
@@ -1354,13 +1354,13 @@ static HMODULE get_handle(char *filename)
     struct oisymbols **imported;
     int *version;
 
-    ensure_hash(&tbl);
-
     u = hashcstr(filename);
     /* Search list for match. */
-    for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
-        if (strcmp(filename, x->filename) == 0)
-            return x->handle;
+    if (tbl.nbuckets > 0) {
+        for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
+            if (strcmp(filename, x->filename) == 0)
+                return x->handle;
+        }
     }
     /* Not found, try to open library and add a new element. */
     wfilename = utf8_to_wchar(filename);
