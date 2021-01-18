@@ -1,10 +1,14 @@
-#define FONTHASH_SIZE 64
-#define FONTINFOHASH_SIZE 64
-#define CURSORHASH_SIZE 128
+#passthru DefineHash(fonttable, struct _wfont);
+#passthru DefineHash(cursortable, struct wcursor);
+
+static uword font_hash_func(wfp p) { return hashcstr(p->name); }
+static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
+
+struct fonttable fonts = { 50, font_hash_func };
+struct cursortable cursors = { 32, cursor_hash_func };
 
 static int inited;
-static wfp fonts[FONTHASH_SIZE], default_font;
-static struct wcursor *cursors[CURSORHASH_SIZE];
+static wfp default_font;
 static struct SharedCursor *null_cursor;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
@@ -95,13 +99,17 @@ static struct imgdataformat imgdataformat_P9AG16;
 
 /* Provides info about a font available on the system. */
 struct FontInfo {
+   struct FontInfo *next;
    char *path;
    char *family;
    int flags;
    double size;
-   struct FontInfo *next;
 };
-static struct FontInfo *font_info[FONTINFOHASH_SIZE];
+
+static uword font_info_hash_func(struct FontInfo *p) { return hashcstr(p->family); }
+
+#passthru DefineHash(fontinfotable, struct FontInfo);
+struct fontinfotable font_info = { 32, font_info_hash_func } ;
 
 /* List of windows with win non-null */
 static wsp vwstates;
@@ -160,7 +168,7 @@ static int window_count;
 #if 0
 static void dump_all(void)
 {
-    int i,j,k;
+    int i, k;
     wsp x;
     wbp y;
     i = 0;
@@ -171,27 +179,17 @@ static void dump_all(void)
         ++i;
     }
     print("============\n");
-    j = 0;
-    for (x = wstates; x; x = x->wnext) {
-        print("Canvas %p\n",x);
-        print("\trefcount=%d\n", x->refcount);
-        print("\tlabel=%s\n", x->windowlabel);
-        print("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        print("\twin=%d\n", (int)x->win);
-        ++j; 
-    }
-    print("============\n");
     k = 0;
     for (x = vwstates; x; x = x->vnext) {
         print("Non-hidden Canvas %p\n",x);
         print("\trefcount=%d\n", x->refcount);
-        print("\tlabel=%s\n", x->windowlabel);
+        print("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
         print("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
         print("\twin=%d\n", (int)x->win);
         ++k; 
     }
 
-    print("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+    print("Total %d bindings (%d non-hidden canvases)\n", i, k);
 }
 #endif
 
@@ -290,8 +288,8 @@ static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), cursors);
-    for(rv = cursors[i]; rv; rv = rv->next) {
+    i = hashcstr(name) % cursors.nbuckets;
+    for(rv = cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
@@ -302,15 +300,15 @@ static struct wcursor *ensure_wcursor(char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), cursors);
-    for(rv = cursors[i]; rv; rv = rv->next) {
+    ensure_hash(&cursors);
+    i = hashcstr(name) % cursors.nbuckets;
+    for(rv = cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    rv->next = cursors[i];
-    cursors[i] = rv;
+    add_to_hash_pre(&cursors, rv, i);
     return rv;
 }
 
@@ -1327,11 +1325,13 @@ static wfp load_font(char *s)
     if (!s)
         return 0;
 
+    ensure_hash(&fonts);
+
     /*
      * See if the font is already loaded.
      */
-    i = hasher(hashcstr(s), fonts);
-    for(rv = fonts[i]; rv; rv = rv->next) {
+    i = hashcstr(s) % fonts.nbuckets;
+    for(rv = fonts.l[i]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name + 3))
             return rv;
     }
@@ -1346,8 +1346,8 @@ static wfp load_font(char *s)
     rv->descent = f->height - f->ascent;
     rv->maxwidth = f->width;               /* max width of one char */
     rv->font = f;
-    rv->next = fonts[i];
-    fonts[i] = rv;
+    add_to_hash_pre(&fonts, rv, i);
+
     return rv;
 }
 
@@ -2845,8 +2845,8 @@ static struct FontInfo *match_font(char *s)
         return 0;
 
     flags = simplify_font_flags(flags);
-    h = hasher(hashcstr(family), font_info);
-    for (curr = font_info[h]; curr; curr = curr->next) {
+    h = hashcstr(family) % font_info.nbuckets;
+    for (curr = font_info.l[h]; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
             if (!best)
                 best = curr;
@@ -2877,6 +2877,8 @@ static void load_font_info(void)
     if (!fd)
         ffatalerr("Can't open font info file: %r");
 
+    ensure_hash(&font_info);
+
     line = 0;
     while ((fgets(l, sizeof(l), fd))) {
         ++line;
@@ -2900,9 +2902,7 @@ static void load_font_info(void)
                 fi->family = salloc(family);
                 fi->flags = simplify_font_flags(flags);
                 fi->size = size;
-                h = hasher(hashcstr(fi->family), font_info);
-                fi->next = font_info[h];
-                font_info[h] = fi;
+                add_to_hash(&font_info, fi);
             }
         }
     }
@@ -3007,10 +3007,8 @@ static void synch_cursors(struct wcursor *c)
 
 static void setup_cursor(char *name, struct Cursor *c)
 {
-    int i;
     struct wcursor *rv;
     struct Cursor *c2;
-    i = hasher(hashcstr(name), cursors);
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     if (c) {
@@ -3019,8 +3017,7 @@ static void setup_cursor(char *name, struct Cursor *c)
         rv->shared_cursor = new_sharedcursor(c2);
     } else
         rv->shared_cursor = link_sharedcursor(null_cursor);
-    rv->next = cursors[i];
-    cursors[i] = rv;
+    add_to_hash(&cursors, rv);
 }
 
 #begdef LoadCursor(f, s)
