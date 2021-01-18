@@ -368,8 +368,9 @@ static struct wcursor *lookup_wcursor(wdp wd, char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), wd->cursors);
-    for(rv = wd->cursors[i]; rv; rv = rv->next) {
+    /* the cursor table can't be empty; see setup_cursors() */
+    i = hashcstr(name) % wd->cursors.nbuckets;
+    for(rv = wd->cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
@@ -380,15 +381,17 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
 {
     struct wcursor *rv;
     int i;
-    i = hasher(hashcstr(name), wd->cursors);
-    for(rv = wd->cursors[i]; rv; rv = rv->next) {
+    ensure_hash(&wd->cursors);
+    i = hashcstr(name) % wd->cursors.nbuckets;
+    for(rv = wd->cursors.l[i]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    rv->next = wd->cursors[i];
-    wd->cursors[i] = rv;
+    rv->next = wd->cursors.l[i];
+    wd->cursors.l[i] = rv;
+    ++wd->cursors.size;
     return rv;
 }
 
@@ -455,18 +458,20 @@ int copypointer(wbp w, char *dest, char *src)
 
 static void setup_cursor(wdp wd, char *name, int id)
 {
-    int i;
     struct wcursor *rv;
-    i = hasher(hashcstr(name), wd->cursors);
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     rv->shared_cursor = new_sharedcursor(wd, XCreateFontCursor(wd->display, id));
-    rv->next = wd->cursors[i];
-    wd->cursors[i] = rv;
+    add_to_hash(&wd->cursors, rv);
 }
+
+static uword font_hash_func(wfp p) { return hashcstr(p->name); }
+static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
 static void setup_cursors(wdp wd)
 {
+    wd->cursors.init = 32;
+    wd->cursors.hash = cursor_hash_func;
     setup_cursor(wd, "X cursor",	XC_X_cursor);
     setup_cursor(wd, "arrow",		XC_arrow);
     setup_cursor(wd, "based arrow down",XC_based_arrow_down);
@@ -5031,10 +5036,14 @@ static wdp alcdisplay(char *s)
     wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
     wd->maskfmt = XRenderFindStandardFormat(wd->display, PictStandardA8);
     wd->winfmt = XRenderFindVisualFormat(wd->display, GetVisual(wd));
+    wd->fonts.init = 50;
+    wd->fonts.hash = font_hash_func;
+    
     wd->defaultfont = loadfont(wd, defaultfont);
     if (wd->defaultfont == NULL) {
         LitWhy("Couldn't load default font");
         XCloseDisplay(wd->display);
+        free(wd->fonts.l);
         free(wd);
         return NULL;
     }
@@ -5174,11 +5183,13 @@ wfp loadfont(wdp wd, char *s)
     if (!s)
         return 0;
 
+    ensure_hash(&wd->fonts);
+
     /*
      * see if the font is already loaded on this display
      */
-    i = hasher(hashcstr(s), wd->fonts);
-    for(rv = wd->fonts[i]; rv; rv = rv->next) {
+    i = hashcstr(s) % wd->fonts.nbuckets;
+    for(rv = wd->fonts.l[i]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name + 3))
             return rv;
     }
@@ -5193,8 +5204,9 @@ wfp loadfont(wdp wd, char *s)
     /*
      * link the font into this display's fontlist
      */
-    rv->next = wd->fonts[i];
-    wd->fonts[i] = rv;
+    rv->next = wd->fonts.l[i];
+    wd->fonts.l[i] = rv;
+    ++wd->fonts.size;
 
     return rv;
 }
