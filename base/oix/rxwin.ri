@@ -463,7 +463,7 @@ static void setup_cursor(wdp wd, char *name, int id)
     add_to_hash(&wd->cursors, rv);
 }
 
-static uword font_hash_func(wfp p) { return hashcstr(p->name); }
+static uword font_hash_func(wfp p) { return hashcstr(p->name + 3); }
 static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
 static void setup_cursors(wdp wd)
