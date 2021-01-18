@@ -1055,10 +1055,6 @@ static int is_marked(void *addr)
 {
     struct marked_block *m;
     int h;
-
-    if (marked_blocks.size == 0)
-        return 0;
-
     h = ptrhasher1(addr) % marked_blocks.nbuckets;
     m = marked_blocks.l[h];
     while (m) {
@@ -1223,6 +1219,7 @@ static void traverse(int m)
 {
     struct progstate *prog;
 
+    ensure_hash(&marked_blocks);
     mode = m;
     finished = 0;
     found = nulldesc;

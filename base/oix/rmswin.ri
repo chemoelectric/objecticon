@@ -1022,16 +1022,14 @@ static gb_Font *mkfont(char *s)
 static wfp load_font(char *s)
 {
     wfp rv;
-    int i;
+    uword u;
     gb_Font *f;
-
-    ensure_hash(&fonts);
 
     /*
      * See if the font is already loaded.
      */
-    i = hashcstr(s) % fonts.nbuckets;
-    for(rv = fonts.l[i]; rv; rv = rv->next) {
+    u = hashcstr(s);
+    for(rv = fonts.l[u % fonts.nbuckets]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name))
             return rv;
     }
@@ -1045,7 +1043,7 @@ static wfp load_font(char *s)
     gb_get_metrics(dummy_hdc, f, &rv->ascent, &rv->descent, &rv->maxwidth);
     /*dbg("ascent=%d descent=%d maxwidth=%d\n", rv->ascent,rv->descent,rv->maxwidth);*/
     rv->font = f;
-    add_to_hash_pre(&fonts, rv, i);
+    add_to_hash_pre(&fonts, rv, u);
 
     return rv;
 }
@@ -1754,9 +1752,9 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
-    int i;
-    i = hashcstr(name) % cursors.nbuckets;
-    for(rv = cursors.l[i]; rv; rv = rv->next) {
+    uword u;
+    u = hashcstr(name);
+    for(rv = cursors.l[u % cursors.nbuckets]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
@@ -1766,15 +1764,15 @@ static struct wcursor *lookup_wcursor(char *name)
 static struct wcursor *ensure_wcursor(char *name)
 {
     struct wcursor *rv;
-    int i;
-    i = hashcstr(name) % cursors.nbuckets;
-    for(rv = cursors.l[i]; rv; rv = rv->next) {
+    uword u;
+    u = hashcstr(name);
+    for(rv = cursors.l[u % cursors.nbuckets]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    add_to_hash_pre(&cursors, rv, i);
+    add_to_hash_pre(&cursors, rv, u);
     return rv;
 }
 
@@ -2030,6 +2028,8 @@ static void init_window_system(void)
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);
     white = new_sharedcolor("white", 0xffff,0xffff,0xffff, 0xffff);
+    ensure_hash(&fonts);
+    ensure_hash(&cursors);
     default_font = load_font(defaultfont);
     if (!default_font)
         ffatalerr("Couldn't load default font");

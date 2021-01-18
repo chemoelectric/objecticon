@@ -886,6 +886,10 @@ static void add_resource(int id, int type) {
 static void remove_resource(int id, int type) {
     int i;
     resource **rp, *r;
+    /* The hash table may be uninitialized if we're closing a public
+     * resource. */
+    if (resource_hash.nbuckets == 0)
+        return;
     i = ptrhasher1(id) % resource_hash.nbuckets;
     rp = &resource_hash.l[i];
     while ((r = *rp)) {

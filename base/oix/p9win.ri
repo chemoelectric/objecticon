@@ -287,9 +287,9 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
-    int i;
-    i = hashcstr(name) % cursors.nbuckets;
-    for(rv = cursors.l[i]; rv; rv = rv->next) {
+    uword u;
+    u = hashcstr(name);
+    for(rv = cursors.l[u % cursors.nbuckets]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
@@ -299,16 +299,15 @@ static struct wcursor *lookup_wcursor(char *name)
 static struct wcursor *ensure_wcursor(char *name)
 {
     struct wcursor *rv;
-    int i;
-    ensure_hash(&cursors);
-    i = hashcstr(name) % cursors.nbuckets;
-    for(rv = cursors.l[i]; rv; rv = rv->next) {
+    uword u;
+    u = hashcstr(name);
+    for(rv = cursors.l[u % cursors.nbuckets]; rv; rv = rv->next) {
         if (!strcmp(name, rv->name))
             return rv;
     }
     rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
-    add_to_hash_pre(&cursors, rv, i);
+    add_to_hash_pre(&cursors, rv, u);
     return rv;
 }
 
@@ -1315,7 +1314,7 @@ static char *convert_spec(char *s)
 static wfp load_font(char *s)
 {
     wfp rv;
-    int i;
+    uword u;
     Font *f;
 
     /*
@@ -1325,13 +1324,11 @@ static wfp load_font(char *s)
     if (!s)
         return 0;
 
-    ensure_hash(&fonts);
-
     /*
      * See if the font is already loaded.
      */
-    i = hashcstr(s) % fonts.nbuckets;
-    for(rv = fonts.l[i]; rv; rv = rv->next) {
+    u = hashcstr(s);
+    for(rv = fonts.l[u % fonts.nbuckets]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name + 3))
             return rv;
     }
@@ -1346,7 +1343,7 @@ static wfp load_font(char *s)
     rv->descent = f->height - f->ascent;
     rv->maxwidth = f->width;               /* max width of one char */
     rv->font = f;
-    add_to_hash_pre(&fonts, rv, i);
+    add_to_hash_pre(&fonts, rv, u);
 
     return rv;
 }
@@ -2495,6 +2492,10 @@ static void init_window_system(void)
     env_string("OI_WIN_MNTGEN", &mntgen_dir);
     env_string("OI_WIN_WSYS", &wsys_dir);
 
+    ensure_hash(&fonts);
+    ensure_hash(&cursors);
+    ensure_hash(&font_info);
+
     load_font_info();
     setup_cursors();
 
@@ -2836,7 +2837,8 @@ static int simplify_font_flags(int flags)
 
 static struct FontInfo *match_font(char *s)
 {
-    int flags, h;
+    int flags;
+    uword u;
     double size;
     char family[MAXFONTWORD];
     struct FontInfo *best = 0, *curr;
@@ -2845,8 +2847,8 @@ static struct FontInfo *match_font(char *s)
         return 0;
 
     flags = simplify_font_flags(flags);
-    h = hashcstr(family) % font_info.nbuckets;
-    for (curr = font_info.l[h]; curr; curr = curr->next) {
+    u = hashcstr(family);
+    for (curr = font_info.l[u % font_info.nbuckets]; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
             if (!best)
                 best = curr;
@@ -2876,8 +2878,6 @@ static void load_font_info(void)
     fd = fopen(fn, ReadText);
     if (!fd)
         ffatalerr("Can't open font info file: %r");
-
-    ensure_hash(&font_info);
 
     line = 0;
     while ((fgets(l, sizeof(l), fd))) {
