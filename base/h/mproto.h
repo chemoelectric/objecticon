@@ -117,7 +117,7 @@ void mb_show(struct membuff *mb);
 
 void ensure_hash(void *tbl0);
 void add_to_hash(void *tbl0, void *item0);
-void add_to_hash_pre(void *tbl0, void *item0, int h);
+void add_to_hash_pre(void *tbl0, void *item0, uword h);
 void check_hash(void *tbl0);
 
 int oi_toupper(int c);

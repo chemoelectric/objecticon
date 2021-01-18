@@ -1177,16 +1177,16 @@ static void *get_handle(char *filename)
 {
     static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
-    int i;
+    uword u;
     void *handle;
     struct oisymbols **imported;
     int *version;
 
     ensure_hash(&tbl);
 
-    i = hashcstr(filename) % tbl.nbuckets;
+    u = hashcstr(filename);
     /* Search list for match. */
-    for (x = tbl.l[i]; x; x = x->next) {
+    for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
         if (strcmp(filename, x->filename) == 0)
             return x->handle;
     }
@@ -1218,7 +1218,7 @@ static void *get_handle(char *filename)
     x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    add_to_hash_pre(&tbl, x, i);
+    add_to_hash_pre(&tbl, x, u);
     return handle;
 }
 
@@ -1348,7 +1348,7 @@ static HMODULE get_handle(char *filename)
 {
     static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
-    int i;
+    uword u;
     HMODULE handle;
     WCHAR *wfilename;
     struct oisymbols **imported;
@@ -1356,9 +1356,9 @@ static HMODULE get_handle(char *filename)
 
     ensure_hash(&tbl);
 
-    i = hashcstr(filename) % tbl.nbuckets;
+    u = hashcstr(filename);
     /* Search list for match. */
-    for (x = tbl.l[i]; x; x = x->next) {
+    for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
         if (strcmp(filename, x->filename) == 0)
             return x->handle;
     }
@@ -1396,7 +1396,7 @@ static HMODULE get_handle(char *filename)
     x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    add_to_hash_pre(&tbl, x, i);
+    add_to_hash_pre(&tbl, x, u);
     return handle;
 }
 

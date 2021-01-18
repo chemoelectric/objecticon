@@ -1739,35 +1739,34 @@ void ensure_hash(void *tbl0)
 }
 
 /*
- * Given an already-calculated hash value, add the given item to the
- * hash table.
+ * Ensure the given hash table is initialized and if necessary
+ * expanded, then insert the item using the already-calculated hash value.
  */
-void add_to_hash_pre(void *tbl0, void *item0, int h)
+void add_to_hash_pre(void *tbl0, void *item0, uword h)
 {
     struct hash_proto *tbl;
     struct hash_item *item;
+    int i;
+    ensure_hash(tbl0);
     tbl = tbl0;
     item = item0;
-    item->next = tbl->l[h];
-    tbl->l[h] = item;
+    i = h % tbl->nbuckets;
+    item->next = tbl->l[i];
+    tbl->l[i] = item;
     ++tbl->size;
 }
 
 /*
- * Ensure the given hash table is initialized and if necessary
- * expanded, then calculate the hash for the given new item, and add
- * it into the table.
+ * This just calls add_to_hash_pre() after calling the table's hash
+ * function.
  */
 void add_to_hash(void *tbl0, void *item0)
 {
     struct hash_proto *tbl;
     struct hash_item *item;
-    int h;
-    ensure_hash(tbl0);
     tbl = tbl0;
     item = item0;
-    h = tbl->hash(item) % tbl->nbuckets;
-    add_to_hash_pre(tbl, item, h);
+    add_to_hash_pre(tbl, item, tbl->hash(item));
 }
 
 /*
