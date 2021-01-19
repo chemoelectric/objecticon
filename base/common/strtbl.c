@@ -16,13 +16,6 @@ struct str_entry {
 #define SBufSize 1024                     /* initial size of a string buffer */
 
 /*
- * init_str - initialize string hash table.
- */
-void init_str()
-{
-}
-
-/*
  * Hash a string of length len bytes (may include nulls).
  */
 static uword hash(char *s, int len)
@@ -94,11 +87,11 @@ void new_sbuf(struct str_buf *sbuf)
     sbuf->end = sbuf->strtimage + sbuf->size;
 }
 
-static struct str_entry *lookup(char *s, int len)
+static struct str_entry *lookup(char *s, int len, uword h)
 {
     struct str_entry *se = 0;
     if (str_tbl.nbuckets > 0) {
-        se = str_tbl.l[hash(s, len) % str_tbl.nbuckets];
+        se = str_tbl.l[h % str_tbl.nbuckets];
         while (se &&
                (len != se->length || memcmp(s, se->s, len) != 0))
             se = se->next;
@@ -113,14 +106,16 @@ char *spec_str(char *s)
 {
     struct str_entry *se;
     int l;
+    uword h;
     /* The null is included in the string. */
     l = strlen(s) + 1;
-    se = lookup(s, l);
+    h = hash(s, l);
+    se = lookup(s, l, h);
     if (!se) {
         se = Alloc(struct str_entry);
         se->s = s;
         se->length = l;
-        add_to_hash(&str_tbl, se);
+        add_to_hash_pre(&str_tbl, se, h);
     }
     return se->s;
 }
@@ -136,13 +131,15 @@ char *str_install(struct str_buf *sbuf)
     char *s;
     char *e;
     int l;
+    uword h;
 
     /* null terminate the buffered copy of the string */
     AppChar(*sbuf, '\0');   
     s = sbuf->strtimage;
     e = sbuf->endimage;
     l = e - s;
-    se = lookup(s, l);
+    h = hash(s, l);
+    se = lookup(s, l, h);
     if (se) {
         /*
          * A copy of the string is already in the table. Delete the copy
@@ -158,7 +155,7 @@ char *str_install(struct str_buf *sbuf)
         se->s = s;
         se->length = l;
         sbuf->strtimage = e;
-        add_to_hash(&str_tbl, se);
+        add_to_hash_pre(&str_tbl, se, h);
     }
     return se->s;
 }
