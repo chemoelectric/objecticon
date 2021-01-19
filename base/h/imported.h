@@ -215,6 +215,8 @@
 #define ensure_hash (*(imported->ensure_hash))
 #define add_to_hash_pre (*(imported->add_to_hash_pre))
 #define add_to_hash (*(imported->add_to_hash))
+#define free_hash (*(imported->free_hash))
+#define clear_hash (*(imported->clear_hash))
 #define check_hash (*(imported->check_hash))
 #define safe_calloc (*(imported->safe_calloc))
 #define safe_zalloc (*(imported->safe_zalloc))

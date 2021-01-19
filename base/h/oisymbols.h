@@ -211,6 +211,8 @@ struct oisymbols {
     void (*ensure_hash)(void *tbl0);
     void (*add_to_hash_pre)(void *tbl0, void *item0, uword h);
     void (*add_to_hash)(void *tbl0, void *item0);
+    void (*free_hash)(void *tbl0);
+    void (*clear_hash)(void *tbl0);
     void (*check_hash)(void *tbl0);
     void * (*safe_calloc)(size_t m, size_t n);
     void * (*safe_zalloc)(size_t size);

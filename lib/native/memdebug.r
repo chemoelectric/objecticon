@@ -1101,9 +1101,8 @@ static void marked_blocks_dispose()
             m = m->next;
             free(n);
         }
-        marked_blocks.l[i] = 0;
     }
-    marked_blocks.size = 0;
+    clear_hash(&marked_blocks);
 }
 
 static void traverse_class(struct b_class *class)

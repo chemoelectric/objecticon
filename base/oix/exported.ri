@@ -211,6 +211,8 @@ struct oisymbols oiexported = {
     &ensure_hash,
     &add_to_hash_pre,
     &add_to_hash,
+    &free_hash,
+    &clear_hash,
     &check_hash,
     &safe_calloc,
     &safe_zalloc,

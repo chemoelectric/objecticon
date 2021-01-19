@@ -1772,6 +1772,32 @@ void add_to_hash(void *tbl0, void *item0)
 }
 
 /*
+ * Clear the hash bucket list, and set the size to 0.  The bucket list
+ * is not freed.  It is the caller's responsibility to ensure the
+ * individual list items are disposed of.
+ */
+void clear_hash(void *tbl0)
+{
+    struct hash_proto *tbl;
+    tbl = tbl0;
+    memset(tbl->l, 0, tbl->nbuckets * sizeof(struct hash_item *));
+    tbl->size = 0;
+}
+
+/*
+ * Free the bucket list memory, and reset the fields to their original
+ * state.
+ */
+void free_hash(void *tbl0)
+{
+    struct hash_proto *tbl;
+    tbl = tbl0;
+    free(tbl->l);
+    tbl->l = 0;
+    tbl->size = tbl->nbuckets = 0;
+}
+
+/*
  * Check the given hash table for errors, and output some statistics
  * about it.
  */

@@ -838,9 +838,8 @@ static void clear_resource_hash() {
             free(r);
             r = t;
         }
-        resource_hash.l[i] = 0;
     }
-    resource_hash.size = 0;
+    free_hash(&resource_hash);
 }
 
 /*
