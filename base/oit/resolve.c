@@ -237,7 +237,6 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
 {
     struct lclass *class;
     struct lclass_field_ref *cfr;
-    int i;
 
     /*
      * If flags is set, then we already know what sort of local it is
@@ -261,10 +260,7 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
          * It's a method, so we look for a match in the class's fields.
          */
         class = func->method->class;
-        i = hasher(lp->name, class->implemented_field_hash);
-        cfr = class->implemented_field_hash[i];
-        while (cfr && cfr->field->name != lp->name)
-            cfr = cfr->b_next;
+        cfr = lookup_implemented_field_ref(class, lp->name);
         if (cfr) {
             /*
              * If we're in a static method, then the field (method or
@@ -421,10 +417,8 @@ static void merge(struct lclass *cl, struct lclass *super)
     /* Merge in any new fields */
     for (f = super->fields; f; f = f->next) {
         /* Do we already have a field with this name? */
-        int i = hasher(f->name, cl->implemented_field_hash);
-        struct lclass_field_ref *fr = cl->implemented_field_hash[i];
-        while (fr && fr->field->name != f->name)
-            fr = fr->b_next;
+        struct lclass_field_ref *fr;
+        fr = lookup_implemented_field_ref(cl, f->name);
         if (fr) {
             /* Found, check consistency.  Both old (fr) and new field
              * (f) must be static, OR both old and new fields must be
@@ -483,8 +477,7 @@ static void merge(struct lclass *cl, struct lclass *super)
             /* Not found, so add it */
             fr = Alloc(struct lclass_field_ref);
             fr->field = f;
-            fr->b_next = cl->implemented_field_hash[i];
-            cl->implemented_field_hash[i] = fr;
+            add_to_hash(&cl->implemented_field_hash, fr);
             if (f->flag & (M_Method | M_Static)) {
                 if (!(cl->flag & M_Abstract) && (f->flag & M_Abstract))
                     lfatal2(cl->global->defined, &cl->global->pos, &f->pos, "), but is not itself declared abstract",

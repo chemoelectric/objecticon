@@ -25,30 +25,44 @@ static void freference(struct lfunction *lf);
 static int add_seen_field(struct lnode *n);
 
 struct package_id {
+    struct package_id *b_next;
     char *name;
     int id;
-    struct package_id *b_next;
 };
 
-#define PACKAGE_ID_HASH_SIZE 128
-struct package_id *package_id_hash[PACKAGE_ID_HASH_SIZE];
+static uword lfhash_func(struct fentry *p) { return hashptr(p->name); }
+DefineHash(, struct fentry) lfhash = { 200, lfhash_func };
+
+static uword pkghash_func(struct package_id *p) { return hashptr(p->name); }
+DefineHash(, struct package_id) pkghash = { 20, pkghash_func };
+
+static struct package_id *pkglocate(char *name)
+{
+    struct package_id *x = 0;
+    if (pkghash.nbuckets > 0) {
+        x = pkghash.l[hashptr(name) % pkghash.nbuckets];
+        while (x && x->name != name)
+            x = x->b_next;
+    }
+    return x;
+}
 
 int get_package_id(char *s)
 {
-    int i = hasher(s, package_id_hash);
-    struct package_id *x = package_id_hash[i];
     static int next_package_id = 1;
-    while (x && x->name != s)
-        x = x->b_next;
+    struct package_id *x;
+    x = pkglocate(s);
     if (!x) {
         x = Alloc(struct package_id);
-        x->b_next = package_id_hash[i];
-        package_id_hash[i] = x;
         x->name = s;
         x->id = next_package_id++;
+        add_to_hash(&pkghash, x);
     }
     return x->id;
 }
+
+static uword lclass_field_hash_func(struct lclass_field *p) { return hashptr(p->name); }
+static uword lclass_field_ref_hash_func(struct lclass_field_ref *p) { return hashptr(p->field->name); }
 
 /*
  * readglob reads the global information from lf
@@ -118,6 +132,10 @@ void readglob(struct lfile *lf)
                     if (uop->opcode == Uop_PkClass) f |= F_Package;
                     gp = putglobal(name, f, lf, &pos);
                     curr_class = Alloc(struct lclass);
+                    curr_class->field_hash.init = 16;
+                    curr_class->field_hash.hash = lclass_field_hash_func;
+                    curr_class->implemented_field_hash.init = 24;
+                    curr_class->implemented_field_hash.hash = lclass_field_ref_hash_func;
                     curr_class->global = gp;
                     curr_class->flag = k;
                     gp->class = curr_class;
@@ -435,24 +453,31 @@ static void reference(struct gentry *gp)
     }
 }
 
+static struct fentry *flocate(char *name)
+{
+    struct fentry *fp = 0;
+    if (lfhash.nbuckets > 0) {
+        fp = lfhash.l[hashptr(name) % lfhash.nbuckets];
+        while (fp && fp->name != name)
+            fp = fp->b_next;
+    }
+    return fp;
+}
+
 static struct fentry *add_fieldtable_entry(char *name)
 {
     struct fentry *fp;
-    int i = hasher(name, lfhash);
-    fp = lfhash[i];
-    while (fp && fp->name != name)
-        fp = fp->b_next;
+    fp = flocate(name);
     if (!fp) {
         fp = Alloc(struct fentry);
         fp->name = name;
         nfields++;
-        fp->b_next = lfhash[i];
-        lfhash[i] = fp;
         if (lflast) {
             lflast->next = fp;
             lflast = fp;
         } else
             lffirst = lflast = fp;
+        add_to_hash(&lfhash, fp);
     }
     return fp;
 }
@@ -541,14 +566,10 @@ void sort_global_table()
     qsort(a, n, sizeof(struct gentry *), (QSortFncCast)global_sort_compare);
 
     lgfirst = lglast = 0;
-    ArrClear(lghash);
     for (i = 0; i < n; ++i) {
         struct gentry *p = a[i];
-        int h = hasher(p->name, lghash);
         p->g_index = i;
-        p->g_blink = lghash[h];
         p->g_next = 0;
-        lghash[h] = p;
         if (lglast) {
             lglast->g_next = p;
             lglast = p;
@@ -592,10 +613,7 @@ void resolve_native_methods()
         if (cl) {
             /* Lookup the method in the class's method table */
             char *method_name = intern(native_methods[n].field);
-            int i = hasher(method_name, cl->field_hash);
-            struct lclass_field *cf = cl->field_hash[i];
-            while (cf && cf->name != method_name)
-                cf = cf->b_next;
+            struct lclass_field *cf = lookup_field(cl, method_name);
             /* Check it's a native method and not a variable */
             if (cf && (cf->flag & M_Native))
                 cf->func->native_method_id = n;
@@ -608,12 +626,10 @@ void resolve_native_methods()
  */
 static struct membuff ref2_mb = {"reference2() function membuff", 64000, 0,0,0 };
 
-static struct method1 *methods[500];
-
 struct method1 {
+    struct method1 *next;
     char *name;
     struct method2 *list;      /* List of methods called name */
-    struct method1 *next;
 };
 
 struct method2 {
@@ -621,19 +637,30 @@ struct method2 {
     struct method2 *next;
 };
 
+static uword m1hash_func(struct method1 *p) { return hashptr(p->name); }
+DefineHash(, struct method1) methods = { 100, m1hash_func };
+
+static struct method1 *locate_method(char *s)
+{
+    struct method1 *x = 0;
+    if (methods.nbuckets > 0) {
+        x = methods.l[hashptr(s) % methods.nbuckets];
+        while (x && x->name != s)
+            x = x->next;
+    }
+    return x;
+}
+
 static void put_method(struct lclass_field *field)
 {
-    int i = hasher(field->name, methods);
-    struct method1 *x = methods[i]; 
+    struct method1 *x; 
     struct method2 *y;
-    while (x && x->name != field->name)
-        x = x->next;
+    x = locate_method(field->name);
     if (!x) {
         x = mb_alloc(&ref2_mb, sizeof(struct method1));
         x->name = field->name;
-        x->next = methods[i];
         x->list = 0;
-        methods[i] = x;
+        add_to_hash(&methods, x);
     }
     y = mb_alloc(&ref2_mb, sizeof(struct method2));
     y->field = field;
@@ -643,10 +670,8 @@ static void put_method(struct lclass_field *field)
 
 static struct method2 *get_methods_named(char *name)
 {
-    int i = hasher(name, methods);
-    struct method1 *x = methods[i]; 
-    while (x && x->name != name)
-        x = x->next;
+    struct method1 *x;
+    x = locate_method(name);
     if (x)
         return x->list;
     else
@@ -854,7 +879,7 @@ void scanrefs2()
      * Free memory used in the method table.
      */
     mb_free(&ref2_mb);
-    ArrClear(methods);
+    free_hash(&methods);
 }
 
 /*

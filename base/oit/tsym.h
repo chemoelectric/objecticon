@@ -8,8 +8,10 @@
  * Symbol table region pointers.
  */
 
-#define GHASH_SIZE    128
-extern struct tgentry *ghash[GHASH_SIZE];	/* hash area for global table */
+/* hash area for global table */
+DefineHash(ghash, struct tgentry);
+extern struct ghash ghash;
+
 extern struct tgentry *gfirst;	/* first global table entry */
 extern struct tgentry *glast;	/* last global table entry */
 

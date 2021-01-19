@@ -1,13 +1,14 @@
-#include "package.h"
 #include "tmain.h"
 #include "icont.h"
+#include "package.h"
 
-struct package_dir *package_dir_hash[16], *package_dirs, *package_dir_last;
+struct package_dir *package_dirs, *package_dir_last;
+
+static uword package_dir_hash_func(struct package_dir *p) { return hashptr(p->path); }
+DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
 
 void init_package_db()
 {
-    ArrClear(package_dir_hash);
-    package_dirs = package_dir_last = 0;
 }
 
 void free_package_db()
@@ -23,20 +24,25 @@ void free_package_db()
                 free(pf);
             }
             tpk = pk->next;
+            free_hash(&pk->file_hash);
             free(pk);
         }
         tpd = pd->next;
+        free_hash(&pd->package_hash);
         free(pd);
     }
-
-    ArrClear(package_dir_hash);
+    free_hash(&package_dir_hash);
     package_dirs = package_dir_last = 0;
 }
+
+static uword package_hash_func(struct package *p) { return hashptr(p->name); }
 
 struct package_dir *create_package_dir(char *path)
 {
     struct package_dir *p = Alloc(struct package_dir);
     p->path = path;
+    p->package_hash.init = 10;
+    p->package_hash.hash = package_hash_func;
     return p;
 }
 
@@ -47,10 +53,14 @@ struct package_file *create_package_file(char *name)
     return p;
 }
 
+static uword package_file_hash_func(struct package_file *p) { return hashptr(p->name); }
+
 struct package *create_package(char *name)
 {
     struct package *p = Alloc(struct package);
     p->name = name;
+    p->file_hash.init = 4;
+    p->file_hash.hash = package_file_hash_func;
     return p;
 }
 
@@ -60,29 +70,28 @@ struct package *create_package(char *name)
  */
 struct package_file *lookup_package_file(struct package *p, char *s)
 {
-    int i = hasher(s, p->file_hash);
-    struct package_file *x = p->file_hash[i];
-    while (x && x->name != s)
-        x = x->b_next;
+    struct package_file *x = 0;
+    if (p->file_hash.nbuckets > 0) {
+        x = p->file_hash.l[hashptr(s) % p->file_hash.nbuckets];
+        while (x && x->name != s)
+            x = x->b_next;
+    }
     return x;
 }
 
 int add_package_file(struct package *p, struct package_file *new)
 {
-    int i = hasher(new->name, p->file_hash);
-    struct package_file *x = p->file_hash[i];
-    while (x && x->name != new->name)
-        x = x->b_next;
+    struct package_file *x;
+    x = lookup_package_file(p, new->name);
     if (x)
         return 0;
-    new->b_next = p->file_hash[i];
-    p->file_hash[i] = new;
     if (p->file_last) {
         p->file_last->next = new;
         p->file_last = new;
     } else {
         p->files = p->file_last = new;
     }
+    add_to_hash(&p->file_hash, new);
     return 1;
 }
 
@@ -191,57 +200,55 @@ void save_package_db()
  */
 struct package_dir *lookup_package_dir(char *s)
 {
-    int i = hasher(s, package_dir_hash);
-    struct package_dir *x = package_dir_hash[i];
-    while (x && x->path != s)
-        x = x->b_next;
+    struct package_dir *x = 0;
+    if (package_dir_hash.nbuckets > 0) {
+        x = package_dir_hash.l[hashptr(s) % package_dir_hash.nbuckets];
+        while (x && x->path != s)
+            x = x->b_next;
+    }
     return x;
 }
 
 int add_package_dir(struct package_dir *new)
 {
-    int i = hasher(new->path, package_dir_hash);
-    struct package_dir *x = package_dir_hash[i];
-    while (x && x->path != new->path)
-        x = x->b_next;
+    struct package_dir *x;
+    x = lookup_package_dir(new->path);
     if (x)
         return 0;
-    new->b_next = package_dir_hash[i];
-    package_dir_hash[i] = new;
     if (package_dir_last) {
         package_dir_last->next = new;
         package_dir_last = new;
     } else {
         package_dirs = package_dir_last = new;
     }
+    add_to_hash(&package_dir_hash, new);
     return 1;
 }
 
 struct package *lookup_package(struct package_dir *p, char *s)
 {
-    int i = hasher(s, p->package_hash);
-    struct package *x = p->package_hash[i];
-    while (x && x->name != s)
-        x = x->b_next;
+    struct package *x = 0;
+    if (p->package_hash.nbuckets > 0) {
+        x = p->package_hash.l[hashptr(s) % p->package_hash.nbuckets];
+        while (x && x->name != s)
+            x = x->b_next;
+    }
     return x;
 }
 
 int add_package(struct package_dir *p, struct package *new)
 {
-    int i = hasher(new->name, p->package_hash);
-    struct package *x = p->package_hash[i];
-    while (x && x->name != new->name)
-        x = x->b_next;
+    struct package *x;
+    x = lookup_package(p, new->name);
     if (x)
         return 0;
-    new->b_next = p->package_hash[i];
-    p->package_hash[i] = new;
     if (p->package_last) {
         p->package_last->next = new;
         p->package_last = new;
     } else {
         p->packages = p->package_last = new;
     }
+    add_to_hash(&p->package_hash, new);
     return 1;
 }
 

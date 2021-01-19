@@ -54,6 +54,7 @@ struct tfunction {
  * Element in the list of imports.
  */
 struct timport {
+    struct timport *b_next;
     char *name;
     int mode;         /* Mode indicating whether whole package import (I_All), qualified with 
                        * included symbols, eg import gui(X,Y) (I_Some),  or qualified with excluded
@@ -61,7 +62,7 @@ struct timport {
                        */
     struct node *pos;
     struct timport_symbol *symbol_hash[64], *symbols, *last_symbol;
-    struct timport *next, *b_next;
+    struct timport *next;
 };
 
 /*

@@ -8,6 +8,7 @@
 #include "lmem.h"
 #include "tmain.h"
 #include "lglob.h"
+#include "lsym.h"
 
 #include "../h/rmacros.h"
 
@@ -15,12 +16,15 @@
  * Memory initialization
  */
 
-struct gentry *lghash[LGHASH_SIZE];	/* hash area for global table */
-struct fentry *lfhash[LFHASH_SIZE];	/* hash area for field table */
 
 /* files to link, and a hash table for them */
-struct lfile *lfile_hash[LFILE_HASH_SIZE], *lfiles, *lfiles_last;
-struct lpackage *lpackage_hash[LPACKAGE_HASH_SIZE];
+static uword lfile_hash_func(struct lfile *p) { return hashptr(p->name); }
+DefineHash(, struct lfile) lfile_hash = { 200, lfile_hash_func };
+struct lfile *lfiles, *lfiles_last;
+
+static uword lpackage_hash_func(struct lpackage *p) { return hashptr(p->name); }
+DefineHash(, struct lpackage) lpackage_hash = { 50, lpackage_hash_func };
+
 struct lclass *lclasses, *lclass_last;
 struct lrecord *lrecords, *lrecord_last;
 struct linvocable *linvocables, *last_linvocable;
@@ -58,16 +62,27 @@ void dumplfiles()
     fflush(stderr);
 }
 
+static struct lfile *locate_lfile(char *s)
+{
+    struct lfile *x = 0;
+    if (lfile_hash.nbuckets > 0) {
+        x = lfile_hash.l[hashptr(s) % lfile_hash.nbuckets];
+        while (x && x->name != s)
+            x = x->b_next;
+    }
+    return x;
+}
+
+static uword fimport_hash_func(struct fimport *p) { return hashptr(p->name); }
+
 /*
  * Given a linkfile, create a new lfile structure and add it to the
  * list of lfiles if it isn't already in the list.
  */
 static void ensure_lfile(char *ifile)
 {
-    int i = hasher(ifile, lfile_hash);
-    struct lfile *x = lfile_hash[i];
-    while (x && x->name != ifile)
-        x = x->b_next;
+    struct lfile *x;
+    x = locate_lfile(ifile);
     if (x)
         return;
 
@@ -75,8 +90,8 @@ static void ensure_lfile(char *ifile)
         report("Linking file %s", ifile);
 
     x = Alloc(struct lfile);
-    x->b_next = lfile_hash[i];
-    lfile_hash[i] = x;
+    x->import_hash.init = 10;
+    x->import_hash.hash = fimport_hash_func;
     x->name = ifile;
     if (lfiles_last) {
         lfiles_last->next = x;
@@ -84,6 +99,7 @@ static void ensure_lfile(char *ifile)
     } else {
         lfiles = lfiles_last = x;
     }
+    add_to_hash(&lfile_hash, x);
 }
 
 /*
@@ -95,6 +111,17 @@ void paramlink(char *name)
     ensure_lfile(intern(canonicalize(name)));
 }
 
+static struct lpackage *locate_lpackage(char *s)
+{
+    struct lpackage *x = 0;
+    if (lpackage_hash.nbuckets > 0) {
+        x = lpackage_hash.l[hashptr(s) % lpackage_hash.nbuckets];
+        while (x && x->name != s)
+            x = x->b_next;
+    }
+    return x;
+}
+
 void alsoimport(char *package, struct lfile *lf, struct loc *pos)
 {
     struct package_dir *pd;
@@ -103,10 +130,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
     char *found = 0;
 
     /* Have we done this one yet? */
-    int i = hasher(package, lpackage_hash);
-    struct lpackage *x = lpackage_hash[i];
-    while (x && x->name != package)
-        x = x->b_next;
+    struct lpackage *x = locate_lpackage(package);
     if (x)
         return;
 
@@ -117,9 +141,9 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
      * files in the package, and add them to the lfiles list.
      */
     x = Alloc1(struct lpackage);
-    x->b_next = lpackage_hash[i];
-    lpackage_hash[i] = x;
     x->name = package;
+    add_to_hash(&lpackage_hash, x);
+
     for (pd = package_dirs; pd; pd = pd->next) {
         if ((pk = lookup_package(pd, package))) {
             /* Check for duplicate package on the path */
@@ -188,13 +212,13 @@ void lmfree()
     lclasses = lclass_last = 0;
     lrecords = lrecord_last = 0;
 
-    for (i = 0; i < ElemCount(lpackage_hash); ++i) {
-        for (lp = lpackage_hash[i]; lp; lp = lp1) {
+    for (i = 0; i < lpackage_hash.nbuckets; ++i) {
+        for (lp = lpackage_hash.l[i]; lp; lp = lp1) {
             lp1 = lp->b_next;
             free(lp);
         }
     }
-    ArrClear(lpackage_hash);
+    free_hash(&lpackage_hash);
 
     for (lf = lfiles; lf != NULL; lf = nlf) {
         nlf = lf->next;
@@ -219,15 +243,10 @@ void add_super(struct lclass *x, char *name, struct loc *pos)
 
 void add_field(struct lclass *x, char *name, int flag, struct loc *pos)
 {
-    int i = hasher(name, x->field_hash);
-    struct lclass_field *cf = x->field_hash[i];
-    while (cf && cf->name != name)
-        cf = cf->b_next;
-    if (cf) 
+    struct lclass_field *cf;
+    if (lookup_field(x, name))
         quit("Duplicate class field: %s", name);
     cf = Alloc(struct lclass_field);
-    cf->b_next = x->field_hash[i];
-    x->field_hash[i] = cf;
     cf->name = name;
     cf->pos = *pos;
     cf->flag = flag;
@@ -237,6 +256,7 @@ void add_field(struct lclass *x, char *name, int flag, struct loc *pos)
         x->last_field = cf;
     } else
         x->fields = x->last_field = cf;
+    add_to_hash(&x->field_hash, cf);
 }
 
 void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct loc *pos)
@@ -249,12 +269,13 @@ void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct
     f->native_method_id = -1;
 }
 
+static uword symbol_hash_func(struct fimport_symbol *p) { return hashptr(p->name); }
+
 void add_fimport(struct lfile *lf, char *package, int mode, struct loc *pos)
 {
-    int i = hasher(package, lf->import_hash);
     struct fimport *fimp = Alloc(struct fimport);
-    fimp->b_next = lf->import_hash[i];
-    lf->import_hash[i] = fimp;
+    fimp->symbol_hash.init = 8;
+    fimp->symbol_hash.hash = symbol_hash_func;
     fimp->name = package;
     fimp->pos = *pos;
     fimp->mode = mode;
@@ -263,14 +284,17 @@ void add_fimport(struct lfile *lf, char *package, int mode, struct loc *pos)
         lf->last_import = fimp;
     } else
         lf->imports = lf->last_import = fimp;
+    add_to_hash(&lf->import_hash, fimp);
 }
 
 struct fimport *lookup_fimport(struct lfile *lf, char *package)
 {
-    int i = hasher(package, lf->import_hash);
-    struct fimport *x = lf->import_hash[i];
-    while (x && x->name != package)
-        x = x->b_next;
+    struct fimport *x = 0;
+    if (lf->import_hash.nbuckets > 0) {
+        x = lf->import_hash.l[hashptr(package) % lf->import_hash.nbuckets];
+        while (x && x->name != package)
+            x = x->b_next;
+    }
     return x;
 }
 
@@ -279,10 +303,7 @@ struct fimport *lookup_fimport(struct lfile *lf, char *package)
  */
 void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos)
 {
-    int i = hasher(symbol, lf->last_import->symbol_hash);
     struct fimport_symbol *x = Alloc(struct fimport_symbol);
-    x->b_next = lf->last_import->symbol_hash[i];
-    lf->last_import->symbol_hash[i] = x;
     x->name = symbol;
     x->pos = *pos;
     if (lf->last_import->last_symbol) {
@@ -291,6 +312,7 @@ void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos)
     } else {
         lf->last_import->symbols = lf->last_import->last_symbol = x;
     }
+    add_to_hash(&lf->last_import->symbol_hash, x);
 }
 
 /*
@@ -298,10 +320,12 @@ void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos)
  */
 struct fimport_symbol *lookup_fimport_symbol(struct fimport *p, char *symbol)
 {
-    int i = hasher(symbol, p->symbol_hash);
-    struct fimport_symbol *x = p->symbol_hash[i];
-    while (x && x->name != symbol)
-        x = x->b_next;
+    struct fimport_symbol *x = 0;
+    if (p->symbol_hash.nbuckets > 0) {
+        x = p->symbol_hash.l[hashptr(symbol) % p->symbol_hash.nbuckets];
+        while (x && x->name != symbol)
+            x = x->b_next;
+    }
     return x;
 }
 

@@ -9,17 +9,20 @@
  * A file in a package (without path or the .u extension)
  */
 struct package_file {
+    struct package_file *b_next;      /* Hash link */
     char *name;
-    struct package_file *b_next, *next;
+    struct package_file *next;
 };
 
 /*
  * A package: just a map/list of several files.
  */
 struct package {
+    struct package *b_next;           /* Hash link */
     char *name;
-    struct package_file *file_hash[32], *files, *file_last;
-    struct package *b_next, *next;
+    DefineHash(, struct package_file) file_hash;
+    struct package_file *files, *file_last;
+    struct package *next;
 };
 
 /*
@@ -27,10 +30,12 @@ struct package {
  * packages contained therein.
  */
 struct package_dir {
+    struct package_dir *b_next;       /* Hash link */
     char *path;
     int modflag;
-    struct package *package_hash[256], *packages, *package_last;
-    struct package_dir *b_next, *next;
+    DefineHash(, struct package) package_hash;
+    struct package *packages, *package_last;
+    struct package_dir *next;
 };
 
 extern struct package_dir *package_dirs, *package_dir_last;
