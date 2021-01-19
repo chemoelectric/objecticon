@@ -8,7 +8,6 @@
 #define FAlloc1(type)   mb_alloc(&file_mb, sizeof(type))
 extern struct membuff file_mb;
 
-void tminit(void);
 void tmfilefree(void);
 void tmfree(void);
 void next_function(int flag);

@@ -29,14 +29,6 @@ DefineHash(, struct timport) import_hash = { 10, import_hash_func };
 struct membuff file_mb = {"Per file membuff", 64000, 0,0,0 };
 
 /*
- * called once - initialize the translation process
- */
-void tminit()
-{
-    init_package_db();
-}
-
-/*
  * called after each file has been translated - reset memory/pointers
  */
 void tmfilefree()
@@ -60,6 +52,8 @@ void tmfree()
 {
     free_package_db();
     mb_free(&file_mb);
+    free_hash(&import_hash);
+    free_hash(&ghash);
 }
 
 void next_function(int flag)

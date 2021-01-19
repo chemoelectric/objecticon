@@ -803,7 +803,6 @@ char *abbreviate(char *name)
 
 void init_strings()
 {
-    init_str();
     main_string = spec_str("main");
     default_string = spec_str("default");
     self_string = spec_str("self");

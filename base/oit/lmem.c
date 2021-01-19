@@ -40,7 +40,6 @@ struct gentry *lglast;		/* last global table entry */
  */
 void linit()
 {
-    init_package_db();
     load_package_db_from_ipath();
     /*
      * Ensure "lang" is package id number 1.

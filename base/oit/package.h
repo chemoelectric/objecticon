@@ -43,7 +43,6 @@ extern struct package_dir *package_dirs, *package_dir_last;
 /*
  * Prototypes.
  */
-void init_package_db(void);
 void free_package_db(void);
 struct package_dir *create_package_dir(char *path);
 struct package_file *create_package_file(char *name);
