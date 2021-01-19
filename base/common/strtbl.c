@@ -26,6 +26,25 @@ void init_str()
         str_tbl = safe_zalloc(StrTblSz * sizeof(struct str_entry *));
 }
 
+/*
+ * Hash a string of length len bytes (may include nulls).
+ */
+static uword hash(char *s, int len)
+{
+    uword u;
+    int l;
+    l = len;
+    if (l > 10)		/* limit scan to first ten characters */
+        l = 10;
+    u = 0;
+    while (l-- > 0) {
+        u += *s++ & 0xFF;	/* add unsigned version of next char */
+        u *= 37;		/* scale total by a nice prime number */
+    }
+    u += len;			/* add the (untruncated) string length */
+    return u;
+}
+
 void dump_stbl()
 {
     struct str_entry *se;
@@ -80,21 +99,12 @@ void new_sbuf(struct str_buf *sbuf)
 char *spec_str(char *s)
 {
     struct str_entry *se;
-    char *s1;
     int l;
     uword h;
 
-    h = 0;
-    l = 0;
-    s1 = s;
-    /* NB: Hash and length computations include the \0 at the end */
-    for (;;) {
-        h = 13 * h + (*s1 & 0377);
-        ++l;
-        if (!*s1)
-            break;
-        ++s1;
-    }
+    l = strlen(s) + 1;
+    h = hash(s, l);
+
     h %= StrTblSz;
     for (se = str_tbl[h]; se != NULL; se = se->next)
         if (l == se->length && memcmp(s, se->s, l) == 0)
@@ -124,16 +134,9 @@ char *str_install(struct str_buf *sbuf)
     AppChar(*sbuf, '\0');   
     s = sbuf->strtimage;
     e = sbuf->endimage;
-
-    /*
-     * Compute hash value.
-     */
-    h = 0;
-    while (s < e)
-        h = 13 * h + (*s++ & 0377);
-    h %= StrTblSz;
-    s = sbuf->strtimage;
     l = e - s;
+    h = hash(s, l);
+    h %= StrTblSz;
     for (se = str_tbl[h]; se != NULL; se = se->next)
         if (l == se->length && memcmp(s, se->s, l) == 0) {
             /*
@@ -163,7 +166,6 @@ char *str_install(struct str_buf *sbuf)
 void zero_sbuf(struct str_buf *sbuf)
 {
     sbuf->endimage = sbuf->strtimage;
-
 }
 
 /*
