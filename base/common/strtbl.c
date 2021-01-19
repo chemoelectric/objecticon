@@ -8,22 +8,18 @@
  * Entry in string table.
  */
 struct str_entry {
+    struct str_entry *next;
     char *s;                 /* string */
     int length;              /* length of string */
-    struct str_entry *next;
 };
 
 #define SBufSize 1024                     /* initial size of a string buffer */
-#define StrTblSz 16000                    /* size of string hash table */
-static struct str_entry **str_tbl = NULL; /* string hash table */
 
 /*
  * init_str - initialize string hash table.
  */
 void init_str()
 {
-    if (str_tbl == NULL)
-        str_tbl = safe_zalloc(StrTblSz * sizeof(struct str_entry *));
 }
 
 /*
@@ -45,14 +41,18 @@ static uword hash(char *s, int len)
     return u;
 }
 
+static uword str_tbl_hash_func(struct str_entry *p) { return hash(p->s, p->length); }
+DefineHash(, struct str_entry) str_tbl = { 16000, str_tbl_hash_func };
+
+#if 0
 void dump_stbl()
 {
     struct str_entry *se;
     int h;
 
-    for (h = 0; h < StrTblSz; ++h) {
+    for (h = 0; h < str_tbl.nbuckets; ++h) {
         int i = 0;
-        for (se = str_tbl[h]; se != NULL; se = se->next)
+        for (se = str_tbl.l[h]; se != NULL; se = se->next)
             ++i;
             /*printf("entry len=%d s=%s\n",se->length,se->s);*/
         printf("Table %d -> %d entries\n", h, i);
@@ -66,6 +66,7 @@ void dump_sbuf(struct str_buf *s)
     printf("strtimage=%p endimage=%p (%ld bytes)\n",s->strtimage,s->endimage,(long)(s->endimage-s->strtimage));
     printf("end=%p (remain=%ld) \n",s->end,(long)(s->end-s->endimage));
 }
+#endif
 
 /*
  * new_sbuf - allocate a new buffer for a sbuf struct, copying the partially
@@ -93,6 +94,18 @@ void new_sbuf(struct str_buf *sbuf)
     sbuf->end = sbuf->strtimage + sbuf->size;
 }
 
+static struct str_entry *lookup(char *s, int len)
+{
+    struct str_entry *se = 0;
+    if (str_tbl.nbuckets > 0) {
+        se = str_tbl.l[hash(s, len) % str_tbl.nbuckets];
+        while (se &&
+               (len != se->length || memcmp(s, se->s, len) != 0))
+            se = se->next;
+    }
+    return se;
+}
+
 /*
  * spec_str - install a special string (null terminated) in the string table.
  */
@@ -100,21 +113,16 @@ char *spec_str(char *s)
 {
     struct str_entry *se;
     int l;
-    uword h;
-
+    /* The null is included in the string. */
     l = strlen(s) + 1;
-    h = hash(s, l);
-
-    h %= StrTblSz;
-    for (se = str_tbl[h]; se != NULL; se = se->next)
-        if (l == se->length && memcmp(s, se->s, l) == 0)
-            return se->s;
-    se = Alloc(struct str_entry);
-    se->s = s;
-    se->length = l;
-    se->next = str_tbl[h];
-    str_tbl[h] = se;
-    return s;
+    se = lookup(s, l);
+    if (!se) {
+        se = Alloc(struct str_entry);
+        se->s = s;
+        se->length = l;
+        add_to_hash(&str_tbl, se);
+    }
+    return se->s;
 }
 
 /*
@@ -124,7 +132,6 @@ char *spec_str(char *s)
  */
 char *str_install(struct str_buf *sbuf)
 {
-    uword h;
     struct str_entry *se;
     char *s;
     char *e;
@@ -135,28 +142,24 @@ char *str_install(struct str_buf *sbuf)
     s = sbuf->strtimage;
     e = sbuf->endimage;
     l = e - s;
-    h = hash(s, l);
-    h %= StrTblSz;
-    for (se = str_tbl[h]; se != NULL; se = se->next)
-        if (l == se->length && memcmp(s, se->s, l) == 0) {
-            /*
-             * A copy of the string is already in the table. Delete the copy
-             *  in the buffer.
-             */
-            sbuf->endimage = s;
-            return se->s;
-        }
-
-    /*
-     * The string is not in the table. Add the copy from the buffer to the
-     *  table.
-     */
-    se = Alloc(struct str_entry);
-    se->s = s;
-    se->length = l;
-    sbuf->strtimage = e;
-    se->next = str_tbl[h];
-    str_tbl[h] = se;
+    se = lookup(s, l);
+    if (se) {
+        /*
+         * A copy of the string is already in the table. Delete the copy
+         *  in the buffer.
+         */
+        sbuf->endimage = s;
+    } else {
+        /*
+         * The string is not in the table. Add the copy from the buffer to the
+         *  table.
+         */
+        se = Alloc(struct str_entry);
+        se->s = s;
+        se->length = l;
+        sbuf->strtimage = e;
+        add_to_hash(&str_tbl, se);
+    }
     return se->s;
 }
 
