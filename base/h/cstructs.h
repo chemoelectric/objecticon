@@ -97,7 +97,7 @@ struct name { \
     int size;                   /* Number of entries */ \
     int nbuckets;               /* Number of bucket lists */ \
     type **l;                   /* Bucket lists */ \
-};
+}
 
 /*
  * Clear an object

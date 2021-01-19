@@ -3,14 +3,11 @@
  *
  */
 
-#passthru DefineHash(fonttable, struct _wfont);
-#passthru DefineHash(cursortable, struct wcursor);
-
 static uword font_hash_func(wfp p) { return hashcstr(p->name); }
 static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
-struct fonttable fonts = { 50, font_hash_func };
-struct cursortable cursors = { 32, cursor_hash_func };
+#passthru DefineHash(, struct _wfont) fonts = { 50, font_hash_func };
+#passthru DefineHash(, struct wcursor) cursors = { 32, cursor_hash_func };
 
 static struct SharedCursor *null_cursor;
 static wcp alccontext(wbp w);

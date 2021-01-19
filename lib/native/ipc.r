@@ -54,10 +54,8 @@ static int msgsnd_ex(int msqid, void *msgp, size_t msgsz, int msgflg);
 static ssize_t msgrcv_ex(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 
-#passthru DefineHash(resource_table, struct _resource);
 static uword resource_hash_func(struct _resource *p) { return hashptr(p->id); }
-
-static struct resource_table resource_hash = { 10, resource_hash_func };
+#passthru DefineHash(, struct _resource) resource_hash = { 10, resource_hash_func };
 
 static struct sdescrip idf = {2, "id"};
 

@@ -4,11 +4,8 @@ struct marked_block {
     void *addr;
 };
 
-#passthru DefineHash(marked_block_tbl, struct marked_block);
-
 static uword marked_block_hash_func(struct marked_block *p) {  return hashptr(p->addr); }
-
-static struct marked_block_tbl marked_blocks = { 512, marked_block_hash_func };
+#passthru DefineHash(, struct marked_block) marked_blocks = { 512, marked_block_hash_func };
 
 enum { AddrQuery=1, TitleQuery };
 

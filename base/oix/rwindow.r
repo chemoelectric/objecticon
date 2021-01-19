@@ -3034,9 +3034,8 @@ static void setpi_PALETTE8(struct imgdata *imd, int x, int y, int i)
     *s = (unsigned char)i;
 }
 
-#passthru DefineHash(imdfmt_table, struct imgdataformat);
 static uword imdfmt_hash_func(struct imgdataformat *p) { return hashcstr(p->name); }
-static struct imdfmt_table imdfmt_hash = { 20, imdfmt_hash_func };
+#passthru DefineHash(, struct imgdataformat) imdfmt_hash = { 20, imdfmt_hash_func };
 
 struct imgdataformat imgdataformat_A8 =   {0,set_A8,get_A8,0,0,getlength_8,8,0,0,"A8"};
 struct imgdataformat imgdataformat_A16 =   {0,set_A16,get_A16,0,0,getlength_16,16,0,0,"A16"};

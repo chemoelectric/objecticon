@@ -1170,12 +1170,11 @@ struct handle_list {
     void *handle;
 };
 
-#passthru DefineHash(handle_table, struct handle_list);
 static uword handle_hash_func(struct handle_list *p) { return hashcstr(p->filename); }
+#passthru static DefineHash(, struct handle_list) htbl = { 4, handle_hash_func };
 
 static void *get_handle(char *filename)
 {
-    static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
     uword u;
     void *handle;
@@ -1184,8 +1183,8 @@ static void *get_handle(char *filename)
 
     u = hashcstr(filename);
     /* Search list for match. */
-    if (tbl.nbuckets > 0) {
-        for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
+    if (htbl.nbuckets > 0) {
+        for (x = htbl.l[u % htbl.nbuckets]; x; x = x->next) {
             if (strcmp(filename, x->filename) == 0)
                 return x->handle;
         }
@@ -1218,7 +1217,7 @@ static void *get_handle(char *filename)
     x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    add_to_hash_pre(&tbl, x, u);
+    add_to_hash_pre(&htbl, x, u);
     return handle;
 }
 
@@ -1341,12 +1340,11 @@ struct handle_list {
     HMODULE handle;
 };
 
-#passthru DefineHash(handle_table, struct handle_list);
 static uword handle_hash_func(struct handle_list *p) { return hashcstr(p->filename); }
+#passthru static DefineHash(, struct handle_list) htbl = { 4, handle_hash_func };
 
 static HMODULE get_handle(char *filename)
 {
-    static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
     uword u;
     HMODULE handle;
@@ -1356,8 +1354,8 @@ static HMODULE get_handle(char *filename)
 
     u = hashcstr(filename);
     /* Search list for match. */
-    if (tbl.nbuckets > 0) {
-        for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
+    if (htbl.nbuckets > 0) {
+        for (x = htbl.l[u % htbl.nbuckets]; x; x = x->next) {
             if (strcmp(filename, x->filename) == 0)
                 return x->handle;
         }
@@ -1396,7 +1394,7 @@ static HMODULE get_handle(char *filename)
     x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    add_to_hash_pre(&tbl, x, u);
+    add_to_hash_pre(&htbl, x, u);
     return handle;
 }
 
