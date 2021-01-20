@@ -7,7 +7,7 @@
 #include "lmem.h"
 
 static uword lghash_func(struct gentry *p) { return hashptr(p->name); }
-DefineHash(, struct gentry) lghash = { 200, lghash_func };
+static DefineHash(, struct gentry) lghash = { 200, lghash_func };
 
 /*
  * Prototypes.

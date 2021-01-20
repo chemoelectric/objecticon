@@ -31,10 +31,10 @@ struct package_id {
 };
 
 static uword lfhash_func(struct fentry *p) { return hashptr(p->name); }
-DefineHash(, struct fentry) lfhash = { 200, lfhash_func };
+static DefineHash(, struct fentry) lfhash = { 200, lfhash_func };
 
 static uword pkghash_func(struct package_id *p) { return hashptr(p->name); }
-DefineHash(, struct package_id) pkghash = { 20, pkghash_func };
+static DefineHash(, struct package_id) pkghash = { 20, pkghash_func };
 
 static struct package_id *pkglocate(char *name)
 {
@@ -638,7 +638,7 @@ struct method2 {
 };
 
 static uword m1hash_func(struct method1 *p) { return hashptr(p->name); }
-DefineHash(, struct method1) methods = { 100, m1hash_func };
+static DefineHash(, struct method1) methods = { 100, m1hash_func };
 
 static struct method1 *locate_method(char *s)
 {

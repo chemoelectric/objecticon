@@ -24,7 +24,7 @@ struct timport *imports , *last_import, *curr_import ;
 struct tinvocable *tinvocables, *last_tinvocable;
 
 static uword import_hash_func(struct timport *p) { return hashptr(p->name); }
-DefineHash(, struct timport) import_hash = { 10, import_hash_func };
+static DefineHash(, struct timport) import_hash = { 10, import_hash_func };
 
 struct membuff file_mb = {"Per file membuff", 64000, 0,0,0 };
 

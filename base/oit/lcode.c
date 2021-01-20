@@ -164,10 +164,10 @@ static void outwordz_nullable(word oword, char *fmt, ...);
 static void tcase_field(struct ir_tcaseinit *x);
 
 static uword centry_hash_func(struct centry *p) { return hashptr(p->data); }
-DefineHash(, struct centry) constblock_hash = { 100, centry_hash_func };
+static DefineHash(, struct centry) constblock_hash = { 100, centry_hash_func };
 
 static uword strconst_hash_func(struct strconst *p) { return hashptr(p->s); }
-DefineHash(, struct strconst) strconst_hash = { 100, strconst_hash_func };
+static DefineHash(, struct strconst) strconst_hash = { 100, strconst_hash_func };
 
 #if WordBits == 32
 #define PadWordFmt "%08"XWordFmtCh

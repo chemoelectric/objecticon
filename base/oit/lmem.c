@@ -19,11 +19,11 @@
 
 /* files to link, and a hash table for them */
 static uword lfile_hash_func(struct lfile *p) { return hashptr(p->name); }
-DefineHash(, struct lfile) lfile_hash = { 200, lfile_hash_func };
+static DefineHash(, struct lfile) lfile_hash = { 200, lfile_hash_func };
 struct lfile *lfiles, *lfiles_last;
 
 static uword lpackage_hash_func(struct lpackage *p) { return hashptr(p->name); }
-DefineHash(, struct lpackage) lpackage_hash = { 50, lpackage_hash_func };
+static DefineHash(, struct lpackage) lpackage_hash = { 50, lpackage_hash_func };
 
 struct lclass *lclasses, *lclass_last;
 struct lrecord *lrecords, *lrecord_last;

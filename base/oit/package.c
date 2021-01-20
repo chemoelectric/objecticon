@@ -5,7 +5,7 @@
 struct package_dir *package_dirs, *package_dir_last;
 
 static uword package_dir_hash_func(struct package_dir *p) { return hashptr(p->path); }
-DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
+static DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
 
 void free_package_db()
 {

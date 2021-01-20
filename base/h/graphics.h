@@ -294,6 +294,7 @@ DefineHash(cursortable, struct wcursor);
  * Displays are maintained in a global list in rxwin.ri.
  */
 typedef struct _wdisplay {
+  struct _wdisplay    *next;
   char                *name;
   Display             *display;
   struct _wbinding    *wbndngs;       /* List of current window bindings */
@@ -314,7 +315,6 @@ typedef struct _wdisplay {
   unsigned int       propcount;               /* counter for selection requests*/
   struct receiving_helper receiving_helpers[NUM_PROP_ATOMS];
   struct sending_helper sending_helpers[NUM_SENDING_HELPERS];
-  struct _wdisplay *previous, *next;
 } *wdp;
 
 #define ATOM(d, x) ((d)->atoms[ATOM_##x])
