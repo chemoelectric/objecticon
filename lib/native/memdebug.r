@@ -1052,12 +1052,14 @@ static int is_marked(void *addr)
 {
     struct marked_block *m;
     int h;
-    h = hashptr(addr) % marked_blocks.nbuckets;
-    m = marked_blocks.l[h];
-    while (m) {
-        if (m->addr == addr)
-            return 1;
-        m = m->next;
+    if (marked_blocks.nbuckets > 0) {
+        h = hashptr(addr) % marked_blocks.nbuckets;
+        m = marked_blocks.l[h];
+        while (m) {
+            if (m->addr == addr)
+                return 1;
+            m = m->next;
+        }
     }
     return 0;
 }
@@ -1215,7 +1217,6 @@ static void traverse(int m)
 {
     struct progstate *prog;
 
-    ensure_hash(&marked_blocks);
     mode = m;
     finished = 0;
     found = nulldesc;
