@@ -31,19 +31,17 @@ struct package_id {
 };
 
 static uword lfhash_func(struct fentry *p) { return hashptr(p->name); }
-DefineHash(, struct fentry) lfhash = { 200, lfhash_func };
+static DefineHash(, struct fentry) lfhash = { 200, lfhash_func };
 
 static uword pkghash_func(struct package_id *p) { return hashptr(p->name); }
-DefineHash(, struct package_id) pkghash = { 20, pkghash_func };
+static DefineHash(, struct package_id) pkghash = { 20, pkghash_func };
 
 static struct package_id *pkglocate(char *name)
 {
-    struct package_id *x = 0;
-    if (pkghash.nbuckets > 0) {
-        x = pkghash.l[hashptr(name) % pkghash.nbuckets];
-        while (x && x->name != name)
-            x = x->b_next;
-    }
+    struct package_id *x;
+    x = Bucket(pkghash, hashptr(name));
+    while (x && x->name != name)
+        x = x->b_next;
     return x;
 }
 
@@ -455,12 +453,10 @@ static void reference(struct gentry *gp)
 
 static struct fentry *flocate(char *name)
 {
-    struct fentry *fp = 0;
-    if (lfhash.nbuckets > 0) {
-        fp = lfhash.l[hashptr(name) % lfhash.nbuckets];
-        while (fp && fp->name != name)
-            fp = fp->b_next;
-    }
+    struct fentry *fp;
+    fp = Bucket(lfhash, hashptr(name));
+    while (fp && fp->name != name)
+        fp = fp->b_next;
     return fp;
 }
 
@@ -638,16 +634,14 @@ struct method2 {
 };
 
 static uword m1hash_func(struct method1 *p) { return hashptr(p->name); }
-DefineHash(, struct method1) methods = { 100, m1hash_func };
+static DefineHash(, struct method1) methods = { 100, m1hash_func };
 
 static struct method1 *locate_method(char *s)
 {
-    struct method1 *x = 0;
-    if (methods.nbuckets > 0) {
-        x = methods.l[hashptr(s) % methods.nbuckets];
-        while (x && x->name != s)
-            x = x->next;
-    }
+    struct method1 *x;
+    x = Bucket(methods, hashptr(s));
+    while (x && x->name != s)
+        x = x->next;
     return x;
 }
 

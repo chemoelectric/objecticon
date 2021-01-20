@@ -164,10 +164,10 @@ static void outwordz_nullable(word oword, char *fmt, ...);
 static void tcase_field(struct ir_tcaseinit *x);
 
 static uword centry_hash_func(struct centry *p) { return hashptr(p->data); }
-DefineHash(, struct centry) constblock_hash = { 100, centry_hash_func };
+static DefineHash(, struct centry) constblock_hash = { 100, centry_hash_func };
 
 static uword strconst_hash_func(struct strconst *p) { return hashptr(p->s); }
-DefineHash(, struct strconst) strconst_hash = { 100, strconst_hash_func };
+static DefineHash(, struct strconst) strconst_hash = { 100, strconst_hash_func };
 
 #if WordBits == 32
 #define PadWordFmt "%08"XWordFmtCh
@@ -318,12 +318,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
 
 static struct centry *lookup_centry(char *s, word f)
 {
-    struct centry *p = 0;
-    if (constblock_hash.nbuckets > 0) {
-        p = constblock_hash.l[hashptr(s) % constblock_hash.nbuckets];
-        while (p && (p->data != s || p->c_flag != f))
-            p = p->b_next;
-    }
+    struct centry *p;
+    p = Bucket(constblock_hash, hashptr(s));
+    while (p && (p->data != s || p->c_flag != f))
+        p = p->b_next;
     return p;
 }
 
@@ -359,12 +357,10 @@ static struct centry *inst_sdescrip(char *s)
 
 static struct strconst *lookup_strconst(char *s)
 {
-    struct strconst *p = 0;
-    if (strconst_hash.nbuckets > 0) {
-        p = strconst_hash.l[hashptr(s) % strconst_hash.nbuckets];
-        while (p && p->s != s)
-            p = p->b_next;
-    }
+    struct strconst *p;
+    p = Bucket(strconst_hash, hashptr(s));
+    while (p && p->s != s)
+        p = p->b_next;
     return p;
 }
 

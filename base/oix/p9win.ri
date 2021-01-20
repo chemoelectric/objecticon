@@ -283,14 +283,10 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
-    if (cursors.nbuckets > 0) {
-        for (rv = cursors.l[hashcstr(name) % cursors.nbuckets];
-             rv; rv = rv->next) {
-            if (!strcmp(name, rv->name))
-                return rv;
-        }
-    }
-    return 0;
+    rv = Bucket(cursors, hashcstr(name));
+    while (rv && strcmp(name, rv->name) != 0)
+        rv = rv->next;
+    return rv;
 }
 
 static struct wcursor *ensure_wcursor(char *name)
@@ -1320,12 +1316,9 @@ static wfp load_font(char *s)
     /*
      * See if the font is already loaded.
      */
-    if (fonts.nbuckets > 0) {
-        for (rv = fonts.l[hashcstr(s) % fonts.nbuckets];
-             rv; rv = rv->next) {
-            if (!strcmp(s, rv->name + 3))
-                return rv;
-        }
+    for (rv = Bucket(fonts, hashcstr(s)); rv; rv = rv->next) {
+        if (strcmp(s, rv->name + 3) == 0)
+            return rv;
     }
 
     f = openfont(display, s);
@@ -2829,17 +2822,15 @@ static int simplify_font_flags(int flags)
 static struct FontInfo *match_font(char *s)
 {
     int flags;
-    uword u;
     double size;
     char family[MAXFONTWORD];
     struct FontInfo *best = 0, *curr;
 
-    if (font_info.nbuckets == 0 || !parsefont(s, family, &flags, &size))
+    if (!parsefont(s, family, &flags, &size))
         return 0;
 
     flags = simplify_font_flags(flags);
-    u = hashcstr(family);
-    for (curr = font_info.l[u % font_info.nbuckets]; curr; curr = curr->next) {
+    for (curr = Bucket(font_info, hashcstr(family)); curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
             if (!best)
                 best = curr;

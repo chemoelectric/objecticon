@@ -5,7 +5,7 @@ struct marked_block {
 };
 
 static uword marked_block_hash_func(struct marked_block *p) {  return hashptr(p->addr); }
-#passthru DefineHash(, struct marked_block) marked_blocks = { 512, marked_block_hash_func };
+#passthru static DefineHash(, struct marked_block) marked_blocks = { 512, marked_block_hash_func };
 
 enum { AddrQuery=1, TitleQuery };
 
@@ -1051,16 +1051,9 @@ static void print_stk_element(struct stk_element *e)
 static int is_marked(void *addr)
 {
     struct marked_block *m;
-    int h;
-    if (marked_blocks.nbuckets > 0) {
-        h = hashptr(addr) % marked_blocks.nbuckets;
-        m = marked_blocks.l[h];
-        while (m) {
-            if (m->addr == addr)
-                return 1;
-            m = m->next;
-        }
-    }
+    for (m = Bucket(marked_blocks, hashptr(addr)); m; m = m->next)
+        if (m->addr == addr)
+            return 1;
     return 0;
 }
 

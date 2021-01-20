@@ -92,12 +92,10 @@ void check_globalflag(struct node *n)
 
 static struct tgentry *lookup_global(char *name)
 {
-    struct tgentry *x = 0;
-    if (ghash.nbuckets > 0) {
-        x = ghash.l[hashptr(name) % ghash.nbuckets];
-        while (x && x->g_name != name)
-            x = x->g_blink;
-    }
+    struct tgentry *x;
+    x = Bucket(ghash, hashptr(name));
+    while (x && x->g_name != name)
+        x = x->g_blink;
     return x;
 }
 

@@ -6,8 +6,8 @@
 static uword font_hash_func(wfp p) { return hashcstr(p->name); }
 static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
-#passthru DefineHash(, struct _wfont) fonts = { 50, font_hash_func };
-#passthru DefineHash(, struct wcursor) cursors = { 32, cursor_hash_func };
+#passthru static DefineHash(, struct _wfont) fonts = { 50, font_hash_func };
+#passthru static DefineHash(, struct wcursor) cursors = { 32, cursor_hash_func };
 
 static struct SharedCursor *null_cursor;
 static wcp alccontext(wbp w);
@@ -1024,12 +1024,9 @@ static wfp load_font(char *s)
     /*
      * See if the font is already loaded.
      */
-    if (fonts.nbuckets > 0) {
-        for (rv = fonts.l[hashcstr(s) % fonts.nbuckets];
-             rv; rv = rv->next) {
-            if (!strcmp(s, rv->name))
-                return rv;
-        }
+    for (rv = Bucket(fonts, hashcstr(s)); rv; rv = rv->next) {
+        if (strcmp(s, rv->name) == 0)
+            return rv;
     }
 
     f = mkfont(s);
@@ -1750,13 +1747,10 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
-    if (cursors.nbuckets > 0) {
-        for(rv = cursors.l[hashcstr(name) % cursors.nbuckets]; rv; rv = rv->next) {
-            if (!strcmp(name, rv->name))
-                return rv;
-        }
-    }
-    return 0;
+    rv = Bucket(cursors, hashcstr(name));
+    while (rv && strcmp(name, rv->name) != 0)
+        rv = rv->next;
+    return rv;
 }
 
 static struct wcursor *ensure_wcursor(char *name)

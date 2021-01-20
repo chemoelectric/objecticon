@@ -35,7 +35,7 @@ static uword hash(char *s, int len)
 }
 
 static uword str_tbl_hash_func(struct str_entry *p) { return hash(p->s, p->length); }
-DefineHash(, struct str_entry) str_tbl = { 16000, str_tbl_hash_func };
+static DefineHash(, struct str_entry) str_tbl = { 16000, str_tbl_hash_func };
 
 #if 0
 void dump_stbl()
@@ -89,13 +89,11 @@ void new_sbuf(struct str_buf *sbuf)
 
 static struct str_entry *lookup(char *s, int len, uword h)
 {
-    struct str_entry *se = 0;
-    if (str_tbl.nbuckets > 0) {
-        se = str_tbl.l[h % str_tbl.nbuckets];
-        while (se &&
-               (len != se->length || memcmp(s, se->s, len) != 0))
-            se = se->next;
-    }
+    struct str_entry *se;
+    se = Bucket(str_tbl, h);
+    while (se &&
+           (len != se->length || memcmp(s, se->s, len) != 0))
+        se = se->next;
     return se;
 }
 

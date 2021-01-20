@@ -5,7 +5,7 @@
 struct package_dir *package_dirs, *package_dir_last;
 
 static uword package_dir_hash_func(struct package_dir *p) { return hashptr(p->path); }
-DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
+static DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
 
 void free_package_db()
 {
@@ -66,12 +66,10 @@ struct package *create_package(char *name)
  */
 struct package_file *lookup_package_file(struct package *p, char *s)
 {
-    struct package_file *x = 0;
-    if (p->file_hash.nbuckets > 0) {
-        x = p->file_hash.l[hashptr(s) % p->file_hash.nbuckets];
-        while (x && x->name != s)
-            x = x->b_next;
-    }
+    struct package_file *x;
+    x = Bucket(p->file_hash, hashptr(s));
+    while (x && x->name != s)
+        x = x->b_next;
     return x;
 }
 
@@ -196,12 +194,10 @@ void save_package_db()
  */
 struct package_dir *lookup_package_dir(char *s)
 {
-    struct package_dir *x = 0;
-    if (package_dir_hash.nbuckets > 0) {
-        x = package_dir_hash.l[hashptr(s) % package_dir_hash.nbuckets];
-        while (x && x->path != s)
-            x = x->b_next;
-    }
+    struct package_dir *x;
+    x = Bucket(package_dir_hash, hashptr(s));
+    while (x && x->path != s)
+        x = x->b_next;
     return x;
 }
 
@@ -223,12 +219,10 @@ int add_package_dir(struct package_dir *new)
 
 struct package *lookup_package(struct package_dir *p, char *s)
 {
-    struct package *x = 0;
-    if (p->package_hash.nbuckets > 0) {
-        x = p->package_hash.l[hashptr(s) % p->package_hash.nbuckets];
-        while (x && x->name != s)
-            x = x->b_next;
-    }
+    struct package *x;
+    x = Bucket(p->package_hash, hashptr(s));
+    while (x && x->name != s)
+        x = x->b_next;
     return x;
 }
 
