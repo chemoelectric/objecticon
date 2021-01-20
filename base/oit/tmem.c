@@ -248,12 +248,10 @@ void next_record(char *name, struct node *n)
 
 struct timport *lookup_import(char *s)
 {
-    struct timport *x = 0;
-    if (import_hash.nbuckets > 0) {
-        x = import_hash.l[hashptr(s) % import_hash.nbuckets];
-        while (x && x->name != s)
-            x = x->b_next;
-    }
+    struct timport *x;
+    x = Bucket(import_hash, hashptr(s));
+    while (x && x->name != s)
+        x = x->b_next;
     return x;
 }
 

@@ -318,12 +318,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
 
 static struct centry *lookup_centry(char *s, word f)
 {
-    struct centry *p = 0;
-    if (constblock_hash.nbuckets > 0) {
-        p = constblock_hash.l[hashptr(s) % constblock_hash.nbuckets];
-        while (p && (p->data != s || p->c_flag != f))
-            p = p->b_next;
-    }
+    struct centry *p;
+    p = Bucket(constblock_hash, hashptr(s));
+    while (p && (p->data != s || p->c_flag != f))
+        p = p->b_next;
     return p;
 }
 
@@ -359,12 +357,10 @@ static struct centry *inst_sdescrip(char *s)
 
 static struct strconst *lookup_strconst(char *s)
 {
-    struct strconst *p = 0;
-    if (strconst_hash.nbuckets > 0) {
-        p = strconst_hash.l[hashptr(s) % strconst_hash.nbuckets];
-        while (p && p->s != s)
-            p = p->b_next;
-    }
+    struct strconst *p;
+    p = Bucket(strconst_hash, hashptr(s));
+    while (p && p->s != s)
+        p = p->b_next;
     return p;
 }
 

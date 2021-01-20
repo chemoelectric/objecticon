@@ -1181,11 +1181,9 @@ static void *get_handle(char *filename)
     int *version;
 
     /* Search list for match. */
-    if (htbl.nbuckets > 0) {
-        for (x = htbl.l[hashcstr(filename) % htbl.nbuckets]; x; x = x->next) {
-            if (strcmp(filename, x->filename) == 0)
-                return x->handle;
-        }
+    for (x = Bucket(htbl, hashcstr(filename)); x; x = x->next) {
+        if (strcmp(filename, x->filename) == 0)
+            return x->handle;
     }
     /* Not found, try to open library and add a new element. */
     handle = dlopen(filename, RTLD_LAZY);
@@ -1350,11 +1348,9 @@ static HMODULE get_handle(char *filename)
     int *version;
 
     /* Search list for match. */
-    if (htbl.nbuckets > 0) {
-        for (x = htbl.l[hashcstr(filename) % htbl.nbuckets]; x; x = x->next) {
-            if (strcmp(filename, x->filename) == 0)
-                return x->handle;
-        }
+    for (x = Bucket(htbl, hashcstr(filename)); x; x = x->next) {
+        if (strcmp(filename, x->filename) == 0)
+            return x->handle;
     }
     /* Not found, try to open library and add a new element. */
     wfilename = utf8_to_wchar(filename);

@@ -371,14 +371,10 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 static struct wcursor *lookup_wcursor(wdp wd, char *name)
 {
     struct wcursor *rv;
-    if (wd->cursors.nbuckets > 0) {
-        for (rv = wd->cursors.l[hashcstr(name) % wd->cursors.nbuckets];
-             rv; rv = rv->next) {
-            if (!strcmp(name, rv->name))
-                return rv;
-        }
-    }
-    return 0;
+    rv = Bucket(wd->cursors, hashcstr(name));
+    while (rv && strcmp(name, rv->name) != 0)
+        rv = rv->next;
+    return rv;
 }
 
 static struct wcursor *ensure_wcursor(wdp wd, char *name)
@@ -5009,11 +5005,9 @@ static wdp alcdisplay(char *s)
         }
     }
 
-    if (wdp_hash.nbuckets > 0) {
-        for (wd = wdp_hash.l[hashcstr(s) % wdp_hash.nbuckets];
-             wd; wd = wd->next)
-            if (wd->program == curpstate && !strcmp(wd->name, s))
-                return wd;
+    for (wd = Bucket(wdp_hash, hashcstr(s)); wd; wd = wd->next) {
+        if (wd->program == curpstate && strcmp(wd->name, s) == 0)
+            return wd;
     }
 
     wd = safe_zalloc(sizeof(struct _wdisplay));
@@ -5184,11 +5178,9 @@ wfp loadfont(wdp wd, char *s)
     /*
      * see if the font is already loaded on this display
      */
-    if (wd->fonts.nbuckets > 0) {
-        for (rv = wd->fonts.l[hashcstr(s) % wd->fonts.nbuckets]; rv; rv = rv->next) {
-            if (!strcmp(s, rv->name + 3))
-                return rv;
-        }
+    for (rv = Bucket(wd->fonts, hashcstr(s)); rv; rv = rv->next) {
+        if (strcmp(s, rv->name + 3) == 0)
+            return rv;
     }
 
     /*

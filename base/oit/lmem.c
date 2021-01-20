@@ -63,12 +63,10 @@ void dumplfiles()
 
 static struct lfile *locate_lfile(char *s)
 {
-    struct lfile *x = 0;
-    if (lfile_hash.nbuckets > 0) {
-        x = lfile_hash.l[hashptr(s) % lfile_hash.nbuckets];
-        while (x && x->name != s)
-            x = x->b_next;
-    }
+    struct lfile *x;
+    x = Bucket(lfile_hash, hashptr(s));
+    while (x && x->name != s)
+        x = x->b_next;
     return x;
 }
 
@@ -112,12 +110,10 @@ void paramlink(char *name)
 
 static struct lpackage *locate_lpackage(char *s)
 {
-    struct lpackage *x = 0;
-    if (lpackage_hash.nbuckets > 0) {
-        x = lpackage_hash.l[hashptr(s) % lpackage_hash.nbuckets];
-        while (x && x->name != s)
-            x = x->b_next;
-    }
+    struct lpackage *x;
+    x = Bucket(lpackage_hash, hashptr(s));
+    while (x && x->name != s)
+        x = x->b_next;
     return x;
 }
 
@@ -288,12 +284,10 @@ void add_fimport(struct lfile *lf, char *package, int mode, struct loc *pos)
 
 struct fimport *lookup_fimport(struct lfile *lf, char *package)
 {
-    struct fimport *x = 0;
-    if (lf->import_hash.nbuckets > 0) {
-        x = lf->import_hash.l[hashptr(package) % lf->import_hash.nbuckets];
-        while (x && x->name != package)
-            x = x->b_next;
-    }
+    struct fimport *x;
+    x = Bucket(lf->import_hash, hashptr(package));
+    while (x && x->name != package)
+        x = x->b_next;
     return x;
 }
 
@@ -319,12 +313,10 @@ void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos)
  */
 struct fimport_symbol *lookup_fimport_symbol(struct fimport *p, char *symbol)
 {
-    struct fimport_symbol *x = 0;
-    if (p->symbol_hash.nbuckets > 0) {
-        x = p->symbol_hash.l[hashptr(symbol) % p->symbol_hash.nbuckets];
-        while (x && x->name != symbol)
-            x = x->b_next;
-    }
+    struct fimport_symbol *x;
+    x = Bucket(p->symbol_hash, hashptr(symbol));
+    while (x && x->name != symbol)
+        x = x->b_next;
     return x;
 }
 

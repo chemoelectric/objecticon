@@ -45,12 +45,10 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
  */
 struct gentry *glocate(char *name)
 {
-    struct gentry *p = 0;
-    if (lghash.nbuckets > 0) {
-        p = lghash.l[hashptr(name) % lghash.nbuckets];
-        while (p && p->name != name)
-            p = p->g_blink;
-    }
+    struct gentry *p;
+    p = Bucket(lghash, hashptr(name));
+    while (p && p->name != name)
+        p = p->g_blink;
     return p;
 }
 
@@ -87,23 +85,19 @@ struct centry *add_constant(struct lfunction *func, int flags, char *data, int l
 
 struct lclass_field *lookup_field(struct lclass *class, char *fname)
 {
-    struct lclass_field *cf = 0;
-    if (class->field_hash.nbuckets > 0) {
-        cf = class->field_hash.l[hashptr(fname) % class->field_hash.nbuckets];
-        while (cf && cf->name != fname)
-            cf = cf->b_next;
-    }
+    struct lclass_field *cf;
+    cf = Bucket(class->field_hash, hashptr(fname));
+    while (cf && cf->name != fname)
+        cf = cf->b_next;
     return cf;
 }
 
 struct lclass_field_ref *lookup_implemented_field_ref(struct lclass *class, char *fname)
 {
-    struct lclass_field_ref *fr = 0;
-    if (class->implemented_field_hash.nbuckets > 0) {
-        fr = class->implemented_field_hash.l[hashptr(fname) % class->implemented_field_hash.nbuckets];
-        while (fr && fr->field->name != fname)
-            fr = fr->b_next;
-    }
+    struct lclass_field_ref *fr;
+    fr = Bucket(class->implemented_field_hash, hashptr(fname));
+    while (fr && fr->field->name != fname)
+        fr = fr->b_next;
     return fr;
 }
 

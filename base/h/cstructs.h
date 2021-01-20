@@ -102,6 +102,13 @@ struct name { \
 }
 
 /*
+ * Expands to an expression which gives the bucket list for the given
+ * hash table t and hash number h.  The result is NULL if the list is
+ * empty, or the table has no buckets.
+ */
+#define Bucket(t, h) ((t).nbuckets == 0 ? NULL : (t).l[(h) % (t).nbuckets])
+
+/*
  * Clear an object
  */
 #define ArrClear(obj) (memset(obj, 0, sizeof(obj)))
