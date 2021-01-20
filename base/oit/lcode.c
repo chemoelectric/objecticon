@@ -131,10 +131,11 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
                           char *tbl_name);     /* name of the table */
 
 struct strconst {
+    struct strconst *b_next;
     char *s;
     word len;
     word offset;
-    struct strconst *next, *b_next;
+    struct strconst *next;
 };
 
 /*
@@ -151,9 +152,8 @@ struct ipc_line {
     int line;           /* line number */
 };
 
-static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
+static struct strconst *first_strconst, *last_strconst;
 static int strconst_offset, ascii_offset, ascii_only;
-static struct centry *constblock_hash[128];
 static void outbytex(char b, char *fmt, ...);
 static void outuint16(uint16_t s, char *fmt, ...);
 static void outwordx(word oword, char *fmt, ...);
@@ -162,6 +162,12 @@ static void outstr(struct strconst *sp, char *fmt, ...);
 static void outdptr(struct centry *ce, char *fmt, ...);
 static void outwordz_nullable(word oword, char *fmt, ...);
 static void tcase_field(struct ir_tcaseinit *x);
+
+static uword centry_hash_func(struct centry *p) { return hashptr(p->data); }
+DefineHash(, struct centry) constblock_hash = { 100, centry_hash_func };
+
+static uword strconst_hash_func(struct strconst *p) { return hashptr(p->s); }
+DefineHash(, struct strconst) strconst_hash = { 100, strconst_hash_func };
 
 #if WordBits == 32
 #define PadWordFmt "%08"XWordFmtCh
@@ -310,18 +316,25 @@ static void emit_ir_var(struct ir_var *v, char *desc)
     }
 }
 
+static struct centry *lookup_centry(char *s, word f)
+{
+    struct centry *p = 0;
+    if (constblock_hash.nbuckets > 0) {
+        p = constblock_hash.l[hashptr(s) % constblock_hash.nbuckets];
+        while (p && (p->data != s || p->c_flag != f))
+            p = p->b_next;
+    }
+    return p;
+}
+
 static struct centry *inst_sdescrip(char *s)
 {
-    int i;
     struct centry *p;
 
     /*
      * Search for an existing entry with the same string data
      */
-    i = hasher(s, constblock_hash);
-    p = constblock_hash[i];
-    while (p && (p->data != s || p->c_flag != F_StrLit))
-        p = p->b_next;
+    p = lookup_centry(s, F_StrLit);
     if (!p) {
         /*
          * Create a new centry and add it
@@ -330,8 +343,7 @@ static struct centry *inst_sdescrip(char *s)
         p->c_flag = F_StrLit;
         p->data = s;
         p->length = strlen(s);
-        p->b_next = constblock_hash[i];
-        constblock_hash[i] = p;
+        add_to_hash(&constblock_hash, p);
         /*
          * Add to constant descriptor table list and set desc_no
          */
@@ -345,12 +357,21 @@ static struct centry *inst_sdescrip(char *s)
     return p;
 }
 
+static struct strconst *lookup_strconst(char *s)
+{
+    struct strconst *p = 0;
+    if (strconst_hash.nbuckets > 0) {
+        p = strconst_hash.l[hashptr(s) % strconst_hash.nbuckets];
+        while (p && p->s != s)
+            p = p->b_next;
+    }
+    return p;
+}
+
 static struct strconst *inst_strconst(char *s, int len)
 {
-    int i = hasher(s, strconst_hash);
-    struct strconst *p = strconst_hash[i];
-    while (p && p->s != s)
-        p = p->b_next;
+    struct strconst *p;
+    p = lookup_strconst(s);
     if (!p) {
         if (is_ascii_string(s, len)) {
             if (!ascii_only)
@@ -361,9 +382,7 @@ static struct strconst *inst_strconst(char *s, int len)
         }
 
         p = Alloc1(struct strconst);
-        p->b_next = strconst_hash[i];
         p->next = 0;
-        strconst_hash[i] = p;
         p->s = s;
         p->len = len;
         p->offset = strconst_offset;
@@ -373,6 +392,7 @@ static struct strconst *inst_strconst(char *s, int len)
             last_strconst = p;
         } else
             first_strconst = last_strconst = p;
+        add_to_hash(&strconst_hash, p);
     }
     return p;
 }
@@ -405,14 +425,6 @@ void generate_code()
     codeoffset = ftell(outfile);
     if (codeoffset < 0)
         equit("Failed to ftell");
-
-    nstatics = 0;
-    strconst_offset = 0;
-
-    first_strconst = last_strconst = 0;
-    ArrClear(strconst_hash);
-    curr_file = last_fnmtbl_filen = 0;
-    curr_line = last_lntable_line = 0;
 
     /*
      * Initialize some dynamically-sized tables.
@@ -599,10 +611,7 @@ static void lemitcon(struct centry *ce)
      * we can reuse.
      */
 
-    i = hasher(ce->data, constblock_hash);
-    p = constblock_hash[i];
-    while (p && (p->data != ce->data || p->c_flag != ce->c_flag))
-        p = p->b_next;
+    p = lookup_centry(ce->data, ce->c_flag);
     if (p) {
         /*
          * Seen before, so just copy desc_no from previously output one.
@@ -613,8 +622,7 @@ static void lemitcon(struct centry *ce)
     /*
      * Add to hash chain and output
      */
-    ce->b_next = constblock_hash[i];
-    constblock_hash[i] = ce;
+    add_to_hash(&constblock_hash, ce);
 
     /*
      * Add to constant descriptor table list and set desc_no
@@ -1324,10 +1332,7 @@ static void genclass(struct lclass *cl)
     outwordx(cl->n_implemented_class_fields, "   Nclassfields");
     outdptr(ce, "   Class name");
 
-    i = hasher(init_string, cl->implemented_field_hash);
-    fr = cl->implemented_field_hash[i];
-    while (fr && fr->field->name != init_string)
-        fr = fr->b_next;
+    fr = lookup_implemented_field_ref(cl, init_string);
     if (fr)
         p = fr->field->ipc;
     else
@@ -1335,10 +1340,7 @@ static void genclass(struct lclass *cl)
 
     outwordz_nullable(p, "   Pointer to init field");
 
-    i = hasher(new_string, cl->implemented_field_hash);
-    fr = cl->implemented_field_hash[i];
-    while (fr && fr->field->name != new_string)
-        fr = fr->b_next;
+    fr = lookup_implemented_field_ref(cl, new_string);
     if (fr)
         p = fr->field->ipc;
     else

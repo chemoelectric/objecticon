@@ -1197,25 +1197,22 @@ struct handle_list {
     void *handle;
 };
 
-#passthru DefineHash(handle_table, struct handle_list);
 static uword handle_hash_func(struct handle_list *p) { return hashcstr(p->filename); }
+#passthru static DefineHash(, struct handle_list) htbl = { 4, handle_hash_func };
 
 static void *get_handle(char *filename)
 {
-    static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
-    uword u;
     void *handle;
     struct oisymbols **imported;
     int *version;
 
-    ensure_hash(&tbl);
-
-    u = hashcstr(filename);
     /* Search list for match. */
-    for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
-        if (strcmp(filename, x->filename) == 0)
-            return x->handle;
+    if (htbl.nbuckets > 0) {
+        for (x = htbl.l[hashcstr(filename) % htbl.nbuckets]; x; x = x->next) {
+            if (strcmp(filename, x->filename) == 0)
+                return x->handle;
+        }
     }
     /* Not found, try to open library and add a new element. */
     handle = dlopen(filename, RTLD_LAZY);
@@ -1245,7 +1242,7 @@ static void *get_handle(char *filename)
     x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    add_to_hash_pre(&tbl, x, u);
+    add_to_hash(&htbl, x);
     return handle;
 }
 
@@ -1368,26 +1365,23 @@ struct handle_list {
     HMODULE handle;
 };
 
-#passthru DefineHash(handle_table, struct handle_list);
 static uword handle_hash_func(struct handle_list *p) { return hashcstr(p->filename); }
+#passthru static DefineHash(, struct handle_list) htbl = { 4, handle_hash_func };
 
 static HMODULE get_handle(char *filename)
 {
-    static struct handle_table tbl = { 4, handle_hash_func };
     struct handle_list *x;
-    uword u;
     HMODULE handle;
     WCHAR *wfilename;
     struct oisymbols **imported;
     int *version;
 
-    ensure_hash(&tbl);
-
-    u = hashcstr(filename);
     /* Search list for match. */
-    for (x = tbl.l[u % tbl.nbuckets]; x; x = x->next) {
-        if (strcmp(filename, x->filename) == 0)
-            return x->handle;
+    if (htbl.nbuckets > 0) {
+        for (x = htbl.l[hashcstr(filename) % htbl.nbuckets]; x; x = x->next) {
+            if (strcmp(filename, x->filename) == 0)
+                return x->handle;
+        }
     }
     /* Not found, try to open library and add a new element. */
     wfilename = utf8_to_wchar(filename);
@@ -1423,7 +1417,7 @@ static HMODULE get_handle(char *filename)
     x = safe_malloc(sizeof(struct handle_list));
     x->filename = salloc(filename);
     x->handle = handle;
-    add_to_hash_pre(&tbl, x, u);
+    add_to_hash(&htbl, x);
     return handle;
 }
 

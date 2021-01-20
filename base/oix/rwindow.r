@@ -3034,41 +3034,30 @@ static void setpi_PALETTE8(struct imgdata *imd, int x, int y, int i)
     *s = (unsigned char)i;
 }
 
-#define IMDHASH_SIZE 32
+static uword imdfmt_hash_func(struct imgdataformat *p) { return hashcstr(p->name); }
+#passthru DefineHash(, struct imgdataformat) imdfmt_hash = { 20, imdfmt_hash_func };
 
-static struct imgdataformat *imdfmt_hash[IMDHASH_SIZE];
-
-static int imdfmt_hash_func(char *s)
-{
-    int h = 0;
-    while (*s)
-        h = 13 * h + (*s++ & 0377);
-    return h % ElemCount(imdfmt_hash);
-}
-
-struct imgdataformat imgdataformat_A8 =   {set_A8,get_A8,0,0,getlength_8,8,0,0,"A8"};
-struct imgdataformat imgdataformat_A16 =   {set_A16,get_A16,0,0,getlength_16,16,0,0,"A16"};
-struct imgdataformat imgdataformat_RGB24 =   {set_RGB24,get_RGB24,0,0,getlength_24,0,24,0,"RGB24"};
-struct imgdataformat imgdataformat_BGR24 =   {set_BGR24,get_BGR24,0,0,getlength_24,0,24,0,"BGR24"};
-struct imgdataformat imgdataformat_RGBA32 =   {set_RGBA32,get_RGBA32,0,0,getlength_32,8,24,0,"RGBA32"};
-struct imgdataformat imgdataformat_ABGR32 =   {set_ABGR32,get_ABGR32,0,0,getlength_32,8,24,0,"ABGR32"};
-struct imgdataformat imgdataformat_RGB48 =   {set_RGB48,get_RGB48,0,0,getlength_48,0,48,0,"RGB48"};
-struct imgdataformat imgdataformat_RGBA64 =   {set_RGBA64,get_RGBA64,0,0,getlength_64,16,48,0,"RGBA64"};
-struct imgdataformat imgdataformat_G8 =   {set_G8,get_G8,0,0,getlength_8,0,8,0,"G8"};
-struct imgdataformat imgdataformat_GA16 =   {set_GA16,get_GA16,0,0,getlength_16,8,8,0,"GA16"};
-struct imgdataformat imgdataformat_AG16 =   {set_AG16,get_AG16,0,0,getlength_16,8,8,0,"AG16"};
-struct imgdataformat imgdataformat_G16 =   {set_G16,get_G16,0,0,getlength_16,0,16,0,"G16"};
-struct imgdataformat imgdataformat_GA32 =   {set_GA32,get_GA32,0,0,getlength_32,16,16,0,"GA32"};
-struct imgdataformat imgdataformat_PALETTE1 =   {set_PALETTE,get_PALETTE,setpi_PALETTE1,getpi_PALETTE1,getlength_1,16,48,2,"PALETTE1"};
-struct imgdataformat imgdataformat_PALETTE2 =   {set_PALETTE,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,16,48,4,"PALETTE2"};
-struct imgdataformat imgdataformat_PALETTE4 =   {set_PALETTE,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,16,48,16,"PALETTE4"};
-struct imgdataformat imgdataformat_PALETTE8 =   {set_PALETTE,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,16,48,256,"PALETTE8"};
+struct imgdataformat imgdataformat_A8 =   {0,set_A8,get_A8,0,0,getlength_8,8,0,0,"A8"};
+struct imgdataformat imgdataformat_A16 =   {0,set_A16,get_A16,0,0,getlength_16,16,0,0,"A16"};
+struct imgdataformat imgdataformat_RGB24 =   {0,set_RGB24,get_RGB24,0,0,getlength_24,0,24,0,"RGB24"};
+struct imgdataformat imgdataformat_BGR24 =   {0,set_BGR24,get_BGR24,0,0,getlength_24,0,24,0,"BGR24"};
+struct imgdataformat imgdataformat_RGBA32 =   {0,set_RGBA32,get_RGBA32,0,0,getlength_32,8,24,0,"RGBA32"};
+struct imgdataformat imgdataformat_ABGR32 =   {0,set_ABGR32,get_ABGR32,0,0,getlength_32,8,24,0,"ABGR32"};
+struct imgdataformat imgdataformat_RGB48 =   {0,set_RGB48,get_RGB48,0,0,getlength_48,0,48,0,"RGB48"};
+struct imgdataformat imgdataformat_RGBA64 =   {0,set_RGBA64,get_RGBA64,0,0,getlength_64,16,48,0,"RGBA64"};
+struct imgdataformat imgdataformat_G8 =   {0,set_G8,get_G8,0,0,getlength_8,0,8,0,"G8"};
+struct imgdataformat imgdataformat_GA16 =   {0,set_GA16,get_GA16,0,0,getlength_16,8,8,0,"GA16"};
+struct imgdataformat imgdataformat_AG16 =   {0,set_AG16,get_AG16,0,0,getlength_16,8,8,0,"AG16"};
+struct imgdataformat imgdataformat_G16 =   {0,set_G16,get_G16,0,0,getlength_16,0,16,0,"G16"};
+struct imgdataformat imgdataformat_GA32 =   {0,set_GA32,get_GA32,0,0,getlength_32,16,16,0,"GA32"};
+struct imgdataformat imgdataformat_PALETTE1 =   {0,set_PALETTE,get_PALETTE,setpi_PALETTE1,getpi_PALETTE1,getlength_1,16,48,2,"PALETTE1"};
+struct imgdataformat imgdataformat_PALETTE2 =   {0,set_PALETTE,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,16,48,4,"PALETTE2"};
+struct imgdataformat imgdataformat_PALETTE4 =   {0,set_PALETTE,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,16,48,16,"PALETTE4"};
+struct imgdataformat imgdataformat_PALETTE8 =   {0,set_PALETTE,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,16,48,256,"PALETTE8"};
 
 void registerimgdataformat(struct imgdataformat *fmt)
 {
-    int i = imdfmt_hash_func(fmt->name);
-    fmt->next = imdfmt_hash[i];
-    imdfmt_hash[i] = fmt;
+    add_to_hash(&imdfmt_hash, fmt);
 }
 
 struct imgdataformat *parseimgdataformat(char *s)
@@ -3100,8 +3089,8 @@ struct imgdataformat *parseimgdataformat(char *s)
 #endif
     }
 
-    i = imdfmt_hash_func(s);
-    for (p = imdfmt_hash[i]; p; p = p->next) {
+    i = hashcstr(s) % imdfmt_hash.nbuckets;
+    for (p = imdfmt_hash.l[i]; p; p = p->next) {
         if (strcmp(s, p->name) == 0)
             return p;
     }

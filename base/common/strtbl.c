@@ -8,32 +8,44 @@
  * Entry in string table.
  */
 struct str_entry {
+    struct str_entry *next;
     char *s;                 /* string */
     int length;              /* length of string */
-    struct str_entry *next;
 };
 
 #define SBufSize 1024                     /* initial size of a string buffer */
-#define StrTblSz 16000                    /* size of string hash table */
-static struct str_entry **str_tbl = NULL; /* string hash table */
 
 /*
- * init_str - initialize string hash table.
+ * Hash a string of length len bytes (may include nulls).
  */
-void init_str()
+static uword hash(char *s, int len)
 {
-    if (str_tbl == NULL)
-        str_tbl = safe_zalloc(StrTblSz * sizeof(struct str_entry *));
+    uword u;
+    int l;
+    l = len;
+    if (l > 10)		/* limit scan to first ten characters */
+        l = 10;
+    u = 0;
+    while (l-- > 0) {
+        u += *s++ & 0xFF;	/* add unsigned version of next char */
+        u *= 37;		/* scale total by a nice prime number */
+    }
+    u += len;			/* add the (untruncated) string length */
+    return u;
 }
 
+static uword str_tbl_hash_func(struct str_entry *p) { return hash(p->s, p->length); }
+DefineHash(, struct str_entry) str_tbl = { 16000, str_tbl_hash_func };
+
+#if 0
 void dump_stbl()
 {
     struct str_entry *se;
     int h;
 
-    for (h = 0; h < StrTblSz; ++h) {
+    for (h = 0; h < str_tbl.nbuckets; ++h) {
         int i = 0;
-        for (se = str_tbl[h]; se != NULL; se = se->next)
+        for (se = str_tbl.l[h]; se != NULL; se = se->next)
             ++i;
             /*printf("entry len=%d s=%s\n",se->length,se->s);*/
         printf("Table %d -> %d entries\n", h, i);
@@ -47,6 +59,7 @@ void dump_sbuf(struct str_buf *s)
     printf("strtimage=%p endimage=%p (%ld bytes)\n",s->strtimage,s->endimage,(long)(s->endimage-s->strtimage));
     printf("end=%p (remain=%ld) \n",s->end,(long)(s->end-s->endimage));
 }
+#endif
 
 /*
  * new_sbuf - allocate a new buffer for a sbuf struct, copying the partially
@@ -74,37 +87,37 @@ void new_sbuf(struct str_buf *sbuf)
     sbuf->end = sbuf->strtimage + sbuf->size;
 }
 
+static struct str_entry *lookup(char *s, int len, uword h)
+{
+    struct str_entry *se = 0;
+    if (str_tbl.nbuckets > 0) {
+        se = str_tbl.l[h % str_tbl.nbuckets];
+        while (se &&
+               (len != se->length || memcmp(s, se->s, len) != 0))
+            se = se->next;
+    }
+    return se;
+}
+
 /*
  * spec_str - install a special string (null terminated) in the string table.
  */
 char *spec_str(char *s)
 {
     struct str_entry *se;
-    char *s1;
     int l;
-    unsigned int h;
-
-    h = 0;
-    l = 0;
-    s1 = s;
-    /* NB: Hash and length computations include the \0 at the end */
-    for (;;) {
-        h = 13 * h + (*s1 & 0377);
-        ++l;
-        if (!*s1)
-            break;
-        ++s1;
+    uword h;
+    /* The null is included in the string. */
+    l = strlen(s) + 1;
+    h = hash(s, l);
+    se = lookup(s, l, h);
+    if (!se) {
+        se = Alloc(struct str_entry);
+        se->s = s;
+        se->length = l;
+        add_to_hash_pre(&str_tbl, se, h);
     }
-    h %= StrTblSz;
-    for (se = str_tbl[h]; se != NULL; se = se->next)
-        if (l == se->length && memcmp(s, se->s, l) == 0)
-            return se->s;
-    se = Alloc(struct str_entry);
-    se->s = s;
-    se->length = l;
-    se->next = str_tbl[h];
-    str_tbl[h] = se;
-    return s;
+    return se->s;
 }
 
 /*
@@ -114,46 +127,36 @@ char *spec_str(char *s)
  */
 char *str_install(struct str_buf *sbuf)
 {
-    unsigned int h;
     struct str_entry *se;
     char *s;
     char *e;
     int l;
+    uword h;
 
     /* null terminate the buffered copy of the string */
     AppChar(*sbuf, '\0');   
     s = sbuf->strtimage;
     e = sbuf->endimage;
-
-    /*
-     * Compute hash value.
-     */
-    h = 0;
-    while (s < e)
-        h = 13 * h + (*s++ & 0377);
-    h %= StrTblSz;
-    s = sbuf->strtimage;
     l = e - s;
-    for (se = str_tbl[h]; se != NULL; se = se->next)
-        if (l == se->length && memcmp(s, se->s, l) == 0) {
-            /*
-             * A copy of the string is already in the table. Delete the copy
-             *  in the buffer.
-             */
-            sbuf->endimage = s;
-            return se->s;
-        }
-
-    /*
-     * The string is not in the table. Add the copy from the buffer to the
-     *  table.
-     */
-    se = Alloc(struct str_entry);
-    se->s = s;
-    se->length = l;
-    sbuf->strtimage = e;
-    se->next = str_tbl[h];
-    str_tbl[h] = se;
+    h = hash(s, l);
+    se = lookup(s, l, h);
+    if (se) {
+        /*
+         * A copy of the string is already in the table. Delete the copy
+         *  in the buffer.
+         */
+        sbuf->endimage = s;
+    } else {
+        /*
+         * The string is not in the table. Add the copy from the buffer to the
+         *  table.
+         */
+        se = Alloc(struct str_entry);
+        se->s = s;
+        se->length = l;
+        sbuf->strtimage = e;
+        add_to_hash_pre(&str_tbl, se, h);
+    }
     return se->s;
 }
 
@@ -163,7 +166,6 @@ char *str_install(struct str_buf *sbuf)
 void zero_sbuf(struct str_buf *sbuf)
 {
     sbuf->endimage = sbuf->strtimage;
-
 }
 
 /*

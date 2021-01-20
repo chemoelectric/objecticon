@@ -62,6 +62,7 @@ struct lfield {
 };
 
 struct centry {                 /* constant table entry */
+    struct centry *b_next;      /* Next in hash bucket, used by code generation */
     word c_flag;                /*   type of literal flag */
     char *data;                 /*   raw data read from ufile */
     int length;                 /*   length of raw data */
@@ -69,14 +70,14 @@ struct centry {                 /* constant table entry */
     word pc;                    /* Address of block for lrgint, cset, ucs, real */
     word desc_no;               /* Index in constant descriptor table for non-integer types */
     struct centry *next,        /* Next in lfunctions's linked list */
-                  *b_next,      /* Next in hash bucket, used by code generation */
                   *d_next;      /* Next in constant descriptor table */
 };
 
 struct fentry {                 /* field table header entry */
+    struct fentry *b_next;      /*   hash link */
     char *name;                 /*   field name, in the string space */
     int field_id;               /*   field id */
-    struct fentry *b_next, *next;       /*   next field name in allocation order */
+    struct fentry *next;        /*   next field name in allocation order */
 };
 
 struct lclass_super {
@@ -88,6 +89,7 @@ struct lclass_super {
 enum const_val_flag { NOT_SEEN = 0, SET_NULL, SET_CONST, SET_YES, OTHER };
 
 struct lclass_field {
+    struct lclass_field *b_next;         /* Hash link */
     char *name;
     struct loc pos;                      /* Source line number */
     word flag;
@@ -99,14 +101,25 @@ struct lclass_field {
     int const_flag;                      /* Optimisation - constant flag */
     struct centry *const_val;            /* Optimisation - constant value */
     struct lclass *class;                /* Pointer back to owning class */
-    struct lclass_field *b_next, *next;  /* Next and hash links */
+    struct lclass_field *next;           /* Next link */
     struct lfunction *func;              /* If it's a method */
+};
+
+/*
+ * A reference to a class field.
+ */
+struct lclass_field_ref {
+    struct lclass_field_ref *b_next;         /* Hash link */
+    struct lclass_field *field;
+    struct lclass_field *static_redef;       /* For checking unambiguous implicit static access (resolve.c) */
+    struct lclass_field_ref *next;
 };
 
 struct lclass {
     word flag;
     struct lclass_super *supers, *last_super;
-    struct lclass_field *field_hash[32], *fields, *last_field;
+    DefineHash(, struct lclass_field) field_hash;
+    struct lclass_field *fields, *last_field;
     struct gentry *global;      /* Pointer back to global table entry */
     struct lclass *next;        /* Link in the list of all lclass objects */
     int seen;                   /* Flag for computing superclass set */
@@ -114,7 +127,8 @@ struct lclass {
     int size;                   /* Computed size of block in icode */
     struct lclass_ref *resolved_supers, *last_resolved_super;
     struct lclass_ref *implemented_classes, *last_implemented_class;
-    struct lclass_field_ref *implemented_field_hash[32], 
+    DefineHash(, struct lclass_field_ref) implemented_field_hash;
+    struct lclass_field_ref
         *implemented_class_fields, *last_implemented_class_field,        /* Methods & Statics */
         *implemented_instance_fields, *last_implemented_instance_field;  /* All others */
     int n_supers,             /* Some list lengths, useful for code generation */
@@ -129,15 +143,6 @@ struct lclass {
 struct lclass_ref {
     struct lclass *class;
     struct lclass_ref *next;
-};
-
-/*
- * A reference to a class field.
- */
-struct lclass_field_ref {
-    struct lclass_field *field;
-    struct lclass_field *static_redef;       /* For checking unambiguous implicit static access (resolve.c) */
-    struct lclass_field_ref *next, *b_next;
 };
 
 struct lfunction {
@@ -161,39 +166,44 @@ struct lfunction {
 };
 
 /*
- * A linked list of files named by link declarations is maintained using
- *  lfile structures.
+ * Symbol in an import.
  */
-struct lfile {
-    char *name;                           /* name of the file */
-    int declend_offset;                      /* file offset of declend */
-    char *package;                           /* package of this file, or null */
-    int package_id;                          /* id number of package */
-    int ref;                                 /* flag used during scanrefs() */
-    struct fimport *import_hash[64], *imports, *last_import;  /* imports in this file */
-    struct lfile *next, *b_next;             /* pointer to next file */
+struct fimport_symbol {
+    struct fimport_symbol *b_next;            /* bucket chain */
+    char *name;
+    int used;
+    struct loc pos;
+    struct fimport_symbol *next;
 };
 
 /*
  * A list of imports in one particular file.
  */
 struct fimport {
+    struct fimport *b_next;             /* hash chain */
     char *name;
     int mode;
     int used;
     struct loc pos;
-    struct fimport_symbol *symbol_hash[64], *symbols, *last_symbol;
-    struct fimport *next, *b_next;      /* pointer to next */
+    DefineHash(, struct fimport_symbol) symbol_hash;
+    struct fimport_symbol *symbols, *last_symbol;
+    struct fimport *next;              /* pointer to next */
 };
 
 /*
- * Symbol in an import.
+ * A linked list of files named by link declarations is maintained using
+ *  lfile structures.
  */
-struct fimport_symbol {
-    char *name;
-    int used;
-    struct loc pos;
-    struct fimport_symbol *next, *b_next;
+struct lfile {
+    struct lfile *b_next;                    /* hash link */
+    char *name;                              /* name of the file */
+    int declend_offset;                      /* file offset of declend */
+    char *package;                           /* package of this file, or null */
+    int package_id;                          /* id number of package */
+    int ref;                                 /* flag used during scanrefs() */
+    DefineHash(, struct fimport) import_hash;
+    struct fimport *imports, *last_import;  /* imports in this file */
+    struct lfile *next;                      /* pointer to next file */
 };
 
 /*
@@ -201,8 +211,8 @@ struct fimport_symbol {
  * only add the files from each package once.
  */
 struct lpackage {
-    char *name;
     struct lpackage *b_next;    /* bucket chain */
+    char *name;
 };
 
 /*

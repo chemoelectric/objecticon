@@ -6,6 +6,9 @@
 #include "lsym.h"
 #include "lmem.h"
 
+static uword lghash_func(struct gentry *p) { return hashptr(p->name); }
+DefineHash(, struct gentry) lghash = { 200, lghash_func };
+
 /*
  * Prototypes.
  */
@@ -18,15 +21,10 @@ int nfields = 0;		/* number of fields in field table */
  */
 struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos)
 {
-    int i = hasher(name, lghash);
-    struct gentry *p = lghash[i];
-    while (p && p->name != name)
-        p = p->g_blink;
-    if (p)
-        quit("Attempted to add an global which already existed:%s", name);
+    struct gentry *p;
+    if (glocate(name))
+        quit("Attempted to add an global which already existed: %s", name);
     p = Alloc(struct gentry);
-    p->g_blink = lghash[i];
-    lghash[i] = p;
     if (lglast) {
         lglast->g_next = p;
         lglast = p;
@@ -37,6 +35,7 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
     p->pos = *pos;
     p->defined = lf;
     p->g_flag = flag | F_Global;
+    add_to_hash(&lghash, p);
     return p;
 }
 
@@ -46,9 +45,12 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
  */
 struct gentry *glocate(char *name)
 {
-    struct gentry *p = lghash[hasher(name, lghash)];
-    while (p && p->name != name)
-        p = p->g_blink;
+    struct gentry *p = 0;
+    if (lghash.nbuckets > 0) {
+        p = lghash.l[hashptr(name) % lghash.nbuckets];
+        while (p && p->name != name)
+            p = p->g_blink;
+    }
     return p;
 }
 
@@ -83,31 +85,26 @@ struct centry *add_constant(struct lfunction *func, int flags, char *data, int l
     return p;
 }
 
-struct fentry *flocate(char *name)
-{
-    int i = hasher(name, lfhash);
-    struct fentry *fp = lfhash[i];
-    while (fp && fp->name != name)
-        fp = fp->b_next;
-    return fp;
-}
-
 struct lclass_field *lookup_field(struct lclass *class, char *fname)
 {
-    int i = hasher(fname, class->field_hash);
-    struct lclass_field *cf = class->field_hash[i];
-    while (cf && cf->name != fname)
-        cf = cf->b_next;
+    struct lclass_field *cf = 0;
+    if (class->field_hash.nbuckets > 0) {
+        cf = class->field_hash.l[hashptr(fname) % class->field_hash.nbuckets];
+        while (cf && cf->name != fname)
+            cf = cf->b_next;
+    }
     return cf;
 }
 
 struct lclass_field_ref *lookup_implemented_field_ref(struct lclass *class, char *fname)
 {
-    int i = hasher(fname, class->implemented_field_hash);
-    struct lclass_field_ref *cf = class->implemented_field_hash[i];
-    while (cf && cf->field->name != fname)
-        cf = cf->b_next;
-    return cf;
+    struct lclass_field_ref *fr = 0;
+    if (class->implemented_field_hash.nbuckets > 0) {
+        fr = class->implemented_field_hash.l[hashptr(fname) % class->implemented_field_hash.nbuckets];
+        while (fr && fr->field->name != fname)
+            fr = fr->b_next;
+    }
+    return fr;
 }
 
 struct lclass_field *lookup_implemented_field(struct lclass *class, char *fname)

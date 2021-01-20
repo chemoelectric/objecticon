@@ -10,25 +10,23 @@
 #include "trans.h"
 #include "package.h"
 
-struct tgentry *ghash[GHASH_SIZE];	/* hash area for global table */
+/* hash area for global table */
+static uword ghash_func(struct tgentry *p) { return hashptr(p->g_name); }
+struct ghash ghash = { 32, ghash_func };
+
 struct tgentry *gfirst;		/* first global table entry */
 struct tgentry *glast;		/* last global table entry */
 
-char *package_name = 0;
-struct tfunction *functions = 0, *curr_func = 0;
-struct tclass *classes = 0, *curr_class = 0;
-struct timport *import_hash[64], *imports = 0, *last_import = 0, *curr_import = 0;
-struct tinvocable *tinvocables = 0, *last_tinvocable = 0;
+char *package_name ;
+struct tfunction *functions , *curr_func ;
+struct tclass *classes , *curr_class ;
+struct timport *imports , *last_import, *curr_import ;
+struct tinvocable *tinvocables, *last_tinvocable;
+
+static uword import_hash_func(struct timport *p) { return hashptr(p->name); }
+DefineHash(, struct timport) import_hash = { 10, import_hash_func };
 
 struct membuff file_mb = {"Per file membuff", 64000, 0,0,0 };
-
-/*
- * called once - initialize the translation process
- */
-void tminit()
-{
-    init_package_db();
-}
 
 /*
  * called after each file has been translated - reset memory/pointers
@@ -38,10 +36,10 @@ void tmfilefree()
     functions = curr_func = 0;
     classes = curr_class = 0;
     curr_import = imports = last_import = 0;
-    ArrClear(import_hash);
+    clear_hash(&import_hash);
     tinvocables = last_tinvocable = 0;
     gfirst = glast = 0;
-    ArrClear(ghash);
+    clear_hash(&ghash);
     package_name = 0;
 
     mb_clear(&file_mb);
@@ -54,6 +52,8 @@ void tmfree()
 {
     free_package_db();
     mb_free(&file_mb);
+    free_hash(&import_hash);
+    free_hash(&ghash);
 }
 
 void next_function(int flag)
@@ -248,10 +248,12 @@ void next_record(char *name, struct node *n)
 
 struct timport *lookup_import(char *s)
 {
-    int i = hasher(s, import_hash);
-    struct timport *x = import_hash[i];
-    while (x && x->name != s)
-        x = x->b_next;
+    struct timport *x = 0;
+    if (import_hash.nbuckets > 0) {
+        x = import_hash.l[hashptr(s) % import_hash.nbuckets];
+        while (x && x->name != s)
+            x = x->b_next;
+    }
     return x;
 }
 
@@ -262,12 +264,10 @@ void set_package(char *s, struct node *n)
 
 void next_import(char *s, int mode, struct node *n)
 {
-    int i = hasher(s, import_hash);
-    struct timport *x = import_hash[i];
+    struct timport *x;
     if (s == package_name)
         tfatal_at(n, "Import same as package: %s", s);
-    while (x && x->name != s)
-        x = x->b_next;
+    x = lookup_import(s);
     if (x) {
         /* Can only have duplicate import declarations if both are qualified and of the same import mode */
         if (mode == I_All && x->mode == I_All)
@@ -278,8 +278,6 @@ void next_import(char *s, int mode, struct node *n)
         return;
     }
     x = FAlloc(struct timport);
-    x->b_next = import_hash[i];
-    import_hash[i] = x;
     x->name = s;
     x->mode = mode;
     x->pos = n;
@@ -290,6 +288,7 @@ void next_import(char *s, int mode, struct node *n)
         imports = last_import = x;
     }
     curr_import = last_import;
+    add_to_hash(&import_hash, x);
 }
 
 void add_import_symbol(char *s, struct node *n) 

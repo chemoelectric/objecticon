@@ -90,12 +90,21 @@ void check_globalflag(struct node *n)
         tfatal_at(n, "A readable global must be declared package readable");
 }
 
+static struct tgentry *lookup_global(char *name)
+{
+    struct tgentry *x = 0;
+    if (ghash.nbuckets > 0) {
+        x = ghash.l[hashptr(name) % ghash.nbuckets];
+        while (x && x->g_name != name)
+            x = x->g_blink;
+    }
+    return x;
+}
+
 struct tgentry *next_global(char *name, int flag, struct node *n)
 {
-    int i = hasher(name, ghash);
-    struct tgentry *x = ghash[i];
-    while (x && x->g_name != name)
-        x = x->g_blink;
+    struct tgentry *x;
+    x = lookup_global(name);
     if (x)
         tfatal_at(n, "Global redeclaration: %s previously declared at line %d", name, Line(x->pos));
 
@@ -106,8 +115,6 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
                           "Global symbol uses name of builtin function");
 
     x = FAlloc(struct tgentry);
-    x->g_blink = ghash[i];
-    ghash[i] = x;
     x->g_name = name;
     x->pos = n;
     x->g_flag = flag | globalflag;
@@ -116,6 +123,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
         glast = x;
     } else
         gfirst = glast = x;
+    add_to_hash(&ghash, x);
     return x;
 }
 

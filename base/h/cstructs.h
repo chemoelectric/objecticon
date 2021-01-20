@@ -75,14 +75,16 @@ struct str_buf {
 #define NearZero(x, zs) (fabs(x) < pow(10.0, -(zs + 1)))
 
 /*
- * Hash functions for symbol tables.  Cast to uword so that the result
- * is never -ve, and avoid compiler warnings about casting pointer to
- * narrower type.
+ * Hash function for a pointer and a fixed-size hash table.
  */
-#define hasher(x,obj)   (((uword)(x))%ElemCount(obj))
-/* If x is a pointer */
-#define ptrhasher1(x)   ((((uword)(x))>>5 ^ ((uword)(x))))
-#define ptrhasher(x,obj)   (ptrhasher1(x)%ElemCount(obj))
+#define hasher(x,obj)   (hashptr(x) % ElemCount(obj))
+
+/*
+ * Hash calculation for a pointer (or any large number).  Cast to
+ * uword so that the result is never -ve, and avoid compiler warnings
+ * about casting pointer to narrower type.
+ */
+#define hashptr(x)   ((((uword)(x))>>5 ^ ((uword)(x))))
 
 /*
  * Define a hash table structure to use with the functions in
@@ -97,7 +99,7 @@ struct name { \
     int size;                   /* Number of entries */ \
     int nbuckets;               /* Number of bucket lists */ \
     type **l;                   /* Bucket lists */ \
-};
+}
 
 /*
  * Clear an object

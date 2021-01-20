@@ -1166,11 +1166,13 @@ char *word2cstr(word n)
 /*
  * Simple hash function for C strings.
  */
-unsigned int hashcstr(char *s)
+uword hashcstr(char *s)
 {
-    unsigned int h;
+    int j;
+    uword h;
     h = 0;
-    while (*s) {
+    j = 10;   /* limit scan to first ten characters */
+    while (*s && j-- > 0) {
         h = 13 * h + (*s & 0377);
         ++s;
     }
@@ -1812,6 +1814,32 @@ void add_to_hash(void *tbl0, void *item0)
     tbl = tbl0;
     item = item0;
     add_to_hash_pre(tbl, item, tbl->hash(item));
+}
+
+/*
+ * Clear the hash bucket list, and set the size to 0.  The bucket list
+ * is not freed.  It is the caller's responsibility to ensure the
+ * individual list items are disposed of.
+ */
+void clear_hash(void *tbl0)
+{
+    struct hash_proto *tbl;
+    tbl = tbl0;
+    memset(tbl->l, 0, tbl->nbuckets * sizeof(struct hash_item *));
+    tbl->size = 0;
+}
+
+/*
+ * Free the bucket list memory, and reset the fields to their original
+ * state.
+ */
+void free_hash(void *tbl0)
+{
+    struct hash_proto *tbl;
+    tbl = tbl0;
+    free(tbl->l);
+    tbl->l = 0;
+    tbl->size = tbl->nbuckets = 0;
 }
 
 /*

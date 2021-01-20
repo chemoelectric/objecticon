@@ -28,6 +28,7 @@ struct triangle {
 struct imgdata;
 
 struct imgdataformat {
+    struct imgdataformat *next;      /* Used for hashing */
     void (*setpixel)(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
     void (*getpixel)(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
     void (*setpaletteindex)(struct imgdata *imd, int x, int y, int i);
@@ -35,7 +36,6 @@ struct imgdataformat {
     int (*getlength)(struct imgdata *imd);
     int alpha_depth, color_depth, palette_size;
     char *name;
-    struct imgdataformat *next;      /* Used for hashing */
 };
 
 struct filter {

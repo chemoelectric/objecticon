@@ -194,7 +194,7 @@ struct oisymbols {
     struct descrip (*block_to_descriptor)(union block *ptr);
     int (*is_flag)(dptr d);
     int (*is_ascii_string)(dptr d);
-    unsigned int (*hashcstr)(char *s);
+    uword (*hashcstr)(char *s);
     char * (*get_hostname)(void);
     char    * (*maketemp)(char *fn);
     int (*is_flowterm_tty)(FILE *f);
@@ -208,6 +208,12 @@ struct oisymbols {
     char * (*buffstr)(dptr d);
     void (*buffnstr)(dptr d, char **s, ...);
     int (*is_little_endian)(void);
+    void (*ensure_hash)(void *tbl0);
+    void (*add_to_hash_pre)(void *tbl0, void *item0, uword h);
+    void (*add_to_hash)(void *tbl0, void *item0);
+    void (*free_hash)(void *tbl0);
+    void (*clear_hash)(void *tbl0);
+    void (*check_hash)(void *tbl0);
     void * (*safe_calloc)(size_t m, size_t n);
     void * (*safe_zalloc)(size_t size);
     void * (*safe_malloc)(size_t size);

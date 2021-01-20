@@ -3,14 +3,11 @@
  *
  */
 
-#passthru DefineHash(fonttable, struct _wfont);
-#passthru DefineHash(cursortable, struct wcursor);
-
 static uword font_hash_func(wfp p) { return hashcstr(p->name); }
 static uword cursor_hash_func(struct wcursor *p) { return hashcstr(p->name); }
 
-struct fonttable fonts = { 50, font_hash_func };
-struct cursortable cursors = { 32, cursor_hash_func };
+#passthru DefineHash(, struct _wfont) fonts = { 50, font_hash_func };
+#passthru DefineHash(, struct wcursor) cursors = { 32, cursor_hash_func };
 
 static struct SharedCursor *null_cursor;
 static wcp alccontext(wbp w);
@@ -1022,16 +1019,17 @@ static gb_Font *mkfont(char *s)
 static wfp load_font(char *s)
 {
     wfp rv;
-    uword u;
     gb_Font *f;
 
     /*
      * See if the font is already loaded.
      */
-    u = hashcstr(s);
-    for(rv = fonts.l[u % fonts.nbuckets]; rv; rv = rv->next) {
-        if (!strcmp(s, rv->name))
-            return rv;
+    if (fonts.nbuckets > 0) {
+        for (rv = fonts.l[hashcstr(s) % fonts.nbuckets];
+             rv; rv = rv->next) {
+            if (!strcmp(s, rv->name))
+                return rv;
+        }
     }
 
     f = mkfont(s);
@@ -1043,7 +1041,7 @@ static wfp load_font(char *s)
     gb_get_metrics(dummy_hdc, f, &rv->ascent, &rv->descent, &rv->maxwidth);
     /*dbg("ascent=%d descent=%d maxwidth=%d\n", rv->ascent,rv->descent,rv->maxwidth);*/
     rv->font = f;
-    add_to_hash_pre(&fonts, rv, u);
+    add_to_hash(&fonts, rv);
 
     return rv;
 }
@@ -1752,11 +1750,11 @@ static void unlink_sharedcursor(struct SharedCursor *x)
 static struct wcursor *lookup_wcursor(char *name)
 {
     struct wcursor *rv;
-    uword u;
-    u = hashcstr(name);
-    for(rv = cursors.l[u % cursors.nbuckets]; rv; rv = rv->next) {
-        if (!strcmp(name, rv->name))
-            return rv;
+    if (cursors.nbuckets > 0) {
+        for(rv = cursors.l[hashcstr(name) % cursors.nbuckets]; rv; rv = rv->next) {
+            if (!strcmp(name, rv->name))
+                return rv;
+        }
     }
     return 0;
 }
@@ -1764,15 +1762,12 @@ static struct wcursor *lookup_wcursor(char *name)
 static struct wcursor *ensure_wcursor(char *name)
 {
     struct wcursor *rv;
-    uword u;
-    u = hashcstr(name);
-    for(rv = cursors.l[u % cursors.nbuckets]; rv; rv = rv->next) {
-        if (!strcmp(name, rv->name))
-            return rv;
+    rv = lookup_wcursor(name);
+    if (!rv) {
+        rv = safe_zalloc(sizeof(struct wcursor));
+        rv->name = salloc(name);
+        add_to_hash(&cursors, rv);
     }
-    rv = safe_zalloc(sizeof(struct wcursor));
-    rv->name = salloc(name);
-    add_to_hash_pre(&cursors, rv, u);
     return rv;
 }
 
@@ -2028,8 +2023,6 @@ static void init_window_system(void)
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);
     white = new_sharedcolor("white", 0xffff,0xffff,0xffff, 0xffff);
-    ensure_hash(&fonts);
-    ensure_hash(&cursors);
     default_font = load_font(defaultfont);
     if (!default_font)
         ffatalerr("Couldn't load default font");
@@ -2153,7 +2146,7 @@ static void get_MSBGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int 
     *a = 257 * (*s++);
 }
 
-static struct imgdataformat imgdataformat_MSBGRA32 = {set_MSBGRA32,get_MSBGRA32,0,0,getlength_32,8,24,0,"MSBGRA32"};
+static struct imgdataformat imgdataformat_MSBGRA32 = {0,set_MSBGRA32,get_MSBGRA32,0,0,getlength_32,8,24,0,"MSBGRA32"};
 
 void registerplatformimgdataformats()
 {

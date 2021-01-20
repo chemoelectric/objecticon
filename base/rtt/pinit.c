@@ -27,7 +27,6 @@ char *opt_lst;
 char **opt_args;
    {
 
-   init_str();                      /* initialize string table */
    init_tok();                      /* initialize tokenizer */
    init_macro();                    /* initialize macro table */
    init_files(opt_lst, opt_args);   /* initialize standard header locations */

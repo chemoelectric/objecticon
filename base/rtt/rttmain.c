@@ -70,7 +70,6 @@ int main(argc, argv)
      * Initialize the string table and indicate that File must be treated
      *  as a typedef name.
      */
-    init_str();
     add_tdef("FILE");
 
     /*

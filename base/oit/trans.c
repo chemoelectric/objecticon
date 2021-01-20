@@ -115,8 +115,6 @@ void trans(struct file_param *trans_files, struct pp_def *pp_defs, int *fatals, 
 {
     struct file_param *p;
 
-    tminit();
-
     awarnings = afatals = 0;
 
     for (p = trans_files; p; p = p->next) {

@@ -4,11 +4,8 @@ struct marked_block {
     void *addr;
 };
 
-#passthru DefineHash(marked_block_tbl, struct marked_block);
-
-static uword marked_block_hash_func(struct marked_block *p) {  return ptrhasher1(p->addr); }
-
-static struct marked_block_tbl marked_blocks = { 512, marked_block_hash_func };
+static uword marked_block_hash_func(struct marked_block *p) {  return hashptr(p->addr); }
+#passthru DefineHash(, struct marked_block) marked_blocks = { 512, marked_block_hash_func };
 
 enum { AddrQuery=1, TitleQuery };
 
@@ -1055,12 +1052,14 @@ static int is_marked(void *addr)
 {
     struct marked_block *m;
     int h;
-    h = ptrhasher1(addr) % marked_blocks.nbuckets;
-    m = marked_blocks.l[h];
-    while (m) {
-        if (m->addr == addr)
-            return 1;
-        m = m->next;
+    if (marked_blocks.nbuckets > 0) {
+        h = hashptr(addr) % marked_blocks.nbuckets;
+        m = marked_blocks.l[h];
+        while (m) {
+            if (m->addr == addr)
+                return 1;
+            m = m->next;
+        }
     }
     return 0;
 }
@@ -1104,9 +1103,8 @@ static void marked_blocks_dispose()
             m = m->next;
             free(n);
         }
-        marked_blocks.l[i] = 0;
     }
-    marked_blocks.size = 0;
+    clear_hash(&marked_blocks);
 }
 
 static void traverse_class(struct b_class *class)
@@ -1219,7 +1217,6 @@ static void traverse(int m)
 {
     struct progstate *prog;
 
-    ensure_hash(&marked_blocks);
     mode = m;
     finished = 0;
     found = nulldesc;
