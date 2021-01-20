@@ -29,7 +29,9 @@
 /*
  * Global variables specific to X
  */
-static wdp wdsplys;
+
+static uword wdp_hash_func(wdp p) { return hashcstr(p->name); }
+#passthru static DefineHash(, struct _wdisplay) wdp_hash = { 4, wdp_hash_func };
 
 struct lineinfo {
     double dx, dy;
@@ -211,30 +213,32 @@ static int triangles = 0;
 #if 0
 static void dump_all(void)
 {
-    int i, k;
+    int i, k, n;
     wdp wd;
     wsp x;
     wbp y;
     i = 0;
-    for(wd = wdsplys; wd; wd = wd->next) {
-        for (y = wd->wbndngs; y; y = y->next) {
-            printf("Binding %p\n",y);
-            printf("\tcanvas %p\n",y->window);
-            printf("\tcontext %p\n",y->context);
-            ++i;
-        }
-        printf("============\n");
-        k = 0;
-        for (x = wd->vwstates; x; x = x->vnext) {
-            printf("Non-hidden Canvas %p\n",x);
-            printf("\trefcount=%d\n", x->refcount);
-            printf("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
-            printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-            printf("\twin=%d\n", (int)x->win);
-            ++k; 
-        }
+    for (n = 0; n < wdp_hash.nbuckets; ++n) {
+        for (wd = wdp_hash.l[n]; wd; wd = wd->next) {
+            for (y = wd->wbndngs; y; y = y->next) {
+                printf("Binding %p\n",y);
+                printf("\tcanvas %p\n",y->window);
+                printf("\tcontext %p\n",y->context);
+                ++i;
+            }
+            printf("============\n");
+            k = 0;
+            for (x = wd->vwstates; x; x = x->vnext) {
+                printf("Non-hidden Canvas %p\n",x);
+                printf("\trefcount=%d\n", x->refcount);
+                printf("\tlabel=%.*s\n", StrF(UcsBlk(x->windowlabel).utf8));
+                printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+                printf("\twin=%d\n", (int)x->win);
+                ++k; 
+            }
 
-        printf("Total %d bindings (%d non-hidden canvases)\n", i, k);
+            printf("Total %d bindings (%d non-hidden canvases)\n", i, k);
+        }
     }
 }
 #endif
@@ -5005,10 +5009,12 @@ static wdp alcdisplay(char *s)
         }
     }
 
-    for(wd = wdsplys; wd; wd = wd->next)
-        if (wd->program == curpstate && !strcmp(wd->name, s)) {
-            return wd;
-        }
+    if (wdp_hash.nbuckets > 0) {
+        for (wd = wdp_hash.l[hashcstr(s) % wdp_hash.nbuckets];
+             wd; wd = wd->next)
+            if (wd->program == curpstate && !strcmp(wd->name, s))
+                return wd;
+    }
 
     wd = safe_zalloc(sizeof(struct _wdisplay));
 
@@ -5054,7 +5060,7 @@ static wdp alcdisplay(char *s)
     for (i = 0; i < NUM_SENDING_HELPERS; ++i)
         init_sending_helper(&wd->sending_helpers[i]);
 
-    GLink(wd, wdsplys);
+    add_to_hash(&wdp_hash, wd);
     return wd;
 }
 
