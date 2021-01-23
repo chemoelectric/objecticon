@@ -629,7 +629,7 @@ class DoublyLinkedList(List)
 
    public override delete(i)
       local n
-      n := node_at(cvpos_item(i, sz)) | fail
+      n := node_at(i) | fail
       if /n.prev then
          nhead := n.nxt
       else
