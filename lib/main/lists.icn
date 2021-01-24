@@ -510,6 +510,7 @@ class LinkedList(List)
    # `other`, or fail if this list is empty.
    #
    public set_tail(other)
+      need_instance(other, LinkedList)
       link ((\nhead).nxt := other.nhead)
    end
 
@@ -525,6 +526,7 @@ class LinkedList(List)
    # Set this list to share the same elements as `other`.
    #
    public set_list(other)
+      need_instance(other, LinkedList)
       nhead := other.nhead
       link
    end
@@ -596,50 +598,296 @@ package class DoublyLinkedListNode()
 end
 
 #
+# A reference to a `DoublyLinkedListNode` and its owning
+# `DoublyLinkedList`.  The referenced node may move along the list,
+# and may be used to indicate a position to insert or delete nodes
+# from the list.
+#
+# Note that deleting any elements from the referenced list invalidates
+# all node references belonging to that list (but see `delete` below
+# for an exception).  After being invalidated, further attempts to use
+# the reference will cause a runtime error.  Insertions do not
+# invalidate any of a list's references.
+#
+class DoublyLinkedListNodeRef()
+   public const
+      l
+   private
+      ver,
+      n
+
+   private check_valid()
+      is_valid() | runerr("Reference invalid", self)
+   end
+
+   #
+   # Succeed iff this reference is still valid.
+   #
+   public is_valid()
+      succeed l.ver = ver
+   end
+
+   #
+   # Return the value in the currently referenced node.  A variable is
+   # returned, allowing the value to be changed.
+   #
+   public val()
+      check_valid()
+      return n.val
+   end
+
+   #
+   # Create another instance referencing the same list and node as
+   # this instance.
+   #
+   public dup()
+      check_valid()
+      return DoublyLinkedListNodeRef(l, n)
+   end
+
+   #
+   # Insert a new node with the given value immediately before the
+   # currently referenced node.
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40)
+   #   r := l.ref(3)
+   #   r.insert_before(99)
+   #   # Now l is (10,20,99,30,40)
+   #   r.val()     # still 30
+   # ~
+   #
+   public insert_before(x)
+      check_valid()
+      l.insert_before_node(n, x)
+      link
+   end
+
+   #
+   # Like `insert_before`, but insert after the currently referenced
+   # node.
+   #
+   public insert_after(x)
+      check_valid()
+      l.insert_after_node(n, x)
+      link
+   end
+
+   #
+   # Insert the contents of another `DoublyLinkedList` immediately
+   # before the currently referenced node.  Afterwards, `other` is
+   # empty. (see also `DoublyLinkedList.splice()`.)
+   #
+   public splice_before(other)
+      check_valid()
+      l.splice_before_node(n, other)
+      link
+   end
+
+   #
+   # Like `splice_before`, but insert after the currently referenced
+   # node.
+   #
+   public splice_after(other)
+      check_valid()
+      l.splice_after_node(n, other)
+      link
+   end
+
+   #
+   # Move the referenced node along the list `i` places; negative
+   # means towards the head.  Fails (and does nothing) if the desired
+   # location does not exist.
+   #
+   public move(i)
+      local t
+      i := need_integer(i)
+      check_valid()
+      t := n
+      if i > 0 then {
+         every 1 to i do
+            t := \t.nxt | fail
+      } else {
+         every 1 to -i do
+            t := \t.prev | fail
+      }
+      n := t
+      link
+   end
+
+   #
+   # Delete the currently referenced node from the enclosing list.
+   #
+   # `i` optionally specifies a new node to reference after the
+   # deletion, being `i` steps from the present node (see `move`).
+   #
+   # If `i` is provided, and indicates a valid node, then this method
+   # succeeds, and the reference remains valid and can continue to be
+   # used.  Otherwise, the method fails and the reference becomes
+   # invalid; further method calls will cause a runtime error.  Note
+   # that the deletion takes place regardless.
+   #
+   # Examples :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40,50,60,70)
+   #   r := l.ref(4)
+   #   r.val()     # 40
+   #   r.delete(1) # move 1 right, then delete old node
+   #   # Now l is (10,20,30,50,60,70)
+   #   r.val()     # 50
+   #
+   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
+   #   # Delete all the 3's from the list.
+   #   r := l.ref(1)
+   #   while if r.val() = 3 then r.delete(1) else r.move(1)
+   #   # Now l is (10,20,30,40,50,60,70)
+   #
+   #   l := DoublyLinkedList(99)
+   #   r := l.ref(1)
+   #   r.delete()
+   #   # l is now empty
+   #   r.val()      # causes runtime error
+   # ~
+   #
+   public delete(i)
+      local t
+      check_valid()
+      t := n
+      move(\i)
+      l.delete_node(t)
+      unless t === n then {
+         ver := l.ver
+         link
+      }
+   end
+
+   package new(l, n)
+      self.l := l
+      self.n := n
+      self.ver := l.ver
+      return
+   end
+end
+
+#
 # A `List` implementation based on a doubly linked list.  Note some of
 # the operations which suspend values may behave differently from the
 # builtin list if the list is concurrently modified.
 #
 class DoublyLinkedList(List)
-   private nhead, ntail, sz
+   private
+      nhead,
+      ntail,
+      sz
+   package
+      ver
 
    public override insert(i, x)
-      local m, n
       i := cvpos(i, sz) | fail
       if i = 1 then {
-         if /nhead then
-            nhead := ntail := DoublyLinkedListNode(,, x)
-         else {
-            n := DoublyLinkedListNode(, nhead, x)
-            nhead.prev := n
-            nhead := n
-         }
-      } else {
-         m := node_at(i - 1) | fail
-         n := DoublyLinkedListNode(m, m.nxt, x)
-         m.nxt := n
-         if m === ntail then
-            ntail := n
-         else
-            n.nxt.prev := n
-      }
+         nhead := (if /nhead then ntail else nhead.prev) :=
+            DoublyLinkedListNode(, nhead, x)
+         sz +:= 1
+      } else
+         insert_after_node(node_at(i - 1), x)
+      link
+   end
+
+   package insert_before_node(n, x)
+      n.prev := (if /n.prev then nhead else n.prev.nxt) :=
+         DoublyLinkedListNode(n.prev, n, x)
       sz +:= 1
       link
    end
 
+   public override clear()
+      nhead := ntail := &null
+      sz := 0
+      mod()
+      link
+   end
+
+   private mod()
+      ver +:= 1
+   end
+
+   package insert_after_node(n, x)
+      n.nxt := (if /n.nxt then ntail else n.nxt.prev) :=
+         DoublyLinkedListNode(n, n.nxt, x)
+      sz +:= 1
+      link
+   end
+
+   #
+   # Insert the contents of another `DoublyLinkedList` at position
+   # `i`.  Afterwards, `other` is empty.
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40)
+   #   m := DoublyLinkedList(96,97,98) 
+   #   l.splice(3, m)
+   #   # Now l is (10,20,96,97,98,30,40)
+   #   # and m is empty.
+   # ~
+   #
+   public splice(i, other)
+      need_instance(other, DoublyLinkedList)
+      i := cvpos(i, sz) | fail
+      if i = 1 then {
+         if sz = 0 then {
+            nhead := other.nhead
+            ntail := other.ntail
+            sz := other.sz
+            other.clear()
+         } else
+            splice_before_node(nhead, other)
+      } else
+         splice_after_node(node_at(i - 1), other)
+      link
+   end
+
+   package splice_before_node(n, other)
+      need_instance(other, DoublyLinkedList)
+      if other.sz > 0 then {
+         if (\n.prev).nxt := other.nhead then
+            other.nhead.prev := n.prev
+         else
+            nhead := other.nhead
+         n.prev := other.ntail
+         other.ntail.nxt := n
+         sz +:= other.sz
+         other.clear()
+      }
+      link
+   end
+
+   package splice_after_node(n, other)
+      need_instance(other, DoublyLinkedList)
+      if other.sz > 0 then {
+         if (\n.nxt).prev := other.ntail then
+            other.ntail.nxt := n.nxt
+         else
+            ntail := other.ntail
+         n.nxt := other.nhead
+         other.nhead.prev := n
+         sz +:= other.sz
+         other.clear()
+      }
+      link
+   end
+
    public override delete(i)
-      local n
-      n := node_at(i) | fail
-      if /n.prev then
-         nhead := n.nxt
-      else
-         n.prev.nxt := n.nxt
-      if /n.nxt then
-         ntail := n.prev
-      else
-         n.nxt.prev := n.prev
+      link delete_node(node_at(i))
+   end
+
+   package delete_node(n)
+      (if /n.prev then nhead else n.prev.nxt) := n.nxt
+      (if /n.nxt then ntail else n.nxt.prev) := n.prev
       n.prev := n.nxt := &null
       sz -:= 1
+      mod()
       link
    end
 
@@ -670,10 +918,56 @@ class DoublyLinkedList(List)
       }
    end
 
-   public override clear()
-      nhead := ntail := &null
-      sz := 0
-      link
+   #
+   # Remove the elements in the range `i:j` and return them as another
+   # `DoublyLinkedList` instance.
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40,50,60,70)
+   #   m := l.extract(2, 5)
+   #   # Now l is (10,50,60,70)
+   #   # and m is (20,30,40)
+   # ~
+   #
+   public extract(i, j)
+      local s, m, n, c
+      s := cvslice(i, j, size()) | fail
+      c := s.hi - s.lo
+      if c > 0 then {
+         m := node_at(s.lo)
+         n := node_at(s.hi - 1)
+         if m === nhead then {
+            if n === ntail then
+               nhead := ntail := &null
+            else {
+               nhead := n.nxt
+               nhead.prev := n.nxt := &null
+            }
+         } else {
+            if n === ntail then {
+               ntail := m.prev
+               ntail.nxt := m.prev := &null
+            } else {
+               m.prev.nxt := n.nxt
+               n.nxt.prev := m.prev
+               m.prev := n.nxt := &null
+            }
+         }
+         sz -:= c
+         mod()
+      }
+      return from_nodes(m, n, c)
+   end
+
+   private static from_nodes(h, t, sz)
+      local i
+      i := Class.create_instance()
+      i.nhead := h
+      i.ntail := t
+      i.sz := sz
+      i.ver := 0
+      return i
    end
 
    public override get_mode()
@@ -681,9 +975,13 @@ class DoublyLinkedList(List)
    end
 
    #
-   # Return the node containing element `i`, or fail if `i` is out of
-   # range.
+   # Return a `DoublyLinkedListNodeRef` reference to the node
+   # containing element `i`, or fail if `i` is out of range.
    #
+   public ref(i)
+      return DoublyLinkedListNodeRef(self, node_at(i))
+   end
+
    private node_at(i)
       local n
       i := cvpos_item(i, sz) | fail
@@ -708,7 +1006,7 @@ class DoublyLinkedList(List)
    # Create an instance and add each of the given entries.
    #
    public new(entries[])
-      sz := 0
+      ver := sz := 0
       every insert(1, default.back(entries))
       return
    end
