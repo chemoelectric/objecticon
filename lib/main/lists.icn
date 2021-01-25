@@ -598,32 +598,35 @@ package class DoublyLinkedListNode()
 end
 
 #
-# A reference to a `DoublyLinkedListNode` and its owning
-# `DoublyLinkedList`.  The referenced node may move along the list,
-# and may be used to indicate a position to insert or delete nodes
-# from the list.
+# A reference to a `DoublyLinkedListNode`.  The reference may move
+# along the list, change values, and insert or delete nodes.
 #
-# Note that deleting any elements from the referenced list invalidates
-# all node references belonging to that list (but see `delete` below
-# for an exception).  After being invalidated, further attempts to use
-# the reference will cause a runtime error.  Insertions do not
-# invalidate any of a list's references.
+# Note that removing any elements from a list makes all node
+# references presently relating to that list read-only (but see
+# `delete` below for an exception).  After being made read-only,
+# further attempts to use the reference to insert or delete nodes will
+# cause a runtime error; however changing values or moving the
+# reference is still permitted.
+#
+# Insertions into a list do not make any of a list's references
+# read-only.
 #
 class DoublyLinkedListNodeRef()
-   public const
+   private const
       l
    private
       ver,
       n
 
-   private check_valid()
-      is_valid() | runerr("Reference invalid", self)
+   private need_write()
+      can_write() | runerr("Reference is read-only", self)
    end
 
    #
-   # Succeed iff this reference is still valid.
+   # Succeed iff this reference can be used to write (insert or delete
+   # nodes).
    #
-   public is_valid()
+   public can_write()
       succeed l.ver = ver
    end
 
@@ -632,7 +635,6 @@ class DoublyLinkedListNodeRef()
    # returned, allowing the value to be changed.
    #
    public val()
-      check_valid()
       return n.val
    end
 
@@ -641,8 +643,7 @@ class DoublyLinkedListNodeRef()
    # this instance.
    #
    public dup()
-      check_valid()
-      return DoublyLinkedListNodeRef(l, n)
+      return DoublyLinkedListNodeRef(l, ver, n)
    end
 
    #
@@ -659,7 +660,7 @@ class DoublyLinkedListNodeRef()
    # ~
    #
    public insert_before(x)
-      check_valid()
+      need_write()
       l.insert_before_node(n, x)
       link
    end
@@ -669,7 +670,7 @@ class DoublyLinkedListNodeRef()
    # node.
    #
    public insert_after(x)
-      check_valid()
+      need_write()
       l.insert_after_node(n, x)
       link
    end
@@ -680,7 +681,7 @@ class DoublyLinkedListNodeRef()
    # empty. (see also `DoublyLinkedList.splice()`.)
    #
    public splice_before(other)
-      check_valid()
+      need_write()
       l.splice_before_node(n, other)
       link
    end
@@ -690,7 +691,7 @@ class DoublyLinkedListNodeRef()
    # node.
    #
    public splice_after(other)
-      check_valid()
+      need_write()
       l.splice_after_node(n, other)
       link
    end
@@ -703,7 +704,6 @@ class DoublyLinkedListNodeRef()
    public move(i)
       local t
       i := need_integer(i)
-      check_valid()
       t := n
       if i > 0 then {
          every 1 to i do
@@ -720,13 +720,14 @@ class DoublyLinkedListNodeRef()
    # Delete the currently referenced node from the enclosing list.
    #
    # `i` optionally specifies a new node to reference after the
-   # deletion, being `i` steps from the present node (see `move`).
+   # deletion, being `i` steps from the present node (see `move`).  In
+   # this case the reference can continue to be used for further
+   # insert and delete operations.  Otherwise, the reference becomes
+   # read-only; further inserts or deletes will cause a runtime error.
    #
-   # If `i` is provided, and indicates a valid node, then this method
-   # succeeds, and the reference remains valid and can continue to be
-   # used.  Otherwise, the method fails and the reference becomes
-   # invalid; further method calls will cause a runtime error.  Note
-   # that the deletion takes place regardless.
+   # The method succeeds if `i` is null, or the `move` `i` steps to
+   # the new node succeeded.  Note that the deletion takes place
+   # regardless.
    #
    # Examples :-
    # ~
@@ -747,25 +748,24 @@ class DoublyLinkedListNodeRef()
    #   r := l.ref(1)
    #   r.delete()
    #   # l is now empty
-   #   r.val()      # causes runtime error
+   #   r.insert_after(100)      # runtime error
    # ~
    #
    public delete(i)
-      local t
-      check_valid()
+      local t, f
+      need_write()
       t := n
-      move(\i)
+      /i | move(i) | (f := &yes)
       l.delete_node(t)
-      unless t === n then {
+      unless t === n then
          ver := l.ver
-         link
-      }
+      link /f
    end
 
-   package new(l, n)
+   package new(l, v, n)
       self.l := l
+      self.ver := v
       self.n := n
-      self.ver := l.ver
       return
    end
 end
@@ -979,7 +979,7 @@ class DoublyLinkedList(List)
    # containing element `i`, or fail if `i` is out of range.
    #
    public ref(i)
-      return DoublyLinkedListNodeRef(self, node_at(i))
+      return DoublyLinkedListNodeRef(self, ver, node_at(i))
    end
 
    private node_at(i)
