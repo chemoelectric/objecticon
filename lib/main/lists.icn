@@ -437,9 +437,9 @@ class LinkedList(List)
    public override gen_from(i)
       local n
       n := node_at(i) | fail
-      while \n do {
+      repeat {
          suspend n.val
-         n := n.nxt
+         n := \n.nxt | fail
       }
    end
 
@@ -647,6 +647,14 @@ class DoublyLinkedListNodeRef()
    end
 
    #
+   # Succeed iff this instance refers to the same list node as
+   # `other`.
+   #
+   public same(other)
+      succeed n === other.n
+   end
+
+   #
    # Insert a new node with the given value immediately before the
    # currently referenced node.
    #
@@ -801,6 +809,13 @@ class DoublyLinkedList(List)
       link
    end
 
+   package insert_after_node(n, x)
+      n.nxt := (if /n.nxt then ntail else n.nxt.prev) :=
+         DoublyLinkedListNode(n, n.nxt, x)
+      sz +:= 1
+      link
+   end
+
    public override clear()
       nhead := ntail := &null
       sz := 0
@@ -812,16 +827,16 @@ class DoublyLinkedList(List)
       ver +:= 1
    end
 
-   package insert_after_node(n, x)
-      n.nxt := (if /n.nxt then ntail else n.nxt.prev) :=
-         DoublyLinkedListNode(n, n.nxt, x)
-      sz +:= 1
-      link
+   private check_splice(other)
+      need_instance(other, DoublyLinkedList)
+      if other === self then
+         runerr("Can't splice a list into itself", self)
    end
 
    #
    # Insert the contents of another `DoublyLinkedList` at position
-   # `i`.  Afterwards, `other` is empty.
+   # `i`.  Afterwards, `other` is empty.  It is not permissible to
+   # splice a list into itself.
    #
    # Example :-
    # ~
@@ -833,10 +848,10 @@ class DoublyLinkedList(List)
    # ~
    #
    public splice(i, other)
-      need_instance(other, DoublyLinkedList)
       i := cvpos(i, sz) | fail
       if i = 1 then {
          if sz = 0 then {
+            check_splice(other)
             nhead := other.nhead
             ntail := other.ntail
             sz := other.sz
@@ -849,7 +864,7 @@ class DoublyLinkedList(List)
    end
 
    package splice_before_node(n, other)
-      need_instance(other, DoublyLinkedList)
+      check_splice(other)
       if other.sz > 0 then {
          if (\n.prev).nxt := other.nhead then
             other.nhead.prev := n.prev
@@ -864,7 +879,7 @@ class DoublyLinkedList(List)
    end
 
    package splice_after_node(n, other)
-      need_instance(other, DoublyLinkedList)
+      check_splice(other)
       if other.sz > 0 then {
          if (\n.nxt).prev := other.ntail then
             other.ntail.nxt := n.nxt
@@ -902,9 +917,9 @@ class DoublyLinkedList(List)
    public override gen_from(i)
       local n
       n := node_at(i) | fail
-      while \n do {
+      repeat {
          suspend n.val
-         n := n.nxt
+         n := \n.nxt | fail
       }
    end
 
@@ -912,9 +927,9 @@ class DoublyLinkedList(List)
       local n
       i := need_integer(i)
       n := node_at(i - 1) | fail
-      while \n do {
+      repeat {
          suspend n.val
-         n := n.prev
+         n := \n.prev | fail
       }
    end
 
@@ -932,7 +947,7 @@ class DoublyLinkedList(List)
    #
    public extract(i, j)
       local s, m, n, c
-      s := cvslice(i, j, size()) | fail
+      s := cvslice(i, j, sz) | fail
       c := s.hi - s.lo
       if c > 0 then {
          m := node_at(s.lo)
@@ -987,19 +1002,15 @@ class DoublyLinkedList(List)
       i := cvpos_item(i, sz) | fail
       if i < sz / 2 then {
          n := nhead
-         while \n & i > 1 do {
+         every 2 to i do
             n := n.nxt
-            i -:= 1
-         }
       } else {
          n := ntail
          i := sz - i + 1
-         while \n & i > 1 do {
+         every 2 to i do
             n := n.prev
-            i -:= 1
-         }
       }
-      return \n
+      return n
    end
 
    #
