@@ -33,8 +33,13 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
       c.chain("set_paint_mid(" || self.paint_mid.name || ")")
       if \self.paint_left then
          c.chain("set_paint_left(" || self.paint_left.name || ")")
-      if \r then
-         c.chain("set_paint_right(" || self.paint_right.name || ")")
+      if \self.paint_right then {
+         # If /r then just take the default right arrow.
+         if \r then
+            c.chain("set_paint_right(" || self.paint_right.name || ")")
+      } else
+         # Remove the default right arrow.
+         c.chain("set_paint_right()")
 
       every c.chain("add(" || (!self.children).name || ")")
    end
