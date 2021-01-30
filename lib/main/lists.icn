@@ -390,7 +390,7 @@ class LinkedList(List)
       if i = 1 then
          nhead := LinkedListNode(nhead, x)
       else {
-         n := node_at(i - 1) | fail
+         n := node(i - 1) | fail
          n.nxt := LinkedListNode(n.nxt, x)
       }
       link
@@ -404,14 +404,14 @@ class LinkedList(List)
       if i = 1 then
          nhead := (\nhead).nxt | fail
       else {
-         n := node_at(i - 1) | fail
+         n := node(i - 1) | fail
          n.nxt := (\n.nxt).nxt | fail
       }
       link
    end
 
    public override at(i)
-      return node_at(i).val
+      return node(i).val
    end
 
    public override empty()
@@ -436,17 +436,17 @@ class LinkedList(List)
 
    public override gen_from(i)
       local n
-      n := node_at(i) | fail
-      while \n do {
+      n := node(i) | fail
+      repeat {
          suspend n.val
-         n := n.nxt
+         n := \n.nxt | fail
       }
    end
 
    public override back_from(i)
       local n
       i := need_integer(i)
-      n := node_at(i - 1) | fail
+      n := node(i - 1) | fail
       repeat {
          suspend n.val
          n := before(n) | fail
@@ -510,6 +510,7 @@ class LinkedList(List)
    # `other`, or fail if this list is empty.
    #
    public set_tail(other)
+      need_instance(other, LinkedList)
       link ((\nhead).nxt := other.nhead)
    end
 
@@ -525,6 +526,7 @@ class LinkedList(List)
    # Set this list to share the same elements as `other`.
    #
    public set_list(other)
+      need_instance(other, LinkedList)
       nhead := other.nhead
       link
    end
@@ -534,7 +536,7 @@ class LinkedList(List)
    # (and including) element `i`.
    #
    public from(i)
-      return from_node(node_at(i))
+      return from_node(node(i))
    end
 
    #
@@ -548,7 +550,7 @@ class LinkedList(List)
    # Return the node containing element `i`, or fail if `i` is out of
    # range.
    #
-   private node_at(i)
+   private node(i)
       local n
       i := need_integer(i)
       if i <= 0 then
@@ -583,16 +585,204 @@ end
 #
 # A node in a `DoublyLinkedList`.
 #
-package class DoublyLinkedListNode()
+class DoublyLinkedListNode()
+   package
+      nxt,        # The next node, or &null if this node was unlinked.
+      prev        # The previous node, or &null if this node was unlinked.
    public
-      nxt, prev, val
+      val         # The value associated with this node.
 
-   public new(prev, nxt, val)
+   #
+   # Create and insert a new node immediately before this node, with
+   # value `x`.  The new node is returned.
+   #
+   public insert_before(x)
+      need_linked()
+      prev.nxt := prev := DoublyLinkedListNode(prev, self, x)
+      return .prev
+   end
+
+   #
+   # Create and insert a new node immediately after this node, with
+   # value `x`.  The new node is returned.
+   #
+   public insert_after(x)
+      need_linked()
+      return nxt.insert_before(x)
+   end
+
+   #
+   # Given a `DoublyLinkedList`, adopt all of its nodes into this
+   # list, inserting them before this node.  Afterwards, `other` will
+   # be empty.
+   #
+   public splice_before(other)
+      need_linked()
+      need_instance(other, DoublyLinkedList)
+      unless other.empty() then {
+         prev.nxt := other.sentinel.nxt
+         other.sentinel.nxt.prev := prev
+         prev := other.sentinel.prev
+         other.sentinel.prev.nxt := self
+         other.clear()
+      }
+      link
+   end
+
+   #
+   # Given a `DoublyLinkedList`, adopt all of its nodes into this
+   # list, inserting them after this node.  Afterwards, `other` will
+   # be empty.
+   #
+   public splice_after(other)
+      need_linked()
+      nxt.splice_before(other)
+      link
+   end
+
+   #
+   # Remove this node from its list, by unlinking it from its adjacent
+   # nodes.
+   #
+   # After a node has been unlinked it cannot be used for further
+   # insert, unlink, or splice operations, and any attempt to do so
+   # will cause a runtime error.  (See also `is_linked`).
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(99)
+   #   r := l.node(1)
+   #   r.unlink()
+   #   # l is now empty, r unlinked.
+   #   r.insert_after(100)      # runtime error
+   # ~
+   #
+   public unlink()
+      need_linked()
+      prev.nxt := nxt
+      nxt.prev := prev
+      prev := nxt := &null
+      link
+   end
+
+   #
+   # Check if this node is "linked" (hasn't been unlinked), signalling
+   # a runtime error otherwise.
+   #
+   public need_linked()
+      is_linked() | runerr("Node has been unlinked", self)
+      link
+   end
+
+   #
+   # Succeed iff this node is "linked" (meaning it hasn't been
+   # unlinked).
+   #
+   public is_linked()
+      succeed \prev
+   end
+
+   #
+   # Return the previous node, or fail if there is none.
+   #
+   public get_prev()
+      unless is(prev, DoublyLinkedListSentinel) then
+         return .\prev
+   end
+
+   #
+   # Return the next node, or fail if there is none.
+   #
+   public get_next()
+      unless is(nxt, DoublyLinkedListSentinel) then
+         return .\nxt
+   end
+
+   #
+   # Generate this node and all subsequent nodes.
+   #
+   public gen()
+      local n
+      n := self
+      repeat {
+         suspend n
+         n := n.get_next() | fail
+      }
+   end
+
+   #
+   # Generate this node and all previous nodes.
+   #
+   public back()
+      local n
+      n := self
+      repeat {
+         suspend n
+         n := n.get_prev() | fail
+      }
+   end
+
+   #
+   # Move along the list `i` places; positive means towards the tail,
+   # negative means towards the head.  Returns the node at that
+   # position, or fail if either end of the list is encountered.
+   #
+   public move(i)
+      local n
+      i := need_integer(i)
+      n := self
+      if i > 0 then {
+         every 1 to i do
+            n := n.get_next() | fail
+      } else {
+         every 1 to -i do
+            n := n.get_prev() | fail
+      }
+      return n
+   end
+
+   #
+   # This method combines a `move` and a `unlink`.  First, `move(i)`
+   # is performed, and the result is noted.  Then the `unlink` is
+   # peformed.  The result of the `move` is returned; if the `move`
+   # failed, then this method fails, but the `unlink` is carried out
+   # regardless.
+   #
+   # This gives a convenient way to iterate over the list and unlink
+   # selected nodes.
+   #
+   # Examples :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40,50,60,70)
+   #   r := l.node(4)
+   #   r.val     # 40
+   #   r := r.move_unlink(1) # move 1 right, then unlink
+   #   # Now l is (10,20,30,50,60,70)
+   #   r.val     # 50
+   #
+   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
+   #   # Delete all the 3's from the list.
+   #   r := l.node(1)
+   #   while r := if r.val = 3 then r.move_unlink(1) else r.move(1)
+   #   # Now l is (10,20,30,40,50,60,70)
+   # ~
+   #
+   public move_unlink(i)
+      local t
+      t := move(i)
+      unlink()
+      return \t
+   end
+
+   package new(prev, nxt, val)
       self.prev := prev
       self.nxt := nxt
       self.val := val
       return
    end
+end
+
+package class DoublyLinkedListSentinel(DoublyLinkedListNode)
 end
 
 #
@@ -601,114 +791,206 @@ end
 # builtin list if the list is concurrently modified.
 #
 class DoublyLinkedList(List)
-   private nhead, ntail, sz
+   package const
+      sentinel
 
    public override insert(i, x)
-      local m, n
-      i := cvpos(i, sz) | fail
-      if i = 1 then {
-         if /nhead then
-            nhead := ntail := DoublyLinkedListNode(,, x)
-         else {
-            n := DoublyLinkedListNode(, nhead, x)
-            nhead.prev := n
-            nhead := n
-         }
-      } else {
-         m := node_at(i - 1) | fail
-         n := DoublyLinkedListNode(m, m.nxt, x)
-         m.nxt := n
-         if m === ntail then
-            ntail := n
-         else
-            n.nxt.prev := n
-      }
-      sz +:= 1
-      link
+      link new_node(i, x)
    end
 
-   public override delete(i)
-      local n
-      n := node_at(cvpos_item(i, sz)) | fail
-      if /n.prev then
-         nhead := n.nxt
-      else
-         n.prev.nxt := n.nxt
-      if /n.nxt then
-         ntail := n.prev
-      else
-         n.nxt.prev := n.prev
-      n.prev := n.nxt := &null
-      sz -:= 1
-      link
+   #
+   # This is like `insert()`, but returns the new node that has been
+   # inserted.
+   #
+   public new_node(i, x)
+      link node_after(i).insert_before(x)
    end
 
-   public override at(i)
-      return node_at(i).val
-   end
-
-   public override size()
-      return .sz
-   end
-
-   public override gen_from(i)
-      local n
-      n := node_at(i) | fail
-      while \n do {
-         suspend n.val
-         n := n.nxt
-      }
-   end
-
-   public override back_from(i)
-      local n
-      i := need_integer(i)
-      n := node_at(i - 1) | fail
-      while \n do {
-         suspend n.val
-         n := n.prev
-      }
+   public override empty()
+      succeed sentinel.nxt === sentinel
    end
 
    public override clear()
-      nhead := ntail := &null
-      sz := 0
+      sentinel.nxt := sentinel.prev := sentinel
       link
+   end
+
+   #
+   # Insert the contents of another `DoublyLinkedList` at position
+   # `i`.  Afterwards, `other` is empty.  It is not permissible to
+   # splice a list into itself.
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40)
+   #   m := DoublyLinkedList(96,97,98) 
+   #   l.splice(3, m)
+   #   # Now l is (10,20,96,97,98,30,40)
+   #   # and m is empty.
+   # ~
+   #
+   public splice(i, other)
+      link node_after(i).splice_before(other)
+   end
+
+   public override delete(i)
+      link node(i).unlink()
+   end
+
+   public override at(i)
+      return node(i).val
+   end
+
+   public override size()
+      local i, n
+      i := 0
+      n := sentinel.nxt
+      until n === sentinel do {
+         n := n.nxt
+         i +:= 1
+      }
+      return i
+   end
+
+   public override gen_from(i)
+      suspend node(i).gen().val
+   end
+
+   public override back_from(i)
+      suspend node(i - 1).back().val
+   end
+
+   #
+   # Given a (positive) index i and a known list size, adjust i to an
+   # equivalent negative index, if that would make lookup using
+   # `node()` faster.
+   #
+   public static adjust_index(i, sz)
+     if i > sz / 2 then
+         i +:= -sz - 1
+      return i
+   end
+
+   #
+   # Remove the elements in the range `i:j` and return them as another
+   # `DoublyLinkedList` instance.
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(10,20,30,40,50,60,70)
+   #   m := l.extract(2, 5)
+   #   # Now l is (10,50,60,70)
+   #   # and m is (20,30,40)
+   # ~
+   #
+   public extract(i, j)
+      local s, sz
+      s := cvslice(i, j, sz := size()) | fail
+      return if s.hi = s.lo then
+         DoublyLinkedList()
+      else
+         from_nodes(node(adjust_index(s.lo, sz)),
+                    node(adjust_index(s.hi - 1, sz)))
+   end
+
+   #
+   # Return the list index position of the given node, or fail if it
+   # is not in the list.
+   #
+   public node_index(n)
+      need_node(n)
+      return Positions{node(1).gen(), n}
+   end
+
+   #
+   # Return the list index position of the given node, counting
+   # downwards from the tail (index -1), or fail if it is not in the
+   # list.
+   #
+   public rev_node_index(n)
+      need_node(n)
+      return -Positions{node(-1).back(), n}
+   end
+
+   #
+   # Check that `x` is a "linked" `DoublyLinkedListNode` instance,
+   # signalling a runtime error otherwise.
+   #
+   public static need_node(x)
+      return need_instance(x, DoublyLinkedListNode).need_linked()
+   end
+
+   #
+   # Check nodes `h` forward to `t` form a sub-list, signalling a
+   # runtime error otherwise.
+   #
+   public static need_sublist(h, t)
+      need_node(h)
+      need_node(t)
+      unless h.gen() === t then
+         runerr("Nodes don't form a sublist")
+      return
+   end
+
+   #
+   # Given two nodes `h` and `t`, forming a sub-list with `h` equal to
+   # or coming before `t`, extract that sub-list from its current list
+   # and return it as a new `DoublyLinkedList`, with `h` and `t`
+   # forming the new list's head and tail node respectively.
+   #
+   public static extract_nodes(h, t)
+      need_sublist(h, t)
+      return from_nodes(h, t)
+   end
+
+   #
+   # This is like `extract_nodes`, but foregoes any check of the
+   # mentioned sub-list requirement, and is thus a constant-time
+   # operation.
+   #
+   # Cautionary note: if the sub-list requirement is not satisifed,
+   # then corrupted lists will result.
+   #
+   public static unsafe_extract_nodes(h, t)
+      return from_nodes(need_node(h), need_node(t))
+   end
+
+   private static from_nodes(h, t)
+      local i
+      i := Class.create_raw_instance()
+      h.prev.nxt := t.nxt
+      t.nxt.prev := h.prev
+      i.sentinel := DoublyLinkedListSentinel(t, h)
+      t.nxt := h.prev := i.sentinel
+      return Class.complete_raw_instance(i)
    end
 
    public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
+   private node_after(i)
+      i := need_integer(i)
+      return if i = 0 | (i = 1 & empty()) then
+         sentinel
+      else
+         node(i)
+   end
+
    #
    # Return the node containing element `i`, or fail if `i` is out of
    # range.
    #
-   private node_at(i)
-      local n
-      i := cvpos_item(i, sz) | fail
-      if i < sz / 2 then {
-         n := nhead
-         while \n & i > 1 do {
-            n := n.nxt
-            i -:= 1
-         }
-      } else {
-         n := ntail
-         i := sz - i + 1
-         while \n & i > 1 do {
-            n := n.prev
-            i -:= 1
-         }
-      }
-      return \n
+   public node(i)
+      return sentinel ~=== sentinel.move(i)
    end
 
    #
    # Create an instance and add each of the given entries.
    #
    public new(entries[])
-      sz := 0
+      sentinel := DoublyLinkedListSentinel()
+      clear()
       every insert(1, default.back(entries))
       return
    end

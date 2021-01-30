@@ -8,7 +8,6 @@
 
 import gui, lang
 
-
 ############################################################################
 #
 #
@@ -32,8 +31,8 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
    public override dup_fields(c)
       CanvasMenuComponent.dup_fields(c)
       c.set_paint_mid(self.paint_mid.dup())
-      c.set_paint_left((\self.paint_left).dup())
-      c.set_paint_right((\self.paint_right).dup())
+      c.set_paint_left(if \paint_left then paint_left.dup() else &null)
+      c.set_paint_right(if \paint_right then paint_right.dup() else &null)
    end
 
    #

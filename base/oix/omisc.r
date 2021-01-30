@@ -2,9 +2,8 @@
  * File: omisc.r
  */
 
-"^x - create a refreshed copy of a co-expression."
 /*
- * ^x - return an entry block for co-expression x from the refresh block.
+ * ^x - create a refreshed copy of a co-expression.
  */
 operator ^ refresh(x)
    if !is:coexpr(x) then
@@ -276,12 +275,12 @@ operator ... toby(from, to, by)
            runerr(211);
 
        if (sn > 0) {
-           for ( ; bigcmp(&from1, &to1) <= 0;) {
+           while (bigcmp(&from1, &to1) <= 0) {
                suspend from1;
                bigadd(&from1, &by1, &from1);
            }
        } else {
-           for ( ; bigcmp(&from1, &to1) >= 0;) {
+           while (bigcmp(&from1, &to1) >= 0) {
                suspend from1;
                bigadd(&from1, &by1, &from1);
            }
@@ -293,18 +292,17 @@ operator ... toby(from, to, by)
            runerr(211);
 
        if (by2 > 0)
-           for ( ; from2 <= to2; from2 += by2) {
+           while (from2 <= to2) {
                suspend C_double from2;
+               from2 += by2;
            }
        else
-           for ( ; from2 >= to2; from2 += by2) {
+           while (from2 >= to2) {
                suspend C_double from2;
+               from2 += by2;
            }
        fail;
    }
    else runerr(102);
   }
 end
-
-
-

@@ -646,7 +646,8 @@ class Ieval(MinimalObjectOutput)
             "object": {  
                every f := Class.get_field_names(v) do {
                   i := Class.get_field_flags(v, f)
-                  if iand(i, Class.Static) = 0 &
+                  # Test for Special to exclude new()
+                  if iand(i, Class.Static + Class.Special) = 0 &
                      iand(i, Class.Public + Class.Readable) ~= 0
                   then
                      suspend h || "." || f

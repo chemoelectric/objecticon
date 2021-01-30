@@ -379,6 +379,8 @@ function seq(from, by)
        for (;;) {
            suspend C_double from2;
            from2 += by2;
+           if (!isfinite(from2))
+               runerr(204);
        }
        fail;
    }
