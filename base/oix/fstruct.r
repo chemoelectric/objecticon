@@ -2,6 +2,10 @@
  * File: fstruct.r
  */
 
+/*
+ * delete(s,x) - delete element x from set, table or list s.  Fails if
+ * the element is not present, otherwise succeeds with s.
+ */
 
 function delete(s,x)
    body {
@@ -12,7 +16,6 @@ function delete(s,x)
                fail;
             EVValD(&s, E_Sdelete);
             EVValD(&x, E_Sval);
-            return s;
          }
 
      table: {
@@ -20,7 +23,6 @@ function delete(s,x)
                fail;
             EVValD(&s, E_Tdelete);
             EVValD(&x, E_Tsub);
-            return s;
          }
      list: {
             word cnv_x, i, size;
@@ -41,12 +43,12 @@ function delete(s,x)
             list_del(&s, i);
             EVValD(&s, E_Ldelete);
             EVVal(cnv_x, E_Lsub);
-	    return s;
          }
 
       default:
           runerr(122, s);
      }
+     return s;
    }
 end
 
@@ -74,7 +76,9 @@ GetOrPop(get) /* get(x) - get an element from the left end of list x. */
 GetOrPop(pop) /* pop(x) - pop an element from the left end of list x. */
 
 
-"key(T) - generate successive keys (entry values) from table T."
+/*
+ * key(T) - generate successive keys (entry values) from table T.
+ */
 
 function key(t)
    if !is:table(t) then
@@ -93,8 +97,10 @@ function key(t)
    }
 end
 
-"keyval(T) - generate alternate keys and their corresponding values (as variables)"
-"      from table T."
+/*
+ * keyval(T) - generate alternate keys and their corresponding values (as variables)
+ * from table T.
+ */
 
 function keyval(t)
    if !is:table(t) then
@@ -115,9 +121,11 @@ function keyval(t)
 end
 
 
-"insert(s, x, y) - insert element x into set or table or list s if not already there"
-" if s is a table or list, the assigned value for element x is y."
-" (always succeeds and returns s)."
+/*
+ * insert(s, x, y) - insert element x into set or table or list s if
+ * not already there if s is a table or list, the assigned value for
+ * element x is y.  (always succeeds and returns s).
+ */
 
 function insert(s, x, y)
     body {
@@ -127,7 +135,6 @@ function insert(s, x, y)
             set_insert(&s, &x);
             EVValD(&s, E_Sinsert);
             EVValD(&x, E_Sval);
-            return s;
          }
 
       list: {
@@ -154,23 +161,24 @@ function insert(s, x, y)
                 list_insert(&s, i, &y);
             EVValD(&s, E_Linsert);
             EVVal(cnv_x, E_Lsub);
-            return s;
         }
       table: {
             table_insert(&s, &x, &y, 1);
             EVValD(&s, E_Tinsert);
             EVValD(&x, E_Tsub);
-            return s;
          }
 
       default:
          runerr(122, s);
     }
+    return s;
   }
 end
 
 
-"list(i, x) - create a list of size i, with initial value x."
+/*
+ * list(i, x) - create a list of size i, with initial value x.
+ */
 
 function list(n, x)
    if !def:C_integer(n, 0L) then
@@ -217,8 +225,11 @@ function list(n, x)
 end
 
 
-"member(s, x) - if s is a set, return x if it is a member of s; if s is a table "
-" return s[x] (a variable) if x is a key of s.  Fails otherwise."
+/*
+ * member(s, x) - if s is a set, return x if it is a member of s; if s
+ * is a table return s[x] (a variable) if x is a key of s.  Fails
+ * otherwise.
+ */
 
 function member(s, x)
    body {
@@ -234,8 +245,6 @@ function member(s, x)
             memb(BlkLoc(s), &x, hn, &res);
             if (res)
                return x;
-            else
-               fail;
          }
       table: {
             int res;
@@ -251,18 +260,20 @@ function member(s, x)
             if (res) {
                bp = *p;
                return struct_var(&bp->telem.tval, bp);
-            } else
-               fail;
+            }
       }
 
       default:
           runerr(133, s);
     }
+    fail;    /* x not found */
   }
 end
 
 
-"pull(L) - pull an element from end of list L."
+/*
+ * pull(L) - pull an element from end of list L.
+ */
 
 function pull(x)
    /*
@@ -281,7 +292,9 @@ function pull(x)
 end
 
 
-"push(L, val) - push value onto beginning of list L."
+/*
+ * push(L, val) - push value onto beginning of list L.
+ */
 
 function push(x, val)
    /*
@@ -301,7 +314,9 @@ function push(x, val)
 end
 
 
-"put(L, val) - put element onto end of list L."
+/*
+ * put(L, val) - put element onto end of list L.
+ */
 
 function put(x, val)
    /*
@@ -321,7 +336,9 @@ function put(x, val)
    }
 end
 
-"set(x1,...,xN) - create a set with given members."
+/*
+ * set(x1,...,xN) - create a set with given members.
+ */
 
 function set(x[n])
    body {
@@ -343,8 +360,10 @@ function set(x[n])
 end
 
 
-"table(x,k1,v1,k2,v2...) - create a table with default value x, and initial mappings"
-"                          v[0]->v[1], v[2]->v[3] etc."
+/*
+ * table(x,k1,v1,k2,v2...) - create a table with default value x, and
+ * initial mappings v[0]->v[1], v[2]->v[3] etc.
+ */
 function table(x, v[n])
    body {
       tended struct descrip result;
@@ -365,7 +384,10 @@ function table(x, v[n])
 end
 
 
-"keyof(s, x) - given a table, list or record s and a value x, generate the keys k such that s[k] === x"
+/*
+ * keyof(s, x) - given a table, list or record s and a value x,
+ * generate the keys k such that s[k] === x
+ */
 
 function keyof(s,x)
    body {
@@ -378,7 +400,6 @@ function keyof(s,x)
                 if (equiv(&le->lslots[state.result], &x))
                   suspend C_integer state.listindex;
             }
-            fail;
          }
 
         table: {
@@ -389,7 +410,6 @@ function keyof(s,x)
                if (equiv(&ep->telem.tval, &x))
                   suspend ep->telem.tref;
             }
-	    fail;
          }
 
          record: {
@@ -399,18 +419,20 @@ function keyof(s,x)
                 if (equiv(&RecordBlk(s).fields[i], &x))
                    suspend C_integer (i + 1);
             }
-	    fail;
          }
 
           default:
               runerr(127, s);
       }
+      fail;
    }
 end
 
 
-"clear(s) - clear set or table or list s of all elements"
-" (always succeeds and returns s)."
+/*
+ * clear(s) - clear set or table or list s of all elements (always
+ * succeeds and returns s).
+ */
 
 function clear(s)
     body {
@@ -419,22 +441,20 @@ function clear(s)
       set: {
             set_clear(&s);
             EVValD(&s, E_Sclear);
-            return s;
          }
 
       list: {
             list_clear(&s);
             EVValD(&s, E_Lclear);
-            return s;
         }
       table: {
             table_clear(&s);
             EVValD(&s, E_Tclear);
-            return s;
          }
 
       default:
          runerr(122, s);
     }
+   return s;
   }
 end
