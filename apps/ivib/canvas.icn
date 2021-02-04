@@ -1013,7 +1013,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.import_name := self.import_name
       c.scale_dimensions_flag := self.scale_dimensions_flag
       c.edit_scale := self.edit_scale
-      c.event_handlers := copy(\self.event_handlers)
+      c.event_handlers := clone(self.event_handlers)
       c.set_pos(self.x_spec, self.y_spec)
       c.dialog_iw := self.dialog_iw
       c.dialog_ih := self.dialog_ih
