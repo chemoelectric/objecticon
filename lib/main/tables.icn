@@ -191,7 +191,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # capability, a variable is returned, otherwise a value is returned.
    #
    public random()
-      return Index{gen(), ?(0 < size())}
+      return member(random_key())
    end
 
    #
@@ -442,11 +442,18 @@ class TableKeyList(List)
    end
 end
 
-package class SortTableNode()
-   public key, val,
+#
+# A node in a `SortTable` tree.
+#
+class SortTableNode()
+   package readable
+      key
+   public
+      val
+   package
       l, r, is_red_flag, N
 
-   public new(k, v)
+   package new(k, v)
       self.key := k
       self.val := v
       self.is_red_flag := &yes
@@ -460,19 +467,29 @@ end
 # in sorted order.
 #
 class SortTable(Table)
-   private root
-   public const cmp
+   private
+      root, nn
+   public const
+      cmp
 
-   public override insert(key, val)
+   #
+   # This is like `insert()`, but returns the new node that has been
+   # inserted, or the existing node that has been modified.
+   #
+   public new_node(key, val)
       root := insert1(root, key, val)
       root.is_red_flag := &no
-      link
+      return 1(.nn, nn := &null)
+   end
+   
+   public override insert(key, val)
+      link new_node(key, val)
    end
 
    private insert1(n, key, val)
       local i
       if /n then
-         return SortTableNode(key, val)
+         return nn := SortTableNode(key, val)
       i := cmp(key, n.key)
       if i < 0 then
          n.l := insert1(n.l, key, val)
@@ -481,7 +498,7 @@ class SortTable(Table)
       else {
          n.key := key
          n.val := val
-         return n
+         return nn := n
       }
       
       if is_red(n.r) & not is_red(n.l) then
@@ -534,22 +551,23 @@ class SortTable(Table)
             n := move_red_right(n)
          if cmp(key, n.key) = 0 then {
             x := min1(n.r)
-            n.key := x.key
-            n.val := x.val
-            n.r := delete_min1(n.r)
+            x.r := delete_min1(n.r)
+            x.l := n.l
+            x.is_red_flag := n.is_red_flag
+            n := x
          } else
             n.r := delete1(n.r, key)
       }
       return balance(n)
    end
 
-   private min1(n)
+   private static min1(n)
       while \n.l do
          n := n.l
       return n
    end
 
-   private delete_min1(n)
+   private static delete_min1(n)
       if /n.l then
          return
       unless is_red(n.l | n.l.l) then
@@ -558,7 +576,7 @@ class SortTable(Table)
       return balance(n)
    end
 
-   private balance(n)
+   private static balance(n)
       if is_red(n.r) then
          n := rotate_left(n)
       if is_red(n.l) & is_red(n.l.l) then
@@ -569,7 +587,7 @@ class SortTable(Table)
       return n
    end
 
-   private rotate_right(n)
+   private static rotate_right(n)
       local x
       x := n.l
       n.l := x.r
@@ -581,7 +599,7 @@ class SortTable(Table)
       return x
    end
 
-   private rotate_left(n)
+   private static rotate_left(n)
       local x
       x := n.r
       n.r := x.l
@@ -593,7 +611,7 @@ class SortTable(Table)
       return x
    end
    
-   private move_red_left(n)
+   private static move_red_left(n)
       flip_colors(n)
       if is_red(n.r.l) then {
          n.r := rotate_right(n.r)
@@ -602,39 +620,99 @@ class SortTable(Table)
       return n
    end
 
-   private move_red_right(n)
+   private static move_red_right(n)
       flip_colors(n)
       if is_red(n.l.l) then
          n := rotate_right(n)
       return n
    end
 
-   private flip_colors(n)
+   private static flip_colors(n)
       n.is_red_flag := toggle_flag(n.is_red_flag)
       n.l.is_red_flag := toggle_flag(n.l.is_red_flag)
       n.r.is_red_flag := toggle_flag(n.r.is_red_flag)
-      link
    end
 
-   private traverse(n)
+   private static traverse(n)
       \n | fail
       traverse(n.l)
       coact(n)
       traverse(n.r)
    end
 
-   private back_traverse(n)
+   private static back_traverse(n)
       \n | fail
       back_traverse(n.r)
       coact(n)
       back_traverse(n.l)
    end
 
-   private is_red(n)
+   private static traverse_from(n, i)
+      local t
+      t := size1(n.l)
+      if t >= i then {
+         if t > i then
+            traverse_from(n.l, i)
+         coact(n)
+         traverse(n.r)
+      } else
+         traverse_from(n.r, i - t - 1)
+   end
+
+   private static back_traverse_from(n, i)
+      local t
+      t := size1(n.l)
+      if t <= i then {
+         if t < i then
+            back_traverse_from(n.r, i - t - 1)
+         coact(n)
+         back_traverse(n.l)
+      } else
+         back_traverse_from(n.l, i)
+   end
+
+   #
+   # Generate the nodes in the table.  Each node represents one entry
+   # in the table, and contains key and val members; the former is
+   # read-only, the latter may be changed if desired, to edit the
+   # value in the table.  The nodes are generated in sorted key order.
+   #
+   public nodes()
+      suspend Seq{traverse(root)}
+   end
+
+   #
+   # Generate the nodes in reverse order (see `nodes()`).
+   #
+   public back_nodes()
+      suspend Seq{back_traverse(root)}
+   end
+
+   #
+   # Generate the nodes starting from the `i`th node in the sorted
+   # order (see `nodes()`).
+   #
+   public nodes_from(i)
+      i := cvpos_item(i, size()) | fail
+      suspend Seq{traverse_from(root, i - 1)}
+   end
+
+   #
+   #
+   # Generate the nodes in reverse sort order, starting with the one
+   # before index `i` (thus generating the nodes in the range 1:i)
+   # (see `nodes()`).
+   #
+   public back_nodes_from(i)
+      i := cvpos_item(i - 1, size()) | fail
+      suspend Seq{back_traverse_from(root, i - 1)}
+   end
+
+   private static is_red(n)
       succeed \ (\n).is_red_flag
    end
 
-   private size1(n)
+   private static size1(n)
       return if /n then 0 else n.N
    end
 
@@ -676,8 +754,15 @@ class SortTable(Table)
    end
 
    public override select(i)
+      return .select_node(i).key
+   end
+
+   #
+   # Return the `i`th node in the sorted order (see `nodes()`).
+   #
+   public select_node(i)
       i := cvpos_item(i, size()) | fail
-      return .select1(root, i - 1).key
+      return select1(root, i - 1)
    end
 
    public override rank(k)
