@@ -297,6 +297,10 @@ class UnmodifiableSet(Set)
       return s.size()
    end
 
+   public override empty()
+      return s.empty()
+   end
+
    public override random()
       return s.random()
    end

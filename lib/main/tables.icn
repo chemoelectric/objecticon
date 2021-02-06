@@ -468,6 +468,10 @@ class UnmodifiableTable(Table)
       return t.size()
    end
 
+   public override empty()
+      return t.empty()
+   end
+
    public override random()
       return .t.random()
    end
@@ -852,7 +856,7 @@ class SortTable(Table)
    end
 
    public override random()
-      return select_node(?(0 < size())).val
+      return node(?(0 < size())).val
    end
 
    public override size()
@@ -860,13 +864,13 @@ class SortTable(Table)
    end
 
    public override select(i)
-      return .select_node(i).key
+      return .node(i).key
    end
 
    #
    # Return the `i`th node in the sorted order (see `nodes()`).
    #
-   public select_node(i)
+   public node(i)
       i := cvpos_item(i, size()) | fail
       return select1(root, i - 1)
    end
