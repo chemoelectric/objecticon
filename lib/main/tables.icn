@@ -8,13 +8,29 @@ import
    lang,
    util,
    ipl.tables(tbldflt),
-   ipl.pdco(Seq,Length,Index),
+   ipl.pdco(Seq,Index),
    ipl.sort(need_callable_def)
 
 record Entry(key, val)
 
 #
 # This is a common superclass for several table-like data structures.
+#
+# A subclass must implement different optional methods depending on
+# its capability mode, as follows :-
+#
+#  * `ORDER` - `key_from()`, `back_key()`, `back_key_from()`,
+#    `rank()` and `select()`; see also `TableImpl1` and 
+#    `TableImpl2` below.
+#  * `INSERT` - `insert()`
+#  * `DELETE` - `delete()`
+#
+# There are several other abstract methods which all classes must of
+# course implement.
+#
+# Note that the behaviour of the various generator methods is
+# undefined if the table is concurrently modified during the course of
+# generation.
 #
 abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public const def
@@ -99,7 +115,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
       # This is defined in terms of sort() above rather than just
       # sorting key_list(), so that classes with a custom sort()
       # ordering don't need to override both sort methods.
-      return if can(ORDER) then key_list() else ipl.pdco.List{(!sort())[1]}
+      return if can(ORDER) then key_list() else ipl.pdco.List{ (!sort())[1] }
    end
 
    #
@@ -149,10 +165,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # out of range, using standard icon indexing semantics.  Only
    # implemented for tables with ORDER capability.
    #
-   public select(i)
-      can(ORDER) | runerr("Table doesn't have ORDER capability")
-      return Index{key(), cvpos_item(i, size())}
-   end
+   public optional select(i)
 
    #
    # Generate the values (cf !t for a table).  If the table has MODIFY
@@ -173,11 +186,22 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
+   # Generate the keys, starting with the key at index `i`.  Only
+   # implemented with ORDER capability.
+   #
+   public optional key_from(i)
+
+   #
+   # Generate the keys in reverse order, starting with the key before
+   # index `i` (thus generating the elements in the range 1:i).  Only
+   # implemented with ORDER capability.
+   #
+   public optional back_key_from(i)
+
+   #
    # Return the size of the table.
    #
-   public size()
-      return Length{key()}
-   end
+   public abstract size()
       
    #
    # Succeed iff the size is zero.
@@ -200,7 +224,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public random_key()
       local r
       if r := ?(0 < size()) then
-         return if can(ORDER) then select(r) else Index{key(), r}
+         return if can(ORDER) then select(r) else Index{ key(), r }
    end
 
    #
@@ -233,17 +257,25 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
       }
    end
 
+   #
    # Return a flat list, with alternating key-value entries.
+   #
    public flatten()
-      return ipl.pdco.List{keyval()}
+      return ipl.pdco.List{ keyval() }
    end
 
-   # Return an unsorted list of the keys.
+   #
+   # Return a list of the keys; it will be sorted if the table has
+   # ORDER capability.
+   #
    public key_list()
-      return ipl.pdco.List{key()}
+      return ipl.pdco.List{ key() }
    end
 
-   # Return an unsorted list of pairs of key-values.
+   #
+   # Return a list of pairs of key-values; it will be sorted by key if
+   # the table has ORDER capability.
+   #
    public entry_list()
       local e
       e := create keyval()
@@ -328,25 +360,76 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
+# A helpful abstract class for a table with `ORDER` capability, which
+# wishes to implement the generator methods (`key()`, `key_from()`,
+# `back_key()` and `back_key_from()`) in terms of `select()`.
+#
+abstract class TableImpl1(Table)
+   public override key()
+      suspend key_from(1)
+   end
+
+   public override back_key()
+      suspend back_key_from(0)
+   end
+
+   public override key_from(i)
+      i := cvpos_item(i, size()) | fail
+      repeat {
+         suspend select(i)
+         if i < size() then
+            i +:= 1
+         else
+            fail
+      }
+   end
+
+   public override back_key_from(i)
+      i := need_integer(i)
+      i := cvpos_item(i - 1, size()) | fail
+      while i > 0 do {
+         suspend select(i)
+         i := min(i - 1, size())
+      }
+   end
+end
+
+#
+# A helpful abstract class for a table with `ORDER` capability, which
+# wishes to implement `select()` in terms of `key()`, by providing
+# `key_from()`.  `back_key_from()` must also be implemented.
+#
+abstract class TableImpl2(Table)
+   public override key()
+      suspend key_from(1)
+   end
+
+   public override back_key()
+      suspend back_key_from(0)
+   end
+
+   public override select(i)
+      return Index{ key(), cvpos_item(i, size()) }
+   end
+end
+
+#
 # A class to provide an unmodifiable view of another table.
 #
 class UnmodifiableTable(Table)
-   private const t
+   protected const
+      t
 
    public override member(key)
       return .t.member(key)
    end
 
-   public override sort()
-      return t.sort()
-   end
-
-   public override key_sort()
-      return t.key_sort()
-   end
-
    public override key()
       suspend t.key()
+   end
+
+   public override key_from(i)
+      suspend t.key_from(i)
    end
 
    public override keyval()
@@ -355,6 +438,10 @@ class UnmodifiableTable(Table)
 
    public override back_key()
       suspend t.back_key()
+   end
+
+   public override back_key_from(i)
+      suspend t.back_key_from(i)
    end
 
    public override back_keyval()
@@ -397,29 +484,30 @@ class UnmodifiableTable(Table)
 end
 
 #
-# A list-view of the keys of a table with ORDER capability.
+# A list-view of the keys of a table with ORDER capability.  Note that
+# this implementation uses the table's generator methods to generate
+# the list elements; these may behave differently from the
+# corresponding builtin list generators if the underlying table is
+# concurrently modified.
 #
 class TableKeyList(List)
-   private const t
+   protected const
+      t
 
    public override at(i)
       return t.select(i)
    end
 
+   public override gen_from(i)
+      suspend t.key_from(i)
+   end
+
+   public override back_from(i)
+      suspend t.back_key_from(i)
+   end
+
    public override delete(i)
       link t.delete(t.select(i))
-   end
-
-   public override gen()
-      suspend t.key()
-   end
-
-   public override back()
-      suspend t.back_key()
-   end
-
-   public override random()
-      return t.random_key()
    end
 
    public override size()
@@ -465,6 +553,10 @@ end
 #
 # A `Table` which uses a red-black binary tree so that its members are always
 # in sorted order.
+#
+# Note that the various generator methods may produce unexpected
+# results if the table is modified between results, including
+# duplicated, deleted and omitted elements.
 #
 class SortTable(Table)
    private
@@ -719,36 +811,48 @@ class SortTable(Table)
    end
 
    public override key()
-      suspend .Seq{traverse(root)}.key
+      suspend .nodes().key
+   end
+
+   public override key_from(i)
+      suspend .nodes_from(i).key
    end
 
    public override keyval()
       local e
-      every e := Seq{traverse(root)} do
+      every e := nodes() do
          suspend .e.key | e.val
    end
 
    public override back_key()
-      suspend .Seq{back_traverse(root)}.key
+      suspend .back_nodes().key
+   end
+
+   public override back_key_from(i)
+      suspend .back_nodes_from(i).key
    end
 
    public override back_keyval()
       local e
-      every e := Seq{back_traverse(root)} do
+      every e := back_nodes() do
          suspend .e.key | e.val
    end
 
    public override gen()
-      suspend Seq{traverse(root)}.val
+      suspend nodes().val
    end
 
    public override back()
-      suspend Seq{back_traverse(root)}.val
+      suspend back_nodes().val
    end
 
    public override clear()
       root := &null
       link
+   end
+
+   public override random()
+      return select_node(?(0 < size())).val
    end
 
    public override size()
@@ -981,7 +1085,8 @@ end
 # A `Table` which is just a wrapper around a builtin table.
 #
 class BuiltinTable(Table)
-   private const t
+   private const
+      t
 
    public override insert(key, val)
       default.insert(t, key, val)
@@ -1046,11 +1151,14 @@ end
 #
 # An empty table.  An instance of this class is `Table.EMPTY_TABLE`.
 #
-class EmptyTable(Table)
+class EmptyTable(TableImpl1)
    public override member(x)
    end
 
-   public override key()
+   public override select(i)
+   end
+
+   public override rank(x)
    end
 
    public override size()
@@ -1058,7 +1166,7 @@ class EmptyTable(Table)
    end
 
    public override get_mode()
-      return 0
+      return ORDER
    end
 end
 
@@ -1066,8 +1174,12 @@ end
 # A `Table` which uses weak references
 #
 class WeakrefTable(Table)
-   private const t
-   private sz, last_purge, repeat_collect_flag
+   private const
+      t
+   private
+      sz,
+      last_purge,
+      repeat_collect_flag
 
    # This flag can be set to force repeated collections during a
    # purge, whilst this reduces the size of the table.  This can be
@@ -1221,7 +1333,8 @@ end
 # UnmodifiableTable.
 #
 class UnmodifiableBuiltinTable(Table)
-   private const t
+   private const
+      t
 
    public override member(key)
       return .default.member(t, key)

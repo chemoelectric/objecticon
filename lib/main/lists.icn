@@ -9,6 +9,15 @@ import lang, util, ipl.pdco-(List)
 #
 # This is a common superclass for a list-like data structure.
 #
+# A subclass must implement different optional methods depending on
+# its capability mode, as follows :-
+#
+#  * `INSERT` - `insert()`
+#  * `DELETE` - `delete()`
+#
+# There are several other abstract methods which all classes must of
+# course implement; see also `ListImpl1` and `ListImpl2`.
+#
 abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const
       # An empty list instance
@@ -89,16 +98,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # If the list has MODIFY capability, variables are generated,
    # otherwise values are generated.
    #
-   public gen_from(i)
-      i := cvpos_item(i, size()) | fail
-      repeat {
-         suspend at(i)
-         if i < size() then
-            i +:= 1
-         else
-            fail
-      }
-   end
+   public abstract gen_from(i)
 
    #
    # Generate the members in reverse order.  If the list has MODIFY
@@ -115,14 +115,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # If the list has MODIFY capability, variables are generated,
    # otherwise values are generated.
    #
-   public back_from(i)
-      i := need_integer(i)
-      i := cvpos_item(i - 1, size()) | fail
-      while i > 0 do {
-         suspend at(i)
-         i := min(i - 1, size())
-      }
-   end
+   public abstract back_from(i)
 
    #
    # Return the size of the list.
@@ -142,14 +135,14 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Generate the indices i such that at(i) === x
    #
    public keyof(x)
-      suspend Positions{gen(), x}
+      suspend Positions{ gen(), x }
    end
 
    #
    # Return an icon list of the elements.
    #
    public list()
-      return ipl.pdco.List{gen()}
+      return ipl.pdco.List{ gen() }
    end
 
    #
@@ -234,10 +227,48 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
+# A helpful abstract class for a list, which wishes to implement the
+# generator methods (`gen_from()` and `back_from()`) in terms of
+# `at()`.
+#
+abstract class ListImpl1(List)
+   public override gen_from(i)
+      i := cvpos_item(i, size()) | fail
+      repeat {
+         suspend at(i)
+         if i < size() then
+            i +:= 1
+         else
+            fail
+      }
+   end
+
+   public override back_from(i)
+      i := need_integer(i)
+      i := cvpos_item(i - 1, size()) | fail
+      while i > 0 do {
+         suspend at(i)
+         i := min(i - 1, size())
+      }
+   end
+end
+
+#
+# A helpful abstract class for a list which wishes to implement `at()`
+# in terms of `gen()`.
+#
+abstract class ListImpl2(List)
+   public override at(i)
+      return Index{ gen(), cvpos_item(i, size()) }
+   end
+end
+
+#
 # This list wraps another list to provide an unmodifiable view of it.
 #
 class UnmodifiableList(List)
-   private const l
+   protected const
+      l
 
    public override at(i)
       return .l.at(i)
@@ -272,8 +303,9 @@ end
 #
 # A `List` that is just a wrapper around a builtin list
 #
-class BuiltinList(List)
-   private const l
+class BuiltinList(ListImpl1)
+   private const
+      l
 
    public override insert(i, x)
       link default.insert(l, i, x)
@@ -347,7 +379,7 @@ end
 #
 # An empty list.  An instance of this class is `List.EMPTY_LIST`.
 #
-class EmptyList(List)
+class EmptyList(ListImpl1)
    public override at(i)
    end
 
@@ -380,7 +412,8 @@ end
 # builtin list if the list is concurrently modified.
 #
 class LinkedList(List)
-   private nhead
+   private
+      nhead
 
    public override insert(i, x)
       local n
@@ -464,14 +497,7 @@ class LinkedList(List)
    end
 
    public override size()
-      local i, n
-      i := 0
-      n := nhead
-      while \n do {
-         i +:= 1
-         n := n.nxt
-      }
-      return i
+      return Length{ gen() }
    end
 
    public override clear()
@@ -842,14 +868,7 @@ class DoublyLinkedList(List)
    end
 
    public override size()
-      local i, n
-      i := 0
-      n := sentinel.nxt
-      until n === sentinel do {
-         n := n.nxt
-         i +:= 1
-      }
-      return i
+      return Length{ node(1).gen() }
    end
 
    public override gen_from(i)
@@ -899,7 +918,7 @@ class DoublyLinkedList(List)
    #
    public node_index(n)
       need_node(n)
-      return Positions{node(1).gen(), n}
+      return Positions{ node(1).gen(), n }
    end
 
    #
@@ -909,7 +928,7 @@ class DoublyLinkedList(List)
    #
    public rev_node_index(n)
       need_node(n)
-      return -Positions{node(-1).back(), n}
+      return -Positions{ node(-1).back(), n }
    end
 
    #
@@ -999,8 +1018,9 @@ end
 # A convenient equivalent to wrapping a BuiltinList in an
 # UnmodifiableList.
 #
-class UnmodifiableBuiltinList(List)
-   private const l
+class UnmodifiableBuiltinList(ListImpl1)
+   private const
+      l
 
    public override at(i)
       return .l[i]
