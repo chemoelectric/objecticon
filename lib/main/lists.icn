@@ -286,6 +286,10 @@ class UnmodifiableList(List)
       return l.size()
    end
 
+   public override empty()
+      return l.empty()
+   end
+
    public override random()
       return .l.random()
    end
@@ -395,11 +399,70 @@ end
 #
 # A node in a `LinkedList`.
 #
-package class LinkedListNode()
+class LinkedListNode()
+   package
+      nxt
    public
-      nxt, val
+      val
 
-   public new(nxt, val)
+   #
+   # Create and insert a new node immediately after this node, with
+   # value `x`.  The new node is returned.
+   #
+   public insert_after(x)
+      nxt := LinkedListNode(nxt, x)
+      return .nxt
+   end
+
+   #
+   # Set the next node to `n`, which may be `&null`.
+   #
+   public set_next(n)
+      need_instance(\n, LinkedListNode)
+      nxt := n
+      link
+   end
+
+   #
+   # Generate this node and all subsequent nodes.
+   #
+   public gen()
+      local n
+      n := self
+      repeat {
+         suspend n
+         n := \n.nxt | fail
+      }
+   end
+
+   #
+   # Return the next node, or fail if there is none.
+   #
+   public get_next()
+      return .\nxt
+   end
+
+   #
+   # Move along the list `i` (>= 0) places.  Returns the node at that
+   # position, or fail if the end of the list is encountered.
+   #
+   public move(i)
+      local n
+      i := need_integer(i, 0)
+      n := self
+      every 1 to i do
+         n := \n.nxt | fail
+      return n
+   end
+
+   #
+   # Return a new `LinkedList`, with this node as its head.
+   #
+   public list()
+      return LinkedList.from_node(self)
+   end
+
+   package new(nxt, val)
       self.nxt := nxt
       self.val := val
       return
@@ -416,30 +479,30 @@ class LinkedList(List)
       nhead
 
    public override insert(i, x)
-      local n
-      i := need_integer(i)
-      if i <= 0 then
-         i := cvpos(i, size()) | fail
-      if i = 1 then
+      link new_node(i, x)
+   end
+
+   #
+   # This is like `insert()`, but returns the new node that has been
+   # inserted.
+   #
+   public new_node(i, x)
+      local n, r
+      n := node_before(i) | fail
+      r := if /n then
          nhead := LinkedListNode(nhead, x)
-      else {
-         n := node(i - 1) | fail
-         n.nxt := LinkedListNode(n.nxt, x)
-      }
-      link
+      else
+         n.insert_after(x)
+      return r
    end
 
    public override delete(i)
       local n
-      i := need_integer(i)
-      if i <= 0 then
-         i := cvpos_item(i, size()) | fail
-      if i = 1 then
+      n := node_before(i) | fail
+      if /n then
          nhead := (\nhead).nxt | fail
-      else {
-         n := node(i - 1) | fail
+      else
          n.nxt := (\n.nxt).nxt | fail
-      }
       link
    end
 
@@ -452,15 +515,12 @@ class LinkedList(List)
    end
 
    public override pull()
-      local v, n
-      \nhead | fail
-      if /nhead.nxt then {
+      local n, v
+      n := node_before(-1) | fail
+      if /n then {
          v := nhead.val
          nhead := &null
       } else {
-         n := nhead
-         while \n.nxt.nxt do
-            n := n.nxt
          v := n.nxt.val
          n.nxt := &null
       }
@@ -468,18 +528,12 @@ class LinkedList(List)
    end
 
    public override gen_from(i)
-      local n
-      n := node(i) | fail
-      repeat {
-         suspend n.val
-         n := \n.nxt | fail
-      }
+      suspend node(i).gen().val
    end
 
    public override back_from(i)
       local n
-      i := need_integer(i)
-      n := node(i - 1) | fail
+      n := \node_before(i) | fail
       repeat {
          suspend n.val
          n := before(n) | fail
@@ -497,7 +551,7 @@ class LinkedList(List)
    end
 
    public override size()
-      return Length{ gen() }
+      return Length{ (\nhead).gen() }
    end
 
    public override clear()
@@ -549,6 +603,22 @@ class LinkedList(List)
    end
 
    #
+   # Set the head node to the given node, which may be `&null`.
+   #
+   public set_nhead(n)
+      need_instance(\n, LinkedListNode)
+      nhead := n
+      link
+   end
+
+   #
+   # Return the head node, or fail if the list is empty.
+   #
+   public get_nhead()
+      return .\nhead
+   end
+
+   #
    # Set this list to share the same elements as `other`.
    #
    public set_list(other)
@@ -573,27 +643,60 @@ class LinkedList(List)
    end
 
    #
-   # Return the node containing element `i`, or fail if `i` is out of
-   # range.
+   # Return the list index position of the given node, or fail if it
+   # is not in the list.
    #
-   private node(i)
-      local n
-      i := need_integer(i)
-      if i <= 0 then
-         i := cvpos_item(i, size()) | fail
-      n := nhead
-      while \n & i > 1 do {
-         n := n.nxt
-         i -:= 1
-      }
-      return \n
+   public node_index(n)
+      need_instance(n, LinkedListNode)
+      return Positions{ (\nhead).gen(), n }
    end
 
    #
-   # Create an instance given a `LinkedListNode` as the list's head node.
+   # Return the node containing element `i`, or fail if `i` is out of
+   # range.
    #
-   private static from_node(n)
+   public node(i)
+      local n
+      n := node_before(i) | fail
+      return .\if /n then
+         nhead
+      else
+         n.nxt
+   end
+
+   #
+   # Return the node before the slice position i; &null indicates the
+   # "virtual node" before the first node (effectively nhead).  1 will
+   # always return null, even for an empty list.  0 will return the
+   # last element, or null for an empty list.
+   #
+   private node_before(i)
+      local n, r
+      i := need_integer(i)
+      if i = 1 then
+         return
+      if i > 1 then
+         return (\nhead).move(i - 2)
+      # i <= 0
+      n := nhead
+      while \n do {
+         if \r then
+            r := r.nxt
+         else if i = 0 then
+            r := nhead
+         else
+            i +:= 1
+         n := n.nxt
+      }
+      if \r then
+         return r
+      if i = 0 then
+         return
+   end
+
+   package static from_node(n)
       local i
+      need_instance(n, LinkedListNode)
       i := Class.create_instance()
       i.nhead := n
       return i
@@ -829,7 +932,7 @@ class DoublyLinkedList(List)
    # inserted.
    #
    public new_node(i, x)
-      link node_after(i).insert_before(x)
+      return node0(i).insert_before(x)
    end
 
    public override empty()
@@ -856,7 +959,7 @@ class DoublyLinkedList(List)
    # ~
    #
    public splice(i, other)
-      link node_after(i).splice_before(other)
+      link node0(i).splice_before(other)
    end
 
    public override delete(i)
@@ -876,6 +979,7 @@ class DoublyLinkedList(List)
    end
 
    public override back_from(i)
+      i := need_integer(i)
       suspend node(i - 1).back().val
    end
 
@@ -988,10 +1092,16 @@ class DoublyLinkedList(List)
       return MODIFY + INSERT + DELETE
    end
 
-   private node_after(i)
+   #
+   # Like node(i), but additionally allowing index 0 (or size()+1) to
+   # return the sentinel node.
+   #
+   private node0(i)
       i := need_integer(i)
       return if i = 0 | (i = 1 & empty()) then
          sentinel
+      else if i > 1 then
+         node(i - 1).nxt   # May be sentinel
       else
          node(i)
    end
@@ -1001,6 +1111,7 @@ class DoublyLinkedList(List)
    # range.
    #
    public node(i)
+      # The test ensures node(0) fails
       return sentinel ~=== sentinel.move(i)
    end
 
