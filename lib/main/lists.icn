@@ -774,8 +774,8 @@ class DoublyLinkedListNode()
    # nodes.
    #
    # After a node has been unlinked it cannot be used for further
-   # insert, unlink, or splice operations, and any attempt to do so
-   # will cause a runtime error.  (See also `is_linked`).
+   # operations, and any attempt to do so will cause a runtime error.
+   # (See also `is_linked`).
    #
    # Example :-
    # ~
@@ -815,16 +815,32 @@ class DoublyLinkedListNode()
    # Return the previous node, or fail if there is none.
    #
    public get_prev()
-      unless is(prev, DoublyLinkedListSentinel) then
-         return .\prev
+      need_linked()
+      return prev.real()
    end
 
    #
    # Return the next node, or fail if there is none.
    #
    public get_next()
-      unless is(nxt, DoublyLinkedListSentinel) then
-         return .\nxt
+      need_linked()
+      return nxt.real()
+   end
+
+   #
+   # Return the `DoublyLinkedList` associated with this node, which
+   # must be "linked".
+   #
+   # This method works by moving along the list to the sentinel node,
+   # whose value is a reference to the creating list.  It is therefore
+   # an O(n) operation.
+   #
+   public get_list()
+      local n
+      need_linked()
+      n := nxt
+      while n := n.real().nxt
+      return .n.val
    end
 
    #
@@ -832,10 +848,11 @@ class DoublyLinkedListNode()
    #
    public gen()
       local n
+      need_linked()
       n := self
       repeat {
          suspend n
-         n := n.get_next() | fail
+         n := n.nxt.real() | fail
       }
    end
 
@@ -844,11 +861,16 @@ class DoublyLinkedListNode()
    #
    public back()
       local n
+      need_linked()
       n := self
       repeat {
          suspend n
-         n := n.get_prev() | fail
+         n := n.prev.real() | fail
       }
+   end
+
+   package real()
+      link
    end
 
    #
@@ -859,13 +881,14 @@ class DoublyLinkedListNode()
    public move(i)
       local n
       i := need_integer(i)
+      need_linked()
       n := self
       if i > 0 then {
          every 1 to i do
-            n := n.get_next() | fail
+            n := n.nxt.real() | fail
       } else {
          every 1 to -i do
-            n := n.get_prev() | fail
+            n := n.prev.real() | fail
       }
       return n
    end
@@ -912,6 +935,8 @@ class DoublyLinkedListNode()
 end
 
 package class DoublyLinkedListSentinel(DoublyLinkedListNode)
+   package override real()
+   end
 end
 
 #
@@ -1083,7 +1108,7 @@ class DoublyLinkedList(List)
       i := Class.create_raw_instance()
       h.prev.nxt := t.nxt
       t.nxt.prev := h.prev
-      i.sentinel := DoublyLinkedListSentinel(t, h)
+      i.sentinel := DoublyLinkedListSentinel(t, h, i)
       t.nxt := h.prev := i.sentinel
       return Class.complete_raw_instance(i)
    end
@@ -1119,7 +1144,7 @@ class DoublyLinkedList(List)
    # Create an instance and add each of the given entries.
    #
    public new(entries[])
-      sentinel := DoublyLinkedListSentinel()
+      sentinel := DoublyLinkedListSentinel(,, self)
       clear()
       every insert(1, default.back(entries))
       return
