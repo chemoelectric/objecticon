@@ -835,12 +835,15 @@ class DoublyLinkedListNode()
    # whose value is a reference to the creating list.  It is therefore
    # an O(n) operation.
    #
+   # If this list of nodes was orphaned because the parent list
+   # performed a `clear()`, then this method fails.
+   #
    public get_list()
       local n
       need_linked()
       n := nxt
       while n := n.real().nxt
-      return .n.val
+      return .\n.val
    end
 
    #
@@ -852,7 +855,8 @@ class DoublyLinkedListNode()
       n := self
       repeat {
          suspend n
-         n := n.nxt.real() | fail
+         n := \n.nxt | runerr("Node unlinked during iteration", n)
+         n := n.real() | fail
       }
    end
 
@@ -865,7 +869,8 @@ class DoublyLinkedListNode()
       n := self
       repeat {
          suspend n
-         n := n.prev.real() | fail
+         n := \n.prev | runerr("Node unlinked during iteration", n)
+         n := n.real() | fail
       }
    end
 
@@ -945,7 +950,7 @@ end
 # builtin list if the list is concurrently modified.
 #
 class DoublyLinkedList(List)
-   package const
+   package
       sentinel
 
    public override insert(i, x)
@@ -964,8 +969,20 @@ class DoublyLinkedList(List)
       succeed sentinel.nxt === sentinel
    end
 
-   public override clear()
+   private new_sentinel()
+      sentinel := DoublyLinkedListSentinel(,, self)
       sentinel.nxt := sentinel.prev := sentinel
+   end
+
+   #
+   # This is a constant-time operation that leaves the former list
+   # nodes intact, but entirely divorced from this list.  The old
+   # nodes will remain "linked" to one another, and can still be
+   # operated upon, but without affecting this list.
+   #
+   public override clear()
+      sentinel.val := &null
+      new_sentinel()
       link
    end
 
@@ -1105,12 +1122,12 @@ class DoublyLinkedList(List)
 
    private static from_nodes(h, t)
       local i
-      i := Class.create_raw_instance()
+      i := Class.create_instance()
       h.prev.nxt := t.nxt
       t.nxt.prev := h.prev
       i.sentinel := DoublyLinkedListSentinel(t, h, i)
       t.nxt := h.prev := i.sentinel
-      return Class.complete_raw_instance(i)
+      return i
    end
 
    public override get_mode()
@@ -1144,8 +1161,7 @@ class DoublyLinkedList(List)
    # Create an instance and add each of the given entries.
    #
    public new(entries[])
-      sentinel := DoublyLinkedListSentinel(,, self)
-      clear()
+      new_sentinel()
       every insert(1, default.back(entries))
       return
    end
