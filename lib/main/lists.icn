@@ -415,6 +415,33 @@ class LinkedListNode()
    end
 
    #
+   # Unlink the node immediately after this node.  Fails if there is
+   # no such node, or returns the unlinked node.  This can be helpful
+   # whilst iterating over a list and deleting nodes.
+   #
+   # Example :-
+   # ~
+   #   l := LinkedList(3, 3,10,20,3,3,30,3,40,50,60,70,3)
+   #   # Delete all the 3's from the list.
+   #   # Start with those at the front.
+   #   while l.at(1) = 3 do
+   #      l.get()
+   #   # Then iterate over the rest.
+   #   every n := l.node(1).gen() do {
+   #      while n.get_next().val = 3 do
+   #         n.unlink_next()
+   #   }
+   #   # Now l is (10,20,30,40,50,60,70)
+   # ~
+   public unlink_next()
+      local n
+      if n := \nxt then {
+         nxt := n.nxt
+         return n
+      }
+   end
+
+   #
    # Set the next node to `n`, which may be `&null`.
    #
    public set_next(n)
@@ -696,7 +723,6 @@ class LinkedList(List)
 
    package static from_node(n)
       local i
-      need_instance(n, LinkedListNode)
       i := Class.create_instance()
       i.nhead := n
       return i
