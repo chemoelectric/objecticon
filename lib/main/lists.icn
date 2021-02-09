@@ -790,7 +790,6 @@ class DoublyLinkedListNode()
       need_linked()
       prev.nxt := nxt
       nxt.prev := prev
-      prev := nxt := &null
       link
    end
 
@@ -808,7 +807,7 @@ class DoublyLinkedListNode()
    # unlinked).
    #
    public is_linked()
-      succeed \prev
+      succeed prev.nxt === self
    end
 
    #
@@ -847,16 +846,25 @@ class DoublyLinkedListNode()
    end
 
    #
-   # Generate this node and all subsequent nodes.
+   # Generate this node and all subsequent nodes.  It is permissible
+   # to edit the list during iteration, including unlinking the last
+   # node generated.
    #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
+   #   # Delete all the 3's from the list.
+   #   every n := l.node(1).gen() do
+   #      if n.val=3 then n.unlink()
+   #   # Now l is (10,20,30,40,50,60,70)
+   # ~
    public gen()
       local n
       need_linked()
       n := self
       repeat {
          suspend n
-         n := \n.nxt | runerr("Node unlinked during iteration", n)
-         n := n.real() | fail
+         n := n.nxt.real() | fail
       }
    end
 
@@ -869,8 +877,7 @@ class DoublyLinkedListNode()
       n := self
       repeat {
          suspend n
-         n := \n.prev | runerr("Node unlinked during iteration", n)
-         n := n.real() | fail
+         n := n.prev.real() | fail
       }
    end
 
@@ -905,10 +912,10 @@ class DoublyLinkedListNode()
    # failed, then this method fails, but the `unlink` is carried out
    # regardless.
    #
-   # This gives a convenient way to iterate over the list and unlink
+   # This gives an alternative way to iterate over the list and unlink
    # selected nodes.
    #
-   # Examples :-
+   # Example :-
    # ~
    #   l := DoublyLinkedList(10,20,30,40,50,60,70)
    #   r := l.node(4)
@@ -916,12 +923,6 @@ class DoublyLinkedListNode()
    #   r := r.move_unlink(1) # move 1 right, then unlink
    #   # Now l is (10,20,30,50,60,70)
    #   r.val     # 50
-   #
-   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
-   #   # Delete all the 3's from the list.
-   #   r := l.node(1)
-   #   while r := if r.val = 3 then r.move_unlink(1) else r.move(1)
-   #   # Now l is (10,20,30,40,50,60,70)
    # ~
    #
    public move_unlink(i)
