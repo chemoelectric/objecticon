@@ -602,7 +602,7 @@ class LinkedList(List)
    # list is empty.
    #
    public set_head(x)
-      link ((\nhead).val := x)
+      link (\nhead).val := x
    end
 
    #
@@ -618,7 +618,7 @@ class LinkedList(List)
    #
    public set_tail(other)
       need_instance(other, LinkedList)
-      link ((\nhead).nxt := other.nhead)
+      link (\nhead).nxt := other.nhead
    end
 
    #
@@ -626,7 +626,7 @@ class LinkedList(List)
    # element), or fail if this list is empty.
    #
    public clear_tail()
-      link ((\nhead).nxt := &null)
+      link (\nhead).nxt := &null
    end
 
    #
@@ -656,10 +656,10 @@ class LinkedList(List)
 
    #
    # Return a new list which shares the elements of this list from
-   # (and including) element `i`.
+   # the notional range `i:0`.
    #
    public from(i)
-      return from_node(node(i))
+      return from_node(node0(i))
    end
 
    #
@@ -683,9 +683,17 @@ class LinkedList(List)
    # range.
    #
    public node(i)
+      return .\node0(i)
+   end
+
+   #
+   # Like node(i), but additionally allowing index 0 (or size()+1) to
+   # return &null.
+   #
+   private node0(i)
       local n
       n := node_before(i) | fail
-      return .\if /n then
+      return if /n then
          nhead
       else
          n.nxt
@@ -1058,8 +1066,8 @@ class DoublyLinkedList(List)
    # `node()` faster.
    #
    public static adjust_index(i, sz)
-     if i > sz / 2 then
-         i +:= -sz - 1
+     if 2 * i > sz + 1 then
+         i -:= sz + 1
       return i
    end
 
