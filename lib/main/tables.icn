@@ -56,8 +56,8 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
    
    #
-   # Insert a new entry.  Always succeeds and returns `self`.  Only
-   # implemented with INSERT capability.
+   # Insert a new entry, or change an existing one.  Always succeeds
+   # and returns `self`.  Only implemented with INSERT capability.
    #
    public optional insert(key, val)
 
@@ -611,18 +611,184 @@ class SortTable(Table)
       return n
    end
 
-   public override member(key)
+   #
+   # Return the node with the smallest key greater than `key`, or fail
+   # there is no such node.
+   #
+   public find_node_gt(key)
+      local n, s, i, p, ch
+      n := root
+      s := []
+      while \n do {
+         i := cmp(key, n.key)
+         if i < 0 then {
+            if /n.l then
+               return n
+            push(s, n)
+            n := n.l
+         } else {
+            if /n.r then {
+               ch := n
+               while p := pop(s) do {
+                  unless ch === p.r then
+                     return p
+                  ch := p
+               }
+               fail
+            }
+            push(s, n)
+            n := n.r
+         }
+      }
+   end
+
+   #
+   # Return the node with the largest key less than `key`, or fail
+   # there is no such node.
+   #
+   public find_node_lt(key)
+      local n, s, i, p, ch
+      n := root
+      s := []
+      while \n do {
+         i := cmp(key, n.key)
+         if i > 0 then {
+            if /n.r then
+               return n
+            push(s, n)
+            n := n.r
+         } else {
+            if /n.l then {
+               ch := n
+               while p := pop(s) do {
+                  unless ch === p.l then
+                     return p
+                  ch := p
+               }
+               fail
+            }
+            push(s, n)
+            n := n.l
+         }
+      }
+   end
+
+   #
+   # Return the node with the smallest key greater than or equal to
+   # `key`, or fail there is no such node.
+   #
+   public find_node_ge(key)
+      local n, s, i, p, ch
+      n := root
+      s := []
+      while \n do {
+         i := cmp(key, n.key)
+         if i < 0 then {
+            if /n.l then
+               return n
+            push(s, n)
+            n := n.l
+         } else if i > 0 then {
+            if /n.r then {
+               ch := n
+               while p := pop(s) do {
+                  unless ch === p.r then
+                     return p
+                  ch := p
+               }
+               fail
+            }
+            push(s, n)
+            n := n.r
+         } else
+            return n
+      }
+   end
+
+   #
+   # Return the node with the largest key less than or equal to `key`,
+   # or fail there is no such node.
+   #
+   public find_node_le(key)
+      local n, s, i, p, ch
+      n := root
+      s := []
+      while \n do {
+         i := cmp(key, n.key)
+         if i > 0 then {
+            if /n.r then
+               return n
+            push(s, n)
+            n := n.r
+         } else if i < 0 then {
+            if /n.l then {
+               ch := n
+               while p := pop(s) do {
+                  unless ch === p.l then
+                     return p
+                  ch := p
+               }
+               fail
+            }
+            push(s, n)
+            n := n.l
+         } else
+            return n
+      }
+   end
+
+   #
+   # Return the node corresponding to `key`, or fail if it is not
+   # found.
+   #
+   public find_node(key)
       local n, i
       n := root
       while \n do {
          i := cmp(key, n.key)
          if i = 0 then
-            return n.val
+            return n
          n := if i < 0 then
             n.l
          else
             n.r
       }
+   end
+
+   #
+   # Return the smallest key greater than `key`, or fail there is no
+   # such key.
+   #
+   public find_key_gt(key)
+      return .find_node_gt(key).key
+   end
+
+   #
+   # Return the largest key less than `key`, or fail there is no such
+   # key.
+   #
+   public find_key_lt(key)
+      return .find_node_lt(key).key
+   end
+
+   #
+   # Return the smallest key greater than or equal to `key`, or fail
+   # there is no such key.
+   #
+   public find_key_ge(key)
+      return .find_node_ge(key).key
+   end
+
+   #
+   # Return the largest key less than or equal to `key`, or fail there
+   # is no such key.
+   #
+   public find_key_le(key)
+      return .find_node_le(key).key
+   end
+
+   public override member(key)
+      return find_node(key).val
    end
 
    public override delete(key)
