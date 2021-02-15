@@ -8,7 +8,7 @@ import
    lang,
    util,
    ipl.tables(tbldflt),
-   ipl.pdco(Seq,Index),
+   ipl.pdco(Index),
    ipl.sort(need_callable_def)
 
 record Entry(key, val)
@@ -543,7 +543,132 @@ class SortTableNode()
    public
       val
    package
-      l, r, is_red_flag, N
+      l, r, p, is_red_flag, N
+
+   #
+   # Return the next node by sorted order within the enclosing tree,
+   # or fail if there is none.
+   #
+   public get_next()
+      local t, c
+      need_linked()
+      if t := \r then {
+         while t := \t.l
+         return t
+      } else {
+         c := self
+         while t := \c.p do {
+            if c === t.l then
+               return t
+            c := t
+         }
+      }
+   end
+
+   #
+   # Return the previous node by sorted order within the enclosing
+   # tree, or fail if there is none.
+   #
+   public get_prev()
+      local t, c
+      need_linked()
+      if t := \l then {
+         while t := \t.r
+         return t
+      } else {
+         c := self
+         while t := \c.p do {
+            if c === t.r then
+               return t
+            c := t
+         }
+      }
+   end
+
+   #
+   # Move along the ordered sequence of nodes `i` places; positive
+   # means increasing key order, negative means decreasing.  Returns
+   # the node at that position, or fail if either end of the sequence
+   # is encountered.
+   #
+   public move(i)
+      local n
+      i := need_integer(i)
+      need_linked()
+      n := self
+      if i > 0 then {
+         every 1 to i do
+            n := n.get_next() | fail
+      } else {
+         every 1 to -i do
+            n := n.get_prev() | fail
+      }
+      return n
+   end
+
+   #
+   # Check if this node is "linked" (hasn't been unlinked), signalling
+   # a runtime error otherwise.
+   #
+   public need_linked()
+      \N | runerr("Node has been unlinked", self)
+      link
+   end
+
+   #
+   # Succeed iff this node is "linked" (meaning it hasn't been
+   # deleted from its tree).
+   #
+   public is_linked()
+      succeed \N
+   end
+
+   #
+   # Generate this node and all subsequent nodes in the sort order in
+   # the enclosing tree.
+   #
+   public gen()
+      local n
+      need_linked()
+      n := self
+      repeat {
+         suspend n
+         n := n.get_next() | fail
+      }
+   end
+
+   #
+   # Generate this node and all prior nodes in the sort order in the
+   # enclosing tree.
+   #
+   public back()
+      local n
+      need_linked()
+      n := self
+      repeat {
+         suspend n
+         n := n.get_prev() | fail
+      }
+   end
+
+   #
+   # Return the rank of this node, ie its index in the sorted order of
+   # nodes in the enclosing tree, with 1 being the rank of the
+   # "smallest" key.
+   #
+   public rank()
+      local i, t, c
+      need_linked()
+      i := N
+      i -:= (\r).N
+      c := self
+      while t := \c.p do {
+         if c === t.r then
+            i +:= (\t.l).N + 1
+         c := t
+      }
+      return i
+   end
 
    package new(k, v)
       self.key := k
@@ -576,6 +701,7 @@ class SortTable(Table)
    #
    public new_node(key, val)
       root := insert1(root, key, val)
+      root.p := &null
       root.is_red_flag := &no
       return 1(.nn, nn := &null)
    end
@@ -589,11 +715,13 @@ class SortTable(Table)
       if /n then
          return nn := SortTableNode(key, val)
       i := cmp(key, n.key)
-      if i < 0 then
+      if i < 0 then {
          n.l := insert1(n.l, key, val)
-      else if i > 0 then
+         n.l.p := n
+      } else if i > 0 then {
          n.r := insert1(n.r, key, val)
-      else {
+         n.r.p := n
+      } else {
          n.key := key
          n.val := val
          return nn := n
@@ -616,27 +744,17 @@ class SortTable(Table)
    # there is no such node.
    #
    public find_node_gt(key)
-      local n, s, i, p, ch
+      local n, i
       n := root
-      s := []
       while \n do {
          i := cmp(key, n.key)
          if i < 0 then {
             if /n.l then
                return n
-            push(s, n)
             n := n.l
          } else {
-            if /n.r then {
-               ch := n
-               while p := pop(s) do {
-                  unless ch === p.r then
-                     return p
-                  ch := p
-               }
-               fail
-            }
-            push(s, n)
+            if /n.r then
+               return n.get_next()
             n := n.r
          }
       }
@@ -647,27 +765,17 @@ class SortTable(Table)
    # there is no such node.
    #
    public find_node_lt(key)
-      local n, s, i, p, ch
+      local n, i
       n := root
-      s := []
       while \n do {
          i := cmp(key, n.key)
          if i > 0 then {
             if /n.r then
                return n
-            push(s, n)
             n := n.r
          } else {
-            if /n.l then {
-               ch := n
-               while p := pop(s) do {
-                  unless ch === p.l then
-                     return p
-                  ch := p
-               }
-               fail
-            }
-            push(s, n)
+            if /n.l then
+               return n.get_prev()
             n := n.l
          }
       }
@@ -678,27 +786,17 @@ class SortTable(Table)
    # `key`, or fail there is no such node.
    #
    public find_node_ge(key)
-      local n, s, i, p, ch
+      local n, i
       n := root
-      s := []
       while \n do {
          i := cmp(key, n.key)
          if i < 0 then {
             if /n.l then
                return n
-            push(s, n)
             n := n.l
          } else if i > 0 then {
-            if /n.r then {
-               ch := n
-               while p := pop(s) do {
-                  unless ch === p.r then
-                     return p
-                  ch := p
-               }
-               fail
-            }
-            push(s, n)
+            if /n.r then
+               return n.get_next()
             n := n.r
          } else
             return n
@@ -710,27 +808,17 @@ class SortTable(Table)
    # or fail there is no such node.
    #
    public find_node_le(key)
-      local n, s, i, p, ch
+      local n, i
       n := root
-      s := []
       while \n do {
          i := cmp(key, n.key)
          if i > 0 then {
             if /n.r then
                return n
-            push(s, n)
             n := n.r
          } else if i < 0 then {
-            if /n.l then {
-               ch := n
-               while p := pop(s) do {
-                  unless ch === p.l then
-                     return p
-                  ch := p
-               }
-               fail
-            }
-            push(s, n)
+            if /n.l then
+               return n.get_prev()
             n := n.l
          } else
             return n
@@ -796,7 +884,10 @@ class SortTable(Table)
       unless is_red(root.l | root.r) then
          root.is_red_flag := &yes
       root := delete1(root, key)
-      (\root).is_red_flag := &no
+      if \root then {
+         root.p  := &null
+         root.is_red_flag := &no
+      }
       link
    end
 
@@ -806,23 +897,60 @@ class SortTable(Table)
          unless is_red(n.l | n.l.l) then
             n := move_red_left(n)
          n.l := delete1(n.l, key)
+         (\n.l).p := n
       } else {
          if is_red(n.l) then
             n := rotate_right(n)
-         if cmp(key, n.key) = 0 & /n.r then
+         if cmp(key, n.key) = 0 & /n.r then {
+            n.N := &null
             return
+         }
          unless is_red(n.r | n.r.l) then
             n := move_red_right(n)
          if cmp(key, n.key) = 0 then {
             x := min1(n.r)
             x.r := delete_min1(n.r)
+            (\x.r).p := x
             x.l := n.l
+            (\x.l).p := x
             x.is_red_flag := n.is_red_flag
+            n.N := &null
             n := x
-         } else
+         } else {
             n.r := delete1(n.r, key)
+            (\n.r).p := n
+         }
       }
       return balance(n)
+   end
+
+   #
+   # This method combines a `move` (applied to a node `n`) and a
+   # `delete` of that same node.  First, `n.move(i)` is performed, and
+   # the result is noted.  Then the `delete` is peformed on `n.key`.
+   # The result of the `move` is returned; if the `move` failed, then
+   # this method fails, but the `unlink` is carried out regardless.
+   #
+   # This gives an alternative way to iterate over the tree and delete
+   # selected nodes.
+   #
+   # Example :-
+   # ~
+   #    # Delete all entries with even-numbered keys.
+   #    n := t.node(1)
+   #    while
+   #       n := if n.key % 2 = 0 then
+   #          t.move_delete(n, 1)
+   #       else
+   #          n.get_next()
+   # ~
+   #
+   public move_delete(n, i)
+      local t
+      need_instance(n, SortTableNode)
+      t := n.move(i)
+      delete(n.key)
+      return \t
    end
 
    private static min1(n)
@@ -837,6 +965,7 @@ class SortTable(Table)
       unless is_red(n.l | n.l.l) then
          n := move_red_left(n)
       n.l := delete_min1(n.l)
+      (\n.l).p := n
       return balance(n)
    end
 
@@ -855,7 +984,9 @@ class SortTable(Table)
       local x
       x := n.l
       n.l := x.r
+      (\n.l).p := n
       x.r := n
+      x.r.p := x
       x.is_red_flag := x.r.is_red_flag
       x.r.is_red_flag := &yes
       x.N := n.N
@@ -867,7 +998,9 @@ class SortTable(Table)
       local x
       x := n.r
       n.r := x.l
+      (\n.r).p := n
       x.l := n
+      x.l.p := x
       x.is_red_flag := x.l.is_red_flag
       x.l.is_red_flag := &yes
       x.N := n.N
@@ -879,6 +1012,7 @@ class SortTable(Table)
       flip_colors(n)
       if is_red(n.r.l) then {
          n.r := rotate_right(n.r)
+         n.r.p := n
          n := rotate_left(n)
       }
       return n
@@ -897,44 +1031,6 @@ class SortTable(Table)
       n.r.is_red_flag := toggle_flag(n.r.is_red_flag)
    end
 
-   private static traverse(n)
-      \n | fail
-      traverse(n.l)
-      coact(n)
-      traverse(n.r)
-   end
-
-   private static back_traverse(n)
-      \n | fail
-      back_traverse(n.r)
-      coact(n)
-      back_traverse(n.l)
-   end
-
-   private static traverse_from(n, i)
-      local t
-      t := size1(n.l)
-      if t >= i then {
-         if t > i then
-            traverse_from(n.l, i)
-         coact(n)
-         traverse(n.r)
-      } else
-         traverse_from(n.r, i - t - 1)
-   end
-
-   private static back_traverse_from(n, i)
-      local t
-      t := size1(n.l)
-      if t <= i then {
-         if t < i then
-            back_traverse_from(n.r, i - t - 1)
-         coact(n)
-         back_traverse(n.l)
-      } else
-         back_traverse_from(n.l, i)
-   end
-
    #
    # Generate the nodes in the table.  Each node represents one entry
    # in the table, and contains key and val members; the former is
@@ -942,14 +1038,14 @@ class SortTable(Table)
    # value in the table.  The nodes are generated in sorted key order.
    #
    public nodes()
-      suspend Seq{traverse(root)}
+      suspend node(1).gen()
    end
 
    #
    # Generate the nodes in reverse order (see `nodes()`).
    #
    public back_nodes()
-      suspend Seq{back_traverse(root)}
+      suspend node(-1).back()
    end
 
    #
@@ -957,8 +1053,7 @@ class SortTable(Table)
    # order (see `nodes()`).
    #
    public nodes_from(i)
-      i := cvpos_item(i, size()) | fail
-      suspend Seq{traverse_from(root, i - 1)}
+      suspend node(i).gen()
    end
 
    #
@@ -968,8 +1063,8 @@ class SortTable(Table)
    # (see `nodes()`).
    #
    public back_nodes_from(i)
-      i := cvpos_item(i - 1, size()) | fail
-      suspend Seq{back_traverse_from(root, i - 1)}
+      i := need_integer(i)
+      suspend node(i - 1).back()
    end
 
    private static is_red(n)
@@ -1038,20 +1133,20 @@ class SortTable(Table)
    #
    public node(i)
       i := cvpos_item(i, size()) | fail
-      return select1(root, i - 1)
+      return select1(root, i)
    end
 
    public override rank(k)
-      return rank1(root, k) + 1
+      return rank1(root, k)
    end
 
    private select1(n, i)
       local t
-      t := size1(n.l)
+      t := size1(n.l) + 1
       return if t > i then
          select1(n.l, i)
       else if t < i then
-         select1(n.r, i - t - 1)
+         select1(n.r, i - t)
       else
          n
    end
@@ -1065,7 +1160,7 @@ class SortTable(Table)
       else if t > 0 then 
          1 + size1(n.l) + rank1(n.r, k)
       else 
-         size1(n.l)
+         1 + size1(n.l)
    end
 
    #
@@ -1077,7 +1172,16 @@ class SortTable(Table)
       is_rank_consistent(root)  | return error("Ranks not consistent")
       is_23(root) | return error("Not a 2-3 tree")
       is_balanced() | return error("Not balanced")
+      is_correctly_linked(root) | return error("Not correctly linked")
+      if \ (\root).p then return error("Root has a parent")
       return
+   end
+
+   private is_correctly_linked(n)
+      if /n then return
+      if (\n.l).p ~=== n then fail
+      if (\n.r).p ~=== n then fail
+      succeed is_correctly_linked(n.l) & is_correctly_linked(n.r)
    end
 
    private is_balanced()
