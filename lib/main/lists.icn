@@ -973,6 +973,22 @@ class DoublyLinkedListNode()
    end
 
    #
+   # Return the list index position of this node in its enclosing
+   # list.
+   #
+   public index()
+      return Length{ back() }
+   end
+
+   #
+   # Return the list index position of this node, relative to the
+   # tail, in its enclosing list.  A negative integer is returned.
+   #
+   public rev_index(n)
+      return -Length{ gen() }
+   end
+
+   #
    # Move along the list `i` places; positive means towards the tail,
    # negative means towards the head.  Returns the node at that
    # position, or fail if either end of the list is encountered.
@@ -1211,25 +1227,6 @@ class DoublyLinkedList(List)
          DoublyLinkedList()
       else
          from_nodes(s.h, s.t)
-   end
-
-   #
-   # Return the list index position of the given node, or fail if it
-   # is not in the list.
-   #
-   public node_index(n)
-      need_node(n)
-      return Positions{ node(1).gen(), n }
-   end
-
-   #
-   # Return the list index position of the given node, counting
-   # downwards from the tail (index -1), or fail if it is not in the
-   # list.
-   #
-   public rev_node_index(n)
-      need_node(n)
-      return -Positions{ node(-1).back(), n }
    end
 
    #
