@@ -557,7 +557,7 @@ class SortTableNode()
          return t
       } else {
          c := self
-         while t := \c.p do {
+         while t := c.p.real() do {
             if c === t.l then
                return t
             c := t
@@ -577,7 +577,7 @@ class SortTableNode()
          return t
       } else {
          c := self
-         while t := \c.p do {
+         while t := c.p.real() do {
             if c === t.r then
                return t
             c := t
@@ -627,6 +627,14 @@ class SortTableNode()
    # Generate this node and all subsequent nodes in the sort order in
    # the enclosing tree.
    #
+   # Changes to the tree structure are permitted during iteration,
+   # with the exception that the last node generated may not be
+   # removed from the tree ("unlinked") before the next result is
+   # generated; if it is then a runtime error is immediately raised.
+   #
+   # In order to iterate over the tree and remove selected nodes, a
+   # loop using `move_unlink` may be used instead.
+   #
    public gen()
       local n
       need_linked()
@@ -641,6 +649,9 @@ class SortTableNode()
    # Generate this node and all prior nodes in the sort order in the
    # enclosing tree.
    #
+   # See also `gen()` for a tree modification limitation (the same
+   # applies to this method).
+   #
    public back()
       local n
       need_linked()
@@ -652,91 +663,360 @@ class SortTableNode()
    end
 
    #
+   # Return the `SortTable` associated with this node, which
+   # must be "linked".
+   #
+   # This method works by moving up the tree to the root node, whose
+   # "parent" is a special object which contains a link to the
+   # enclosing tree.
+   #
+   # If this tree of nodes was orphaned because the parent tree
+   # performed a `clear()`, then this method fails.
+   #
+   public get_tree()
+      local n
+      need_linked()
+      n := p
+      while n := n.real().p
+      return \n.tree
+   end
+
+   #
+   # Remove this node from its tree.
+   #
+   # After a node has been unlinked it cannot be used for further
+   # operations, and any attempt to do so will cause a runtime error.
+   # (See also `is_linked`).
+   #
+   # Example :-
+   # ~
+   #   t := SortTable(,, "Cat", 12, "Mouse", 2, "Gerbil", 1)
+   #   n := t.node(2)     # SortTableNode(key="Gerbil";val=1)
+   #   n.unlink()
+   #   # t is now SortTable("Cat"->12;"Mouse"->2)
+   #   n.gen()            # runtime error
+   # ~
+   #
+   public unlink()
+      need_linked()
+      SortTable.unlink(self)
+      link
+   end
+
+   #
+   # This method combines a `move` and an `unlink`.  First, `move(i)`
+   # is performed, and the result is noted.  Then the `unlink` is
+   # peformed.  The result of the `move` is returned; if the `move`
+   # failed, then this method fails, but the `unlink` is carried out
+   # regardless.
+   #
+   # This gives a convenient way to iterate over the tree and delete
+   # selected nodes.
+   #
+   # Example :-
+   # ~
+   #    # Delete all entries with even-numbered keys.
+   #    n := t.node(1)
+   #    while
+   #       n := if n.key % 2 = 0 then
+   #          n.move_unlink(1)
+   #       else
+   #          n.get_next()
+   # ~
+   #
+   public move_unlink(i)
+      local t
+      t := move(i)
+      unlink()
+      return \t
+   end
+
+   #
    # Return the rank of this node, ie its index in the sorted order of
    # nodes in the enclosing tree, with 1 being the rank of the
    # "smallest" key.
    #
    public rank()
-      local i, t, c
       need_linked()
-      i := N
-      i -:= (\r).N
-      c := self
-      while t := \c.p do {
-         if c === t.r then
-            i +:= (\t.l).N + 1
-         c := t
-      }
-      return i
+      return SortTable.rank_of(self)
    end
 
-   package new(k, v)
+   package real()
+      link
+   end
+
+   package new(k, v, p)
       self.key := k
       self.val := v
-      self.is_red_flag := &yes
+      self.p := p
       self.N := 1
       return
    end
 end
 
 #
-# A `Table` which uses a red-black binary tree so that its members are always
-# in sorted order.
+# A sentinel which is the parent of the root node of a tree.
 #
-# Note that the various generator methods may produce unexpected
-# results if the table is modified between results, including
-# duplicated, deleted and omitted elements.
+package class SortTableSentinel()
+   public
+      tree,    # Parent SortTable, or null if cleared
+      root     # Root node, or null if table empty.
+
+   package real()
+   end
+
+   package new(t)
+      self.tree := t
+      return
+   end
+end
+
+#
+# A `Table` which uses a red-black binary tree so that its members are
+# always in sorted order.
 #
 class SortTable(Table)
    private
-      root
-   private static
-      nn
+      sentinel
    public const
       cmp
+
+   public override insert(key, val)
+      link new_node(key, val)
+   end
 
    #
    # This is like `insert()`, but returns the new node that has been
    # inserted, or the existing node that has been modified.
    #
    public new_node(key, val)
-      root := insert1(root, key, val)
-      root.p := &null
-      root.is_red_flag := &no
-      return 1(.nn, nn := &null)
-   end
-   
-   public override insert(key, val)
-      link new_node(key, val)
-   end
-
-   private insert1(n, key, val)
-      local i
-      if /n then
-         return nn := SortTableNode(key, val)
-      i := cmp(key, n.key)
-      if i < 0 then {
-         n.l := insert1(n.l, key, val)
-         n.l.p := n
-      } else if i > 0 then {
-         n.r := insert1(n.r, key, val)
-         n.r.p := n
-      } else {
-         n.key := key
-         n.val := val
-         return nn := n
+      local n, p, i
+      if /sentinel.root then {
+         sentinel.root := n := SortTableNode(key, val, sentinel)
+         return n
       }
-      
-      if is_red(n.r) & not is_red(n.l) then
-         n := rotate_left(n)
-      if is_red(n.l) & is_red(n.l.l) then
-         n := rotate_right(n)
-      if is_red(n.l) & is_red(n.r) then
-         flip_colors(n)
-      
-      n.N := size1(n.l) + size1(n.r) + 1
+      n := sentinel.root
+      repeat {
+         p := n
+         i := cmp(key, n.key)
+         if i < 0 then
+            n := n.l
+         else if i > 0 then
+            n := n.r
+         else {
+            n.val := val
+            return n
+         }
+         if /n then {
+            n := SortTableNode(key, val, p)
+            if i < 0 then
+               p.l := n
+            else
+               p.r := n
+            fix_sizes(p, 1)
+            fix_after_insertion(n)
+            return n
+         }
+      }
+   end
 
-      return n
+   private static fix_sizes(n, d)
+      repeat {
+         n.N +:= d
+         n := n.p.real() | fail
+      }
+   end
+
+   public override delete(key)
+      return unlink(find_node(key))
+   end
+
+   package static unlink(n)
+      local x
+      # If n has 2 children, swap its position with its successor
+      # (which has at most one child).
+      if \n.l & \n.r then
+         swap_nodes(n, n.get_next())
+      if x := \n.l | \n.r then {
+         # One child
+         x.p := n.p
+         down_var(n) := x
+         fix_sizes(x.p.real(), -1)
+         n.l := n.r := n.p := n.N := &null
+         fix_after_deletion(x)
+      } else {
+         # No children
+         fix_after_deletion(n)
+         down_var(n) := &null
+         fix_sizes(n.p.real(), -1)
+         n.p := n.N := &null
+      }
+      link
+   end
+
+   private static fix_after_deletion(x)
+      local sib, xp
+      while /x.is_red_flag & xp := x.p.real() do {
+         if x === xp.l then {
+            sib := xp.r
+            if is_red(sib) then {
+               sib.is_red_flag := &no
+               xp.is_red_flag := &yes
+               rotate_left(xp)
+               # Since x is xp.l and rotate_left(n) doesn't change
+               # n.l, xp is still valid.
+               sib := xp.r
+            }
+            if /sib | (is_black(sib.l) & is_black(sib.r)) then {
+               (\sib).is_red_flag := &yes
+               x := xp
+            } else {
+               if is_black(sib.r) then {
+                  (\sib.l).is_red_flag := &no
+                  sib.is_red_flag := &yes
+                  rotate_right(sib)
+                  # xp is still the same
+                  sib := xp.r
+               }
+               sib.is_red_flag := xp.is_red_flag
+               xp.is_red_flag := &no
+               (\sib.r).is_red_flag := &no
+               rotate_left(xp)
+               return
+            }
+         } else {       # Symmetric
+            sib := xp.l
+            if is_red(sib) then {
+               sib.is_red_flag := &no
+               xp.is_red_flag := &yes
+               rotate_right(xp)
+               sib := xp.l
+            }
+            if /sib | (is_black(sib.l) & is_black(sib.r)) then {
+                (\sib).is_red_flag := &yes
+                x := xp
+            } else {
+               if is_black(sib.l) then {
+                  (\sib.r).is_red_flag := &no
+                  sib.is_red_flag := &yes
+                  rotate_left(sib)
+                  sib := xp.l
+               }
+               sib.is_red_flag := xp.is_red_flag
+               xp.is_red_flag := &no
+               (\sib.l).is_red_flag := &no
+               rotate_right(xp)
+               return
+            }
+         }
+      }
+      x.is_red_flag := &no 
+   end
+
+   private static swap_nodes(x, y)
+      down_var(x) := y
+      down_var(y) := x
+      x.p :=: y.p
+      x.l :=: y.l
+      x.r :=: y.r
+      x.N :=: y.N
+      x.is_red_flag :=: y.is_red_flag
+      (\x.l).p := x
+      (\x.r).p := x
+      (\y.l).p := y
+      (\y.r).p := y
+   end
+
+   private static down_var(n)
+      local t
+      return if t := n.p.real() then {
+         if t.l === n then
+            t.l
+         else
+            t.r
+      } else
+         n.p.root
+   end
+
+   private static is_black(p)
+      succeed /p | /p.is_red_flag
+   end
+
+   private static is_red(n)
+      succeed \ (\n).is_red_flag
+   end
+
+   private fix_after_insertion(x)
+      local y, xp, xpp
+      x.is_red_flag := &yes
+      while xp := x.p.real() & \xp.is_red_flag do {
+         if xpp := xp.p.real() & xp === xpp.l then {
+            if y := \xpp.r & \y.is_red_flag then {
+               xp.is_red_flag := &no
+               y.is_red_flag := &no
+               xpp.is_red_flag := &yes
+               x := xpp
+            } else {
+               if x === xp.r then {
+                  x := xp
+                  rotate_left(x)
+               }
+               if xp := x.p.real() then {
+                  xp.is_red_flag := &no
+                  if xpp := xp.p.real() then {
+                     xpp.is_red_flag := &yes
+                     rotate_right(xpp)
+                  }
+               }
+            }
+         } else {
+            if xpp := xp.p.real() & y := \xpp.l & \y.is_red_flag then {
+               xp.is_red_flag := &no
+               y.is_red_flag := &no
+               xpp.is_red_flag := &yes
+               x := xpp
+            } else {
+               if x === xp.l then {
+                  x := xp
+                  rotate_right(x)
+               }
+               if xp := x.p.real() then {
+                  xp.is_red_flag := &no
+                  if xpp := xp.p.real() then {
+                     xpp.is_red_flag := &yes
+                     rotate_left(xpp)
+                  }
+               }
+            }
+         }
+      }
+      sentinel.root.is_red_flag := &no
+   end
+
+   private static rotate_left(n)
+      local x
+      x := n.r
+      n.r := x.l
+      (\x.l).p := n
+      x.p := n.p
+      down_var(n) := x
+      x.l := n
+      n.p := x
+      x.N := n.N
+      n.N := size1(n.l) + size1(n.r) + 1
+   end
+
+   private static rotate_right(n)
+      local x
+      x := n.l
+      n.l := x.r
+      (\x.r).p := n
+      x.p := n.p
+      down_var(n) := x
+      x.r := n
+      n.p := x
+      x.N := n.N
+      n.N := size1(n.l) + size1(n.r) + 1
    end
 
    #
@@ -745,7 +1025,7 @@ class SortTable(Table)
    #
    public find_node_gt(key)
       local n, i
-      n := root
+      n := sentinel.root
       while \n do {
          i := cmp(key, n.key)
          if i < 0 then {
@@ -766,7 +1046,7 @@ class SortTable(Table)
    #
    public find_node_lt(key)
       local n, i
-      n := root
+      n := sentinel.root
       while \n do {
          i := cmp(key, n.key)
          if i > 0 then {
@@ -787,7 +1067,7 @@ class SortTable(Table)
    #
    public find_node_ge(key)
       local n, i
-      n := root
+      n := sentinel.root
       while \n do {
          i := cmp(key, n.key)
          if i < 0 then {
@@ -809,7 +1089,7 @@ class SortTable(Table)
    #
    public find_node_le(key)
       local n, i
-      n := root
+      n := sentinel.root
       while \n do {
          i := cmp(key, n.key)
          if i > 0 then {
@@ -831,7 +1111,7 @@ class SortTable(Table)
    #
    public find_node(key)
       local n, i
-      n := root
+      n := sentinel.root
       while \n do {
          i := cmp(key, n.key)
          if i = 0 then
@@ -879,163 +1159,13 @@ class SortTable(Table)
       return find_node(key).val
    end
 
-   public override delete(key)
-      member(key) | fail
-      unless is_red(root.l | root.r) then
-         root.is_red_flag := &yes
-      root := delete1(root, key)
-      if \root then {
-         root.p  := &null
-         root.is_red_flag := &no
-      }
-      link
-   end
-
-   private delete1(n, key)
-      local x
-      if cmp(key, n.key) < 0 then {
-         unless is_red(n.l | n.l.l) then
-            n := move_red_left(n)
-         n.l := delete1(n.l, key)
-         (\n.l).p := n
-      } else {
-         if is_red(n.l) then
-            n := rotate_right(n)
-         if cmp(key, n.key) = 0 & /n.r then {
-            n.N := &null
-            return
-         }
-         unless is_red(n.r | n.r.l) then
-            n := move_red_right(n)
-         if cmp(key, n.key) = 0 then {
-            x := min1(n.r)
-            x.r := delete_min1(n.r)
-            (\x.r).p := x
-            x.l := n.l
-            (\x.l).p := x
-            x.is_red_flag := n.is_red_flag
-            n.N := &null
-            n := x
-         } else {
-            n.r := delete1(n.r, key)
-            (\n.r).p := n
-         }
-      }
-      return balance(n)
-   end
-
-   #
-   # This method combines a `move` (applied to a node `n`) and a
-   # `delete` of that same node.  First, `n.move(i)` is performed, and
-   # the result is noted.  Then the `delete` is peformed on `n.key`.
-   # The result of the `move` is returned; if the `move` failed, then
-   # this method fails, but the `unlink` is carried out regardless.
-   #
-   # This gives an alternative way to iterate over the tree and delete
-   # selected nodes.
-   #
-   # Example :-
-   # ~
-   #    # Delete all entries with even-numbered keys.
-   #    n := t.node(1)
-   #    while
-   #       n := if n.key % 2 = 0 then
-   #          t.move_delete(n, 1)
-   #       else
-   #          n.get_next()
-   # ~
-   #
-   public move_delete(n, i)
-      local t
-      need_instance(n, SortTableNode)
-      t := n.move(i)
-      delete(n.key)
-      return \t
-   end
-
-   private static min1(n)
-      while \n.l do
-         n := n.l
-      return n
-   end
-
-   private static delete_min1(n)
-      if /n.l then
-         return
-      unless is_red(n.l | n.l.l) then
-         n := move_red_left(n)
-      n.l := delete_min1(n.l)
-      (\n.l).p := n
-      return balance(n)
-   end
-
-   private static balance(n)
-      if is_red(n.r) then
-         n := rotate_left(n)
-      if is_red(n.l) & is_red(n.l.l) then
-         n := rotate_right(n)
-      if is_red(n.l) & is_red(n.r) then
-         flip_colors(n)
-      n.N := size1(n.l) + size1(n.r) + 1
-      return n
-   end
-
-   private static rotate_right(n)
-      local x
-      x := n.l
-      n.l := x.r
-      (\n.l).p := n
-      x.r := n
-      x.r.p := x
-      x.is_red_flag := x.r.is_red_flag
-      x.r.is_red_flag := &yes
-      x.N := n.N
-      n.N := size1(n.l) + size1(n.r) + 1
-      return x
-   end
-
-   private static rotate_left(n)
-      local x
-      x := n.r
-      n.r := x.l
-      (\n.r).p := n
-      x.l := n
-      x.l.p := x
-      x.is_red_flag := x.l.is_red_flag
-      x.l.is_red_flag := &yes
-      x.N := n.N
-      n.N := size1(n.l) + size1(n.r) + 1
-      return x
-   end
-   
-   private static move_red_left(n)
-      flip_colors(n)
-      if is_red(n.r.l) then {
-         n.r := rotate_right(n.r)
-         n.r.p := n
-         n := rotate_left(n)
-      }
-      return n
-   end
-
-   private static move_red_right(n)
-      flip_colors(n)
-      if is_red(n.l.l) then
-         n := rotate_right(n)
-      return n
-   end
-
-   private static flip_colors(n)
-      n.is_red_flag := toggle_flag(n.is_red_flag)
-      n.l.is_red_flag := toggle_flag(n.l.is_red_flag)
-      n.r.is_red_flag := toggle_flag(n.r.is_red_flag)
-   end
-
    #
    # Generate the nodes in the table.  Each node represents one entry
    # in the table, and contains key and val members; the former is
    # read-only, the latter may be changed if desired, to edit the
    # value in the table.  The nodes are generated in sorted key order.
+   #
+   # See also `SortTableNode.gen()`.
    #
    public nodes()
       suspend node(1).gen()
@@ -1067,8 +1197,15 @@ class SortTable(Table)
       suspend node(i - 1).back()
    end
 
-   private static is_red(n)
-      succeed \ (\n).is_red_flag
+   package static rank_of(n)
+      local i, t
+      i := size1(n.l) + 1
+      while t := n.p.real() do {
+         if n === t.r then
+            i +:= size1(t.l) + 1
+         n := t
+      }
+      return i
    end
 
    private static size1(n)
@@ -1111,8 +1248,19 @@ class SortTable(Table)
       suspend back_nodes().val
    end
 
+   private new_sentinel()
+      self.sentinel := SortTableSentinel(self)
+   end
+
+   #
+   # This is a constant-time operation that leaves the former tree of
+   # nodes intact, but entirely divorced from this table.  The old
+   # nodes will remain "linked" to one another, and can still be
+   # operated upon, but without affecting this list.
+   #
    public override clear()
-      root := &null
+      sentinel.tree := &null
+      new_sentinel()
       link
    end
 
@@ -1121,7 +1269,7 @@ class SortTable(Table)
    end
 
    public override size()
-      return size1(root)
+      return size1(sentinel.root)
    end
 
    public override select(i)
@@ -1133,11 +1281,11 @@ class SortTable(Table)
    #
    public node(i)
       i := cvpos_item(i, size()) | fail
-      return select1(root, i)
+      return select1(sentinel.root, i)
    end
 
    public override rank(k)
-      return rank1(root, k)
+      return rank1(sentinel.root, k)
    end
 
    private select1(n, i)
@@ -1167,45 +1315,47 @@ class SortTable(Table)
    # Check the table for internal consistency.
    #
    public check()
-      is_bst(root) | return error("Not in symmetric order")
-      is_size_consistent(root)  | return error("Subtree counts not consistent")
-      is_rank_consistent(root)  | return error("Ranks not consistent")
-      is_23(root) | return error("Not a 2-3 tree")
+      is_bst(sentinel.root) | return error("Not in symmetric order")
+      is_size_consistent(sentinel.root)  | return error("Subtree counts not consistent")
+      is_rank_consistent(sentinel.root)  | return error("Ranks not consistent")
       is_balanced() | return error("Not balanced")
-      is_correctly_linked(root) | return error("Not correctly linked")
-      if \ (\root).p then return error("Root has a parent")
+      is_correctly_linked(sentinel.root) | return error("Not correctly linked")
+      if (\sentinel.root).p.real() then return error("Root has a parent")
       return
+   end
+
+   #
+   # Return the height of the tree; useful for testing purposes.
+   #
+   public height()
+      return height1(sentinel.root)
+   end
+
+   private height1(n)
+      return if /n then 0 else 1 + max(height1(n.l), height1(n.r))
    end
 
    private is_correctly_linked(n)
       if /n then return
-      if (\n.l).p ~=== n then fail
-      if (\n.r).p ~=== n then fail
+      if (\n.l | \n.r).p ~=== n then fail
       succeed is_correctly_linked(n.l) & is_correctly_linked(n.r)
    end
 
    private is_balanced()
       local b, n
       b := 0
-      n := root
+      n := sentinel.root
       while \n do {
          is_red(n) | (b +:= 1)
          n := n.l
       }
-      succeed is_balanced1(root, b)
+      succeed is_balanced1(sentinel.root, b)
    end
 
    private is_balanced1(n, b)
       if /n then succeed b = 0
       is_red(n) | (b -:= 1)
       succeed is_balanced1(n.l, b) & is_balanced1(n.r, b)
-   end
-
-   private is_23(n)
-      if /n then return
-      if is_red(n.r) then fail
-      if n ~=== root & is_red(n) & is_red(n.l) then fail
-      succeed is_23(n.l) & is_23(n.r)
    end
 
    private is_bst(n, min, max)
@@ -1248,6 +1398,7 @@ class SortTable(Table)
    # :  `entries` - initial key-value entries.
    #
    public new(def, cmp, entries[])
+      new_sentinel()
       self.def := def
       self.cmp := need_callable_def(cmp)
       init_entries(entries)
