@@ -323,7 +323,7 @@ class TableSet(Set)
       t
 
    public override insert(x)
-      t.insert(x, t.def)
+      t.add(x)
       link
    end
 

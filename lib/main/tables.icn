@@ -59,7 +59,10 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Insert a new entry, or change an existing one.  Always succeeds
    # and returns `self`.  Only implemented with INSERT capability.
    #
-   public optional insert(key, val)
+   public insert(key, val)
+      add(key) := val
+      link
+   end
 
    # Return the value for the given key if it is in the table, or fail
    # if it is not present.  If the table has MODIFY capability, a
@@ -86,7 +89,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Like `member`, but if the key is not present a new entry is added
    # (with the default value).  If the table has MODIFY capability, a
    # variable for the new entry is returned, otherwise a value is
-   # returned.
+   # returned.  Only implemented with INSERT capability.
    #
    # Example :-
    # ~
@@ -95,9 +98,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #    every w := words() do
    #       t.add(w) +:= 1
    # ~
-   public add(key)
-      return member(key) | (insert(key, def) & member(key))
-   end
+   public optional add(key)
 
    #
    # Return a sorted list of key-value pairs.
@@ -538,7 +539,7 @@ end
 # A node in a `SortTable` tree.
 #
 class SortTableNode()
-   package readable
+   public const
       key
    public
       val
@@ -781,34 +782,44 @@ class SortTable(Table)
    public const
       cmp
 
-   public override insert(key, val)
-      link new_node(key, val)
+   public override add(key)
+      return add_node(key).val
    end
 
    #
-   # This is like `insert()`, but returns the new node that has been
-   # inserted, or the existing node that has been modified.
+   # This is like `add_node()`, but sets the value of the node to
+   # `val` before returning it.
    #
    public new_node(key, val)
+      local n
+      n := add_node(key)
+      n.val := val
+      return n
+   end
+
+   #
+   # Add a new node into the tree with the given key (and the default
+   # value), or return an existing node if one with a matching key is
+   # already present.
+   #
+   public add_node(key)
       local n, p, i
       if /sentinel.root then {
-         sentinel.root := n := SortTableNode(key, val, sentinel)
+         sentinel.root := n := SortTableNode(key, def, sentinel)
          return n
       }
       n := sentinel.root
       repeat {
-         p := n
          i := cmp(key, n.key)
-         if i < 0 then
-            n := n.l
-         else if i > 0 then
-            n := n.r
-         else {
-            n.val := val
+         if i = 0 then
             return n
-         }
+         p := n
+         n := if i < 0 then
+            n.l
+         else
+            n.r
          if /n then {
-            n := SortTableNode(key, val, p)
+            n := SortTableNode(key, def, p)
             if i < 0 then
                p.l := n
             else
@@ -1128,7 +1139,7 @@ class SortTable(Table)
    # such key.
    #
    public find_key_gt(key)
-      return .find_node_gt(key).key
+      return find_node_gt(key).key
    end
 
    #
@@ -1136,7 +1147,7 @@ class SortTable(Table)
    # key.
    #
    public find_key_lt(key)
-      return .find_node_lt(key).key
+      return find_node_lt(key).key
    end
 
    #
@@ -1144,7 +1155,7 @@ class SortTable(Table)
    # there is no such key.
    #
    public find_key_ge(key)
-      return .find_node_ge(key).key
+      return find_node_ge(key).key
    end
 
    #
@@ -1152,7 +1163,7 @@ class SortTable(Table)
    # is no such key.
    #
    public find_key_le(key)
-      return .find_node_le(key).key
+      return find_node_le(key).key
    end
 
    public override member(key)
@@ -1213,31 +1224,31 @@ class SortTable(Table)
    end
 
    public override key()
-      suspend .nodes().key
+      suspend nodes().key
    end
 
    public override key_from(i)
-      suspend .nodes_from(i).key
+      suspend nodes_from(i).key
    end
 
    public override keyval()
       local e
       every e := nodes() do
-         suspend .e.key | e.val
+         suspend e.key | e.val
    end
 
    public override back_key()
-      suspend .back_nodes().key
+      suspend back_nodes().key
    end
 
    public override back_key_from(i)
-      suspend .back_nodes_from(i).key
+      suspend back_nodes_from(i).key
    end
 
    public override back_keyval()
       local e
       every e := back_nodes() do
-         suspend .e.key | e.val
+         suspend e.key | e.val
    end
 
    public override gen()
@@ -1273,7 +1284,7 @@ class SortTable(Table)
    end
 
    public override select(i)
-      return .node(i).key
+      return node(i).key
    end
 
    #
@@ -1411,13 +1422,10 @@ end
 # rather than the builtin `===` operator.
 #
 class EqTable(Table)
-   private const t
-   private sz
-
-   public override insert(key, val)
-      add(key) := val
-      link
-   end
+   private const
+      t
+   private
+      sz
 
    public override add(key)
       local h, l, e, n
@@ -1516,6 +1524,10 @@ class BuiltinTable(Table)
    public override insert(key, val)
       default.insert(t, key, val)
       link
+   end
+
+   public override add(key)
+      return member(key) | (insert(key, def) & member(key))
    end
 
    public override member(key)
@@ -1619,11 +1631,6 @@ class WeakrefTable(Table)
    #
    public set_repeat_collect(s)
       self.repeat_collect_flag := need_flag(s)
-      link
-   end
-
-   public override insert(key, val)
-      add(key) := val
       link
    end
 
