@@ -1,4 +1,103 @@
-import io, lang, datastruct, ipl.random, ipl.test
+import io, lang, datastruct, ipl.random, ipl.test, ipl.pdco(Length)
+
+procedure methods(x)
+   local i, y
+   write()
+   write("Testing methods of ", imagex(x))
+
+   if is(x,Table) then {
+      print{"size()", x.size()}
+      if is(x,WeakrefTable) then
+         every x.insert([1 to 10], ?0)
+      else if x.can(Table.INSERT) then
+         every x.insert(1 to 10, ?0)
+
+      print{"key()", Length{ x.key() }}
+      print{"gen()", Length{ x.gen() }}
+      print{"keyval()", Length{ x.keyval() }}
+
+      if x.can(Table.ORDER) then {
+         print{"key_from(1)", Length{ x.key_from(1) }}
+         print{"back_key()", Length{ x.back_key() }}
+         print{"back_key_from(0)", Length{ x.back_key_from(0) }}
+         print{"gen_from(1)", Length{ x.gen_from(1) }}
+         print{"back()", Length{ x.back() }}
+         print{"back_from(0)", Length{ x.back_from(0) }}
+         print{"keyval_from(1)", Length{ x.keyval_from(1) }}
+         print{"back_keyval()", Length{ x.back_keyval() }}
+         print{"back_keyval_from(0)", Length{ x.back_keyval_from(0) }}
+         print{"select(0)", x.select(0)}
+
+         every i := 1 to x.size() do {
+            if y := x.select(i) then {
+               unless i = x.rank(y) then
+                  write("rank of ", imagex(y), " not equal to ", i)
+            } else
+               write("Failed to select ", i)
+         }
+      }
+
+      if x.can(Table.DELETE) then {
+         x.delete(1)
+         x.clear()
+         print{"size() after clear()", x.size()}
+      }
+
+   } else if is(x,Set) then {
+      print{"size()", x.size()}
+      if x.can(Set.INSERT) then
+         every x.insert(1 to 10)
+
+      print{"gen()", Length{ x.gen() }}
+
+      if x.can(Set.ORDER) then {
+         print{"gen_from(1)", Length{ x.gen_from(1) }}
+         print{"back()", Length{ x.back() }}
+         print{"back_from(0)", Length{ x.back_from(0) }}
+         print{"select(0)", x.select(0)}
+
+         every i := 1 to x.size() do {
+            if y := x.select(i) then {
+               unless i = x.rank(y) then
+                  write("rank of ", imagex(y), " not equal to ", i)
+            } else
+               write("Failed to select ", i)
+         }
+      }
+
+      if x.can(Set.DELETE) then {
+         x.delete(1)
+         x.clear()
+         print{"size() after clear()", x.size()}
+      }
+
+   } else if is(x,List) then {
+      print{"Size=", x.size()}
+      if x.can(Set.INSERT) then
+         every x.insert(0, 1 to 10)
+
+      print{"gen()", Length{ x.gen() }}
+      print{"gen_from(1)", Length{ x.gen_from(1) }}
+      print{"back()", Length{ x.back() }}
+      print{"back_from(0)", Length{ x.back_from(0) }}
+      print{"at(0)", x.at(0)}
+
+      every i := 1 to x.size() do {
+         if y := x.at(i) then {
+            unless i = x.keyof(y) then
+               write("keyof of ", imagex(y), " not equal to ", i)
+         } else
+            write("Failed to at() ", i)
+      }
+
+      if x.can(Set.DELETE) then {
+         x.delete(1)
+         x.clear()
+         print{"size() after clear()", x.size()}
+      }
+
+   }
+end
 
 procedure test_ord(t1,t2)
    local i, l, e
@@ -127,6 +226,29 @@ procedure test_list()
 end
 
 procedure main()
+   methods(UnmodifiableTable(SortTable(,,1,2,3,4)))
+   methods(SortTable())
+   methods(EqTable())
+   methods(BuiltinTable())
+   methods(EmptyTable())
+   methods(WeakrefTable())
+   methods(UnmodifiableBuiltinTable(table(1,2,3)))
+
+   methods(UnmodifiableSet(TableSet(SortTable(,,1,2,3,4))))
+   methods(TableSet(SortTable(,,1,2,3,4)))
+   methods(EqSet())
+   methods(EmptySet())
+   methods(BuiltinSet())
+   methods(UnmodifiableBuiltinSet(set(10,20)))
+
+   methods(UnmodifiableList(LinkedList(1,2,3)))
+   methods(EmptyList())
+   methods(BuiltinList())
+   methods(LinkedList())
+   methods(DoublyLinkedList())
+   methods(UnmodifiableBuiltinList([1,2,3,4]))
+   methods(SubList(DoublyLinkedList(10,20,30,40,50,60,70),3,6))
+
    test_ord(EqTable(0),EqTable(0))
    test_ord(SortTable(0),SortTable(0))
    test_ord(BuiltinTable(table(0)),BuiltinTable(table(0)))
