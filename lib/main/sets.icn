@@ -12,9 +12,8 @@ import ipl.pdco(Index), lang, util
 # A subclass must implement different optional methods depending on
 # its capability mode, as follows :-
 #
-#  * `ORDER` - `gen_from()`, `back()`, `back_from()`,
-#    `rank()` and `select()`; see also `SetImpl1` and 
-#    `SetImpl2` below.
+#  * `ORDER` - `gen_from()`, `back_from()`, `rank()` and
+#              `select()`; see also `OrderSetImpl` below.
 #  * `INSERT` - `insert()`
 #  * `DELETE` - `delete()`
 #
@@ -81,7 +80,9 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Generate the entries in reverse order.  Only implemented with
    # ORDER capability.
    #
-   public optional back()
+   public back()
+      suspend back_from(0)
+   end
 
    #
    # Generate the entries, starting with the entry at index `i`.  Only
@@ -127,8 +128,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # `self`.  Only implemented with DELETE capability.
    #
    public clear()
-      while size() > 0 do
-         delete(gen())
+      while delete(gen())
       link
    end
 
@@ -201,19 +201,21 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
-# A helpful abstract class for a table with `ORDER` capability, which
-# wishes to implement the generator methods (`gen()`, `gen_from()`,
-# `back()` and `back_from()`) in terms of `select()`.
+# An abstract class for a set with `ORDER` capability, providing a
+# default implementation of `gen()` in terms of `gen_from(i)`.
 #
-abstract class SetImpl1(Set)
+abstract class OrderSetImpl(Set)
    public override gen()
       suspend gen_from(1)
    end
+end
 
-   public override back()
-      suspend back_from(0)
-   end
-
+#
+# This subclass of `OrderSetImpl` implements `gen_from()` and
+# `back_from()` in terms of `select()` (which must be provided by the
+# subclass).
+#
+abstract class OrderSetImpl1(OrderSetImpl)
    public override gen_from(i)
       i := cvpos_item(i, size()) | fail
       repeat {
@@ -236,19 +238,10 @@ abstract class SetImpl1(Set)
 end
 
 #
-# A helpful abstract class for a set with `ORDER` capability, which
-# wishes to implement `select()` in terms of `gen()`, by providing
-# `gen_from()`.  `back_from()` must also be implemented.
+# This subclass of `OrderSetImpl` implements `select()` in terms of
+# `gen()`.
 #
-abstract class SetImpl2(Set)
-   public override gen()
-      suspend gen_from(1)
-   end
-
-   public override back()
-      suspend back_from(0)
-   end
-
+abstract class OrderSetImpl2(OrderSetImpl)
    public override select(i)
       return Index{ gen(), cvpos_item(i, size()) }
    end
@@ -414,7 +407,7 @@ end
 #
 # An empty set.  An instance of this class is `Set.EMPTY_SET`.
 #
-class EmptySet(SetImpl1)
+class EmptySet(OrderSetImpl1)
    public override select(i)
    end
 
