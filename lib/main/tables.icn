@@ -19,13 +19,13 @@ record Entry(key, val)
 # A subclass must implement different optional methods depending on
 # its capability mode, as follows :-
 #
-#  * `ORDER` - `back_key()`, `rank()` and `select()`; see also
-#               `OrderTableImpl1` below.
-#  * `INSERT` - `add()`
+#  * `ORDER` - `back_key()`, `rank()` and `select()`
+#  * `INSERT` - `insert()`, `add()`
 #  * `DELETE` - `delete()`
 #
 # There are several other abstract methods which all classes must of
-# course implement.
+# course implement.  Some helper classes are provided below to provide
+# implementations of some methods in terms of others.
 #
 # Note that the behaviour of the various generator methods is
 # undefined if the table is concurrently modified during the course of
@@ -33,7 +33,8 @@ record Entry(key, val)
 #
 abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public const
-      def        # The table's default value.
+      # The table's default value.
+      def
 
    public static const
       # Empty table implementation
@@ -59,10 +60,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Insert a new entry, or change an existing one.  Always succeeds
    # and returns `self`.  Only implemented with INSERT capability.
    #
-   public insert(key, val)
-      add(key) := val
-      link
-   end
+   public optional insert(key, val)
 
    #
    # Return the value for the given key if it is in the table, or fail
@@ -410,6 +408,27 @@ end
 abstract class OrderTableImpl2(Table)
    public override select(i)
       return Index{ key(), cvpos_item(i, size()) }
+   end
+end
+
+#
+# A helpful abstract class for a table with `INSERT` capability, which
+# wishes to implement `insert()` in terms of `add()`.
+#
+abstract class InsertTableImpl1(Table)
+   public override insert(key, val)
+      add(key) := val
+      link
+   end
+end
+
+#
+# A helpful abstract class for a table with `INSERT` capability, which
+# wishes to implement `add()` in terms of `member()` and `insert()`.
+#
+abstract class InsertTableImpl2(Table)
+   public override add(key)
+      return member(key) | (insert(key, def) & member(key))
    end
 end
 
@@ -771,7 +790,7 @@ end
 # A `Table` which uses a red-black binary tree so that its members are
 # always in sorted order.
 #
-class SortTable(Table)
+class SortTable(InsertTableImpl1)
    private
       sentinel
    public const
@@ -1390,7 +1409,7 @@ end
 # A `Table` which uses the `lang.equals` procedure for key comparison,
 # rather than the builtin `===` operator.
 #
-class EqTable(Table)
+class EqTable(InsertTableImpl1)
    private const
       t
    private
@@ -1486,17 +1505,13 @@ end
 #
 # A `Table` which is just a wrapper around a builtin table.
 #
-class BuiltinTable(Table)
+class BuiltinTable(InsertTableImpl2)
    private const
       t
 
    public override insert(key, val)
       default.insert(t, key, val)
       link
-   end
-
-   public override add(key)
-      return member(key) | (insert(key, def) & member(key))
    end
 
    public override member(key)
@@ -1579,7 +1594,7 @@ end
 #
 # A `Table` which uses weak references
 #
-class WeakrefTable(Table)
+class WeakrefTable(InsertTableImpl1)
    private const
       t
    private
@@ -1587,6 +1602,7 @@ class WeakrefTable(Table)
       last_purge,
       repeat_collect_flag
 
+   #
    # This flag can be set to force repeated collections during a
    # purge, whilst this reduces the size of the table.  This can be
    # useful in the case that the values in the table hold references

@@ -7,10 +7,18 @@ procedure methods(x)
 
    if is(x,Table) then {
       print{"size()", x.size()}
-      if is(x,WeakrefTable) then
+      if is(x,WeakrefTable) then {
          every x.insert([1 to 10], ?0)
-      else if x.can(Table.INSERT) then
+         every x.add([11 to 20], ?0)
+      }
+      else if x.can(Table.INSERT) then {
          every x.insert(1 to 10, ?0)
+         every x.add(11 to 20)
+         if x.can(Table.MODIFY) then {
+            x.add(20) := 0
+            x.add(21) := 0
+         }
+      }
 
       print{"key()", Length{ x.key() }}
       print{"gen()", Length{ x.gen() }}
