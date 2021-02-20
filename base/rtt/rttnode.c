@@ -146,7 +146,7 @@ struct token *tok;
    int typcd;
 
    n = sym_node(tok);
-   typcd = n->u[0].sym->u.typ_indx; 
+   typcd = n->u[0].sym->typ_indx; 
    if (typcd != int_typ && typcd != str_typ && typcd != cset_typ &&
       typcd != real_typ && typcd != ucs_typ)
       errt2(tok, "cannot convert to ", tok->image);

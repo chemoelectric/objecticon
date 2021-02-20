@@ -72,9 +72,8 @@ struct sym_entry {
          struct node *init;     /*   initial value from declaration */
          struct sym_entry *next;
          } declare_var;
-      int typ_indx;             /* index into arrays of type information */
-      word lbl_num;             /* label number used in in-line code */
       } u;
+   int typ_indx;             /* index into arrays of type information */
    int t_indx;		/* index into tended array */
    int il_indx;		/* index used in in-line code */
    int f_indx;          /* index in function sym list */
