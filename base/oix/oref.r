@@ -23,6 +23,23 @@ static struct b_tvsubs *make_tvsubs(dptr var, word pos, word len)
     return t;
 }
 
+/* Some helpful macros for suspending/returning chars in a cset */
+
+#begdef SuspendCh(x)
+    if (x < 256)
+       suspend string(1, &allchars[x]);
+    else
+       suspend ucs(make_one_char_ucs_block(x));
+#enddef
+
+#begdef ReturnCh(x)
+    if (x < 256)
+       return string(1, &allchars[x]);
+    else
+       return ucs(make_one_char_ucs_block(x));
+#enddef
+
+
 "!x - generate successive values from object x."
 
 operator ! bang(underef x -> dx)
@@ -104,10 +121,7 @@ operator ! bang(underef x -> dx)
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = from; j <= to; ++j) {
-                   if (j < 256)
-                       suspend string(1, &allchars[j]);
-                   else
-                       suspend ucs(make_one_char_ucs_block(j));
+                   SuspendCh(j);
                }
             }
          }
@@ -233,10 +247,7 @@ operator ? random(underef x -> dx)
              i = (word)rval + 1;
              k = cset_range_of_pos(&CsetBlk(dx), i);
              ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
-             if (ch < 256)
-                 return string(1, &allchars[ch]);
-             else
-                 return ucs(make_one_char_ucs_block(ch));
+             ReturnCh(ch);
          }
 
       list: {
@@ -610,10 +621,7 @@ operator [] subsc(underef x -> dx,y)
              fail;
          k = cset_range_of_pos(&CsetBlk(dx), i);
          ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
-         if (ch < 256)
-             return string(1, &allchars[ch]);
-         else
-             return ucs(make_one_char_ucs_block(ch));
+         ReturnCh(ch);
        }
 
       default: {
@@ -733,19 +741,13 @@ function back(underef x -> dx, n)
             from = CsetBlk(dx).range[i].from;
             to = from + n - 1 - CsetBlk(dx).range[i].index;
             for (j = to; j >= from; --j) {
-                if (j < 256)
-                    suspend string(1, &allchars[j]);
-                else
-                    suspend ucs(make_one_char_ucs_block(j));
+                SuspendCh(j);
             }
             for (i--; i >= 0; i--) {
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = to; j >= from; --j) {
-                   if (j < 256)
-                       suspend string(1, &allchars[j]);
-                   else
-                       suspend ucs(make_one_char_ucs_block(j));
+                   SuspendCh(j);
                }
             }
          }
@@ -873,19 +875,13 @@ function forward(underef x -> dx, n)
             from = CsetBlk(dx).range[i].from + n - 1 - CsetBlk(dx).range[i].index;;
             to = CsetBlk(dx).range[i].to;
             for (j = from; j <= to; ++j) {
-                if (j < 256)
-                    suspend string(1, &allchars[j]);
-                else
-                    suspend ucs(make_one_char_ucs_block(j));
+                SuspendCh(j);
             }
             for (i++; i < CsetBlk(dx).n_ranges; i++) {
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = from; j <= to; ++j) {
-                   if (j < 256)
-                       suspend string(1, &allchars[j]);
-                   else
-                       suspend ucs(make_one_char_ucs_block(j));
+                   SuspendCh(j);
                }
             }
          }
