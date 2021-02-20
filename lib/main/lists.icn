@@ -86,36 +86,19 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the members.  If the list has MODIFY capability,
+   # Generate the members, starting with the element at index `i`,
+   # which defaults to 1.  If the list has MODIFY capability,
    # variables are generated, otherwise values are generated.
    #
-   public gen()
-      suspend gen_from(1)
-   end
-
-   #
-   # Generate the members, starting with the element at index `i`.
-   # If the list has MODIFY capability, variables are generated,
-   # otherwise values are generated.
-   #
-   public abstract gen_from(i)
-
-   #
-   # Generate the members in reverse order.  If the list has MODIFY
-   # capability, variables are generated, otherwise values are
-   # generated.
-   #
-   public back()
-      suspend back_from(0)
-   end
+   public abstract gen(i)
 
    #
    # Generate the members in reverse order, starting with the element
-   # before index `i` (thus generating the elements in the range 1:i).
-   # If the list has MODIFY capability, variables are generated,
-   # otherwise values are generated.
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0.  If the list has MODIFY capability, variables
+   # are generated, otherwise values are generated.
    #
-   public abstract back_from(i)
+   public abstract back(i)
 
    #
    # Return the size of the list.
@@ -151,7 +134,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public slice(i, j)
       local s
       s := cvslice(i, j, size()) | fail
-      return ipl.pdco.List{ gen_from(s.lo) \ (s.hi - s.lo) }
+      return ipl.pdco.List{ gen(s.lo) \ (s.hi - s.lo) }
    end
 
    #
@@ -228,11 +211,11 @@ end
 
 #
 # A helpful abstract class for a list, which wishes to implement the
-# generator methods (`gen_from()` and `back_from()`) in terms of
-# `at()`.
+# generator methods `gen()` and `back()` in terms of `at()`.
 #
 abstract class ListImpl1(List)
-   public override gen_from(i)
+   public override gen(i)
+      /i := 1
       i := cvpos_item(i, size()) | fail
       repeat {
          suspend at(i)
@@ -243,8 +226,8 @@ abstract class ListImpl1(List)
       }
    end
 
-   public override back_from(i)
-      i := need_integer(i)
+   public override back(i)
+      i := need_integer(\i) | 0
       i := cvpos_item(i - 1, size()) | fail
       while i > 0 do {
          suspend at(i)
@@ -274,12 +257,12 @@ class UnmodifiableList(List)
       return .l.at(i)
    end
 
-   public override gen_from(i)
-      suspend .l.gen_from(i)
+   public override gen(i)
+      suspend .l.gen(i)
    end
 
-   public override back_from(i)
-      suspend .l.back_from(i)
+   public override back(i)
+      suspend .l.back(i)
    end
 
    public override size()
@@ -307,7 +290,7 @@ end
 #
 # A `List` that is just a wrapper around a builtin list
 #
-class BuiltinList(ListImpl1)
+class BuiltinList(List)
    private const
       l
 
@@ -345,12 +328,12 @@ class BuiltinList(ListImpl1)
       suspend default.keyof(l, x)
    end
 
-   public override gen()
-      suspend !l
+   public override gen(i)
+      suspend forward(l, i)
    end
 
-   public override back()
-      suspend default.back(l)
+   public override back(i)
+      suspend default.back(l, i)
    end
 
    public override slice(i, j)
@@ -545,18 +528,39 @@ class LinkedList(List)
       return v
    end
 
-   public override gen_from(i)
-      suspend node(i).gen().val
+   #
+   # Generate the nodes in the list, starting at index `i` (default
+   # 1).  Each node represents one entry in the list.  The node `val`
+   # field may be changed if desired, to edit the value in the list.
+   #
+   # See also `LinkedListNode.gen()`.
+   #
+   public nodes(i)
+      /i := 1
+      suspend node(i).gen()
    end
 
-   public override back_from(i)
+   #
+   # Generate the nodes in reverse order, starting with the node
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0. (see `nodes()`).
+   #
+   public back_nodes(i)
       local n
-      i := need_integer(i)
+      i := need_integer(\i) | 0
       n := node(i - 1) | fail
       repeat {
-         suspend n.val
+         suspend n
          n := before(n) | fail
       }
+   end
+
+   public override gen(i)
+      suspend nodes(i).val
+   end
+
+   public override back(i)
+      suspend back_nodes(i).val
    end
 
    #
@@ -575,7 +579,7 @@ class LinkedList(List)
    end
 
    public override size()
-      return Length{ (\nxt).gen() }
+      return Length{ nodes() }
    end
 
    public override clear()
@@ -941,7 +945,7 @@ class DoublyLinkedListNode()
    # ~
    #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
    #   # Delete all the 3's from the list.
-   #   every n := l.node(1).gen() do
+   #   every n := l.nodes() do
    #      if n.val=3 then n.unlink()
    #   # Now l is (10,20,30,40,50,60,70)
    # ~
@@ -1117,16 +1121,37 @@ class DoublyLinkedList(List)
    end
 
    public override size()
-      return Length{ node(1).gen() }
+      return Length{ nodes() }
    end
 
-   public override gen_from(i)
-      suspend node(i).gen().val
+   #
+   # Generate the nodes in the list, starting at index `i` (default
+   # 1).  Each node represents one entry in the list.  The node `val`
+   # field may be changed if desired, to edit the value in the list.
+   #
+   # See also `DoublyLinkedListNode.gen()`.
+   #
+   public nodes(i)
+      /i := 1
+      suspend node(i).gen()
    end
 
-   public override back_from(i)
-      i := need_integer(i)
-      suspend node(i - 1).back().val
+   #
+   # Generate the nodes in reverse order, starting with the node
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0. (see `nodes()`).
+   #
+   public back_nodes(i)
+      i := need_integer(\i) | 0
+      suspend node(i - 1).back()
+   end
+
+   public override gen(i)
+      suspend nodes(i).val
+   end
+
+   public override back(i)
+      suspend back_nodes(i).val
    end
 
    #
@@ -1322,7 +1347,7 @@ end
 # A convenient equivalent to wrapping a BuiltinList in an
 # UnmodifiableList.
 #
-class UnmodifiableBuiltinList(ListImpl1)
+class UnmodifiableBuiltinList(List)
    private const
       l
 
@@ -1334,12 +1359,12 @@ class UnmodifiableBuiltinList(ListImpl1)
       suspend default.keyof(l, x)
    end
 
-   public override gen()
-      suspend .!l
+   public override gen(i)
+      suspend .forward(l, i)
    end
 
-   public override back()
-      suspend .default.back(l)
+   public override back(i)
+      suspend .default.back(l, i)
    end
 
    public override slice(i, j)
@@ -1415,20 +1440,22 @@ class SubList(List)
          0
    end
 
-   public override gen_from(i)
+   public override gen(i)
       local s
+      /i := 1
       s := cvslice() | fail
       i := cvpos_item(i, s.hi - s.lo) | fail
       i +:= s.lo - 1
-      suspend other.gen_from(i) \ (s.hi - i)
+      suspend other.gen(i) \ (s.hi - i)
    end
 
-   public override back_from(i)
+   public override back(i)
       local s
+      /i := 0
       s := cvslice() | fail
       i := cvpos(i, s.hi - s.lo) | fail
       i +:= s.lo - 1
-      suspend other.back_from(i) \ (i - s.lo)
+      suspend other.back(i) \ (i - s.lo)
    end
 
    private cvslice()

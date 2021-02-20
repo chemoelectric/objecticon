@@ -12,8 +12,8 @@ import ipl.pdco(Index), lang, util
 # A subclass must implement different optional methods depending on
 # its capability mode, as follows :-
 #
-#  * `ORDER` - `gen_from()`, `back_from()`, `rank()` and
-#              `select()`; see also `OrderSetImpl` below.
+#  * `ORDER` - `back()`, `rank()` and `select()`; see also
+#              `OrderSetImpl1` below.
 #  * `INSERT` - `insert()`
 #  * `DELETE` - `delete()`
 #
@@ -72,30 +72,18 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the members.
+   # Generate members.  With ORDER capability, the members are
+   # generated in sorted order, starting with the member at index `i`
+   # (default 1).
    #
-   public abstract gen()
+   public abstract gen(i)
 
    #
-   # Generate the entries in reverse order.  Only implemented with
-   # ORDER capability.
+   # Generate the members in reverse order, starting with the member
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0.  Only implemented with ORDER capability.
    #
-   public back()
-      suspend back_from(0)
-   end
-
-   #
-   # Generate the entries, starting with the entry at index `i`.  Only
-   # implemented with ORDER capability.
-   #
-   public optional gen_from(i)
-
-   #
-   # Generate the entries in reverse order, starting with the entry
-   # before index `i` (thus generating the elements in the range 1:i).
-   # Only implemented with ORDER capability.
-   #
-   public optional back_from(i)
+   public optional back(i)
 
    #
    # Return the rank of the given entry, ie its order number in the
@@ -201,22 +189,13 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
-# An abstract class for a set with `ORDER` capability, providing a
-# default implementation of `gen()` in terms of `gen_from(i)`.
+# A helpful abstract class for a table with `ORDER` capability, which
+# wishes to implement the generator methods `gen()` and `back()` in
+# terms of `select()`.
 #
-abstract class OrderSetImpl(Set)
-   public override gen()
-      suspend gen_from(1)
-   end
-end
-
-#
-# This subclass of `OrderSetImpl` implements `gen_from()` and
-# `back_from()` in terms of `select()` (which must be provided by the
-# subclass).
-#
-abstract class OrderSetImpl1(OrderSetImpl)
-   public override gen_from(i)
+abstract class OrderSetImpl1(Set)
+   public override gen(i)
+      /i := 1
       i := cvpos_item(i, size()) | fail
       repeat {
          suspend select(i)
@@ -227,8 +206,8 @@ abstract class OrderSetImpl1(OrderSetImpl)
       }
    end
 
-   public override back_from(i)
-      i := need_integer(i)
+   public override back(i)
+      i := need_integer(\i) | 0
       i := cvpos_item(i - 1, size()) | fail
       while i > 0 do {
          suspend select(i)
@@ -238,10 +217,10 @@ abstract class OrderSetImpl1(OrderSetImpl)
 end
 
 #
-# This subclass of `OrderSetImpl` implements `select()` in terms of
-# `gen()`.
+# A helpful abstract class for a set with `ORDER` capability, which
+# wishes to implement `select()` in terms of `gen()`.
 #
-abstract class OrderSetImpl2(OrderSetImpl)
+abstract class OrderSetImpl2(Set)
    public override select(i)
       return Index{ gen(), cvpos_item(i, size()) }
    end
@@ -262,20 +241,12 @@ class UnmodifiableSet(Set)
       return s.sort()
    end
 
-   public override gen()
-      suspend s.gen()
+   public override gen(i)
+      suspend s.gen(i)
    end
 
-   public override back()
-      suspend s.back()
-   end
-
-   public override gen_from(i)
-      suspend s.gen_from(i)
-   end
-
-   public override back_from(i)
-      suspend s.back_from(i)
+   public override back(i)
+      suspend s.back(i)
    end
 
    public override rank(x)
@@ -333,20 +304,12 @@ class TableSet(Set)
       return t.key_sort()
    end
 
-   public override gen()
-      suspend t.key()
+   public override gen(i)
+      suspend t.key(i)
    end
 
-   public override back()
-      suspend t.back_key()
-   end
-
-   public override gen_from(i)
-      suspend t.key_from(i)
-   end
-
-   public override back_from(i)
-      suspend t.back_key_from(i)
+   public override back(i)
+      suspend t.back_key(i)
    end
 
    public override rank(x)

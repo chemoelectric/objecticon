@@ -17,15 +17,9 @@ procedure methods(x)
       print{"keyval()", Length{ x.keyval() }}
 
       if x.can(Table.ORDER) then {
-         print{"key_from(1)", Length{ x.key_from(1) }}
          print{"back_key()", Length{ x.back_key() }}
-         print{"back_key_from(0)", Length{ x.back_key_from(0) }}
-         print{"gen_from(1)", Length{ x.gen_from(1) }}
          print{"back()", Length{ x.back() }}
-         print{"back_from(0)", Length{ x.back_from(0) }}
-         print{"keyval_from(1)", Length{ x.keyval_from(1) }}
          print{"back_keyval()", Length{ x.back_keyval() }}
-         print{"back_keyval_from(0)", Length{ x.back_keyval_from(0) }}
          print{"select(0)", x.select(0)}
 
          every i := 1 to x.size() do {
@@ -51,9 +45,7 @@ procedure methods(x)
       print{"gen()", Length{ x.gen() }}
 
       if x.can(Set.ORDER) then {
-         print{"gen_from(1)", Length{ x.gen_from(1) }}
          print{"back()", Length{ x.back() }}
-         print{"back_from(0)", Length{ x.back_from(0) }}
          print{"select(0)", x.select(0)}
 
          every i := 1 to x.size() do {
@@ -77,9 +69,7 @@ procedure methods(x)
          every x.insert(0, 1 to 10)
 
       print{"gen()", Length{ x.gen() }}
-      print{"gen_from(1)", Length{ x.gen_from(1) }}
       print{"back()", Length{ x.back() }}
-      print{"back_from(0)", Length{ x.back_from(0) }}
       print{"at(0)", x.at(0)}
 
       every i := 1 to x.size() do {
@@ -208,8 +198,8 @@ procedure test_list_a(c)
    yes_no{"l1=l2", equals(l1, l2)}
    cmp_seq{"l1.gen()", l1.gen(), 1 to 5}
    cmp_seq{"l1.back()", l1.back(), 5 to 1 by -1}
-   cmp_seq{"l1.gen_from(3)", l1.gen_from(3), 3 to 5}
-   cmp_seq{"l1.back_from(3)", l1.back_from(3), 2 | 1}
+   cmp_seq{"l1.gen(3)", l1.gen(3), 3 to 5}
+   cmp_seq{"l1.back(3)", l1.back(3), 2 | 1}
    u := UnmodifiableList(l1)
    cmp_seq{"u.gen()", l1.gen(), u.gen() }
    try{"u.at(1) := 2", u.at(1) := 2 }

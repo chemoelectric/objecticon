@@ -19,9 +19,9 @@ record Entry(key, val)
 # A subclass must implement different optional methods depending on
 # its capability mode, as follows :-
 #
-#  * `ORDER` - `key_from()`, `back_key_from()`, `rank()` and
-#              `select()`; see also `OrderTableImpl` below.
-#  * `INSERT` - `insert()`
+#  * `ORDER` - `back_key()`, `rank()` and `select()`; see also
+#               `OrderTableImpl1` below.
+#  * `INSERT` - `add()`
 #  * `DELETE` - `delete()`
 #
 # There are several other abstract methods which all classes must of
@@ -121,27 +121,29 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the keys (cf the builtin key() function).  With
-   # ORDER capability, the keys are generated in sorted order.
+   # Generate the keys (cf the builtin key() function).  With ORDER
+   # capability, the keys are generated in sorted order, starting with
+   # the key at index `i` (default 1).
    #
-   public abstract key()
+   public abstract key(i)
 
    #
    # Generate alternating key/value pairs (cf the builtin keyval()
    # function.)  If the table has MODIFY capability, the entry values
-   # will be generated as variables, otherwise as values.
+   # will be generated as variables, otherwise as values.  With ORDER
+   # capability, the pairs are generated in sorted key order, starting
+   # with the key at index `i` (default 1).
    #
-   public keyval()
-      suspend key_member(key())
+   public keyval(i)
+      suspend key_member(key(i))
    end
 
    #
-   # Generate the keys (cf the builtin key() function) in reverse
-   # order.  Only implemented with ORDER capability.
+   # Generate the keys in reverse order, starting with the key before
+   # index `i` (thus generating the elements in the range 1:i); `i`
+   # defaults to 0.  Only implemented with ORDER capability.
    #
-   public back_key()
-      suspend back_key_from(0)
-   end
+   public optional back_key(i)
 
    #
    # Helper method to suspend the key `k` and its corresponding entry.
@@ -151,13 +153,14 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate alternating key/values (cf the builtin keyval()
-   # function.) in reverse order.  Only implemented with ORDER
-   # capability.  If the table has MODIFY capability, the entry values
-   # will be generated as variables, otherwise as values.
+   # Generate alternating key/value pairs, starting with the key
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0.  If the table has MODIFY capability, the entry
+   # values will be generated as variables, otherwise as values.  Only
+   # implemented with ORDER capability.
    #
-   public back_keyval()
-      suspend back_keyval_from(0)
+    public back_keyval(i)
+      suspend key_member(back_key(i))
    end
 
    #
@@ -177,70 +180,23 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Generate the values (cf !t for a table).  If the table has MODIFY
    # capability, variables are generated, otherwise values are
-   # generated.
+   # generated.  With ORDER capability, the values are generated in
+   # the order corresponding to the sorted key order, starting with
+   # the key at index `i` (default 1).
    #
-   public gen()
-      suspend member(key())
+   public gen(i)
+      suspend member(key(i))
    end
 
    #
-   # Generate the values in reverse order.  Only implemented with
-   # ORDER capability.  If the table has MODIFY capability, variables
-   # are generated, otherwise values are generated.
+   # Generate the values in reverse order, starting with the value
+   # corresponding to the key before index `i` (thus generating the
+   # values in the range 1:i); `i` defaults to 0.  Only implemented
+   # with ORDER capability.  If the table has MODIFY capability,
+   # variables are generated, otherwise values are generated.
    #
-   public back()
-      suspend back_from(0)
-   end
-
-   #
-   # Generate the keys, starting with the key at index `i`.  Only
-   # implemented with ORDER capability.
-   #
-   public optional key_from(i)
-
-   #
-   # Generate the keys in reverse order, starting with the key before
-   # index `i` (thus generating the elements in the range 1:i).  Only
-   # implemented with ORDER capability.
-   #
-   public optional back_key_from(i)
-
-   #
-   # Generate the values, starting with the value at index `i`.  Only
-   # implemented with ORDER capability.
-   #
-   public gen_from(i)
-      suspend member(key_from(i))
-   end
-
-   #
-   # Generate the values in reverse order, starting with the value before
-   # index `i` (thus generating the elements in the range 1:i).  Only
-   # implemented with ORDER capability.
-   #
-   public back_from(i)
-      suspend member(back_key_from(i))
-   end
-
-   #
-   # Generate alternating key/value pairs, starting with the key at
-   # index `i`.  If the table has MODIFY capability, the entry values
-   # will be generated as variables, otherwise as values.  Only
-   # implemented with ORDER capability.
-   #
-   public keyval_from(i)
-      suspend key_member(key_from(i))
-   end
-
-   #
-   # Generate alternating key/value pairs, starting with the key
-   # before index `i` (thus generating the elements in the range 1:i).
-   # If the table has MODIFY capability, the entry values will be
-   # generated as variables, otherwise as values.  Only implemented
-   # with ORDER capability.
-   #
-   public back_keyval_from(i)
-      suspend key_member(back_key_from(i))
+   public back(i)
+      suspend member(back_key(i))
    end
 
    #
@@ -420,30 +376,13 @@ procedure EntryList(e)
 end
 
 #
-# A class for a table with `ORDER` capability, providing appropriate
-# default implementations for `key()`, `gen()` and `keyval()`.
+# A helpful abstract class for a table with `ORDER` capability, which
+# wishes to implement the generator methods `key()` and `back_key()`
+# in terms of `select()`.
 #
-abstract class OrderTableImpl(Table)
-   public override key()
-      suspend key_from(1)
-   end
-
-   public override gen()
-      suspend gen_from(1)
-   end
-
-   public override keyval()
-      suspend keyval_from(1)
-   end
-end
-
-#
-# This subclass of `OrderTableImpl` implements `key_from()` and
-# `back_key_from()` in terms of `select()` (which must be provided by
-# the subclass).
-#
-abstract class OrderTableImpl1(OrderTableImpl)
-   public override key_from(i)
+abstract class OrderTableImpl1(Table)
+   public override key(i)
+      /i := 1
       i := cvpos_item(i, size()) | fail
       repeat {
          suspend select(i)
@@ -454,8 +393,8 @@ abstract class OrderTableImpl1(OrderTableImpl)
       }
    end
 
-   public override back_key_from(i)
-      i := need_integer(i)
+   public override back_key(i)
+      i := need_integer(\i) | 0
       i := cvpos_item(i - 1, size()) | fail
       while i > 0 do {
          suspend select(i)
@@ -465,10 +404,10 @@ abstract class OrderTableImpl1(OrderTableImpl)
 end
 
 #
-# This subclass of `OrderTableImpl` implements `select()` in terms of
-# `key()`.
+# A helpful abstract class for a table with `ORDER` capability, which
+# wishes to implement `select()` in terms of `key()`.
 #
-abstract class OrderTableImpl2(OrderTableImpl)
+abstract class OrderTableImpl2(Table)
    public override select(i)
       return Index{ key(), cvpos_item(i, size()) }
    end
@@ -485,44 +424,20 @@ class UnmodifiableTable(Table)
       return .t.member(key)
    end
 
-   public override key()
-      suspend t.key()
+   public override key(i)
+      suspend t.key(i)
    end
 
-   public override key_from(i)
-      suspend t.key_from(i)
+   public override keyval(i)
+      suspend .t.keyval(i)
    end
 
-   public override keyval()
-      suspend .t.keyval()
+   public override back_key(i)
+      suspend t.back_key(i)
    end
 
-   public override back_key()
-      suspend t.back_key()
-   end
-
-   public override back_key_from(i)
-      suspend t.back_key_from(i)
-   end
-
-   public override back_keyval()
-      suspend .t.back_keyval()
-   end
-
-   public override keyval_from(i)
-      suspend .t.keyval_from(i)
-   end
-
-   public override back_keyval_from(i)
-      suspend .t.back_keyval_from(i)
-   end
-
-   public override gen_from(i)
-      suspend .t.gen_from(i)
-   end
-
-   public override back_from(i)
-      suspend .t.back_from(i)
+   public override back_keyval(i)
+      suspend .t.back_keyval(i)
    end
 
    public override rank(key)
@@ -533,12 +448,12 @@ class UnmodifiableTable(Table)
       return t.select(i)
    end
 
-   public override gen()
-      suspend .t.gen()
+   public override gen(i)
+      suspend .t.gen(i)
    end
 
-   public override back()
-      suspend .t.back()
+   public override back(i)
+      suspend .t.back(i)
    end
 
    public override size()
@@ -579,12 +494,12 @@ class TableKeyList(List)
       return t.select(i)
    end
 
-   public override gen_from(i)
-      suspend t.key_from(i)
+   public override gen(i)
+      suspend t.key(i)
    end
 
-   public override back_from(i)
-      suspend t.back_key_from(i)
+   public override back(i)
+      suspend t.back_key(i)
    end
 
    public override delete(i)
@@ -1251,39 +1166,26 @@ class SortTable(Table)
    end
 
    #
-   # Generate the nodes in the table.  Each node represents one entry
-   # in the table, and contains key and val members; the former is
-   # read-only, the latter may be changed if desired, to edit the
-   # value in the table.  The nodes are generated in sorted key order.
+   # Generate the nodes in the table, in sorted key order, starting at
+   # index `i` (default 1).  Each node represents one entry in the
+   # table, and contains key and val members; the former is read-only,
+   # the latter may be changed if desired, to edit the value in the
+   # table.  The nodes are generated in sorted key order.
    #
    # See also `SortTableNode.gen()`.
    #
-   public nodes()
-      suspend node(1).gen()
-   end
-
-   #
-   # Generate the nodes in reverse order (see `nodes()`).
-   #
-   public back_nodes()
-      suspend node(-1).back()
-   end
-
-   #
-   # Generate the nodes starting from the `i`th node in the sorted
-   # order (see `nodes()`).
-   #
-   public nodes_from(i)
+   public nodes(i)
+      /i := 1
       suspend node(i).gen()
    end
 
    #
-   # Generate the nodes in reverse sort order, starting with the one
-   # before index `i` (thus generating the nodes in the range 1:i)
-   # (see `nodes()`).
+   # Generate the nodes in reverse order, starting with the node
+   # before index `i` in the sorted order (thus generating the
+   # elements in the range 1:i); `i` defaults to 0. (see `nodes()`).
    #
-   public back_nodes_from(i)
-      i := need_integer(i)
+   public back_nodes(i)
+      i := need_integer(\i) | 0
       suspend node(i - 1).back()
    end
 
@@ -1302,52 +1204,28 @@ class SortTable(Table)
       return if /n then 0 else n.N
    end
 
-   public override key()
-      suspend nodes().key
+   public override key(i)
+      suspend nodes(i).key
    end
 
-   public override key_from(i)
-      suspend nodes_from(i).key
+   public override keyval(i)
+      suspend nodes(i).keyval()
    end
 
-   public override gen_from(i)
-      suspend nodes_from(i).val
+   public override back_key(i)
+      suspend back_nodes(i).key
    end
 
-   public override keyval()
-      suspend nodes().keyval()
+   public override back_keyval(i)
+      suspend back_nodes(i).keyval()
    end
 
-   public override keyval_from(i)
-      suspend nodes_from(i).keyval()
+   public override gen(i)
+      suspend nodes(i).val
    end
 
-   public override back_key()
-      suspend back_nodes().key
-   end
-
-   public override back_from(i)
-      suspend back_nodes_from(i).val
-   end
-
-   public override back_key_from(i)
-      suspend back_nodes_from(i).key
-   end
-
-   public override back_keyval()
-      suspend back_nodes().keyval()
-   end
-
-   public override back_keyval_from(i)
-      suspend back_nodes_from(i).keyval()
-   end
-
-   public override gen()
-      suspend nodes().val
-   end
-
-   public override back()
-      suspend back_nodes().val
+   public override back(i)
+      suspend back_nodes(i).val
    end
 
    private new_sentinel()
