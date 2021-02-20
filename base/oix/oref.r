@@ -781,8 +781,7 @@ function back(underef x -> dx, n)
                   }
               }
           } else {
-              tended char *p = StrLoc(UcsBlk(dx).utf8) +
-                  StrLen(UcsBlk(dx).utf8);
+              tended char *p = ucs_utf8_ptr(&UcsBlk(dx), n + 1);
               for (i = n; i > 0; i--) {
                   tended struct descrip utf8;
                   utf8_rev_iter0(&p);
@@ -912,7 +911,7 @@ function forward(underef x -> dx, n)
                   }
               }
           } else {
-              tended char *p = StrLoc(UcsBlk(dx).utf8);
+              tended char *p = ucs_utf8_ptr(&UcsBlk(dx), n);
               for (i = n; i <= UcsBlk(dx).length; i++) {
                   tended struct descrip utf8;
                   MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
