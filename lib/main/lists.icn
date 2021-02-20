@@ -16,7 +16,8 @@ import lang, util, ipl.pdco-(List)
 #  * `DELETE` - `delete()`
 #
 # There are several other abstract methods which all classes must of
-# course implement; see also `ListImpl1` and `ListImpl2`.
+# course implement.  Some helper classes are provided below to provide
+# implementations of some methods in terms of others.
 #
 abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const

@@ -12,13 +12,13 @@ import ipl.pdco(Index), lang, util
 # A subclass must implement different optional methods depending on
 # its capability mode, as follows :-
 #
-#  * `ORDER` - `back()`, `rank()` and `select()`; see also
-#              `OrderSetImpl1` below.
+#  * `ORDER` - `back()`, `rank()` and `select()`
 #  * `INSERT` - `insert()`
 #  * `DELETE` - `delete()`
 #
 # There are several other abstract methods which all classes must of
-# course implement.
+# course implement.  Some helper classes are provided below to provide
+# implementations of some methods in terms of others.
 #
 # Note that the behaviour of the various generator methods is
 # undefined if the set is concurrently modified during the course of
