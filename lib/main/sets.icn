@@ -17,12 +17,12 @@ import ipl.pdco(Index), lang, util
 #  * `DELETE` - `delete()`
 #
 # There are several other abstract methods which all classes must of
-# course implement.  Some helper classes are provided below to provide
-# implementations of some methods in terms of others.
+# course implement, and others which may be overridden to provide more
+# efficient implementations than the default.
 #
-# Note that the behaviour of the various generator methods is
-# undefined if the set is concurrently modified during the course of
-# generation.
+# Note that the behaviour of the various generator methods should the
+# set be concurrently modified during the course of generation,
+# depends upon the particular set implementation.
 #
 abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const
@@ -51,9 +51,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Succeed with `x` if it is a member of the set.
    #
-   public member(x)
-      return gen() === x 
-   end
+   public abstract member(x)
 
    #
    # Delete `x` from the set.  Fails if the key was not present,
@@ -371,6 +369,9 @@ end
 # An empty set.  An instance of this class is `Set.EMPTY_SET`.
 #
 class EmptySet(OrderSetImpl1)
+   public override member(x)
+   end
+
    public override select(i)
    end
 
