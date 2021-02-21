@@ -534,6 +534,7 @@ struct b_lelem *lginit(struct b_list *lb, word i, struct lgstate *state)
     if (!le)
         return 0;
     state->listindex = i;
+    state->listsize = lb->size;
     state->changecount = lb->changecount;
     state->blockpos = pos;
     state->result = le->first + pos;
@@ -621,12 +622,10 @@ struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem 
         }
     } else {
         /*
-         * List structure changed - refresh the state values based on
-         * the current list index, and if the list shrunk, keep our
-         * index in range
+         * List structure changed - refresh the state values so that
+         * the distance of listindex from the end of the list remains
+         * the same.
          */
-        if (state->listindex > lb->size)
-            state->listindex = lb->size;
-        return lginit(lb, state->listindex, state);
+        return lginit(lb, state->listindex + lb->size - state->listsize, state);
     }
 }
