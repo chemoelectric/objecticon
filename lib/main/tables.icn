@@ -24,12 +24,12 @@ record Entry(key, val)
 #  * `DELETE` - `delete()`
 #
 # There are several other abstract methods which all classes must of
-# course implement.  Some helper classes are provided below to provide
-# implementations of some methods in terms of others.
+# course implement, and others which may be overridden to provide more
+# efficient implementations than the default.
 #
-# Note that the behaviour of the various generator methods is
-# undefined if the table is concurrently modified during the course of
-# generation.
+# Note that the behaviour of the various generator methods should the
+# table be concurrently modified during the course of generation,
+# depends upon the particular table implementation.
 #
 abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public const
