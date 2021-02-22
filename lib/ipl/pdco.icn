@@ -1499,3 +1499,15 @@ procedure MaxNN(e)
 
    return x
 end
+
+#
+# A convenient wrapper around the `echo()` builtin function.  `e` is
+# evaluated, and if successful, a co-expression is returned which
+# endlessly repeats the result.
+#
+procedure Echo(e)
+   local f
+   f := create echo(@e)
+   if @f then
+      return f
+end
