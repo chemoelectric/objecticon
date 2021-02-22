@@ -119,6 +119,7 @@ function echo(underef x)
     body {
        for (;;)
            suspend x;
+       fail;       /* Not reached */
     }
 end
 
