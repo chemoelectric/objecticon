@@ -218,26 +218,18 @@ end
 # A helpful abstract class for a list, which wishes to implement the
 # generator methods `gen()` and `back()` in terms of `at()`.
 #
+# In the case of changes to the list during generation, the methods
+# behave like the builtin `forward()` and `back()` functions.
+#
 abstract class ListImpl1(List)
    public override gen(i)
-      /i := 1
-      i := cvpos_item(i, size()) | fail
-      repeat {
-         suspend at(i)
-         if i < size() then
-            i +:= 1
-         else
-            fail
-      }
+      if i := first_forward(i, size()) then
+         suspend |1(at(i), i +:= 1)
    end
 
    public override back(i)
-      i := need_integer(\i) | 0
-      i := cvpos_item(i - 1, size()) | fail
-      while i > 0 do {
-         suspend at(i)
-         i := min(i - 1, size())
-      }
+      if i := first_back(i, size()) then
+         suspend |1(at(i), i -:= 1)
    end
 end
 

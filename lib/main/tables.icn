@@ -378,26 +378,18 @@ end
 # wishes to implement the generator methods `key()` and `back_key()`
 # in terms of `select()`.
 #
+# In the case of changes to the table during generation, the methods
+# behave like the builtin `forward()` and `back()` functions.
+#
 abstract class OrderTableImpl1(Table)
    public override key(i)
-      /i := 1
-      i := cvpos_item(i, size()) | fail
-      repeat {
-         suspend select(i)
-         if i < size() then
-            i +:= 1
-         else
-            fail
-      }
+      if i := first_forward(i, size()) then
+         suspend |1(select(i), i +:= 1)
    end
 
    public override back_key(i)
-      i := need_integer(\i) | 0
-      i := cvpos_item(i - 1, size()) | fail
-      while i > 0 do {
-         suspend select(i)
-         i := min(i - 1, size())
-      }
+      if i := first_back(i, size()) then
+         suspend |1(select(i), i -:= 1)
    end
 end
 

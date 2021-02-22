@@ -191,26 +191,18 @@ end
 # wishes to implement the generator methods `gen()` and `back()` in
 # terms of `select()`.
 #
+# In the case of changes to the set during generation, the methods
+# behave like the builtin `forward()` and `back()` functions.
+#
 abstract class OrderSetImpl1(Set)
    public override gen(i)
-      /i := 1
-      i := cvpos_item(i, size()) | fail
-      repeat {
-         suspend select(i)
-         if i < size() then
-            i +:= 1
-         else
-            fail
-      }
+      if i := first_forward(i, size()) then
+         suspend |1(select(i), i +:= 1)
    end
 
    public override back(i)
-      i := need_integer(\i) | 0
-      i := cvpos_item(i - 1, size()) | fail
-      while i > 0 do {
-         suspend select(i)
-         i := min(i - 1, size())
-      }
+      if i := first_back(i, size()) then
+         suspend |1(select(i), i -:= 1)
    end
 end
 
