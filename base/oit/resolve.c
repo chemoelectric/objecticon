@@ -22,34 +22,6 @@ static int merge_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg);
 static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *cl);
 
 /*
- * Names of builtin functions.
- */
-static char *builtin_table[] = {
-#define FncDef(p) #p,
-#include "../h/fdefs.h"
-#undef FncDef
-};
-
-static int builtin_table_cmp(char *key, char **item)
-{
-    return strcmp(key, *item);
-}
-
-/*
- * Lookup a builtin function name; returns -1 if not found, or the
- * index otherwise.
- */
-static int blookup(char *s)
-{
-    char **p = bsearch(s, builtin_table, ElemCount(builtin_table), 
-                       sizeof(char *), (BSearchFncCast)builtin_table_cmp);
-    if (!p)
-        return -1;
-
-    return p - builtin_table;
-}
-
-/*
  * Just like glocate, but if the symbol is not found then it checks
  * for a builtin function as well.
  */

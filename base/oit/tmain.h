@@ -65,5 +65,6 @@ char *abbreviate(char *path);
 void begin_link(FILE *f, char *fname, int line);
 void end_link(FILE *f);
 void add_remove_file(char *s);
+int blookup(char *s);
 
 #endif

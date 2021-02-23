@@ -84,6 +84,34 @@ struct file_param *trans_files = 0, *last_trans_file = 0,
 
 struct pp_def *pp_defs = 0, *last_pp_def = 0;
 
+/*
+ * Names of builtin functions.
+ */
+static char *builtin_table[] = {
+#define FncDef(p) #p,
+#include "../h/fdefs.h"
+#undef FncDef
+};
+
+static int builtin_table_cmp(char *key, char **item)
+{
+    return strcmp(key, *item);
+}
+
+/*
+ * Lookup a builtin function name; returns -1 if not found, or the
+ * index otherwise.
+ */
+int blookup(char *s)
+{
+    char **p = bsearch(s, builtin_table, ElemCount(builtin_table), 
+                       sizeof(char *), (BSearchFncCast)builtin_table_cmp);
+    if (!p)
+        return -1;
+
+    return p - builtin_table;
+}
+
 static void add_trans_file(char *s)
 {
     struct file_param *p = Alloc(struct file_param);
