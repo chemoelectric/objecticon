@@ -1,15 +1,10 @@
-import io, lang, util, net, ipl.options, ipl.lists
+import io, lang, util, net, ipl.options, ipl.lists, ipl.pdco
 
-procedure create_prog(main, imps, links)
+procedure create_prog(imps, links)
    local tf, prog
 
    imps ++:= set("ipl.ieval")  # Avoid changing imps parameter
-   prog := ""
-   every prog ||:= "import " || !imps || "\n"
-   prog ||:= "invocable all\n_
-procedure " || main || "(imports, files, opts)\n_
-    ipl.ieval.Ieval(imports, files, opts).run()\n_
-end\n"
+   prog := String{ "import " || !imps || "\n" }
    return use {
       tf := Files.make_temp_filename("ieval", Files.PROG_SUFFIX),
       compile(prog, tf, links),
@@ -28,8 +23,7 @@ end
 procedure compile1(prog, pf, tf, links)
    local s, i
    Files.string_to_file(pf, prog) | fail
-   s := "oit -s -l2 -b2 -o " || esc(tf) || " " || esc(pf)
-   every s ||:= " " || esc(!links)
+   s := "oit -f -M -s -l2 -b2 -o" || String{ " " || esc(tf | pf | !links) }
    i := system(s)
    if i = 0 then
       return
@@ -63,10 +57,9 @@ procedure usage(opts)
 end
 
 procedure main(a)
-   local opts, prog, imports, links, main
+   local opts, prog, imports, links
    opts := options(a, [Opt("i", string, "PACKAGE#Import the given package(s).  Several packages may be comma-separated, or several -i options may be given",&yes),
                        Opt("l", string, "FILE#Link the given source file.  Several -l options may be given",&yes),
-                       Opt("m",, "Expect a main procedure in one of the linked source files"),
                        Opt("wglob",, "If given, then assignments to global variables are allowed"),
                        Opt("s",, "Don't use console line editing (implicit on non-Unix platforms)"),
                        Opt("g",, "Use a gui interface rather than the console"),
@@ -76,12 +69,11 @@ procedure main(a)
                        Opt("elim",integer_range(10),"LIM#Set the expression limit for evaluation (default is 35, minimum is 10)"),
                        Opt("llim",integer_range(0),"LIM#Set the gui interface's log area line limit (default is 600)")],
                        usage)
-   main := if /opts["m"] then "main" else "ieval_main"
    imports := set()
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []
-   prog := create_prog(main, imports, links) | stop(&why)
+   prog := create_prog(imports, links) | stop(&why)
    # Set progname so help_stop gives proper output.
    Prog.get_variable("&progname", prog) := &progname
-   Prog.get_global(main, prog)(imports, a, opts)
+   Prog.get_global("ipl.ieval.Ieval", prog)(imports, a, opts).run()
 end
