@@ -446,7 +446,6 @@ struct progstate {
     struct ipc_line *Current_line_ptr;
     struct ipc_fname *Current_fname_ptr;
     dptr Current_fname;
-    dptr MainProc;
 
     struct timeval start_time;          /* time program started */
 

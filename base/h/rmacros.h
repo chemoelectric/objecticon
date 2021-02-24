@@ -629,7 +629,6 @@ __declspec(dllexport)  \
 #define elines (curpstate->Elines)
 #define current_line_ptr (curpstate->Current_line_ptr)
 #define current_fname_ptr (curpstate->Current_fname_ptr)
-#define main_proc (curpstate->MainProc)
 
 #define curstring (curpstate->stringregion)
 #define curblock  (curpstate->blockregion)

@@ -9,6 +9,7 @@
 
 static FILE *readhdr_strict(char *name, struct header *hdr);
 static FILE *readhdr_liberal(char *name, struct header *hdr);
+static dptr get_main(struct progstate *prog);
 static int check_version(struct header *hdr);
 static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr);
 static void initptrs (struct progstate *p, struct header *h);
@@ -248,6 +249,20 @@ static int check_version(struct header *hdr)
     return strncmp((char *)hdr->Config, IVersion, strlen(IVersion)) == 0 && 
         ((((char *)hdr->Config)[strlen(IVersion)]) == 0 ||
          strcmp(((char *)hdr->Config) + strlen(IVersion), "Z") == 0);
+}
+
+/*
+ * Get the global descriptor for the main procedure in prog, or signal
+ * a fatal error if it is not found.
+ */
+static dptr get_main(struct progstate *prog)
+{
+    static struct sdescrip main = {4, "main"};
+    dptr t;
+    if ((t = lookup_named_global((dptr)&main, 1, prog)) && is:proc(*t))
+        return t;
+    fatalerr(117, NULL);
+    return 0;           /* Not reached */
 }
 
 /*
@@ -758,7 +773,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        tended struct b_coexpr *coex;
        struct header hdr;
        FILE *ifile;
-       struct b_proc *main_bp;
+       dptr main_proc;
        struct p_frame *new_pf;
 
        /*
@@ -848,13 +863,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
 
        resolve(pstate);
 
-      /*
-       * Check whether resolve() found the main procedure.
-       */
-       if (!pstate->MainProc)
-          fatalerr(117, NULL);
-
-       main_bp = &ProcBlk(*pstate->MainProc);
+       main_proc = get_main(pstate);
        {
            /*
             * Allocate the top frame in the new program; this ensures
@@ -865,7 +874,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
            MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
            curpstate = t;
        }
-       new_pf->tmp[0] = *pstate->MainProc;
+       new_pf->tmp[0] = *main_proc;
        coex->sp = (struct frame *)new_pf;
        coex->base_pf = coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
@@ -873,7 +882,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        coex->tvalloc = 0;
        coex->level = 0;
 
-       if (main_bp->nparam) {
+       if (ProcBlk(*main_proc).nparam) {
            if (is:null(arglist))
                create_list(0, &new_pf->tmp[1]);
            else
@@ -1050,10 +1059,9 @@ static void slow_resolve(struct progstate *p)
             Relocate(lp->fname);
 
     /*
-     * Scan the global variable array and relocate all blocks. Also
-     * note the main procedure if found, and create the table of named globals.
+     * Scan the global variable array and relocate all blocks, and
+     * create the table of named globals.
      */
-    p->MainProc = 0;
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -1142,14 +1150,6 @@ static void slow_resolve(struct progstate *p)
                         if (pp->llocs)
                             Relocate(pp->llocs[i].fname);
                     }
-
-                    /*
-                     * Is it the main procedure?
-                     */
-                    if (StrLen(*pp->name) == 4 &&
-                        !strncmp(StrLoc(*pp->name), "main", 4))
-                        p->MainProc = &p->Globals[j];
-
                     pp->program = p;
                 }
                 break;
@@ -1237,7 +1237,6 @@ static void quick_resolve(struct progstate *p)
         }
     }
 
-    p->MainProc = 0;
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -1267,14 +1266,6 @@ static void quick_resolve(struct progstate *p)
                      * p->Globals[j] points to an Icon procedure.
                      */
                     pp = (struct p_proc *)&ProcBlk(p->Globals[j]);
-
-                    /*
-                     * Is it the main procedure?
-                     */
-                    if (StrLen(*pp->name) == 4 &&
-                        !strncmp(StrLoc(*pp->name), "main", 4))
-                        p->MainProc = &p->Globals[j];
-
                     pp->program = p;
                 }
                 break;
@@ -1295,7 +1286,7 @@ int main(int argc, char **argv)
 {
     int i;
     struct fileparts *fp;
-    struct b_proc *main_bp;
+    dptr main_proc;
     struct p_frame *frame;
     struct header hdr;
     FILE *ifile = 0;
@@ -1468,13 +1459,7 @@ int main(int argc, char **argv)
      */
     starttime = millisec();
 
-    /*
-     * Check whether resolve() found the main procedure.  If not, exit.
-     */
-    if (!main_proc)
-        fatalerr(117, NULL);
-
-    main_bp = &ProcBlk(*main_proc);
+    main_proc = get_main(&rootpstate);
 
     MemProtect(frame = alc_p_frame(&Bmain_wrapper, 0));
     frame->tmp[0] = *main_proc;
@@ -1482,7 +1467,7 @@ int main(int argc, char **argv)
      * Only create an args list if main has a parameter; otherwise args[1]
      * is just left as &null.
      */
-    if (main_bp->nparam) {
+    if (ProcBlk(*main_proc).nparam) {
         tended struct descrip args;
         create_list(argc - 2, &args);
         for (i = 2; i < argc; i++) {
