@@ -33,5 +33,6 @@ struct fimport *lookup_fimport(struct lfile *lf, char *package);
 void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos);
 struct fimport_symbol *lookup_fimport_symbol(struct fimport *p, char *symbol);
 void add_record_field(struct lrecord *lr, char *name, struct loc *pos);
+void setgmain(void);
 
 #endif

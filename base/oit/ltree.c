@@ -583,6 +583,8 @@ void loadtrees()
 {
     for (lf = lfiles; lf; lf = lf->next) {
         inname = lf->name;
+        if (inname == synthetic_string)
+            continue;
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             equit("Cannot open .u for %s", inname);

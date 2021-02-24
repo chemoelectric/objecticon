@@ -26,6 +26,7 @@ int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
 int Wflag	=0;	/* -W: exit with error result on warning */
 int Bflag       =0;     /* -B: bundle iconx in output file */
+int Mflag       =0;     /* -M: add an empty main procedure if it is missing */
 int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace info (default), 
                          *       2 = trace & symbol info */
 int Olevel      =1;     /* -O n: optimisation */
@@ -37,6 +38,7 @@ int Aflag       =0;     /* -A: treat files other than .icn or .u as source files
  * Some convenient interned strings.
  */
 char *main_string;
+char *synthetic_string;
 char *default_string;
 char *self_string;
 char *new_string;
@@ -254,8 +256,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBfgmnsELIZWTAV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
-    while ((c = oi_getopt(argc,argv, "?cBAfgmno:sv:ELIZWTVl:O:D:b:")) != EOF) {
+#define Usage "[-cBMfgmnsELIZWTAV] [-o ofile] [-v i] [-l i] [-O i] [-D k=v] [-b i]"
+    while ((c = oi_getopt(argc,argv, "?cBMAfgmno:sv:ELIZWTVl:O:D:b:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -263,6 +265,10 @@ int main(int argc, char **argv)
 
             case 'B':
                 Bflag = 1;
+                break;
+
+            case 'M':
+                Mflag = 1;
                 break;
 
             case 'A':
@@ -709,6 +715,7 @@ static void usage()
     fprintf(stderr,"Usage: %s %s file ... [-x args]\n", progname, Usage);
     fprintf(stderr,"-n        Only translate a .icn to a .u file if it is out-of-date\n"
                    "-B        Bundle the oix executable in the output\n"
+                   "-M        Add an empty main procedure if it is missing\n"
                    "-m        Preprocess using m4\n"
                    "-Z        Use zlib compression on the icode file\n"
                    "-W        Exit with an error status if there were warnings\n"
@@ -832,6 +839,7 @@ char *abbreviate(char *name)
 void init_strings()
 {
     main_string = spec_str("main");
+    synthetic_string = spec_str("synthetic");
     default_string = spec_str("default");
     self_string = spec_str("self");
     new_string = spec_str("new");

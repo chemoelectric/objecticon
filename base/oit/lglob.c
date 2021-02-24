@@ -205,8 +205,6 @@ void readglob(struct lfile *lf)
                     f = F_Proc;
                     if (uop->opcode == Uop_PkProcdecl) f |= F_Package;
                     gp = putglobal(name, f, lf, &pos);
-                    if (name == main_string)
-                        gmain = gp;
                 }
                 curr_func = gp->func = Alloc(struct lfunction);
                 curr_func->defined = lf;
