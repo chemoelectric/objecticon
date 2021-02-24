@@ -37,21 +37,49 @@
    } while (0)
 #enddef					/* ReturnErrNum */
 
+/*
+ * Macros to avoid creating an expression to be suspended/returned, if
+ * there is no left-hand-side to receive it.
+ */
+
 #begdef LazySuspend(expr)
    do {
        if (_lhs)
-           suspend expr;
+          suspend expr;
        else
-           suspend;
+          suspend;
    } while (0)
 #enddef
 
 #begdef LazyReturn(expr)
    do {
        if (_lhs)
-           return expr;
+          return expr;
        else
-           return;
+          return;
+   } while (0)
+#enddef
+
+/*
+ * Macros to avoid creating a struct_var to be suspended/returned, if
+ * _rval indicates the value may be used instead.
+ */
+
+#begdef SuspendStructVar(desc, blk)
+   do {
+       if (_rval)
+          suspend desc;
+       else
+          suspend struct_var(&desc, blk);
+   } while (0)
+#enddef
+
+#begdef ReturnStructVar(desc, blk)
+   do {
+       if (_rval)
+          return desc;
+       else
+          return struct_var(&desc, blk);
    } while (0)
 #enddef
 

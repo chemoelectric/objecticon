@@ -114,7 +114,7 @@ function keyval(t)
             ep = hgnext(BlkLoc(t), &state, ep)) {
            EVValD(&ep->telem.tref, E_Tsub);
            suspend ep->telem.tref;
-           suspend struct_var(&ep->telem.tval, ep);
+           SuspendStructVar(ep->telem.tval, ep);
        }
        fail;
    }
@@ -259,7 +259,7 @@ function member(s, x)
             p = memb(BlkLoc(s), &x, hn, &res);
             if (res) {
                bp = *p;
-               return struct_var(&bp->telem.tval, bp);
+               ReturnStructVar(bp->telem.tval, bp);
             }
       }
 

@@ -26,17 +26,21 @@ static struct b_tvsubs *make_tvsubs(dptr var, word pos, word len)
 /* Some helpful macros for suspending/returning chars in a cset */
 
 #begdef SuspendCh(x)
+   do {
     if (x < 256)
        suspend string(1, &allchars[x]);
     else
        suspend ucs(make_one_char_ucs_block(x));
+   } while (0)
 #enddef
 
 #begdef ReturnCh(x)
+   do {
     if (x < 256)
        return string(1, &allchars[x]);
     else
        return ucs(make_one_char_ucs_block(x));
+   } while (0)
 #enddef
 
 
@@ -82,7 +86,7 @@ operator ! bang(underef x -> dx)
             for (le = lgfirst(&ListBlk(dx), &state); le;
                  le = lgnext(&ListBlk(dx), &state, le)) {
                 EVVal(state.listindex, E_Lsub);
-                suspend struct_var(&le->lslots[state.result], le);
+                SuspendStructVar(le->lslots[state.result], le);
             }
          }
 
@@ -96,7 +100,7 @@ operator ! bang(underef x -> dx)
 	    for (ep = hgfirst(BlkLoc(dx), &state); ep;
                  ep = hgnext(BlkLoc(dx), &state, ep)) {
                   EVValD(&ep->telem.tval, E_Tval);
-                  suspend struct_var(&ep->telem.tval, ep);
+                  SuspendStructVar(ep->telem.tval, ep);
                   }
             }
 
@@ -176,8 +180,7 @@ operator ! bang(underef x -> dx)
             j = RecordBlk(dx).constructor->n_fields;
             for (i = 0; i < j; i++) {
 	       EVVal(i+1, E_Rsub);
-               suspend struct_var(&RecordBlk(dx).fields[i], 
-                  &RecordBlk(dx));
+               SuspendStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
                }
             }
 
@@ -283,7 +286,7 @@ operator ? random(underef x -> dx)
             j += le->first;
             if (j >= le->nslots)
                 j -= le->nslots;
-            return struct_var(&le->lslots[j], le);
+            ReturnStructVar(le->lslots[j], le);
          }
 
       table: {
@@ -315,7 +318,7 @@ operator ? random(underef x -> dx)
 		       BlkType(ep) == T_Telem;
 		       ep = ep->telem.clink)
                      if (--n <= 0) {
-                        return struct_var(&ep->telem.tval, ep);
+                        ReturnStructVar(ep->telem.tval, ep);
 			}
             syserr("Table reference out of bounds in random");
          }
@@ -368,7 +371,7 @@ operator ? random(underef x -> dx)
             rval *= val;
             EVValD(&dx, E_Rrand);
             EVVal(rval + 1, E_Rsub);
-            return struct_var(&rec->fields[(word)rval], rec);
+            ReturnStructVar(rec->fields[(word)rval], rec);
          }
 
       default: {
@@ -383,6 +386,7 @@ operator ? random(underef x -> dx)
           return result;
       }
    }
+   fail;       /* Not reached */
 }
 end
 
@@ -518,7 +522,7 @@ operator [] subsc(underef x -> dx,y)
           j += le->first;
           if (j >= le->nslots)
               j -= le->nslots;
-          return struct_var(&le->lslots[j], le);
+          ReturnStructVar(le->lslots[j], le);
        }
 
       table: {
@@ -529,16 +533,14 @@ operator [] subsc(underef x -> dx,y)
             if (_rval) {
                 int res;
                 union block **p;
-                union block *bp;
                 /*
                  * Rval, so lookup now and return element or default
                  * value.
                  */
                 p = memb(BlkLoc(dx), &y, hash(&y), &res);
-                if (res) {
-                    bp = *p;
-                    return struct_var(&bp->telem.tval, bp);
-                } else
+                if (res)
+                    return (*p)->telem.tval;
+                else
                     return TableBlk(dx).defvalue;
             } else {
                 struct b_tvtbl *tp;       /* Doesn't need to be tended */
@@ -567,7 +569,7 @@ operator [] subsc(underef x -> dx,y)
          /*
           * Found the field, return a pointer to it.
           */
-         return struct_var(&RecordBlk(dx).fields[i], &RecordBlk(dx));
+         ReturnStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
        }
 
      ucs: {
@@ -677,6 +679,7 @@ operator [] subsc(underef x -> dx,y)
          }
       }
     }
+    fail;       /* Not reached */
   }
 end
 
@@ -732,7 +735,7 @@ function back(underef x -> dx, n)
                 fail;
             for (le = lginit(&ListBlk(dx), n, &state); le;
                  le = lgprev(&ListBlk(dx), &state, le)) {
-                suspend struct_var(&le->lslots[state.result], le);
+                SuspendStructVar(le->lslots[state.result], le);
             }
          }
 
@@ -808,8 +811,7 @@ function back(underef x -> dx, n)
             if (n == CvtFail)
                 fail;
             for (i = n - 1; i >= 0; i--) {
-               suspend struct_var(&RecordBlk(dx).fields[i], 
-                  &RecordBlk(dx));
+               SuspendStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
                }
             }
 
@@ -871,7 +873,7 @@ function forward(underef x -> dx, n)
                 fail;
             for (le = lginit(&ListBlk(dx), n, &state); le;
                  le = lgnext(&ListBlk(dx), &state, le)) {
-                suspend struct_var(&le->lslots[state.result], le);
+                SuspendStructVar(le->lslots[state.result], le);
             }
          }
 
@@ -946,8 +948,7 @@ function forward(underef x -> dx, n)
             if (n == CvtFail)
                 fail;
             for (i = n - 1; i < j; i++) {
-               suspend struct_var(&RecordBlk(dx).fields[i], 
-                  &RecordBlk(dx));
+               SuspendStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
                }
             }
 
