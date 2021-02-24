@@ -44,6 +44,7 @@ struct gentry {                 /* global table entry */
 
 struct lbuiltin {
     int builtin_id;
+    int underef;                /* set if this function uses underef on any of its arguments */
 };
 
 struct lrecord {

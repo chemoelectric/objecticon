@@ -27,14 +27,32 @@ static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *
  */
 static struct gentry *gb_locate(char *name)
 {
+    static char *names[4];
+    static int inited;
     struct gentry *gl = glocate(name);
-    int bn;
+    int i, bn;
+
+    if (!inited) {
+        /* Names of functions which use underef parameter(s) */
+        names[0] = intern("coact");
+        names[1] = intern("echo");
+        names[2] = intern("forward");
+        names[3] = intern("back");
+        inited = 1;
+    }
+
     if (!gl && (bn = blookup(name)) >= 0) {	
         struct loc bl = {"Builtin", 0};
         /* Builtin function, add to global table so we see it next time */
         gl = putglobal(name, F_Builtin | F_Proc, 0, &bl);
         gl->builtin = Alloc(struct lbuiltin);
         gl->builtin->builtin_id = bn;
+        for (i = 0; i < ElemCount(names); ++i) {
+            if (name == names[i]) {
+                gl->builtin->underef = 1;
+                break;
+            }
+        }
     }
     return gl;
 }
