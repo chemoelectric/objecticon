@@ -257,9 +257,9 @@ static int check_version(struct header *hdr)
  */
 static dptr get_main(struct progstate *prog)
 {
-    static struct sdescrip main = {4, "main"};
+    static struct sdescrip ms = {4, "main"};
     dptr t;
-    if ((t = lookup_named_global((dptr)&main, 1, prog)) && is:proc(*t))
+    if ((t = lookup_named_global((dptr)&ms, 1, prog)) && is:proc(*t))
         return t;
     fatalerr(117, NULL);
     return 0;           /* Not reached */
