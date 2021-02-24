@@ -1042,7 +1042,7 @@ void begin_link(FILE *f, dptr fname, word line)
 {
     char *s;
     int i;
-    if (!is_flowterm_tty(f))
+    if (!is_flowterm_tty(f) || StrLen(*fname) == 0 || StrLoc(*fname)[0] != '/')
         return;
     fputs("\x1b[!\"file://", f);
     if ((s = get_hostname()))

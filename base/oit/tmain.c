@@ -789,7 +789,7 @@ void equit(char *fmt, ...)
 void begin_link(FILE *f, char *fname, int line)
 {
     char *s;
-    if (!is_flowterm_tty(f))
+    if (!is_flowterm_tty(f) || fname[0] != '/')
         return;
     fputs("\x1b[!\"file://", f);
     if ((s = get_hostname()))

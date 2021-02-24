@@ -523,13 +523,11 @@ class Lex(Connectable)
       local rv, ender, chunk, buffer
 
       str := need_string(str)
-      /encoding := "ASCII"
-      /line := 0
       yytext := ""
       yytokval := &null
-      yyencoding := encoding
-      yyfilename := filename
-      yylineno := line
+      yyencoding := need_string(\encoding) | "ASCII"
+      yyfilename := need_string(\filename)
+      yylineno := need_integer(\line, 0) | 0
       yylinestart := 0
       buffer := str
       tokflags := 0

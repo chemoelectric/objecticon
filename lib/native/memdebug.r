@@ -559,6 +559,8 @@ static void begin_linkx(dptr fname, word line)
 {
     char *s;
     int i;
+    if (!flowterm || StrLen(*fname) == 0 || StrLoc(*fname)[0] != '/')
+        return;
     fputs("\x1b[!\"file://", out);
     if ((s = get_hostname()))
         fputs(s, out);
@@ -594,7 +596,7 @@ static void print_locationx(struct p_frame *pf)
     if (pline && pfile) {
         struct descrip t;
         abbr_fname(pfile->fname, &t);
-        if (flowterm) begin_linkx(pfile->fname, pline->line);
+        begin_linkx(pfile->fname, pline->line);
         fprintf(out, "File %.*s; Line " WordFmt, StrF(t), pline->line);
         if (flowterm) end_linkx();
         fputc('\n', out);
