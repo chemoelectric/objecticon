@@ -120,19 +120,6 @@ abstract class Outputter()
       return String{ get_record_fields(obj), ", " }
    end
 
-   protected get_class_prefix(c)
-      local s
-      s := ""
-      if c.has_package_flag() then
-         s ||:= "package "
-      if c.is_final() then
-         s ||:= "final "
-      if c.is_abstract() then
-         s ||:= "abstract "
-      s ||:= "class"
-      return s
-   end
-
    protected get_top_level_type(c)
       local s
       s := ""
@@ -141,6 +128,8 @@ abstract class Outputter()
       if is(c, GlobalSymbol) & c.has_readable_flag() then
          s ||:= " readable "
       if is(c, ClassSymbol) then {
+         if c.is_limited() then
+            s ||:= "limited "
          if c.is_final() then
             s ||:= "final "
          if c.is_abstract() then
@@ -188,6 +177,8 @@ abstract class Outputter()
             s ||:= "optional "
          if iand(obj.flags, Class.Final) ~= 0 then
             s ||:= "final "
+         if iand(obj.flags, Class.Limited) ~= 0 then
+            s ||:= "limited "
       }
       s[-1] := ""
       return s

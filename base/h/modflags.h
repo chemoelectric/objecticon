@@ -16,3 +16,4 @@
 #define M_Native        010000  /* native method */
 #define M_Removed       020000  /* method removed during optimisation */
 #define M_Override      040000  /* override method */
+#define M_Limited      0100000  /* limited class/method */
