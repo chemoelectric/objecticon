@@ -49,31 +49,31 @@ abstract class SelectiveObjectCodec(ObjectCodec)
    # This empty method may be overridden; it is invoked just before
    # the object is encoded.
    #
-   private pre_encode()
+   protected pre_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just after
    # the object has been encoded.
    #
-   private post_encode()
+   protected post_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just before
    # the object is decoded.
    #
-   private pre_decode()
+   protected pre_decode()
    end
 
    #
    # This empty method may be overridden; it is invoked just after
    # the object has been decoded.
    #
-   private post_decode()
+   protected post_decode()
    end
 
-   private override object_encode(e)
+   protected override object_encode(e)
       local p, x
 
       p := load_structs()
@@ -92,7 +92,7 @@ abstract class SelectiveObjectCodec(ObjectCodec)
       post_encode()
    end
 
-   private override object_decode(e)
+   protected override object_decode(e)
       local p, m, v, f, n, x
 
       p := load_structs()
@@ -123,7 +123,7 @@ abstract class SelectiveObjectCodec(ObjectCodec)
    # numbers to read/write.  The second element is a table mapping the
    # field ids to field numbers.
    #
-   private final load_structs()
+   private load_structs()
       local e, fnum, fnum_map, template_els, p, x, cl
       static cache
       initial {
@@ -161,7 +161,7 @@ abstract class SelectiveObjectCodec(ObjectCodec)
    # template (see above).  By default, the method generates all of
    # the instance fields of self.
    #
-   private get_template()
+   protected get_template()
       suspend Class.get_instance_field_names(self)
    end
 end

@@ -41,32 +41,31 @@ struct toktab toktab[] = {
    { "import",           IMPORT,        0},                /*  23 */
    { "initial",          INITIAL,       0},                /*  24 */
    { "invocable",        INVOCABLE,     0},                /*  25 */
-   { "limited",          LIMITED,       0},                /*  26 */
-   { "link",             LINK,          Beginner+Ender},   /*  27 */
-   { "local",            LOCAL,         0},                /*  28 */
-   { "native",           NATIVE,        0},                /*  29 */
-   { "next",             NEXT,          Beginner+Ender},   /*  30 */
-   { "not",              NOT,           Beginner},         /*  31 */
-   { "of",               OF,            0},                /*  32 */
-   { "optional",         OPTIONAL,      0},                /*  33 */
-   { "override",         OVERRIDE,      0},                /*  34 */
-   { "package",          PACKAGE,       0},                /*  35 */
-   { "private",          PRIVATE,       0},                /*  36 */
-   { "procedure",        PROCEDURE,     0},                /*  37 */
-   { "protected",        PROTECTED,     0},                /*  38 */
-   { "public",           PUBLIC,        0},                /*  39 */
-   { "readable",         READABLE,      0},                /*  40 */
-   { "record",           RECORD,        0},                /*  41 */
-   { "repeat",           REPEAT,        Beginner},         /*  42 */
-   { "return",           RETURN,        Beginner+Ender},   /*  43 */
-   { "static",           STATIC,        0},                /*  44 */
-   { "succeed",          SUCCEED,       Beginner+Ender},   /*  45 */
-   { "suspend",          SUSPEND,       Beginner+Ender},   /*  46 */
-   { "then",             THEN,          0},                /*  47 */
-   { "to",               TO,            0},                /*  48 */
-   { "unless",           UNLESS,        Beginner},         /*  49 */
-   { "until",            UNTIL,         Beginner},         /*  50 */
-   { "while",            WHILE,         Beginner},         /*  51 */
+   { "link",             LINK,          Beginner+Ender},   /*  26 */
+   { "local",            LOCAL,         0},                /*  27 */
+   { "native",           NATIVE,        0},                /*  28 */
+   { "next",             NEXT,          Beginner+Ender},   /*  29 */
+   { "not",              NOT,           Beginner},         /*  30 */
+   { "of",               OF,            0},                /*  31 */
+   { "optional",         OPTIONAL,      0},                /*  32 */
+   { "override",         OVERRIDE,      0},                /*  33 */
+   { "package",          PACKAGE,       0},                /*  34 */
+   { "private",          PRIVATE,       0},                /*  35 */
+   { "procedure",        PROCEDURE,     0},                /*  36 */
+   { "protected",        PROTECTED,     0},                /*  37 */
+   { "public",           PUBLIC,        0},                /*  38 */
+   { "readable",         READABLE,      0},                /*  39 */
+   { "record",           RECORD,        0},                /*  40 */
+   { "repeat",           REPEAT,        Beginner},         /*  41 */
+   { "return",           RETURN,        Beginner+Ender},   /*  42 */
+   { "static",           STATIC,        0},                /*  43 */
+   { "succeed",          SUCCEED,       Beginner+Ender},   /*  44 */
+   { "suspend",          SUSPEND,       Beginner+Ender},   /*  45 */
+   { "then",             THEN,          0},                /*  46 */
+   { "to",               TO,            0},                /*  47 */
+   { "unless",           UNLESS,        Beginner},         /*  48 */
+   { "until",            UNTIL,         Beginner},         /*  49 */
+   { "while",            WHILE,         Beginner},         /*  50 */
    { "end-of-file",      0,             0},
    };
 
@@ -79,9 +78,9 @@ struct toktab *restab[] = {
    &toktab[ 7], &toktab[ 8], &toktab[10], &toktab[14], /* 61-64 abcd */
    &toktab[16], &toktab[19], &toktab[21], NULL,        /* 65-68 efgh */
    &toktab[22], NULL,        NULL,        &toktab[26], /* 69-6C ijkl */
-   NULL,        &toktab[29], &toktab[32], &toktab[35], /* 6D-70 mnop */
-   NULL,        &toktab[40], &toktab[44], &toktab[47], /* 71-74 qrst */
-   &toktab[49], NULL,        &toktab[51], NULL,        /* 75-78 uvwx */
+   NULL,        &toktab[28], &toktab[31], &toktab[34], /* 6D-70 mnop */
+   NULL,        &toktab[39], &toktab[43], &toktab[46], /* 71-74 qrst */
+   &toktab[48], NULL,        &toktab[50], NULL,        /* 75-78 uvwx */
    NULL,        NULL,                                  /* 79-7A yz */
    };
 

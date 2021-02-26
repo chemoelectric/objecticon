@@ -194,8 +194,6 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Final "
       if iand(f, Class.Override) ~= 0 then
          s ||:= "Override "
-      if iand(f, Class.Limited) ~= 0 then
-         s ||:= "Limited "
       if iand(f, Class.Special) ~= 0 then
          s ||:= "Special "
       if iand(f, Class.Removed) ~= 0 then

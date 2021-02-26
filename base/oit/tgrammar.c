@@ -136,7 +136,6 @@ int globalflag;
 #define Modifier10()            modflag |= M_Abstract
 #define Modifier11()            modflag |= M_Native
 #define Modifier12()            modflag |= M_Override
-#define Modifier13()            modflag |= M_Limited
 
 #define Classbody0()            modflag = 0; idflag = F_Class
 #define Fielddecl1(x)           check_flags(modflag, x)

@@ -161,7 +161,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin lists.
    #
-   private override object_equals(other, seen)
+   protected override object_equals(other, seen)
       local e, x
       other.size() = size() | fail
       e := create other.gen()
@@ -173,7 +173,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin lists.
    #
-   private override object_hash(depth)
+   protected override object_hash(depth)
       local n, i
       n := size()
       if depth > 1 then
@@ -185,7 +185,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       local e, sep
       if oo.simple{gen()} then {
          oo.object_start(self)
@@ -381,7 +381,7 @@ package record NodeSlice(len, h, t)
 #
 # A node in a `LinkedList`.
 #
-final class LinkedListNode()
+class LinkedListNode()
    package
       nxt
    public
@@ -802,7 +802,7 @@ end
 #
 # A node in a `DoublyLinkedList`.
 #
-limited class DoublyLinkedListNode()
+class DoublyLinkedListNode()
    package
       nxt,        # The next node, or &null if this node was unlinked.
       prev        # The previous node, or &null if this node was unlinked.

@@ -205,7 +205,7 @@ abstract class Number(ObjectOutput)
    # Subtract the other instance of the same type from this instance.
    public abstract sub(x, rnd)
 
-   private override object_output(oo)
+   protected override object_output(oo)
       oo.object_string(self, str())
    end
 end
@@ -649,11 +649,11 @@ class Dec(RealNumber, ObjectHash, ObjectEquals)
       p10 := memoize1(calc_p10)
    end
 
-   private override object_equals(x)
+   protected override object_equals(x)
       succeed i = x.i & e = x.e
    end
 
-   private override object_hash()
+   protected override object_hash()
       return iand(i, 16rffff) + 37 * default.abs(e)
    end
 

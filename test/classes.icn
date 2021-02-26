@@ -73,7 +73,7 @@ end
 class Seven(ObjectOutput)
    public a,b,c,d
 
-   private override object_output(oo)
+   protected override object_output(oo)
       return oo.object_selected(self, "a","c")
    end
 
@@ -571,7 +571,7 @@ end
 class E1(ObjectEquals)
    private x
 
-   private override object_equals(other)
+   protected override object_equals(other)
       return other.x === x
    end
 
@@ -585,7 +585,7 @@ class E2(E1)
 end
 
 class E3(E1)
-   private override object_equals(other)
+   protected override object_equals(other)
       return other.x === x
    end
 end

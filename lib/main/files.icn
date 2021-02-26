@@ -774,7 +774,7 @@ class FilePath(ObjectOutput)
       return from_list(l[1:-1])
    end
 
-   private override object_output(oo)
+   protected override object_output(oo)
       oo.object_string(self, str())
    end
 
@@ -966,7 +966,7 @@ end
 #
 # This class represents file stat information.
 #
-final class Stat()
+class Stat()
    public const 
       dev,
       ino,

@@ -137,7 +137,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin sets.
    #
-   private override object_equals(other, seen)
+   protected override object_equals(other, seen)
       other.size() = self.size() | fail
       return hash_and_check(other.member_list(), self.member_list(), seen)
    end
@@ -145,7 +145,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin sets.
    #
-   private override object_hash(depth)
+   protected override object_hash(depth)
       local n
       n := size()
       if depth > 1 then
@@ -156,7 +156,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       local elements, e, sep
       elements := sort()
       if oo.simple{!elements} then {

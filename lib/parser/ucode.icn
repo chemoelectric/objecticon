@@ -4,7 +4,7 @@ import
    util(error),
    lang(UcodeOp)
 
-final class UFile()
+class UFile()
    private readable
       pack,
       declend_offset,
@@ -69,7 +69,7 @@ final class UFile()
    end
 end
 
-limited class UObject()
+class UObject()
    public const
       name,
       file,

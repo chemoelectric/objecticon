@@ -364,7 +364,7 @@ end
 #
 # Contains some information about a frame in a stack.
 #
-final class FrameInfo()
+class FrameInfo()
    public const
       # The name of the procedure
       proc, 
@@ -388,7 +388,7 @@ end
 # This class contains information about the garbage collections
 # carried out by a program.
 #
-final class CollectionInfo()
+class CollectionInfo()
    public const
       # The number of collections requested by the `collect()` function.
       user_requests, 
@@ -419,7 +419,7 @@ end
 # This class returns the total amounts allocated by a program in each
 # of its regions.
 #
-final class AllocationInfo()
+class AllocationInfo()
    public const
       # The total allocated in the string region.
       string_total,
@@ -444,7 +444,7 @@ end
 # This class contains information about a program's memory allocation
 # regions.
 #
-final class RegionInfo()
+class RegionInfo()
    public const
       # A list of `Region` instances, one for each string region
       # allocated.
@@ -478,7 +478,7 @@ end
 #
 # This class contains info about an allocated memory region.
 #
-final class Region()
+class Region()
    public const 
       # The amount used
       used,

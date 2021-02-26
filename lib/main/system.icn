@@ -229,7 +229,7 @@ $endif
 end
 
 # A structure returned by the `System.uname` method.
-final class UtsName()
+class UtsName()
    public const
       sysname,
       nodename,
@@ -248,7 +248,7 @@ final class UtsName()
 end
 
 # Provides info about an exited process
-final class ExitInfo()
+class ExitInfo()
    public static const
       STOPPED,
       COREDUMP,
@@ -297,7 +297,7 @@ final class ExitInfo()
 end
 
 # A structure representing a user group
-final class Group()
+class Group()
    public const
       name,
       passwd,
@@ -314,7 +314,7 @@ final class Group()
 end
 
 # A structure representing a user in the passwd database
-final class Passwd()
+class Passwd()
    public const
       name,
       passwd,

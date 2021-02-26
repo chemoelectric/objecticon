@@ -227,7 +227,7 @@ class URL(ObjectOutput)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       oo.object_string(self, str())
    end
 

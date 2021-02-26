@@ -30,7 +30,6 @@
 %token  IMPORT      /* import    */
 %token  INITIAL     /* initial   */
 %token  INVOCABLE   /* invocable */
-%token	LIMITED     /* limited   */
 %token  LINK        /* link      */
 %token  LOCAL       /* local     */
 %token  NATIVE      /* native    */
@@ -234,7 +233,6 @@ classaccess : classaccess1 ;
 
 classaccess1 : { $$ := Node.EMPTY } ;
         | FINAL
-        | LIMITED
         | ABSTRACT
 
 fieldaccess : fieldaccess1 ;
@@ -249,7 +247,6 @@ fieldaccess1 : PRIVATE
         | READABLE
         | FINAL
         | OVERRIDE
-        | LIMITED
 
 global  : optreadable GLOBAL idlist { $$ := Node("global", $1,$2,$3) } ;
 

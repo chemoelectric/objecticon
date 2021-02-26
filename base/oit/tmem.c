@@ -74,12 +74,6 @@ void next_class(char *name, struct node *n)
     c->flag = modflag;
     if (globalflag)
         c->flag |= M_Package;
-    if (c->flag & M_Limited) {
-        if (c->flag & M_Package)
-            tfatal_at(n, "A package class cannot be limited: class %s", name);
-        if (c->flag & M_Final)
-            tfatal_at(n, "A final class cannot be limited: class %s", name);
-    }
     if (curr_class) {
         curr_class->next = c;
         curr_class = c;
@@ -134,10 +128,6 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A static method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & (M_Static | M_Limited)) == (M_Static | M_Limited))
-            tfatal_at(n, "A static method cannot be limited: method %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
         if ((flag & (M_Static | M_Abstract)) == (M_Static | M_Abstract))
             tfatal_at(n, "A static method cannot be abstract: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
@@ -154,14 +144,6 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A method cannot be final in a class marked final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & M_Limited) && (curr_class->flag & M_Final))
-            tfatal_at(n, "A method cannot be limited in a class marked final: method %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
-        if ((flag & M_Limited) && (curr_class->flag & M_Limited))
-            tfatal_at(n, "A method cannot be limited in a class marked limited: method %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
         if ((flag & M_Abstract) && (curr_class->flag & M_Final))
             tfatal_at(n, "A method cannot be abstract in a class marked final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
@@ -176,6 +158,18 @@ void check_flags(int flag, struct node *n)
 
         if ((flag & (M_Optional | M_Final)) == (M_Optional | M_Final))
             tfatal_at(n, "An optional method cannot be final: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & (M_Private | M_Final)) == (M_Private | M_Final))
+            tfatal_at(n, "A private method cannot be final: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & (M_Abstract | M_Private)) == (M_Abstract | M_Private))
+            tfatal_at(n, "An abstract method cannot be private: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & (M_Optional | M_Private)) == (M_Optional | M_Private))
+            tfatal_at(n, "An optional method cannot be private: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if (flag & M_Const)

@@ -112,7 +112,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       oo.object_string(self, format("MMMM d, yyyy HH:mm:ss z"))
    end
 
@@ -423,7 +423,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Succeed if date is equal to d; uses the seconds past the base date
    # for comparison.
    #
-   private override object_equals(d)
+   protected override object_equals(d)
       succeed self.seconds = d.seconds
    end
 
@@ -431,18 +431,18 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # The hash code, to be consistent with `equals()` above, returns the
    # seconds past the base date.
    #
-   private override object_hash()
+   protected override object_hash()
       return self.seconds
    end
 
    #
    # Encode just stores the seconds and zone information.
    #
-   private override object_encode(c)
+   protected override object_encode(c)
       every c.encode(seconds | zone)
    end
 
-   private override object_decode(c)
+   protected override object_decode(c)
       self.seconds := c.decode()
       self.zone := c.decode()
       compute_broken_down_fields()

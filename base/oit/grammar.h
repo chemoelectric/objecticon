@@ -88,7 +88,6 @@ classaccess : classaccess1 ;
 
 classaccess1 : ;
         | FINAL {Modifier8();};
-        | LIMITED {Modifier13();};
         | ABSTRACT {Modifier10();};
 
 fieldaccess : fieldaccess1 ;
@@ -103,7 +102,6 @@ fieldaccess1 : PRIVATE {Modifier1();};
         | READABLE {Modifier7();};
         | FINAL {Modifier8();};
         | OVERRIDE {Modifier12();};
-        | LIMITED {Modifier13();};
 
 global	: optreadable GLOBAL {Global0($2);} idlist  {Global1($1,$2,$3,$4);} ;
 

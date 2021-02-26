@@ -5,7 +5,7 @@ import
    lang(),
    io
 
-abstract limited class Symbol()
+abstract class Symbol()
    public const
       scanned_file,
       obj,
@@ -171,13 +171,6 @@ class ClassSymbol(TopLevelSymbol)
          iand(obj.flags, lang.Class.Final) ~= 0
    end
 
-   public is_limited()
-      succeed if is(obj, Tree) then
-         obj.get_access().gen().str() == "limited"
-      else
-         iand(obj.flags, lang.Class.Limited) ~= 0
-   end
-
    public is_abstract()
       succeed if is(obj, Tree) then
          obj.get_access().gen().str() == "abstract"
@@ -227,7 +220,7 @@ end
 class ClassMethod(ClassField)
 end
 
-final class ScannedFile()
+class ScannedFile()
    public const
       filename
 
@@ -329,7 +322,7 @@ final class ScannedFile()
    end
 end
 
-final class ImportDec()
+class ImportDec()
    public const
       mode,
       name

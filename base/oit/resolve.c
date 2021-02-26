@@ -335,7 +335,7 @@ static struct gentry *resolve_super(struct lclass *class, struct lclass_super *s
 
 void resolve_supers()
 {
-    struct lclass *cl;
+    struct lclass *cl, *x;
     struct gentry *rsup;
     struct lclass_super *sup;
     struct lclass_ref *el;
@@ -344,6 +344,13 @@ void resolve_supers()
         for (sup = cl->supers; sup; sup = sup->next) {
             rsup = resolve_super(cl, sup);
             if (rsup) {
+                x = rsup->class;
+                /* Check that the superclass isn't final */
+                if (x->flag & M_Final)
+                    lfatal(cl->global->defined,
+                           &cl->global->pos,
+                           "Class %s cannot inherit from %s, which is marked final", 
+                           cl->global->name, x->global->name);
                 el = Alloc(struct lclass_ref);
                 el->class = rsup->class;
                 if (cl->last_resolved_super) {
@@ -392,22 +399,6 @@ static void merge(struct lclass *cl, struct lclass *super)
     struct lclass_field *f;
     struct lclass_ref *cr;
 
-    if (cl != super) {
-        /* Check that the superclass isn't final */
-        if (super->flag & M_Final)
-            lfatal(cl->global->defined,
-                   &cl->global->pos,
-                   "Class %s cannot inherit from %s, which is marked final", 
-                   cl->global->name, super->global->name);
-        /* Check that the superclass isn't limited and in another package */
-        if ((super->flag & M_Limited) &&
-            other_package(cl->global->defined, super->global))
-            lfatal(cl->global->defined,
-                   &cl->global->pos,
-                   "Class %s cannot inherit from %s, which is marked limited and is in a different package", 
-                   cl->global->name, super->global->name);
-    }
-
     /* Add a reference to super into the implemented_classes list. */
     cr = Alloc(struct lclass_ref);
     cr->class = super;
@@ -448,22 +439,28 @@ static void merge(struct lclass *cl, struct lclass *super)
             else if (f->flag & M_Final) {
                 lfatal2(fr->field->class->global->defined,
                         &fr->field->pos, &f->pos, ")",
-                        "Field %s encountered in class %s overrides a final field in class %s (",
+                        "Method %s encountered in class %s overrides a final method in class %s (",
                         f->name,
                         fr->field->class->global->name,
                         f->class->global->name
                     );
                 if (fr->field->class != cl)
                     print_see_also(cl);
-            }
-            /*
-             * If the new field is limited, then this is like final except that it only applies if
-             * the new field is in a different package.
-             */
-            else if ((f->flag & M_Limited) && other_package(f->class->global->defined, fr->field->class->global)) {
+            } else if (((f->flag & (M_Method | M_Static | M_Package)) == (M_Method | M_Package)) &&
+                       other_package(f->class->global->defined, fr->field->class->global)) {
                 lfatal2(fr->field->class->global->defined,
                         &fr->field->pos, &f->pos, ")",
-                        "Field %s encountered in class %s overrides a limited field in class %s (",
+                        "Method %s encountered in class %s overrides a package method in a class from another package, %s (",
+                        f->name,
+                        fr->field->class->global->name,
+                        f->class->global->name
+                    );
+                if (fr->field->class != cl)
+                    print_see_also(cl);
+            } else if (((f->flag & (M_Method | M_Static | M_Private)) == (M_Method | M_Private))) {
+                lfatal2(fr->field->class->global->defined,
+                        &fr->field->pos, &f->pos, ")",
+                        "Method %s encountered in class %s overrides a private method in class %s (",
                         f->name,
                         fr->field->class->global->name,
                         f->class->global->name

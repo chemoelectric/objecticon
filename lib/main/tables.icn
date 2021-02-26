@@ -270,7 +270,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin tables.
    #
-   private override object_equals(other, seen)
+   protected override object_equals(other, seen)
       other.size() = self.size() | fail
       equals(other.def, self.def, seen) | fail
       return hash_and_check(other.entry_list(), self.entry_list(), seen)
@@ -279,7 +279,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin tables.
    #
-   private override object_hash(depth)
+   protected override object_hash(depth)
       local n
       n := size()
       if depth > 1 then {
@@ -292,7 +292,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       local pairs, e, sep
       pairs := sort()
       if oo.simple{!!pairs | def} then {
@@ -540,7 +540,7 @@ end
 #
 # A node in a `SortTable` tree.
 #
-final class SortTableNode()
+class SortTableNode()
    public const
       key
    public

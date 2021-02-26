@@ -5,19 +5,19 @@ import io, util, exception, ipl.scan, ipl.printf, ipl.pdco
 # A class implements this interface to provide custom encoding/decoding.
 #
 abstract class ObjectCodec()
-   private abstract object_encode(es)
-   private abstract object_decode(ds)
+   protected abstract object_encode(es)
+   protected abstract object_decode(ds)
 end
 
 #
 # Parent class for a class which wishes to prohibit encoding.
 #
 class Unencodable(ObjectCodec)
-   private final override object_encode()
+   protected final override object_encode()
       throw("Not encodable: " || image(self))
    end
 
-   private final override object_decode()
+   protected final override object_decode()
       throw("Not decodable: " || image(self))
    end
 end
@@ -442,7 +442,7 @@ class Decode()
       }
    end
 
-   private optional nothing()
+   package optional nothing()
    private static native decode_methp_impl(obj, cl, fn, target)
 
    private decode_methp()

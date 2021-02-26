@@ -22,8 +22,7 @@ final abstract class Class()
       Abstract,      # Integer flag for an abstract class/method.
       Native,        # Integer flag for a native method.
       Removed,       # Integer flag for a removed method.
-      Override,      # Integer flag for an override method.
-      Limited        # Integer flag for an limited class/method.
+      Override       # Integer flag for an override method.
 
    private static init()
       Method := 8r01
@@ -41,7 +40,6 @@ final abstract class Class()
       Native := 8r010000
       Removed := 8r020000
       Override := 8r040000
-      Limited := 8r0100000
    end
 
    # This method creates a new instance of the class from which the

@@ -154,7 +154,7 @@ class Node()
    end
 end
 
-abstract limited class Tree()
+abstract class Tree()
    public const pos
 
    public optional get_first_token()
@@ -169,7 +169,7 @@ abstract limited class Tree()
    end
 end
 
-abstract limited class List()
+abstract class List()
    public const lpos, index
 
    package abstract flatten()
