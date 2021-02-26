@@ -413,6 +413,35 @@ procedure cvslice_def(pos1, pos2, len)
 end
 
 #
+# Helper procedure to return the index of the first element returned
+# by an iteration using the builtin `forward()` function, with
+# subsequent elements given by increasing this value by 1 each time.
+#
+# :Parameters :
+# :  `i` - the starting position, default 1
+# :  `len` - the list length
+#
+procedure first_forward(i, len)
+   /i := 1
+   return cvpos_item(i, len)
+end
+
+#
+# Helper procedure to return the index of the first element returned
+# in an iteration using the builtin `back()` function.  A negative
+# index is returned, with subsequent elements given by decreasing this
+# value by 1 each time.
+#
+# :Parameters :
+# :  `i` - the starting position, default 0
+# :  `len` - the list length
+#
+procedure first_back(i, len)
+   i := need_integer(\i) | 0
+   return cvpos_item(i - 1, len) - len - 1
+end
+
+#
 # This class can be used by a class which has various capabilities or
 # permitted operations, and needs to give clients a simple way of
 # seeing what it is capable of, by way of an integer bit flag

@@ -4,10 +4,25 @@
 
 package datastruct
 
-import ipl.pdco(Length,Index), lang, util
+import ipl.pdco(Index), lang, util
 
 #
 # This is a common superclass for a set-like data structure.
+#
+# A subclass must implement different optional methods depending on
+# its capability mode, as follows :-
+#
+#  * `ORDER` - `back()`, `rank()` and `select()`
+#  * `INSERT` - `insert()`
+#  * `DELETE` - `delete()`
+#
+# There are several other abstract methods which all classes must of
+# course implement, and others which may be overridden to provide more
+# efficient implementations than the default.
+#
+# Note that the behaviour of the various generator methods should the
+# set be concurrently modified during the course of generation,
+# depends upon the particular set implementation.
 #
 abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const
@@ -36,9 +51,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Succeed with `x` if it is a member of the set.
    #
-   public member(x)
-      return gen() === x 
-   end
+   public abstract member(x)
 
    #
    # Delete `x` from the set.  Fails if the key was not present,
@@ -57,15 +70,18 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the members.
+   # Generate members.  With ORDER capability, the members are
+   # generated in sorted order, starting with the member at index `i`
+   # (default 1).
    #
-   public abstract gen()
+   public abstract gen(i)
 
    #
-   # Generate the entries in reverse order.  Only implemented with
-   # ORDER capability.
+   # Generate the members in reverse order, starting with the member
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0.  Only implemented with ORDER capability.
    #
-   public optional back()
+   public optional back(i)
 
    #
    # Return the rank of the given entry, ie its order number in the
@@ -79,17 +95,12 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # out of range, using standard icon indexing semantics.  Only
    # implemented for sets with ORDER capability.
    #
-   public select(i)
-      can(ORDER) | runerr("Set doesn't have ORDER capability")
-      return Index{gen(), cvpos_item(i, size())}
-   end
+   public optional select(i)
 
    #
    # Return the size of the set.
    #
-   public size()
-      return Length{gen()}
-   end
+   public abstract size()
 
    #
    # Succeed iff the size is zero.
@@ -103,8 +114,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # `self`.  Only implemented with DELETE capability.
    #
    public clear()
-      while size() > 0 do
-         delete(gen())
+      while delete(gen())
       link
    end
 
@@ -121,13 +131,13 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Return a list of the members, in the order produced by `gen()`.
    #
    public member_list()
-      return ipl.pdco.List{gen()}
+      return ipl.pdco.List{ gen() }
    end
 
    #
    # Custom equals mirrors the `equals()` behaviour for builtin sets.
    #
-   private override object_equals(other, seen)
+   protected override object_equals(other, seen)
       other.size() = self.size() | fail
       return hash_and_check(other.member_list(), self.member_list(), seen)
    end
@@ -135,7 +145,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin sets.
    #
-   private override object_hash(depth)
+   protected override object_hash(depth)
       local n
       n := size()
       if depth > 1 then
@@ -146,7 +156,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       local elements, e, sep
       elements := sort()
       if oo.simple{!elements} then {
@@ -177,10 +187,41 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
+# A helpful abstract class for a table with `ORDER` capability, which
+# wishes to implement the generator methods `gen()` and `back()` in
+# terms of `select()`.
+#
+# In the case of changes to the set during generation, the methods
+# behave like the builtin `forward()` and `back()` functions.
+#
+abstract class OrderSetImpl1(Set)
+   public override gen(i)
+      if i := first_forward(i, size()) then
+         suspend |1(select(i), i +:= 1)
+   end
+
+   public override back(i)
+      if i := first_back(i, size()) then
+         suspend |1(select(i), i -:= 1)
+   end
+end
+
+#
+# A helpful abstract class for a set with `ORDER` capability, which
+# wishes to implement `select()` in terms of `gen()`.
+#
+abstract class OrderSetImpl2(Set)
+   public override select(i)
+      return Index{ gen(), cvpos_item(i, size()) }
+   end
+end
+
+#
 # A class to provide an unmodifiable view of another set.
 #
 class UnmodifiableSet(Set)
-   private const s
+   protected const
+      s
 
    public override member(x)
       return s.member(x)
@@ -190,12 +231,12 @@ class UnmodifiableSet(Set)
       return s.sort()
    end
 
-   public override gen()
-      suspend s.gen()
+   public override gen(i)
+      suspend s.gen(i)
    end
 
-   public override back()
-      suspend s.back()
+   public override back(i)
+      suspend s.back(i)
    end
 
    public override rank(x)
@@ -208,6 +249,10 @@ class UnmodifiableSet(Set)
 
    public override size()
       return s.size()
+   end
+
+   public override empty()
+      return s.empty()
    end
 
    public override random()
@@ -228,10 +273,11 @@ end
 # A Set which is a view of the keys of a `Table`.
 #
 class TableSet(Set)
-   private const t
+   protected const
+      t
 
    public override insert(x)
-      t.insert(x, t.def)
+      t.add(x)
       link
    end
 
@@ -248,12 +294,12 @@ class TableSet(Set)
       return t.key_sort()
    end
 
-   public override gen()
-      suspend t.key()
+   public override gen(i)
+      suspend t.key(i)
    end
 
-   public override back()
-      suspend t.back_key()
+   public override back(i)
+      suspend t.back_key(i)
    end
 
    public override rank(x)
@@ -314,8 +360,14 @@ end
 #
 # An empty set.  An instance of this class is `Set.EMPTY_SET`.
 #
-class EmptySet(Set)
-   public override gen()
+class EmptySet(OrderSetImpl1)
+   public override member(x)
+   end
+
+   public override select(i)
+   end
+
+   public override rank(x)
    end
 
    public override size()
@@ -323,7 +375,7 @@ class EmptySet(Set)
    end
 
    public override get_mode()
-      return 0
+      return ORDER
    end
 end
 
@@ -331,7 +383,8 @@ end
 # A `Set` that is just a wrapper around a builtin set
 #
 class BuiltinSet(Set)
-   private const s
+   private const
+      s
 
    public override insert(x)
       default.insert(s, x)
@@ -387,7 +440,8 @@ end
 # UnmodifiableSet.
 #
 class UnmodifiableBuiltinSet(Set)
-   private const s
+   private const
+      s
 
    public override member(x)
       return default.member(s, x)

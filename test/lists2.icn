@@ -13,12 +13,10 @@ end
 
 procedure e_reviterator(l)
    local i
-   i := *l
-   while i > 0 do {
-      suspend l[i]
-      i -:= 1
-      if i > *l then
-         i := *l
+   i := 1
+   while i <= *l do {
+      suspend l[-i]
+      i +:= 1
    }
 end
 

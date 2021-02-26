@@ -137,8 +137,6 @@ int nest_lvl;
    sym->ref_cnt = 1;
    sym->il_indx = -1;
    sym->may_mod = 0;
-   if (id_type == Label)
-      sym->u.lbl_num = lbl_num++;
    sym->next = *symp;
    *symp = sym;
 

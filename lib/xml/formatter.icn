@@ -25,9 +25,8 @@ abstract class Formatter(Stream, HasCloseUnderlying)
    # Create a formatter which will output to the `Stream` `file`; by
    # default standard output.
    #
-   public new(file)
-      /file := FileStream.stdout
-      self.file := file
+   public new(f)
+      file := need_Stream(\f) | FileStream.stdout
       file.can(Stream.WRITE) | runerr("Formatter: stream not writable: ", file)
       return
    end

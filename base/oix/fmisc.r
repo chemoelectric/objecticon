@@ -113,6 +113,16 @@ function copy(x)
 end
 
 
+"echo(x) - repeatedly suspend x without dereferencing."
+
+function echo(underef x)
+    body {
+       for (;;)
+           suspend x;
+       fail;       /* Not reached */
+    }
+end
+
 
 /*
  * the bitwise operators are identical enough to be expansions

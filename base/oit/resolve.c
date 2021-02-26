@@ -22,47 +22,37 @@ static int merge_c3(struct lclass_ref_list *res, struct lclass_ref_list **arg);
 static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *cl);
 
 /*
- * Names of builtin functions.
- */
-static char *builtin_table[] = {
-#define FncDef(p) #p,
-#include "../h/fdefs.h"
-#undef FncDef
-};
-
-static int builtin_table_cmp(char *key, char **item)
-{
-    return strcmp(key, *item);
-}
-
-/*
- * Lookup a builtin function name; returns -1 if not found, or the
- * index otherwise.
- */
-static int blookup(char *s)
-{
-    char **p = bsearch(s, builtin_table, ElemCount(builtin_table), 
-                       sizeof(char *), (BSearchFncCast)builtin_table_cmp);
-    if (!p)
-        return -1;
-
-    return p - builtin_table;
-}
-
-/*
  * Just like glocate, but if the symbol is not found then it checks
  * for a builtin function as well.
  */
 static struct gentry *gb_locate(char *name)
 {
+    static char *names[4];
+    static int inited;
     struct gentry *gl = glocate(name);
-    int bn;
+    int i, bn;
+
+    if (!inited) {
+        /* Names of functions which use underef parameter(s) */
+        names[0] = intern("coact");
+        names[1] = intern("echo");
+        names[2] = intern("forward");
+        names[3] = intern("back");
+        inited = 1;
+    }
+
     if (!gl && (bn = blookup(name)) >= 0) {	
         struct loc bl = {"Builtin", 0};
         /* Builtin function, add to global table so we see it next time */
         gl = putglobal(name, F_Builtin | F_Proc, 0, &bl);
         gl->builtin = Alloc(struct lbuiltin);
         gl->builtin->builtin_id = bn;
+        for (i = 0; i < ElemCount(names); ++i) {
+            if (name == names[i]) {
+                gl->builtin->underef = 1;
+                break;
+            }
+        }
     }
     return gl;
 }
@@ -95,12 +85,17 @@ static void print_see_also(struct lclass *cl)
     fputs(")\n", stderr);
 }
 
+static int other_package(struct lfile *lf, struct gentry *gl)
+{
+    return lf->package_id != 1 &&
+        (gl->defined->package_id != lf->package_id);
+}
+
 static struct gentry *check_package_access(struct lfile *lf, struct gentry *gl)
 {
     if (gl &&
         (gl->g_flag & (F_Package|F_Readable)) == F_Package &&
-        lf->package_id != 1 &&
-        gl->defined->package_id != lf->package_id)
+        other_package(lf, gl))
         gl = 0;
     return gl;
 }
@@ -444,7 +439,28 @@ static void merge(struct lclass *cl, struct lclass *super)
             else if (f->flag & M_Final) {
                 lfatal2(fr->field->class->global->defined,
                         &fr->field->pos, &f->pos, ")",
-                        "Field %s encountered in class %s overrides a final field in class %s (",
+                        "Method %s encountered in class %s overrides a final method in class %s (",
+                        f->name,
+                        fr->field->class->global->name,
+                        f->class->global->name
+                    );
+                if (fr->field->class != cl)
+                    print_see_also(cl);
+            } else if (((f->flag & (M_Method | M_Static | M_Package)) == (M_Method | M_Package)) &&
+                       other_package(f->class->global->defined, fr->field->class->global)) {
+                lfatal2(fr->field->class->global->defined,
+                        &fr->field->pos, &f->pos, ")",
+                        "Method %s encountered in class %s overrides a package method in a class from another package, %s (",
+                        f->name,
+                        fr->field->class->global->name,
+                        f->class->global->name
+                    );
+                if (fr->field->class != cl)
+                    print_see_also(cl);
+            } else if (((f->flag & (M_Method | M_Static | M_Private)) == (M_Method | M_Private))) {
+                lfatal2(fr->field->class->global->defined,
+                        &fr->field->pos, &f->pos, ")",
+                        "Method %s encountered in class %s overrides a private method in class %s (",
                         f->name,
                         fr->field->class->global->name,
                         f->class->global->name

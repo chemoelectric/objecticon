@@ -9,6 +9,20 @@ import lang, util, ipl.pdco-(List)
 #
 # This is a common superclass for a list-like data structure.
 #
+# A subclass must implement different optional methods depending on
+# its capability mode, as follows :-
+#
+#  * `INSERT` - `insert()`
+#  * `DELETE` - `delete()`
+#
+# There are several other abstract methods which all classes must of
+# course implement, and others which may be overridden to provide more
+# efficient implementations than the default.
+#
+# Note that the behaviour of the various generator methods should the
+# list be concurrently modified during the course of generation,
+# depends upon the particular list implementation.
+#
 abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const
       # An empty list instance
@@ -77,52 +91,19 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the members.  If the list has MODIFY capability,
+   # Generate the members, starting with the element at index `i`,
+   # which defaults to 1.  If the list has MODIFY capability,
    # variables are generated, otherwise values are generated.
    #
-   public gen()
-      suspend gen_from(1)
-   end
-
-   #
-   # Generate the members, starting with the element at index `i`.
-   # If the list has MODIFY capability, variables are generated,
-   # otherwise values are generated.
-   #
-   public gen_from(i)
-      i := cvpos_item(i, size()) | fail
-      repeat {
-         suspend at(i)
-         if i < size() then
-            i +:= 1
-         else
-            fail
-      }
-   end
-
-   #
-   # Generate the members in reverse order.  If the list has MODIFY
-   # capability, variables are generated, otherwise values are
-   # generated.
-   #
-   public back()
-      suspend back_from(0)
-   end
+   public abstract gen(i)
 
    #
    # Generate the members in reverse order, starting with the element
-   # before index `i` (thus generating the elements in the range 1:i).
-   # If the list has MODIFY capability, variables are generated,
-   # otherwise values are generated.
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0.  If the list has MODIFY capability, variables
+   # are generated, otherwise values are generated.
    #
-   public back_from(i)
-      i := need_integer(i)
-      i := cvpos_item(i - 1, size()) | fail
-      while i > 0 do {
-         suspend at(i)
-         i := min(i - 1, size())
-      }
-   end
+   public abstract back(i)
 
    #
    # Return the size of the list.
@@ -142,14 +123,14 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # Generate the indices i such that at(i) === x
    #
    public keyof(x)
-      suspend Positions{gen(), x}
+      suspend Positions{ gen(), x }
    end
 
    #
    # Return an icon list of the elements.
    #
    public list()
-      return ipl.pdco.List{gen()}
+      return ipl.pdco.List{ gen() }
    end
 
    #
@@ -158,7 +139,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public slice(i, j)
       local s
       s := cvslice(i, j, size()) | fail
-      return ipl.pdco.List{ gen_from(s.lo) \ (s.hi - s.lo) }
+      return ipl.pdco.List{ gen(s.lo) \ (s.hi - s.lo) }
    end
 
    #
@@ -180,7 +161,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom equals mirrors the `equals()` behaviour for builtin lists.
    #
-   private override object_equals(other, seen)
+   protected override object_equals(other, seen)
       local e, x
       other.size() = size() | fail
       e := create other.gen()
@@ -192,7 +173,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Custom hash mirrors the `hash()` behaviour for builtin lists.
    #
-   private override object_hash(depth)
+   protected override object_hash(depth)
       local n, i
       n := size()
       if depth > 1 then
@@ -204,7 +185,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       local e, sep
       if oo.simple{gen()} then {
          oo.object_start(self)
@@ -234,25 +215,59 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
+# A helpful abstract class for a list, which wishes to implement the
+# generator methods `gen()` and `back()` in terms of `at()`.
+#
+# In the case of changes to the list during generation, the methods
+# behave like the builtin `forward()` and `back()` functions.
+#
+abstract class ListImpl1(List)
+   public override gen(i)
+      if i := first_forward(i, size()) then
+         suspend |1(at(i), i +:= 1)
+   end
+
+   public override back(i)
+      if i := first_back(i, size()) then
+         suspend |1(at(i), i -:= 1)
+   end
+end
+
+#
+# A helpful abstract class for a list which wishes to implement `at()`
+# in terms of `gen()`.
+#
+abstract class ListImpl2(List)
+   public override at(i)
+      return Index{ gen(), cvpos_item(i, size()) }
+   end
+end
+
+#
 # This list wraps another list to provide an unmodifiable view of it.
 #
 class UnmodifiableList(List)
-   private const l
+   protected const
+      l
 
    public override at(i)
       return .l.at(i)
    end
 
-   public override gen_from(i)
-      suspend .l.gen_from(i)
+   public override gen(i)
+      suspend .l.gen(i)
    end
 
-   public override back_from(i)
-      suspend .l.back_from(i)
+   public override back(i)
+      suspend .l.back(i)
    end
 
    public override size()
       return l.size()
+   end
+
+   public override empty()
+      return l.empty()
    end
 
    public override random()
@@ -273,7 +288,8 @@ end
 # A `List` that is just a wrapper around a builtin list
 #
 class BuiltinList(List)
-   private const l
+   private const
+      l
 
    public override insert(i, x)
       link default.insert(l, i, x)
@@ -309,12 +325,12 @@ class BuiltinList(List)
       suspend default.keyof(l, x)
    end
 
-   public override gen()
-      suspend !l
+   public override gen(i)
+      suspend forward(l, i)
    end
 
-   public override back()
-      suspend default.back(l)
+   public override back(i)
+      suspend default.back(l, i)
    end
 
    public override slice(i, j)
@@ -347,7 +363,7 @@ end
 #
 # An empty list.  An instance of this class is `List.EMPTY_LIST`.
 #
-class EmptyList(List)
+class EmptyList(ListImpl1)
    public override at(i)
    end
 
@@ -360,14 +376,102 @@ class EmptyList(List)
    end
 end
 
+package record NodeSlice(len, h, t)
+
 #
 # A node in a `LinkedList`.
 #
-package class LinkedListNode()
+class LinkedListNode()
+   package
+      nxt
    public
-      nxt, val
+      val
 
-   public new(nxt, val)
+   #
+   # Create and insert a new node immediately after this node, with
+   # value `x`.  The new node is returned.
+   #
+   public insert_after(x)
+      nxt := LinkedListNode(nxt, x)
+      return .nxt
+   end
+
+   #
+   # Unlink the node immediately after this node.  Fails if there is
+   # no such node, or returns the unlinked node.  This can be helpful
+   # whilst iterating over a list and deleting nodes.
+   #
+   # Example :-
+   # ~
+   #   l := LinkedList(3, 3,10,20,3,3,30,3,40,50,60,70,3)
+   #   # Delete all the 3's from the list.
+   #   # Start with those at the front.
+   #   while l.at(1) = 3 do
+   #      l.get()
+   #   # Then iterate over the rest.
+   #   every n := l.node(1).gen() do {
+   #      while n.get_next().val = 3 do
+   #         n.unlink_next()
+   #   }
+   #   # Now l is (10,20,30,40,50,60,70)
+   # ~
+   public unlink_next()
+      local n
+      if n := \nxt then {
+         nxt := n.nxt
+         return n
+      }
+   end
+
+   #
+   # Set the next node to `n`, which may be `&null`.
+   #
+   public set_next(n)
+      need_instance(\n, LinkedListNode)
+      nxt := n
+      link
+   end
+
+   #
+   # Generate this node and all subsequent nodes.
+   #
+   public gen()
+      local n
+      n := self
+      repeat {
+         suspend n
+         n := \n.nxt | fail
+      }
+   end
+
+   #
+   # Return the next node, or fail if there is none.
+   #
+   public get_next()
+      return .\nxt
+   end
+
+   #
+   # Move along the list `i` (>= 0) places.  Returns the node at that
+   # position, or fail if the end of the list is encountered.
+   #
+   public move(i)
+      local n
+      i := need_integer(i, 0)
+      n := self
+      every 1 to i do
+         n := \n.nxt | fail
+      return n
+   end
+
+   #
+   # Return a new `LinkedList`, with this node as its head.
+   #
+   public list()
+      return LinkedList.from_node(self)
+   end
+
+   package new(nxt, val)
       self.nxt := nxt
       self.val := val
       return
@@ -380,33 +484,28 @@ end
 # builtin list if the list is concurrently modified.
 #
 class LinkedList(List)
-   private nhead
+   private
+      nxt
 
    public override insert(i, x)
-      local n
-      i := need_integer(i)
-      if i <= 0 then
-         i := cvpos(i, size()) | fail
-      if i = 1 then
-         nhead := LinkedListNode(nhead, x)
-      else {
-         n := node(i - 1) | fail
-         n.nxt := LinkedListNode(n.nxt, x)
-      }
-      link
+      link new_node(i, x)
+   end
+
+   #
+   # This is like `insert()`, but returns the new node that has been
+   # inserted.
+   #
+   public new_node(i, x)
+      local n, r
+      n := node_before(i) | fail
+      n.nxt := r := LinkedListNode(n.nxt, x)
+      return r
    end
 
    public override delete(i)
       local n
-      i := need_integer(i)
-      if i <= 0 then
-         i := cvpos_item(i, size()) | fail
-      if i = 1 then
-         nhead := (\nhead).nxt | fail
-      else {
-         n := node(i - 1) | fail
-         n.nxt := (\n.nxt).nxt | fail
-      }
+      n := node_before(i) | fail
+      n.nxt := (\n.nxt).nxt | fail
       link
    end
 
@@ -415,47 +514,60 @@ class LinkedList(List)
    end
 
    public override empty()
-      return /nhead
+      return /nxt
    end
 
    public override pull()
-      local v, n
-      \nhead | fail
-      if /nhead.nxt then {
-         v := nhead.val
-         nhead := &null
-      } else {
-         n := nhead
-         while \n.nxt.nxt do
-            n := n.nxt
-         v := n.nxt.val
-         n.nxt := &null
-      }
+      local n, v
+      n := node_before(-1) | fail
+      v := n.nxt.val
+      n.nxt := &null
       return v
    end
 
-   public override gen_from(i)
-      local n
-      n := node(i) | fail
-      repeat {
-         suspend n.val
-         n := \n.nxt | fail
-      }
+   #
+   # Generate the nodes in the list, starting at index `i` (default
+   # 1).  Each node represents one entry in the list.  The node `val`
+   # field may be changed if desired, to edit the value in the list.
+   #
+   # See also `LinkedListNode.gen()`.
+   #
+   public nodes(i)
+      /i := 1
+      suspend node(i).gen()
    end
 
-   public override back_from(i)
+   #
+   # Generate the nodes in reverse order, starting with the node
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0. (see `nodes()`).
+   #
+   public back_nodes(i)
       local n
-      i := need_integer(i)
+      i := need_integer(\i) | 0
       n := node(i - 1) | fail
       repeat {
-         suspend n.val
+         suspend n
          n := before(n) | fail
       }
    end
 
-   private before(n)
+   public override gen(i)
+      suspend nodes(i).val
+   end
+
+   public override back(i)
+      suspend back_nodes(i).val
+   end
+
+   #
+   # If node `n` appears in this list, and is not the first element,
+   # return the node immediately before it, or fail otherwise.
+   #
+   public before(n)
       local t
-      t := nhead
+      need_instance(n, LinkedListNode)
+      t := nxt
       while \t do {
          if t.nxt === n then
             return t
@@ -464,18 +576,11 @@ class LinkedList(List)
    end
 
    public override size()
-      local i, n
-      i := 0
-      n := nhead
-      while \n do {
-         i +:= 1
-         n := n.nxt
-      }
-      return i
+      return Length{ nodes() }
    end
 
    public override clear()
-      nhead := &null
+      nxt := &null
       link
    end
 
@@ -487,7 +592,7 @@ class LinkedList(List)
    # Return the head value of the list, or fail if the list is empty.
    #
    public head()
-      return (\nhead).val
+      return (\nxt).val
    end
 
    #
@@ -495,14 +600,14 @@ class LinkedList(List)
    # list is empty.
    #
    public set_head(x)
-      link ((\nhead).val := x)
+      link (\nxt).val := x
    end
 
    #
    # Return the tail of the list, or fail if the list is empty.
    #
    public tail()
-      return from_node((\nhead).nxt)
+      return from_node((\nxt).nxt)
    end
 
    #
@@ -511,7 +616,7 @@ class LinkedList(List)
    #
    public set_tail(other)
       need_instance(other, LinkedList)
-      link ((\nhead).nxt := other.nhead)
+      link (\nxt).nxt := other.nxt
    end
 
    #
@@ -519,7 +624,23 @@ class LinkedList(List)
    # element), or fail if this list is empty.
    #
    public clear_tail()
-      link ((\nhead).nxt := &null)
+      link (\nxt).nxt := &null
+   end
+
+   #
+   # Set the head node to the given node, which may be `&null`.
+   #
+   public set_nxt(n)
+      need_instance(\n, LinkedListNode)
+      nxt := n
+      link
+   end
+
+   #
+   # Return the head node, or fail if the list is empty.
+   #
+   public get_nhead()
+      return .\nxt
    end
 
    #
@@ -527,49 +648,145 @@ class LinkedList(List)
    #
    public set_list(other)
       need_instance(other, LinkedList)
-      nhead := other.nhead
+      nxt := other.nxt
       link
    end
 
    #
    # Return a new list which shares the elements of this list from
-   # (and including) element `i`.
+   # the notional range `i:0`.  The result may be an empty list.
    #
    public from(i)
-      return from_node(node(i))
+      return from_node(node0(i))
    end
 
    #
    # Succeed iff this list shares the same elements as list `other`.
    #
    public same(other)
-      succeed nhead === other.nhead
+      need_instance(other, LinkedList)
+      succeed nxt === other.nxt
+   end
+
+   #
+   # Return the list index position of the given node, or fail if it
+   # is not in the list.
+   #
+   public node_index(n)
+      need_instance(n, LinkedListNode)
+      return Positions{ (\nxt).gen(), n }
+   end
+
+   #
+   # Given an index range `i:j`, this method returns the corresponding
+   # nodes at the beginning and end of the range.  If the range is out
+   # of bounds, the method fails.  Otherwise, a record is returned
+   # with `len`, `h` and `t` fields indicating the length of the range
+   # and the head and tail nodes respectively.  If the range is empty,
+   # then `len` is zero and the other two fields are null.
+   #
+   public node_cvslice(i, j)
+      local n, i1, d, h, t
+
+      i := need_integer(i)
+      j := need_integer(j)
+
+      if i > j then
+         i :=: j
+
+      unless j > 0 & i <= 0 then {
+         # Since i <= j,
+         #    i > 0 & j > 0 or i <= 0 & j <= 0
+         h := node0(i) | fail
+         if i = j then
+            return NodeSlice(0)
+         t := (\h).move(j - i - 1) | fail
+         return NodeSlice(j - i, h, t)
+      }
+
+      # j > 0 & i <= 0
+      i1 := i
+      n := self
+      repeat {
+         if j = 1 then
+            h := n
+         if \t then
+            t := t.nxt
+         else if i = 0 then
+            t := self
+         else
+            i +:= 1
+         n := n.nxt
+         j -:= 1
+         if /n then {
+            if /h | /t then
+               fail
+            d := i1 - j
+            return if d = 0 then
+               NodeSlice(0)
+            else if d < 0 then
+               NodeSlice(-d, t.nxt, h)
+            else   # d > 0
+               NodeSlice(d, h.nxt, t)
+         }
+      }
+
+   end
+
+   public override slice(i, j)
+      local s
+      s := node_cvslice(i, j) | fail
+      return ipl.pdco.List{ s.h.gen().val \ s.len }
    end
 
    #
    # Return the node containing element `i`, or fail if `i` is out of
    # range.
    #
-   private node(i)
-      local n
-      i := need_integer(i)
-      if i <= 0 then
-         i := cvpos_item(i, size()) | fail
-      n := nhead
-      while \n & i > 1 do {
-         n := n.nxt
-         i -:= 1
-      }
-      return \n
+   public node(i)
+      return .\node0(i)
    end
 
    #
-   # Create an instance given a `LinkedListNode` as the list's head node.
+   # Like node(i), but additionally allowing index 0 (or size()+1) to
+   # return &null.
    #
-   private static from_node(n)
+   private node0(i)
+      return node_before(i).nxt
+   end
+
+   #
+   # Return the node before the slice position i; position 1 returns
+   # self, the "virtual node" before the first node; this is the case
+   # even for an empty list.  0 will return the last element, or self
+   # for an empty list.
+   #
+   private node_before(i)
+      local n, r
+      i := need_integer(i)
+      if i = 1 then
+         return self
+      if i > 1 then
+         return (\nxt).move(i - 2)
+      # i <= 0
+      n := self
+      repeat {
+         if \r then
+            r := r.nxt
+         else if i = 0 then
+            r := self
+         else
+            i +:= 1
+         n := n.nxt
+         if /n then
+            return \r
+      }
+   end
+
+   package static from_node(n)
       local i
       i := Class.create_instance()
-      i.nhead := n
+      i.nxt := n
       return i
    end
 
@@ -577,7 +794,7 @@ class LinkedList(List)
    # Create an instance and add each of the given entries.
    #
    public new(entries[])
-      every nhead := LinkedListNode(nhead, default.back(entries))
+      every nxt := LinkedListNode(nxt, default.back(entries))
       return
    end
 end
@@ -645,8 +862,8 @@ class DoublyLinkedListNode()
    # nodes.
    #
    # After a node has been unlinked it cannot be used for further
-   # insert, unlink, or splice operations, and any attempt to do so
-   # will cause a runtime error.  (See also `is_linked`).
+   # operations, and any attempt to do so will cause a runtime error.
+   # (See also `is_linked`).
    #
    # Example :-
    # ~
@@ -661,7 +878,6 @@ class DoublyLinkedListNode()
       need_linked()
       prev.nxt := nxt
       nxt.prev := prev
-      prev := nxt := &null
       link
    end
 
@@ -679,34 +895,64 @@ class DoublyLinkedListNode()
    # unlinked).
    #
    public is_linked()
-      succeed \prev
+      succeed prev.nxt === self
    end
 
    #
    # Return the previous node, or fail if there is none.
    #
    public get_prev()
-      unless is(prev, DoublyLinkedListSentinel) then
-         return .\prev
+      need_linked()
+      return prev.real()
    end
 
    #
    # Return the next node, or fail if there is none.
    #
    public get_next()
-      unless is(nxt, DoublyLinkedListSentinel) then
-         return .\nxt
+      need_linked()
+      return nxt.real()
    end
 
    #
-   # Generate this node and all subsequent nodes.
+   # Return the `DoublyLinkedList` associated with this node, which
+   # must be "linked".
    #
+   # This method works by moving along the list to the sentinel node,
+   # whose value is a reference to the creating list.  It is therefore
+   # an O(n) operation.
+   #
+   # If this list of nodes was orphaned because the parent list
+   # performed a `clear()`, then this method fails.
+   #
+   public get_list()
+      local n
+      need_linked()
+      n := nxt
+      while n := n.real().nxt
+      return .\n.val
+   end
+
+   #
+   # Generate this node and all subsequent nodes.  It is permissible
+   # to edit the list during iteration, including unlinking the last
+   # node generated.
+   #
+   # Example :-
+   # ~
+   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
+   #   # Delete all the 3's from the list.
+   #   every n := l.nodes() do
+   #      if n.val=3 then n.unlink()
+   #   # Now l is (10,20,30,40,50,60,70)
+   # ~
    public gen()
       local n
+      need_linked()
       n := self
       repeat {
          suspend n
-         n := n.get_next() | fail
+         n := n.nxt.real() | fail
       }
    end
 
@@ -715,11 +961,32 @@ class DoublyLinkedListNode()
    #
    public back()
       local n
+      need_linked()
       n := self
       repeat {
          suspend n
-         n := n.get_prev() | fail
+         n := n.prev.real() | fail
       }
+   end
+
+   package real()
+      link
+   end
+
+   #
+   # Return the list index position of this node in its enclosing
+   # list.
+   #
+   public index()
+      return Length{ back() }
+   end
+
+   #
+   # Return the list index position of this node, relative to the
+   # tail, in its enclosing list.  A negative integer is returned.
+   #
+   public rev_index(n)
+      return -Length{ gen() }
    end
 
    #
@@ -730,13 +997,14 @@ class DoublyLinkedListNode()
    public move(i)
       local n
       i := need_integer(i)
+      need_linked()
       n := self
       if i > 0 then {
          every 1 to i do
-            n := n.get_next() | fail
+            n := n.nxt.real() | fail
       } else {
          every 1 to -i do
-            n := n.get_prev() | fail
+            n := n.prev.real() | fail
       }
       return n
    end
@@ -748,10 +1016,10 @@ class DoublyLinkedListNode()
    # failed, then this method fails, but the `unlink` is carried out
    # regardless.
    #
-   # This gives a convenient way to iterate over the list and unlink
+   # This gives an alternative way to iterate over the list and unlink
    # selected nodes.
    #
-   # Examples :-
+   # Example :-
    # ~
    #   l := DoublyLinkedList(10,20,30,40,50,60,70)
    #   r := l.node(4)
@@ -759,12 +1027,6 @@ class DoublyLinkedListNode()
    #   r := r.move_unlink(1) # move 1 right, then unlink
    #   # Now l is (10,20,30,50,60,70)
    #   r.val     # 50
-   #
-   #   l := DoublyLinkedList(3,10,20,3,3,30,3,40,50,60,70,3)
-   #   # Delete all the 3's from the list.
-   #   r := l.node(1)
-   #   while r := if r.val = 3 then r.move_unlink(1) else r.move(1)
-   #   # Now l is (10,20,30,40,50,60,70)
    # ~
    #
    public move_unlink(i)
@@ -783,6 +1045,8 @@ class DoublyLinkedListNode()
 end
 
 package class DoublyLinkedListSentinel(DoublyLinkedListNode)
+   package override real()
+   end
 end
 
 #
@@ -791,7 +1055,7 @@ end
 # builtin list if the list is concurrently modified.
 #
 class DoublyLinkedList(List)
-   package const
+   package
       sentinel
 
    public override insert(i, x)
@@ -803,15 +1067,27 @@ class DoublyLinkedList(List)
    # inserted.
    #
    public new_node(i, x)
-      link node_after(i).insert_before(x)
+      return node0(i).insert_before(x)
    end
 
    public override empty()
       succeed sentinel.nxt === sentinel
    end
 
-   public override clear()
+   private new_sentinel()
+      sentinel := DoublyLinkedListSentinel(,, self)
       sentinel.nxt := sentinel.prev := sentinel
+   end
+
+   #
+   # This is a constant-time operation that leaves the former list
+   # nodes intact, but entirely divorced from this list.  The old
+   # nodes will remain "linked" to one another, and can still be
+   # operated upon, but without affecting this list.
+   #
+   public override clear()
+      sentinel.val := &null
+      new_sentinel()
       link
    end
 
@@ -830,7 +1106,7 @@ class DoublyLinkedList(List)
    # ~
    #
    public splice(i, other)
-      link node_after(i).splice_before(other)
+      link node0(i).splice_before(other)
    end
 
    public override delete(i)
@@ -842,22 +1118,37 @@ class DoublyLinkedList(List)
    end
 
    public override size()
-      local i, n
-      i := 0
-      n := sentinel.nxt
-      until n === sentinel do {
-         n := n.nxt
-         i +:= 1
-      }
-      return i
+      return Length{ nodes() }
    end
 
-   public override gen_from(i)
-      suspend node(i).gen().val
+   #
+   # Generate the nodes in the list, starting at index `i` (default
+   # 1).  Each node represents one entry in the list.  The node `val`
+   # field may be changed if desired, to edit the value in the list.
+   #
+   # See also `DoublyLinkedListNode.gen()`.
+   #
+   public nodes(i)
+      /i := 1
+      suspend node(i).gen()
    end
 
-   public override back_from(i)
-      suspend node(i - 1).back().val
+   #
+   # Generate the nodes in reverse order, starting with the node
+   # before index `i` (thus generating the elements in the range 1:i);
+   # `i` defaults to 0. (see `nodes()`).
+   #
+   public back_nodes(i)
+      i := need_integer(\i) | 0
+      suspend node(i - 1).back()
+   end
+
+   public override gen(i)
+      suspend nodes(i).val
+   end
+
+   public override back(i)
+      suspend back_nodes(i).val
    end
 
    #
@@ -866,9 +1157,77 @@ class DoublyLinkedList(List)
    # `node()` faster.
    #
    public static adjust_index(i, sz)
-     if i > sz / 2 then
-         i +:= -sz - 1
+      i := need_integer(i, 1)
+      sz := need_integer(sz, 0)
+      if 2 * i > sz + 1 then
+         i -:= sz + 1
       return i
+   end
+
+   #
+   # Given an index range `i:j`, this method returns the corresponding
+   # nodes at the beginning and end of the range.  If the range is out
+   # of bounds, the method fails.  Otherwise, a record is returned
+   # with `len`, `h` and `t` fields indicating the length of the range
+   # and the head and tail nodes respectively.  If the range is empty,
+   # then `len` is zero and the other two fields are null.
+   #
+   public node_cvslice(i, j)
+      local n, i1, d, h, t
+      i := need_integer(i)
+      j := need_integer(j)
+
+      if i > j then
+         i :=: j
+
+      if i > 0 & j > 0 then {
+         h := node0(i) | fail
+         if i = j then
+            return NodeSlice(0)
+         t := h.real().move(j - i - 1) | fail
+         return NodeSlice(j - i, h, t)
+      }
+
+      if i <= 0 & j <= 0 then {
+         t := node0(j) | fail
+         if i = j then
+            return NodeSlice(0)
+         h := t.move(i - j) | fail
+         return NodeSlice(j - i, h, t.prev)
+      }
+
+      # j > 0 & i <= 0
+      i1 := i
+      n := sentinel
+      repeat {
+         if j = 1 then
+            h := n
+         if \t then
+            t := t.nxt
+         else if i = 0 then
+            t := sentinel
+         else
+            i +:= 1
+         n := n.nxt
+         j -:= 1
+         unless n.real() then {
+            if /h | /t then
+               fail
+            d := i1 - j
+            return if d = 0 then
+               NodeSlice(0)
+            else if d < 0 then
+               NodeSlice(-d, t.nxt, h)
+            else   # d > 0
+               NodeSlice(d, h.nxt, t)
+         }
+      }
+   end
+
+   public override slice(i, j)
+      local s
+      s := node_cvslice(i, j) | fail
+      return ipl.pdco.List{ s.h.gen().val \ s.len }
    end
 
    #
@@ -884,32 +1243,12 @@ class DoublyLinkedList(List)
    # ~
    #
    public extract(i, j)
-      local s, sz
-      s := cvslice(i, j, sz := size()) | fail
-      return if s.hi = s.lo then
+      local s
+      s := node_cvslice(i, j) | fail
+      return if s.len = 0 then
          DoublyLinkedList()
       else
-         from_nodes(node(adjust_index(s.lo, sz)),
-                    node(adjust_index(s.hi - 1, sz)))
-   end
-
-   #
-   # Return the list index position of the given node, or fail if it
-   # is not in the list.
-   #
-   public node_index(n)
-      need_node(n)
-      return Positions{node(1).gen(), n}
-   end
-
-   #
-   # Return the list index position of the given node, counting
-   # downwards from the tail (index -1), or fail if it is not in the
-   # list.
-   #
-   public rev_node_index(n)
-      need_node(n)
-      return -Positions{node(-1).back(), n}
+         from_nodes(s.h, s.t)
    end
 
    #
@@ -957,22 +1296,28 @@ class DoublyLinkedList(List)
 
    private static from_nodes(h, t)
       local i
-      i := Class.create_raw_instance()
+      i := Class.create_instance()
       h.prev.nxt := t.nxt
       t.nxt.prev := h.prev
-      i.sentinel := DoublyLinkedListSentinel(t, h)
+      i.sentinel := DoublyLinkedListSentinel(t, h, i)
       t.nxt := h.prev := i.sentinel
-      return Class.complete_raw_instance(i)
+      return i
    end
 
    public override get_mode()
       return MODIFY + INSERT + DELETE
    end
 
-   private node_after(i)
+   #
+   # Like node(i), but additionally allowing index 0 (or size()+1) to
+   # return the sentinel node.
+   #
+   private node0(i)
       i := need_integer(i)
       return if i = 0 | (i = 1 & empty()) then
          sentinel
+      else if i > 1 then
+         node(i - 1).nxt   # May be sentinel
       else
          node(i)
    end
@@ -982,15 +1327,15 @@ class DoublyLinkedList(List)
    # range.
    #
    public node(i)
-      return sentinel ~=== sentinel.move(i)
+      # real() is needed so that node(0) fails
+      return sentinel.move(i).real()
    end
 
    #
    # Create an instance and add each of the given entries.
    #
    public new(entries[])
-      sentinel := DoublyLinkedListSentinel()
-      clear()
+      new_sentinel()
       every insert(1, default.back(entries))
       return
    end
@@ -1000,7 +1345,8 @@ end
 # UnmodifiableList.
 #
 class UnmodifiableBuiltinList(List)
-   private const l
+   private const
+      l
 
    public override at(i)
       return .l[i]
@@ -1010,12 +1356,12 @@ class UnmodifiableBuiltinList(List)
       suspend default.keyof(l, x)
    end
 
-   public override gen()
-      suspend .!l
+   public override gen(i)
+      suspend .forward(l, i)
    end
 
-   public override back()
-      suspend .default.back(l)
+   public override back(i)
+      suspend .default.back(l, i)
    end
 
    public override slice(i, j)
@@ -1091,20 +1437,22 @@ class SubList(List)
          0
    end
 
-   public override gen_from(i)
+   public override gen(i)
       local s
+      /i := 1
       s := cvslice() | fail
       i := cvpos_item(i, s.hi - s.lo) | fail
       i +:= s.lo - 1
-      suspend other.gen_from(i) \ (s.hi - i)
+      suspend other.gen(i) \ (s.hi - i)
    end
 
-   public override back_from(i)
+   public override back(i)
       local s
+      /i := 0
       s := cvslice() | fail
       i := cvpos(i, s.hi - s.lo) | fail
       i +:= s.lo - 1
-      suspend other.back_from(i) \ (i - s.lo)
+      suspend other.back(i) \ (i - s.lo)
    end
 
    private cvslice()
@@ -1112,7 +1460,7 @@ class SubList(List)
    end
 
    public override get_mode()
-      return other.mode()
+      return other.get_mode()
    end
 
    #

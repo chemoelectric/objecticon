@@ -25,6 +25,7 @@ extern int Dflag;       /* -L: link debug */
 extern int Iflag;       /* -I: ir code dump */
 extern int Zflag;	/* -Z: icode-gz compression */
 extern int Bflag;       /* -B: bundle iconx in output file */
+extern int Mflag;       /* -M: add an empty main procedure if it is missing */
 extern int loclevel;    /* -l n: location info */
 extern int Olevel;      /* -O n: optimisation */
 extern int nolink;
@@ -43,6 +44,7 @@ extern long scriptsize;			/* size of iconx header script */
  * Some convenient interned strings.
  */
 extern char *main_string;
+extern char *synthetic_string;
 extern char *default_string;
 extern char *self_string;
 extern char *new_string;
@@ -65,5 +67,6 @@ char *abbreviate(char *path);
 void begin_link(FILE *f, char *fname, int line);
 void end_link(FILE *f);
 void add_remove_file(char *s);
+int blookup(char *s);
 
 #endif

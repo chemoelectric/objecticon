@@ -207,7 +207,7 @@ abstract class RandomWithModulus(Random)
    private readable
       rr, rf            # For calculating reals
    private
-      n1, b1, p1, s1    # Some cached values
+      n1, a1, p1, s1    # Some cached values
    public static const
       MAX_REAL_RANGE    # Max range for calculating a `real`
 
@@ -265,7 +265,7 @@ abstract class RandomWithModulus(Random)
    end
 
    public override range(n)
-      local r, m1
+      local r, b1, m1
       n := need_integer(n, 1)
       # See if we have to update the various cached fields.
       unless n === n1 then {
@@ -282,28 +282,24 @@ abstract class RandomWithModulus(Random)
          # Now since m1 >= n > 0 and 0 <= b1 < n,
          #      m1 = b1 + qn, for some q > 0
          # So (m1 - b1) is positive and divisible by n.
-         s1 := (m1 - b1) / n
+         a1 := m1 - b1
+         s1 := a1 / n
          n1 := n
       }
       repeat {
          # Get a random number r in the range [0, m^p1)
          r := get_n(p1)
-         # Filter out any below the bias
-         if r >= b1 then
+         # Filter the range of r to eliminate bias
+         if r < a1 then
             # We could return 1 + r % n here, but that would depend on
             # the lower order bits of r being a good random source
             # (which will not be the case for a power of 2 LCG).
             #
-            # So instead split the possible range of r into n equal
-            # sections and see which one it landed in.
-            #
-            # Since we have filtered r below b1, it is now in the
-            # range [b1, m1).  so (r - b1) is in [0, m1 - b1).
-            #
-            # Now divide that range into n equal sections, each of
-            # size (m1 - b1) / n, which is s1 (see above).
+            # So instead split the range of r, [0, a1), into n equal
+            # sections, each of size a1 / n (ie, s1, see above), and
+            # see which one r landed in.
             # 
-            return 1 + (r - b1) / s1
+            return 1 + r / s1
       }
    end
 

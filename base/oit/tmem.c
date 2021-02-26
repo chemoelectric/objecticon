@@ -160,6 +160,18 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "An optional method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
+        if ((flag & (M_Private | M_Final)) == (M_Private | M_Final))
+            tfatal_at(n, "A private method cannot be final: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & (M_Abstract | M_Private)) == (M_Abstract | M_Private))
+            tfatal_at(n, "An abstract method cannot be private: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & (M_Optional | M_Private)) == (M_Optional | M_Private))
+            tfatal_at(n, "An optional method cannot be private: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
         if (flag & M_Const)
             tfatal_at(n, "A method cannot be const: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);

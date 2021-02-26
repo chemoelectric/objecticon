@@ -958,7 +958,7 @@ static void ret_value1(struct token *t, struct node *n, int indent)
       if (caller->nd_id == SymNd) {
          switch (caller->tok->tok_id) {
             case IconType:
-               typcd = caller->u[0].sym->u.typ_indx;
+               typcd = caller->u[0].sym->typ_indx;
                switch (icontypes[typcd].rtl_ret) {
                   case TRetBlkP:
                      /*

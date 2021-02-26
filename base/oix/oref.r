@@ -23,12 +23,34 @@ static struct b_tvsubs *make_tvsubs(dptr var, word pos, word len)
     return t;
 }
 
+/* Some helpful macros for suspending/returning chars in a cset */
+
+#begdef SuspendCh(x)
+   do {
+    if (x < 256)
+       suspend string(1, &allchars[x]);
+    else
+       suspend ucs(make_one_char_ucs_block(x));
+   } while (0)
+#enddef
+
+#begdef ReturnCh(x)
+   do {
+    if (x < 256)
+       return string(1, &allchars[x]);
+    else
+       return ucs(make_one_char_ucs_block(x));
+   } while (0)
+#enddef
+
+
 "!x - generate successive values from object x."
 
 operator ! bang(underef x -> dx)
-   body {
-      word i, j;
-      tended union block *ep;
+ body {
+   word i, j;
+   tended union block *ep;
+   struct hgstate state;
 
    type_case dx of {
      string : {
@@ -64,13 +86,11 @@ operator ! bang(underef x -> dx)
             for (le = lgfirst(&ListBlk(dx), &state); le;
                  le = lgnext(&ListBlk(dx), &state, le)) {
                 EVVal(state.listindex, E_Lsub);
-                suspend struct_var(&le->lslots[state.result], le);
+                SuspendStructVar(le->lslots[state.result], le);
             }
          }
 
       table: {
-            struct hgstate state;
-
             EVValD(&dx, E_Tbang);
 
             /*
@@ -80,12 +100,11 @@ operator ! bang(underef x -> dx)
 	    for (ep = hgfirst(BlkLoc(dx), &state); ep;
                  ep = hgnext(BlkLoc(dx), &state, ep)) {
                   EVValD(&ep->telem.tval, E_Tval);
-                  suspend struct_var(&ep->telem.tval, ep);
+                  SuspendStructVar(ep->telem.tval, ep);
                   }
             }
 
       set: {
-            struct hgstate state;
             EVValD(&dx, E_Sbang);
             /*
              *  This is similar to the method for tables except that a
@@ -104,22 +123,33 @@ operator ! bang(underef x -> dx)
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = from; j <= to; ++j) {
-                   if (j < 256)
-                       suspend string(1, &allchars[j]);
-                   else
-                       suspend ucs(make_one_char_ucs_block(j));
+                   SuspendCh(j);
                }
             }
          }
 
      ucs: {
+          tended char *p;
+          tended struct descrip utf8;
           if (is:variable(x)) {
               if (_rval) {
+                  tended struct descrip prev;
+                  p = 0;
+                  prev = dx;
                   for (i = 1; i <= UcsBlk(dx).length; i++) {
-                      suspend ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
+                      if (!p)
+                          p = ucs_utf8_ptr(&UcsBlk(dx), i);
+                      MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
+                      suspend ucs(make_ucs_block(&utf8, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
+                      if (EqlDesc(prev, dx))
+                          p += StrLen(utf8);
+                      else {
+                          p = 0;
+                          prev = dx;
+                      }
                   }
               } else {
                   for (i = 1; i <= UcsBlk(dx).length; i++) {
@@ -130,9 +160,8 @@ operator ! bang(underef x -> dx)
                   }
               }
           } else {
-              tended char *p = StrLoc(UcsBlk(dx).utf8);
+              p = StrLoc(UcsBlk(dx).utf8);
               for (i = 1; i <= UcsBlk(dx).length; i++) {
-                  tended struct descrip utf8;
                   MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
                   p += StrLen(utf8);
                   suspend ucs(make_ucs_block(&utf8, 1));
@@ -151,8 +180,7 @@ operator ! bang(underef x -> dx)
             j = RecordBlk(dx).constructor->n_fields;
             for (i = 0; i < j; i++) {
 	       EVVal(i+1, E_Rsub);
-               suspend struct_var(&RecordBlk(dx).fields[i], 
-                  &RecordBlk(dx));
+               SuspendStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
                }
             }
 
@@ -172,7 +200,7 @@ operator ! bang(underef x -> dx)
        default: {
            if (cnv:string(dx,dx)) {
                /*
-                * A (converted or non-variable) string is being banged.
+                * A converted string is being banged.
                 * Loop through the string suspending simple one character
                 *  substrings.
                 */
@@ -191,12 +219,12 @@ end
 "?x - produce a randomly selected element of x."
 
 operator ? random(underef x -> dx)
-   body{
+  body{
+   word val;
+   double rval;
+
    type_case dx of {
       string: {
-            word val;
-            double rval;
-
             if ((val = StrLen(dx)) == 0)
                fail;
             rval = RandVal;
@@ -208,8 +236,7 @@ operator ? random(underef x -> dx)
          }
 
       ucs: {
-            word val, i;
-            double rval;
+            word i;
 
             if ((val = UcsBlk(dx).length) == 0)
                fail;
@@ -223,8 +250,7 @@ operator ? random(underef x -> dx)
        }
 
       cset: {
-             word val, i;
-             double rval;
+             word i;
              int k, ch;
              if ((val = CsetBlk(dx).size) == 0)
                  fail;
@@ -233,10 +259,7 @@ operator ? random(underef x -> dx)
              i = (word)rval + 1;
              k = cset_range_of_pos(&CsetBlk(dx), i);
              ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
-             if (ch < 256)
-                 return string(1, &allchars[ch]);
-             else
-                 return ucs(make_one_char_ucs_block(ch));
+             ReturnCh(ch);
          }
 
       list: {
@@ -244,8 +267,7 @@ operator ? random(underef x -> dx)
           * x is a list.  Set i to a random number in the range [1,*x],
           *  failing if the list is empty.
           */
-            word val, i, j;
-            double rval;
+            word i, j;
             struct b_lelem *le;     /* doesn't need to be tended */
             if ((val = ListBlk(dx).size) == 0)
                fail;
@@ -264,7 +286,7 @@ operator ? random(underef x -> dx)
             j += le->first;
             if (j >= le->nslots)
                 j -= le->nslots;
-            return struct_var(&le->lslots[j], le);
+            ReturnStructVar(le->lslots[j], le);
          }
 
       table: {
@@ -272,8 +294,7 @@ operator ? random(underef x -> dx)
            * x is a table.  Set n to a random number in the range [1,*x],
            *  failing if the table is empty.
            */
-            double rval;
-            word val, i, j, n;
+            word i, j, n;
             union block *ep, *bp;   /* doesn't need to be tended */
 	    struct b_slots *seg;
 
@@ -297,7 +318,7 @@ operator ? random(underef x -> dx)
 		       BlkType(ep) == T_Telem;
 		       ep = ep->telem.clink)
                      if (--n <= 0) {
-                        return struct_var(&ep->telem.tval, ep);
+                        ReturnStructVar(ep->telem.tval, ep);
 			}
             syserr("Table reference out of bounds in random");
          }
@@ -307,8 +328,7 @@ operator ? random(underef x -> dx)
           * x is a set.  Set n to a random number in the range [1,*x],
           *  failing if the set is empty.
           */
-            double rval;
-            word val, i, j, n;
+            word i, j, n;
             union block *bp, *ep;  /* doesn't need to be tended */
 	    struct b_slots *seg;
 
@@ -338,8 +358,6 @@ operator ? random(underef x -> dx)
           *  [1,*x] (*x is the number of fields), failing if the
           *  record has no fields.
           */
-            word val;
-            double rval;
             struct b_record *rec;  /* doesn't need to be tended */
 
             rec = &RecordBlk(dx);
@@ -353,7 +371,7 @@ operator ? random(underef x -> dx)
             rval *= val;
             EVValD(&dx, E_Rrand);
             EVVal(rval + 1, E_Rsub);
-            return struct_var(&rec->fields[(word)rval], rec);
+            ReturnStructVar(rec->fields[(word)rval], rec);
          }
 
       default: {
@@ -368,6 +386,7 @@ operator ? random(underef x -> dx)
           return result;
       }
    }
+   fail;       /* Not reached */
 }
 end
 
@@ -503,7 +522,7 @@ operator [] subsc(underef x -> dx,y)
           j += le->first;
           if (j >= le->nslots)
               j -= le->nslots;
-          return struct_var(&le->lslots[j], le);
+          ReturnStructVar(le->lslots[j], le);
        }
 
       table: {
@@ -514,16 +533,14 @@ operator [] subsc(underef x -> dx,y)
             if (_rval) {
                 int res;
                 union block **p;
-                union block *bp;
                 /*
                  * Rval, so lookup now and return element or default
                  * value.
                  */
                 p = memb(BlkLoc(dx), &y, hash(&y), &res);
-                if (res) {
-                    bp = *p;
-                    return struct_var(&bp->telem.tval, bp);
-                } else
+                if (res)
+                    return (*p)->telem.tval;
+                else
                     return TableBlk(dx).defvalue;
             } else {
                 struct b_tvtbl *tp;       /* Doesn't need to be tended */
@@ -552,7 +569,7 @@ operator [] subsc(underef x -> dx,y)
          /*
           * Found the field, return a pointer to it.
           */
-         return struct_var(&RecordBlk(dx).fields[i], &RecordBlk(dx));
+         ReturnStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
        }
 
      ucs: {
@@ -610,10 +627,7 @@ operator [] subsc(underef x -> dx,y)
              fail;
          k = cset_range_of_pos(&CsetBlk(dx), i);
          ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
-         if (ch < 256)
-             return string(1, &allchars[ch]);
-         else
-             return ucs(make_one_char_ucs_block(ch));
+         ReturnCh(ch);
        }
 
       default: {
@@ -665,45 +679,50 @@ operator [] subsc(underef x -> dx,y)
          }
       }
     }
+    fail;       /* Not reached */
   }
 end
 
 
-function back(underef x -> dx)
+function back(underef x -> dx, n)
+   if !def:C_integer(n, 0) then
+      runerr(101, n)
  body {
    word i, j;
-   tended union block *ep;
+   tended struct descrip prev;
 
    type_case dx of {
      string : {
+            n = cvpos_item(n - 1, StrLen(dx));
+            if (n == CvtFail)
+                fail;
             if (is:variable(x)) {
+                prev = dx;
                 if (_rval) {
-                    for (i = StrLen(dx); i > 0; i--) {
-                        if (i > StrLen(dx)) {
-                            i = StrLen(dx);
-                            if (i == 0)
-                                break;
-                        }
+                    for (i = n; i > 0; i--) {
                         suspend string(1, StrLoc(dx) + i - 1);
                         deref(&x, &dx);
                         if (!is:string(dx)) 
                             runerr(103, dx);
+                        if (!EqlDesc(prev, dx)) {
+                            i += StrLen(dx) - StrLen(prev);
+                            prev = dx;
+                        }
                     }
                 } else {
-                    for (i = StrLen(dx); i > 0; i--) {
-                        if (i > StrLen(dx)) {
-                            i = StrLen(dx);
-                            if (i == 0)
-                                break;
-                        }
+                    for (i = n; i > 0; i--) {
                         suspend tvsubs(make_tvsubs(&x, i, 1));
                         deref(&x, &dx);
                         if (!is:string(dx)) 
                             runerr(103, dx);
+                        if (!EqlDesc(prev, dx)) {
+                            i += StrLen(dx) - StrLen(prev);
+                            prev = dx;
+                        }
                     }
                 }
             } else {
-                for (i = StrLen(dx); i > 0; i--)
+                for (i = n; i > 0; i--)
                     suspend string(1, StrLoc(dx) + i - 1);
            }
       }
@@ -711,62 +730,75 @@ function back(underef x -> dx)
       list: {
             struct lgstate state;
             tended struct b_lelem *le;
-
-            EVValD(&dx, E_Lbang);
-
-            for (le = lglast(&ListBlk(dx), &state); le;
+            n = cvpos_item(n - 1, ListBlk(dx).size);
+            if (n == CvtFail)
+                fail;
+            for (le = lginit(&ListBlk(dx), n, &state); le;
                  le = lgprev(&ListBlk(dx), &state, le)) {
-                EVVal(state.listindex, E_Lsub);
-                suspend struct_var(&le->lslots[state.result], le);
+                SuspendStructVar(le->lslots[state.result], le);
             }
          }
 
       cset: {
-            for (i = CsetBlk(dx).n_ranges - 1; i >= 0; i--) {
-               word from, to;
+            word from, to;
+            n = cvpos_item(n - 1, CsetBlk(dx).size);
+            if (n == CvtFail)
+                fail;
+            i = cset_range_of_pos(&CsetBlk(dx), n);
+            from = CsetBlk(dx).range[i].from;
+            to = from + n - 1 - CsetBlk(dx).range[i].index;
+            for (j = to; j >= from; --j) {
+                SuspendCh(j);
+            }
+            for (i--; i >= 0; i--) {
                from = CsetBlk(dx).range[i].from;
                to = CsetBlk(dx).range[i].to;
                for (j = to; j >= from; --j) {
-                   if (j < 256)
-                       suspend string(1, &allchars[j]);
-                   else
-                       suspend ucs(make_one_char_ucs_block(j));
+                   SuspendCh(j);
                }
             }
          }
 
      ucs: {
+          tended char *p;
+          tended struct descrip utf8;
+          n = cvpos_item(n - 1, UcsBlk(dx).length);
+          if (n == CvtFail)
+              fail;
           if (is:variable(x)) {
+              prev = dx;
               if (_rval) {
-                  for (i = UcsBlk(dx).length; i > 0; i--) {
-                      if (i > UcsBlk(dx).length) {
-                          i = UcsBlk(dx).length;
-                          if (i == 0)
-                              break;
-                      }
-                      suspend ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
+                  p = 0;
+                  for (i = n; i > 0; i--) {
+                      if (!p)
+                          p = ucs_utf8_ptr(&UcsBlk(dx), i + 1);
+                      utf8_rev_iter0(&p);
+                      MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
+                      suspend ucs(make_ucs_block(&utf8, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
+                      if (!EqlDesc(prev, dx)) {
+                          p = 0;
+                          i += UcsBlk(dx).length - UcsBlk(prev).length;
+                          prev = dx;
+                      }
                   }
               } else {
-                  for (i = UcsBlk(dx).length; i > 0; i--) {
-                      if (i > UcsBlk(dx).length) {
-                          i = UcsBlk(dx).length;
-                          if (i == 0)
-                              break;
-                      }
+                  for (i = n; i > 0; i--) {
                       suspend tvsubs(make_tvsubs(&x, i, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
+                      if (!EqlDesc(prev, dx)) {
+                          i += UcsBlk(dx).length - UcsBlk(prev).length;
+                          prev = dx;
+                      }
                   }
               }
           } else {
-              tended char *p = StrLoc(UcsBlk(dx).utf8) +
-                  StrLen(UcsBlk(dx).utf8);
-              for (i = UcsBlk(dx).length; i > 0; i--) {
-                  tended struct descrip utf8;
+              p = ucs_utf8_ptr(&UcsBlk(dx), n + 1);
+              for (i = n; i > 0; i--) {
                   utf8_rev_iter0(&p);
                   MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
                   suspend ucs(make_ucs_block(&utf8, 1));
@@ -775,28 +807,20 @@ function back(underef x -> dx)
        }
 
      record: {
-            /*
-             * x is a record.  Loop through the fields and suspend
-             * a variable pointing to each one.
-             */
-
-            EVValD(&dx, E_Rbang);
-
-            for (i = RecordBlk(dx).constructor->n_fields - 1; i >= 0; i--) {
-	       EVVal(i+1, E_Rsub);
-               suspend struct_var(&RecordBlk(dx).fields[i], 
-                  &RecordBlk(dx));
+            n = cvpos_item(n - 1, RecordBlk(dx).constructor->n_fields);
+            if (n == CvtFail)
+                fail;
+            for (i = n - 1; i >= 0; i--) {
+               SuspendStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
                }
             }
 
        default: {
            if (cnv:string(dx,dx)) {
-               /*
-                * A (converted or non-variable) string is being banged.
-                * Loop through the string suspending simple one character
-                *  substrings.
-                */
-               for (i = StrLen(dx); i > 0; i--)
+               n = cvpos_item(n - 1, StrLen(dx));
+               if (n == CvtFail)
+                   fail;
+               for (i = n; i > 0; i--)
                   suspend string(1, StrLoc(dx) + i - 1);
             }
          else
@@ -806,3 +830,140 @@ function back(underef x -> dx)
    fail;
    }
 end      
+
+function forward(underef x -> dx, n)
+   if !def:C_integer(n, 1) then
+      runerr(101, n)
+  body {
+   word i, j;
+
+   type_case dx of {
+     string : {
+            n = cvpos_item(n, StrLen(dx));
+            if (n == CvtFail)
+                fail;
+            if (is:variable(x)) {
+                if (_rval) {
+                    for (i = n; i <= StrLen(dx); i++) {
+                        suspend string(1, StrLoc(dx) + i - 1);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
+                } else {
+                    for (i = n; i <= StrLen(dx); i++) {
+                        suspend tvsubs(make_tvsubs(&x, i, 1));
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
+                }
+            } else {
+                for (i = n; i <= StrLen(dx); i++) {
+                    suspend string(1, StrLoc(dx) + i - 1);
+                }
+            }
+     }
+
+      list: {
+            struct lgstate state;
+            tended struct b_lelem *le;
+            n = cvpos_item(n, ListBlk(dx).size);
+            if (n == CvtFail)
+                fail;
+            for (le = lginit(&ListBlk(dx), n, &state); le;
+                 le = lgnext(&ListBlk(dx), &state, le)) {
+                SuspendStructVar(le->lslots[state.result], le);
+            }
+         }
+
+
+      cset: {
+            word from, to;
+            n = cvpos_item(n, CsetBlk(dx).size);
+            if (n == CvtFail)
+                fail;
+            i = cset_range_of_pos(&CsetBlk(dx), n);
+            from = CsetBlk(dx).range[i].from + n - 1 - CsetBlk(dx).range[i].index;;
+            to = CsetBlk(dx).range[i].to;
+            for (j = from; j <= to; ++j) {
+                SuspendCh(j);
+            }
+            for (i++; i < CsetBlk(dx).n_ranges; i++) {
+               from = CsetBlk(dx).range[i].from;
+               to = CsetBlk(dx).range[i].to;
+               for (j = from; j <= to; ++j) {
+                   SuspendCh(j);
+               }
+            }
+         }
+
+     ucs: {
+          tended char *p;
+          tended struct descrip utf8;
+          n = cvpos_item(n, UcsBlk(dx).length);
+          if (n == CvtFail)
+              fail;
+          if (is:variable(x)) {
+              if (_rval) {
+                  tended struct descrip prev;
+                  p = 0;
+                  prev = dx;
+                  for (i = n; i <= UcsBlk(dx).length; i++) {
+                      if (!p)
+                          p = ucs_utf8_ptr(&UcsBlk(dx), i);
+                      MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
+                      suspend ucs(make_ucs_block(&utf8, 1));
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                      if (EqlDesc(prev, dx))
+                          p += StrLen(utf8);
+                      else {
+                          p = 0;
+                          prev = dx;
+                      }
+                  }
+              } else {
+                  for (i = n; i <= UcsBlk(dx).length; i++) {
+                      suspend tvsubs(make_tvsubs(&x, i, 1));
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
+              }
+          } else {
+              p = ucs_utf8_ptr(&UcsBlk(dx), n);
+              for (i = n; i <= UcsBlk(dx).length; i++) {
+                  MakeStr(p, UTF8_SEQ_LEN(*p), &utf8);
+                  p += StrLen(utf8);
+                  suspend ucs(make_ucs_block(&utf8, 1));
+              }
+          }
+       }
+
+     record: {
+            j = RecordBlk(dx).constructor->n_fields;
+            n = cvpos_item(n, j);
+            if (n == CvtFail)
+                fail;
+            for (i = n - 1; i < j; i++) {
+               SuspendStructVar(RecordBlk(dx).fields[i], &RecordBlk(dx));
+               }
+            }
+
+       default: {
+           if (cnv:string(dx,dx)) {
+               n = cvpos_item(n, StrLen(dx));
+               if (n == CvtFail)
+                   fail;
+               for (i = n; i <= StrLen(dx); i++)
+                  suspend string(1, StrLoc(dx) + i - 1);
+            }
+         else
+            runerr(116, dx);
+      }
+   }
+   fail;
+   }
+end

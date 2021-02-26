@@ -192,7 +192,7 @@ class CanvasComponent(CanvasObject)
       c.accel := self.accel
       c.wattribs := copy(self.wattribs)
       c.constraints := copy(self.constraints)
-      c.event_handlers := lang.clone(\self.event_handlers)
+      c.event_handlers := clone(self.event_handlers)
       if /self.layout_delegate then
          c.layout_delegate := &null
       else

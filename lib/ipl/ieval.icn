@@ -224,17 +224,21 @@ class Ieval(MinimalObjectOutput)
    end
 
    private locn_string(l)
-      return if /is_flowterm then
-         "line " || l.line || " in " || l.file
-      else
+      local fp
+      fp := FilePath(l.file)
+      return if \is_flowterm & fp.is_absolute() then
          Files.begin_link(l.file, l.line) || "line " || l.line || " in " || l.file || Files.end_link()
+      else
+         "line " || l.line || " in " || l.file
    end
 
    private abbr_locn_string(l)
-      return if /is_flowterm then
-         "line " || l.line || " in " || FilePath(l.file).get(-1)
+      local fp
+      fp := FilePath(l.file)
+      return if \is_flowterm & fp.is_absolute() then
+         Files.begin_link(l.file, l.line) || "line " || l.line || " in " || fp.get(-1) || Files.end_link()
       else
-         Files.begin_link(l.file, l.line) || "line " || l.line || " in " || FilePath(l.file).get(-1) || Files.end_link()
+         "line " || l.line || " in " || fp.get(-1)
    end
 
    private kind_string(f)

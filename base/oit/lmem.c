@@ -9,6 +9,8 @@
 #include "tmain.h"
 #include "lglob.h"
 #include "lsym.h"
+#include "ucode.h"
+#include "ltree.h"
 
 #include "../h/rmacros.h"
 
@@ -76,12 +78,12 @@ static uword fimport_hash_func(struct fimport *p) { return hashptr(p->name); }
  * Given a linkfile, create a new lfile structure and add it to the
  * list of lfiles if it isn't already in the list.
  */
-static void ensure_lfile(char *ifile)
+static struct lfile *ensure_lfile(char *ifile)
 {
     struct lfile *x;
     x = locate_lfile(ifile);
     if (x)
-        return;
+        return x;
 
     if (verbose > 2)
         report("Linking file %s", ifile);
@@ -97,6 +99,7 @@ static void ensure_lfile(char *ifile)
         lfiles = lfiles_last = x;
     }
     add_to_hash(&lfile_hash, x);
+    return x;
 }
 
 /*
@@ -106,6 +109,28 @@ static void ensure_lfile(char *ifile)
 void paramlink(char *name)
 {
     ensure_lfile(intern(canonicalize(name)));
+}
+
+/*
+ * Create a "synthetic" empty main procedure, for use with the -M
+ * option.
+ */
+void setgmain()
+{
+    struct loc l;
+    struct lfunction *f;
+    struct lfile *lf;
+    lf = ensure_lfile(synthetic_string);
+    l.file = lf->name;
+    l.line = 1;
+    gmain = putglobal(main_string, F_Proc, lf, &l);
+    f = gmain->func = Alloc(struct lfunction);
+    f->defined = lf;
+    f->proc = gmain;
+    f->start = lnode_0(Uop_Start, &l);
+    f->initial = lnode_0(Uop_Empty, &l);
+    f->body = lnode_0(Uop_Empty, &l);
+    f->end = lnode_0(Uop_End, &l);
 }
 
 static struct lpackage *locate_lpackage(char *s)

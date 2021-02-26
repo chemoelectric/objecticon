@@ -34,7 +34,7 @@ class TableCellInfo(Insets, ObjectOutput)
    #
    # Output object
    #
-   private override object_output(oo)
+   protected override object_output(oo)
       local t
       /s := "?"
       t := s || ": "

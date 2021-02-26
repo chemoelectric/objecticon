@@ -1,3 +1,140 @@
+
+Testing methods of object datastruct.UnmodifiableTable#*(2)
+size(): 2
+key(): 2
+gen(): 2
+keyval(): 4
+back_key(): 2
+back(): 2
+back_keyval(): 4
+select(0): Failed
+
+Testing methods of object datastruct.SortTable#*(3)
+size(): 0
+key(): 21
+gen(): 21
+keyval(): 42
+back_key(): 21
+back(): 21
+back_keyval(): 42
+select(0): Failed
+size() after clear(): 0
+
+Testing methods of object datastruct.EqTable#*(3)
+size(): 0
+key(): 21
+gen(): 21
+keyval(): 42
+size() after clear(): 0
+
+Testing methods of object datastruct.BuiltinTable#*(2)
+size(): 0
+key(): 21
+gen(): 21
+keyval(): 42
+size() after clear(): 0
+
+Testing methods of object datastruct.EmptyTable#*(1)
+size(): 0
+key(): 0
+gen(): 0
+keyval(): 0
+back_key(): 0
+back(): 0
+back_keyval(): 0
+select(0): Failed
+
+Testing methods of object datastruct.WeakrefTable#*(5)
+size(): 0
+key(): 20
+gen(): 20
+keyval(): 40
+size() after clear(): 0
+
+Testing methods of object datastruct.UnmodifiableBuiltinTable#*(2)
+size(): 1
+key(): 1
+gen(): 1
+keyval(): 2
+
+Testing methods of object datastruct.UnmodifiableSet#*(1)
+size(): 2
+gen(): 2
+back(): 2
+select(0): Failed
+
+Testing methods of object datastruct.TableSet#*(1)
+size(): 2
+gen(): 10
+back(): 10
+select(0): Failed
+size() after clear(): 0
+
+Testing methods of object datastruct.EqSet#*(1)
+size(): 0
+gen(): 10
+size() after clear(): 0
+
+Testing methods of object datastruct.EmptySet#*(0)
+size(): 0
+gen(): 0
+back(): 0
+select(0): Failed
+
+Testing methods of object datastruct.BuiltinSet#*(1)
+size(): 0
+gen(): 10
+size() after clear(): 0
+
+Testing methods of object datastruct.UnmodifiableBuiltinSet#*(1)
+size(): 2
+gen(): 2
+
+Testing methods of object datastruct.UnmodifiableList#*(1)
+Size=: 3
+gen(): 3
+back(): 3
+at(0): Failed
+
+Testing methods of object datastruct.EmptyList#*(0)
+Size=: 0
+gen(): 0
+back(): 0
+at(0): Failed
+
+Testing methods of object datastruct.BuiltinList#*(1)
+Size=: 0
+gen(): 10
+back(): 10
+at(0): Failed
+size() after clear(): 0
+
+Testing methods of object datastruct.LinkedList#*(1)
+Size=: 0
+gen(): 10
+back(): 10
+at(0): Failed
+size() after clear(): 0
+
+Testing methods of object datastruct.DoublyLinkedList#*(1)
+Size=: 0
+gen(): 10
+back(): 10
+at(0): Failed
+size() after clear(): 0
+
+Testing methods of object datastruct.UnmodifiableBuiltinList#*(1)
+Size=: 4
+gen(): 4
+back(): 4
+at(0): Failed
+
+Testing methods of object datastruct.SubList#*(3)
+Size=: 3
+gen(): 3
+back(): 3
+at(0): Failed
+size() after clear(): 0
 >>>test_ord(class datastruct.EqTable)
 equals(t1,t2): yes
 t1.size() = t2.size(): yes
@@ -66,8 +203,8 @@ class datastruct.LinkedList
 l1=l2: yes
 l1.gen(): same
 l1.back(): same
-l1.gen_from(3): same
-l1.back_from(3): same
+l1.gen(3): same
+l1.back(3): same
 u.gen(): same
 u.at(1) := 2: Error 111
 s.gen(): same
@@ -76,8 +213,8 @@ class datastruct.DoublyLinkedList
 l1=l2: yes
 l1.gen(): same
 l1.back(): same
-l1.gen_from(3): same
-l1.back_from(3): same
+l1.gen(3): same
+l1.back(3): same
 u.gen(): same
 u.at(1) := 2: Error 111
 s.gen(): same
@@ -86,8 +223,8 @@ class datastruct.BuiltinList
 l1=l2: yes
 l1.gen(): same
 l1.back(): same
-l1.gen_from(3): same
-l1.back_from(3): same
+l1.gen(3): same
+l1.back(3): same
 u.gen(): same
 u.at(1) := 2: Error 111
 s.gen(): same

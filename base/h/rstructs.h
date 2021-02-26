@@ -305,6 +305,7 @@ struct hgstate {		/* hashed-structure generator state */
  */
 struct lgstate {		/* list generator state */
     word listindex;		/* notional list index */
+    word listsize;              /* last size of subject list */
     word changecount;		/* last changecount of subject list */
     word blockpos;  		/* index in current element block */
     word result;		/* computed position of current element in element block */
@@ -445,7 +446,6 @@ struct progstate {
     struct ipc_line *Current_line_ptr;
     struct ipc_fname *Current_fname_ptr;
     dptr Current_fname;
-    dptr MainProc;
 
     struct timeval start_time;          /* time program started */
 

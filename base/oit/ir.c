@@ -5298,7 +5298,7 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
         if (!get_class_field_ref(x, 0, &ref))
             return 0;
 
-        if ((ref->field->flag & (M_Static | M_Method | M_Removed | M_Optional | M_Abstract | M_Native)) != (M_Static | M_Method))
+        if ((ref->field->flag & (M_Static | M_Method | M_Native)) != (M_Static | M_Method))
             return 0;
 
         /* Static method (with body) */
@@ -5309,17 +5309,30 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
         return 0;
     y = (struct lnode_global *)n;
 
-    /* Constructor invocation */
-    if (y->global->class)
+    /* Record constructor invocation */
+    if (y->global->record)
         return 1;
 
-    /* Builtin function, not using underef. */
-    if (y->global->g_flag & F_Builtin) {
-        if (strcmp(y->global->name, "coact") == 0 ||
-            strcmp(y->global->name, "back") == 0)
+    /* Class invocation */
+    if (y->global->class) {
+        struct lclass_field_ref *fr;
+        fr = lookup_implemented_field_ref(y->global->class, new_string);
+        if (fr && (fr->field->flag & M_Native))
             return 0;
+
+        /* Class with no new() method, or a non-native one */
         return 1;
     }
+
+    /* Builtin function */
+    if (y->global->g_flag & F_Builtin) {
+        if (y->global->builtin->underef)
+            return 0;
+
+        /* Function that doesn't use underef param(s) */
+        return 1;
+    }
+
 
     /* User procedure */
     if (y->global->g_flag & F_Proc)

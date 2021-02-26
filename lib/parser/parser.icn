@@ -24,10 +24,13 @@ class ErrorDetail()
    #
    public esc_str()
       local s
-      if \src then
-         s := Files.begin_link(src, line) || "File " || abbreviate(src) || "; "
-      else
-         s := ""
+      s := if \src then {
+         if FilePath(src).is_absolute() & line > 0 then
+            Files.begin_link(src, line) || "File " || abbreviate(src) || "; "
+         else
+            "File " || abbreviate(src) || "; "            
+      } else
+         ""
       s ||:= "Line " || line
       if \src then
          s ||:= Files.end_link()
@@ -41,10 +44,10 @@ class ErrorDetail()
    #
    public str()
       local s
-      if \src then
-         s := "File " || abbreviate(src) || "; "
+      s := if \src then
+         "File " || abbreviate(src) || "; "
       else
-         s := ""
+         ""
       s ||:= "Line " || line || " # " || msg
       return s
    end

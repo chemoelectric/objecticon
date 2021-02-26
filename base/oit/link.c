@@ -5,6 +5,7 @@
 #include "icont.h"
 #include "link.h"
 #include "lmem.h"
+#include "lsym.h"
 #include "tmain.h"
 #include "lglob.h"
 #include "resolve.h"
@@ -94,8 +95,13 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     /* Resolve identifiers encountered in procedures and methods */
     resolve_locals();
     check_unused_imports();
-    if (!gmain)
-        lfatal(0, 0, "No main procedure found");
+    gmain = glocate(main_string);
+    if (!gmain) {
+        if (Mflag)
+            setgmain();
+        else
+            lfatal(0, 0, "No main procedure found");
+    }
 
     if (lfatals > 0) {
         *warnings = lwarnings;

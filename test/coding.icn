@@ -24,13 +24,13 @@ end
 class Three(ObjectCodec)
    public x,y,z
 
-   private override object_encode(e)
+   protected override object_encode(e)
       e.encode(x)
       e.encode(y)
       e.encode(z)
    end
 
-   private override object_decode(e)
+   protected override object_decode(e)
       x := e.decode()
       y := e.decode()
       z := e.decode()

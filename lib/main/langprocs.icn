@@ -58,21 +58,21 @@ end
 # for an ObjectOutputStream
 #
 abstract class ObjectOutput()
-   private abstract object_output(oos)
+   protected abstract object_output(oos)
 end
 
 # A class implements this interface to provide a custom implementation
 # for the `clone` procedure.
 #
 abstract class ObjectClone()
-   private abstract object_clone(seen)
+   protected abstract object_clone(seen)
 end
 
 # A class implements this interface to provide a custom implementation
 # for the `hash` procedure.
 #
 abstract class ObjectHash()
-   private abstract object_hash(depth)
+   protected abstract object_hash(depth)
 end
 
 # A class implements this interface to provide a custom implementation
@@ -87,7 +87,7 @@ end
 # correctly.
 #
 abstract class ObjectEquals()
-   private abstract object_equals(other, seen)
+   protected abstract object_equals(other, seen)
 end
 
 #
@@ -531,7 +531,7 @@ class ObjectOutputStream(Stream, HasCloseUnderlying)
 end
 
 package class CloneMethp()
-   private optional nothing()
+   package optional nothing()
 end
 
 #
@@ -803,7 +803,7 @@ end
 # immutable classes).
 #
 class SelfClone(ObjectClone)
-   private final override object_clone()
+   protected final override object_clone()
       link
    end
 end
@@ -821,7 +821,7 @@ end
 # such as "object mypackage.MyObject#3()"
 #
 class MinimalObjectOutput(ObjectOutput)
-   private override object_output(oo)
+   protected override object_output(oo)
       oo.object_string(self)
    end
 end

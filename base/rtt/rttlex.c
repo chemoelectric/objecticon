@@ -143,13 +143,13 @@ void init_lex()
       for (i = 0; i < num_typs; ++i) {
          icontypes[i].id = spec_str(icontypes[i].id);
          sym = sym_add(IconType, icontypes[i].id, OtherDcl, 0);
-         sym->u.typ_indx = i;
+         sym->typ_indx = i;
          }
 
       for (i = 0; i < num_cmpnts; ++i) {
          typecompnt[i].id = spec_str(typecompnt[i].id);
          sym = sym_add(Component, typecompnt[i].id, OtherDcl, 0);
-         sym->u.typ_indx = i;
+         sym->typ_indx = i;
          }
       }
    }

@@ -28,7 +28,7 @@ struct token *tok;
    struct sym_entry *sym;
 
    sym = sym_lkup(tok->image);
-   if (sym->u.typ_indx != int_typ)
+   if (sym->typ_indx != int_typ)
       errt2(tok, "exact conversions do not apply  to ", tok->image);
    return tok;
    }
@@ -64,7 +64,7 @@ struct node *typ;
             }
 
       case SymNd:
-         return typ->u[0].sym->u.typ_indx;
+         return typ->u[0].sym->typ_indx;
 
       default:  /* must be exact conversion */
          if (typ->tok->tok_id == C_Integer)
