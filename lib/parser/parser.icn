@@ -2,7 +2,7 @@ package parser
 
 import util, io
 
-class ErrorDetail()
+final class ErrorDetail()
    public const src, line, msg
 
    # Does the same as abbreviate() in tmain.c
@@ -52,7 +52,7 @@ class ErrorDetail()
       return s
    end
 
-   package final new(src, line, msg)
+   package new(src, line, msg)
       self.src := src
       self.line := line
       self.msg := msg

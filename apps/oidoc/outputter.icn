@@ -141,6 +141,8 @@ abstract class Outputter()
       if is(c, GlobalSymbol) & c.has_readable_flag() then
          s ||:= " readable "
       if is(c, ClassSymbol) then {
+         if c.is_protected() then
+            s ||:= "protected "
          if c.is_final() then
             s ||:= "final "
          if c.is_abstract() then

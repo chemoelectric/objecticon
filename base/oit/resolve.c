@@ -335,7 +335,7 @@ static struct gentry *resolve_super(struct lclass *class, struct lclass_super *s
 
 void resolve_supers()
 {
-    struct lclass *cl, *x;
+    struct lclass *cl;
     struct gentry *rsup;
     struct lclass_super *sup;
     struct lclass_ref *el;
@@ -344,13 +344,6 @@ void resolve_supers()
         for (sup = cl->supers; sup; sup = sup->next) {
             rsup = resolve_super(cl, sup);
             if (rsup) {
-                x = rsup->class;
-                /* Check that the superclass isn't final */
-                if (x->flag & M_Final)
-                    lfatal(cl->global->defined,
-                           &cl->global->pos,
-                           "Class %s cannot inherit from %s, which is marked final", 
-                           cl->global->name, x->global->name);
                 el = Alloc(struct lclass_ref);
                 el->class = rsup->class;
                 if (cl->last_resolved_super) {
@@ -398,6 +391,22 @@ static void merge(struct lclass *cl, struct lclass *super)
 {
     struct lclass_field *f;
     struct lclass_ref *cr;
+
+    if (cl != super) {
+        /* Check that the superclass isn't final */
+        if (super->flag & M_Final)
+            lfatal(cl->global->defined,
+                   &cl->global->pos,
+                   "Class %s cannot inherit from %s, which is marked final", 
+                   cl->global->name, super->global->name);
+        /* Check that the superclass isn't protected and in another package */
+        if ((super->flag & M_Protected) &&
+            other_package(cl->global->defined, super->global))
+            lfatal(cl->global->defined,
+                   &cl->global->pos,
+                   "Class %s cannot inherit from %s, which is marked protected and is in a different package", 
+                   cl->global->name, super->global->name);
+    }
 
     /* Add a reference to super into the implemented_classes list. */
     cr = Alloc(struct lclass_ref);

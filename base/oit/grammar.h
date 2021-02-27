@@ -88,6 +88,7 @@ classaccess : classaccess1 ;
 
 classaccess1 : ;
         | FINAL {Modifier8();};
+        | PROTECTED {Modifier3();};
         | ABSTRACT {Modifier10();};
 
 fieldaccess : fieldaccess1 ;

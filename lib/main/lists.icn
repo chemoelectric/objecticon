@@ -381,7 +381,7 @@ package record NodeSlice(len, h, t)
 #
 # A node in a `LinkedList`.
 #
-class LinkedListNode()
+final class LinkedListNode()
    package
       nxt
    public
@@ -802,7 +802,7 @@ end
 #
 # A node in a `DoublyLinkedList`.
 #
-class DoublyLinkedListNode()
+protected class DoublyLinkedListNode()
    package
       nxt,        # The next node, or &null if this node was unlinked.
       prev        # The previous node, or &null if this node was unlinked.
