@@ -74,6 +74,12 @@ void next_class(char *name, struct node *n)
     c->flag = modflag;
     if (globalflag)
         c->flag |= M_Package;
+    if (c->flag & M_Protected) {
+        if (c->flag & M_Package)
+            tfatal_at(n, "A package class cannot be protected: class %s", name);
+        if (c->flag & M_Final)
+            tfatal_at(n, "A final class cannot be protected: class %s", name);
+    }
     if (curr_class) {
         curr_class->next = c;
         curr_class = c;

@@ -5,7 +5,7 @@ import
    lang(),
    io
 
-abstract class Symbol()
+abstract protected class Symbol()
    public const
       scanned_file,
       obj,
@@ -171,6 +171,13 @@ class ClassSymbol(TopLevelSymbol)
          iand(obj.flags, lang.Class.Final) ~= 0
    end
 
+   public is_protected()
+      succeed if is(obj, Tree) then
+         obj.get_access().gen().str() == "protected"
+      else
+         iand(obj.flags, lang.Class.Protected) ~= 0
+   end
+
    public is_abstract()
       succeed if is(obj, Tree) then
          obj.get_access().gen().str() == "abstract"
@@ -220,7 +227,7 @@ end
 class ClassMethod(ClassField)
 end
 
-class ScannedFile()
+final class ScannedFile()
    public const
       filename
 
@@ -322,7 +329,7 @@ class ScannedFile()
    end
 end
 
-class ImportDec()
+final class ImportDec()
    public const
       mode,
       name

@@ -65,7 +65,7 @@ end
 # This represents a node in the parse tree.  The children are
 # either other Nodes, or Token instances, which come from the lexer.
 #
-class Node()
+final class Node()
    public const 
       label
    private const
@@ -154,7 +154,7 @@ class Node()
    end
 end
 
-abstract class Tree()
+protected abstract class Tree()
    public const pos
 
    public optional get_first_token()
@@ -169,7 +169,7 @@ abstract class Tree()
    end
 end
 
-abstract class List()
+protected abstract class List()
    public const lpos, index
 
    package abstract flatten()
@@ -997,7 +997,7 @@ class Class(TopLevel)
    end
 end
 
-abstract class Function()
+protected abstract class Function()
    public const
       fpos,
       name_index,

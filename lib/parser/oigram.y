@@ -233,6 +233,7 @@ classaccess : classaccess1 ;
 
 classaccess1 : { $$ := Node.EMPTY } ;
         | FINAL
+        | PROTECTED
         | ABSTRACT
 
 fieldaccess : fieldaccess1 ;

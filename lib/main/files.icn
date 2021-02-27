@@ -1070,7 +1070,7 @@ $if _PLAN9
 #
 # This class represents file stat information.
 #
-class Stat()
+final class Stat()
    public const 
       dev,
       ino,
@@ -1142,7 +1142,7 @@ $else
 #
 # This class represents file stat information.
 #
-class Stat()
+final class Stat()
    public const 
       dev,
       ino,
