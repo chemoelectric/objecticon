@@ -4,7 +4,7 @@ import lang, ipl.numbers(gcd), ipl.types, util, ipl.functional
 
 # This class encapsulates options for rounding a decimal number.
 #
-class Round()
+final class Round()
    public const
       # Set if rounding is to decimal places rather than a precision.
       dp_flag,
@@ -172,7 +172,7 @@ end
 # Abstract parent class for the three number types, `Cpx`, `Rat` and
 # `Dec`.  The latter two are in fact subclasses via `RealNumber`.
 #
-abstract class Number(ObjectOutput)
+protected abstract class Number(ObjectOutput)
    public static const
       # Precision used in converting to icon real type
       REAL_DIGS
