@@ -20,10 +20,10 @@ final class Token()
    end
 
    public get_pad()
-      if chunk[-*s:0] == s then
-         return .chunk[1:-*s]
+      return .if chunk[-*s:0] == s then
+         chunk[1:-*s]
       else
-         return .chunk
+         chunk
    end
 
    public str()
@@ -315,7 +315,7 @@ abstract class IdList(LList)
       local l, n
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          if is(n, Node) & n.label == lab then {
             default.push(l, Id(n.child(3), n.child(2)))
             n := n.child(1)
@@ -380,7 +380,7 @@ class AccessList(SimpleLList)
       local l, n
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          if is(n, Node) then {
             default.push(l, Leaf(n.child(2)))
             n := n.child(1)
@@ -417,7 +417,7 @@ class LocalsList(SimpleLList)
       local l, n
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          default.push(l, Local(n))
          n := n.child(1)
       }
@@ -442,7 +442,7 @@ class Invocable(SimpleLList)
       local l, n
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          if is(n, Node) & n.label == "invoclist" then {
             default.push(l, Id(n.child(3), n.child(2)))
             n := n.child(1)
@@ -482,7 +482,7 @@ class Import(SimpleLList)
       local l, n, t
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          if is(n, Node) & n.label == "importlist" then {
             t := n.child(3)
             if is(t, Node) & t.label == "importspec" then
@@ -525,7 +525,7 @@ class Imports(SimpleLList)
       local l, n
       l := []
       n := pos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          default.push(l, Import(n.child(2)))
          n := n.child(1)
       }
@@ -545,7 +545,7 @@ class Body(SimpleLList)
       local l, n, t, t2
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          t := n.child(2)
          default.push(l, case t.label of {
             "body" : {
@@ -934,7 +934,7 @@ class ClassMembers(SimpleLList)
       local l, n, t
       l := []
       n := lpos.child(index)
-      while n ~=== Node.EMPTY do {
+      until n === Node.EMPTY do {
          t := n.child(3)
          default.push(l, 
               if is(t, Token) | t.label == "idlist" then
