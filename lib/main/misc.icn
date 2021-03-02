@@ -578,7 +578,6 @@ class CleanupState(State)
    end
 end
 
-
 #
 # A `State` to save `&why`.
 #
@@ -603,6 +602,22 @@ class TraceState(State)
 
    public override swap()
       &trace :=: t
+   end
+
+   public new(i)
+      self.t := need_integer(\i) | 0
+      return
+   end
+end
+
+#
+# A `State` to save `&random`.  The default initial value is 0.
+#
+class RandomState(State)
+   private t
+
+   public override swap()
+      &random :=: t
    end
 
    public new(i)
