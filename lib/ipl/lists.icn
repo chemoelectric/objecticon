@@ -209,10 +209,16 @@ end
 
 # Delete all instances of `x` from the list `l`.
 procedure ldel(l, x)
-   local i
-   every i := *l to 1 by -1 do {
-      if l[i] === x then
-         delete(l, i)
+   local i, e
+   i := 1
+   every e := !l do {
+      if e === x then {
+         repeat {
+            delete(l, i)
+            l[i] === x | break
+         }
+      }
+      i +:= 1
    }
    return l
 end
