@@ -287,11 +287,11 @@ procedure test23()
    obj := t(1,2,3)
    print{"subtype(obj)", Constructor.get_name(obj)}
    pr_seq{"test23.obj", !obj}
-   pr_seq{"test23.names", Prog.get_variable_name(!obj)}
+   pr_seq{"test23.names", vimage(!obj)}
    res := p(t, obj)
    print{"subtype(res)", Constructor.get_name(res)}
    pr_seq{"test23.res", !res}
-   pr_seq{"test23.names", Prog.get_variable_name(!res)}
+   pr_seq{"test23.names", vimage(!res)}
 end
 
 procedure test24()
@@ -301,7 +301,7 @@ procedure test24()
    o := t(1,2,3)
    pr_seq{"test24.o", !o}
    print{"subtype(o)", Constructor.get_name(o)}
-   pr_seq{"test24.names", Prog.get_variable_name(!o)}
+   pr_seq{"test24.names", vimage(!o)}
 end
 
 procedure test25()

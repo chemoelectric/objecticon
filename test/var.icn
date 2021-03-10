@@ -39,19 +39,19 @@ record complex(r,i)
 procedure main2(a)
    local T, L, L1
    static s
-   every write(imagex(Prog.get_variable_name(T | L | s | a)))
+   every write(imagex(vimage(T | L | s | a)))
    T := table()
    L := list(200)
    L1 := []
    every 1 to 200 do push(L1,1)
    write(image(L[10]))
-   write(image(Prog.get_variable_name(&handler)))
-   write(imagex(Prog.get_variable_name(T["abc"])))
+   write(image(vimage(&handler)))
+   write(imagex(vimage(T["abc"])))
    T["abc"] := 1
-   write(imagex(Prog.get_variable_name(T["abc"])))
-   every write(imagex(Prog.get_variable_name(L[1 | 2 | 3 | -1 | -10])))
-   every write(imagex(Prog.get_variable_name(L1[1 | 2 | 3 | -1 | -10])))
-   write(imagex(Prog.get_variable_name(complex().r)))
+   write(imagex(vimage(T["abc"])))
+   every write(imagex(vimage(L[1 | 2 | 3 | -1 | -10])))
+   every write(imagex(vimage(L1[1 | 2 | 3 | -1 | -10])))
+   write(imagex(vimage(complex().r)))
    return
 end
 

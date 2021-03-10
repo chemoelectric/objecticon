@@ -222,7 +222,7 @@ function errorclear(ce)
       }
 end
 
-function lang_Prog_get_variable_name(underef v)
+function vimage(underef v)
    /*
     * v must be a variable
     */
