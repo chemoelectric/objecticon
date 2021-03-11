@@ -5238,19 +5238,10 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
     struct lnode *n;
 
     n = x->expr;
-    if (n->op == Uop_Field) {
-        struct lnode_field *x = (struct lnode_field *)n;
-        struct lclass_field_ref *ref;
 
-        if (!get_class_field_ref(x, 0, &ref))
-            return 0;
-
-        if ((ref->field->flag & (M_Static | M_Method | M_Native)) != (M_Static | M_Method))
-            return 0;
-
-        /* Static method (with body) */
+    /* Method invocation */
+    if (n->op == Uop_Field)
         return 1;
-    }
 
     if (n->op != Uop_Global)
         return 0;
@@ -5261,15 +5252,8 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
         return 1;
 
     /* Class invocation */
-    if (y->global->class) {
-        struct lclass_field_ref *fr;
-        fr = lookup_implemented_field_ref(y->global->class, new_string);
-        if (fr && (fr->field->flag & M_Native))
-            return 0;
-
-        /* Class with no new() method, or a non-native one */
+    if (y->global->class)
         return 1;
-    }
 
     /* Builtin function */
     if (y->global->g_flag & F_Builtin) {
@@ -5279,7 +5263,6 @@ static int last_invoke_arg_rval(struct lnode_invoke *x)
         /* Function that doesn't use underef param(s) */
         return 1;
     }
-
 
     /* User procedure */
     if (y->global->g_flag & F_Proc)
