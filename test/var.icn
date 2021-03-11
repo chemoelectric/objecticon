@@ -2,6 +2,8 @@
 
 import io, lang, util(Math), ipl.test
 
+global gname
+
 procedure main(a)
    local x, l0, l1, l2, l3, l4, l5, l6, l7, l8, l9
    static y
@@ -52,6 +54,10 @@ procedure main2(a)
    every write(imagex(vimage(L[1 | 2 | 3 | -1 | -10])))
    every write(imagex(vimage(L1[1 | 2 | 3 | -1 | -10])))
    write(imagex(vimage(complex().r)))
+   write(image(vimage(gname)))
+   gname := "hello world"
+   write(image(vimage(gname[3:7])))
+
    return
 end
 

@@ -1,9 +1,9 @@
 &pos &subject: 3 abcde
 &pos &subject: 1 wxyz
-"T"
-"L"
-"s"
-"a"
+"local T"
+"local L"
+"static s"
+"local a"
 &null
 "&handler"
 "table#*[\"abc\"]"
@@ -19,4 +19,6 @@
 "list#*[200]"
 "list#*[191]"
 "record complex#*.r"
+"global gname"
+"global gname[3+:4]"
 

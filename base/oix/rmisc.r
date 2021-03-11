@@ -1662,11 +1662,15 @@ int getvimage(dptr dp1, dptr dp2)
              * temporary stack variables as occurs for string scanning).
              */
             struct p_frame *uf;
-            dptr vp;
+            dptr vp, name;
             uf = get_current_user_frame();
             vp = VarLoc(*dp1);		 /* get address of variable */
             if ((prog = find_global(vp))) {
-                *dp2 = *prog->Gnames[vp - prog->Globals]; 		/* global */
+                name = prog->Gnames[vp - prog->Globals];
+                len = 7 + StrLen(*name);
+                MakeStrMemProtect(reserve(Strings, len), len, dp2);
+                alcstr("global ", 7);
+                alcstr(StrLoc(*name), StrLen(*name));
             }
             else if ((prog = find_class_static(vp))) {
                 /*
@@ -1674,19 +1678,27 @@ int getvimage(dptr dp1, dptr dp2)
                  */
                 struct class_field *cf = find_class_field_for_dptr(vp, prog);
                 struct b_class *c = cf->defining_class;
-                dptr fname = c->program->Fnames[cf->fnum];
-                len = 6 + StrLen(*c->name) + 1 + StrLen(*fname);
+                name = c->program->Fnames[cf->fnum];
+                len = 6 + StrLen(*c->name) + 1 + StrLen(*name);
                 MakeStrMemProtect(reserve(Strings, len), len, dp2);
                 alcstr("class ", 6);
                 alcstr(StrLoc(*c->name), StrLen(*c->name));
                 alcstr(".", 1);
-                alcstr(StrLoc(*fname), StrLen(*fname));
+                alcstr(StrLoc(*name), StrLen(*name));
             }
             else if ((prog = find_procedure_static(vp))) {
-                *dp2 = *prog->Snames[vp - prog->Statics]; 		/* static in procedure */
+                name = prog->Snames[vp - prog->Statics]; 		/* static in procedure */
+                len = 7 + StrLen(*name);
+                MakeStrMemProtect(reserve(Strings, len), len, dp2);
+                alcstr("static ", 7);
+                alcstr(StrLoc(*name), StrLen(*name));
             }
             else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-                *dp2 = *uf->proc->lnames[vp - uf->fvars->desc];          /* argument/local */
+                name = uf->proc->lnames[vp - uf->fvars->desc];          /* argument/local */
+                len = 6 + StrLen(*name);
+                MakeStrMemProtect(reserve(Strings, len), len, dp2);
+                alcstr("local ", 6);
+                alcstr(StrLoc(*name), StrLen(*name));
             }
             else {
                 LitStr("(temp)", dp2);
