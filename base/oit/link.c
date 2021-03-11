@@ -291,7 +291,7 @@ void setexe(char *fname)
  */
 static void note_underefs()
 {
-    char *names[] = { "coact", "echo", "forward", "back", "vimage" };
+    char *names[] = { "coact", "echo", "forward", "back", "variable", "vimage" };
     int i;
     struct gentry *gl;
     for (i = 0; i < ElemCount(names); ++i) {

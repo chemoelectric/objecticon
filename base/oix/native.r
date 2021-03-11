@@ -236,6 +236,15 @@ function vimage(underef v)
    }
 end
 
+function variable(underef v)
+   body {
+      if (is:variable(v))
+          return v;
+      else
+          fail;
+   }
+end
+
 function lang_Prog_get_variable(s,c)
    if !cnv:string(s) then
       runerr(103, s)
