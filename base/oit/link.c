@@ -296,7 +296,6 @@ static void note_underefs()
     struct gentry *gl;
     for (i = 0; i < ElemCount(names); ++i) {
         gl = glocate(intern(names[i]));
-printf("HOHO %s %p\n",names[i],gl);
         if (gl)
             gl->builtin->underef = 1;
     }
