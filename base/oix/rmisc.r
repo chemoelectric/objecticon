@@ -468,7 +468,7 @@ static int cset_do_range(int from, int to)
 static void kywdout(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 {
    tended struct descrip tdp;
-   getname(dp, &tdp);
+   getvimage(dp, &tdp);
    putstr(f, &tdp);
    if (!noimage) {
        fprintf(f, " = ");
@@ -1579,9 +1579,9 @@ static void keyref(dptr dp1, dptr dp2)
 }
 
 /*
- * getname -- function to get print name of variable.
+ * getvimage -- function to get print name of variable.
  */
-int getname(dptr dp1, dptr dp2)
+int getvimage(dptr dp1, dptr dp2)
 {
     char sbuf[100];			/* buffer; might be too small */
     word i, len;
@@ -1595,7 +1595,7 @@ int getname(dptr dp1, dptr dp2)
             else
                 sprintf(sbuf, "[" WordFmt "+:" WordFmt "]", TvsubsBlk(*dp1).sspos, TvsubsBlk(*dp1).sslen);
             tdp1 = TvsubsBlk(*dp1).ssvar;
-            getname(&tdp1, &tdp2);
+            getvimage(&tdp1, &tdp2);
             len = StrLen(tdp2) + strlen(sbuf);
             MakeStrMemProtect(reserve(Strings, len), len, dp2);
             alcstr(StrLoc(tdp2), StrLen(tdp2));
@@ -1626,10 +1626,10 @@ int getname(dptr dp1, dptr dp2)
               }
           }
           if (!prog)
-            syserr("getname: Unknown integer keyword variable");
+            syserr("getvimage: Unknown integer keyword variable");
         }            
       kywdany:
-        syserr("getname: Unknown keyword variable");
+        syserr("getvimage: Unknown keyword variable");
 
       kywdhandler: {
         LitStr("&handler", dp2);
@@ -1645,7 +1645,7 @@ int getname(dptr dp1, dptr dp2)
               }
           }
           if (!prog)
-              syserr("getname: Unknown string keyword variable");
+              syserr("getvimage: Unknown string keyword variable");
         }
       kywdpos: {
         LitStr("&pos", dp2);

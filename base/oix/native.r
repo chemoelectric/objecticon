@@ -231,7 +231,7 @@ function vimage(underef v)
 
    body {
       tended struct descrip result;
-      getname(&v, &result);
+      getvimage(&v, &result);
       return result;
    }
 end

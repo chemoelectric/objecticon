@@ -507,7 +507,7 @@ static void kywdout(dptr d)
 {
     struct descrip t, v;
     struct progstate *p;
-    getname(d, &t);
+    getvimage(d, &t);
     for (p = progs; p; p = p->next) {
         if (getvar(&t, &v, p) == Succeeded && VarLoc(v) == VarLoc(*d)) {
             if (p != prog)
