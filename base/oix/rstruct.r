@@ -17,44 +17,23 @@ void addmem(struct b_set *ps,struct b_selem *pe,union block **pl)
    }
 
 /*
- * cpslots(dp1, slotptr, i, j) - copy elements of sublist dp1[i:j]
+ * cpslots(dp, slotptr, i, size) - copy elements of sublist dp[i+:size]
  *  into an array of descriptors.
  * 
  *  No allocation is done.
  */
 
-void cpslots(dptr dp1, dptr slotptr, word i, word size)
+void cpslots(dptr dp, dptr slotptr, word i, word size)
    {
-   word pos;
-   struct b_list *lp1;     /* Neither pointer need be tended since no allocation is done. */
-   struct b_lelem *bp1;
-   /*
-    * Get pointers to the list and list elements for the source list
-    *  (bp1, lp1).
-    */
-   lp1 = &ListBlk(*dp1);
-   bp1 = get_lelem_for_index(lp1, i, &pos);
-   if (!bp1)
-       return;
-
-   /*
-    * Copy elements from the source list into the sublist, moving to
-    *  the next list block in the source list when all elements in a
-    *  block have been copied.
-    */
-   while (size > 0) {
-      word j = bp1->first + pos;
-      if (j >= bp1->nslots)
-         j -= bp1->nslots;
-      *slotptr++ = bp1->lslots[j];
-      if (++pos >= bp1->nused) {
-         pos = 0;
-         bp1 = (struct b_lelem *) bp1->listnext;
-         }
+   struct b_list *lp;     /* Neither pointer need be tended since no allocation is done. */
+   struct b_lelem *le;
+   struct lgstate state;
+   lp = &ListBlk(*dp);
+   for (le = lginit(lp, i, &state); size > 0 && le; le = lgnext(lp, &state, le)) {
+      *slotptr++ = le->lslots[state.result];
       size--;
       }
    }
-
 
 /*
  * cplist(dp1,dp2,i,size) - copy sublist dp1[i+:size] into dp2.
