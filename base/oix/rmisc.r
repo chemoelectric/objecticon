@@ -828,8 +828,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          switch (BlkType(bp)) {
              case T_Telem: { 		/* table */
                  /* Find and print the element's table block */
-                 while(BlkType(bp) == T_Telem)
-                     bp = bp->telem.clink;
+                 do bp = bp->telem.clink;
+                 while(BlkType(bp) == T_Telem);
                  MakeDesc(D_Table, bp, &tdp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  /* Print the element key */
@@ -1564,8 +1564,8 @@ static void keyref(dptr dp1, dptr dp2)
     } else {
         tr = TelemBlk(*dp1).tref;
         bp = BlkLoc(*dp1);
-        while(BlkType(bp) == T_Telem)
-            bp = bp->telem.clink;
+        do bp = bp->telem.clink;
+        while (BlkType(bp) == T_Telem);
     }
     sprintf(sbuf, "table#" UWordFmt "[", bp->table.id);
 

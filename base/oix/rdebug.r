@@ -994,9 +994,9 @@ void print_dword(FILE *f, dptr d) {
  */
 struct descrip block_to_descriptor(union block *ptr)
 {
-    word d, t = BlkType(ptr);
+    word d;
     struct descrip desc;
-    switch (t) {
+    switch (BlkType(ptr)) {
         case T_Lrgint: d = D_Lrgint; break;
 #if !RealInDesc
         case T_Real: d = D_Real; break; 
@@ -1006,20 +1006,20 @@ struct descrip block_to_descriptor(union block *ptr)
         case T_Proc: d = D_Proc; break;
         case T_Record: d = D_Record; break;
         case T_Lelem: {
-            while (BlkType(ptr) == T_Lelem)
-                ptr = ptr->lelem.listnext;
+            do ptr = ptr->lelem.listnext;
+            while (BlkType(ptr) == T_Lelem);
             /* fall through */
         }
         case T_List: d = D_List; break;
         case T_Selem: {
-            while (BlkType(ptr) == T_Selem)
-                ptr = ptr->telem.clink;
+            do ptr = ptr->telem.clink;
+            while (BlkType(ptr) == T_Selem);
             /* fall through */
         }
         case T_Set: d = D_Set; break;
         case T_Telem: {
-            while (BlkType(ptr) == T_Telem)
-                ptr = ptr->telem.clink;
+            do ptr = ptr->telem.clink;
+            while (BlkType(ptr) == T_Telem);
             /* fall through */
         }
         case T_Table: d = D_Table; break;
