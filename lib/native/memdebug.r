@@ -19,7 +19,6 @@ struct query {
         } by_title;
         struct {
             void *addr;
-            int compacted;
         } by_addr;
     } u;
 };
@@ -29,20 +28,21 @@ static struct descrip found;
 static struct query query;
 static int mode;
 static int all_flag;
-static int verbose = 0;
-static int finished = 0;
+static int verbose;
+static int finished;
+static int orphans;
 static word slim = 64;
 static word llim = 6;
 static int addrs = 1;
 static FILE *out;
-static int flowterm = 0;
+static int flowterm;
 
 enum { Global=1, ClassStatic, ProcStatic, ObjectMember, SetMember, 
        RecordMember, TableDefault, TableKey, TableValue, ListElement, 
        CoexprActivator, CFrameArg, CFrameTended, PFrameTmp, PFrameVar, 
        UcsUtf8, WeakrefVal, MethpObject, Other };
 
-enum { ListMode=1, RefsMode, FindMode, DumpMode };
+enum { ListMode=1, RefsMode, FindMode, DumpMode, OrphansMode };
 
 struct stk_element {
     int type;
@@ -141,7 +141,9 @@ static int is_prog_region(struct region *rp);
 static void begin_linkx(dptr fname, word line);
 static void end_linkx();
 static void print_locationx(struct p_frame *pf);
-
+static int is_marked(void *addr);
+static void mark(void *addr);
+static void outimagex(dptr d);
 
 /* Get from stack, assumes it's not empty */
 static struct stk_element stk_get()
@@ -472,6 +474,68 @@ static void stk_add_methp_object(struct b_methp *methp)
     stk.top++;
 }
 
+/* Does the given list element block actually appear in its parent
+ * list's chain of element blocks? */
+static int orphaned_lelem(dptr l, union block *le)
+{
+    union block *x;
+    x = ListBlk(*l).listhead;
+    while (BlkType(x) == T_Lelem) {
+        if (x == le)
+            return 0;
+        x = x->lelem.listnext;
+    }
+    return 1;
+}
+
+/* Does the given variable, which points to a list element block,
+ * reference an orphaned element in the block? */
+static int orphaned_lelem_index(dptr d)
+{
+    dptr varptr = OffsetVarLoc(*d);
+    union block *bp = BlkLoc(*d);
+    word i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+    if (i < 1)
+        i += bp->lelem.nslots;
+    if (i > bp->lelem.nused)
+        return 1;
+    return 0;
+}
+
+/* Does the given table element block actually appear in its parent
+ * table's hash chain? */
+static int orphaned_telem(dptr t, union block *te)
+{
+    union block *x;
+    x = *hchain(BlkLoc(*t), te->telem.hashnum);
+    while (BlkType(x) == T_Telem) {
+        if (x == te)
+            return 0;
+        x = x->telem.clink;
+    }
+    return 1;
+}
+
+/* Does the given list contain any list element blocks with unused
+ * slots which are non-null? */
+static int orphaned_member(dptr l)
+{
+    struct b_lelem *le;
+    word i, j;
+    le = (struct b_lelem *)ListBlk(*l).listhead;
+    while (BlkType(le) == T_Lelem) {
+        for (i = le->nused; i < le->nslots; ++i) {
+            j = le->first + i;
+            if (j >= le->nslots)
+                j -= le->nslots;
+            if (!is:null(le->lslots[j]))
+                return 1;
+        }
+        le = (struct b_lelem *)le->listnext;
+    }
+    return 0;
+}
+
 static struct descrip normalize_descriptor(dptr dp)
 {
     struct descrip d = *dp;
@@ -481,7 +545,53 @@ static struct descrip normalize_descriptor(dptr dp)
       /* Like the garbage collector, named_var descriptor pointers aren't traversed */
       named_var: return nulldesc;  
       tvtbl: return block_to_descriptor(TvtblBlk(d).clink);
-      struct_var: return block_to_descriptor(BlkLoc(d));
+      struct_var: {
+            struct descrip r;
+            union block *bp = BlkLoc(d);
+            r = block_to_descriptor(bp);
+            /* If traversing, check for orphaned data blocks. */
+            if (mode) {
+                switch (BlkType(bp)) {
+                    case T_Lelem: { 		/* list */
+                        if (!is_marked(bp)) {
+                            mark(bp);
+                            if (orphaned_lelem(&r, bp)) {
+                                if (mode == OrphansMode) {
+                                    fputs("Orphaned list element block detected from list ", out);
+                                    outimagex(&r);
+                                    fputc('\n', out);
+                                } else
+                                    orphans++;
+                            }
+                            if (orphaned_lelem_index(dp)) {
+                                if (mode == OrphansMode) {
+                                    fputs("Reference to orphaned list element detected in list ", out);
+                                    outimagex(&r);
+                                    fputc('\n', out);
+                                } else
+                                    orphans++;
+                            }
+                        }
+                        break;
+                    }
+                    case T_Telem: { 		/* table */
+                        if (!is_marked(bp)) {
+                            mark(bp);
+                            if (orphaned_telem(&r, bp)) {
+                                if (mode == OrphansMode) {
+                                    fputs("Orphaned table element block detected from table ", out);
+                                    outimagex(&r);
+                                    fputc('\n', out);
+                                } else
+                                    orphans++;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            return r;
+        }
     }
 
     if (d.dword == D_TendPtr) {
@@ -861,8 +971,8 @@ static void outimagey(dptr d, struct frame *frame)
             switch (BlkType(bp)) {
                 case T_Telem: { 		/* table */
                     /* Find and print the element's table block */
-                    while(BlkType(bp) == T_Telem)
-                        bp = bp->telem.clink;
+                    do bp = bp->telem.clink;
+                    while(BlkType(bp) == T_Telem);
                     MakeDesc(D_Table, bp, &tmp);
                     outimagex(&tmp);
                     /* Print the element key */
@@ -930,7 +1040,7 @@ static void print_stk_element(struct stk_element *e)
     switch (e->type) {
         case Other: {
             fprintf(out, "%s", e->u.other.desc);
-            if (e->u.other.prog != prog) {
+            if (e->u.other.prog && (e->u.other.prog != prog)) {
                 fputs(" of program ", out);
                 outblock((union block *)e->u.other.prog->K_main);
             }
@@ -1213,7 +1323,7 @@ static void traverse(int m)
     struct progstate *prog;
 
     mode = m;
-    finished = 0;
+    orphans = finished = 0;
     found = nulldesc;
 
     stk_clear();
@@ -1228,6 +1338,10 @@ static void traverse(int m)
 
     stk_dispose();
     marked_blocks_dispose();
+    mode = 0;
+
+    if (orphans)
+        fprintf(out, "\n!!! Orphaned data blocks encountered.  memdebug's traversal may be incomplete.\n");
 }
 
 static void traverse_stack(struct b_coexpr *cp)
@@ -1574,6 +1688,14 @@ static void traverse_element(struct stk_element e)
                  le = lgnext(&ListBlk(e.dest), &state, le)) {
                 stk_add_list_element(&ListBlk(e.dest), &le->lslots[state.result], state.listindex);
             }
+            if (orphaned_member(&e.dest)) {
+                if (mode == OrphansMode) {
+                    fputs("Orphaned list member detected in ", out);
+                    outimagex(&e.dest);
+                    fputc('\n', out);
+                } else
+                    orphans++;
+            }
         }
       ucs: {
             stk_add_ucs_utf8(&UcsBlk(e.dest));
@@ -1667,7 +1789,6 @@ function MemDebug_list(s, flag)
           runerr(171, flag);
        if (!parsequery(buffstr(&s), &query))
            fail;
-       verbose = 0;
        all_flag = is:yes(flag);
        traverse(ListMode);
        ReturnDefiningClass;
@@ -1813,8 +1934,14 @@ function MemDebug_dump()
        fprintf(out, "\nGlobals and statics\n===================\n"); 
        output_all_statics();
        fprintf(out, "\nRegion dump\n===========\n");
-       verbose = 0;
        traverse(DumpMode);
+       ReturnDefiningClass;
+    }
+end
+
+function MemDebug_orphans()
+    body {
+       traverse(OrphansMode);
        ReturnDefiningClass;
     }
 end
@@ -1829,7 +1956,6 @@ function MemDebug_refs(s)
            LitWhy("refs needs an id number to uniquely identify an object.");
            fail;
        }
-       verbose = 0;
        traverse(RefsMode);
        ReturnDefiningClass;
     }
