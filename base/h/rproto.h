@@ -128,6 +128,8 @@ struct progstate *find_global(dptr s);
 struct progstate *find_class_static(dptr s);
 struct progstate *find_procedure_static(dptr s);
 struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog);
+int orphaned_lelem(dptr l, union block *le);
+int orphaned_telem(dptr t, union block *te);
 
 void print_desc(FILE *f, dptr d);
 void print_vword(FILE *f, dptr d);

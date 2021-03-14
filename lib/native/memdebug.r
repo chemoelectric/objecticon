@@ -591,34 +591,6 @@ static void stk_add_methp_object(struct b_methp *methp)
     stk.top++;
 }
 
-/* Does the given list element block actually appear in its parent
- * list's chain of element blocks? */
-static int orphaned_lelem(dptr l, union block *le)
-{
-    union block *x;
-    x = ListBlk(*l).listhead;
-    while (BlkType(x) == T_Lelem) {
-        if (x == le)
-            return 0;
-        x = x->lelem.listnext;
-    }
-    return 1;
-}
-
-/* Does the given table element block actually appear in its parent
- * table's hash chain? */
-static int orphaned_telem(dptr t, union block *te)
-{
-    union block *x;
-    x = *hchain(BlkLoc(*t), te->telem.hashnum);
-    while (BlkType(x) == T_Telem) {
-        if (x == te)
-            return 0;
-        x = x->telem.clink;
-    }
-    return 1;
-}
-
 static struct descrip normalize_descriptor(dptr dp)
 {
     struct descrip d = *dp;
@@ -1051,8 +1023,8 @@ static void outimagey(dptr d, struct frame *frame)
                 case T_Telem: { 		/* table */
                     struct descrip par;
                     par = block_to_descriptor(bp);
-                    if (orphaned_telem(&par, BlkLoc(*d))) {
-                        MakeDesc(D_Telem, BlkLoc(*d), &tmp);
+                    if (orphaned_telem(&par, bp)) {
+                        MakeDesc(D_Telem, bp, &tmp);
                         outimagex(&tmp);
                     } else {
                         outimagex(&par);
@@ -1068,8 +1040,8 @@ static void outimagey(dptr d, struct frame *frame)
                     word i;
                     struct descrip par;
                     par = block_to_descriptor(bp);
-                    if (orphaned_lelem(&par, BlkLoc(*d))) {
-                        MakeDesc(D_Lelem, BlkLoc(*d), &tmp);
+                    if (orphaned_lelem(&par, bp)) {
+                        MakeDesc(D_Lelem, bp, &tmp);
                         outimagex(&tmp);
                     } else {
                         outimagex(&par);
