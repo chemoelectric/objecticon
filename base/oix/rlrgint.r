@@ -377,7 +377,7 @@ void bigprint(FILE *f, dptr da)
     union bigprint_b_bignum tdigits;
     word alen = LEN(&BignumBlk(*da));
     word slen, dlen;
-    tended struct b_bignum *blk = &BignumBlk(*da);
+    struct b_bignum *blk = &BignumBlk(*da);
 
     slen = blk->lsd - blk->msd;
     dlen = slen * DigitBits * 0.3010299956639812	/* 1 / log2(10) */
