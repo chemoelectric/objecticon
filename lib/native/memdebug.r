@@ -30,7 +30,6 @@ static int mode;
 static int all_flag;
 static int verbose;
 static int finished;
-static int orphans;
 static word slim = 64;
 static word llim = 6;
 static int addrs = 1;
@@ -40,9 +39,11 @@ static int flowterm;
 enum { Global=1, ClassStatic, ProcStatic, ObjectMember, SetMember, 
        RecordMember, TableDefault, TableKey, TableValue, ListElement, 
        CoexprActivator, CFrameArg, CFrameTended, PFrameTmp, PFrameVar, 
-       UcsUtf8, WeakrefVal, MethpObject, Other };
+       UcsUtf8, WeakrefVal, MethpObject, StuckListElement, Other,
+       OrphanedListBlockParent, OrphanedListBlockLink, OrphanedListBlockMember,
+       OrphanedTableBlockParent, OrphanedTableBlockLink, OrphanedTableBlockKey, OrphanedTableBlockValue };
 
-enum { ListMode=1, RefsMode, FindMode, DumpMode, OrphansMode };
+enum { ListMode=1, RefsMode, FindMode, DumpMode };
 
 struct stk_element {
     int type;
@@ -61,14 +62,37 @@ struct stk_element {
         struct {
             struct b_object *object;
             int no;
-        } object;
+        } object_member;
+        struct {
+            struct b_lelem *src;
+            int dir;
+        } orphaned_list_block_link;
+        struct {
+            struct b_lelem *src;
+        } orphaned_list_block_parent;
+        struct {
+            struct b_lelem *le;
+            word no;
+        } orphaned_list_block_member;
+        struct {
+            struct b_telem *src;
+        } orphaned_table_block_link;
+        struct {
+            struct b_telem *src;
+        } orphaned_table_block_parent;
+        struct {
+            struct b_telem *te;
+        } orphaned_table_block_key;
+        struct {
+            struct b_telem *te;
+        } orphaned_table_block_value;
         struct {
             struct b_record *record;
             int no;
-        } record;
+        } record_member;
         struct {
             struct b_set *set;
-        } set;
+        } set_member;
         struct {
             struct b_table *table;
         } table_default;
@@ -82,7 +106,10 @@ struct stk_element {
         struct {
             struct b_list *list;
             word no;
-        } list;
+        } list_member;
+        struct {
+            struct b_list *list;
+        } stuck_list_element;
         struct {
             struct b_coexpr *coexpr;
         } coexpr_activator;
@@ -242,6 +269,83 @@ static void stk_add_block(struct progstate *prog, char *desc, int no, union bloc
     stk.top++;
 }
 
+static void stk_add_orphaned_list_block_member(struct b_lelem *le, int no)
+{
+    struct descrip d;
+    d = normalize_descriptor(&le->lslots[no]);
+    if (is:null(d))
+        return;
+    stk_ensure();
+    stk.top->type = OrphanedListBlockMember;
+    stk.top->u.orphaned_list_block_member.le = le;
+    stk.top->u.orphaned_list_block_member.no = no;
+    stk.top->dest = d;
+    stk.top++;
+}
+
+static void stk_add_orphaned_list_block_link(struct b_lelem *src, int dir, union block *le)
+{
+    stk_ensure();
+    stk.top->type = OrphanedListBlockLink;
+    stk.top->u.orphaned_list_block_link.src = src;
+    stk.top->u.orphaned_list_block_link.dir = dir;
+    MakeDesc(D_Lelem, le, &stk.top->dest);
+    stk.top++;
+}
+
+static void stk_add_orphaned_list_block_parent(struct b_lelem *src)
+{
+    stk_ensure();
+    stk.top->type = OrphanedListBlockParent;
+    stk.top->u.orphaned_list_block_parent.src = src;
+    stk.top->dest = block_to_descriptor((union block *)src);
+    stk.top++;
+}
+
+static void stk_add_orphaned_table_block_key(struct b_telem *te)
+{
+    struct descrip d;
+    d = normalize_descriptor(&te->tref);
+    if (is:null(d))
+        return;
+    stk_ensure();
+    stk.top->type = OrphanedTableBlockKey;
+    stk.top->u.orphaned_table_block_key.te = te;
+    stk.top->dest = d;
+    stk.top++;
+}
+
+static void stk_add_orphaned_table_block_value(struct b_telem *te)
+{
+    struct descrip d;
+    d = normalize_descriptor(&te->tval);
+    if (is:null(d))
+        return;
+    stk_ensure();
+    stk.top->type = OrphanedTableBlockValue;
+    stk.top->u.orphaned_table_block_key.te = te;
+    stk.top->dest = d;
+    stk.top++;
+}
+
+static void stk_add_orphaned_table_block_link(struct b_telem *src)
+{
+    stk_ensure();
+    stk.top->type = OrphanedTableBlockLink;
+    stk.top->u.orphaned_table_block_link.src = src;
+    MakeDesc(D_Telem, src->clink, &stk.top->dest);
+    stk.top++;
+}
+
+static void stk_add_orphaned_table_block_parent(struct b_telem *src)
+{
+    stk_ensure();
+    stk.top->type = OrphanedTableBlockParent;
+    stk.top->u.orphaned_table_block_parent.src = src;
+    stk.top->dest = block_to_descriptor((union block *)src);
+    stk.top++;
+}
+
 static void stk_add_object_member(struct b_object *obj, int no)
 {
     struct descrip d;
@@ -250,8 +354,8 @@ static void stk_add_object_member(struct b_object *obj, int no)
         return;
     stk_ensure();
     stk.top->type = ObjectMember;
-    stk.top->u.object.object = obj;
-    stk.top->u.object.no = no;
+    stk.top->u.object_member.object = obj;
+    stk.top->u.object_member.no = no;
     stk.top->dest = d;
     stk.top++;
 }
@@ -264,8 +368,8 @@ static void stk_add_record_member(struct b_record *rec, int no)
         return;
     stk_ensure();
     stk.top->type = RecordMember;
-    stk.top->u.record.record = rec;
-    stk.top->u.record.no = no;
+    stk.top->u.record_member.record = rec;
+    stk.top->u.record_member.no = no;
     stk.top->dest = d;
     stk.top++;
 }
@@ -278,8 +382,21 @@ static void stk_add_list_element(struct b_list *list, dptr val, word no)
         return;
     stk_ensure();
     stk.top->type = ListElement;
-    stk.top->u.list.list = list;
-    stk.top->u.list.no = no;
+    stk.top->u.list_member.list = list;
+    stk.top->u.list_member.no = no;
+    stk.top->dest = d;
+    stk.top++;
+}
+
+static void stk_add_stuck_list_element(struct b_list *list, dptr val)
+{
+    struct descrip d;
+    d = normalize_descriptor(val);
+    if (is:null(d))
+        return;
+    stk_ensure();
+    stk.top->type = StuckListElement;
+    stk.top->u.stuck_list_element.list = list;
     stk.top->dest = d;
     stk.top++;
 }
@@ -292,7 +409,7 @@ static void stk_add_set_member(struct b_set *set, struct b_selem *elem)
         return;
     stk_ensure();
     stk.top->type = SetMember;
-    stk.top->u.set.set = set;
+    stk.top->u.set_member.set = set;
     stk.top->dest = d;
     stk.top++;
 }
@@ -488,20 +605,6 @@ static int orphaned_lelem(dptr l, union block *le)
     return 1;
 }
 
-/* Does the given variable, which points to a list element block,
- * reference an orphaned element in the block? */
-static int orphaned_lelem_index(dptr d)
-{
-    dptr varptr = OffsetVarLoc(*d);
-    union block *bp = BlkLoc(*d);
-    word i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
-    if (i < 1)
-        i += bp->lelem.nslots;
-    if (i > bp->lelem.nused)
-        return 1;
-    return 0;
-}
-
 /* Does the given table element block actually appear in its parent
  * table's hash chain? */
 static int orphaned_telem(dptr t, union block *te)
@@ -514,26 +617,6 @@ static int orphaned_telem(dptr t, union block *te)
         x = x->telem.clink;
     }
     return 1;
-}
-
-/* Does the given list contain any list element blocks with unused
- * slots which are non-null? */
-static int orphaned_member(dptr l)
-{
-    struct b_lelem *le;
-    word i, j;
-    le = (struct b_lelem *)ListBlk(*l).listhead;
-    while (BlkType(le) == T_Lelem) {
-        for (i = le->nused; i < le->nslots; ++i) {
-            j = le->first + i;
-            if (j >= le->nslots)
-                j -= le->nslots;
-            if (!is:null(le->lslots[j]))
-                return 1;
-        }
-        le = (struct b_lelem *)le->listnext;
-    }
-    return 0;
 }
 
 static struct descrip normalize_descriptor(dptr dp)
@@ -549,45 +632,20 @@ static struct descrip normalize_descriptor(dptr dp)
             struct descrip r;
             union block *bp = BlkLoc(d);
             r = block_to_descriptor(bp);
-            /* If traversing, check for orphaned data blocks. */
-            if (mode) {
-                switch (BlkType(bp)) {
-                    case T_Lelem: { 		/* list */
-                        if (!is_marked(bp)) {
-                            mark(bp);
-                            if (orphaned_lelem(&r, bp)) {
-                                if (mode == OrphansMode) {
-                                    fputs("Orphaned list element block detected from list ", out);
-                                    outimagex(&r);
-                                    fputc('\n', out);
-                                } else
-                                    orphans++;
-                            }
-                            if (orphaned_lelem_index(dp)) {
-                                if (mode == OrphansMode) {
-                                    fputs("Reference to orphaned list element detected in list ", out);
-                                    outimagex(&r);
-                                    fputc('\n', out);
-                                } else
-                                    orphans++;
-                            }
-                        }
-                        break;
-                    }
-                    case T_Telem: { 		/* table */
-                        if (!is_marked(bp)) {
-                            mark(bp);
-                            if (orphaned_telem(&r, bp)) {
-                                if (mode == OrphansMode) {
-                                    fputs("Orphaned table element block detected from table ", out);
-                                    outimagex(&r);
-                                    fputc('\n', out);
-                                } else
-                                    orphans++;
-                            }
-                        }
-                        break;
-                    }
+            /* Orphaned list/table blocks are converted to block
+             * descriptors pointing to them, rather than pointers to
+             * the parent.
+             */
+            switch (BlkType(bp)) {
+                case T_Lelem: { 		/* list */
+                    if (orphaned_lelem(&r, bp))
+                        MakeDesc(D_Lelem, bp, &r);
+                    break;
+                }
+                case T_Telem: { 		/* table */
+                    if (orphaned_telem(&r, bp))
+                        MakeDesc(D_Telem, bp, &r);
+                    break;
                 }
             }
             return r;
@@ -635,6 +693,17 @@ static void structout(char *name, uword id, dptr d)
     if (addrs > 1)
         addrout(BlkLoc(*d));
     outimage1(out, d, 1, slim, llim);
+    if (flowterm)
+        end_linkx();
+    return;
+}
+
+static void structout2(char *name, dptr d)
+{
+    fputs(name, out);
+    if (flowterm)
+        fprintf(out, "\x1b[!\"text:%p\"L", BlkLoc(*d));
+    addrout(BlkLoc(*d));
     if (flowterm)
         end_linkx();
     return;
@@ -723,6 +792,16 @@ static void outimagey(dptr d, struct frame *frame)
         fputs("D_TendPtr -> ", out);
         tmp = normalize_descriptor(d);
         outimagex(&tmp);
+        return;
+    }
+
+    if (d->dword == D_Lelem) {
+        structout2("Orphaned list element block", d);
+        return;
+    }
+
+    if (d->dword == D_Telem) {
+        structout2("Orphaned table element block", d);
         return;
     }
 
@@ -970,30 +1049,43 @@ static void outimagey(dptr d, struct frame *frame)
             fputs("struct_var -> ", out);
             switch (BlkType(bp)) {
                 case T_Telem: { 		/* table */
-                    /* Find and print the element's table block */
-                    do bp = bp->telem.clink;
-                    while(BlkType(bp) == T_Telem);
-                    MakeDesc(D_Table, bp, &tmp);
-                    outimagex(&tmp);
-                    /* Print the element key */
-                    putc('[', out);
-                    tmp = TelemBlk(*d).tref;
-                    outimagex(&tmp);
-                    putc(']', out);
+                    struct descrip par;
+                    par = block_to_descriptor(bp);
+                    if (orphaned_telem(&par, BlkLoc(*d))) {
+                        MakeDesc(D_Telem, BlkLoc(*d), &tmp);
+                        outimagex(&tmp);
+                    } else {
+                        outimagex(&par);
+                        /* Print the element key */
+                        putc('[', out);
+                        tmp = TelemBlk(*d).tref;
+                        outimagex(&tmp);
+                        putc(']', out);
+                    }
                     break;
                 }
                 case T_Lelem: { 		/* list */
-                    /* Find and print the list block and the index */
-                    word i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
-                    if (i < 1)
-                        i += bp->lelem.nslots;
-                    while (BlkType(bp->lelem.listprev) == T_Lelem) {
-                        bp = bp->lelem.listprev;
-                        i += bp->lelem.nused;
+                    word i;
+                    struct descrip par;
+                    par = block_to_descriptor(bp);
+                    if (orphaned_lelem(&par, BlkLoc(*d))) {
+                        MakeDesc(D_Lelem, BlkLoc(*d), &tmp);
+                        outimagex(&tmp);
+                    } else {
+                        outimagex(&par);
+                        i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+                        if (i < 1)
+                            i += bp->lelem.nslots;
+                        if (i > bp->lelem.nused) {
+                            fprintf(out, "[Unused slot]");
+                        } else {
+                            while (BlkType(bp->lelem.listprev) == T_Lelem) {
+                                bp = bp->lelem.listprev;
+                                i += bp->lelem.nused;
+                            }
+                            fprintf(out, "[" WordFmt "]", i);
+                        }
                     }
-                    MakeDesc(D_List, bp->lelem.listprev, &tmp);
-                    outimagex(&tmp);
-                    fprintf(out, "[" WordFmt "]", i);
                     break;
                 }
                 case T_Object: { 		/* object */
@@ -1068,26 +1160,83 @@ static void print_stk_element(struct stk_element *e)
             break;
         }
         case ObjectMember: {
-            name = e->u.object.object->class->program->Fnames[e->u.object.object->class->fields[e->u.object.no]->fnum];
+            name = e->u.object_member.object->class->program->Fnames[e->u.object_member.object->class->fields[e->u.object_member.no]->fnum];
             fprintf(out, "Instance variable %.*s in ", StrF(*name));
-            outblock((union block *)e->u.object.object);
+            outblock((union block *)e->u.object_member.object);
+            break;
+        }
+        case OrphanedListBlockParent: {
+            struct descrip tmp;
+            fputs("Parent of ",out);
+            MakeDesc(D_Lelem, e->u.orphaned_list_block_parent.src,  &tmp);
+            outimagex(&tmp);
+            break;
+        }
+        case OrphanedListBlockLink: {
+            struct descrip tmp;
+            if (e->u.orphaned_list_block_link.dir > 0)
+                fputs("Next link of ",out);
+            else
+                fputs("Previous link of ",out);
+            MakeDesc(D_Lelem, e->u.orphaned_list_block_link.src,  &tmp);
+            outimagex(&tmp);
+            break;
+        }
+        case OrphanedListBlockMember: {
+            struct descrip tmp;
+            fprintf(out, "Slot " WordFmt " in ", e->u.orphaned_list_block_member.no);
+            MakeDesc(D_Lelem, e->u.orphaned_list_block_member.le,  &tmp);
+            outimagex(&tmp);
+            break;
+        }
+        case OrphanedTableBlockParent: {
+            struct descrip tmp;
+            fputs("Parent of ",out);
+            MakeDesc(D_Telem, e->u.orphaned_table_block_parent.src,  &tmp);
+            outimagex(&tmp);
+            break;
+        }
+        case OrphanedTableBlockLink: {
+            struct descrip tmp;
+            fputs("Next link of ",out);
+            MakeDesc(D_Telem, e->u.orphaned_table_block_link.src,  &tmp);
+            outimagex(&tmp);
+            break;
+        }
+        case OrphanedTableBlockKey: {
+            struct descrip tmp;
+            fputs("Key of ",out);
+            MakeDesc(D_Telem, e->u.orphaned_table_block_key.te,  &tmp);
+            outimagex(&tmp);
+            break;
+        }
+        case OrphanedTableBlockValue: {
+            struct descrip tmp;
+            fputs("Value of ",out);
+            MakeDesc(D_Telem, e->u.orphaned_table_block_value.te,  &tmp);
+            outimagex(&tmp);
             break;
         }
         case RecordMember: {
-            name = e->u.record.record->constructor->program->Fnames[e->u.record.record->constructor->fnums[e->u.record.no]];
+            name = e->u.record_member.record->constructor->program->Fnames[e->u.record_member.record->constructor->fnums[e->u.record_member.no]];
             fprintf(out, "Record variable %.*s in ", StrF(*name));
-            outblock((union block *)e->u.record.record);
+            outblock((union block *)e->u.record_member.record);
             break;
         }
         case ListElement: {
             fprintf(out, "List element ");
-            outblock((union block *)e->u.list.list);
-            fprintf(out, "[" WordFmt "]", e->u.list.no);
+            outblock((union block *)e->u.list_member.list);
+            fprintf(out, "[" WordFmt "]", e->u.list_member.no);
+            break;
+        }
+        case StuckListElement: {
+            fprintf(out, "Stuck list element in ");
+            outblock((union block *)e->u.stuck_list_element.list);
             break;
         }
         case SetMember: {
             fprintf(out, "Member of ");
-            outblock((union block *)e->u.set.set);
+            outblock((union block *)e->u.set_member.set);
             break;
         }
         case TableDefault: {
@@ -1323,7 +1472,7 @@ static void traverse(int m)
     struct progstate *prog;
 
     mode = m;
-    orphans = finished = 0;
+    finished = 0;
     found = nulldesc;
 
     stk_clear();
@@ -1339,9 +1488,6 @@ static void traverse(int m)
     stk_dispose();
     marked_blocks_dispose();
     mode = 0;
-
-    if (orphans)
-        fprintf(out, "\n!!! Orphaned data blocks encountered.  memdebug's traversal may be incomplete.\n");
 }
 
 static void traverse_stack(struct b_coexpr *cp)
@@ -1451,6 +1597,58 @@ static void display(dptr dp)
     d = *dp;
     outimagex(&d);
     fputc('\n', out);
+    if (d.dword == D_Lelem) {
+        struct b_lelem *le;
+        struct descrip tmp, par;
+        word i;
+        le = &LelemBlk(d);
+        par = block_to_descriptor((union block *)le);
+        for (i = 0; i < le->nslots; ++i) {
+            if (!is:null(le->lslots[i])) {
+                fprintf(out, "\tSlot " WordFmt "=", i);
+                outimagex(&le->lslots[i]);
+                fputc('\n', out);
+            }
+        }
+        if (BlkType(le->listnext) == T_Lelem && orphaned_lelem(&par, le->listnext)) {
+            MakeDesc(D_Lelem, le->listnext, &tmp);
+            fputs("\tNext=", out);
+            outimagex(&tmp);
+            fputc('\n', out);
+        }
+        if (BlkType(le->listprev) == T_Lelem && orphaned_lelem(&par, le->listprev)) {
+            MakeDesc(D_Lelem, le->listprev, &tmp);
+            fputs("\tPrevious=", out);
+            outimagex(&tmp);
+            fputc('\n', out);
+        }
+        fputs("\tParent block=", out);
+        outimagex(&par);
+        fputc('\n', out);
+        return;
+    }
+    if (d.dword == D_Telem) {
+        struct b_telem *te;
+        struct descrip tmp;
+        te = &TelemBlk(d);
+        fprintf(out, "\tKey=");
+        outimagex(&te->tref);
+        fputc('\n', out);
+        fprintf(out, "\tValue=");
+        outimagex(&te->tval);
+        fputc('\n', out);
+        if (BlkType(te->clink) == T_Telem) {
+            MakeDesc(D_Telem, te->clink, &tmp);
+            fputs("\tNext=", out);
+            outimagex(&tmp);
+            fputc('\n', out);
+        }
+        fputs("\tParent block=", out);
+        tmp = block_to_descriptor((union block *)te);
+        outimagex(&tmp);
+        fputc('\n', out);
+        return;
+    }
     type_case d of {
       cset: { 
             fprintf(out, "\tsize=" WordFmt "\n", CsetBlk(d).size);
@@ -1485,11 +1683,27 @@ static void display(dptr dp)
       list: {
             struct lgstate state;
             struct b_lelem *le;
+            word i, j;
             for (le = lgfirst(&ListBlk(d), &state); le;
                  le = lgnext(&ListBlk(d), &state, le)) {
                 fprintf(out, "\t" WordFmt "=", state.listindex);
                 outimagex(&le->lslots[state.result]);
                 fputc('\n', out);
+            }
+            /* Now iterate again looking for stuck elements. */
+            le = (struct b_lelem *)ListBlk(d).listhead;
+            while (BlkType(le) == T_Lelem) {
+                for (i = le->nused; i < le->nslots; ++i) {
+                    j = le->first + i;
+                    if (j >= le->nslots)
+                        j -= le->nslots;
+                    if (!is:null(le->lslots[j])) {
+                        fprintf(out, "\tStuck element=");
+                        outimagex(&le->lslots[j]);
+                        fputc('\n', out);
+                    }
+                }
+                le = (struct b_lelem *)le->listnext;
             }
         }
       set: {
@@ -1650,6 +1864,37 @@ static void traverse_element(struct stk_element e)
         case DumpMode: do_dump(&e, rp); break;
     }
 
+    if (e.dest.dword == D_Lelem) {
+        struct b_lelem *le;
+        word i;
+        struct descrip par;
+        le = &LelemBlk(e.dest);
+        par = block_to_descriptor((union block *)le);
+        /* Add all slots, ignoring first, used etc. */
+        for (i = 0; i < le->nslots; ++i)
+            stk_add_orphaned_list_block_member(le, i);
+        /* Add adjoining orphaned blocks.  If they,re not orphaned then they
+         * will be traversed via the parent table. */
+        if (BlkType(le->listnext) == T_Lelem && orphaned_lelem(&par, le->listnext))
+            stk_add_orphaned_list_block_link(le, 1, le->listnext);
+        if (BlkType(le->listprev) == T_Lelem && orphaned_lelem(&par, le->listprev))
+            stk_add_orphaned_list_block_link(le, -1, le->listprev);
+        stk_add_orphaned_list_block_parent(le);
+        return;
+    }
+
+    if (e.dest.dword == D_Telem) {
+        struct b_telem *te;
+        te = &TelemBlk(e.dest);
+        stk_add_orphaned_table_block_key(te);
+        stk_add_orphaned_table_block_value(te);
+        /* The next block, if present, must be orphaned too. */
+        if (BlkType(te->clink) == T_Telem)
+            stk_add_orphaned_table_block_link(te);
+        stk_add_orphaned_table_block_parent(te);
+        return;
+    }
+
     type_case e.dest of {
       object:{
             word i;
@@ -1684,17 +1929,22 @@ static void traverse_element(struct stk_element e)
       list:{
             struct lgstate state;
             struct b_lelem *le;
+            word i, j;
             for (le = lgfirst(&ListBlk(e.dest), &state); le;
                  le = lgnext(&ListBlk(e.dest), &state, le)) {
                 stk_add_list_element(&ListBlk(e.dest), &le->lslots[state.result], state.listindex);
             }
-            if (orphaned_member(&e.dest)) {
-                if (mode == OrphansMode) {
-                    fputs("Orphaned list member detected in ", out);
-                    outimagex(&e.dest);
-                    fputc('\n', out);
-                } else
-                    orphans++;
+            /* Now iterate again looking for stuck elements. */
+            le = (struct b_lelem *)ListBlk(e.dest).listhead;
+            while (BlkType(le) == T_Lelem) {
+                for (i = le->nused; i < le->nslots; ++i) {
+                    j = le->first + i;
+                    if (j >= le->nslots)
+                        j -= le->nslots;
+                    if (!is:null(le->lslots[j]))
+                        stk_add_stuck_list_element(&ListBlk(e.dest), &le->lslots[j]);
+                }
+                le = (struct b_lelem *)le->listnext;
             }
         }
       ucs: {
@@ -1833,9 +2083,8 @@ static void output_named_global(dptr glob)
             }
         }
       constructor: {
-         }
+        }
     }
-
 }
 
 static void output_global(int i)
@@ -1935,13 +2184,6 @@ function MemDebug_dump()
        output_all_statics();
        fprintf(out, "\nRegion dump\n===========\n");
        traverse(DumpMode);
-       ReturnDefiningClass;
-    }
-end
-
-function MemDebug_orphans()
-    body {
-       traverse(OrphansMode);
        ReturnDefiningClass;
     }
 end

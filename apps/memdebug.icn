@@ -12,7 +12,6 @@ class MemDebug()
    public static native globals()
    public static native nglobals()
    public static native statics(name)
-   public static native orphans()
    public static native prog(name)
    public static native progs()
    public static native regions()
@@ -44,7 +43,6 @@ procedure do_help()
       write("                    list#21 would show what references that list").
       write("dump                Show all globals, statics and structures of the").
       write("                    current program").
-      write("orphans             Detect orphaned table and list elements").
       write("globals             Show the global variables of the current program").
       write("nglobals            Show the named globals of the current program").
       write("prog x              Set the current program, initially set to the").
@@ -139,10 +137,6 @@ end
 
 procedure do_dump()
    MemDebug.dump()
-end
-
-procedure do_orphans()
-   MemDebug.orphans()
 end
 
 procedure do_statics(a)
@@ -549,7 +543,6 @@ procedure main(args)
                  "list",  do_list,
                  "refs",  do_refs,
                  "dump",  do_dump,
-                 "orphans",  do_orphans,
                  "globals",  do_globals,
                  "nglobals",  do_nglobals,
                  "prog",  do_prog,
