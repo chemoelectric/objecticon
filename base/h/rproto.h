@@ -372,7 +372,7 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog);
 void    collect         (int region);
 void    deref           (dptr dp1, dptr dp2);
 int     eq              (dptr dp1,dptr dp2);
-int     getvimage       (dptr dp1, dptr dp2);
+void    getvimage       (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);
 void    print_location  (FILE *f, struct p_frame *pf);
 

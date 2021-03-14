@@ -432,7 +432,7 @@ delete(t, "xyz") -- > failure
 t := table("default") --> table#*(0)
 t["one"] := 1 --> 1
 t[] --> "default"
-x := r1([t, [1, [2, 3]]]) --> record r1#*(1)
+x := r1([t, [1, [2, 3]]]) --> record r1#*
 x[1, 1, "one"] --> 1
 x[1, 2, 2, 2] --> 3
 x[1, 2] := ["abcd", "defg"] --> list#*(2)

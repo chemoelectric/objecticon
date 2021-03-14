@@ -176,7 +176,7 @@ x := sort(x) ----> list#*(8)
 procedure io.write
 list#*(0)
 table#*(0)
-record array#*(7)
+record array#*
 every write(imagex(!x)) ----> none
 t := table(table()) ----> table#*(0)
 table#*(1)
@@ -312,7 +312,7 @@ every write(!a5) ----> none
 [] ||| [] ----> list#*(0)
 [1,2,3] ||| [] ----> list#*(3)
 [] ||| [1,2,3] ----> list#*(3)
-r := array(1,2,3,4,5,6,7,8,9) ----> record array#*(7)
+r := array(1,2,3,4,5,6,7,8,9) ----> record array#*
 r.a ----> 1
 r.b ----> 2
 r.c ----> 3
@@ -320,7 +320,7 @@ r.d ----> 4
 r.e ----> 5
 r.f ----> 6
 type(r) ----> "record"
-imagex(r) ----> "record array#*(7)"
+imagex(r) ----> "record array#*"
 r.a +:= 0 ----> 1
 r.b +:= 0 ----> 2
 r.c +:= 0 ----> 3
@@ -333,21 +333,21 @@ r.c ----> 3
 r.d ----> 4
 r.e ----> 5
 r.f ----> 6
-r := array("a",2,array(),r,main) ----> record array#*(7)
+r := array("a",2,array(),r,main) ----> record array#*
 "a"
 2
 3.5
-record array#*(7)
-record array#*(7)
+record array#*
+record array#*
 procedure main
 &null
 every write(imagex(!r)) ----> none
-r[1] :=: r.d ----> record array#*(7)
-record array#*(7)
+r[1] :=: r.d ----> record array#*
+record array#*
 2
 3.5
 "a"
-record array#*(7)
+record array#*
 procedure main
 &null
 every write(imagex(!r)) ----> none

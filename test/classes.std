@@ -129,7 +129,7 @@ Field eleven1 index 13
 	Flags: 5
 	Defining class: class Eleven
 	Value via class: Not accessible
-	Value via instance: methp#*(object Eleven#*(9),method Eleven.eleven1)
+	Value via instance: methp#*(object Eleven#*,method Eleven.eleven1)
 Field new index 14
 	Name: new
 	Index: 14
@@ -143,14 +143,14 @@ Field thing index 15
 	Flags: 5
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp#*(object Eleven#*(9),method Eight.thing)
+	Value via instance: methp#*(object Eleven#*,method Eight.thing)
 Field dm index 16
 	Name: dm
 	Index: 16
 	Flags: 261
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp#*(object Eleven#*(9),optional method)
+	Value via instance: methp#*(object Eleven#*,optional method)
 Field ten1 index 17
 	Name: ten1
 	Index: 17
@@ -183,14 +183,14 @@ Field thing index 1
 	Flags: 5
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp#*(object Eight#*(0),method Eight.thing)
+	Value via instance: methp#*(object Eight#*,method Eight.thing)
 Field dm index 2
 	Name: dm
 	Index: 2
 	Flags: 261
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp#*(object Eight#*(0),optional method)
+	Value via instance: methp#*(object Eight#*,optional method)
 -------------
 Class Nine
 Supers: {}
@@ -770,15 +770,15 @@ Par.f3(): Succeeded with 3
 Par.f4(): Succeeded with 4
 Other.f1: Error 607
 Par.new: Error 622
-Par.f1: Succeeded with methp#*(object Sub#*(0),method Par.f1)
+Par.f1: Succeeded with methp#*(object Sub#*,method Par.f1)
 Par.f2: Error 608
-Par.f3: Succeeded with methp#*(object Sub#*(0),method Par.f3)
+Par.f3: Succeeded with methp#*(object Sub#*,method Par.f3)
 Par.f4: Succeeded with method Par.f4
 Class.get(Other,f1): Error 607
 Class.get(Par,new): Error 622
-Class.get(Par,f1): Succeeded with methp#*(object Sub#*(0),method Par.f1)
+Class.get(Par,f1): Succeeded with methp#*(object Sub#*,method Par.f1)
 Class.get(Par,f2): Error 608
-Class.get(Par,f3): Succeeded with methp#*(object Sub#*(0),method Par.f3)
+Class.get(Par,f3): Succeeded with methp#*(object Sub#*,method Par.f3)
 Class.get(Par,f4): Succeeded with method Par.f4
 from proc Par.new(): Error 606
 from proc Par.f1(): Error 606

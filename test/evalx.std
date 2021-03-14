@@ -47,7 +47,7 @@ proc("+") ----> operator unary +
 ?20 ----> 11
 ?[1,2,3,4] ----> 2
 ?[1,2,3,4] ----> 2
-x := array(1,2,3,4,5,6,7) ----> record array#*(7)
+x := array(1,2,3,4,5,6,7) ----> record array#*
 ?x ----> 1
 ?x ----> 6
 ?x ----> 1
@@ -89,7 +89,7 @@ d
 f
 b
 every 1 to 10 do write(?"abcdef") ----> none
-x := array(1,2,3,4,5,6,7) ----> record array#*(7)
+x := array(1,2,3,4,5,6,7) ----> record array#*
 3
 6
 7
@@ -184,7 +184,7 @@ b
 3
 4
 every write(!([1,"ab",[1,2,3],34][1 to 4])) ----> none
-x := array(1,2,3,4,5) ----> record array#*(7)
+x := array(1,2,3,4,5) ----> record array#*
 1
 2
 3
