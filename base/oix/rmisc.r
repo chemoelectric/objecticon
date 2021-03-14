@@ -467,7 +467,9 @@ static int cset_do_range(int from, int to)
 
 static void kywdout(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 {
-   tended struct descrip tdp;
+   struct descrip tdp;
+   /* Although getvimage() generally allocates, it doesn't for keyword
+    * variables; it just produces literal strings. */
    getvimage(dp, &tdp);
    putstr(f, &tdp);
    if (!noimage) {
@@ -478,8 +480,9 @@ static void kywdout(FILE *f, dptr dp, int noimage, word stringlimit, word listli
 
 /*
  * outimage - print image of *dp on file f.  If noimage is nonzero,
- * fields of records will not be imaged.  This function should not
- * perform any allocations.
+ * fields of records will not be imaged.  This function does not
+ * perform any allocations, so dp doesn't need to point to tended
+ * data.
  */
 
 void outimage(FILE *f, dptr dp, int noimage)
@@ -494,9 +497,8 @@ void outimage(FILE *f, dptr dp, int noimage)
 void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
    {
    word i, j;
-   char *s;
-   char *csn;
-   tended struct descrip tdp;
+   char *s, *csn;
+   struct descrip tmp;
    char cbuf[CHAR_CVT_LEN];
 
    if (stringlimit <= 0) stringlimit = MaxWord;
@@ -545,7 +547,6 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          fprintf(f, "&yes");
 
       integer:
-
          if (IsLrgint(*dp))
             bigprint(f, dp);
          else
@@ -658,11 +659,11 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
      methp: {
              fprintf(f, "methp#" UWordFmt "(", MethpBlk(*dp).id);
-             MakeDesc(D_Object, MethpBlk(*dp).object, &tdp);
-             outimage1(f, &tdp, noimage, stringlimit, listlimit);
+             MakeDesc(D_Object, MethpBlk(*dp).object, &tmp);
+             outimage1(f, &tmp, noimage, stringlimit, listlimit);
              putc(',', f);
-             MakeDesc(D_Proc, MethpBlk(*dp).proc, &tdp);
-             outimage1(f, &tdp, noimage, stringlimit, listlimit);
+             MakeDesc(D_Proc, MethpBlk(*dp).proc, &tmp);
+             outimage1(f, &tmp, noimage, stringlimit, listlimit);
              putc(')', f);
      }
 
@@ -683,8 +684,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                      if (i > 0)
                          putc(',', f);
                      fprintf(f, "%.*s=", StrF(*name));
-                     tdp = ObjectBlk(*dp).fields[i];
-                     outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+                     tmp = ObjectBlk(*dp).fields[i];
+                     outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
                  }
                  putc(')', f);
              }
@@ -692,12 +693,12 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
      weakref: {
              fprintf(f, "weakref#" UWordFmt "", WeakrefBlk(*dp).id);
-             tdp = WeakrefBlk(*dp).val;
-             if (is:null(tdp))
+             tmp = WeakrefBlk(*dp).val;
+             if (is:null(tmp))
                  fprintf(f, "()");
              else {
                  putc('(', f);
-                 outimage1(f, &tdp, noimage, stringlimit, listlimit);
+                 outimage1(f, &tmp, noimage, stringlimit, listlimit);
                  putc(')', f);
              }
      }
@@ -719,8 +720,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                if (i > 0)
                    putc(',', f);
                fprintf(f, "%.*s=", StrF(*name));
-               tdp = RecordBlk(*dp).fields[i];
-               outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+               tmp = RecordBlk(*dp).fields[i];
+               outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
             }
             putc(')', f);
             }
@@ -731,7 +732,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          }
 
       tvsubs: {
-         tended struct descrip sv;
+         struct descrip sv;
          /*
           * Produce "v[i+:j] = value" where v is the image of the variable
           *  containing the substring, i is starting position of the substring
@@ -753,13 +754,13 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
               * oref.r), and only dereferencing a tvsubs does an
               * allocation.
               */
-             deref(&sv, &tdp);
-             type_case tdp of {
+             deref(&sv, &tmp);
+             type_case tmp of {
                ucs: {
                  struct descrip utf8_subs;
-                 if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > UcsBlk(tdp).length)
+                 if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > UcsBlk(tmp).length)
                      return;
-                 utf8_substr(&UcsBlk(tdp),
+                 utf8_substr(&UcsBlk(tmp),
                              TvsubsBlk(*dp).sspos,
                              TvsubsBlk(*dp).sslen,
                              &utf8_subs);
@@ -778,10 +779,10 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  putc('"', f);
              }
              string: {
-                 tended struct descrip q;
-                 if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > StrLen(tdp))
+                 struct descrip q;
+                 if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > StrLen(tmp))
                      return;
-                 MakeStr(StrLoc(tdp) + TvsubsBlk(*dp).sspos - 1, TvsubsBlk(*dp).sslen, &q);
+                 MakeStr(StrLoc(tmp) + TvsubsBlk(*dp).sspos - 1, TvsubsBlk(*dp).sslen, &q);
                  fprintf(f, " = ");
                  outimage1(f, &q, noimage, stringlimit, listlimit);
              }
@@ -794,11 +795,11 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
           * produce "t[s]" where t is the image of the table containing
           *  the element and s is the image of the subscript.
           */
-         MakeDesc(D_Table, TvtblBlk(*dp).clink, &tdp);
-	 outimage1(f, &tdp, noimage, stringlimit, listlimit);
+         MakeDesc(D_Table, TvtblBlk(*dp).clink, &tmp);
+	 outimage1(f, &tmp, noimage, stringlimit, listlimit);
          putc('[', f);
-         tdp = TvtblBlk(*dp).tref;
-         outimage1(f, &tdp, noimage, stringlimit, listlimit);
+         tmp = TvtblBlk(*dp).tref;
+         outimage1(f, &tmp, noimage, stringlimit, listlimit);
          putc(']', f);
          }
 
@@ -827,30 +828,36 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          dptr varptr = OffsetVarLoc(*dp);
          switch (BlkType(bp)) {
              case T_Telem: { 		/* table */
-                 /* Find and print the element's table block */
-                 do bp = bp->telem.clink;
-                 while(BlkType(bp) == T_Telem);
-                 MakeDesc(D_Table, bp, &tdp);
-                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+                 tmp = block_to_descriptor(bp);
+                 outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
+                 if (orphaned_telem(&tmp, bp))
+                     fprintf(f, "(Orphaned block)");
                  /* Print the element key */
                  putc('[', f);
-                 tdp = TelemBlk(*dp).tref;
-                 outimage1(f, &tdp, noimage, stringlimit, listlimit);
+                 tmp = TelemBlk(*dp).tref;
+                 outimage1(f, &tmp, noimage, stringlimit, listlimit);
                  putc(']', f);
                  break;
              }
              case T_Lelem: { 		/* list */
-                 /* Find and print the list block and the index */
-                 i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
-                 if (i < 1)
-                     i += bp->lelem.nslots;
-                 while (BlkType(bp->lelem.listprev) == T_Lelem) {
-                     bp = bp->lelem.listprev;
-                     i += bp->lelem.nused;
+                 tmp = block_to_descriptor(bp);
+                 outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
+                 if (orphaned_lelem(&tmp, bp)) {
+                     fprintf(f, "[Orphaned slot]");
+                 } else {
+                     i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+                     if (i < 1)
+                         i += bp->lelem.nslots;
+                     if (i > bp->lelem.nused) {
+                         fprintf(f, "[Unused slot]");
+                     } else {
+                         while (BlkType(bp->lelem.listprev) == T_Lelem) {
+                             bp = bp->lelem.listprev;
+                             i += bp->lelem.nused;
+                         }
+                         fprintf(f,"[" WordFmt "]", i);
+                     }
                  }
-                 MakeDesc(D_List, bp->lelem.listprev, &tdp);
-                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f,"[" WordFmt "]", i);
                  break;
              }
              case T_Object: { 		/* object */
@@ -858,8 +865,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  dptr fname;
                  i = varptr - ObjectBlk(*dp).fields;
                  fname =  c->program->Fnames[c->fields[i]->fnum];
-                 MakeDesc(D_Object, BlkLoc(*dp), &tdp);
-                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+                 MakeDesc(D_Object, BlkLoc(*dp), &tmp);
+                 outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
                  fprintf(f," . %.*s", StrF(*fname));
                  break;
              }
@@ -868,8 +875,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  dptr fname;
                  i = varptr - RecordBlk(*dp).fields;
                  fname = c->program->Fnames[c->fnums[i]];
-                 MakeDesc(D_Record, BlkLoc(*dp), &tdp);
-                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+                 MakeDesc(D_Record, BlkLoc(*dp), &tmp);
+                 outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
                  fprintf(f," . %.*s", StrF(*fname));
                  break;
              }
@@ -879,8 +886,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          }
          if (!noimage) {
              fprintf(f, " = ");
-             tdp = *OffsetVarLoc(*dp);
-             outimage1(f, &tdp, noimage, stringlimit, listlimit);
+             tmp = *OffsetVarLoc(*dp);
+             outimage1(f, &tmp, noimage, stringlimit, listlimit);
          }
       }
 
@@ -915,8 +922,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
          if (!noimage) {
              fprintf(f, " = ");
-             tdp = *VarLoc(*dp);
-             outimage1(f, &tdp, noimage, stringlimit, listlimit);
+             tmp = *VarLoc(*dp);
+             outimage1(f, &tmp, noimage, stringlimit, listlimit);
              putc(')', f);
          }
      }
@@ -932,15 +939,15 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
 
 /*
- * listimage - print an image of a list.
+ * listimage - print an image of a list.  This does no allocation.
  */
 
 static void listimage(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 {
    word size;
-   tended struct b_list *lp;
-   tended struct descrip tdp;
-   tended struct b_lelem *le;
+   struct b_list *lp;
+   struct descrip tmp;
+   struct b_lelem *le;
    struct lgstate state;
 
    lp = &ListBlk(*dp);
@@ -972,16 +979,16 @@ static void listimage(FILE *f, dptr dp, int noimage, word stringlimit, word list
                break;
            if (state.listindex > 1)
                putc(',', f);
-           tdp = le->lslots[state.result];
-           outimage1(f, &tdp, noimage+1, stringlimit, listlimit);
+           tmp = le->lslots[state.result];
+           outimage1(f, &tmp, noimage+1, stringlimit, listlimit);
        }
        if (size > listlimit) {
            /* Output the last listlimit/2 elements */
            fprintf(f, ",...");
            for (le = lginit(lp, size - listlimit / 2 + 1, &state); le; le = lgnext(lp, &state, le)) {
                putc(',', f);
-               tdp = le->lslots[state.result];
-               outimage1(f, &tdp, noimage+1, stringlimit, listlimit);
+               tmp = le->lslots[state.result];
+               outimage1(f, &tmp, noimage+1, stringlimit, listlimit);
            }
        }
 
@@ -1547,35 +1554,32 @@ struct progstate *find_procedure_static(dptr s)
     return 0;
 }
 
-/*
- * keyref() -- print name of subscripted table.  dp1 is either a tvtbl
- * or a telem.
- */
-static void keyref(dptr dp1, dptr dp2)
+/* Does the given list element block actually appear in its parent
+ * list's chain of element blocks? */
+int orphaned_lelem(dptr l, union block *le)
 {
-    tended struct descrip tr, td;
-    union block *bp;  /* doesn't need to be tended */
-    char sbuf[64];
-    int len;
-
-    if (is:tvtbl(*dp1)) {
-        tr = TvtblBlk(*dp1).tref;
-        bp = TvtblBlk(*dp1).clink;
-    } else {
-        tr = TelemBlk(*dp1).tref;
-        bp = BlkLoc(*dp1);
-        do bp = bp->telem.clink;
-        while (BlkType(bp) == T_Telem);
+    union block *x;
+    x = ListBlk(*l).listhead;
+    while (BlkType(x) == T_Lelem) {
+        if (x == le)
+            return 0;
+        x = x->lelem.listnext;
     }
-    sprintf(sbuf, "table#" UWordFmt "[", bp->table.id);
+    return 1;
+}
 
-    getimage(&tr, &td);
-
-    len = strlen(sbuf) + StrLen(td) + 1;
-    MakeStrMemProtect(reserve(Strings, len), len, dp2);
-    alcstr(sbuf, strlen(sbuf));
-    alcstr(StrLoc(td), StrLen(td));
-    alcstr("]", 1);
+/* Does the given table element block actually appear in its parent
+ * table's hash chain? */
+int orphaned_telem(dptr t, union block *te)
+{
+    union block *x;
+    x = *hchain(BlkLoc(*t), te->telem.hashnum);
+    while (BlkType(x) == T_Telem) {
+        if (x == te)
+            return 0;
+        x = x->telem.clink;
+    }
+    return 1;
 }
 
 /*
@@ -1586,10 +1590,10 @@ int getvimage(dptr dp1, dptr dp2)
     char sbuf[100];			/* buffer; might be too small */
     word i, len;
     struct progstate *prog;
+    tended struct descrip tdp1, tdp2;
 
     type_case *dp1 of {
       tvsubs: {
-            tended struct descrip tdp1, tdp2;
             if (TvsubsBlk(*dp1).sslen == 1)
                 sprintf(sbuf, "[" WordFmt "]", TvsubsBlk(*dp1).sspos);
             else
@@ -1603,7 +1607,16 @@ int getvimage(dptr dp1, dptr dp2)
         }
 
       tvtbl: {
-            keyref(dp1, dp2);
+            union block *bp;  /* doesn't need to be tended */
+            tdp1 = TvtblBlk(*dp1).tref;
+            bp = TvtblBlk(*dp1).clink;
+            sprintf(sbuf, "table#" UWordFmt "[", bp->table.id);
+            getimage(&tdp1, &tdp2);
+            len = strlen(sbuf) + StrLen(tdp2) + 1;
+            MakeStrMemProtect(reserve(Strings, len), len, dp2);
+            alcstr(sbuf, strlen(sbuf));
+            alcstr(StrLoc(tdp2), StrLen(tdp2));
+            alcstr("]", 1);
         }
 
       kywdint: {
@@ -1710,22 +1723,35 @@ int getvimage(dptr dp1, dptr dp2)
             /*
              * Must be an element of a structure.
              */
-            union block *bp = BlkLoc(*dp1);
+            union block *bp = BlkLoc(*dp1);    /* doesn't need to be tended */
             dptr varptr = OffsetVarLoc(*dp1);
             switch (BlkType(bp)) {
-                case T_Lelem: 		/* list */
-                    i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
-                    if (i < 1)
-                        i += bp->lelem.nslots;
-                    while (BlkType(bp->lelem.listprev) == T_Lelem) {
-                        bp = bp->lelem.listprev;
-                        i += bp->lelem.nused;
+                case T_Lelem: {		/* list */
+                    struct descrip par;
+                    par = block_to_descriptor(bp);
+                    if (orphaned_lelem(&par, bp)) {
+                        sprintf(sbuf,"list#" UWordFmt "[Orphaned slot]",
+                                ListBlk(par).id);
+                    } else {
+                        i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+                        if (i < 1)
+                            i += bp->lelem.nslots;
+                        if (i > bp->lelem.nused) {
+                            sprintf(sbuf,"list#" UWordFmt "[Unused slot]",
+                                    ListBlk(par).id);
+                        } else {
+                            while (BlkType(bp->lelem.listprev) == T_Lelem) {
+                                bp = bp->lelem.listprev;
+                                i += bp->lelem.nused;
+                            }
+                            sprintf(sbuf,"list#" UWordFmt "[" WordFmt "]",
+                                    ListBlk(par).id, i);
+                        }
                     }
-                    sprintf(sbuf,"list#" UWordFmt "[" WordFmt "]",
-                            bp->lelem.listprev->list.id, i);
                     i = strlen(sbuf);
                     MakeStrMemProtect(alcstr(sbuf,i), i, dp2);
                     break;
+                }
                 case T_Record: { 		/* record */
                     struct b_constructor *c = RecordBlk(*dp1).constructor;
                     dptr fname;
@@ -1756,9 +1782,22 @@ int getvimage(dptr dp1, dptr dp2)
                     alcstr(StrLoc(*fname), StrLen(*fname));
                     break;
                 }
-                case T_Telem: 		/* table */
-                    keyref(dp1, dp2);
+                case T_Telem: {		/* table */
+                    struct descrip par;
+                    par = block_to_descriptor(bp);
+                    if (orphaned_telem(&par, bp))
+                        sprintf(sbuf, "table#" UWordFmt "(Orphaned block)[", TableBlk(par).id);
+                    else
+                        sprintf(sbuf, "table#" UWordFmt "[", TableBlk(par).id);
+                    tdp1 = TelemBlk(*dp1).tref;
+                    getimage(&tdp1, &tdp2);
+                    len = strlen(sbuf) + StrLen(tdp2) + 1;
+                    MakeStrMemProtect(reserve(Strings, len), len, dp2);
+                    alcstr(sbuf, strlen(sbuf));
+                    alcstr(StrLoc(tdp2), StrLen(tdp2));
+                    alcstr("]", 1);
                     break;
+                }
                 default:		/* none of the above */
                     LitStr("(struct)", dp2);
                     return Failed;
