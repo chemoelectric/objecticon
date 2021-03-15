@@ -2331,7 +2331,7 @@ $endif
          dest := d.get_result_path() | fail
       } else
          dest := FilePath(dest).canonical()
-      s := dest.ucs() | return info_msg(u"Log file not UTF-8")
+      s := dest.ucs() | return info_msg("Log file not UTF-8")
       if log := open(s, "w") then {
          parent_dialog.last_log_file := log_file := dest
          info_msg("Logging to file " || s)

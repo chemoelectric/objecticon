@@ -41,10 +41,12 @@ class FavouriteDirectoriesDialog(Dialog)
    public
       okay
    public static const
-      EDIT_ME
+      EDIT_ME,
+      PROG
 
    private static init()
       EDIT_ME := u"Edit me"
+      PROG := ucs(Files.get_program_name()) | u"Unknown"
    end
 
    public static get_favourites_file()
@@ -57,10 +59,9 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    public static gen_directories()
-      local app, e
-      app := Files.get_program_name()
+      local e
       every e := !get_pair_list() do {
-         if /e[1] | (e[1] == app) then
+         if /e[1] | (e[1] == PROG) then
             suspend EDIT_ME ~== e[2]
       }
    end
@@ -149,7 +150,7 @@ class FavouriteDirectoriesDialog(Dialog)
 
    private on_add_button(ev)
       etc.
-         insert_lines([ [Files.get_program_name(), EDIT_ME] ], *etc.contents + 1).
+         insert_lines([ [PROG, EDIT_ME] ], *etc.contents + 1).
          set_selections([*etc.contents]).
          ensure_line_visible(*etc.contents)
       parent_dialog.set_focus(directory_field)
@@ -175,7 +176,7 @@ class FavouriteDirectoriesDialog(Dialog)
 
    private on_application_check_box(ev)
       if application_check_box.is_unchecked() & *application_field.get_contents() = 0 then
-         application_field.set_contents(Files.get_program_name())
+         application_field.set_contents(PROG)
       update_grey()
       msg()
    end

@@ -249,7 +249,7 @@ function errorclear(ce)
       }
 end
 
-function lang_Prog_get_variable_name(underef v)
+function vimage(underef v)
    /*
     * v must be a variable
     */
@@ -258,8 +258,17 @@ function lang_Prog_get_variable_name(underef v)
 
    body {
       tended struct descrip result;
-      getname(&v, &result);
+      getvimage(&v, &result);
       return result;
+   }
+end
+
+function variable(underef v)
+   body {
+      if (is:variable(v))
+          return v;
+      else
+          fail;
    }
 end
 

@@ -1616,6 +1616,8 @@ function lang_Text_create_cset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
+     struct lgstate state;
+     tended struct b_lelem *le;
      word from, to;
      int i;
 
@@ -1623,34 +1625,27 @@ function lang_Text_create_cset(x[n])
      i = 0;
      while (i < n) {
          if (is:list(x[i])) {
-             union block *pb = BlkLoc(x[i]);
-             int j, k;
              /*
-              * Chain through each list block and add the ranges
+              * Chain through each element and add the ranges
               */
              from = -1;
-             for (pb = pb->list.listhead;
-                  pb && (BlkType(pb) == T_Lelem);
-                  pb = pb->lelem.listnext) {
-                 for (j = 0; j < pb->lelem.nused; j++) {
-                     k = pb->lelem.first + j;
-                     if (k >= pb->lelem.nslots)
-                         k -= pb->lelem.nslots;
-                     if (!cnv:C_integer(pb->lelem.lslots[k], to)) {
-                         free_rangeset(rs);
-                         runerr(101, pb->lelem.lslots[k]);
-                     }
-                     if (to < 0 || to > MAX_CODE_POINT) {
-                         whyf("Invalid codepoint: " WordFmt, to);
-                         free_rangeset(rs);
-                         fail;
-                     }
-                     if (from == -1)
-                         from = to;
-                     else {
-                         add_range(rs, from, to);
-                         from = -1;
-                     }
+             for (le = lgfirst(&ListBlk(x[i]), &state); le;
+                  le = lgnext(&ListBlk(x[i]), &state, le))
+             {
+                 if (!cnv:C_integer(le->lslots[state.result], to)) {
+                     free_rangeset(rs);
+                     runerr(101, le->lslots[state.result]);
+                 }
+                 if (to < 0 || to > MAX_CODE_POINT) {
+                     whyf("Invalid codepoint: " WordFmt, to);
+                     free_rangeset(rs);
+                     fail;
+                 }
+                 if (from == -1)
+                     from = to;
+                 else {
+                     add_range(rs, from, to);
+                     from = -1;
                  }
              }
              if (from != -1)

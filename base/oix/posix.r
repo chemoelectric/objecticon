@@ -124,26 +124,24 @@ end
 static char ** list2stringptrs(dptr l)
 {
     char *data, *p = 0, **a;
-    tended union block *pb;
-    int i, j, k, total;
+    tended struct b_lelem *le;
+    tended struct descrip t;
+    struct lgstate state;
+    word i, total;
 
     /*
      * Chain through each list block, making all elements strings
      * and counting the string array size required (total).
      */
     total = 0;
-    for (pb = ListBlk(*l).listhead;
-         pb && (BlkType(pb) == T_Lelem);
-         pb = pb->lelem.listnext) {
-        for (j = 0; j < pb->lelem.nused; j++) {
-            k = pb->lelem.first + j;
-            if (k >= pb->lelem.nslots)
-                k -= pb->lelem.nslots;
-            if (!cnv:string(pb->lelem.lslots[k], pb->lelem.lslots[k])) {
-                ReturnErrVal(103, pb->lelem.lslots[k], 0);
-            }
-            total += StrLen(pb->lelem.lslots[k]) + 1;
-        }
+    for (le = lgfirst(&ListBlk(*l), &state); le;
+         le = lgnext(&ListBlk(*l), &state, le))
+    {
+        t = le->lslots[state.result];
+        if (!cnv:string(t, t))
+            ReturnErrVal(103, t, 0);
+        le->lslots[state.result] = t;
+        total += StrLen(t) + 1;
     }
 
     /*
@@ -156,18 +154,14 @@ static char ** list2stringptrs(dptr l)
         p = data;
     }
     i = 0;
-    for (pb = ListBlk(*l).listhead;
-         pb && (BlkType(pb) == T_Lelem);
-         pb = pb->lelem.listnext) {
-        for (j = 0; j < pb->lelem.nused; j++) {
-            k = pb->lelem.first + j;
-            if (k >= pb->lelem.nslots)
-                k -= pb->lelem.nslots;
-          a[i++] = p;
-          memcpy(p, StrLoc(pb->lelem.lslots[k]), StrLen(pb->lelem.lslots[k]));
-          p += StrLen(pb->lelem.lslots[k]);
-          *p++ = 0;
-        }
+    for (le = lgfirst(&ListBlk(*l), &state); le;
+         le = lgnext(&ListBlk(*l), &state, le))
+    {
+        t = le->lslots[state.result];
+        a[i++] = p;
+        memcpy(p, StrLoc(t), StrLen(t));
+        p += StrLen(t);
+        *p++ = 0;
     }
     if (i != ListBlk(*l).size)
         syserr("Inconsistent list/element size in list2stringptrs");

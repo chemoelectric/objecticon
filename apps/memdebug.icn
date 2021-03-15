@@ -44,7 +44,7 @@ procedure do_help()
       write("dump                Show all globals, statics and structures of the").
       write("                    current program").
       write("globals             Show the global variables of the current program").
-      write("nglobals            Show the named globals of the current program.").
+      write("nglobals            Show the named globals of the current program").
       write("prog x              Set the current program, initially set to the").
       write("                    monitored program.  x should be an &main co-expression").
       write("progs               List all programs and show the current program").
@@ -136,7 +136,7 @@ procedure do_refs(a)
 end
 
 procedure do_dump()
-   MemDebug.dump() | return err_msg(&why)
+   MemDebug.dump()
 end
 
 procedure do_statics(a)
@@ -146,11 +146,11 @@ procedure do_statics(a)
 end
 
 procedure do_globals()
-   MemDebug.globals() | return err_msg(&why)
+   MemDebug.globals()
 end
 
 procedure do_nglobals()
-   MemDebug.nglobals() | return err_msg(&why)
+   MemDebug.nglobals()
 end
 
 procedure do_prog(a)

@@ -21,6 +21,7 @@
  */
 
 static void check_unused_imports(void);
+static void note_underefs(void);
 
 FILE *infile;                           /* input file (.u) */
 FILE *outfile;                          /* interpreter code output file */
@@ -123,6 +124,7 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     sort_global_table();
     build_fieldtable();
     resolve_native_methods();
+    note_underefs();
 
     if (verbose > 3)
         dumpstate();
@@ -286,6 +288,22 @@ void setexe(char *fname)
 /*
  * End of operating-system specific code.
  */
+}
+
+
+/*
+ * Set the underef flag of builtin functions using underef parameters.
+ */
+static void note_underefs()
+{
+    char *names[] = { "coact", "echo", "forward", "back", "variable", "vimage" };
+    int i;
+    struct gentry *gl;
+    for (i = 0; i < ElemCount(names); ++i) {
+        gl = glocate(intern(names[i]));
+        if (gl)
+            gl->builtin->underef = 1;
+    }
 }
 
 static void check_unused_imports()

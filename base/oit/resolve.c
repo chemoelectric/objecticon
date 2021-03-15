@@ -11,8 +11,7 @@ struct lclass_ref_list
 };
 
 static void merge(struct lclass *cl, struct lclass *super);
-static void check_override1(struct lclass *cl);
-static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f);
+static void check_overrides(struct lclass *cl);
 static void add_lclass_ref(struct lclass_ref_list *l, struct lclass *c);
 static int is_empty(struct lclass_ref_list **arg);
 static void check_head_del(struct lclass_ref_list *l, struct lclass *v);
@@ -27,32 +26,14 @@ static struct lclass_ref_list *linearize_c3(struct lclass *base, struct lclass *
  */
 static struct gentry *gb_locate(char *name)
 {
-    static char *names[4];
-    static int inited;
     struct gentry *gl = glocate(name);
-    int i, bn;
-
-    if (!inited) {
-        /* Names of functions which use underef parameter(s) */
-        names[0] = intern("coact");
-        names[1] = intern("echo");
-        names[2] = intern("forward");
-        names[3] = intern("back");
-        inited = 1;
-    }
-
+    int bn;
     if (!gl && (bn = blookup(name)) >= 0) {	
         struct loc bl = {"Builtin", 0};
         /* Builtin function, add to global table so we see it next time */
         gl = putglobal(name, F_Builtin | F_Proc, 0, &bl);
         gl->builtin = Alloc(struct lbuiltin);
         gl->builtin->builtin_id = bn;
-        for (i = 0; i < ElemCount(names); ++i) {
-            if (name == names[i]) {
-                gl->builtin->underef = 1;
-                break;
-            }
-        }
     }
     return gl;
 }
@@ -357,33 +338,17 @@ void resolve_supers()
     }
 }
 
-static void check_override1(struct lclass *cl)
+static void check_overrides(struct lclass *cl)
 {
-    struct lclass_field *f;
-    for (f = cl->fields; f; f = f->next) {
-        if (f->flag & M_Override && !f->overrode)
-            lfatal(f->class->global->defined,
-                   &f->pos,
+    struct lclass_field_ref *fr;
+    for (fr = cl->implemented_class_fields; fr; fr = fr->next) {
+        if (fr->field->flag & M_Override && !fr->overrode) {
+            lfatal(fr->field->class->global->defined,
+                   &fr->field->pos,
                    "Method %s in class %s marked override, but didn't override another method",
-                   f->name,
-                   f->class->global->name);
-    }
-}
-
-static void check_override2(struct lclass *cl, struct lclass_field *fr, struct lclass_field *f)
-{
-    if (fr->flag & M_Override)
-        fr->overrode = 1;
-    else {
-        lfatal2(fr->class->global->defined,
-                &fr->pos, &f->pos, ") without setting override modifier",
-                "Method %s in class %s overrides a method in class %s (",
-                f->name,
-                fr->class->global->name,
-                f->class->global->name
-            );
-        if (fr->class != cl)
-            print_see_also(cl);
+                   fr->field->name,
+                   fr->field->class->global->name);
+        }
     }
 }
 
@@ -496,7 +461,19 @@ static void merge(struct lclass *cl, struct lclass *super)
             if (((fr->field->flag & (M_Method | M_Static)) == M_Method) &&
                 ((f->flag & (M_Method | M_Static)) == M_Method)) 
             {
-                check_override2(cl, fr->field, f);
+                if (fr->field->flag & M_Override) {
+                    fr->overrode = 1;
+                } else {
+                    lfatal2(fr->field->class->global->defined,
+                            &fr->field->pos, &f->pos, ") without setting override modifier",
+                            "Method %s in class %s overrides a method in class %s (",
+                            f->name,
+                            fr->field->class->global->name,
+                            f->class->global->name
+                        );
+                    if (fr->field->class != cl)
+                        print_see_also(cl);
+                }
             }
         } else {
             /* Not found, so add it */
@@ -544,7 +521,7 @@ void compute_inheritance()
             linearize_c3(cl, cl);
             mb_clear(&c3_mb);
         }
-        check_override1(cl);
+        check_overrides(cl);
         if (cl->n_implemented_class_fields + cl->n_implemented_instance_fields > 0xffff)
             lfatal(cl->global->defined,
                    &cl->global->pos,

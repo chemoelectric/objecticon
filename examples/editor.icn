@@ -42,12 +42,16 @@ class Editor(Dialog)
       dispose()
    end
 
+   private static print_name(fname)
+      return ucs(FilePath(fname).get(-1)) | "(Filename not UTF-8)"
+   end
+
    public load(fname)
       local s
       if Files.access(fname) then {
          if s := Files.file_to_string(fname) then {
             if s := ucs(s) then {
-               msg("Loaded " || FilePath(fname).get(-1) || " (" || *s || " bytes)")
+               msg("Loaded " || print_name(fname) || " (" || *s || " bytes)")
                text.set_contents_str(s)
                if is_live() then
                   text.move_cursor(1, 1)
@@ -72,7 +76,7 @@ class Editor(Dialog)
       }
       s := text.get_contents_str()
       if Files.string_to_file(fname, s) then {
-         msg("Saved " || FilePath(fname).get(-1) || " (" || *s || " bytes)")
+         msg("Saved " || print_name(fname) || " (" || *s || " bytes)")
          text.undo_manager.clear()
          update_grey()
          curr_file_name := fname

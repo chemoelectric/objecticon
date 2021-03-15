@@ -238,6 +238,10 @@ class Main(Dialog)
       win.set_min_size(win.get_width(), win.get_height())
    end
 
+   private want_ucs_filename(s)
+      return ucs(s) | return alert_error(self, "Invalid (non-UTF-8) filename")
+   end
+
    #
    # Special custom show to allow a popup during init
    #         
@@ -246,7 +250,7 @@ class Main(Dialog)
       self.args := a
       show()
       if *self.args > 0  then {
-         s := ucs(self.args[1]) | return alert_error(self, "Invalid (non-UTF-8) filename")
+         s := want_ucs_filename(self.args[1]) | fail
          if Files.access(s, Access.R_OK) then {
             c := load_canvas(s) | fail
             c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
@@ -274,7 +278,7 @@ class Main(Dialog)
    #         
    public test(fname)
       local s, c, code
-      s := ucs(fname) | return alert_error(self, "Invalid (non-UTF-8) filename")
+      s := want_ucs_filename(fname) | fail
       Files.access(s, Access.R_OK) | return alert_error(self, "Couldn't open " || s)
       c := load_canvas(s) | fail
       code := c.gen_code()
@@ -286,7 +290,7 @@ class Main(Dialog)
    #         
    public load_and_save(fname)
       local s, c, code
-      s := ucs(fname) | return alert_error(self, "Invalid (non-UTF-8) filename")
+      s := want_ucs_filename(fname) | fail
       Files.access(s, Access.R_OK) | return alert_error(self, "Couldn't open " || s)
       c := load_canvas(s) | fail
       code := c.gen_code()
@@ -642,7 +646,7 @@ class Main(Dialog)
 
       fd.show_modal(self)
       Ivib.last_icn_dir := fd.get_directory()
-      s := fd.get_result() | fail
+      s := want_ucs_filename(fd.get_result()) | fail
 
       c := self.canvas.gen_code()
 
@@ -724,7 +728,7 @@ class Main(Dialog)
       fd.set_directory(Ivib.last_icn_dir)
       fd.show_modal(self)
       Ivib.last_icn_dir := fd.get_directory()
-      s := fd.get_result() | fail
+      s := want_ucs_filename(fd.get_result()) | fail
       c := load_canvas(s) | fail
       self.clear_undo()
       self.clear_redo()

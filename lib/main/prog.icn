@@ -162,17 +162,6 @@ final abstract class Prog()
    public static native get_variable(s, P)
 
    #
-   # Given a variable, return its name.  If x is an identifier or a
-   # keyword that is a variable, the name of the identifier or keyword
-   # is produced. If x is a record field reference, the record name
-   # and field name are produced with a separating period. If x is a
-   # string, the name of the string and the subscript range are
-   # shown. If x is a subscripted list or table, the type name
-   # followed by the subscripting expression is produced.
-   #
-   public static native get_variable_name(v)
-
-   #
    # Get the given program's event mask
    #
    public static native get_event_mask(P)

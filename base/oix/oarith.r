@@ -147,9 +147,9 @@ operator + number(x)
           return x;
           }
       }
-   else if cnv:C_double(x) then {
+   else if cnv:real(x) then {
        body {
-          return C_double x;
+          return x;
           }
       }
    else
