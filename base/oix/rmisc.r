@@ -863,7 +863,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  fname =  c->program->Fnames[c->fields[i]->fnum];
                  MakeDesc(D_Object, BlkLoc(*dp), &tmp);
                  outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f," . %.*s", StrF(*fname));
+                 fprintf(f,".%.*s", StrF(*fname));
                  break;
              }
              case T_Record: { 		/* record */
@@ -873,7 +873,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  fname = c->program->Fnames[c->fnums[i]];
                  MakeDesc(D_Record, BlkLoc(*dp), &tmp);
                  outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f," . %.*s", StrF(*fname));
+                 fprintf(f,".%.*s", StrF(*fname));
                  break;
              }
              default: {		/* none of the above */
@@ -892,8 +892,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          dptr vp;
          vp = VarLoc(*dp);
          if ((prog = find_global(vp))) {
-             if (noimage <= 0)
-                 fprintf(f, "(global variable ");
+             fprintf(f, "global ");
              putstr(f, prog->Gnames[vp - prog->Globals]); 		/* global */
          }
          else if ((prog = find_class_static(vp))) {
@@ -903,26 +902,20 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              struct class_field *cf = find_class_field_for_dptr(vp, prog);
              struct b_class *c = cf->defining_class;
              dptr fname = c->program->Fnames[cf->fnum];
-             if (noimage <= 0)
-                 fprintf(f, "(variable ");
-             fprintf(f, "class %.*s . %.*s", StrF(*c->name), StrF(*fname));
+             fprintf(f, "class %.*s.%.*s", StrF(*c->name), StrF(*fname));
          }
          else if ((prog = find_procedure_static(vp))) {
-             if (noimage <= 0)
-                 fprintf(f, "(static variable ");
+             fprintf(f, "static ");
              putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
          }
          else {
              struct p_frame *uf;
              uf = get_current_user_frame();
              if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-                 if (noimage <= 0)
-                     fprintf(f, "(local variable ");
+                 fprintf(f, "local ");
                  putstr(f, uf->proc->lnames[vp - uf->fvars->desc]);          /* argument/local */
              }
              else {
-                 if (noimage <= 0)
-                     fprintf(f, "(variable ");
                  fprintf(f, "(temp)");
              }
          }
@@ -931,7 +924,6 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              fprintf(f, " = ");
              tmp = *VarLoc(*dp);
              outimage1(f, &tmp, noimage, stringlimit, listlimit);
-             putc(')', f);
          }
      }
 

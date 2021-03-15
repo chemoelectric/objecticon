@@ -33,9 +33,9 @@ tracer.icn   :   27  | tracer suspended 1
 tracer.icn   :    8  | tracer resumed
 tracer.icn   :   27  | tracer suspended 2
 tracer.icn   :    8  | tracer resumed
-tracer.icn   :   27  | tracer suspended (static variable j = 3)
+tracer.icn   :   27  | tracer suspended static j = 3
 tracer.icn   :    8  | tracer resumed
-tracer.icn   :   27  | tracer suspended (global variable s = "abcdef")
+tracer.icn   :   27  | tracer suspended global s = "abcdef"
 tracer.icn   :    8  | tracer resumed
 tracer.icn   :   27  | tracer suspended &subject = "123456"
 tracer.icn   :    8  | tracer resumed
@@ -49,9 +49,9 @@ tracer.icn   :   27  | tracer suspended &subject[3] = "3"
 tracer.icn   :    8  | tracer resumed
 tracer.icn   :   27  | tracer suspended "4"
 tracer.icn   :    8  | tracer resumed
-tracer.icn   :   27  | tracer suspended s[3] = "c"
+tracer.icn   :   27  | tracer suspended global s[3] = "c"
 tracer.icn   :    8  | tracer resumed
-tracer.icn   :   27  | tracer suspended s[3+:2] = "cd"
+tracer.icn   :   27  | tracer suspended global s[3+:2] = "cd"
 tracer.icn   :    8  | tracer resumed
 tracer.icn   :   27  | tracer suspended "0"
 tracer.icn   :    8  | tracer resumed

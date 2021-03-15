@@ -151,27 +151,27 @@ tracing.icn  :  100  | p suspended table#1(1)[1]
 tracing.icn  :   13  | p resumed
 tracing.icn  :  100  | p suspended table#1(1)[100]
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended (variable class SomeClass . a_static = 102)
+tracing.icn  :  100  | p suspended class SomeClass.a_static = 102
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended object SomeClass#1 . x = 99
+tracing.icn  :  100  | p suspended object SomeClass#1.x = 99
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended object SomeClass#1 . y = 100
+tracing.icn  :  100  | p suspended object SomeClass#1.y = 100
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended object SomeClass#1 . z = 101
+tracing.icn  :  100  | p suspended object SomeClass#1.z = 101
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended record SomeRec#1 . one = 1
+tracing.icn  :  100  | p suspended record SomeRec#1.one = 1
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended record SomeRec#1 . two = 2
+tracing.icn  :  100  | p suspended record SomeRec#1.two = 2
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended record SomeRec#1 . three = 3
+tracing.icn  :  100  | p suspended record SomeRec#1.three = 3
 tracing.icn  :   13  | p resumed
 tracing.icn  :  100  | p suspended list#12(100)[2] = &null
 tracing.icn  :   13  | p resumed
 tracing.icn  :  100  | p suspended list#12(100)[10] = 199
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended s1[2+:3] = "he "
+tracing.icn  :  100  | p suspended global s1[2+:3] = "he "
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended s2[2+:4] = u"ver "
+tracing.icn  :  100  | p suspended global s2[2+:4] = u"ver "
 tracing.icn  :   13  | p resumed
 tracing.icn  :  103  | p failed
 tracing.icn  :   14  main failed
