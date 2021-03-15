@@ -22,3 +22,56 @@
 "global gname"
 "global gname[3+:4]"
 
+record Rec#1
+record Rec#1.b
+object Thing#1
+object Thing#1.b
+list#31(4)
+list#31(4)[3]
+table#2(1)
+table#2(1)["junk1"]
+table#2(1)["something"]
+class Thing
+class Thing.x
+local x1
+global g1
+static st
+local s[3+:5]
+record Rec#1.d[3+:2]
+table#3(1)["junk2"]
+list#32(1001)[992]
+list#33(1000)[10]
+table#3(0)(Orphaned block)["junk2"]
+list#32(0)[Orphaned slot]
+list#33(0)[Unused slot]
+local x1
+static st
+global g1
+var.icn      :  175  | | main3; co-expression#1 : &null @ co-expression#5
+var.icn      :   19  | Echo; co-expression#5 returned record Rec#1.b = 2 to co-expression#1
+var.icn      :  176  | | main3; co-expression#1 : &null @ co-expression#7
+var.icn      :   19  | Echo; co-expression#7 returned object Thing#1.b = &null to co-expression#1
+var.icn      :  177  | | main3; co-expression#1 : &null @ co-expression#9
+var.icn      :   19  | Echo; co-expression#9 returned list#31(4)[3] = 3 to co-expression#1
+var.icn      :  178  | | main3; co-expression#1 : &null @ co-expression#11
+var.icn      :   19  | Echo; co-expression#11 returned table#2(1)["junk1"] = 99 to co-expression#1
+var.icn      :  179  | | main3; co-expression#1 : &null @ co-expression#13
+var.icn      :   19  | Echo; co-expression#13 returned table#2(1)["something"] to co-expression#1
+var.icn      :  180  | | main3; co-expression#1 : &null @ co-expression#15
+var.icn      :   19  | Echo; co-expression#15 returned class Thing.x = &null to co-expression#1
+var.icn      :  181  | | main3; co-expression#1 : &null @ co-expression#16
+var.icn      :  146  | main3; co-expression#16 returned local x1 = record Rec#1(a=1;b=2;c=3;d="The quick fox") to co-expression#1
+var.icn      :  182  | | main3; co-expression#1 : &null @ co-expression#17
+var.icn      :  147  | main3; co-expression#17 returned global g1 = &null to co-expression#1
+var.icn      :  183  | | main3; co-expression#1 : &null @ co-expression#18
+var.icn      :  148  | main3; co-expression#18 returned static st = &null to co-expression#1
+var.icn      :  184  | | main3; co-expression#1 : &null @ co-expression#19
+var.icn      :  149  | main3; co-expression#19 returned local s[3+:5] = "e qui" to co-expression#1
+var.icn      :  185  | | main3; co-expression#1 : &null @ co-expression#20
+var.icn      :  150  | main3; co-expression#20 returned record Rec#1.d[3+:2] = "e " to co-expression#1
+var.icn      :  186  | | main3; co-expression#1 : &null @ co-expression#22
+var.icn      :   19  | Echo; co-expression#22 returned table#3(0)(Orphaned block)["junk2"] = 199 to co-expression#1
+var.icn      :  187  | | main3; co-expression#1 : &null @ co-expression#24
+var.icn      :   19  | Echo; co-expression#24 returned list#32(0)[Orphaned slot] = 1991 to co-expression#1
+var.icn      :  188  | | main3; co-expression#1 : &null @ co-expression#26
+var.icn      :   19  | Echo; co-expression#26 returned list#33(0)[Unused slot] = &null to co-expression#1
