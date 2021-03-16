@@ -293,12 +293,12 @@ static void stk_add_orphaned_list_block_link(struct b_lelem *src, int dir, union
     stk.top++;
 }
 
-static void stk_add_orphaned_list_block_parent(struct b_lelem *src)
+static void stk_add_orphaned_list_block_parent(struct b_lelem *src, dptr par)
 {
     stk_ensure();
     stk.top->type = OrphanedListBlockParent;
     stk.top->u.orphaned_list_block_parent.src = src;
-    stk.top->dest = block_to_descriptor((union block *)src);
+    stk.top->dest = *par;
     stk.top++;
 }
 
@@ -337,12 +337,12 @@ static void stk_add_orphaned_table_block_link(struct b_telem *src)
     stk.top++;
 }
 
-static void stk_add_orphaned_table_block_parent(struct b_telem *src)
+static void stk_add_orphaned_table_block_parent(struct b_telem *src, dptr par)
 {
     stk_ensure();
     stk.top->type = OrphanedTableBlockParent;
     stk.top->u.orphaned_table_block_parent.src = src;
-    stk.top->dest = block_to_descriptor((union block *)src);
+    stk.top->dest = *par;
     stk.top++;
 }
 
@@ -1851,7 +1851,7 @@ static void traverse_element(struct stk_element e)
             stk_add_orphaned_list_block_link(le, 1, le->listnext);
         if (BlkType(le->listprev) == T_Lelem && orphaned_lelem(&par, le->listprev))
             stk_add_orphaned_list_block_link(le, -1, le->listprev);
-        stk_add_orphaned_list_block_parent(le);
+        stk_add_orphaned_list_block_parent(le, &par);
         return;
     }
 
@@ -1865,7 +1865,7 @@ static void traverse_element(struct stk_element e)
         /* Add the next block if present and orphaned too. */
         if (BlkType(te->clink) == T_Telem && orphaned_telem(&par, te->clink))
             stk_add_orphaned_table_block_link(te);
-        stk_add_orphaned_table_block_parent(te);
+        stk_add_orphaned_table_block_parent(te, &par);
         return;
     }
 
