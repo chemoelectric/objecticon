@@ -1601,23 +1601,23 @@ static void display(dptr dp)
     }
     if (d.dword == D_Telem) {
         struct b_telem *te;
-        struct descrip tmp;
+        struct descrip tmp, par;
         te = &TelemBlk(d);
+        par = block_to_descriptor((union block *)te);
         fprintf(out, "\tKey=");
         outimagex(&te->tref);
         fputc('\n', out);
         fprintf(out, "\tValue=");
         outimagex(&te->tval);
         fputc('\n', out);
-        if (BlkType(te->clink) == T_Telem) {
+        if (BlkType(te->clink) == T_Telem && orphaned_telem(&par, te->clink)) {
             MakeDesc(D_Telem, te->clink, &tmp);
             fputs("\tNext=", out);
             outimagex(&tmp);
             fputc('\n', out);
         }
         fputs("\tParent block=", out);
-        tmp = block_to_descriptor((union block *)te);
-        outimagex(&tmp);
+        outimagex(&par);
         fputc('\n', out);
         return;
     }
@@ -1857,11 +1857,13 @@ static void traverse_element(struct stk_element e)
 
     if (e.dest.dword == D_Telem) {
         struct b_telem *te;
+        struct descrip par;
         te = &TelemBlk(e.dest);
+        par = block_to_descriptor((union block *)te);
         stk_add_orphaned_table_block_key(te);
         stk_add_orphaned_table_block_value(te);
-        /* The next block, if present, must be orphaned too. */
-        if (BlkType(te->clink) == T_Telem)
+        /* Add the next block if present and orphaned too. */
+        if (BlkType(te->clink) == T_Telem && orphaned_telem(&par, te->clink))
             stk_add_orphaned_table_block_link(te);
         stk_add_orphaned_table_block_parent(te);
         return;
