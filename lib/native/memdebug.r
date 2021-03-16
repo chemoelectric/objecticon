@@ -975,7 +975,7 @@ static void outimagey(dptr d, struct frame *frame)
                 dptr fname = c->program->Fnames[cf->fnum];
                 if (other != prog)
                     progout(other);
-                fprintf(out, "class %.*s . %.*s", StrF(*c->name), StrF(*fname));
+                fprintf(out, "class %.*s.%.*s", StrF(*c->name), StrF(*fname));
             } else if ((other = find_procedure_static(vp))) {
                 if (other != prog)
                     progout(other);
@@ -1067,7 +1067,7 @@ static void outimagey(dptr d, struct frame *frame)
                     fname =  c->program->Fnames[c->fields[i]->fnum];
                     MakeDesc(D_Object, BlkLoc(*d), &tmp);
                     outimagex(&tmp);
-                    fprintf(out, " . %.*s", StrF(*fname));
+                    fprintf(out, ".%.*s", StrF(*fname));
                     break;
                 }
                 case T_Record: { 		/* record */
@@ -1077,7 +1077,7 @@ static void outimagey(dptr d, struct frame *frame)
                     fname = c->program->Fnames[c->fnums[i]];
                     MakeDesc(D_Record, BlkLoc(*d), &tmp);
                     outimagex(&tmp);
-                    fprintf(out," . %.*s", StrF(*fname));
+                    fprintf(out,".%.*s", StrF(*fname));
                     break;
                 }
                 default: {		/* none of the above */
