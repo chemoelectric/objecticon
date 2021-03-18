@@ -3074,6 +3074,12 @@ $endif
       if *parent.children = 1 then
          parent_dialog.dispose()
       else {
+         # To help the garbage collector, clear references to this tab
+         # in the other tabs.
+         every t := !parent.children do {
+            if t.revert_tab === self then
+               t.revert_tab := &null
+         }
          if parent.which_one === self then {
             # We're closing the currently selected tab, so choose a new
             # one to be the current tab.
@@ -3585,8 +3591,17 @@ procedure usage(opts)
    exit(0)
 end
 
-procedure main(a)
+procedure get_dialog(a)
    local d, t
+   d := FlowTermDialog()
+   d.do_tab_cmd(a) | help_stop(&why)
+   t := \d.tabs.which_one | d.tabs.children[1]
+   d.set_focus(t.remembered_focus)
+   return d
+end
+
+procedure main(a)
+   local d
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
@@ -3606,10 +3621,7 @@ procedure main(a)
       put(glob_cmds, pop(a)[2:0])
    if *a = 0 then
       put(a, "")
-   d := FlowTermDialog()
-   d.do_tab_cmd(a) | help_stop(&why)
-   t := \d.tabs.which_one | d.tabs.children[1]
-   d.set_focus(t.remembered_focus)
+   d := get_dialog(a)
    d.show_modal()
    if \opts["v"] then ewrite("Exiting")
 end

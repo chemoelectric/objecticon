@@ -1213,6 +1213,12 @@ class BrowserTab(TabItem, BrowserUI)
 
    public close_tab()
       local t, i
+      # To help the garbage collector, clear references to this tab
+      # in the other tabs.
+      every t := !parent.children do {
+         if is(t, BrowserTab) & t.revert_tab === self then
+            t.revert_tab := &null
+      }
       if parent.which_one === self then {
          # Note that parent.get_index may fail even if \revert_tab, since
          # revert_tab may have been removed from the TabSet previously.
@@ -1925,8 +1931,24 @@ $endif
    end
 end
 
+procedure get_dialog(a, cookies, settings)
+   local d, s, url
+   d := BrowserDialog(cookies, settings)
+   if *a = 0 then
+      d.new_tab(settings.home_url)
+   else {
+      every s := !a do {
+         s := ucs(s) | stop("Argument not UTF-8")
+         url := URL(s).normal() | stopf("Invalid url: %s: %w", s)
+         d.new_tab(url)
+      }
+   }
+   d.set_focus(d.tabs.children[1].url_field.find_focus())
+   return d
+end
+
 procedure main(a)
-   local d, url, cookies_file, cookies, settings, settings_file, home, s
+   local d, cookies_file, cookies, settings, settings_file, home
    opts := options(a, [Opt("k",string, "FILE#Load cookies from file"),
                        Opt("l",,"Show HTTP headers and data flow"),
                        Opt("agent",string, "Set user agent field"),
@@ -1951,17 +1973,7 @@ procedure main(a)
       name_image("rpp.INCREASE_FONT_SVG", INCREASE_FONT_SVG).
       name_image("rpp.DECREASE_FONT_SVG", DECREASE_FONT_SVG)
    insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, Pixels(BROWSER_LOGO))
-   d := BrowserDialog(cookies, settings)
-   if *a = 0 then
-      d.new_tab(settings.home_url)
-   else {
-      every s := !a do {
-         s := ucs(s) | stop("Argument not UTF-8")
-         url := URL(s).normal() | stopf("Invalid url: %s: %w", s)
-         d.new_tab(url)
-      }
-   }
-   d.set_focus(d.tabs.children[1].url_field.find_focus())
+   d := get_dialog(a, cookies, settings)
    d.show_modal()
    # Save cookies
    atomic_encode_to_file(cookies_file, Cookie.expire_cookies(cookies)) | 
