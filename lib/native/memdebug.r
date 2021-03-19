@@ -148,15 +148,16 @@ struct q_element {
         } other;
     } u;
     struct descrip dest;
-    struct q_element *prev;      /* The last two are only used with refs -r */
-    int rc;
+    struct q_element *qlink;     /* Next in queue */
+    struct q_element *prev;      /* Trace to root; only used with refs -r */
+    word rc;                     /* Reference count; only ever non-zero with refs -r */
 };
 
 static struct q_element *curr;
 
 static struct {
-    uword bufsize, size;
-    struct q_element *buf, *ebuf, *front, *back;
+    int chk;                     /* For checking we don't leak memory */
+    struct q_element *front, *back;
 } q;
 
 static struct descrip normalize_descriptor(dptr dp);
@@ -176,79 +177,79 @@ static int is_marked(void *addr);
 static void mark(void *addr);
 static void outimagex(dptr d);
 
+/* Is the queue empty? */
+static int q_empty()
+{
+    return q.front == 0;
+}
+
 /* Get from queue, assumes it's not empty */
-static struct q_element q_get()
+static struct q_element *q_get()
 {
     struct q_element *e;
     e = q.front;
-    ++q.front;
-    if (q.front == q.ebuf)
-        q.front = q.buf;
-    --q.size;
-    return *e;
+    q.front = e->qlink;
+    e->qlink = 0;
+    if (q_empty())
+        q.back = 0;
+    return e;
+}
+
+/* Free the given element, if its reference count is zero. */
+static void q_free(struct q_element *e)
+{
+    struct q_element *t;
+    while (e && e->rc == 0) {
+        t = e->prev;
+        if (t) t->rc--;
+        free(e);
+        --q.chk;
+        e = t;
+    }
 }
 
 /* Reset queue */
 static void q_clear()
 {
-    if (!q.buf) {
-        q.bufsize = 1024;
-        q.buf = safe_malloc(q.bufsize * sizeof(struct q_element));
-        q.ebuf = q.buf + q.bufsize;
-    }
-    q.size = 0;
-    q.front = q.back = q.buf;
+    while (!q_empty())
+        q_free(q_get());
+    if (q.front)
+        fprintf(out, "!!! queue front not nil after q_clear\n");
+    if (q.back)
+        fprintf(out, "!!! queue back not nil after q_clear\n");
+    if (q.chk != 0)
+        fprintf(out, "!!! chk == %d in q_clear()\n", q.chk);
 }
 
-/* Ensure that the queue has room for one more element, and clear
- * q.back, which will be the next element (see q_put()). */
-static void q_ensure()
+/* Add a new item to the back of the queue.  q.back must then be
+ * filled in. */
+static void q_add()
 {
-    if (q.size == q.bufsize) {
-        struct q_element *t;
-        q.bufsize *= 2;
-        t = safe_malloc(q.bufsize * sizeof(struct q_element));
-        memcpy(t,
-               q.front,
-               (q.ebuf - q.front) * sizeof(struct q_element));
-        memcpy(t + (q.ebuf - q.front),
-               q.buf,
-               (q.front - q.buf)  * sizeof(struct q_element));
-        q.buf = t;
-        q.front = q.buf;
-        q.back = q.buf + q.size;
-        q.ebuf = q.buf + q.bufsize;
+    struct q_element *e;
+    e = safe_zalloc(sizeof(struct q_element));
+    ++q.chk;
+    if (q_empty())
+        q.front = e;
+    else
+        q.back->qlink = e;
+    q.back = e;
+    if (curr) {
+        e->prev = curr;
+        curr->rc++;
     }
-    StructClear(*q.back);
 }
 
-/* Process pointers in queue until it's empty */
+/* Process items in the queue until it's empty */
 static void q_traverse_elements()
 {
-    int chk;
-    chk = 0;
-    while (!finished && q.size > 0) {
-        struct q_element e;
+    struct q_element *e;
+    while (!finished && !q_empty()) {
         e = q_get();
-        if (r_flag) {
-            curr = safe_malloc(sizeof(struct q_element));
-            ++chk;
-            *curr = e;
-        }
-        traverse_element(&e);
-        if (r_flag) {
-            struct q_element *t;
-            while (curr && curr->rc == 0) {
-                t = curr->prev;
-                if (t) t->rc--;
-                free(curr);
-                --chk;
-                curr = t;
-            }
-        }
+        if (r_flag)
+            curr = e;
+        traverse_element(e);
+        q_free(e);
     }
-    if (chk != 0)
-        fprintf(out, "!!! chk == %d in q_traverse_elements()\n", chk);
 }
 
 static struct region *which_block_region(union block *p)
@@ -277,38 +278,17 @@ static struct region *which_string_region(char *p)
     return rp;
 }
 
-static void q_dispose()
-{
-    free(q.buf);
-    StructClear(q);
-}
-
-/* Called after q_ensure() to make the now-initialized element at
- * q.back the actual last element. */
-static void q_put()
-{
-    q.back->prev = curr;
-    q.back->rc = 0;
-    if (curr) curr->rc++;
-    ++q.back;
-    if (q.back == q.ebuf)
-        q.back = q.buf;
-
-    ++q.size;
-}
-
 static void q_add_desc(struct progstate *prog, char *desc, int no, dptr dp)
 {
     struct descrip d;
     d = normalize_descriptor(dp);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = Other;
     q.back->u.other.prog = prog;
     q.back->u.other.desc = desc;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_block(struct progstate *prog, char *desc, int no, union block *blk)
@@ -318,12 +298,11 @@ static void q_add_block(struct progstate *prog, char *desc, int no, union block 
     d = normalize_descriptor(&d);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = Other;
     q.back->u.other.prog = prog;
     q.back->u.other.desc = desc;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_orphaned_list_block_member(struct b_lelem *le, int no)
@@ -332,31 +311,28 @@ static void q_add_orphaned_list_block_member(struct b_lelem *le, int no)
     d = normalize_descriptor(&le->lslots[no]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = OrphanedListBlockMember;
     q.back->u.orphaned_list_block_member.le = le;
     q.back->u.orphaned_list_block_member.no = no;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_orphaned_list_block_link(struct b_lelem *src, int dir, union block *le)
 {
-    q_ensure();
+    q_add();
     q.back->type = OrphanedListBlockLink;
     q.back->u.orphaned_list_block_link.src = src;
     q.back->u.orphaned_list_block_link.dir = dir;
     MakeDesc(D_Lelem, le, &q.back->dest);
-    q_put();
 }
 
 static void q_add_orphaned_list_block_parent(struct b_lelem *src, dptr par)
 {
-    q_ensure();
+    q_add();
     q.back->type = OrphanedListBlockParent;
     q.back->u.orphaned_list_block_parent.src = src;
     q.back->dest = *par;
-    q_put();
 }
 
 static void q_add_orphaned_table_block_key(struct b_telem *te)
@@ -365,11 +341,10 @@ static void q_add_orphaned_table_block_key(struct b_telem *te)
     d = normalize_descriptor(&te->tref);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = OrphanedTableBlockKey;
     q.back->u.orphaned_table_block_key.te = te;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_orphaned_table_block_value(struct b_telem *te)
@@ -378,29 +353,26 @@ static void q_add_orphaned_table_block_value(struct b_telem *te)
     d = normalize_descriptor(&te->tval);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = OrphanedTableBlockValue;
     q.back->u.orphaned_table_block_key.te = te;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_orphaned_table_block_link(struct b_telem *src)
 {
-    q_ensure();
+    q_add();
     q.back->type = OrphanedTableBlockLink;
     q.back->u.orphaned_table_block_link.src = src;
     MakeDesc(D_Telem, src->clink, &q.back->dest);
-    q_put();
 }
 
 static void q_add_orphaned_table_block_parent(struct b_telem *src, dptr par)
 {
-    q_ensure();
+    q_add();
     q.back->type = OrphanedTableBlockParent;
     q.back->u.orphaned_table_block_parent.src = src;
     q.back->dest = *par;
-    q_put();
 }
 
 static void q_add_object_member(struct b_object *obj, int no)
@@ -409,12 +381,11 @@ static void q_add_object_member(struct b_object *obj, int no)
     d = normalize_descriptor(&obj->fields[no]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = ObjectMember;
     q.back->u.object_member.object = obj;
     q.back->u.object_member.no = no;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_record_member(struct b_record *rec, int no)
@@ -423,12 +394,11 @@ static void q_add_record_member(struct b_record *rec, int no)
     d = normalize_descriptor(&rec->fields[no]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = RecordMember;
     q.back->u.record_member.record = rec;
     q.back->u.record_member.no = no;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_list_element(struct b_list *list, dptr val, word no)
@@ -437,12 +407,11 @@ static void q_add_list_element(struct b_list *list, dptr val, word no)
     d = normalize_descriptor(val);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = ListElement;
     q.back->u.list_member.list = list;
     q.back->u.list_member.no = no;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_stuck_list_element(struct b_list *list, dptr val)
@@ -451,11 +420,10 @@ static void q_add_stuck_list_element(struct b_list *list, dptr val)
     d = normalize_descriptor(val);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = StuckListElement;
     q.back->u.stuck_list_element.list = list;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_set_member(struct b_set *set, struct b_selem *elem)
@@ -464,11 +432,10 @@ static void q_add_set_member(struct b_set *set, struct b_selem *elem)
     d = normalize_descriptor(&elem->setmem);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = SetMember;
     q.back->u.set_member.set = set;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_table_default(struct b_table *table)
@@ -477,11 +444,10 @@ static void q_add_table_default(struct b_table *table)
     d = normalize_descriptor(&table->defvalue);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = TableDefault;
     q.back->u.table_default.table = table;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_table_key(struct b_table *table, struct b_telem *elem)
@@ -490,11 +456,10 @@ static void q_add_table_key(struct b_table *table, struct b_telem *elem)
     d = normalize_descriptor(&elem->tref);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = TableKey;
     q.back->u.table_key.table = table;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_table_value(struct b_table *table, struct b_telem *elem)
@@ -503,12 +468,11 @@ static void q_add_table_value(struct b_table *table, struct b_telem *elem)
     d = normalize_descriptor(&elem->tval);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = TableValue;
     q.back->u.table_value.table = table;
     q.back->u.table_value.elem = elem;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_class_static(struct class_field *field)
@@ -517,11 +481,10 @@ static void q_add_class_static(struct class_field *field)
     d = normalize_descriptor(field->field_descriptor);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = ClassStatic;
     q.back->u.field.field = field;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_proc_static(struct p_proc *proc, int num)
@@ -530,12 +493,11 @@ static void q_add_proc_static(struct p_proc *proc, int num)
     d = normalize_descriptor(&proc->fstatic[num]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = ProcStatic;
     q.back->u.proc.proc = proc;
     q.back->u.proc.no = num;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_global(struct progstate *prog, int num)
@@ -544,21 +506,19 @@ static void q_add_global(struct progstate *prog, int num)
     d = normalize_descriptor(&prog->Globals[num]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = Global;
     q.back->u.global.prog = prog;
     q.back->u.global.no = num;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_coexpr_activator(struct b_coexpr *cp)
 {
-    q_ensure();
+    q_add();
     q.back->type = CoexprActivator;
     q.back->u.coexpr_activator.coexpr = cp;
     q.back->dest = block_to_descriptor((union block *)cp->activator);
-    q_put();
 }
 
 static void q_add_c_frame_arg(struct b_coexpr *coexpr, struct c_frame *cf, int num)
@@ -567,13 +527,12 @@ static void q_add_c_frame_arg(struct b_coexpr *coexpr, struct c_frame *cf, int n
     d = normalize_descriptor(&cf->args[num]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = CFrameArg;
     q.back->u.c_frame_arg.coexpr = coexpr;
     q.back->u.c_frame_arg.frame = cf;
     q.back->u.c_frame_arg.no = num;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_c_frame_tended(struct b_coexpr *coexpr, struct c_frame *cf, int num)
@@ -582,13 +541,12 @@ static void q_add_c_frame_tended(struct b_coexpr *coexpr, struct c_frame *cf, in
     d = normalize_descriptor(&cf->tend[num]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = CFrameTended;
     q.back->u.c_frame_tended.coexpr = coexpr;
     q.back->u.c_frame_tended.frame = cf;
     q.back->u.c_frame_tended.no = num;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_p_frame_tmp(struct b_coexpr *coexpr, struct p_frame *pf, int num)
@@ -597,13 +555,12 @@ static void q_add_p_frame_tmp(struct b_coexpr *coexpr, struct p_frame *pf, int n
     d = normalize_descriptor(&pf->tmp[num]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = PFrameTmp;
     q.back->u.p_frame_tmp.coexpr = coexpr;
     q.back->u.p_frame_tmp.frame = pf;
     q.back->u.p_frame_tmp.no = num;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_p_frame_var(struct b_coexpr *coexpr, struct p_frame *pf, int num)
@@ -612,40 +569,36 @@ static void q_add_p_frame_var(struct b_coexpr *coexpr, struct p_frame *pf, int n
     d = normalize_descriptor(&pf->fvars->desc[num]);
     if (is:null(d))
         return;
-    q_ensure();
+    q_add();
     q.back->type = PFrameVar;
     q.back->u.p_frame_var.coexpr = coexpr;
     q.back->u.p_frame_var.frame = pf;
     q.back->u.p_frame_var.no = num;
     q.back->dest = d;
-    q_put();
 }
 
 static void q_add_ucs_utf8(struct b_ucs *ucs)
 {
-    q_ensure();
+    q_add();
     q.back->type = UcsUtf8;
     q.back->u.ucs_utf8.ucs = ucs;
     q.back->dest = ucs->utf8;
-    q_put();
 }
 
 static void q_add_weakref_val(struct b_weakref *weakref)
 {
-    q_ensure();
+    q_add();
     q.back->type = WeakrefVal;
     q.back->u.weakref_val.weakref = weakref;
     q.back->dest = weakref->val;
-    q_put();
 }
 
 static void q_add_methp_object(struct b_methp *methp)
 {
-    q_ensure();
+    q_add();
     q.back->type = MethpObject;
     q.back->u.methp_object.methp = methp;
     q.back->dest = block_to_descriptor((union block *)methp->object);
-    q_put();
 }
 
 static struct descrip normalize_descriptor(dptr dp)
@@ -1502,20 +1455,20 @@ static void traverse(int m)
     struct progstate *prog;
 
     mode = m;
-    finished = 0;
-    curr = 0;
 
-    q_clear();
-
+    /* Traverse the various roots */
     for (prog = progs; prog; prog = prog->next)
         traverse_program(prog);
-
     traverse_tended();
     traverse_others();
 
+    /* Traverse the graph */
     q_traverse_elements();
 
-    q_dispose();
+    /* Reset everything. */
+    finished = 0;
+    curr = 0;
+    q_clear();
     marked_blocks_dispose();
     mode = 0;
 }
