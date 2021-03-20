@@ -7,7 +7,7 @@ global prog, input, output, stopped, sched, break_proc, break_line, break_file,
 
 class MemDebug()
    public static native list(obj, f)
-   public static native refs(obj, f)
+   public static native refs(obj, f1, f2)
    public static native dump()
    public static native globals()
    public static native nglobals()
@@ -39,9 +39,10 @@ procedure do_help()
       write("                    lists all instances of SomeType, whilst list SomeType#22").
       write("                    shows the elements of a particular instance.  -a means").
       write("                    include regions outside the current program's regions").
-      write("refs [-r] x         Show what points to the given instance, eg refs").
-      write("                    list#21 would show what references that list  -r means").
-      write("                    show a path back to a root for each match").
+      write("refs [-r|-a] x      Show what points to the given instance, eg refs").
+      write("                    list#21 would show what references that list.  -r means").
+      write("                    show a path back to a root for each match; -a means").
+      write("                    include indirect paths via x itself").
       write("dump                Show all globals, statics and structures of the").
       write("                    current program").
       write("globals             Show the global variables of the current program").
@@ -132,9 +133,10 @@ end
 
 procedure do_refs(a)
    local o
-   o := get_options(a, [Opt("r",, "Trace back to root")], "Usage: refs [-r] object") | fail
+   o := get_options(a, [Opt("r",, "Trace back to root"),
+                        Opt("a",, "Include indirect paths via object")], "Usage: refs [-r|-a] object") | fail
    (*a = 1) | return bad_params()
-   MemDebug.refs(a[1], o["r"]) | return err_msg(&why)
+   MemDebug.refs(a[1], o["r"], o["a"]) | return err_msg(&why)
 end
 
 procedure do_dump()

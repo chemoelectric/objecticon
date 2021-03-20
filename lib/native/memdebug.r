@@ -26,7 +26,7 @@ struct query {
 static struct progstate *prog;
 static struct query query;
 static int mode;
-static int all_flag;
+static int a_flag;
 static int r_flag;
 static int verbose;
 static int finished;
@@ -1770,7 +1770,7 @@ static void do_list(struct q_element *e, struct region *rp)
         if (is_prog_region(rp)) {
             outimagex(&e->dest);
             fputc('\n', out);
-        } else if (all_flag) {
+        } else if (a_flag) {
             outimagex(&e->dest);
             fprintf(out, " in foreign region %p\n", rp);
         }
@@ -1780,10 +1780,12 @@ static void do_list(struct q_element *e, struct region *rp)
     }
 }
 
-static void do_refs(struct q_element *e)
+/* Returns a flag indicating whether to traverse further in the
+ * graph. */
+static int do_refs(struct q_element *e)
 {
     if (!query_match(&e->dest))
-        return;
+        return 0;
     print_q_element(e);
     fputc('\n', out);
     while ((e = e->prev)) {
@@ -1791,6 +1793,7 @@ static void do_refs(struct q_element *e)
         print_q_element(e);
         fputc('\n', out);
     };
+    return !a_flag;
 }
 
 static void traverse_element(struct q_element *e)
@@ -1824,8 +1827,10 @@ static void traverse_element(struct q_element *e)
         return;
     }
 
-    if (mode == RefsMode)
-        do_refs(e);
+    if (mode == RefsMode) {
+        if (do_refs(e))
+            return;
+    }
 
     if (Qual(e->dest))
         addr = StrLoc(e->dest);
@@ -2019,8 +2024,9 @@ function MemDebug_list(s, flag)
           runerr(171, flag);
        if (!parsequery(buffstr(&s), &query))
            fail;
-       all_flag = is:yes(flag);
+       a_flag = is:yes(flag);
        traverse(ListMode);
+       a_flag = 0;
        ReturnDefiningClass;
     }
 end
@@ -2168,21 +2174,24 @@ function MemDebug_dump()
     }
 end
 
-function MemDebug_refs(s, flag)
+function MemDebug_refs(s, flag1, flag2)
    if !cnv:string(s) then
       runerr(103, s)
     body {
-       if (!is_flag(&flag))
-          runerr(171, flag);
+       if (!is_flag(&flag1))
+          runerr(171, flag1);
+       if (!is_flag(&flag2))
+          runerr(171, flag2);
        if (!parsequery(buffstr(&s), &query))
            fail;
        if (query.type == TitleQuery && query.u.by_title.id == 0) {
            LitWhy("refs needs an id number to uniquely identify an object");
            fail;
        }
-       r_flag = is:yes(flag);
+       r_flag = is:yes(flag1);
+       a_flag = is:yes(flag2);
        traverse(RefsMode);
-       r_flag = 0;
+       r_flag = a_flag = 0;
        ReturnDefiningClass;
     }
 end
