@@ -7,7 +7,7 @@ struct marked_block {
 static uword marked_block_hash_func(struct marked_block *p) {  return hashptr(p->addr); }
 #passthru static DefineHash(, struct marked_block) marked_blocks = { 512, marked_block_hash_func };
 
-enum { AddrQuery=1, TitleQuery };
+enum { AddrQuery=1, TitleQuery, QualQuery };
 
 struct query {
     int type;
@@ -41,9 +41,32 @@ enum { Global=1, ClassStatic, ProcStatic, ObjectMember, SetMember,
        CoexprActivator, CFrameArg, CFrameTended, PFrameTmp, PFrameVar, 
        UcsUtf8, WeakrefVal, MethpObject, StuckListElement, Other,
        OrphanedListBlockParent, OrphanedListBlockLink, OrphanedListBlockMember,
-       OrphanedTableBlockParent, OrphanedTableBlockLink, OrphanedTableBlockKey, OrphanedTableBlockValue };
+       OrphanedTableBlockParent, OrphanedTableBlockLink, OrphanedTableBlockKey,
+       OrphanedTableBlockValue };
 
-enum { ListMode=1, RefsMode, DumpMode };
+enum { ListMode=1, RefsMode, DumpMode, ReportMode };
+
+struct instance_counter {
+    struct instance_counter *next;
+    union block *type;
+    uword count;
+};
+
+static uword instance_counter_hash_func(struct instance_counter *p) {  return hashptr(p->type); }
+#passthru static DefineHash(, struct instance_counter) instance_counters = { 512, instance_counter_hash_func };
+
+struct report {
+    uword list, list_element;
+    uword set, set_element;
+    uword table, table_element;
+    uword coexpr;
+    uword string, string_length;
+    uword ucs, ucs_length;
+    uword integer, real;
+    uword cset, cset_element;
+    uword methp, weakref;
+    uword orphaned_lelem, orphaned_telem;
+} report;
 
 struct q_element {
     int type;
@@ -1507,8 +1530,8 @@ static int query_match(dptr dp)
     if (Qual(*dp)) {
         if (query.type == AddrQuery)
             return (void *)StrLoc(*dp) == query.u.by_addr.addr;
-        else
-            return 0;
+        else 
+            return (query.type == QualQuery);
     }
 
     if (query.type == AddrQuery)
@@ -1564,6 +1587,90 @@ static void do_dump(struct q_element *e, struct region *rp)
 {
     if (is_prog_region(rp))
         display(&e->dest);
+}
+
+static void note_instance(union block *typ)
+{
+    struct instance_counter *i;
+    for (i = Bucket(instance_counters, hashptr(typ)); i; i = i->next)
+        if (i->type == typ) {
+            i->count++;
+            return;
+        }
+    i = safe_malloc(sizeof(struct instance_counter));
+    i->type = typ;
+    i->count = 1;
+    add_to_hash(&instance_counters, i);
+}
+
+static void report_sum(dptr d)
+{
+    if (d->dword == D_Lelem) {
+        report.orphaned_lelem++;
+        return;
+    }
+
+    if (d->dword == D_Telem) {
+        report.orphaned_telem++;
+        return;
+    }
+
+    type_case *d of {
+      string: {
+            report.string++;
+            report.string_length += StrLen(*d);
+        }
+      cset: {
+            report.cset++;
+            report.cset_element += CsetBlk(*d).size;
+        }
+      ucs: {
+            report.ucs++;
+            report.ucs_length += UcsBlk(*d).length;
+        }
+      integer: {
+            if (IsLrgint(*d))
+                report.integer++;
+        }
+#if !RealInDesc
+      real: {
+            report.real++;
+        }
+#endif
+      list: {
+            report.list++;
+            report.list_element += ListBlk(*d).size;
+        }
+      set: {
+            report.set++;
+            report.set_element += SetBlk(*d).size;
+        }
+      table: {
+            report.table++;
+            report.table_element += TableBlk(*d).size;
+        }
+      coexpr: {
+            report.coexpr++;
+        }
+      object: {
+            note_instance((union block *)ObjectBlk(*d).class);
+        }
+      record: {
+            note_instance((union block *)RecordBlk(*d).constructor);
+        }
+      methp: {
+            report.methp++;
+        }
+      weakref: {
+            report.weakref++;
+        }
+     }
+}
+
+static void do_report(struct q_element *e, struct region *rp)
+{
+    if (is_prog_region(rp))
+        report_sum(&e->dest);
 }
 
 static void display(dptr dp)
@@ -1766,14 +1873,22 @@ static void do_list(struct q_element *e, struct region *rp)
 {
     if (!query_match(&e->dest))
         return;
-    if (query.type == TitleQuery && query.u.by_title.id == 0) {
+    if (query.type == QualQuery ||
+        (query.type == TitleQuery && query.u.by_title.id == 0))
+    {
         if (is_prog_region(rp)) {
             outimagex(&e->dest);
             fputc('\n', out);
         } else if (a_flag) {
             outimagex(&e->dest);
             fprintf(out, " in foreign region %p\n", rp);
-        }
+        } else
+            return;
+        do {
+            fputc('\t', out);
+            print_q_element(e);
+            fputc('\n', out);
+        } while ((e = e->prev));
     } else {
         finished = 1;
         display(&e->dest);
@@ -1846,6 +1961,7 @@ static void traverse_element(struct q_element *e)
     switch (mode) {
         case ListMode: do_list(e, rp); break;
         case DumpMode: do_dump(e, rp); break;
+        case ReportMode: do_report(e, rp); break;
     }
 
     if (e->dest.dword == D_Lelem) {
@@ -1951,7 +2067,18 @@ static void traverse_element(struct q_element *e)
     }
 }
 
-static stringint titles[] = {
+/* Titles without serial numbers */
+static stringint titles1[] = {
+   { 0, 5},
+   {"cset",  T_Cset},
+   {"integer",  T_Lrgint},
+   {"lelem",  T_Lelem},
+   {"telem",  T_Telem},
+   {"ucs",  T_Ucs},
+};
+
+/* Titles with serial numbers */
+static stringint titles2[] = {
    { 0, 6},
    {"co-expression",  T_Coexpr},
    {"list",  T_List},
@@ -1980,35 +2107,54 @@ static int parsequery(char *buf, struct query *ret)
     s = strpbrk(buf, "#");
     if (s)
         *s++ = 0;
-    e = stringint_lookup(titles, buf);
+    if (strcmp(buf, "string") == 0) {
+        if (s) {
+            LitWhy("Id number not allowed");
+            return 0;
+        }
+        ret->type = QualQuery;
+        return 1;
+    }
+    e = stringint_lookup(titles1, buf);
     if (e) {
+        if (s) {
+            LitWhy("Id number not allowed");
+            return 0;
+        }
         title = e->i;
         class0 = 0;
-    } else {
-        CMakeStr(buf, &nd);
-        glob = lookup_named_global(&nd, 1, prog);
-        if (!glob) {
-            LitWhy("Invalid structure type");
-            return 0;
-        }
-        type_case *glob of {
-          class: title = T_Object;
-          constructor: title = T_Record;
-          default: {
-              LitWhy("Invalid structure type");
-              return 0;
-          }
-        }
-        class0 = (union block *)BlkLoc(*glob);
-    }
-    if (s) {
-        char c;
-        if (sscanf(s, UWordFmt "%c", &id, &c) != 1) {
-            LitWhy("Invalid id number");
-            return 0;
-        }
-    } else
         id = 0;
+    } else {
+        e = stringint_lookup(titles2, buf);
+        if (e) {
+            title = e->i;
+            class0 = 0;
+        } else {
+            CMakeStr(buf, &nd);
+            glob = lookup_named_global(&nd, 1, prog);
+            if (!glob) {
+                LitWhy("Invalid structure type");
+                return 0;
+            }
+            type_case *glob of {
+               class: title = T_Object;
+               constructor: title = T_Record;
+               default: {
+                  LitWhy("Invalid structure type");
+                  return 0;
+               }
+            }
+            class0 = (union block *)BlkLoc(*glob);
+        }
+        if (s) {
+            char c;
+            if (sscanf(s, UWordFmt "%c", &id, &c) != 1) {
+                LitWhy("Invalid id number");
+                return 0;
+            }
+        } else
+            id = 0;
+    }
     ret->type = TitleQuery;
     ret->u.by_title.title = title;
     ret->u.by_title.id = id;
@@ -2016,17 +2162,20 @@ static int parsequery(char *buf, struct query *ret)
     return 1;
 }
 
-function MemDebug_list(s, flag)
+function MemDebug_list(s, flag1, flag2)
    if !cnv:string(s) then
       runerr(103, s)
     body {
-       if (!is_flag(&flag))
-          runerr(171, flag);
+       if (!is_flag(&flag1))
+          runerr(171, flag1);
+       if (!is_flag(&flag2))
+          runerr(171, flag2);
        if (!parsequery(buffstr(&s), &query))
            fail;
-       a_flag = is:yes(flag);
+       r_flag = is:yes(flag1);
+       a_flag = is:yes(flag2);
        traverse(ListMode);
-       a_flag = 0;
+       r_flag = a_flag = 0;
        ReturnDefiningClass;
     }
 end
@@ -2170,6 +2319,103 @@ function MemDebug_dump()
        output_all_statics();
        fprintf(out, "\nRegion dump\n===========\n");
        traverse(DumpMode);
+       ReturnDefiningClass;
+    }
+end
+
+static void instance_counters_dispose()
+{
+    int i;
+    for (i = 0; i < instance_counters.nbuckets; ++i) {
+        struct instance_counter *p, *n;
+        p = instance_counters.l[i];
+        while (p) {
+            n = p;
+            p = p->next;
+            free(n);
+        }
+    }
+    clear_hash(&instance_counters);
+}
+
+static int instance_counters_cmp(struct instance_counter **p1, struct instance_counter **p2)
+{
+    return (*p2)->count - (*p1)->count;
+}
+
+#define ReportFmt "%10" UWordFmtCh "  "
+
+static void instance_counters_report()
+{
+    int i, j;
+    struct instance_counter **t, *p;
+    t = safe_malloc(instance_counters.size * sizeof(struct instance_counter *));
+    j = 0;
+    for (i = 0; i < instance_counters.nbuckets; ++i) {
+        for (p = instance_counters.l[i]; p; p = p->next)
+            t[j++] = p;
+    }
+    qsort(t, j, sizeof(struct instance_counter *), (QSortFncCast) instance_counters_cmp);
+    fprintf(out, "\nObjects and Records\n===================\n");
+    for (i = 0; i < j; ++i) {
+        p = t[i];
+        fprintf(out, ReportFmt,  p->count);
+        outblock(p->type);
+        fputc('\n', out);
+    }
+    free(t);
+}
+
+static void counters_report()
+{
+    fprintf(out, "Builtin types\n=============\n");
+    if (report.string) {
+        fprintf(out, ReportFmt "String\n",  report.string);
+        fprintf(out, ReportFmt "   Total length\n",  report.string_length);
+    }
+    if (report.ucs) {
+        fprintf(out, ReportFmt "Ucs\n",  report.ucs);
+        fprintf(out, ReportFmt "   Total length\n",  report.ucs_length);
+    }
+    if (report.cset) {
+        fprintf(out, ReportFmt "Cset\n",  report.cset);
+        fprintf(out, ReportFmt "   Total size\n",  report.cset_element);
+    }
+    if (report.integer)
+        fprintf(out, ReportFmt "Integer\n",  report.integer);
+    if (report.real)
+        fprintf(out, ReportFmt "Real\n",  report.real);
+    if (report.list) {
+        fprintf(out, ReportFmt "List\n",  report.list);
+        fprintf(out, ReportFmt "   Total size\n",  report.list_element);
+    }
+    if (report.set) {
+        fprintf(out, ReportFmt "Set\n",  report.set);
+        fprintf(out, ReportFmt "   Total size\n",  report.set_element);
+    }
+    if (report.table) {
+        fprintf(out, ReportFmt "Table\n",  report.table);
+        fprintf(out, ReportFmt "   Total size\n",  report.table_element);
+    }
+    if (report.coexpr)
+        fprintf(out, ReportFmt "Co-expression\n",  report.coexpr);
+    if (report.methp)
+        fprintf(out, ReportFmt "Methp\n",  report.methp);
+    if (report.weakref)
+        fprintf(out, ReportFmt "Weakref\n",  report.weakref);
+    if (report.orphaned_lelem)
+        fprintf(out, ReportFmt "Orphaned list\n",  report.orphaned_lelem);
+    if (report.orphaned_telem)
+        fprintf(out, ReportFmt "Orphaned table\n",  report.orphaned_telem);
+}
+
+function MemDebug_report()
+    body {
+       traverse(ReportMode);
+       counters_report();
+       instance_counters_report();
+       StructClear(report);
+       instance_counters_dispose();
        ReturnDefiningClass;
     }
 end
