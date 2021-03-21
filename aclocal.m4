@@ -323,24 +323,25 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
         AC_RUN_IFELSE(
            [AC_LANG_SOURCE([[#include <dlfcn.h>
                              #include <stdlib.h>
-                             #if OS_DARWIN
-                             /* On macos, func2() in the library is overridden (gives 19 not 5) */
-                             #define RES 1144066
-                             #else
-                             #define RES 301070
-                             #endif
+                             /* Allow two results, depending on whether func2() in the library is overridden
+                                (giving 19 not 5).  I have only found this to happen on macos, and even then
+                                only if optimizations are off (-O0). */
+                             #define RES1 1144066
+                             #define RES2 301070
                              int func1(int x) { return 3+x; }
                              int func2() { return 19; }
                              int var1 = 11;
                              int var2 = 13;
                              int main() {
                                  void *handle;
+                                 int i;
                                  int (*func3)(int);
                                  handle = dlopen("./dloadtest.so", RTLD_LAZY);
                                  if (!handle) exit(1);
                                  *(void **)(&func3) = dlsym(handle, "func3");
                                  if (!func3) exit(1);
-                                 if (func3(17) != RES) exit(1);
+                                 i = func3(17);
+                                 if (i != RES1 && i != RES2) exit(1);
                                  exit(0);
                              }
                              ]])],
