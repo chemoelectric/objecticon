@@ -1086,6 +1086,15 @@ package class UnixFileSystem(FileSystem)
       return other.append(fp)
    end
 
+$if _DARWIN
+   public override filepath_standard_case(fp)
+      return FilePath.from_list(List{ map(!fp.l) })
+   end
+
+   public override standard_case(s)
+      return map(s)
+   end
+$else
    public override filepath_standard_case(fp)
       return fp
    end
@@ -1093,6 +1102,7 @@ package class UnixFileSystem(FileSystem)
    public override standard_case(s)
       return s
    end
+$endif
 
    public override get_home()
       return env_string("HOME") | System.getpw(System.getuid()).dir | get_temp()

@@ -337,7 +337,7 @@ class DirectoryDialog(Dialog)
       local n1
       s := Files.standard_case(s)
       every n1 := !n.children do {
-         if Files.standard_case(n1.label.name) == s then
+         if n1.label.standard_case() == s then
             return n1
       }
    end

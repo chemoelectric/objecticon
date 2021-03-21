@@ -2019,7 +2019,7 @@ $endif
    end
 
    public get_pats()
-      return ipl.pdco.List{ Wildcard(separate(filter.get_contents(), ';')) }
+      return ipl.pdco.List{ Wildcard(Files.standard_case(separate(filter.get_contents(), ';'))) }
    end
 
    public tab_active()
@@ -2710,7 +2710,7 @@ $endif
       show_hidden := show_hidden_menu_item.get_status()
       filter_dirs := filter_dirs_menu_item.get_status()
       every e := !cwd_list do {
-         s := e.name
+         s := e.standard_case()
          t := e.stat.mode_str[1]
          if ((/filter_dirs & t == "d") | (!pats).match_all(s))\1 &
             (\show_hidden | not(Files.is_hidden(s))) then {
@@ -2820,7 +2820,7 @@ $endif
          parent_dialog.resynch_pointer()
       }
 
-      unless cwd == history[history_pos].dir then {
+      unless Files.standard_case(cwd) == Files.standard_case(history[history_pos].dir) then {
          every 1 to history_pos - 1 do
             pop(history)
          push(history, default.HistoryEntry(cwd))
