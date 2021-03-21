@@ -241,11 +241,11 @@ class FileDialog(Dialog)
       local f, s
       if /multiple_files_flag then {
          f := get_current_selection().str()
-         warned := &null
          if \f & existing_file_mode === (WARN | DISALLOW) & not Files.is_directory(f) & Files.access(f) then {
             warned := &yes
             msg("Existing file")
-         }
+         } else
+            warned := &null
       } else {
          # For multiple selection, choose the selected item with the
          # cursor (if any) as the file to show in the image tab.
