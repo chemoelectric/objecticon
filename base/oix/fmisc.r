@@ -1443,12 +1443,14 @@ int in_cset(struct b_cset *b, int c)
 int cset_range_of_pos(struct b_cset *b, word pos)
 {
     int l, r, m;
+    /* Common cases of looking up first or last pos */
+    if (pos == 1 && b->n_ranges > 0)
+        return 0;
+    if (pos == b->size && b->n_ranges > 0)
+        return b->n_ranges - 1;
     l = 0;
     r = b->n_ranges - 1;
     --pos;
-    /* Common case of looking up first pos */
-    if (pos == 0 && b->n_ranges > 0)
-        return 0;
     while (l <= r) {
         m = (l + r) / 2;
         if (pos < b->range[m].index)
