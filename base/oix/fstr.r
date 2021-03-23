@@ -657,6 +657,7 @@ function map(s1,s2,s3)
           static word maptab_len = 0;
           char *p1, *p2, *p3;
           word utf8_size, i;
+          int fl;
 
           /*
            * If s2 and s3 are the same as for the last call of map,
@@ -717,17 +718,25 @@ function map(s1,s2,s3)
            */
           utf8_size = 0;
           p1 = StrLoc(UcsBlk(s1).utf8);
+          fl = 0;
           for (i = 0; i < UcsBlk(s1).length; ++i) {
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
                                            sizeof(struct mappair), 
                                            (BSearchFncCast)mappair_search_compare);
-              if (mp)
+              if (mp) {
                   utf8_size += mp->utf8_len;
-              else
+                  fl = 1;
+              } else
                   utf8_size += p1 - t;
           }
+
+          /*
+           * Check if the source has no chars to be mapped.
+           */
+          if (!fl)
+              return s1;
 
           /*
            * Make a descriptor for the result's utf8 string.
