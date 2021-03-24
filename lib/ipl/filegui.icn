@@ -7,7 +7,8 @@ import
    gui,
    io,
    xdg,
-   util
+   util,
+   lang
 
 #
 # A subclass of `ListEntry` which provides fields for storing some
@@ -92,7 +93,7 @@ class ColorFilesItemPaint(WithCloneItemPaint)
          default : {
             if st.mode_str[-7] == ("x" | "s") then
                "green"
-            else case map(string(Files.get_extension(data.name))) of {
+            else case Text.lower(string(Files.get_extension(data.name))) of {
                "cmd"|"exe"|"com"|"btm"|"bat" : "green"
                "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "red"
                "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "blue"
@@ -248,7 +249,7 @@ class IconFilesItemPaint(ItemPaint)
             if st.mode_str[-7] == ("x" | "s") then
                "fi.exe"
             else {
-               get_xdg_for_file(data.name) | case map(string(Files.get_extension(data.name))) of {
+               get_xdg_for_file(data.name) | case Text.lower(string(Files.get_extension(data.name))) of {
                   "pdf": "fi.pdf"
                   "cmd"|"exe"|"com"|"btm"|"bat" : "fi.exe"
                   "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "fi.archive"

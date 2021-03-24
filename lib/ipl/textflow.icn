@@ -4,6 +4,7 @@ import
    gui,
    util,
    net,
+   lang,
    graphics(Key),
    ipl.strings,
    ipl.tables(inserts),
@@ -657,7 +658,7 @@ class TextFlow(Component, HasLastHighlight)
                j := 1
                every o := !or.l do {
                   if is(o, TextOut) then {
-                     /o.l_s := map(o.s)
+                     /o.l_s := Text.lower(o.s)
                      o.l_s ? every k := find(s[1]) do {
                         # Get the word (or first part thereof) starting at k
                         tab(k)
@@ -715,7 +716,7 @@ class TextFlow(Component, HasLastHighlight)
          while o := or.l[j] do {
             # Don't allow any component to be a word separator.
             is(o, TextOut) | fail
-            /o.l_s := map(o.s)
+            /o.l_s := Text.lower(o.s)
             o.l_s ? {
                tab(k)
                repeat {

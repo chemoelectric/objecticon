@@ -331,7 +331,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, c
       i := 0
       every c := !s do {
-         i := ior(i, case map(string(c)) of {
+         i := ior(i, case Text.lower(string(c)) of {
             "0" : 0
             "c" : C
             "s" : S
@@ -2857,7 +2857,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          clear_mark()
          ui.search_msg("No results")
       } else {
-         search_term := map(s)
+         search_term := Text.lower(s)
          do_search_prev()
       }
       link
@@ -2871,7 +2871,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       num := 0
       i := 1
       every r := unflowed() do {
-         every j := find(search_term, map(line_str(r.l))) do {
+         every j := find(search_term, Text.lower(line_str(r.l))) do {
             num +:= 1
             last := Locn(j, i)
             if \curr & ((i < curr.y) | (i = curr.y & j < curr.x)) then {
@@ -2895,7 +2895,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       num := 0
       i := 1
       every r := unflowed() do {
-         every j := find(search_term, map(line_str(r.l))) do {
+         every j := find(search_term, Text.lower(line_str(r.l))) do {
             num +:= 1
             p := Locn(j, i)
             /first := p

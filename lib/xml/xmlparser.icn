@@ -615,7 +615,7 @@ class XmlParser(Connectable)
    private parse_pi_target()
       local s
       s := parse_name()
-      if map(s) == "xml" then
+      if Text.lower(s) == "xml" then
          throw("Can't have 'xml' here")
       return s
    end
@@ -2287,7 +2287,7 @@ class XmlParser(Connectable)
                   prefix := tab(0)
                   if *prefix = 0 then
                      throw("Badly formed xmlns attribute: " || k)
-                  if match("xml", map(prefix)) then
+                  if match("xml", Text.lower(prefix)) then
                      throw("xmlns namespace can't start with 'xml': " || k)
                   insert(t, prefix, uri)
                }

@@ -312,9 +312,9 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
                   "z": zone.get_id()
                   "Z": zone.format_offset()
                   "T": format_rfc3339_timezone(w)
-                  "a": map(format_am_pm(AM_PM))
+                  "a": Text.lower(format_am_pm(AM_PM))
                   "A": format_am_pm(AM_PM)
-                  "b": map(format_am_pm(LOCAL_AM_PM))
+                  "b": Text.lower(format_am_pm(LOCAL_AM_PM))
                   "B": format_am_pm(LOCAL_AM_PM)
                }
             } else if any('\'') then 
@@ -1098,8 +1098,8 @@ class TimeParser()
    private parse_am_pm(hh, l)
       local s, i
       every i := 1 to 2 do {
-         s := map(l[i])
-         if s == map(ss.move(*s)) then {
+         s := Text.lower(l[i])
+         if s == Text.lower(ss.move(*s)) then {
             if i = 2 & (0 <= \hh < 12) then 
                hh +:= 12
             return hh
@@ -1116,8 +1116,8 @@ class TimeParser()
       if w < 3 then
          return parse_int(w, 1, 12)
       every i := 1 to 24 do {
-         m := map(l[i])
-         if m == map(ss.move(*m)) then
+         m := Text.lower(l[i])
+         if m == Text.lower(ss.move(*m)) then
             return if i > 12 then i - 12 else i
       }
       throw("Month expected")
@@ -1129,8 +1129,8 @@ class TimeParser()
    private parse_weekday(l)
       local i, w
       every i := 1 to 14 do {
-         w := map(l[i])
-         if w == map(ss.move(*w)) then
+         w := Text.lower(l[i])
+         if w == Text.lower(ss.move(*w)) then
             return
       }
       throw("Weekday expected")

@@ -217,7 +217,7 @@ procedure do_hist(a)
    s := a[1] | u""
    i := input.get_history_start_no()
    every e := !input.get_history() do {
-      if find(s, map(e)) then
+      if find(s, Text.lower(e)) then
          cmd_out.write(right(i, 4), "  ", e)
       i +:= 1
    }

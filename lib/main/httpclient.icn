@@ -242,7 +242,7 @@ $endif
       local t
       t := ""
       s ? until pos(0) do {
-         t ||:= map(move(1), &lcase, &ucase) || map(tab(past("-") | 0))
+         t ||:= Text.upper(move(1)) || Text.lower(tab(past("-") | 0))
       }
       return t
    end
@@ -328,7 +328,7 @@ $endif
       #
       auth := auth_scheme := &null
       l := response.get_first_header("Location") | return on_http_error("No Location in a redirect response")
-      if match("http://" | "https://", map(l)) then {
+      if match("http://" | "https://", Text.lower(l)) then {
          u := URL(l) | return on_http_error("Invalid Location in a redirect response: " || l)
          request.set_url(u)
       } else
@@ -428,7 +428,7 @@ $endif
       #
       md5 := MD5()
       md5.update(auth.username || ":" || realm || ":" || auth.password)
-      if map(algorithm) == "md5-sess" then {
+      if Text.lower(algorithm) == "md5-sess" then {
          md5.update(":" || nonce || ":" || cnonce)
       }
       self.ha1 := md5.final_str()
@@ -439,7 +439,7 @@ $endif
       qop_options := set()
       member(t, "qop") ? {
          while(tab(upto(TOKEN_CHAR))) do 
-            insert(qop_options, map(tab(many(TOKEN_CHAR))))
+            insert(qop_options, Text.lower(tab(many(TOKEN_CHAR))))
       }
       self.qop := member(qop_options, "auth-int" | "auth") | &null
 
@@ -450,7 +450,7 @@ $endif
       local md5, nc, h, t, hentity, ha2, s
 
       self.nonce_count +:= 1
-      nc := map(Format.int_to_string(self.nonce_count, 16, 8))
+      nc := Text.lower(Format.int_to_string(self.nonce_count, 16, 8))
       md5 := MD5()
       #
       # Calculate HA2
@@ -593,7 +593,7 @@ $endif
             c.name := k
             c.value := v
          } else {
-            case map(k) of {
+            case Text.lower(k) of {
                # Allow old netscape format or format from the later RFCs.
                "expires" : c.expires := Time.parse(v, "E, d MMM yyyy HH':'mm':'ss z" |
                                                       "E, d'-'MMM'-'yyyy HH':'mm':'ss z")
@@ -625,8 +625,8 @@ $endif
          match(c.path, request.url.get_file()) | fail
 
       if \c.domain then {
-         d := map(c.domain)
-         e := map(request.url.get_host())
+         d := Text.lower(c.domain)
+         e := Text.lower(request.url.get_host())
 
          # The domain must have an embedded dot
          #
@@ -655,7 +655,7 @@ $endif
       local c, domain, path, paths, vals, s
       every s := response.gen_headers("set-cookie") do {
          if (c := parse_cookie_string(s)) & valid_cookie(c) then {
-            domain := map(\c.domain | string(request.url.get_host()))
+            domain := Text.lower(\c.domain | string(request.url.get_host()))
             (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
             path := c.path
             if /path then {
@@ -670,7 +670,7 @@ $endif
                }
             }
             (vals := member(paths, path)) | insert(paths, path, vals := table())
-            insert(vals, map(c.name), c)
+            insert(vals, Text.lower(c.name), c)
          }
       }
    end
@@ -695,7 +695,7 @@ $endif
 
    private create_cookie_header()
       local s, e, f, domain, path, c, now, ver, t
-      domain := string(map(request.url.get_host()))
+      domain := string(Text.lower(request.url.get_host()))
       path := string(request.url.get_file())
       now := Time()
       s := ""
@@ -896,7 +896,7 @@ $endif
       #
       # Close if told to do so, or if keep_alive_flag is unset
       #
-      if /keep_alive_flag | map(response.gen_headers("connection")) == "close" then
+      if /keep_alive_flag | Text.lower(response.gen_headers("connection")) == "close" then
          close_connection()
    end
 
@@ -1010,8 +1010,8 @@ $endif
       # even without Accept-encoding=gzip.
       #
       if \gzip_flag &
-         trim(map(response.get_first_header("content-encoding"))) == ("gzip" | "x-gzip") &
-         not endswith(map(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
+         trim(Text.lower(response.get_first_header("content-encoding"))) == ("gzip" | "x-gzip") &
+         not endswith(Text.lower(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
       {
          inflater_stream := FilterOutputStream(request.output_stream, "gunzip", ["-c"]) | 
             return whyf_dont_retry("Couldn't open inflater stream: %w")
@@ -1039,7 +1039,7 @@ $endif
       #
       # Read the data.
       #
-      return if trim(map(response.get_first_header("transfer-encoding"))) == "chunked" then
+      return if trim(Text.lower(response.get_first_header("transfer-encoding"))) == "chunked" then
          read_chunked()
       else if /length then
          read_to_eof()

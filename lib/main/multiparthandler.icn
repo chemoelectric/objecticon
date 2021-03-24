@@ -4,11 +4,11 @@
 
 package mail
 
-import util(error)
+import lang, util(error)
 
 class MultipartHandler(TypeHandler)
    public override can_handle(ct)
-      succeed map(ct.get_type()) == "multipart"
+      succeed Text.lower(ct.get_type()) == "multipart"
    end
    
    public override convert_to_object(m, data)

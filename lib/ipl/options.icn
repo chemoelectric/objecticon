@@ -79,7 +79,7 @@ class Opt()
             else
                ph := case convert of {
                   real|integer|numeric|ucs|text|string|cset :
-                     map(Proc.get_name(convert), &lcase, &ucase)
+                     Text.upper(Proc.get_name(convert))
                   flag: "FLAG"
                   default: "VALUE"
                }
@@ -479,7 +479,7 @@ end
 package procedure capitalize_cnv(f)
    local s
    s := Proc.get_name(f)
-   s[1] := map(s[1], &lcase, &ucase)
+   s[1] := Text.upper(s[1])
    return s
 end
 

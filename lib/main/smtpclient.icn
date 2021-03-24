@@ -4,7 +4,7 @@
 
 package mail
 
-import net, util
+import net, util, lang
 
 class SmtpClient(NetClient)
    private static const 
@@ -166,7 +166,7 @@ class SmtpClient(NetClient)
       send_first_header(l, m, "Encrypted")
 
       every k := m.gen_header_keys() do
-         member(RFC822_HEADERS, map(k)) | send_headers_list(l, m, k)
+         member(RFC822_HEADERS, Text.lower(k)) | send_headers_list(l, m, k)
 
       return write_lines(l)
    end

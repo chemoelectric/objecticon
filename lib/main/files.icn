@@ -1088,11 +1088,11 @@ package class UnixFileSystem(FileSystem)
 
 $if _DARWIN
    public override filepath_standard_case(fp)
-      return FilePath.from_list(List{ map(!fp.l) })
+      return FilePath.from_list(List{ Text.lower(!fp.l) })
    end
 
    public override standard_case(s)
-      return map(s)
+      return Text.lower(s)
    end
 $else
    public override filepath_standard_case(fp)
@@ -1222,7 +1222,7 @@ package class WindowsFileSystem(FileSystem)
       local e, r
       # Check for named pipe.  See
       #   https://docs.microsoft.com/en-gb/windows/win32/ipc/pipe-names
-      if filepath_is_unc(fp) & map(fp.l[3]) == "pipe" then
+      if filepath_is_unc(fp) & Text.lower(fp.l[3]) == "pipe" then
          return fp
       r := []
       every e := !fp.l do {
@@ -1243,11 +1243,11 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public override filepath_standard_case(fp)
-      return FilePath.from_list(List{ map(!fp.l) })
+      return FilePath.from_list(List{ Text.lower(!fp.l) })
    end
 
    public override standard_case(s)
-      return map(s)
+      return Text.lower(s)
    end
 
    public override filepath_absolute(fp, other)
@@ -1301,7 +1301,7 @@ package class WindowsFileSystem(FileSystem)
    public override get_program_name()
       local s
       s := FilePath(&progname).get(-1)
-      if map(s[-4:0]) == ".exe" then
+      if Text.lower(s[-4:0]) == ".exe" then
          s[-4:0] := ""
       return s
    end

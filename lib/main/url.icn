@@ -70,7 +70,7 @@ class URL(ObjectOutput)
    # Set the scheme field.
    #
    public set_scheme(x)
-      self.scheme := map(x)
+      self.scheme := Text.lower(x)
       link
    end
 
@@ -322,7 +322,7 @@ class URL(ObjectOutput)
    #
    public new(s)
       s ? {
-         scheme := 1(map(tab(many(SCHEME_CHAR))), =":") | return error("Scheme required")
+         scheme := 1(Text.lower(tab(many(SCHEME_CHAR))), =":") | return error("Scheme required")
          if ="//" then {
             userinfo := 1(tab(upto('@/?#')\1), ="@")
             host := if ="[" then
@@ -441,7 +441,7 @@ class URL(ObjectOutput)
    public static from_parts(scheme, userinfo, host, port, path, query, fragment)
       local i
       i := Class.create_instance()
-      i.scheme := map(scheme)
+      i.scheme := Text.lower(scheme)
       i.userinfo := /userinfo | need_text(userinfo)
       i.host := /host | need_text(host)
       i.port := /port | need_integer(port, 0)
@@ -618,10 +618,10 @@ class URL(ObjectOutput)
    #
    public normal()
       local s, u, h, p, q, f
-      s := string(map(scheme))
+      s := string(Text.lower(scheme))
       if \host then {
          u := re_encode(\userinfo, USERINFO_CHAR)
-         h := if upto(':', host) then map(host) else re_encode(map(host), HOST_CHAR)
+         h := if upto(':', host) then Text.lower(host) else re_encode(Text.lower(host), HOST_CHAR)
          p := strip_dot_dirs(re_encode(path, PATH_CHAR))
       } else
          p := re_encode(path, PATH_CHAR)

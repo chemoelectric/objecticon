@@ -667,7 +667,7 @@ end
 procedure draw_string_ex(win, x, y, s, k)
    local i
    win.draw_string(x, y, s)
-   if i := upto(\k, map(s)) then {
+   if i := upto(\k, Text.lower(s)) then {
       win.fill_rectangle(x + win.text_width(s[1:i]),
                          y + win.get_font_descent() - Gui.FINE_WIDTH,
                          win.text_width(s[i]), Gui.FINE_WIDTH)

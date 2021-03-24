@@ -1,6 +1,6 @@
 package mail
 
-import util, ipl.base64
+import util, lang, ipl.base64
 
 class RFC1522()
    public static const
@@ -62,7 +62,7 @@ class RFC1522()
 
             t := tab(k)
             res ||:= pre
-            case map(encoding) of {
+            case Text.lower(encoding) of {
                "b": {
                   res ||:= base64encode(t)
                }
@@ -123,13 +123,13 @@ class RFC1522()
             encoding := tab(upto('?')) | return error("Badly formed encoded word")
             move(1)
             data := tab(upto('?')) | return error("Badly formed encoded word")
-            t := case map(encoding) of {
+            t := case Text.lower(encoding) of {
                "b": base64decode(data) | fail
                "q": q_decode(data) | fail
                default:
                   return error("Unknown content word encoding: " || encoding)
             }
-            if map(charset) == "utf-8" then
+            if Text.lower(charset) == "utf-8" then
                t := ucs(t) | return error("Encoded word data not proper UTF-8")
             res ||:= t
             ="?="  | return error("Encoded word did not end with ?=")

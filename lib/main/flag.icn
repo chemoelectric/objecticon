@@ -1,5 +1,7 @@
 package util
 
+import lang
+
 #
 # Convert to flag value (&yes/&no)
 #
@@ -7,7 +9,7 @@ procedure flag(s)
    # Flag values just return themselves
    return if s === (&yes | &no) then
       s
-   else case  map(string(s)) of {
+   else case Text.lower(string(s)) of {
       "y" | "&yes" | "yes" | "t" | "true" | "on" | "1" : &yes
       "n" | "&no" | "no" | "f" | "false" | "off" | "0" : &no
    }

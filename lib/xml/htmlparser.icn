@@ -23,7 +23,7 @@ package class Tag()
    # leading "/" should be omitted.
    #
    public set_name(s) 
-      name := map(s, &lcase, &ucase)
+      name := Text.upper(s)
       link
    end
 
@@ -47,7 +47,7 @@ package class Tag()
    # Set an attribute for this tag.
    #
    public set_attribute(key, value)
-      insert(attributes, map(key, &lcase, &ucase), value)
+      insert(attributes, Text.upper(key), value)
       link
    end
 
@@ -463,7 +463,7 @@ class HtmlParser()
                value := remove_entities(s)
             } else
                # See http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.3.4.2
-               value := map(key)
+               value := Text.lower(key)
 
             res.set_attribute(key, value)
          }

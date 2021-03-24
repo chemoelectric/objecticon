@@ -1318,7 +1318,7 @@ class Terminal(TabItem, VtUI)
       s := ucs(s) | return error("Not a ucs string")
       s ? if s := tab(upto('=')) then
          param := (move(1), tab(0))
-      case map(string(s)) of {
+      case Text.lower(string(s)) of {
          "sh" : {
             check_new(s) | fail
             set_shell(param)
@@ -1787,7 +1787,7 @@ class Terminal(TabItem, VtUI)
       s := string(s)
       return (s[1] == "x" & char(Format.string_to_int(s[2:0]))) |
              (s[1] == "u" & uchar(Format.string_to_int(s[2:0]))) |
-             (s := map(s, &lcase, &ucase) & not match("MOD_", s) &
+             (s := Text.upper(s) & not match("MOD_", s) &
                        c := Class.getq(Key, s) & type(c) == "integer" & c)
    end
 

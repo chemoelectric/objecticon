@@ -4,7 +4,7 @@
 
 package mail
 
-import util(error)
+import lang, util(error)
 
 #
 # Handles the base64 encoding of a message
@@ -22,7 +22,7 @@ class Base64Handler(EncodingHandler)
    end
 
    public override can_handle(enc)
-      succeed map(enc) == "base64"
+      succeed Text.lower(enc) == "base64"
    end
 
    public override decode_data(m, data)

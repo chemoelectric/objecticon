@@ -23,7 +23,7 @@ package ipl.printf
 import
    io(stop, FileStream, need_Stream),
    util(Format, need_integer, need_text, need_real, need_list),
-   lang(to_string),
+   lang(Text,to_string),
    ipl.pdco(String)
 
 #
@@ -177,7 +177,7 @@ package procedure one(args)
    v := case string(conv) of {
       "d": decimal(a, prec, flag)
       "s": str(a, prec)
-      "x": map(intstr(a, prec, flag))
+      "x": Text.lower(intstr(a, prec, flag))
       "X": intstr(a, prec, flag)
       "o": intstr(a, prec, flag, 8)
       "b": intstr(a, prec, flag, 2)

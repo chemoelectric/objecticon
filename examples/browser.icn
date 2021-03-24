@@ -1566,7 +1566,7 @@ class BrowserTab(TabItem, BrowserUI)
             f := subst.file &
             Files.access(f) &
             not Files.is_directory(f) &
-            not (string(map(Files.get_extension(f))) ==
+            not (Text.lower(Files.get_extension(f)) ==
                  ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
             de := Mime.gen_desktop_entries_for_path(f)
          then {
@@ -1654,7 +1654,7 @@ $endif
       local data, ct
       /fres.err | fail
       data := fres.data
-      if (map(Files.get_extension(fres.fname)) == "ico") | 
+      if (Text.lower(Files.get_extension(fres.fname)) == "ico") | 
          (ct := \fres.content_type &
           ct.type == "image" &
           ct.subtype == "x-icon") then

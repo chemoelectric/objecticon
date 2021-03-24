@@ -8,6 +8,7 @@ import
    ipl.functional,
    util,
    io,
+   lang,
    ipl.strings
 
 class FileDialogPos()
@@ -253,7 +254,7 @@ class FileDialog(Dialog)
             f := loaded_dir_path.child(flist.object_get_cursor().name).str()
       }
       if \img then {
-         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
+         if endswith(Text.lower(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
             img.set_image(f)
          else
             img.clear_image()
