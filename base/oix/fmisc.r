@@ -1597,20 +1597,63 @@ function lang_Text_caseless_compare(s1, s2)
       if (is:string(s1) && is:string(s2))
           return C_integer caseless_lexcmp(&s1, &s2);
       if (is:ucs(s1) && is:ucs(s2))
-          return C_integer caseless_lexcmp(&UcsBlk(s1).utf8, &UcsBlk(s2).utf8);
+          return C_integer caseless_ucs_lexcmp(&UcsBlk(s1), &UcsBlk(s2));
       return C_integer anycmp(&s1, &s2);
    }
 end
 
 function lang_Text_consistent_compare(s1, s2)
    body {
+      int i;
       if (EqlDesc(s1,s2))
           return C_integer Equal;
-      if (is:string(s1) && is:string(s2))
-          return C_integer consistent_lexcmp(&s1, &s2);
-      if (is:ucs(s1) && is:ucs(s2))
-          return C_integer consistent_lexcmp(&UcsBlk(s1).utf8, &UcsBlk(s2).utf8);
+      if (is:string(s1) && is:string(s2)) {
+          i = caseless_lexcmp(&s1, &s2);
+          if (i == Equal)
+              i = lexcmp(&s1, &s2);
+          return C_integer i;
+      }
+      if (is:ucs(s1) && is:ucs(s2)) {
+          i = caseless_ucs_lexcmp(&UcsBlk(s1), &UcsBlk(s2));
+          if (i == Equal)
+              i = lexcmp(&s1, &s2);
+          return C_integer i;
+      }
       return C_integer anycmp(&s1, &s2);
+   }
+end
+
+function lang_Text_caseless_cset(x, t)
+   if !cnv:cset(x) then 
+      runerr(104, x)
+   body {
+       struct rangeset *rs;
+       struct b_cset *blk;
+       word i, j, from, to;
+       int c, fl;
+       fl = is:string(t);
+       rs = init_rangeset();
+       for (i = 0; i < CsetBlk(x).n_ranges; ++i) {
+           from = CsetBlk(x).range[i].from;
+           to = CsetBlk(x).range[i].to;
+           for (j = from; j <= to; ++j) {
+               add_char(rs, j);
+               if (!fl || j < 128) {
+                   c = oi_case_misc(j);
+                   if (j != c)
+                       add_char(rs, c);
+                   c = oi_towlower(j);
+                   if (j != c)
+                       add_char(rs, c);
+                   c = oi_towupper(j);
+                   if (j != c)
+                       add_char(rs, c);
+               }
+           }
+       }
+       blk = rangeset_to_block(rs);
+       free_rangeset(rs);
+       return cset(blk);
    }
 end
 
@@ -1651,7 +1694,7 @@ function lang_Text_create_cset(x[n])
                  }
              }
              if (from != -1)
-                 add_range(rs, from, from);
+                 add_char(rs, from);
              ++i;
          } else {
              if (!cnv:C_integer(x[i], from)) {
@@ -1677,7 +1720,7 @@ function lang_Text_create_cset(x[n])
                  add_range(rs, from, to);
                  ++i;
              } else
-                 add_range(rs, from, from);
+                 add_char(rs, from);
          }
      }
      b = rangeset_to_block(rs);
@@ -1779,6 +1822,76 @@ function lang_Text_has_ord(c, x)
     fail;
    }
 end
+
+#begdef caseop(func_name, map_ucs, map_str)
+function func_name(s)
+   if !cnv:string_or_ucs(s) then
+      runerr(129,s)
+   body {
+      if (is:ucs(s)) {
+          tended struct descrip utf8;
+          char buf[MAX_UTF8_SEQ_LEN];
+          word utf8_size, i;
+          char *p, *t;    /* Don't need to be tended */
+          int c, d, n, fl;
+
+          /*
+           * Calculate the result's size
+           */
+          utf8_size = 0;
+          fl = 0;
+          p = StrLoc(UcsBlk(s).utf8);
+          for (i = 0; i < UcsBlk(s).length; ++i) {
+              t = p;
+              c = utf8_iter(&p);
+              d = map_ucs(c);
+              if (c == d)
+                  utf8_size += (p - t);
+              else {
+                  fl = 1;
+                  utf8_size += utf8_seq(d, NULL);
+              }
+          }
+          /*
+           * Check if the source has no chars to be mapped.
+           */
+          if (!fl)
+              return s;
+
+          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8); 
+          p = StrLoc(UcsBlk(s).utf8);
+          for (i = 0; i < UcsBlk(s).length; ++i) {
+              t = p;
+              c = utf8_iter(&p);
+              d = map_ucs(c);
+              if (c == d)
+                  alcstr(t, p - t);
+              else {
+                  n = utf8_seq(d, buf);
+                  alcstr(buf, n);
+              }
+          }
+          return ucs(make_ucs_block(&utf8, UcsBlk(s).length));
+      } else {
+          tended struct descrip result;
+          word i, slen;
+          char *p, *str;   /* Don't need to be tended */
+          slen = StrLen(s);
+          if (slen == 0)
+              return s;
+          MakeStrMemProtect(alcstr(NULL, slen), slen, &result); 
+          str = StrLoc(s);
+          p = StrLoc(result);
+          for (i = 0; i < slen; i++)
+              p[i] = map_str(str[i]);
+          return result;
+      }
+   }
+end
+#enddef
+
+caseop(lang_Text_lower, oi_towlower, oi_tolower)
+caseop(lang_Text_upper, oi_towupper, oi_toupper)
 
 
 "ord(c) - generate the code points in a cset, ucs or string for the range of entries i:j"

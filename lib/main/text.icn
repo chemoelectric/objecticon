@@ -3,10 +3,12 @@ package lang
 import util(need_string, need_cset, need_ucs)
 
 final abstract class Text()
+   #
    # Generate the ranges in a cset, as a sequence of from-to pairs.
    #
    public static native get_ord_range(c)
 
+   #
    # Produce a cset consisting of characters in the range x[1]-x[2],
    # x[3]-x[4] etc.  A list of ranges may also be passed as a
    # parameter.
@@ -14,23 +16,29 @@ final abstract class Text()
    # Fails and sets &why if any of the code point numbers is invalid.
    #
    public static native create_cset(x[])
-
+   
+   #
    # Succeed if the cset c contains the code point x, returning its
    # index in the cset
    #
    public static native has_ord(c, x)
 
+   #
    # Produce a string containing the utf-8 sequence of chars for
    # character i.
    #
    public static native utf8_seq(i)
 
+   #
    # Caseless string comparator function.  This works just like
    # Internal.compare (so no conversions are done), but uses caseless
-   # text comparison.
+   # text comparison.  For ucs, a unicode mapping is used to compare
+   # letters, whilst for strings only the ASCII letters are
+   # considered.
    #
    public static native caseless_compare(s1, s2)
 
+   #
    # A caseless string comparator function with consistent ordering
    # amongst items which compare caselessly equal, so that for example
    # abc, aBc, ABC are always sorted in the same order.  No
@@ -48,6 +56,7 @@ final abstract class Text()
       return
    end
 
+   #
    # Given an initial character, return the number of characters
    # making up a valid utf8 sequence beginning with that character, or
    # fail if it is not a valid initial character.
@@ -67,6 +76,7 @@ final abstract class Text()
       return \utf8_seq_len_arr[ord(ch)\1 + 1]
    end
 
+   #
    # A more liberal way of parsing a utf-8 string than the builtin
    # `ucs` function.  Any errors in the input result in the substitute
    # character (by default U+FFFD) being put into the resulting
@@ -122,13 +132,46 @@ final abstract class Text()
       }
    end
 
+   #
    # Given a cset `c`, produce another cset containing those characters in 
    # positions `i`:`j`.
    #
    public static native slice(c, i, j)
 
+   #
    # Succeed iff `s` is a string composed of ascii characters.  No
    # conversions are performed.
    #
    public static native is_ascii_string(s)
+
+   #
+   # Convert the given string or ucs `s` to lower case.  If `s` is
+   # ucs, then a unicode mapping is used; it is a string then only the
+   # characters in `&ucase` are converted.
+   #
+   public static native lower(s)
+
+   #
+   # Convert the given string or ucs `s` to upper case.  If `s` is
+   # ucs, then a unicode mapping is used; it is a string then only the
+   # characters in `&lcase` are converted.
+   #
+   public static native upper(s)
+
+   #
+   # Expand the given cset so that all letters appear in the result
+   # both in lowercase and uppercase, eg
+   # ~
+   #   Text.caseless_cset('Cat123') -> 'catCAT123'
+   # ~
+   # The result can then be used, for example to do a caseless upto
+   # search.
+   #
+   # The optional parameter `t` can be used to indicate the type the
+   # result will be used with; if `t` is a string, then non-ascii
+   # characters won't be expanded to upper and lower case alternatives
+   # (using a unicode mapping); otherwise they will.  This allows
+   # convenient interaction with the behaviour of `upper` and `lower`.
+   #
+   public static native caseless_cset(c, t)
 end
