@@ -2841,14 +2841,3 @@ int oi_towlower(int c)
     }
     return c;
 }
-
-int oi_case_misc(int c)
-{
-    switch (c) {
-        case 0x1c4: case 0x1c6: return 0x1c5;
-        case 0x1c7: case 0x1c9: return 0x1c8;
-        case 0x1ca: case 0x1cc: return 0x1cb;
-        case 0x1f1: case 0x1f3: return 0x1f2;
-    }
-    return c;
-}

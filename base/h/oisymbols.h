@@ -208,7 +208,6 @@ struct oisymbols {
     int (*oi_tolower)(int c);
     int (*oi_towlower)(int c);
     int (*oi_towupper)(int c);
-    int (*oi_case_misc)(int c);
     char * (*buffstr)(dptr d);
     void (*buffnstr)(dptr d, char **s, ...);
     int (*is_little_endian)(void);

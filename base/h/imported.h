@@ -212,7 +212,6 @@
 #define oi_tolower (*(imported->oi_tolower))
 #define oi_towlower (*(imported->oi_towlower))
 #define oi_towupper (*(imported->oi_towupper))
-#define oi_case_misc (*(imported->oi_case_misc))
 #define buffstr (*(imported->buffstr))
 #define buffnstr (*(imported->buffnstr))
 #define is_little_endian (*(imported->is_little_endian))

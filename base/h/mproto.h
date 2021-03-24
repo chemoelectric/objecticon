@@ -127,7 +127,6 @@ int oi_toupper(int c);
 int oi_tolower(int c);
 int oi_towlower(int c);
 int oi_towupper(int c);
-int oi_case_misc(int c);
 
 extern int over_flow;
 word add(word a, word b);
