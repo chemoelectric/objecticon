@@ -211,15 +211,12 @@ function ssl_SslStream_in(self, i)
            Irunerr(205, i);
 
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        SigPipeProtect(nread = SSL_read(self_ssl->ssl, s, i));
        if (nread <= 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
-
            if (nread < 0 || SSL_get_error(self_ssl->ssl, nread) != SSL_ERROR_ZERO_RETURN) {
                io_set_whyf(self_ssl, "SSL_read", nread);
                fail;
@@ -228,9 +225,9 @@ function ssl_SslStream_in(self, i)
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
 
        return string(nread, s);
    }
