@@ -917,7 +917,7 @@ static int cnv_cset(struct literal *s)
             rs = init_rangeset();
             while (p < e) {
                 int i = utf8_iter(&p);
-                add_range(rs, i, i);
+                add_char(rs, i);
             }
             s->type = CSET;
             s->u.rs = rs;
@@ -934,7 +934,7 @@ static int cnv_cset(struct literal *s)
             i = s->u.str.len;
             while (i--) {
                 int j = *p++ & 0xff;
-                add_range(rs, j, j);
+                add_char(rs, j);
             }
             s->type = CSET;
             s->u.rs = rs;

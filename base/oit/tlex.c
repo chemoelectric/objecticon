@@ -716,7 +716,7 @@ static struct toktab *getcset(int ac, int *cc)
                 if (!esc_flag && c == '-')
                     ++state;
                 else {
-                    add_range(cs, prev, prev);
+                    add_char(cs, prev);
                     prev = c;
                 }
                 break;
@@ -729,7 +729,7 @@ static struct toktab *getcset(int ac, int *cc)
     }
     if (c == '\'') {
         if (state == 1) {
-            add_range(cs, prev, prev);
+            add_char(cs, prev);
         } else if (state == 2)
             lexfatal("Incomplete cset range");
         *cc = ' ';
