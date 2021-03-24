@@ -31,7 +31,7 @@ function detab(s,i[n])
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          word utf8_size, in_count, out_count;
+          word utf8_len, in_count, out_count;
           char *in_p;
 
           /*
@@ -42,7 +42,7 @@ function detab(s,i[n])
               interval = 8;
           tablst = i;
           col = 1;
-          in_count = out_count = utf8_size = 0;
+          in_count = out_count = utf8_len = 0;
           in_p = StrLoc(UcsBlk(s).utf8);
           for (in_count = 0; in_count < UcsBlk(s).length; ++in_count) {
               char *pp = in_p;
@@ -52,12 +52,12 @@ function detab(s,i[n])
                   target = col;
                   nxttab(&target, &tablst, endlst, &last, &interval);
                   while (col < target) {
-                      utf8_size++;
+                      utf8_len++;
                       out_count++;
                       col++;
                   }
               } else {
-                  utf8_size += in_p - pp;
+                  utf8_len += in_p - pp;
                   out_count++;
                   switch (ch) {
                       case '\b':
@@ -87,7 +87,7 @@ function detab(s,i[n])
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
+          MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
 
           /*
            * Do the copy
@@ -259,7 +259,7 @@ function entab(s,i[n])
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          word utf8_size, in_count, out_count;
+          word utf8_len, in_count, out_count;
           char *in_p;
 
           /*
@@ -271,7 +271,7 @@ function entab(s,i[n])
           tablst = i;
           col = 1;
           target = 0;
-          in_count = out_count = utf8_size = 0;
+          in_count = out_count = utf8_len = 0;
           in_p = StrLoc(UcsBlk(s).utf8);
           for (in_count = 0; in_count < UcsBlk(s).length; ++in_count) {
               char *pp = in_p;
@@ -288,7 +288,7 @@ function entab(s,i[n])
                           nxttab(&nt1, &tablst, endlst, &last, &interval);
                           if (nt1 > target) {
                               /* keep space to avoid 1-col tab then spaces */
-                              utf8_size++;
+                              utf8_len++;
                               out_count++;
                               col++;	
                               nt = nt1;
@@ -297,24 +297,24 @@ function entab(s,i[n])
                       while (nt <= target)  {
                           inserted = 1;
                           /* Add tab */
-                          utf8_size++;
+                          utf8_len++;
                           out_count++;
                           col = nt;
                           nxttab(&nt, &tablst, endlst, &last, &interval);
                       }
                       while (col++ < target) {
                          /* complete gap with spaces */
-                          utf8_size++;
+                          utf8_len++;
                           out_count++;
                       }
                   } else {
                       /* Add space */
-                      utf8_size++;
+                      utf8_len++;
                       out_count++;
                   }
                   col = target;
               } else {
-                  utf8_size += in_p - pp;
+                  utf8_len += in_p - pp;
                   out_count++;
                   switch (ch) {
                       case '\b':
@@ -349,7 +349,7 @@ function entab(s,i[n])
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8); 
+          MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8); 
 
           /*
            * Do the copy
@@ -655,8 +655,8 @@ function map(s1,s2,s3)
           static struct staticstr buf = {16 * sizeof(struct mappair)};
           static struct mappair *maptab = 0;
           static word maptab_len = 0;
-          char *p1, *p2, *p3;
-          word utf8_size, i;
+          char *r, *p1, *p2, *p3;
+          word utf8_len, i;
           int fl;
 
           /*
@@ -713,10 +713,40 @@ function map(s1,s2,s3)
           if (maptab_len == 0 || UcsBlk(s1).length == 0)
               return s1;
 
+          utf8_len = 0;
+          if (AmpleForUtf8(UcsBlk(s1).length))
+              r = strfree;
+          else {
+              /*
+               * Calculate the result's exact size
+               */
+              p1 = StrLoc(UcsBlk(s1).utf8);
+              fl = 0;
+              for (i = 0; i < UcsBlk(s1).length; ++i) {
+                  char *t = p1;
+                  int ch = utf8_iter(&p1);
+                  struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
+                                               sizeof(struct mappair), 
+                                               (BSearchFncCast)mappair_search_compare);
+                  if (mp) {
+                      utf8_len += mp->utf8_len;
+                      fl = 1;
+                  } else
+                      utf8_len += p1 - t;
+              }
+
+              /*
+               * Check if the source has no chars to be mapped.
+               */
+              if (!fl)
+                  return s1;
+
+              MemProtect(r = reserve(Strings, utf8_len));
+          }
+
           /*
-           * Calculate the result's size
+           * Build the result
            */
-          utf8_size = 0;
           p1 = StrLoc(UcsBlk(s1).utf8);
           fl = 0;
           for (i = 0; i < UcsBlk(s1).length; ++i) {
@@ -726,39 +756,24 @@ function map(s1,s2,s3)
                                            sizeof(struct mappair), 
                                            (BSearchFncCast)mappair_search_compare);
               if (mp) {
-                  utf8_size += mp->utf8_len;
+                  alcstr(mp->utf8, mp->utf8_len);
                   fl = 1;
               } else
-                  utf8_size += p1 - t;
-          }
-
-          /*
-           * Check if the source has no chars to be mapped.
-           */
-          if (!fl)
-              return s1;
-
-          /*
-           * Make a descriptor for the result's utf8 string.
-           */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8); 
-
-          /*
-           * Build the result
-           */
-          p1 = StrLoc(UcsBlk(s1).utf8);
-          for (i = 0; i < UcsBlk(s1).length; ++i) {
-              char *t = p1;
-              int ch = utf8_iter(&p1);
-              struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
-                                           sizeof(struct mappair), 
-                                           (BSearchFncCast)mappair_search_compare);
-              if (mp)
-                  alcstr(mp->utf8, mp->utf8_len);
-              else
                   alcstr(t, p1 - t);
           }
 
+          /*
+           * Check if the source had no chars to be mapped.
+           */
+          if (!fl) {
+              dealcstr(r);
+              return s1;
+          }
+
+          if (utf8_len && utf8_len != (strfree - r))
+              syserr("map() utf8_len calculation was wrong");
+
+          MakeStr(r, strfree - r, &utf8); 
           return ucs(make_ucs_block(&utf8, UcsBlk(s1).length));
       } else {
           tended struct descrip result;
@@ -872,7 +887,7 @@ function repl(s,n)
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          word utf8_size;
+          word utf8_len;
 
           /*
            * Return an empty string if n is 0 or if s is the empty string.
@@ -883,14 +898,14 @@ function repl(s,n)
           /*
            * Make sure the resulting string will not be too long.
            */
-          utf8_size = mul(n, StrLen(UcsBlk(s).utf8));
+          utf8_len = mul(n, StrLen(UcsBlk(s).utf8));
           if (over_flow) 
               Irunerr(205,n);
 
           /*
            * Make a descriptor for the replicated utf8 string.
            */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
+          MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
 
           /*
            * Fill the allocated area with copies of s.
@@ -1003,7 +1018,7 @@ function left(s1,n,s2)
          Irunerr(205,n);
 
       if (is:ucs(s1)) {
-          word utf8_size;
+          word utf8_len;
           tended struct descrip utf8, odd_utf8;
 
           if (!def:ucs(s2, *blank_ucs, s2))
@@ -1036,14 +1051,14 @@ function left(s1,n,s2)
                       odd_len,
                       &odd_utf8);
 
-          utf8_size = StrLen(UcsBlk(s1).utf8) + 
+          utf8_len = StrLen(UcsBlk(s1).utf8) + 
               StrLen(odd_utf8) +
               StrLen(UcsBlk(s2).utf8) * whole_len;
 
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
+          MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
           alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
           alcstr_repl(&UcsBlk(s2).utf8, whole_len);
@@ -1110,7 +1125,7 @@ function right(s1,n,s2)
          Irunerr(205,n);
 
       if (is:ucs(s1)) {
-          word utf8_size;
+          word utf8_len;
           tended struct descrip utf8, odd_utf8;
 
           if (!def:ucs(s2, *blank_ucs, s2))
@@ -1145,14 +1160,14 @@ function right(s1,n,s2)
                       odd_len,
                       &odd_utf8);
 
-          utf8_size = StrLen(UcsBlk(s1).utf8) + 
+          utf8_len = StrLen(UcsBlk(s1).utf8) + 
               StrLen(odd_utf8) +
               StrLen(UcsBlk(s2).utf8) * whole_len;
 
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
+          MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
           alcstr_repl(&UcsBlk(s2).utf8, whole_len);
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
           alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
@@ -1218,7 +1233,7 @@ function center(s1,n,s2)
          Irunerr(205,n);
 
       if (is:ucs(s1)) {
-          word utf8_size;
+          word utf8_len;
           tended struct descrip utf8, odd_left_utf8, odd_right_utf8;
 
           if (!def:ucs(s2, *blank_ucs, s2))
@@ -1267,14 +1282,14 @@ function center(s1,n,s2)
                       odd_right_len,
                       &odd_right_utf8);
 
-          utf8_size = StrLen(UcsBlk(s1).utf8) + 
+          utf8_len = StrLen(UcsBlk(s1).utf8) + 
               StrLen(odd_left_utf8) + StrLen(odd_right_utf8) +
               StrLen(UcsBlk(s2).utf8) * (whole_left_len + whole_right_len);
 
           /*
            * Make a descriptor for the result's utf8 string.
            */
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8);
+          MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
 
           alcstr_repl(&UcsBlk(s2).utf8, whole_left_len);
           alcstr(StrLoc(odd_left_utf8), StrLen(odd_left_utf8));

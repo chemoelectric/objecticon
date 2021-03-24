@@ -1471,7 +1471,7 @@ int cset_range_of_pos(struct b_cset *b, word pos)
  */
 struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
 {
-    char buf[MAX_UTF8_SEQ_LEN];
+    char *r, buf[MAX_UTF8_SEQ_LEN];
     tended struct b_cset *b = b0;
     tended struct descrip utf8;
     int i, first;
@@ -1483,28 +1483,31 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
     first = cset_range_of_pos(b, pos);  /* The first row of interest */
     --pos;  /* Make zero-based */
 
-    /*
-     * Calcuate utf8 length
-     */
-
-    l0 = len;
-    i = first;
-    p0 = pos - b->range[i].index;   /* Offset into first range */
     utf8_len = 0;
-    for (; l0 > 0 && i < b->n_ranges; ++i) {
-        from = b->range[i].from;
-        to = b->range[i].to;
-        for (j = p0 + from; l0 > 0 && j <= to; ++j) {
-            utf8_len += utf8_seq(j, 0);
-            --l0;
+    if (AmpleForUtf8(len))
+        r = strfree;
+    else {
+        /*
+         * Calcuate exact utf8 length
+         */
+        l0 = len;
+        i = first;
+        p0 = pos - b->range[i].index;   /* Offset into first range */
+        for (; l0 > 0 && i < b->n_ranges; ++i) {
+            from = b->range[i].from;
+            to = b->range[i].to;
+            for (j = p0 + from; l0 > 0 && j <= to; ++j) {
+                utf8_len += utf8_seq(j, 0);
+                --l0;
+            }
+            p0 = 0;
         }
-        p0 = 0;
-    }
-    /* Ensure we found len chars. */
-    if (l0)
-        syserr("cset_to_ucs_block inconsistent parameters");
+        /* Ensure we found len chars. */
+        if (l0)
+            syserr("cset_to_ucs_block inconsistent parameters");
 
-    MakeStrMemProtect(reserve(Strings, utf8_len), utf8_len, &utf8);
+        MemProtect(r = reserve(Strings, utf8_len));
+    }
 
     /*
      * Same loop again, to build utf8 string.
@@ -1522,7 +1525,13 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
         }
         p0 = 0;
     }
+    /* Ensure we found len chars. */
+    if (l0)
+        syserr("cset_to_ucs_block inconsistent parameters");
+    if (utf8_len && utf8_len != (strfree - r))
+        syserr("cset_to_ucs_block utf8_len calculation was wrong");
 
+    MakeStr(r, strfree - r, &utf8); 
     return make_ucs_block(&utf8, len);
 }
 
@@ -1623,6 +1632,47 @@ function lang_Text_consistent_compare(s1, s2)
    }
 end
 
+static void misc_case(struct rangeset *rs, int c)
+{
+   switch (c) {
+      case 0x0049: add_char(rs, 0x0131); break;
+      case 0x0053: add_char(rs, 0x017F); break;
+      case 0x0069: add_char(rs, 0x0130); break;
+      case 0x006B: add_char(rs, 0x212A); break;
+      case 0x00DF: add_char(rs, 0x1E9E); break;
+      case 0x00E5: add_char(rs, 0x212B); break;
+      case 0x01C4: add_char(rs, 0x01C5); break;
+      case 0x01C6: add_char(rs, 0x01C5); break;
+      case 0x01C7: add_char(rs, 0x01C8); break;
+      case 0x01C9: add_char(rs, 0x01C8); break;
+      case 0x01CA: add_char(rs, 0x01CB); break;
+      case 0x01CC: add_char(rs, 0x01CB); break;
+      case 0x01F1: add_char(rs, 0x01F2); break;
+      case 0x01F3: add_char(rs, 0x01F2); break;
+      case 0x0392: add_char(rs, 0x03D0); break;
+      case 0x0395: add_char(rs, 0x03F5); break;
+      case 0x0398: add_char(rs, 0x03D1); break;
+      case 0x0399: add_char(rs, 0x1FBE); add_char(rs, 0x0345); break;
+      case 0x039A: add_char(rs, 0x03F0); break;
+      case 0x039C: add_char(rs, 0x00B5); break;
+      case 0x03A0: add_char(rs, 0x03D6); break;
+      case 0x03A1: add_char(rs, 0x03F1); break;
+      case 0x03A3: add_char(rs, 0x03C2); break;
+      case 0x03A6: add_char(rs, 0x03D5); break;
+      case 0x03B8: add_char(rs, 0x03F4); break;
+      case 0x03C9: add_char(rs, 0x2126); break;
+      case 0x0412: add_char(rs, 0x1C80); break;
+      case 0x0414: add_char(rs, 0x1C81); break;
+      case 0x041E: add_char(rs, 0x1C82); break;
+      case 0x0421: add_char(rs, 0x1C83); break;
+      case 0x0422: add_char(rs, 0x1C85); add_char(rs, 0x1C84); break;
+      case 0x042A: add_char(rs, 0x1C86); break;
+      case 0x0462: add_char(rs, 0x1C87); break;
+      case 0x1E60: add_char(rs, 0x1E9B); break;
+      case 0xA64A: add_char(rs, 0x1C88); break;
+   }
+}
+
 function lang_Text_caseless_cset(x, t)
    if !cnv:cset(x) then 
       runerr(104, x)
@@ -1638,10 +1688,15 @@ function lang_Text_caseless_cset(x, t)
            to = CsetBlk(x).range[i].to;
            for (j = from; j <= to; ++j) {
                add_char(rs, j);
-               if (!fl || j < 128) {
-                   c = oi_case_misc(j);
+               if (fl) {
+                   c = oi_tolower(j);
                    if (j != c)
                        add_char(rs, c);
+                   c = oi_toupper(j);
+                   if (j != c)
+                       add_char(rs, c);
+               } else {
+                   misc_case(rs, j);
                    c = oi_towlower(j);
                    if (j != c)
                        add_char(rs, c);
@@ -1831,46 +1886,59 @@ function func_name(s)
       if (is:ucs(s)) {
           tended struct descrip utf8;
           char buf[MAX_UTF8_SEQ_LEN];
-          word utf8_size, i;
-          char *p, *t;    /* Don't need to be tended */
+          word utf8_len, i;
+          char *r, *p, *t;    /* Don't need to be tended */
           int c, d, n, fl;
 
-          /*
-           * Calculate the result's size
-           */
-          utf8_size = 0;
+          utf8_len = 0;
+          if (AmpleForUtf8(UcsBlk(s).length))
+              r = strfree;
+          else {
+              /*
+               * Calculate the result's exact size
+               */
+              fl = 0;
+              p = StrLoc(UcsBlk(s).utf8);
+              for (i = 0; i < UcsBlk(s).length; ++i) {
+                  t = p;
+                  c = utf8_iter(&p);
+                  d = map_ucs(c);
+                  if (c == d)
+                      utf8_len += (p - t);
+                  else {
+                      fl = 1;
+                      utf8_len += utf8_seq(d, NULL);
+                  }
+              }
+              /*
+               * Check if the source has no chars to be mapped.
+               */
+              if (!fl)
+                  return s;
+              MemProtect(r = reserve(Strings, utf8_len));
+          }
+
           fl = 0;
           p = StrLoc(UcsBlk(s).utf8);
           for (i = 0; i < UcsBlk(s).length; ++i) {
               t = p;
               c = utf8_iter(&p);
               d = map_ucs(c);
-              if (c == d)
-                  utf8_size += (p - t);
-              else {
-                  fl = 1;
-                  utf8_size += utf8_seq(d, NULL);
-              }
-          }
-          /*
-           * Check if the source has no chars to be mapped.
-           */
-          if (!fl)
-              return s;
-
-          MakeStrMemProtect(reserve(Strings, utf8_size), utf8_size, &utf8); 
-          p = StrLoc(UcsBlk(s).utf8);
-          for (i = 0; i < UcsBlk(s).length; ++i) {
-              t = p;
-              c = utf8_iter(&p);
-              d = map_ucs(c);
-              if (c == d)
+              if (c == d) {
                   alcstr(t, p - t);
-              else {
+              } else {
+                  fl = 1;
                   n = utf8_seq(d, buf);
                   alcstr(buf, n);
               }
           }
+          if (!fl) {
+              dealcstr(r);
+              return s;
+          }
+          if (utf8_len && utf8_len != (strfree - r))
+              syserr("case conversion utf8_len calculation was wrong");
+          MakeStr(r, strfree - r, &utf8); 
           return ucs(make_ucs_block(&utf8, UcsBlk(s).length));
       } else {
           tended struct descrip result;

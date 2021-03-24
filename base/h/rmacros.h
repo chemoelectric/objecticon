@@ -129,6 +129,12 @@
 #define StrMemcmp(p, s) (memcmp(p, StrLoc(s), StrLen(s)))
 
 /*
+ * Check whether the string region has sufficient space remaining for
+ * n UTF-8 characters of the maximum length.
+ */
+#define AmpleForUtf8(n) (UDiffPtrs(strend, strfree) / MAX_UTF8_SEQ_LEN >= (n))
+
+/*
  * Macros for testing whether a descriptor is a large integer (stored
  * in a block) or a C integer (stored in the descriptor).
  */
