@@ -107,7 +107,7 @@ union block     *hgnext         (union block*b,struct hgstate*s,union block *e);
 union block     *hmake          (int tcode,word nslots,word nelem);
 int             lexcmp          (dptr dp1,dptr dp2);
 int             caseless_lexcmp       (dptr dp1, dptr dp2);
-int             consistent_lexcmp       (dptr dp1, dptr dp2);
+int             caseless_ucs_lexcmp    (struct b_ucs *b1, struct b_ucs *b2);
 union block     **memb          (union block *pb,dptr x,uword hn, int *res);
 void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
 void            outimage        (FILE *f,dptr dp,int noimage);
