@@ -18,8 +18,10 @@ static word get_ucs_n_slots(struct b_ucs *b);
 "char(i) - produce a string consisting of character i."
 
 function char(i)
-   if !cnv:C_integer(i) then
+   if !cnv:C_integer(i) then {
+      if cnv : integer(i) then body { fail; }     /* Fail on out of word range */
       runerr(101,i)
+   }
    body {
       if (i < 0 || i > 255)
           fail;
@@ -1285,8 +1287,12 @@ struct b_ucs *make_one_char_ucs_block(int i)
     int n;
     if (i < 0 || i > MAX_CODE_POINT)
         syserr("Bad codepoint to make_one_char_ucs_block");
-    n = utf8_seq(i, utf8);
-    MakeStrMemProtect(alcstr(utf8, n), n, &s);
+    if (i < 128)
+        MakeStr(&allchars[i], 1, &s);
+    else {
+        n = utf8_seq(i, utf8);
+        MakeStrMemProtect(alcstr(utf8, n), n, &s);
+    }
     return make_ucs_block(&s, 1);
 }
 
@@ -1574,9 +1580,10 @@ void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
 "uchar(i) - produce a ucs consisting of character i."
 
 function uchar(i)
-
-   if !cnv:C_integer(i) then
+   if !cnv:C_integer(i) then {
+      if cnv : integer(i) then body { fail; }     /* Fail on out of word range */
       runerr(101,i)
+   }
    body {
       if (i < 0 || i > MAX_CODE_POINT)
           fail;
@@ -1585,14 +1592,17 @@ function uchar(i)
 end
 
 function lang_Text_utf8_seq(i)
-
-   if !cnv:C_integer(i) then
+   if !cnv:C_integer(i) then {
+      if cnv : integer(i) then body { fail; }     /* Fail on out of word range */
       runerr(101,i)
+   }
    body {
       int n;
       char utf8[MAX_UTF8_SEQ_LEN], *a;
       if (i < 0 || i > MAX_CODE_POINT)
           fail;
+      if (i < 128)
+          return string(1, &allchars[i]);
       n = utf8_seq(i, utf8);
       MemProtect(a = alcstr(utf8, n));
       return string(n, a);
@@ -1786,7 +1796,7 @@ end
 
 function lang_Text_get_ord_range(c)
    if !cnv:cset(c) then
-      runerr(120, c)
+      runerr(104, c)
    body {
        word i;
        for (i = 0; i < CsetBlk(c).n_ranges; ++i) {
@@ -1857,9 +1867,11 @@ end
 
 function lang_Text_has_ord(c, x)
    if !cnv:cset(c) then
-      runerr(120, c)
-   if !cnv:C_integer(x) then
+      runerr(104, c)
+   if !cnv:C_integer(x) then {
+      if cnv : integer(x) then body { fail; }     /* Fail on out of word range */
       runerr(101, x)
+   }
    body {
     int l, r, m;
     struct b_cset *b = &CsetBlk(c);
