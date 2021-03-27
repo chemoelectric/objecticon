@@ -1,6 +1,6 @@
 package parser
 
-import io, util, ipl.scan, datastruct(Entry)
+import io, util, ipl.scan, datastruct(Entry, SortTable)
 
 class Preprocessor(Connectable)
    private
@@ -108,7 +108,7 @@ class Preprocessor(Connectable)
       }
       if_stack := []
       file_stack := []
-      include_set := set(fname)
+      include_set := SortTable(, Files.standard_case_cmp, fname, )
       if_state := &null
       filename := include_name := fname
       line := 0
@@ -313,13 +313,13 @@ class Preprocessor(Connectable)
          "include": {
             if /if_state then {
                if sym := scan_qword() & *sym > 0 & at_end() then {
-                  if member(include_set,sym) then {
-                     err("Circular reference to " || image(sym))
-                  } else {
-                     if new_filename := Files.path_find(sym, 
-                                                        "OI_INCL",
-                                                        FilePath(filename).parent().str()) then
-                     {
+                  if new_filename := Files.path_find(sym, 
+                                                     "OI_INCL",
+                                                     FilePath(filename).parent().str()) then
+                  {
+                     if include_set.member(new_filename) then {
+                        err("Circular reference to " || image(new_filename))
+                     } else {
                         if new_file := open(new_filename) then {
                            every push(file_stack,
                                       encoding|file|filename|
@@ -331,13 +331,13 @@ class Preprocessor(Connectable)
                            line := 0
                            encoding := "ASCII"
                            nest_level := *if_stack
-                           insert(include_set,sym)
+                           include_set.insert(new_filename)
                            return sync_lines()
                         } else
                            err("Cannot open " || image(new_filename) || ": " || &why)
-                     } else
-                        err("Cannot find " || image(sym) || " on path")
-                  }
+                     }
+                  } else
+                     err("Cannot find " || image(sym) || " on path")
                } else {
                   err()
                }
@@ -565,7 +565,7 @@ class Preprocessor(Connectable)
          }
          close(file)
          file := &null
-         delete(include_set,include_name)
+         include_set.delete(include_name)
          (nest_level := pop(file_stack) &
           line := pop(file_stack) &
           include_name := pop(file_stack) &

@@ -921,6 +921,10 @@ static int ldbg(int argc, char **argv)
     return 0;
 }
 
+/*
+ * Given an (interned) string, return the standard-case version of the
+ * string as another interned string.
+ */
 char *intern_standard_case(char *s)
 {
 #if MSWIN32 || OS_DARWIN

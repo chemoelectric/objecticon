@@ -36,6 +36,7 @@
 typedef struct fstruct {		/* input file structure */
    struct fstruct *prev;		/* previous file */
    char *fname;				/* file name */
+   char *sc_fname;			/* standard-cased (original) fname */
    char *encoding;                      /* encoding */
    long lno;				/* line number */
    FILE *fp;				/* stdio file pointer */
@@ -194,13 +195,17 @@ static int ppopen(char *fname, int m4)
    {
    FILE *f;
    infile *fs;
+   char *sc_fname;
 
    fname = intern(fname);
-   for (fs = curfile; fs->fname != NULL; fs = fs->prev)
-      if (fname == fs->fname) {
+   sc_fname = intern_standard_case(fname);
+   for (fs = curfile; fs->sc_fname != NULL; fs = fs->prev) {
+      if (sc_fname == fs->sc_fname) {
          pfatal("Circular include: %s", fname);	/* issue error message */
          return 1;				/* treat as success */
          }
+   }
+
    if (m4)
       f = m4pipe(fname);
    else if (curfile == &nofile && fname == stdin_string) { /* 1st file only */
@@ -215,6 +220,7 @@ static int ppopen(char *fname, int m4)
    fs->prev = curfile;
    fs->fp = f;
    fs->fname = fname;
+   fs->sc_fname = sc_fname;
    fs->encoding = ascii_string;
    fs->lno = 0;
    fs->m4flag = m4;
@@ -888,6 +894,9 @@ static char *setline1(char *s, int report)
         t = pathfind(intern(getdir(curfile->fname)), 0, fname, 0);
         if (t)
             fname = t;
+        /* Note that we leave sc_fname alone deliberately; so that we
+         * check for circular includes against the actual opened
+         * filename. */
         curfile->fname = intern(fname);
     }
     if (code)
