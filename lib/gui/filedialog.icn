@@ -665,13 +665,13 @@ class FileDialog(Dialog)
    end
 
    public save_pos()
-      pos_table.insert((\loaded_dir_path).str(),
+      pos_table.insert((\loaded_dir_path).ucs(),
                        FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
    end
 
    public restore_pos()
       local e, i
-      if e := pos_table.member(loaded_dir_path.str()) then {
+      if e := pos_table.member(loaded_dir_path.ucs()) then {
          if i := Positions{(!dlist.contents).name, e.cursor_name} then
             dlist.set_cursor(i)
          dlist.set_area_y(e.area_y)
