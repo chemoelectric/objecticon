@@ -127,8 +127,13 @@ void normalize(char *file)
             p += 2;
         } else if (*p == '/' && *(p+1) == '/') {  /* Duplicate slashes */
             ++p;
-        } else
+        } else {
+#if OS_DARWIN
+            *q++ = oi_tolower(*p++);
+#else
             *q++ = *p++;
+#endif
+        }
     }
     *q = 0;
 }
