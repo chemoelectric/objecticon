@@ -10,12 +10,12 @@ final class ErrorDetail()
       local l
       l := FilePath(name).get(-1)
       return if Files.access(name, Access.R_OK) then {
-         if FilePath(l).canonical().standard_case().str() == name then
+         if Files.standard_case_cmp(FilePath(l).canonical().str(), name) = 0 then
             l
          else
             name
       } else
-      l
+         l
    end
 
    # Produce a string version of the message in the same form as

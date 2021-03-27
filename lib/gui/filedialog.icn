@@ -9,6 +9,7 @@ import
    util,
    io,
    lang,
+   datastruct(SortTable),
    ipl.strings
 
 class FileDialogPos()
@@ -219,7 +220,7 @@ class FileDialog(Dialog)
          set_use_wheel(&no)
       flist.set_select_mode(if /multiple_files_flag then Select.ONE else Select.MANY)
       synch_file_overlay()
-      pos_table := table()
+      pos_table := SortTable(, Files.standard_case_cmp)
       res := &null
    end
 
@@ -536,7 +537,7 @@ class FileDialog(Dialog)
 
    public on_show_hidden_menu_item(ev)
       if is_live() then {
-         pos_table := table()
+         pos_table.clear()
          refresh_dir() 
       }
       trail.set_show_hidden_files(show_hidden_menu_item.get_status())
@@ -664,14 +665,13 @@ class FileDialog(Dialog)
    end
 
    public save_pos()
-      insert(pos_table,
-             (\loaded_dir_path).standard_case().str(),
-             FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
+      pos_table.insert((\loaded_dir_path).str(),
+                       FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
    end
 
    public restore_pos()
       local e, i
-      if e := member(pos_table, loaded_dir_path.standard_case().str()) then {
+      if e := pos_table.member(loaded_dir_path.str()) then {
          if i := Positions{(!dlist.contents).name, e.cursor_name} then
             dlist.set_cursor(i)
          dlist.set_area_y(e.area_y)
