@@ -1247,7 +1247,7 @@ class SortTable(InsertTableImpl1)
    # This is a constant-time operation that leaves the former tree of
    # nodes intact, but entirely divorced from this table.  The old
    # nodes will remain "linked" to one another, and can still be
-   # operated upon, but without affecting this list.
+   # operated upon, but without affecting this table.
    #
    public override clear()
       sentinel.tree := &null
