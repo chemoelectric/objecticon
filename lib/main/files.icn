@@ -644,6 +644,14 @@ $endif
    public static standard_case(s)
       return FS.standard_case(s)
    end
+
+   #
+   # A comparator function for comparing two filename strings, taking
+   # into account the case-sensitivity of the underlying file system.
+   #
+   public static standard_case_cmp(s1, s2)
+      return FS.standard_case_cmp(s1, s2)
+   end
 end
 
 #
@@ -660,6 +668,7 @@ package abstract class FileSystem()
    public abstract filepath_is_unc(fp)
    public abstract filepath_is_prefix(fp)
    public abstract standard_case(s)
+   public abstract standard_case_cmp(s1, s2)
    public abstract file_to_url(f)
    public abstract url_to_file(u)
    public abstract get_home()
@@ -1094,6 +1103,10 @@ $if _DARWIN
    public override standard_case(s)
       return Text.lower(s)
    end
+
+   public override standard_case_cmp(s1, s2)
+      return Text.caseless_compare(s1, s2)
+   end
 $else
    public override filepath_standard_case(fp)
       return fp
@@ -1101,6 +1114,10 @@ $else
 
    public override standard_case(s)
       return s
+   end
+
+   public override standard_case_cmp(s1, s2)
+      return Internal.compare(s1, s2)
    end
 $endif
 
@@ -1248,6 +1265,10 @@ package class WindowsFileSystem(FileSystem)
 
    public override standard_case(s)
       return Text.lower(s)
+   end
+
+   public override standard_case_cmp(s1, s2)
+      return Text.caseless_compare(s1, s2)
    end
 
    public override filepath_absolute(fp, other)

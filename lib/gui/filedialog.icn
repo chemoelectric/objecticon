@@ -697,7 +697,7 @@ class FileDialog(Dialog)
       restore_pos()
       if /nav then {
          ds := loaded_dir_path.ucs()
-         unless Files.standard_case(ds) == Files.standard_case(history[history_pos]) then {
+         unless Files.standard_case_cmp(ds, history[history_pos]) = 0 then {
             every 1 to history_pos - 1 do
                pop(history)
             push(history, ds)
@@ -707,7 +707,6 @@ class FileDialog(Dialog)
       }
       link
    end
-
    
    public set_lists(l)
       #

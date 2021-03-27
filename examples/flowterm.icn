@@ -2820,7 +2820,7 @@ $endif
          parent_dialog.resynch_pointer()
       }
 
-      unless Files.standard_case(cwd) == Files.standard_case(history[history_pos].dir) then {
+      unless Files.standard_case_cmp(cwd, history[history_pos].dir) = 0 then {
          every 1 to history_pos - 1 do
             pop(history)
          push(history, default.HistoryEntry(cwd))
