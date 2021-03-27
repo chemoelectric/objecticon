@@ -828,7 +828,8 @@ char *abbreviate(char *name)
 {
     char *l = last_pathelem(name);
     if (!access(name, R_OK)) {
-        if (strcmp(canonicalize(l), name))
+        if (strcmp(intern_standard_case(canonicalize(l)),
+                   intern_standard_case(name)))
             return name;
         else
             return l;
@@ -920,3 +921,16 @@ static int ldbg(int argc, char **argv)
     return 0;
 }
 
+char *intern_standard_case(char *s)
+{
+#if MSWIN32 || OS_DARWIN
+    static struct str_buf sb;
+    char *p;
+    zero_sbuf(&sb);
+    for (p = s; *p; ++p)
+        AppChar(sb, oi_tolower(*p));
+    return str_install(&sb);
+#else
+    return s;
+#endif
+}

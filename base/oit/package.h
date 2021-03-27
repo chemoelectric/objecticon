@@ -11,6 +11,7 @@
 struct package_file {
     struct package_file *b_next;      /* Hash link */
     char *name;
+    char *sc_name;                    /* standard-cased name */
     struct package_file *next;
 };
 
@@ -32,6 +33,7 @@ struct package {
 struct package_dir {
     struct package_dir *b_next;       /* Hash link */
     char *path;
+    char *sc_path;                    /* standard-cased path */
     int modflag;
     DefineHash(, struct package) package_hash;
     struct package *packages, *package_last;
@@ -44,8 +46,8 @@ extern struct package_dir *package_dirs, *package_dir_last;
  * Prototypes.
  */
 void free_package_db(void);
-struct package_dir *create_package_dir(char *path);
-struct package_file *create_package_file(char *name);
+struct package_dir *create_package_dir(char *path, char *sc_path);
+struct package_file *create_package_file(char *name, char *sc_name);
 struct package *create_package(char *name);
 struct package_file *lookup_package_file(struct package *p, char *s);
 int add_package_file(struct package *p, struct package_file *new);

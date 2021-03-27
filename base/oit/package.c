@@ -4,7 +4,7 @@
 
 struct package_dir *package_dirs, *package_dir_last;
 
-static uword package_dir_hash_func(struct package_dir *p) { return hashptr(p->path); }
+static uword package_dir_hash_func(struct package_dir *p) { return hashptr(p->sc_path); }
 static DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
 
 void free_package_db()
@@ -33,23 +33,25 @@ void free_package_db()
 
 static uword package_hash_func(struct package *p) { return hashptr(p->name); }
 
-struct package_dir *create_package_dir(char *path)
+struct package_dir *create_package_dir(char *path, char *sc_path)
 {
     struct package_dir *p = Alloc(struct package_dir);
     p->path = path;
+    p->sc_path = sc_path;
     p->package_hash.init = 10;
     p->package_hash.hash = package_hash_func;
     return p;
 }
 
-struct package_file *create_package_file(char *name)
+struct package_file *create_package_file(char *name, char *sc_name)
 {
     struct package_file *p = Alloc(struct package_file);
     p->name = name;
+    p->sc_name = sc_name;
     return p;
 }
 
-static uword package_file_hash_func(struct package_file *p) { return hashptr(p->name); }
+static uword package_file_hash_func(struct package_file *p) { return hashptr(p->sc_name); }
 
 struct package *create_package(char *name)
 {
@@ -68,7 +70,7 @@ struct package_file *lookup_package_file(struct package *p, char *s)
 {
     struct package_file *x;
     x = Bucket(p->file_hash, hashptr(s));
-    while (x && x->name != s)
+    while (x && x->sc_name != s)
         x = x->b_next;
     return x;
 }
@@ -76,7 +78,7 @@ struct package_file *lookup_package_file(struct package *p, char *s)
 int add_package_file(struct package *p, struct package_file *new)
 {
     struct package_file *x;
-    x = lookup_package_file(p, new->name);
+    x = lookup_package_file(p, new->sc_name);
     if (x)
         return 0;
     if (p->file_last) {
@@ -139,7 +141,7 @@ int load_package_dir(struct package_dir *dir)
         } else {
             if (!pack)
                 quit("%s corrupt - package expected", fn);
-            pf = create_package_file(s);
+            pf = create_package_file(s, intern_standard_case(s));
             if (!add_package_file(pack, pf))
                 quit("%s corrupt - duplicate file entry", fn);
         }
@@ -190,13 +192,13 @@ void save_package_db()
 
 /*
  * Lookup the package_dir for the given path, which is an interned
- * string.
+ * standard-cased string.
  */
 struct package_dir *lookup_package_dir(char *s)
 {
     struct package_dir *x;
     x = Bucket(package_dir_hash, hashptr(s));
-    while (x && x->path != s)
+    while (x && x->sc_path != s)
         x = x->b_next;
     return x;
 }
@@ -204,7 +206,7 @@ struct package_dir *lookup_package_dir(char *s)
 int add_package_dir(struct package_dir *new)
 {
     struct package_dir *x;
-    x = lookup_package_dir(new->path);
+    x = lookup_package_dir(new->sc_path);
     if (x)
         return 0;
     if (package_dir_last) {
@@ -245,7 +247,7 @@ int add_package(struct package_dir *p, struct package *new)
 void ensure_file_in_package(char *file, char *ipackage)
 {
     struct fileparts *fps;
-    char *idir, *iname;
+    char *sc_idir, *idir, *sc_iname, *iname;
     struct package_dir *pd;
     struct package *pk;
     struct package_file *pf;
@@ -255,13 +257,15 @@ void ensure_file_in_package(char *file, char *ipackage)
     /* Intern the bits */
     iname = intern(fps->name);
     idir = intern(fps->dir);
-    pd = lookup_package_dir(idir);
+    sc_idir = intern_standard_case(idir);
+    sc_iname = intern_standard_case(iname);
+    pd = lookup_package_dir(sc_idir);
     if (!pd) {
         /*
          * Create a new instance, try to load its contents from the packages.txt file,
          * and add it to the database.
          */
-        pd = create_package_dir(idir);
+        pd = create_package_dir(idir, sc_idir);
         load_package_dir(pd);
         if (!add_package_dir(pd))
             quit("Unexpected failure to add new package dir");
@@ -275,10 +279,10 @@ void ensure_file_in_package(char *file, char *ipackage)
             quit("Unexpected failure to add new package");
     }
 
-    pf = lookup_package_file(pk, iname);
+    pf = lookup_package_file(pk, sc_iname);
     if (!pf) {
         /* Create a new one */
-        pf = create_package_file(iname);
+        pf = create_package_file(iname, sc_iname);
         if (!add_package_file(pk, pf))
             quit("Unexpected failure to add new package file");
         /* Flag the file as needing to be saved. */
@@ -289,11 +293,13 @@ void ensure_file_in_package(char *file, char *ipackage)
 static void load_path_impl(char *dir)
 {
     struct package_dir *pd;
-    char *idir;
+    char *idir, *sc_idir;
 
     idir = intern(canonicalize(dir));
+    sc_idir = intern_standard_case(idir);
+
     /* Have we seen it yet?  If so, just ignore. */
-    pd = lookup_package_dir(idir);
+    pd = lookup_package_dir(sc_idir);
     if (pd)
         return;
 
@@ -301,7 +307,7 @@ static void load_path_impl(char *dir)
      * Create a new instance, try to load its contents from the packages.txt file,
      * and add it to the database.
      */
-    pd = create_package_dir(idir);
+    pd = create_package_dir(idir, sc_idir);
     load_package_dir(pd);
     if (!add_package_dir(pd))
         quit("Unexpected failure to add new package dir");

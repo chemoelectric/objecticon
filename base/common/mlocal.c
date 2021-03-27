@@ -127,13 +127,8 @@ void normalize(char *file)
             p += 2;
         } else if (*p == '/' && *(p+1) == '/') {  /* Duplicate slashes */
             ++p;
-        } else {
-#if OS_DARWIN
-            *q++ = oi_tolower(*p++);
-#else
+        } else
             *q++ = *p++;
-#endif
-        }
     }
     *q = 0;
 }
@@ -198,21 +193,19 @@ int is_flowterm_tty(FILE *f)
 #if MSWIN32
 
 /*
- * Normalize a path by lower-casing everything, changing / to \,
- * removing redundant slashes, . dirs and .. dirs.
+ * Normalize a path by changing / to \, removing redundant slashes,
+ * . dirs and .. dirs.
  */
 void normalize(char *file)
 {
     char *p, *q;
 
     /*
-     * Lower case everything and convert / to \
+     * Convert / to \
      */
     for (p = file; *p; ++p) {
         if (*p == '/')
             *p = '\\';
-        else 
-            *p = oi_tolower(*p);
     }
     if (oi_isalpha(file[0]) && file[1]==':') 
         file += 2;
