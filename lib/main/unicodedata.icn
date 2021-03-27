@@ -1,6 +1,6 @@
 package unicode
 
-import lang, util
+import lang, util, ipl.pdco
 
 final abstract class Block()
    public static const
@@ -1907,14 +1907,13 @@ final abstract class Mapping()
       UPPER_DOMAIN, UPPER_RANGE,
       TITLE_DOMAIN, TITLE_RANGE
    private static const
-      LOWER, UPPER, TITLE
+      LOWER, UPPER, TITLE, FOLD
 
    private static load(d, r)
-      local t, e1, e2
+      local t, e
       t := table()
-      e1 := create ord(d)
-      e2 := create ord(r)
-      while insert(t, @e1, @e2)
+      e := create string(!r)
+      every insert(t, ord(d), @e)
       return t
    end
 
@@ -2660,38 +2659,220 @@ final abstract class Mapping()
          \U01e918\U01e919\U01e91a\U01e91b\U01e91c\U01e91d\U01e91e\U01e91f\U01e920_
          \U01e921"
       TITLE := load(TITLE_DOMAIN, TITLE_RANGE)
+      FOLD := copy(LOWER)
+      insert(FOLD, 16rB5, "\xce\xbc")
+      insert(FOLD, 16rDF, "ss")
+      insert(FOLD, 16r130, "i\xcc\x87")
+      insert(FOLD, 16r149, "\xca\xbcn")
+      insert(FOLD, 16r17F, "s")
+      insert(FOLD, 16r1F0, "j\xcc\x8c")
+      insert(FOLD, 16r345, "\xce\xb9")
+      insert(FOLD, 16r390, "\xce\xb9\xcc\x88\xcc\x81")
+      insert(FOLD, 16r3B0, "\xcf\x85\xcc\x88\xcc\x81")
+      insert(FOLD, 16r3C2, "\xcf\x83")
+      insert(FOLD, 16r3D0, "\xce\xb2")
+      insert(FOLD, 16r3D1, "\xce\xb8")
+      insert(FOLD, 16r3D5, "\xcf\x86")
+      insert(FOLD, 16r3D6, "\xcf\x80")
+      insert(FOLD, 16r3F0, "\xce\xba")
+      insert(FOLD, 16r3F1, "\xcf\x81")
+      insert(FOLD, 16r3F5, "\xce\xb5")
+      insert(FOLD, 16r587, "\xd5\xa5\xd6\x82")
+      insert(FOLD, 16r13F8, "\xe1\x8f\xb0")
+      insert(FOLD, 16r13F9, "\xe1\x8f\xb1")
+      insert(FOLD, 16r13FA, "\xe1\x8f\xb2")
+      insert(FOLD, 16r13FB, "\xe1\x8f\xb3")
+      insert(FOLD, 16r13FC, "\xe1\x8f\xb4")
+      insert(FOLD, 16r13FD, "\xe1\x8f\xb5")
+      insert(FOLD, 16r1C80, "\xd0\xb2")
+      insert(FOLD, 16r1C81, "\xd0\xb4")
+      insert(FOLD, 16r1C82, "\xd0\xbe")
+      insert(FOLD, 16r1C83, "\xd1\x81")
+      insert(FOLD, 16r1C84, "\xd1\x82")
+      insert(FOLD, 16r1C85, "\xd1\x82")
+      insert(FOLD, 16r1C86, "\xd1\x8a")
+      insert(FOLD, 16r1C87, "\xd1\xa3")
+      insert(FOLD, 16r1C88, "\xea\x99\x8b")
+      insert(FOLD, 16r1E96, "h\xcc\xb1")
+      insert(FOLD, 16r1E97, "t\xcc\x88")
+      insert(FOLD, 16r1E98, "w\xcc\x8a")
+      insert(FOLD, 16r1E99, "y\xcc\x8a")
+      insert(FOLD, 16r1E9A, "a\xca\xbe")
+      insert(FOLD, 16r1E9B, "\xe1\xb9\xa1")
+      insert(FOLD, 16r1E9E, "ss")
+      insert(FOLD, 16r1F50, "\xcf\x85\xcc\x93")
+      insert(FOLD, 16r1F52, "\xcf\x85\xcc\x93\xcc\x80")
+      insert(FOLD, 16r1F54, "\xcf\x85\xcc\x93\xcc\x81")
+      insert(FOLD, 16r1F56, "\xcf\x85\xcc\x93\xcd\x82")
+      insert(FOLD, 16r1F80, "\xe1\xbc\x80\xce\xb9")
+      insert(FOLD, 16r1F81, "\xe1\xbc\x81\xce\xb9")
+      insert(FOLD, 16r1F82, "\xe1\xbc\x82\xce\xb9")
+      insert(FOLD, 16r1F83, "\xe1\xbc\x83\xce\xb9")
+      insert(FOLD, 16r1F84, "\xe1\xbc\x84\xce\xb9")
+      insert(FOLD, 16r1F85, "\xe1\xbc\x85\xce\xb9")
+      insert(FOLD, 16r1F86, "\xe1\xbc\x86\xce\xb9")
+      insert(FOLD, 16r1F87, "\xe1\xbc\x87\xce\xb9")
+      insert(FOLD, 16r1F88, "\xe1\xbc\x80\xce\xb9")
+      insert(FOLD, 16r1F89, "\xe1\xbc\x81\xce\xb9")
+      insert(FOLD, 16r1F8A, "\xe1\xbc\x82\xce\xb9")
+      insert(FOLD, 16r1F8B, "\xe1\xbc\x83\xce\xb9")
+      insert(FOLD, 16r1F8C, "\xe1\xbc\x84\xce\xb9")
+      insert(FOLD, 16r1F8D, "\xe1\xbc\x85\xce\xb9")
+      insert(FOLD, 16r1F8E, "\xe1\xbc\x86\xce\xb9")
+      insert(FOLD, 16r1F8F, "\xe1\xbc\x87\xce\xb9")
+      insert(FOLD, 16r1F90, "\xe1\xbc\xa0\xce\xb9")
+      insert(FOLD, 16r1F91, "\xe1\xbc\xa1\xce\xb9")
+      insert(FOLD, 16r1F92, "\xe1\xbc\xa2\xce\xb9")
+      insert(FOLD, 16r1F93, "\xe1\xbc\xa3\xce\xb9")
+      insert(FOLD, 16r1F94, "\xe1\xbc\xa4\xce\xb9")
+      insert(FOLD, 16r1F95, "\xe1\xbc\xa5\xce\xb9")
+      insert(FOLD, 16r1F96, "\xe1\xbc\xa6\xce\xb9")
+      insert(FOLD, 16r1F97, "\xe1\xbc\xa7\xce\xb9")
+      insert(FOLD, 16r1F98, "\xe1\xbc\xa0\xce\xb9")
+      insert(FOLD, 16r1F99, "\xe1\xbc\xa1\xce\xb9")
+      insert(FOLD, 16r1F9A, "\xe1\xbc\xa2\xce\xb9")
+      insert(FOLD, 16r1F9B, "\xe1\xbc\xa3\xce\xb9")
+      insert(FOLD, 16r1F9C, "\xe1\xbc\xa4\xce\xb9")
+      insert(FOLD, 16r1F9D, "\xe1\xbc\xa5\xce\xb9")
+      insert(FOLD, 16r1F9E, "\xe1\xbc\xa6\xce\xb9")
+      insert(FOLD, 16r1F9F, "\xe1\xbc\xa7\xce\xb9")
+      insert(FOLD, 16r1FA0, "\xe1\xbd\xa0\xce\xb9")
+      insert(FOLD, 16r1FA1, "\xe1\xbd\xa1\xce\xb9")
+      insert(FOLD, 16r1FA2, "\xe1\xbd\xa2\xce\xb9")
+      insert(FOLD, 16r1FA3, "\xe1\xbd\xa3\xce\xb9")
+      insert(FOLD, 16r1FA4, "\xe1\xbd\xa4\xce\xb9")
+      insert(FOLD, 16r1FA5, "\xe1\xbd\xa5\xce\xb9")
+      insert(FOLD, 16r1FA6, "\xe1\xbd\xa6\xce\xb9")
+      insert(FOLD, 16r1FA7, "\xe1\xbd\xa7\xce\xb9")
+      insert(FOLD, 16r1FA8, "\xe1\xbd\xa0\xce\xb9")
+      insert(FOLD, 16r1FA9, "\xe1\xbd\xa1\xce\xb9")
+      insert(FOLD, 16r1FAA, "\xe1\xbd\xa2\xce\xb9")
+      insert(FOLD, 16r1FAB, "\xe1\xbd\xa3\xce\xb9")
+      insert(FOLD, 16r1FAC, "\xe1\xbd\xa4\xce\xb9")
+      insert(FOLD, 16r1FAD, "\xe1\xbd\xa5\xce\xb9")
+      insert(FOLD, 16r1FAE, "\xe1\xbd\xa6\xce\xb9")
+      insert(FOLD, 16r1FAF, "\xe1\xbd\xa7\xce\xb9")
+      insert(FOLD, 16r1FB2, "\xe1\xbd\xb0\xce\xb9")
+      insert(FOLD, 16r1FB3, "\xce\xb1\xce\xb9")
+      insert(FOLD, 16r1FB4, "\xce\xac\xce\xb9")
+      insert(FOLD, 16r1FB6, "\xce\xb1\xcd\x82")
+      insert(FOLD, 16r1FB7, "\xce\xb1\xcd\x82\xce\xb9")
+      insert(FOLD, 16r1FBC, "\xce\xb1\xce\xb9")
+      insert(FOLD, 16r1FBE, "\xce\xb9")
+      insert(FOLD, 16r1FC2, "\xe1\xbd\xb4\xce\xb9")
+      insert(FOLD, 16r1FC3, "\xce\xb7\xce\xb9")
+      insert(FOLD, 16r1FC4, "\xce\xae\xce\xb9")
+      insert(FOLD, 16r1FC6, "\xce\xb7\xcd\x82")
+      insert(FOLD, 16r1FC7, "\xce\xb7\xcd\x82\xce\xb9")
+      insert(FOLD, 16r1FCC, "\xce\xb7\xce\xb9")
+      insert(FOLD, 16r1FD2, "\xce\xb9\xcc\x88\xcc\x80")
+      insert(FOLD, 16r1FD3, "\xce\xb9\xcc\x88\xcc\x81")
+      insert(FOLD, 16r1FD6, "\xce\xb9\xcd\x82")
+      insert(FOLD, 16r1FD7, "\xce\xb9\xcc\x88\xcd\x82")
+      insert(FOLD, 16r1FE2, "\xcf\x85\xcc\x88\xcc\x80")
+      insert(FOLD, 16r1FE3, "\xcf\x85\xcc\x88\xcc\x81")
+      insert(FOLD, 16r1FE4, "\xcf\x81\xcc\x93")
+      insert(FOLD, 16r1FE6, "\xcf\x85\xcd\x82")
+      insert(FOLD, 16r1FE7, "\xcf\x85\xcc\x88\xcd\x82")
+      insert(FOLD, 16r1FF2, "\xe1\xbd\xbc\xce\xb9")
+      insert(FOLD, 16r1FF3, "\xcf\x89\xce\xb9")
+      insert(FOLD, 16r1FF4, "\xcf\x8e\xce\xb9")
+      insert(FOLD, 16r1FF6, "\xcf\x89\xcd\x82")
+      insert(FOLD, 16r1FF7, "\xcf\x89\xcd\x82\xce\xb9")
+      insert(FOLD, 16r1FFC, "\xcf\x89\xce\xb9")
    end
 
-   public static upper(x)
-      return .member(UPPER, x)
-   end
-
-   public static lower(x)
-      return .member(LOWER, x)
-   end
-
-   public static title(x)
-      return .member(TITLE, x)
+   private static lookup(t, i)
+      return \t[i] | Text.utf8_seq(i)
    end
 
    private static convert_with(s, t)
-      local x, i
+      local x
       s := need_ucs(s)
-      x := ""
-      every i := ord(s) do
-         x ||:= Text.utf8_seq(member(t, i) | i)
+      x := String{ lookup(t, ord(s)) }
       return ucs(x)
    end
 
-   public static to_upper(s)
+   private static char_seq(s, t)
+      s := need_ucs(s)
+      suspend !lookup(t, ord(s))
+   end
+
+   #
+   # See `fold_chars`; this is the equivalent for the upper case
+   # mapping.
+   #
+   public static upper_chars(s)
+      return create char_seq(s, UPPER)
+   end
+
+   #
+   # See `fold_chars`; this is the equivalent for the lower case
+   # mapping.
+   #
+   public static lower_chars(s)
+      return create char_seq(s, LOWER)
+   end
+
+   #
+   # See `fold_chars`; this is the equivalent for the title case
+   # mapping.
+   #
+   public static title_chars(s)
+      return create char_seq(s, TITLE)
+   end
+
+   #
+   # Return a co-expression, the results of which are the individual
+   # characters that would comprise `string(fold(s))`.  For example,
+   # ~
+   #    fold_chars(u"Spaß")
+   # ~
+   # generates 5 characters, namely "s", "p", "a", "s", "s".
+   #
+   # This function is useful for doing comparisons; see for example
+   # the implementation of `folded_equal` below.
+   #
+   public static fold_chars(s)
+      return create char_seq(s, FOLD)
+   end
+
+   #
+   # Convert a ucs string using the upper case mapping.  Note that
+   # this gives the same result as `Text.upper()`.
+   #
+   public static upper(s)
       return convert_with(s, UPPER)
    end
 
-   public static to_lower(s)
+   #
+   # Convert a ucs string using the lower case mapping.  Note that
+   # this gives the same result as `Text.lower()`.
+   #
+   public static lower(s)
       return convert_with(s, LOWER)
    end
 
-   public static to_title(s)
+   #
+   # Convert a ucs string using the title case mapping.
+   #
+   public static title(s)
       return convert_with(s, TITLE)
+   end
+
+   #
+   # Convert a ucs string using the case folding mapping.
+   #
+   public static fold(s)
+      return convert_with(s, FOLD)
+   end
+
+   #
+   # Test whether the given two ucs strings are equal according to the
+   # case folding mapping; the result is equivalent to comparing
+   # `fold(x)` and `fold(y)`, but avoids the two conversions.
+   #
+   public static folded_equal(x, y)
+      return Compare( fold_chars(x), fold_chars(y) )
    end
 end
