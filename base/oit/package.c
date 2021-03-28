@@ -7,6 +7,17 @@ struct package_dir *package_dirs, *package_dir_last;
 static uword package_dir_hash_func(struct package_dir *p) { return hashptr(p->sc_path); }
 static DefineHash(, struct package_dir) package_dir_hash = { 10, package_dir_hash_func };
 
+static struct package_dir *create_package_dir(char *path, char *sc_path);
+static struct package_file *create_package_file(char *name, char *sc_name);
+static struct package *create_package(char *name);
+static struct package_file *lookup_package_file(struct package *p, char *s);
+static int add_package_file(struct package *p, struct package_file *new);
+static char *get_packages_file(struct package_dir *d);
+static int load_package_dir(struct package_dir *dir);
+static struct package_dir *lookup_package_dir(char *s);
+static int add_package_dir(struct package_dir *new);
+static int add_package(struct package_dir *p, struct package *new);
+
 void free_package_db()
 {
     struct package_dir *pd, *tpd;
@@ -33,7 +44,7 @@ void free_package_db()
 
 static uword package_hash_func(struct package *p) { return hashptr(p->name); }
 
-struct package_dir *create_package_dir(char *path, char *sc_path)
+static struct package_dir *create_package_dir(char *path, char *sc_path)
 {
     struct package_dir *p = Alloc(struct package_dir);
     p->path = path;
@@ -43,7 +54,7 @@ struct package_dir *create_package_dir(char *path, char *sc_path)
     return p;
 }
 
-struct package_file *create_package_file(char *name, char *sc_name)
+static struct package_file *create_package_file(char *name, char *sc_name)
 {
     struct package_file *p = Alloc(struct package_file);
     p->name = name;
@@ -53,7 +64,7 @@ struct package_file *create_package_file(char *name, char *sc_name)
 
 static uword package_file_hash_func(struct package_file *p) { return hashptr(p->sc_name); }
 
-struct package *create_package(char *name)
+static struct package *create_package(char *name)
 {
     struct package *p = Alloc(struct package);
     p->name = name;
@@ -66,7 +77,7 @@ struct package *create_package(char *name)
  * Lookup the package_file for the given file, which is an interned
  * string.
  */
-struct package_file *lookup_package_file(struct package *p, char *s)
+static struct package_file *lookup_package_file(struct package *p, char *s)
 {
     struct package_file *x;
     x = Bucket(p->file_hash, hashptr(s));
@@ -75,7 +86,7 @@ struct package_file *lookup_package_file(struct package *p, char *s)
     return x;
 }
 
-int add_package_file(struct package *p, struct package_file *new)
+static int add_package_file(struct package *p, struct package_file *new)
 {
     struct package_file *x;
     x = lookup_package_file(p, new->sc_name);
@@ -91,7 +102,7 @@ int add_package_file(struct package *p, struct package_file *new)
     return 1;
 }
 
-char *get_packages_file(struct package_dir *d)
+static char *get_packages_file(struct package_dir *d)
 {
     return join(d->path, "packages.txt", NullPtr);
 }
@@ -117,7 +128,7 @@ static char *read_package_line(FILE *f)
  * Try to load the list of files for a package dir from packages.txt.  Returns 1 on
  * success, 0 if packages.txt didn't exist, and quits on a corrupt file.
  */
-int load_package_dir(struct package_dir *dir)
+static int load_package_dir(struct package_dir *dir)
 {
     struct package *pack = 0;
     struct package_file *pf = 0;
@@ -194,7 +205,7 @@ void save_package_db()
  * Lookup the package_dir for the given path, which is an interned
  * standard-cased string.
  */
-struct package_dir *lookup_package_dir(char *s)
+static struct package_dir *lookup_package_dir(char *s)
 {
     struct package_dir *x;
     x = Bucket(package_dir_hash, hashptr(s));
@@ -203,7 +214,7 @@ struct package_dir *lookup_package_dir(char *s)
     return x;
 }
 
-int add_package_dir(struct package_dir *new)
+static int add_package_dir(struct package_dir *new)
 {
     struct package_dir *x;
     x = lookup_package_dir(new->sc_path);
@@ -228,7 +239,7 @@ struct package *lookup_package(struct package_dir *p, char *s)
     return x;
 }
 
-int add_package(struct package_dir *p, struct package *new)
+static int add_package(struct package_dir *p, struct package *new)
 {
     struct package *x;
     x = lookup_package(p, new->name);
