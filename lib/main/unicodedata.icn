@@ -2826,12 +2826,32 @@ final abstract class Mapping()
    # Return a co-expression, the results of which are the individual
    # characters that would comprise `string(fold(s))`.  For example,
    # ~
-   #    fold_chars(u"Spaß")
+   #     fold_chars(u"Spaß")
    # ~
    # generates 5 characters, namely "s", "p", "a", "s", "s".
    #
-   # This function is useful for doing comparisons; see for example
-   # the implementation of `folded_equal` below.
+   # This function is useful for doing comparisons.  For example, the
+   # `ipl.sort.convert_cmp` and `ipl.sort.coex_cmp` procedures can be
+   # used to create a comparator function as follows :-
+   # ~
+   #     import ipl.sort
+   #     ...
+   #     f := convert_cmp(Mapping.fold_chars, coex_cmp())
+   # ~
+   # 
+   # This comparator could then be used to compare strings directly
+   # or perhaps with a `SortTable` :-
+   # ~
+   #     import datastruct
+   #     ...
+   #     f(u"Spaß", u"SPASS")   # Gives 0 (ie, equal).
+   #     ...
+   #     t := SortTable(, f)
+   #     t.insert(u"Gefäß", 99)
+   #     t.member(u"GEFÄSS")    # 99
+   #     t.member(u"GEFÄß")     # also 99
+   #     t.select(1)            # u"Gefäß"
+   # ~
    #
    public static fold_chars(s)
       return create char_seq(s, FOLD)
@@ -2865,14 +2885,5 @@ final abstract class Mapping()
    #
    public static fold(s)
       return convert_with(s, FOLD)
-   end
-
-   #
-   # Test whether the given two ucs strings are equal according to the
-   # case folding mapping; the result is equivalent to comparing
-   # `fold(x)` and `fold(y)`, but avoids the two conversions.
-   #
-   public static folded_equal(x, y)
-      return Compare( fold_chars(x), fold_chars(y) )
    end
 end
