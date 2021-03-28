@@ -70,22 +70,20 @@ function io_Files_getcwd()
 
        buff_size = 32;
        for (;;) {
-           MemProtect(buff = alcstr(0, buff_size));
+           MemProtect(buff = reserve(Strings, buff_size));
            if (getcwd(buff, buff_size)) {
                int len = strlen(buff);
-               /* Success - free surplus and return */
-               dealcstr(buff + len);
+               /* Success - confirm allocation and return */
+               alcstr(NULL, len);
                return string(len, buff);
            }
            if (errno != ERANGE) {
-               /* Failed; free buff and fail */
-               dealcstr(buff);
+               /* Failed */
                errno2why();
                fail;
            }
-           /* Didn't fit (errno == ERANGE) - so deallocate buff,
-            * increase buff_size and repeat */
-           dealcstr(buff);
+           /* Didn't fit (errno == ERANGE) - so increase buff_size and
+            * repeat */
            buff_size *= 2;
        }
    }

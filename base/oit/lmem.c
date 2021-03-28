@@ -20,7 +20,7 @@
 
 
 /* files to link, and a hash table for them */
-static uword lfile_hash_func(struct lfile *p) { return hashptr(p->name); }
+static uword lfile_hash_func(struct lfile *p) { return hashptr(p->sc_name); }
 static DefineHash(, struct lfile) lfile_hash = { 200, lfile_hash_func };
 struct lfile *lfiles, *lfiles_last;
 
@@ -67,7 +67,7 @@ static struct lfile *locate_lfile(char *s)
 {
     struct lfile *x;
     x = Bucket(lfile_hash, hashptr(s));
-    while (x && x->name != s)
+    while (x && x->sc_name != s)
         x = x->b_next;
     return x;
 }
@@ -81,7 +81,9 @@ static uword fimport_hash_func(struct fimport *p) { return hashptr(p->name); }
 static struct lfile *ensure_lfile(char *ifile)
 {
     struct lfile *x;
-    x = locate_lfile(ifile);
+    char *sc_ifile;
+    sc_ifile = intern_standard_case(ifile);
+    x = locate_lfile(sc_ifile);
     if (x)
         return x;
 
@@ -92,6 +94,7 @@ static struct lfile *ensure_lfile(char *ifile)
     x->import_hash.init = 10;
     x->import_hash.hash = fimport_hash_func;
     x->name = ifile;
+    x->sc_name = sc_ifile;
     if (lfiles_last) {
         lfiles_last->next = x;
         lfiles_last = x;

@@ -309,18 +309,46 @@ LexCmp(lexcmp, SimpleCharCmp)
 LexCmp(caseless_lexcmp, CaselessCharCmp)
 
 /*
- * Caseless comparison, but caselessly equal strings are still
- * distinguished based on the case sensitive ordering.  This can't be
- * done on a char-by-char basis as for caseless_lexcmp, since we want
- * "AbCX" < "ABCy", but "AB" < "Ab".
+ * A caseless lexical comparison on two ucs strings.
  */
-int consistent_lexcmp(dptr dp1, dptr dp2)
+int caseless_ucs_lexcmp(struct b_ucs *b1, struct b_ucs *b2)
 {
-    int i;
-    i = caseless_lexcmp(dp1, dp2);
-    if (i == Equal)
-        i = lexcmp(dp1, dp2);
-    return i;
+   char *s1, *s2;
+   word l1, l2;
+
+   /*
+    * Get length and starting address of both strings.
+    */
+   l1 = b1->length;
+   s1 = StrLoc(b1->utf8);
+   l2 = b2->length;
+   s2 = StrLoc(b2->utf8);
+
+   if (s1 != s2) {
+       /*
+        * Set minlen to length of the shorter string.
+        */
+       word minlen = Min(l1, l2);
+
+       /*
+        * Compare as many chars as are in the smaller string.  If an
+        *  inequality is found, compare the differing chars.
+        */
+       while (minlen--) {
+           int c1, c2;
+           c1 = oi_towlower(utf8_iter(&s1));
+           c2 = oi_towlower(utf8_iter(&s2));
+           if (c1 != c2)
+               return (c1 > c2) ? Greater : Less;
+       }
+   }
+
+   /*
+    * The strings compared equal for the length of the shorter.
+    */
+   if (l1 == l2)
+      return Equal;
+   return (l1 > l2) ? Greater : Less;
 }
 
 /*

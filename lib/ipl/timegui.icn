@@ -281,7 +281,7 @@ class WeekField(DropDown)
    #
    public get_value()
       local w, y
-      trim(map(view.get_contents())) ? {
+      trim(Text.lower(view.get_contents())) ? {
          (y := integer(tab(many(&digits))) &
           1000 <= y <= 9999 &
           tab(many(' ')) &

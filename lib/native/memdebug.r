@@ -7,7 +7,7 @@ struct marked_block {
 static uword marked_block_hash_func(struct marked_block *p) {  return hashptr(p->addr); }
 #passthru static DefineHash(, struct marked_block) marked_blocks = { 512, marked_block_hash_func };
 
-enum { AddrQuery=1, TitleQuery };
+enum { AddrQuery=1, TitleQuery, QualQuery };
 
 struct query {
     int type;
@@ -24,10 +24,10 @@ struct query {
 };
 
 static struct progstate *prog;
-static struct descrip found;
 static struct query query;
 static int mode;
-static int all_flag;
+static int a_flag;
+static int r_flag;
 static int verbose;
 static int finished;
 static word slim = 64;
@@ -41,11 +41,34 @@ enum { Global=1, ClassStatic, ProcStatic, ObjectMember, SetMember,
        CoexprActivator, CFrameArg, CFrameTended, PFrameTmp, PFrameVar, 
        UcsUtf8, WeakrefVal, MethpObject, StuckListElement, Other,
        OrphanedListBlockParent, OrphanedListBlockLink, OrphanedListBlockMember,
-       OrphanedTableBlockParent, OrphanedTableBlockLink, OrphanedTableBlockKey, OrphanedTableBlockValue };
+       OrphanedTableBlockParent, OrphanedTableBlockLink, OrphanedTableBlockKey,
+       OrphanedTableBlockValue };
 
-enum { ListMode=1, RefsMode, FindMode, DumpMode };
+enum { ListMode=1, RefsMode, DumpMode, ReportMode };
 
-struct stk_element {
+struct instance_counter {
+    struct instance_counter *next;
+    union block *type;
+    uword count;
+};
+
+static uword instance_counter_hash_func(struct instance_counter *p) {  return hashptr(p->type); }
+#passthru static DefineHash(, struct instance_counter) instance_counters = { 512, instance_counter_hash_func };
+
+struct report {
+    uword list, list_element;
+    uword set, set_element;
+    uword table, table_element;
+    uword coexpr;
+    uword string, string_length;
+    uword ucs, ucs_length;
+    uword integer, real;
+    uword cset, cset_element;
+    uword methp, weakref;
+    uword orphaned_lelem, orphaned_telem;
+} report;
+
+struct q_element {
     int type;
     union {
         struct {
@@ -148,12 +171,17 @@ struct stk_element {
         } other;
     } u;
     struct descrip dest;
+    struct q_element *qlink;     /* Next in queue */
+    struct q_element *prev;      /* Trace to root; only used with refs -r */
+    word rc;                     /* Reference count; only ever non-zero with refs -r */
 };
 
+static struct q_element *curr;
+
 static struct {
-   uword bufsize;
-    struct stk_element *buf, *ebuf, *top;
-} stk;
+    int chk;                     /* For checking we don't leak memory */
+    struct q_element *front, *back;
+} q;
 
 static struct descrip normalize_descriptor(dptr dp);
 static void outblock(union block *b);
@@ -162,8 +190,8 @@ static void outimagey(dptr d, struct frame *frame);
 static void display(dptr dp);
 static void proc_statics(char *indent, struct p_proc *pp);
 static void traverse_proc(struct b_proc *proc);
-static void print_stk_element(struct stk_element *e);
-static void traverse_element(struct stk_element e);
+static void print_q_element(struct q_element *e);
+static void traverse_element(struct q_element *e);
 static int is_prog_region(struct region *rp);
 static void begin_linkx(dptr fname, word line);
 static void end_linkx();
@@ -172,39 +200,79 @@ static int is_marked(void *addr);
 static void mark(void *addr);
 static void outimagex(dptr d);
 
-/* Get from stack, assumes it's not empty */
-static struct stk_element stk_get()
+/* Is the queue empty? */
+static int q_empty()
 {
-    return *--stk.top;
+    return q.front == 0;
 }
 
-/* Reset pointer stack */
-static void stk_clear()
+/* Get from queue, assumes it's not empty */
+static struct q_element *q_get()
 {
-    if (!stk.buf) {
-        stk.bufsize = 1024;
-        stk.buf = safe_malloc(stk.bufsize * sizeof(struct stk_element));
-        stk.ebuf = stk.buf + stk.bufsize;
+    struct q_element *e;
+    e = q.front;
+    q.front = e->qlink;
+    e->qlink = 0;
+    if (q_empty())
+        q.back = 0;
+    return e;
+}
+
+/* Free the given element, if its reference count is zero. */
+static void q_free(struct q_element *e)
+{
+    struct q_element *t;
+    while (e && e->rc == 0) {
+        t = e->prev;
+        if (t) t->rc--;
+        free(e);
+        --q.chk;
+        e = t;
     }
-    stk.top = stk.buf;
 }
 
-static void stk_ensure()
+/* Reset queue */
+static void q_clear()
 {
-    if (stk.top == stk.ebuf) {
-        stk.buf = safe_realloc(stk.buf, stk.bufsize * 2 * sizeof(struct stk_element));
-        stk.top = stk.buf + stk.bufsize;
-        stk.bufsize *= 2;
-        stk.ebuf = stk.buf + stk.bufsize;
+    while (!q_empty())
+        q_free(q_get());
+    if (q.front)
+        fprintf(out, "!!! queue front not nil after q_clear\n");
+    if (q.back)
+        fprintf(out, "!!! queue back not nil after q_clear\n");
+    if (q.chk != 0)
+        fprintf(out, "!!! chk == %d in q_clear()\n", q.chk);
+}
+
+/* Add a new item to the back of the queue.  q.back must then be
+ * filled in. */
+static void q_add()
+{
+    struct q_element *e;
+    e = safe_zalloc(sizeof(struct q_element));
+    ++q.chk;
+    if (q_empty())
+        q.front = e;
+    else
+        q.back->qlink = e;
+    q.back = e;
+    if (curr) {
+        e->prev = curr;
+        curr->rc++;
     }
-    StructClear(*stk.top);
 }
 
-/* Process pointers in stack until it's empty */
-static void stk_traverse_elements()
+/* Process items in the queue until it's empty */
+static void q_traverse_elements()
 {
-    while (!finished && stk.top != stk.buf)
-        traverse_element(stk_get());
+    struct q_element *e;
+    while (!finished && !q_empty()) {
+        e = q_get();
+        if (r_flag)
+            curr = e;
+        traverse_element(e);
+        q_free(e);
+    }
 }
 
 static struct region *which_block_region(union block *p)
@@ -233,362 +301,327 @@ static struct region *which_string_region(char *p)
     return rp;
 }
 
-static void stk_dispose()
-{
-    free(stk.buf);
-    stk.buf = stk.ebuf = stk.top = 0;
-    stk.bufsize = 0;
-}
-
-static void stk_add_desc(struct progstate *prog, char *desc, int no, dptr dp)
+static void q_add_desc(struct progstate *prog, char *desc, int no, dptr dp)
 {
     struct descrip d;
     d = normalize_descriptor(dp);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = Other;
-    stk.top->u.other.prog = prog;
-    stk.top->u.other.desc = desc;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = Other;
+    q.back->u.other.prog = prog;
+    q.back->u.other.desc = desc;
+    q.back->dest = d;
 }
 
-static void stk_add_block(struct progstate *prog, char *desc, int no, union block *blk)
+static void q_add_block(struct progstate *prog, char *desc, int no, union block *blk)
 {
     struct descrip d;
     d = block_to_descriptor(blk);
     d = normalize_descriptor(&d);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = Other;
-    stk.top->u.other.prog = prog;
-    stk.top->u.other.desc = desc;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = Other;
+    q.back->u.other.prog = prog;
+    q.back->u.other.desc = desc;
+    q.back->dest = d;
 }
 
-static void stk_add_orphaned_list_block_member(struct b_lelem *le, int no)
+static void q_add_orphaned_list_block_member(struct b_lelem *le, int no)
 {
     struct descrip d;
     d = normalize_descriptor(&le->lslots[no]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = OrphanedListBlockMember;
-    stk.top->u.orphaned_list_block_member.le = le;
-    stk.top->u.orphaned_list_block_member.no = no;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedListBlockMember;
+    q.back->u.orphaned_list_block_member.le = le;
+    q.back->u.orphaned_list_block_member.no = no;
+    q.back->dest = d;
 }
 
-static void stk_add_orphaned_list_block_link(struct b_lelem *src, int dir, union block *le)
+static void q_add_orphaned_list_block_link(struct b_lelem *src, int dir, union block *le)
 {
-    stk_ensure();
-    stk.top->type = OrphanedListBlockLink;
-    stk.top->u.orphaned_list_block_link.src = src;
-    stk.top->u.orphaned_list_block_link.dir = dir;
-    MakeDesc(D_Lelem, le, &stk.top->dest);
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedListBlockLink;
+    q.back->u.orphaned_list_block_link.src = src;
+    q.back->u.orphaned_list_block_link.dir = dir;
+    MakeDesc(D_Lelem, le, &q.back->dest);
 }
 
-static void stk_add_orphaned_list_block_parent(struct b_lelem *src)
+static void q_add_orphaned_list_block_parent(struct b_lelem *src, dptr par)
 {
-    stk_ensure();
-    stk.top->type = OrphanedListBlockParent;
-    stk.top->u.orphaned_list_block_parent.src = src;
-    stk.top->dest = block_to_descriptor((union block *)src);
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedListBlockParent;
+    q.back->u.orphaned_list_block_parent.src = src;
+    q.back->dest = *par;
 }
 
-static void stk_add_orphaned_table_block_key(struct b_telem *te)
+static void q_add_orphaned_table_block_key(struct b_telem *te)
 {
     struct descrip d;
     d = normalize_descriptor(&te->tref);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = OrphanedTableBlockKey;
-    stk.top->u.orphaned_table_block_key.te = te;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedTableBlockKey;
+    q.back->u.orphaned_table_block_key.te = te;
+    q.back->dest = d;
 }
 
-static void stk_add_orphaned_table_block_value(struct b_telem *te)
+static void q_add_orphaned_table_block_value(struct b_telem *te)
 {
     struct descrip d;
     d = normalize_descriptor(&te->tval);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = OrphanedTableBlockValue;
-    stk.top->u.orphaned_table_block_key.te = te;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedTableBlockValue;
+    q.back->u.orphaned_table_block_key.te = te;
+    q.back->dest = d;
 }
 
-static void stk_add_orphaned_table_block_link(struct b_telem *src)
+static void q_add_orphaned_table_block_link(struct b_telem *src)
 {
-    stk_ensure();
-    stk.top->type = OrphanedTableBlockLink;
-    stk.top->u.orphaned_table_block_link.src = src;
-    MakeDesc(D_Telem, src->clink, &stk.top->dest);
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedTableBlockLink;
+    q.back->u.orphaned_table_block_link.src = src;
+    MakeDesc(D_Telem, src->clink, &q.back->dest);
 }
 
-static void stk_add_orphaned_table_block_parent(struct b_telem *src)
+static void q_add_orphaned_table_block_parent(struct b_telem *src, dptr par)
 {
-    stk_ensure();
-    stk.top->type = OrphanedTableBlockParent;
-    stk.top->u.orphaned_table_block_parent.src = src;
-    stk.top->dest = block_to_descriptor((union block *)src);
-    stk.top++;
+    q_add();
+    q.back->type = OrphanedTableBlockParent;
+    q.back->u.orphaned_table_block_parent.src = src;
+    q.back->dest = *par;
 }
 
-static void stk_add_object_member(struct b_object *obj, int no)
+static void q_add_object_member(struct b_object *obj, int no)
 {
     struct descrip d;
     d = normalize_descriptor(&obj->fields[no]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = ObjectMember;
-    stk.top->u.object_member.object = obj;
-    stk.top->u.object_member.no = no;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = ObjectMember;
+    q.back->u.object_member.object = obj;
+    q.back->u.object_member.no = no;
+    q.back->dest = d;
 }
 
-static void stk_add_record_member(struct b_record *rec, int no)
+static void q_add_record_member(struct b_record *rec, int no)
 {
     struct descrip d;
     d = normalize_descriptor(&rec->fields[no]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = RecordMember;
-    stk.top->u.record_member.record = rec;
-    stk.top->u.record_member.no = no;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = RecordMember;
+    q.back->u.record_member.record = rec;
+    q.back->u.record_member.no = no;
+    q.back->dest = d;
 }
 
-static void stk_add_list_element(struct b_list *list, dptr val, word no)
+static void q_add_list_element(struct b_list *list, dptr val, word no)
 {
     struct descrip d;
     d = normalize_descriptor(val);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = ListElement;
-    stk.top->u.list_member.list = list;
-    stk.top->u.list_member.no = no;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = ListElement;
+    q.back->u.list_member.list = list;
+    q.back->u.list_member.no = no;
+    q.back->dest = d;
 }
 
-static void stk_add_stuck_list_element(struct b_list *list, dptr val)
+static void q_add_stuck_list_element(struct b_list *list, dptr val)
 {
     struct descrip d;
     d = normalize_descriptor(val);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = StuckListElement;
-    stk.top->u.stuck_list_element.list = list;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = StuckListElement;
+    q.back->u.stuck_list_element.list = list;
+    q.back->dest = d;
 }
 
-static void stk_add_set_member(struct b_set *set, struct b_selem *elem)
+static void q_add_set_member(struct b_set *set, struct b_selem *elem)
 {
     struct descrip d;
     d = normalize_descriptor(&elem->setmem);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = SetMember;
-    stk.top->u.set_member.set = set;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = SetMember;
+    q.back->u.set_member.set = set;
+    q.back->dest = d;
 }
 
-static void stk_add_table_default(struct b_table *table)
+static void q_add_table_default(struct b_table *table)
 {
     struct descrip d;
     d = normalize_descriptor(&table->defvalue);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = TableDefault;
-    stk.top->u.table_default.table = table;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = TableDefault;
+    q.back->u.table_default.table = table;
+    q.back->dest = d;
 }
 
-static void stk_add_table_key(struct b_table *table, struct b_telem *elem)
+static void q_add_table_key(struct b_table *table, struct b_telem *elem)
 {
     struct descrip d;
     d = normalize_descriptor(&elem->tref);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = TableKey;
-    stk.top->u.table_key.table = table;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = TableKey;
+    q.back->u.table_key.table = table;
+    q.back->dest = d;
 }
 
-static void stk_add_table_value(struct b_table *table, struct b_telem *elem)
+static void q_add_table_value(struct b_table *table, struct b_telem *elem)
 {
     struct descrip d;
     d = normalize_descriptor(&elem->tval);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = TableValue;
-    stk.top->u.table_value.table = table;
-    stk.top->u.table_value.elem = elem;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = TableValue;
+    q.back->u.table_value.table = table;
+    q.back->u.table_value.elem = elem;
+    q.back->dest = d;
 }
 
-static void stk_add_class_static(struct class_field *field)
+static void q_add_class_static(struct class_field *field)
 {
     struct descrip d;
     d = normalize_descriptor(field->field_descriptor);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = ClassStatic;
-    stk.top->u.field.field = field;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = ClassStatic;
+    q.back->u.field.field = field;
+    q.back->dest = d;
 }
 
-static void stk_add_proc_static(struct p_proc *proc, int num)
+static void q_add_proc_static(struct p_proc *proc, int num)
 {
     struct descrip d;
     d = normalize_descriptor(&proc->fstatic[num]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = ProcStatic;
-    stk.top->u.proc.proc = proc;
-    stk.top->u.proc.no = num;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = ProcStatic;
+    q.back->u.proc.proc = proc;
+    q.back->u.proc.no = num;
+    q.back->dest = d;
 }
 
-static void stk_add_global(struct progstate *prog, int num)
+static void q_add_global(struct progstate *prog, int num)
 {
     struct descrip d;
     d = normalize_descriptor(&prog->Globals[num]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = Global;
-    stk.top->u.global.prog = prog;
-    stk.top->u.global.no = num;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = Global;
+    q.back->u.global.prog = prog;
+    q.back->u.global.no = num;
+    q.back->dest = d;
 }
 
-static void stk_add_coexpr_activator(struct b_coexpr *cp)
+static void q_add_coexpr_activator(struct b_coexpr *cp)
 {
-    stk_ensure();
-    stk.top->type = CoexprActivator;
-    stk.top->u.coexpr_activator.coexpr = cp;
-    stk.top->dest = block_to_descriptor((union block *)cp->activator);
-    stk.top++;
+    q_add();
+    q.back->type = CoexprActivator;
+    q.back->u.coexpr_activator.coexpr = cp;
+    q.back->dest = block_to_descriptor((union block *)cp->activator);
 }
 
-static void stk_add_c_frame_arg(struct b_coexpr *coexpr, struct c_frame *cf, int num)
+static void q_add_c_frame_arg(struct b_coexpr *coexpr, struct c_frame *cf, int num)
 {
     struct descrip d;
     d = normalize_descriptor(&cf->args[num]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = CFrameArg;
-    stk.top->u.c_frame_arg.coexpr = coexpr;
-    stk.top->u.c_frame_arg.frame = cf;
-    stk.top->u.c_frame_arg.no = num;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = CFrameArg;
+    q.back->u.c_frame_arg.coexpr = coexpr;
+    q.back->u.c_frame_arg.frame = cf;
+    q.back->u.c_frame_arg.no = num;
+    q.back->dest = d;
 }
 
-static void stk_add_c_frame_tended(struct b_coexpr *coexpr, struct c_frame *cf, int num)
+static void q_add_c_frame_tended(struct b_coexpr *coexpr, struct c_frame *cf, int num)
 {
     struct descrip d;
     d = normalize_descriptor(&cf->tend[num]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = CFrameTended;
-    stk.top->u.c_frame_tended.coexpr = coexpr;
-    stk.top->u.c_frame_tended.frame = cf;
-    stk.top->u.c_frame_tended.no = num;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = CFrameTended;
+    q.back->u.c_frame_tended.coexpr = coexpr;
+    q.back->u.c_frame_tended.frame = cf;
+    q.back->u.c_frame_tended.no = num;
+    q.back->dest = d;
 }
 
-static void stk_add_p_frame_tmp(struct b_coexpr *coexpr, struct p_frame *pf, int num)
+static void q_add_p_frame_tmp(struct b_coexpr *coexpr, struct p_frame *pf, int num)
 {
     struct descrip d;
     d = normalize_descriptor(&pf->tmp[num]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = PFrameTmp;
-    stk.top->u.p_frame_tmp.coexpr = coexpr;
-    stk.top->u.p_frame_tmp.frame = pf;
-    stk.top->u.p_frame_tmp.no = num;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = PFrameTmp;
+    q.back->u.p_frame_tmp.coexpr = coexpr;
+    q.back->u.p_frame_tmp.frame = pf;
+    q.back->u.p_frame_tmp.no = num;
+    q.back->dest = d;
 }
 
-static void stk_add_p_frame_var(struct b_coexpr *coexpr, struct p_frame *pf, int num)
+static void q_add_p_frame_var(struct b_coexpr *coexpr, struct p_frame *pf, int num)
 {
     struct descrip d;
     d = normalize_descriptor(&pf->fvars->desc[num]);
     if (is:null(d))
         return;
-    stk_ensure();
-    stk.top->type = PFrameVar;
-    stk.top->u.p_frame_var.coexpr = coexpr;
-    stk.top->u.p_frame_var.frame = pf;
-    stk.top->u.p_frame_var.no = num;
-    stk.top->dest = d;
-    stk.top++;
+    q_add();
+    q.back->type = PFrameVar;
+    q.back->u.p_frame_var.coexpr = coexpr;
+    q.back->u.p_frame_var.frame = pf;
+    q.back->u.p_frame_var.no = num;
+    q.back->dest = d;
 }
 
-static void stk_add_ucs_utf8(struct b_ucs *ucs)
+static void q_add_ucs_utf8(struct b_ucs *ucs)
 {
-    stk_ensure();
-    stk.top->type = UcsUtf8;
-    stk.top->u.ucs_utf8.ucs = ucs;
-    stk.top->dest = ucs->utf8;
-    stk.top++;
+    q_add();
+    q.back->type = UcsUtf8;
+    q.back->u.ucs_utf8.ucs = ucs;
+    q.back->dest = ucs->utf8;
 }
 
-static void stk_add_weakref_val(struct b_weakref *weakref)
+static void q_add_weakref_val(struct b_weakref *weakref)
 {
-    stk_ensure();
-    stk.top->type = WeakrefVal;
-    stk.top->u.weakref_val.weakref = weakref;
-    stk.top->dest = weakref->val;
-    stk.top++;
+    q_add();
+    q.back->type = WeakrefVal;
+    q.back->u.weakref_val.weakref = weakref;
+    q.back->dest = weakref->val;
 }
 
-static void stk_add_methp_object(struct b_methp *methp)
+static void q_add_methp_object(struct b_methp *methp)
 {
-    stk_ensure();
-    stk.top->type = MethpObject;
-    stk.top->u.methp_object.methp = methp;
-    stk.top->dest = block_to_descriptor((union block *)methp->object);
-    stk.top++;
+    q_add();
+    q.back->type = MethpObject;
+    q.back->u.methp_object.methp = methp;
+    q.back->dest = block_to_descriptor((union block *)methp->object);
 }
 
 static struct descrip normalize_descriptor(dptr dp)
@@ -975,7 +1008,7 @@ static void outimagey(dptr d, struct frame *frame)
                 dptr fname = c->program->Fnames[cf->fnum];
                 if (other != prog)
                     progout(other);
-                fprintf(out, "class %.*s . %.*s", StrF(*c->name), StrF(*fname));
+                fprintf(out, "class %.*s.%.*s", StrF(*c->name), StrF(*fname));
             } else if ((other = find_procedure_static(vp))) {
                 if (other != prog)
                     progout(other);
@@ -1067,7 +1100,7 @@ static void outimagey(dptr d, struct frame *frame)
                     fname =  c->program->Fnames[c->fields[i]->fnum];
                     MakeDesc(D_Object, BlkLoc(*d), &tmp);
                     outimagex(&tmp);
-                    fprintf(out, " . %.*s", StrF(*fname));
+                    fprintf(out, ".%.*s", StrF(*fname));
                     break;
                 }
                 case T_Record: { 		/* record */
@@ -1077,7 +1110,7 @@ static void outimagey(dptr d, struct frame *frame)
                     fname = c->program->Fnames[c->fnums[i]];
                     MakeDesc(D_Record, BlkLoc(*d), &tmp);
                     outimagex(&tmp);
-                    fprintf(out," . %.*s", StrF(*fname));
+                    fprintf(out,".%.*s", StrF(*fname));
                     break;
                 }
                 default: {		/* none of the above */
@@ -1098,7 +1131,7 @@ static void outblock(union block *b)
     outimagex(&tmp);
 }
 
-static void print_stk_element(struct stk_element *e)
+static void print_q_element(struct q_element *e)
 {
     dptr name;
     switch (e->type) {
@@ -1278,6 +1311,10 @@ static void print_stk_element(struct stk_element *e)
             outblock((union block *)e->u.methp_object.methp);
             break;
         }
+        default: {
+            fprintf(out, "!!! Nonsensical q_element type=%d", e->type);
+            break;
+        }
     }
 }
 
@@ -1344,7 +1381,7 @@ static void traverse_class(struct b_class *class)
             if ((field->flags & M_Method))
                 traverse_proc(&ProcBlk(*field->field_descriptor));
             else if ((field->flags & M_Static))
-                stk_add_class_static(field);
+                q_add_class_static(field);
         }
     }
 }
@@ -1357,7 +1394,7 @@ static void traverse_proc(struct b_proc *proc)
         return;
     pp = (struct p_proc *)proc;
     for (i = 0; i < pp->nstatic; ++i) {
-        stk_add_proc_static(pp, i);
+        q_add_proc_static(pp, i);
     }
 }
 
@@ -1367,18 +1404,16 @@ static void traverse_program(struct progstate *pstate)
     dptr dp;
     int i;
 
-    stk_add_block(pstate, "Program event mask", 0, (union block *)pstate->eventmask);
-    i = 0;
-    for (pe = pstate->event_queue_head; pe; pe = pe->next) {
-        stk_add_desc(pstate, "Program event queue code", i, &pe->eventcode);
-        stk_add_desc(pstate, "Program event queue value", i, &pe->eventval);
-        ++i;
-    }
-
-    stk_add_desc(pstate, "&handler", 0, &pstate->Kywd_handler);
-    stk_add_desc(pstate, "&subject", 0, &pstate->Kywd_subject);
-    stk_add_desc(pstate, "&progname", 0, &pstate->Kywd_prog);
-    stk_add_desc(pstate, "&why", 0, &pstate->Kywd_why);
+    q_add_desc(pstate, "&handler", 0, &pstate->Kywd_handler);
+    q_add_desc(pstate, "&subject", 0, &pstate->Kywd_subject);
+    q_add_desc(pstate, "&progname", 0, &pstate->Kywd_prog);
+    q_add_desc(pstate, "&why", 0, &pstate->Kywd_why);
+    q_add_block(pstate, "&main", 0, (union block *)pstate->K_main);
+    q_add_block(pstate, "&current", 0, (union block *)pstate->K_current);
+    q_add_desc(pstate, "&errorvalue", 0, &pstate->K_errorvalue);
+    q_add_desc(pstate, "&errortext", 0, &pstate->K_errortext);
+    if (pstate->K_errorcoexpr)
+        q_add_block(pstate, "&errorcoexpr", 0, (union block *)pstate->K_errorcoexpr);
 
     i = 0;
     for (i = 0; i < pstate->NGlobals; ++i) {
@@ -1390,26 +1425,25 @@ static void traverse_program(struct progstate *pstate)
               proc:  traverse_proc(&ProcBlk(*val));
             }
         } else {
-            stk_add_global(pstate, i);
+            q_add_global(pstate, i);
         }
     }
 
-
+    q_add_desc(pstate, "Temp error value", 0, &pstate->T_errorvalue);
+    q_add_desc(pstate, "Temp error text", 0, &pstate->T_errortext);
+    q_add_block(pstate, "Program event mask", 0, (union block *)pstate->eventmask);
     i = 0;
-    for (dp = pstate->TCaseTables; dp < pstate->ETCaseTables; dp++) {
-        stk_add_desc(pstate, "Case table entry", i, dp);
+    for (pe = pstate->event_queue_head; pe; pe = pe->next) {
+        q_add_desc(pstate, "Program event queue code", i, &pe->eventcode);
+        q_add_desc(pstate, "Program event queue value", i, &pe->eventval);
         ++i;
     }
 
-    stk_add_desc(pstate, "&errorvalue", 0, &pstate->K_errorvalue);
-    stk_add_desc(pstate, "&errortext", 0, &pstate->K_errortext);
-    stk_add_desc(pstate, "Temp error value", 0, &pstate->T_errorvalue);
-    stk_add_desc(pstate, "Temp error text", 0, &pstate->T_errortext);
-    if (pstate->K_errorcoexpr)
-        stk_add_block(pstate, "&errorcoexpr", 0, (union block *)pstate->K_errorcoexpr);
-
-    stk_add_block(pstate, "&main", 0, (union block *)pstate->K_main);
-    stk_add_block(pstate, "&current", 0, (union block *)pstate->K_current);
+    i = 0;
+    for (dp = pstate->TCaseTables; dp < pstate->ETCaseTables; dp++) {
+        q_add_desc(pstate, "Case table entry", i, dp);
+        ++i;
+    }
 }
 
 static void traverse_tended()
@@ -1420,7 +1454,7 @@ static void traverse_tended()
     j = 0;
     for (tp = tendedlist; tp != NULL; tp = tp->previous) {
         for (i = 0; i < tp->num; ++i) {
-            stk_add_desc(0, "Tended descriptor", j, &tp->d[i]);
+            q_add_desc(0, "Tended descriptor", j, &tp->d[i]);
             ++j;
         }
     }
@@ -1434,7 +1468,7 @@ static void traverse_others()
     j = 0;
     for (i = 0; i < og_table.nbuckets; ++i)
         for (dl = og_table.l[i]; dl; dl = dl->next) {
-            stk_add_desc(0, "Other global", j, dl->dp);
+            q_add_desc(0, "Other global", j, dl->dp);
             ++j;
         }
 }
@@ -1444,20 +1478,20 @@ static void traverse(int m)
     struct progstate *prog;
 
     mode = m;
-    finished = 0;
-    found = nulldesc;
 
-    stk_clear();
-
+    /* Traverse the various roots */
     for (prog = progs; prog; prog = prog->next)
         traverse_program(prog);
-
     traverse_tended();
     traverse_others();
 
-    stk_traverse_elements();
+    /* Traverse the graph */
+    q_traverse_elements();
 
-    stk_dispose();
+    /* Reset everything. */
+    finished = 0;
+    curr = 0;
+    q_clear();
     marked_blocks_dispose();
     mode = 0;
 }
@@ -1472,17 +1506,17 @@ static void traverse_stack(struct b_coexpr *cp)
             case C_Frame: {
                 struct c_frame *cf = (struct c_frame *)f;
                 for (i = 0; i < cf->nargs; ++i)
-                    stk_add_c_frame_arg(cp, cf, i);
+                    q_add_c_frame_arg(cp, cf, i);
                 for (i = 0; i < cf->proc->ntend; ++i)
-                    stk_add_c_frame_tended(cp, cf, i);
+                    q_add_c_frame_tended(cp, cf, i);
                 break;
             }
             case P_Frame: {
                 struct p_frame *pf = (struct p_frame *)f;
-                for (i = 0; i < pf->proc->ntmp; ++i)
-                    stk_add_p_frame_tmp(cp, pf, i);
                 for (i = 0; i < pf->proc->ndynam + pf->proc->nparam; ++i)
-                    stk_add_p_frame_var(cp, pf, i);
+                    q_add_p_frame_var(cp, pf, i);
+                for (i = 0; i < pf->proc->ntmp; ++i)
+                    q_add_p_frame_tmp(cp, pf, i);
                 break;
             }
             default: syserr("Unknown frame type");
@@ -1496,8 +1530,8 @@ static int query_match(dptr dp)
     if (Qual(*dp)) {
         if (query.type == AddrQuery)
             return (void *)StrLoc(*dp) == query.u.by_addr.addr;
-        else
-            return 0;
+        else 
+            return (query.type == QualQuery);
     }
 
     if (query.type == AddrQuery)
@@ -1549,18 +1583,94 @@ static int is_prog_region(struct region *rp)
     return 0;
 }
 
-static void do_dump(struct stk_element *e, struct region *rp)
+static void do_dump(struct q_element *e, struct region *rp)
 {
     if (is_prog_region(rp))
         display(&e->dest);
 }
 
-static void do_find(struct stk_element *e)
+static void note_instance(union block *typ)
 {
-    if (!query_match(&e->dest))
+    struct instance_counter *i;
+    for (i = Bucket(instance_counters, hashptr(typ)); i; i = i->next)
+        if (i->type == typ) {
+            i->count++;
+            return;
+        }
+    i = safe_malloc(sizeof(struct instance_counter));
+    i->type = typ;
+    i->count = 1;
+    add_to_hash(&instance_counters, i);
+}
+
+static void report_sum(dptr d)
+{
+    if (d->dword == D_Lelem) {
+        report.orphaned_lelem++;
         return;
-    found = e->dest;
-    finished = 1;
+    }
+
+    if (d->dword == D_Telem) {
+        report.orphaned_telem++;
+        return;
+    }
+
+    type_case *d of {
+      string: {
+            report.string++;
+            report.string_length += StrLen(*d);
+        }
+      cset: {
+            report.cset++;
+            report.cset_element += CsetBlk(*d).size;
+        }
+      ucs: {
+            report.ucs++;
+            report.ucs_length += UcsBlk(*d).length;
+        }
+      integer: {
+            if (IsLrgint(*d))
+                report.integer++;
+        }
+#if !RealInDesc
+      real: {
+            report.real++;
+        }
+#endif
+      list: {
+            report.list++;
+            report.list_element += ListBlk(*d).size;
+        }
+      set: {
+            report.set++;
+            report.set_element += SetBlk(*d).size;
+        }
+      table: {
+            report.table++;
+            report.table_element += TableBlk(*d).size;
+        }
+      coexpr: {
+            report.coexpr++;
+        }
+      object: {
+            note_instance((union block *)ObjectBlk(*d).class);
+        }
+      record: {
+            note_instance((union block *)RecordBlk(*d).constructor);
+        }
+      methp: {
+            report.methp++;
+        }
+      weakref: {
+            report.weakref++;
+        }
+     }
+}
+
+static void do_report(struct q_element *e, struct region *rp)
+{
+    if (is_prog_region(rp))
+        report_sum(&e->dest);
 }
 
 static void display(dptr dp)
@@ -1601,23 +1711,23 @@ static void display(dptr dp)
     }
     if (d.dword == D_Telem) {
         struct b_telem *te;
-        struct descrip tmp;
+        struct descrip tmp, par;
         te = &TelemBlk(d);
+        par = block_to_descriptor((union block *)te);
         fprintf(out, "\tKey=");
         outimagex(&te->tref);
         fputc('\n', out);
         fprintf(out, "\tValue=");
         outimagex(&te->tval);
         fputc('\n', out);
-        if (BlkType(te->clink) == T_Telem) {
+        if (BlkType(te->clink) == T_Telem && orphaned_telem(&par, te->clink)) {
             MakeDesc(D_Telem, te->clink, &tmp);
             fputs("\tNext=", out);
             outimagex(&tmp);
             fputc('\n', out);
         }
         fputs("\tParent block=", out);
-        tmp = block_to_descriptor((union block *)te);
-        outimagex(&tmp);
+        outimagex(&par);
         fputc('\n', out);
         return;
     }
@@ -1759,55 +1869,71 @@ static void display(dptr dp)
     }
 }
 
-static void do_list(struct stk_element *e, struct region *rp)
+static void do_list(struct q_element *e, struct region *rp)
 {
     if (!query_match(&e->dest))
         return;
-    if (query.type == TitleQuery && query.u.by_title.id == 0) {
+    if (query.type == QualQuery ||
+        (query.type == TitleQuery && query.u.by_title.id == 0))
+    {
         if (is_prog_region(rp)) {
             outimagex(&e->dest);
             fputc('\n', out);
-        } else if (all_flag) {
+        } else if (a_flag) {
             outimagex(&e->dest);
             fprintf(out, " in foreign region %p\n", rp);
-        }
+        } else
+            return;
+        do {
+            fputc('\t', out);
+            print_q_element(e);
+            fputc('\n', out);
+        } while ((e = e->prev));
     } else {
         finished = 1;
         display(&e->dest);
     }
 }
 
-static void do_refs(struct stk_element *e)
+/* Returns a flag indicating whether to traverse further in the
+ * graph. */
+static int do_refs(struct q_element *e)
 {
     if (!query_match(&e->dest))
-        return;
-    print_stk_element(e);
+        return 0;
+    print_q_element(e);
     fputc('\n', out);
+    while ((e = e->prev)) {
+        fputc('\t', out);
+        print_q_element(e);
+        fputc('\n', out);
+    };
+    return !a_flag;
 }
 
-static void traverse_element(struct stk_element e)
+static void traverse_element(struct q_element *e)
 {
     void *addr;
     struct region *rp;
 
     if (verbose) {
         fprintf(out, "Traversing ");
-        print_stk_element(&e);
+        print_q_element(e);
         fputs(" = ", out);
-        outimagex(&e.dest);
+        outimagex(&e->dest);
         fputc('\n', out);
     }
 
-    if (Var(e.dest)) {
+    if (Var(e->dest)) {
         fprintf(out, "!!! Variable encountered: ");
-        print_desc(out, &e.dest);
+        print_desc(out, &e->dest);
         fputc('\n', out);
     }
 
-    if (Qual(e.dest))
-        rp = which_string_region(StrLoc(e.dest));
+    if (Qual(e->dest))
+        rp = which_string_region(StrLoc(e->dest));
     else
-        rp = which_block_region(BlkLoc(e.dest));
+        rp = which_block_region(BlkLoc(e->dest));
 
     if (rp) {
         if (verbose) fprintf(out, "\tin region %p\n", rp);
@@ -1816,13 +1942,15 @@ static void traverse_element(struct stk_element e)
         return;
     }
 
-    if (mode == RefsMode)
-        do_refs(&e);
+    if (mode == RefsMode) {
+        if (do_refs(e))
+            return;
+    }
 
-    if (Qual(e.dest))
-        addr = StrLoc(e.dest);
+    if (Qual(e->dest))
+        addr = StrLoc(e->dest);
     else
-        addr = BlkLoc(e.dest);
+        addr = BlkLoc(e->dest);
 
     if (is_marked(addr)) {
         if (verbose) fprintf(out, "\talready marked\n");
@@ -1831,114 +1959,126 @@ static void traverse_element(struct stk_element e)
     mark(addr);
 
     switch (mode) {
-        case ListMode: do_list(&e, rp); break;
-        case FindMode: do_find(&e); break;
-        case DumpMode: do_dump(&e, rp); break;
+        case ListMode: do_list(e, rp); break;
+        case DumpMode: do_dump(e, rp); break;
+        case ReportMode: do_report(e, rp); break;
     }
 
-    if (e.dest.dword == D_Lelem) {
+    if (e->dest.dword == D_Lelem) {
         struct b_lelem *le;
         word i;
         struct descrip par;
-        le = &LelemBlk(e.dest);
+        le = &LelemBlk(e->dest);
         par = block_to_descriptor((union block *)le);
         /* Add all slots, ignoring first, used etc. */
         for (i = 0; i < le->nslots; ++i)
-            stk_add_orphaned_list_block_member(le, i);
+            q_add_orphaned_list_block_member(le, i);
         /* Add adjoining orphaned blocks.  If they,re not orphaned then they
          * will be traversed via the parent table. */
         if (BlkType(le->listnext) == T_Lelem && orphaned_lelem(&par, le->listnext))
-            stk_add_orphaned_list_block_link(le, 1, le->listnext);
+            q_add_orphaned_list_block_link(le, 1, le->listnext);
         if (BlkType(le->listprev) == T_Lelem && orphaned_lelem(&par, le->listprev))
-            stk_add_orphaned_list_block_link(le, -1, le->listprev);
-        stk_add_orphaned_list_block_parent(le);
+            q_add_orphaned_list_block_link(le, -1, le->listprev);
+        q_add_orphaned_list_block_parent(le, &par);
         return;
     }
 
-    if (e.dest.dword == D_Telem) {
+    if (e->dest.dword == D_Telem) {
         struct b_telem *te;
-        te = &TelemBlk(e.dest);
-        stk_add_orphaned_table_block_key(te);
-        stk_add_orphaned_table_block_value(te);
-        /* The next block, if present, must be orphaned too. */
-        if (BlkType(te->clink) == T_Telem)
-            stk_add_orphaned_table_block_link(te);
-        stk_add_orphaned_table_block_parent(te);
+        struct descrip par;
+        te = &TelemBlk(e->dest);
+        par = block_to_descriptor((union block *)te);
+        q_add_orphaned_table_block_key(te);
+        q_add_orphaned_table_block_value(te);
+        /* Add the next block if present and orphaned too. */
+        if (BlkType(te->clink) == T_Telem && orphaned_telem(&par, te->clink))
+            q_add_orphaned_table_block_link(te);
+        q_add_orphaned_table_block_parent(te, &par);
         return;
     }
 
-    type_case e.dest of {
+    type_case e->dest of {
       object:{
             word i;
-            for (i = 0; i < ObjectBlk(e.dest).class->n_instance_fields; ++i) {
-                stk_add_object_member(&ObjectBlk(e.dest), i);
+            for (i = 0; i < ObjectBlk(e->dest).class->n_instance_fields; ++i) {
+                q_add_object_member(&ObjectBlk(e->dest), i);
             }
         }
       record:{
             word i;
-            for (i = 0; i < RecordBlk(e.dest).constructor->n_fields; ++i) {
-                stk_add_record_member(&RecordBlk(e.dest), i);
+            for (i = 0; i < RecordBlk(e->dest).constructor->n_fields; ++i) {
+                q_add_record_member(&RecordBlk(e->dest), i);
             }
         }
       set: {
             struct hgstate state;
             union block *ep;
-            for (ep = hgfirst(BlkLoc(e.dest), &state); ep;
-                 ep = hgnext(BlkLoc(e.dest), &state, ep)) {
-                stk_add_set_member(&SetBlk(e.dest), &ep->selem);
+            for (ep = hgfirst(BlkLoc(e->dest), &state); ep;
+                 ep = hgnext(BlkLoc(e->dest), &state, ep)) {
+                q_add_set_member(&SetBlk(e->dest), &ep->selem);
             }
         }
       table: {
             struct hgstate state;
             union block *ep;
-            stk_add_table_default(&TableBlk(e.dest));
-            for (ep = hgfirst(BlkLoc(e.dest), &state); ep;
-                 ep = hgnext(BlkLoc(e.dest), &state, ep)) {
-                stk_add_table_key(&TableBlk(e.dest), &ep->telem);
-                stk_add_table_value(&TableBlk(e.dest), &ep->telem);
+            q_add_table_default(&TableBlk(e->dest));
+            for (ep = hgfirst(BlkLoc(e->dest), &state); ep;
+                 ep = hgnext(BlkLoc(e->dest), &state, ep)) {
+                q_add_table_key(&TableBlk(e->dest), &ep->telem);
+                q_add_table_value(&TableBlk(e->dest), &ep->telem);
             }
         }
       list:{
             struct lgstate state;
             struct b_lelem *le;
             word i, j;
-            for (le = lgfirst(&ListBlk(e.dest), &state); le;
-                 le = lgnext(&ListBlk(e.dest), &state, le)) {
-                stk_add_list_element(&ListBlk(e.dest), &le->lslots[state.result], state.listindex);
+            for (le = lgfirst(&ListBlk(e->dest), &state); le;
+                 le = lgnext(&ListBlk(e->dest), &state, le)) {
+                q_add_list_element(&ListBlk(e->dest), &le->lslots[state.result], state.listindex);
             }
             /* Now iterate again looking for stuck elements. */
-            le = (struct b_lelem *)ListBlk(e.dest).listhead;
+            le = (struct b_lelem *)ListBlk(e->dest).listhead;
             while (BlkType(le) == T_Lelem) {
                 for (i = le->nused; i < le->nslots; ++i) {
                     j = le->first + i;
                     if (j >= le->nslots)
                         j -= le->nslots;
                     if (!is:null(le->lslots[j]))
-                        stk_add_stuck_list_element(&ListBlk(e.dest), &le->lslots[j]);
+                        q_add_stuck_list_element(&ListBlk(e->dest), &le->lslots[j]);
                 }
                 le = (struct b_lelem *)le->listnext;
             }
         }
       ucs: {
-            stk_add_ucs_utf8(&UcsBlk(e.dest));
+            q_add_ucs_utf8(&UcsBlk(e->dest));
         }
       weakref: {
-            stk_add_weakref_val(&WeakrefBlk(e.dest));
+            q_add_weakref_val(&WeakrefBlk(e->dest));
         }
       methp: {
-            stk_add_methp_object(&MethpBlk(e.dest));
+            q_add_methp_object(&MethpBlk(e->dest));
         }
       coexpr: {
-            struct b_coexpr *cp = &CoexprBlk(e.dest);
+            struct b_coexpr *cp = &CoexprBlk(e->dest);
             if (cp->activator)
-                stk_add_coexpr_activator(cp);
+                q_add_coexpr_activator(cp);
             traverse_stack(cp);
         }
     }
-    
 }
 
-static stringint titles[] = {
+/* Titles without serial numbers */
+static stringint titles1[] = {
+   { 0, 5},
+   {"cset",  T_Cset},
+   {"integer",  T_Lrgint},
+   {"lelem",  T_Lelem},
+   {"telem",  T_Telem},
+   {"ucs",  T_Ucs},
+};
+
+/* Titles with serial numbers */
+static stringint titles2[] = {
    { 0, 6},
    {"co-expression",  T_Coexpr},
    {"list",  T_List},
@@ -1967,35 +2107,54 @@ static int parsequery(char *buf, struct query *ret)
     s = strpbrk(buf, "#");
     if (s)
         *s++ = 0;
-    e = stringint_lookup(titles, buf);
+    if (strcmp(buf, "string") == 0) {
+        if (s) {
+            LitWhy("Id number not allowed");
+            return 0;
+        }
+        ret->type = QualQuery;
+        return 1;
+    }
+    e = stringint_lookup(titles1, buf);
     if (e) {
+        if (s) {
+            LitWhy("Id number not allowed");
+            return 0;
+        }
         title = e->i;
         class0 = 0;
-    } else {
-        CMakeStr(buf, &nd);
-        glob = lookup_named_global(&nd, 1, prog);
-        if (!glob) {
-            LitWhy("Invalid structure type");
-            return 0;
-        }
-        type_case *glob of {
-          class: title = T_Object;
-          constructor: title = T_Record;
-          default: {
-              LitWhy("Invalid structure type");
-              return 0;
-          }
-        }
-        class0 = (union block *)BlkLoc(*glob);
-    }
-    if (s) {
-        char c;
-        if (sscanf(s, UWordFmt "%c", &id, &c) != 1) {
-            LitWhy("Invalid id number");
-            return 0;
-        }
-    } else
         id = 0;
+    } else {
+        e = stringint_lookup(titles2, buf);
+        if (e) {
+            title = e->i;
+            class0 = 0;
+        } else {
+            CMakeStr(buf, &nd);
+            glob = lookup_named_global(&nd, 1, prog);
+            if (!glob) {
+                LitWhy("Invalid structure type");
+                return 0;
+            }
+            type_case *glob of {
+               class: title = T_Object;
+               constructor: title = T_Record;
+               default: {
+                  LitWhy("Invalid structure type");
+                  return 0;
+               }
+            }
+            class0 = (union block *)BlkLoc(*glob);
+        }
+        if (s) {
+            char c;
+            if (sscanf(s, UWordFmt "%c", &id, &c) != 1) {
+                LitWhy("Invalid id number");
+                return 0;
+            }
+        } else
+            id = 0;
+    }
     ret->type = TitleQuery;
     ret->u.by_title.title = title;
     ret->u.by_title.id = id;
@@ -2003,16 +2162,20 @@ static int parsequery(char *buf, struct query *ret)
     return 1;
 }
 
-function MemDebug_list(s, flag)
+function MemDebug_list(s, flag1, flag2)
    if !cnv:string(s) then
       runerr(103, s)
     body {
-       if (!is_flag(&flag))
-          runerr(171, flag);
+       if (!is_flag(&flag1))
+          runerr(171, flag1);
+       if (!is_flag(&flag2))
+          runerr(171, flag2);
        if (!parsequery(buffstr(&s), &query))
            fail;
-       all_flag = is:yes(flag);
+       r_flag = is:yes(flag1);
+       a_flag = is:yes(flag2);
        traverse(ListMode);
+       r_flag = a_flag = 0;
        ReturnDefiningClass;
     }
 end
@@ -2160,17 +2323,121 @@ function MemDebug_dump()
     }
 end
 
-function MemDebug_refs(s)
+static void instance_counters_dispose()
+{
+    int i;
+    for (i = 0; i < instance_counters.nbuckets; ++i) {
+        struct instance_counter *p, *n;
+        p = instance_counters.l[i];
+        while (p) {
+            n = p;
+            p = p->next;
+            free(n);
+        }
+    }
+    clear_hash(&instance_counters);
+}
+
+static int instance_counters_cmp(struct instance_counter **p1, struct instance_counter **p2)
+{
+    return (*p2)->count - (*p1)->count;
+}
+
+#define ReportFmt "%10" UWordFmtCh "  "
+
+static void instance_counters_report()
+{
+    int i, j;
+    struct instance_counter **t, *p;
+    t = safe_malloc(instance_counters.size * sizeof(struct instance_counter *));
+    j = 0;
+    for (i = 0; i < instance_counters.nbuckets; ++i) {
+        for (p = instance_counters.l[i]; p; p = p->next)
+            t[j++] = p;
+    }
+    qsort(t, j, sizeof(struct instance_counter *), (QSortFncCast) instance_counters_cmp);
+    fprintf(out, "\nObjects and Records\n===================\n");
+    for (i = 0; i < j; ++i) {
+        p = t[i];
+        fprintf(out, ReportFmt,  p->count);
+        outblock(p->type);
+        fputc('\n', out);
+    }
+    free(t);
+}
+
+static void counters_report()
+{
+    fprintf(out, "Builtin types\n=============\n");
+    if (report.string) {
+        fprintf(out, ReportFmt "String\n",  report.string);
+        fprintf(out, ReportFmt "   Total length\n",  report.string_length);
+    }
+    if (report.ucs) {
+        fprintf(out, ReportFmt "Ucs\n",  report.ucs);
+        fprintf(out, ReportFmt "   Total length\n",  report.ucs_length);
+    }
+    if (report.cset) {
+        fprintf(out, ReportFmt "Cset\n",  report.cset);
+        fprintf(out, ReportFmt "   Total size\n",  report.cset_element);
+    }
+    if (report.integer)
+        fprintf(out, ReportFmt "Integer\n",  report.integer);
+    if (report.real)
+        fprintf(out, ReportFmt "Real\n",  report.real);
+    if (report.list) {
+        fprintf(out, ReportFmt "List\n",  report.list);
+        fprintf(out, ReportFmt "   Total size\n",  report.list_element);
+    }
+    if (report.set) {
+        fprintf(out, ReportFmt "Set\n",  report.set);
+        fprintf(out, ReportFmt "   Total size\n",  report.set_element);
+    }
+    if (report.table) {
+        fprintf(out, ReportFmt "Table\n",  report.table);
+        fprintf(out, ReportFmt "   Total size\n",  report.table_element);
+    }
+    if (report.coexpr)
+        fprintf(out, ReportFmt "Co-expression\n",  report.coexpr);
+    if (report.methp)
+        fprintf(out, ReportFmt "Methp\n",  report.methp);
+    if (report.weakref)
+        fprintf(out, ReportFmt "Weakref\n",  report.weakref);
+    if (report.orphaned_lelem)
+        fprintf(out, ReportFmt "Orphaned list\n",  report.orphaned_lelem);
+    if (report.orphaned_telem)
+        fprintf(out, ReportFmt "Orphaned table\n",  report.orphaned_telem);
+}
+
+function MemDebug_report()
+    body {
+       traverse(ReportMode);
+       counters_report();
+       instance_counters_report();
+       StructClear(report);
+       instance_counters_dispose();
+       ReturnDefiningClass;
+    }
+end
+
+function MemDebug_refs(s, flag1, flag2)
    if !cnv:string(s) then
       runerr(103, s)
     body {
+       if (!is_flag(&flag1))
+          runerr(171, flag1);
+       if (!is_flag(&flag2))
+          runerr(171, flag2);
        if (!parsequery(buffstr(&s), &query))
            fail;
        if (query.type == TitleQuery && query.u.by_title.id == 0) {
-           LitWhy("refs needs an id number to uniquely identify an object.");
+           LitWhy("refs needs an id number to uniquely identify an object");
            fail;
        }
+       r_flag = is:yes(flag1);
+       a_flag = is:yes(flag2);
        traverse(RefsMode);
+       r_flag = a_flag = 0;
        ReturnDefiningClass;
     }
 end
@@ -2299,7 +2566,7 @@ function MemDebug_prog(s)
        if (!parsequery(buffstr(&s), &query))
            fail;
        if (query.type == TitleQuery && (query.u.by_title.title != T_Coexpr || query.u.by_title.id == 0)) {
-           LitWhy("prog needs an unique co-expression as parameter.");
+           LitWhy("prog needs an unique co-expression as parameter");
            fail;
        }
        for (p = progs; p; p = p->next) {
@@ -2308,7 +2575,7 @@ function MemDebug_prog(s)
                break;
        }
        if (!p) {
-           LitWhy("co-expression is not &main of a program.");
+           LitWhy("co-expression is not &main of a program");
            fail;
        }
        prog = p;

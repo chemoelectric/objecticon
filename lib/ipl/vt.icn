@@ -280,6 +280,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       charsets,                   # List of 4 Charsets G0..G4
       curr_charset,               # Current charset 1=G0 etc.  
       search_term,                # Current string being searched for.
+      search_term_c1,             # Cset of first search char.
       search_increment_flag       # Should next search forward/backward be incremental? (ie from mark).
 
    private static const
@@ -331,7 +332,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, c
       i := 0
       every c := !s do {
-         i := ior(i, case map(string(c)) of {
+         i := ior(i, case Text.lower(string(c)) of {
             "0" : 0
             "c" : C
             "s" : S
@@ -2852,15 +2853,24 @@ class Vt(LineBasedScrollArea, MenuMode)
    public do_search(s)
       reset_search()
       if *s = 0 then {
-         search_term := &null
+         search_term := search_term_c1 := &null
          invalidate_region()
          clear_mark()
          ui.search_msg("No results")
       } else {
-         search_term := map(s)
+         search_term := Text.lower(s)
+         search_term_c1 := Text.caseless_cset(search_term[1])
          do_search_prev()
       }
       link
+   end
+
+   private search_helper(str)
+      local p
+      every p := upto(search_term_c1, str) do {
+         if search_term == Text.lower(str[p +: *search_term]) then
+            suspend p
+      }
    end
 
    public do_search_prev()
@@ -2871,7 +2881,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       num := 0
       i := 1
       every r := unflowed() do {
-         every j := find(search_term, map(line_str(r.l))) do {
+         every j := search_helper(line_str(r.l)) do {
             num +:= 1
             last := Locn(j, i)
             if \curr & ((i < curr.y) | (i = curr.y & j < curr.x)) then {
@@ -2895,7 +2905,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       num := 0
       i := 1
       every r := unflowed() do {
-         every j := find(search_term, map(line_str(r.l))) do {
+         every j := search_helper(line_str(r.l)) do {
             num +:= 1
             p := Locn(j, i)
             /first := p

@@ -1,4 +1,4 @@
-import parser, ipl.options, io, util, ipl.strings, ipl.pdco
+import lang(Text), parser, ipl.options, io, util, ipl.strings, ipl.pdco
 
 global symbol_table, scanned_file, need, pp_defs, opts
 
@@ -39,7 +39,7 @@ end
 
 procedure do_one(s)
    local par, o, prog
-   map(s[-4:0]) == ".icn" | fail
+   Text.lower(s[-4:0]) == ".icn" | fail
    scanned_file := symbol_table.get_scanned_file(s) | stop("Couldn't get scanned file for ", s)
    if is(scanned_file.obj, Prog) then
       prog := scanned_file.obj

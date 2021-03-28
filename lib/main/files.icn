@@ -747,6 +747,14 @@ $endif
    public static standard_case(s)
       return FS.standard_case(s)
    end
+
+   #
+   # A comparator function for comparing two filename strings, taking
+   # into account the case-sensitivity of the underlying file system.
+   #
+   public static standard_case_cmp(s1, s2)
+      return FS.standard_case_cmp(s1, s2)
+   end
 end
 
 #
@@ -763,6 +771,7 @@ package abstract class FileSystem()
    public abstract filepath_is_unc(fp)
    public abstract filepath_is_prefix(fp)
    public abstract standard_case(s)
+   public abstract standard_case_cmp(s1, s2)
    public abstract file_to_url(f)
    public abstract url_to_file(u)
    public abstract get_home()
@@ -1263,6 +1272,19 @@ package class UnixFileSystem(FileSystem)
       return other.append(fp)
    end
 
+$if _DARWIN
+   public override filepath_standard_case(fp)
+      return FilePath.from_list(List{ Text.lower(!fp.l) })
+   end
+
+   public override standard_case(s)
+      return Text.lower(s)
+   end
+
+   public override standard_case_cmp(s1, s2)
+      return Text.caseless_compare(s1, s2)
+   end
+$else
    public override filepath_standard_case(fp)
       return fp
    end
@@ -1270,6 +1292,11 @@ package class UnixFileSystem(FileSystem)
    public override standard_case(s)
       return s
    end
+
+   public override standard_case_cmp(s1, s2)
+      return Internal.compare(s1, s2)
+   end
+$endif
 
    public override get_home()
       return env_string("HOME") | System.getpw(System.getuid()).dir | get_temp()
@@ -1436,7 +1463,7 @@ package class WindowsFileSystem(FileSystem)
       local e, r
       # Check for named pipe.  See
       #   https://docs.microsoft.com/en-gb/windows/win32/ipc/pipe-names
-      if filepath_is_unc(fp) & map(fp.l[3]) == "pipe" then
+      if filepath_is_unc(fp) & Text.lower(fp.l[3]) == "pipe" then
          return fp
       r := []
       every e := !fp.l do {
@@ -1457,11 +1484,15 @@ package class WindowsFileSystem(FileSystem)
    end
 
    public override filepath_standard_case(fp)
-      return FilePath.from_list(List{ map(!fp.l) })
+      return FilePath.from_list(List{ Text.lower(!fp.l) })
    end
 
    public override standard_case(s)
-      return map(s)
+      return Text.lower(s)
+   end
+
+   public override standard_case_cmp(s1, s2)
+      return Text.caseless_compare(s1, s2)
    end
 
    public override filepath_absolute(fp, other)
@@ -1515,7 +1546,7 @@ package class WindowsFileSystem(FileSystem)
    public override get_program_name()
       local s
       s := FilePath(&progname).get(-1)
-      if map(s[-4:0]) == ".exe" then
+      if Text.lower(s[-4:0]) == ".exe" then
          s[-4:0] := ""
       return s
    end

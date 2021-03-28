@@ -95,7 +95,7 @@ class Lex(Connectable)
                if yylineno := integer(tab(many(&digits))) - 1 then {
                   tab(many(' \t'))
                   if ="\"" then {
-                     yyfilename := FilePath(tab(find("\"" | "\n") | 0)).canonical().standard_case().str()
+                     yyfilename := FilePath(tab(find("\"" | "\n") | 0)).canonical().str()
                      ="\""
                      tab(many(' \t'))
                      do_encoding()

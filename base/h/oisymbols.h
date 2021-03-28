@@ -69,7 +69,7 @@ struct oisymbols {
     int (*lexcmp)(dptr dp1,dptr dp2);
     int (*equiv)(dptr dp1,dptr dp2);
     int (*caseless_lexcmp)(dptr dp1, dptr dp2);
-    int (*consistent_lexcmp)(dptr dp1, dptr dp2);
+    int (*caseless_ucs_lexcmp)(struct b_ucs *b1, struct b_ucs *b2);
     void (*create_list)(word nslots, dptr d);
     void (*create_table)(word nslots, word nelem, dptr d);
     void (*create_set)(word nslots, word nelem, dptr d);
@@ -190,6 +190,7 @@ struct oisymbols {
     struct rangeset * (*init_rangeset)(void);
     void (*free_rangeset)(struct rangeset *rs);
     void (*add_range)(struct rangeset *cs, int from, int to);
+    void (*add_char)(struct rangeset *cs, int ch);
     word (*millisec)(void);
     struct descrip (*block_to_descriptor)(union block *ptr);
     int (*is_flag)(dptr d);
@@ -205,6 +206,8 @@ struct oisymbols {
     char * (*buffprintf)(char *fmt, ...);
     int (*oi_toupper)(int c);
     int (*oi_tolower)(int c);
+    int (*oi_towlower)(int c);
+    int (*oi_towupper)(int c);
     char * (*buffstr)(dptr d);
     void (*buffnstr)(dptr d, char **s, ...);
     int (*is_little_endian)(void);

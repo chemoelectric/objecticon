@@ -4,7 +4,7 @@
 
 package mail
 
-import util
+import util, lang
 
 #
 # Handles the quoted-printable encoding of a message
@@ -20,7 +20,7 @@ class QuotedPrintableHandler(EncodingHandler)
    private res, ll
 
    public override can_handle(enc)
-      succeed map(enc) == "quoted-printable"
+      succeed Text.lower(enc) == "quoted-printable"
    end
 
    public override encode_data(m, data)

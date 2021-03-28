@@ -198,6 +198,7 @@ struct fimport {
 struct lfile {
     struct lfile *b_next;                    /* hash link */
     char *name;                              /* name of the file */
+    char *sc_name;                           /* standard-cased name */
     int declend_offset;                      /* file offset of declend */
     char *package;                           /* package of this file, or null */
     int package_id;                          /* id number of package */

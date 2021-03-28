@@ -4,11 +4,13 @@
 
 package mail
 
+import lang
+
 class MessageHandler(TypeHandler)
    public override can_handle(ct)
       local t, s
-      t := map(ct.get_type())
-      s := map(ct.get_subtype())
+      t := Text.lower(ct.get_type())
+      s := Text.lower(ct.get_subtype())
       succeed (t == "message" & s == "rfc822") | (t == "application" & s == "x-extension-eml")
    end
 

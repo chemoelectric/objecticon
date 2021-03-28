@@ -7,33 +7,23 @@ package ipl.test
 import io, lang, ipl.pdco, util
 
 procedure imagex(o)
+   return unserial(image(o))
+end
+
+procedure unserial(s)
    local t
    t := ""
-   image(o) ? {
-      repeat {
-         t ||:= tab(find("#") | 0)
-         if pos(0) then
-            return t
-         t ||:= move(1)
+   s ? {
+      while t ||:= tab(upto('#') + 1) do {
          if tab(many(&digits)) then
             t ||:= "*"
       }
+      return t || tab(0)
    }
 end
 
 procedure to_stringx(o)
-   local t
-   t := ""
-   to_string(o) ? {
-      repeat {
-         t ||:= tab(find("#") | 0)
-         if pos(0) then
-            return t
-         t ||:= move(1)
-         if tab(many(&digits)) then
-            t ||:= "*"
-      }
-   }
+   return unserial(to_string(o))
 end
 
 procedure pr_seq(s, e)

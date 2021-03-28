@@ -1,8 +1,8 @@
  ----> &null
-f := open("foo.baz","w") ----> object io.BufferStream#*(8)
+f := open("foo.baz","w") ----> object io.BufferStream#*
 write(f,"hello world") ----> "hello world"
-close(f) ----> object io.BufferStream#*(8)
-F := open("fncs1.dat") ----> object io.BufferStream#*(8)
+close(f) ----> object io.BufferStream#*
+F := open("fncs1.dat") ----> object io.BufferStream#*
 )(niam erudecorp
 { od 001 ot 1 yreve   
 )snoitcelloc&(etirw      
@@ -19,8 +19,8 @@ od 001 ot 1 yreve
 }      
 dne
 every write(reverse(!F)) ----> none
-close(F) ----> object io.BufferStream#*(8)
-F := open("fncs1.dat") ----> object io.BufferStream#*(8)
+close(F) ----> object io.BufferStream#*
+F := open("fncs1.dat") ----> object io.BufferStream#*
 procedure main()
    every 1 to 100 do {
       write(&collections)
@@ -37,8 +37,8 @@ procedure main()
       }
 end
 every write(map(!F)) ----> none
-close(F) ----> object io.BufferStream#*(8)
-F := open("fncs1.dat") ----> object io.BufferStream#*(8)
+close(F) ----> object io.BufferStream#*
+F := open("fncs1.dat") ----> object io.BufferStream#*
 pr-c-d-r- m--n()
    -v-ry 1 t- 100 d- {
       wr-t-(&c-ll-ct--ns)
@@ -55,8 +55,8 @@ pr-c-d-r- m--n()
       }
 -nd
 every write(map(!F,&cset || "aeiou",&cset || "-----")) ----> none
-close(F) ----> object io.BufferStream#*(8)
-F := open("fncs1.dat") ----> object io.BufferStream#*(8)
+close(F) ----> object io.BufferStream#*
+F := open("fncs1.dat") ----> object io.BufferStream#*
 procedureumain()
 uuueveryu1utou100udou{
 uuuuuuwrite(&collections)
@@ -73,8 +73,8 @@ uuuuuus[2u:u5]
 uuuuuu}
 end
 every write(map(!F,&cset || "     ",&cset || "aeiou")) ----> none
-close(F) ----> object io.BufferStream#*(8)
-f := open("fncs1.dat") ----> object io.BufferStream#*(8)
+close(F) ----> object io.BufferStream#*
+f := open("fncs1.dat") ----> object io.BufferStream#*
 procedure main()
    every 1 to 100 do {
       write(&collections)
@@ -91,8 +91,8 @@ procedure main()
       }
 end
 while writes(reads(f)) ----> none
-close(f) ----> object io.BufferStream#*(8)
-f := open("fncs1.dat") ----> object io.BufferStream#*(8)
+close(f) ----> object io.BufferStream#*
+f := open("fncs1.dat") ----> object io.BufferStream#*
 procedure main()
    every 1 to 100 do {
       write(&collections)
@@ -109,7 +109,7 @@ procedure main()
       }
 end
 while writes(reads(f,10)) ----> none
-f := open("fncs1.dat") ----> object io.BufferStream#*(8)
+f := open("fncs1.dat") ----> object io.BufferStream#*
 procedure main()
    every 1 to 100 do {
       write(&collections)
@@ -126,7 +126,7 @@ procedure main()
       }
 end
 while write(read(f)) ----> none
-close(f) ----> object io.BufferStream#*(8)
+close(f) ----> object io.BufferStream#*
 1
 2
 3

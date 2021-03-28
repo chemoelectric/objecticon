@@ -1,16 +1,16 @@
 list#*(3) ~=== list#*(3) cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
 constructor r ~=== constructor r cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
 constructor r === constructor r cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
-record r#*(4) ~=== record r#*(4) cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
-record r#*(4) === record r#*(4) cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
+record r#* ~=== record r#* cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
+record r#* === record r#* cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
 class A ~=== class A cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
 class A === class A cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
-object A#*(2) ~=== object A#*(2) cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
-object A#*(2) === object A#*(2) cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
+object A#* ~=== object A#* cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
+object A#* === object A#* cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
 procedure fun ~=== procedure fun cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
 method A.fun ~=== method A.fun cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
 procedure fun2 ~=== procedure fun2 cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
-methp#*(object A#*(2),method A.fun2) ~=== methp#*(object A#*(2),method A.fun2) cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
+methp#*(object A#*,method A.fun2) ~=== methp#*(object A#*,method A.fun2) cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
 procedure fun ~=== method A.fun cmp(o1,o2)=1 cmp(o2,o1)=-1 HASH OK CMP OK
 unresolved native method === unresolved native method cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
 "aaaaaaaaaa" === "aaaaaaaaaa" cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
@@ -21,7 +21,7 @@ co-expression#* ~=== co-expression#* cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
 weakref#*(co-expression#*) ~=== weakref#*(co-expression#*) cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
 "a" ~=== "b" cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
 u"a" ~=== u"b" cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
-methp#*(object A#*(2),method A.fun2) ~=== methp#*(object A#*(2),method A.fun2) cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
+methp#*(object A#*,method A.fun2) ~=== methp#*(object A#*,method A.fun2) cmp(o1,o2)=-1 cmp(o2,o1)=1 HASH OK CMP OK
 table#*(0) === table#*(0) cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
 set#*(0) === set#*(0) cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK
 list#*(0) === list#*(0) cmp(o1,o2)=0 cmp(o2,o1)=0 HASH OK CMP OK

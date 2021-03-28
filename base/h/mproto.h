@@ -60,6 +60,7 @@ int utf8_seq(int c, char *s);
 struct rangeset *init_rangeset(void);
 void free_rangeset(struct rangeset *rs);
 void add_range(struct rangeset *cs, int from, int to);
+void add_char(struct rangeset *cs, int ch);
 void print_rangeset(struct rangeset *rs);
 
 void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_offs, word *offset_bits, word *n_off_words);
@@ -133,6 +134,8 @@ void check_hash(void *tbl0);
 
 int oi_toupper(int c);
 int oi_tolower(int c);
+int oi_towlower(int c);
+int oi_towupper(int c);
 
 extern int over_flow;
 word add(word a, word b);

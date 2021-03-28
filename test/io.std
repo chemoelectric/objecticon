@@ -1,8 +1,8 @@
-object: object io.BufferStream#*(8)
-object: object io.BufferStream#*(8)
-object: object io.FileStream#*(2)
-object: object io.FileStream#*(2)
-object: object io.FileStream#*(2)
+object: object io.BufferStream#*
+object: object io.BufferStream#*
+object: object io.FileStream#*
+object: object io.FileStream#*
+object: object io.FileStream#*
 
 aaa
 bbbb
@@ -13,11 +13,11 @@ ffffffff
 ggggggggg
 hhhhhhhhhh
 
-flush io.icn: object io.BufferStream#*(8)
-close io.icn: object io.BufferStream#*(8)
+flush io.icn: object io.BufferStream#*
+close io.icn: object io.BufferStream#*
 
-flush /dev/null: object io.BufferStream#*(8)
-close /dev/null: object io.BufferStream#*(8)
+flush /dev/null: object io.BufferStream#*
+close /dev/null: object io.BufferStream#*
 
 read  /dev/null:	
    !f:		 
@@ -72,8 +72,8 @@ read  tmp2:	 cleared anew
    reads():	 clear ed.an ew.
    nonseq:	 ?????????????????.wena.deraelc?.wena.deraelc-----------------
 
-object io.BufferStream#*(8)
-object io.BufferStream#*(8)
+object io.BufferStream#*
+object io.BufferStream#*
 >stdout>stdout>stdout
 
 >stdout
@@ -103,10 +103,10 @@ io.dat
 io.icn
 io.std
 
-object io.ProgInputStream#*(5)
+object io.ProgInputStream#*
 > hello world
 
-object io.ProgInputStream#*(5)
+object io.ProgInputStream#*
 > =()= aaa
 > =()= bbbb
 > =()= ccccc
@@ -118,12 +118,12 @@ object io.ProgInputStream#*(5)
 > =()= iiiiiiiiiii
 > =()= jjjjjjjjjjjj
 
-object io.ProgInputStream#*(5)
+object io.ProgInputStream#*
 > io.dat
 > io.icn
 > io.std
 
-object io.ProgOutputStream#*(5)
+object io.ProgOutputStream#*
 unca ipun o medneght draory
 twu ruods devargad en o yalluw wuud
 ond tha muma roths uitgroba

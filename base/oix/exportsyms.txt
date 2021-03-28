@@ -79,7 +79,7 @@ anycmp
 lexcmp
 equiv
 caseless_lexcmp
-consistent_lexcmp
+caseless_ucs_lexcmp
 # Data structures
 create_list
 create_table
@@ -211,6 +211,7 @@ utf8_seq
 init_rangeset
 free_rangeset
 add_range
+add_char
 # Miscellany
 millisec
 block_to_descriptor
@@ -227,6 +228,8 @@ buffvprintf
 buffprintf
 oi_toupper
 oi_tolower
+oi_towlower
+oi_towupper
 buffstr
 buffnstr
 is_little_endian

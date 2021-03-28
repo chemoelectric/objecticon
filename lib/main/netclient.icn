@@ -34,8 +34,14 @@ abstract class NetClient(Connectable, HasTask, HasClose)
       WRITING_LINE_EVENT,
       READ_LINE_EVENT,
       READ_STRING_EVENT,
-      # The timeout (in ms) for IP addresses noted to avoid; by default one minute.
+      # The timeout (in ms) for IP addresses noted to avoid; by
+      # default one minute.  Configure with environment variable
+      # OI_NETCLIENT_AVOID_TIMEOUT.
       AVOID_TIMEOUT,
+      # A flag, indicating that dns requests should always be in the
+      # foreground; configure with environment variable
+      # OI_NETCLIENT_FOREGROUND_DNS.
+      FOREGROUND_DNS,
       # A table of addresses (string) to expiry time.
       avoid
 
@@ -48,6 +54,7 @@ abstract class NetClient(Connectable, HasTask, HasClose)
       READ_LINE_EVENT := "Read line"
       READ_STRING_EVENT := "Read string"
       AVOID_TIMEOUT := env_int("OI_NETCLIENT_AVOID_TIMEOUT", 0) | 60*1000
+      FOREGROUND_DNS := env_flag("OI_NETCLIENT_FOREGROUND_DNS")
       avoid := table()
    end
 
@@ -276,7 +283,7 @@ $else
       return SocketStream.dns_query(server, ip_version)
    end
 
-   private dns_bg_query(p, server)
+   private dns_background_query(p, server)
       local r
       if r := dns_query_impl(server) then
          p.send(r)
@@ -286,9 +293,9 @@ $else
 
    private dns_query(server)
       local p, v
-      if /task then
+      if /task | \FOREGROUND_DNS then
          return dns_query_impl(server)
-      p := Process{dns_bg_query(p, server)}.set_task(task)
+      p := Process{dns_background_query(p, server)}.set_task(task)
       p.start() | fail
       if v := p.poll() then {
          p.close()

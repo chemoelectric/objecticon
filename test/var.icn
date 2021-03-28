@@ -1,12 +1,32 @@
 #SRC: V9GEN
 
-import io, lang, util(Math), ipl.test
+import io, lang, util(Math), ipl.test, ipl.pdco(List)
 
-global gname
+global gname, g1
+
+record Rec(a,b,c,d)
+
+class Thing()
+   public a,b,c,d
+   public static x,y
+
+   public meth()
+   end
+end
+
+procedure Echo(e)
+   local f
+   f := create echo(@e)
+   if @f then
+      return f
+end
 
 procedure main(a)
    local x, l0, l1, l2, l3, l4, l5, l6, l7, l8, l9
    static y
+
+   main3()
+
    x := y := &null
    Prog.get_variable("a") := 1
    Prog.get_variable("x") := 2
@@ -75,4 +95,90 @@ procedure recurse(a,b)	# to build up some context for display()
       write(repl('-',70))
       }
    return
+end
+
+procedure main3()
+   local s, 
+      y1, y2, y3,
+      x1, e1,
+      x2, e2,
+      x3, e3,
+      x4, e4, e5,
+      e6, e7, e8,
+      e9, e10, e11,
+      e12, e13, e14
+   static st
+
+   s := "The quick brown fox"
+
+   x1 := Rec(1,2,3,"The quick fox")
+   x2 := Thing()
+   x3 := [1,2,3,4]
+   x4 := table(, "junk1", 99)
+
+   y1 := table(, "junk2", 199)
+   # A list comprising several blocks of elements
+   y2 := List{ 1000 to 2000 }
+   # A list comprising a single big block of elements
+   y3 := list(1000)
+
+   e1 := Echo{ x1.b }
+   e2 := Echo{ x2.b }
+   e3 := Echo{ x3[3] }
+   e4 := Echo{ !x4 }
+   e5 := Echo{ x4["something"] }
+   e6 := Echo{ Thing.x }
+   e7 := create echo(x1)
+   e8 := create echo(g1)
+   e9 := create echo(st)
+   e10 := create echo(s[3:8])
+   e11 := create echo(x1.d[3:5])
+   e12 := Echo{ !y1 }
+   # This will point to an entry in the last element block in y2.
+   e13 := Echo{ y2[-10] }
+   e14 := Echo{ y3[10] }
+
+   write(imagex(x1))
+   write(unserial(vimage(@e1)))
+   write(imagex(x2))
+   write(unserial(vimage(@e2)))
+   write(imagex(x3))
+   write(unserial(vimage(@e3)))
+   write(imagex(x4))
+   write(unserial(vimage(@e4)))
+   write(unserial(vimage(@e5)))
+   write(imagex(Thing))
+   write(unserial(vimage(@e6)))
+   write(unserial(vimage(@e7)))
+   write(unserial(vimage(@e8)))
+   write(unserial(vimage(@e9)))
+   write(unserial(vimage(@e10)))
+   write(unserial(vimage(@e11)))
+   write(unserial(vimage(@e12)))
+   write(unserial(vimage(@e13)))
+   write(unserial(vimage(@e14)))
+   every clear(y1 | y2 | y3)
+   write(unserial(vimage(@e12)))
+   write(unserial(vimage(@e13)))
+   write(unserial(vimage(@e14)))
+   write(unserial(vimage(x1)))
+   write(unserial(vimage(st)))
+   write(unserial(vimage(g1)))
+
+   &trace := -1
+   @e1
+   @e2
+   @e3
+   @e4
+   @e5
+   @e6
+   @e7
+   @e8
+   @e9
+   @e10
+   @e11
+   @e12
+   @e13
+   @e14
+   &trace := 0
 end

@@ -1676,23 +1676,20 @@ function io_FileStream_fd2path(self)
        GetSelfFd();
        buff_size = 128;
        for (;;) {
-           MemProtect(buff = alcstr(0, buff_size));
+           MemProtect(buff = reserve(Strings, buff_size));
            n = fd2path(self_fd, buff, buff_size);
            if (n != 0) {
-               /* Failed; free buff and fail */
-               dealcstr(buff);
+               /* Failed */
                errno2why();
                fail;
            }
            len = strlen(buff);
            if (len <= buff_size - 6) {
-               /* Success - free surplus and return */
-               dealcstr(buff + len);
+               /* Success - confirm allocation and return */
+               alcstr(NULL, len);
                return string(len, buff);
            }
-           /* Didn't fit - so deallocate buff, increase buff_size and
-            * repeat */
-           dealcstr(buff);
+           /* Didn't fit - so increase buff_size and repeat */
            buff_size *= 2;
        }
    }
@@ -1743,15 +1740,12 @@ function io_FileStream_in(self, i)
            Irunerr(205, i);
 
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        nread = read(self_fd, s, i);
        if (nread <= 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
-
            if (nread < 0) {
                errno2why();
                fail;
@@ -1760,9 +1754,9 @@ function io_FileStream_in(self, i)
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
 
        return string(nread, s);
    }
@@ -1970,15 +1964,12 @@ function io_FileStream_pread(self, i, offset)
            runerr(0);
 
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        nread = pread(self_fd, s, i, c_offset);
        if (nread <= 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
-
            if (nread < 0) {
                errno2why();
                fail;
@@ -1987,9 +1978,9 @@ function io_FileStream_pread(self, i, offset)
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
 
        return string(nread, s);
 #else
@@ -2034,15 +2025,12 @@ function io_SocketStream_in(self, i)
        if (i <= 0)
            Irunerr(205, i);
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        nread = recv(self_fd, s, i, 0);
        if (nread <= 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
-
            if (nread < 0) {
                errno2why();
                fail;
@@ -2051,9 +2039,9 @@ function io_SocketStream_in(self, i)
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
 
        return string(nread, s);
    }
@@ -2554,24 +2542,22 @@ function io_SocketStream_recvfrom_impl(self, i, flags)
            Irunerr(205, i);
 
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        iss_len = sizeof(iss);
 
        nread = recvfrom(self_fd, s, i, flags, (struct sockaddr *)&iss, &iss_len);
        if (nread < 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
            errno2why();
            fail;
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
        MakeStr(s, nread, &tmp);
 
        ip = sockaddr_string((struct sockaddr *)&iss, iss_len);
@@ -3401,21 +3387,19 @@ function io_Files_readlink(s)
        char *buff;
        buff_size = 32;
        for (;;) {
-           MemProtect(buff = alcstr(0, buff_size));
+           MemProtect(buff = reserve(Strings, buff_size));
            rc = readlink(s, buff, buff_size);
            if (rc < 0) {
-               dealcstr(buff);
                errno2why();
                fail;
            }
            if (rc < buff_size) {
-               /* Fitted okay, so deallocate surplus and return */
-               dealcstr(buff + rc);
+               /* Fitted okay, so confirm allocation and return */
+               alcstr(NULL, rc);
                return string(rc, buff);
            }
-           /* Didn't fit (or perhaps did fit exactly) - so deallocate
-            * buff, increase buff_size and repeat */
-           dealcstr(buff);
+           /* Didn't fit (or perhaps did fit exactly) - so increase
+            * buff_size and repeat */
            buff_size *= 2;
        }
 #else
@@ -5538,15 +5522,12 @@ function io_WinsockStream_in(self, i)
        if (i <= 0)
            Irunerr(205, i);
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        nread = recv(self_socket, s, i, 0);
        if (nread <= 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
-
            if (nread < 0) {
                win32error2why();
                fail;
@@ -5555,9 +5536,9 @@ function io_WinsockStream_in(self, i)
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
 
        return string(nread, s);
    }
@@ -6018,24 +5999,22 @@ function io_WinsockStream_recvfrom_impl(self, i, flags)
            Irunerr(205, i);
 
        /*
-        * For now, assume we can read the full number of bytes.
+        * Reserve the full number of bytes.
         */
-       MemProtect(s = alcstr(NULL, i));
+       MemProtect(s = reserve(Strings, i));
 
        iss_len = sizeof(iss);
 
        nread = recvfrom(self_socket, s, i, flags, (struct sockaddr *)&iss, &iss_len);
        if (nread < 0) {
-           /* Reset the memory just allocated */
-           dealcstr(s);
            win32error2why();
            fail;
        }
 
        /*
-        * We may not have used the entire amount of storage we reserved.
+        * Confirm the allocation actually required.
         */
-       dealcstr(s + nread);
+       alcstr(NULL, nread);
        MakeStr(s, nread, &tmp);
 
        ip = sockaddr_string((struct sockaddr *)&iss);

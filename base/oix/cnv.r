@@ -254,7 +254,7 @@ static int cnv_cset_impl(dptr s, dptr d)
        s1 = StrLoc(UcsBlk(*s).utf8);
        while (l-- > 0) {
            int i = utf8_iter(&s1);
-           add_range(rs, i, i);
+           add_char(rs, i);
        }
        MakeDesc(D_Cset, rangeset_to_block(rs), d);
        free_rangeset(rs);
@@ -271,7 +271,7 @@ static int cnv_cset_impl(dptr s, dptr d)
             l = StrLen(str);
             while(l--) {
                 int i = *s1++ & 0xff;
-                add_range(rs, i, i);
+                add_char(rs, i);
             }
             MakeDesc(D_Cset, rangeset_to_block(rs), d);
             free_rangeset(rs);

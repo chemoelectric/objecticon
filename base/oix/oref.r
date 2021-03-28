@@ -685,8 +685,10 @@ end
 
 
 function back(underef x -> dx, n)
-   if !def:C_integer(n, 0) then
+   if !def:C_integer(n, 0) then {
+      if cnv : integer(n) then body { fail; }     /* Fail on out of word range */
       runerr(101, n)
+   }
  body {
    word i, j;
    tended struct descrip prev;
@@ -832,8 +834,10 @@ function back(underef x -> dx, n)
 end      
 
 function forward(underef x -> dx, n)
-   if !def:C_integer(n, 1) then
+   if !def:C_integer(n, 1) then {
+      if cnv : integer(n) then body { fail; }     /* Fail on out of word range */
       runerr(101, n)
+   }
   body {
    word i, j;
 

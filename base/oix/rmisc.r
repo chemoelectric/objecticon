@@ -467,19 +467,19 @@ static int cset_do_range(int from, int to)
 
 static void kywdout(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 {
-   struct descrip tdp;
+   struct descrip tmp;
    /* Although getvimage() generally allocates, it doesn't for keyword
     * variables; it just produces literal strings. */
-   getvimage(dp, &tdp);
-   putstr(f, &tdp);
-   if (!noimage) {
+   getvimage(dp, &tmp);
+   putstr(f, &tmp);
+   if (noimage <= 0) {
        fprintf(f, " = ");
        outimage1(f, VarLoc(*dp), noimage, stringlimit, listlimit);
    }
 }
 
 /*
- * outimage - print image of *dp on file f.  If noimage is nonzero,
+ * outimage - print image of *dp on file f.  If noimage is <= 0,
  * fields of records will not be imaged.  This function does not
  * perform any allocations, so dp doesn't need to point to tended
  * data.
@@ -669,20 +669,18 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
      object: {
              /*
-              * If noimage is nonzero, print "object classname(n)" where n is the
-              *  number of fields in the record.  If noimage is zero, print
-              *  the image of each field instead of the number of fields.
+              * Print "object classname#n" where n is the serial
+              *  number of the instance.  If noimage is <= 0, also
+              *  print the image of each field.
               */
              fprintf(f, "object %.*s#" UWordFmt, StrF(*ObjectBlk(*dp).class->name), ObjectBlk(*dp).id);
-             j = ObjectBlk(*dp).class->n_instance_fields;
-             if (noimage > 0)
-                 fprintf(f, "(" WordFmt ")", j);
-             else {
+             if (noimage <= 0) {
+                 j = ObjectBlk(*dp).class->n_instance_fields;
                  putc('(', f);
                  for (i = 0; i < j; ++i) {
                      dptr name = ObjectBlk(*dp).class->program->Fnames[ObjectBlk(*dp).class->fields[i]->fnum];
                      if (i > 0)
-                         putc(',', f);
+                         putc(';', f);
                      fprintf(f, "%.*s=", StrF(*name));
                      tmp = ObjectBlk(*dp).fields[i];
                      outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
@@ -705,20 +703,18 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
       record: {
          /*
-          * If noimage is nonzero, print "record(n)" where n is the
-          *  number of fields in the record.  If noimage is zero, print
-          *  the image of each field instead of the number of fields.
+          * Print "record name#n" where n is the serial number of the
+          *  instance.  If noimage is <= 0, also print the image of each
+          *  field.
           */
          fprintf(f, "record %.*s#" UWordFmt, StrF(*RecordBlk(*dp).constructor->name), RecordBlk(*dp).id);
-         j = RecordBlk(*dp).constructor->n_fields;
-         if (noimage > 0)
-            fprintf(f, "(" WordFmt ")", j);
-         else {
+         if (noimage <= 0) {
             putc('(', f);
+            j = RecordBlk(*dp).constructor->n_fields;
             for (i = 0; i < j; ++i) {
                dptr name = RecordBlk(*dp).constructor->program->Fnames[RecordBlk(*dp).constructor->fnums[i]];
                if (i > 0)
-                   putc(',', f);
+                   putc(';', f);
                fprintf(f, "%.*s=", StrF(*name));
                tmp = RecordBlk(*dp).fields[i];
                outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
@@ -747,7 +743,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          else
             fprintf(f, "[" WordFmt "+:" WordFmt "]", TvsubsBlk(*dp).sspos, TvsubsBlk(*dp).sslen);
 
-         if (!noimage) {
+         if (noimage <= 0) {
              /*
               * This shouldn't do an allocation, since the variable sv
               * shouldn't be another tvsubs (see make_tvsubs in
@@ -867,7 +863,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  fname =  c->program->Fnames[c->fields[i]->fnum];
                  MakeDesc(D_Object, BlkLoc(*dp), &tmp);
                  outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f," . %.*s", StrF(*fname));
+                 fprintf(f,".%.*s", StrF(*fname));
                  break;
              }
              case T_Record: { 		/* record */
@@ -877,14 +873,14 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  fname = c->program->Fnames[c->fnums[i]];
                  MakeDesc(D_Record, BlkLoc(*dp), &tmp);
                  outimage1(f, &tmp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f," . %.*s", StrF(*fname));
+                 fprintf(f,".%.*s", StrF(*fname));
                  break;
              }
              default: {		/* none of the above */
                  fprintf(f, "struct_var");
              }
          }
-         if (!noimage) {
+         if (noimage <= 0) {
              fprintf(f, " = ");
              tmp = *OffsetVarLoc(*dp);
              outimage1(f, &tmp, noimage, stringlimit, listlimit);
@@ -893,13 +889,10 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
      named_var: {
          struct progstate *prog;
-         struct p_frame *uf;
          dptr vp;
-         if (!noimage)
-             fprintf(f, "(variable ");
          vp = VarLoc(*dp);
-         uf = get_current_user_frame();
          if ((prog = find_global(vp))) {
+             fprintf(f, "global ");
              putstr(f, prog->Gnames[vp - prog->Globals]); 		/* global */
          }
          else if ((prog = find_class_static(vp))) {
@@ -909,22 +902,28 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              struct class_field *cf = find_class_field_for_dptr(vp, prog);
              struct b_class *c = cf->defining_class;
              dptr fname = c->program->Fnames[cf->fnum];
-             fprintf(f, "class %.*s . %.*s", StrF(*c->name), StrF(*fname));
+             fprintf(f, "class %.*s.%.*s", StrF(*c->name), StrF(*fname));
          }
          else if ((prog = find_procedure_static(vp))) {
+             fprintf(f, "static ");
              putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
          }
-         else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-             putstr(f, uf->proc->lnames[vp - uf->fvars->desc]);          /* argument/local */
+         else {
+             struct p_frame *uf;
+             uf = get_current_user_frame();
+             if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
+                 fprintf(f, "local ");
+                 putstr(f, uf->proc->lnames[vp - uf->fvars->desc]);          /* argument/local */
+             }
+             else {
+                 fprintf(f, "(temp)");
+             }
          }
-         else
-             fprintf(f, "(temp)");
 
-         if (!noimage) {
+         if (noimage <= 0) {
              fprintf(f, " = ");
              tmp = *VarLoc(*dp);
              outimage1(f, &tmp, noimage, stringlimit, listlimit);
-             putc(')', f);
          }
      }
 
@@ -1350,11 +1349,11 @@ void getimage(dptr dp1, dptr dp2)
       record: {
          /*
           * Produce:
-          *  "record name#m(n)"
-          * where n is the number of fields.
+          *  "record name#m"
+          *  where m is the number of the instance
           */
          struct b_constructor *rec_const = RecordBlk(*dp1).constructor;
-         sprintf(sbuf, "#" UWordFmt "(" WordFmt ")", RecordBlk(*dp1).id, rec_const->n_fields);
+         sprintf(sbuf, "#" UWordFmt, RecordBlk(*dp1).id);
          len = 7 + strlen(sbuf) + StrLen(*rec_const->name);
 	 MakeStrMemProtect(reserve(Strings, len), len, dp2);
          /* No need to refresh pointer, rec_const is static */
@@ -1408,11 +1407,11 @@ void getimage(dptr dp1, dptr dp2)
      object: {
            /*
             * Produce:
-            *  "object name#m(n)"     
-            * where n is the number of fields.
+            *  "object name#m"
+            *  where m is the number of the instance
             */
            struct b_class *obj_class = ObjectBlk(*dp1).class;   
-           sprintf(sbuf, "#" UWordFmt "(" WordFmt ")", ObjectBlk(*dp1).id, obj_class->n_instance_fields);
+           sprintf(sbuf, "#" UWordFmt, ObjectBlk(*dp1).id);
            len = 7 + strlen(sbuf) + StrLen(*obj_class->name);
            MakeStrMemProtect(reserve(Strings, len), len, dp2);
            /* No need to refresh pointer, obj_class is static */
@@ -1585,7 +1584,7 @@ int orphaned_telem(dptr t, union block *te)
 /*
  * getvimage -- function to get print name of variable.
  */
-int getvimage(dptr dp1, dptr dp2)
+void getvimage(dptr dp1, dptr dp2)
 {
     char sbuf[100];			/* buffer; might be too small */
     word i, len;
@@ -1608,9 +1607,10 @@ int getvimage(dptr dp1, dptr dp2)
 
       tvtbl: {
             union block *bp;  /* doesn't need to be tended */
-            tdp1 = TvtblBlk(*dp1).tref;
             bp = TvtblBlk(*dp1).clink;
-            sprintf(sbuf, "table#" UWordFmt "[", bp->table.id);
+            sprintf(sbuf, "table#" UWordFmt "(" WordFmt ")[",
+                    bp->table.id, bp->table.size);
+            tdp1 = TvtblBlk(*dp1).tref;
             getimage(&tdp1, &tdp2);
             len = strlen(sbuf) + StrLen(tdp2) + 1;
             MakeStrMemProtect(reserve(Strings, len), len, dp2);
@@ -1674,9 +1674,7 @@ int getvimage(dptr dp1, dptr dp2)
              * (When used internally, could be reference to nameless
              * temporary stack variables as occurs for string scanning).
              */
-            struct p_frame *uf;
             dptr vp, name;
-            uf = get_current_user_frame();
             vp = VarLoc(*dp1);		 /* get address of variable */
             if ((prog = find_global(vp))) {
                 name = prog->Gnames[vp - prog->Globals];
@@ -1706,16 +1704,19 @@ int getvimage(dptr dp1, dptr dp2)
                 alcstr("static ", 7);
                 alcstr(StrLoc(*name), StrLen(*name));
             }
-            else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-                name = uf->proc->lnames[vp - uf->fvars->desc];          /* argument/local */
-                len = 6 + StrLen(*name);
-                MakeStrMemProtect(reserve(Strings, len), len, dp2);
-                alcstr("local ", 6);
-                alcstr(StrLoc(*name), StrLen(*name));
-            }
             else {
-                LitStr("(temp)", dp2);
-                return Failed;
+                struct p_frame *uf;
+                uf = get_current_user_frame();
+                if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
+                    name = uf->proc->lnames[vp - uf->fvars->desc];          /* argument/local */
+                    len = 6 + StrLen(*name);
+                    MakeStrMemProtect(reserve(Strings, len), len, dp2);
+                    alcstr("local ", 6);
+                    alcstr(StrLoc(*name), StrLen(*name));
+                }
+                else {
+                    LitStr("(temp)", dp2);
+                }
             }
         }
 
@@ -1730,22 +1731,22 @@ int getvimage(dptr dp1, dptr dp2)
                     struct descrip par;
                     par = block_to_descriptor(bp);
                     if (orphaned_lelem(&par, bp)) {
-                        sprintf(sbuf,"list#" UWordFmt "[Orphaned slot]",
-                                ListBlk(par).id);
+                        sprintf(sbuf,"list#" UWordFmt "(" WordFmt ")[Orphaned slot]",
+                                ListBlk(par).id, ListBlk(par).size);
                     } else {
                         i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
                         if (i < 1)
                             i += bp->lelem.nslots;
                         if (i > bp->lelem.nused) {
-                            sprintf(sbuf,"list#" UWordFmt "[Unused slot]",
-                                    ListBlk(par).id);
+                            sprintf(sbuf,"list#" UWordFmt "(" WordFmt ")[Unused slot]",
+                                    ListBlk(par).id, ListBlk(par).size);
                         } else {
                             while (BlkType(bp->lelem.listprev) == T_Lelem) {
                                 bp = bp->lelem.listprev;
                                 i += bp->lelem.nused;
                             }
-                            sprintf(sbuf,"list#" UWordFmt "[" WordFmt "]",
-                                    ListBlk(par).id, i);
+                            sprintf(sbuf,"list#" UWordFmt "(" WordFmt ")[" WordFmt "]",
+                                    ListBlk(par).id, ListBlk(par).size, i);
                         }
                     }
                     i = strlen(sbuf);
@@ -1757,7 +1758,7 @@ int getvimage(dptr dp1, dptr dp2)
                     dptr fname;
                     i = varptr - RecordBlk(*dp1).fields;
                     fname = c->program->Fnames[c->fnums[i]];
-                    sprintf(sbuf,"#" UWordFmt "", RecordBlk(*dp1).id);
+                    sprintf(sbuf,"#" UWordFmt, RecordBlk(*dp1).id);
                     len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
                     MakeStrMemProtect(reserve(Strings, len), len, dp2);
                     alcstr("record ", 7);
@@ -1772,7 +1773,7 @@ int getvimage(dptr dp1, dptr dp2)
                     dptr fname;
                     i = varptr - ObjectBlk(*dp1).fields;
                     fname =  c->program->Fnames[c->fields[i]->fnum];
-                    sprintf(sbuf,"#" UWordFmt "", ObjectBlk(*dp1).id);
+                    sprintf(sbuf,"#" UWordFmt, ObjectBlk(*dp1).id);
                     len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
                     MakeStrMemProtect(reserve(Strings, len), len, dp2);
                     alcstr("object ", 7);
@@ -1786,9 +1787,11 @@ int getvimage(dptr dp1, dptr dp2)
                     struct descrip par;
                     par = block_to_descriptor(bp);
                     if (orphaned_telem(&par, bp))
-                        sprintf(sbuf, "table#" UWordFmt "(Orphaned block)[", TableBlk(par).id);
+                        sprintf(sbuf, "table#" UWordFmt "(" WordFmt ")(Orphaned block)[",
+                                TableBlk(par).id, TableBlk(par).size);
                     else
-                        sprintf(sbuf, "table#" UWordFmt "[", TableBlk(par).id);
+                        sprintf(sbuf, "table#" UWordFmt "(" WordFmt ")[",
+                                TableBlk(par).id, TableBlk(par).size);
                     tdp1 = TelemBlk(*dp1).tref;
                     getimage(&tdp1, &tdp2);
                     len = strlen(sbuf) + StrLen(tdp2) + 1;
@@ -1800,16 +1803,13 @@ int getvimage(dptr dp1, dptr dp2)
                 }
                 default:		/* none of the above */
                     LitStr("(struct)", dp2);
-                    return Failed;
             }
         }
 
         default: {
             LitStr("(non-variable)", dp2);
-            return Failed;
         }
     }
-    return Succeeded;
 }
 
 

@@ -113,7 +113,7 @@ final class Round()
          if pos(0) then
             mode := HALF_UP
          else {
-            t := map(tab(many(&letters ++ '\-'))) | fail
+            t := Text.lower(tab(many(&letters ++ '\-'))) | fail
             mode := case t of {
                UP | "u" : UP
                DOWN | "d" | "t" | "trunc" | "truncate" : DOWN

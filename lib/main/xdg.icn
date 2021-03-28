@@ -853,7 +853,7 @@ final abstract class Mime()
    end
 
    private static need_mime_type(mt)
-      return map(need_string(mt))
+      return Text.lower(need_string(mt))
    end
 
    #
@@ -905,7 +905,7 @@ final abstract class Mime()
 
    private static alternative_mime_types1(mt, l, seen)
       local sub, mmt
-      mmt := map(mt)
+      mmt := Text.lower(mt)
       if member(seen, mmt) then
          fail
       put(l, mt)
@@ -936,7 +936,7 @@ final abstract class Mime()
       every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "generic-icons").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := map(tab(upto(':'))) &
+               if k := Text.lower(tab(upto(':'))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -954,7 +954,7 @@ final abstract class Mime()
       every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "icons").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := map(tab(upto(':'))) &
+               if k := Text.lower(tab(upto(':'))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -972,7 +972,7 @@ final abstract class Mime()
       every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "aliases").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := map(tab(upto(' '))) &
+               if k := Text.lower(tab(upto(' '))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -990,7 +990,7 @@ final abstract class Mime()
       every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := map(tab(upto(' '))) &
+               if k := Text.lower(tab(upto(' '))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -1022,7 +1022,7 @@ final abstract class Mime()
    end
 
    private static true_key(dm, key)
-      succeed map(member(dm, key)) == "true"
+      succeed Text.lower(member(dm, key)) == "true"
    end
 
    private static build_desktop_entry(dm, src)
@@ -1046,7 +1046,7 @@ final abstract class Mime()
    end
 
    private static gen_desktop_mime_types(dm)
-      suspend "" ~== map(string(separate(member(dm, u"MimeType"), ';')))
+      suspend "" ~== Text.lower(string(separate(member(dm, u"MimeType"), ';')))
    end
 
    private static scan_application_dir(p, prefix, t, u)
@@ -1086,7 +1086,7 @@ final abstract class Mime()
          # we look each one up in t.  The resulting list prepends to any
          # desktop entries there already.
          every k := key(a) do {
-            mime_type := map(string(k))
+            mime_type := Text.lower(string(k))
             if l := member(u, mime_type) then {
                every d := Reverse{ member(t, separate(member(a, k), ';')) } do {
                   # Keep the list unique, by deleting the element (if present)
@@ -1105,7 +1105,7 @@ final abstract class Mime()
          # Each entry gives a mime type and list of desktop files to
          # remove from the corresponding list in u.
          every k := key(a) do {
-            mime_type := map(string(k))
+            mime_type := Text.lower(string(k))
             if l := member(u, mime_type) then {
                # Lookup the DesktopEntry (in t) and then delete it from l.
                every d := member(t, separate(member(a, k), ';')) do
@@ -1229,7 +1229,7 @@ package class Globs()
       local i, v, fm
       need_text(f)
       f := ucs(f) | fail
-      fm := map(f)
+      fm := Text.lower(f)
       if v := member(literal, f | fm) then
          return v
       every i := upto('.', f) do {

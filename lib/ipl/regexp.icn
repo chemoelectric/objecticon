@@ -17,8 +17,8 @@
 package ipl.regexp
 
 import
-   ipl.scan(caseless_cset, caseless_match, caseless_find, begin_analysis),
-   lang(Prog),
+   ipl.scan(caseless_match, caseless_find, begin_analysis),
+   lang(Prog, Text),
    util(need_flag, need_string, need_cset)
 
 package record Pos(n)
@@ -928,11 +928,11 @@ class Pattern()
    end
 
    private static Re_c_any(c)
-      return any(caseless_cset(c))
+      return any(Text.caseless_cset(c, &subject))
    end
 
    private static Re_c_upto(c)
-      suspend upto(caseless_cset(c))
+      suspend upto(Text.caseless_cset(c, &subject))
    end
 
 end

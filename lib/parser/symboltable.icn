@@ -2,7 +2,8 @@ package parser
 
 import 
    util(Connectable, error, need_flag, env_string), 
-   lang(),
+   lang(Text),
+   datastruct(SortTable),
    io
 
 abstract protected class Symbol()
@@ -421,9 +422,9 @@ class SymbolTable(Connectable)
    end
 
    private get_stem(f)
-      if map(f[-4:0]) == ".icn" then
+      if Text.lower(f[-4:0]) == ".icn" then
          return f[1:-4]
-      if map(f[-2:0]) == ".u" then
+      if Text.lower(f[-2:0]) == ".u" then
          return f[1:-2]
       return f
    end
@@ -460,13 +461,13 @@ class SymbolTable(Connectable)
       local sf, i, g
       # Standardize by getting rid of the extension
       f := get_stem(f)
-      if member(scanned_files, f) then
+      if scanned_files.member(f) then
          link
       g := match_stem(f) | return error("No .icn or .u file at " || f)
       fire(SCANNING_EVENT, g)
       sf := ScannedFile(g)
-      scanned_files[f] := sf
-      if map(g[-4:0]) == ".icn" then
+      scanned_files.insert(f, sf)
+      if Text.lower(g[-4:0]) == ".icn" then
          scan_src(sf) | fail
       else
          scan_u(sf) | fail
@@ -588,26 +589,27 @@ class SymbolTable(Connectable)
    end
 
    public scan_file(f)
-      return scan(FilePath(f).canonical().standard_case().str())
+      return scan(FilePath(f).canonical().str())
    end
 
    private ensure_package_db()
-      local d, p, s, f
+      local d, p, s, f, t
       if \package_db then
          return
-      package_db := table()
+      package_db := SortTable(, Files.standard_case_cmp)
       every d := Files.getcwd() | Files.split_paths(env_string("OI_PATH")) do {
-         p := FilePath(d).canonical().standard_case()
+         p := FilePath(d).canonical()
          s := p.str()
-         if /package_db[s] then {
+         unless package_db.member(s) then {
             if f := open(p.child("packages.txt").str(), "r") then {
-               unless package_db[s] := scan_packtxt(f) then {
+               unless t := scan_packtxt(f) then {
                   f.close()
                   fail
                }
                f.close()
             } else
-               package_db[s] := table()
+               t := table()
+            package_db.insert(s, t)
          }
       }
       return
@@ -630,22 +632,22 @@ class SymbolTable(Connectable)
 
    public get_all_packages()
       ensure_package_db() | fail
-      suspend key(!package_db)
+      suspend key(package_db.gen())
    end
 
    public scan_package(p)
-      local d, fs, seen, f
+      local fs, seen, f, n
       if member(scanned_packages, p) then
          link
       insert(scanned_packages, p)
       ensure_package_db() | fail
-      every d := key(package_db) do {
-         if fs := \package_db[d, p] then {
+      every n := package_db.nodes() do {
+         if fs := \n.val[p] then {
             if \seen then
                return error("Located package " || p || " in multiple directories")
-            every f := FilePath(d).child(!fs).str()  do
+            every f := FilePath(n.key).child(!fs).str()  do
                scan(f) | fail
-            seen := 1
+            seen := &yes
          }
       }
       if /seen then
@@ -683,7 +685,7 @@ class SymbolTable(Connectable)
    end
 
    public get_scanned_file(f)
-      return member(scanned_files, get_stem(FilePath(f).canonical().standard_case().str()))
+      return scanned_files.member(get_stem(FilePath(f).canonical().str()))
    end
 
    private static check_package_access(sf, sym)
@@ -749,7 +751,7 @@ class SymbolTable(Connectable)
 
    private resolve_invocables()
       local sf, s, x
-      every sf := !scanned_files do {
+      every sf := scanned_files.gen() do {
          every s := sf.get_invocables() do {
             if s[1] ~== "." then {
                x := resolve(sf, s) | fail
@@ -838,7 +840,7 @@ class SymbolTable(Connectable)
    public override new()
       Connectable.new()
       symbol_table := table()
-      scanned_files := table()
+      scanned_files := SortTable(, Files.standard_case_cmp)
       scanned_packages := set()
       file_mode := PREFER_SRC
       pparser := Parser()

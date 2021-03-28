@@ -1,5 +1,5 @@
 
-Testing methods of object datastruct.UnmodifiableTable#*(2)
+Testing methods of object datastruct.UnmodifiableTable#*
 size(): 2
 key(): 2
 gen(): 2
@@ -9,7 +9,7 @@ back(): 2
 back_keyval(): 4
 select(0): Failed
 
-Testing methods of object datastruct.SortTable#*(3)
+Testing methods of object datastruct.SortTable#*
 size(): 0
 key(): 21
 gen(): 21
@@ -20,21 +20,21 @@ back_keyval(): 42
 select(0): Failed
 size() after clear(): 0
 
-Testing methods of object datastruct.EqTable#*(3)
+Testing methods of object datastruct.EqTable#*
 size(): 0
 key(): 21
 gen(): 21
 keyval(): 42
 size() after clear(): 0
 
-Testing methods of object datastruct.BuiltinTable#*(2)
+Testing methods of object datastruct.BuiltinTable#*
 size(): 0
 key(): 21
 gen(): 21
 keyval(): 42
 size() after clear(): 0
 
-Testing methods of object datastruct.EmptyTable#*(1)
+Testing methods of object datastruct.EmptyTable#*
 size(): 0
 key(): 0
 gen(): 0
@@ -44,92 +44,92 @@ back(): 0
 back_keyval(): 0
 select(0): Failed
 
-Testing methods of object datastruct.WeakrefTable#*(5)
+Testing methods of object datastruct.WeakrefTable#*
 size(): 0
 key(): 20
 gen(): 20
 keyval(): 40
 size() after clear(): 0
 
-Testing methods of object datastruct.UnmodifiableBuiltinTable#*(2)
+Testing methods of object datastruct.UnmodifiableBuiltinTable#*
 size(): 1
 key(): 1
 gen(): 1
 keyval(): 2
 
-Testing methods of object datastruct.UnmodifiableSet#*(1)
+Testing methods of object datastruct.UnmodifiableSet#*
 size(): 2
 gen(): 2
 back(): 2
 select(0): Failed
 
-Testing methods of object datastruct.TableSet#*(1)
+Testing methods of object datastruct.TableSet#*
 size(): 2
 gen(): 10
 back(): 10
 select(0): Failed
 size() after clear(): 0
 
-Testing methods of object datastruct.EqSet#*(1)
+Testing methods of object datastruct.EqSet#*
 size(): 0
 gen(): 10
 size() after clear(): 0
 
-Testing methods of object datastruct.EmptySet#*(0)
+Testing methods of object datastruct.EmptySet#*
 size(): 0
 gen(): 0
 back(): 0
 select(0): Failed
 
-Testing methods of object datastruct.BuiltinSet#*(1)
+Testing methods of object datastruct.BuiltinSet#*
 size(): 0
 gen(): 10
 size() after clear(): 0
 
-Testing methods of object datastruct.UnmodifiableBuiltinSet#*(1)
+Testing methods of object datastruct.UnmodifiableBuiltinSet#*
 size(): 2
 gen(): 2
 
-Testing methods of object datastruct.UnmodifiableList#*(1)
+Testing methods of object datastruct.UnmodifiableList#*
 Size=: 3
 gen(): 3
 back(): 3
 at(0): Failed
 
-Testing methods of object datastruct.EmptyList#*(0)
+Testing methods of object datastruct.EmptyList#*
 Size=: 0
 gen(): 0
 back(): 0
 at(0): Failed
 
-Testing methods of object datastruct.BuiltinList#*(1)
+Testing methods of object datastruct.BuiltinList#*
 Size=: 0
 gen(): 10
 back(): 10
 at(0): Failed
 size() after clear(): 0
 
-Testing methods of object datastruct.LinkedList#*(1)
+Testing methods of object datastruct.LinkedList#*
 Size=: 0
 gen(): 10
 back(): 10
 at(0): Failed
 size() after clear(): 0
 
-Testing methods of object datastruct.DoublyLinkedList#*(1)
+Testing methods of object datastruct.DoublyLinkedList#*
 Size=: 0
 gen(): 10
 back(): 10
 at(0): Failed
 size() after clear(): 0
 
-Testing methods of object datastruct.UnmodifiableBuiltinList#*(1)
+Testing methods of object datastruct.UnmodifiableBuiltinList#*
 Size=: 4
 gen(): 4
 back(): 4
 at(0): Failed
 
-Testing methods of object datastruct.SubList#*(3)
+Testing methods of object datastruct.SubList#*
 Size=: 3
 gen(): 3
 back(): 3
@@ -189,7 +189,7 @@ get(list#*(3)): 2
 get(table#*(2)): 2
 get(list#*(2)): 2
 get(set#*(3)): 2
-get(object datastruct.SortTable#*(3)): 2
+get(object datastruct.SortTable#*): 2
 equals(t1,clone(t1)): yes
 t1.size()=0: yes
 >>>test_set()

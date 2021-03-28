@@ -2,6 +2,7 @@ package gui
 
 import 
    util,
+   lang,
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
@@ -368,7 +369,7 @@ class GridPaint(Paint)
          }
          draw_string_ex(win, x, y1 + win.get_font_ascent(), s, accel)
          # Just print the accelerator once.
-         if upto(\accel, map(s)) then
+         if upto(\accel, Text.lower(s)) then
             accel := &null
          x +:= win.text_width(s)
       }

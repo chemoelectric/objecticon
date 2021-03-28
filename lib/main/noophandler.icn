@@ -4,12 +4,14 @@
 
 package mail
 
+import lang
+
 #
 # Handles the 8bit, 7bit and binary encoding types, by doing nothing.
 #
 class NoOpEncodingHandler(EncodingHandler)
    public override can_handle(enc)
-      succeed map(enc) == ("7bit" | "8bit" | "binary")
+      succeed Text.lower(enc) == ("7bit" | "8bit" | "binary")
    end
 
    public override decode_data(m, data)
@@ -26,8 +28,8 @@ end
 #
 class NoOpTypeHandler(TypeHandler)
    public override can_handle(ct)
-      succeed (map(ct.get_type()) == "application") & 
-         (map(ct.get_subtype()) == "octet-stream")
+      succeed (Text.lower(ct.get_type()) == "application") & 
+         (Text.lower(ct.get_subtype()) == "octet-stream")
    end
    
    public override convert_to_object(m, data)

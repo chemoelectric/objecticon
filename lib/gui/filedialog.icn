@@ -8,6 +8,8 @@ import
    ipl.functional,
    util,
    io,
+   lang,
+   datastruct(SortTable),
    ipl.strings
 
 class FileDialogPos()
@@ -218,7 +220,7 @@ class FileDialog(Dialog)
          set_use_wheel(&no)
       flist.set_select_mode(if /multiple_files_flag then Select.ONE else Select.MANY)
       synch_file_overlay()
-      pos_table := table()
+      pos_table := SortTable(, Files.standard_case_cmp)
       res := &null
    end
 
@@ -241,11 +243,11 @@ class FileDialog(Dialog)
       local f, s
       if /multiple_files_flag then {
          f := get_current_selection().str()
-         warned := &null
          if \f & existing_file_mode === (WARN | DISALLOW) & not Files.is_directory(f) & Files.access(f) then {
             warned := &yes
             msg("Existing file")
-         }
+         } else
+            warned := &null
       } else {
          # For multiple selection, choose the selected item with the
          # cursor (if any) as the file to show in the image tab.
@@ -253,7 +255,7 @@ class FileDialog(Dialog)
             f := loaded_dir_path.child(flist.object_get_cursor().name).str()
       }
       if \img then {
-         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
+         if endswith(Text.lower(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
             img.set_image(f)
          else
             img.clear_image()
@@ -274,8 +276,8 @@ class FileDialog(Dialog)
    public synch_flist()
       local i
       if showing_file() then {
-         if i := Positions{Files.standard_case((!flist.contents).name), 
-                           Files.standard_case(file.get_contents())} then {
+         if i := Positions{ (!flist.contents).standard_case(),
+                            Files.standard_case(file.get_contents()) } then {
             flist.
                set_cursor(i).
                set_selections([i]).
@@ -535,7 +537,7 @@ class FileDialog(Dialog)
 
    public on_show_hidden_menu_item(ev)
       if is_live() then {
-         pos_table := table()
+         pos_table.clear()
          refresh_dir() 
       }
       trail.set_show_hidden_files(show_hidden_menu_item.get_status())
@@ -663,14 +665,13 @@ class FileDialog(Dialog)
    end
 
    public save_pos()
-      insert(pos_table,
-             (\loaded_dir_path).standard_case().str(),
-             FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
+      pos_table.insert((\loaded_dir_path).ucs(),
+                       FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
    end
 
    public restore_pos()
       local e, i
-      if e := member(pos_table, loaded_dir_path.standard_case().str()) then {
+      if e := pos_table.member(loaded_dir_path.ucs()) then {
          if i := Positions{(!dlist.contents).name, e.cursor_name} then
             dlist.set_cursor(i)
          dlist.set_area_y(e.area_y)
@@ -696,7 +697,7 @@ class FileDialog(Dialog)
       restore_pos()
       if /nav then {
          ds := loaded_dir_path.ucs()
-         unless ds == history[history_pos] then {
+         unless Files.standard_case_cmp(ds, history[history_pos]) = 0 then {
             every 1 to history_pos - 1 do
                pop(history)
             push(history, ds)
@@ -706,7 +707,6 @@ class FileDialog(Dialog)
       }
       link
    end
-
    
    public set_lists(l)
       #
@@ -754,7 +754,7 @@ class FileDialog(Dialog)
       dir_list := []
       file_list := []
       every e := !loaded_dir_list do {
-         n := Files.standard_case(e.name)
+         n := e.standard_case()
          if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(n) | put(dir_list, e)

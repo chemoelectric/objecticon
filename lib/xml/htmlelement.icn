@@ -8,26 +8,28 @@
 
 package xml
 
+import lang
+
 class HtmlElement(Element)
    #
    # Set the name of the element, which is converted to upper case.
    #
    public override set_name(s) 
-      return Element.set_name(map(s, &lcase, &ucase))
+      return Element.set_name(Text.upper(s))
    end
 
    #
    # Return the attribute for this element
    #
    public override get_attribute(key)
-      return Element.get_attribute(map(key, &lcase, &ucase))
+      return Element.get_attribute(Text.upper(key))
    end
 
    #
    # Set an attribute for this element.
    #
    public override set_attribute(key, value)
-      return Element.set_attribute(map(key, &lcase, &ucase), value)
+      return Element.set_attribute(Text.upper(key), value)
    end
 
    #
@@ -38,7 +40,7 @@ class HtmlElement(Element)
    # :  `s` - the case-insensitive name of the sub-elements.
    #
    public override search_tree(s)
-      s := map(\s, &lcase, &ucase)
+      s := Text.upper(\s)
       suspend Element.search_tree(s)
    end
 
@@ -50,7 +52,7 @@ class HtmlElement(Element)
    # :  `s` - the case-insensitive name of the sub-elements.
    #
    public override search_children(s)
-      s := map(\s, &lcase, &ucase)
+      s := Text.upper(\s)
       suspend Element.search_children(s)
    end
 end

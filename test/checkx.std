@@ -80,9 +80,9 @@ numeric(++2) ----> 2
 numeric(--2) ----> 2
 36 ^ -9 ----> 0
 -36 ^ -9 ----> 0
-f := open("foo.baz","w") ----> object io.BufferStream#*(8)
+f := open("foo.baz","w") ----> object io.BufferStream#*
 write(f,"hello world") ----> "hello world"
-close(f) ----> object io.BufferStream#*(8)
+close(f) ----> object io.BufferStream#*
 
 cset sizes and images:
        0 ''

@@ -6,9 +6,10 @@ global prog, input, output, stopped, sched, break_proc, break_line, break_file,
    history, hfile, slim, addrs, is_flowterm, kbreak, cmds
 
 class MemDebug()
-   public static native list(obj)
-   public static native refs(obj)
+   public static native list(obj, f1, f2)
+   public static native refs(obj, f1, f2)
    public static native dump()
+   public static native report()
    public static native globals()
    public static native nglobals()
    public static native statics(name)
@@ -34,15 +35,19 @@ procedure do_help()
       write("start               Restart the monitored program").
       write("exit                Exit immediately").
       write("regions             Display memory regions").
-      write("list [-a] x         List instances of type x, or show the structure of").
+      write("list [-r|-a] x      List instances of type x, or show the structure of").
       write("                    a particular instance x.  For example, list SomeType").
       write("                    lists all instances of SomeType, whilst list SomeType#22").
-      write("                    shows the elements of a particular instance.  -a means").
+      write("                    shows the elements of a particular instance. -r means").
+      write("                    show a path back to a root for each match;  -a means").
       write("                    include regions outside the current program's regions").
-      write("refs x              Show what points to the given instance, eg refs").
-      write("                    list#21 would show what references that list").
+      write("refs [-r|-a] x      Show what points to the given instance, eg refs").
+      write("                    list#21 would show what references that list.  -r means").
+      write("                    show a path back to a root for each match; -a means").
+      write("                    include indirect paths via x itself").
       write("dump                Show all globals, statics and structures of the").
       write("                    current program").
+      write("report              Show a summary of the current program's allocations").
       write("globals             Show the global variables of the current program").
       write("nglobals            Show the named globals of the current program").
       write("prog x              Set the current program, initially set to the").
@@ -124,19 +129,26 @@ end
 
 procedure do_list(a)
    local o
-   o := get_options(a, [Opt("a",, "All regions")], "Usage: list [-a] object") | fail
+   o := get_options(a, [Opt("r",, "Trace back to root"),
+                        Opt("a",, "All regions")], "Usage: list [-a] object") | fail
    (*a = 1) | return bad_params()
-   MemDebug.list(a[1], o["a"]) | return err_msg(&why)
+   MemDebug.list(a[1], o["r"],o["a"]) | return err_msg(&why)
 end
 
 procedure do_refs(a)
-   get_options(a,, "Usage: refs object") | fail
+   local o
+   o := get_options(a, [Opt("r",, "Trace back to root"),
+                        Opt("a",, "Include indirect paths via object")], "Usage: refs [-r|-a] object") | fail
    (*a = 1) | return bad_params()
-   MemDebug.refs(a[1]) | return err_msg(&why)
+   MemDebug.refs(a[1], o["r"], o["a"]) | return err_msg(&why)
 end
 
 procedure do_dump()
    MemDebug.dump()
+end
+
+procedure do_report()
+   MemDebug.report()
 end
 
 procedure do_statics(a)
@@ -205,7 +217,7 @@ procedure do_hist(a)
    s := a[1] | u""
    i := input.get_history_start_no()
    every e := !input.get_history() do {
-      if find(s, map(e)) then
+      if find(s, Text.lower(e)) then
          cmd_out.write(right(i, 4), "  ", e)
       i +:= 1
    }
@@ -543,6 +555,7 @@ procedure main(args)
                  "list",  do_list,
                  "refs",  do_refs,
                  "dump",  do_dump,
+                 "report",  do_report,
                  "globals",  do_globals,
                  "nglobals",  do_nglobals,
                  "prog",  do_prog,
