@@ -67,24 +67,24 @@ void dump_sbuf(struct str_buf *s)
  */
 void new_sbuf(struct str_buf *sbuf)
 {
-    char *s1, *s2;
+    char *s;
+    size_t n;
 
     if (sbuf->size == 0) 
         sbuf->size = SBufSize;
     else {
         /*
-         * The new buffer is larger than the old one to insure that any
+         * The new buffer is larger than the old one to ensure that any
          *  size string can be buffered.
          */
         sbuf->size *= 2;
     }
-
-    s1 = sbuf->strtimage;
-    s2 = sbuf->strtimage = safe_malloc(sbuf->size);
-    while (s1 < sbuf->endimage)
-        *s2++ = *s1++;
-    sbuf->endimage = s2;
-    sbuf->end = sbuf->strtimage + sbuf->size;
+    s = safe_malloc(sbuf->size);
+    n = sbuf->endimage - sbuf->strtimage;
+    memcpy(s, sbuf->strtimage, n);
+    sbuf->strtimage = s;
+    sbuf->endimage = s + n;
+    sbuf->end = s + sbuf->size;
 }
 
 static struct str_entry *lookup(char *s, int len, uword h)
