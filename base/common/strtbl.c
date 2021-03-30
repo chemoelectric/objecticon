@@ -80,7 +80,7 @@ void new_sbuf(struct str_buf *sbuf)
         sbuf->size *= 2;
     }
     s = safe_malloc(sbuf->size);
-    n = sbuf->endimage - sbuf->strtimage;
+    n = CurrLen(*sbuf);
     memcpy(s, sbuf->strtimage, n);
     sbuf->strtimage = s;
     sbuf->endimage = s + n;
