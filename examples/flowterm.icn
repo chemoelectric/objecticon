@@ -2005,7 +2005,7 @@ $endif
          tty.close()
          Files.chdir(cwd)
          Files.bulk_close(50)
-$if _LINUX
+$if _LINUX | _DARWIN
          system("stty iutf8")
 $endif
          System.exec(sh, shell_args, env) | stop(&why)
