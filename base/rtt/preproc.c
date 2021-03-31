@@ -754,82 +754,6 @@ struct token *interp_dir(void)
 
 
 /*
- * See if compiler used to build the preprocessor recognizes '\a' 
- *  as the bell character.
- */
-#if '\a' == Bell
-
-#define TokSrc interp_dir
-
-#else      /*  '\a' == Bell  */
-
-#define TokSrc check_bell
-
-/*
- * fix_bell - replace \a characters which correct octal escape sequences.
- */
-static char *fix_bell(s)
-register char *s;
-   {
-   struct str_buf *sbuf;
-
-   sbuf = get_sbuf();
-   while (*s != '\0') {
-      AppChar(*sbuf, *s);
-      if (*s == '\\') {
-         ++s;
-         if (*s == 'a') {
-            AppChar(*sbuf, '0' + ((Bell >> 6) & 7));
-            AppChar(*sbuf, '0' + ((Bell >> 3) & 7));
-            AppChar(*sbuf, '0' + (Bell & 7));
-            }
-         else
-            AppChar(*sbuf, *s);
-         }
-      ++s;
-      }
-   s = str_install(sbuf);
-   rel_sbuf(sbuf);
-   return s;
-   }
-
-/*
- * check_bell - check for \a in character and string constants. This is only
- *  used with compilers which don't give the standard interpretation to \a.
- */
-static struct token *check_bell(void)
-   {
-   struct token *t;
-   register char *s;
-
-   t = interp_dir();
-   if (t == NULL)
-      return NULL;
-   switch (t->tok_id) {
-      case StrLit:
-      case LStrLit:
-      case CharConst:
-      case LCharConst:
-         s = t->image;
-         while (*s != '\0') {
-           if (*s == '\\') {
-              if (*++s == 'a') {
-                 /*
-                  * There is at least one \a to replace.
-                  */
-                 t->image = fix_bell(t->image);
-                 break;
-                 }
-              }
-           ++s;
-           }
-      }
-   return t;
-   }
-
-#endif     /*  '\a' == Bell  */
-
-/*
  * preproc - return the next fully preprocessed token.
  */
 struct token *preproc()
@@ -842,7 +766,7 @@ struct token *preproc()
    char hex_char;
    int is_hex_char;
 
-   t1 = TokSrc();
+   t1 = interp_dir();
    if (t1 == NULL)
       return NULL;  /* end of file */
 
@@ -861,7 +785,7 @@ struct token *preproc()
        *  white space yet.
        */
       whsp = NULL;
-      merge_whsp(&whsp, &t2, TokSrc);
+      merge_whsp(&whsp, &t2, interp_dir);
       if (t2 != NULL && (t2->tok_id == StrLit || t2->tok_id == LStrLit)) {
          /*
           * There are at least two adjacent string literals, concatenate them.
@@ -966,7 +890,7 @@ struct token *preproc()
              * Get the next non-white space token, saving any skipped
              *  white space.
              */
-            merge_whsp(&whsp, &t2, TokSrc);
+            merge_whsp(&whsp, &t2, interp_dir);
             }
 
          /*

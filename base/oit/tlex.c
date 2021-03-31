@@ -654,7 +654,7 @@ static struct toktab *getucs(int ac, int *cc)
         }
     }
 
-    len = lex_sbuf.endimage - lex_sbuf.strtimage;
+    len = CurrLen(lex_sbuf);
     yylval = UcsNode(str_install(&lex_sbuf), len);
     return T_Ucs;
 }

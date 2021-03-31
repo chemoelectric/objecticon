@@ -190,7 +190,7 @@ struct token *trigger;
                case '"':  e1 = (long) '"';  break;
                case '?':  e1 = (long) '?';  break;
                case '\\': e1 = (long) '\\'; break;
-               case 'a':  e1 = (long) Bell; break;
+               case 'a':  e1 = (long) '\a'; break;
                case 'b':  e1 = (long) '\b'; break;
                case 'f':  e1 = (long) '\f'; break;
                case 'n':  e1 = (long) '\n'; break;

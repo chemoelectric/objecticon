@@ -46,18 +46,8 @@ extern struct package_dir *package_dirs, *package_dir_last;
  * Prototypes.
  */
 void free_package_db(void);
-struct package_dir *create_package_dir(char *path, char *sc_path);
-struct package_file *create_package_file(char *name, char *sc_name);
-struct package *create_package(char *name);
-struct package_file *lookup_package_file(struct package *p, char *s);
-int add_package_file(struct package *p, struct package_file *new);
-char *get_packages_file(struct package_dir *d);
-int load_package_dir(struct package_dir *dir);
 void save_package_db(void);
-struct package_dir *lookup_package_dir(char *s);
-int add_package_dir(struct package_dir *new);
 struct package *lookup_package(struct package_dir *p, char *s);
-int add_package(struct package_dir *p, struct package *new);
 void ensure_file_in_package(char *file, char *package);
 void load_package_db_from_ipath(void);
 void dump_package_db(void);

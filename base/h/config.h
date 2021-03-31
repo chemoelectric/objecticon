@@ -64,7 +64,6 @@
 /*
  *  The following definitions assume ANSI C.
  */
-#define Bell '\a'
 
 #ifndef PPInit
    #define PPInit ""

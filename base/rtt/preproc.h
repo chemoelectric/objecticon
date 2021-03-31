@@ -5,15 +5,6 @@
 #define tokenize oi_tokenize
 #endif
 
-
-/*
- * If Bell is not defined, determine the default value for the "bell"
- *   character.
- */
-#ifndef Bell
-#define Bell '\a'
-#endif					/* Bell */
-
 #define CBufSize 256  /* size of buffer for file input */
 
 /*
