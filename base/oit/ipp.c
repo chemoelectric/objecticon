@@ -90,7 +90,8 @@ static char *getidt  (char *dst, char *src);
 static char *getencoding(char *dst, char *src);
 static char *getfnm  (char *dst, char *src);
 static void freecdefn(cdefn *d);
-static int matchdef(cdefn *d, char *name, int len);
+static int eqname(cdefn *d, char *name, int len);
+static int eqval(cdefn *d, char *val, int vlen);
 static cdefn *dquery(char *name, int len);
 static void dremove(char *name);
 static void dinsert(char *name, char *val);
@@ -756,6 +757,10 @@ static char *loadfile(char *fname, int *vlen, int ucs)
         }
         n = charstr(ch, s + i);
         i += n;
+        if (i > 24 * 1024 * 1024) {
+            pfatal("File too big: %s", fname);
+            break;
+        }
     }
     s[i++] = '\"';
     s[i] = 0;
@@ -1310,16 +1315,21 @@ static uword cdefn_hashstr(cdefn *p)
     return hashstr(p->name, p->nlen);
 }
 
-static int matchdef(cdefn *d, char *name, int len)
+static int eqname(cdefn *d, char *name, int len)
 {
     return (d->nlen == len && memcmp(name, d->name, len) == 0);
+}
+
+static int eqval(cdefn *d, char *val, int vlen)
+{
+    return (d->vlen == vlen && memcmp(val, d->val, vlen) == 0);
 }
 
 static cdefn *dquery(char *name, int len)
 {
     cdefn *d;
     for (d = Bucket(cbin, hashstr(name, len)); d; d = d->next)
-        if (matchdef(d, name, len))
+        if (eqname(d, name, len))
             return d;			/* return pointer to entry */
     /*
      * No match
@@ -1338,7 +1348,7 @@ static void dremove(char *name)
     h = hashstr(name, nlen);
     p = &cbin.l[h % cbin.nbuckets];
     while ((d = *p)) {
-        if (matchdef(d, name, nlen)) {
+        if (eqname(d, name, nlen)) {
             *p = d->next;		/* delete from table */
             freecdefn(d);
             --cbin.size;
@@ -1357,11 +1367,11 @@ static void dinsert(char *name, char *val)
     vlen = strlen(val);
     h = hashstr(name, nlen);
     for (d = Bucket(cbin, h); d; d = d->next) {
-        if (matchdef(d, name, nlen)) {
+        if (eqname(d, name, nlen)) {
             /*
              * We found a match in the table.
              */
-            if (strcmp(val, d->val) != 0) 
+            if (!eqval(d, val, vlen))
                 pfatal("Value redefined: %s", name);
             return;
         }
@@ -1386,11 +1396,11 @@ static void dinsert_pre(char *name, char *val, int vlen)
     nlen = strlen(name);
     h = hashstr(name, nlen);
     for (d = Bucket(cbin, h); d; d = d->next) {
-        if (matchdef(d, name, nlen)) {
+        if (eqname(d, name, nlen)) {
             /*
              * We found a match in the table.
              */
-            if (strcmp(val, d->val) != 0) 
+            if (!eqval(d, val, vlen))
                 pfatal("Value redefined: %s", name);
             return;
         }
