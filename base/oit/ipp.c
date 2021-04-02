@@ -673,7 +673,7 @@ static int charstr(int c, char *b)
     static char cbuf[12];
     if (c < 128 && oi_isprint(c)) {
         /*
-         * c is printable, but special case ", ', - and \.
+         * c is printable, but special case " and \.
          */
         switch (c) {
             case '"':
@@ -689,37 +689,37 @@ static int charstr(int c, char *b)
     }
 
     /*
-     * c is some sort of unprintable character.	If it one of the common
+     * c is some sort of unprintable character. If it one of the common
      *  ones, produce a special representation for it, otherwise, produce
      *  its hex value.
      */
     switch (c) {
-        case '\b':			/* backspace */
+        case '\b':                      /* backspace */
             memcpy(b, "\\b", 2);
             return 2;
 
-        case '\177':			/* delete */
+        case '\177':                    /* delete */
             memcpy(b, "\\d", 2);
             return 2;
-        case '\33':			/* escape */
+        case '\33':                     /* escape */
             memcpy(b, "\\e", 2);
             return 2;
-        case '\f':			/* form feed */
+        case '\f':                      /* form feed */
             memcpy(b, "\\f", 2);
             return 2;
-        case '\n':			/* new line */
+        case '\n':                      /* new line */
             memcpy(b, "\\n", 2);
             return 2;
-        case '\r':     		/* carriage return b */
+        case '\r':                      /* carriage return b */
             memcpy(b, "\\r", 2);
             return 2;
-        case '\t':			/* horizontal tab */
+        case '\t':                      /* horizontal tab */
             memcpy(b, "\\t", 2);
             return 2;
-        case '\13':			/* vertical tab */
+        case '\13':                     /* vertical tab */
             memcpy(b, "\\v", 2);
             return 2;
-        default: {				/* hex escape sequence */
+        default: {                      /* hex escape sequence */
             sprintf(cbuf, "\\x%02x", c);
             memcpy(b, cbuf, 4);
             return 4;

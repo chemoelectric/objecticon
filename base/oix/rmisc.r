@@ -342,57 +342,49 @@ static int charstr(int c, char *b)
     static char cbuf[12];
     if (c < 128 && oi_isprint(c)) {
         /*
-         * c is printable, but special case ", ', - and \.
+         * c is printable, but special case \.
          */
-        switch (c) {
-            case '"':
-                if (b) memcpy(b, "\\\"", 2);
-                return 2;
-            case '\'':
-                if (b) memcpy(b, "\\'", 2);
-                return 2;
-            case '\\':
-                if (b) memcpy(b, "\\\\", 2);
-                return 2;
-            default:
-                if (b) *b = c;
-                return 1;
+        if (c == '\\') {
+            if (b) memcpy(b, "\\\\", 2);
+            return 2;
         }
+        if (b) *b = c;
+        return 1;
     }
 
     if (c < 256) {
         /*
-         * c is some sort of unprintable character.	If it one of the common
+         * c is some sort of unprintable character.     If it one of the common
          *  ones, produce a special representation for it, otherwise, produce
          *  its hex value.
          */
         switch (c) {
-            case '\b':			/* backspace */
+            case '\b':                  /* backspace */
                 if (b) memcpy(b, "\\b", 2);
                 return 2;
 
-            case '\177':			/* delete */
+            case '\177':                /* delete */
                 if (b) memcpy(b, "\\d", 2);
                 return 2;
-            case '\33':			/* escape */
+            case '\33':                 /* escape */
                 if (b) memcpy(b, "\\e", 2);
                 return 2;
-            case '\f':			/* form feed */
+            case '\f':                  /* form feed */
                 if (b) memcpy(b, "\\f", 2);
                 return 2;
-            case '\n':			/* new line */
+            case '\n':                  /* new line */
                 if (b) memcpy(b, "\\n", 2);
                 return 2;
-            case '\r':     		/* carriage return b */
+            case '\r':                  /* carriage return b */
                 if (b) memcpy(b, "\\r", 2);
                 return 2;
-            case '\t':			/* horizontal tab */
+            case '\t':                  /* horizontal tab */
                 if (b) memcpy(b, "\\t", 2);
                 return 2;
-            case '\13':			/* vertical tab */
+            case '\13':                 /* vertical tab */
                 if (b) memcpy(b, "\\v", 2);
                 return 2;
-            default: {				/* hex escape sequence */
+            default: {                  /* hex escape sequence */
                 if (b) {
                     sprintf(cbuf, "\\x%02x", c);
                     memcpy(b, cbuf, 4);
@@ -418,22 +410,22 @@ static int charstr(int c, char *b)
 
 static int cset_charstr(int c, char *b)
 {
-    if (c == '\"') {
-        if (b) *b = c;
-        return 1;
-    }
-    if (c == '-') {
-        if (b) memcpy(b, "\\-", 2);
-        return 2;
+    switch (c) {
+        case '\'':
+            if (b) memcpy(b, "\\'", 2);
+            return 2;
+        case '-':
+            if (b) memcpy(b, "\\-", 2);
+            return 2;
     }
     return charstr(c, b);
 }
 
 static int str_charstr(int c, char *b)
 {
-    if (c == '\'') {
-        if (b) *b = c;
-        return 1;
+    if (c == '\"') {
+        if (b) memcpy(b, "\\\"", 2);
+        return 2;
     }
     return charstr(c, b);
 }
@@ -441,9 +433,9 @@ static int str_charstr(int c, char *b)
 static int ucs_charstr(int c, char *b)
 {
     static char cbuf[12];
-    if (c == '\'') {
-        if (b) *b = c;
-        return 1;
+    if (c == '\"') {
+        if (b) memcpy(b, "\\\"", 2);
+        return 2;
     }
     if (c > 127 && c < 256) {
         if (b) {
