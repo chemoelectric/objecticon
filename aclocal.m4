@@ -250,7 +250,7 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
            dnl Flags for linking a library
            case $host_os in
               *darwin* )
-                       DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
+                       DYNAMIC_LIB_LDFLAGS="-bundle -undefined suppress -flat_namespace"
                        ;;
               *solaris* )
                        case $CCVER in
