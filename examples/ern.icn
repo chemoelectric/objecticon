@@ -12,21 +12,23 @@ class ErnDialog(Dialog)
       files
 
    public on_okay_button(ev)
-      local s
+      local s, p
       s := name_field.get_contents()
       if upto(Files.PATH_SPECIALS, s) then
          msg("Invalid character in filename entered")
       else {
-         s := path.sibling(s).ucs()
-         if Files.access(s) then
+         p := path.sibling(s).ucs()
+         # The second test allows same-file renaming (useful on
+         # case-insensitive systems).
+         if Files.access(p) & Files.standard_case_cmp(s, path.get(-1)) ~= 0 then
             msg("File already exists")
-         else if Files.rename(path.str(), s) then {
+         else if Files.rename(path.str(), p) then {
             msg("OK")
             writes(path.str(), " -> ")
             if FileStream.stdout.is_flowterm_tty() then
-               write(Files.begin_link(s), s, Files.end_link())
+               write(Files.begin_link(p), p, Files.end_link())
             else
-               write(s)
+               write(p)
             next_file()
          }
          else
