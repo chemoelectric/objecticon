@@ -2251,8 +2251,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private handle_table_key(e)
-      local i, ke
+   private get_key_flags(e)
+      local i
       i := 0
       if \e.shift then i +:= S
       if \e.ctrl then i +:= C
@@ -2261,6 +2261,24 @@ class Vt(LineBasedScrollArea, MenuMode)
       if \e.meta5 then i +:= M5
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
+      return i
+   end
+
+   #
+   # Given a key event e, lookup and call any matching defined custom
+   # key.
+   #
+   public do_custom_key(e)
+      local i, ke
+      i := get_key_flags(e)
+      if ke := custom_keys.lookup(e.code, i) then
+         ke.val(ke.data, e)
+      link
+   end
+
+   private handle_table_key(e)
+      local i, ke
+      i := get_key_flags(e)
       if ke := custom_keys.lookup(e.code, i) then {
          ke.val(ke.data, e)
          return

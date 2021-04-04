@@ -852,6 +852,7 @@ class Columns(LineBasedScrollArea)
          Key.LEFT : handle_key_move(handle_key_left)
          Key.RIGHT : handle_key_move(handle_key_right)
          "\r" | "\l": handle_return(e)
+         default: fire("other-key", e)
       }
    end
 
@@ -2870,6 +2871,7 @@ $endif
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
+         connect(output.do_custom_key, "other-key").
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
          connect(on_columns_over_changed, "over-changed")
