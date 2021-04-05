@@ -980,6 +980,7 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xFF80: return 0x20;	/*  KP_Space	 space  */
         case 0xFF89: return 0x9;	/*  KP_Tab */
         case 0xFF8D: return 0xD;	/*  KP_Enter	 enter  */
+        case 0xFF9F: return 0x7F;	/*  KP_Delete */
         case 0xFFAA: return 0x2A;	/*  KP_Multiply */
         case 0xFFAB: return 0x2B;	/*  KP_Add */
         case 0xFFAC: return 0x2C;	/*  KP_Separator	 separator, often comma  */
