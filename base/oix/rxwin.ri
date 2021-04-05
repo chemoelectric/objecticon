@@ -864,7 +864,7 @@ static void handle_selection_request(wsp ws, XSelectionRequestEvent *event)
 
     MakeInt(SELECTIONREQUEST, &tmp);
     list_put(&ws->listp, &tmp);
-    MakeInt((word)event->requestor, &tmp);
+    MakeInt(event->requestor, &tmp);
     list_put(&ws->listp, &tmp);
     get_atom_descriptor(wd, event->property, &tmp);
     list_put(&ws->listp, &tmp);
@@ -2743,7 +2743,7 @@ static void handle_crossing(wsp ws, XCrossingEvent *event)
     UpdateCommon(ws, event);
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
-           (word)event->time, 
+           event->time, 
            make_mod(event->state));
 }
 
@@ -2762,14 +2762,14 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
     if (event->type == KeyRelease)
         fl |= MOD_RELEASE;
     /* First try to convert the event to a simple char string, and a KeySym */
+    k = NoSymbol;
     i = XLookupString(event, s, sizeof(s), &k, NULL);
     if (i > 0) {
         /* Found a char string, so generate string event(s) */
         StrLen(d) = 1;
         for (j = 0; j < i; j++) {
             StrLoc(d) = &allchars[s[j] & 0xFF];
-            qevent(ws, &d, event->x, event->y,
-                   (word)event->time, fl);
+            qevent(ws, &d, event->x, event->y, event->time, fl);
         }
         return;
     }
@@ -2782,18 +2782,30 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
             MakeStr(&allchars[i], 1, &d);
         else
             MakeDesc(D_Ucs, make_one_char_ucs_block(i), &d);
-
-        qevent(ws, &d, event->x, event->y,
-               (word)event->time, fl);
+        qevent(ws, &d, event->x, event->y, event->time, fl);
         return;
     }
 
-    /* Neither of those worked, so it must be a non-character key (cursor key, etc).
-     * So just generate the numerical value of the KeySym as an integer.
+    /* Neither of those worked, so it must be a non-character key
+     * (cursor key, etc).  So just generate the numerical value of the
+     * KeySym as an integer.  First though, we map some of the
+     * non-numlock keypad KeySyms to their corresponding non-keypad
+     * equivalents.
      */
+    switch (k) {
+        case XK_KP_Page_Down: k = XK_Page_Down; break;
+        case XK_KP_Page_Up:   k = XK_Page_Up; break;
+        case XK_KP_Begin:     k = XK_Begin; break;
+        case XK_KP_Home:      k = XK_Home; break;
+        case XK_KP_End:       k = XK_End; break;
+        case XK_KP_Insert:    k = XK_Insert; break;
+        case XK_KP_Left:      k = XK_Left; break;
+        case XK_KP_Up:        k = XK_Up; break;
+        case XK_KP_Down:      k = XK_Down; break;
+        case XK_KP_Right:     k = XK_Right; break;
+    }
     MakeInt(k, &d);
-    qevent(ws, &d, event->x, event->y,
-           (word)event->time, fl);
+    qevent(ws, &d, event->x, event->y, event->time, fl);
 }
 
 #include "rxkeysyms.ri"
@@ -2838,7 +2850,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
     }
     qmouseevents(ws, state, 
                  event->x, event->y, 
-                 (word)event->time, 
+                 event->time, 
                  make_mod(event->state));
 }
 
