@@ -777,7 +777,7 @@ class Ieval(MinimalObjectOutput)
       prompt := "> "
       repeat {
          input.set_prompt(prompt)
-         t := input.read_line() | stopf("Failed to read input: %w")
+         save_why{ t := input.read_line() | stopf("Failed to read input: %w") }
          if /t then break
          s ||:= t
          if s[-1] == "\\" then {
