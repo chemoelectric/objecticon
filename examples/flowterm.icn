@@ -839,6 +839,7 @@ class Columns(LineBasedScrollArea)
       \cursor | fail
       set_cursor(f())
       ensure_line_visible(get_row_for_index(cursor))
+      set_area_x(0)
    end
 
    public handle_key(e)
