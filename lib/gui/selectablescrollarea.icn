@@ -496,8 +496,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # :  `n` - the position
    #
    public insert_lines(l, n)
-      local i, e, t
+      local i, e, t, p
       if *l > 0 then {
+         p := *self.contents
+
          every i := 1 to *l do
             insert(self.contents, i + n - 1, l[i])
 
@@ -509,6 +511,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          }
          self.selections := t
 
+         # If the list was empty, set the cursor.
+         if p = 0 then
+            set_cursor(1)
          invalidate_subject_width()
          invalidate_line_height()
          invalidate_line_count()
