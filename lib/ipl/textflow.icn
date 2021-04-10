@@ -1397,8 +1397,11 @@ class TextFlow(Component, HasLastHighlight)
       local c, t
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
-         set_highlight(over)
-         held := over
+         if /e.shift then {
+            set_highlight(over)
+            held := over
+         } else
+            browser.set_last_highlight(self, over)
       } else if t := which_text_out(e) then {
          if c := \ ( \ (t.attr.form_label)).comp & not c.is_shaded() then {
             parent_dialog.set_focus(c.gen_focusable(e))
@@ -1464,8 +1467,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    private handle_lmdrag(e)
-      \held | fail
-      if \which_text_out(e).attr.url === held then {
+      if which_text_out(e).attr.url === \held then {
          set_over(held)
          set_highlight(held)
       } else {

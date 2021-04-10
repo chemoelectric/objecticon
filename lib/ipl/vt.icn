@@ -2110,9 +2110,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_ldrag(e)
-      if \held then
-         handle_mdrag(e)
-      else if /no_drag & \mark_y then {
+      if /held & /no_drag & \mark_y then {
          if cursor_y > 1 & e.y < self.view.y then {
             going_up := &yes
             check_scroll_ticker(self.view.y - e.y)
@@ -2132,7 +2130,8 @@ class Vt(LineBasedScrollArea, MenuMode)
                set_cursor_from_pos(e)
             invalidate_region()
          }
-      }
+      } else
+         handle_mdrag(e)
    end
 
    private check_scroll_ticker(d)
@@ -2552,9 +2551,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_mdrag(e)
-      local seg
-      \held | fail
-      if (seg := get_segment_for_pos(e)) & (seg.attr.url === held) then {
+      if get_segment_for_pos(e).attr.url === \held then {
          set_over(held)
          set_highlight(held)
       } else {
@@ -2662,8 +2659,13 @@ class Vt(LineBasedScrollArea, MenuMode)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
          ensure_pointer_line_visible(e)
-         set_highlight(over)
-         held := over
+         if /e.shift then {
+            set_highlight(over)
+            held := over
+         } else {
+            set_last_highlight(over)
+            no_drag := &yes
+         }
       } else {
          handle_lpress1(e)
       }
