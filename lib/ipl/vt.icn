@@ -2415,6 +2415,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
          multi_begin := last_highlight
+         ensure_pointer_line_visible(e)
          set_highlight(over)
          held := over
       } else {
@@ -2653,9 +2654,14 @@ class Vt(LineBasedScrollArea, MenuMode)
       invalidate_region()
    end
 
+   private ensure_pointer_line_visible(e)
+      ensure_line_visible(get_nearest_line_to_pointer(e))
+   end
+
    private handle_lpress(e)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
+         ensure_pointer_line_visible(e)
          set_highlight(over)
          held := over
       } else {
@@ -2673,6 +2679,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          }
       } else {
          if m := ui.create_link_menu(over) then {
+            ensure_pointer_line_visible(e)
             set_highlight(over)
             set_over()
             pm := PopupMenu()
