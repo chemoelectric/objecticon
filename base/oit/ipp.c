@@ -64,7 +64,7 @@ static uword cdefn_hashstr(cdefn *p);
 static int ppopen  (char *fname, int m4);
 static FILE *m4pipe  (char *fname);
 static char *rmnl    (char *s);
-static char *rline   (FILE *fp);
+static char *rline   (void);
 static void pushdef (cdefn *d);
 static void pushline (void);
 static void ppdir   (char *line);
@@ -404,12 +404,11 @@ int ppch()
       /*
        * There's nothing at all in memory.  Read a new line.
        */
-      if ((buf = rline(curfile->fp)) != NULL) {
+      if ((buf = rline()) != NULL) {
          /*
           * The read was successful.
           */
          p = bnxt = bstop = blim = buf;		/* reset buffer pointers */
-         curfile->lno++;			/* bump line number */
          if (quoting) {
             /*
              * We're in a multi-line quote
@@ -475,11 +474,11 @@ int ppch()
    }
 
 /*
- * rline(fp) -- read arbitrarily long line and return pointer.
+ * rline(fp) -- read arbitrarily long line from curfile and return pointer.
  *
  *  Allocates memory as needed.  Returns NULL for EOF.  Lines end with "\n\0".
  */
-static char *rline(FILE *fp)
+static char *rline()
    {
 #define LINE_SIZE_INIT 100
 #define LINE_SIZE_INCR 100
@@ -487,6 +486,9 @@ static char *rline(FILE *fp)
    static int llen = 0;		/* current buffer length */
    char *p;
    int c, n;
+   FILE *fp;
+
+   fp = curfile->fp;
 
    /* if first time, allocate buffer */
    if (!lbuf) {
@@ -498,8 +500,13 @@ static char *rline(FILE *fp)
    c = getc(fp);
    if (c == EOF)
       return NULL;
+
+   curfile->lno++;			/* bump line number */
+
    if (c == '\n')
       return "\n";
+   if (c == '\0')
+      pfatal("Null character read");
 
    p = lbuf;
    n = llen - 3;
@@ -507,8 +514,11 @@ static char *rline(FILE *fp)
 
    for (;;)  {
       /* read until buffer full; return after newline or EOF */
-      while (--n >= 0 && (c = getc(fp)) != '\n' && c != EOF)
+      while (--n >= 0 && (c = getc(fp)) != '\n' && c != EOF) {
+         if (c == '\0')
+             pfatal("Null character read");
          *p++ = c;
+         }
       if (n >= 0) {
          *p++ = '\n';			/* always terminate with \n\0 */
          *p++ = '\0';
@@ -1073,9 +1083,7 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
     char c, *p, *cmd;
     int quoting = 0;
 
-    while ((p = buf = rline(curfile->fp)) != NULL) {
-        curfile->lno++;			/* bump line number */
-
+    while ((p = buf = rline()) != NULL) {
         if (quoting) {
             char *p;
             p = skipstring(quoting, buf);
