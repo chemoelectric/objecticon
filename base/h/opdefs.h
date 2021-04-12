@@ -59,7 +59,6 @@
 #define Op_Field         48
 #define Op_Goto          49
 #define Op_Int           50
-#define Op_Keywd         51
 #define Op_Limit         52
 #define Op_Mark          53
 #define Op_Unmark        54

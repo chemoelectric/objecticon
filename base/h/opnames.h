@@ -51,7 +51,7 @@ static char *op_names[] = {
     /*  48 */         "field",
     /*  49 */         "goto",
     /*  50 */         "int",
-    /*  51 */         "keywd",
+    /*  51 */         INVALID,
     /*  52 */         "limit",
     /*  53 */         "mark",
     /*  54 */         "unmark",

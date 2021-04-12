@@ -348,14 +348,9 @@ static void show_curr_cf_op()
  */
 static void xtrace()
 {
-    if (curr_op == 0)
-        return;
-
-    switch ((int)curr_op) {
-
-        case Op_Keywd:
-            fprintf(stderr,"   bad keyword reference");
-            break;
+    switch (curr_op) {
+        case 0:
+            return;
 
         case Op_Invokef:
             if (curr_cf) {
