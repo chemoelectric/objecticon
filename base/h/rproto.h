@@ -368,6 +368,9 @@ int     lookup_record_field(struct b_constructor *recdef, dptr query, struct inl
 int     lookup_record_field_by_name(struct b_constructor *recdef, dptr name);
 int     lookup_record_field_by_fnum(struct b_constructor *recdef, int fnum);
 struct loc *lookup_global_loc(dptr name, struct progstate *prog);
+struct c_proc *lookup_operator(dptr name, int arity);
+struct c_proc *lookup_function(dptr name);
+struct c_proc *lookup_keyword(dptr name);
 
 void    collect         (int region);
 void    deref           (dptr dp1, dptr dp2);
