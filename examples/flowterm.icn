@@ -1690,7 +1690,8 @@ class Terminal(TabItem, VtUI)
                parent_dialog.menu_bar.set_which_highlight(parent_dialog.menu_bar.menus[1])
             else {
                param := parent_dialog.menu_bar.menus[integer(param)] | return error("Valid menu index expected for open-menu")
-               parent_dialog.menu_bar.set_which_open(param)
+               if parent_dialog.menu_bar.set_which_open(param) then
+                  param.cursor_on()
             }
          }
          "info": {
