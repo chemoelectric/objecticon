@@ -139,7 +139,6 @@ class ErnDialog(Dialog)
       message_label := MessageLabel().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
-         set_fg("red").
          clear_constraints().
          set_constraint(Grid.X_FILL, &yes).
          set_constraint(Grid.X_WEIGHT, 1.0).

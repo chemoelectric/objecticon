@@ -89,6 +89,7 @@ class MessageLabel(Label)
    public override new()
       Label.new()
       set_label("")
+      set_fg(Style.INFO_COLOR)
       connect(on_rpress, Event.MOUSE_RIGHT_PRESS)
       return
    end

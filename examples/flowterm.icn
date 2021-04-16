@@ -2866,7 +2866,6 @@ $endif
       self.revert_tab := revert_tab
       setup()
       setup_search_panel()
-      message_label.set_fg(Style.INFO_COLOR)
       label_border.set_x_align(Align.L)
       columns.
          set_item_paint(AnnotatedIconFilesItemPaint()).
@@ -3479,7 +3478,6 @@ $endif
             set_l_inset(scale(3))).
          set_x_align(Align.L)
       message_label := MessageLabel().
-         set_fg("red").
          clear_constraints().
          set_constraint(Grid.B_INSET, scale(0)).
          set_constraint(Grid.L_INSET, scale(0)).
