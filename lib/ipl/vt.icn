@@ -162,7 +162,7 @@ abstract class VtUI()
    public abstract search_msg(s)
 
    public info_msg(s)
-      return msg(s, 3000)
+      return msg(s, Gui.INFO_DELAY)
    end
 end
 

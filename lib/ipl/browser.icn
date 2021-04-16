@@ -2865,7 +2865,7 @@ abstract class BrowserUI()
    public abstract save_attachment(file, res)
 
    public info_msg(s)
-      return msg(s, 3000)
+      return msg(s, Gui.INFO_DELAY)
    end
 end
 
