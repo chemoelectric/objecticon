@@ -7,7 +7,11 @@ import graphics(Selection), lang(Class)
 #
 class MessageLabel(Label)
    private
-      want_s, want_n, keep, message, message_tt
+      want_s,
+      want_n,
+      keep,
+      message,
+      message_tt
 
    private set_impl(s)
       local p
@@ -19,6 +23,7 @@ class MessageLabel(Label)
       }
    end
 
+   #
    # Set the label to the given string `s`.  If `s` is &null, then the
    # label is cleared.  If `n` is given then the label will remain
    # unchanged for at least `n` milliseconds regardless of future
@@ -45,8 +50,8 @@ class MessageLabel(Label)
             }}
             t.start()
          }
-      } else if /want_n then {
-          want_s := s
+      } else if /want_n | \n then {        # A message with a time overrides any earlier
+          want_s := s                      # one.
           want_n := n
       }
       link
