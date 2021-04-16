@@ -9,6 +9,8 @@ class Style()
       TOOLTIP_FONT,
       FOCUS_COLOR,
       FOCUS_PATTERN,
+      # Foreground color for message bar information.
+      INFO_COLOR,
       DASHED_PATTERN,
       HIGHLIGHT_COLOR,
       HIGHLIGHT_PATTERN,
@@ -27,6 +29,7 @@ class Style()
       TOOLTIP_FONT := env_font("OI_STYLE_TOOLTIP_FONT") | "sans,*0.85"
       FOCUS_COLOR := env_color("OI_STYLE_FOCUS_COLOR") | "red"
       FOCUS_PATTERN := env_pattern("OI_STYLE_FOCUS_PATTERN") | "gray"
+      INFO_COLOR := env_color("OI_STYLE_INFO_COLOR") | "red"
       DASHED_PATTERN := env_pattern("OI_STYLE_DASHED_PATTERN") | "gray"
       HIGHLIGHT_COLOR := env_color("OI_STYLE_HIGHLIGHT_COLOR") | "blue"
       HIGHLIGHT_PATTERN := env_pattern("OI_STYLE_HIGHLIGHT_PATTERN") | "gray"
