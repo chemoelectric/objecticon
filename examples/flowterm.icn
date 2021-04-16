@@ -1556,13 +1556,12 @@ class Terminal(TabItem, VtUI)
                (param === Yes{split.second.get_index(search_panel)}) | toggle_search_panel()
             }
          }
-         "start-log" : {
+         "log" : {
             check_live(s) | fail
-            start_log(param)
-         }
-         "end-log" : {
-            check_live(s) | fail
-            on_end_log()
+            if /log then
+               start_log(param)
+            else
+               on_end_log()
          }
          "string": {
             check_param(s, param) | fail
@@ -3551,8 +3550,7 @@ procedure usage(opts)
    write()
    help_line("The following commands only apply to the currently active tab (not new tabs) :-")
    write()
-   help_line(":start-log=DEST", "Start logging to file DEST")
-   help_line(":end-log", "End logging")
+   help_line(":log=DEST", "Start logging to file DEST, or stop logging if already logging")
    help_line(":url=URL", "Activate a URL as though clicked by the user")
    help_line(":copy-cwd", "Copy the current directory to the clipboard")
    help_line(":copy", "Copy the current selection to the clipboard")
