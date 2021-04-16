@@ -83,25 +83,6 @@ class FavouriteDirectoriesDialog(Dialog)
 
    public override component_setup()
       entry_table.set_contents(get_pair_list())
-      etc := entry_table.table_content
-      etc.
-         set_allow_drag(&yes).
-         set_allow_drop(&yes).
-         set_select_mode("many").
-         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
-         connect(on_table_selection, Event.SELECTION_CHANGED)
-      directory_column.
-         set_item_paint(AbbreviatedTextItemPaint()).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
-                            set_x_align(Align.L))
-      application_column.
-         set_item_paint(MapItemPaint(AbbreviatedTextItemPaint(), application_col)).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
-                            set_x_align(Align.L))
-      directory_field.
-         set_directories_only(&yes)
       update_grey()
    end
 
@@ -204,6 +185,25 @@ class FavouriteDirectoriesDialog(Dialog)
    public override new()
       Dialog.new()
       setup()
+      etc := entry_table.table_content
+      etc.
+         set_allow_drag(&yes).
+         set_allow_drop(&yes).
+         set_select_mode("many").
+         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
+         connect(on_table_selection, Event.SELECTION_CHANGED)
+      directory_column.
+         set_item_paint(AbbreviatedTextItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      application_column.
+         set_item_paint(MapItemPaint(AbbreviatedTextItemPaint(), application_col)).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      directory_field.
+         set_directories_only(&yes)
       return
    end
 
