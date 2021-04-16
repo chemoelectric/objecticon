@@ -26,7 +26,7 @@ class ColorField(Component)
          tf.remove_wattrib(WAttrib.FG).reset()
          cr.set_color(last_val)
       } else {
-         tf.set_fg("red").reset()
+         tf.set_fg(Style.ERROR_COLOR).reset()
          cr.set_color("white")
       }
    end
