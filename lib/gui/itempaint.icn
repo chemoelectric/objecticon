@@ -17,6 +17,7 @@ abstract class ItemPaint()
    public initially(c)
    end
 
+   #
    # Return the width of the given data.  Implementing this method is
    # not necessary if `get_constant_width` is overridden instead.
    #
@@ -26,6 +27,7 @@ abstract class ItemPaint()
    #
    public optional get_width(W, data)
 
+   #
    # Return the height of the given data.  Implementing this method is
    # not necessary if `get_constant_height` is overridden instead.
    #
@@ -35,6 +37,7 @@ abstract class ItemPaint()
    #
    public optional get_height(W, data)
 
+   #
    # Return the size of the given data, as a `Size` instance.
    # :Parameters :
    # :  `W` - The window to use for text metrics
@@ -42,6 +45,7 @@ abstract class ItemPaint()
    #
    public abstract get_size(W, data)
 
+   #
    # Draw the given data item
    # :Parameters :
    # :  `W` - The window to draw into
@@ -50,8 +54,10 @@ abstract class ItemPaint()
    # :  `y` - The y position
    # :  `w` - The available output width
    # :  `h` - The available output height
+   #
    public abstract draw(W, data, x, y, w, h)
 
+   #
    # This method should be implemented if it is known that all data
    # items will have the same width.
    # :Parameters :
@@ -60,6 +66,7 @@ abstract class ItemPaint()
    public get_constant_width(W)
    end
 
+   #
    # This method should be implemented if it is known that all data
    # items will have the same height.
    # :Parameters :
@@ -68,21 +75,26 @@ abstract class ItemPaint()
    public get_constant_height(W)
    end
 
+   #
    # Convenient method to draw at a given point with size limit; just calls `draw`.
    # :Parameters :
    # :  `W` - The window to draw into
    # :  `data` - The data item
    # :  `p` - The `Rect`, giving the point to draw at, and the
    #          height/width limitation.
+   #
    public draw_rect(W, data, r)
       self.draw(W, data, r.x, r.y, r.w, r.h)
    end
 
+   #
    # Cleanup any resources used by this instance.
+   #
    public finally()
    end
 end
 
+#
 # An `ItemPaint` in which each piece of data is an instance of
 # `Paint`.
 #
@@ -104,6 +116,7 @@ class PaintAdapter(ItemPaint)
    end
 end
 
+#
 # A simple `ItemPaint` in which each piece of data is a string.
 #
 class TextItemPaint(ItemPaint)
@@ -124,37 +137,29 @@ class TextItemPaint(ItemPaint)
    end
 end
 
+#
 # A simple `ItemPaint` in which each piece of data is a string.  If
 # the string is limited when output, then a truncated string ending in
 # "..." is output.
 #
-class AbbreviatedTextItemPaint(ItemPaint)
-   public override get_width(W, data)
-      return W.text_width(detab(data))
-   end
-
-   public override get_constant_height(W)
-      return W.get_line_height()
-   end
-
-   public override get_size(W, data)
-      return Size(W.text_width(detab(data)), W.get_line_height())
-   end
-
+class AbbreviatedTextItemPaint(TextItemPaint)
    public override draw(W, data, x, y, w)
       W.draw_string(x, y + W.get_line_ascent(), limit_text(W, detab(data), w))
    end
 end
 
+#
 # A parent class for `ItemPaint`s which wish to calculate sizes and
 # draw with a cloned window.
 #
 abstract class WithCloneItemPaint(ItemPaint)
    private cw, wt, ct
 
+   #
    # This method must be implemented to create the cloned window
    # :Parameters :
    # :  `W` - the base window to clone from
+   #
    protected abstract make_clone(W)
 
    protected get_clone(W, ignore_clip)
@@ -183,6 +188,7 @@ abstract class WithCloneItemPaint(ItemPaint)
    end
 end
 
+#
 # An `ItemPaint` which draws text using a cloned window.  It must be
 # subclassed in order to provide the `make_clone` method.
 #
@@ -206,6 +212,7 @@ abstract class AttributedTextItemPaint(WithCloneItemPaint)
    end
 end
 
+#
 # An `ItemPaint` in which each piece of data is a Pixels instance.
 #
 class PixelsItemPaint(ItemPaint)
@@ -226,6 +233,7 @@ class PixelsItemPaint(ItemPaint)
    end
 end
 
+#
 # An `ItemPaint` in which each piece of data is a window containing an
 # image to be copied to the destination.  It is the responsibility of
 # the user to initialize and dispose of the windows.
@@ -248,6 +256,7 @@ class ImageWindowItemPaint(ItemPaint)
    end
 end
 
+#
 # An `ItemPaint` in which each piece of data is a key to be given to
 # `ImageCache.get`.  The resulting image is then copied to the
 # destination.
@@ -274,6 +283,7 @@ class ImageCacheItemPaint(ItemPaint)
    end
 end
 
+#
 # An `ItemPaint` which wraps another `ItemPaint`.  Each item of data
 # is mapped using a provided function before being passed to the other
 # instance.
@@ -314,8 +324,10 @@ class MapItemPaint(ItemPaint)
       other.finally()
    end
 
+   #
    # Create a new instance with the given `ItemPaint` to wrap, and
    # map function `f`.
+   #
    public new(other, f)
       self.other := other
       self.f := need_callable(f)
