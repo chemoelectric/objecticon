@@ -1195,3 +1195,56 @@ procedure open_image(img)
    }
    return w
 end
+
+#
+# A helper class for caching a cloned window.
+#
+abstract class CachedClone(HasClose)
+   private
+      cw,        # The current cloned window
+      wt,        # The corresponding source window
+      ct         # The corresponding clip rectangle (or &null)
+
+   #
+   # This method must be implemented to create the cloned window.
+   # This method should not be invoked directly; rather `get_clone()`
+   # should be used.
+   #
+   # :Parameters :
+   # :  `W` - the base window to clone from
+   #
+   protected abstract make_clone(W)
+
+   #
+   # Return a clone of `W`.  A fresh clone will only be created if
+   # necessary.  If `ignore_clip` is set, then differences in the clip
+   # regions of the cache and `W` won't cause a fresh clone to be made.
+   #
+   public get_clone(W, ignore_clip)
+      local cc, f
+      if W === wt then {
+         if /ignore_clip then {
+            cc := W.get_clip()
+            equals(ct, cc) | (f := &yes)
+         }
+      } else {
+         cc := W.get_clip()
+         f := &yes
+      }
+      if \f then {
+         wt := W
+         ct := cc
+         (\cw).close()
+         cw := make_clone(W) | runerr("make_clone() failed unexpectedly")
+      }
+      return .cw
+   end
+
+   #
+   # This must be invoked to dispose of the cached clone window.
+   #
+   public override close()
+      (\cw).close()
+      wt := ct := cw := &null
+   end
+end
