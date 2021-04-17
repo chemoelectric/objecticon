@@ -6,6 +6,7 @@ import
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
+#
 # A `Paint` represents an arbitrary object which has a size and can be
 # drawn.
 #
@@ -17,6 +18,7 @@ abstract class Paint(Size)
    # :  `accel` - The keyboard accelerator to be drawn
    public abstract initially(c, accel)
 
+   #
    # Draw the instance
    # :Parameters :
    # :  `W` - The window to draw into
@@ -26,10 +28,12 @@ abstract class Paint(Size)
    # :  `h` - The available output height
    public abstract draw(W, x, y, w, h)
 
+   #
    # Cleanup any resources used by this instance.
    public finally()
    end
 
+   #
    # Convenient method to draw at a given point with size limit; just calls `draw`.
    # :Parameters :
    # :  `W` - The window to draw into
@@ -49,6 +53,7 @@ procedure paint_for_string(s)
       return TextPaint(s)
 end
 
+#
 # A simple `Paint` instance which draws a string.
 #
 class TextPaint(Paint)
@@ -64,6 +69,7 @@ class TextPaint(Paint)
       draw_string_ex(W, x, y + W.get_line_ascent(), str, accel)
    end
 
+   #
    # Create a new instance.
    # :Parameters :
    # :  `s` - The string to draw
@@ -73,32 +79,18 @@ class TextPaint(Paint)
    end
 end
 
+#
 # A simple `Paint` instance which draws a string.  If the string is
 # limited when output, then a truncated string ending in "..." is
 # output.
 #
-class AbbreviatedTextPaint(Paint)
-   public str, accel
-
-   public override initially(c, accel)
-      self.accel := accel
-      self.h := c.cbwin.get_line_height()
-      self.w := c.cbwin.text_width(str)
-   end
-
+class AbbreviatedTextPaint(TextPaint)
    public override draw(W, x, y, w)
       draw_string_ex(W, x, y + W.get_line_ascent(), limit_text(W, str, w), accel)
    end
-
-   # Create a new instance.
-   # :Parameters :
-   # :  `s` - The string to draw
-   public override new(s)
-      self.str := need_text(s)
-      return
-   end
 end
 
+#
 # A simple `Paint` instance which draws a `Pixels` instance.
 #
 class PixelsPaint(Paint)
@@ -120,6 +112,7 @@ class PixelsPaint(Paint)
       pix := &null
    end
 
+   #
    # Create a new instance.
    # :Parameters :
    # :  `src` - The `Pixels` to draw
@@ -129,6 +122,7 @@ class PixelsPaint(Paint)
    end
 end
 
+#
 # A simple `Paint` instance which has zero size and draws nothing.
 #
 class NullPaint(Paint)
@@ -140,6 +134,7 @@ class NullPaint(Paint)
    end
 end
 
+#
 # A simple `Paint` instance which has the given size and draws nothing.
 #
 class EmptyPaint(Paint)
@@ -192,6 +187,7 @@ class CompoundPaint(Paint)
    end
 end
 
+#
 # A `Paint` instance which draws its output using a `Grid`.  The input is a format
 # string specifying the grid and its contents.
 #
@@ -484,6 +480,7 @@ class GridPaint(Paint)
       }
    end
 
+   #
    # Create a new instance.
    # :Parameters :
    # :  `s` - The format string
@@ -493,6 +490,7 @@ class GridPaint(Paint)
    end
 end
 
+#
 # A `Paint` instance which draws an image, which can come from a
 # number of sources.  The image can also be scaled.
 #
@@ -568,6 +566,7 @@ class ImagePaint(Paint)
       link
    end
    
+   #
    # This setting controls how the image will be expanded if its size
    # is less than any specified maximum width and/or height (if none
    # is specified it has no effect).  If set to 0, then the image will
