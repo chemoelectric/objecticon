@@ -1,6 +1,6 @@
 package gui
 
-import lang, util
+import util
 
 #
 # An `ItemPaint` is an object which can be used in a component which
@@ -149,66 +149,54 @@ class AbbreviatedTextItemPaint(TextItemPaint)
 end
 
 #
-# A parent class for `ItemPaint`s which wish to calculate sizes and
-# draw with a cloned window.
+# An `ItemPaint` which wraps another `ItemPaint`.  The window seen by
+# the wrapped instance is a clone of the one provided in the calls to
+# this instance.  The clone is created by the `make_clone()` method,
+# which must be provided by a subclass.
 #
-abstract class WithCloneItemPaint(ItemPaint)
-   private cw, wt, ct
+abstract class WithCloneItemPaint(CachedClone, ItemPaint)
+   public const
+      other
 
-   #
-   # This method must be implemented to create the cloned window
-   # :Parameters :
-   # :  `W` - the base window to clone from
-   #
-   protected abstract make_clone(W)
-
-   protected get_clone(W, ignore_clip)
-      local cc, f
-      if W === wt then {
-         if /ignore_clip then {
-            cc := W.get_clip()
-            equals(ct, cc) | (f := &yes)
-         }
-      } else {
-         cc := W.get_clip()
-         f := &yes
-      }
-      if \f then {
-         wt := W
-         ct := cc
-         (\cw).close()
-         cw := make_clone(W)
-      }
-      return cw
+   public override initially(c)
+      other.initially(c)
    end
 
-   public override finally()
-      (\cw).close()
-      wt := ct := cw := &null
-   end
-end
-
-#
-# An `ItemPaint` which draws text using a cloned window.  It must be
-# subclassed in order to provide the `make_clone` method.
-#
-abstract class AttributedTextItemPaint(WithCloneItemPaint)
    public override get_width(W, data)
-      return get_clone(W, &yes).text_width(detab(data))
+      return other.get_width(get_clone(W, &yes), data)
    end
 
-   public override get_constant_height(W)
-      return get_clone(W, &yes).get_line_height()
+   public override get_height(W, data)
+      return other.get_height(get_clone(W, &yes), data)
    end
 
    public override get_size(W, data)
-      W := get_clone(W, &yes)
-      return Size(W.text_width(detab(data)), W.get_line_height())
+      return other.get_size(get_clone(W, &yes), data)
    end
 
-   public override draw(W, data, x, y)
-      W := get_clone(W)
-      W.draw_string(x, y + W.get_line_ascent(), detab(data))
+   public override draw(W, data, x, y, w, h)
+      other.draw(get_clone(W), data, x, y, w, h)
+   end
+
+   public override get_constant_height(W)
+      return other.get_constant_height(get_clone(W, &yes))
+   end
+
+   public override get_constant_width(W)
+      return other.get_constant_width(get_clone(W, &yes))
+   end
+
+   public override finally()
+      other.finally()
+      close()
+   end
+
+   #
+   # Create a new instance with the given `ItemPaint` to wrap.
+   #
+   public new(other)
+      self.other := other
+      return
    end
 end
 
@@ -309,7 +297,7 @@ class MapItemPaint(ItemPaint)
    end
 
    public override draw(W, data, x, y, w, h)
-      return other.draw(W, f(data), x, y, w, h)
+      other.draw(W, f(data), x, y, w, h)
    end
 
    public override get_constant_width(W)
