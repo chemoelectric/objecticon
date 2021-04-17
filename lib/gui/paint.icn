@@ -16,6 +16,7 @@ abstract class Paint(Size)
    # :Parameters :
    # :  `c` - The owning `Component`
    # :  `accel` - The keyboard accelerator to be drawn
+   #
    public abstract initially(c, accel)
 
    #
@@ -26,6 +27,7 @@ abstract class Paint(Size)
    # :  `y` - The y position
    # :  `w` - The available output width
    # :  `h` - The available output height
+   #
    public abstract draw(W, x, y, w, h)
 
    #
@@ -39,11 +41,17 @@ abstract class Paint(Size)
    # :  `W` - The window to draw into
    # :  `p` - The `Rect`, giving the point to draw at, and the
    #          height/width limitation.
+   #
    public draw_rect(W, r)
       self.draw(W, r.x, r.y, r.w, r.h)
    end
 end
 
+#
+# Helpful method to return either a `TextPaint` or a `GridPaint`,
+# based on whether `s` starts with the string ".cell" (indicating a
+# `GridPaint`).
+#
 procedure paint_for_string(s)
    if /s then
       return
@@ -57,7 +65,8 @@ end
 # A simple `Paint` instance which draws a string.
 #
 class TextPaint(Paint)
-   public str, accel
+   public
+      str, accel
 
    public override initially(c, accel)
       self.accel := accel
@@ -73,6 +82,7 @@ class TextPaint(Paint)
    # Create a new instance.
    # :Parameters :
    # :  `s` - The string to draw
+   #
    public override new(s)
       self.str := need_text(s)
       return
@@ -91,10 +101,48 @@ class AbbreviatedTextPaint(TextPaint)
 end
 
 #
+# A `Paint` which wraps another `Paint`.  The window seen by the
+# wrapped instance's `draw` method is a cloned window.  This is
+# created by the `make_clone()` method, which must be provided by a
+# subclass.
+#
+# Note that the clone is not involved in the `initially` setup, so the
+# clone should not be inconsistent with any measuring done there.
+#
+abstract class WithClonePaint(CachedClone, Paint)
+   public const
+      other
+
+   public override initially(c, accel)
+      other.initially(c, accel)
+      self.w := other.w
+      self.h := other.h
+   end
+
+   public override draw(W, x, y, w, h)
+      other.draw(get_clone(W), x, y, w, h)
+   end
+
+   public override finally()
+      other.finally()
+      close()
+   end
+
+   #
+   # Create a new instance with the given `Paint` to wrap.
+   #
+   public override new(other)
+      self.other := other
+      return
+   end
+end
+
+#
 # A simple `Paint` instance which draws a `Pixels` instance.
 #
 class PixelsPaint(Paint)
-   public src, pix
+   public
+      src, pix
 
    public override initially()
       /pix | runerr("initially() called out of sequence")
