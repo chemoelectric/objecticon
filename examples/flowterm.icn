@@ -1129,6 +1129,12 @@ class FileTrailEx(FileTrail)
    end
 end
 
+class LoggingTabTitlePaint(WithClonePaint)
+   protected override make_clone(W)
+      return W.clone().set_fg(Terminal.LOGGING_COLOR)
+   end
+end
+
 record MenuCommand(label, verb)
 
 class Terminal(TabItem, VtUI)
@@ -1139,7 +1145,8 @@ class Terminal(TabItem, VtUI)
       DEFAULT_HISTORY_SIZE,
       DEFAULT_LIST_WIDTH,
       DEFAULT_LIST_HEIGHT,
-      EXTRAS_DIR
+      EXTRAS_DIR,
+      LOGGING_COLOR
 
    private
       prev_button,
@@ -1160,6 +1167,7 @@ class Terminal(TabItem, VtUI)
       best_focus,         # Either columns or output (the vt)
       log_file,
       log,
+      paint_str,          # String used in title Paint
       terminal_menu_commands,
       columns_menu_commands,
       misc_menu_commands
@@ -1211,6 +1219,7 @@ class Terminal(TabItem, VtUI)
       DEFAULT_HISTORY_SIZE := env_int("OI_FLOWTERM_DEFAULT_HISTORY_SIZE", 1) | 100
       DEFAULT_LIST_WIDTH := env_scale("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | scale(300)
       DEFAULT_LIST_HEIGHT := env_scale("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | scale(300)
+      LOGGING_COLOR := env_color("OI_FLOWTERM_LOGGING_COLOR") | "dark orange"
       EXTRAS_DIR := \opts["x"] | env_string("OI_FLOWTERM_EXTRAS") |
                           (Files.get_home() || "/flowterm-extras")
    end
@@ -2337,6 +2346,7 @@ $endif
       if log := open(s, "w") then {
          parent_dialog.last_log_file := log_file := dest
          info_msg("Logging to file " || s)
+         update_title()
       } else
          info_msg("Failed to open " || s || ": " || ucs(&why))
    end
@@ -2345,6 +2355,7 @@ $endif
       \log | fail
       log.close()
       log := &null
+      update_title()
    end
 
    private on_end_log()
@@ -2494,8 +2505,8 @@ $endif
    end
 
    public override get_tab_tooltip()
-      if tab_w - label_border.get_total_width() < cbwin.text_width(paint.str) then
-         return paint.str
+      if tab_w - label_border.get_total_width() < cbwin.text_width(paint_str) then
+         return paint_str
    end
 
    private on_set_annotate_opt(v)
@@ -2795,7 +2806,12 @@ $endif
    end
 
    private update_title()
-      set_paint(AbbreviatedTextPaint(\title | FilePath(cwd).get(-1)))
+      local p
+      paint_str := \title | FilePath(cwd).get(-1)
+      p := AbbreviatedTextPaint(paint_str)
+      if \log then
+         p := LoggingTabTitlePaint(p)
+      set_paint(p)
    end
 
    private set_cwd(s)
