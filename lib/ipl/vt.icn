@@ -184,7 +184,12 @@ package class VtPrimarySelectionOwner(TextSelectionOwner)
 end
 
 package class Charset()
-   public const id, src, dest
+   public const
+      id, src, dest
+
+   public map(s)
+      return default.map(s, src, dest)
+   end
 
    public new(id, src, dest)
       self.id := id
@@ -774,9 +779,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private apply_charset(s, n)
-      local cs
-      cs := charsets[n]
-      return map(s, cs.src, cs.dest)
+      return charsets[n].map(s)
    end
 
    private do_tab()
@@ -1070,7 +1073,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_insert_blanks(n)
-      do_insert(repl(u" ", n))
+      do_insert(spc(n))
    end
 
    private reset_tab_stops()
@@ -1227,13 +1230,17 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
+   private static spc(n)
+      return repl(u" ", n)
+   end
+
    private do_erase_characters(n)
       local i, r, m
       r := contents[i := cy_to_index()]
       cx >:= cols
       n >:= cols - cx + 1
       m := split_upto(r, cx - 1, &yes)
-      put_segment(m, repl(u" ", n), attr)
+      put_segment(m, spc(n), attr)
       content_edit(i, split_from(r, cx + n - 1, m), r.bg, r.join)
       invalidate_line(i)
    end
@@ -1346,7 +1353,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             # We know j < *t.s from the above while loop
             put_segment(m, t.s[1:j+1], t.attr)
          else if \pad then
-            put_segment(m, repl(u" ", j), Attr(, r.bg))
+            put_segment(m, spc(j), Attr(, r.bg))
       }
       return m
    end
@@ -1399,7 +1406,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, r, m
       r := contents[i := cy_to_index()]
       cx >:= cols
-      m := [Segment(repl(u" ", cx), Attr(, attr.bg))]
+      m := [Segment(spc(cx), Attr(, attr.bg))]
       content_edit(i, split_from(r, cx, m), r.bg, r.join)
       invalidate_line(i)
    end
