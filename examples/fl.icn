@@ -1,4 +1,4 @@
-import io, ipl.options, util, net
+import io, ipl.options, util, net, ipl.printf
 
 global fl, opts, non_ws
 
@@ -70,20 +70,20 @@ procedure do_one(f)
 end
 
 procedure main(a)
-   local s, f
+   local n, f
    opts := options(a, [Opt("f",, "Always output links")], 
                    ["Usage: fl [OPTIONS] [FILES...]", 
                     "Copy files to stdout, inserting flowterm links"])
    fl := Yes{ \opts["f"] | FileStream.stdout.is_flowterm_tty() }
    non_ws := ~' \t\f'
    if *a = 0 then
-      do_one(FileStream.stdin)
+      do_one(BufferStream(FileStream.stdin))
    else {
-      every s := !a do {
+      every n := !a do {
          use {
-            f := open(s),
+            f := open(n),
             do_one(f)
-         } | stop("Couldn't read from ", s, ": ", &why)
+         } | stopf("Couldn't read from %s: %w", n)
       }
    }
 end
