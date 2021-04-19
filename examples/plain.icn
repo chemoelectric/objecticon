@@ -654,8 +654,8 @@ end
 procedure main(a)
    local n, f
    opts := options(a, [Opt("n",, "Convert nl to crnl")],
-                   ["Usage: plain [OPTIONS] [FILES...]", 
-                    "Copy files to stdout, processing and removing escape sequences"])
+                   "Usage: plain [OPTIONS] [FILES...]\N_
+                    Copy files to stdout, processing and removing escape sequences")
    init()
    if *a = 0 then
       do_one(FileStream.stdin)
