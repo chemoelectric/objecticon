@@ -1,0 +1,671 @@
+$encoding UTF-8
+
+import io, gui, util, lang,
+   ipl.pdco, ipl.options, ipl.printf
+
+global
+   opts,
+   OSC_CHAR,
+   MAX_TAB,
+   CHARSET,
+   input_handler_coex,
+   got,
+   part_ch,
+   buff,
+   cx,
+   contents,
+   tab_stops,
+   curr_charset,
+   charsets,
+   saved_cursor,
+   saved_buffer,
+   insert_mode
+
+record SavedCursor(cx, charsets, curr_charset)
+
+record SavedBuffer(cx, charsets, curr_charset, tab_stops,
+                   insert_mode,
+                   contents)
+
+class Charset()
+   public const
+      id, src, dest
+
+   public map(s)
+      return default.map(s, src, dest)
+   end
+
+   public new(id, src, dest)
+      self.id := id
+      self.src := src
+      self.dest := dest
+      return
+   end
+end
+
+procedure input(s)
+   got := need_string(s)
+   @input_handler_coex
+end
+
+procedure is_partial_utf8(s)
+   succeed *s < (5 > Text.get_utf8_seq_len(s[1]))
+end
+
+procedure wait_for_buff()
+   local i
+   while *buff = 0 do {
+      # Note that *got will not be 0 here on the first time
+      # through, since we are activated for the first time by
+      # input().
+      while *got = 0 do
+         coact()
+      # Add any partial utf-8 char saved from last time
+      got := part_ch || got
+      part_ch := ""
+      # Try the simple, usual case first
+      buff := ucs(got) | {
+         # Find the last utf-8 char in got; may be part of a char
+         i := *got
+         while i > 1 & 127 < ord(got[i]) < 192 do
+            i -:= 1
+         # Now got[i:0] gives us the last utf-8 char or part of it.
+         # Split got into got and part_ch, depending on whether the
+         # last utf-8 sequence is partial or not.
+         if is_partial_utf8(got[i:0]) then {
+            part_ch := got[i:0]
+            got := got[1:i]
+         }
+         # Assign to buff
+         Text.liberal_ucs(got)
+      }
+      got := ""
+   }
+end
+
+procedure get_chs(cs)
+   local c
+   wait_for_buff()
+   buff ? {
+      c := tab(many(cs)) | move(1)
+      buff := tab(0)
+   }
+   return c
+end
+
+procedure get_ch()
+   local c
+   wait_for_buff()
+   buff ? {
+      c := move(1)
+      buff := tab(0)
+   }
+   return c
+end
+
+procedure peek_ch()
+   wait_for_buff()
+   return buff[1]
+end
+
+procedure do_cr()
+   move_cursor(1)
+end
+
+procedure do_nl()
+   if \opts["n"] then
+      do_cr()
+   write(contents)
+   contents := u""
+end
+
+procedure move_cursor(x, y)
+   if \x then {
+      x <:= 1
+      cx := x
+   }
+end
+
+procedure do_backspace()
+   move_cursor(cx - 1)
+end
+
+procedure do_tab()
+   local i
+   i := cx
+   repeat {
+      i +:= 1
+      if (i >= MAX_TAB) | member(tab_stops, i) then
+         break
+   }
+   move_cursor(i)
+end
+
+procedure reset_tab_stops()
+   tab_stops := Set{1 to MAX_TAB by 8}
+end
+
+procedure setup_charsets()
+   CHARSET := table()
+   insert(CHARSET, "0", Charset("DEC Special Character and Line Drawing",
+                                u"`abcdefghijklmnopqrstuvwxyz{|}~",
+                                u"◆▒␉␌␍␊°±␤␋┘┐┌└┼─├┤┴┬│≤≥π≠£·"))
+   insert(CHARSET, "A", Charset("United Kingdom", u"#", u"£"))
+   insert(CHARSET, "B", Charset("United States", u"", u""))
+end
+
+procedure do_set_charset(n)
+   curr_charset := n
+end
+
+procedure apply_charset(s, n)
+   return charsets[n].map(s)
+end
+
+procedure reset_charsets()
+   charsets := []
+   every 1 to 4 do put(charsets, CHARSET["B"])
+   curr_charset := 1
+end
+
+procedure reset_term()
+   cx := 1
+   insert_mode := &no
+   reset_charsets()
+   reset_tab_stops()
+end
+
+procedure do_default_str(s)
+   do_insert_or_put(s)
+   cx +:= *s
+end
+
+procedure do_insert_or_put(s)
+   if /insert_mode then
+      do_put(s)
+   else
+      do_insert(s)
+end
+
+procedure do_put(s)
+   local i
+   if *s = 0 then
+      fail
+   i := cx + *s - *contents - 1
+   if i > 0 then
+      contents ||:= spc(i)
+   contents[cx+:*s] := s
+end
+
+procedure do_insert(s)
+   local i
+   if *s = 0 then
+      fail
+   i := cx - *contents - 1
+   if i > 0 then
+      contents ||:= spc(i)
+   contents[cx+:0] ||:= s
+end
+
+procedure do_next_line()
+   move_cursor(1)
+end
+
+procedure do_tab_set()
+   insert(tab_stops, cx)
+end
+
+procedure do_esc_hash()
+   local c
+   c := get_ch()
+   case string(c) of {
+      "8" : do_decaln()
+   }
+end
+
+procedure do_decaln()
+end
+
+procedure do_designate_charset(n)
+   local c
+   c := get_ch()
+   charsets[n] := member(CHARSET, string(c) | "B")
+end
+
+procedure do_save_cursor()
+   saved_cursor := SavedCursor(cx, copy(charsets), curr_charset)
+end
+
+procedure do_restore_cursor()
+   \saved_cursor | fail
+   curr_charset := saved_cursor.curr_charset
+   charsets := saved_cursor.charsets
+   move_cursor(saved_cursor.cx)
+   saved_cursor := &null
+end
+
+procedure do_single_shift(n)
+   local c
+   c := get_ch()
+   do_default_str(apply_charset(c, n))
+end
+
+procedure do_erase_all()
+   contents := u""
+end
+
+procedure do_full_reset()
+   do_restore_cursor()
+   do_use_normal_buffer()
+   reset_term()
+   do_erase_all()
+   move_cursor(1, 1)
+end
+
+procedure do_use_alternate_buffer()
+   saved_buffer := SavedBuffer(cx, charsets, curr_charset, 
+                               tab_stops,
+                               insert_mode, contents)
+   contents := u""
+   cx := 1
+   insert_mode := &no
+   reset_charsets()
+   reset_tab_stops()
+end
+
+procedure do_use_normal_buffer()
+   \saved_buffer | fail
+   contents := saved_buffer.contents
+   tab_stops := saved_buffer.tab_stops
+   move_cursor(saved_buffer.cx)
+   charsets := saved_buffer.charsets
+   curr_charset := saved_buffer.curr_charset
+   insert_mode := saved_buffer.insert_mode
+   saved_buffer := &null
+end
+
+#
+# Read a string according to ecma 8.3.27, 8.3.89 and others.  The
+# stuck loop check is non-standard.
+#
+procedure read_string1()
+   local t, c
+   t := u""
+   repeat {
+      # Avoid stuck loop; see comment in read_params() above.
+      if any('\r\n', peek_ch()) then
+         break
+      c := get_chs(OSC_CHAR -- '\r\n\e')
+      if c == "\e" then {
+         # ESC-\ terminates, as does ESC on its own.
+         if peek_ch() == "\\" then
+            get_ch()
+         break
+      }
+      if any(OSC_CHAR, c) then
+         t ||:= c
+      else
+         break
+   }
+   return t
+end
+
+#
+# Read a string according to ecma 8.3.128.  The stuck loop check is
+# non-standard.
+#
+procedure read_string2()
+   local t, c
+   t := u""
+   repeat {
+      # Avoid stuck loop; see comment in read_params() above.
+      if any('\r\n', peek_ch()) then
+         break
+      c := get_chs(~'\r\n\e')
+      if c == "\e" then {
+         # Only ESC-\ terminates.
+         if peek_ch() == "\\" then {
+            get_ch()
+            break
+         }
+      }
+      t ||:= c
+   }
+   return t
+end
+
+procedure do_privacy_message()
+   read_string1()
+end
+
+procedure do_apc()
+   read_string1()
+end
+
+procedure do_dcs()
+   read_string1()
+end
+
+procedure do_osc()
+   read_string1()
+end
+
+procedure do_sos()
+   read_string2()
+end
+
+procedure do_esc()
+   local c
+   c := get_ch()
+   case string(c) of {
+      "D" : {}    # do_index()
+      "M" : {}    # do_reverse_index()
+      "E" : do_next_line()
+      "H" : do_tab_set()
+      "#" : do_esc_hash()
+      "[" : do_csi()
+      "7" : do_save_cursor()
+      "8" : do_restore_cursor()
+      ">" : {}    # do_application_keypad_mode(&no)
+      "=" : {}    # do_application_keypad_mode(&yes)
+      "(" : do_designate_charset(1)
+      ")" : do_designate_charset(2)
+      "*" : do_designate_charset(3)
+      "+" : do_designate_charset(4)
+      "n" : do_set_charset(3)
+      "o" : do_set_charset(4)
+      "N" : do_single_shift(3)
+      "O" : do_single_shift(4)
+      "c" : do_full_reset()
+      "^" : do_privacy_message()
+      "_" : do_apc()
+      "P" : do_dcs()
+      "]" : do_osc()
+      "X" : do_sos()
+   }
+end
+
+procedure read_params()
+   local l, c, t
+   l := []
+   repeat {
+      c := peek_ch()
+      if any(&digits, c) then {
+         t := get_chs(&digits)
+         while any(&digits, peek_ch()) do
+            t ||:= get_chs(&digits)
+         put(l, integer(t))
+      } else if c == "\"" then {
+         get_ch()  # opening "
+         t := u""
+         repeat {
+            # This check is to avoid getting stuck in the loop.  ^C
+            # will certainly be followed by a newline, or the user
+            # will press newline to get the prompt, or the prompt
+            # itself will produce a newline.
+            if any('\r\n', peek_ch()) then
+               break
+            c := get_chs(~'\r\n\"')
+            if c == "\"" then
+               break
+            t ||:= c
+         }
+         put(l, t)
+      } else if c == ";" then
+         # Empty param
+         put(l)
+      if peek_ch() ~== ";" then
+         break
+      get_ch()  # skip ;
+   }
+   return l
+end
+
+procedure do_cursor_right(n)
+   move_cursor(cx + n)
+end
+
+procedure do_cursor_left(n)
+   move_cursor(cx - n)
+end
+
+procedure do_delete_chars(n)
+   if cx <= *contents then {
+      n >:= *contents + 1 - cx
+      contents[cx+:n] := ""
+   }
+end
+
+procedure do_erase_in_display(n)
+   case n of {
+      0 : do_erase_below()
+      1 : do_erase_above()
+      2 : do_erase_all()
+      9 : {}    # do_erase_history()
+   }
+end
+
+procedure do_erase_in_line(n)
+   case n of {
+      0 : do_erase_right()
+      1 : do_erase_left()
+      2 : do_erase_line()
+      7 : do_custom_erase_right()
+   }
+end
+
+procedure do_erase_below()
+   do_erase_right()
+end
+
+procedure do_erase_above()
+   do_erase_left()
+end
+
+procedure do_custom_erase_right()
+   do_erase_right()
+end
+
+procedure do_erase_right()
+   contents[cx:0] := ""
+end
+
+procedure do_erase_left()
+   if *contents > cx then
+      contents[1+:cx] := spc(cx)
+   else
+      contents := u""
+end
+
+procedure do_erase_line()
+   contents := u""
+end
+
+procedure spc(n)
+   return repl(u" ", n)
+end
+
+procedure do_erase_characters(n)
+   if cx <= *contents then {
+      n >:= *contents + 1 - cx
+      contents[cx+:n] := spc(n)
+   }
+end
+
+procedure do_move_cursor(r, c)
+   move_cursor(c, r)
+end
+
+procedure do_move_cursor_x(c)
+   move_cursor(c)
+end
+
+procedure do_insert_blanks(n)
+   do_insert(spc(n))
+end
+
+procedure do_vertical_and_horizontal_pos(m, n)
+   move_cursor(n, m)
+end
+
+procedure do_tab_clear(n)
+   case n of {
+      0 : delete(tab_stops, cx)
+      3 : clear(tab_stops)
+   }
+end
+
+procedure do_soft_reset()
+   reset_term()
+end
+
+procedure do_set_mode(n)
+   case n of {
+      4 : insert_mode := &yes
+   }
+end
+
+procedure do_reset_mode(n)
+   case n of {
+      4 : insert_mode := &no
+   }
+end
+
+procedure do_dec_set(n)
+   case n of {
+      1 : {}    # do_application_cursor_keys_mode(&yes)
+      3 : {}    # set_col_mode(132)
+      5 : {}    # do_reverse_video(&yes)
+      6 : {}    # do_origin_mode(&yes)
+      7 : {}    # do_wraparound_mode(&yes)
+      25 : {}   # do_hide_cursor(&no)
+      40 : {}   # do_allow_80_132_mode(&yes)
+      1047 | 1049 : do_use_alternate_buffer()
+      1048 : do_save_cursor()
+   }
+end
+
+procedure do_dec_reset(n)
+   case n of {
+      1 : {}    # do_application_cursor_keys_mode(&no)
+      3 : {}    # set_col_mode(80)
+      5 : {}    # do_reverse_video(&no)
+      6 : {}    # do_origin_mode(&no)
+      7 : {}    # do_wraparound_mode(&no)
+      25 : {}   # do_hide_cursor(&yes)
+      40 : {}   # do_allow_80_132_mode(&no)
+      1047 | 1049 : do_use_normal_buffer()
+      1048 : do_restore_cursor()
+   }
+end
+
+procedure do_csi()
+   local cmd, param
+   cmd := if any('>?!', peek_ch()) then get_ch() else u""
+   param := read_params()
+   cmd ||:= get_ch()
+   # See ecma 5.4
+   while any(' !"#$%&\'()*+,\-./', cmd[-1]) do
+      cmd ||:= get_ch()
+   case string(cmd) of {
+      "m" : {}    # every do_set_attr(int_params(param, 0))
+      "!L" : {}   # do_set_link(param)
+      "!P" : {}   # do_popup(param)
+      "A" : {}    # do_cursor_up(int_param(param, 1, 1))
+      "B" : {}    # do_cursor_down(int_param(param, 1, 1))
+      "C" : do_cursor_right(int_param(param, 1, 1))
+      "D" : do_cursor_left(int_param(param, 1, 1))
+      "P" : do_delete_chars(int_param(param, 1, 1))
+      "J" : do_erase_in_display(int_param(param, 1, 0))
+      "K" : do_erase_in_line(int_param(param, 1, 0))
+      "X" : do_erase_characters(int_param(param, 1, 1))
+      "G" : do_move_cursor_x(int_param(param, 1, 1))
+      "H" : do_move_cursor(int_param(param, 1, 1), int_param(param, 2, 1))
+      "r" : {}    # do_set_margins(int_param(param, 1, 1), int_param(param, 2, rows))
+      "c" : {}    # do_send_primary_device_attrs(int_param(param, 1, 0))
+      ">c" : {}   # do_send_secondary_device_attrs(int_param(param, 1, 0))
+      "@" : do_insert_blanks(int_param(param, 1, 1))
+      "S" : {}    # do_scroll_up(int_param(param, 1, 1))
+      "L" : {}    # do_insert_lines(int_param(param, 1, 1))
+      "M" : {}    # do_delete_lines(int_param(param, 1, 1))
+      "d" : {}    # do_vertical_pos_absolute(int_param(param, 1, 1))
+      "e" : {}    # do_vertical_pos_relative(int_param(param, 1, 1))
+      "f" : do_vertical_and_horizontal_pos(int_param(param, 1, 1), int_param(param, 2, 1))
+      "h" : do_set_mode(int_param(param, 1))
+      "l" : do_reset_mode(int_param(param, 1))
+      "n" : {}    # do_device_status_report(int_param(param, 1))
+      "?h" : do_dec_set(int_param(param, 1))
+      "?l" : do_dec_reset(int_param(param, 1))
+      "!p" : do_soft_reset()
+      "g" : do_tab_clear(int_param(param, 1, 0))
+   }
+end
+
+procedure int_param(param, n, def)
+   return (0 < integer(param[n])) | \def
+end
+
+procedure int_params(param, def)
+   local i
+   if *param = 0 then
+      return def
+   every i := !param do
+      suspend ((0 < integer(i)) | \def)\1
+end
+
+procedure input_handler()
+   local c
+   repeat {
+      c := get_chs(Gui.PRINTABLE_1)
+      case string(c) of {
+         "\r" : do_cr()
+         "\n" | "\f" | "\v" : do_nl()
+         "\e" : do_esc()
+         "\b" : do_backspace()
+         "\t" : do_tab()
+         "\^g" : {}
+         "\^o" : do_set_charset(1)
+         "\^n" : do_set_charset(2)
+         default: do_default_str(apply_charset(c, curr_charset))
+      }
+   }
+end
+
+procedure init()
+   input_handler_coex := create input_handler()
+   part_ch := got := ""
+   buff := contents := u""
+   setup_charsets()
+   OSC_CHAR := '\x08-\x0D\x20-\x7E'
+   MAX_TAB := 240
+   reset_term()
+end
+
+procedure do_one(f)
+   local s
+   repeat {
+      s := f.in(1024) | fail
+      if /s then
+         return
+      input(s)
+   }
+end
+
+procedure main(a)
+   local n, f
+   opts := options(a, [Opt("n",, "Convert nl to crnl")],
+                   ["Usage: plain [OPTIONS] [FILES...]", 
+                    "Copy files to stdout, processing and removing escape sequences"])
+   init()
+   if *a = 0 then
+      do_one(FileStream.stdin)
+   else {
+      every n := !a do {
+         use {
+            f := FileStream(n),
+            do_one(f)
+         } | stopf("Couldn't read from %s: %w", n)
+      }
+   }
+   writes(contents)
+end
