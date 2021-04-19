@@ -83,7 +83,7 @@ class DateField(DropDown)
       if last_val := get_value() then
          view.remove_wattrib(WAttrib.FG).reset()
       else
-         view.set_fg("red").reset()
+         view.set_fg(Style.ERROR_COLOR).reset()
       # Fire the event with self as source.
       fire(type, ev)
    end
@@ -158,7 +158,7 @@ class TimeField(Spin)
       if last_val := get_value() then
          view.remove_wattrib(WAttrib.FG).reset()
       else
-         view.set_fg("red").reset()
+         view.set_fg(Style.ERROR_COLOR).reset()
       # Fire the event with self as source.
       fire(type, ev)
    end
@@ -220,7 +220,7 @@ class TimezoneField(EditList)
       if last_val := get_value() then
          view.remove_wattrib(WAttrib.FG).reset()
       else
-         view.set_fg("red").reset()
+         view.set_fg(Style.ERROR_COLOR).reset()
       EditList.on_textfield(ev, src, type)
    end
 
@@ -317,7 +317,7 @@ class WeekField(DropDown)
       if last_val := get_value() then
          view.remove_wattrib(WAttrib.FG).reset()
       else
-         view.set_fg("red").reset()
+         view.set_fg(Style.ERROR_COLOR).reset()
       # Fire the event with self as source.
       fire(type, ev)
    end

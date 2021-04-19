@@ -576,7 +576,6 @@ class DirectoryDialog(Dialog)
       message_label := MessageLabel().
          set_size(scale(130)).
          set_align(Align.L, Align.B).
-         set_fg("red").
          clear_constraints().
          set_constraint(Grid.X_ALIGN, Align.L).
          set_constraint(Grid.X_FILL, &yes).

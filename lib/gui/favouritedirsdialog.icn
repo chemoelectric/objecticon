@@ -83,25 +83,6 @@ class FavouriteDirectoriesDialog(Dialog)
 
    public override component_setup()
       entry_table.set_contents(get_pair_list())
-      etc := entry_table.table_content
-      etc.
-         set_allow_drag(&yes).
-         set_allow_drop(&yes).
-         set_select_mode("many").
-         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
-         connect(on_table_selection, Event.SELECTION_CHANGED)
-      directory_column.
-         set_item_paint(AbbreviatedTextItemPaint()).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
-                            set_x_align(Align.L))
-      application_column.
-         set_item_paint(MapItemPaint(AbbreviatedTextItemPaint(), application_col)).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
-                            set_x_align(Align.L))
-      directory_field.
-         set_directories_only(&yes)
       update_grey()
    end
 
@@ -204,6 +185,25 @@ class FavouriteDirectoriesDialog(Dialog)
    public override new()
       Dialog.new()
       setup()
+      etc := entry_table.table_content
+      etc.
+         set_allow_drag(&yes).
+         set_allow_drop(&yes).
+         set_select_mode("many").
+         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
+         connect(on_table_selection, Event.SELECTION_CHANGED)
+      directory_column.
+         set_item_paint(AbbreviatedTextItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      application_column.
+         set_item_paint(MapItemPaint(AbbreviatedTextItemPaint(), application_col)).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      directory_field.
+         set_directories_only(&yes)
       return
    end
 
@@ -223,11 +223,11 @@ class FavouriteDirectoriesDialog(Dialog)
       entry_table := FavouriteDirectoriesTable().
          set_size(scale(501), scale(314)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_select_mode(Select.NONE).
          set_contents([]).
          add_column(application_column).
@@ -236,37 +236,37 @@ class FavouriteDirectoriesDialog(Dialog)
       paint_3 := TextPaint("Application")
       label_1 := Label().
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_paint(paint_3)
       application_field := TextField().
          set_size(scale(203)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          connect(self.on_apply_button, Event.ACTION).
          set_contents(u"")
       paint_10 := TextPaint("Use in all applications")
       application_check_box := CheckBox().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_tab", 1).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_TAB, 1).
          connect(self.on_application_check_box, Event.ACTION).
          set_toggles(&yes).
          set_paint(paint_10)
       paint_4 := TextPaint("Directory")
       label_2 := Label().
          clear_constraints().
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_paint(paint_4)
       directory_field := FileSuggestField().
          set_size(scale(205)).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          connect(self.on_directory_field, Event.ACTION).
          set_contents(u"")
       layout_7 := GridLayout().
@@ -274,11 +274,11 @@ class FavouriteDirectoriesDialog(Dialog)
          set_extra("cells")
       edit_panel := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_layout(layout_7).
          add(label_1).
          add(application_field).
@@ -320,7 +320,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
+         set_constraint(Grid.EOL, &yes).
          set_layout(layout_6).
          add(add_button).
          add(delete_button).
@@ -336,10 +336,10 @@ class FavouriteDirectoriesDialog(Dialog)
          add(panel_3)
       border_1 := Border().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_weight", 0.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_WEIGHT, 0.0).
          set_content(border_content_1)
       self.add(border_1)
       paint_5 := TextPaint("Okay")
@@ -360,20 +360,19 @@ class FavouriteDirectoriesDialog(Dialog)
       message_label := MessageLabel().
          set_size(scale(130)).
          set_align(Align.L, Align.B).
-         set_fg("red").
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_11)
       layout_2 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_2).
          add(okay_button).
          add(cancel_button).

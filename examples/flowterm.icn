@@ -839,6 +839,7 @@ class Columns(LineBasedScrollArea)
       \cursor | fail
       set_cursor(f())
       ensure_line_visible(get_row_for_index(cursor))
+      set_area_x(0)
    end
 
    public handle_key(e)
@@ -852,6 +853,7 @@ class Columns(LineBasedScrollArea)
          Key.LEFT : handle_key_move(handle_key_left)
          Key.RIGHT : handle_key_move(handle_key_right)
          "\r" | "\l": handle_return(e)
+         default: fire("other-key", e)
       }
    end
 
@@ -1127,6 +1129,12 @@ class FileTrailEx(FileTrail)
    end
 end
 
+class LoggingTabTitlePaint(WithClonePaint)
+   protected override make_clone(W)
+      return W.clone().set_fg(Terminal.LOGGING_COLOR)
+   end
+end
+
 record MenuCommand(label, verb)
 
 class Terminal(TabItem, VtUI)
@@ -1137,7 +1145,8 @@ class Terminal(TabItem, VtUI)
       DEFAULT_HISTORY_SIZE,
       DEFAULT_LIST_WIDTH,
       DEFAULT_LIST_HEIGHT,
-      EXTRAS_DIR
+      EXTRAS_DIR,
+      LOGGING_COLOR
 
    private
       prev_button,
@@ -1157,7 +1166,9 @@ class Terminal(TabItem, VtUI)
       trail,
       best_focus,         # Either columns or output (the vt)
       log_file,
+      log_err,
       log,
+      paint_str,          # String used in title Paint
       terminal_menu_commands,
       columns_menu_commands,
       misc_menu_commands
@@ -1209,6 +1220,7 @@ class Terminal(TabItem, VtUI)
       DEFAULT_HISTORY_SIZE := env_int("OI_FLOWTERM_DEFAULT_HISTORY_SIZE", 1) | 100
       DEFAULT_LIST_WIDTH := env_scale("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | scale(300)
       DEFAULT_LIST_HEIGHT := env_scale("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | scale(300)
+      LOGGING_COLOR := env_color("OI_FLOWTERM_LOGGING_COLOR") | "dark orange"
       EXTRAS_DIR := \opts["x"] | env_string("OI_FLOWTERM_EXTRAS") |
                           (Files.get_home() || "/flowterm-extras")
    end
@@ -1554,13 +1566,12 @@ class Terminal(TabItem, VtUI)
                (param === Yes{split.second.get_index(search_panel)}) | toggle_search_panel()
             }
          }
-         "start-log" : {
+         "log" : {
             check_live(s) | fail
-            start_log(param)
-         }
-         "end-log" : {
-            check_live(s) | fail
-            on_end_log()
+            if /log then
+               start_log(param)
+            else
+               close_log()
          }
          "string": {
             check_param(s, param) | fail
@@ -1688,7 +1699,8 @@ class Terminal(TabItem, VtUI)
                parent_dialog.menu_bar.set_which_highlight(parent_dialog.menu_bar.menus[1])
             else {
                param := parent_dialog.menu_bar.menus[integer(param)] | return error("Valid menu index expected for open-menu")
-               parent_dialog.menu_bar.set_which_open(param)
+               if parent_dialog.menu_bar.set_which_open(param) then
+                  param.cursor_on()
             }
          }
          "info": {
@@ -2101,7 +2113,8 @@ $endif
             }
             if \opts["v"] then
                ewrite("In: ", image(s))
-            (\log).writes1(s)
+            if \log then
+               log.writes1(s) | (/log_err := &why)
             send_vt(s)
             check_cwd_change()
             some_in := &yes
@@ -2305,10 +2318,6 @@ $endif
       parent_dialog.new_tab(, dir,, self)
    end
 
-   private on_start_log()
-      start_log()
-   end
-
    private start_log(dest)
       local d, dl, fl, s
       /log | return info_msg("Already logging to " || log_file.ucs())
@@ -2335,20 +2344,21 @@ $endif
       if log := open(s, "w") then {
          parent_dialog.last_log_file := log_file := dest
          info_msg("Logging to file " || s)
+         update_title()
       } else
          info_msg("Failed to open " || s || ": " || ucs(&why))
    end
 
    private close_log()
-      \log | fail
-      log.close()
-      log := &null
-   end
-
-   private on_end_log()
       \log | return info_msg("Not logging")
-      close_log()
-      info_msg("Closed log file " || log_file.ucs())
+      log.close() | (/log_err := &why)
+      log := &null
+      info_msg(if /log_err then
+         "Closed log file " || log_file.ucs()
+      else
+         "Problem with log file " || log_file.ucs() || ": " || log_err)
+      log_err := &null
+      update_title()
    end
 
    private add_custom_menus(m, list)
@@ -2400,11 +2410,11 @@ $endif
       if /log then
          m.add(TextMenuItem().
                set_label("Log...").
-               connect(on_start_log, Event.ACTION))
+               connect(create start_log(), Event.ACTION))
       else
          m.add(TextMenuItem().
                set_label("End log").
-               connect(on_end_log, Event.ACTION))
+               connect(create close_log(), Event.ACTION))
 
       return add_custom_menus(m, terminal_menu_commands)
    end
@@ -2492,8 +2502,8 @@ $endif
    end
 
    public override get_tab_tooltip()
-      if tab_w - label_border.get_total_width() < cbwin.text_width(paint.str) then
-         return paint.str
+      if tab_w - label_border.get_total_width() < cbwin.text_width(paint_str) then
+         return paint_str
    end
 
    private on_set_annotate_opt(v)
@@ -2793,7 +2803,12 @@ $endif
    end
 
    private update_title()
-      set_paint(AbbreviatedTextPaint(\title | FilePath(cwd).get(-1)))
+      local p
+      paint_str := \title | FilePath(cwd).get(-1)
+      p := AbbreviatedTextPaint(paint_str)
+      if \log then
+         p := LoggingTabTitlePaint(p)
+      set_paint(p)
    end
 
    private set_cwd(s)
@@ -2870,6 +2885,7 @@ $endif
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
+         connect(output.do_custom_key, "other-key").
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
          connect(on_columns_over_changed, "over-changed")
@@ -3475,7 +3491,6 @@ $endif
             set_l_inset(scale(3))).
          set_x_align(Align.L)
       message_label := MessageLabel().
-         set_fg("red").
          clear_constraints().
          set_constraint(Grid.B_INSET, scale(0)).
          set_constraint(Grid.L_INSET, scale(0)).
@@ -3547,8 +3562,7 @@ procedure usage(opts)
    write()
    help_line("The following commands only apply to the currently active tab (not new tabs) :-")
    write()
-   help_line(":start-log=DEST", "Start logging to file DEST")
-   help_line(":end-log", "End logging")
+   help_line(":log=DEST", "Start logging to file DEST, or stop logging if already logging")
    help_line(":url=URL", "Activate a URL as though clicked by the user")
    help_line(":copy-cwd", "Copy the current directory to the clipboard")
    help_line(":copy", "Copy the current selection to the clipboard")

@@ -500,7 +500,7 @@ procedure lclose(l)
    local e, f
    every e := !l do
       e.close() | (f := &why)
-   return /f | error(f)
+   return error_if(f)
 end
 
 #

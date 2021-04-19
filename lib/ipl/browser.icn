@@ -1405,11 +1405,22 @@ class Img(Image, HasLastHighlight)
                                   e.y - y - border.get_t_inset()) | bg_area
    end
 
-   private handle_lmpress(e)
+   private handle_mpress(e)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
+      }
+   end
+
+   private handle_lpress(e)
+      parent_dialog.get_held_count() = 1 | fail
+      if \over then {
+         if /e.shift then {
+            set_highlight(over)
+            held := over
+         } else
+            browser.set_last_highlight(self, over)
       }
    end
 
@@ -1474,8 +1485,7 @@ class Img(Image, HasLastHighlight)
    end
 
    private handle_lmdrag(e)
-      \held | fail
-      if \which_area(e).url === held then {
+      if which_area(e).url === \held then {
          set_over(held)
          set_highlight(held)
       } else {
@@ -1533,10 +1543,10 @@ class Img(Image, HasLastHighlight)
          connect(handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
       } else if \map_id | \context.url then {
          connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
-         connect(handle_lmpress, Event.MOUSE_LEFT_PRESS)
+         connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
          connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
          connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
-         connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
+         connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
          connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
          connect(handle_exit, Event.MOUSE_EXIT)
          connect(handle_interrupted, Event.INTERRUPTED)
@@ -2885,7 +2895,7 @@ abstract class BrowserUI()
    public abstract save_attachment(file, res)
 
    public info_msg(s)
-      return msg(s, 3000)
+      return msg(s, Gui.INFO_DELAY)
    end
 end
 

@@ -44,6 +44,8 @@ final abstract class Format()
       }
       s := need_string(s)
       base := need_integer(\base, 2, 16) | 16
+      if *s = 0 then
+         fail
       if s[1] == "-" then {
          s := s[2:0]
          neg := &yes

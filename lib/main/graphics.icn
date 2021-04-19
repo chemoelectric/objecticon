@@ -1742,17 +1742,7 @@ final abstract class Key()
       HELP,
       HOME,
       INSERT,
-      KP_DOWN,
-      KP_LEFT,
-      KP_RIGHT,
-      KP_UP,
-      KP_HOME,
-      KP_PRIOR,
-      KP_BEGIN,
-      KP_END,
-      KP_NEXT,
-      KP_INSERT,
-      KP_DELETE,
+      BEGIN,
       L1,
       L2,
       L3,
@@ -1875,17 +1865,7 @@ $if _X_WINDOW_SYSTEM
       HELP :=                65386
       HOME :=                65360
       INSERT :=              65379
-      KP_DOWN :=             65433
-      KP_LEFT :=             65430
-      KP_RIGHT :=            65432
-      KP_UP :=               65431
-      KP_HOME :=             65429
-      KP_PRIOR :=            65434
-      KP_BEGIN :=            65437
-      KP_END :=              65436
-      KP_NEXT :=             65435
-      KP_INSERT :=           65438
-      KP_DELETE :=           65439
+      BEGIN :=               65368
       L1 :=                  65480  # clash with f11
       L2 :=                  65481  # clash with f12
       L3 :=                  65482
@@ -2003,10 +1983,6 @@ $elsif _MS_WIN32
       COMPOSE :=            0
       DO :=                 93
       FIND :=               0
-      KP_DOWN :=            0
-      KP_LEFT :=            0
-      KP_RIGHT :=           0
-      KP_UP :=              0
       L1 :=                 0
       L2 :=                 0
       L3 :=                 0
@@ -2038,13 +2014,7 @@ $elsif _MS_WIN32
       R15 :=                0
       HYPER_L :=            0
       HYPER_R :=            0
-      KP_BEGIN :=           0
-      KP_END :=             0
-      KP_HOME :=            0
-      KP_NEXT :=            0
-      KP_PRIOR :=           0
-      KP_INSERT :=          0
-      KP_DELETE :=          0
+      BEGIN :=              12     # VK_CLEAR
       META_L :=             0
       META_R :=             0
       SHIFT_LOCK :=         0
@@ -2121,10 +2091,6 @@ $elsif _PLAN9
       COMPOSE :=            0
       DO :=                 0
       FIND :=               0
-      KP_DOWN :=            63488
-      KP_LEFT :=            61457
-      KP_RIGHT :=           61458
-      KP_UP :=              61454
       L1 :=                 0
       L2 :=                 0
       L3 :=                 0
@@ -2164,13 +2130,7 @@ $elsif _PLAN9
       CONTROL_R :=          0
       HYPER_L :=            0
       HYPER_R :=            0
-      KP_BEGIN :=           0
-      KP_END :=             0
-      KP_HOME :=            0
-      KP_NEXT :=            0
-      KP_PRIOR :=           0
-      KP_INSERT :=          0
-      KP_DELETE :=          0
+      BEGIN :=              0
       META_L :=             0
       META_R :=             0
       NUM_LOCK :=           0

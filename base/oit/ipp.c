@@ -31,8 +31,6 @@
 #include "trans.h"
 #include "ipp.h"
 
-#define HTBINS 256			/* number of hash bins */
-
 typedef struct fstruct {		/* input file structure */
    struct fstruct *prev;		/* previous file */
    char *fname;				/* file name */
@@ -54,52 +52,61 @@ typedef struct bstruct {		/* buffer pointer structure */
 
 typedef struct cd {			/* structure holding a definition */
    struct cd *next;			/* link to next defn */
-   struct cd *prev;			/* link to previous defn */
    int nlen, vlen;			/* length of name & val */
    char inuse;				/* nonzero if curr being expanded */
    char *name;                          /* name */
    char *val;                           /* value */
    } cdefn;
 
-static	int	ppopen	(char *fname, int m4);
-static	FILE *	m4pipe	(char *fname);
-static  char *  rmnl    (char *s);
-static	char *	rline	(FILE *fp);
-static	void	pushdef	(cdefn *d);
-static	void	pushline (void);
-static	void	ppdir	(char *line);
-static  void    pfatal(char *fmt, ...);
-static	void	skipcode (int doelse, int report, char **cmd0, char **args0);
-static	char *	define	(char *s);
-static	char *	undef	(char *s);
-static	char *	ifdir	(char *s);
-static	char *	elsifdir(char *s);
-static	char *	elsedir	(char *s);
-static	char *	endif	(char *s);
-static	char *	encoding(char *s);
-static  char *  load    (char *s);
-static  char *  uload   (char *s);
-static	char *	errdir	(char *s);
-static	char *	include	(char *s);
-static	char *	setline	(char *s);
-static	char *	setline1(char *s, int report);
-static	char *	wskip	(char *s);
-static	char *	nskip	(char *s);
-static	char *	matchq	(char *s);
-static	char *	getidt	(char *dst, char *src);
-static	char *	getencoding(char *dst, char *src);
-static	char *	getfnm	(char *dst, char *src);
-static  void   freecdefn(cdefn *d);
+
+static uword hashstr(char *s, int len);
+static uword cdefn_hashstr(cdefn *p);
+static int ppopen  (char *fname, int m4);
+static FILE *m4pipe  (char *fname);
+static char *rmnl    (char *s);
+static char *rline   (void);
+static void pushdef (cdefn *d);
+static void pushline (void);
+static void ppdir   (char *line);
+static void pfatal(char *fmt, ...);
+static void skipcode (int doelse, int report, char **cmd0, char **args0);
+static char *define  (char *s);
+static char *undef   (char *s);
+static char *ifdir   (char *s);
+static char *elsifdir(char *s);
+static char *elsedir (char *s);
+static char *endif   (char *s);
+static char *encoding(char *s);
+static char *load    (char *s);
+static char *uload   (char *s);
+static char *errdir  (char *s);
+static char *include (char *s);
+static char *setline (char *s);
+static char *setline1(char *s, int report);
+static char *wskip   (char *s);
+static char *nskip   (char *s);
+static char *matchq  (char *s);
+static char *getidt  (char *dst, char *src);
+static char *getencoding(char *dst, char *src);
+static char *getfnm  (char *dst, char *src);
+static void freecdefn(cdefn *d);
+static int eqname(cdefn *d, char *name, int len);
+static int eqval(cdefn *d, char *val, int vlen);
 static cdefn *dquery(char *name, int len);
-static void  dremove(char *name);
-static void  dinsert(char *name, char *val);
-static void  dinsert_pre(char *name, char *val, int vlen);
+static void dremove(char *name);
+static void dinsert(char *name, char *val);
+static void dinsert_pre(char *name, char *val, int vlen);
 static char *skipstring(char q, char *s);
 static int multistart(char *s);
 static char *evalexpr(char *s, int *val);
 static char *evalexpr1(char **ss, int *val);
 static char *evalexpr2(char **ss, int *val);
 static char *evalexpr3(char **ss, int *val);
+
+/*
+ * Hash table for macro definitions.
+ */
+static DefineHash(, cdefn) cbin = { 64, cdefn_hashstr };
 
 struct ppcmd {
    char *name;
@@ -130,7 +137,6 @@ static char *buf;			/* input line buffer */
 static char *bnxt;			/* next character */
 static char *bstop;			/* limit of preprocessed chars */
 static char *blim;			/* limit of all chars */
-static cdefn *cbin[HTBINS];		/* hash bins for defn table */
 
 static char *lpath;				/* LPATH for finding source files */
 
@@ -161,13 +167,15 @@ int ppinit(char *fname, int m4)
    /*
     * clear out any existing definitions from previous files
     */
-   for (i = 0; i < HTBINS; i++) {
-      for (d = cbin[i]; d != NULL; d = n) {
-         n = d->next;
-         freecdefn(d);
-         }
-      cbin[i] = NULL;
-      }
+   for (i = 0; i < cbin.nbuckets; i++) {
+       d = cbin.l[i];
+       while (d) {
+           n = d;
+           d = d->next;
+           freecdefn(n);
+       }
+   }
+   clear_hash(&cbin);
 
    /*
     * install predefined symbols
@@ -396,12 +404,11 @@ int ppch()
       /*
        * There's nothing at all in memory.  Read a new line.
        */
-      if ((buf = rline(curfile->fp)) != NULL) {
+      if ((buf = rline()) != NULL) {
          /*
           * The read was successful.
           */
          p = bnxt = bstop = blim = buf;		/* reset buffer pointers */
-         curfile->lno++;			/* bump line number */
          if (quoting) {
             /*
              * We're in a multi-line quote
@@ -467,11 +474,11 @@ int ppch()
    }
 
 /*
- * rline(fp) -- read arbitrarily long line and return pointer.
+ * rline(fp) -- read arbitrarily long line from curfile and return pointer.
  *
  *  Allocates memory as needed.  Returns NULL for EOF.  Lines end with "\n\0".
  */
-static char *rline(FILE *fp)
+static char *rline()
    {
 #define LINE_SIZE_INIT 100
 #define LINE_SIZE_INCR 100
@@ -479,6 +486,9 @@ static char *rline(FILE *fp)
    static int llen = 0;		/* current buffer length */
    char *p;
    int c, n;
+   FILE *fp;
+
+   fp = curfile->fp;
 
    /* if first time, allocate buffer */
    if (!lbuf) {
@@ -490,8 +500,13 @@ static char *rline(FILE *fp)
    c = getc(fp);
    if (c == EOF)
       return NULL;
+
+   curfile->lno++;			/* bump line number */
+
    if (c == '\n')
       return "\n";
+   if (c == '\0')
+      pfatal("Null character read");
 
    p = lbuf;
    n = llen - 3;
@@ -499,8 +514,11 @@ static char *rline(FILE *fp)
 
    for (;;)  {
       /* read until buffer full; return after newline or EOF */
-      while (--n >= 0 && (c = getc(fp)) != '\n' && c != EOF)
+      while (--n >= 0 && (c = getc(fp)) != '\n' && c != EOF) {
+         if (c == '\0')
+             pfatal("Null character read");
          *p++ = c;
+         }
       if (n >= 0) {
          *p++ = '\n';			/* always terminate with \n\0 */
          *p++ = '\0';
@@ -665,7 +683,7 @@ static int charstr(int c, char *b)
     static char cbuf[12];
     if (c < 128 && oi_isprint(c)) {
         /*
-         * c is printable, but special case ", ', - and \.
+         * c is printable, but special case " and \.
          */
         switch (c) {
             case '"':
@@ -681,37 +699,37 @@ static int charstr(int c, char *b)
     }
 
     /*
-     * c is some sort of unprintable character.	If it one of the common
+     * c is some sort of unprintable character. If it one of the common
      *  ones, produce a special representation for it, otherwise, produce
      *  its hex value.
      */
     switch (c) {
-        case '\b':			/* backspace */
+        case '\b':                      /* backspace */
             memcpy(b, "\\b", 2);
             return 2;
 
-        case '\177':			/* delete */
+        case '\177':                    /* delete */
             memcpy(b, "\\d", 2);
             return 2;
-        case '\33':			/* escape */
+        case '\33':                     /* escape */
             memcpy(b, "\\e", 2);
             return 2;
-        case '\f':			/* form feed */
+        case '\f':                      /* form feed */
             memcpy(b, "\\f", 2);
             return 2;
-        case '\n':			/* new line */
+        case '\n':                      /* new line */
             memcpy(b, "\\n", 2);
             return 2;
-        case '\r':     		/* carriage return b */
+        case '\r':                      /* carriage return b */
             memcpy(b, "\\r", 2);
             return 2;
-        case '\t':			/* horizontal tab */
+        case '\t':                      /* horizontal tab */
             memcpy(b, "\\t", 2);
             return 2;
-        case '\13':			/* vertical tab */
+        case '\13':                     /* vertical tab */
             memcpy(b, "\\v", 2);
             return 2;
-        default: {				/* hex escape sequence */
+        default: {                      /* hex escape sequence */
             sprintf(cbuf, "\\x%02x", c);
             memcpy(b, cbuf, 4);
             return 4;
@@ -749,6 +767,10 @@ static char *loadfile(char *fname, int *vlen, int ucs)
         }
         n = charstr(ch, s + i);
         i += n;
+        if (i > 24 * 1024 * 1024) {
+            pfatal("File too big: %s", fname);
+            break;
+        }
     }
     s[i++] = '\"';
     s[i] = 0;
@@ -1061,9 +1083,7 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
     char c, *p, *cmd;
     int quoting = 0;
 
-    while ((p = buf = rline(curfile->fp)) != NULL) {
-        curfile->lno++;			/* bump line number */
-
+    while ((p = buf = rline()) != NULL) {
         if (quoting) {
             char *p;
             p = skipstring(quoting, buf);
@@ -1286,20 +1306,39 @@ static void freecdefn(cdefn *d)
     free(d);
 }
 
+static uword hashstr(char *s, int len)
+{
+    uword h;
+    h = 0;
+    if (len > 5) len = 5;
+    while (len-- > 0) {
+        h = 37 * h + (*s & 0377);
+        ++s;
+    }
+    return h;
+}
+
+static uword cdefn_hashstr(cdefn *p)
+{
+    return hashstr(p->name, p->nlen);
+}
+
+static int eqname(cdefn *d, char *name, int len)
+{
+    return (d->nlen == len && memcmp(name, d->name, len) == 0);
+}
+
+static int eqval(cdefn *d, char *val, int vlen)
+{
+    return (d->vlen == vlen && memcmp(val, d->val, vlen) == 0);
+}
+
 static cdefn *dquery(char *name, int len)
 {
-    int h, i;
-    unsigned int t;
     cdefn *d;
-    for (t = i = 0; i < len; i++)
-        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
-    h = t % HTBINS;			/* calc bin number */
-    d = cbin[h];			/* get head of list */
-    while (d != NULL) {
-        if (d->nlen == len && memcmp(name, d->name, len) == 0)
+    for (d = Bucket(cbin, hashstr(name, len)); d; d = d->next)
+        if (eqname(d, name, len))
             return d;			/* return pointer to entry */
-        d = d->next;
-    }
     /*
      * No match
      */
@@ -1308,18 +1347,19 @@ static cdefn *dquery(char *name, int len)
 
 static void dremove(char *name)
 {
-    int nlen, h, i;
-    unsigned int t;
+    int nlen;
     cdefn *d, **p;
+    uword h;
+    if (cbin.nbuckets == 0)
+        return;
     nlen = strlen(name);
-    for (t = i = 0; i < nlen; i++)
-        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
-    h = t % HTBINS;			/* calc bin number */
-    p = &cbin[h];			/* get head of list */
-    while ((d = *p) != NULL) {
-        if (d->nlen == nlen && memcmp(name, d->name, nlen) == 0) {
+    h = hashstr(name, nlen);
+    p = &cbin.l[h % cbin.nbuckets];
+    while ((d = *p)) {
+        if (eqname(d, name, nlen)) {
             *p = d->next;		/* delete from table */
             freecdefn(d);
+            --cbin.size;
             return;
         }
         p = &d->next;
@@ -1328,25 +1368,21 @@ static void dremove(char *name)
 
 static void dinsert(char *name, char *val)
 {
-    int h, i, nlen, vlen;
-    unsigned int t;
+    int nlen, vlen;
     cdefn *d;
+    uword h;
     nlen = strlen(name);
     vlen = strlen(val);
-    for (t = i = 0; i < nlen; i++)
-        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
-    h = t % HTBINS;			/* calc bin number */
-    d = cbin[h];			/* get head of list */
-    while (d != NULL) {
-        if (d->nlen == nlen && memcmp(name, d->name, nlen) == 0) {
+    h = hashstr(name, nlen);
+    for (d = Bucket(cbin, h); d; d = d->next) {
+        if (eqname(d, name, nlen)) {
             /*
              * We found a match in the table.
              */
-            if (strcmp(val, d->val) != 0) 
+            if (!eqval(d, val, vlen))
                 pfatal("Value redefined: %s", name);
             return;
         }
-        d = d->next;
     }
     d = Alloc1(*d);
     d->nlen = nlen;
@@ -1354,11 +1390,7 @@ static void dinsert(char *name, char *val)
     d->inuse = 0;
     d->name = salloc(name);
     d->val = salloc(val);
-    d->prev = NULL;
-    d->next = cbin[h];
-    if (d->next != NULL)
-        d->next->prev = d;
-    cbin[h] = d;
+    add_to_hash_pre(&cbin, d, h);
 }
 
 /*
@@ -1366,24 +1398,20 @@ static void dinsert(char *name, char *val)
  */
 static void dinsert_pre(char *name, char *val, int vlen)
 {
-    int h, i, nlen;
-    unsigned int t;
+    int nlen;
     cdefn *d;
+    uword h;
     nlen = strlen(name);
-    for (t = i = 0; i < nlen; i++)
-        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
-    h = t % HTBINS;			/* calc bin number */
-    d = cbin[h];			/* get head of list */
-    while (d  != NULL) {
-        if (d->nlen == nlen && memcmp(name, d->name, nlen) == 0) {
+    h = hashstr(name, nlen);
+    for (d = Bucket(cbin, h); d; d = d->next) {
+        if (eqname(d, name, nlen)) {
             /*
              * We found a match in the table.
              */
-            if (strcmp(val, d->val) != 0) 
+            if (!eqval(d, val, vlen))
                 pfatal("Value redefined: %s", name);
             return;
         }
-        d = d->next;
     }
     d = Alloc1(*d);
     d->nlen = nlen;
@@ -1391,11 +1419,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
     d->inuse = 0;
     d->name = salloc(name);
     d->val = val;
-    d->prev = NULL;
-    d->next = cbin[h];
-    if (d->next != NULL)
-        d->next->prev = d;
-    cbin[h] = d;
+    add_to_hash_pre(&cbin, d, h);
 }
 
 /*

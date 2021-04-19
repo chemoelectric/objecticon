@@ -416,6 +416,8 @@ final abstract class Gui()
       X_INSET,
       Y_INSET,
       VISUALIZE_DELAY,
+      # Default delay for important message bar information.
+      INFO_DELAY,
       REPEAT_DELAY,            
       REPEAT_RATE,
       CURSOR_BLINK,
@@ -472,6 +474,7 @@ final abstract class Gui()
       Y_INSET := env_scale("OI_GUI_Y_INSET") | scale(2)
       VISUALIZE_DELAY := env_int("OI_GUI_VISUALIZE_DELAY", 10) | 50
       REPEAT_DELAY := env_int("OI_GUI_REPEAT_DELAY", 250) | 500
+      INFO_DELAY := env_int("OI_GUI_INFO_DELAY", 500) | 3000
       REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
       CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400
       TAB_WIDTH := env_int("OI_GUI_TAB_WIDTH", 1) | 8
@@ -1195,4 +1198,57 @@ procedure open_image(img)
       fail
    }
    return w
+end
+
+#
+# A helper class for caching a cloned window.
+#
+abstract class CachedClone(HasClose)
+   private
+      cw,        # The current cloned window
+      wt,        # The corresponding source window
+      ct         # The corresponding clip rectangle (or &null)
+
+   #
+   # This method must be implemented to create the cloned window.
+   # This method should not be invoked directly; rather `get_clone()`
+   # should be used.
+   #
+   # :Parameters :
+   # :  `W` - the base window to clone from
+   #
+   protected abstract make_clone(W)
+
+   #
+   # Return a clone of `W`.  A fresh clone will only be created if
+   # necessary.  If `ignore_clip` is set, then differences in the clip
+   # regions of the cache and `W` won't cause a fresh clone to be made.
+   #
+   public get_clone(W, ignore_clip)
+      local cc, f
+      if W === wt then {
+         if /ignore_clip then {
+            cc := W.get_clip()
+            equals(ct, cc) | (f := &yes)
+         }
+      } else {
+         cc := W.get_clip()
+         f := &yes
+      }
+      if \f then {
+         wt := W
+         ct := cc
+         (\cw).close()
+         cw := make_clone(W) | runerr("make_clone() failed unexpectedly")
+      }
+      return .cw
+   end
+
+   #
+   # This must be invoked to dispose of the cached clone window.
+   #
+   public override close()
+      (\cw).close()
+      wt := ct := cw := &null
+   end
 end

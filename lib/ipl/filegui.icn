@@ -75,7 +75,7 @@ class AnnotatedIconFilesItemPaint(IconFilesItemPaint)
    end
 end
 
-class ColorFilesItemPaint(WithCloneItemPaint)
+class ColorFilesItemPaint(CachedClone, ItemPaint)
    protected override make_clone(W)
       return W.clone()
    end
@@ -122,6 +122,10 @@ class ColorFilesItemPaint(WithCloneItemPaint)
    public override draw(W, data, x, y)
       W := get_clone(W).set_fg(get_color(data))
       W.draw_string(x, y + W.get_line_ascent(), get_string(data))
+   end
+
+   public override finally()
+      close()
    end
 end
 

@@ -259,7 +259,6 @@ class Editor(Dialog)
       self.add(text)
 
       message_label := MessageLabel().
-         set_fg("red").
          set_constraint("x_fill", &yes).
          set_constraint("b_inset", 0).
          set_constraint("l_inset", 0).

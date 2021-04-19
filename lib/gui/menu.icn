@@ -86,15 +86,14 @@ class Menu(TextMenuItem)
    end
 
    #
-   # Go to the first non-shaded item.
+   # Go to the first non-shaded item; returns self if one found, fails
+   # otherwise.
    #
    public override cursor_on()
       local m
       every m := !children do {
-         unless m.is_shaded() | m.is_decorative() then {
-            set_which_highlight(m)
-            return
-         }
+         unless m.is_shaded() | m.is_decorative() then
+            return set_which_highlight(m)
       }
    end
 

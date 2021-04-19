@@ -1240,9 +1240,10 @@
 0xff0a   U000a   f   # Linefeed	/* Linefeed, LF */
 0xff0b   U000b   f   # Clear
 0xff0d   U000d   f   # Return	/* Return, enter */
-0xff13   U0013   f   # Pause	/* Pause, hold */
-0xff14   U0014   f   # Scroll_Lock
-0xff15   U0015   f   # Sys_Req
+# RPP deletions
+# 0xff13   U0013   f   # Pause	/* Pause, hold */
+# 0xff14   U0014   f   # Scroll_Lock
+# 0xff15   U0015   f   # Sys_Req
 0xff1b   U001b   f   # Escape
 0xff20   U0000   f   # Multi_key
 0xff21   U0000   f   # Kanji
@@ -1315,7 +1316,8 @@
 0xff9c   U0000   f   # KP_End
 0xff9d   U0000   f   # KP_Begin
 0xff9e   U0000   f   # KP_Insert
-0xff9f   U0000   f   # KP_Delete
+# RPP edit to return "\d"
+0xff9f   U007f   f   # KP_Delete
 0xffaa   U002a   f   # KP_Multiply
 0xffab   U002b   f   # KP_Add
 0xffac   U002c   f   # KP_Separator	/* separator, often comma */

@@ -43,7 +43,7 @@ static void slow_resolve(struct progstate *p);
 #undef KDef
 
 /* 
- * operators table
+ * Operators table (sorted at startup into name/arity order).
  */
 #define OpDef(f)  &B##f,
 struct c_proc *op_tbl[] = {
@@ -52,7 +52,7 @@ struct c_proc *op_tbl[] = {
 #undef OpDef
 
 /*
- * function table
+ * Function table
  */
 #define FncDef(f)  &B##f,
 struct c_proc *fnc_tbl[] = {
@@ -61,7 +61,7 @@ struct c_proc *fnc_tbl[] = {
 #undef FncDef
 
 /*
- * keyword table
+ * Keyword table
  */
 #define KDef(p,n) &L##p,
 struct c_proc *keyword_tbl[] = {
@@ -222,21 +222,15 @@ uword table_ser = 1;
 uword weakref_ser = 1;
 uword methp_ser = 1;
 
-struct progstate *progs;        /* list of progstates */
-
-struct tend_desc *tendedlist = NULL;  /* chain of tended descriptors */
-
+struct progstate *progs;                 /* list of progstates */
+struct tend_desc *tendedlist = NULL;     /* chain of tended descriptors */
 struct region rootstring, rootblock;
-
-
+struct progstate *curpstate = &rootpstate;
+struct progstate rootpstate;
 
 int op_tbl_sz = ElemCount(op_tbl);
 int fnc_tbl_sz = ElemCount(fnc_tbl);
 int keyword_tbl_sz = ElemCount(keyword_tbl);
-
-
-struct progstate *curpstate = &rootpstate;
-struct progstate rootpstate;
 
 #include "exported.ri"
 
@@ -250,6 +244,72 @@ static int check_version(struct header *hdr)
         ((((char *)hdr->Config)[strlen(IVersion)]) == 0 ||
          strcmp(((char *)hdr->Config) + strlen(IVersion), "Z") == 0);
 }
+
+/*
+ * For sorting/searching op_tbl
+ */
+static int opcmp1(struct c_proc *p, dptr name, int arity)
+{
+    int i;
+    i = lexcmp(p->name, name);
+    if (i == 0)
+        i = p->nparam - arity;
+    return i;
+}
+
+static int opcmp2(struct c_proc **p1, struct c_proc **p2)
+{
+    return opcmp1(*p1, (*p2)->name, (*p2)->nparam);
+}
+
+/*
+ * Lookup an operator with the given name (eg "+"), and arity (1-3).
+ */
+struct c_proc *lookup_operator(dptr name, int arity)
+{
+    int i, l, r, m;
+    l = 0;
+    r = op_tbl_sz - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        i = opcmp1(op_tbl[m], name, arity);
+        if (i > 0)
+            r = m - 1;
+        else if (i < 0)
+            l = m + 1;
+        else  /* i == 0 */
+            return op_tbl[m];
+    }
+    return NULL;
+}
+
+/*
+ * proc_name_cmp - do a string comparison of a descriptor to the procedure 
+ *   name in a c_proc struct; used in call to bsearch().
+ */
+static int proc_name_cmp(dptr dp, struct c_proc **e)
+{
+    return lexcmp(dp, (*e)->name);
+}
+
+struct c_proc *lookup_function(dptr name)
+{
+    struct c_proc **p;
+    p = bsearch(name, fnc_tbl, fnc_tbl_sz,
+                sizeof(struct c_proc *), 
+                (BSearchFncCast)proc_name_cmp);
+    return p ? *p : NULL;
+}
+
+struct c_proc *lookup_keyword(dptr name)
+{
+      struct c_proc **p;
+      p = bsearch(name, keyword_tbl, keyword_tbl_sz,
+                  sizeof(struct c_proc *), 
+                  (BSearchFncCast)proc_name_cmp);
+      return p ? *p : NULL;
+}
+
 
 /*
  * Get the global descriptor for the main procedure in prog, or signal
@@ -1349,6 +1409,7 @@ int main(int argc, char **argv)
      * Initializations that cannot be performed statically (at least for
      * some compilers).					[[I?]]
      */
+    qsort(op_tbl, op_tbl_sz, sizeof(struct c_proc *),(QSortFncCast)opcmp2);
 
     LitStr(" ", &blank);
     LitStr("", &emptystr);

@@ -6,6 +6,7 @@ import
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
+#
 # A `Paint` represents an arbitrary object which has a size and can be
 # drawn.
 #
@@ -15,8 +16,10 @@ abstract class Paint(Size)
    # :Parameters :
    # :  `c` - The owning `Component`
    # :  `accel` - The keyboard accelerator to be drawn
+   #
    public abstract initially(c, accel)
 
+   #
    # Draw the instance
    # :Parameters :
    # :  `W` - The window to draw into
@@ -24,22 +27,31 @@ abstract class Paint(Size)
    # :  `y` - The y position
    # :  `w` - The available output width
    # :  `h` - The available output height
+   #
    public abstract draw(W, x, y, w, h)
 
+   #
    # Cleanup any resources used by this instance.
    public finally()
    end
 
+   #
    # Convenient method to draw at a given point with size limit; just calls `draw`.
    # :Parameters :
    # :  `W` - The window to draw into
    # :  `p` - The `Rect`, giving the point to draw at, and the
    #          height/width limitation.
+   #
    public draw_rect(W, r)
       self.draw(W, r.x, r.y, r.w, r.h)
    end
 end
 
+#
+# Helpful method to return either a `TextPaint` or a `GridPaint`,
+# based on whether `s` starts with the string ".cell" (indicating a
+# `GridPaint`).
+#
 procedure paint_for_string(s)
    if /s then
       return
@@ -49,10 +61,12 @@ procedure paint_for_string(s)
       return TextPaint(s)
 end
 
+#
 # A simple `Paint` instance which draws a string.
 #
 class TextPaint(Paint)
-   public str, accel
+   public
+      str, accel
 
    public override initially(c, accel)
       self.accel := accel
@@ -64,45 +78,71 @@ class TextPaint(Paint)
       draw_string_ex(W, x, y + W.get_line_ascent(), str, accel)
    end
 
+   #
    # Create a new instance.
    # :Parameters :
    # :  `s` - The string to draw
+   #
    public override new(s)
       self.str := need_text(s)
       return
    end
 end
 
+#
 # A simple `Paint` instance which draws a string.  If the string is
 # limited when output, then a truncated string ending in "..." is
 # output.
 #
-class AbbreviatedTextPaint(Paint)
-   public str, accel
-
-   public override initially(c, accel)
-      self.accel := accel
-      self.h := c.cbwin.get_line_height()
-      self.w := c.cbwin.text_width(str)
-   end
-
+class AbbreviatedTextPaint(TextPaint)
    public override draw(W, x, y, w)
       draw_string_ex(W, x, y + W.get_line_ascent(), limit_text(W, str, w), accel)
    end
+end
 
-   # Create a new instance.
-   # :Parameters :
-   # :  `s` - The string to draw
-   public override new(s)
-      self.str := need_text(s)
+#
+# A `Paint` which wraps another `Paint`.  The window seen by the
+# wrapped instance's `draw` method is a cloned window.  This is
+# created by the `make_clone()` method, which must be provided by a
+# subclass.
+#
+# Note that the clone is not involved in the `initially` setup, so the
+# clone should not be inconsistent with any measuring done there.
+#
+abstract class WithClonePaint(CachedClone, Paint)
+   public const
+      other
+
+   public override initially(c, accel)
+      other.initially(c, accel)
+      self.w := other.w
+      self.h := other.h
+   end
+
+   public override draw(W, x, y, w, h)
+      other.draw(get_clone(W), x, y, w, h)
+   end
+
+   public override finally()
+      other.finally()
+      close()
+   end
+
+   #
+   # Create a new instance with the given `Paint` to wrap.
+   #
+   public override new(other)
+      self.other := other
       return
    end
 end
 
+#
 # A simple `Paint` instance which draws a `Pixels` instance.
 #
 class PixelsPaint(Paint)
-   public src, pix
+   public
+      src, pix
 
    public override initially()
       /pix | runerr("initially() called out of sequence")
@@ -120,6 +160,7 @@ class PixelsPaint(Paint)
       pix := &null
    end
 
+   #
    # Create a new instance.
    # :Parameters :
    # :  `src` - The `Pixels` to draw
@@ -129,6 +170,7 @@ class PixelsPaint(Paint)
    end
 end
 
+#
 # A simple `Paint` instance which has zero size and draws nothing.
 #
 class NullPaint(Paint)
@@ -140,6 +182,7 @@ class NullPaint(Paint)
    end
 end
 
+#
 # A simple `Paint` instance which has the given size and draws nothing.
 #
 class EmptyPaint(Paint)
@@ -192,6 +235,7 @@ class CompoundPaint(Paint)
    end
 end
 
+#
 # A `Paint` instance which draws its output using a `Grid`.  The input is a format
 # string specifying the grid and its contents.
 #
@@ -484,6 +528,7 @@ class GridPaint(Paint)
       }
    end
 
+   #
    # Create a new instance.
    # :Parameters :
    # :  `s` - The format string
@@ -493,6 +538,7 @@ class GridPaint(Paint)
    end
 end
 
+#
 # A `Paint` instance which draws an image, which can come from a
 # number of sources.  The image can also be scaled.
 #
@@ -568,6 +614,7 @@ class ImagePaint(Paint)
       link
    end
    
+   #
    # This setting controls how the image will be expanded if its size
    # is less than any specified maximum width and/or height (if none
    # is specified it has no effect).  If set to 0, then the image will

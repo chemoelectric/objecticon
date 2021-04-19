@@ -516,26 +516,15 @@ function lang_Prog_get_keywords()
    }
 end
 
-/*
- * proc_name_cmp - do a string comparison of a descriptor to the procedure 
- *   name in a b_proc struct; used in call to bsearch().
- */
-static int proc_name_cmp(dptr dp, struct b_proc **e)
-{
-    return lexcmp(dp, (*e)->name);
-}
-
 function lang_Prog_get_function(s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-      struct b_proc **p;
-      p = (struct b_proc **)bsearch(&s, fnc_tbl, fnc_tbl_sz,
-                                    sizeof(struct b_proc *), 
-                                    (BSearchFncCast)proc_name_cmp);
-      if (p)
-          return proc(*p);
-      fail;
+       struct c_proc *c;
+       c = lookup_function(&s);
+       if (c)
+           return proc(c);
+       fail;
    }
 end
 
@@ -545,12 +534,12 @@ function lang_Prog_get_operator(s, n)
    if !cnv:C_integer(n) then
       runerr(101, n)
    body {
-       int i;
+       struct c_proc *c;
        if (n < 1 || n > 3)
            Irunerr(205, n);
-       for (i = 0; i < op_tbl_sz; ++i)
-           if (eq(&s, op_tbl[i]->name) && n == op_tbl[i]->nparam)
-               return proc(op_tbl[i]);
+       c = lookup_operator(&s, n);
+       if (c)
+           return proc(c);
        fail;
    }
 end
@@ -559,13 +548,11 @@ function lang_Prog_get_keyword(s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-      struct b_proc **p;
-      p = (struct b_proc **)bsearch(&s, keyword_tbl, keyword_tbl_sz,
-                                    sizeof(struct b_proc *), 
-                                    (BSearchFncCast)proc_name_cmp);
-      if (p)
-          return proc(*p);
-      fail;
+       struct c_proc *c;
+       c = lookup_keyword(&s);
+       if (c)
+           return proc(c);
+       fail;
    }
 end
 
@@ -809,9 +796,8 @@ end
 
 struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
 {
-    int i;
     dptr t;
-    struct b_proc **pp;
+    struct c_proc *c;
 
     if (!StrLen(*s))
         return NULL;
@@ -828,32 +814,24 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
      * See if the string represents an operator. In this case the arity
      *  of the operator must match the one given.
      */
-    if (arity && !oi_isalpha(*StrLoc(*s)) && (StrLen(*s) == 1 || *StrLoc(*s) != '&')) {
-        for (i = 0; i < op_tbl_sz; ++i)
-            if (eq(s, op_tbl[i]->name) && arity == op_tbl[i]->nparam)
-                return (struct b_proc *)op_tbl[i];
-        return 0;
-    }
+    if (arity && !oi_isalpha(*StrLoc(*s)) && (StrLen(*s) == 1 || *StrLoc(*s) != '&'))
+        return (struct b_proc *)lookup_operator(s, arity);
 
     /*
      * See if the string represents a built-in function.
      */
-    pp = (struct b_proc **)bsearch(s, fnc_tbl, fnc_tbl_sz,
-                                   sizeof(struct b_proc *), 
-                                   (BSearchFncCast)proc_name_cmp);
-    if (pp)
-        return *pp;
+    c = lookup_function(s);
+    if (c)
+        return (struct b_proc *)c;
 
     /*
      * See if the string represents a keyword function.
      */
-    pp = (struct b_proc **)bsearch(s, keyword_tbl, keyword_tbl_sz,
-                                   sizeof(struct b_proc *), 
-                                   (BSearchFncCast)proc_name_cmp);
-    if (pp)
-        return *pp;
+    c = lookup_keyword(s);
+    if (c)
+        return (struct b_proc *)c;
 
-    return 0;
+    return NULL;
 }
 
 function proc(x, n, c)
