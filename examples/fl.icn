@@ -61,12 +61,11 @@ procedure do_one(f)
    repeat {
       s := f.read_line() | fail
       if /s then
-         break
+         return
       if \fl then
          s := linkify(s)
       write(s)
    }
-   return
 end
 
 procedure main(a)
