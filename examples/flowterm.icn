@@ -1166,6 +1166,7 @@ class Terminal(TabItem, VtUI)
       trail,
       best_focus,         # Either columns or output (the vt)
       log_file,
+      log_err,
       log,
       paint_str,          # String used in title Paint
       terminal_menu_commands,
@@ -1570,7 +1571,7 @@ class Terminal(TabItem, VtUI)
             if /log then
                start_log(param)
             else
-               on_end_log()
+               close_log()
          }
          "string": {
             check_param(s, param) | fail
@@ -2112,7 +2113,8 @@ $endif
             }
             if \opts["v"] then
                ewrite("In: ", image(s))
-            (\log).writes1(s)
+            if \log then
+               log.writes1(s) | (/log_err := &why)
             send_vt(s)
             check_cwd_change()
             some_in := &yes
@@ -2316,10 +2318,6 @@ $endif
       parent_dialog.new_tab(, dir,, self)
    end
 
-   private on_start_log()
-      start_log()
-   end
-
    private start_log(dest)
       local d, dl, fl, s
       /log | return info_msg("Already logging to " || log_file.ucs())
@@ -2352,16 +2350,15 @@ $endif
    end
 
    private close_log()
-      \log | fail
-      log.close()
-      log := &null
-      update_title()
-   end
-
-   private on_end_log()
       \log | return info_msg("Not logging")
-      close_log()
-      info_msg("Closed log file " || log_file.ucs())
+      log.close() | (/log_err := &why)
+      log := &null
+      info_msg(if /log_err then
+         "Closed log file " || log_file.ucs()
+      else
+         "Problem with log file " || log_file.ucs() || ": " || log_err)
+      log_err := &null
+      update_title()
    end
 
    private add_custom_menus(m, list)
@@ -2413,11 +2410,11 @@ $endif
       if /log then
          m.add(TextMenuItem().
                set_label("Log...").
-               connect(on_start_log, Event.ACTION))
+               connect(create start_log(), Event.ACTION))
       else
          m.add(TextMenuItem().
                set_label("End log").
-               connect(on_end_log, Event.ACTION))
+               connect(create close_log(), Event.ACTION))
 
       return add_custom_menus(m, terminal_menu_commands)
    end
