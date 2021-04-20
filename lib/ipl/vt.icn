@@ -2216,7 +2216,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private send_tr_nl(s)
-      send(replace(s, u"\n", u"\r"))
+      send(replace(s, u"\N", u"\r"))
    end
 
    private send(s)

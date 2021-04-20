@@ -1730,7 +1730,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private send_tr_nl(s)
-      send_tty(replace(s, u"\n", u"\r"))
+      send_tty(replace(s, u"\N", u"\r"))
    end
 
    private handle_paste(e)
