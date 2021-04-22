@@ -71,8 +71,8 @@ end
 procedure main(a)
    local n, f
    opts := options(a, [Opt("f",, "Always output links")], 
-                   ["Usage: fl [OPTIONS] [FILES...]", 
-                    "Copy files to stdout, inserting flowterm links"])
+                   "Usage: fl [OPTIONS] [FILES...]\N_
+                    Copy files to stdout, inserting flowterm links")
    fl := Yes{ \opts["f"] | FileStream.stdout.is_flowterm_tty() }
    non_ws := ~' \t\f'
    if *a = 0 then
