@@ -654,7 +654,7 @@ abstract class DescStream(Stream, NoCopy)
    #
 $if _PLAN9
    public static poll(l, timeout)
-      local loop_until, f, ev, r, done, i, res, snooze
+      local loop_until, f, r, done, i, res, snooze
       need_list(l)
       if *l % 2 ~= 0 then
          runerr(177, l)
@@ -666,8 +666,7 @@ $if _PLAN9
          clear(r)
          every i := 1 to *l by 2 do {
             f := need_instance(l[i], Pollable)
-            ev := need_integer(l[i + 1])
-            res := f.get_poll(ev)
+            res := f.get_poll(l[i + 1])
             put(r, res)
             if res ~= 0 then
                done := &yes
@@ -3045,6 +3044,7 @@ class NonBlockStream(Stream, Pollable, HasCloseUnderlying, NoCopy)
 
    public override get_poll(ev)
       local res, in, out
+      ev := need_integer(ev)
       res := 0  
       in := get_in_status()
       if iand(ev, Poll.IN) ~= 0 & in ~= READING then
@@ -3278,6 +3278,7 @@ class FileWorker(Pollable, NoCopy, HasClose)
 
    public override get_poll(ev)
       local res
+      ev := need_integer(ev)
       if is_running() then
          return 0
       res := iand(ev, ior(Poll.IN, Poll.OUT))
