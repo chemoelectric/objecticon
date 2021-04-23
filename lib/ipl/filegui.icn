@@ -368,7 +368,7 @@ class FileSuggestField(SuggestField)
             return
       } else {
          n := e.standard_case()
-         if /directories_only_flag & (/pats | (!pats).match(n) = *n + 1) then
+         if /directories_only_flag & (/pats | (!pats).match_all(n)) then
             return
       }
    end
