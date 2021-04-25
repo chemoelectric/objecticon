@@ -1347,6 +1347,14 @@ class Terminal(TabItem, VtUI)
             check_new(s) | fail
             add_shell_var(param)
          }
+         "reset-sh-args" : {
+            check_new(s) | fail
+            clear(shell_args)
+         }
+         "reset-sh-vars" : {
+            check_new(s) | fail
+            clear(shell_vars)
+         }
          "run" : {
             check_param(s, param) | fail
             run_prog(param)
@@ -3550,6 +3558,8 @@ procedure usage(opts)
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell")
    help_line(":sh-arg=STRING", "Specify an argument to pass to the shell; may be given several times to give multiple arguments")
    help_line(":sh-var=NAME=STRING", "Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.  If just NAME is given (with no =), then NAME is deleted from the environment")
+   help_line(":reset-sh-args", "Forget any arguments previously set with :sh-arg")
+   help_line(":reset-sh-vars", "Forget any values previously set with :sh-var")
    help_line(":run=STRING", "Run the given string in the shell; the same as :send-tty with a carriage return appended")
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'")
    help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour")
