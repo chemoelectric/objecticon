@@ -2591,7 +2591,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private urls_in_segments(e)
+   private static urls_in_segments(e)
       return ipl.pdco.List{ Unique{ \Seq(e).attr.url }}
    end
 
