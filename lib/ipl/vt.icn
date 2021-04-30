@@ -2470,7 +2470,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          r[-1] ||:= s
    end
 
-   private segments_in_range(row, i, j)
+   private static segments_in_range(row, i, j)
       local seg, c
       c := 1
       /i := 1
