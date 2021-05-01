@@ -392,7 +392,7 @@ class HtmlOutputter(Outputter)
       }
    end
 
-   private esc(s)
+   private static esc(s)
       return xml_escape(s, '<>&')
    end
 
@@ -587,7 +587,7 @@ class HtmlOutputter(Outputter)
             while s := read(g) do {
                line_no +:= 1
                writes(f, "<a name=\"", line_no, "\"/>")
-               write(f, xml_escape(s, '<>&'))
+               write(f, esc(s))
             }
          }}
 
