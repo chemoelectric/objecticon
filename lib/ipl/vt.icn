@@ -1875,7 +1875,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       invalidate_line(i)
    end
 
-   private truncate(l, lim)
+   private static truncate(l, lim)
       local n, t
       n := line_len(l)
       while n > lim do {
