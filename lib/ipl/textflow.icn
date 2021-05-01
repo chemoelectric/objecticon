@@ -1421,11 +1421,11 @@ class TextFlow(Component, HasLastHighlight)
    package wants_rpress(e)
       # Also check highlight since we may have just opened a menu,
       # clearing over and setting highlight.
-      return \over | \highlight
+      succeed \over | \highlight
    end
 
    package wants_lpress(e)
-      return \over
+      succeed \over
    end
 
    private handle_rpress(e)
