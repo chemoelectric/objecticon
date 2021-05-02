@@ -25,7 +25,8 @@ end
 #
 final class SslStream(Stream, HasCloseUnderlying, NoCopy)
    private
-      ptr,
+      ptr
+   private const
       other
 
    public static const
