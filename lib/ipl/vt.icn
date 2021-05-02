@@ -3,7 +3,7 @@ $encoding UTF-8
 package ipl.vt
 
 import gui, io, lang, util, graphics(Window,Key,Selection,Mouse,Canvas), 
-   net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
+   xml, net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics, ipl.printf
 
 # Current attributes.  Treated as immutable, to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url)
@@ -166,10 +166,173 @@ abstract class VtUI()
    end
 end
 
-package class VtPrimarySelectionOwner(TextSelectionOwner)
+package abstract class AttrTextSelectionOwner(SelectionOwner)
+   private
+      attr,
+      rs,
+      stk
+
+   protected abstract get_list()
+
+   private get_text()
+      local s, l, m
+      l := get_list()
+      s := ""
+      every m := !l do {
+         every s ||:= (!m).s
+         unless m === l[-1] then
+            s ||:= "\N"
+      }
+      return ucs(s)
+   end
+
+   private static html_colour(s)
+      local r
+      if r := Window.parse_color(s) then
+         return sprintf("#%02x%02x%02x", r.red / 257, r.green / 257, r.blue / 257)
+   end
+
+   private pop_to(s)
+      while pop_item() ~== s
+   end
+
+   private pop_item()
+      local s
+      if s := get(stk) then {
+         case s of {
+            "A":  { rs.writes1("</A>") ; attr.url := &null }
+            "B":  { rs.writes1("</B>") ; attr.bold := &null }
+            "U":  { rs.writes1("</U>") ; attr.underline := &null }
+            "I":  { rs.writes1("</I>") ; attr.italic := &null }
+            "S":  { rs.writes1("</S>") ; attr.crossed := &null }
+            "FG":  { rs.writes1("</FONT>") ; attr.fg := &null }
+            "BG":  { rs.writes1("</SPAN>") ; attr.bg := &null }
+            "V":  { rs.writes1("</SPAN>") ; attr.invisible := &null }
+         }
+         return s
+      }
+   end
+
+   private note(s)
+      push(stk, s)
+   end
+
+   private html_segment(e)
+      local a, fg, bg
+      a := e.attr
+      if /a.url & \attr.url then
+         pop_to("A")
+      if /a.underline & \attr.underline then
+         pop_to("U")
+      if /a.bold & \attr.bold then
+         pop_to("B")
+      if /a.italic & \attr.italic then
+         pop_to("I")
+      if /a.crossed & \attr.crossed then
+         pop_to("S")
+      if /a.invisible & \attr.invisible then
+         pop_to("V")
+      fg := a.fg
+      bg := a.bg
+      if \a.inverse then {
+         /fg := "black"
+         /bg := "white"
+         fg :=: bg
+      }
+      if fg ~=== \attr.fg then
+         pop_to("FG")
+      if bg ~=== \attr.bg then
+         pop_to("BG")
+
+      if attr.url ~===:= a.url then {
+         note("A")
+         rs.writes("<A HREF=\"", xml_escape(a.url.str(), '\"\'&'), "\">")
+      }
+      if attr.underline ~===:= a.underline then {
+         note("U")
+         rs.writes1("<U>")
+      }
+      if attr.bold ~===:= a.bold then {
+         note("B")
+         rs.writes1("<B>")
+      }
+      if attr.italic ~===:= a.italic then {
+         note("I")
+         rs.writes1("<I>")
+      }
+      if attr.crossed ~===:= a.crossed then {
+         note("S")
+         rs.writes1("<S>")
+      }
+      if attr.invisible ~===:= a.invisible then {
+         note("V")
+         rs.writes1("<SPAN STYLE=\"visibility:hidden\">")
+      }
+      if attr.fg ~===:= fg then {
+         note("FG")
+         rs.writes("<FONT COLOR=\"", html_colour(fg), "\">")
+      }
+      if attr.bg ~===:= bg then {
+         note("BG")
+         rs.writes("<SPAN STYLE=\"background-color:", html_colour(bg), "\">")
+      }
+      rs.writes1(xml_escape(e.s, '<>&'))
+   end
+
+   private get_html()
+      local l, m
+      l := get_list()
+      return use {
+         rs := RamStream(),
+         {
+            attr := Attr()
+            stk := []
+            rs.writes1("<HTML><PRE>")
+            every m := !l do {
+               every html_segment(!m)
+               unless m === l[-1] then
+                  rs.write()
+            }
+            while pop_item()
+            rs.writes1("</PRE></HTML>")
+            ucs(rs.str())
+         }
+      }
+   end
+
+   public override get_targets()
+      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | "text/html"
+   end
+
+   public override get_content(target)
+      return case target of {
+         Selection.STRING_TARGET: text_convert(get_text(), "string")
+         Selection.UTF8_STRING_TARGET: get_text()
+         "text/html": get_html()
+      }
+   end
+end
+
+package class StaticAttrTextSelectionOwner(AttrTextSelectionOwner)
+   private const l
+
+   protected override get_list()
+      return l
+   end
+
+   public override lost_ownership()
+   end
+
+   public new(l)
+      self.l := need_list(l)
+      return
+   end
+end
+
+package class VtPrimarySelectionOwner(AttrTextSelectionOwner)
    private const parent
 
-   protected override get_text()
+   protected override get_list()
       return \parent.primary
    end
 
@@ -2246,9 +2409,9 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public handle_copy(e)
-      local s
-      if s := \text_selection then
-         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+      local l
+      if l := \text_selection then
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticAttrTextSelectionOwner(l))
    end
 
    public handle_copy_links(e)
@@ -2463,11 +2626,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       return \.text_selection
    end
 
-   private static ts_add(r, s, fl)
+   private static ts_add(r, l, fl)
       if /fl then
-         put(r, s)
+         put(r, l)
       else
-         r[-1] ||:= s
+         every put(r[-1], !l)
    end
 
    private static segments_in_range(row, i, j)
@@ -2508,40 +2671,36 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private calculate_text_selection()
-      local r, s, t, a, fl
+      local r, t, a, fl
       text_selection := &null
       \mark_y | fail
       if mark_y < cursor_y then {
          a := contents[mark_y]
-         s := line_str(a.l)
          fl := a.join
-         r := [if t := range(1, *s + 1, mark_x, *s + 1) then s[t.lo:t.hi] else u""]
+         r := [ split_from(a, mark_x - 1) ]
          every a := contents[mark_y + 1 to cursor_y - 1] do {
-            ts_add(r, line_str(a.l), fl)
+            ts_add(r, a.l, fl)
             fl := a.join
          }
-         a := contents[cursor_y]
-         s := line_str(a.l)
-         ts_add(r, if t := range(1, *s + 1, 1, cursor_x) then s[t.lo:t.hi] else u"", fl)
+         ts_add(r, split_upto(contents[cursor_y], cursor_x - 1), fl)
       } else if mark_y > cursor_y then {
          a := contents[cursor_y]
-         s := line_str(a.l)
          fl := a.join
-         r := [if t := range(1, *s + 1, cursor_x, *s + 1) then s[t.lo:t.hi] else u""]
+         r := [ split_from(a, cursor_x - 1) ]
          every a := contents[cursor_y + 1 to mark_y - 1] do {
-            ts_add(r, line_str(a.l), fl)
+            ts_add(r, a.l, fl)
             fl := a.join
          }
-         a := contents[mark_y]
-         s := line_str(a.l)
-         ts_add(r, if t := range(1, *s + 1, 1, mark_x) then s[t.lo:t.hi] else u"", fl)
+         ts_add(r, split_upto(contents[mark_y], mark_x - 1), fl)
       } else {
          # mark_y = cursor_y
-         s := contents_str(mark_y)
-         t := range1(1, *s + 1, cursor_x, mark_x) | fail
-         r := [ s[t.lo:t.hi] ]
+         a := contents[cursor_y]
+         t := range1(1, line_len(a.l) + 1, cursor_x, mark_x) | fail
+         r := split_from(a, t.lo - 1)
+         r := Row(r)
+         r := [ split_upto(r, t.hi - t.lo) ]
       }
-      text_selection := cat_lines(r)
+      text_selection := r
    end
 
    private handle_lrelease(e)
