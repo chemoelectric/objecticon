@@ -524,18 +524,18 @@ class Vt(LineBasedScrollArea, MenuMode)
       add_cursor_key(Key.HOME, "H")
       add_cursor_key(Key.END, "F")
 
-      KEY_TABLE.add1("\b", 0, M, "\d")
-      KEY_TABLE.add1("\b", M, M, "\e\d")
-      KEY_TABLE.add1("\d", 0, 0, "\e[3~")
+      KEY_TABLE.add1("\b", 0, C+M, "\d")
+      KEY_TABLE.add1("\b", M, C+M, "\e\d")
 
+      add_std_key("\d", "\e[3~")
       add_std_key(Key.PGUP, "\e[5~")
       add_std_key(Key.PGDN, "\e[6~")
       add_std_key(Key.INSERT, "\e[2~")
 
-      add_std_key(Key.F1, "\eOP")
-      add_std_key(Key.F2, "\eOQ")
-      add_std_key(Key.F3, "\eOR")
-      add_std_key(Key.F4, "\eOS")
+      add_std_key(Key.F1, "\eOP", "\e[1P")
+      add_std_key(Key.F2, "\eOQ", "\e[1Q")
+      add_std_key(Key.F3, "\eOR", "\e[1R")
+      add_std_key(Key.F4, "\eOS", "\e[1S")
       add_std_key(Key.F5, "\e[15~")
       add_std_key(Key.F6, "\e[17~")
       add_std_key(Key.F7, "\e[18~")
@@ -546,35 +546,26 @@ class Vt(LineBasedScrollArea, MenuMode)
       add_std_key(Key.F12, "\e[24~")
    end
 
-   private static add_std_key(k, s)
-      local l, r
-      KEY_TABLE.add1(k, 0, CSM, s)
-      if any(&digits, s[3]) then {
-         l := s[1:4]
-         r := s[4:0]
-      } else {
-         l := s[1:3] || "1"
-         r := s[3:0]
-      }
-      KEY_TABLE.add1(k, S, CSM, l || ";2" || r)
-      KEY_TABLE.add1(k, M, CSM, l || ";3" || r)
-      KEY_TABLE.add1(k, C, CSM, l || ";5" || r)
+   private static add_std_mods(k, l, r)
+      KEY_TABLE.add1(k, S,   CSM, l || ";2" || r)
+      KEY_TABLE.add1(k, M,   CSM, l || ";3" || r)
       KEY_TABLE.add1(k, S+M, CSM, l || ";4" || r)
-      KEY_TABLE.add1(k, C+M, CSM, l || ";7" || r)
+      KEY_TABLE.add1(k, C,   CSM, l || ";5" || r)
       KEY_TABLE.add1(k, C+S, CSM, l || ";6" || r)
+      KEY_TABLE.add1(k, C+M, CSM, l || ";7" || r)
       KEY_TABLE.add1(k, CSM, CSM, l || ";8" || r)
+   end
+
+   private static add_std_key(k, s, t)
+      KEY_TABLE.add1(k, 0, CSM, s)
+      /t := s
+      add_std_mods(k, t[1:-1], t[-1])
    end
 
    private static add_cursor_key(k, c)
       KEY_TABLE.add1(k, 0, CSM+U, "\e[" || c)
       KEY_TABLE.add1(k, U, CSM+U, "\eO" || c)
-      KEY_TABLE.add1(k, S, CSM, "\e[1;2" || c)
-      KEY_TABLE.add1(k, M, CSM, "\e[1;3" || c)
-      KEY_TABLE.add1(k, C, CSM, "\e[1;5" || c)
-      KEY_TABLE.add1(k, S+M, CSM, "\e[1;4" || c)
-      KEY_TABLE.add1(k, C+M, CSM, "\e[1;7" || c)
-      KEY_TABLE.add1(k, C+S, CSM, "\e[1;6" || c)
-      KEY_TABLE.add1(k, CSM, CSM, "\e[1;8" || c)
+      add_std_mods(k, "\e[1", c)
    end
 
    package on_lost_primary_ownership()
