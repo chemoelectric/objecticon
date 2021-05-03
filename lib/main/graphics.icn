@@ -1709,7 +1709,6 @@ final abstract class Key()
       MOD_META5,
       MOD_RELEASE,
       # Key event codes
-      SHIFT_TAB,
       COMPOSE,
       DO,
       DOWN,
@@ -1832,7 +1831,6 @@ final abstract class Key()
       MOD_META5 :=   128
       MOD_RELEASE := 256
 $if _X_WINDOW_SYSTEM
-      SHIFT_TAB :=           65056
       COMPOSE :=             65312
       DO :=                  65383
       DOWN :=                65364
@@ -1979,7 +1977,6 @@ $elsif _MS_WIN32
       RIGHT :=              39
       SELECT :=             41
       UP :=                 38
-      SHIFT_TAB :=          0
       COMPOSE :=            0
       DO :=                 93
       FIND :=               0
