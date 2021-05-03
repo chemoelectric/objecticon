@@ -1632,7 +1632,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     struct lgstate state;
     tended struct b_lelem *le;
     tended char *cstr_target;
-    int target_cnt = 1;
+    int target_cnt;
     struct sending_helper *h;
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -1668,6 +1668,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
         if (!is:list(*data))
             ReturnErrVal(108, *data, Error);
         target_list[0] = ATOM(wd, TARGETS);
+        target_cnt = 1;
         for (le = lgfirst(&ListBlk(*data), &state); le;
              le = lgnext(&ListBlk(*data), &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))
