@@ -1733,13 +1733,13 @@ static void display(dptr dp)
     }
     type_case d of {
       cset: { 
-            fprintf(out, "\tsize=" WordFmt "\n", CsetBlk(d).size);
+            fprintf(out, "\tSize=" WordFmt "\n", CsetBlk(d).size);
         }
       string: {
-            fprintf(out, "\tlength=" WordFmt "\n", StrLen(d));
+            fprintf(out, "\tLength=" WordFmt "\n", StrLen(d));
         }
       ucs: {
-            fprintf(out, "\tlength=" WordFmt "\n", UcsBlk(d).length);
+            fprintf(out, "\tLength=" WordFmt "\n", UcsBlk(d).length);
             fputs("\tUTF-8=", out);
             outimagex(&UcsBlk(d).utf8);
             fputc('\n', out);
@@ -1801,7 +1801,7 @@ static void display(dptr dp)
       table: {
             struct hgstate state;
             union block *ep;
-            fprintf(out, "\tdefault=");
+            fprintf(out, "\tDefault=");
             outimagex(&TableBlk(d).defvalue);
             fputc('\n', out);
             for (ep = hgfirst(BlkLoc(d), &state); ep;
@@ -1816,6 +1816,11 @@ static void display(dptr dp)
       coexpr: {
             struct frame *f;
             int i;
+            if (CoexprBlk(d).activator) {
+                fprintf(out, "\tActivator=");
+                outblock((union block *)CoexprBlk(d).activator);
+                fputc('\n', out);
+            }
             f = CoexprBlk(d).sp;
             fprintf(out, "\tSP=%p\n\tPF=%p\n", CoexprBlk(d).sp, CoexprBlk(d).curr_pf);
             while (f) {
@@ -1843,7 +1848,7 @@ static void display(dptr dp)
                         fputc('\t', out);
                         outblock((union block *)pf->proc);
                         fputc('\n', out);
-                        fprintf(out, "\t\t%p, caller=%p\n", f, pf->caller);
+                        fprintf(out, "\t\t%p, Caller=%p\n", f, pf->caller);
                         if (pf->proc->program && pf->curr_inst) {
                             fputs("\t\t", out);
                             print_locationx(pf);
