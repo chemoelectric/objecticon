@@ -580,6 +580,13 @@ final abstract class IconTheme()
       ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
    end
 
+   public static dump()
+      write("THEMES")
+      write("======")
+      to_stdout(THEMES, 3)
+      write()
+   end
+
    #
    # Set the icon theme; fails if the theme is invalid.
    #
@@ -806,6 +813,28 @@ final abstract class Mime()
       MIME_ALIASES := read_mime_aliases()
       MIME_SUBCLASSES := read_mime_subclasses()
       DESKTOP_ENTRIES := read_desktop_entries()
+   end
+
+   public static dump()
+      write("GLOBS")
+      write("=====")
+      to_stdout(GLOBS, 3)
+      write("\N\NMIME_SUBCLASSES")
+      write("===============")
+      to_stdout(MIME_SUBCLASSES, 3)
+      write("\N\NMIME_ALIASES")
+      write("=============")
+      to_stdout(MIME_ALIASES, 3)
+      write("\N\NICONS")
+      write("=====")
+      to_stdout(ICONS, 3)
+      write("\N\NGENERIC_ICONS")
+      write("=============")
+      to_stdout(GENERIC_ICONS, 3)
+      write("\N\NDESKTOP_ENTRIES")
+      write("===============")
+      to_stdout(DESKTOP_ENTRIES, 3)
+      write()
    end
 
    private static parse_glob_file(g, s)
