@@ -14,6 +14,7 @@ import
    ipl.wildcard,
    ipl.sort,
    ipl.pdco,
+   ipl.lists,
    ipl.functional
 
 # An object for parsing and holding the parts of a locale string, like
@@ -1090,7 +1091,7 @@ final abstract class Mime()
                every d := Reverse{ member(t, separate(member(a, k), ';')) } do {
                   # Keep the list unique, by deleting the element (if present)
                   # we're about to push on the front.
-                  delete(l, keyof(l, d))
+                  ldel1(l, d)
                   push(l, d)
                }
             } else {
@@ -1108,7 +1109,7 @@ final abstract class Mime()
             if l := member(u, mime_type) then {
                # Lookup the DesktopEntry (in t) and then delete it from l.
                every d := member(t, separate(member(a, k), ';')) do
-                  delete(l, keyof(l, d))
+                  ldel1(l, d)
             }
          }
       }
