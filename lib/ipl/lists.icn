@@ -212,11 +212,9 @@ procedure ldel(l, x)
    local i, e
    i := 1
    every e := !l do {
-      if e === x then {
-         repeat {
-            delete(l, i)
-            l[i] === x | break
-         }
+      while e === x do {
+         delete(l, i)
+         e := l[i] | return l
       }
       i +:= 1
    }
@@ -675,21 +673,44 @@ procedure lswap(L)
 
 end
 
-# Keep only unique list elements
+#
+# Keep only unique list elements.  L is unchanged, and a new list is
+# returned.
+#
 procedure lunique(L)			
-   local result, culls, x
+   local result, seen, x
 
    result := []
-   culls := elementset(L)
+   seen := set()
 
    every x := !L do
-      if member(culls, x) then {
-         delete(culls, x)
+      unless member(seen, x) then {
          put(result, x)
+         insert(seen, x)
          }
 
    return result
+end
 
+#
+# Like `lunique`, but modify L.
+#
+procedure lunique_mod(L)			
+   local seen, x, i
+
+   seen := set()
+   i := 1
+
+   every x := !L do {
+      while member(seen, x) do {
+         delete(L, i)
+         x := L[i] | return L
+      }
+      insert(seen, x)
+      i +:= 1
+   }
+
+   return L
 end
 
 # Returns the size of the largest value in `L`.  If `p` is given, it
