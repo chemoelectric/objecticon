@@ -72,7 +72,7 @@ procedure usage()
 end
 
 procedure main(a)
-   local s, s1, u1, p, c
+   local s, s1, u1, p, c, d
 
    options(a, [], usage)
 
@@ -128,7 +128,8 @@ procedure main(a)
 
       "dirs": {
          write("Data Home: ", file_link(BaseDir.get_data_home()))
-         every write("Data Dirs: ", file_link(Files.split_paths(BaseDir.get_data_dirs())))
+         every d := Files.split_paths(BaseDir.get_data_dirs()) do
+            write("Data Dirs: ", file_link(d), if Mime.use_mimeinfo_cache(d) then " (C)" else "")
          write("Config Home: ", file_link(BaseDir.get_config_home()))
          every write("Config Dirs: ", file_link(Files.split_paths(BaseDir.get_config_dirs())))
       }
