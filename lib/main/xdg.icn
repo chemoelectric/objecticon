@@ -871,15 +871,17 @@ final abstract class Mime()
    end
 
    private static parse_glob_file(g, s)
-      local weight, type, pattern, l
+      local weight, type, pattern, flags, l
       every l := separate_lines(s) do l ? {
          if weight := integer(tab(upto(':'))) & 
             move(1) &
             type := string(tab(upto(':'))) &
-            move(1) &
-            pattern := tab(0) then 
-         {
-            g.add(pattern, weight, type)
+            move(1)
+         then {
+            pattern := tab(upto(':') | 0)
+            move(1)
+            flags := tab(0)
+            g.add(pattern, flags, weight, type)
          }
       }
    end
@@ -1270,6 +1272,7 @@ end
 #
 package record GlobMatch(weight,      # The integer weight
                          mime_type,   # The mime mime_type (string)
+                         cs,          # Case-sensitive flag
                          pattern      # An optional wildcard pattern.
                          )
 
@@ -1283,19 +1286,30 @@ package class Globs()
       other
 
    public lookup(f)
-      local i, v, fm
+      local i, v
       need_text(f)
       f := ucs(f) | fail
-      fm := Text.lower(f)
-      if v := member(literal, f | fm) then
+      if v := member(literal, f) then
          return v
       every i := upto('.', f) do {
-         if v := member(simple, (f | fm)[i + 1:0]) then
+         if v := member(simple, f[i + 1:0]) then
             return v
       }
       every v := !other do {
-         if v.pattern.match_all(f | fm) then
+         if v.pattern.match_all(f) then
             return v
+      }
+      if f ~==:= Text.lower(f) then {
+         if v := member(literal, f) then
+            return /v.cs & v
+         every i := upto('.', f) do {
+            if v := member(simple, f[i + 1:0]) then
+               return /v.cs & v
+         }
+         every v := !other do {
+            if /v.cs & v.pattern.match_all(f) then
+               return v
+         }
       }
    end
 
@@ -1303,8 +1317,8 @@ package class Globs()
    # Add an entry.  p is the pattern (ucs), weight an integer and mime_type
    # the mime type (string).
    #
-   public add(p, weight, mime_type)
-      local x, t, k
+   public add(p, flags, weight, mime_type)
+      local x, t, k, cs
       if p == "__NOGLOBS__" then {
          every t := literal | simple | other do {
             every k := key(t) do {
@@ -1312,21 +1326,25 @@ package class Globs()
                   delete(t, k)
             }
          }
-      } else if upto('*?[', p) then {
-         if match("*.", p) & not upto('*?[', p[3:0]) then {
-            p := p[3:0]
-            x := member(simple, p)
-            if /x | (weight > x.weight) then
-               insert(simple, p, GlobMatch(weight, mime_type))
-         } else {
-            x := member(other, p)
-            if /x | (weight > x.weight) then
-               insert(other, p, GlobMatch(weight, mime_type, Wildcard(p)))
-         }
       } else {
-         x := member(literal, p)
-         if /x | (weight > x.weight) then
-            insert(literal, p, GlobMatch(weight, mime_type))
+         if match("cs", flags) then
+            cs := &yes
+         if upto('*?[', p) then {
+            if match("*.", p) & not upto('*?[', p[3:0]) then {
+               p := p[3:0]
+               x := member(simple, p)
+               if /x | (weight > x.weight) then
+                  insert(simple, p, GlobMatch(weight, mime_type, cs))
+            } else {
+               x := member(other, p)
+               if /x | (weight > x.weight) then
+                  insert(other, p, GlobMatch(weight, mime_type, cs, Wildcard(p)))
+            }
+         } else {
+            x := member(literal, p)
+            if /x | (weight > x.weight) then
+               insert(literal, p, GlobMatch(weight, mime_type, cs))
+         }
       }
       link
    end
