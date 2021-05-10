@@ -579,9 +579,13 @@ final abstract class IconTheme()
    end
 
    public static dump()
-      write("THEMES")
+      write("Current theme: ", theme)
+      write("\nTHEMES")
       write("======")
       to_stdout(THEMES, 3)
+      write("\N\NICON_FALLBACK_CACHED_DIRS")
+      write("=========================")
+      to_stdout(ICON_FALLBACK_CACHED_DIRS, 3)
       write()
    end
 
@@ -800,6 +804,8 @@ final abstract class Mime()
       MIME_ALIASES,       #   - ditto -
       MIME_ALTERNATIVES,  # A cache of alternative_mime_types() results,
                           #   mapping mime-type (string) to lists of mime-types (strings)
+      FIFF_CACHE,         # A cache of find_icon_for_file() results, mapping string key to icon
+                          #   name (string)
       PATHS,              # A map of ID (string) to path (string), (eg "gimp.desktop" ->
                           #   "/usr/share/applications/gimp.desktop")
       EDITS,              # A list of Edit() records to be applied in order
@@ -823,6 +829,7 @@ final abstract class Mime()
    #
    public static refresh()
       MIME_ALTERNATIVES := table()
+      FIFF_CACHE := table()
       GLOBS := read_globs()
       ICONS := read_icons()
       GENERIC_ICONS := read_generic_icons()
@@ -923,34 +930,45 @@ final abstract class Mime()
 
    #
    # Generate the alternative mime types for the given mime type.
-   # This recursively traverses the subclasses and aliases and
-   # generates all possible alternatives.
+   # This traverses the subclasses and aliases and generates all
+   # possible alternatives.
    #
    public static alternative_mime_types(mt)
       local l
       mt := need_string(mt)
       unless l := member(MIME_ALTERNATIVES, mt) then {
-         l := []
-         alternative_mime_types1(mt, l, set())
+         l := ipl.pdco.List{ alternative_mime_types1(mt) }
          insert(MIME_ALTERNATIVES, mt, l)
       }
       suspend .!l
    end
 
-   private static alternative_mime_types1(mt, l, seen)
-      local sub, mmt
-      mmt := Text.lower(mt)
-      if member(seen, mmt) then
-         fail
-      put(l, mt)
-      insert(seen, mmt)
-      every alternative_mime_types1(!member(MIME_ALIASES, mmt), l, seen)
-      if sub := member(MIME_SUBCLASSES, mmt) then
-         every alternative_mime_types1(!sub, l, seen)
-      else if match("text/", mmt) then
-         alternative_mime_types1("text/plain", l, seen)
-      else unless match("inode/", mmt) then
-         alternative_mime_types1("application/octet-stream", l, seen)
+   private static gen_alternatives(x)
+      local sub
+      x := Text.lower(x)
+      suspend !member(MIME_ALIASES, x)
+      if sub := member(MIME_SUBCLASSES, x) then
+         suspend !sub
+      else if match("text/", x) then
+         return "text/plain"
+      else unless match("inode/", x) then
+         return "application/octet-stream"
+   end
+
+   private static alternative_mime_types1(mt)
+      local x, mx, seen, l
+      l := [mt]
+      seen := set(Text.lower(mt))
+      while mt := pop(l) do {
+         suspend mt
+         every x := gen_alternatives(mt) do {
+            mx := Text.lower(x)
+            unless member(seen, mx) then {
+               insert(seen, mx)
+               put(l, x)
+            }
+         }
+      }
    end
 
    #
@@ -1051,8 +1069,16 @@ final abstract class Mime()
    # optional scale (see `IconTheme.find_icon()`).
    #
    public static find_icon_for_file(file, size, scale)
-      return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
-                                 size, scale)
+      local mt, v, k
+      if mt := get_mime_type_for_file(file) then {
+         k := mt || "/" || image(size)  || "/" || image(scale)
+         unless v := member(FIFF_CACHE, k) then {
+            v := IconTheme.find_icon(gen_all_icons(alternative_mime_types(mt)),
+                                     size, scale)
+            insert(FIFF_CACHE, k, v)
+         }
+         return \v
+      }
    end
 
    private static true_key(dm, key)
@@ -1094,7 +1120,8 @@ final abstract class Mime()
                id := prefix || e.name
                unless member(PATHS, id) then {
                   path := p.child(e.name).str()
-                  every insert(N | PATHS, id, path)
+                  insert(PATHS, id, path)
+                  insert(N, id)
                }
             }
          }
@@ -1171,7 +1198,7 @@ final abstract class Mime()
          # Scan the applications directory recursively, recording new
          # entries added to PATHS, in N (note that existing entries in
          # PATHS are never overwritten).
-         scan_application_dir(app, "", N := table())
+         scan_application_dir(app, "", N := set())
          if use_mimeinfo_cache(d) &
             cf := Util.load_ini_file(app.child("mimeinfo.cache").str()) &
             cf := member(cf, u"MIME Cache")
@@ -1189,8 +1216,8 @@ final abstract class Mime()
          } else {
             # No cache.  For each new name in the tree, load its
             # corresponding ini file and process the mime types.
-            every id := key(N) do {
-               if dm := load_DE_ini(N[id]) then {
+            every id := !N do {
+               if dm := load_DE_ini(PATHS[id]) then {
                   every mt := gen_desktop_mime_types(dm) do
                      inserts_set(DEFINED, mt, id)
                }
