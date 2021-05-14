@@ -800,8 +800,7 @@ final abstract class Mime()
       GLOBS,              # A Globs instance for file pattern matching.
       ICONS,              # A map of mime-type (string) to list of icon names (strings)
       GENERIC_ICONS,      #   - ditto -
-      MIME_SUBCLASSES,    # A map of mime-type (string) to lists of mime-types (strings)
-      MIME_ALIASES,       #   - ditto -
+      MIME_GRAPH,         # A map of mime-type (string) to lists of mime-types (strings)
       MIME_ALTERNATIVES,  # A cache of alternative_mime_types() results,
                           #   mapping mime-type (string) to lists of mime-types (strings)
       FIFF_CACHE,         # A cache of find_icon_for_file() results, mapping string key to icon
@@ -833,8 +832,7 @@ final abstract class Mime()
       GLOBS := read_globs()
       ICONS := read_icons()
       GENERIC_ICONS := read_generic_icons()
-      MIME_ALIASES := read_mime_aliases()
-      MIME_SUBCLASSES := read_mime_subclasses()
+      MIME_GRAPH := read_mime_graph()
       DESKTOP_ENTRIES := table()
       scan_desktop_entries()
    end
@@ -847,12 +845,9 @@ final abstract class Mime()
       write("GLOBS")
       write("=====")
       to_stdout(GLOBS, 3)
-      write("\N\NMIME_SUBCLASSES")
-      write("===============")
-      to_stdout(MIME_SUBCLASSES, 3)
-      write("\N\NMIME_ALIASES")
-      write("=============")
-      to_stdout(MIME_ALIASES, 3)
+      write("\N\NMIME_GRAPH")
+      write("==========")
+      to_stdout(MIME_GRAPH, 3)
       write("\N\NICONS")
       write("=====")
       to_stdout(ICONS, 3)
@@ -930,8 +925,9 @@ final abstract class Mime()
 
    #
    # Generate the alternative mime types for the given mime type.
-   # This traverses the subclasses and aliases and generates all
-   # possible alternatives.
+   # This traverses the graph formed from the subclasses and aliases
+   # files, in a breadth-first fashion, and generates all possible
+   # alternatives.
    #
    public static alternative_mime_types(mt)
       local l
@@ -943,31 +939,28 @@ final abstract class Mime()
       suspend .!l
    end
 
-   private static gen_alternatives(x)
-      local sub
-      x := Text.lower(x)
-      suspend !member(MIME_ALIASES, x)
-      if sub := member(MIME_SUBCLASSES, x) then
-         suspend !sub
-      else if match("text/", x) then
-         return "text/plain"
-      else unless match("inode/", x) then
-         return "application/octet-stream"
-   end
-
    private static alternative_mime_types1(mt)
-      local x, mx, seen, l
+      local x, lx, seen, l
       l := [mt]
       seen := set(Text.lower(mt))
-      while mt := pop(l) do {
-         suspend mt
-         every x := gen_alternatives(mt) do {
-            mx := Text.lower(x)
-            unless member(seen, mx) then {
-               insert(seen, mx)
-               put(l, x)
+      repeat {
+         while mt := pop(l) do {
+            suspend mt
+            every x := !member(MIME_GRAPH, Text.lower(mt)) do {
+               lx := Text.lower(x)
+               unless member(seen, lx) | (lx == "application/octet-stream") then {
+                  insert(seen, lx)
+                  put(l, x)
+               }
             }
          }
+         if ((not member(seen, x := "text/plain")) & match("text/", !seen)) |
+            ((not member(seen, x := "application/octet-stream")) & not match("inode/", !seen))
+         then {
+            insert(seen, x)
+            put(l, x)
+         } else
+            fail
       }
    end
 
@@ -1018,7 +1011,7 @@ final abstract class Mime()
       return t
    end
 
-   private static read_mime_aliases()
+   private static read_mime_graph()
       local d, t, s, k, v, l
       t := table()
       every d := BaseDir.gen_data_dirs() do {
@@ -1029,17 +1022,10 @@ final abstract class Mime()
                   v := tab(0) then
                {
                   inserts(t, k, v)
+                  inserts(t, v, k)
                }
             }
          }
-      }
-      return t
-   end
-
-   private static read_mime_subclasses()
-      local d, t, s, k, v, l
-      t := table()
-      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
                if k := Text.lower(tab(upto(' '))) &
