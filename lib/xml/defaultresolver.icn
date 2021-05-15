@@ -101,6 +101,7 @@ class DefaultResolver(Resolver)
             URL(FilePath(sys_id).canonical().to_url())
       }
 
+      sys_url := sys_url.normal()
       sys_id := sys_url.str()
 
       #
