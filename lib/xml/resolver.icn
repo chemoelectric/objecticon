@@ -8,6 +8,8 @@
 
 package xml
 
+import util
+
 #
 # Base class for the resolver called by the parser to resolve external IDs.
 #
@@ -26,13 +28,14 @@ end
 # content returned, and the content of the external id itself.
 #
 class Resolved()
-   public
-      base,
+   public const
+      base
+   package readable
       content
 
    public new(base, content)
       self.base := base
-      self.content := content
+      self.content := need_string(content)
       return
    end
 end
