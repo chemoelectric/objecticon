@@ -79,6 +79,8 @@ class DefaultResolver(Resolver)
    public override resolve(base, external_id)
       local sys_id, sys_url, res, u, t
 
+      base := need_string(\base)
+
       #
       # Try to map from the public id (if any) to an alternative URI
       #
@@ -88,7 +90,7 @@ class DefaultResolver(Resolver)
       sys_id := string(sys_id)
 
       unless sys_url := URL(sys_id) & sys_url.scheme == ("http" | "https" | "file") then {
-         sys_url := if u := URL(string(base)) &
+         sys_url := if u := URL(\base) &
                        u.scheme == ("http" | "https" | "file")
          then
             #
