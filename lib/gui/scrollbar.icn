@@ -373,7 +373,8 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    #
    public page_jump(n)
       return value + if /is_range_flag then
-                         integer(page_factor * n * page_size)
+                         # Give this expression the same type as page_size
+                         type(page_size)(page_factor * n * page_size)
                      else
                          n * page_size
    end
