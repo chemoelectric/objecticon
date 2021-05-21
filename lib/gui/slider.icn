@@ -209,13 +209,13 @@ class Slider(Component, HasOrientation, HasUseWheel)
    private move_slider_pos(x)
       x <:= self.slider_area_pos
       x >:= self.slider_area_pos + self.slider_area_size
-      (self.slider_pos ~=== x) | fail
-      self.slider_pos := x
-      if /self.is_horizontal_flag then
-         self.slider_area.slider_y := self.slider_pos - AREA_W / 2
-      else
-         self.slider_area.slider_x := self.slider_pos - AREA_W / 2
-      self.slider_area.invalidate()
+      if self.slider_pos ~===:= x then {
+         if /self.is_horizontal_flag then
+            self.slider_area.slider_y := self.slider_pos - AREA_W / 2
+         else
+            self.slider_area.slider_x := self.slider_pos - AREA_W / 2
+         self.slider_area.invalidate()
+      }
    end
 
    #
