@@ -9,17 +9,18 @@ procedure main(a)
                        Opt("h",, "Initially show hidden files"),
                        Opt("k",, "Keep directory between uses"),
                        Opt("m",, "Multiple file mode"),
-                       Opt("nf",, "Empty files list"),
+                       Opt("i",string, "Filter (multiple allowed)", &yes),
+                       Opt("f",string, "File list item (multiple allowed)", &yes),
+                       Opt("d",string, "Directory list item (multiple allowed)", &yes),
                        Opt("ns",, "No file suggestions"),
                        Opt("ip",, "Image preview")])
 
    d :=  FileDialog().
-      set_label("A File Dialog").
-      set_filters(["*", "*.jpg", "*.icn", "*.c", "*.txt"]).
-      set_directories([Files.get_temp(), "/non/existent/path"])
+      set_label("A File Dialog")
 
-   if /opts["nf"] then
-      d.set_files(["one.icn", "two.icn", "three.icn", "/tmp/four.icn", "/tmp/five.icn"])
+   d.set_directories(\opts["d"])
+   d.set_files(\opts["f"])
+   d.set_filters(\opts["i"])
 
    if \opts["h"] then
       d.set_show_hidden_files(&yes)
