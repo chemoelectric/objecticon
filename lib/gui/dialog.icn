@@ -1381,10 +1381,8 @@ $endif
                 # Try to begin a drag.
                 self.curr_drag := self.invoke_can_drag(e) 
                 self.tried_drag := &yes
-                if \self.curr_drag then {
+                if \self.curr_drag then
                    self.curr_drag.get_source().define_dnd_pointers(self.curr_drag)
-                   change_pointer("dnd negative")
-                }
              }
       } else
          self.tried_drag := &null
