@@ -27,7 +27,7 @@ abstract class Formatter(Stream, HasCloseUnderlying)
    #
    public new(f)
       file := need_Stream(\f) | FileStream.stdout
-      file.can(Stream.WRITE) | runerr("Formatter: stream not writable: ", file)
+      file.can(Stream.WRITE) | runerr("Formatter: Stream not writable: ", file)
       return
    end
 

@@ -25,7 +25,7 @@ class JSONFormatter(Stream, HasCloseUnderlying)
    public new(file)
       /file := FileStream.stdout
       self.file := file
-      file.can(Stream.WRITE) | runerr("Formatter: stream not writable: ", file)
+      file.can(Stream.WRITE) | runerr("Formatter: Stream not writable: ", file)
       true := &yes
       false := &no
       return

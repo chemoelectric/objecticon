@@ -412,7 +412,7 @@ class Encode(Stream, HasCloseUnderlying)
    public new(file)
       /file := FileStream.stdout
       self.file := file
-      file.can(Stream.WRITE) | runerr("Encode: stream not writable: ", file)
+      file.can(Stream.WRITE) | runerr("Encode: Stream not writable: ", file)
       return
    end
 end
