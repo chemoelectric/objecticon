@@ -6,7 +6,8 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang(encode, encode_to_file), gui, parser, io, ipl.strings
+import lang(encode, encode_to_file), gui, parser, io, ipl.strings,
+   ipl.printf
 
 #
 # Record to store a method to generate
@@ -253,12 +254,12 @@ class Code()
       #
       if \l_name then {
          Files.remove(l_name)
-         Files.move(l_temp_name, l_name) | stop("Couldn't rename new layout file ", 
-                                                l_temp_name, " to ", l_name)
+         Files.move(l_temp_name, l_name) | stopf("Couldn't rename new layout file %s to %s: %w", 
+                                                 l_temp_name, l_name)
       }
       Files.remove(dest_name)
-      Files.move(temp_name, dest_name) | stop("Couldn't rename new source file ", 
-                                              temp_name, " to ", dest_name)
+      Files.move(temp_name, dest_name) | stopf("Couldn't rename new source file %s to %s: %w", 
+                                               temp_name, dest_name)
 
       return
    end

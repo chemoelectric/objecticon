@@ -1,4 +1,4 @@
-import lang(Text), parser, ipl.options, io, util, ipl.strings, ipl.pdco
+import lang(Text), parser, ipl.options, io, util, ipl.strings, ipl.pdco, ipl.printf
 
 global symbol_table, scanned_file, need, pp_defs, opts
 
@@ -31,8 +31,8 @@ procedure main(a)
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
 
    every s := !\opts["f"] | !a do
-      symbol_table.scan_file(s) | stop("Couldn't scan ", s, ": ", &why)
-   symbol_table.resolve_classes() | stop("Problem resolving classes in ", s, ": ", &why)
+      symbol_table.scan_file(s) | stopf("Couldn't scan %s: %w", s)
+   symbol_table.resolve_classes() | stopf("Problem resolving classes in %s: %w", s)
 
    every do_one(!a)
 end
@@ -46,7 +46,7 @@ procedure do_one(s)
    else {
       # We scanned the ucode file, so we must parse the source file now.
       par := Parser()
-      prog := par.parse_file(s, pp_defs) | stop("Couldn't parse ", s, ": ", &why)
+      prog := par.parse_file(s, pp_defs) | stopf("Couldn't parse %s: %w", s)
    }
    need := table()
    every o := prog.get_body().gen() do {
@@ -83,7 +83,7 @@ procedure print(s)
 
    # Re-parse, but without preprocessing
    par := Parser()
-   p := par.parse(src := Files.file_to_string(s)) |  stop("Couldn't reparse ", s, ": ", &why)
+   p := par.parse(src := Files.file_to_string(s)) |  stopf("Couldn't reparse %s: %w", s)
    eol := guess_eol(src)
 
    #
@@ -122,12 +122,12 @@ procedure print(s)
    # Save the result
    tname := s || ".temp"
    use {
-      f := open(tname, "w") | stop("Couldn't open ", tname),
-      p.pos.output(f) | stop(&why)
-   }
+      f := open(tname, "w"),
+      p.pos.output(f)
+   } | stopf("Couldn't output to %s: %w", tname)
    Files.remove(s)
-   Files.move(tname, s) | stop("Couldn't rename new source file ",
-                               tname, " to ", s)
+   Files.move(tname, s) | stopf("Couldn't rename new source file %s to %s: %w",
+                                tname, s)
 end
 
 procedure seen(id)
