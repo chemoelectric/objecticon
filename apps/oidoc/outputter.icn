@@ -5,11 +5,45 @@ import
    ipl.pdco(String,Seq),
    ipl.sort(qsort),
    datastruct(SortTable),
-   util(Yes)
+   util(Yes),
+   io(open,Stream),
+   ipl.printf(stopf)
 
 record Item(kind, indent)
 
 record Comment(token, string)
+
+#
+# A helper class to stop immediately on a problem with an output file
+# (eg disk full).
+#
+class OutputStream(Stream)
+   private const
+      fname,
+      other
+
+   private die()
+      stopf("Failed to output to %s: %w", fname)
+   end
+
+   public override out(s)
+      return other.out(s) | die()
+   end
+
+   public override close()
+      link other.close() | die()
+   end
+
+   public override get_mode()
+      return WRITE
+   end
+
+   public new(fname)
+      self.fname := fname
+      self.other := open(fname, "w") | die()
+      return
+   end
+end
 
 abstract class Outputter()
    public static const

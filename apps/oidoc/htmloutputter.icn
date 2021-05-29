@@ -65,7 +65,7 @@ class HtmlOutputter(Outputter)
       done_files := set()
       output_dir := \opts["o"] | stop("Please specify an output directory")
       fname := output_dir || "/index.html"
-      use {index := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {index := OutputStream(fname), {
          doctype(index)
          write(index, "<html>")
          write(index, "<title>")
@@ -112,7 +112,7 @@ class HtmlOutputter(Outputter)
       }
 
       fname := output_dir || "/nav.html"
-      use {nav := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {nav := OutputStream(fname), {
          doctype(nav)
          write(nav, "<html><body>")
          write(nav, "<h1>Packages</h1><p/>")
@@ -126,7 +126,7 @@ class HtmlOutputter(Outputter)
       }}
            
       fname := output_dir || "/begin.html"
-      use {begin := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {begin := OutputStream(fname), {
          doctype(begin)
          write(begin, "<html><body>")
          write(begin, "<h1>Object Icon generated documentation</h1>")
@@ -138,7 +138,7 @@ class HtmlOutputter(Outputter)
       }}
 
       fname := output_dir || "/all.html"
-      use {all := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {all := OutputStream(fname), {
          doctype(all)
          write(all, "<html><body>")
          write(all, "<h1>All packages</h1><p/>")
@@ -165,7 +165,7 @@ class HtmlOutputter(Outputter)
    private output_package(s)
       local f, fname, c
       fname := output_dir || "/" || get_id(s) || ".html"
-      use {f := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {f := OutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p/>")
@@ -190,7 +190,7 @@ class HtmlOutputter(Outputter)
    private output_class(c)
       local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, acc
       fname := output_dir || "/" || get_id(c) || ".html"
-      use {f := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {f := OutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", c.name, "</title></head><body>")
          write(f, "<h1>", c.name, "</h1>")
@@ -578,7 +578,7 @@ class HtmlOutputter(Outputter)
       insert(done_files, filename)
 
       fname := output_dir || "/" || get_id(c.scanned_file) || ".html"
-      use {f := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {f := OutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
          # filename may be unavailable if a #line directive gave a path which was inaccessible
@@ -604,7 +604,7 @@ class HtmlOutputter(Outputter)
          fullname ||:= "(" || get_record_field_string(c.obj) || ")"
       
       fname := output_dir || "/" || get_id(c) || ".html"
-      use {f := open(fname, "w") | stop("Couldn't open ", fname, ": ", &why), {
+      use {f := OutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", c.name, "</title></head><body>")
          write(f, "<h1>", fullname, "</h1>")
