@@ -82,7 +82,7 @@ abstract class Stream(HasClose, HasMode)
 
    #
    # Truncate this stream to the given length.  The file position
-   # remains unchanged.
+   # remains unchanged.  Returns `self` on success.
    #
    public optional truncate(len)
 
