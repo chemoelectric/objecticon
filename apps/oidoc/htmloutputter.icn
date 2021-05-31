@@ -13,7 +13,8 @@ import
    ipl.scan,
    ipl.tables,
    io,
-   util
+   util,
+   ipl.streams(SimpleOutputStream)
 
 class HtmlOutputter(Outputter)
    private
@@ -65,7 +66,7 @@ class HtmlOutputter(Outputter)
       done_files := set()
       output_dir := \opts["o"] | stop("Please specify an output directory")
       fname := output_dir || "/index.html"
-      use {index := OutputStream(fname), {
+      use {index := SimpleOutputStream(fname), {
          doctype(index)
          write(index, "<html>")
          write(index, "<title>")
@@ -112,7 +113,7 @@ class HtmlOutputter(Outputter)
       }
 
       fname := output_dir || "/nav.html"
-      use {nav := OutputStream(fname), {
+      use {nav := SimpleOutputStream(fname), {
          doctype(nav)
          write(nav, "<html><body>")
          write(nav, "<h1>Packages</h1><p/>")
@@ -126,7 +127,7 @@ class HtmlOutputter(Outputter)
       }}
            
       fname := output_dir || "/begin.html"
-      use {begin := OutputStream(fname), {
+      use {begin := SimpleOutputStream(fname), {
          doctype(begin)
          write(begin, "<html><body>")
          write(begin, "<h1>Object Icon generated documentation</h1>")
@@ -138,7 +139,7 @@ class HtmlOutputter(Outputter)
       }}
 
       fname := output_dir || "/all.html"
-      use {all := OutputStream(fname), {
+      use {all := SimpleOutputStream(fname), {
          doctype(all)
          write(all, "<html><body>")
          write(all, "<h1>All packages</h1><p/>")
@@ -165,7 +166,7 @@ class HtmlOutputter(Outputter)
    private output_package(s)
       local f, fname, c
       fname := output_dir || "/" || get_id(s) || ".html"
-      use {f := OutputStream(fname), {
+      use {f := SimpleOutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p/>")
@@ -190,7 +191,7 @@ class HtmlOutputter(Outputter)
    private output_class(c)
       local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, acc
       fname := output_dir || "/" || get_id(c) || ".html"
-      use {f := OutputStream(fname), {
+      use {f := SimpleOutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", c.name, "</title></head><body>")
          write(f, "<h1>", c.name, "</h1>")
@@ -578,7 +579,7 @@ class HtmlOutputter(Outputter)
       insert(done_files, filename)
 
       fname := output_dir || "/" || get_id(c.scanned_file) || ".html"
-      use {f := OutputStream(fname), {
+      use {f := SimpleOutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
          # filename may be unavailable if a #line directive gave a path which was inaccessible
@@ -604,7 +605,7 @@ class HtmlOutputter(Outputter)
          fullname ||:= "(" || get_record_field_string(c.obj) || ")"
       
       fname := output_dir || "/" || get_id(c) || ".html"
-      use {f := OutputStream(fname), {
+      use {f := SimpleOutputStream(fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", c.name, "</title></head><body>")
          write(f, "<h1>", fullname, "</h1>")
