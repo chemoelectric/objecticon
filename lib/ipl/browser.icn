@@ -1292,9 +1292,9 @@ end
 
 class Img(Image, HasLastHighlight)
    public const
-      browser, context, form, img_url, alt, bg_area
+      browser, context, form, img_url, alt, bg_area, map_id
    private readable
-      over, img_data, img_name, map, map_id, held, err, highlight, last_highlight
+      over, img_data, img_name, map, held, err, highlight, last_highlight
 
    package got_data(res)
       local iw, ih
@@ -1400,9 +1400,11 @@ class Img(Image, HasLastHighlight)
    end
 
    private which_area(e)
-      in_region(e) | fail
-      return get_map().which_area(e.x - x - border.get_l_inset(), 
-                                  e.y - y - border.get_t_inset()) | bg_area
+      if \bg_area then {
+         in_region(e) | fail
+         return get_map().which_area(e.x - x - border.get_l_inset(), 
+                                     e.y - y - border.get_t_inset()) | bg_area
+      }
    end
 
    private handle_mpress(e)
@@ -1495,20 +1497,20 @@ class Img(Image, HasLastHighlight)
    end
 
    package wants_lpress(e)
-      return \over | \form
+      succeed \over | \form
    end
 
    package handle_in_chain(e)
-      local u, t, a, f
+      local u, t, f
       parent_dialog.get_held_count() = 0 | fail
+      # This should succeed iff we have areas (ie a link and/or a map).
+      t := which_area(e) | fail
       if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /e.release then
             f := &yes
       } else f := \e.ctrl
-      t := which_area(e)
-      a := (\t).title
-      set_tooltip(a)
-      if /f & (u := \ (\t).url) then {
+      set_tooltip(t.title)
+      if /f & (u := \t.url) then {
          set_over(u)
          set_pointer("hand1")
       } else {
@@ -4998,13 +5000,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse_area(e, p, context)
-      local mc, coords
+      local mc, coords, h
       mc := \context.map | fail
       coords := []
       every put(coords, scale(integer(separate(e.get_attribute(u"COORDS"), ',; '))))
+      # The link attribute is optional.
+      h := mk_link(e.get_attribute(u"HREF"))
       mc.map.add_area(MapArea(Text.lower(string(e.get_attribute(u"SHAPE"))), 
                               coords,
-                              mk_link(e.get_attribute(u"HREF")),
+                              h,
                               context.title))
    end
 
@@ -5133,7 +5137,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                "DEL"|"STRIKE"|"S": traverse_s(e, p, c)
                "SUP": traverse_sup(e, p, c)
                "SUB": traverse_sub(e, p, c)
-               "LISTING"|"PRE"|"XMP": traverse_pre(e, p, c)
+               "PLAINTEXT"|"LISTING"|"PRE"|"XMP": traverse_pre(e, p, c)
                "FIELDSET": traverse_fieldset(e, p, c)
                "LEGEND": traverse_legend(e, p, c)
                "MAP": traverse_map(e, p, c)

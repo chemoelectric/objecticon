@@ -42,9 +42,9 @@ class Dialog(Component)
       TOOLTIP_CONTINUE_DELAY,
       TOOLTIP_X_OFFSET,
       TOOLTIP_Y_OFFSET,
-      # Set of events to move focus up
+      # Set of additional events (other than shift-tab) to move focus up
       FOCUS_UP,
-      # Set of events to move focus down
+      # Set of additional events (other than tab) to move focus down
       FOCUS_DOWN
 
    private readable
@@ -914,17 +914,21 @@ $endif
       # Check for focus keyboard movement, but not in menu mode; this would get muddled up
       # with the menu's cursor movement.
       #
-      if /e.release & /self.menu_mode then {
-         if member(FOCUS_DOWN, ec) & (/self.focus | 
-                                      self.focus.is_hidden() |
-                                      self.focus.is_shaded() | 
-                                      not(self.focus.keeps(e))) then 
-            self.set_focus(find_next_focus(e), e)
-         else if member(FOCUS_UP, ec) & (/self.focus | 
-                                         self.focus.is_hidden() |
-                                         self.focus.is_shaded() | 
-                                         not(self.focus.keeps(e))) then 
-            self.set_focus(find_previous_focus(e), e)
+      if /e.release & /menu_mode then {
+         if ((ec === "\t" & /e.shift) | member(FOCUS_DOWN, ec)) &
+            (/focus | 
+             focus.is_hidden() |
+             focus.is_shaded() | 
+             not(focus.keeps(e)))
+         then 
+            set_focus(find_next_focus(e), e)
+         else if ((ec === "\t" & \e.shift) | member(FOCUS_UP, ec)) &
+            (/focus | 
+             focus.is_hidden() |
+             focus.is_shaded() | 
+             not(focus.keeps(e)))
+         then 
+            set_focus(find_previous_focus(e), e)
       }
 
       #
@@ -1377,10 +1381,8 @@ $endif
                 # Try to begin a drag.
                 self.curr_drag := self.invoke_can_drag(e) 
                 self.tried_drag := &yes
-                if \self.curr_drag then {
+                if \self.curr_drag then
                    self.curr_drag.get_source().define_dnd_pointers(self.curr_drag)
-                   change_pointer("dnd negative")
-                }
              }
       } else
          self.tried_drag := &null
@@ -1705,8 +1707,8 @@ $endif
       POINTER := env_pointer("OI_DIALOG_POINTER") | "left ptr"
       DND_NEGATIVE_POINTER := env_pointer("OI_DIALOG_DND_NEGATIVE_POINTER") | "circle"
       DND_POSITIVE_POINTER := env_pointer("OI_DIALOG_DND_POSITIVE_POINTER") | "hand2"
-      FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
-      FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
+      FOCUS_UP := set(Key.LEFT, Key.UP)
+      FOCUS_DOWN := set(Key.RIGHT, Key.DOWN)
    end
 
    public override new()

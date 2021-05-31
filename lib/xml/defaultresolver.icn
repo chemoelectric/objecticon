@@ -23,9 +23,10 @@ import http, net, util, io
 # Otherwise, the system id is treated as a filename.
 #
 class DefaultResolver(Resolver)
-   private
+   private const
       public_mapping,
-      uri_cache,
+      uri_cache
+   private
       cache_uris_flag,
       http_client
 
@@ -78,6 +79,8 @@ class DefaultResolver(Resolver)
    public override resolve(base, external_id)
       local sys_id, sys_url, res, u, t
 
+      base := need_string(\base)
+
       #
       # Try to map from the public id (if any) to an alternative URI
       #
@@ -87,7 +90,7 @@ class DefaultResolver(Resolver)
       sys_id := string(sys_id)
 
       unless sys_url := URL(sys_id) & sys_url.scheme == ("http" | "https" | "file") then {
-         sys_url := if u := URL(string(base)) &
+         sys_url := if u := URL(\base) &
                        u.scheme == ("http" | "https" | "file")
          then
             #
@@ -101,6 +104,7 @@ class DefaultResolver(Resolver)
             URL(FilePath(sys_id).canonical().to_url())
       }
 
+      sys_url := sys_url.normal()
       sys_id := sys_url.str()
 
       #

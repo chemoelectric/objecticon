@@ -146,7 +146,8 @@ end
 class Encode(Stream, HasCloseUnderlying)
    private
       tag_count,
-      seen, 
+      seen
+   private const
       file
    private readable
       fast_flag,

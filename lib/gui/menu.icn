@@ -200,7 +200,9 @@ class Menu(TextMenuItem)
    end
 
    public handle_key_escape(e)
-      if /parent then
+      if \e.shift then
+         close_all()
+      else if /parent then
          parent_component.make_partial()
       else
          parent.set_which_highlight(self)

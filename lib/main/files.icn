@@ -608,6 +608,7 @@ $endif
    #
    public static get_extension(f)
       local i                                                     
+      f := need_text(f)
       if (i := backto('.' ++ PATH_SPECIALS, f)\1) <= *f &
          any('.', f[i - 1]) & any(~PATH_SPECIALS, f[i - 2]) then
          return f[i:0]

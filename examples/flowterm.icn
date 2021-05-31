@@ -163,7 +163,6 @@ end
 
 class FlowTermDialog(Dialog)
    private readable
-      favourite_dirs,
       tabs,
       menu_bar,
       file_dialog
@@ -934,6 +933,9 @@ class FilterEditList(EditList)
    protected override open_popup(ev)
       local t
       t := parent.parent
+      # Clear the selection so that it isn't constrained to the last
+      # item of the new list (if the field contents isn't in the new
+      # list).
       set_selection_only()
       synch_set_selection_list(t.get_filter_list())
       EditList.open_popup(ev)
@@ -1211,7 +1213,9 @@ class Terminal(TabItem, VtUI)
       select_flag,
       title,
       history_size,
-      added_favourites
+      start_dir,
+      added_favourites,
+      added_filters
 
    private static init()
       SHOW_NAME_ONLY := "name only"
@@ -1343,6 +1347,14 @@ class Terminal(TabItem, VtUI)
             check_new(s) | fail
             add_shell_var(param)
          }
+         "reset-sh-args" : {
+            check_new(s) | fail
+            clear(shell_args)
+         }
+         "reset-sh-vars" : {
+            check_new(s) | fail
+            clear(shell_vars)
+         }
          "run" : {
             check_param(s, param) | fail
             run_prog(param)
@@ -1404,6 +1416,7 @@ class Terminal(TabItem, VtUI)
             }
          }
          "title" : set_title(param)
+         "reset-fav-dirs" : clear(added_favourites)
          "fav-dir" : {
             check_param(s, param) | fail
             push(added_favourites, FilePath(param).canonical().ucs())
@@ -1586,9 +1599,18 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             send_tty(param)
          }
+         "reset-filters": {
+            filter.set_contents(u"*")
+            clear(added_filters)
+            resort_cwd(&yes)
+         }
          "filter": {
             /param := u"*"
             filter.set_contents(param)
+            # Put the latest one at the front, and avoid duplicates
+            # building up
+            ldel1(added_filters, param)
+            push(added_filters, param)
             resort_cwd(&yes)
          }
          "url" : {
@@ -2783,17 +2805,15 @@ $endif
    end
 
    public get_filter_list()
-      local e, l, ex
+      local e, ex
       ex := table(0)
       every e := !cwd_list do {
          (e.stat.mode_str[1] == "d") |
             Files.is_hidden(e.name) |
-            (ex[Files.get_extension(e.name)] +:= 1)
+            (ex[Files.standard_case(Files.get_extension(e.name))] +:= 1)
       }
-      l := [u"*"]
-      every e := back(sort(ex, 2)) do
-         put(l, "*." || e[1])
-      return l
+      ex := sort(ex, 2)
+      return ipl.pdco.List{ Unique{ !added_filters | u"*" | ("*." || back(ex)[1]) } }
    end
 
    private refresh_cwd()
@@ -2849,7 +2869,7 @@ $endif
    end
 
    public get_favourites_directories()
-      return FileDialog.unique_ucs_list{ !added_favourites | FavouriteDirectoriesDialog.gen_directories_plus() }
+      return FileDialog.unique_ucs_list{ !added_favourites | start_dir | FavouriteDirectoriesDialog.gen_directories_plus() }
    end
 
    private on_trail(ev)
@@ -2874,7 +2894,7 @@ $endif
    end
 
    public override new(dir, other, revert_tab)
-      local start_dir, c, e
+      local c, e
       TabItem.new()
       self.revert_tab := revert_tab
       setup()
@@ -2923,7 +2943,7 @@ $endif
          connect(on_dont_quieten_menu_item, Event.ACTION)
 
       favourites_list.set_size().set_selection_list([])
-      filter.set_selection_list([u"*"]).set_use_wheel(&no)
+      filter.set_use_wheel(&no)
       history_list.set_size().set_selection_list([])
       input := []
       theme_toolbar_button(close_button, "window-close")
@@ -2980,7 +3000,9 @@ $endif
          misc_menu_commands := copy(other.misc_menu_commands)
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
+         start_dir := other.start_dir
          added_favourites := clone(other.added_favourites)
+         added_filters := clone(other.added_filters)
          set_cwd(other.cwd)
       } else {
          columns.set_size(DEFAULT_LIST_WIDTH, DEFAULT_LIST_HEIGHT)
@@ -3003,7 +3025,9 @@ $endif
                info_msg("Invalid tab start directory: " || &why)
          }
          /start_dir := ucs(Files.getcwd()) | u"/"
-         added_favourites := [start_dir]
+         added_favourites := []
+         added_filters := []
+         filter.set_contents(u"*")
          set_cwd(start_dir)
          # Apply global default tab options; should only fail on first time through.
          every e := !glob_cmds do
@@ -3534,6 +3558,8 @@ procedure usage(opts)
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell")
    help_line(":sh-arg=STRING", "Specify an argument to pass to the shell; may be given several times to give multiple arguments")
    help_line(":sh-var=NAME=STRING", "Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.  If just NAME is given (with no =), then NAME is deleted from the environment")
+   help_line(":reset-sh-args", "Forget any arguments previously set with :sh-arg")
+   help_line(":reset-sh-vars", "Forget any values previously set with :sh-var")
    help_line(":run=STRING", "Run the given string in the shell; the same as :send-tty with a carriage return appended")
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'")
    help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour")
@@ -3556,9 +3582,11 @@ procedure usage(opts)
    help_line(":string=STRING", "Insert a string as though typed by the user; like :send-tty, but quietens the cursor and goes to the bottom of the terminal content")
    help_line(":search=FLAG", "Toggle or set the visibility of the search panel")
    help_line(":filter=PATTERN", "Set the list filter to the given pattern.  The default is \"*\", meaning show all files")
+   help_line(":reset-filters", "Forget any remembered filters previously set with :filter")
    help_line(":focus-filter", "Give the filter field the keyboard focus")
    help_line(":send-tty=STRING", "Send a string directly to the pseudo-terminal")
    help_line(":fav-dir=DIR", "Add a directory to the favourites list")
+   help_line(":reset-fav-dirs", "Forget any directories previously added with :fav-dir")
    write()
    help_line("The following commands only apply to the currently active tab (not new tabs) :-")
    write()

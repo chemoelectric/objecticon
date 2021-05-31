@@ -63,14 +63,16 @@ procedure usage()
    help_line("find-icon", "Find icon for icon name, size and optional scale")
    help_line("de", "List desktop entries for mime type")
    help_line("de-file", "List desktop entries for file")
-   help_line("dir", "Show config and data directories")
+   help_line("dirs", "Show config and data directories")
    help_line("cmd", "List commands for file")
    help_line("cmd-url", "List commands for URL")
+   help_line("dump-mime", "Print the mime database to stdout")
+   help_line("dump-themes", "Print the icon theme database to stdout")
    exit(0)
 end
 
 procedure main(a)
-   local s, s1, u1, p, c
+   local s, s1, u1, p, c, d
 
    options(a, [], usage)
 
@@ -124,9 +126,10 @@ procedure main(a)
          every write(to_string(Mime.gen_desktop_entries_for_file(no_path(s)), 3, &yes))
       }
 
-      "dir": {
+      "dirs": {
          write("Data Home: ", file_link(BaseDir.get_data_home()))
-         every write("Data Dirs: ", file_link(Files.split_paths(BaseDir.get_data_dirs())))
+         every d := Files.split_paths(BaseDir.get_data_dirs()) do
+            write("Data Dirs: ", file_link(d), if Mime.use_mimeinfo_cache(d) then " (C)" else "")
          write("Config Home: ", file_link(BaseDir.get_config_home()))
          every write("Config Dirs: ", file_link(Files.split_paths(BaseDir.get_config_dirs())))
       }
@@ -146,6 +149,16 @@ procedure main(a)
                        else
                           Mime.gen_desktop_entries("x-scheme-handler/" || u1.scheme),
                        s1)
+      }
+
+      "dump-mime": {
+         Mime.dump()
+      }
+
+      "dump-themes": {
+         # To ensure the database is loaded.
+         IconTheme.find_icon("*Non Existent*", 24, 1.0)
+         IconTheme.dump()
       }
 
       default:

@@ -8,7 +8,7 @@ import
    graphics(Key),
    ipl.strings,
    ipl.tables(inserts),
-   ipl.pdco()
+   ipl.pdco(String)
 
 abstract class HasAscent()
    public abstract get_ascent(dw, dh)
@@ -1212,19 +1212,18 @@ class TextFlow(Component, HasLastHighlight)
             cmd.blob_width := W.text_width(l[-1])
          }
          every max_word_w <:= W.text_width(!l)
-      }
-
-      ds := u""
-      i := 1
-      while wd := l[i] do {
-         if *ds = 0 then
-            ds2 := wd
-         else
-            ds2 := ds || u" " || wd
-         if \calculating then {
-            ds := ds2
-            i +:= 1
-         } else {
+         # The same effect as the loop below, with an infinite right
+         # margin, but avoiding potentially numerous large ucs block
+         # allocations.
+         ds := ucs(String{ string(!l), " " })
+      } else {
+         ds := u""
+         i := 1
+         while wd := l[i] do {
+            ds2 := if *ds = 0 then
+               wd
+            else
+               ds || " " || wd
             tw := W.text_width(ds2) + get_pad()
             #
             # The width of the last word is given by the blob width, if any.  For example, if we have
@@ -1422,11 +1421,11 @@ class TextFlow(Component, HasLastHighlight)
    package wants_rpress(e)
       # Also check highlight since we may have just opened a menu,
       # clearing over and setting highlight.
-      return \over | \highlight
+      succeed \over | \highlight
    end
 
    package wants_lpress(e)
-      return \over
+      succeed \over
    end
 
    private handle_rpress(e)

@@ -1,9 +1,9 @@
 AC_INIT([Object Icon],
-        m4_esyscmd_s([svnversion | tr : -]),
+        [m4_esyscmd_s(svnversion | tr : -)],
         [2rparlett@gmail.com],
         [objecticon])
 
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_HOST
 case $host_os in
      *linux*)
@@ -106,8 +106,6 @@ AC_CHECK_SIZEOF([clock_t], [], [[#include <time.h>]])
 AX_VAR_TIMEZONE_EXTERNALS()
 AC_STRUCT_TIMEZONE()
 AX_STRUCT_TIMEZONE_GMTOFF()
-AC_CYGWIN()
-AC_SUBST([CYGWIN])
 AX_CHECK_SIZEOF(short, short)
 AX_CHECK_SIZEOF(int, int)
 AX_CHECK_SIZEOF(long, long)

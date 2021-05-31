@@ -115,11 +115,11 @@ class ObjectOutputStream(Stream, HasCloseUnderlying)
       indent,
       level,
       ilevel
-      
+   private const
+      file
    private
       stuff,
       seen, 
-      file,
       ignore_object_output_flag,
       always_structure_flag
 

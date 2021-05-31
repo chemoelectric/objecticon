@@ -73,7 +73,7 @@ class Untitled(Dialog)
          target_list.set_contents([])
       else
          # Strip off last \n and split
-         target_list.set_contents(str2list(data[1:-1], "\n"))
+         target_list.set_contents(str2list(data[1:-1], '\n'))
    end
 
    private setup()

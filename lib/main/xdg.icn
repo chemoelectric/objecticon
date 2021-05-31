@@ -16,6 +16,7 @@ $endif
    ipl.wildcard,
    ipl.sort,
    ipl.pdco,
+   ipl.lists,
    ipl.functional
 
 # An object for parsing and holding the parts of a locale string, like
@@ -222,10 +223,7 @@ final class DesktopEntry()
       exec_line,            # optional ExecLine entry (ucs)
       path,                 # Path entry (ucs)
       terminal,             # Terminal entry (flag)
-      initial_preference    # InitialPreference entry (integer or &null)
-
-   package
-      list_pos              # Used internally for initial_preference sort
+      initial_preference    # InitialPreference entry (default 0)
 
    public static const
       # A command (including any flag) to prefix to the `subst_file`
@@ -610,6 +608,17 @@ final abstract class IconTheme()
       ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
    end
 
+   public static dump()
+      write("Current theme: ", theme)
+      write("\nTHEMES")
+      write("======")
+      to_stdout(THEMES, 3)
+      write("\N\NICON_FALLBACK_CACHED_DIRS")
+      write("=========================")
+      to_stdout(ICON_FALLBACK_CACHED_DIRS, 3)
+      write()
+   end
+
    #
    # Set the icon theme; fails if the theme is invalid.
    #
@@ -808,6 +817,12 @@ final abstract class IconTheme()
 end
 
 #
+# Encapsulates the editing done by a mimeapps.list file
+#
+package record Edit(src,  # The source location
+                    add,  # A map of mime-type (string) to lists of IDs (strings)
+                    del)  #   - ditto -
+#
 # This class contains static methods for looking up XDG mime data.
 #
 final abstract class Mime()
@@ -815,13 +830,26 @@ final abstract class Mime()
       GLOBS,              # A Globs instance for file pattern matching.
       ICONS,              # A map of mime-type (string) to list of icon names (strings)
       GENERIC_ICONS,      #   - ditto -
-      MIME_SUBCLASSES,    # A map of mime-type (string) to lists of mime-types (strings)
-      MIME_ALIASES,       #   - ditto -
+      MIME_GRAPH,         # A map of mime-type (string) to lists of mime-types (strings)
       MIME_ALTERNATIVES,  # A cache of alternative_mime_types() results,
                           #   mapping mime-type (string) to lists of mime-types (strings)
+      FIFF_CACHE,         # A cache of find_icon_for_file() results, mapping string key to icon
+                          #   name (string)
+      PATHS,              # A map of ID (string) to path (string), (eg "gimp.desktop" ->
+                          #   "/usr/share/applications/gimp.desktop")
+      EDITS,              # A list of Edit() records to be applied in order
+      DEFINED,            # A map of mime-type (string) to sets of IDs (strings), being
+                          #   the mappings found in the .desktop files
+      LOADED,             # A map of ID (string) to DesktopEntry or null
       DESKTOP_ENTRIES     # A map of mime-types (string) to list of DesktopEntry objects.
 
+   private static const
+      CACHE_DIRS
+
    private static init()
+      local t
+      t := env_string("OI_XDG_MIMEINFO_CACHE_DIRS") | BaseDir.get_data_dirs()
+      CACHE_DIRS := Set{ Files.split_paths(t) }
       refresh()
    end
 
@@ -830,24 +858,62 @@ final abstract class Mime()
    #
    public static refresh()
       MIME_ALTERNATIVES := table()
+      FIFF_CACHE := table()
       GLOBS := read_globs()
       ICONS := read_icons()
       GENERIC_ICONS := read_generic_icons()
-      MIME_ALIASES := read_mime_aliases()
-      MIME_SUBCLASSES := read_mime_subclasses()
-      DESKTOP_ENTRIES := read_desktop_entries()
+      MIME_GRAPH := read_mime_graph()
+      DESKTOP_ENTRIES := table()
+      scan_desktop_entries()
+   end
+
+   public static use_mimeinfo_cache(d)
+      succeed member(CACHE_DIRS, d)
+   end
+
+   public static dump()
+      write("GLOBS")
+      write("=====")
+      to_stdout(GLOBS, 3)
+      write("\N\NMIME_GRAPH")
+      write("==========")
+      to_stdout(MIME_GRAPH, 3)
+      write("\N\NICONS")
+      write("=====")
+      to_stdout(ICONS, 3)
+      write("\N\NGENERIC_ICONS")
+      write("=============")
+      to_stdout(GENERIC_ICONS, 3)
+      write("\N\NEDITS")
+      write("=====")
+      to_stdout(EDITS, 3)
+      write("\N\NPATHS")
+      write("=====")
+      to_stdout(PATHS, 3, &yes)
+      write("\N\NDEFINED")
+      write("=======")
+      to_stdout(DEFINED, 3)
+      write("\N\NLOADED")
+      write("======")
+      to_stdout(LOADED, 3, &yes)
+      write("\N\NDESKTOP_ENTRIES")
+      write("===============")
+      to_stdout(DESKTOP_ENTRIES, 3)
+      write()
    end
 
    private static parse_glob_file(g, s)
-      local weight, type, pattern, l
+      local weight, type, pattern, flags, l
       every l := separate_lines(s) do l ? {
          if weight := integer(tab(upto(':'))) & 
             move(1) &
             type := string(tab(upto(':'))) &
-            move(1) &
-            pattern := tab(0) then 
-         {
-            g.add(pattern, weight, type)
+            move(1)
+         then {
+            pattern := tab(upto(':') | 0)
+            move(1)
+            flags := tab(0)
+            g.add(pattern, flags, weight, type)
          }
       }
    end
@@ -889,34 +955,43 @@ final abstract class Mime()
 
    #
    # Generate the alternative mime types for the given mime type.
-   # This recursively traverses the subclasses and aliases and
-   # generates all possible alternatives.
+   # This traverses the graph formed from the subclasses and aliases
+   # files, in a breadth-first fashion, and generates all possible
+   # alternatives.
    #
    public static alternative_mime_types(mt)
       local l
       mt := need_string(mt)
       unless l := member(MIME_ALTERNATIVES, mt) then {
-         l := []
-         alternative_mime_types1(mt, l, set())
+         l := ipl.pdco.List{ alternative_mime_types1(mt) }
          insert(MIME_ALTERNATIVES, mt, l)
       }
       suspend .!l
    end
 
-   private static alternative_mime_types1(mt, l, seen)
-      local sub, mmt
-      mmt := Text.lower(mt)
-      if member(seen, mmt) then
-         fail
-      put(l, mt)
-      insert(seen, mmt)
-      every alternative_mime_types1(!member(MIME_ALIASES, mmt), l, seen)
-      if sub := member(MIME_SUBCLASSES, mmt) then
-         every alternative_mime_types1(!sub, l, seen)
-      else if match("text/", mmt) then
-         alternative_mime_types1("text/plain", l, seen)
-      else unless match("inode/", mmt) then
-         alternative_mime_types1("application/octet-stream", l, seen)
+   private static alternative_mime_types1(mt)
+      local x, lx, seen, l
+      l := [mt]
+      seen := set(Text.lower(mt))
+      repeat {
+         while mt := pop(l) do {
+            suspend mt
+            every x := !member(MIME_GRAPH, Text.lower(mt)) do {
+               lx := Text.lower(x)
+               unless member(seen, lx) | (lx == "application/octet-stream") then {
+                  insert(seen, lx)
+                  put(l, x)
+               }
+            }
+         }
+         if ((not member(seen, x := "text/plain")) & match("text/", !seen)) |
+            ((not member(seen, x := "application/octet-stream")) & not match("inode/", !seen))
+         then {
+            insert(seen, x)
+            put(l, x)
+         } else
+            fail
+      }
    end
 
    #
@@ -966,7 +1041,7 @@ final abstract class Mime()
       return t
    end
 
-   private static read_mime_aliases()
+   private static read_mime_graph()
       local d, t, s, k, v, l
       t := table()
       every d := BaseDir.gen_data_dirs() do {
@@ -977,17 +1052,10 @@ final abstract class Mime()
                   v := tab(0) then
                {
                   inserts(t, k, v)
+                  inserts(t, v, k)
                }
             }
          }
-      }
-      return t
-   end
-
-   private static read_mime_subclasses()
-      local d, t, s, k, v, l
-      t := table()
-      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
                if k := Text.lower(tab(upto(' '))) &
@@ -1017,8 +1085,16 @@ final abstract class Mime()
    # optional scale (see `IconTheme.find_icon()`).
    #
    public static find_icon_for_file(file, size, scale)
-      return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
-                                 size, scale)
+      local mt, v, k
+      if mt := get_mime_type_for_file(file) then {
+         k := mt || "/" || image(size)  || "/" || image(scale)
+         unless v := member(FIFF_CACHE, k) then {
+            v := IconTheme.find_icon(gen_all_icons(alternative_mime_types(mt)),
+                                     size, scale)
+            insert(FIFF_CACHE, k, v)
+         }
+         return \v
+      }
    end
 
    private static true_key(dm, key)
@@ -1030,7 +1106,6 @@ final abstract class Mime()
          initial_preference, exec_line
       member(dm, u"Type") == "Application" | fail
       name := member(dm, u"Name") | fail
-
       # A TryExec entry means testing if such an exe is on the path;
       # if not ignore the entry
       if try_exec := member(dm, u"TryExec") then
@@ -1041,7 +1116,8 @@ final abstract class Mime()
       exec_line := member(dm, u"ExecLine")
       path := member(dm, u"Path")
       terminal := Yes{ true_key(dm, u"Terminal") }
-      initial_preference := integer(member(dm, u"InitialPreference"))
+      initial_preference := integer(member(dm, u"InitialPreference")) | 0
+
       return DesktopEntry(name, icon, src, exec, exec_line, path, terminal, initial_preference)
    end
 
@@ -1049,124 +1125,136 @@ final abstract class Mime()
       suspend "" ~== Text.lower(string(separate(member(dm, u"MimeType"), ';')))
    end
 
-   private static scan_application_dir(p, prefix, t, u)
-      local l, e, de, mt, dm, src, key
-      l := qsort(Files.ucs_list(p.str()), Files.name_cmp) | fail
+   private static scan_application_dir(p, prefix, N)
+      local l, e, id, path
+      l := Files.list(p.str()) | fail
       every e := !l do {
          unless Files.is_hidden(e.name) then {
             if e.stat.mode_str[1] == "d" then {
-               scan_application_dir(p.child(e.name), prefix || e.name || "-", t, u)
+               scan_application_dir(p.child(e.name), prefix || e.name || "-", N)
             } else if endswith(e.name, ".desktop") then {
-               key := prefix || e.name
-               if (not member(t, key)) & 
-                  src := p.child(e.name).str() &
-                  dm := Util.load_ini_file(src) &
-                  dm := member(dm, u"Desktop Entry")
-               then {
-                  # A Hidden entry adds a null entry to t, to mask any further
-                  # occurrences of the key; it is deleted below after scanning
-                  # is complete.
-                  if true_key(dm, u"Hidden") then
-                     insert(t, key, &null)
-                  else if de := build_desktop_entry(dm, src) then {
-                     insert(t, key, de)
-                     every mt := gen_desktop_mime_types(dm) do
-                        inserts(u, mt, de)
-                  }
+               id := prefix || e.name
+               unless member(PATHS, id) then {
+                  path := p.child(e.name).str()
+                  insert(PATHS, id, path)
+                  insert(N, id)
                }
             }
          }
       }
    end
 
-   private static process_mimeapps_list(mm, t, u)
-      local a, k, mime_type, l, d
-      every a := member(mm, u"Added Associations" | u"Default Applications") do {
-         # Each entry gives a mime type and list of desktop files, so
-         # we look each one up in t.  The resulting list prepends to any
-         # desktop entries there already.
+   private static process_mimeapps_list(f, mm)
+      local a, k, mime_type, r
+      r := Edit(f, table(), table())
+      every a := member(mm, u"Default Applications" | u"Added Associations") do {
          every k := key(a) do {
             mime_type := Text.lower(string(k))
-            if l := member(u, mime_type) then {
-               every d := Reverse{ member(t, separate(member(a, k), ';')) } do {
-                  # Keep the list unique, by deleting the element (if present)
-                  # we're about to push on the front.
-                  delete(l, keyof(l, d))
-                  push(l, d)
-               }
-            } else {
-               insert(u, 
-                      mime_type,
-                      ipl.pdco.List{ member(t, separate(member(a, k), ';')) })
-            }
+            every inserts(r.add, mime_type, "" ~== separate(string(member(a, k)), ';'))
          }
       }
       if a := member(mm, u"Removed Associations") then {
-         # Each entry gives a mime type and list of desktop files to
-         # remove from the corresponding list in u.
          every k := key(a) do {
             mime_type := Text.lower(string(k))
-            if l := member(u, mime_type) then {
-               # Lookup the DesktopEntry (in t) and then delete it from l.
-               every d := member(t, separate(member(a, k), ';')) do
-                  delete(l, keyof(l, d))
-            }
+            every inserts(r.del, mime_type, "" ~== separate(string(member(a, k)), ';'))
          }
       }
+      push(EDITS, r)
    end
 
    private static prefcmp(d1, d2)
-      local ip1, ip2
-      ip1 := \d1.initial_preference | -1
-      ip2 := \d2.initial_preference | -1
-      return if ip1 = ip2 then d2.list_pos - d1.list_pos else ip2 - ip1
-   end
-
-   private static sort_by_preference(l)
-      local e, i
-      # Do nothing if they're all unset
-      \ (!l).initial_preference | fail
-      # The list_pos is used to maintain the original ordering if the
-      # preferences for two entries are the same.
-      i := *l
-      every e := !l do {
-         e.list_pos := i
-         i -:= 1
+      local i
+      i := Internal.compare(d2.initial_preference, d1.initial_preference)
+      if i = 0 then {
+         i := Text.caseless_compare(d1.name, d2.name)
+         # As a tie-breaker, use the entry's source path.
+         if i = 0 then
+            i := Internal.compare(d1.source, d2.source)
       }
-      qsort(l, prefcmp)
+      return i
    end
 
    private static gen_mimeapps_lists()
       local d
-      every d := Reverse{ BaseDir.gen_data_dirs() } do
-         suspend FilePath(d).walk("applications", "mimeapps.list").str()
-      every d := Reverse{ BaseDir.gen_config_dirs() } do
+      every d := BaseDir.gen_config_dirs() do
          suspend FilePath(d).child("mimeapps.list").str()
+      every d := BaseDir.gen_data_dirs() do
+         suspend FilePath(d).walk("applications", "mimeapps.list").str()
    end
 
-   private static read_desktop_entries()
-      local d, t, u, f, mm, k
-      t := table()    # maps desktop entry names (ucs, eg u"kate.desktop") to DesktopEntry object
-      u := table()    # mime-type (string) to list of DesktopEntry
-      every d := BaseDir.gen_data_dirs() do
-         scan_application_dir(FilePath(d).child("applications"), u"", t, u)
+   private static load_DE_ini(path)
+      local dm
+      if dm := Util.load_ini_file(path) &
+         dm := member(dm, u"Desktop Entry") &
+         not true_key(dm, u"Hidden")
+      then
+         return dm
+   end
 
-      # Delete hidden (null) entries from t
-      every k := key(t) do {
-         if /t[k] then
-            delete(t, k)
+   private static ensure_DE(id)
+      local de, path, dm
+      unless de := member(LOADED, id) then {
+         if path := member(PATHS, id) &
+            dm := load_DE_ini(path)
+         then
+            de := build_desktop_entry(dm, path)
+         insert(LOADED, id, de)
       }
+      return \de
+   end
 
-      # Sort each list of DesktopEntry by the initial preference field.
-      every sort_by_preference(!u)
-
-      # Process customisations from the mimeapps.lists files.
+   private static scan_desktop_entries()
+      local d, dm, id, mt, N, f, mm, app, cf, k
+      EDITS := []
+      PATHS := table()
+      DEFINED := table()
+      LOADED := table()
+      every d := BaseDir.gen_data_dirs() do {
+         app := FilePath(d).child("applications")
+         # Scan the applications directory recursively, recording new
+         # entries added to PATHS, in N (note that existing entries in
+         # PATHS are never overwritten).
+         scan_application_dir(app, "", N := set())
+         if use_mimeinfo_cache(d) &
+            cf := Util.load_ini_file(app.child("mimeinfo.cache").str()) &
+            cf := member(cf, u"MIME Cache")
+         then {
+            # Cache in use.  Read each mime-type->id pair.
+            every k := key(cf) do {
+               mt := Text.lower(string(k))
+               every id := "" ~== separate(string(member(cf, k)), ';') do {
+                  # Make sure the name matches with one added in this
+                  # tree.
+                  if member(N, id) then
+                     inserts_set(DEFINED, mt, id)
+               }
+            }
+         } else {
+            # No cache.  For each new name in the tree, load its
+            # corresponding ini file and process the mime types.
+            every id := !N do {
+               if dm := load_DE_ini(PATHS[id]) then {
+                  every mt := gen_desktop_mime_types(dm) do
+                     inserts_set(DEFINED, mt, id)
+               }
+            }
+         }
+      }
+      # Load customisations from the mimeapps.lists files.
       every f := gen_mimeapps_lists() do {
          if mm := Util.load_ini_file(f) then
-            process_mimeapps_list(mm, t, u)
+            process_mimeapps_list(f, mm)
       }
+      tidy()
+   end
 
-      return u
+   private static tidy()
+      local s, k
+      s := Set{ !!DEFINED | !!((!EDITS).add) }
+      every k := key(PATHS) do {
+         unless member(s, k) then
+            delete(PATHS, k)
+      }
    end
 
    #
@@ -1195,26 +1283,41 @@ final abstract class Mime()
    # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
-      suspend .!member(DESKTOP_ENTRIES, need_mime_type(mt))
+      local l, de, r
+      mt := need_mime_type(mt)
+      unless l := member(DESKTOP_ENTRIES, mt) then {
+         # Make the initial list from the ordered association
+         # definitions, sorted by preference/name.
+         l := ipl.pdco.List{ ensure_DE(!member(DEFINED, mt)) }
+         qsort(l, prefcmp)
+         # Now apply the edits, with each pair of additions and
+         # removals being applied together, in turn.  This gives the
+         # same outcome as the algorithm in the mime-apps spec, since,
+         #   (((S & ~r2) | a2) & ~r1 |a1) = a1 | (a2 & ~r1) | (S & ~r1 & ~r2),
+         # where S is the current set, r1 the first removal, a1, the first
+         # addition, etc.
+         every r := !EDITS do {
+            every de := ensure_DE(!member(r.del, mt)) do
+               ldel(l, de)
+            every de := ensure_DE(back(member(r.add, mt))) do
+               push(l, de)
+         }
+         # Finally, remove any duplicates.
+         lunique_mod(l)
+         insert(DESKTOP_ENTRIES, mt, l)
+      }
+      suspend .!l
    end
 end
 
 #
 # An entry in the `Globs` object.
 #
-package class GlobMatch()
-   public const
-      weight,      # The integer weight
-      mime_type,   # The mime mime_type (string)
-      pattern      # An optional wildcard pattern.
-
-   public new(weight, mime_type, pattern)
-      self.weight := weight
-      self.mime_type := mime_type
-      self.pattern := pattern
-      return
-   end
-end
+package record GlobMatch(weight,      # The integer weight
+                         mime_type,   # The mime mime_type (string)
+                         cs,          # Case-sensitive flag
+                         pattern      # An optional wildcard pattern.
+                         )
 
 # A helper class used to store wildcard ("globbing") information
 # associated with mime-types.
@@ -1226,19 +1329,30 @@ package class Globs()
       other
 
    public lookup(f)
-      local i, v, fm
+      local i, v
       need_text(f)
       f := ucs(f) | fail
-      fm := Text.lower(f)
-      if v := member(literal, f | fm) then
+      if v := member(literal, f) then
          return v
       every i := upto('.', f) do {
-         if v := member(simple, (f | fm)[i + 1:0]) then
+         if v := member(simple, f[i + 1:0]) then
             return v
       }
       every v := !other do {
-         if v.pattern.match_all(f | fm) then
+         if v.pattern.match_all(f) then
             return v
+      }
+      if f ~==:= Text.lower(f) then {
+         if v := member(literal, f) then
+            return /v.cs & v
+         every i := upto('.', f) do {
+            if v := member(simple, f[i + 1:0]) then
+               return /v.cs & v
+         }
+         every v := !other do {
+            if /v.cs & v.pattern.match_all(f) then
+               return v
+         }
       }
    end
 
@@ -1246,8 +1360,8 @@ package class Globs()
    # Add an entry.  p is the pattern (ucs), weight an integer and mime_type
    # the mime type (string).
    #
-   public add(p, weight, mime_type)
-      local x, t, k
+   public add(p, flags, weight, mime_type)
+      local x, t, k, cs
       if p == "__NOGLOBS__" then {
          every t := literal | simple | other do {
             every k := key(t) do {
@@ -1255,21 +1369,25 @@ package class Globs()
                   delete(t, k)
             }
          }
-      } else if upto('*?[', p) then {
-         if match("*.", p) & not upto('*?[', p[3:0]) then {
-            p := p[3:0]
-            x := member(simple, p)
-            if /x | (weight > x.weight) then
-               insert(simple, p, GlobMatch(weight, mime_type))
-         } else {
-            x := member(other, p)
-            if /x | (weight > x.weight) then
-               insert(other, p, GlobMatch(weight, mime_type, Wildcard(p)))
-         }
       } else {
-         x := member(literal, p)
-         if /x | (weight > x.weight) then
-            insert(literal, p, GlobMatch(weight, mime_type))
+         if match("cs", flags) then
+            cs := &yes
+         if upto('*?[', p) then {
+            if match("*.", p) & not upto('*?[', p[3:0]) then {
+               p := p[3:0]
+               x := member(simple, p)
+               if /x | (weight > x.weight) then
+                  insert(simple, p, GlobMatch(weight, mime_type, cs))
+            } else {
+               x := member(other, p)
+               if /x | (weight > x.weight) then
+                  insert(other, p, GlobMatch(weight, mime_type, cs, Wildcard(p)))
+            }
+         } else {
+            x := member(literal, p)
+            if /x | (weight > x.weight) then
+               insert(literal, p, GlobMatch(weight, mime_type, cs))
+         }
       }
       link
    end

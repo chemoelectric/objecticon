@@ -1076,7 +1076,12 @@ static void close_screen_win(wsp ws)
 {
     wdp wd = ws->display;
     XRenderFreePicture(wd->display, ws->wpic);
-    XDestroyWindow(wd->display, ws->win);
+    if (ws->state->i == RootState) {
+        XSelectInput(wd->display, ws->win, 0);
+        /* Put the original background back. */
+        XClearWindow(wd->display, ws->win);
+    } else
+        XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
     ws->win = 0;
     ws->wpic = 0;
@@ -1250,78 +1255,61 @@ static void synch_pos(wsp ws, int newx, int newy)
  */
 static void wmap(wbp w)
 {
-    XWindowAttributes attrs;
-    XSetWindowAttributes attr;
     char *m1, *m2;
-    XWMHints wmhints;
-    XClassHint clhints;
-    wcp wc = w->context;
+    XSizeHints size_hints;
+    XWMHints wm_hints;
+    XClassHint cl_hints;
     wsp ws = w->window;
     wdp wd = ws->display;
 
-    /*
-     * create the X window (or use the DefaultRootWindow if requested)
-     */
-    attr.background_pixel = 0xffffff;  /* TODO wc->bg->c; */
-
-    switch (ws->state->i) {
-        case RootState:
-            ws->win = GetRoot(wd);
-            break;
-        case PopupState: {
-            attr.override_redirect = True;
-            ws->win = XCreateWindow(wd->display, GetRoot(wd),
-                                    ws->reqx == -INT_MAX ? 0 : ws->reqx,
-                                    ws->reqy == -INT_MAX ? 0 : ws->reqy, 
-                                    ws->width, ws->height, 
-                                    0,
-                                    GetDepth(wd),
-                                    InputOutput,
-                                    CopyFromParent,
-                                    CWBackPixel|CWOverrideRedirect,
-                                    &attr);
-            break;
-        }
-        default: {
-            ws->win = XCreateWindow(wd->display, GetRoot(wd),
-                                    ws->reqx == -INT_MAX ? 0 : ws->reqx,
-                                    ws->reqy == -INT_MAX ? 0 : ws->reqy, 
-                                    ws->width, ws->height, 
-                                    0,
-                                    GetDepth(wd),
-                                    InputOutput,
-                                    CopyFromParent,
-                                    CWBackPixel,
-                                    &attr);
-            break;
-        }
+    if (ws->state->i == RootState) {
+        XWindowAttributes attrs;
+        ws->win = GetRoot(wd);
+        /* Ascertain the root window's size and resize the pixmap
+         * accordingly. */
+        XGetWindowAttributes(wd->display, ws->win, &attrs);
+        ws->width = attrs.width;
+        ws->height = attrs.height;
+        resizepixmap(w);
+    } else {
+        XSetWindowAttributes attrs;
+        unsigned long mask;
+        if (ws->state->i == PopupState) {
+            mask = CWOverrideRedirect;
+            attrs.override_redirect = True;
+        } else
+            mask = 0;
+        ws->win = XCreateWindow(wd->display, GetRoot(wd),
+                                ws->reqx == -INT_MAX ? 0 : ws->reqx,
+                                ws->reqy == -INT_MAX ? 0 : ws->reqy, 
+                                ws->width, ws->height, 
+                                0,
+                                GetDepth(wd),
+                                InputOutput,
+                                CopyFromParent,
+                                mask,
+                                &attrs);
     }
 
     ws->wpic = XRenderCreatePicture(wd->display, ws->win, wd->winfmt, 0, NULL);
-
-    /* Set the optional WM_TRANSIENT_FOR hint. */
-    if (ws->transientfor && ws->transientfor->win)
-        XSetTransientForHint(wd->display, ws->win, ws->transientfor->win);
-
-    /* Turn off background; this prevents X filling the background on an expose
-       and hence prevents unsightly flicker on a resize. */
-    XSetWindowBackgroundPixmap(wd->display, ws->win, None);
-
-    XSetWMProtocols(wd->display, ws->win, &ATOM(wd, WM_DELETE_WINDOW), 1);
-
-    XClearWindow(wd->display, ws->win);
-
     GLink4(ws, wd->vwstates, vnext, vprevious);
 
-    /* For RootState, need to fill since XClearWindow above fills with a pixmap */
     if (ws->state->i == RootState) {
-        XRenderFillRectangle(wd->display,
-                             PictOpSrc,
-                             ws->wpic,
-                             &wc->bg->color,
-                             0, 0, ws->width, ws->height);
+        pix_to_win(ws, 0, 0, ws->width, ws->height);
+        XSelectInput(wd->display, ws->win, 
+                     ExposureMask | EnterWindowMask | LeaveWindowMask |
+                     PropertyChangeMask | StructureNotifyMask | PointerMotionMask);
     } else {
-        XSizeHints size_hints;
+        /* Turn off background; this prevents X filling the background
+           either initially, on an expose, or on a resize, and hence
+           prevents unsightly flicker. */
+        XSetWindowBackgroundPixmap(wd->display, ws->win, None);
+
+        /* Set the optional WM_TRANSIENT_FOR hint. */
+        if (ws->transientfor && ws->transientfor->win)
+            XSetTransientForHint(wd->display, ws->win, ws->transientfor->win);
+
+        XSetWMProtocols(wd->display, ws->win, &ATOM(wd, WM_DELETE_WINDOW), 1);
         mk_hints(ws, &size_hints);
         size_hints.flags |= PSize;
         size_hints.width = ws->width;
@@ -1340,97 +1328,90 @@ static void wmap(wbp w)
 
         if (ws->icondata)
             apply_windowicon(ws);
+
+        wm_hints.input = True;
+        wm_hints.flags = InputHint;
+        switch (ws->state->i) {
+            case IconicState: {
+                wm_hints.flags |= StateHint;
+                wm_hints.initial_state = IconicState;
+                break;
+            }
+            case WithdrawnState: {
+                wm_hints.flags |= StateHint;
+                wm_hints.initial_state = WithdrawnState;
+                break;
+            }
+            default: {
+                wm_hints.flags |= StateHint;
+                wm_hints.initial_state = NormalState;
+                break;
+            }
+        }
+        XSetWMHints(wd->display, ws->win, &wm_hints);
+
+        /*
+         * Set the class hints that name the program (for reference by the
+         * window manager) following conventions given in O'Reilly.
+         */
+        if (resource_name) {
+            cl_hints.res_name = resource_name;
+            m1 = 0;
+        } else {
+            m1 = get_progname();
+            cl_hints.res_name = m1;
+        }
+        if (resource_class) {
+            cl_hints.res_class = resource_class;
+            m2 = 0;
+        } else {
+            /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
+            m2 = get_progname();
+            m2[0] = oi_toupper(m2[0]);
+            cl_hints.res_class = m2;
+        }
+        XSetClassHint(wd->display, ws->win, &cl_hints);
+        free(m1);
+        free(m2);
+
+        /* This is a convenient way to set the WM_CLIENT_MACHINE and
+         * WM_LOCALE_NAME properties. */
+        XSetWMProperties(wd->display, ws->win, 0, 0, 0, 0, 0, 0, 0);
+
+        switch (ws->state->i) {
+            case MaximizedState: {
+                Atom atoms[2];
+                atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+                atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+                XChangeProperty(wd->display, ws->win,
+                                ATOM(wd, _NET_WM_STATE),
+                                XA_ATOM, 32,
+                                PropModeReplace, (unsigned char *)atoms, 2);
+                break;
+            }
+            case FullScreenState: {
+                Atom atoms[1];
+                atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+                XChangeProperty(wd->display, ws->win,
+                                ATOM(wd, _NET_WM_STATE),
+                                XA_ATOM, 32,
+                                PropModeReplace, (unsigned char *)atoms, 1);
+                break;
+            }
+            case ShadedState: {
+                Atom atoms[1];
+                atoms[0] = ATOM(wd, _NET_WM_STATE_SHADED);
+                XChangeProperty(wd->display, ws->win,
+                                ATOM(wd, _NET_WM_STATE),
+                                XA_ATOM, 32,
+                                PropModeReplace, (unsigned char *)atoms, 1);
+                break;
+            }
+        }
+
+        if (ws->state->i != WithdrawnState)
+            XMapWindow(wd->display, ws->win);
     }
-
-    wmhints.input = True;
-    wmhints.flags = InputHint;
-    switch (ws->state->i) {
-        case IconicState: {
-            wmhints.flags |= StateHint;
-            wmhints.initial_state = IconicState;
-            break;
-        }
-        case WithdrawnState: {
-            wmhints.flags |= StateHint;
-            wmhints.initial_state = WithdrawnState;
-            break;
-        }
-        case RootState:
-            break;
-        default: {
-            wmhints.flags |= StateHint;
-            wmhints.initial_state = NormalState;
-            break;
-        }
-    }
-    XSetWMHints(wd->display, ws->win, &wmhints);
-
-    /*
-     * Set the class hints that name the program (for reference by the
-     * window manager) following conventions given in O'Reilly.
-     */
-    if (resource_name) {
-        clhints.res_name = resource_name;
-        m1 = 0;
-    } else {
-        m1 = get_progname();
-        clhints.res_name = m1;
-    }
-    if (resource_class) {
-        clhints.res_class = resource_class;
-        m2 = 0;
-    } else {
-        /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
-        m2 = get_progname();
-        m2[0] = oi_toupper(m2[0]);
-        clhints.res_class = m2;
-    }
-    XSetClassHint(wd->display, ws->win, &clhints);
-    free(m1);
-    free(m2);
-
-    /* This is a convenient way to set the WM_CLIENT_MACHINE and
-     * WM_LOCALE_NAME properties. */
-    XSetWMProperties(wd->display, ws->win, 0, 0, 0, 0, 0, 0, 0);
-
-    switch (ws->state->i) {
-        case MaximizedState: {
-            Atom atoms[2];
-            atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
-            atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-            XChangeProperty(wd->display, ws->win,
-                            ATOM(wd, _NET_WM_STATE),
-                            XA_ATOM, 32,
-                            PropModeReplace, (unsigned char *)atoms, 2);
-            break;
-        }
-        case FullScreenState: {
-            Atom atoms[1];
-            atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
-            XChangeProperty(wd->display, ws->win,
-                            ATOM(wd, _NET_WM_STATE),
-                            XA_ATOM, 32,
-                            PropModeReplace, (unsigned char *)atoms, 1);
-            break;
-        }
-        case ShadedState: {
-            Atom atoms[1];
-            atoms[0] = ATOM(wd, _NET_WM_STATE_SHADED);
-            XChangeProperty(wd->display, ws->win,
-                            ATOM(wd, _NET_WM_STATE),
-                            XA_ATOM, 32,
-                            PropModeReplace, (unsigned char *)atoms, 1);
-            break;
-        }
-    }
-
-    if (ws->state->i != RootState && ws->state->i != WithdrawnState)
-        XMapWindow(wd->display, ws->win);
-
-    XGetWindowAttributes(wd->display, ws->win, &attrs);
-    ws->width = attrs.width;
-    ws->height = attrs.height;
-    resizepixmap(w);
 
     synch_cursor(ws);
 
@@ -1632,7 +1613,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     struct lgstate state;
     tended struct b_lelem *le;
     tended char *cstr_target;
-    int target_cnt = 1;
+    int target_cnt;
     struct sending_helper *h;
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -1668,6 +1649,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
         if (!is:list(*data))
             ReturnErrVal(108, *data, Error);
         target_list[0] = ATOM(wd, TARGETS);
+        target_cnt = 1;
         for (le = lgfirst(&ListBlk(*data), &state); le;
              le = lgnext(&ListBlk(*data), &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))

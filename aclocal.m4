@@ -58,11 +58,11 @@ AS_HELP_STRING([--without-$1], disable $0_T usage completely)],
 AC_DEFUN([AX_STRUCT_TIMEZONE_GMTOFF],
 [
   AC_CACHE_CHECK(for struct tm.tm_gmtoff, ax_cv_member_struct_tm_tm_gmtoff,
-  [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_gmtoff = 3600;],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[struct tm t; t.tm_gmtoff = 3600;]])],
         [ax_cv_member_struct_tm_tm_gmtoff=yes],
         [ax_cv_member_struct_tm_tm_gmtoff=no])])
   AC_CACHE_CHECK(for struct tm.tm_isdst, ax_cv_member_struct_tm_tm_isdst,
-  [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_isdst = 1;],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[struct tm t; t.tm_isdst = 1;]])],
         [ax_cv_member_struct_tm_tm_isdst=yes],
         [ax_cv_member_struct_tm_tm_isdst=no])])
   if test "$ax_cv_member_struct_tm_tm_gmtoff" = yes; then
@@ -76,24 +76,24 @@ AC_DEFUN([AX_STRUCT_TIMEZONE_GMTOFF],
 AC_DEFUN([AX_VAR_TIMEZONE_EXTERNALS],
 [  
    AC_CACHE_CHECK(for timezone external, ax_cv_var_timezone,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)timezone;],
-         ax_cv_var_timezone=yes,
-         ax_cv_var_timezone=no)
+   [  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[return (int)timezone;]])],
+        [ax_cv_var_timezone=yes],
+        [ax_cv_var_timezone=no])
    ])
    AC_CACHE_CHECK(for altzone external, ax_cv_var_altzone,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)altzone;],
-         ax_cv_var_altzone=yes,
-         ax_cv_var_altzone=no)
+   [  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[return (int)altzone;]])],
+        [ax_cv_var_altzone=yes],
+        [ax_cv_var_altzone=no])
    ])
    AC_CACHE_CHECK(for daylight external, ax_cv_var_daylight,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)daylight;],
-         ax_cv_var_daylight=yes,
-         ax_cv_var_daylight=no)
+   [  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[return (int)daylight;]])],
+        [ax_cv_var_daylight=yes],
+        [ax_cv_var_daylight=no])
    ])
    AC_CACHE_CHECK(for tzname external, ax_cv_var_tzname,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)tzname;],
-         ax_cv_var_tzname=yes,
-         ax_cv_var_tzname=no)
+   [  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <time.h>]], [[return (int)tzname;]])],
+        [ax_cv_var_tzname=yes],
+        [ax_cv_var_tzname=no])
    ])
    if test $ax_cv_var_timezone = yes; then
       AC_DEFINE(HAVE_TIMEZONE)
@@ -112,8 +112,8 @@ AC_DEFUN([AX_VAR_TIMEZONE_EXTERNALS],
 AC_DEFUN([AX_CHECK_MSG_NOSIGNAL],
 [
   AC_CACHE_CHECK(for MSG_NOSIGNAL, ax_cv_flag_msg_nosignal,
-     [AC_TRY_COMPILE([#include <sys/types.h>
-                      #include <sys/socket.h>],[int flags = MSG_NOSIGNAL;],
+     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+                                           #include <sys/socket.h>]], [[int flags = MSG_NOSIGNAL;]])],
         [ax_cv_flag_msg_nosignal=yes],
         [ax_cv_flag_msg_nosignal=no])])
    if test "$ax_cv_flag_msg_nosignal" = yes ; then
@@ -124,9 +124,9 @@ AC_DEFUN([AX_CHECK_MSG_NOSIGNAL],
 AC_DEFUN([AX_CHECK_UNSETENV_RETURNS_INT],
 [
    AC_CACHE_CHECK(if unsetenv returns int, ax_cv_flag_unsetenv_int_return,
-      [AC_TRY_COMPILE([#include <stdlib.h>], [int x = unsetenv("dummy");],
-         [ax_cv_flag_unsetenv_int_return=yes],
-         [ax_cv_flag_unsetenv_int_return=no])])
+      [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]], [[int x = unsetenv("dummy");]])],
+        [ax_cv_flag_unsetenv_int_return=yes],
+        [ax_cv_flag_unsetenv_int_return=no])])
    if test "$ax_cv_flag_unsetenv_int_return" = yes ; then
       AC_DEFINE(HAVE_UNSETENV_INT_RETURN)
    fi
@@ -167,13 +167,13 @@ AC_DEFUN([AX_CHECK_TIOCSCTTY],
 AC_DEFUN([AX_CHECK_NS_FILE_STAT],
 [
    AC_CACHE_CHECK(for nanosecond file stat support, ax_cv_flag_have_ns_file_stat,
-      [AC_TRY_COMPILE([#include <sys/types.h>
-                       #include <sys/stat.h>
-                       #include <unistd.h>],
-                      [struct stat st;
-                       st.st_mtim.tv_nsec = 0;],
-         [ax_cv_flag_have_ns_file_stat=yes],
-         [ax_cv_flag_have_ns_file_stat=no])])
+      [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+                                            #include <sys/stat.h>
+                                            #include <unistd.h>]],
+                                            [[struct stat st;
+                                              st.st_mtim.tv_nsec = 0;]])],
+        [ax_cv_flag_have_ns_file_stat=yes],
+        [ax_cv_flag_have_ns_file_stat=no])])
    if test "$ax_cv_flag_have_ns_file_stat" = yes ; then
       AC_DEFINE(HAVE_NS_FILE_STAT)
    fi
@@ -182,16 +182,16 @@ AC_DEFUN([AX_CHECK_NS_FILE_STAT],
 AC_DEFUN([AX_CHECK_COMPUTED_GOTO],
 [
    AC_CACHE_CHECK(for computed goto support, ax_cv_flag_have_computed_goto,
-     [AC_TRY_COMPILE([],
-         [ static void *labels[] = {&&label0, &&label1, &&label2};
+     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],
+        [[ static void *labels[] = {&&label0, &&label1, &&label2};
            unsigned char *pc = 0;
            goto *labels[*pc];
            label0: ;
            label1: ;
            label2: ;
-         ], 
-         [ax_cv_flag_have_computed_goto=yes],
-         [ax_cv_flag_have_computed_goto=no])])
+        ]])],
+        [ax_cv_flag_have_computed_goto=yes],
+        [ax_cv_flag_have_computed_goto=no])])
    if test "$ax_cv_flag_have_computed_goto" = yes ; then
       AC_DEFINE(HAVE_COMPUTED_GOTO)
    fi
@@ -204,12 +204,10 @@ do
    AC_MSG_CHECKING([for global variable ${ac_global}])
    AC_CACHE_VAL(ac_cv_global_$ac_global,
    [
-    AC_TRY_LINK(
-    [/* no includes */],
-    [ extern long int $ac_global;  return (int)$ac_global; ],
-    eval "ac_cv_global_${ac_global}=yes",
-    eval "ac_cv_global_${ac_global}=no"
-    )
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[/* no includes */]], [[ extern long int $ac_global;  return (int)$ac_global; ]])],
+        [eval "ac_cv_global_${ac_global}=yes"],
+        [eval "ac_cv_global_${ac_global}=no"
+    ])
    ]
    )
   if eval "test \"`echo '$ac_cv_global_'$ac_global`\" = yes"; then

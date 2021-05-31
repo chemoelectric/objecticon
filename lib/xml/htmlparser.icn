@@ -263,21 +263,21 @@ class HtmlParser()
 
       case string(start_tag.name) of {
          "PLAINTEXT":
-            res.add("" ~== remove_entities(tab(0)))
+            res.add("" ~== tab(0))
          "XMP" | "SCRIPT" | "STYLE": {
             if /start_tag.empty then
                res.add("" ~== move_past_end_tag(start_tag))
          }
          "TITLE" | "TEXTAREA": {
             if /start_tag.empty then
-               res.add("" ~== remove_entities(move_past_end_tag(start_tag)))
+               res.add("" ~== do_remove_entities(move_past_end_tag(start_tag)))
          }
          default: {
             unless \start_tag.empty | is_standalone_tag(start_tag.name) then {
                push(node_stack, string(start_tag.name))
                repeat {
                   s := move_to_node()
-                  res.add("" ~== remove_entities(s))
+                  res.add("" ~== do_remove_entities(s))
                   if pos(0) then
                      break
 
@@ -460,7 +460,7 @@ class HtmlParser()
                   move(1)
                } else
                   s := tab(many(VALCHARS)) | next
-               value := remove_entities(s)
+               value := do_remove_entities(s)
             } else
                # See http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.3.4.2
                value := Text.lower(key)
@@ -541,13 +541,23 @@ class HtmlParser()
    #
    # Remove the entity characters from a string.
    #
-   private remove_entities(s)
+   private do_remove_entities(s)
       local res
       res := ""
       s ? {
          while res ||:= string(tab(upto('&'))) do res ||:= (match_entity() | string(move(1)))
          return res || tab(0)
       }
+   end
+
+   #
+   # Remove the entity characters from a string.
+   #
+   public static remove_entities(s)
+      local p
+      p := HtmlParser()
+      p.utf8_flag := Yes{ type(s) == "ucs" }
+      return p.do_remove_entities(s)
    end
 
    #

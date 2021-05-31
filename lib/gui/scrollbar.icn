@@ -77,7 +77,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       page_size,               #                 
       increment_size,          #                      
       wheel_factor,
-      page_factor,
+      margin_factor,
       total_size,              #                  
       hi,                      #          
       lo,                      #          
@@ -100,14 +100,14 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
 
    public static const
       DEFAULT_INNER_SIZE, BAR_INDENT, DEFAULT_WHEEL_FACTOR,
-      DEFAULT_PAGE_FACTOR, MIN_BAR_SIZE, RANGE_BAR_SIZE,
+      DEFAULT_MARGIN_FACTOR, MIN_BAR_SIZE, RANGE_BAR_SIZE,
       DEFAULT_SHADE_BUTTONS
 
    private static init()
       DEFAULT_INNER_SIZE := env_scale("OI_SCROLLBAR_DEFAULT_INNER_SIZE") | scale(16)
       BAR_INDENT := env_scale_even("OI_SCROLLBAR_BAR_INDENT") | Gui.FINE_WIDTH
       DEFAULT_WHEEL_FACTOR := env_int("OI_SCROLLBAR_DEFAULT_WHEEL_FACTOR", 1) | 4
-      DEFAULT_PAGE_FACTOR := env_real("OI_SCROLLBAR_DEFAULT_PAGE_FACTOR", 0.0, 1.0) | 0.9
+      DEFAULT_MARGIN_FACTOR := env_int("OI_SCROLLBAR_DEFAULT_MARGIN_FACTOR", 0) | 3
       DEFAULT_SHADE_BUTTONS := env_flag("OI_SCROLLBAR_DEFAULT_SHADE_BUTTONS")
       MIN_BAR_SIZE := env_scale("OI_SCROLLBAR_MIN_BAR_SIZE") | scale(8)
       RANGE_BAR_SIZE := env_scale("OI_SCROLLBAR_RANGE_BAR_SIZE") | scale(24)
@@ -243,23 +243,23 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    end
 
    #
-   # Set the page factor.  This is a real number indicating the
-   # percentage of the page size to move on a page movement (a click
-   # in the bar area outside the bar); by default it is
-   # `DEFAULT_PAGE_FACTOR`.
+   # Set the margin factor.  This is an integer giving the number of
+   # increments (see `set_increment_size()`) by which to reduce a page
+   # movement (a click in the bar area outside the bar); by default it
+   # is `DEFAULT_MARGIN_FACTOR`.
    #
    # This is ignored for a range based scrollbar.
    #
-   public set_page_factor(n)
-      self.page_factor := need_real(n, 0.0, 1.0)
+   public set_margin_factor(n)
+      self.margin_factor := need_integer(n, 0)
       link
    end
 
    #
-   # Get the page factor
+   # Get the margin factor
    #
-   public get_page_factor()
-      return self.page_factor
+   public get_margin_factor()
+      return self.margin_factor
    end
 
    private update_grey()
@@ -277,14 +277,14 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    private move_bar_pos(x)
       x <:= self.bar_area_pos
       x >:= self.bar_area_pos + self.bar_area_size - self.bar_size
-      (self.bar_pos ~=== x) | fail
-      self.bar_pos := x
-      if /self.is_horizontal_flag then
-         self.bar_area.bar_y := self.bar_pos
-      else
-         self.bar_area.bar_x := self.bar_pos        
-      update_grey()
-      self.bar_area.invalidate()
+      if self.bar_pos ~===:= x then {
+         if /self.is_horizontal_flag then
+            self.bar_area.bar_y := self.bar_pos
+         else
+            self.bar_area.bar_x := self.bar_pos        
+         update_grey()
+         self.bar_area.invalidate()
+      }
    end
 
    private move_value(x)
@@ -367,15 +367,16 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
    # 
    # This may be overridden to provide custom behaviour, for example
    # to make scroll bar moves match up with keyboard page up and down.
-   # The default implementation moves value by `page_factor * n *
-   # page_size` for a non-range scrollbar, or just `n * page_size` for
-   # a range.
+   # The default implementation moves value by `n * (page_size -
+   # margin_factor * increment_size)` for a non-range scrollbar, or
+   # just `n * page_size` for a range.
    #
    public page_jump(n)
-      return value + if /is_range_flag then
-                         integer(page_factor * n * page_size)
-                     else
-                         n * page_size
+      return value +
+         if /is_range_flag then
+            n * (0 < page_size - (margin_factor to 0 by -1) * increment_size)
+         else
+            n * page_size
    end
 
    #
@@ -713,7 +714,7 @@ class ScrollBar(Component, HasOrientation, HasUseWheel)
       connect(handle_interrupted, Event.INTERRUPTED)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
-      self.page_factor := DEFAULT_PAGE_FACTOR
+      self.margin_factor := DEFAULT_MARGIN_FACTOR
       self.shade_buttons_flag := DEFAULT_SHADE_BUTTONS
       set_use_wheel(&yes)
       set_border(RaisedBorder())

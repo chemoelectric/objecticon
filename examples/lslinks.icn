@@ -138,11 +138,6 @@ procedure print(pfx, s, base)
       write(pfx, url.str())
 end
 
-procedure remove_entities(s)
-   return HtmlParser().parse("<HTML><PLAINTEXT>" || s).
-      get_root_element().search_tree("PLAINTEXT").get_string_content()
-end
-
 procedure do_search(url, src, doc, tag, attr, pfx)
    local base, n, s
 
@@ -160,7 +155,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
          s ? {
             while tab(caseless_past("<" || tag || " ")) do {
                if tab(caseless_past(attr || "=\"")) & s := tab(upto('\"')) then
-                  print(pfx, remove_entities(s), base)
+                  print(pfx, HtmlParser.remove_entities(s), base)
             }
          }
       }

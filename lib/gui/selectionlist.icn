@@ -28,7 +28,7 @@ abstract class SelectionList()
    # :  `x` - An index into the list of selectable items.
    #
    public set_selection(x, ev)
-      self.selection := need_integer(\x)
+      self.selection := /x | need_integer(x)
       constrain_selection()
       apply_selection(ev)
       link
@@ -95,7 +95,7 @@ abstract class SelectionList()
    # :  `x` - An index into the list of selectable items.
    #
    public set_selection_only(x)
-      self.selection := need_integer(\x)
+      self.selection := /x | need_integer(x)
       constrain_selection()
       link
    end

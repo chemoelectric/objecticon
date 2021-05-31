@@ -955,6 +955,7 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0x20AA: return 0x20AA;	/*  NewSheqelSign                                 */
         case 0x20AB: return 0x20AB;	/*  DongSign                                      */
         case 0x20AC: return 0x20AC;	/*  EuroSign                                      */
+        case 0xFE20: return 0x9;	/*  ISO_Left_Tab */
         case 0xFE50: return 0x300;	/*  dead_grave */
         case 0xFE51: return 0x301;	/*  dead_acute */
         case 0xFE52: return 0x302;	/*  dead_circumflex */
