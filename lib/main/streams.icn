@@ -89,7 +89,7 @@ abstract class Stream(HasClose, HasMode)
 
    #
    # Truncate this stream to the given length.  The file position
-   # remains unchanged.
+   # remains unchanged.  Returns `self` on success.
    #
    public optional truncate(len)
 
@@ -829,7 +829,7 @@ end
 # :Parameters :
 # :  `name` - The file name
 # :  `mode` - The mode; possible values are :-
-#    :  "r" - `FileStream` with `FileOpt.RDONLY`
+#    :  "r" - `FileStream` with `FileOpt.RDONLY`.  This is the default mode.
 #    :  "w" - `FileStream` with `FileOpt.WRONLY`, `FileOpt.TRUNC`, `FileOpt.CREAT`
 #    :  "b"|"rw"|"r+" - `FileStream` with `FileOpt.RDWR`
 #    :  "crw"|"w+" - `FileStream` with `FileOpt.RDWR`, `FileOpt.TRUNC`, `FileOpt.CREAT`
@@ -840,8 +840,10 @@ end
 #    :  "prw" - `ProgInputOutputStream`, using shell interpreter
 #
 procedure open(name, mode)
+   name := need_string(name)
+   mode := need_string(\mode) | "r"
    return BufferStream(case mode of {
-      &null | "r" : FileStream(name, FileOpt.RDONLY)
+      "r" : FileStream(name, FileOpt.RDONLY)
       "w" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
       "b"|"rw"|"r+" : FileStream(name, FileOpt.RDWR)
       "crw"|"w+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))

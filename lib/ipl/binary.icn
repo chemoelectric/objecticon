@@ -413,7 +413,7 @@ procedure pack_hex_digit(s)
       "d": 2r1101
       "e": 2r1110
       "f": 2r1111
-      }) | runerr("Bad hex digit: ",s)
+      }) | runerr("Bad hex digit",s)
 end
 
 #

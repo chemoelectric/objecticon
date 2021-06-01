@@ -1,8 +1,9 @@
 package ipl.streams
 
 import
-   io(LineBasedGeneratorStream, need_Stream),
-   util(HasCloseUnderlying, lclose)
+   io(LineBasedGeneratorStream, need_Stream, Stream, open),
+   util(HasCloseUnderlying, lclose, need_string),
+   ipl.printf(stopf)
 
 #
 # This `Stream` takes a list of other `Stream`s.  Their lines of
@@ -39,6 +40,44 @@ class IntersperseStream(LineBasedGeneratorStream, HasCloseUnderlying)
       every need_Stream(!a)
       self.a := a
       LineBasedGeneratorStream.new{line_gen()}
+      return
+   end
+end
+
+#
+# A helper class to stop immediately on a problem with an output file
+# (eg disk full).
+#
+class SimpleOutputStream(Stream)
+   private const
+      fname,
+      other
+
+   protected problem()
+      stopf("Failed to output to %s: %w", fname)
+   end
+
+   public override out(s)
+      return other.out(s) | problem()
+   end
+
+   public override close()
+      link other.close() | problem()
+   end
+
+   public override get_mode()
+      return WRITE
+   end
+
+   #
+   # Create a new instance, which will wrap a write-only stream
+   # created with the `open` call with the given parameters.  `mode`
+   # defaults to "w", but could also be "a" or "pw".
+   #
+   public new(fname, mode)
+      /mode := "w"
+      self.fname := need_string(fname)
+      self.other := open(fname, mode) | problem()
       return
    end
 end
