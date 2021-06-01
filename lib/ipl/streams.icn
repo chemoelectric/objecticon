@@ -2,7 +2,7 @@ package ipl.streams
 
 import
    io(LineBasedGeneratorStream, need_Stream, Stream, open),
-   util(HasCloseUnderlying, lclose),
+   util(HasCloseUnderlying, lclose, need_string),
    ipl.printf(stopf)
 
 #
@@ -69,9 +69,15 @@ class SimpleOutputStream(Stream)
       return WRITE
    end
 
-   public new(fname)
-      self.fname := fname
-      self.other := open(fname, "w") | problem()
+   #
+   # Create a new instance, which will wrap a write-only stream
+   # created with the `open` call with the given parameters.  `mode`
+   # defaults to "w", but could also be "a" or "pw".
+   #
+   public new(fname, mode)
+      /mode := "w"
+      self.fname := need_string(fname)
+      self.other := open(fname, mode) | problem()
       return
    end
 end
