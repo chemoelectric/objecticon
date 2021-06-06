@@ -169,7 +169,7 @@ $elsif _BSD
          header := repl("#", 1024)
          o_opt := "cwd=" || header
       }
-      s := run_prog("/bin/ps", ["-p", pid, "-o", o_opt], ["LC_CTYPE=C.UTF-8"])
+      s := run_prog("/bin/ps", ["-p", pid, "-o", o_opt], ["LC_CTYPE=C.UTF-8"]) | fail
       return s ? 4(=header, ="\n", any('/'), tab(-1), ="\n") | error("No such pid or permission denied")
    end
 
