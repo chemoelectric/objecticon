@@ -154,33 +154,29 @@
 package ipl.bufread
 
 import
-   io(close, open, read, need_Stream)
+   io(close, open, read, need_Stream),
+   util(need_integer)
 
-global __buf
+package global fbuf
 
 procedure bufopen(fname)
 
     local file
     
-    if /__buf then
-        __buf := table(&null)
+    initial
+        fbuf := table()
     
-        if file := open(fname, "r") then {
-            __buf[file] := []
-            return file
-        }
-        else fail
+    if file := open(fname, "r") then {
+       fbuf[file] := []
+       return file
+    }
         
 end
 
 procedure bufclose(file)
 
-    if /__buf then
-        __buf := table(&null)
-        
-        close(file)
-        __buf[file] := &null
-        return file
+   delete(\fbuf, file)
+   return close(file)
 
 end
 
@@ -188,11 +184,8 @@ procedure bufread(file)
 
     local buf
 
-    if /__buf then
-        __buf := table(&null)
-        
     need_Stream(file)
-    buf := \__buf[file] | runerr("bufread: File not open for buffered reads", file)
+    buf := member(\fbuf, file) | runerr("bufread: File not open for buffered reads", file)
     return get(buf) | read(file)
 
 end
@@ -201,22 +194,14 @@ procedure bufnext(file, n)
 
     local buf
 
-    if /__buf then
-        __buf := table(&null)
-    
-    if /n then
-        n := 1
-        
     need_Stream(file)
-    integer(n) | runerr("bufnext: Look ahead count was not convertible to integer", n)
-    (n > 0) | runerr("bufnext: Look ahead count was non-positive", n)
-    buf := \__buf[file] | runerr("bufnext: File not open for buffered reads", file)
+    n := need_integer(\n, 1) | 1
 
-    return buf[n] |
-        (
-            while *buf < n do
-                (put(buf, read(file)) | break &fail) 
-        ) |
-        buf[n]
+    buf := member(\fbuf, file) | runerr("bufnext: File not open for buffered reads", file)
+
+    while *buf < n do
+       put(buf, read(file)) | fail
+
+    return buf[n]
 
 end
