@@ -154,17 +154,14 @@ $elsif _BSD
    end
 
    private static freebsd_getcwd(pid)
-      local s, f, t
-      s := use {
-         f := ProgInputStream("/usr/bin/procstat", ["--libxo=json", "-f", pid],,, get_null()),
-         f.read_all()
-      } | fail
+      local s, t
+      s := run_prog("/usr/bin/procstat", ["--libxo=json", "-f", pid]) | fail
       t := JSONParser().parse(s) | return whyf("Invalid json from procstat: %w")
       return freebsd_getcwd1(t, pid) | error("No such pid or permission denied")
    end
 
    private static openbsd_getcwd(pid)
-      local s, f
+      local s
       static header, o_opt
       initial {
          # The header dictates the maximum length of the output, so
@@ -172,10 +169,7 @@ $elsif _BSD
          header := repl("#", 1024)
          o_opt := "cwd=" || header
       }
-      s := use {
-         f := ProgInputStream("/bin/ps", ["-p", pid, "-o", o_opt], ["LC_CTYPE=C.UTF-8"]),
-         f.read_all()
-      } | fail
+      s := run_prog("/bin/ps", ["-p", pid, "-o", o_opt], ["LC_CTYPE=C.UTF-8"])
       return s ? 4(=header, ="\n", any('/'), tab(-1), ="\n") | error("No such pid or permission denied")
    end
 

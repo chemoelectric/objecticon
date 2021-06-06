@@ -1,7 +1,8 @@
 package ipl.io
 
 import
-   io(Files, FileOpt, FileStream, DirStream, FilePath, stop), 
+   io(Files, FileOpt, FileStream, DirStream, ProgInputStream,
+      FilePath, stop), 
    util(use),
    exception(throw)
 
@@ -110,3 +111,30 @@ procedure dir_recurse(f, on_err)
       v := coact(, v.revert) | fail
    }
 end
+
+#
+# A simple helper to run a program `prog` with the given optional
+# parameter list and environment, and capture and return its output as
+# a string.  If the program exits with an error status code, then the
+# procedure fails and sets `&why` appropriately.
+#
+# Notes :-
+# * This procedure only works on UNIX platforms.
+# * stdin and stderr are both set to `/dev/null`.
+# * The shell isn't invoked (unlike `io.open(..., "pr")`); so
+#   no shell syntax may be used.
+# * The PATH is used to search for `prog`.
+#
+# Example :-
+# ~
+#    s := run_prog("ls", ["-l", "/"])
+# ~
+#
+procedure run_prog(prog, params, env)
+   local f, s
+   if s := use {                         
+      f := ProgInputStream(prog, params, env, get_null(), get_null()),
+      f.read_all()
+   } & f.succeeded() then
+      return s
+end                                                      
