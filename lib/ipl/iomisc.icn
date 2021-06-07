@@ -2,7 +2,7 @@ package ipl.io
 
 import
    io(Files, FileOpt, FileStream, DirStream, ProgInputStream,
-      FilePath, stop), 
+      FilterInputStream, FilePath, stop), 
    util(use),
    exception(throw)
 
@@ -134,6 +134,32 @@ procedure run_prog(prog, params, env)
    local f, s
    if s := use {                         
       f := ProgInputStream(prog, params, env, get_null(), get_null()),
+      f.read_all()
+   } & f.succeeded() then
+      return s
+end                                                      
+
+#
+# This procedure is very similar to `run_prog()` above, but provides
+# better error reporting, by capturing standard error output.  This
+# comes at a slight setup and performance cost, however.  For example :-
+#
+# ~
+#    s := run_prog2("ls", ["-l", "/junk"])
+# ~
+#
+# would fail and set `&why` to something like :-
+#
+# ~
+#   ls failed: Exited with status 2: ls: cannot access '/junk': No such file or directory
+# ~
+#
+# whereas `run_prog()` would just report the status code.
+#
+procedure run_prog2(prog, params, env)
+   local f, s
+   if s := use {                         
+      f := FilterInputStream(, prog, params, env),
       f.read_all()
    } & f.succeeded() then
       return s
