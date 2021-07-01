@@ -14,11 +14,11 @@ end
 #
 class Unencodable(ObjectCodec)
    protected final override object_encode()
-      throw("Not encodable: " || image(self))
+      throwf("Not encodable: %i", self)
    end
 
    protected final override object_decode()
-      throw("Not decodable: " || image(self))
+      throwf("Not decodable: %i", self)
    end
 end
 
@@ -204,7 +204,7 @@ class Encode(Stream, HasCloseUnderlying)
 
    private encode_methp(mp)
       writes1(Codec.METHP_CODE)
-      Proc.get_defining_class(mp) | throw("Can't encode an optional, abstract, unresolved native or removed methp: " || image(mp))
+      Proc.get_defining_class(mp) | throwf("Can't encode an optional, abstract, unresolved native or removed methp: %i", mp)
       note_seen(mp)
       line_out(Proc.get_name(mp))
       encode(Class.get_methp_object(mp))
@@ -221,7 +221,7 @@ class Encode(Stream, HasCloseUnderlying)
          s := case tab(upto(' ')) of {
             "function": {
                (Prog.get_function(Proc.get_name(f)) === f) |  
-                  throw("Can only encode a function which is a builtin function: " || image(f))
+                  throwf("Can only encode a function which is a builtin function: %i", f)
                "F"
             }
             "keyword": "K"
@@ -230,7 +230,7 @@ class Encode(Stream, HasCloseUnderlying)
             "method": {
                j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
                iand(j, Class.Static + Class.Method + Class.Special) = Class.Static + Class.Method |
-                  throw("Can only encode a static method: " || image(f))
+                  throwf("Can only encode a static method: %i", f)
                "M"
             }
             "unresolved": throw("Can't encode an unresolved native method")
@@ -244,7 +244,7 @@ class Encode(Stream, HasCloseUnderlying)
    end
 
    private static check_program(o, p)
-      (p === &main) | throw("Can't encode from another program: " || image(o))
+      (p === &main) | throwf("Can't encode from another program: %i", o)
    end
 
    public encode(o)
@@ -604,7 +604,7 @@ class Decode()
                if \fast_flag then {
                   n := int_in()
                   n = Class.get_n_instance_fields(res) | 
-                     throw("Inconsistent number of fields in " || image(res))
+                     throwf("Inconsistent number of fields in %i", res)
                   every i := 1 to n do
                      Class.get(res, i) := decode()
                } else {
@@ -658,7 +658,7 @@ class Decode()
             note_seen(res)
             n := int_in()
             if \fast_flag then {
-               n = *res | throw("Inconsistent number of fields in " || image(res))
+               n = *res | throwf("Inconsistent number of fields in %i", res)
                every i := 1 to n do
                   res[i] := decode()
             } else {
@@ -703,7 +703,7 @@ class Decode()
             return decode_methp()
 
          default :
-            throw("Unknown type code:" || image(t))
+            throwf("Unknown type code: %i", t)
       }            
    end
 end
