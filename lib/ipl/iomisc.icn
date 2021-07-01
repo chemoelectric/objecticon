@@ -2,8 +2,9 @@ package ipl.io
 
 import
    io(Files, FileOpt, FileStream, DirStream, ProgInputStream,
-      FilterInputStream, FilePath, stop), 
+      FilterInputStream, FilePath), 
    util(use),
+   ipl.printf(stopf),
    exception(throw)
 
 #
@@ -13,7 +14,7 @@ import
 procedure get_null()
    static nul
    initial
-      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | stop("Can't open " || Files.NULL_FILE || ": ", &why)
+      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | stopf("Can't open %s: %w", Files.NULL_FILE)
    return nul
 end
 
@@ -24,7 +25,7 @@ end
 procedure get_zero()
    static zero
    initial
-      zero := FileStream("/dev/zero", FileOpt.RDWR) | stop("Can't open /dev/zero: ", &why)
+      zero := FileStream("/dev/zero", FileOpt.RDWR) | stopf("Can't open /dev/zero: %w")
    return zero
 end
 
