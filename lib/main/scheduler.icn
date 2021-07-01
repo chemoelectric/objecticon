@@ -2,6 +2,7 @@ package io
 
 import lang, util, ipl.printf, ipl.sort
 
+#
 # This stream wraps another stream (normally a `SocketStream`).  The
 # `in` and `out` methods are invoked from the co-expression of the
 # owning `Task`.  Those methods activate the `Task`'s `Scheduler`'s
@@ -62,6 +63,7 @@ class TaskStream(Stream, HasTask, HasCloseUnderlying)
       return other.truncate(len)
    end
 
+   #
    # Set the timeout in ms to use.  If `&null`, then no timeout will
    # be used.
    #
@@ -98,6 +100,7 @@ class Task()
       interrupt_why,
       notify_flag
 
+   #
    # If a task is currently sleeping or polling, then this alters the
    # time it will sleep for, behaving as though the original call to
    # `sleep` or `poll` had given `n` as its time parameter.
@@ -116,6 +119,7 @@ class Task()
       link
    end
 
+   #
    # This is like `change_time()`, but the time is set to `n`
    # milliseconds from now, rather than from the time of the original
    # call.
@@ -134,12 +138,14 @@ class Task()
       link
    end
 
+   #
    # Succeed iff the task is currently active.
    #
    public is_active()
       succeed /coex
    end
 
+   #
    # Succeed iff the task is the current task.  Note that a task may
    # be active, but not the current task, since a task may itself
    # invoke `Scheduler.work` in order to activate another task, in a
@@ -151,21 +157,28 @@ class Task()
       succeed self === scheduler.curr_task
    end
 
+   #
    # Succeed iff the task is currently sleeping
+   #
    public is_sleeping()
       succeed state === scheduler.sleeping
    end
 
+   #
    # Succeed iff the task is currently polling
+   #
    public is_polling()
       succeed state === scheduler.polling
    end
 
+   #
    # Succeed iff the task is currently in the ready state
+   #
    public is_ready()
       succeed state === scheduler.ready
    end
 
+   #
    # Succeed iff the task is dormant, meaning it is not active, and is
    # not sleeping, polling or ready, meaning it won't be scheduled by
    # the scheduler, at least until `start` is called on it.
@@ -173,6 +186,7 @@ class Task()
       succeed \coex & /state
    end
 
+   #
    # Suspend this task, which must be the currently scheduled task, in
    # order to carry out a `DescStream.poll`.  The parameters and
    # result are in the same form as for `DescStream.poll`.  The
@@ -212,6 +226,7 @@ class Task()
       return error_if(f, poll_res)
    end
 
+   #
    # Suspend this task, which must be the currently scheduled task,
    # for `n` milliseconds; `&null` means indefinitely.
    #
@@ -242,6 +257,7 @@ class Task()
       link error_if(interrupt_why)
    end
 
+   #
    # Interrupt the task, which may not be currently active.  If the
    # task is currently sleeping or polling, then it is placed back in
    # the ready state.  This causes the original `poll` or `sleep` call
@@ -250,11 +266,12 @@ class Task()
    #
    public interrupt(why)
       \coex | runerr("interrupt() called on a currently active task")
-      why := need_text(\why)
+      why := need_text(\why) | "Interrupted"
       scheduler.interrupt(self, why)
       link
    end
 
+   #
    # If the task is sleeping or polling, then place it immediately
    # back into the ready state.  The task must not be currently
    # active.
@@ -265,6 +282,7 @@ class Task()
       link
    end
 
+   #
    # Suspend this task, which must be the currently scheduled task,
    # placing it immediately into the ready state in the scheduler.
    #
@@ -275,6 +293,7 @@ class Task()
       link
    end
 
+   #
    # Suspend this task, which must be the currently scheduled task,
    # but do not resume it.  Control reverts to the scheduler.  The
    # task may be subsequently restarted with `start`.  Note that to
@@ -288,6 +307,7 @@ class Task()
       link
    end
 
+   #
    # Start the task, which may not be currently active.  If the task
    # was previously stopped in a particular state (eg sleeping), then
    # it continues from that same state.
@@ -298,6 +318,7 @@ class Task()
       link
    end
 
+   #
    # Stop the task, which may not be currently active.  This prevents
    # the scheduler from activating it.  Its present state is
    # remembered, and it may be started again in that state using
@@ -309,6 +330,7 @@ class Task()
       link
    end
 
+   #
    # This method swaps the values of external state previously saved,
    # by invoking the `swap()` on the xstate member (if set).
    #
@@ -495,7 +517,7 @@ class Scheduler()
 
    package interrupt(t, why)
       if \t.state ~=== ready then {
-         t.interrupt_why := \why | "Interrupted"
+         t.interrupt_why := why
          set_state(t, ready)
       }
    end
