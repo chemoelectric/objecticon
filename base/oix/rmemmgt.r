@@ -1018,18 +1018,20 @@ static void adjust()
      *  next block.
      */
     while (source < blkfree) {
-        if ((uword)(nxtptr = (union block **)BlkType(source)) > MaxType) {
+        nxtptr = (union block **)BlkType(source);
+        if ((uword)nxtptr > MaxType) {
 
             /*
              * The type field of source is a back pointer.  Traverse the
              *  chain of back pointers, changing each block location from
              *  source to dest.
              */
-            while ((uword)nxtptr > MaxType) {
+            do {
                 tptr = nxtptr;
                 nxtptr = (union block **) *nxtptr;
                 *tptr = (union block *)dest;
-            }
+            } while ((uword)nxtptr > MaxType);
+
             BlkType(source) = (uword)nxtptr | F_Mark;
             dest += BlkSize(source);
         }
