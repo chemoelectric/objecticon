@@ -300,11 +300,6 @@
    ((SETP(p)->hdir[1] != NULL) && (SETP(p)->size < MinHLoad*(SETP(p)->mask+1)))
 
 /*
- * Definitions and declarations used for storage management.
- */
-#define F_Mark		0100000 	/* bit for marking blocks */
-
-/*
  * Argument values for the built-in Icon user function "collect()".
  */
 #define User    0                       /* collection triggered by user 
@@ -344,16 +339,6 @@
  * Get type of block pointed at by x.
  */
 #define BlkType(x)   (*(word *)x)
-
-/*
- * BlkSize(x) takes the block pointed to by x and if the size of
- *  the block as indicated by bsizes[] is nonzero it returns the
- *  indicated size; otherwise it returns the second word in the
- *  block contains the size.
- */
-#define BlkSize(x) (bsizes[*(word *)x & ~F_Mark] ? \
-		     bsizes[*(word *)x & ~F_Mark] : *((word *)x + 1))
-
 
 /*
  * Type codes (descriptors and blocks).
