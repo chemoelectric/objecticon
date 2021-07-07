@@ -627,9 +627,10 @@ alctvtbl_macro(alctvtbl_1,E_Tvtbl)
  */
 void f (union block *bp)
 {
-   word nbytes = BlkSize(bp);
-   if ((char *)bp + nbytes != blkfree)
-       syserr("Attempt to dealcblk, but block not at end of current block region");
+   uword nbytes;
+   if (!InRange(blkbase, bp, blkfree))
+       syserr("Attempt to dealcblk, but pointer not in current block region");
+   nbytes = UDiffPtrsBytes(blkfree,bp);
    blkfree = (char *)bp;
    blktotal -= nbytes;
    EVVal(-nbytes, e_blkdealc);

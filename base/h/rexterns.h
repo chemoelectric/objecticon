@@ -32,8 +32,6 @@ extern uword methp_ser;
 extern char *allchars;          /* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */
 extern char *currend;		/* current end of memory region */
-extern int bsizes[];		/* sizes of blocks */
-extern int firstd[];		/* offset (words) of first descrip. */
 extern uword segsize[];		/* size of hash bucket segment */
 
 extern struct og_table og_table;

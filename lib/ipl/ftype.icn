@@ -25,14 +25,8 @@
 package ipl.ftype
 
 import
-   io(ProgInputStream),
-   util(use)
+   ipl.io(run_prog)
 
 procedure ftype(file)
-   local f, r
-   if r := use {
-      f := ProgInputStream("file", ["-b", file]),
-      f.read()
-   } & f.succeeded() then
-      return r
+   return run_prog("file", ["-b", file])
 end

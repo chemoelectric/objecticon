@@ -1,9 +1,11 @@
 package ipl.io
 
 import
-   io(Files, FileOpt, FileStream, DirStream, FilePath, stop), 
+   io(Files, FileOpt, FileStream, DirStream, ProgInputStream,
+      FilterInputStream, FilePath), 
    util(use),
-   exception(throw)
+   ipl.printf(stopf),
+   exception(throwf)
 
 #
 # Return an open file to /dev/null.  The returned file is shared
@@ -12,7 +14,7 @@ import
 procedure get_null()
    static nul
    initial
-      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | stop("Can't open " || Files.NULL_FILE || ": ", &why)
+      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | stopf("Can't open %s: %w", Files.NULL_FILE)
    return nul
 end
 
@@ -23,7 +25,7 @@ end
 procedure get_zero()
    static zero
    initial
-      zero := FileStream("/dev/zero", FileOpt.RDWR) | stop("Can't open /dev/zero: ", &why)
+      zero := FileStream("/dev/zero", FileOpt.RDWR) | stopf("Can't open /dev/zero: %w")
    return zero
 end
 
@@ -70,7 +72,7 @@ end
 # with the value set to an informative error message.
 #
 procedure dir_recurse_throw(f)
-   throw("Failed to read dir " || f || ": " || &why)
+   throwf("Failed to read dir %s: %w", f)
 end
 
 package procedure dir_recurse1(f, revert, on_err)
@@ -110,3 +112,56 @@ procedure dir_recurse(f, on_err)
       v := coact(, v.revert) | fail
    }
 end
+
+#
+# A simple helper to run a program `prog` with the given optional
+# parameter list and environment, and capture and return its output as
+# a string.  If the program exits with an error status code, then the
+# procedure fails and sets `&why` appropriately.
+#
+# Notes :-
+# * This procedure only works on UNIX platforms.
+# * stdin and stderr are both set to `/dev/null`.
+# * The shell isn't invoked (unlike `io.open(..., "pr")`); so
+#   no shell syntax may be used.
+# * The PATH is used to search for `prog`.
+#
+# Example :-
+# ~
+#    s := run_prog("ls", ["-l", "/"])
+# ~
+#
+procedure run_prog(prog, params, env)
+   local f, s
+   if s := use {                         
+      f := ProgInputStream(prog, params, env, get_null(), get_null()),
+      f.read_all()
+   } & f.succeeded() then
+      return s
+end                                                      
+
+#
+# This procedure is very similar to `run_prog()` above, but provides
+# better error reporting, by capturing standard error output.  This
+# comes at a slight setup and performance cost, however.  For example :-
+#
+# ~
+#    s := run_prog2("ls", ["-l", "/junk"])
+# ~
+#
+# would fail and set `&why` to something like :-
+#
+# ~
+#   ls failed: Exited with status 2: ls: cannot access '/junk': No such file or directory
+# ~
+#
+# whereas `run_prog()` would just report the status code.
+#
+procedure run_prog2(prog, params, env)
+   local f, s
+   if s := use {                         
+      f := FilterInputStream(, prog, params, env),
+      f.read_all()
+   } & f.succeeded() then
+      return s
+end                                                      

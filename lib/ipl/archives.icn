@@ -152,32 +152,26 @@ procedure tarfile(tname, fname)
    return FilterInputStream(, "tar", ["xOf", tname, fname])
 end
 
-# Perform gzip on a string, returning the gzipped string.
-procedure gzip(s)
-   local f, r
-   if r := use {
-      f := FilterInputStream(StringStream(s), "gzip", ["-c"]),
+package procedure run(in, prog, params)
+   local f, s
+   if s := use {                         
+      f := FilterInputStream(in, prog, params),
       f.read_all()
    } & f.succeeded() then
-      return r
+      return s
+end                                                      
+
+# Perform gzip on a string, returning the gzipped string.
+procedure gzip(s)
+   return run(StringStream(s), "gzip", ["-c"])
 end
 
 # Perform gunzip on a string, returning the unzipped string.
 procedure gunzip(s)
-   local f, r
-   if r := use {
-      f := FilterInputStream(StringStream(s), "gunzip", ["-c"]),
-      f.read_all()
-   } & f.succeeded() then
-      return r
+   return run(StringStream(s), "gunzip", ["-c"])
 end
 
 # Perform gunzip on the given file, returning the unzipped string.
 procedure gunzip_file(fn)
-   local f, r
-   if r := use {
-      f := FilterInputStream(, "gunzip", ["-c", fn]),
-      f.read_all()
-   } & f.succeeded() then
-      return r
+   return run(, "gunzip", ["-c", fn])
 end

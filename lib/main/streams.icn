@@ -3920,7 +3920,7 @@ class WProgOutputStream(WProgStreamBase)
    #
    # For example :-
    # ~
-   #      f := ProgOutputStream(, "prog arg1 arg2") | stop(&why)
+   #      f := WProgOutputStream(, "prog arg1 arg2") | stop(&why)
    #      f.write("data")
    #      f.close()
    # ~

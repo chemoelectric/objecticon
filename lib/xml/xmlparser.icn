@@ -713,7 +713,7 @@ class XmlParser(Connectable)
    private parse_version_num()
       local c
       c := 'a-zA-Z0-9_.:\-'
-      any(c) | throw("Expected " || image(c))
+      any(c) | throwf("Expected %i", c)
       return tab(many(c))
    end
 
@@ -1093,7 +1093,7 @@ class XmlParser(Connectable)
    private check_is_char_data(s, msg)
       local j
       if j := upto(INVALID_CHAR, s) then
-         throw("Invalid char (" || image(s[j]) || ") in " || msg)
+         throwf("Invalid char (%i) in %s", s[j], msg)
       return
    end
 
@@ -2151,9 +2151,9 @@ class XmlParser(Connectable)
    #
    private resolve(base, external_id)
       local t
-      t := resolver.resolve(base, external_id)  | throw("Couldn't resolve: " || to_string(external_id) || ": " || &why)
+      t := resolver.resolve(base, external_id)  | throwf("Couldn't resolve: %t: %w", external_id)
       if \utf8_flag then
-         t.content := ucs(t.content) | throw("Couldn't convert " || to_string(external_id) || " to UTF-8")
+         t.content := ucs(t.content) | throwf("Couldn't convert %t to UTF-8", external_id)
       t.content := normalize_eol(t.content)
       return t
    end

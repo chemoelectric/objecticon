@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang, net, ipl.strings, ipl.io(get_null), gui(Conversion)
+import undo, util, lang, net, ipl.strings, ipl.io(get_null, run_prog2), gui(Conversion)
 
 package record Save(text, undo)
 
@@ -218,14 +218,10 @@ $endif
    end
 
    public static read_terminfo(name)
-      local f, params, out
+      local params
       params := ["-L"]
       put(params, \name)
-      out := StringStream()
-      if use { f := FilterOutputStream(out, "infocmp", params) } &
-         f.succeeded()
-      then
-         return parse_terminfo(out.str())
+      return parse_terminfo(run_prog2("infocmp", params))
    end
 
    protected override read_line_impl()

@@ -133,6 +133,7 @@ end
 package class Args()
    private a
    private const e
+   public const why
 
    public get(i)
       return if /i then @e else a[i]
@@ -152,6 +153,9 @@ package class Args()
    public new(x)
       a := need_list(x)
       e := create !a
+      # Save a copy of &why, since its value could be disturbed by
+      # calls to writes1 in lfprintf.
+      why := &why
       return
    end
 end
@@ -186,7 +190,7 @@ package procedure one(args)
       "r": fixnum(a, prec, flag)
       "e": eformatstr(a, prec, flag ++ 'e')
       "E": eformatstr(a, prec, flag ++ 'E')
-      "w": str(&why, prec)
+      "w": str(args.why, prec)
       "n": str("", prec)
       default: str(conv, prec)
    }

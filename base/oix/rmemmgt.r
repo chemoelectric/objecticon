@@ -28,7 +28,6 @@ static void stk_markptrs(void);
 static void do_weakrefs(void);
 static void mark_others(void);
 
-
 /* string qualifier list */
 static struct {
    uword listsize;
@@ -47,7 +46,7 @@ static struct b_weakref *weakrefs;     /* head of list of weakrefs encountered d
  *  0 is used for types with constant sized blocks.
  */
 
-int bsizes[] = {
+static int bsizes[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
@@ -88,7 +87,7 @@ int bsizes[] = {
  * Table of offsets (in bytes) to first descriptor in blocks.  -1 is for
  *  types not allocated, 0 for blocks with no descriptors.
  */
-int firstd[] = {
+static int firstd[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
@@ -129,7 +128,7 @@ int firstd[] = {
  * Table of offsets (in bytes) to first pointer in blocks.  -1 is for
  *  types not allocated, 0 for blocks with no pointers.
  */
-int firstp[] = {
+static int firstp[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
@@ -170,7 +169,7 @@ int firstp[] = {
  * Table of number of pointers in blocks.  -1 is for types not allocated and
  *  types without pointers, 0 for pointers through the end of the block.
  */
-int ptrno[] = {
+static int ptrno[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
     -1,                       /* T_Lrgint (2), large integer */
@@ -207,7 +206,7 @@ int ptrno[] = {
  * Table of number of descriptors in blocks.  -1 is for types not allocated and
  *  types without descriptors, 0 for descriptors through the end of the block.
  */
-int descno[] = {
+static int descno[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
     -1,                       /* T_Lrgint (2), large integer */
@@ -298,6 +297,17 @@ uword segsize[] = {
    ((uword)HSlots) << 9,		/* segment 10 */
    ((uword)HSlots) << 10,		/* segment 11 */
    };
+
+#define F_Mark		0100000 	/* bit for marking blocks */
+
+/*
+ * BlkSize(x) takes the block pointed to by x and if the size of
+ *  the block as indicated by bsizes[] is nonzero it returns the
+ *  indicated size; otherwise it returns the second word in the
+ *  block contains the size.
+ */
+#define BlkSize(x) (bsizes[*(word *)x & ~F_Mark] ? \
+		     bsizes[*(word *)x & ~F_Mark] : *((word *)x + 1))
 
 #define PostDescrip(d) \
    if (Qual(d)) \
@@ -1008,18 +1018,20 @@ static void adjust()
      *  next block.
      */
     while (source < blkfree) {
-        if ((uword)(nxtptr = (union block **)BlkType(source)) > MaxType) {
+        nxtptr = (union block **)BlkType(source);
+        if ((uword)nxtptr > MaxType) {
 
             /*
              * The type field of source is a back pointer.  Traverse the
              *  chain of back pointers, changing each block location from
              *  source to dest.
              */
-            while ((uword)nxtptr > MaxType) {
+            do {
                 tptr = nxtptr;
                 nxtptr = (union block **) *nxtptr;
                 *tptr = (union block *)dest;
-            }
+            } while ((uword)nxtptr > MaxType);
+
             BlkType(source) = (uword)nxtptr | F_Mark;
             dest += BlkSize(source);
         }
