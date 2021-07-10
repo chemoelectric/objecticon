@@ -12,6 +12,7 @@ import
    ipl.sort,
    ipl.scan,
    ipl.tables,
+   ipl.pdco(Reverse),
    io,
    util,
    ipl.streams(SimpleOutputStream)
@@ -120,7 +121,7 @@ class HtmlOutputter(Outputter)
          write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p/>")
          every s := get_packages() do {
             if should_print_package(s) then
-               write(nav, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(nav, "<a href=\"", get_id(s), ".html", "\" target=\"listFrame\">", s, "</a><br>")
             output_package(s)
          }
          write(nav, "</body></html>")
@@ -134,7 +135,7 @@ class HtmlOutputter(Outputter)
          write(begin, "This is the automatically generated documentation for the following packages.<p/>")
          every s := get_packages() do
             if should_print_package(s) then
-               write(begin, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(begin, "<a href=\"", get_id(s), ".html", "\" target=\"listFrame\">", s, "</a><br>")
          write(begin, "</body></html>")
       }}
 
@@ -148,7 +149,7 @@ class HtmlOutputter(Outputter)
          every c := !all_classes do {
             if should_print_symbol(c) then
                write(all, "<a href=\"", 
-                     get_id(c) || ".html\" target=\"displayFrame\">", 
+                     get_id(c), ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
          write(all, "<p/><h1>Other Symbols</h1><p/>")
@@ -156,7 +157,7 @@ class HtmlOutputter(Outputter)
          every c := !all_others do {
             if should_print_symbol(c) then
                write(all, 
-                     "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", 
+                     "<a href=\"", get_id(c), ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
       }}
@@ -173,12 +174,12 @@ class HtmlOutputter(Outputter)
          write(f, "<h1>Classes</h1><p/>")
          every c := get_classes_in(s) do {
             output_class(c)
-            write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+            write(f, "<a href=\"", get_id(c), ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
          write(f, "<p/><h1>Other Symbols</h1><p/>")
          every c := get_others_in(s) do {
             output_other(c)
-            write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+            write(f, "<a href=\"", get_id(c), ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
       }}
    end
@@ -221,7 +222,7 @@ class HtmlOutputter(Outputter)
          }
 
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s), ".html", "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "</dl><p/>")
 
          if is(c.obj, Tree) then {
@@ -231,16 +232,22 @@ class HtmlOutputter(Outputter)
          }
 
          pretty_heading(f, "Class summary")
+
+         if *supers > 0 then {
+            tbl_start(f, "Implemented classes")
+            every d := Reverse{ c.get_implemented_classes() } do
+               write(f,"<a href=\"", get_id(d), ".html", "\">", d.get_fq_name(), "</a>")
+            tbl_end(f)
+         }
+
          overrides := table()
          do_inherited(f, c, overrides)
 
          meths := []
          vars := []
          every x := c.get_fields() do {
-            if is(x, ClassVariable) then
-               put(vars, x)
-            else
-               put(meths, x)
+            put(if is(x, ClassVariable) then vars else meths,
+                x)
          }
          qsort(meths, name_sort)
          qsort(vars, name_sort)
@@ -248,7 +255,7 @@ class HtmlOutputter(Outputter)
          if *meths > 0 then {
             tbl_start(f, "Methods defined in this class")
             every m := !meths do {
-               write(f,"<a href=\"#" || m.name || "\">" || m.name || "()</a>")
+               write(f,"<a href=\"#", m.name, "\">", m.name, "()</a>")
             }
             tbl_end(f)
          }
@@ -256,7 +263,7 @@ class HtmlOutputter(Outputter)
          if *vars > 0 then {
             tbl_start(f, "Variables defined in this class")
             every m := !vars do {
-               write(f,"<a href=\"#" || m.name || "\">" || m.name || "</a>")
+               write(f,"<a href=\"#", m.name, "\">", m.name, "</a>")
             }
             tbl_end(f)
          }
@@ -273,8 +280,8 @@ class HtmlOutputter(Outputter)
                if not find("static", acc) & member(overrides, m.name) then {
                   o := overrides[m.name]
                   mm := o.get_field(m.name) | syserr("get_field() failed")
-                  write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || 
-                        mm.name || "\">" || mm.name || "()</a> in <a href=\"", 
+                  write(f,"<dd>Overrides <a href=\"", get_id(o), ".html#", 
+                        mm.name, "\">", mm.name, "()</a> in <a href=\"", 
                         get_id(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
                }
                if is(m.obj, Tree) then {
@@ -307,20 +314,16 @@ class HtmlOutputter(Outputter)
    end
 
    private do_inherited(f, c, overrides)
-      local l, m, d, x, tm, tv, u
-      l := []
-      every push(l, c ~=== c.get_implemented_classes())
+      local m, d, x, tm, tv, u
 
       tm := table()
       tv := table()
       every x := c.get_implemented_fields() do {
-         if is(x, ClassVariable) then
-            inserts(tv, x.defining_class, x)
-         else
-            inserts(tm, x.defining_class, x)
+         inserts(if is(x, ClassVariable) then tv else tm,
+                 x.defining_class, x)
       }
 
-      every d := !l do {
+      every d := Reverse{ c ~=== c.get_implemented_classes() } do {
          # Note any overridden fields
          every x := c.get_fields() do {
             if d.get_field(x.name) then
@@ -331,7 +334,7 @@ class HtmlOutputter(Outputter)
             tbl_start(f, "Methods inherited from " || d.get_fq_name())
             qsort(u, name_sort)
             every m := !u do {
-               write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "()</a>")
+               write(f,"<a href=\"", get_id(d), ".html#", m.name, "\">", m.name, "()</a>")
             }
             tbl_end(f)
          }
@@ -339,7 +342,7 @@ class HtmlOutputter(Outputter)
             tbl_start(f, "Variables inherited from " || d.get_fq_name())
             qsort(u, name_sort)
             every m := !u do {
-               write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "</a>")
+               write(f,"<a href=\"", get_id(d), ".html#", m.name, "\">", m.name, "</a>")
             }
             tbl_end(f)
          }
@@ -611,7 +614,7 @@ class HtmlOutputter(Outputter)
          write(f, "<h1>", fullname, "</h1>")
          write(f, "<dl>")
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s), ".html", "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
          write(f, "</dl><p/>")
          if is(c.obj, Tree) then {
