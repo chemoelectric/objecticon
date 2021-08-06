@@ -60,23 +60,20 @@ procedure test3()
    yes_no{"1.testfile -v- testfile2a", Files.equal_files("testfile", "testfile2a")}
    Files.rename("testfile2a", "testfile2") | stop(&why)
    yes_no{"2.testfile -v- testfile2", Files.equal_files("testfile", "testfile2")}
-$if _UNIX
-   Files.hardlink("testfile2", "testfile2b") | stop(&why)
-   yes_no{"3.testfile -v- testfile2b", Files.equal_files("testfile", "testfile2b")}
-   Files.remove("testfile2b") | stop(&why)
-$else
-   write("3.testfile -v- testfile2b: yes")
-$endif
+   if Files.hardlink("testfile2", "testfile2b") then {
+      yes_no{"3.testfile -v- testfile2b", Files.equal_files("testfile", "testfile2b")}
+      Files.remove("testfile2b") | stop(&why)
+   }else
+      write("3.testfile -v- testfile2b: yes")
    yes_no{"4.testfile -v- testfile2", Files.equal_files("testfile", "testfile2")}
-$if _UNIX
-   Files.symlink("testfile2", "testfile2c") | stop(&why)
-   yes_no{"5.testfile -v- testfile2c", Files.equal_files("testfile", "testfile2c")}
-   print{"readlink",Files.readlink("testfile2c")}
-   Files.remove("testfile2c") | stop(&why)
-$else
-   write("5.testfile -v- testfile2c: yes")
-   write("readlink: \"testfile2\"")
-$endif
+   if Files.symlink("testfile2", "testfile2c") then {
+      yes_no{"5.testfile -v- testfile2c", Files.equal_files("testfile", "testfile2c")}
+      print{"readlink",Files.readlink("testfile2c")}
+      Files.remove("testfile2c") | stop(&why)
+   } else {
+      write("5.testfile -v- testfile2c: yes")
+      write("readlink: \"testfile2\"")
+   }
    Files.copy("testfile", "testfile2d")
    yes_no{"6.testfile -v- testfile2d", Files.equal_files("testfile", "testfile2d")}
    Files.append("testfile", "testfile2") | stop(&why)
