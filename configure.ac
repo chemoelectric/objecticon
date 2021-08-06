@@ -180,6 +180,11 @@ else
 fi
 if test "$HAVE_LIBDL" = yes; then
         AC_MSG_NOTICE([dynamic linking        : yes])
+        if test -z "$HAVE_SYSV_IPC"; then 
+                AC_MSG_NOTICE([sys v ipc lib          : no])
+        else
+                AC_MSG_NOTICE([sys v ipc lib          : yes])
+        fi
         if test -z "$MYSQL_VERSION"; then 
                 AC_MSG_NOTICE([mysql lib              : no])
         else
