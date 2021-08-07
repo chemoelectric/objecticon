@@ -4,7 +4,7 @@ ifeq (@HAVE_LIBDL@,)
   TARGET=
 else
   TARGET=objecticonmemdebug.so
-  ifeq (@HAVE_SYSV_IPC@,yes)
+  ifneq (@HAVE_SYSV_IPC@,)
     TARGET:=$(TARGET) objecticonipclib.so
   endif
   ifneq (@MYSQL_VERSION@,)
