@@ -202,11 +202,11 @@ AC_DEFUN([AX_CHECK_SYSV_IPC],
         unset HAVE_SYSV_IPC
         AC_CACHE_CHECK([for System V IPC headers], ax_cv_sysv_ipc, [
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+                        #include <sys/types.h>
                         #include <sys/ipc.h>
                         #include <sys/shm.h>
                         #include <sys/sem.h>
                         #include <sys/msg.h>
-                        #include <sys/types.h>
                 ]], [])],
                 [ax_cv_sysv_ipc=yes],
                 [ax_cv_sysv_ipc=no])
