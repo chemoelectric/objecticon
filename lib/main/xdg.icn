@@ -1014,6 +1014,10 @@ final abstract class Mime()
    private static read_mime_graph()
       local d, t, s, k, v, l
       t := table()
+      #
+      # Loop over all aliases first, so that they have priority over
+      # subclasses (ie they come first in the table entry lists).
+      #
       every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "aliases").str()) then {
             every l := separate_lines(s) do l ? {
@@ -1026,6 +1030,8 @@ final abstract class Mime()
                }
             }
          }
+      }
+      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
                if k := Text.lower(tab(upto(' '))) &
