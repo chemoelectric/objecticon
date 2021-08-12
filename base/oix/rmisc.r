@@ -27,19 +27,10 @@ static char *op_arity[] = { NULL,
 /* 
  * eq - compare two Icon strings for equality
  */
-int eq(dptr d1, dptr d2)
+int eq(dptr x, dptr y)
 {
-	char *s1, *s2;
-	int i;
-
-	if (StrLen(*d1) != StrLen(*d2))
-	   return 0;
-	s1 = StrLoc(*d1);
-	s2 = StrLoc(*d2);
-	for (i = 0; i < StrLen(*d1); i++)
-	   if (*s1++ != *s2++) 
-	      return 0;
-	return 1;
+    return StrLen(*x) == StrLen(*y) &&
+        memcmp(StrLoc(*x), StrLoc(*y), StrLen(*x)) == 0;
 }
 
 /*
