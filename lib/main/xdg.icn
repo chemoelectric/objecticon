@@ -893,21 +893,24 @@ final abstract class Mime()
    end
 
    #
-   # Given a filename (not a path), return the corresponding mime type.
+   # Given a filename (not a path), return the corresponding mime
+   # type, or fail if no mime type could be deduced.
    #
    public static get_mime_type_for_file(f)
       return GLOBS.lookup(f).mime_type
    end
 
    #
-   # Generate the generic icons defined for the given mime type.
+   # Generate the icon names from the "generic-icons" files, defined
+   # for the given mime type.
    #
    public static gen_generic_icons(mt)
       suspend .!member(GENERIC_ICONS, need_mime_type(mt))
    end
 
    #
-   # Generate the icons defined for the given mime type.
+   # Generate the icon names from the "icons" files, defined for the
+   # given mime type.
    #
    public static gen_icons(mt)
       suspend .!member(ICONS, need_mime_type(mt))
@@ -915,12 +918,14 @@ final abstract class Mime()
 
    #
    # Generate all the icons defined for the given mime type, namely
-   # the default icon formed from substituting / for -; then the icons
-   # and then the generic icons.
+   # any mappings from the "icons" files, then the default icon formed
+   # from substituting "/" for "-", and then any mappings from the
+   # "generic-icons" files.  This method will always generate at least
+   # one result.
    #
    public static gen_all_icons(mt)
       mt := need_mime_type(mt)
-      suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
+      suspend .!member(ICONS, mt) | map(mt, "/", "-") | .!member(GENERIC_ICONS, mt)
    end
 
    #
