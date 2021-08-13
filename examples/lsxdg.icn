@@ -64,6 +64,7 @@ procedure usage()
    help_line("de", "List desktop entries for mime type")
    help_line("de-file", "List desktop entries for file")
    help_line("dirs", "Show config and data directories")
+   help_line("theme", "Show the icon theme name")
    help_line("cmd", "List commands for file")
    help_line("cmd-url", "List commands for URL")
    help_line("dump-mime", "Print the mime database to stdout")
@@ -149,6 +150,10 @@ procedure main(a)
                        else
                           Mime.gen_desktop_entries("x-scheme-handler/" || u1.scheme),
                        s1)
+      }
+
+      "theme" : {
+         write(IconTheme.theme)
       }
 
       "dump-mime": {
