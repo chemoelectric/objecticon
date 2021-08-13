@@ -425,8 +425,6 @@ struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem 
 void cstr2string(char *s, dptr d);
 void bytes2string(char *s, word len, dptr d);
 void cstrs2string(char **s, char *delim, dptr d);
-int eq(dptr d1, dptr d2);
-int ceq(dptr dp, char *s);
 void env_int(char *name, int *variable, int min, int max);
 void env_word(char *name, word *variable, word min, word max);
 void env_uword(char *name, uword *variable, uword min, uword max);

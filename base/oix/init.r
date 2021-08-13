@@ -1176,7 +1176,7 @@ static void slow_resolve(struct progstate *p)
                     if (n < 0 || n >= fnc_tbl_sz)
                         ffatalerr("Builtin function index out of range: %d", n);
                     BlkLoc(p->Globals[j]) = (union block *)fnc_tbl[n];
-                    if (!eq(p->Gnames[j], fnc_tbl[n]->name))
+                    if (!equiv(p->Gnames[j], fnc_tbl[n]->name))
                         ffatalerr("Builtin function index name mismatch: %.*s", 
                                   (int)StrLen(*p->Gnames[j]), StrLoc(*p->Gnames[j]));
                 }
@@ -1317,7 +1317,7 @@ static void quick_resolve(struct progstate *p)
                     if (n < 0 || n >= fnc_tbl_sz)
                         ffatalerr("Builtin function index out of range: %d", n);
                     BlkLoc(p->Globals[j]) = (union block *)fnc_tbl[n];
-                    if (!eq(p->Gnames[j], fnc_tbl[n]->name))
+                    if (!equiv(p->Gnames[j], fnc_tbl[n]->name))
                         ffatalerr("Builtin function index name mismatch: %.*s", 
                                   (int)StrLen(*p->Gnames[j]), StrLoc(*p->Gnames[j]));
                 }

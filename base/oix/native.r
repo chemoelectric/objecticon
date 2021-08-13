@@ -3965,7 +3965,7 @@ static int lookup_proc_local(struct p_proc *proc, dptr query)
     if (is:string(*query)) {
         word i;
         for (i = 0; i < nf; ++i) {
-            if (eq(proc->lnames[i], query))
+            if (equiv(proc->lnames[i], query))
                 return (int)i;
         }
         return -1;

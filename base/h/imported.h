@@ -67,8 +67,6 @@
 #define imgdataformat_PALETTE2 (*(imported->imgdataformat_PALETTE2))
 #define imgdataformat_PALETTE4 (*(imported->imgdataformat_PALETTE4))
 #define imgdataformat_PALETTE8 (*(imported->imgdataformat_PALETTE8))
-#define eq (*(imported->eq))
-#define ceq (*(imported->ceq))
 #define anycmp (*(imported->anycmp))
 #define lexcmp (*(imported->lexcmp))
 #define equiv (*(imported->equiv))
