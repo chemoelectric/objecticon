@@ -63,8 +63,6 @@ struct oisymbols {
     struct imgdataformat *imgdataformat_PALETTE2;
     struct imgdataformat *imgdataformat_PALETTE4;
     struct imgdataformat *imgdataformat_PALETTE8;
-    int (*eq)(dptr d1, dptr d2);
-    int (*ceq)(dptr dp, char *s);
     int (*anycmp)(dptr dp1,dptr dp2);
     int (*lexcmp)(dptr dp1,dptr dp2);
     int (*equiv)(dptr dp1,dptr dp2);

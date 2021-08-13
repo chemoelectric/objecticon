@@ -118,6 +118,7 @@ AX_CHECK_DOUBLE_HAS_WORD_ALIGNMENT()
 AX_CHECK_COMPUTED_GOTO()
 AX_CHECK_NS_FILE_STAT()
 AX_CHECK_MSG_NOSIGNAL()
+AX_CHECK_SYSV_IPC()
 
 AC_CONFIG_COMMANDS(system, [
 	AS_MKDIR_P(bin)
@@ -179,6 +180,11 @@ else
 fi
 if test "$HAVE_LIBDL" = yes; then
         AC_MSG_NOTICE([dynamic linking        : yes])
+        if test -z "$HAVE_SYSV_IPC"; then 
+                AC_MSG_NOTICE([sys v ipc lib          : no])
+        else
+                AC_MSG_NOTICE([sys v ipc lib          : yes])
+        fi
         if test -z "$MYSQL_VERSION"; then 
                 AC_MSG_NOTICE([mysql lib              : no])
         else

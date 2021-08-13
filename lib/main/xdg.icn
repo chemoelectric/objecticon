@@ -718,13 +718,14 @@ final abstract class IconTheme()
    # `size` is treated as an already-scaled value.
    #
    public static find_icon(icon, size, scale)
-      local k, v
+      local k, v, tried
       icon := need_string(icon)
       size := need_integer(size, 1)
       scale := need_real(\scale, 1.0) | Gui.SCALE
       k := icon || "/" || size || "/" || scale
       unless v := member(FIND_ICON_CACHE, k) then {
-         v := find_icon_helper(icon, size, scale, theme, set()) | lookup_fallback_icon(icon)
+         tried := set()
+         v := find_icon_helper(icon, size, scale, theme | "hicolor", tried) | lookup_fallback_icon(icon)
          insert(FIND_ICON_CACHE, k, v)
       }
       return \v
@@ -923,21 +924,24 @@ final abstract class Mime()
    end
 
    #
-   # Given a filename (not a path), return the corresponding mime type.
+   # Given a filename (not a path), return the corresponding mime
+   # type, or fail if no mime type could be deduced.
    #
    public static get_mime_type_for_file(f)
       return GLOBS.lookup(f).mime_type
    end
 
    #
-   # Generate the generic icons defined for the given mime type.
+   # Generate the icon names from the "generic-icons" files, defined
+   # for the given mime type.
    #
    public static gen_generic_icons(mt)
       suspend .!member(GENERIC_ICONS, need_mime_type(mt))
    end
 
    #
-   # Generate the icons defined for the given mime type.
+   # Generate the icon names from the "icons" files, defined for the
+   # given mime type.
    #
    public static gen_icons(mt)
       suspend .!member(ICONS, need_mime_type(mt))
@@ -945,12 +949,14 @@ final abstract class Mime()
 
    #
    # Generate all the icons defined for the given mime type, namely
-   # the default icon formed from substituting / for -; then the icons
-   # and then the generic icons.
+   # any mappings from the "icons" files, then the default icon formed
+   # from substituting "/" for "-", and then any mappings from the
+   # "generic-icons" files.  This method will always generate at least
+   # one result.
    #
    public static gen_all_icons(mt)
       mt := need_mime_type(mt)
-      suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
+      suspend .!member(ICONS, mt) | map(mt, "/", "-") | .!member(GENERIC_ICONS, mt)
    end
 
    #
@@ -1044,6 +1050,10 @@ final abstract class Mime()
    private static read_mime_graph()
       local d, t, s, k, v, l
       t := table()
+      #
+      # Loop over all aliases first, so that they have priority over
+      # subclasses (ie they come first in the table entry lists).
+      #
       every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "aliases").str()) then {
             every l := separate_lines(s) do l ? {
@@ -1056,6 +1066,8 @@ final abstract class Mime()
                }
             }
          }
+      }
+      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
                if k := Text.lower(tab(upto(' '))) &

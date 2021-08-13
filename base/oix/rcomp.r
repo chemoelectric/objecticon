@@ -173,77 +173,66 @@ int order(dptr dp)
  */
 
 int equiv(dptr dp1, dptr dp2)
-   {
-   int result;
-   word i;
+{
 
-   result = 0;
-
-      /*
-       * If the descriptors are identical, the objects are equivalent.
-       */
+   /*
+    * If the descriptors are identical, the objects are equivalent.
+    */
    if (EqlDesc(*dp1,*dp2))
-      result = 1;
-   else if (Qual(*dp1) && Qual(*dp2)) {
+       return 1;
 
+   if (Qual(*dp1) && Qual(*dp2))
       /*
-       *  If both are strings of equal length, compare their characters.
+       *  Both are strings, so compare length and, if equal, characters.
        */
+       return StrLen(*dp1) == StrLen(*dp2) &&
+           memcmp(StrLoc(*dp1), StrLoc(*dp2), StrLen(*dp1)) == 0;
 
-      if ((i = StrLen(*dp1)) == StrLen(*dp2))
-         result = memcmp(StrLoc(*dp1), StrLoc(*dp2), i) == 0;
-
-      }
-   else if (dp1->dword == dp2->dword)
+   if (dp1->dword == dp2->dword)
       switch (Type(*dp1)) {
 	 /*
 	  * For integers and reals, just compare the values.
 	  */
 	 case T_Integer:
-	    result = (IntVal(*dp1) == IntVal(*dp2));
-	    break;
+            return IntVal(*dp1) == IntVal(*dp2);
 
 	 case T_Lrgint:
-	    result = (bigcmp(dp1, dp2) == 0);
-	    break;
+            return bigcmp(dp1, dp2) == 0;
 
 	 case T_Real: {
             double r1, r2;
             DGetReal(*dp1, r1);
             DGetReal(*dp2, r2);
-            result = (r1 == r2);
-	    break;
+            return r1 == r2;
          }
 
-          case T_Ucs:
-              /* Compare the utf8 strings */
-              result = equiv(&UcsBlk(*dp1).utf8, &UcsBlk(*dp2).utf8);
-              break;
+         case T_Ucs:
+            /* Compare the utf8 strings */
+            return equiv(&UcsBlk(*dp1).utf8, &UcsBlk(*dp2).utf8);
 
-          case T_Cset: {
+         case T_Cset: {
+            word i;
 	    /*
 	     * Compare the ranges.
 	     */
-             result = (CsetBlk(*dp1).n_ranges == CsetBlk(*dp2).n_ranges);
-             if (result) {
-                 for (i = 0; i < CsetBlk(*dp1).n_ranges; i++) {
-                     if (CsetBlk(*dp1).range[i].from != CsetBlk(*dp2).range[i].from ||
-                         CsetBlk(*dp1).range[i].to != CsetBlk(*dp2).range[i].to) {
-                         result = 0;
-                         break;
-                     }
+             if (CsetBlk(*dp1).n_ranges != CsetBlk(*dp2).n_ranges)
+                 return 0;
+             for (i = 0; i < CsetBlk(*dp1).n_ranges; i++) {
+                 if (CsetBlk(*dp1).range[i].from != CsetBlk(*dp2).range[i].from ||
+                     CsetBlk(*dp1).range[i].to != CsetBlk(*dp2).range[i].to) {
+                     return 0;
                  }
              }
-          }
-	}
-   else
-      /*
-       * dp1 and dp2 are of different types, so they can't be
-       *  equivalent.
-       */
-      result = 0;
+             return 1;
+         }
+      }
 
-   return result;
+   /*
+    * dp1 and dp2 are of different types, or aren't atomic, so they can't be
+    *  equivalent.
+    */
+
+   return 0;
    }
 
 #begdef LexCmp(func_name, char_cmp)

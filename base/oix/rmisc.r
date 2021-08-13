@@ -23,36 +23,6 @@ static char *op_arity[] = { NULL,
                             "binary",
                             "ternary"};
 
-
-/* 
- * eq - compare two Icon strings for equality
- */
-int eq(dptr d1, dptr d2)
-{
-	char *s1, *s2;
-	int i;
-
-	if (StrLen(*d1) != StrLen(*d2))
-	   return 0;
-	s1 = StrLoc(*d1);
-	s2 = StrLoc(*d2);
-	for (i = 0; i < StrLen(*d1); i++)
-	   if (*s1++ != *s2++) 
-	      return 0;
-	return 1;
-}
-
-/*
- * Compare an Icon string and a C string for equality.
- */
-int ceq(dptr dp, char *s)
-{
-    struct descrip t;
-    CMakeStr(s, &t);
-    return eq(&t, dp);
-}
-
-
 /*
  * Get variable descriptor from name.  Returns the (integer-encoded) scope
  *  of the variable (Succeeded for keywords), or Failed if the variable
@@ -147,7 +117,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
         dp = pf->fvars->desc;
         for (i = bp->nparam; i > 0; i--) {
-            if (eq(s, *np)) {
+            if (equiv(s, *np)) {
                /* Don't allow var access to the self argument in an instance method */
                if (bp->field && !(bp->field->flags & M_Static) && i == bp->nparam)
                    return Failed;
@@ -159,7 +129,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
         }
 
         for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
-            if (eq(s, *np)) {
+            if (equiv(s, *np)) {
                 MakeVarDesc(D_NamedVar, dp, vp);
                 return LocalName;
             }
@@ -169,7 +139,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
         dp = bp->fstatic; /* Check the local static names. */
         for (i = bp->nstatic; i > 0; i--) {
-            if (eq(s, *np)) {
+            if (equiv(s, *np)) {
                 MakeVarDesc(D_NamedVar, dp, vp);
                 return StaticName;
             }

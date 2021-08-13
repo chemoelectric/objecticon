@@ -3,7 +3,10 @@ include ../../Makedefs
 ifeq (@HAVE_LIBDL@,)
   TARGET=
 else
-  TARGET=objecticonipclib.so objecticonmemdebug.so
+  TARGET=objecticonmemdebug.so
+  ifneq (@HAVE_SYSV_IPC@,)
+    TARGET:=$(TARGET) objecticonipclib.so
+  endif
   ifneq (@MYSQL_VERSION@,)
     TARGET:=$(TARGET) objecticonmysqllib.so
   endif

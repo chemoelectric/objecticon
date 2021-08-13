@@ -1,9 +1,7 @@
-#passthru #include <unistd.h>
 #passthru #include <sys/ipc.h>
 #passthru #include <sys/shm.h>
 #passthru #include <sys/sem.h>
 #passthru #include <sys/msg.h>
-#passthru #include <sys/types.h>
 
 typedef union {
     int val;

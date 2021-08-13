@@ -197,6 +197,27 @@ AC_DEFUN([AX_CHECK_COMPUTED_GOTO],
    fi
 ])
 
+AC_DEFUN([AX_CHECK_SYSV_IPC],
+[
+        unset HAVE_SYSV_IPC
+        AC_CACHE_CHECK([for System V IPC headers], ax_cv_sysv_ipc, [
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+                        #include <sys/types.h>
+                        #include <sys/ipc.h>
+                        #include <sys/shm.h>
+                        #include <sys/sem.h>
+                        #include <sys/msg.h>
+                ]], [])],
+                [ax_cv_sysv_ipc=yes],
+                [ax_cv_sysv_ipc=no])
+                ])
+        if test "$ax_cv_sysv_ipc" = yes
+        then
+                HAVE_SYSV_IPC=yes
+        fi
+        AC_SUBST(HAVE_SYSV_IPC)
+])
+
 AC_DEFUN(AC_CHECK_GLOBALS,
 [for ac_global in $1
 do
