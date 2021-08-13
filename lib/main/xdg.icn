@@ -688,13 +688,14 @@ final abstract class IconTheme()
    # `size` is treated as an already-scaled value.
    #
    public static find_icon(icon, size, scale)
-      local k, v
+      local k, v, tried
       icon := need_string(icon)
       size := need_integer(size, 1)
       scale := need_real(\scale, 1.0) | Gui.SCALE
       k := icon || "/" || size || "/" || scale
       unless v := member(FIND_ICON_CACHE, k) then {
-         v := find_icon_helper(icon, size, scale, theme, set()) | lookup_fallback_icon(icon)
+         tried := set()
+         v := find_icon_helper(icon, size, scale, theme | "hicolor", tried) | lookup_fallback_icon(icon)
          insert(FIND_ICON_CACHE, k, v)
       }
       return \v
