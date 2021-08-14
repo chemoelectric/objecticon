@@ -1127,18 +1127,26 @@ final abstract class Mime()
    end
 
    private static process_mimeapps_list(f, mm)
-      local a, k, mime_type, r
+      local a, k, mime_type, r, id
       r := Edit(f, table(), table())
       every a := member(mm, u"Default Applications" | u"Added Associations") do {
          every k := key(a) do {
             mime_type := Text.lower(string(k))
-            every inserts(r.add, mime_type, "" ~== separate(string(member(a, k)), ';'))
+            every id := "" ~== separate(string(member(a, k)), ';') do {
+               # The entry may not refer to a desktop id from an
+               # earlier (higher precedence) directory.
+               unless member(PATHS, id) then
+                  inserts(r.add, mime_type, id)
+            }
          }
       }
       if a := member(mm, u"Removed Associations") then {
          every k := key(a) do {
             mime_type := Text.lower(string(k))
-            every inserts(r.del, mime_type, "" ~== separate(string(member(a, k)), ';'))
+            every id := "" ~== separate(string(member(a, k)), ';') do {
+               unless member(PATHS, id) then
+                  inserts(r.del, mime_type, id)
+            }
          }
       }
       push(EDITS, r)
@@ -1154,14 +1162,6 @@ final abstract class Mime()
             i := Internal.compare(d1.source, d2.source)
       }
       return i
-   end
-
-   private static gen_mimeapps_lists()
-      local d
-      every d := BaseDir.gen_config_dirs() do
-         suspend FilePath(d).child("mimeapps.list").str()
-      every d := BaseDir.gen_data_dirs() do
-         suspend FilePath(d).walk("applications", "mimeapps.list").str()
    end
 
    private static load_DE_ini(path)
@@ -1191,8 +1191,22 @@ final abstract class Mime()
       PATHS := table()
       DEFINED := table()
       LOADED := table()
+
+      # Load customisations from the mimeapps.lists files.
+      every d := BaseDir.gen_config_dirs() do {
+         f := FilePath(d).child("mimeapps.list").str()
+         if mm := Util.load_ini_file(f) then
+            process_mimeapps_list(f, mm)
+      }
+
       every d := BaseDir.gen_data_dirs() do {
          app := FilePath(d).child("applications")
+
+         # Load customisations from the mimeapps.lists file.
+         f := app.child("mimeapps.list").str()
+         if mm := Util.load_ini_file(f) then
+            process_mimeapps_list(f, mm)
+
          # Scan the applications directory recursively, recording new
          # entries added to PATHS, in N (note that existing entries in
          # PATHS are never overwritten).
@@ -1221,11 +1235,6 @@ final abstract class Mime()
                }
             }
          }
-      }
-      # Load customisations from the mimeapps.lists files.
-      every f := gen_mimeapps_lists() do {
-         if mm := Util.load_ini_file(f) then
-            process_mimeapps_list(f, mm)
       }
       tidy()
    end
