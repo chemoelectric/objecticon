@@ -812,7 +812,8 @@ final abstract class Mime()
       DEFINED,            # A map of mime-type (string) to sets of IDs (strings), being
                           #   the mappings found in the .desktop files
       LOADED,             # A map of ID (string) to DesktopEntry or null
-      DESKTOP_ENTRIES     # A map of mime-types (string) to list of DesktopEntry objects.
+      DESKTOP_ENTRIES,    # A map of mime-types (string) to list of DesktopEntry objects.
+      ALL_DESKTOP_ENTRIES # A map of mime-types (string) to list of DesktopEntry objects.
 
    private static const
       CACHE_DIRS
@@ -835,6 +836,7 @@ final abstract class Mime()
       GENERIC_ICONS := read_generic_icons()
       MIME_GRAPH := read_mime_graph()
       DESKTOP_ENTRIES := table()
+      ALL_DESKTOP_ENTRIES := table()
       scan_desktop_entries()
    end
 
@@ -870,6 +872,9 @@ final abstract class Mime()
       write("\N\NDESKTOP_ENTRIES")
       write("===============")
       to_stdout(DESKTOP_ENTRIES, 3)
+      write("\N\NALL_DESKTOP_ENTRIES")
+      write("===============")
+      to_stdout(ALL_DESKTOP_ENTRIES, 3)
       write()
    end
 
@@ -1251,13 +1256,13 @@ final abstract class Mime()
    #
    # Given a file path (as a string), if the path represents an
    # existing directory, then the desktop entries for mime type
-   # "inode/directory" are returned; otherwise
+   # "inode/directory" (and its alternatives) are returned; otherwise
    # `gen_desktop_entries_for_file()` is called on the last path
    # component.
    #
    public static gen_desktop_entries_for_path(file)
       suspend if Files.is_directory(file) then
-         gen_desktop_entries("inode/directory")
+         gen_all_desktop_entries("inode/directory")
       else
          gen_desktop_entries_for_file(FilePath(file).get(-1))
    end
@@ -1267,11 +1272,27 @@ final abstract class Mime()
    # filename (without path), with the most suitable first.
    #
    public static gen_desktop_entries_for_file(file)
-      suspend Unique{gen_desktop_entries(alternative_mime_types(get_mime_type_for_file(file)))}
+      suspend gen_all_desktop_entries(get_mime_type_for_file(file))
    end
 
    #
-   # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
+   # Given a mime type (string), generate the corresponding
+   # `DesktopEntry` objects, for that type, in preference order, and
+   # then likewise for all the alternative mime types.
+   #
+   public static gen_all_desktop_entries(mt)
+      local l
+      mt := need_mime_type(mt)
+      unless l := member(ALL_DESKTOP_ENTRIES, mt) then {
+         l := ipl.pdco.List{ Unique{ gen_desktop_entries(alternative_mime_types(mt)) } }
+         insert(ALL_DESKTOP_ENTRIES, mt, l)
+      }
+      suspend .!l
+   end
+
+   #
+   # Given a mime type (string), generate the corresponding
+   # `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
       local l, de, r
