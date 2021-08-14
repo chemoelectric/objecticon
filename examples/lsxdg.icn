@@ -62,7 +62,9 @@ procedure usage()
    help_line("icon-file", "Find icon for file, size and optional scale")
    help_line("find-icon", "Find icon for icon name, size and optional scale")
    help_line("de", "List desktop entries for mime type")
+   help_line("all-de", "List desktop entries for mime type, and all of its alternatives")
    help_line("de-file", "List desktop entries for file")
+   help_line("de-path", "List desktop entries for path, which may be a directory")
    help_line("dirs", "Show config and data directories")
    help_line("theme", "Show the icon theme name")
    help_line("cmd", "List commands for file")
@@ -122,9 +124,19 @@ procedure main(a)
          every write(to_string(Mime.gen_desktop_entries(s), 3, &yes))
       }
 
+      "all-de": {
+         s := need_one(a)
+         every write(to_string(Mime.gen_all_desktop_entries(s), 3, &yes))
+      }
+
       "de-file": {
          s := need_one(a)
          every write(to_string(Mime.gen_desktop_entries_for_file(no_path(s)), 3, &yes))
+      }
+
+      "de-path": {
+         s := need_one(a)
+         every write(to_string(Mime.gen_desktop_entries_for_path(s), 3, &yes))
       }
 
       "dirs": {
