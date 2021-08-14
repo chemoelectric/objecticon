@@ -160,7 +160,7 @@ procedure main(a)
          every cmd_out(if u1.scheme == "file" then
                           Mime.gen_desktop_entries_for_path(s1.file)
                        else
-                          Mime.gen_desktop_entries("x-scheme-handler/" || u1.scheme),
+                          Mime.gen_desktop_entries_for_scheme(u1.scheme),
                        s1)
       }
 

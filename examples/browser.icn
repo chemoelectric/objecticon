@@ -1443,7 +1443,7 @@ class BrowserTab(TabItem, BrowserUI)
          }
       } else {
          subst := Subst.from_URL(url)
-         every de := Mime.gen_desktop_entries("x-scheme-handler/" || url.scheme) do
+         every de := Mime.gen_desktop_entries_for_scheme(url.scheme) do
             m1.add(BrowserDialog.create_open_with_menu_item(de, subst))
          if url.scheme == ("http" | "https") then {
             m.add(TextMenuItem().
@@ -1576,7 +1576,7 @@ class BrowserTab(TabItem, BrowserUI)
       } else {
          if not( url.scheme == ("http" | "https") ) &
             subst := Subst.from_URL(url) &
-            de := Mime.gen_desktop_entries("x-scheme-handler/" || url.scheme)
+            de := Mime.gen_desktop_entries_for_scheme(url.scheme)
          then {
             de.launch_prog(subst)
             parent_dialog.update_visited(url)

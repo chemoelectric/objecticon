@@ -1277,6 +1277,14 @@ final abstract class Mime()
    end
 
    #
+   # Convenient method to call `gen_all_desktop_entries()` for the
+   # mime type `x-scheme-handler/` with subtype `s`.
+   #
+   public static gen_desktop_entries_for_scheme(s)
+      suspend gen_all_desktop_entries("x-scheme-handler/" || s)
+   end
+
+   #
    # Given a mime type (string), generate the corresponding
    # `DesktopEntry` objects, for that type, in preference order, and
    # then likewise for all the alternative mime types.
