@@ -966,7 +966,8 @@ final abstract class Mime()
             }
          }
          if ((not member(seen, x := "text/plain")) & match("text/", !seen)) |
-            ((not member(seen, x := "application/octet-stream")) & not match("inode/", !seen))
+            ((not member(seen, x := "application/octet-stream")) &
+                  not match("inode/" | "x-scheme-handler/" | "x-content/", !seen))
          then {
             insert(seen, x)
             put(l, x)
