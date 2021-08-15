@@ -14,6 +14,10 @@ procedure file_link(s)
       s
 end
 
+procedure cache_str(d)
+   return if Mime.use_mimeinfo_cache(d) then " (C)" else ""
+end
+
 procedure need_one(a)
    if *a = 1 then
       return ucs(a[1]) | help_stop("Parameter not UTF-8")
@@ -140,9 +144,9 @@ procedure main(a)
       }
 
       "dirs": {
-         write("Data Home: ", file_link(BaseDir.get_data_home()))
+         write("Data Home: ", file_link(d := BaseDir.get_data_home()), cache_str(d))
          every d := Files.split_paths(BaseDir.get_data_dirs()) do
-            write("Data Dirs: ", file_link(d), if Mime.use_mimeinfo_cache(d) then " (C)" else "")
+            write("Data Dirs: ", file_link(d), cache_str(d))
          write("Config Home: ", file_link(BaseDir.get_config_home()))
          every write("Config Dirs: ", file_link(Files.split_paths(BaseDir.get_config_dirs())))
       }
