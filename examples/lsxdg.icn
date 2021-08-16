@@ -71,6 +71,7 @@ procedure usage()
    help_line("de-path", "List desktop entries for path, which may be a directory")
    help_line("dirs", "Show config and data directories")
    help_line("theme", "Show the icon theme name")
+   help_line("term-cmd", "Show the command used to launch terminal apps")
    help_line("cmd", "List commands for file")
    help_line("cmd-url", "List commands for URL")
    help_line("dump-mime", "Print the mime database to stdout")
@@ -170,6 +171,10 @@ procedure main(a)
 
       "theme" : {
          write(IconTheme.theme)
+      }
+
+      "term-cmd" : {
+         write(DesktopEntry.TERM_CMD)
       }
 
       "dump-mime": {
