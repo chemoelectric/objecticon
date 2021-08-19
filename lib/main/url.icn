@@ -442,12 +442,12 @@ class URL(ObjectOutput)
       local i
       i := Class.create_instance()
       i.scheme := Text.lower(scheme)
-      i.userinfo := /userinfo | need_text(userinfo)
-      i.host := /host | need_text(host)
-      i.port := /port | need_integer(port, 0)
+      i.userinfo := need_text(\userinfo)
+      i.host := need_text(\host)
+      i.port := need_integer(\port, 0)
       i.path := need_text(path)
-      i.query := /query | need_text(query)
-      i.fragment := /fragment | need_text(fragment)
+      i.query := need_text(\query)
+      i.fragment := need_text(\fragment)
       return i
    end
 
