@@ -510,8 +510,8 @@ class Ieval(MinimalObjectOutput)
          else
             do_line_editor()
          encode_to_file(hfile, input.get_history()) | stopf("Couldn't encode to history file %s: %w", hfile)
+         write("Ciao")
       }
-      write("Ciao")
    end
 
    private prelim()
@@ -553,7 +553,7 @@ class Ieval(MinimalObjectOutput)
       # History is set here (rather than when input is created), so
       # that history is not truncated to the default length (hlim may
       # be set in the initialization files).
-      input.set_history(history)
+      (\input).set_history(history)
    end
 
    private body(s)
