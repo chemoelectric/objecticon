@@ -13,7 +13,7 @@ struct errtab {
 /*
  * Run-time error numbers and text.
  */
-struct errtab errtab[] = {
+static struct errtab errtab[] = {
     {101, "Integer expected or out of range"},
     {102, "Numeric expected or out of range"},
     {103, "String expected"},
