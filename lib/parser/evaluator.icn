@@ -77,61 +77,46 @@ class Evaluator()
       env,
       node
 
-   private const
-      dispatch,
-      cdispatch
-
    private compute_loops(n, loop, scan)
       if is(n, Node) then
-         cdispatch[n.label](n, loop, scan)
-   end
-
-   private cdo_loop(n, loop, scan)
-      loops[n] := loop
-      scans[n] := scan
-      every compute_loops(n.gen(), n)
-   end
-
-   private cdo_create(n, loop, scan)
-      every compute_loops(n.gen())
-   end
-
-   private cdo_break(n, loop, scan)
-      loops[n] := \loop | throw("break without loop")
-      scans[n] := scan
-   end
-
-   private cdo_breakexpr(n, loop, scan)
-      loops[n] := \loop | throw("break without loop")
-      scans[n] := scan
-      every compute_loops(n.gen(), loops[loop], scans[loop])
-   end
-
-   private cdo_next(n, loop, scan)
-      loops[n] := \loop | throw("next without loop")
-      scans[n] := scan
-   end
-
-   private cdo_exit(n, loop, scan)
-      throw("suspend/return/succeed/link/fail not allowed")
-   end
-
-   private cdo_scan(n, loop, scan)
-      every compute_loops(n.child(1), loop, scan)
-      /scan := n
-      every compute_loops(n.child(3), loop, scan)
-   end
-
-   private cdo_default(n, loop, scan)
-      every compute_loops(n.gen(), loop, scan)
+         case n.label of {
+            "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat": {
+               loops[n] := loop
+               scans[n] := scan
+               every compute_loops(n.gen(), n)
+            }
+            "create": compute_loops(n.child(2))
+            "coinvoke": {
+               compute_loops(n.child(1), loop, scan)
+               every compute_loops(ExprList(n, 3).gen().pos)
+            }
+            "break"|"breakexpr": {
+               loops[n] := \loop | throw("break without loop")
+               scans[n] := scan
+               compute_loops(n.child(2), loops[loop], scans[loop])
+            }
+            "next": {
+               loops[n] := \loop | throw("next without loop")
+               scans[n] := scan
+            }
+            "augqmark"|"Bqmark": {
+               compute_loops(n.child(1), loop, scan)
+               /scan := n
+               compute_loops(n.child(3), loop, scan)
+            }
+            "fail"|"return"|"returnexpr"|"succeed"|"succeedexpr"|"link"|
+               "linkexpr"|"suspend"|"suspendexpr"|"suspendexprdo":
+               throw("suspend/return/succeed/link/fail not allowed")
+            default: every compute_loops(n.gen(), loop, scan)
+         }
    end
 
    private loop(n, ex)
       local res
       brk[n] := &current
-      while res := !ex do {
-         (res === "next") | return res
-      }
+      while res := !ex do
+         unless res === "next" then
+            return res
    end
 
    private restore(n)
@@ -164,7 +149,7 @@ class Evaluator()
       return create E(e)
    end
 
-   private pos_list(x)
+   private static pos_list(x)
       return ipl.pdco.List{ x.gen().pos }
    end
 
@@ -373,114 +358,20 @@ class Evaluator()
       suspend f() 
    end
 
-   private do_and(n) suspend E(n.child(1)) & E(n.child(3)) end
-   private do_Bqmark(n) suspend 1(E(n.child(1)),save(n)) ? E(n.child(3)) end
-   private do_swap(n) suspend E(n.child(1)) :=: E(n.child(3)) end
-   private do_assign(n) suspend E(n.child(1)) := E(n.child(3)) end
-   private do_revswap(n) suspend E(n.child(1)) <-> E(n.child(3)) end
-   private do_revassign(n) suspend E(n.child(1)) <- E(n.child(3)) end
-   private do_augconcat(n) suspend E(n.child(1)) ||:= E(n.child(3)) end
-   private do_auglconcat(n) suspend E(n.child(1)) |||:= E(n.child(3)) end
-   private do_augdiff(n) suspend E(n.child(1)) --:= E(n.child(3)) end
-   private do_augunion(n) suspend E(n.child(1)) ++:= E(n.child(3)) end
-   private do_augplus(n) suspend E(n.child(1)) +:= E(n.child(3)) end
-   private do_augminus(n) suspend E(n.child(1)) -:= E(n.child(3)) end
-   private do_augstar(n) suspend E(n.child(1)) *:= E(n.child(3)) end
-   private do_auginter(n) suspend E(n.child(1)) **:= E(n.child(3)) end
-   private do_augslash(n) suspend E(n.child(1)) /:= E(n.child(3)) end
-   private do_augmod(n) suspend E(n.child(1)) %:= E(n.child(3)) end
-   private do_augcaret(n) suspend E(n.child(1)) ^:= E(n.child(3)) end
-   private do_augnmeq(n) suspend E(n.child(1)) =:= E(n.child(3)) end
-   private do_augequiv(n) suspend E(n.child(1)) ===:= E(n.child(3)) end
-   private do_augnmge(n) suspend E(n.child(1)) >=:= E(n.child(3)) end
-   private do_augnmgt(n) suspend E(n.child(1)) >:= E(n.child(3)) end
-   private do_augnmle(n) suspend E(n.child(1)) := E(n.child(3)) end
-   private do_augnmlt(n) suspend E(n.child(1)) <:= E(n.child(3)) end
-   private do_augnmne(n) suspend E(n.child(1)) ~=:= E(n.child(3)) end
-   private do_augnequiv(n) suspend E(n.child(1)) ~===:= E(n.child(3)) end
-   private do_augseq(n) suspend E(n.child(1)) ==:= E(n.child(3)) end
-   private do_augsge(n) suspend E(n.child(1)) >>=:= E(n.child(3)) end
-   private do_augsgt(n) suspend E(n.child(1)) >>:= E(n.child(3)) end
-   private do_augsle(n) suspend E(n.child(1)) <<=:= E(n.child(3)) end
-   private do_augslt(n) suspend E(n.child(1)) <<:= E(n.child(3)) end
-   private do_augsne(n) suspend E(n.child(1)) ~==:= E(n.child(3)) end
-   private do_augqmark(n) suspend 1(E(n.child(1)),save(n)) ?:= E(n.child(3)) end
-   private do_augand(n) suspend E(n.child(1)) &:= E(n.child(3)) end
-   private do_augat(n) suspend E(n.child(1)) @:= E(n.child(3)) end
-   private do_augbang(n) suspend E(n.child(1)) !:= E(n.child(3)) end
-   private do_to(n) suspend E(n.child(1)) to E(n.child(3)) end
-   private do_toby(n) suspend E(n.child(1)) to E(n.child(3)) by E(n.child(5)) end
-   private do_Bbar(n) suspend E(n.child(1)) | E(n.child(3)) end
-   private do_Bseq(n) suspend E(n.child(1)) == E(n.child(3)) end
-   private do_Bsge(n) suspend E(n.child(1)) >>= E(n.child(3)) end
-   private do_Bsgt(n) suspend E(n.child(1)) >> E(n.child(3)) end
-   private do_Bsle(n) suspend E(n.child(1)) <<= E(n.child(3)) end
-   private do_Bslt(n) suspend E(n.child(1)) << E(n.child(3)) end
-   private do_Bsne(n) suspend E(n.child(1)) ~== E(n.child(3)) end
-   private do_Bnmeq(n) suspend E(n.child(1)) = E(n.child(3)) end
-   private do_Bnmge(n) suspend E(n.child(1)) >= E(n.child(3)) end
-   private do_Bnmgt(n) suspend E(n.child(1)) > E(n.child(3)) end
-   private do_Bnmle(n) suspend E(n.child(1)) <= E(n.child(3)) end
-   private do_Bnmlt(n) suspend E(n.child(1)) < E(n.child(3)) end
-   private do_Bnmne(n) suspend E(n.child(1)) ~= E(n.child(3)) end
-   private do_Bequiv(n) suspend E(n.child(1)) === E(n.child(3)) end
-   private do_Bnequiv(n) suspend E(n.child(1)) ~=== E(n.child(3)) end
-   private do_Bconcat(n) suspend E(n.child(1)) || E(n.child(3)) end
-   private do_Blconcat(n) suspend E(n.child(1)) ||| E(n.child(3)) end
-   private do_Bplus(n) suspend E(n.child(1)) + E(n.child(3)) end
-   private do_Bdiff(n) suspend E(n.child(1)) -- E(n.child(3)) end
-   private do_Bunion(n) suspend E(n.child(1)) ++ E(n.child(3)) end
-   private do_Bminus(n) suspend E(n.child(1)) - E(n.child(3)) end
-   private do_Bstar(n) suspend E(n.child(1)) * E(n.child(3)) end
-   private do_Binter(n) suspend E(n.child(1)) ** E(n.child(3)) end
-   private do_Bslash(n) suspend E(n.child(1)) / E(n.child(3)) end
-   private do_Bmod(n) suspend E(n.child(1)) % E(n.child(3)) end
-   private do_Bcaret(n) suspend E(n.child(1)) ^ E(n.child(3)) end
-   private do_Bbackslash(n) suspend E(n.child(1)) \ E(n.child(3)) end
-   private do_Bat(n) suspend E(n.child(1)) @ E(n.child(3)) end
-   private do_Bbang(n) suspend E(n.child(1)) ! E(n.child(3)) end
-   private do_Uat(n) suspend  @E(n.child(2)) end
-   private do_Unot(n) suspend not E(n.child(2)) end
-   private do_Ubar(n) suspend |E(n.child(2)) end
-   private do_Uconcat(n) suspend |E(n.child(2)) end
-   private do_Ulconcat(n) suspend |E(n.child(2)) end
-   private do_Udot(n) suspend .E(n.child(2)) end
-   private do_Ubang(n) suspend !E(n.child(2)) end
-   private do_Udiff(n) suspend --E(n.child(2)) end
-   private do_Uplus(n) suspend +E(n.child(2)) end
-   private do_Ustar(n) suspend *E(n.child(2)) end
-   private do_Uslash(n) suspend /E(n.child(2)) end
-   private do_Ucaret(n) suspend ^E(n.child(2)) end
-   private do_Uinter(n) suspend **E(n.child(2)) end
-   private do_Utilde(n) suspend ~E(n.child(2)) end
-   private do_Uminus(n) suspend -E(n.child(2)) end
-   private do_Unmeq(n) suspend =E(n.child(2)) end
-   private do_Unmne(n) suspend ~=E(n.child(2)) end
-   private do_Useq(n) suspend ==E(n.child(2)) end
-   private do_Usne(n) suspend ~==E(n.child(2)) end
-   private do_Uequiv(n) suspend ===E(n.child(2)) end
-   private do_Uunion(n) suspend ++E(n.child(2)) end
-   private do_Uqmark(n) suspend ?E(n.child(2)) end
-   private do_Unequiv(n) suspend ~===E(n.child(2)) end
-   private do_Ubackslash(n) suspend \E(n.child(2)) end
-   private do_field(n) suspend Class_get(E(n.child(1)), n.child(3).s) end
-   private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
-   private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
-   private do_unless(n) suspend unless E(n.child(2)) then E(n.child(4)) end
-   private do_unlesselse(n) suspend unless E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
-   private do_whiledo(n) suspend E( loop(n, create  while E(n.child(2)) do E(n.child(4)) )) end
-   private do_while(n) suspend E( loop(n, create  while E(n.child(2)) )) end
-   private do_untildo(n) suspend E( loop(n, create  until E(n.child(2)) do E(n.child(4)) )) end
-   private do_until(n) suspend E( loop(n, create  until E(n.child(2)) )) end
-   private do_repeat(n) suspend E( loop(n, create  repeat E(n.child(2)) )) end
-   private do_create(n) return create_E(n.child(2)) end
-   private do_brace(n) suspend E(n.child(2)) end
-   private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
-   private do_break(n) restore(n) ; return coact(Factory.new_keyword(, "null"), brk[loops[n]]) end
-   private do_next(n) restore(n) ; return coact("next", brk[loops[n]]) end
-   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[loops[n]]) end
-   private do_Empty(n) return end
-   private do_default(n) fatalerr("Not implemented: " || n.label) end
+   private do_break(n)
+      restore(n)
+      return coact(Factory.new_keyword(, "null"), brk[loops[n]])
+   end
+
+   private do_next(n)
+      restore(n)
+      return coact("next", brk[loops[n]])
+   end
+
+   private do_breakexpr(n)
+      restore(n)
+      return coact(n.child(2), brk[loops[n]])
+   end
 
    private E(n)
       if is(n, Token) then
@@ -489,7 +380,125 @@ class Evaluator()
             YY.INTLIT|YY.REALLIT|YY.STRINGLIT|YY.CSETLIT|YY.UCSLIT: n.val
             default : fatalerr("Not implemented: token " || to_string(n))
          }
-      suspend dispatch[n.label](n)
+      suspend case n.label of {
+         "Bat": E(n.child(1)) @ E(n.child(3))
+         "Bbackslash": E(n.child(1)) \ E(n.child(3))
+         "Bbang": E(n.child(1)) ! E(n.child(3))
+         "Bbar": E(n.child(1)) | E(n.child(3))
+         "Bcaret": E(n.child(1)) ^ E(n.child(3))
+         "Bconcat": E(n.child(1)) || E(n.child(3))
+         "Bdiff": E(n.child(1)) -- E(n.child(3))
+         "Bequiv": E(n.child(1)) === E(n.child(3))
+         "Binter": E(n.child(1)) ** E(n.child(3))
+         "Blconcat": E(n.child(1)) ||| E(n.child(3))
+         "Bminus": E(n.child(1)) - E(n.child(3))
+         "Bmod": E(n.child(1)) % E(n.child(3))
+         "Bnequiv": E(n.child(1)) ~=== E(n.child(3))
+         "Bnmeq": E(n.child(1)) = E(n.child(3))
+         "Bnmge": E(n.child(1)) >= E(n.child(3))
+         "Bnmgt": E(n.child(1)) > E(n.child(3))
+         "Bnmle": E(n.child(1)) <= E(n.child(3))
+         "Bnmlt": E(n.child(1)) < E(n.child(3))
+         "Bnmne": E(n.child(1)) ~= E(n.child(3))
+         "Bplus": E(n.child(1)) + E(n.child(3))
+         "Bqmark": 1(E(n.child(1)),save(n)) ? E(n.child(3))
+         "Bseq": E(n.child(1)) == E(n.child(3))
+         "Bsge": E(n.child(1)) >>= E(n.child(3))
+         "Bsgt": E(n.child(1)) >> E(n.child(3))
+         "Bslash": E(n.child(1)) / E(n.child(3))
+         "Bsle": E(n.child(1)) <<= E(n.child(3))
+         "Bslt": E(n.child(1)) << E(n.child(3))
+         "Bsne": E(n.child(1)) ~== E(n.child(3))
+         "Bstar": E(n.child(1)) * E(n.child(3))
+         "Bunion": E(n.child(1)) ++ E(n.child(3))
+         "Empty": {}
+         "Uat": @E(n.child(2))
+         "Ubackslash": \E(n.child(2))
+         "Ubang": !E(n.child(2))
+         "Ucaret": ^E(n.child(2))
+         "Ubar"|"Uconcat"|"Ulconcat": |E(n.child(2))
+         "Udiff": --E(n.child(2))
+         "Udot": .E(n.child(2))
+         "Uequiv": ===E(n.child(2))
+         "Uinter": **E(n.child(2))
+         "Uminus": -E(n.child(2))
+         "Unequiv": ~===E(n.child(2))
+         "Unmeq": =E(n.child(2))
+         "Unmne": ~=E(n.child(2))
+         "Unot": not E(n.child(2))
+         "Uplus": +E(n.child(2))
+         "Uqmark": ?E(n.child(2))
+         "Useq": ==E(n.child(2))
+         "Uslash": /E(n.child(2))
+         "Usne": ~==E(n.child(2))
+         "Ustar": *E(n.child(2))
+         "Utilde": ~E(n.child(2))
+         "Uunion": ++E(n.child(2))
+         "and": E(n.child(1)) & E(n.child(3))
+         "assign": E(n.child(1)) := E(n.child(3))
+         "augand": E(n.child(1)) &:= E(n.child(3))
+         "augat": E(n.child(1)) @:= E(n.child(3))
+         "augbang": E(n.child(1)) !:= E(n.child(3))
+         "augcaret": E(n.child(1)) ^:= E(n.child(3))
+         "augconcat": E(n.child(1)) ||:= E(n.child(3))
+         "augdiff": E(n.child(1)) --:= E(n.child(3))
+         "augequiv": E(n.child(1)) ===:= E(n.child(3))
+         "auginter": E(n.child(1)) **:= E(n.child(3))
+         "auglconcat": E(n.child(1)) |||:= E(n.child(3))
+         "augminus": E(n.child(1)) -:= E(n.child(3))
+         "augmod": E(n.child(1)) %:= E(n.child(3))
+         "augnequiv": E(n.child(1)) ~===:= E(n.child(3))
+         "augnmeq": E(n.child(1)) =:= E(n.child(3))
+         "augnmge": E(n.child(1)) >=:= E(n.child(3))
+         "augnmgt": E(n.child(1)) >:= E(n.child(3))
+         "augnmle": E(n.child(1)) <=:= E(n.child(3))
+         "augnmlt": E(n.child(1)) <:= E(n.child(3))
+         "augnmne": E(n.child(1)) ~=:= E(n.child(3))
+         "augplus": E(n.child(1)) +:= E(n.child(3))
+         "augqmark": 1(E(n.child(1)),save(n)) ?:= E(n.child(3))
+         "augseq": E(n.child(1)) ==:= E(n.child(3))
+         "augsge": E(n.child(1)) >>=:= E(n.child(3))
+         "augsgt": E(n.child(1)) >>:= E(n.child(3))
+         "augslash": E(n.child(1)) /:= E(n.child(3))
+         "augsle": E(n.child(1)) <<=:= E(n.child(3))
+         "augslt": E(n.child(1)) <<:= E(n.child(3))
+         "augsne": E(n.child(1)) ~==:= E(n.child(3))
+         "augstar": E(n.child(1)) *:= E(n.child(3))
+         "augunion": E(n.child(1)) ++:= E(n.child(3))
+         "brace": E(n.child(2))
+         "brack": do_brack(n)
+         "break": do_break(n)
+         "breakexpr": do_breakexpr(n)
+         "case": do_case(n)
+         "coinvoke": do_coinvoke(n)
+         "compound": { E(n.child(1)) ; E(n.child(3)) }
+         "create": create_E(n.child(2))
+         "dottedident": do_dottedident(n)
+         "every": do_every(n)
+         "everydo": do_everydo(n)
+         "field": Class_get(E(n.child(1)), n.child(3).s)
+         "if": if E(n.child(2)) then E(n.child(4))
+         "ifelse": if E(n.child(2)) then E(n.child(4)) else E(n.child(6))
+         "invoke": do_invoke(n)
+         "keyword": do_keyword(n)
+         "next": do_next(n)
+         "paren": do_paren(n)
+         "repeat": E( loop(n, create  repeat E(n.child(2)) ))
+         "revassign": E(n.child(1)) <- E(n.child(3))
+         "revswap": E(n.child(1)) <-> E(n.child(3))
+         "section": do_section(n)
+         "subscript": do_subscript(n)
+         "swap": E(n.child(1)) :=: E(n.child(3))
+         "to": E(n.child(1)) to E(n.child(3))
+         "toby": E(n.child(1)) to E(n.child(3)) by E(n.child(5))
+         "unless": unless E(n.child(2)) then E(n.child(4))
+         "unlesselse": unless E(n.child(2)) then E(n.child(4)) else E(n.child(6))
+         "until": E( loop(n, create  until E(n.child(2)) ))
+         "untildo": E( loop(n, create  until E(n.child(2)) do E(n.child(4)) ))
+         "while": E( loop(n, create  while E(n.child(2)) ))
+         "whiledo": E( loop(n, create  while E(n.child(2)) do E(n.child(4)) ))
+         default: fatalerr("Not implemented: " || n.label)
+      }
    end
    
    public eval()
@@ -523,139 +532,5 @@ class Evaluator()
 
    public get_imports()
       suspend .!\imports
-   end
-
-   public new()
-      self.dispatch := table(do_default,
-                             "Bat", do_Bat,
-                             "Bbackslash", do_Bbackslash,
-                             "Bbang", do_Bbang,
-                             "Bbar", do_Bbar,
-                             "Bcaret", do_Bcaret,
-                             "Bconcat", do_Bconcat,
-                             "Bdiff", do_Bdiff,
-                             "Bequiv", do_Bequiv,
-                             "Binter", do_Binter,
-                             "Blconcat", do_Blconcat,
-                             "Bminus", do_Bminus,
-                             "Bmod", do_Bmod,
-                             "Bnequiv", do_Bnequiv,
-                             "Bnmeq", do_Bnmeq,
-                             "Bnmge", do_Bnmge,
-                             "Bnmgt", do_Bnmgt,
-                             "Bnmle", do_Bnmle,
-                             "Bnmlt", do_Bnmlt,
-                             "Bnmne", do_Bnmne,
-                             "Bplus", do_Bplus,
-                             "Bqmark", do_Bqmark,
-                             "Bseq", do_Bseq,
-                             "Bsge", do_Bsge,
-                             "Bsgt", do_Bsgt,
-                             "Bslash", do_Bslash,
-                             "Bsle", do_Bsle,
-                             "Bslt", do_Bslt,
-                             "Bsne", do_Bsne,
-                             "Bstar", do_Bstar,
-                             "Bunion", do_Bunion,
-                             "Empty", do_Empty,
-                             "Uat", do_Uat,
-                             "Ubackslash", do_Ubackslash,
-                             "Ubang", do_Ubang,
-                             "Ubar", do_Ubar,
-                             "Ucaret", do_Ucaret,
-                             "Uconcat", do_Uconcat,
-                             "Udiff", do_Udiff,
-                             "Udot", do_Udot,
-                             "Uequiv", do_Uequiv,
-                             "Uinter", do_Uinter,
-                             "Ulconcat", do_Ulconcat,
-                             "Uminus", do_Uminus,
-                             "Unequiv", do_Unequiv,
-                             "Unmeq", do_Unmeq,
-                             "Unmne", do_Unmne,
-                             "Unot", do_Unot,
-                             "Uplus", do_Uplus,
-                             "Uqmark", do_Uqmark,
-                             "Useq", do_Useq,
-                             "Uslash", do_Uslash,
-                             "Usne", do_Usne,
-                             "Ustar", do_Ustar,
-                             "Utilde", do_Utilde,
-                             "Uunion", do_Uunion,
-                             "and", do_and,
-                             "assign", do_assign,
-                             "augand", do_augand,
-                             "augat", do_augat,
-                             "augbang", do_augbang,
-                             "augcaret", do_augcaret,
-                             "augconcat", do_augconcat,
-                             "augdiff", do_augdiff,
-                             "augequiv", do_augequiv,
-                             "auginter", do_auginter,
-                             "auglconcat", do_auglconcat,
-                             "augminus", do_augminus,
-                             "augmod", do_augmod,
-                             "augnequiv", do_augnequiv,
-                             "augnmeq", do_augnmeq,
-                             "augnmge", do_augnmge,
-                             "augnmgt", do_augnmgt,
-                             "augnmle", do_augnmle,
-                             "augnmlt", do_augnmlt,
-                             "augnmne", do_augnmne,
-                             "augplus", do_augplus,
-                             "augqmark", do_augqmark,
-                             "augseq", do_augseq,
-                             "augsge", do_augsge,
-                             "augsgt", do_augsgt,
-                             "augslash", do_augslash,
-                             "augsle", do_augsle,
-                             "augslt", do_augslt,
-                             "augsne", do_augsne,
-                             "augstar", do_augstar,
-                             "augunion", do_augunion,
-                             "brace", do_brace,
-                             "brack", do_brack,
-                             "break", do_break,
-                             "breakexpr", do_breakexpr,
-                             "case", do_case,
-                             "coinvoke", do_coinvoke,
-                             "compound", do_compound,
-                             "create", do_create,
-                             "default", do_default,
-                             "dottedident", do_dottedident,
-                             "every", do_every,
-                             "everydo", do_everydo,
-                             "field", do_field,
-                             "if", do_if,
-                             "ifelse", do_ifelse,
-                             "invoke", do_invoke,
-                             "keyword", do_keyword,
-                             "next", do_next,
-                             "paren", do_paren,
-                             "repeat", do_repeat,
-                             "revassign", do_revassign,
-                             "revswap", do_revswap,
-                             "section", do_section,
-                             "subscript", do_subscript,
-                             "swap", do_swap,
-                             "to", do_to,
-                             "toby", do_toby,
-                             "unless", do_unless,
-                             "unlesselse", do_unlesselse,
-                             "until", do_until,
-                             "untildo", do_untildo,
-                             "while", do_while,
-                             "whiledo", do_whiledo
-                             )
-      self.cdispatch := table(cdo_default)
-      every cdispatch["everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat"] := cdo_loop
-      cdispatch["create"] := cdo_create
-      cdispatch["break"] := cdo_break
-      cdispatch["breakexpr"] := cdo_breakexpr
-      cdispatch["next"] := cdo_next
-      every cdispatch["fail"|"return"|"returnexpr"|"succeed"|"succeedexpr"|"link"|
-                      "linkexpr"|"suspend"|"suspendexpr"|"suspendexprdo"] := cdo_exit
-      every cdispatch["augqmark"|"Bqmark"] := cdo_scan
-      return
    end
 end
