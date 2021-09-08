@@ -1,6 +1,6 @@
 package ssl
 
-import io, lang, util, ipl.scan
+import io, lang, util
 
 #
 # Succeed if the ssl library is available, or fail and set `&why` if
@@ -14,10 +14,7 @@ end
 # Extract the SSL_get_error value from `&why`, or fail if not found.
 #
 procedure ssl_error()
-   &why ? {
-      if tab(past("SSL_get_error:")) then
-         return integer(tab(many(&digits)))
-   }
+   return errno("SSL_get_error")
 end
 
 #
