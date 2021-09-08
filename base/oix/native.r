@@ -2009,7 +2009,7 @@ static void getaddrinfo_error2why(int error)
     if (error == EAI_SYSTEM)
         errno2why();
     else
-        whyf("%s (gai errno=%d)", gai_strerror(error), error);
+        whyf("%s (gai_errno=%d)", gai_strerror(error), error);
 }
 
 static struct sockaddr *parse_sockaddr(char *s, socklen_t *len)
