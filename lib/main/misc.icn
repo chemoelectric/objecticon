@@ -50,16 +50,13 @@ end
 #
 procedure errno(k)
    local i
-   &why ? { 
-      every tab(upto('(')) &
-         move(1) &
-         (if /k then tab(many(&letters ++ &digits ++ '_\-')) else =k) &
-         ="=" &
-         i := integer(tab(many(&digits ++ '+\-'))) &
-         any(')')
-      do
-         suspend i
-   }
+   &why ? every tab(upto('(') + 1) &
+      (if /k then tab(many(&letters ++ &digits ++ '_\-')) else =k) &
+      ="=" &
+      i := integer(tab(many(&digits ++ '+\-'))) &
+      any(')')
+   do
+      suspend i
 end
 
 # Invoke co-expression `e`, generating its results, in such a way that

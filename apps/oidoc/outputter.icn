@@ -286,12 +286,11 @@ abstract class Outputter()
    end
 
    # Given a comment string, turn it into a list of lines.
-   private get_comment_list(s)
+   private static get_comment_list(s)
       local res, l
       res := []
       s ? {
-         while tab(upto('#')) do {
-            move(1)
+         while tab(upto('#') + 1) do {
             l := tab(upto('\n\r') | 0)
             # Omit pre-processor generated comments, (in the form #line ...)
             match("line ", l) | put(res, l)
