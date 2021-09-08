@@ -1561,7 +1561,7 @@ void win32error2why()
         whyf("%s (lasterror=%d)", res, n);
         free(res);
     } else {
-        whyf("Windows error: (lasterror=%d)", n);
+        whyf("Windows error (lasterror=%d)", n);
     }
 }
 

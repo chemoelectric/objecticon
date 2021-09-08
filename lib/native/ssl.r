@@ -102,7 +102,7 @@ static void io_set_whyf(struct sslstream *ss, char *fun, int rc)
     if (se == SSL_ERROR_SYSCALL || se == SSL_ERROR_SSL)
         whyf("%s: %s (SSL_get_error=%d)", fun, ERR_error_string(ERR_peek_last_error(), 0), se);
     else
-        whyf("%s: SSL error: (SSL_get_error=%d)", fun, se);
+        whyf("%s: SSL error (SSL_get_error=%d)", fun, se);
 }
 
 function ssl_SslStream_connect(self)
