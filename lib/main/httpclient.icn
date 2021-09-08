@@ -679,7 +679,7 @@ $endif
    # Given a domain name, generate all the valid matching cookie domain
    # values.
    #
-   private domain_keys(s)
+   private static domain_keys(s)
       # If a numerical address, then just return s
       if many('0-9.', s) = *s + 1 then
          return s
