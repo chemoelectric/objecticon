@@ -53,10 +53,11 @@ procedure errno(k)
    &why ? { 
       every tab(upto('(')) &
          move(1) &
-         (if /k then tab(many(&letters ++ &digits ++ '_')) else =k) &
+         (if /k then tab(many(&letters ++ &digits ++ '_\-')) else =k) &
          ="=" &
-         i := integer(tab(many(&digits))) &
-         any(')') do
+         i := integer(tab(many(&digits ++ '+\-'))) &
+         any(')')
+      do
          suspend i
    }
 end
