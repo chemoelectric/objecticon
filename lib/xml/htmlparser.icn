@@ -209,7 +209,7 @@ class HtmlParser()
                #
                # No opening node found, so put whole in html tags and retry
                #
-               return parse("<html>" || s || "</html>")
+               return parse("<HTML>" || s || "</HTML>")
             }
 
             i := &pos
@@ -230,7 +230,7 @@ class HtmlParser()
                   #
                   # Bad structure, so put html tags around it and start again.
                   #
-                  return parse(s[1:i] || "<html>" || s[i:0] || "</html>")
+                  return parse(s[1:i] || "<HTML>" || s[i:0] || "</HTML>")
                }
             }
          }
