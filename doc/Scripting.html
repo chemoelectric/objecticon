@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Using Object Icon as a scripting language</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Using Object Icon as a scripting language</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#implementation">Implementation</a></li>
+<li><a href="#customization">Customization</a></li>
+<li><a href="#progname">&amp;progname</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Although Object Icon has a separate translation and execution process, it is possible (at least on Unix-like systems) to run a program like a script file.</p>
+<p>To do this, create a source file in the usual way, but prefix it with the following line, suitably adjusted to reflect the location of your <code>objecticon</code> directory :-</p>
+<pre><code>#!/home/rparlett/objecticon/bin/oiscript</code></pre>
+<p>For example :-</p>
+<p><a href="script.icn">Download script.icn</a></p>
+<pre><code>#!/home/rparlett/objecticon/bin/oiscript
+
+import io
+
+procedure main(a)
+   every write(!a)
+end
+</code></pre>
+<p>Next, make the source file executable :-</p>
+<pre><code>$ chmod +x script.icn</code></pre>
+<p>It can now be run directly :-</p>
+<pre><code>$ ./script.icn 1 2 3
+1
+2
+3</code></pre>
+<h1 id="implementation">Implementation</h1>
+<p>The implementation of the above is entirely contained in the <code>oiscript</code> file, which is just a simple shell script.</p>
+<p>This script tries to minimize the startup time of the program by caching the translated executable files produced by <code>oit</code>. These are stored in a temporary directory (by default <code>/tmp/oixcache</code>), and are named according to the MD5 hash value of the source file. So, for example, after running <code>script.icn</code>, <code>/tmp/oixcache</code> contains :-</p>
+<pre><code>$ ls /tmp/oixcache/ -l
+total 90,112
+-r-xr-xr-x 1 rparlett rparlett 89,082 Aug 18 13:23 13b4874fd6f8f76f8a0cb986a2b93737</code></pre>
+<p>When a script file is run, its MD5 hash value is calculated, and if a matching file in <code>/tmp/oixcache</code> is found, that is run directly, without needing to run <code>oit</code>. If it is not found, then <code>oit</code> is run and a new cache file created.</p>
+<p>The location of the cache directory can be altered by setting the environment variable <code>OIX_CACHE</code>.</p>
+<h1 id="customization">Customization</h1>
+<p>The <code>oiscript</code> file can be copied to another location and modified as you wish. Then you just have to alter the opening ‘#!’ line in your <code>.icn</code> file to point to the modified script.</p>
+<h1 id="progname">&amp;progname</h1>
+<p>This keyword will be set to the executable file in the cache directory. This may be inconvenient; for example if the <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.options.options.html"><code>ipl.options.options</code></a> procedure is being used to process command line arguments, then the default usage string will look wrong :-</p>
+<pre><code>$ my-prog.icn -help
+Usage: 6289838a06433f166f387d4c4f669579 [OPTIONS...]
+-t                  Test only
+-l                  List output only</code></pre>
+<p>One fix for this problem is to simply set &amp;progname to the name of the source file in <code>main()</code>, as follows :-</p>
+<pre><code>procedure main(a)
+   &amp;progname := &amp;file
+   ...
+end</code></pre>
+<p>Then the output of <code>options</code> would be :-</p>
+<pre><code>$ my-prog.icn -help
+Usage: my-prog.icn [OPTIONS...]
+-t                  Test only
+-l                  List output only</code></pre>
+<p>Alternatively, <code>options</code> also allows a custom usage string (or procedure) to be passed to it as a parameter.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

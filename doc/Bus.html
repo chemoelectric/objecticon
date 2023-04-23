@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The bus example program</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The bus example program</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#controls">Controls</a></li>
+<li><a href="#menus">Menus</a></li>
+<li><a href="#command-line-options">Command line options</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This is a program which displays a map of the London bus network. In order to run, it requires some additional files, which are contained in the file <code>busroutes.tar.gz</code>, which can be downloaded from the sourceforge <a href="https://sourceforge.net/projects/objecticon/files/misc/"><code>misc</code> directory</a>. Extract this file in your home directory. It will create a directory <code>busroutes</code>. You can extract it somewhere else if you wish, but then you will need to pass the directory to the <code>bus</code> program with the <code>-d</code> option.</p>
+<p>At startup, a view of the entire bus network is shown.</p>
+<p><img src="bus1.png" /></p>
+<h1 id="controls">Controls</h1>
+<p>To zoom in and out, use mouse wheel up and down respectively. To move the map, drag the mouse. To locate a specific bus stop quickly, type its name in the text field at the top and press return.</p>
+<p>Each bus route has a particular colour. Lines between stops are multi-coloured if several routes traverse between them. Arrows are shown if a line between stops is in one direction only.</p>
+<p>Here is a view of the routes around Richmond, at full zoom. Note the how the line between “The Quadrant” and “Richmond Station” is multi-coloured; there are 11 routes between those two stops.</p>
+<p><img src="bus2.png" /></p>
+<p>Moving the mouse over a stop or a line between stops will show the routes that run there.</p>
+<h1 id="menus">Menus</h1>
+<p>Right-clicking on a stop or a line lets a filter be set, so that only particular routes are displayed. Filters can be saved in a file and loaded by right clicking on a blank part of the screen. This menu also lets the filter be cleared.</p>
+<p>Here is an example of a filter which show all the routes from Richmond Station.</p>
+<p><img src="bus3.png" /></p>
+<p>To see the shortest route between two stops, select “Mark” on the first stop, and “Join” on the second. The shortest route is then indicated by the stops with a red dot in the centre.</p>
+<h1 id="command-line-options">Command line options</h1>
+<ul>
+<li><strong>-n</strong> Show the night-time bus network.</li>
+<li><strong>-r</strong> Show just the given route; may be specified several times to give several routes.</li>
+<li><strong>-d</strong> Specify the directory containing the data files; by default <code>busroutes</code> in the same directory as the <code>bus</code> program, or failing that in the home directory.</li>
+</ul>
+<a href="index.html">Contents</a>
+</body>
+</html>

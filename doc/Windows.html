@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Installation on Windows</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Installation on Windows</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#uninstalling-and-upgrading">Uninstalling and upgrading</a></li>
+<li><a href="#path-setup">Path setup</a></li>
+<li><a href="#console-io">Console I/O</a></li>
+<li><a href="#line-endings">Line endings</a></li>
+<li><a href="#launching-programs-from-the-desktop">Launching programs from the desktop</a></li>
+<li><a href="#unicode-support">Unicode support</a></li>
+<li><a href="#ieval">ieval</a></li>
+<li><a href="#openssl">OpenSSL</a></li>
+<li><a href="#compilation">Compilation</a><ul>
+<li><a href="#cygwin">Cygwin</a></li>
+<li><a href="#microsoft-visual-c-compiler">Microsoft Visual C++ compiler</a></li>
+<li><a href="#compiling-from-the-subversion-source-repository">Compiling from the subversion source repository</a></li>
+<li><a href="#compiling-from-a-tar.gz-file">Compiling from a tar.gz file</a></li>
+<li><a href="#third-party-libraries">Third-party libraries</a></li>
+<li><a href="#configuration">Configuration</a><ul>
+<li><a href="#examples">Examples</a></li>
+</ul></li>
+<li><a href="#environment-variables">Environment variables</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>The sourceforge <a href="https://sourceforge.net/projects/objecticon/files/">downloads page</a> contains a Windows “msi” installer file for 64-bit Windows systems. Installing this will create a directory <code>C:\objecticon\</code> containing a binary distribution.</p>
+<h1 id="uninstalling-and-upgrading">Uninstalling and upgrading</h1>
+<p>To uninstall, just go to the Windows 10 settings dialog, select “Apps &amp; features”, and find the entry for “objecticon”. Click on it and press “Uninstall”. This will remove the <code>C:\objecticon\</code> directory.</p>
+<p>It is not necessary to remove an old version before upgrading to a newer one; this is done automatically.</p>
+<p>The version number of the installed package is formed from the subversion version number. For example subversion version 12345 would be package version “1.23.45.0”.</p>
+<h1 id="path-setup">Path setup</h1>
+<p>The <code>C:\objecticon</code> directory contains a batch file, <code>paths.bat</code> which can be run to setup the various environment variables needed by the translator. It also adds <code>C:\objecticon\bin</code> to the <code>PATH</code>.</p>
+<p>It is not necessary to set any path or other environment variables before running a translated Object Icon program, because the path to the runtime interperter <code>oix</code> is embedded into the executable output by the translator.</p>
+<h1 id="console-io">Console I/O</h1>
+<p>When outputting UTF-8 to the console (for example when writing a <code>ucs</code> string), the console’s code page should be set with the following command :-</p>
+<pre><code>chcp 65001</code></pre>
+<p>Unfortunately I haven’t found a way to read UTF-8 input from the console. Unicode characters appear as null (ascii 0) characters when read.</p>
+<h1 id="line-endings">Line endings</h1>
+<p>The string literal escape sequence “\N” can be used to produce a platform-independent line ending. On Windows, this sequence expands to “\r\n”, and on other platforms to just “\n”.</p>
+<h1 id="launching-programs-from-the-desktop">Launching programs from the desktop</h1>
+<p><code>oix</code> is built as a Windows console application. This means that Windows will create a console window for <code>oix</code> unless it is started from an existing console. This can be annoying; starting an Object Icon program via a desktop icon will open an unwanted console window. However, this behaviour can be mitigated by setting the environment variable <code>OI_HIDE_CONSOLE</code> to 1, before starting a particular program. This will make <code>oix</code> hide the console window when it starts up. Thus hidden, the console window will still exist, but it won’t appear in the taskbar, the “alt-tab” switcher, and so on.</p>
+<p>Obviously it is not desirable to do this in the general case, so <code>OI_HIDE_CONSOLE</code> should not be set outside of an individual batch file or command line to launch a program from the desktop. A batch file might look like this :-</p>
+<pre><code>set OI_HIDE_CONSOLE=1
+someprog.exe</code></pre>
+<p>This batch file sets the variable, and runs the (Object Icon) program <code>someprog.exe</code>, which in turn runs <code>oix</code>. The console window will then be hidden, and will thus appear to the user only instantaneously.</p>
+<p>A <code>call</code> command to another batch file, to set up variables such as <code>OI_FONT</code>, <code>OI_FONT_SIZE</code> and so on could also be made before <code>someprog</code> is started.</p>
+<p>An alternative to using a batch file is to create a shortcut to the desired Object Icon program, and place that on the desktop. Then, edit that shortcut and change the “Target” field to something like :-</p>
+<pre><code>C:\Windows\System32\cmd.exe /c &quot;set ^&quot;OI_HIDE_CONSOLE=1^&quot; &amp;&amp; &lt;program&gt;&quot;</code></pre>
+<p>where <code>&lt;program&gt;</code> is original value of “Target”; ie the path to the program to run. Note that the use of quotes, and escaped inner quotes (^“) is important. Without the latter, the value of <code>OI_HIDE_CONSOLE</code> would include a space after the “1”, and would thus be invalid. Also, <code>&lt;program&gt;</code> would need to be surrounded by escaped quotes if it contained spaces.</p>
+<p>Like the batch file, a <code>call</code> command to set variables could be inserted before the program is started.</p>
+<p>It is tempting to configure the shortcut to use a minimized window (the “Run” field). However, this gives poor results and leads to the Object Icon program’s window starting minimized itself, behind other windows, or without the keyboard focus.</p>
+<h1 id="unicode-support">Unicode support</h1>
+<p>Wherever possible, the wide-character versions of the Win32 API are used, with conversions to and from UTF-8 (used internally by the <code>ucs</code> type).</p>
+<h1 id="ieval">ieval</h1>
+<p><code>ieval</code> should work acceptably in the Windows console, but the program’s built-in line editing will be disabled. However, the console’s own line editing can of course be used instead. Alternatively, the graphics version of <code>ieval</code> (option <code>-g</code>) can be used.</p>
+<h1 id="openssl">OpenSSL</h1>
+<p>The binary distribution includes the <a href="http://objecticon.sourceforge.net/libref/index.html?ssl-package.html"><code>ssl</code></a> library (in <code>lib/native</code>). This DLL is statically linked to the OpenSSL libraries.</p>
+<p>To be useful, OpenSSL needs to have access to a set of root authority certificates. This enables the identity of remote hosts to be verified. A helpful page containing up-to-date certificates extracted from Mozilla is <a href="https://curl.haxx.se/docs/caextract.html" class="uri">https://curl.haxx.se/docs/caextract.html</a>. The certificates are contained in a single “.pem” file. After saving this file, OpenSSL can be directed to use it by setting the environment variable “SSL_CERT_FILE” to the location of the file.</p>
+<h1 id="compilation">Compilation</h1>
+<p>This section describes how to compile Object Icon on Windows (32 and 64 bit).</p>
+<h2 id="cygwin">Cygwin</h2>
+<p>Cygwin must be installed. It is used to provide <code>make</code> and some other shell utilities. <code>gcc</code> is not required however, since the Microsoft Visual C/C++ compiler is used. The compiled executables don’t rely on Cygwin in any way, and can be used from a Windows command prompt window if desired (a <code>paths.bat</code> file is provided to set the usual environment variables).</p>
+<h2 id="microsoft-visual-c-compiler">Microsoft Visual C++ compiler</h2>
+<p>The C/C++ compiler of Visual Studio 2015 or later must be used. It is not necessary to install Visual Studio itself; rather just the build tools alone are sufficient. These are a free download :-</p>
+<p><a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/" class="uri">https://visualstudio.microsoft.com/visual-cpp-build-tools/</a></p>
+<p>The compiler executable, <code>cl</code>, must be on the cygwin shell’s <code>PATH</code>. Both 32 and 64 bit versions of the compiler are supported. To see which version is on the path, just type <code>cl</code> at the bash prompt. For 32 bits the output might be :-</p>
+<pre><code>Microsoft (R) C/C++ Optimizing Compiler Version 19.00.23026 for x86
+Copyright (C) Microsoft Corporation.  All rights reserved.</code></pre>
+<p>whilst for the 64 bit version :-</p>
+<pre><code>Microsoft (R) C/C++ Optimizing Compiler Version 19.00.23026 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.</code></pre>
+<p>Apart from <code>PATH</code>, the enviroment variables <code>INCLUDE</code>, <code>LIB</code> and <code>LIBPATH</code> need to be set correctly for the compiler to work from the command line. To find the correct settings, open a command prompt window, and run the <code>vcvarsall.bat</code> batch file, as described in the following page :-</p>
+<p><a href="https://msdn.microsoft.com/en-us/library/x4d2c09s.aspx" class="uri">https://msdn.microsoft.com/en-us/library/x4d2c09s.aspx</a></p>
+<p>After running the batch file, the correct environment variable settings can be noted and placed in <code>.bash_profile</code>. Example settings are, for 32 bits :-</p>
+<pre><code>PATH=/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 14.0/VC/bin:/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 14.0/Common7/IDE:/cygdrive/c/Program\ Files/Debugging\ Tools\ for\ Windows\ \(x64\):$PATH
+export INCLUDE=&#39;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\INCLUDE;C:\Program Files (x86)\Windows Kits\10\include\10.0.10150.0\ucrt;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\include\um;C:\Program Files (x86)\Windows Kits\8.1\include\shared;C:\Program Files (x86)\Windows Kits\8.1\include\um;C:\Program Files (x86)\Windows Kits\8.1\include\winrt;&#39;
+export LIB=&#39;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB;C:\Program Files (x86)\Windows Kits\10\lib\10.0.10150.0\ucrt\x86;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\lib\um\x86;C:\Program Files (x86)\Windows Kits\8.1\lib\winv6.3\um\x86;&#39;
+export LIBPATH=&#39;C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB;References\CommonConfiguration\Neutral;\Microsoft.VCLibs\14.0\References\CommonConfiguration\neutral;&#39;</code></pre>
+<p>and for 64 bits :-</p>
+<pre><code>PATH=/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 14.0/VC/bin/amd64:/cygdrive/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 14.0/Common7/IDE:/cygdrive/c/Program\ Files/Debugging\ Tools\ for\ Windows\ \(x64\):$PATH
+export INCLUDE=&#39;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\INCLUDE;C:\Program Files (x86)\Windows Kits\10\include\10.0.10150.0\ucrt;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\include\um;C:\Program Files (x86)\Windows Kits\8.1\include\shared;C:\Program Files (x86)\Windows Kits\8.1\include\um;C:\Program Files (x86)\Windows Kits\8.1\include\winrt;&#39;
+export LIB=&#39;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\amd64;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\amd64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.10150.0\ucrt\x64;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\lib\um\x64;C:\Program Files (x86)\Windows Kits\8.1\lib\winv6.3\um\x64;&#39;
+export LIBPATH=&#39;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\amd64;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\amd64;References\CommonConfiguration\Neutral;\Microsoft.VCLibs\14.0\References\CommonConfiguration\neutral;&#39;</code></pre>
+<h2 id="compiling-from-the-subversion-source-repository">Compiling from the subversion source repository</h2>
+<p>Use the following command to checkout a read-only copy of the source code :-</p>
+<pre><code>svn co svn://svn.code.sf.net/p/objecticon/code/trunk objecticon</code></pre>
+<p>This will create a directory <code>objecticon</code> under the present directory (you can change the last parameter to create a different directory name if you want).</p>
+<h2 id="compiling-from-a-tar.gz-file">Compiling from a tar.gz file</h2>
+<p>Extract the source code from the .tar.gz file with a command like</p>
+<pre><code>tar xfz objecticon-1234.tar.gz</code></pre>
+<p>This will create a directory <code>objecticon-1234</code> under the current directory. The number is the subversion version number from which the .tar.gz was built, and will of course be different. You can rename this directory if you like, but it must not be renamed (or moved) after configuration and compilation.</p>
+<h2 id="third-party-libraries">Third-party libraries</h2>
+<p>Microsoft’s <code>vcpkg</code> (see <a href="https://github.com/microsoft/vcpkg" class="uri">https://github.com/microsoft/vcpkg</a>) can be used to provide the external libraries for zlib, OpenSSL and MySQL. <code>zlib</code> is just used to provide the <code>-Z</code> option to <code>oit</code>, whilst OpenSSL and MySQL provide the <a href="http://objecticon.sourceforge.net/libref/index.html?ssl-package.html"><code>ssl</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?mysql-package.html"><code>mysql</code></a> libraries (in <code>lib/native</code>).</p>
+<p>After installation of <code>vcpkg</code>, use one or more of the following commands to install the desired libraries (for a 64-bit build) :-</p>
+<pre><code>vcpkg install openssl:x64-windows-static
+vcpkg install libmysql:x64-windows-static
+vcpkg install zlib:x64-windows-static</code></pre>
+<p>The shared library versions can be installed instead (the same commands, but without the <code>-static</code> ending). In this case, the appropriate <code>vcpkg</code> <code>bin</code> directory must be on the executable PATH variable, so that the third-party DLLs can be located as needed.</p>
+<h2 id="configuration">Configuration</h2>
+<p>After ensuring that the <code>cl</code> compiler is available, change to the new directory and run the following command at the bash prompt :-</p>
+<pre><code>./configure-win32 [OPTIONS]</code></pre>
+<p>This is the equivalent of running the <code>./configure</code> script on a Unix system. Afterwards, <code>make</code> can be run to compile everything, and <code>make test</code> will run the tests. The script accepts the following options :-</p>
+<ul>
+<li><code>-r</code> - compile with “release” compiler options, rather than the usual “debug” options.</li>
+<li><code>-v DIR</code> - specify the vcpkg directory from which to take include/library files for the <code>s</code>, <code>q</code> and <code>z</code> options.</li>
+<li><code>-s</code> - use the OpenSSL library.</li>
+<li><code>-q</code> - use the MySQL library.</li>
+<li><code>-z</code> - use the Zlib library.</li>
+<li><code>-D</code> - use dynamic rather than static linking to the C runtime library (compiler option <code>/MD</code> rather than the usual <code>/MT</code>).</li>
+</ul>
+<p>Note that the <code>-D</code> option should only be used with the dynamic library versions of the <code>vcpkg</code> libraries; conversely, without <code>-D</code>, only the static versions should be used. Also, <code>-D</code> necessitates the correct <code>PATH</code> setting. The examples below clarify these points.</p>
+<h3 id="examples">Examples</h3>
+<p>Compile with a statically linked runtime, and make use of ssl and zlib libraries :-</p>
+<pre><code>./configure-win32 -v &quot;C:\vcpkg\installed\x64-windows-static&quot; -sz</code></pre>
+<p>The resulting <code>oix.exe</code> is about 2.2MB.</p>
+<p>Like the above, but with “release” settings; this is what I use to build the <code>msi</code> file :-</p>
+<pre><code>./configure-win32 -v &quot;C:\vcpkg\installed\x64-windows-static&quot; -rsz</code></pre>
+<p><code>oix.exe</code> is about 870KB.</p>
+<p>Compile with dynamic linking to the runtime, again using ssl and zlib :-</p>
+<pre><code># PATH must include C:\vcpkg\installed\x64-windows\debug\bin
+./configure-win32 -v &quot;C:\vcpkg\installed\x64-windows&quot; -Dsz</code></pre>
+<p><code>oix.exe</code> is about 1MB.</p>
+<p>And the same, with release settings (note the slightly different PATH setting) :-</p>
+<pre><code># PATH must include C:\vcpkg\installed\x64-windows\bin
+./configure-win32 -v &quot;C:\vcpkg\installed\x64-windows&quot; -Dszr</code></pre>
+<p><code>oix.exe</code> is about 590KB.</p>
+<h2 id="environment-variables">Environment variables</h2>
+<p>Amongst other things, the <code>configure-win32</code> script creates a <code>paths.sh</code> file, which can be used to set the various Object Icon environment variables from within the cygwin bash shell, and <code>paths.bat</code> which sets the same variables from within the Windows command line.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The exception package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The exception package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#try-and-throw"><code>try</code> and <code>throw</code></a></li>
+<li><a href="#nested-trys">Nested <code>try</code>s</a></li>
+<li><a href="#try1"><code>try1</code></a></li>
+<li><a href="#cleaning-up-resources">Cleaning up resources</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Icon traditionally uses failure to indicate some exceptional (but non-fatal) situation; for example the <code>open()</code> call fails if a file cannot be opened.</p>
+<p>This method of communicating an error condition works well most of the time, but it does have a couple of limitations. Firstly, it may be that the procedure concerned may wish to fail for other reasons; for example it may generate a results sequence, which could be empty. Secondly, propagating errors up through the call chain can become tedious and error-prone. Consider a recursive descent parser for example. At the lowest level of call a syntax error might be detected, and so every procedure invocation at a higher level must have “<code>| fail</code>” appended to it. Should this be accidentally missed out on a call, the results can be unfortunate.</p>
+<p>A solution to these problems is provided by a simple exception library, contained in the <code>exception</code> package.</p>
+<h1 id="try-and-throw"><code>try</code> and <code>throw</code></h1>
+<p><code>try</code> and <code>throw</code> are the two basic procedures provided by the package. Here is an example illustrating their use :-</p>
+<p><a href="exception.icn">Download exception.icn</a></p>
+<pre><code>import io, lang, exception
+
+procedure call3()
+   throw(&quot;Error happened&quot;)
+end
+
+procedure call2()
+   call3()
+end
+
+procedure call1()
+   call2()
+end
+
+procedure main()
+   try {
+      call1()
+   }
+   if \thrown then {
+      write(&quot;Caught: &quot;, image(thrown))
+      Coexpression.traceback(thrower)
+      eclear()
+   }
+end
+</code></pre>
+<p>which outputs :-</p>
+<pre><code>Caught: &quot;Error happened&quot;
+Traceback:
+co-expression#2 activated by co-expression#1
+   main()
+   call1() from line 17 in exception.icn
+   call2() from line 12 in exception.icn
+   call3() from line 8 in exception.icn
+   exception.throw(&quot;Error happened&quot;) from line 4 in exception.icn
+   at line 50 in exception.icn</code></pre>
+<p><code>try</code> works by taking a single co-expression parameter. This is the “body” of the try; in the above example the body just invokes <code>call1()</code>. Before invoking the body, it sets a global variable, <code>throw_handler</code> to <code>&amp;current</code>; this is the co-expression to activate when an exception occurs.</p>
+<p>So all <code>throw</code> does is to activate the handler, after setting two other global variables</p>
+<ul>
+<li><code>thrown</code> which indicate the thing being thrown (usually a string), and</li>
+<li><code>thrower</code>, which gives the co-expression doing the throw.</li>
+</ul>
+<p>Here is a diagram illustrating the above :-</p>
+<p><img src="exception2.png" /></p>
+<p>All the caller of <code>try</code> has to do is check whether <code>thrown</code> (or <code>thrower</code>) have been set. If so, an exception was thrown. After handling it, <a href="http://objecticon.sourceforge.net/libref/index.html?exception.eclear.html"><code>exception.eclear</code></a> should be called to reset the global variables to <code>&amp;null</code>.</p>
+<h1 id="nested-trys">Nested <code>try</code>s</h1>
+<p><code>try</code> calls can be nested. The <code>throw_handler</code> global variable is saved and restored by <code>try</code>, so that each call effectively sees its own copy. The <a href="http://objecticon.sourceforge.net/libref/index.html?util.save_state.html"><code>util.save_state</code></a> procedure is used, together a <a href="http://objecticon.sourceforge.net/libref/index.html?util.State.html"><code>util.State</code></a> subclass, <a href="http://objecticon.sourceforge.net/libref/index.html?exception.ThrowHandlerState.html"><code>exception.ThrowHandlerState</code></a>, as described on <a href="GlobalState.html">this page</a>.</p>
+<h1 id="try1"><code>try1</code></h1>
+<p><code>try1</code> is a convenient wrapper around <code>try</code>. <code>try1</code> will succeed with the first value generated by the body expression, or <code>&amp;null</code> if that expression fails. If an exception was thrown, it fails and sets <code>&amp;why</code> appropriately, and also calls <code>eclear()</code>. So we could have written our example above slighly more concisely as follows :-</p>
+<pre><code>procedure main()
+   try1 {
+      call1()
+   } | write(&quot;Caught: &quot;, &amp;why)
+end</code></pre>
+<p>although we no longer have the <code>thrower</code> co-expression available, since <code>try1</code> calls <code>eclear()</code>.</p>
+<h1 id="cleaning-up-resources">Cleaning up resources</h1>
+<p>One potential problem with exceptions is that they may bypass cleanup code, such as closing open files. Languages like java handle this by using a <code>try ... finally</code> structure.</p>
+<p>A somewhat similar effect can be achieved using two library procedures found in the <code>util</code> package, <a href="http://objecticon.sourceforge.net/libref/index.html?util.use.html"><code>util.use</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?util.clean.html"><code>util.clean</code></a>.</p>
+<p><code>use</code> takes three co-expressions: a setup expression which opens a particular resource (such as a file); an action expression which uses that resource, and finally a cleanup expression which closes the resource. Normally <code>use</code> invokes the cleanup expression itself, after the action expression completes. But if the action expression never does this, as may happen if we throw an exception, then we can use <code>clean</code>. This works in conjunction with <code>use</code>, by managing a global list of cleanup expressions. <code>use</code> adds each cleanup expression to the list, and removes them if and when they are run. Finally, <code>clean</code> will run any cleanup expressions that <code>use</code> hasn’t.</p>
+<p>Therefore to clean up any resources which may be left open by a thrown exception, we just need to</p>
+<ul>
+<li>enclose the <code>try</code> (or <code>try1</code>) call in a <code>clean</code> call, and</li>
+<li>allocate resources with <code>use</code></li>
+</ul>
+<p>A good example of the use of <code>use</code> and <code>clean</code> can be found on <a href="DirEntries.html">this page</a>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

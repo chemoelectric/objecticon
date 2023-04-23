@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Specifying access to fields and globals</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Specifying access to fields and globals</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#field-modifiers">Field modifiers</a><ul>
+<li><a href="#private">private</a></li>
+<li><a href="#public">public</a></li>
+<li><a href="#package">package</a><ul>
+<li><a href="#package-readable-scope">Package readable scope</a></li>
+</ul></li>
+<li><a href="#protected">protected</a></li>
+<li><a href="#static">static</a></li>
+<li><a href="#const">const</a><ul>
+<li><a href="#substitution-and-constant-folding">Substitution and constant folding</a></li>
+</ul></li>
+<li><a href="#override">override</a></li>
+<li><a href="#readable">readable</a></li>
+<li><a href="#final">final</a></li>
+<li><a href="#native">native</a></li>
+<li><a href="#optional">optional</a></li>
+<li><a href="#abstract">abstract</a></li>
+</ul></li>
+<li><a href="#accessor-methods">Accessor methods</a></li>
+</ul>
+</nav>
+<h1 id="field-modifiers">Field modifiers</h1>
+<p>There are various modifiers which can be applied to a class field. Some can also be applied to the class itself, and some to any top-level declaration (class, record, procedure, or global variable). Each modifier is described in detail in its own section.</p>
+<h2 id="private">private</h2>
+<p>The private modifier can only be applied to a class field. It indicates that the field can only be accessed from within a method in the same class as the field. For example :-</p>
+<pre><code>class A()
+   private x
+
+   private f()
+      x := 100  # Allowed
+   end
+end
+
+...
+   a := A()
+   # Both these would give runtime errors.
+   a.x := 200
+   a.f()</code></pre>
+<p>A private instance method cannot be overridden in a subclass, either directly or indirectly.</p>
+<h2 id="public">public</h2>
+<p>The public modifier can only be applied to a class field. It indicates that the field can be accessed from anywhere.</p>
+<h2 id="package">package</h2>
+<p>This modifier can be applied to a class field, or any top-level declaration.</p>
+<p>When applied to a field, it means that it can only be accessed from within the same package as the field. Further, a package instance method may not be overridden (directly or indirectly) except by a method in a subclass within the same package.</p>
+<p>When applied to a top-level declaration, it means the symbol is only visible from within the declaring package. This is useful for hiding implementation classes, helper procedures and so on. For example :-</p>
+<pre><code>package my.pack
+
+package class Abc()
+  ...
+end
+
+package procedure abc()
+  ...
+end
+
+package record rec(a, b, c)
+
+package global a, b, c</code></pre>
+<p>Now none of these symbols will be visible outside of the package <code>my.pack</code>.</p>
+<p>Symbols with package scope cannot be looked up using <code>proc()</code>, <code>Prog.get_global()</code> and similar functions, even from within the declaring package. Nor can they be used with string invocation.</p>
+<p>If a final or abstract class is declared with package scope, the <code>package</code> keyword must precede the <code>final</code> or <code>abstract</code> keyword, otherwise a syntax error results. So, one must say <code>package final class Abc()</code> rather than <code>final package class Abc()</code>.</p>
+<h3 id="package-readable-scope">Package readable scope</h3>
+<p>A global variable can also be declared with <code>package readable</code> scope, as follows :-</p>
+<pre><code>package my.pack
+
+package readable global g</code></pre>
+<p>This means that the symbol <code>g</code> will be visible for reading and writing inside the package <code>my.pack</code>, but visible only for reading outside of <code>my.pack</code>. String lookup is allowed, but always returns the readable value.</p>
+<p>The <code>package</code> keyword must always precede the <code>readable</code> keyword.</p>
+<h2 id="protected">protected</h2>
+<p>This modifier can be applied to a class field or a class. For a field, its meaning varies slightly depending on whether we are accessing an instance field or a static field.</p>
+<p>In the case of an instance field, the caller must be a method in the implemented classes of the instance being accessed. So, for example, consider the following tree of superclasses :-</p>
+<p><img src="inherit.png" /></p>
+<p>Here, <code>X</code> has two superclasses, <code>B</code> and <code>C</code>. <code>B</code> in turn has a superclass <code>A</code>, so <code>X</code>’s <a href="Inheritance.html#implemented-classes">implemented classes</a> are <code>X, B, C, A</code>. This means that any protected instance field in <code>X</code> could only be accessed from a method within those four classes. A method in <code>Y</code>, would not be able to access the field in the instance of <code>X</code>, even if the field were defined in <code>C</code>, the common superclass of <code>X</code> and <code>Y</code> (in that case a method in <code>Y</code> <em>could</em> access that field on an instance of <code>Y</code>). This little example program illustrates this.</p>
+<pre><code>import io
+
+class C()
+   protected f
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+class X(C)
+end
+
+class Y(C)
+   public try(o)
+      write(o.f)
+   end
+end
+
+procedure main()
+   local x, y
+   x := X(100)
+   y := Y(99)
+   y.try(y)   # Okay, writes 99
+   y.try(x)   # Will lead to a runtime error...
+end</code></pre>
+<p>In the case of a static field, the field being accessed must be in the implemented classes of the calling method’s class. So in the above example a method in <code>X</code> could access static protected fields in any of the classes <code>X, B, C, A</code>.</p>
+<p>When the <code>protected</code> modifier is applied to a class, it means that that class may only be subclassed (directly or indirectly) from within the same package. For example :-</p>
+<pre><code>package first
+
+protected class C()
+   ...
+end
+
+# Allowed
+class X(C)
+end
+
+...
+package second
+
+import first(C)
+
+# Not allowed
+class Y(C)
+end</code></pre>
+<h2 id="static">static</h2>
+<p>This declares the field as static - for more information on what this means, see <a href="Fields.html">Fields</a>.</p>
+<h2 id="const">const</h2>
+<p>Declaring a static field const means that it cannot be changed (ie, assigned to) after the class has been initialized, which is just after the class’s static <code>init()</code> method has been called. Therefore, static const fields can be initialized in <code>init()</code> and thereafter treated as constants, with any attempt to assign to them causing a runtime error. For example</p>
+<pre><code>import io
+
+class Maths()
+   public static const PI
+
+   private static init()
+      PI := 3.14
+   end
+end
+
+procedure main()
+   write(Maths.PI) # Write 3.14
+   Maths.PI := 3   # Runtime error
+end</code></pre>
+<p>Note that, even during class initialization, <code>const</code> fields can only be assigned to from within the <code>init()</code> method. In other words, you cannot call another method from <code>init()</code> and initialize constants there. This restriction is to help <code>oit</code> to determine which constants can be folded during optimization.</p>
+<p>A <code>const</code> instance field is similar, and can be assigned to during instance initialization, but thereafter becomes fixed. The class’s <code>new()</code> method can be used to set initial values of the field. For example</p>
+<pre><code>import io
+
+class Employee()
+   public const name, age
+
+   public new(name, age)
+      self.name := name
+      self.age := age
+      return
+   end
+end
+
+procedure main()
+   local e
+   e := Employee(&quot;Mary&quot;, 30)
+   write(e.name, &quot;,&quot;, e.age)   # Writes Mary,30
+   e.age := 25                 # Runtime error
+end</code></pre>
+<p>A method cannot be declared <code>const</code>.</p>
+<h3 id="substitution-and-constant-folding">Substitution and constant folding</h3>
+<p>Fields which are declared <code>static const</code>, and are assigned to a literal value (string, cset or numeric) in the <code>init()</code> method, normally have this literal value substituted for any legal use of the field in the program. Thus the line <code>write(Maths.PI)</code> in the example above will generate the same code as the line <code>write(3.14)</code>. This saves a field access at runtime, and also lets the translator apply constant folding on the substituted value. Thus the expression <code>2 * Maths.PI * radius</code> would generate the same code as <code>6.28 * radius</code>.</p>
+<h2 id="override">override</h2>
+<p>An instance method must be declared as <code>override</code> if and only if it overrides a method in some other class. For example :-</p>
+<pre><code>class Parent()
+   public f()
+      ...
+   end
+end
+
+class Child(Parent)
+   public override f()   # Must be marked &#39;override&#39;
+       ...
+   end
+
+   public g()            # Mustn&#39;t be marked &#39;override&#39;
+       ...
+   end
+end</code></pre>
+<p>The intention of this modifier is twofold: firstly, to prevent a subclass from inadvertently overriding a superclass’s method, and secondly, to produce an error if a new method is added to a superclass which clashes with an existing method in a subclass (in the above example, if a method <code>g</code> were added to <code>Parent</code>, a translation error would be raised).</p>
+<h2 id="readable">readable</h2>
+<p>The readable modifier must always be specified together with either the <code>private, package</code>, or <code>protected</code> modifier. It indicates that the field is accessible in a read-only fashion, where it would otherwise be inaccessible, based on that other modifier.</p>
+<p>So for example, consider the following class :-</p>
+<pre><code>import io
+
+class X()
+   private readable v
+
+   public f()
+      v := 100
+   end
+end
+
+procedure main()
+   local x
+   x := X()
+   x.f()
+   write(x.v)   # Okay, prints 100
+   x.v := 101   # Runtime error
+end</code></pre>
+<p>The field <code>v</code> can be read and assigned to within <code>X</code>, but can only be read from outside of <code>X</code>. Without the <code>readable</code> modifier, it would not be accessible at all outside of <code>X</code>, so the access in <code>write(x.v)</code> in <code>main()</code> would give a runtime error.</p>
+<p>Note that a <code>public</code> field cannot be declared <code>readable</code>, because it is already readable everywhere. Nor can a method be declared <code>readable</code>.</p>
+<h2 id="final">final</h2>
+<p>An instance method can be declared <code>final</code>. It indicates that the method cannot be overridden. So, for example, the following will give an error during linking because the method <code>f()</code> in <code>Y</code> overrides <code>f()</code> in <code>X</code>, which is marked <code>final</code>.</p>
+<pre><code>class X()
+   public final f()
+   end
+end
+
+class Y(X)
+   public override f()
+   end
+end</code></pre>
+<p>A class can also be marked as <code>final</code>, and in this case it means that the class cannot be subclassed by another class. So for example, this is not allowed :-</p>
+<pre><code>final class X()
+   public f()
+   end
+end
+
+class Y(X)
+end</code></pre>
+<p>A static method cannot be <code>final</code> because <code>static</code> methods cannot be overridden, and a method cannot be marked <code>final</code> in a <code>final</code> class, because such a declaration would obviously be superfluous.</p>
+<h2 id="native">native</h2>
+<p>If a method is declared <code>native</code> then it has no body, and its implementation should be provided via a C function, either compiled into the interpreter, or loaded from an external library file. See <a href="NativeMethods.html">Native Methods</a> for more details on how to do this.</p>
+<p>Note that, due to the limitations of the Yacc parser, the <code>native</code> modifier must be the last modifier specified. For example <code>public static native</code> is fine, but <code>native public static</code> would give a syntax error.</p>
+<h2 id="optional">optional</h2>
+<p>If a method is declared <code>optional</code> then it has no body. If it is invoked without having been overridden then a runtime error results.</p>
+<p>It is useful for specifying a method which a subclass may optionally choose to implement.</p>
+<p>Static methods cannot be <code>optional</code>, since they cannot be overridden, and for a similar reason, an <code>optional</code> method cannot appear in a <code>final</code> class. Due to the limitations of the Yacc parser, the <code>optional</code> modifier must be the last modifier specified.</p>
+<h2 id="abstract">abstract</h2>
+<p>If a class is declared <code>abstract</code>, then it means that it cannot be instantiated.</p>
+<p>If a method is declared <code>abstract</code> then it has no body, and must be overridden and implemented by a subclass. Any class that contains or inherits an <code>abstract</code> method must itself be declared <code>abstract</code>.</p>
+<p>Static methods cannot be <code>abstract</code>, since they cannot be overridden, and for a similar reason, an <code>abstract</code> method cannot appear in a <code>final</code> class. Due to the limitations of the Yacc parser, the <code>abstract</code> method modifier must be the last modifier specified.</p>
+<p>The visibility modifier of an <code>abstract</code> method does not have any real significance, other than to indicate how an overriding method should be declared. An <code>abstract</code> method can in fact be invoked from a subclass using the same syntax which allows access to an overridden method (<code>Superclass.methodname()</code>), and in this case the visibility modifier will be checked by the interpreter in the usual way. However, such an invocation will simply cause a runtime error.</p>
+<p>Abstract classes and methods allow an “interface” of methods to be defined which a subclass must implement. For example :-</p>
+<pre><code>abstract class Set()
+   # Mandatory methods
+   public abstract generate()
+   public abstract member(x)
+   public abstract size()
+
+   # Optional methods for mutable sets.
+   public optional insert(x)
+   public optional delete(x)
+end</code></pre>
+<h1 id="accessor-methods">Accessor methods</h1>
+<p>Consider the following class :-</p>
+<pre><code>class Thing()
+   private x
+
+   public get_x()
+      return x
+   end
+
+   public new()
+      x := 99
+      return
+   end
+end</code></pre>
+<p>At first glance this seems safe enough, but in fact it is possible to change the value of <code>x</code> from outside the class, as follows :-</p>
+<pre><code>import io
+
+procedure main()
+   local i
+   i := Thing()
+   i.get_x() := 100
+   write(i.get_x())   # writes 100
+end</code></pre>
+<p>This is because the <code>get_x()</code> method returns a reference to <code>x</code>, which can form the left side of an assignment. Fortunately the problem is easily solved by explicitly dereferencing <code>x</code> using the unary <code>.</code> operator as follows :-</p>
+<pre><code>   public get_x()
+      return .x
+   end</code></pre>
+<p>The attempted assignment then generates a runtime error. A nicer solution to this problem would be to make <code>x</code> a <code>private readable</code> variable and get rid of the <code>get_x()</code> method entirely.</p>
+<p>Another potential access problem occurs when using structures such as lists, sets and tables. Consider the following class :-</p>
+<pre><code>class Thing()
+   private readable x
+
+   public new()
+      x := [1,2,3,4]
+      return
+   end
+end</code></pre>
+<p>Unfortunately, although <code>x</code> cannot be assigned to from outside of the class, its contents can be changed :-</p>
+<pre><code>import io, lang
+
+procedure main()
+   local i
+   i := Thing()
+   put(i.x, 5)
+   write(to_string(i.x))  # writes &quot;list#1[1,2,3,4,5]&quot;
+end</code></pre>
+<p>One solution to this problem is to make <code>x</code> private and provide a method to generate its elements :-</p>
+<pre><code>import io, lang
+
+class Thing()
+   private x
+
+   public gen_x()
+      suspend .!x
+   end
+
+   public new()
+      x := [1,2,3,4]
+      return
+   end
+end
+
+procedure main()
+   local i
+   i := Thing()
+   every write(i.gen_x())  # writes 1,2,3,4 in turn
+end</code></pre>
+<p>Note that we still have to dereference the generated elements before suspending them, otherwise they could be changed.</p>
+<p>Another alternative would be to provided a method which simply returned a copy of <code>x</code>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

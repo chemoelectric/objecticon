@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>List of keywords</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">List of keywords</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#ascii">&amp;ascii</a></li>
+<li><a href="#break">&amp;break</a></li>
+<li><a href="#clock">&amp;clock</a></li>
+<li><a href="#cset">&amp;cset</a></li>
+<li><a href="#current">&amp;current</a></li>
+<li><a href="#date">&amp;date</a></li>
+<li><a href="#dateline">&amp;dateline</a></li>
+<li><a href="#digits">&amp;digits</a></li>
+<li><a href="#dump">&amp;dump</a></li>
+<li><a href="#errorcoexpr">&amp;errorcoexpr</a></li>
+<li><a href="#errornumber">&amp;errornumber</a></li>
+<li><a href="#errortext">&amp;errortext</a></li>
+<li><a href="#errorvalue">&amp;errorvalue</a></li>
+<li><a href="#fail">&amp;fail</a></li>
+<li><a href="#features">&amp;features</a></li>
+<li><a href="#file">&amp;file</a></li>
+<li><a href="#handler">&amp;handler</a></li>
+<li><a href="#host">&amp;host</a></li>
+<li><a href="#lcase">&amp;lcase</a></li>
+<li><a href="#letters">&amp;letters</a></li>
+<li><a href="#level">&amp;level</a></li>
+<li><a href="#line">&amp;line</a></li>
+<li><a href="#main">&amp;main</a></li>
+<li><a href="#maxlevel">&amp;maxlevel</a></li>
+<li><a href="#no">&amp;no</a></li>
+<li><a href="#null">&amp;null</a></li>
+<li><a href="#pos">&amp;pos</a></li>
+<li><a href="#progname">&amp;progname</a></li>
+<li><a href="#random">&amp;random</a></li>
+<li><a href="#source">&amp;source</a></li>
+<li><a href="#subject">&amp;subject</a></li>
+<li><a href="#time">&amp;time</a></li>
+<li><a href="#trace">&amp;trace</a></li>
+<li><a href="#ucase">&amp;ucase</a></li>
+<li><a href="#uset">&amp;uset</a></li>
+<li><a href="#version">&amp;version</a></li>
+<li><a href="#why">&amp;why</a></li>
+<li><a href="#yes">&amp;yes</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page lists Object Icon’s builtin keywords.</p>
+<h2 id="ascii">&amp;ascii</h2>
+<p><code>&amp;ascii : c</code></p>
+<p>The cset of ascii characters.</p>
+<h2 id="break">&amp;break</h2>
+<p><code>&amp;break</code></p>
+<p>Causes a break event to be sent to the program monitor. In the monitored program, <code>&amp;break</code> fails.</p>
+<h2 id="clock">&amp;clock</h2>
+<p><code>&amp;clock : s</code></p>
+<p>The current time of day, for example “15:38:27”.</p>
+<h2 id="cset">&amp;cset</h2>
+<p><code>&amp;cset : c</code></p>
+<p>The cset of all 8-bit characters.</p>
+<h2 id="current">&amp;current</h2>
+<p><code>&amp;current : C</code></p>
+<p>The current co-expression</p>
+<h2 id="date">&amp;date</h2>
+<p><code>&amp;date : s</code></p>
+<p>The current date in the formay “yyyy/mm/dd”; for example “2009/11/06”.</p>
+<h2 id="dateline">&amp;dateline</h2>
+<p><code>&amp;dateline : s</code></p>
+<p>The current date and time, for example “Friday, November 6, 2009 3:38 pm”.</p>
+<h2 id="digits">&amp;digits</h2>
+<p><code>&amp;digits : c</code></p>
+<p>The cset of digits 0-9</p>
+<h2 id="dump">&amp;dump</h2>
+<p><code>&amp;dump : i</code></p>
+<p>If non-zero, causes dump on termination</p>
+<h2 id="errorcoexpr">&amp;errorcoexpr</h2>
+<p><code>&amp;errorcoexpr : C</code></p>
+<p>The co-expression which caused the run-time error.</p>
+<h2 id="errornumber">&amp;errornumber</h2>
+<p><code>&amp;errornumber : i</code></p>
+<p>Run-time error number</p>
+<h2 id="errortext">&amp;errortext</h2>
+<p><code>&amp;errortext : s</code></p>
+<p>Run-time error message text</p>
+<h2 id="errorvalue">&amp;errorvalue</h2>
+<p><code>&amp;errorvalue : x</code></p>
+<p>Run-time error offending value</p>
+<h2 id="fail">&amp;fail</h2>
+<p><code>&amp;fail</code></p>
+<p>Simply fails.</p>
+<h2 id="features">&amp;features</h2>
+<p><code>&amp;features : s1,s2,...,sn</code></p>
+<p>Generate a sequence of strings describing implementation features</p>
+<h2 id="file">&amp;file</h2>
+<p><code>&amp;file : s</code></p>
+<p>The current source code file name</p>
+<h2 id="handler">&amp;handler</h2>
+<p><code>&amp;error : C</code></p>
+<p>If non-null, non-fatal run-time errors are handled by invoking this co-expression, whilst setting, setting <code>&amp;errorcoexpr</code>, <code>&amp;errornumber</code>, <code>&amp;errortext</code> and <code>&amp;errorvalue</code>.</p>
+<h2 id="host">&amp;host</h2>
+<p><code>&amp;host : s</code></p>
+<p>A string identifying the host computer</p>
+<h2 id="lcase">&amp;lcase</h2>
+<p><code>&amp;lcase : c</code></p>
+<p>The cset of lower case letters a-z</p>
+<h2 id="letters">&amp;letters</h2>
+<p><code>&amp;letters : c</code></p>
+<p>The cset of all letters A-Za-z</p>
+<h2 id="level">&amp;level</h2>
+<p><code>&amp;level : i</code></p>
+<p>The level of current procedure call</p>
+<h2 id="line">&amp;line</h2>
+<p><code>&amp;line : i</code></p>
+<p>The current source code line number</p>
+<h2 id="main">&amp;main</h2>
+<p><code>&amp;main : C</code></p>
+<p>The main co-expression</p>
+<h2 id="maxlevel">&amp;maxlevel</h2>
+<p><code>&amp;maxlevel : i</code></p>
+<p>The maximum allowed procedure call depth, ie the maximum allowed value of <code>&amp;level</code>.</p>
+<h2 id="no">&amp;no</h2>
+<p><code>&amp;no : n</code></p>
+<p>A constant for representing “false”, “off” etc. It has the null value</p>
+<h2 id="null">&amp;null</h2>
+<p><code>&amp;null : n</code></p>
+<p>The null value</p>
+<h2 id="pos">&amp;pos</h2>
+<p><code>&amp;pos : i</code></p>
+<p>String scanning position</p>
+<h2 id="progname">&amp;progname</h2>
+<p><code>&amp;progname : s</code></p>
+<p>The file name of the executing program</p>
+<h2 id="random">&amp;random</h2>
+<p><code>&amp;random : i</code></p>
+<p>Random number seed</p>
+<h2 id="source">&amp;source</h2>
+<p><code>&amp;source : C</code></p>
+<p>The activator of current co-expression</p>
+<h2 id="subject">&amp;subject</h2>
+<p><code>&amp;subject : s</code></p>
+<p>String scanning subject</p>
+<h2 id="time">&amp;time</h2>
+<p><code>&amp;time : i</code></p>
+<p>Current run time in milliseconds</p>
+<h2 id="trace">&amp;trace</h2>
+<p><code>&amp;trace : i</code></p>
+<p>If non-zero, trace procedure calls</p>
+<h2 id="ucase">&amp;ucase</h2>
+<p><code>&amp;ucase : c</code></p>
+<p>The cset of upper case letters A-Z</p>
+<h2 id="uset">&amp;uset</h2>
+<p><code>&amp;uset : c</code></p>
+<p>The cset of all unicode codepoints</p>
+<h2 id="version">&amp;version</h2>
+<p><code>&amp;version : s</code></p>
+<p>String describing the version of Object Icon</p>
+<h2 id="why">&amp;why</h2>
+<p><code>&amp;why : s</code></p>
+<p>Reason for failure</p>
+<h2 id="yes">&amp;yes</h2>
+<p><code>&amp;yes</code></p>
+<p>A constant for representing “true”, “on” etc. It is the only value of a builtin type.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

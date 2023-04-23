@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>ieval - an interactive icon expression evaluator</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">ieval - an interactive icon expression evaluator</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#ieval">ieval</a></li>
+<li><a href="#command-line-options">Command line options</a></li>
+<li><a href="#useful-built-in-expressions">Useful built-in expressions</a></li>
+<li><a href="#loading-programs">Loading programs</a></li>
+<li><a href="#keyboard-shortcuts">Keyboard shortcuts</a></li>
+</ul>
+</nav>
+<h1 id="ieval">ieval</h1>
+<p><code>ieval</code> is a program to interactively evaluate icon expressions. Input is read from the terminal until end-of-file (control-D) is entered. Each expression has its results sequence evaluated and printed (although see the <code>!q</code> option below). Variables may be assigned to, and they are stored in a local environment, which may be printed by entering <code>!env</code>. To link with library packages, use the <code>-i</code> command line option. Packages can’t be imported interactively. To link with individual source files, use the <code>-l</code> option.</p>
+<p>An example session</p>
+<pre><code>$ ieval -i lang,graphics
+&gt; &amp;version
+&quot;Object Icon Version 1234.  Mon Aug 29 11:57:11 BST 2011&quot;
+&gt; upto(&#39;aeiou&#39;, &quot;The quick brown fox&quot;)
+3
+6
+7
+13
+18
+&gt; w := Window()
+object graphics.Window#1(ptr=136611152)
+&gt; w.close()
+object graphics.Window#1(ptr=0)
+&gt; ^D
+$</code></pre>
+<p>Input of an expression over several lines can be achieved by ending a line with a backslash character. The prompt changes to <code>&gt;&gt;</code> and the next line is concatenated to the previous one.</p>
+<h1 id="command-line-options">Command line options</h1>
+<p><code>ieval</code> accepts the following command-line options :-</p>
+<ul>
+<li><strong>-i</strong> Import the given package(s). Several packages may be comma-separated, or several <code>-i</code> options may be given.</li>
+<li><strong>-l</strong> Link the given source file. Several <code>-l</code> options may be given.</li>
+<li><strong>-wglob</strong> If given, then assignments to global variables (eg procedures) are allowed.</li>
+<li><strong>-g</strong> Use a gui interface rather than the console.</li>
+<li><strong>-a</strong> In gui mode, actively show completions, rather than on the tab key.</li>
+<li><strong>-z</strong> Don’t read commands interactively, but exit after processing input files.</li>
+<li><strong>-s</strong> Read commands from standard input rather than using a line editor.</li>
+<li><strong>-hlim</strong> Set the history limit for the line editor (default is 500).</li>
+<li><strong>-elim</strong> Set the expression limit for evaluation (default is 35).</li>
+<li><strong>-llim</strong> Set the gui interface’s log area line limit (default is 600).</li>
+</ul>
+<p>Remaining arguments specify files which are processed before command line input commences. They should contain valid expressions (which may be compound expressions).</p>
+<h1 id="useful-built-in-expressions">Useful built-in expressions</h1>
+<ul>
+<li><strong>!env</strong> Show the values stored in the environment</li>
+<li><strong>!help</strong> Show help</li>
+<li><strong>!parse</strong> Toggle parse mode, in which just the syntax structure of the command is printed</li>
+<li><strong>!trace</strong> Toggle tracing</li>
+<li><strong>!wglob</strong> Toggle the write-globals flag</li>
+<li><strong>!traceback</strong> Show the traceback of the last command that gave a runtime error</li>
+<li><strong>!quiet</strong> Don’t force evaluation of all of the values in the expression, and don’t output any expression value</li>
+<li><strong>dir(x)</strong> With no parameter, show all global variables. With a parameter, show information about it.</li>
+<li><strong>!hist</strong> Show the command line history</li>
+<li><strong>old(s)</strong> List commands in the history containing string <code>s</code>.</li>
+<li><strong>hlim(n)</strong> Set the history limit to <code>n</code>.</li>
+<li><strong>elim(n)</strong> Set the expression limit to <code>n</code>.</li>
+<li><strong>llim(n)</strong> Set the gui log area line limit to <code>n</code>.</li>
+<li><strong>load(s,a[])</strong> Load the given prog, and set its error handler. Optional symbols in <code>a[]</code> are then loaded as variables, as in <code>sym()</code>.</li>
+<li><strong>sym(p,a[])</strong> Load symbols from prog <code>p</code> as variables.</li>
+<li><strong>gg(s,p)</strong> Get the given global from the the given prog (shorthand for <code>Prog.get_global</code>).</li>
+<li><strong>c3(c)</strong> Show the C3 linearizaton algorithm for class <code>c</code>.</li>
+<li><strong>oos</strong> The <code>ObjectOutputStream</code> used to output results.</li>
+<li><strong>out</strong> The <code>OutputStream</code> of the terminal (or window if using the graphical interface).</li>
+<li><strong>vars</strong> The environment (as shown by <code>!env</code>), as a table.</li>
+</ul>
+<h1 id="loading-programs">Loading programs</h1>
+<p>An existing program can conveniently be loaded with the <code>load()</code> procedure. The executable search path is used to locate the given program. The loaded program’s error handler is set in order to catch any runtime errors.</p>
+<p>Symbols in the loaded program can then be accessed using <code>gg()</code> (which is just a shorthand for <code>Prog.get_global</code>), or by setting chosen symbols as variables, using <code>sym()</code>. For example :-</p>
+<pre><code>&gt; p := load(&quot;ivib&quot;)
+co-expression#75
+&gt; dir(p)
+... list of the symbols in p
+&gt; sym(p, &quot;CanvasIcon&quot;, &quot;Custom&quot;)
+CanvasIcon = class CanvasIcon
+Custom = class Custom
+&gt; dir(CanvasIcon)
+... details of that class</code></pre>
+<p>The calls to <code>load</code> and <code>sym</code> can conveniently be combined, as follows :-</p>
+<pre><code>&gt; p := load(&quot;ivib&quot;, &quot;CanvasIcon&quot;, &quot;Custom&quot;)
+CanvasIcon = class CanvasIcon
+Custom = class Custom
+co-expression#75</code></pre>
+<p>The variable names used may be different from the symbols they map to; any “.” is mapped to a “<em>”, and an “</em>” is appended if a clash with a symbol in the main program would hide the loaded symbol.</p>
+<p>Please remember that <code>oit</code> will remove symbols from a program if it decides they aren’t referenced. Procedures, methods and entire classes can thus be discarded, and will thus not be usable from <code>ieval</code>. This process of culling can be averted by using the <code>oit</code> option <code>-f</code>, or from within a program by the <code>invocable</code> declaration.</p>
+<h1 id="keyboard-shortcuts">Keyboard shortcuts</h1>
+<p>Unless <code>ieval</code> is started with the <code>-s</code> option, it keeps a history of entered expressions, and uses the following keyboard shortcuts :-</p>
+<ul>
+<li>Up and down keys recall history items.</li>
+<li>View the history by entering <code>!hist</code></li>
+<li><p>Goto a particular history number with <code>^P</code> typed after the number, eg</p>
+<pre><code>&gt; 25^P</code></pre></li>
+<li><p>Search for a history item by typing <code>^R</code> (backward) or <code>^T</code> (forward) after a string prefix, eg</p>
+<pre><code>&gt; cat^R</code></pre>
+will search backwards for the next history item beginning with <code>cat</code>.</li>
+<li><code>^_</code> performs an undo (<code>^Z</code> on the graphics version).</li>
+<li><code>^Y</code> performs a redo.</li>
+<li><code>^A</code> or <code>Home</code> goes to start of line.</li>
+<li><code>^E</code> or <code>End</code> goes to end of line.</li>
+<li><code>^K</code> deletes to end of line (deletes whole line on the graphics version).</li>
+<li><code>^G</code> resets, ie abandon all edits and goes to end of history.</li>
+<li><code>TAB</code> produces a list of possible completions. This only works in gui mode, or in text mode if using <a href="FlowTerm.html">flowterm</a> as a terminal.</li>
+<li><code>PGUP</code> in gui mode, scrolls the history up</li>
+<li><p><code>PGDN</code> in gui mode, scrolls the history down</p></li>
+</ul>
+<a href="index.html">Contents</a>
+</body>
+</html>

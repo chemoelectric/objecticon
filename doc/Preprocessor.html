@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The Object Icon preprocessor.</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The Object Icon preprocessor.</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#line-n-filename-encoding"><code>$line n [[filename] encoding]</code></a></li>
+<li><a href="#include-filename"><code>$include filename</code></a></li>
+<li><a href="#load-identifier-filename"><code>$load identifier filename</code></a></li>
+<li><a href="#uload-identifier-filename"><code>$uload identifier filename</code></a></li>
+<li><a href="#define-identifier-text"><code>$define identifier text</code></a></li>
+<li><a href="#undef-identifier"><code>$undef identifier</code></a></li>
+<li><a href="#if-expression"><code>$if expression</code></a></li>
+<li><a href="#elsif-expression"><code>$elsif expression</code></a></li>
+<li><a href="#else"><code>$else</code></a></li>
+<li><a href="#endif"><code>$endif</code></a></li>
+<li><a href="#encoding-name"><code>$encoding name</code></a></li>
+<li><a href="#error-text"><code>$error [text]</code></a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Object Icon inherits a textual preprocessor from Icon. The following directives are recognised.</p>
+<h2 id="line-n-filename-encoding"><code>$line n [[filename] encoding]</code></h2>
+<p>Set the line number and optionally filename and encoding. These values are passed to the lexical analyzer (by way of a special comment in the output).</p>
+<h2 id="include-filename"><code>$include filename</code></h2>
+<p>Include the given file.</p>
+<h2 id="load-identifier-filename"><code>$load identifier filename</code></h2>
+<p>Load the contents of the given file as a string literal, and set those contents as the value of the given macro variable. For example, if a particular text file contained the single line “testing 1 2 3”, and a newline, then</p>
+<pre><code>$load STR &quot;file.txt&quot;</code></pre>
+<p>would be equivalent to</p>
+<pre><code>$define STR &quot;testing 1 2 3\n&quot;</code></pre>
+<p>This directive is particularly useful for compiling image files, such as PNG icons, into the object file.</p>
+<h2 id="uload-identifier-filename"><code>$uload identifier filename</code></h2>
+<p>This is like <code>$load</code>, except that the resulting string is a ucs literal. The contents of the file must therefore be in UTF-8 format.</p>
+<h2 id="define-identifier-text"><code>$define identifier text</code></h2>
+<p>Set the given variable to a value.</p>
+<h2 id="undef-identifier"><code>$undef identifier</code></h2>
+<p>Clear the given variable.</p>
+<h2 id="if-expression"><code>$if expression</code></h2>
+<p>Include or exclude a block of text based on the given boolean expression. The expression may be a combination of the following symbols :-</p>
+<ul>
+<li>an identifier, which is true if the macro variable is defined and false if it is not.</li>
+<li><code>x &amp; y</code>, for logical and.</li>
+<li><code>x | y</code>, for logical or.</li>
+<li><code>~ x</code>, for logical not.</li>
+<li><code>(x)</code>, for grouping.</li>
+</ul>
+<p>The usual operator precedence applies - <code>&amp;</code> has higher precedence than <code>|</code>.</p>
+<p>For example :-</p>
+<pre><code>$if _LINUX | _DARWIN
+...</code></pre>
+<h2 id="elsif-expression"><code>$elsif expression</code></h2>
+<p>Following a <code>$if</code> or <code>$elsif</code>, this can be used to provide a further conditional expression and associated block.</p>
+<h2 id="else"><code>$else</code></h2>
+<p>Following a <code>$if</code> or <code>$elsif</code>, this can be used to include a block of text if the condition was false.</p>
+<h2 id="endif"><code>$endif</code></h2>
+<p>This ends a conditional statement block.</p>
+<h2 id="encoding-name"><code>$encoding name</code></h2>
+<p>Set the encoding of the file. This is passed to the lexical analyzer (by way of a special comment in the output). Allowed values of <code>name</code> are :-</p>
+<ul>
+<li><code>ASCII</code> (the default)</li>
+<li><code>ISO-8859-1</code></li>
+<li><code>UTF-8</code></li>
+</ul>
+<h2 id="error-text"><code>$error [text]</code></h2>
+<p>Signal an explicit error message.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

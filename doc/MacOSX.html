@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Installation on Mac OS X</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Installation on Mac OS X</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#gcc">gcc</a></li>
+<li><a href="#build-software">Build software</a></li>
+<li><a href="#xquartz">XQuartz</a></li>
+<li><a href="#optional-software">Optional software</a></li>
+<li><a href="#pkg_config_path"><code>PKG_CONFIG_PATH</code></a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page lists some things which need to be installed before compiling Object Icon on Mac OS X. Afterwards, just proceed in the usual way as for other <a href="Unix.html">Unix systems</a>, but note the comment below about using “gmake” instead of “make”.</p>
+<h1 id="gcc">gcc</h1>
+<p>At the terminal, type <code>gcc</code>. A dialog box should appear. Click “Install”. This should install <code>gcc</code> and <code>make</code>.</p>
+<h1 id="build-software">Build software</h1>
+<p>The other software required for compilation can easily be installed with “homebrew”; see <a href="https://brew.sh/" class="uri">https://brew.sh/</a>.</p>
+<p>After installation of “brew”, proceed as follows :-</p>
+<pre><code>brew install autoconf
+brew install make
+brew install pkg-config</code></pre>
+<p>Note that Mac OS X comes with an ancient version of GNU make, dating from 2006. The installation above providees a newer version named “gmake” to distinguish it from the builtin one. Please remember to use <code>gmake</code> when compiling Object Icon, rather than <code>make</code>.</p>
+<h1 id="xquartz">XQuartz</h1>
+<p>This is optional, but is required if you wish the graphics facilities to be compiled.</p>
+<p>Download the latest <code>.dmg</code> file from <a href="https://www.xquartz.org/" class="uri">https://www.xquartz.org/</a></p>
+<p>Open this file, and then open and install the contained XQuartz pkg file.</p>
+<p>This should result in X11 being installed, mostly under the <code>/opt/X11</code> and <code>/usr/X11</code> directories.</p>
+<p>Note that, at the time of writing, the current version (2.8.1), suffers from a bug which makes drawing very slow. Hopefully this bug will be fixed in the next version (see <a href="https://github.com/XQuartz/XQuartz/issues/166" class="uri">https://github.com/XQuartz/XQuartz/issues/166</a> for more).</p>
+<h1 id="optional-software">Optional software</h1>
+<p>Homebrew can also be used to enable compilation of some optional features :-</p>
+<pre><code>brew install jpeg
+brew install zlib
+brew install openssl@1.1</code></pre>
+<p>Note that libpng is included with XQuartz.</p>
+<h1 id="pkg_config_path"><code>PKG_CONFIG_PATH</code></h1>
+<p>Before running <code>configure</code>, this environment variable must be set, if either XQuartz or <code>openssl</code> are desired :-</p>
+<pre><code>export PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/X11/share/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

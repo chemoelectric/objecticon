@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The new and init methods.</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The new and init methods.</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#special-methods">Special methods</a><ul>
+<li><a href="#the-init-method">The init() method</a></li>
+<li><a href="#the-new-method">The new() method</a></li>
+</ul></li>
+<li><a href="#class.create_instance">Class.create_instance()</a></li>
+</ul>
+</nav>
+<h1 id="special-methods">Special methods</h1>
+<p>There are two special methods, which are used to initialize a class and its objects.</p>
+<h2 id="the-init-method">The init() method</h2>
+<p>The <code>init</code> method is used to initialize a class, and in particular to initialize the values of any static variables. It is called automatically the first time that one of the class’s (static) fields is accessed, or when an instance of the class is created.</p>
+<p>Some other points to note about <code>init</code> :-</p>
+<ul>
+<li>A class’s superclasses’ <code>init</code> methods (if any) are called before the class’s.</li>
+<li>An <code>init</code> method is only ever called once.</li>
+<li>The <code>init</code> method must be declared as a <code>private static</code> method.</li>
+<li>It is not possible to access the <code>init</code> field via normal field access, so the method can only ever be invoked by the runtime system itself. There is however a library function, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23ensure_initialized"><code>lang.Class.ensure_initialized()</code></a> which will ensure the given class’s <code>init</code> method has been called, if it hasn’t been already.</li>
+<li><code>init</code> may not be called if a constant field access has been replaced by the value assigned to it in <code>init</code>, during optimization. For example, we may have a class <code>X</code> with a constant <code>Y</code>, assigned the value <code>123</code> in <code>X</code>’s <code>init</code> method. Elsewhere in the program, the expression <code>X.Y</code> would be replaced with <code>123</code>, by <code>oit</code>’s optimizer. When encountered at runtime, <code>123</code> would not of course cause <code>X</code>’s <code>init</code> method to be run.</li>
+<li><code>const</code> fields can <strong>only</strong> be assigned to from within the <code>init</code> method. In other words, you cannot call another method from <code>init</code> and initialize constants there. This restriction is to help <code>oit</code> in the constant folding process just described.</li>
+</ul>
+<h2 id="the-new-method">The new() method</h2>
+<p>The <code>new</code> method is used to initialize an object, ie an instance of a particular class. The method is not invoked explicitly however. Rather, in order to create an instance the class name is used like a function call, and the <code>new()</code> method is invoked automatically. So for example :-</p>
+<pre><code>import io
+
+class X()
+   public new(a, b)
+      write(&quot;in new a=&quot;, a, &quot; b=&quot;, b)
+      return
+   end
+end
+
+procedure main()
+   local i
+   i := X(3, 4)
+end</code></pre>
+<p>This writes <code>"in new a=3 b=4"</code>.</p>
+<p>Some other points to note about <code>new()</code> :-</p>
+<ul>
+<li>A class doesn’t have to have a <code>new()</code> method. If it is absent, then all the instance variables are initially <code>&amp;null</code>.</li>
+<li>A class can inherit (and override) a <code>new()</code> method in a superclass, just like any other method.</li>
+<li>The access modifier of the <code>new()</code> method is respected. So making the <code>new()</code> method private means that instances can only be created from within the class itself (by necessity in a static method).</li>
+<li><p>After an object has been initialized, the <code>new()</code> method cannot be accessed, and any attempt to do so gives a run-time error. So in the example above, the following would not be allowed :-</p>
+<pre><code>procedure main()
+   local i
+   i := X(3, 4)
+   i.new(5, 6)   # Runtime error
+end</code></pre></li>
+<li><p>If the <code>new()</code> method fails, then the creation of the object fails. This gives <code>new()</code> extra control over the creation process, but does mean that you have to remember to put a <code>return</code> in the <code>new()</code> method somewhere.</p></li>
+</ul>
+<h1 id="class.create_instance">Class.create_instance()</h1>
+<p>It is sometimes desirable to provide a way of creating a new instance which bypasses the <code>new()</code> method. The method <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23create_instance"><code>lang.Class.create_instance()</code></a> provides a way to do this. It can be called from within a class, and it returns a new instance of that class. <code>new()</code> is not invoked, and all of the instance variables are set to <code>&amp;null</code>. It is the responsibility of the caller to initialize the instance as appropriate.</p>
+<p>Another method, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23create_raw_instance"><code>lang.Class.create_raw_instance()</code></a>, is just like <code>create_instance()</code>, except that the new object is in an even more primitive state, which allows <code>const</code> fields to be assigned and <code>new</code> to be invoked. The method <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23complete_raw_instance"><code>lang.Class.complete_raw_instance()</code></a> must be used to complete the object’s initialization.</p>
+<p>Here is an example illustrating the use of <code>create_instance()</code>.</p>
+<p><a href="createinstance.icn">Download createinstance.icn</a></p>
+<pre><code>import io, lang
+
+class X()
+   private x
+
+   public static f(x)
+      local i
+      write(&quot;In X.f()&quot;)
+      i := Class.create_instance()
+      i.x := 2 * x
+      return i
+   end
+
+   public new(x)
+      write(&quot;In X.new()&quot;)
+      self.x := 3 * x
+      return
+   end
+end
+
+procedure main()
+   write(to_string(X(123)))
+   write(to_string(X.f(345)))
+end
+</code></pre>
+<p>The output is :-</p>
+<pre><code>In X.new()
+object X#1(x=369)
+In X.f()
+object X#2(x=690)</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

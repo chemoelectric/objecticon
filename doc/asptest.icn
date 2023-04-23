@@ -1,0 +1,94 @@
+import
+   gui, io, lang, util
+
+class Untitled(Dialog)
+   private
+      img
+
+   public override initially()
+      local bh, bw, s1, r
+      Dialog.initially()
+      if /img.win then
+         stop("Invalid image")
+      s1 := img.win.get_size()
+      bh := get_preferred_height() - s1.height
+      bw := get_preferred_width() - s1.width
+      set_base_size(bw, bh)
+      set_min_size(bw, bh)
+      r := real(s1.width) / s1.height
+      set_min_aspect_ratio(r)
+      set_max_aspect_ratio(r)
+      write(to_string(wattribs))
+   end
+
+   public override new(s)
+      Dialog.new()
+      self.setup()
+      img.set_size().
+         set_fill_dimensions(1).
+         set_image(s)
+      return
+   end
+
+   private setup()
+      local layout_1, paint_1, text_button_1
+      self.set_resize(&yes)
+      img := Image().
+         set_size(scale(291 / 1.71), scale(208 / 1.71)).
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_image("")
+      self.add(img)
+      paint_1 := TextPaint("Quit")
+      text_button_1 := TextButton().
+         clear_constraints().
+         connect(self.dispose, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_1)
+      self.add(text_button_1)
+      self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
+   end
+end
+
+procedure main(a)
+   local d, f, s
+   f := a[1] |
+      FilePath(env_string("OI_HOME")).walk("examples", "flintstones10-hp.jpg").str() | 
+      stop("Need an image file")
+   s := Files.file_to_string(f) | stop("Couldn't load file ", f, ": ", &why)
+   d := Untitled(s)
+   d.show_modal()
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I20SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|GSGen Component Setup|GSGe
+#n Init Dialog|GSGen Constructor|GSDialog Struct|CCDialog|I1SWAttribs|T
+#1NSresize|GSName|SUntitled|SIs Component|NSWidth|NSHeight|NSChildren|L
+#2CCanvasImage|I29SParent Canvas|X1SName|Simg|SClass Name|SImage|SImpor
+#t Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|
+#NSY Spec|NSW Spec|S291|SH Spec|S208|SX Align|Sl|SY Align|St|SZ|I0STab 
+#ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx_weight|B1.0|Sx_fill|
+#GSy_weight|B1.0|Sy_fill|GSeol|GSTooltip|NSAccel|NSLayout delegate|NSBo
+#rder opts|NSEvent Handlers|L0SParent Component|X1SImage Str|S|SImage C
+#ache|NSFill Dimensions|I0CCanvasTextButton|I34SParent Canvas|X1SName|S
+#text_button_1|SClass Name|STextButton|SImport Name|Sgui|SClass Variabl
+#e|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|
+#NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSCon
+#straints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent H
+#andlers|L1L2SEvent.ACTION|Sdispose|SParent Component|X1SNo click focus
+#|NSAccepts focus Flag|GSIs Checked Flag|NSIs Checkbox Flag|NSParent Ch
+#eckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextPaint|I6SParent C
+#anvas|X1SName|Spaint_1|SClass Name|STextPaint|SImport Name|Sgui|SClass
+# Variable|NSStr|SQuit|SPaint down|NSInitial Focus|NSEvent Handlers|L1L
+#2SEvent.WINDOW_CLOSE_BUTTON|Sdispose|SLayout delegate|CCanvasGridLayou
+#t|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGri
+#dLayout|SImport Name|Sgui|SClass Variable|NSParent|X1SScale Dimensions
+# Flag|GSEdit Scale|B1.71|

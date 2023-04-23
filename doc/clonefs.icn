@@ -1,0 +1,37 @@
+import plan9, ipl.server9p
+
+class CtrlFile(StringFile9P)
+   public override close()
+      parent.parent.remove_child(parent)
+   end
+end
+
+class CloneFile(StringFile9P)
+   private clone_count
+
+   public override open(mode)
+      local ctrl, data
+      clone_count +:= 1
+      ctrl := CtrlFile("ctrl").
+         set_data(clone_count)
+      data := StringFile9P("data").
+         set_data("Here is some data")
+      parent.add_child(TableDir9P(clone_count).
+            add_child(ctrl).
+            add_child(data))
+      return ctrl
+   end
+
+   public override new(n)
+      StringFile9P.new(n)
+      clone_count := 0
+      return
+   end
+end
+
+procedure main(a)
+   local root, sess
+   root := Root9P().add_child(CloneFile("clone"))
+   sess := Session9P(TreeData9P(root))
+   server_main_0(a, sess)   
+end

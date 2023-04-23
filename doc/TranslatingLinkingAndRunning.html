@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Translating, linking and running programs</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Translating, linking and running programs</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#translating">Translating</a></li>
+<li><a href="#linking">Linking</a></li>
+<li><a href="#command-line-options">Command line options</a></li>
+<li><a href="#invocable-options">Invocable options</a></li>
+<li><a href="#running">Running</a><ul>
+<li><a href="#runtime-environment-variables">Runtime environment variables</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="translating">Translating</h1>
+<p>Translation from Object Icon source files to intermediate <code>.u</code> files is done by the program <code>oit</code>.</p>
+<p>Input source files should have the suffix <code>.icn</code> (but see the <code>-A</code> option below). To translate one or more files, invoke <code>oit</code> as follows :-</p>
+<pre><code>oit -c file1.icn file2.icn ...</code></pre>
+<p>This will produce <code>file1.u</code>, <code>file2.u</code> etc.</p>
+<h1 id="linking">Linking</h1>
+<p>The <code>oit</code> program is also used to link <code>.u</code> files together to form an executable file that can be run :-</p>
+<pre><code>oit -o prog file1.u file2.u ...</code></pre>
+<p>You can also go directly from the source file to the executable if you wish. In this case the intermediate <code>.u</code> files are deleted. For example :-</p>
+<pre><code>oit myprog.icn</code></pre>
+<p>Translates and links <code>myprog.icn</code> into an executable <code>myprog</code>.</p>
+<h1 id="command-line-options">Command line options</h1>
+<p><code>oit</code> accepts the following command-line options :-</p>
+<ul>
+<li><strong>-n</strong> Only translate a .icn to a .u file if it is out-of-date.</li>
+<li><strong>-B</strong> Bundle the oix executable in the output.</li>
+<li><strong>-M</strong> Add an empty main procedure if it is missing.</li>
+<li><strong>-m</strong> Preprocess using m4.</li>
+<li><strong>-Z</strong> Use zlib compression on the icode file.</li>
+<li><strong>-W</strong> Exit with an error status if there were warnings.</li>
+<li><strong>-c</strong> Stop after producing ucode files.</li>
+<li><strong>-f</strong> Enable full string invocation by preserving unreferenced globals and methods during linking (equivalent to <code>invocable all</code> in a source file).</li>
+<li><strong>-g</strong> Enable full string method invocation by preserving unreferenced methods during linking (equivalent to <code>invocable methods</code> in a source file).</li>
+<li><strong>-o file</strong> Write the executable program to the specified file.</li>
+<li><strong>-s</strong> Suppress informative messages during translation and linking (equivalent to <code>-v 0</code>)</li>
+<li><strong>-O i</strong> Optimization level during linking. 1 means do optimizations, 0 means don’t (default is 1).</li>
+<li><strong>-v i</strong> Set verbosity level of informative messages to i.</li>
+<li><strong>-l i</strong> Configure the amount of source location info to store in the icode. 0 means none, 1 means store location info for procedure call and stack tracebacks (the default, 1, adds about 10% more space compared to option 0) and 2 means additionally store location info of all symbols (costs another 5% of space).</li>
+<li><strong>-L</strong> During linking, output a <code>.ux</code> file giving information about the icode file. This is only useful if you are interested in the virtual machine instructions used by oix.</li>
+<li><strong>-I</strong> During code generation, output a dump of the intermediate code, both in its raw and optimized state. This is only useful if you are interested in the internals of oit.</li>
+<li><strong>-D k[=v]</strong> Define or clear a preprocessor symbol.</li>
+<li><strong>-E</strong> Direct the results of preprocessing to standard output and inhibit further processing.</li>
+<li><strong>-b i</strong> Base option in icode file; 0 means zero base.</li>
+<li><strong>-A</strong> Treat files other than .icn or .u files as source files.</li>
+<li><strong>-V</strong> Announce version and configuration information on standard error.</li>
+</ul>
+<h1 id="invocable-options">Invocable options</h1>
+<p><code>oit</code> will try to remove unused parts of a program before generating an output file. This obviously reduces the output file’s size, and also helps improve the resulting program’s startup time and memory usage.</p>
+<p>By default, <code>oit</code> will remove unused globals (procedures, records and classes), as well as unused methods. The latter are determined simply by checking whether a method’s name is referenced via a field name anywhere in the program. Globals are removed completely from the resulting program; removed methods are replaced by a stub method which, if it is somehow invoked, raises a runtime error.</p>
+<p>Sometimes it is desirable to override this default behaviour because occasionally a global symbol or method may still be used, even if it is not explicitly referenced anywhere in a program. For example :-</p>
+<ul>
+<li>a program might be written in order to be loaded by another program, which would then use its procedures and classes. But these may not be referenced by the program itself.</li>
+<li>a program may use functions like <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Prog.html%23get_global"><code>lang.Prog.get_global()</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23get"><code>lang.Class.get()</code></a> to look up global symbols or methods by string name. These won’t be detected as references.</li>
+<li>a program may use <a href="http://objecticon.sourceforge.net/libref/index.html?lang.decode.html"><code>lang.decode</code></a> to decode a string previously encoded with <a href="http://objecticon.sourceforge.net/libref/index.html?lang.encode.html"><code>lang.encode</code></a>, but a symbol in the encoded string is not otherwise referenced in the program.</li>
+</ul>
+<p>To deal with these sort of situations the <code>invocable</code> declaration can be used to change the default behaviour just described.</p>
+<ul>
+<li><code>invocable all</code> - don’t remove any unused globals or methods at all.</li>
+<li><code>invocable methods</code> - remove unused globals, but don’t remove any unused methods from within the remaining classes.</li>
+<li><code>invocable g</code>, where <code>g</code> is some global name - don’t remove this global and, if it is a class, don’t remove any of its methods (including inherited ones).</li>
+<li><code>invocable .f</code>, where <code>f</code> is some field name - don’t remove any methods with this name in any (referenced) classes.</li>
+</ul>
+<p>Two command line options to <code>oit</code> are also provided. <code>-f</code> is equivalent to using <code>invocable all</code>, whilst <code>-g</code> is equivalent to <code>invocable methods</code>.</p>
+<h1 id="running">Running</h1>
+<p>The runtime system is contained in the program <code>oix</code>. It is not normally necessary to run that directly because the executable built by <code>oit</code> invokes it automatically.</p>
+<p><code>oix</code> can be invoked by <code>oit</code> by appending <code>-x</code> to the command line (followed by any desired runtime arguments). For example</p>
+<pre><code>oit myprog.icn -x</code></pre>
+<p>translates, links and runs <code>myprog.icn</code>. The executable file <code>myprog</code> is not deleted after completion (unlike the intermediate <code>.u</code> file).</p>
+<h2 id="runtime-environment-variables">Runtime environment variables</h2>
+<p>Several environment variables affect the behaviour of the interpreter, as shown in the following table.</p>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 50%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><em>Variable name</em></th>
+<th><em>Description</em></th>
+<th><em>Default value</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>OI_MAX_LEVEL</code></td>
+<td>The initial value of the <code>&amp;maxlevel</code> keyword, which controls the level of invocation depth before a runtime error is signalled.</td>
+<td>500</td>
+</tr>
+<tr class="even">
+<td><code>OI_STRING_SIZE</code></td>
+<td>The initial size of the string region.</td>
+<td>Based on the amount of system memory, up to a maximum of 20MB.</td>
+</tr>
+<tr class="odd">
+<td><code>OI_BLOCK_SIZE</code></td>
+<td>The initial size of the block region.</td>
+<td>Based on the amount of system memory, up to a maximum of 40MB (20MB on 32-bit systems).</td>
+</tr>
+<tr class="even">
+<td><code>OI_MEM_CUSHION</code></td>
+<td>A percentage parameter to the garbage collector to prevent excessive numbers of collections occuring; see <code>ralc.r</code> for more details.</td>
+<td>10%</td>
+</tr>
+<tr class="odd">
+<td><code>OI_MEM_GROWTH</code></td>
+<td>A percentage parameter to the garbage collector to indicate the size of a new region relative to the previous one.</td>
+<td>200%; in other words new regions are double the size of their predecessor.</td>
+</tr>
+<tr class="even">
+<td><code>OI_STACK_LIMIT</code></td>
+<td>A parameter to the garbage collector. Should the amount of “stack memory” (memory used in the invocation frames of co-expressions) exceed this amount, a collection occurs.</td>
+<td>Half the initial size of the initial block region’s size.</td>
+</tr>
+<tr class="odd">
+<td><code>OI_STACK_CUSHION</code></td>
+<td>A percentage parameter to the garbage collector to prevent excessive numbers of collections occuring due to stack usage. After a collection triggered by the stack limit, the remaining uncollected stack usage is calculated, and multiplied by the stack cushion. The stack limit is then increased to that value if necessary.</td>
+<td>150%</td>
+</tr>
+<tr class="even">
+<td><code>OI_CORE</code></td>
+<td>Indicates whether to call the C <code>abort()</code> function on an error exit. 0 means no, 1 means yes, but only on a system error, 2 means yes, on any error.</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><code>TRACE</code></td>
+<td>The initial value of the keyword <code>&amp;trace</code>.</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<a href="index.html">Contents</a>
+</body>
+</html>

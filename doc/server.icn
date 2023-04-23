@@ -1,0 +1,57 @@
+import io
+
+global sched, x_flag
+
+procedure handle(a)
+   local t, s
+   t := Task(sched, create {
+      # Service the client with a 30s timeout
+      a := TaskStream(a, t, 30000) 
+      write("\tHandling...")
+      repeat {
+         s := a.read() | {
+            write("\tRead failed ", &why)
+            break
+         }
+         # An input of "x" shuts down the server
+         if s == "x" then {
+            x_flag := 1
+            break
+         }
+         # An input of "q" ends this client's session
+         if s == "q" then 
+            break
+         a.write(map(s))
+      } 
+      write("\tEnd of handling.")
+      a.close()
+      t.revert()
+   })
+   t.start()
+end
+
+procedure main()
+   local f, x
+   # Use a 50ms delay in the Scheduler's call to poll.
+   sched := Scheduler(50)
+
+   x := Task(sched, create {
+      f := SocketStream(ProtocolFormat.INET, SocketType.STREAM) | stop(&why)
+      f.bind("inet:*:7000") | stop(&why)
+      f.listen(5)  | stop(&why)
+      write("Listening...")
+      repeat {
+         x.poll([f, Poll.IN]) | stop(&why)
+         handle(f.accept())
+      }
+   })
+   x.start()
+
+   until \x_flag do {
+      sched.work()
+      # Could do some extra work between polls.
+   }
+
+   f.close()
+   write("Exiting")
+end

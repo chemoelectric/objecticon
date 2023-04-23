@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Object Icon’s package system</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Object Icon’s package system</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#packages">Packages</a><ul>
+<li><a href="#declaring-a-package">Declaring a package</a></li>
+<li><a href="#using-a-package">Using a package</a></li>
+<li><a href="#using-fully-qualified-symbols">Using fully-qualified symbols</a></li>
+<li><a href="#package-scope">Package scope</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="packages">Packages</h1>
+<p>Packages in Object Icon provide two functions :-</p>
+<ul>
+<li>They group several source files into a single unit which can easily be imported into a program.</li>
+<li>They provide a naming prefix for all the symbols in a package, so that symbol name clashes between code in different libraries are avoided.</li>
+</ul>
+<h2 id="declaring-a-package">Declaring a package</h2>
+<p>A file is declared to be in a package by simply adding a package declaration at the top of the source file, such as the following :-</p>
+<pre><code>package my.pack
+
+import io(write)
+
+procedure one()
+   write(&quot;in my.pack.one&quot;)
+end</code></pre>
+<p>This will have the effect of adding the file to the package <code>my.pack</code>. This information is stored in a file named <code>packages.txt</code>, stored in the same directory as the ucode file. The format of the file is very simple, and just maintains a list of which files are in which package.</p>
+<p>The other effect of the package statement is that the names of the global symbols (procedures, records, classes and global variables) declared in the file are prefixed automatically with the package name. So, the procedure <code>one</code> in the above file is in fact named <code>my.pack.one</code>.</p>
+<ul>
+<li>A package name must be comprised of one or more identifiers separated by dots.</li>
+<li>You can have several packages in the same directory of source files; however you cannot spread a particular package over source files from more than one directory.</li>
+</ul>
+<h2 id="using-a-package">Using a package</h2>
+<p>A package is used in a program via the import statement. For example :-</p>
+<pre><code>import my.pack
+
+procedure main()
+   one()
+end</code></pre>
+<p>The import statement causes the linker to search all the <code>packages.txt</code> located on the linking path for the specified package. When found, all of the files in the package are linked into the program.</p>
+<p>Note that the reference to the procedure <code>my.pack.one</code> is in the shorter form, <code>one</code>. This is allowed so long as there isn’t another symbol <code>one</code> which would make the reference ambiguous. In any case, the fully qualified form is also acceptable.</p>
+<p>If there are several imports in one file it may become difficult to discern which symbol came from which package. For this reason, the import statement lets you indicate which symbols are being used from a particular package, as follows :-</p>
+<pre><code>import my.pack(one, two, three)</code></pre>
+<p>This means the three given symbols are being used in the source file and can be resolved to <code>my.pack.one</code>, <code>my.pack.two</code> and <code>my.pack.three</code> respectively. If there were another symbol in <code>my.pack</code>, say <code>four</code>, then it would not be resolved by the linker if it were encountered as <code>four</code>; rather an undeclared identifier error would be raised. If it were encountered as <code>my.pack.four</code> however, that would not raise an error. Note that this form of the import statement still links all of the files in the package into the program, regardless of which symbols are specified.</p>
+<p>It is also possible to specify that certain symbols in a package should be excluded; for example :-</p>
+<pre><code>import my.pack -(one, two, three)</code></pre>
+<p>This imports all of the symbols in <code>my.pack</code> except <code>one</code>, <code>two</code> and <code>three</code>. This can be useful if a particular symbol in a package is not being used, but is clashing with a symbol from another package (which is being used).</p>
+<h2 id="using-fully-qualified-symbols">Using fully-qualified symbols</h2>
+<p>Sometimes it is necessary to use a fully-qualified symbol; in particular it may be necessary if you have imported two packages which both contain the same symbol. For example, consider the following program which imports two packages each of which contains a symbol named <code>Class</code>.</p>
+<pre><code>import lang, parser, io(write)
+
+procedure main()
+   write(to_string(Class))
+end</code></pre>
+<p>Compiling this produces an error message (on linking) :-</p>
+<pre><code>/tmp/junk.u:
+File junk.icn; Line 4 # Symbol &#39;Class&#39; resolves to multiple targets in procedure main :-
+        lang.Class (/opt/objecticon/lib/main/class.icn; Line 7)
+        parser.Class (/opt/objecticon/lib/parser/tree.icn; Line 723)
+1 error</code></pre>
+<p>Supposing we meant <code>parser.Class</code>, we can just change the offending line to :-</p>
+<pre><code>write(image(parser.Class))</code></pre>
+<p>Note that we still need the <code>import parser</code>. Otherwise <code>parser</code> is interpreted as an identifier and <code>Class</code> as a field, and an “Undeclared identifier” error is produced by the linker.</p>
+<p>Another way to resolve the ambiguity would be to use qualified imports. For example, the following program compiles successfully with the use of <code>Class</code> unambiguously resolving to <code>parser.Class</code>.</p>
+<pre><code>import lang(to_string), parser(Class), io(write)
+
+procedure main()
+   write(to_string(Class))
+end</code></pre>
+<p>Yet another way to solve this problem would be to exclude the <code>Class</code> symbol from the <code>lang</code> import, as follows :-</p>
+<pre><code>import lang-(Class), parser, io(write)</code></pre>
+<p>If you use a fully-qualified symbol in a superclass list, or an invocable declaration, then the package must be imported. For example, consider the following file :-</p>
+<pre><code>class Abc(xml.Node)
+end</code></pre>
+<p>Translating this will give the following error :-</p>
+<pre><code>File junk.icn; Line 1 # Reference to unimported package: &#39;xml&#39;</code></pre>
+<p>This can be resolved by simply importing the <code>xml</code> package, either as a qualified or unqualified import. The reasoning behind this error is to avoid library code which translates correctly to a <code>.u</code> file, but depends on some other file, or the client program, importing (and hence linking) a particular package.</p>
+<h2 id="package-scope">Package scope</h2>
+<p>Top-level declarations can be specified as having package scope; for details see <a href="FieldModifiers.html#package">here</a>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

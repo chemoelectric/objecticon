@@ -1,0 +1,24 @@
+import
+   io(write),
+   util(Process)
+
+global var
+
+procedure run()
+   write("In child, setting var")
+   var := 2
+end
+
+procedure main()
+   local c
+
+   var := 1
+
+   write("In parent var=", var)
+
+   c := Process{run()}
+   c.start()
+   c.close()
+
+   write("Finished, var=", var)
+end

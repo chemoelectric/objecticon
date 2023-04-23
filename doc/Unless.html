@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Unless expressions</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Unless expressions</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#example">Example</a></li>
+<li><a href="#else">else</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>An “unless” expression is a very simple syntactic alternative to expressions of the form “if not …”.</p>
+<pre><code>unless e1 then e2</code></pre>
+<p>means the same thing as</p>
+<pre><code>if not(e1) then e2</code></pre>
+<p>Thus “unless” forms a counterpart to “until” (recall that “until e1 do e2” means “while not(e1) do e2”).</p>
+<h2 id="example">Example</h2>
+<p>Consider :-</p>
+<pre><code>if not(f := open(file)) then {
+   handle failure
+   ...
+}</code></pre>
+<p>Assuming this isn’t within the context of a generator, it can also be written as :-</p>
+<pre><code>(f := open(file)) | {
+    handle failure
+    ...
+}</code></pre>
+<p>or using an “unless” expression :-</p>
+<pre><code>unless f := open(file) then {
+   handle failure
+   ...
+}</code></pre>
+<p>which has the advantage of removing the clutter of parentheses around “f := open(file)” (which are required because of the precedence of “not” and “|”), and avoiding inadvertent errors should those parentheses be omitted.</p>
+<h2 id="else">else</h2>
+<p>An “else” clause can be attached to the “unless” expression if desired, although it may be better to swap the two branches around, for of course :-</p>
+<pre><code>unless e1 then e2 else e3</code></pre>
+<p>means the same thing as</p>
+<pre><code>if e1 then e3 else e2</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

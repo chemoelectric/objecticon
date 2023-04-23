@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The fields of a class</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The fields of a class</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Every class has a set of fields, each of which has a unique name. Some of the fields may be defined in the class itself, but other may be inherited from the class’s superclasses: see <a href="Inheritance.html">Inheritance</a>.</p>
+<p>The fields can be divided into four basic categories. Here is a class with one field of each sort.</p>
+<pre><code>class X()
+   public a
+
+   public static b
+
+   public c(v)
+        self.a := v
+   end
+
+   public static d()
+   end
+end</code></pre>
+<p>The field <code>a</code> is an instance variable. That is, every instance of <code>X</code> will have its own value of the field, accessed as follows :-</p>
+<pre><code>x1 := X()
+x1.a := 100
+x2 := X()
+x2.a := 99   # Distinct from x1.a</code></pre>
+<p>The field <code>b</code> is a static variable. This means that there is only one value of the variable in existence, and it is accessed via the class itself, rather than via any instance :-</p>
+<pre><code>X.b := 101</code></pre>
+<p>The field <code>c</code> is an instance method. It doesn’t take up any space in the instance, but it is accessed in the same way as an instance variable :-</p>
+<pre><code>x1 := X()
+x1.c(40)</code></pre>
+<p>An instance method has an implicit parameter <code>self</code>, which refers to the instance which was used to invoke the method (in the above example, <code>x1</code>). It is possible (and often very useful) to get a reference to an instance method without invoking it :-</p>
+<pre><code>x1 := X()
+m := x1.c
+...
+m(40)</code></pre>
+<p>Here, <code>m</code> will have a value of type <code>methp</code>, short for “method pointer”. See <a href="MethodPointers.html">this page</a> for details.</p>
+<p>Finally, the field <code>d</code> is a static method. It doesn’t have an implicit <code>self</code> parameter, and is invoked via the class, rather than an instance. Instance variables and methods cannot be accessed from inside a static method (an error on linking will be produced).</p>
+<pre><code>X.d()</code></pre>
+<p>Like an instance method, it is possible to get a reference to a static method without invoking it :-</p>
+<pre><code>m := X.d
+...
+m()</code></pre>
+<p>In this case <code>m</code> has the type “procedure”.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

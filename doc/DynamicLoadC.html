@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>How to dynamically load C/RTL code</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">How to dynamically load C/RTL code</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#dynamically-loading-crtl-code">Dynamically loading C/RTL code</a><ul>
+<li><a href="#a-sample-rtl-file">A sample RTL file</a></li>
+<li><a href="#compilation">Compilation</a></li>
+<li><a href="#compiling-on-windows">Compiling on Windows</a></li>
+<li><a href="#loading-the-library">Loading the library</a></li>
+<li><a href="#class.load_library">Class.load_library()</a></li>
+<li><a href="#external-headers-and-symbols">External headers and symbols</a></li>
+<li><a href="#accessing-symbols-from-the-library">Accessing symbols from the library</a><ul>
+<li><a href="#symbol-clashes">Symbol clashes</a></li>
+</ul></li>
+<li><a href="#multiple-source-files">Multiple source files</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="dynamically-loading-crtl-code">Dynamically loading C/RTL code</h1>
+<p>Object Icon incorporates some enhancements to Icon’s dynamic loading facility which allow dynamically loaded functions to be written in RTL rather than plain C. This means that dynamically loaded code can take the same form as builtin code, and can do the same things.</p>
+<h2 id="a-sample-rtl-file">A sample RTL file</h2>
+<p>Here is a not-very-useful function to generate the bit positions of ones in an integer (for example 6 is 110, so generates 2, 3).</p>
+<pre><code>function bits(v)
+    if !cnv:C_integer(v) then
+       runerr(101, v)
+    body {
+       int i = 1;
+       while (v) {
+           if (v &amp; 1)
+               suspend C_integer i;
+           v /= 2;
+           ++i;
+       }
+       fail;
+    }
+end</code></pre>
+<p>To create a dynamic library to use this function we would firstly place it in a file with the suffix “.r”, say <code>testlib.r</code>.</p>
+<h2 id="compilation">Compilation</h2>
+<p>Next, create a Makefile to build the library.</p>
+<pre><code>include $(OI_HOME)/Makedefs
+
+all:    testlib.so prog
+
+clean :
+    rm -f *.c *.u *.o *.so prog
+
+prog :  prog.icn
+    oit -s prog.icn
+
+testlib.o : testlib.r
+    rtt testlib.r
+    $(CC) $(CPPFLAGS) $(CFLAGS) $(DYNAMIC_LIB_CFLAGS) -c testlib.c -o testlib.o
+
+testlib.so : testlib.o
+    $(CC) $(DYNAMIC_LIB_LDFLAGS) -o testlib.so testlib.o</code></pre>
+<p>Notes :-</p>
+<ul>
+<li>The <code>Makedefs</code> file defines various variables, in particular the flags for C compilation.</li>
+<li>The flags to the <code>$(CC)</code> command may need to be tweaked.</li>
+</ul>
+<h2 id="compiling-on-windows">Compiling on Windows</h2>
+<p>The above relates to Unix-like platforms. For Windows, the commands are of course slightly different. If Cygwin is being used, the following Makefile could be used. Note that <code>rtt</code> is given the <code>-x</code> option, which is explained below.</p>
+<pre><code>include $(OI_HOME)/Makedefs
+
+all:    testlib.dll prog.exe
+
+clean :
+    rm -f *.c *.u *.obj *.dll prog.exe
+
+prog.exe :  prog.icn
+    oit -s prog.icn
+
+testlib.c: testlib.r
+    rtt -x testlib.r
+
+testlib.dll : testlib.obj
+    cl /LD testlib.obj</code></pre>
+<h2 id="loading-the-library">Loading the library</h2>
+<p>Here is a sample program to load the library and run the <code>bits()</code> function. Save this as <code>prog.icn</code>.</p>
+<pre><code>import io, lang
+
+procedure main()
+   local p
+   p := Proc.load(&quot;./testlib&quot; || Files.LIB_SUFFIX, &quot;bits&quot;) | stop(&amp;why)
+   write(&quot;okay, loaded &quot;,image(p))
+   every write(p(12345))
+end</code></pre>
+<p>When compiled and run, the following output should result :-</p>
+<pre><code>okay, loaded function bits
+1
+4
+5
+6
+13
+14</code></pre>
+<p>Note that the library name in the first parameter of <code>loadfunc</code> is passed unaltered to the underlying system’s dynamic load function (on Unix, <code>dlopen</code>). This means that the library must either be an absolute path, relative to the current directory, or in one of the places that the system normally looks for shared libraries.</p>
+<p>There are some functions available to help search for files on paths. In particular see <a href="http://objecticon.sourceforge.net/libref/index.html?io.Files.html%23path_find"><code>io.Files.path_find()</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?io.Files.html%23find_native_lib"><code>io.Files.find_native_lib()</code></a>. This latter function is used to load the shared libraries included in the distribution, using the path given by the environment variable <code>OI_NATIVE</code>.</p>
+<h2 id="class.load_library">Class.load_library()</h2>
+<p>This function can be used to define several native methods at once in a class, using a shared library. It should be called from the class’s static <code>init</code> method, with the shared library as a parameter. It goes through each native method in the class, looking for a matching function defined in the shared library. Any not found are just ignored. This means a class with numerous native methods can resolve them all at once with a single convenient call.</p>
+<p>For example, if we replace <code>testlib.r</code> with the following :-</p>
+<pre><code>function Test_one()
+    body {
+       printf(&quot;test one\n&quot;);
+       fail;
+    }
+end
+
+function Test_two()
+    body {
+       printf(&quot;test two\n&quot;);
+       fail;
+    }
+end</code></pre>
+<p>and <code>prog.icn</code> with :-</p>
+<pre><code>import lang
+
+class Test()
+   public native one()
+   public native two()
+
+   private static init()
+      Class.load_library(&quot;./testlib&quot; || Files.LIB_SUFFIX) | stop(&amp;why)
+   end
+end
+
+procedure main()
+   local o
+   o := Test()
+   o.one()
+   o.two()
+end</code></pre>
+<p>and recompile using the Makefile already given above, then the output from <code>prog</code> will be :-</p>
+<pre><code>test one
+test two</code></pre>
+<h2 id="external-headers-and-symbols">External headers and symbols</h2>
+<p>It is possible that the RTL code in a dynamic library will need to refer to another existing library and its associated C header files. For example, the mysql library needs to reference <code>"mysql.h"</code> and link to the mysqlclient library. These external header files are normally <em>not</em> processed by RTT - rather they are passed through RTT to be processed by the C compiler. For example</p>
+<pre><code>#passthru #include &quot;mysql.h&quot;</code></pre>
+<p>This raises a problem of how <code>rtt</code> will recognise symbol and types defined in the header concerned, which are then used in the RTL source. For example <code>mysql.h</code> defines the type <code>MYSQL_RES</code>, and this is used several times in <code>mysql.r</code>. For code in the interpreter, a separate header file, <code>grttin.h</code>, is processed specially by <code>rtt</code> in order to allow such symbols to be declared with dummy types, typically as <code>typedef int</code>. This allows them to pass through RTT without error. For an dynamic library we naturally don’t want to edit <code>grttin.h</code>, so a new option, <code>-h</code> specifies an extra header file to process immediately after <code>grttin.h</code>. Here we can provide the necessary dummy definitions of symbols like <code>MYSQL_RES</code>. The header for the mysql library looks like this :-</p>
+<pre><code>typedef int MYSQL, MYSQL_FIELD, my_bool, MYSQL_RES,
+    MYSQL_FIELD_OFFSET, MYSQL_ROW, MYSQL_ROW_OFFSET, my_ulonglong;</code></pre>
+<p>and is processed (from a Makefile like the one above) with the command :-</p>
+<pre><code>$(RTT) -h gmysql.h mysql.r</code></pre>
+<p>Another way of passing symbols like MYSQL_RES through <code>rtt</code> unchanged is via the <code>-t</code> option to <code>rtt</code> :-</p>
+<pre><code>$(RTT) -t MYSQL_RES -t MYSQL_FIELD .... mysql.r</code></pre>
+<p>The indicated symbols then pass through to the C code unchanged.</p>
+<h2 id="accessing-symbols-from-the-library">Accessing symbols from the library</h2>
+<p>The above simple <code>bits</code> function used the conversion <code>cnv:C_integer</code> to check and convert the type of its argument. This syntax is translated by <code>rtt</code> into the C call <code>cnv_c_int</code>, a function defined in <code>cnv.r</code> and part of the main <code>oix</code> executable. On modern Unix systems (including Linux), this doesn’t present a problem, because the loader will be be able to link a shared library’s undefined symbols at load time to the parent program.</p>
+<p>However, this doesn’t apply to all systems, and in particular a Windows DLL file cannot access its parent’s symbols in this way. Therefore another method has to be used to enable the library to call into the main program.</p>
+<p>The method used is to pass a structure containing pointers to variables, constants and functions of the main program, into the library when it is first loaded. This structure can then be used to conveniently access the main program. There should be no need to access the pointer structure directly, since a file of macro definitions is included by the code generated by <code>rtt</code> in order to map the symbols to their pointer equivalents. For example <code>cnv_c_int</code> mentioned above is defined as :-</p>
+<pre><code>#define cnv_c_int (*(imported-&gt;cnv_c_int))</code></pre>
+<p>The full list of macro definitions is in the file <code>base/h/imported.h</code>.</p>
+<p>The variable <code>imported</code> points to the structure passed from the main program.</p>
+<p>To tell <code>rtt</code> to generate a C file which uses the above scheme for accessing the main program’s symbols, just pass the <code>-x</code> option to <code>rtt</code>. This will define the <code>imported</code> variable, together with an exported function to set it.</p>
+<h3 id="symbol-clashes">Symbol clashes</h3>
+<p>Do be aware that occasionally preprocessor definitions of this sort can cause trouble. For example, like <code>cnv_c_int</code>, the symbol <code>why</code> is also defined in <code>imported.h</code> :-</p>
+<pre><code>#define why (*(imported-&gt;why))</code></pre>
+<p>Imagine that a library wishes to include some third-party header as follows :-</p>
+<pre><code>/* trouble.h */
+struct bother {
+    int why;
+};</code></pre>
+<p>As described above, this would be included in a <code>.r</code> file with the line :-</p>
+<pre><code>#passthru #include &quot;trouble.h&quot;</code></pre>
+<p>The problem is that the C preprocessor will replace the <code>why</code> in the structure definition with “(*(imported-&gt;why))”, causing a syntax error.</p>
+<p>If we don’t need to use the imported <code>why</code> in our <code>.r</code> file, then we can just undefine it :-</p>
+<pre><code>#passthru #undef why
+#passthru #include &quot;trouble.h&quot;</code></pre>
+<p>However, if we do wish to use <code>why</code>, then we must use something more verbose :-</p>
+<pre><code>#passthru #undef why
+#passthru #define why _why
+#passthru #include &quot;trouble.h&quot;
+#passthru #undef why
+#passthru #define why (*(imported-&gt;why))</code></pre>
+<p>and then refer to the field structure as follows :-</p>
+<pre><code>struct bother b;
+b._why = 100;</code></pre>
+<p>Another option is to put the code using the problem library (and its include file) into a separate C source file, which is then called from the <code>.r</code> file.</p>
+<h2 id="multiple-source-files">Multiple source files</h2>
+<p>If you wish to create a single library file from several source files, then translate all but one of the files using the <code>-y</code> option with <code>rtt</code>. This ensures that certain variables generated by <code>rtt</code> (such as <code>imported</code> described above), are defined in just one file (the one translated without <code>-y</code>).</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

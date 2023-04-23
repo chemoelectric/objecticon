@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Generating directory entries</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Generating directory entries</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#first-attempt">First attempt</a></li>
+<li><a href="#second-attempt">Second attempt</a></li>
+<li><a href="#third-attempt">Third attempt</a></li>
+<li><a href="#final-version">Final version</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Here is a seemingly simple programming problem that actually throws up several interesting issues: write a library procedure that recursively generates the entries in a given directory.</p>
+<h1 id="first-attempt">First attempt</h1>
+<p>This is a simple first attempt. The enclosing main program takes two optional parameters; namely the directory to list, and the maximum number of results to print.</p>
+<p><a href="dir1.icn">Download dir1.icn</a></p>
+<pre><code>import io
+
+procedure dir_recurse(f)
+   local p, f2, l, s
+   write(&quot;Opening &quot;, f)
+   s := DirStream(f) | {
+      write(&quot;Failed to open &quot;, f, &quot;: &quot;, &amp;why)
+      fail
+   }
+   suspend f
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | break
+      if /l then
+         break
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         suspend dir_recurse(f2)
+      else
+         suspend f2
+   }
+   write(&quot;Closing &quot;, f)
+   s.close()
+end
+
+procedure main(a)
+   local f, d, n
+
+   d := a[1] | &quot;/tmp&quot;
+   n := integer(a[2]) | 100
+
+   every f := dir_recurse(d) \ n do
+      write(&quot;   Got &quot;, f)
+
+   write(&quot;Exiting&quot;)
+end
+</code></pre>
+<p>This procedure has three problems. Firstly, unless the generator is run to exhaustion, not all of the <a href="http://objecticon.sourceforge.net/libref/index.html?io.DirStream.html"><code>io.DirStream</code></a> objects used to read the directories will be closed. This is because the last line of <code>dir_recurse</code>, which closes the <code>DirStream</code>, <code>s</code>, won’t be reached if <code>dir_recurse</code> suspends, but isn’t resumed.</p>
+<p>To illustrate this problem, try creating a test directory with some entries as follows :-</p>
+<pre><code>mkdir -p /tmp/here/is/a/deep/directory
+touch /tmp/here/entry1 /tmp/here/is/a/entry2 /tmp/here/is/a/entry3 /tmp/here/is/a/deep/entry4
+chmod -r /tmp/here/is/a/deep/directory</code></pre>
+<p>Note that the last command makes that directory unreadable. If we run the command</p>
+<pre><code>oit -s ./dir1.icn -x /tmp/here 5</code></pre>
+<p>we get the output :-</p>
+<pre><code>Opening /tmp/here
+   Got /tmp/here
+   Got /tmp/here/entry1
+Opening /tmp/here/is
+   Got /tmp/here/is
+Opening /tmp/here/is/a
+   Got /tmp/here/is/a
+   Got /tmp/here/is/a/entry3
+Exiting</code></pre>
+<p>Note how none of the three opened <code>DirStream</code>s has a corresponding close.</p>
+<p>The second problem is that <code>dir_recurse</code> doesn’t handle errors well. If it can’t open a directory, it just prints a message, and if it encounters an error reading a directory (indicated by <code>s.read_line()</code> failing), it exits its loop. In either case, there is no way for the caller of <code>dir_recurse</code> to tell that an error occurred.</p>
+<p>To illustrate this, try running :-</p>
+<pre><code>oit -s ./dir1.icn -x /tmp/here</code></pre>
+<p>Here we see that the error opening the unreadable directory goes unnoticed by the higher level invocations, which just carry on regardless :-</p>
+<pre><code>Opening /tmp/here
+   Got /tmp/here
+   Got /tmp/here/entry1
+Opening /tmp/here/is
+   Got /tmp/here/is
+Opening /tmp/here/is/a
+   Got /tmp/here/is/a
+   Got /tmp/here/is/a/entry3
+Opening /tmp/here/is/a/deep
+   Got /tmp/here/is/a/deep
+Opening /tmp/here/is/a/deep/directory
+Failed to open /tmp/here/is/a/deep/directory: Permission denied (errno=13)
+   Got /tmp/here/is/a/deep/entry4
+Closing /tmp/here/is/a/deep
+   Got /tmp/here/is/a/entry2
+Closing /tmp/here/is/a
+Closing /tmp/here/is
+Closing /tmp/here
+Exiting</code></pre>
+<p>The third problem is that the procedure is potentially inefficient if it is handling a very deep directory structure. This is because every result from the deepest directories has to “bubble up” through all the higher level calls. Then, after it is received by the top-level caller, the whole chain of calls has to be resumed to get the next result. This is illustrated in the following diagram, showing what happens when a directory under “/usr/lib” is being iterated over. Every result generated involves a complete circuit of the loop shown by the green and orange arrows.</p>
+<p><img src="bubble_dir.png" /></p>
+<h1 id="second-attempt">Second attempt</h1>
+<p>The second version tries to address the last of the above problems, by using coroutines, instead of nested suspension.</p>
+<p><a href="dir2.icn">Download dir2.icn</a></p>
+<pre><code>import io, ipl.pdco
+
+procedure dir_recurse1(f)
+   local s, p, f2, l
+   write(&quot;Opening &quot;, f)
+   s := DirStream(f) | {
+      write(&quot;Failed to open &quot;, f, &quot;: &quot;, &amp;why)
+      fail
+   }
+
+   coact(f)
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | fail
+      if /l then
+         break
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         dir_recurse1(f2)
+      else
+         coact(f2)
+   }
+
+   write(&quot;Closing &quot;, f)
+   s.close()
+end
+
+procedure dir_recurse(f)
+   suspend Seq{ dir_recurse1(f) }
+end
+
+procedure main(a)
+   local f, d, n
+
+   d := a[1] | &quot;/tmp&quot;
+   n := integer(a[2]) | 100
+
+   every f := dir_recurse(d) \ n do
+      write(&quot;   Got &quot;, f)
+
+   write(&quot;Exiting&quot;)
+end
+</code></pre>
+<p>Now <code>dir_recurse()</code> starts off a new coroutine, which recursively descends the directory tree in <code>dir_recurse1()</code>. As each result is encountered, it is sent back to <code>dir_recurse()</code> via a co-expression activation. <code>dir_recurse()</code> then suspends it to the main procedure. It makes use of the <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.pdco.Seq.html"><code>ipl.pdco.Seq</code></a> library procedure, which is a very simple one-liner which turns a co-expression’s activation results back into a results sequence. The result is that the main procedure sees the same results sequence as in the first version.</p>
+<p>Here is a diagram showing what is happening. The results now flow along the blue lines, bypassing the lengthy green and orange loop.</p>
+<p><img src="coroutine_dir.png" /></p>
+<p>Having said all this, a directory would have to be very deep indeed, and have a large number of entries, before the relatively small cost of procedure resumption becomes noticeable against the backdrop of the expensive I/O calls. In fact, for shallow directories, the above technique will probably be slightly slower than the first version (although in this case, the cost difference will almost certainly be irrelevant). For more on the performance advantage of the technique, please see <a href="Bypass.html">this page</a>.</p>
+<h1 id="third-attempt">Third attempt</h1>
+<p>The next version addresses the problem of ensuring that the <code>DirStream</code> instances are properly closed, even if the results aren’t generated until exhaustion.</p>
+<p><a href="dir3.icn">Download dir3.icn</a></p>
+<pre><code>import io, util
+
+record Msg(file, revert)
+
+procedure dir_recurse2(s, f, revert)
+   local p, f2, l
+   coact(Msg(f, &amp;current), revert)
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | fail
+      if /l then
+         return
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         dir_recurse1(f2, revert)
+      else
+         coact(Msg(f2, &amp;current), revert)
+   }
+end
+
+procedure dir_recurse1(f, revert)
+   local s
+   use {
+      {
+         write(&quot;Opening &quot;, f)
+         s := DirStream(f)
+      },
+      dir_recurse2(s, f, revert),
+      {
+         write(&quot;Closing &quot;, f)
+         s.close()
+      }
+   } | write(&quot;Problem accessing &quot;, f, &quot;: &quot;, &amp;why)
+end
+
+procedure dir_recurse(f)
+   local v, here, e
+   here := &amp;current
+   e := create dir_recurse1(f, here)
+   v := @e | fail
+   repeat {
+      suspend v.file
+      v := coact(, v.revert) | fail
+   }
+end
+
+procedure main(a)
+   local f, d, n
+
+   d := a[1] | &quot;/tmp&quot;
+   n := integer(a[2]) | 100
+   clean {
+      every f := dir_recurse(d) \ n do
+         write(&quot;   Got &quot;, f)
+   }
+
+   write(&quot;Exiting&quot;)
+end
+</code></pre>
+<p>It achieves this by using the <a href="http://objecticon.sourceforge.net/libref/index.html?util.use.html"><code>util.use</code></a> library procedure. This procedure takes three co-expressions: a setup expression which opens a particular resource (such as a file); an action expression which uses that resource, and finally a cleanup expression which closes the resource. Normally <code>use</code> invokes the cleanup expression itself, after the action expression completes. But if the action expression never does this, as may happen in this case if we don’t generate all the directory entries to exhaustion, then we can use another procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?util.clean.html"><code>util.clean</code></a>. This works in conjunction with <code>use</code>, by managing a global list of cleanup expressions. <code>use</code> adds each cleanup expression to the list, and removes them if and when they are run. Finally, <code>clean</code> will run any cleanup expressions that <code>use</code> hasn’t.</p>
+<p>The call to <code>use</code> is in <code>dir_recurse1</code> which then calls <code>dir_recurse2</code> to make use of the <code>DirStream</code> resource. The procedure <code>dir_recurse</code> is still the top-level interface, suspending the sequence of file names to the client program. You will see that it is rather more involved than in the previous version. This is because unfortunately <code>use</code> also happens to introduce a complication. Before, we only had two co-expressions, namely the main co-expression and the one descending the directory tree. This means we didn’t have to keep track of which co-expression each one should activate or revert to; the descending co-routine just reverted to its activator when it had a result (this is what <code>coact</code> doees by default). But now each time we call <code>use</code> we are creating three co-expressions. One of those is activated and calls <code>dir_recurse2</code>, so that procedure can no longer simply revert to its activator to send a result. So instead we have to pass a parameter (<code>revert</code>) down to <code>dir_recurse2</code>, giving it the co-expression we wish to activate when we have a result. Similarly, with each result we have to include the co-expression we wish the top level to resume when we want another result. So rather than just giving a file as a result, we give a record instance, <code>Msg</code>, containing a file and the co-expression to revert to for the next result.</p>
+<p>Try running this version on the test directory mentioned before, producing just the first few results :-</p>
+<pre><code>oit -s ./dir3.icn -x /tmp/here 5</code></pre>
+<p>which produces :-</p>
+<pre><code>Opening /tmp/here
+   Got /tmp/here
+   Got /tmp/here/entry1
+Opening /tmp/here/is
+   Got /tmp/here/is
+Opening /tmp/here/is/a
+   Got /tmp/here/is/a
+   Got /tmp/here/is/a/entry3
+Closing /tmp/here/is/a
+Closing /tmp/here/is
+Closing /tmp/here
+Exiting</code></pre>
+<p>In contrast to the first version, all the <code>DirStream</code>s are closed properly.</p>
+<h1 id="final-version">Final version</h1>
+<p>This just leaves the problem of error notification to be addressed. The problem is that, since <code>dir_recurse</code> generates a sequence of results, it can’t use failure to indicate an error. One possibility would be to use some kind of flag to indicate an error. But a better way is to use the library procedure <a href="http://objecticon.sourceforge.net/libref/index.html?exception.throw.html"><code>exception.throw</code></a> to raise an exception. This has the added advantage that it is easy to abandon a deeply nested series of calls, which is what we have in this case.</p>
+<p>Here is the final version of the program.</p>
+<p><a href="dir4.icn">Download dir4.icn</a></p>
+<pre><code>import io,  util, exception
+
+record Msg(file, revert)
+
+procedure dir_recurse2(s, f, revert)
+   local p, f2, l
+   coact(Msg(f, &amp;current), revert)
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | fail
+      if /l then
+         return
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         dir_recurse1(f2, revert)
+      else
+         coact(Msg(f2, &amp;current), revert)
+   }
+end
+
+
+procedure dir_recurse1(f, revert)
+   local s
+   use {
+      {
+         write(&quot;Opening &quot;, f)
+         s := DirStream(f)
+      },
+      dir_recurse2(s, f, revert),
+      {
+         write(&quot;Closing &quot;, f)
+         s.close()
+      }
+   } | throw(&quot;Problem accessing &quot; || f || &quot;: &quot; || &amp;why)
+end
+
+procedure dir_recurse(f)
+   local v, here, e
+   here := &amp;current
+   e := create dir_recurse1(f, here)
+   v := @e | fail
+   repeat {
+      suspend v.file
+      v := coact(, v.revert) | fail
+   }
+end
+
+procedure main(a)
+   local f, d, n
+
+   d := a[1] | &quot;/tmp&quot;
+   n := integer(a[2]) | 100
+   clean { try1 {
+      every f := dir_recurse(d) \ n do
+         write(&quot;   Got &quot;, f)
+   }} | write(&amp;why)
+
+   write(&quot;Exiting&quot;)
+end
+</code></pre>
+<p>The exception mechanism is actually very simple. At the top level, a procedure <a href="http://objecticon.sourceforge.net/libref/index.html?exception.try1.html"><code>exception.try1</code></a> is used to wrap the call to <code>dir_recurse</code>. All this does in effect is save the current co-expression (ie, <code>&amp;current</code>) in a global variable, <code>throw_handler</code>. The expression passed to <code>try1</code> is now invoked. If that expression wants to raise an exception, all it does is call <code>throw</code> with an arbitrary exception message (an error message string in this case). <code>throw</code> simply sets some global variables to save the message and other information, and invokes the handler.</p>
+<p>Here is a diagram showing what happens when an exception is raised. <code>try1</code> invokes the body coroutine passed to it. It then descends several levels of calls to <code>dir_recurse1</code>. Finally, on encountering an error, <code>throw</code> is called, and the handler (set by <code>try1</code>, and stored in <code>throw_handler</code>) is invoked.</p>
+<p><img src="exception.png" /></p>
+<p>This diagram rather simplifies the activities of the descending body coroutine. <code>dir_recurse2</code> isn’t shown, and, since we are now using <code>use</code> to invoke <code>dir_recurse2</code>, each level of recursion actually invovles a co-expression activation, as well as an ordinary procedure invocation.</p>
+<p>There is a similarity between this diagram and the one above showing how the traversal coroutine sends its results to the main coroutine, bypassing the call chain. Indeed both are using a similar technique, and it would be possible to avoid using the exception library and instead send an error notification as part of the <code>Msg</code> record.</p>
+<p>The call to <code>try1</code> is in the main procedure, inside the call to <code>clean</code>, ensuring that all the <code>DirStream</code>s opened by the calls to <code>use</code> are closed in the case of an exception.</p>
+<p>To test this final version of the program, try running :-</p>
+<pre><code>oit -s ./dir4.icn -x /tmp/here</code></pre>
+<p>The output should be :-</p>
+<pre><code>Opening /tmp/here
+   Got /tmp/here
+Opening /tmp/here/is
+   Got /tmp/here/is
+Opening /tmp/here/is/a
+   Got /tmp/here/is/a
+Opening /tmp/here/is/a/deep
+   Got /tmp/here/is/a/deep
+Opening /tmp/here/is/a/deep/directory
+Closing /tmp/here/is/a/deep
+Closing /tmp/here/is/a
+Closing /tmp/here/is
+Closing /tmp/here
+Problem accessing /tmp/here/is/a/deep/directory: Permission denied (errno=13)
+Exiting</code></pre>
+<p>Note how the program stops when an error is encountered, and that all <code>DirStream</code>s are properly closed.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

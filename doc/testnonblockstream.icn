@@ -1,0 +1,29 @@
+import io
+
+procedure main(a)
+   local f, nb, s
+
+   # Open a file for reading.
+   f := FileStream(a[1]) | stop(&why)
+
+   # Create a read-only NonBlockStream operating on f
+   nb := NonBlockStream(f)
+   every 1 to 5 do {
+      # Print some dots whilst we're waiting
+      while nb.get_in_status() == NonBlockStream.READING do {
+         writes(".")
+         delay(100)
+      }
+      # Get the result
+      if s := nb.in(32) then {
+         if /s then
+            write(" EOF")
+         else
+            write(" -> ", s)
+      } else
+         write(" failed ", &why)
+   }
+
+   # This will close f too.
+   nb.close()
+end

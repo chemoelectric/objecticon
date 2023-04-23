@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Handling flag values</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Handling flag values</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#yes">&amp;yes</a></li>
+<li><a href="#no">&amp;no</a></li>
+<li><a href="#yes-and-no-procedures"><code>Yes</code> and <code>No</code> procedures</a></li>
+<li><a href="#helpful-procedures">Helpful procedures</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>One minor frustration the Icon programmer may encounter is the problem of storing boolean values in a variable. Icon of course has no boolean type, and it doesn’t really make sense to add one, because its conditional tests in <code>if</code> expressions and loops aren’t based on a boolean evaluation (rather, they’re based on whether an expression succeeds or not, which is a very different thing).</p>
+<p>So, the following simple code in Java is actually a little awkward to translate into Icon :-</p>
+<pre><code>boolean b;
+int i;
+
+....
+
+b = (i &gt; 0);
+
+....
+
+if (b) {
+   /* i is &gt; 0 */
+   ....
+   }</code></pre>
+<p>Since there is no boolean type in Icon, we have to choose values to represent true and false. It makes sense to choose <code>&amp;null</code> for false, since we can then use the <code>\</code> and <code>/</code> operators to test the variable for its boolean value. We then have to choose a value for true, which just has to be any non-null value, say the string “yes”. The above java code can then be translated as :-</p>
+<pre><code>local b, i
+
+....
+
+b := if i &gt; 0 then &quot;yes&quot; else &amp;null
+
+....
+
+if \b then {
+   # i is &gt; 0
+   ....
+}</code></pre>
+<h1 id="yes">&amp;yes</h1>
+<p>The thing I never really liked about the above technique was the arbitrary nature of the non-null value for representing true. Whatever value is chosen, it won’t match well with <code>&amp;null</code>, and will be impossible to distinguish from a value having a non-flag meaning.</p>
+<p>Therefore Object Icon has a value (and type) especially for the purpose of a flag value. This value is <code>&amp;yes</code>, and it is the only value of a builtin type, “yes”. In a way, it is a mirror of <code>&amp;null</code>, which is of course the only value of type “null”. Like <code>&amp;null</code>, <code>&amp;yes</code> doesn’t support any operators (other than <code>/</code> and <code>\</code>), and it is always quite clear that it’s being used as a flag.</p>
+<p>The above example works the same, but the assignment to <code>b</code> now looks rather more symmetrical :-</p>
+<pre><code>b := if i &gt; 0 then &amp;yes else &amp;null</code></pre>
+<h1 id="no">&amp;no</h1>
+<p>For the sake of readability, there is also a keyword, <code>&amp;no</code>, which is just a synonym for <code>&amp;null</code> (they are both entirely interchangeable).</p>
+<h1 id="yes-and-no-procedures"><code>Yes</code> and <code>No</code> procedures</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?util.Yes.html"><code>util.Yes</code></a> procedure takes an expression, and returns <code>&amp;yes</code> or <code>&amp;no</code> depending on whether the expression succeeds or fails. <code>Yes</code> never fails. <a href="http://objecticon.sourceforge.net/libref/index.html?util.No.html"><code>util.No</code></a> is just the same, but returns <code>&amp;no</code> instead of <code>&amp;yes</code> on success of the expression, and vice versa.</p>
+<p>They are very useful to reduce the clutter caused by <code>if</code> expressions, such as the one assigning to <code>b</code> in the example above. Using <code>Yes</code>, it can be rewritten :-</p>
+<pre><code>b := Yes{ i &gt; 0 }</code></pre>
+<p>which is much more concise.</p>
+<h1 id="helpful-procedures">Helpful procedures</h1>
+<p>There are a handful of other utility procedures which make flag handling a little easier. <a href="http://objecticon.sourceforge.net/libref/index.html?util.flag.html"><code>util.flag</code></a> is a conversion procedure which tries to deduce a <code>&amp;yes</code> or <code>&amp;no</code> value from its parameter. <a href="http://objecticon.sourceforge.net/libref/index.html?util.need_flag.html"><code>util.need_flag</code></a> checks if its parameter is <code>&amp;yes</code> or <code>&amp;no</code> and exits with a runtime error otherwise. Finally, <a href="http://objecticon.sourceforge.net/libref/index.html?util.toggle_flag.html"><code>util.toggle_flag</code></a> inverts a flag value. The source for these very simple procedures, as well as <code>Yes</code> and <code>No</code>, can be seen in <a href="http://objecticon.sourceforge.net/libref/index.html?util-flag.icn.html">this file</a>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

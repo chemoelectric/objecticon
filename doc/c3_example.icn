@@ -1,0 +1,10 @@
+class O() end
+class A(O) end
+class B(O) end
+class C(O) end
+class D(O) end
+class E(O) end
+class K1(A,B,C) end
+class K2(D,B,E) end
+class K3(D,A) end
+class Z(K1,K2,K3) end

@@ -1,0 +1,45 @@
+import net, http, io, xml, ipl.webscraper, ipl.options
+
+$load TEMPLATE "template.html"
+
+procedure main(a)
+   local url, hreq, hc, hres, out, ws, doc, el, x, s, opts
+
+   ws := WebScraper(TEMPLATE) | stop(&why)
+
+   opts := options(a, [Opt("v",, "Output scraped element in HTML format")])
+
+   # The URL we wish to scrape
+   url := URL("http://www.merriam-webster.com/dictionary/" || a[1])  | stop("usage: dictionary word")
+
+   # A stream for the resulting data
+   out := RamStream()
+
+   # Get the page.
+   hreq := HttpRequest().
+      set_url(url).
+      set_output_stream(out)
+
+   hc := HttpClient()
+
+   hres := hc.retrieve(hreq) | stop(&why)
+
+   # Parse into a HTML document
+   doc := HtmlParser().parse(out.done())
+
+   # Search the document for the desired element
+   el := ws.lookup(doc, "deflist") | stop(&why)
+
+   if \opts["v"] then {
+      write("HTML formatted output :-")
+      HtmlFormatter().format(el)
+      write("\n")
+   }
+
+   # Output the results
+   every x := el.search_tree() do {
+      s := x.get_trimmed_string_content()
+      if *s > 1 then
+         write(s)
+   }
+end

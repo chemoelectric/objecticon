@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Inheritance</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Inheritance</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#inheritance">Inheritance</a><ul>
+<li><a href="#restrictions">Restrictions</a></li>
+<li><a href="#field-name-clashes">Field name clashes</a></li>
+<li><a href="#implemented-classes">Implemented classes</a></li>
+<li><a href="#accessing-overridden-methods">Accessing overridden methods</a></li>
+<li><a href="#linearization-algorithm">Linearization algorithm</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="inheritance">Inheritance</h1>
+<p>Classes can inherit from multiple parent classes. Fields of the parent classes are “merged” into the resulting class by a process which, firstly, involves linearizing the graph of superclasses (ie: flattening it into a simple list). After this is done, the resulting list of classes is processed in order, adding fields as they occur. Fields which come first take priority; they override fields which come later in the list.</p>
+<p>The algorithm used to perform the flattening is described <a href="#linearization-algorithm">below</a>.</p>
+<h2 id="restrictions">Restrictions</h2>
+<p>There are some restrictions on what can be inherited, as follows.</p>
+<ul>
+<li><p>A class cannot inherit from a superclass declared as <code>final</code>. For example, this is not allowed :-</p>
+<pre><code>final class Parent()
+end
+
+class Child(Parent)
+end</code></pre></li>
+<li><p>A class cannot inherit (directly or indirectly) from a superclass declared as <code>protected</code>, unless it is in the same package. For example, this is not allowed :-</p>
+<pre><code>package first
+
+protected class C()
+   ...
+end
+
+...
+package second
+
+import first(C)
+
+class Y(C)                # Error (outside of package)
+end</code></pre></li>
+<li><p>A method which was declared <code>final</code> or <code>private</code> cannot be overridden. For example, this is not allowed :-</p>
+<pre><code>class Parent()
+   public final f()
+   end
+
+   private g()
+   end
+end
+
+class Child(Parent)
+   public override f()    # Error
+   end
+
+   public override g()    # Error
+   end
+end</code></pre></li>
+<li><p>If (and only if) a method overrides another, then it must be declared with the <code>override</code> modifier :-</p>
+<pre><code>class Parent()
+   public f()
+   end
+
+   public g()
+   end
+end
+
+class Child(Parent)
+   public override f()    # OK
+   end
+
+   public g()             # Error (needs override)
+   end
+
+   public override h()    # Error (doesn&#39;t override)
+   end
+end</code></pre></li>
+<li><p>A method which was declared <code>package</code> cannot be overridden (directly or indirectly) except by a method in a subclass within the same package. For example :-</p>
+<pre><code>package first
+
+class C()
+   package f()
+   end
+end
+
+class X(C)
+   package override f()   # OK
+   end
+end
+
+...
+package second
+
+import first(C)
+
+class Y(C)
+   public override f()    # Error (outside of package)
+   end
+end</code></pre></li>
+<li><p>It may also happen that there is a disallowed name clash - this is described in the next section.</p></li>
+</ul>
+<h2 id="field-name-clashes">Field name clashes</h2>
+<p>It may be that a field name is encountered more than once whilst traversing the flattened list of parent classes. If this happens, then the first occurence is always the one that is inherited into the resulting class. However, a compilation error may also be signalled. This will happen UNLESS</p>
+<ul>
+<li>the first and the subsequent occurences are static, OR</li>
+<li>the first and the subsequent occurences are instance methods.</li>
+</ul>
+<p>Looked at from another viewpoint, this table shows the permissible combinations, with an ‘X’ meaning disallowed and a ‘+’ meaning allowed.</p>
+<table>
+<thead>
+<tr class="header">
+<th>First def’n</th>
+<th>Instance var</th>
+<th>Static var</th>
+<th>Instance method</th>
+<th>Static method</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Subsequent def’n</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Instance var</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr class="odd">
+<td>Static var</td>
+<td>X</td>
+<td>+</td>
+<td>X</td>
+<td>+</td>
+</tr>
+<tr class="even">
+<td>Instance method</td>
+<td>X</td>
+<td>X</td>
+<td>+</td>
+<td>X</td>
+</tr>
+<tr class="odd">
+<td>Static method</td>
+<td>X</td>
+<td>+</td>
+<td>X</td>
+<td>+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="implemented-classes">Implemented classes</h2>
+<p>This term is used to describe the set of classes in the list created by the linearization algorithm. For any class, it will comprise :-</p>
+<ul>
+<li>The class itself</li>
+<li>The class’s immediate superclasses</li>
+<li>The class’s superclasses’ superclasses, and so on up the class hierarchy.</li>
+</ul>
+<p>So if we have the following class hierarchy :-</p>
+<pre><code>class Animal()
+class Pet()
+class Mammal(Animal)
+class Dog(Mammal,Pet)</code></pre>
+<p>Then the implemented classes of <code>Dog</code> are <code>Dog, Mammal, Animal</code> and <code>Pet</code>.</p>
+<p>If we have an instance of <code>Dog</code>, then the builtin function <code>is()</code> will succeed for just the implemented classes. Thus :-</p>
+<pre><code>d := Dog()
+is(d, Pet)  # Yes
+is(d, Cat)  # No
+is(d, Mammal) # Yes
+... etc</code></pre>
+<p>The implemented classes of a particular class can be easily enumerated using the library function <a href="http://objecticon.sourceforge.net/libref/index.html?Class.get_implemented_classes.html"><code>Class.get_implemented_classes</code></a>. Note that this method doesn’t produce the classes in any specific order.</p>
+<h2 id="accessing-overridden-methods">Accessing overridden methods</h2>
+<p>It is often the case that a class overrides an instance method, but still wants to access the overridden method in the parent class. This can be done using the following syntax :-</p>
+<pre><code>import io
+
+class Parent()
+   public func()
+      write(&quot;Parent.func&quot;)
+   end
+end
+
+class Child(Parent)
+   public override func()
+      write(&quot;Child.func&quot;)
+      # Call the overridden method
+      Parent.func()
+   end
+end
+
+procedure main()
+   local z
+   z := Child()
+   z.func()
+end</code></pre>
+<p>The expression <code>Parent.func()</code> is used to invoke the overridden method. Such an expression can only be used from within an instance method, and the target method must be in one of the instance’s implemented classes.</p>
+<h2 id="linearization-algorithm">Linearization algorithm</h2>
+<p>Object Icon uses the <a href="https://en.wikipedia.org/wiki/C3_linearization">C3 superclass linearization algorithm</a> to calculate the implemented classes of a class. The algorithm turns the inheritance graph of the class into a simple list of classes, which can then be used to calculate the fields of the class.</p>
+<p>This algorithm is also used by several other languages which support multiple inheritance.</p>
+<p><code>ieval</code> can be used to see how this algorithm is applied to a particular class. For example :-</p>
+<pre><code>$ ieval -i io
+&gt; c3(PipeStream)
+C3: io.PipeStream(io.FileStream)
+   C3: io.FileStream(io.DescStream)
+      C3: io.DescStream(io.Stream, lang.NoCopy)
+         C3: io.Stream(util.HasMode)
+            C3: util.HasMode() = util.HasMode
+            Added: io.Stream
+            Added: util.HasMode
+         Result: 2 classes
+         C3: lang.NoCopy(lang.SelfClone, lang.Unencodable)
+            C3: lang.SelfClone(lang.ObjectClone)
+               C3: lang.ObjectClone() = lang.ObjectClone
+               Added: lang.SelfClone
+               Added: lang.ObjectClone
+            Result: 2 classes
+            C3: lang.Unencodable(lang.ObjectCodec)
+               C3: lang.ObjectCodec() = lang.ObjectCodec
+               Added: lang.Unencodable
+               Added: lang.ObjectCodec
+            Result: 2 classes
+            Added: lang.NoCopy
+            Added: lang.SelfClone
+            Added: lang.ObjectClone
+            Added: lang.Unencodable
+            Added: lang.ObjectCodec
+         Result: 5 classes
+         Added: io.DescStream
+         Added: io.Stream
+         Added: util.HasMode
+         Added: lang.NoCopy
+         Added: lang.SelfClone
+         Added: lang.ObjectClone
+         Added: lang.Unencodable
+         Added: lang.ObjectCodec
+      Result: 8 classes
+      Added: io.FileStream
+      Added: io.DescStream
+      Added: io.Stream
+      Added: util.HasMode
+      Added: lang.NoCopy
+      Added: lang.SelfClone
+      Added: lang.ObjectClone
+      Added: lang.Unencodable
+      Added: lang.ObjectCodec
+   Result: 9 classes
+   Added: io.PipeStream
+   Added: io.FileStream
+   Added: io.DescStream
+   Added: io.Stream
+   Added: util.HasMode
+   Added: lang.NoCopy
+   Added: lang.SelfClone
+   Added: lang.ObjectClone
+   Added: lang.Unencodable
+   Added: lang.ObjectCodec
+Result: 10 classes
+&gt; </code></pre>
+<p>Each line beginning “C3:” represents a call to the algorithm. For a class with no superclasses, the algorithm just returns the class itself as the result. <code>util.HasMode</code> is an example, and the result is shown on one line :-</p>
+<pre><code>   ...
+   C3: util.HasMode() = util.HasMode
+   ...</code></pre>
+<p>For classes with superclasses, the algorithm first calls itself recursively to linearize each superclass. So for example, <code>lang.NoCopy</code> has two superclasses. These are shown in parentheses as follows :-</p>
+<pre><code>   ...
+   C3: lang.NoCopy(lang.SelfClone, lang.Unencodable)
+   ...</code></pre>
+<p>After this line the calls to the two superclasses are listed, with an extra indentation. Once those calls are complete, the results are merged together to give the result for the class itself. As each result is added by the merge, it is shown on a line by itself; finally the number of classes in the result is shown, at the same indentation as the original “C3:” line. So the output for <code>lang.NoCopy</code> is :-</p>
+<pre><code>   C3: lang.NoCopy(lang.SelfClone, lang.Unencodable)
+      C3: lang.SelfClone(lang.ObjectClone)
+         C3: lang.ObjectClone() = lang.ObjectClone
+         Added: lang.SelfClone
+         Added: lang.ObjectClone
+      Result: 2 classes
+      C3: lang.Unencodable(lang.ObjectCodec)
+         C3: lang.ObjectCodec() = lang.ObjectCodec
+         Added: lang.Unencodable
+         Added: lang.ObjectCodec
+      Result: 2 classes
+      Added: lang.NoCopy
+      Added: lang.SelfClone
+      Added: lang.ObjectClone
+      Added: lang.Unencodable
+      Added: lang.ObjectCodec
+   Result: 5 classes</code></pre>
+<p>At the end of the merge for <code>PipeStream</code> we see that ten classes are added, and these constitute the implemented classes for <code>PipeStream</code>, in that order. The fields of <code>PipeStream</code> are then calculated from those classes by traversing the list. The result of that can also be shown by <code>ieval</code>, as shown below :-</p>
+<pre><code>$ ieval -i io
+&gt; dir(PipeStream)
+class io.PipeStream(io.FileStream)
+   at line 1077 in /home/rparlett/objecticon/lib/main/streams.icn
+   implements io.Stream, io.DescStream, io.FileStream, io.PipeStream, lang.ObjectClone, lang.SelfClone, lang.NoCopy, lang.ObjectCodec, lang.Unencodable, util.HasMode
+adjust_mode        io.FileStream       10    Method Private
+ALL                io.Stream           46    Public Static Const
+can                util.HasMode        58    Method Public
+chdir              io.FileStream       22    Method Public Native
+close              io.FileStream       25    Method Public Native Override
+copy_to            io.Stream           57    Method Public
+create_for_fd      io.FileStream        9    Method Private Static
+dflag              io.DescStream       33    Method Public Native
+dup                io.PipeStream        3    Method Public Override
+dup2               io.DescStream       34    Method Public
+dup2_impl          io.DescStream       35    Method Private Native
+dup_impl           io.DescStream       36    Method Protected Native
+fd                 io.DescStream        1    Protected
+...
+(omitted for brevity)
+...
+stderr             io.FileStream        8    Public Static Const
+stdin              io.FileStream        6    Public Static Const
+stdout             io.FileStream        7    Public Static Const
+tell               io.FileStream       20    Method Public Native Override
+TRUNCATE           io.Stream           44    Public Static Const
+truncate           io.FileStream       21    Method Public Native Override
+ttyname            io.FileStream       24    Method Public Native
+WRITE              io.Stream           42    Public Static Const
+write              io.Stream           55    Method Public
+write1             io.Stream           53    Method Public
+writes             io.Stream           54    Method Public
+writes1            io.Stream           52    Method Public
+wstat              io.DescStream       39    Method Public Native
+&gt; </code></pre>
+<p>The second column in the field table gives the source class for each field.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

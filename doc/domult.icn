@@ -1,0 +1,29 @@
+import io, ipl.pdco
+
+procedure main(a)
+   local e, p, q, r
+
+   e := create integer(pop(a)) | stop("Integer expected")
+   p := !e
+   q := !e
+
+   writes(p, " * ", q, " = ")
+   r := 0
+   Do {
+      q < 0, {
+         q := -q
+         p := -p
+      },
+
+      q > 0 & q % 2 = 0, {
+         q /:= 2
+         p *:= 2
+      },
+
+      q > 0 & q % 2 = 1, {
+         q -:= 1
+         r +:= p
+      }
+   }
+   write(r)
+end

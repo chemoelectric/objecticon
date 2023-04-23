@@ -1,0 +1,31 @@
+import
+   io(write),
+   ipc(Shm)
+
+class MyClass()
+   private x
+
+   public thing()
+      write("In thing, x=", x)
+   end
+
+   public new(x)
+      self.x := x
+      return
+   end
+end
+
+procedure main()
+   local var, c, d
+   var := Shm.create_private()
+
+   c := MyClass(10)
+   var.set_value(c)
+
+   d := var.get_value()
+   d.thing()
+
+   write("c=", image(c), " d=", image(d))
+
+   var.close()
+end

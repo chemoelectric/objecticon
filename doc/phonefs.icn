@@ -1,0 +1,61 @@
+import plan9, ipl.server9p
+
+global db
+
+#
+# Example of a dynamic read-only Dir9P.
+#
+
+class Letter(Dir9P)
+   public override get_child(x)
+      local s
+      if s := member(db, x) then
+         return StringFile9P(x).
+            set_data(s || "\n").
+            set_fixed_perm(8r444).
+            set_parent(self)
+   end
+
+   public override gen_children()
+      local t
+      every t := key(db) do
+         if match(name, t) then
+            suspend get_child(t)
+   end
+end
+
+procedure main(a)
+   local root, sess
+
+   db := table(,
+               "Kelly, Grace", "+70 6267 849422",
+               "Mansfield, Jayne", "+28 9966 778016",
+               "Monroe, Marilyn", "+19 3435 226024",
+               "Novak, Kim", "+64 8137 206255",
+               "Dandridge, Dorothy", "+17 3086 530043",
+               "Dee, Ruby", "+35 4193 021480",
+               "Wood, Natalie", "+18 4724 979516",
+               "Dean, James", "+81 1091 778385",
+               "Wayne, John", "+26 6630 226929",
+               "Hudson, Rock", "+23 1293 642244",
+               "Curtis, Tony", "+21 5814 721165",
+               "Presley, Elvis", "+78 0598 343952",
+               "Gable, Clark", "+40 2972 740853",
+               "Grant, Cary", "+30 9933 838496",
+               "Bergman, Ingrid", "+89 2910 389517",
+               "Tierney, Gene", "+22 8319 234505",
+               "Fontaine, Joan", "+92 1726 078001",
+               "Wright, Teresa", "+85 5380 981622",
+               "Jones, Jennifer", "+36 4042 270838",
+               "Stanwyck, Barbara", "+33 4207 427618",
+               "Lemmon, Jack", "+93 6870 534136",
+               "Newman, Paul", "+12 4983 137123",
+               "Andrews, Julie", "+78 1223 184098"
+               )
+               
+   root := Root9P().set_fixed_perm(8r555)
+   every root.add_child(Letter(!&ucase).set_fixed_perm(8r555))
+
+   sess := Session9P(TreeData9P(root))
+   server_main_0(a, sess)   
+end

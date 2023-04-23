@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Co-expression performance</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Co-expression performance</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#traversing-a-tree">Traversing a tree</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>On a couple of other pages (<a href="Coexpressions.html#co-routines">here</a> and <a href="DirEntries.html">here</a>) I mentioned a technique for avoiding the cost of procedure suspension and resumption over a deeply nested stack of calls.</p>
+<p>The question arises, how much time does this save?</p>
+<p>Here is a simple <a href="bypass.icn">test program</a> which tries to answer this.</p>
+<p><a href="bypass.icn">Download bypass.icn</a></p>
+<pre><code>import io, util
+
+global lim
+
+procedure do_suspend(n)
+   if n = 0 then
+      suspend 1 to lim
+   else
+      suspend do_suspend(n - 1)
+end
+
+procedure do_coact(n)
+   if n = 0 then
+      every coact(1 to lim)
+   else
+      do_coact(n - 1)
+end
+
+procedure do_act_source(n)
+   if n = 0 then
+      every (1 to lim)@&amp;source
+   else
+      do_act_source(n - 1)
+end
+
+procedure main(a)
+   local depth, e
+
+   depth := integer(a[1]) | 100
+   lim := integer(a[2]) | 1000000
+
+   &amp;maxlevel := depth + 1000
+
+   write(&quot;Depth=&quot;, depth, &quot;   Generate=&quot;, lim)
+
+   note_time()
+   every do_suspend(depth)
+   note_time(&quot;procedure&quot;)
+
+   note_time()
+   e := create do_coact(depth)
+   while @e
+   note_time(&quot;coact()&quot;)
+
+   note_time()
+   e := create do_act_source(depth)
+   while @e
+   note_time(&quot;@&amp;source&quot;)
+
+   write(&quot;Exit&quot;)
+end
+</code></pre>
+<p>It creates a procedure call chain of a given depth, and produces a given number of results from the deepest level.</p>
+<p>Three methods are used to produce the results :-</p>
+<ul>
+<li><p>Conventional procedure suspension and resumption</p></li>
+<li><p>Co-expression transmission with the <code>coact</code> builtin function, and</p></li>
+<li><p>Co-expression transmission using the <code>@</code> operator.</p></li>
+</ul>
+<p>The timing results are calculated and printed (in milliseconds) using the simple library procedure <a href="http://objecticon.sourceforge.net/libref/index.html?util.note_time.html"><code>util.note_time</code></a>.</p>
+<p>Run with the default for depth and number of results, I get the following results :-</p>
+<pre><code>$ oit -s ./bypass.icn -x
+Depth=100   Generate=1000000
+1522: procedure
+193: coact()
+49: @&amp;source
+Exit</code></pre>
+<p>With a shallow depth of 10 (and more results to give clearer timings), I get :-</p>
+<pre><code>$ oit -s ./bypass.icn -x 10 20000000
+Depth=10   Generate=20000000
+4009: procedure
+3768: coact()
+997: @&amp;source
+Exit</code></pre>
+<p>and with a depth of 1000, I get :-</p>
+<pre><code>$ oit -s ./bypass.icn -x 1000
+Depth=1000   Generate=1000000
+16506: procedure
+174: coact()
+50: @&amp;source
+Exit</code></pre>
+<p>These results show that for a depth of about 10, procedure call is about the same speed as <code>coact</code>. In fact, if you try it for depths less than 10, you will find procedure call is rather faster. However, as the depth increases, <code>coact</code> becomes relatively faster than procedure call.</p>
+<p>Co-expression transmission with the <code>@</code> operator seems to be consistently about 3-4 times faster than with the <code>coact</code> function. This is just because invoking a builtin function is a relatively expensive operation when compared to invoking a builtin operator. However, the <code>coact</code> function is more flexible than the <code>@</code> operator. Particularly important is its ability to transmit a value without affecting the target co-expression’s <code>&amp;source</code> value; this is vital in avoiding co-expression <a href="Coexpressions.html#co-expression-black-holes">black holes</a>.</p>
+<h1 id="traversing-a-tree">Traversing a tree</h1>
+<p>A more practical problem involves traversing a binary tree. Here is the next <a href="nodes.icn">test program</a>.</p>
+<p><a href="nodes.icn">Download nodes.icn</a></p>
+<pre><code>import io, util
+
+class Node()
+   public const data
+   private l, r
+
+   public insert(val)
+      if val &lt; data then
+         (/l := Node(val)) | l.insert(val)
+      else
+         (/r := Node(val)) | r.insert(val)
+   end
+
+   public traverse()
+      (\l).traverse()
+      coact(self)
+      (\r).traverse()
+   end
+
+   public traverse2()
+      (\l).traverse2()
+      self@&amp;source
+      (\r).traverse2()
+   end
+
+   public gen()
+      suspend (\l).gen() | self | (\r).gen()
+   end
+
+   public depth()
+      local dl, dr
+      dl := (\l).depth() | 0
+      dr := (\r).depth() | 0
+      return 1 + max(dl, dr)
+   end
+
+   public new(i)
+      self.data := i
+      return
+   end
+end
+
+procedure main(a)
+   local root, e, r, n, i, v, nt
+
+   # n is the number of elements to insert
+   n := integer(a[1]) | 250000
+
+   # v is the range of values to insert (1..v)
+   v := integer(a[2]) | (n / 2)
+
+   # nt is the number of times to run each traversal (larger obviously
+   # gives more accuracy but takes longer).
+   nt := max(2000000 / n, 1)
+
+   # Make sure the procedure traversal doesn&#39;t exceed the call depth
+   # limit.
+   &amp;maxlevel := n
+
+   # Create the tree
+   write(&quot;Creating tree with &quot;, n, &quot; entries in range 1..&quot;, v)
+   r := create |?v
+   root := Node(@r)
+   every i := 1 to n do {
+      root.insert(@r)
+      if i % 1000 = 0 then
+         writes(&quot;\e[K   &quot;, (i * 100) / n, &quot;% complete\r&quot;)
+   }
+   write(&quot;\e[KComplete&quot;)
+
+   write(&quot;Tree depth = &quot;, root.depth(), &quot;, number of traversals = &quot;, nt)
+
+   note_time()
+   every 1 to nt do
+      every root.gen()
+   note_time(&quot;procedure&quot;)
+
+   note_time()
+   every 1 to nt do {
+      e := create root.traverse()
+      while @e
+   }
+   note_time(&quot;coact()&quot;)
+
+   note_time()
+   every 1 to nt do {
+      e := create root.traverse2()
+      while @e
+   }
+   note_time(&quot;@&amp;source&quot;)
+end
+</code></pre>
+<p>This creates a simple binary tree and traverses over its elements, again using the three techniques from the first example.</p>
+<p>With the default tree size, I get the following output :-</p>
+<pre><code>$ oit -s ./nodes.icn -x
+Creating tree with 250000 entries in range 1..125000
+Complete
+Tree depth = 41, number of traversals = 8
+1467: procedure
+893: coact()
+612: @&amp;source</code></pre>
+<p>Here is much larger tree (this takes some time to build).</p>
+<pre><code>$ oit -s ./nodes.icn -x 5000000
+Creating tree with 5000000 entries in range 1..2500000
+Complete
+Tree depth = 55, number of traversals = 1
+4389: procedure
+2408: coact()
+1686: @&amp;source</code></pre>
+<p>Finally, here is a small tree with only 200 entries.</p>
+<pre><code>$ oit -s ./nodes.icn -x 200
+Creating tree with 200 entries in range 1..100
+Complete
+Tree depth = 16, number of traversals = 10000
+769: procedure
+657: coact()
+388: @&amp;source</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

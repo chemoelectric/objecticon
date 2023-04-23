@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Differences between Object Icon and Icon.</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Differences between Object Icon and Icon.</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#differences">Differences</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Although Object Icon is quite compatible with Icon source code, there are several differences. These notes should be helpful in converting Icon code to Object Icon.</p>
+<h1 id="differences">Differences</h1>
+<ul>
+<li>New reserved words: <code>class</code>, <code>const</code>, <code>optional</code>, <code>native</code>, <code>abstract</code>, <code>final</code>, <code>import</code>, <code>package</code>, <code>private</code>, <code>protected</code>, <code>public</code>, <code>readable</code>, <code>succeed</code>.</li>
+<li>A few new builtin functions, most notably : <code>is()</code>, <code>classof()</code>, <code>keyof()</code>, <code>ucs()</code>, <code>uchar()</code>, <code>text()</code>. In total though, Object Icon has far fewer builtin functions, since much functionality now exists in classes. See <a href="BuiltinFunctions.html">BuiltinFunctions</a>.</li>
+<li>Some new keywords, amongst them <code>&amp;why</code> is a string, giving the reason for a failure (rather like C’s <code>errno</code> variable). <code>&amp;yes</code> and <code>&amp;no</code> are values for an on/off flag to take. <code>&amp;yes</code> is the single value of a type “yes”, and <code>&amp;no</code> is a synonym for <code>&amp;null</code>. Again, several of Icon’s keywords have their equivalent in classes. See <a href="Keywords.html">Keywords</a>.</li>
+<li>I/O has been completely rewritten in Object Icon; there are no builtin I/O functions nor is there a builtin <code>file</code> type. Rather, I/O is implemented using a new set of classes in the <a href="IoPackage.html"><code>io</code> package</a>. There are procedures in this package which emulate some of Icon’s I/O functions (<code>open</code>, <code>read</code>, <code>write</code>, etc).</li>
+<li>Graphics facilities are re-cast in object-oriented form and are found in the <a href="GraphicsPackage.html"><code>graphics</code> package</a>. Most notably, the class <code>Window</code> represents an window, rather than Icon’s builtin <code>file</code> type, and most of the Icon graphics functions have corresponding methods in that class. The various Icon graphics keywords don’t exist in Object Icon.</li>
+<li>The maths functions are static methods in the class <code>util.Math</code>, rather than builtins. Object Icon doesn’t have Icon’s keyword constants <code>&amp;pi</code>, <code>&amp;e</code> and <code>&amp;phi</code>, but equivalents can be found in <code>util.Math</code>.</li>
+<li>The <code>set()</code> function creates a set and adds each parameter provided to the function to the new set. In Icon the <code>set()</code> function takes a list and adds its members to the new set.</li>
+<li>Icon’s runtime error conversion control using the <code>&amp;error</code> keyword is absent from Object Icon. Rather, runtime errors can be handled with co-expressions, using the <code>&amp;handler</code> keyword.</li>
+<li>For a record, <code>type()</code> returns the record type name in Icon, whereas in Object Icon it returns “record”; the static method <code>Constructor.get_name()</code> can instead be used to get the record constructor’s name for a given record instance.</li>
+<li><p>The invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter. So the syntax</p>
+<pre><code>proc{expr1, expr2, ...}</code></pre>
+<p>is equivalent to</p>
+<pre><code>proc(create expr1, create expr2, ...)</code></pre>
+<p>rather than Icon’s</p>
+<pre><code>proc([create expr1, create expr2, ...])</code></pre></li>
+<li>Co-expressions have slightly different semantics. Further, in Icon, co-expressions are quite expensive to create and use, whereas in Object Icon they are very cheap. See <a href="Coexpressions.html">Coexpressions</a> for full details.</li>
+<li>In Icon, an undeclared identifier produces a compiler warning; in Object Icon it is an error.</li>
+<li>In Icon, global variables representing functions, procedures and records can be assigned to at runtime. In Object Icon, they are constants and cannot be changed.</li>
+<li>The builtin functions <code>insert</code> and <code>delete</code> may be used to modify lists; Icon does not support such usage.</li>
+<li>The builtin functions <code>put</code> and <code>push</code> only allow a single value to be added to a list; Icon allows multiple values. There are library functions, <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.lists.put_n.html"><code>ipl.lists.put_n</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.lists.push_n.html"><code>ipl.lists.push_n</code></a> which behave more like Icon.</li>
+<li>The builtin function <code>trim</code> behaves differently; by default it trims characters from both ends of the input string, whereas Icon just trims from the end. To replicate Icon, pass <code>-1</code> as a <a href="BuiltinFunctions.html#trim">third argument</a>.</li>
+<li>A different ucode format - you can’t link Icon and Object Icon ucode files.</li>
+<li>Different executable names. Icon has <code>icont</code> and <code>iconx</code>; Object Icon has <code>oit</code> and <code>oix</code>.</li>
+<li>Different path variables. Whereas Icon has <code>IPATH</code> and <code>LPATH</code>, Object Icon has <code>OI_PATH</code> and <code>OI_INCL</code>. Furthermore, these path variables use the platform’s path syntax rather than Icon’s space-separated syntax.</li>
+<li><p>Icon program library. Most of the IPL is available in Object Icon, but uses Object Icon’s package system to avoid filename and symbol clashes. Generally, this just means changing a link declaration like</p>
+<pre><code>link options</code></pre>
+<p>to an import declaration</p>
+<pre><code>import ipl.options</code></pre></li>
+<li>The <a href="Preprocessor.html">preprocessor</a> uses <code>$if</code> rather than <code>$ifdef</code> for conditionals, and allows a more general syntax.</li>
+<li><p>Cset literals in Object Icon can include character ranges specified with a hyphen. Thus</p>
+<pre><code>&#39;a-zA-Z&#39;</code></pre>
+<p>has the same value as <code>&amp;letters</code> in Object Icon. To include a hyphen in a cset, it must be escaped with a backslash.</p></li>
+</ul>
+<a href="index.html">Contents</a>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Pointers to instance methods</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Pointers to instance methods</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#method-pointers">Method pointers</a><ul>
+<li><a href="#method-pointers-like-closures">Method pointers like closures</a></li>
+<li><a href="#efficiency">Efficiency</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="method-pointers">Method pointers</h1>
+<p>When a static method field is accessed, the result is a procedure value. For example :-</p>
+<pre><code>import io
+
+class X()
+   public static f()
+   end
+end
+
+procedure main()
+   local m
+   m := X.f
+   write(&quot;type=&quot;, type(m))
+   write(&quot;image=&quot;, image(m))
+end</code></pre>
+<p>This program writes :-</p>
+<pre><code>type=procedure
+image=method X.f</code></pre>
+<p>The value of <code>m</code> is just a procedure that can be invoked when desired.</p>
+<p>For an instance method, the situation is a little more involved, because the instance needs to be kept to hand so that it can be passed to the method as the value of the <code>self</code> parameter. To achieve this, when an instance method field is accessed, a small structure is created which holds two things, namely the instance and the method’s procedure. This structure is called a “methp” (short for “method pointer”).</p>
+<p>To illustrate this, consider the following :-</p>
+<pre><code>import io
+
+class X()
+   public g()
+   end
+end
+
+procedure main()
+   local i, m
+   i := X()
+   m := i.g
+   write(&quot;type=&quot;, type(m))
+   write(&quot;image=&quot;, image(m))
+end</code></pre>
+<p>The output in this case is :-</p>
+<pre><code>type=methp
+image=methp#1(object X#1(0),method X.g)</code></pre>
+<p>The value <code>m</code> can now be used just like a procedure to invoke the method :-</p>
+<pre><code>m(1, 2, 3)</code></pre>
+<p>and the effect of this is to call the method <code>g</code> with the given parameters, as well as the <code>self</code> parameter, which will have the value of the instance <code>i</code>.</p>
+<p>One other general point to note about methods is that access permissions are checked when the field is accessed, not when the method is called, which can be done at any later time from any location in the program.</p>
+<h2 id="method-pointers-like-closures">Method pointers like closures</h2>
+<p>In functional programming languages, anonymous, or lambda, functions, capture a “closure” over the local variables in scope, so that a function carries with it an additional, hidden reference. As mentioned above, method pointers do the same thing, but instead of a hidden reference to a set of local variables, there is a reference to an object instance.</p>
+<p>This similarity allows method pointers to do the same sort of things that can be done in functional languages with lambda functions, so long as we think in terms of classes and objects, instead of closures over local variables. For example, consider the problem of writing a function which takes a parameter <code>n</code>, and returns another function which adds <code>n</code> to its argument. This can be done as follows :-</p>
+<p><a href="adder.icn">Download adder.icn</a></p>
+<pre><code>import io
+
+class X()
+   private n
+
+   private f(x)
+      return x + n
+   end
+
+   private new(n)
+      return self.n := n
+   end
+
+   public static adder(n)
+      return X(n).f
+   end
+end
+
+procedure main()
+   local f
+   f := X.adder(20)
+   write(f(4))
+   write(f(6))
+
+   f := X.adder(100)
+   write(f(5))
+   write(f(10))
+end
+</code></pre>
+<p>The output is</p>
+<pre><code>24
+26
+105
+110</code></pre>
+<p>This technique is used in the <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional-package.html"><code>ipl.functional</code></a> package to provide various high-order procedures commonly found in functional programming languages.</p>
+<p><a href="Lambda.html">This page</a> describes how, together with co-expressions, method pointers can be used to provide simple lambda-style anonymous functions.</p>
+<h2 id="efficiency">Efficiency</h2>
+<p>In order to keep garbage collection operations to a minimum, <code>methp</code> objects are not created unless absolutely necessary. For example, although the expression <code>obj.f(100)</code> could be implemented by creating a <code>methp</code> for <code>obj.f</code>, and then applying that to the parameter <code>100</code>, it is more efficient to gather both of these steps into a single operation that avoids the creation of the intermediate <code>methp</code>. This is implemented in the interpreter with two special virtual machine instructions (<code>invokef</code> and <code>applyf</code>).</p>
+<p>One point to note is that in an expression like</p>
+<pre><code>obj.f(obj := expr)</code></pre>
+<p>then it is the value of <code>obj</code> <em>after</em> the assignment from which the field <code>f</code> will be evaluated. This is because the whole expression is treated as a unit, and <code>obj</code> is only dereferenced after the arguments have been evaluated.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

@@ -1,0 +1,142 @@
+import parser, ipl.options, io, lang(), util
+
+global symbol_table, scanned_file, opts, mod
+
+procedure note(s)
+   write("Scanning ", s)
+end
+
+procedure usage(opts)
+   write("Usage: fixoverrides [OPTIONS] [SRC FILES...]")
+   write("Rewrite method declarations to include necessary override modifiers")
+   options_help(opts)
+   exit(0)
+end
+
+procedure main(a)
+   local s
+   opts := options(a, [Opt("d",, "Generate symbol table scanning progress messages"),
+                       Opt("c",, "Output to standard output, without changing the source file")],
+                       usage)
+   symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U)
+   if \opts["d"] then
+      symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
+
+   every s := !a do
+      symbol_table.scan_file(s) | stop(&why)
+   symbol_table.resolve_classes() | stop(&why)
+
+   every do_one(!a)
+end
+
+procedure do_one(s)
+   local par, o, prog
+
+   mod := &null
+   map(s[-4:0]) == ".icn" | fail
+   scanned_file := symbol_table.get_scanned_file(s) | stop("Couldn't get scanned file for ", s)
+
+   par := Parser()
+   prog := par.parse(Files.file_to_string(s)) |  stop("Couldn't parse ", s, ": ", &why)
+
+   every o := prog.get_body().gen() do {
+      if is(o, Class) then
+         do_class(o)
+     
+   }
+   if \mod then {
+      print(s, prog.pos)
+   } else
+      ewrite("No change made to ", s)
+end
+
+procedure print(s, tree)
+   local f, tname
+
+   # just output to stdout
+   if \opts["c"] then {
+      tree.output(FileStream.stdout) | stop(&why)
+      return
+   }
+
+   # Save the result
+   tname := s || ".temp"
+   use {
+      f := open(tname, "w") | stop("Couldn't open ", tname),
+      tree.output(f) | stop(&why)
+   }
+   Files.remove(s)
+   Files.move(tname, s) | stop("Couldn't rename new source file ",
+                               tname, " to ", s)
+   ewrite("Successfully rewrote ", s)
+end
+
+procedure get_access_string(obj)
+   local s
+   s := ""
+   if is(obj, Tree) then {
+      every s ||:= obj.get_access().gen().str() || " "
+      if is(obj, DeferredMethod) then
+         s ||:= obj.get_defer_type().str() || " "
+      s[-1] := ""
+   } else {
+      if iand(obj.flags, lang.Class.Private) ~= 0 then
+         s ||:= "private "
+      if iand(obj.flags, lang.Class.Public) ~= 0 then
+         s ||:= "public "
+      if iand(obj.flags, lang.Class.Protected) ~= 0 then
+         s ||:= "protected "
+      if iand(obj.flags, lang.Class.Package) ~= 0 then
+         s ||:= "package "
+      if iand(obj.flags, lang.Class.Static) ~= 0 then
+         s ||:= "static "
+      if iand(obj.flags, lang.Class.Final) ~= 0 then
+         s ||:= "final "
+      if iand(obj.flags, lang.Class.Const) ~= 0 then
+         s ||:= "const "
+      if iand(obj.flags, lang.Class.Readable) ~= 0 then
+         s ||:= "readable "
+      if iand(obj.flags, lang.Class.Override) ~= 0 then
+         s ||:= "override "
+      if iand(obj.flags, lang.Class.Abstract) ~= 0 then
+         s ||:= "abstract "
+      if iand(obj.flags, lang.Class.Native) ~= 0 then
+         s ||:= "native "
+      if iand(obj.flags, lang.Class.Optional) ~= 0 then
+         s ||:= "optional "
+      s[-1] := ""
+   }
+   return s
+end
+
+procedure do_class(c)
+   local csym, f, l, acc, isym, x, acc2, msym
+
+   csym := scanned_file.get_symbol(c.get_name().str()) | fail
+   write("\nClass ", csym.get_fq_name())
+   l := []
+   every put(l, csym ~=== csym.get_implemented_classes())
+
+   every f := c.get_members().gen() do {
+      if is(f, Method|DeferredMethod) then {
+         msym := csym.get_field(f.get_name().str()) | stop("Internal error")
+         acc := get_access_string(f)
+         if find("static" | "override", acc) then
+            next
+
+         every isym := !l do {
+            if x := isym.get_field(msym.name) then {
+               is(x, ClassMethod) | next
+               acc2 := get_access_string(x.obj)
+               if find("static", acc2) then
+                  next
+               write("\t", msym.name, " access=", acc,
+                     " overrides method in ", isym.get_fq_name(), " with access ", acc2)
+               f.get_access().put(Factory.new_access(" ", "override"))
+               mod := &yes
+               break
+            }
+         }
+      }
+   }
+end

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The http package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The http package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#example-programs">Example programs</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This package contains a HTTP client class, and related other classes.</p>
+<p>The central class is <a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpClient.html"><code>http.HttpClient</code></a>. Request objects are created (<a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpRequest.html"><code>http.HttpRequest</code></a>), passed to the client, and responses received (<a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpResponse.html"><code>http.HttpResponse</code></a>).</p>
+<p>This is illustrated in the following simple program :-</p>
+<p><a href="http.icn">Download http.icn</a></p>
+<pre><code>import net, http, io, lang
+
+procedure main(a)
+   local url, hreq, hc, hres, out
+
+   a := a[1] | stop(&quot;URL expected&quot;)
+   url := URL(a) | stop(&quot;Invalid url: &quot; || a)
+   url.scheme == (&quot;http&quot;|&quot;https&quot;) | stop(&quot;Inappropriate url scheme: &quot; || url.scheme)
+
+   # A stream for the resulting data
+   out := StringStream()
+
+   # A request object
+   hreq := HttpRequest().
+      set_url(url).
+      set_output_stream(out)
+
+   hc := HttpClient()
+
+   # Get the response object
+   hres := hc.retrieve(hreq) | stop(&amp;why)
+
+   write(&quot;OK &quot;, *out.str(), &quot; bytes\n&quot;, to_string(hres, 3))
+end
+</code></pre>
+<p>This produces output similar to the following :-</p>
+<pre><code>$ ./http http://www.google.com
+OK 10611 bytes
+object http.HttpResponse#2(
+   url=object net.URL#3(http://www.google.co.uk/?gfe_rd=cr&amp;ei=jHHJV421IYbDaJCmodgJ)
+   status=&quot;HTTP/1.1 200 OK&quot;
+   previous_response=
+      object http.HttpResponse#1(
+         url=object net.URL#1(http://www.google.com/)
+         status=&quot;HTTP/1.1 302 Found&quot;
+         previous_response=&amp;null
+         headers=
+            object datastruct.SortTable#3(
+               &quot;Cache-Control&quot;-&gt;list#111[&quot;private&quot;]
+               &quot;Content-Length&quot;-&gt;list#114[&quot;259&quot;]
+               &quot;Content-Type&quot;-&gt;list#112[&quot;text/html; charset=UTF-8&quot;]
+               &quot;Date&quot;-&gt;list#115[&quot;Fri, 02 Sep 2016 12:33:16 GMT&quot;]
+               &quot;Location&quot;-&gt;list#113[&quot;http://www.google.co.uk/?gfe_rd=cr&amp;ei=jHHJV421IYbDaJCmodgJ&quot;]
+            )
+      )
+   headers=
+      object datastruct.SortTable#4(
+         &quot;Cache-Control&quot;-&gt;list#133[&quot;private, max-age=0&quot;]
+         &quot;Content-Encoding&quot;-&gt;list#136[&quot;gzip&quot;]
+         &quot;Content-Length&quot;-&gt;list#138[&quot;4515&quot;]
+         &quot;Content-Type&quot;-&gt;list#134[&quot;text/html; charset=ISO-8859-1&quot;]
+         &quot;Date&quot;-&gt;list#131[&quot;Fri, 02 Sep 2016 12:33:16 GMT&quot;]
+         &quot;Expires&quot;-&gt;list#132[&quot;-1&quot;]
+         &quot;P3P&quot;-&gt;list#135[&quot;CP=\&quot;This is not a P3P policy! See https://www.google.com/support/accounts/answer/151657?hl=en for more info.\&quot;&quot;]
+         &quot;Server&quot;-&gt;list#137[&quot;gws&quot;]
+         &quot;Set-Cookie&quot;-&gt;list#141[&quot;NID=85=aerKk58-jVx9pLIo-Yq-W6pRf28JDj8mmP1OvSPg19CMvjDIqYtGIDqiG1f34v395bbyP2Cqy8mA9qS4sFBKqeexxx-V0yeaxhluXCJOxssVFRBwzyfoddmIZ3BY2YfH; expires=Sat, 04-Mar-2017 12:33:16 GMT; path=/; domain=.google.co.uk; HttpOnly&quot;]
+         &quot;X-Frame-Options&quot;-&gt;list#140[&quot;SAMEORIGIN&quot;]
+         &quot;X-XSS-Protection&quot;-&gt;list#139[&quot;1; mode=block&quot;]
+      )
+)</code></pre>
+<h1 id="example-programs">Example programs</h1>
+<p>The <code>examples</code> directory contains two programs which use <code>HttpClient</code>. The first is <code>geturl</code>, which is a command-line tool to retrieve URLs. The second is <code>browser</code>, which is a simple web browser. It makes use of <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.browser.Browser.html"><code>ipl.browser.Browser</code></a>, which uses multiple asynchronous <code>HttpClient</code>s (each running in an <a href="http://objecticon.sourceforge.net/libref/index.html?io.Task.html"><code>io.Task</code></a>) to download a particular web page and its images.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

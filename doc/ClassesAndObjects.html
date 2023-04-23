@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Classes and objects</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Classes and objects</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#class-syntax">Class syntax</a></li>
+<li><a href="#superclasses">Superclasses</a></li>
+<li><a href="#fields">Fields</a></li>
+</ul>
+</nav>
+<h1 id="class-syntax">Class syntax</h1>
+<p>The syntax for a class definition is</p>
+<pre><code>class ClassName(Super1, Super2, ...)
+   ... Field definitions...
+end</code></pre>
+<p>Declaring a class causes a read-only global variable having the name of the class to be included in the program, just like for a procedure or a record. The variable will have a value of type <code>class</code>, representing the class itself. Classes cannot be created or changed dynamically; they are hardwired into the icode file.</p>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html"><code>lang.Class</code></a> class contains many static methods which allow the inner structure of a class to be examined at runtime.</p>
+<h1 id="superclasses">Superclasses</h1>
+<p>A class can have zero, one or several superclasses, from which it inherits fields. Full details of how Object Icon implements inheritance can be found <a href="Inheritance.html">here</a>.</p>
+<h1 id="fields">Fields</h1>
+<p>The field definitions are either variables or methods. Each definition starts with the access modifiers, which specify who may access the field, and how it may be accessed. Typical variable declarations are :-</p>
+<pre><code>private x, y                    # Private instance variables
+public static const PI          # A constant, accessible anywhere
+private readable z              # A private variable, but accessible read-only from outside</code></pre>
+<p>The meaning of the various modifiers is explained in detail <a href="FieldModifiers.html">here</a>.</p>
+<p>A method definition looks like :-</p>
+<pre><code># A public instance method
+public set_loc(x, y)
+   self.x := x
+   self.y := y
+end
+
+# A static method accessible without an instance
+public static origin()
+   return Point(0,0)
+end</code></pre>
+<p>To bring these things together, here is a simple class definition to represent an x,y point :-</p>
+<pre><code>import util(Math)
+
+class Point()
+   public const x, y
+   public static const ORIGIN
+
+   private static init()
+      ORIGIN := Point(0, 0)
+   end
+
+   # Radius of a circle on which this point lies
+   public radius()
+      return Math.sqrt(x * x + y * y)
+   end
+
+   # Distance between two points
+   public static distance(p1, p2)
+      return Math.sqrt((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2)
+   end
+
+   public new(x, y)
+      self.x := x
+      self.y := y
+      return
+   end
+end</code></pre>
+<p>The static <a href="SpecialMethods.html#the-init-method">init() method</a> is used to initialize any static variables. It is called automatically the first time the class is referenced. The <a href="SpecialMethods.html#the-new-method">new() method</a> is similar, but is used to initialize instances - it is called automatically every time a new object is created. Some examples of using the class :-</p>
+<pre><code>p1 := Point(-2, -3)
+p2 := Point(4, 3)
+write(Point.distance(p1, p2))
+write(p2.radius())
+write(Point.distance(p2, Point.ORIGIN))</code></pre>
+<p>One thing to note about the <code>Point</code> class is that it is immutable. That means that its state does not change once it has been created. This is achieved by declaring its two instance variables as <a href="FieldModifiers.html#const">const</a>. The following attempts to change these variables’ values would cause a runtime error :-</p>
+<pre><code>p1.x := 100
+Point.ORIGIN.y := 1
+p1.new(3, 4)</code></pre>
+<p>The static field <code>ORIGIN</code> is also declared <code>const</code>. That means that any attempt to change its value would also cause a runtime error :-</p>
+<pre><code>Point.ORIGIN := 1    # Run-time error</code></pre>
+<p>Naturally these const variables have to be assignable at some point in order to be initialized. For static variables, they are assignable during class initialization (when the <code>init</code> method is called), and for instance variables during object initialization (when the <code>new</code> method is called). Thereafter, the variables become “locked”, and are no longer assignable.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

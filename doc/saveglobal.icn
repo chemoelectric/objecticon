@@ -1,0 +1,42 @@
+import io, util
+
+global g
+
+class MyGlobalState(State)
+   private tg
+
+   public override swap()
+      g :=: tg
+   end
+
+   #
+   # i gives the initial value seen by the co-expression we're evaluating
+   #
+   public new(i)
+      self.tg := i
+      return
+   end
+end
+
+procedure other()
+   local i
+   write("other begin: g=", g)
+   every i := 1 to 5 do {
+      g +:= 1
+      suspend i
+      write("other loop: g=", g)
+   }
+   write("other end: g=", g)
+end
+
+procedure main()
+   local i, e
+   e := create other()
+   g := 300
+   write("main begin: g=", g)
+   every i := save_state(e, MyGlobalState(100)) do {
+      g -:= 1
+      write("main loop: i=", i, " g=", g)
+   }
+   write("main end: g=", g)
+end

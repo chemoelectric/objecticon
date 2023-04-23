@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Anonymous functions</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Anonymous functions</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#library-procedures">Library procedures</a></li>
+<li><a href="#alternative-techniques">Alternative techniques</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>One feature which all new programming languages seem to have, but which is missing from Icon (and Object Icon), is the anonymous nested function. However, it is quite easy to simulate something very similar, using co-expressions and objects.</p>
+<p>The goal is to have a procedure (call it <code>lambda</code>) which takes a co-expression, and returns another callable procedure, with the co-expression as its body. For example :-</p>
+<pre><code>f := lambda{ 1 to 10 }</code></pre>
+<p>This would assign to f a procedure (or something that behaves like a procedure), which when called each time would generate 1 to 10.</p>
+<p>Obviously there is also the question of parameters (and local variables), but for the moment just consider the case with no parameters or locals. This can easily be achieved by using a thing I term a <a href="MethodPointers.html">“method pointer”</a> (or “methp” for short), as follows :-</p>
+<pre><code>class Lambda()
+   private e
+
+   public call()
+      suspend !e
+   end
+
+   public new(e)
+      self.e := e
+      return
+   end
+end
+
+procedure lambda(e)
+   return Lambda(e).call
+end</code></pre>
+<p>The idea here is that <code>lambda</code> first creates an instance of <code>Lambda</code>, which stores a reference to <code>e</code>, the co-expression which is the body of the anonymous function. Then, <code>lambda</code> returns a method pointer to the <code>call</code> method of that instance. When this method pointer is later invoked, the <code>call()</code> method on the instance is invoked, and this generates the results of <code>e</code>.</p>
+<h1 id="parameters">Parameters</h1>
+<p>Turning now to the question of parameters, note that the above <code>call</code> method doesn’t take any parameters. If it did, how could they be communicated to the co-expression <code>e</code>?</p>
+<p>One way would be to send the parameters as the value transmitted during co-expression activation. <code>call()</code> could be rewritten as follows :-</p>
+<pre><code>public call(a[])
+   local t
+   t := ^e
+   @t
+   suspend a@t | |@t
+end</code></pre>
+<p>This could be used in the following way :-</p>
+<pre><code>local f, p
+
+   ...
+
+f := lambda {{
+   # Get the parameters
+   p := coact()
+   # Produce the results
+   (p[1] + 1) | (p[2] - 1)
+}}</code></pre>
+<p>Calling <code>f(100, 200)</code> would then generate <code>101</code> and <code>199</code>.</p>
+<p>This has a couple of problems. Firstly, it is clumsy, which rather defeats the point of an anonymous function. Secondly, it requires the use of a local variable in the enclosing procedure to store the parameters. This may be a problem if the function is used twice concurrently, since the two calls may interfere with one another. To see this, consider the expression</p>
+<pre><code>f(100, 200) + f(1000, 2000)</code></pre>
+<p>This should generate the four values 1102, 2100, 1200 and 2198. Instead it generates 1102, 2100, 3000 and 3998, because the second invocation overwrites the value of <code>p</code> used by the first.</p>
+<p>This problem obviously isn’t insurmountable, but a solution would make the code even clumsier.</p>
+<p>Another approach is to use a global variable to pass the parameters. So we would change <code>call</code> to :-</p>
+<pre><code>global _a
+
+...
+
+   public call(a[])
+      _a := a
+      suspend !e
+   end</code></pre>
+<p>And use it as follows :-</p>
+<pre><code>f := lambda{ _a[1] + 1 | _a[2] - 1 }</code></pre>
+<p>Of course, this still suffers from the problem that one call may interfere with another’s use of <code>_a</code>. However, this is quite easily fixed, because the <code>call</code> method has access to <code>_a</code>, and can thus save and restore its value as necessary. Saving and restoring global state is a general problem, and there is a library procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?util.save_state.html"><code>util.save_state</code></a>, to help. See <a href="GlobalState.html">this page</a> for more details.</p>
+<h1 id="library-procedures">Library procedures</h1>
+<p>The above techniques are used in the library procedure <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.lambda.html"><code>ipl.functional.lambda</code></a>. In addition to a global variable <code>_a</code> for the arguments, <code>_l</code> is provided for notional local variables to be used by the anonymous function. For example :-</p>
+<pre><code>f := lambda{ (_l := 0, _l +:= 1 to _a[1], ._l) }</code></pre>
+<p>Given this, <code>f(5)</code> would generate 1, 3, 6, 10, 15. Note how <code>_l</code> is dereferenced, to avoid returning a variable reference to <code>_l</code>. If this wasn’t done, the caller would dereference it, and get the value restored by <code>save_state</code>, probably <code>&amp;null</code>.</p>
+<p>An instance of <a href="http://objecticon.sourceforge.net/libref/index.html?util.State.html"><code>util.State</code></a> is provided, <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.LambdaState.html"><code>ipl.functional.LambdaState</code></a>, which saves and restores <code>_a</code> and <code>_l</code>, in effect giving each lambda function it its own copy of these variables. The <code>call</code> method uses <code>save_state</code>, as follows :-</p>
+<pre><code>   public call(a[])
+      suspend save_state(^e, LambdaState(a))
+   end</code></pre>
+<p>There is another procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.lambda1.html"><code>ipl.functional.lambda1</code></a>, which behaves just like <code>lambda</code>, except that it sets <code>_a</code> to the first argument, rather than the argument list. This makes functions which use just one argument cleaner; for example the one above could be rewritten :-</p>
+<pre><code>f := lambda1{ (_l := 0, _l +:= 1 to _a, ._l) }</code></pre>
+<p>As a final example, here is a recursive function to sum a flattened list structure; for example f([1,[2,4],[5,[6,7]]]) gives 25.</p>
+<pre><code>f := lambda1{{
+   if type(_a) == &quot;list&quot; then {
+      _l := 0
+      every _l +:= f(!_a)
+   } else
+      _l := _a
+   ._l
+}}</code></pre>
+<p>The <code>_l</code> variable is invaluable here since each invocation needs its own copy of that variable; if they shared a local variable in the enclosing procedure the results would certainly be wrong! Note again how <code>_l</code> must be dereferenced when it provides the value of the function.</p>
+<p>One cautionary note about the above function is that its recursion depth isn’t limited by <code>&amp;maxlevel</code> in the ordinary way, for the following reason. <code>&amp;maxlevel</code> limits the call depth in each individual co-expression. However, our above function creates one new co-expression on each invocation, to execute the body of the function. Within each of those co-expression, the call depth never exceeds three. So, if we were to introduce a bug causing runaway recursion into the above function the result would unfortunately be to allocate more and more co-expressions until memory was exhausted.</p>
+<h1 id="alternative-techniques">Alternative techniques</h1>
+<p>The above is rather involved, inefficient and clumsy. If you don’t mind using an auxiliary helper procedure or method, here are some better alternatives.</p>
+<ol type="1">
+<li><p>Within the context of a class, if you just wish to reference the enclosing object instance, but don’t wish to reference any local variables, consider using a simple method pointer. In other words, instead of :-</p>
+<pre><code>public meth1()
+   local f
+   ...
+   f := lambda1{ ... }
+   ...
+end</code></pre>
+<p>use</p>
+<pre><code>public meth1()
+   local f
+   ...
+   f := meth2
+   ...
+end
+
+private meth2(a)
+   ....
+end</code></pre></li>
+<li><p>However, if you <em>do</em> wish to reference local variables in the function, consider passing them using <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.functional.lpartial.html"><code>ipl.functional.lpartial</code></a>. For example :-</p>
+<pre><code>public meth1()
+   local f, v1, v2
+   ...
+   f := lpartial(meth2, v1, v2)
+   ...
+end
+
+private meth2(v1, v2, a)
+   ....
+end</code></pre></li>
+<li><p>Within the context of a procedure (rather than a method), consider using a package-level helper procedure. This will be invisible outside the package :-</p>
+<pre><code>procedure proc1()
+   local f, v1, v2
+   ...
+   f := lpartial(helper, v1, v2)
+   ...
+end
+
+package procedure helper(v1, v2, a)
+   ....
+end</code></pre></li>
+<li><p>When using <code>lpartial</code>, the local variables are of course copied, so the auxiliary function cannot modify the originals. If you wish to do that, then it is best to create an auxiliary object (or record) to store them, and pass a reference to that instead. In some circumstances, it may even be preferable to move one or both methods into this auxiliary class.</p></li>
+</ol>
+<a href="index.html">Contents</a>
+</body>
+</html>

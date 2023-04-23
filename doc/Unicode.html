@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Unicode support in Object Icon</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Unicode support in Object Icon</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#the-ucs-type">The <code>ucs</code> type</a><ul>
+<li><a href="#utf-8-escape-sequences">utf-8 escape sequences</a></li>
+<li><a href="#creating-a-ucs-string">Creating a <code>ucs</code> string</a></li>
+<li><a href="#operations-on-ucs-strings">Operations on <code>ucs</code> strings</a></li>
+</ul></li>
+<li><a href="#csets">Csets</a><ul>
+<li><a href="#indexing">Indexing</a></li>
+<li><a href="#conversion">Conversion</a></li>
+</ul></li>
+<li><a href="#builtin-functions">Builtin functions</a><ul>
+<li><a href="#ordx-i-j">ord(x, i, j)</a></li>
+<li><a href="#ucharx">uchar(x)</a></li>
+<li><a href="#textx">text(x)</a></li>
+</ul></li>
+<li><a href="#lang.text-class">lang.Text class</a></li>
+<li><a href="#editing-non-ascii-source-code">Editing non-ASCII source code</a><ul>
+<li><a href="#literals">Literals</a></li>
+<li><a href="#example">Example</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page describes the Unicode support in Object Icon. This provides an additional string type, which behaves like a conventional string, but can contain any unicode character. Csets have also been enhanced in Object Icon.</p>
+<h1 id="the-ucs-type">The <code>ucs</code> type</h1>
+<p><code>ucs</code> (standing for Unicode character string) is a new builtin type, whose behaviour closely mirrors that of the conventional Icon string. It operates by providing a wrapper around a conventional conventional Icon string, which must be in utf-8 format. This has several advantages, and only one serious disadvantage, namely that a utf-8 string is not randomly accessible, in the sense that one cannot say where the representation for unicode character <code>i</code> begins. To alleviate this disadvantage, the <code>ucs</code> type maintains an index of offsets into the utf-8 string to make random access faster. The size of the index is only a few percent of the total allocation for the <code>ucs</code> object.</p>
+<p>Another potential disadvantage of utf-8 as an internal format, namely that it is awkward to edit a string (since a new character can have a different length to the one it’s replacing), happily doesn’t apply in Object Icon, since strings are immutable.</p>
+<h2 id="utf-8-escape-sequences">utf-8 escape sequences</h2>
+<p>Two new escape sequences are provided to represent the utf-8 character sequences of unicode characters. These are <code>\u</code>, which is followed by up to 4 hex digits, and <code>\U</code>, which is followed by up to six hex digits. Each expands to between one and four characters, depending on the unicode character concerned. So, for example, the line</p>
+<pre><code>write(image(&quot;\u0001*\u00ff*\u1234*\U10ffff&quot;))</code></pre>
+<p>writes</p>
+<pre><code>&quot;\x01*\xc3\xbf*\xe1\x88\xb4*\xf4\x8f\xbf\xbf&quot;</code></pre>
+<p>Note that this is still just an ordinary string, rather than a <code>ucs</code> string.</p>
+<h2 id="creating-a-ucs-string">Creating a <code>ucs</code> string</h2>
+<p>A <code>ucs</code> string can be created at compile-time, as a literal, or at runtime, via the builtin <code>ucs</code> function. To create a literal, prefix a <code>u</code> to an ordinary string literal, which must be valid utf-8; for example :-</p>
+<pre><code>s := u&quot;\u0001*\u00ff*\u1234*\U10ffff&quot;</code></pre>
+<p>To use <code>ucs</code>, just call it like any other function.</p>
+<pre><code>s := ucs(x)</code></pre>
+<p>The parameter to <code>ucs</code> must be something which can be converted to a string which must be valid utf-8 (otherwise <code>ucs</code> fails). Note that all plain ascii strings (ie, those with only characters less than 128) are in utf-8 format.</p>
+<h2 id="operations-on-ucs-strings">Operations on <code>ucs</code> strings</h2>
+<p>The <code>ucs</code> type supports all of the familiar string operations, with the same semantics as the conventional string type.</p>
+<p>String operations which take two parameters can usually mix <code>string</code> and <code>ucs</code> types, although some care is needed. The general rule is: if either parameter is a <code>ucs</code>, then the other parameter must be convertible to a <code>ucs</code>. For example, consider string catenation. The expression</p>
+<pre><code>&quot;abc&quot; || u&quot;\u1234&quot;</code></pre>
+<p>is valid, and has the result <code>u"abc\u1234"</code>, because <code>"abc"</code> is valid utf8 and hence convertible to a <code>ucs</code>. However, the expression</p>
+<pre><code>&quot;\xff&quot; || u&quot;\u1234&quot;</code></pre>
+<p>is invalid and will cause a runtime error because <code>"\xff"</code> is not valid utf8, and hence cannot be converted to a <code>ucs</code>.</p>
+<p>Converting a <code>ucs</code> back to a normal string produces the utf8 representation. This is the internal representation, so this operation is very fast.</p>
+<h1 id="csets">Csets</h1>
+<p>In Icon, csets can only represent characters in the range 0 to 255. Object Icon extends this range to cover all possible unicode characters (0 up to 0x10FFFF).</p>
+<p>The <code>\u</code> and <code>\U</code> escape sequences can be used to specify characters greater than 255. For example</p>
+<pre><code>&#39;\x01\xff\u1234\U10ffff&#39;</code></pre>
+<p>specifies a cset with four characters. You can also specify a range of characters by using a hyphen. Thus <code>'a-zA-Z'</code> has the lower and upper case characters, <code>'0-9'</code> has the digits, and so on. A new keyword, <code>&amp;uset</code>, contains all of the possible characters and is equivalent to <code>'\x00-\U10ffff'</code>.</p>
+<p>Generating the elements of a cset with <code>!</code> will produce one-character strings for those elements less than 256, and one-character <code>ucs</code> strings for those elements greater than or equal to 256. So for example the expression</p>
+<pre><code>!&#39;\x01\xff\u1234\U10ffff&#39;</code></pre>
+<p>produces the following four results</p>
+<pre><code>&quot;\x01&quot;
+&quot;\xff&quot;
+u&quot;\u1234&quot;
+u&quot;\U10ffff&quot;</code></pre>
+<h2 id="indexing">Indexing</h2>
+<p>Indexing a cset will produce either a normal string or a <code>ucs</code> string, depending on whether any of the elements in the range are greater than or equal to 256. For example the expression</p>
+<pre><code>&#39;\x01\xff\u1234\U10ffff&#39;[1:1 to 5]</code></pre>
+<p>produces the following results</p>
+<pre><code>&quot;&quot;
+&quot;\x01&quot;
+&quot;\x01\xff&quot;
+u&quot;\x01\u00ff\u1234&quot;
+u&quot;\x01\u00ff\u1234\U10ffff&quot;</code></pre>
+<p>The builtin <code>ord()</code> function can be used to access the numerical values of some or all of the characters in a cset (see below for a full explanation of <code>ord</code>).</p>
+<h2 id="conversion">Conversion</h2>
+<p>Any cset can be converted to a <code>ucs</code> string, but only one containing only characters less than 256 can be converted to a normal string.</p>
+<h1 id="builtin-functions">Builtin functions</h1>
+<h2 id="ordx-i-j">ord(x, i, j)</h2>
+<p>The <code>ord</code> function expands on its Icon predecessor. The first parameter can be a string, a <code>ucs</code> string, or a cset. The optional parameters <code>i</code> and <code>j</code> specify a range within <code>x</code>, and default to <code>1</code> and <code>0</code> respectively. The result sequence is the integer character values of the specified range. For example</p>
+<pre><code>ord(u&quot;\x01\u00ff\u1234\U10ffff&quot;)</code></pre>
+<p>generates</p>
+<pre><code>1
+255
+4660
+1114111</code></pre>
+<p>whilst</p>
+<pre><code>ord(&amp;ucase, 5, 10)</code></pre>
+<p>generates</p>
+<pre><code>69
+70
+71
+72
+73</code></pre>
+<h2 id="ucharx">uchar(x)</h2>
+<p>This is the <code>ucs</code> equivalent of the <code>char</code> function. It produces a one-character <code>ucs</code> string containing character number <code>x</code>.</p>
+<h2 id="textx">text(x)</h2>
+<p>This function will try to convert <code>x</code> to either a <code>ucs</code> or a conventional string as appropriate. If <code>x</code> is a string or <code>ucs</code>, it is just returned. If <code>x</code> is a cset then it is converted to a string if its highest char is &lt; 256; otherwise it is converted to a <code>ucs</code>. For any other type, normal string conversion is attempted.</p>
+<h1 id="lang.text-class">lang.Text class</h1>
+<p>This class has a some static methods which may prove useful.</p>
+<p>The method <code>has_ord(c, x)</code> tests whether character number <code>x</code> is in cset <code>c</code>.</p>
+<p>The method <code>utf8_seq(i)</code> produces the utf-8 string representation of character <code>i</code>. This is useful for building up a utf-8 string which can then be passed to <code>ucs</code>. For example, consider the problem of converting an iso-8859-1 format string to a <code>ucs</code>. One way to do this would be :-</p>
+<pre><code>procedure iso8859_to_ucs(s)
+   local t
+   t := u&quot;&quot;
+   every t ||:= uchar(ord(s))
+   return t
+end</code></pre>
+<p>The drawback with this method is that it is creating lots of temporary <code>ucs</code> values in the every loop (<code>uchar</code> produces one, and the old value of <code>t</code> is thrown away).</p>
+<p>A quicker way is to create a utf-8 string first, and then create the <code>ucs</code> result at the end :-</p>
+<pre><code>import lang(Text)
+
+procedure iso8859_to_ucs(s)
+   local t
+   t := &quot;&quot;
+   every t ||:= Text.utf8_seq(ord(s))
+   return ucs(t)
+end</code></pre>
+<h1 id="editing-non-ascii-source-code">Editing non-ASCII source code</h1>
+<p>Source code files can be edited in non-ASCII format.</p>
+<p>To specify a file’s encoding, a preprocessor directive, <code>$encoding</code> is used. The directive is followed by the encoding name, which at present can take one of three possible values :-</p>
+<ul>
+<li><code>ASCII</code> (the default)</li>
+<li><code>ISO-8859-1</code></li>
+<li><code>UTF-8</code></li>
+</ul>
+<p>Each source file is processed as a sequence of codepoints, which are converted from the input bytes, based on the encoding. For ASCII encoding and ISO-8859-1 encoding, each codepoint is the same as each input byte. The only difference is that ASCII restricts the range of codepoints to 0-127, as opposed to 0-255 for ISO-8859-1. For UTF-8 encoding each codepoint may correspond to several input bytes, and may be any valid Unicode codepoint.</p>
+<h2 id="literals">Literals</h2>
+<p>Other than escape sequences, each codepoint within a string, ucs or cset literal will correspond to exactly one character in that literal. For a string, the codepoint must be in the range 0-255; otherwise a compile-time error is signalled.</p>
+<h2 id="example">Example</h2>
+<pre><code>import io
+
+$encoding UTF-8
+
+procedure main()
+   local s
+   s := u&quot;Министры иностранных дел Европейского союза утвердили&quot;
+   s ? every write(upto(&#39;ив&#39;))
+end</code></pre>
+<p>This program produces the output</p>
+<pre><code>2
+4
+10
+27
+47
+51
+53</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

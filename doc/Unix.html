@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Compiling Object Icon on Unix systems</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Compiling Object Icon on Unix systems</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#debian-packages">Debian packages</a></li>
+<li><a href="#compiling-from-the-subversion-source-repository">Compiling from the subversion source repository</a></li>
+<li><a href="#compiling-from-a-tar.gz-file">Compiling from a tar.gz file</a></li>
+<li><a href="#compilation">Compilation</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#installing">Installing</a></li>
+<li><a href="#environment-variables">Environment variables</a></li>
+<li><a href="#libref-documentation">Libref documentation</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page gives generic instructions for compiling Object Icon on Unix-like systems.</p>
+<h1 id="prerequisites">Prerequisites</h1>
+<ul>
+<li>GNU make</li>
+<li>autoconf (at least version 2.61), if you build direct from the subversion source</li>
+<li>gcc, or clang</li>
+</ul>
+<p>Please note that Object Icon runs from the directory you compile it in (there is no <code>make install</code> step), so please bear that in mind when choosing where you extract the tar file, or checkout the subversion repository from. This directory’s path must not contain any characters with special meaning in bash or make; in particular “$”, backslash and double-quotes should be avoided. Spaces are allowed however.</p>
+<h1 id="debian-packages">Debian packages</h1>
+<p>If you are using a debian-based system, the following may be helpful.</p>
+<p>If compiling from the subversion source, rather than the tar file, you need the <code>autoconf</code> package.</p>
+<p>To compile a text-only basic system, you need</p>
+<pre><code>gcc or clang
+make</code></pre>
+<p>To compile a graphics system, you also need</p>
+<pre><code>pkg-config
+libx11-dev
+libxrender-dev
+libxft-dev
+libjpeg-dev</code></pre>
+<p>For a graphics system, the package <code>oxygen-icon-theme</code> is also recommended in order to provide some standard icons.</p>
+<p>Finally, to compile the optional dynamically loaded libraries (cairo, ssl and mysql), you need</p>
+<pre><code>librsvg2-dev
+libcairo2-dev
+libpango1.0-dev
+libssl-dev
+libmysqlclient-dev</code></pre>
+<h1 id="compiling-from-the-subversion-source-repository">Compiling from the subversion source repository</h1>
+<p>Use the following command to checkout a read-only copy of the source code :-</p>
+<pre><code>svn co svn://svn.code.sf.net/p/objecticon/code/trunk objecticon</code></pre>
+<p>This will create a directory <code>objecticon</code> under the present directory (you can change the last parameter to create a different directory name if you want).</p>
+<p>Then <code>cd</code> into that directory and run the command <code>autoconf</code>. This will create a <code>configure</code> script.</p>
+<p>Then proceed just the same as if you had downloaded the .tar.gz file, as explained below.</p>
+<p>If you later wish to update your copy of the repository, <code>cd</code> into the directory and run the following :-</p>
+<pre><code>svn up
+make clean</code></pre>
+<p>Then run <code>autoconf</code> again, and then <code>configure</code>, and then proceed as before.</p>
+<h1 id="compiling-from-a-tar.gz-file">Compiling from a tar.gz file</h1>
+<p>Extract the source code from the .tar.gz file with a command like</p>
+<pre><code>tar xfz objecticon-1234.tar.gz</code></pre>
+<p>This will create a directory <code>objecticon-1234</code> under the current directory. The number is the subversion version number from which the .tar.gz was built, and will of course be different. You can rename this directory if you like.</p>
+<p>Importantly, please note that there is no “install” phase after compilation, and the extracted directory must be moved to the place you want to keep it, before proceeding further. This is because the compilation process embeds absolute paths into some object files, and they will be wrong if the directory is moved afterwards.</p>
+<p>So, after you are happy with the location (and name) of the extracted directory, change to it and run</p>
+<pre><code>./configure</code></pre>
+<p>This command accepts various options - run</p>
+<pre><code>./configure --help</code></pre>
+<p>to see them.</p>
+<p>If you are using the <code>clang</code> C compiler, specify this with :-</p>
+<pre><code>CC=clang ./configure</code></pre>
+<p>The <code>configure</code> script prints a summary of features when it finishes. For example.</p>
+<pre><code>Summary:-
+X11 graphics           : yes
+jpeg library           : yes
+png library            : yes
+zlib compression       : yes
+dynamic loading        : yes
+mysql lib              : yes
+cairo lib              : yes
+ssl lib                : yes</code></pre>
+<p>The meaning of these various options is as follows.</p>
+<ul>
+<li><strong>X11 graphics</strong> - Determines whether the Icon graphics facilities are built. The following two options only apply if this is ‘yes’.</li>
+<li><strong>jpeg library</strong> -Allows loading of jpeg images.</li>
+<li><strong>png library</strong> -Allows loading of png images.</li>
+<li><strong>zlib compression</strong> - This allows icode files to be compressed with the -Z flag given to <code>oit</code>.</li>
+<li><strong>dynamic loading</strong> -Allows shared library (.so) files containing native functions to be loaded at runtime.</li>
+<li><strong>mysql lib</strong> -Allows a dynamic library to be built which provides an interface to mysql (package <a href="http://objecticon.sourceforge.net/libref/index.html?mysql-package.html"><code>mysql</code></a>). Neither this option, nor the following dynamic libraries, have any effect either way on the runtime system proper.</li>
+<li><strong>cairo lib</strong> -Allows a dynamic library to be built which provides an interface to cairo graphics (package <a href="http://objecticon.sourceforge.net/libref/index.html?cairo-package.html"><code>cairo</code></a>).</li>
+<li><strong>ssl lib</strong> -Allows a dynamic library to be built which provides an interface to the openssl library (package <a href="http://objecticon.sourceforge.net/libref/index.html?ssl-package.html"><code>ssl</code></a>).</li>
+</ul>
+<p>If you later wish to run <code>configure</code> again, please remember to run <code>make clean</code> afterwards in order to remove any object files built under the previous configuration.</p>
+<h1 id="compilation">Compilation</h1>
+<p>After running <code>configure</code> successfully, just run the command</p>
+<pre><code>make</code></pre>
+<p>to build everything. Note that GNU make is required. Note that sometimes GNU make is installed under the name <code>gmake</code> instead.</p>
+<h1 id="testing">Testing</h1>
+<p>After <code>make</code> has completed successfully, you can optionally run some tests, as follows :-</p>
+<pre><code>make test</code></pre>
+<p>Various output will follow, which should hopefully end with the message “Testing successful.” If not, the problem with the failed test can be examined by comparing the expected output of a test with the actual output. For example, if the io test failed, run</p>
+<pre><code>cd test
+diff io.out io.std</code></pre>
+<p>to see the problem.</p>
+<h1 id="installing">Installing</h1>
+<p>As mentioned above, there is no installation stage; rather Object Icon runs from the directory it was compiled in. As also mentioned, it is important that this directory is not moved or renamed after compilation, since various embedded paths would then no longer be correct.</p>
+<h1 id="environment-variables">Environment variables</h1>
+<p>Object Icon requires some environment variables to be setup correctly. To make doing this a bit easier, a file named <code>paths.sh</code> is created by <code>configure</code>, which contains appropriate definitions.</p>
+<p>Include this file by adding a line like this to your <code>.bashrc</code> file (or equivalent); obviously the actual path may vary, and note the dot at the beginning of the line.</p>
+<pre><code>. ~/objecticon/paths.sh</code></pre>
+<p>If you are using bash, you can also use the <code>source</code> command instead of the dot syntax; but don’t try to run <code>paths.sh</code> directly, since its contents must be loaded into the current shell environment.</p>
+<h1 id="libref-documentation">Libref documentation</h1>
+<p>You might also create a local copy of the auto-generated library documentation. It is not done by default because it is rather large (about 25MB). If you want this, run</p>
+<pre><code>make libref</code></pre>
+<p>This command will take a couple of minutes to run. A directory <code>libref</code> is created, and contains the top-level file of the documentation, <code>index.html</code>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

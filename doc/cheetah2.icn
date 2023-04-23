@@ -1,0 +1,39 @@
+import graphics, ipl.graphics
+
+$load CAT "cheetah_cubs.jpg"
+
+procedure circle_mask(d)
+   local p, i, j, r2, r, s, a
+   p := Pixels(d, d, Pixels.A8)
+   r := d / 2
+   r2 := r * r
+   every j := 0 to d - 1 do
+      every i := 0 to d - 1 do
+         if (s := (i - r)^2 + (j - r)^2) < r2 then {
+            a := ((r2 - s) * 65535) / r2
+            p.set_rgba(i, j, 0,0,0, a)
+         }
+   return p
+end
+
+procedure main()
+   local cm, w, cat
+
+   # Get the cat image
+   cat := Pixels(CAT)
+
+   # Create a circular mask image.  The parameter gives the diameter.
+   # The further away from the centre of the circle, the more
+   # transparent is the mask, with the centre being opaque.
+   cm := circle_mask(cat.get_width())
+
+   # Create a destination window with a light blue background.
+   w := Window().
+      set_mask(cm).
+      set_bg("very light blue").erase_area().
+      set_image(cat)
+
+   # Display the destination window.
+   w.set_canvas("normal")
+   WDone(w)
+end

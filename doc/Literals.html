@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Literals and escape sequences</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Literals and escape sequences</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#escape-sequences">Escape sequences</a></li>
+<li><a href="#ucs-literals">Ucs literals</a></li>
+<li><a href="#string-literals">String literals</a></li>
+<li><a href="#cset-literals">Cset literals</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>The escape sequences found in strings, ucs and cset literals are shown below. Each of these types interpret the sequences slightly differently, as described in the following sections.</p>
+<h1 id="escape-sequences">Escape sequences</h1>
+<table>
+<thead>
+<tr class="header">
+<th><em>Escape sequence</em></th>
+<th><em>Character</em></th>
+<th><em>ASCII</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>\b</td>
+<td>Backspace</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<td>\d</td>
+<td>Delete</td>
+<td>127</td>
+</tr>
+<tr class="odd">
+<td>\e</td>
+<td>Escape</td>
+<td>27</td>
+</tr>
+<tr class="even">
+<td>\f</td>
+<td>Formfeed</td>
+<td>12</td>
+</tr>
+<tr class="odd">
+<td>\l</td>
+<td>Linefeed</td>
+<td>10</td>
+</tr>
+<tr class="even">
+<td>\n</td>
+<td>Newline</td>
+<td>10</td>
+</tr>
+<tr class="odd">
+<td>\r</td>
+<td>Return</td>
+<td>13</td>
+</tr>
+<tr class="even">
+<td>\t</td>
+<td>Horizontal tab</td>
+<td>9</td>
+</tr>
+<tr class="odd">
+<td>\v</td>
+<td>Vertical tab</td>
+<td>11</td>
+</tr>
+<tr class="even">
+<td>\’</td>
+<td>Single quote</td>
+<td>39</td>
+</tr>
+<tr class="odd">
+<td>\"</td>
+<td>Double quote</td>
+<td>34</td>
+</tr>
+<tr class="even">
+<td>\\</td>
+<td>Backslash</td>
+<td>92</td>
+</tr>
+<tr class="odd">
+<td>\<em>ddd</em></td>
+<td>Octal code, 1-3 digits</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>\x<em>dd</em></td>
+<td>Hexadecimal code, 1 or 2 digits</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>\^<em>c</em></td>
+<td>Control code</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>\N</td>
+<td>Platform line ending (not csets)</td>
+<td>10 or 13,10</td>
+</tr>
+<tr class="odd">
+<td>\u<em>dddd</em></td>
+<td>Unicode 1-4 hexadecimal digits</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>\U<em>dddddd</em></td>
+<td>Unicode 1-6 hexadecimal digits</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h1 id="ucs-literals">Ucs literals</h1>
+<p>Each escape sequence (except perhaps \N) produces one character. In particular, the two Unicode escape sequences produce a single character corresponding to one Unicode code point. The other characters in the string must form valid UTF-8; so for example</p>
+<pre><code>  u&quot;\xFF&quot;</code></pre>
+<p>is not allowed. Instead, to get a string containing a single character 255 one should use :-</p>
+<pre><code>  u&quot;\u00FF&quot;</code></pre>
+<h1 id="string-literals">String literals</h1>
+<p>Plain string literals are just the same as ucs, with two exceptions. Firstly, there is of course no restriction regarding valid UTF-8. Secondly, the Unicode escapes expand to the UTF-8 sequences for the particular codepoint. Thus</p>
+<pre><code>  &quot;\u00FF&quot;</code></pre>
+<p>is identical to</p>
+<pre><code>  &quot;\xc3\xbf&quot;</code></pre>
+<h1 id="cset-literals">Cset literals</h1>
+<p>Like ucs, each escape sequence represents a single character. The \N sequence is not recognised (and just represents “N”). Since a cset is really just a set of character numbers (and knows nothing of UTF-8),</p>
+<pre><code>  &#39;\xFF&#39;</code></pre>
+<p>is identical to</p>
+<pre><code>  &#39;\u00FF&#39;</code></pre>
+<p>Both contain a single character number 255.</p>
+<p>The hyphen character has a special meaning in cset literals. It is used to specify ranges of characters. For example</p>
+<pre><code>  &#39;a-z&#39;</code></pre>
+<p>is the same as the predefined value <code>&amp;lcase</code>. Therefore the hyphen must be escaped when used outside of this context :-</p>
+<pre><code>  punctuation := &#39;.,;!\-:&#39;</code></pre>
+<p>Without the backslash, the above cset would also contain all 24 ASCII characters between “!” and “:”.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

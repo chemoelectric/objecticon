@@ -1,0 +1,24 @@
+import net, http, io, lang
+
+procedure main(a)
+   local url, hreq, hc, hres, out
+
+   a := a[1] | stop("URL expected")
+   url := URL(a) | stop("Invalid url: " || a)
+   url.scheme == ("http"|"https") | stop("Inappropriate url scheme: " || url.scheme)
+
+   # A stream for the resulting data
+   out := StringStream()
+
+   # A request object
+   hreq := HttpRequest().
+      set_url(url).
+      set_output_stream(out)
+
+   hc := HttpClient()
+
+   # Get the response object
+   hres := hc.retrieve(hreq) | stop(&why)
+
+   write("OK ", *out.str(), " bytes\n", to_string(hres, 3))
+end

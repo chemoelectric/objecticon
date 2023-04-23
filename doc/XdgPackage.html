@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The xdg package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The xdg package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#lsxdg">lsxdg</a></li>
+<li><a href="#base-directories">Base directories</a></li>
+<li><a href="#mime-types">Mime types</a><ul>
+<li><a href="#from-file-name-to-mime-type">From file name to mime type</a></li>
+<li><a href="#alternative-mime-types">Alternative mime types</a></li>
+<li><a href="#icon-names">Icon names</a></li>
+</ul></li>
+<li><a href="#icon-themes">Icon themes</a><ul>
+<li><a href="#specifying-a-theme">Specifying a theme</a></li>
+<li><a href="#icon-names-to-files">Icon names to files</a></li>
+<li><a href="#file-names-to-icon-files">File names to icon files</a></li>
+</ul></li>
+<li><a href="#desktop-entries">Desktop entries</a><ul>
+<li><a href="#application-associations">Application associations</a></li>
+<li><a href="#mimeapps.list">mimeapps.list</a></li>
+<li><a href="#mimeinfo.cache">mimeinfo.cache</a></li>
+<li><a href="#extensions">Extensions</a></li>
+<li><a href="#launch-commands">Launch commands</a></li>
+</ul></li>
+<li><a href="#customizing">Customizing</a><ul>
+<li><a href="#adding-a-custom-mime-type">Adding a custom mime type</a></li>
+<li><a href="#adding-a-new-desktop-file">Adding a new desktop file</a></li>
+<li><a href="#changing-mime-type-associations-and-application-ordering">Changing mime type associations and application ordering</a></li>
+<li><a href="#unwanted-desktop-files">Unwanted desktop files</a></li>
+<li><a href="#changing-an-icon-association">Changing an icon association</a></li>
+</ul></li>
+<li><a href="#refreshing">Refreshing</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page describes the classes in the xdg package. These provide an interface to that part of the freedesktop XDG database which contains information about mime types, applications and icons, as described in the specifications found on <a href="https://specifications.freedesktop.org/" class="uri">https://specifications.freedesktop.org/</a>.</p>
+<h1 id="lsxdg">lsxdg</h1>
+<p>This program, found in the <code>examples</code> subdirectory, is useful for examining the results from various calls into the <code>xdg</code> classes. Run</p>
+<pre><code>lsxdg -?</code></pre>
+<p>to get a list of the various query commands; these are described in detail below.</p>
+<h1 id="base-directories">Base directories</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.BaseDir.html"><code>xdg.BaseDir</code></a> class provides some static methods to determine the XDG base directories, as described in <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html" class="uri">https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html</a>.</p>
+<p>Run</p>
+<pre><code>lsxdg dirs</code></pre>
+<p>to see the various directory settings. Example output might be :-</p>
+<pre><code>Data Home: /home/rparlett/.local/share
+Data Dirs: /usr/local/share (C)
+Data Dirs: /usr/share (C)
+Data Dirs: /var/lib/snapd/desktop (C)
+Config Home: /home/rparlett/.config
+Config Dirs: /etc/xdg</code></pre>
+<p>The “(C)” indicates a directory which will use a “mimeinfo.cache” file if present; this is described further <a href="#mimeinfo.cache">below</a>.</p>
+<h1 id="mime-types">Mime types</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html"><code>xdg.Mime</code></a> class provides static methods to lookup mime information. The relevant specification is <a href="https://specifications.freedesktop.org/shared-mime-info-spec/shared-mime-info-spec-latest.html" class="uri">https://specifications.freedesktop.org/shared-mime-info-spec/shared-mime-info-spec-latest.html</a>.</p>
+<h2 id="from-file-name-to-mime-type">From file name to mime type</h2>
+<p>The most basic method, <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23get_mime_type_for_file"><code>xdg.Mime.get_mime_type_for_file()</code></a>, maps a file name (just the name, not a path) to a mime type. Note that the content of a file is not examined; in fact it makes no difference whether the file even exists. The derivation depends solely on the name itself. Thus, the sections in the above specification relating to “magic” data are not implemented by the <code>xdg</code> package.</p>
+<p>The <code>mime</code> command of <code>lsxdg</code> shows the output for a given name or names :-</p>
+<pre><code>$ lsxdg mime junk.pdf junk.jpg README Makefile junk
+junk.pdf: application/pdf
+junk.jpg: image/jpeg
+README: text/x-readme
+Makefile: text/x-makefile</code></pre>
+<p>Note that the last one, “junk”, gave no result, meaning <code>get_mime_type_for_file()</code> failed because no mime type could be deduced from that name.</p>
+<h2 id="alternative-mime-types">Alternative mime types</h2>
+<p>Each mime type may have alternative mime types. Each alternative is either equivalent, or a broader type than the original. <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23alternative_mime_types"><code>xdg.Mime.alternative_mime_types()</code></a> generates the alternatives for a mime type, and <code>lsxdg</code> may be used to see the results :-</p>
+<pre><code>$ lsxdg alt-mime application/xml
+application/xml
+text/xml
+text/plain
+application/octet-stream</code></pre>
+<p>Note that the original input is the first result generated. The method tries to generate the other results in a reasonable order, with the closest alternatives first, and the most general last.</p>
+<h2 id="icon-names">Icon names</h2>
+<p>The <code>Mime</code> class also maps mime types to icon names. These are distinct from actual icon files. The further mapping from icon names to icon files depends on the particular icon theme in use, and is described below.</p>
+<p>The specification describes two icon mappings - “icons” and “generic icons”. These mappings are retrieved with the methods <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_icons"><code>xdg.Mime.gen_icons()</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_generic_icons"><code>xdg.Mime.gen_generic_icons()</code></a> respectively. <code>lsxdg</code> has two corresponding commands :-</p>
+<pre><code>$ lsxdg icons video/webm
+video-x-generic
+$ lsxdg generic-icons application/x-archive
+package-x-generic</code></pre>
+<p>More useful is the <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_all_icons"><code>xdg.Mime.gen_all_icons()</code></a> which combines both of the above methods, and adds between them a default icon name based on the mime type name itself. <code>lsxdg</code> has a corresponding command :-</p>
+<pre><code>$ lsxdg all-icons video/webm
+video-x-generic
+video-webm
+mira $ lsxdg all-icons application/x-archive
+application-x-archive
+package-x-generic</code></pre>
+<p>Note how, in the <code>video/webm</code> example above, the name from the “icons” entry comes before the default name (<code>video-webm</code>), and thus overrides it when searching for an actual icon file.</p>
+<h1 id="icon-themes">Icon themes</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.IconTheme.html"><code>xdg.IconTheme</code></a> class provides static methods to find icon files from the icon names described in the last section. The relevant specification is <a href="https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html" class="uri">https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html</a></p>
+<h2 id="specifying-a-theme">Specifying a theme</h2>
+<p>The environment variable <code>OI_THEME</code> can be used to specify the theme to use. Themes are searched for in the “icons” subdirectory of the data directories. To check the theme has been found, use</p>
+<pre><code>lsxdg theme</code></pre>
+<p>which will report the name of the theme in use.</p>
+<p>If no theme is specified with <code>OI_THEME</code>, then, if present, the “oxygen” or “gnome” themes are used. As a final fallback, “hicolor” is used.</p>
+<h2 id="icon-names-to-files">Icon names to files</h2>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.IconTheme.html%23find_icon"><code>xdg.IconTheme.find_icon()</code></a> method searches for an icon of a particular name, size and scale. The latter setting is optional, and defaults to <a href="GuiPackage.html#scaling">the gui package’s scale setting.</a>. <code>lsxdg</code> may be used to see the results of this method, as follows :-</p>
+<pre><code>$ lsxdg find-icon application-pdf 35
+/usr/share/icons/oxygen/base/32x32/mimetypes/application-pdf.png</code></pre>
+<h2 id="file-names-to-icon-files">File names to icon files</h2>
+<p>To combine the mapping from file names to icon names described in the previous section, with the mapping from icon names to icon files described in this section, the method <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23find_icon_for_file"><code>xdg.Mime.find_icon_for_file()</code></a> can be used. <code>lsxdg</code> may again be used to test this method :-</p>
+<pre><code>$ lsxdg icon-file junk.pdf 35
+/usr/share/icons/oxygen/base/32x32/mimetypes/application-pdf.png</code></pre>
+<h1 id="desktop-entries">Desktop entries</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html"><code>xdg.Mime</code></a> class described above also provides methods to lookup desktop entries. These are “.desktop” files, each of which contains information about a particular application. The relevant specification in this case is <a href="https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html" class="uri">https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html</a>.</p>
+<h2 id="application-associations">Application associations</h2>
+<p>The method <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_desktop_entries"><code>xdg.Mime.gen_desktop_entries()</code></a> generates the desktop entries for a given mime type. <code>lsxdg</code> can be used to show the results as follows :-</p>
+<pre><code>$ lsxdg de application/pdf
+object xdg.DesktopEntry#6(
+   name=u&quot;Okular&quot;
+   icon=&quot;okular&quot;
+   source=&quot;/usr/share/applications/okularApplication_pdf.desktop&quot;
+   exec=u&quot;okular %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=8
+)
+object xdg.DesktopEntry#9(
+   name=u&quot;Document Viewer&quot;
+   icon=&quot;org.gnome.Evince&quot;
+   source=&quot;/usr/share/applications/org.gnome.Evince.desktop&quot;
+   exec=u&quot;evince %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+... etc</code></pre>
+<p>The results are generated in “preferred order”, with the most preferred coming first.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_all_desktop_entries"><code>xdg.Mime.gen_all_desktop_entries()</code></a> is like the above, but extends the results by including those additional desktop entries for any alternative mime types. The corresponding <code>lsxdg</code> command is <code>all-de</code>. So, for example we can contrast :-</p>
+<pre><code>$ lsxdg de application/xml
+object xdg.DesktopEntry#1(
+   name=u&quot;Firefox Web Browser&quot;
+   icon=&quot;firefox&quot;
+   source=&quot;/usr/share/applications/firefox.desktop&quot;
+   exec=u&quot;firefox %u&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+object xdg.DesktopEntry#2(
+   name=u&quot;Google Chrome&quot;
+   icon=&quot;google-chrome&quot;
+   source=&quot;/usr/share/applications/google-chrome.desktop&quot;
+   exec=u&quot;/usr/bin/google-chrome-stable %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)</code></pre>
+<p>with</p>
+<pre><code>$ lsxdg all-de application/xml
+object xdg.DesktopEntry#1(
+   name=u&quot;Firefox Web Browser&quot;
+   icon=&quot;firefox&quot;
+   source=&quot;/usr/share/applications/firefox.desktop&quot;
+   exec=u&quot;firefox %u&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+object xdg.DesktopEntry#2(
+   name=u&quot;Google Chrome&quot;
+   icon=&quot;google-chrome&quot;
+   source=&quot;/usr/share/applications/google-chrome.desktop&quot;
+   exec=u&quot;/usr/bin/google-chrome-stable %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+object xdg.DesktopEntry#3(
+   name=u&quot;Run GNU Emacs&quot;
+   icon=&quot;emacs&quot;
+   source=&quot;/home/rparlett/.local/share/applications/runemacs.desktop&quot;
+   exec=u&quot;/home/rparlett/bin/runemacs.sh %F&quot;
+   exec_line=u&quot;/home/rparlett/bin/runemacs.sh +%P %F&quot;
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=20
+)
+... etc, for more text editors and viewers</code></pre>
+<p>Note how the second command includes more general, but still useful, commands relating to <code>application/xml</code>’s parent type of <code>text/plain</code>.</p>
+<p>Two further useful methods use the last method with file names. <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_desktop_entries_for_file"><code>xdg.Mime.gen_desktop_entries_for_file()</code></a> takes a file (not a path), finds its mime type, and then generates the results of <code>gen_all_desktop_entries()</code>. The corresponding <code>lsxdg</code> command is <code>de-file</code>. Thus :-</p>
+<pre><code>$ lsxdg de-file junk.xml</code></pre>
+<p>will generate the same results as the second command shown above.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23gen_desktop_entries_for_path"><code>xdg.Mime.gen_desktop_entries_for_path()</code></a>, is similar, but takes a file path (instead of a simple name), and checks whether it is a directory. If so, it generates the desktop entries for the special mime type <code>inode/directory</code>; otherwise it takes the last path element and applies it to <code>gen_desktop_entries_for_file()</code>. The corresponding <code>lsxdg</code> command is <code>de-path</code> :-</p>
+<pre><code>$ lsxdg de-path /
+object xdg.DesktopEntry#2(
+   name=u&quot;Google Chrome&quot;
+   icon=&quot;google-chrome&quot;
+   source=&quot;/usr/share/applications/google-chrome.desktop&quot;
+   exec=u&quot;/usr/bin/google-chrome-stable %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+object xdg.DesktopEntry#1(
+   name=u&quot;Firefox Web Browser&quot;
+   icon=&quot;firefox&quot;
+   source=&quot;/usr/share/applications/firefox.desktop&quot;
+   exec=u&quot;firefox %u&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)</code></pre>
+<h2 id="mimeapps.list">mimeapps.list</h2>
+<p>This file is used to customize the mime-type to desktop file associations, and their preferred order. The relevant specification in this case is <a href="https://specifications.freedesktop.org/mime-apps-spec/mime-apps-spec-latest.html" class="uri">https://specifications.freedesktop.org/mime-apps-spec/mime-apps-spec-latest.html</a>. Note that the <code>xdg</code> package does not handle the “Default Applications” section in line with the specification. Having a default application as well as a most preferred application is too confusing; thus the “Default Applications” section is treated in the same way as the “Added Associations” section, with the former having priority. In other words, a <code>mimeapps.list</code> file like this :-</p>
+<pre><code>[Added Associations]
+text/html=a.desktop;b.desktop
+[Default Applications]
+text/html=x.desktop;y.desktop</code></pre>
+<p>is treated as if it were :-</p>
+<pre><code>[Added Associations]
+text/html=x.desktop;y.desktop;a.desktop;b.desktop</code></pre>
+<h2 id="mimeinfo.cache">mimeinfo.cache</h2>
+<p>These files, which don’t seem to be mentioned in any of the above standards, contain a summary of the mappings of the mime associations contained in the “desktop” files in a particular directory. This saves having to open, read and parse all of the desktop files when initializing the database. The downside of course is that the cache file may be out of date.</p>
+<p>By default, the <code>xdg</code> package only uses cache files which reside in the system data directories (ie, those specified by the environment variable <code>XDG_DATA_DIRS</code>). Any cache file in <code>XDG_DATA_HOME</code> will be ignored. This allows easier editing and testing of desktop files in the user’s personal directory.</p>
+<p>This behaviour may be altered my setting the environment variable <code>OI_XDG_MIMEINFO_CACHE_DIRS</code>. If this variable is unset, or empty, then the behaviour is as just described. If it is set, then it specifies a path variable, and only directories in one of its elements will use a cache file.</p>
+<p>Which data directories may use a cache may be seen with the <code>dirs</code> command of <code>lsxdg</code> and noting which has a “(C)” after its name. So for example :-</p>
+<pre><code>$ lsxdg dirs
+Data Home: /home/rparlett/.local/share
+Data Dirs: /usr/local/share (C)
+Data Dirs: /usr/share (C)
+Data Dirs: /var/lib/snapd/desktop (C)
+Config Home: /home/rparlett/.config
+Config Dirs: /etc/xdg
+$ # Restrict cache use to just one directory
+$ export OI_XDG_MIMEINFO_CACHE_DIRS=/usr/share
+mira $ lsxdg dirs
+Data Home: /home/rparlett/.local/share
+Data Dirs: /usr/local/share
+Data Dirs: /usr/share (C)
+Data Dirs: /var/lib/snapd/desktop
+Config Home: /home/rparlett/.config
+Config Dirs: /etc/xdg</code></pre>
+<h2 id="extensions">Extensions</h2>
+<p>The <code>xdg</code> package adds a non-standard key to the desktop file, namely <code>ExecLine</code>. This is used to enable a command with additional non-standard field codes to be used. These are described further in the documentation for <a href="FlowTerm.html#file">flowterm</a>, the program for which they were devised.</p>
+<h2 id="launch-commands">Launch commands</h2>
+<p>To see the command lines, derived from the desktop files, which may be used to launch a particular application for a file (or URL), use the following <code>lsxdg</code> commands :-</p>
+<pre><code>$ lsxdg cmd junk.pdf
+okular /tmp/junk.pdf
+evince /tmp/junk.pdf
+... etc
+$ lsxdg cmd-url http://junk.com
+/usr/bin/google-chrome-stable http://junk.com/
+firefox http://junk.com/</code></pre>
+<p>Some desktop files specify that their application should be launched in a terminal window (an example is the <code>vim</code> editor). The particular terminal program that the <code>xdg</code> package uses to launch such applications can be seen by running :-</p>
+<pre><code>$ lsxdg term-cmd
+xterm -e</code></pre>
+<p>This setting can be customized by setting the environment variable <code>OI_XDG_TERM_CMD</code>; for example to use <code>konsole</code> :-</p>
+<pre><code>export OI_XDG_TERM_CMD=&quot;konsole -e&quot;</code></pre>
+<h1 id="customizing">Customizing</h1>
+<p>This section contains some notes about how the various XDG database files can be edited to customize various settings. Of course most desktop environments will provide software which will perform at least some of these tasks in a more user-friendly way.</p>
+<h2 id="adding-a-custom-mime-type">Adding a custom mime type</h2>
+<p>If you are using Object Icon (or Icon) as a programming language, it is very useful to add a custom mime type to associate with “.icn” files. To do this, create a <code>mime/packages</code> directory under your <code>XDG_DATA_HOME</code> directory, which is by default <code>~/.local/share</code> :-</p>
+<pre><code>mkdir -p ~/.local/share/mime/packages</code></pre>
+<p>Then copy this file into the directory.</p>
+<p><a href="text-x-objecticon.xml">Download text-x-objecticon.xml</a></p>
+<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;mime-info xmlns=&quot;http://www.freedesktop.org/standards/shared-mime-info&quot;&gt;
+  &lt;mime-type type=&quot;text/x-objecticon&quot;&gt;
+    &lt;comment&gt;Object Icon source code&lt;/comment&gt;
+    &lt;sub-class-of type=&quot;text/plain&quot;/&gt;
+    &lt;glob pattern=&quot;*.icn&quot;/&gt;
+  &lt;/mime-type&gt;
+&lt;/mime-info&gt;
+</code></pre>
+<p>Finally, run :-</p>
+<pre><code>update-mime-database ~/.local/share/mime</code></pre>
+<p>to create the various XDG database files. Now <code>lsxdg</code> and other programs should recognise “.icn” files :-</p>
+<pre><code>$ lsxdg mime junk.icn
+junk.icn: text/x-objecticon
+$ lsxdg alt-mime text/x-objecticon
+text/x-objecticon
+text/plain
+application/octet-stream
+$ lsxdg de-file junk.icn
+object xdg.DesktopEntry#1(
+   name=u&quot;Run GNU Emacs&quot;
+   icon=&quot;emacs&quot;
+   source=&quot;/home/rparlett/.local/share/applications/runemacs.desktop&quot;
+   exec=u&quot;/home/rparlett/bin/runemacs.sh %F&quot;
+   exec_line=u&quot;/home/rparlett/bin/runemacs.sh +%P %F&quot;
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=20
+)
+... etc, for more text editors and viewers associated with text/plain</code></pre>
+<h2 id="adding-a-new-desktop-file">Adding a new desktop file</h2>
+<p>Desktop files contain information about a particular application, including the command needed to start the application, and the mime types with which it is associated.</p>
+<p>New desktop files can be placed in the <code>applications</code> subdirectory of the <code>XDG_DATA_HOME</code> directory; normally that is <code>~/.local/share/applications</code>. These override desktop files of the same name in the system data directories, so it is quite possible to copy a desktop file from one of the system data directories to your <code>XDG_DATA_HOME</code> directory, and then edit it as you please; for example :-</p>
+<pre><code>$ cp /usr/share/applications/vim.desktop ~/.local/share/applications
+$ edit ~/.local/share/applications/vim.desktop</code></pre>
+<p>Here is an example of a custom desktop file which I use to launch emacs using the <code>emacsclient</code> program, which makes use of an existing running emacs, rather than starting a new emacs for each invocation. It also uses the non-standard <code>ExecLine</code> key, as described above.</p>
+<p><a href="runemacs.desktop">Download runemacs.desktop</a></p>
+<pre><code>[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Run GNU Emacs
+GenericName=Text Editor
+Comment=View and edit files
+MimeType=text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;application/json;text/markdown
+Exec=/home/rparlett/bin/runemacs.sh %F
+ExecLine=/home/rparlett/bin/runemacs.sh +%P %F
+TryExec=/home/rparlett/bin/runemacs.sh
+Icon=emacs
+Type=Application
+Terminal=false
+Categories=Utility;Development;TextEditor;
+InitialPreference=20
+</code></pre>
+<p>The referenced script file just starts a fresh copy of emacs if <code>emacsclient</code> fails (presumably because emacs isn’t already running) :-</p>
+<p><a href="runemacs.sh">Download runemacs.sh</a></p>
+<pre><code>#!/bin/bash
+if ! emacsclient -n &quot;$@&quot; &amp;&gt;/dev/null; then
+    setsid -f emacs &quot;$@&quot; &lt;/dev/null &amp;&gt;/dev/null
+fi
+</code></pre>
+<p>After adding a desktop file, it may be wise for compatibility’s sake, to run the following command :-</p>
+<pre><code>update-desktop-database -v ~/.local/share/applications</code></pre>
+<p>This will create a <code>mimeinfo.cache</code> file in the given directory. As described <a href="#mimeinfo.cache">above</a>, by default the <code>xdg</code> package will ignore this file in the <code>XDG_DATA_HOME</code> directory, but other software may not.</p>
+<h2 id="changing-mime-type-associations-and-application-ordering">Changing mime type associations and application ordering</h2>
+<p>It is often desirable to customize the associations between a particular mime type and various applications, as specified in the desktop files (with the “MimeType” key). To do this, a <code>mimeapps.list</code> file may be created, which is best placed in <code>XDG_CONFIG_HOME</code>, where it will override any other similar files. This file contains three sections :-</p>
+<pre><code>[Added Associations]
+...
+
+[Removed Associations]
+...
+
+[Default Applications]
+...</code></pre>
+<p>Each section contains a list of mime types associated destkop IDs. A desktop ID is just the desktop file name (without the path), unless the file is in a subdirectory of <code>applications</code>; in which case substitute directory slashes with hyphens. The file name is easily found from the <code>lsxdg</code> output of <code>DesktopEntry</code> instances as the “source” member.</p>
+<p>The first section, “Added Associations”, adds desktop files to the association for a particular mime type, in the order given. So a line like :-</p>
+<pre><code>application/pdf=okularApplication_pdf.desktop;org.gnome.Evince.desktop</code></pre>
+<p>will put <code>okular</code> as the most preferred desktop file for the mime type <code>application/pdf</code>, with <code>evince</code> in second place. Any other associations specified in other desktop files will still be recognised, and will appear as lower preference entries; for example :-</p>
+<pre><code>$ lsxdg de application/pdf
+object xdg.DesktopEntry#6(
+   name=u&quot;Okular&quot;
+   icon=&quot;okular&quot;
+   source=&quot;/usr/share/applications/okularApplication_pdf.desktop&quot;
+   exec=u&quot;okular %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=8
+)
+object xdg.DesktopEntry#9(
+   name=u&quot;Document Viewer&quot;
+   icon=&quot;org.gnome.Evince&quot;
+   source=&quot;/usr/share/applications/org.gnome.Evince.desktop&quot;
+   exec=u&quot;evince %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+object xdg.DesktopEntry#4(
+   name=u&quot;Google Chrome&quot;
+   icon=&quot;google-chrome&quot;
+   source=&quot;/usr/share/applications/google-chrome.desktop&quot;
+   exec=u&quot;/usr/bin/google-chrome-stable %U&quot;
+   exec_line=&amp;null
+   path=&amp;null
+   terminal=&amp;null
+   initial_preference=0
+)
+... more lower preference desktop entries</code></pre>
+<p>The second section, “Removed Associations” is less useful. It simply removes the listed desktop files from the association with a particular mime type. So the following line :-</p>
+<pre><code>application/pdf=google-chrome.desktop</code></pre>
+<p>would remove the third entry shown above from the <code>lsxdg</code> results.</p>
+<p>As described <a href="#mimeapps.list">above</a>, the third section, “Default Applications” is treated by the <code>xdg</code> package as another “Added Associations”, with higher precedence. However, other software may behave differently. For that reason, I suggest keeping the two sections synchronized to the extent that the first item in each “Added Associations” entry appears as an entry in “Default Applications”. Thus, I would have :-</p>
+<pre><code>[Added Associations]
+application/pdf=okularApplication_pdf.desktop;org.gnome.Evince.desktop
+...
+
+[Default Applications]
+application/pdf=okularApplication_pdf.desktop
+...</code></pre>
+<h2 id="unwanted-desktop-files">Unwanted desktop files</h2>
+<p>A desktop file in one of the <code>XDG_DATA_DIRS</code> directories can be deactivated entirely by creating an empty desktop file with the same desktop ID in the <code>XDG_DATA_HOME</code> directory.</p>
+<p>For example, if I wished to deactivate <code>/usr/share/applications/vim.desktop</code>, then I would just run :-</p>
+<pre><code>touch /home/rparlett/.local/share/applications/vim.desktop</code></pre>
+<p>Thereafter, the above overrides the desktop file in <code>/usr/share/applications</code>, and since it is empty, doesn’t have any other effect.</p>
+<p>The process can of course be reversed by simply removing the empty <code>vim.desktop</code> file.</p>
+<h2 id="changing-an-icon-association">Changing an icon association</h2>
+<p>To make a custom association between a mime type and an icon name, create an “icons” file in the “mime” subdirectory of the <code>XDG_DATA_HOME</code> directory. Then add a line like :-</p>
+<pre><code>application/x-shellscript:application-x-shellscript</code></pre>
+<p>To make a custom associaton between an icon name and an actual icon file, create additional theme subdirectories under the “icons” subdirectory of the <code>XDG_DATA_HOME</code> directory. For example :-</p>
+<pre><code>$ ls ~/.local/share/icons/hicolor/32x32/apps
+adobe.pdf.png
+AdobeReader9.png
+vnd.adobe.pdx.png
+vnd.adobe.xdp+xml.png
+vnd.adobe.xfdf.png
+vnd.fdf.png
+...
+$ lsxdg find-icon vnd.adobe.pdx 32
+/home/rparlett/.local/share/icons/hicolor/32x32/apps/vnd.adobe.pdx.png</code></pre>
+<p>Further “fallback” icons can be added to the “icons” directory :-</p>
+<pre><code>$ ls ~/.local/share/icons
+hicolor/
+junk.png
+$ lsxdg find-icon junk 32
+/home/rparlett/.local/share/icons/junk.png</code></pre>
+<h1 id="refreshing">Refreshing</h1>
+<p>After changes have been made to the underlying XDG database files, the various cached values in the <code>xdg</code> classes may be out of date. To reset them, two methods are provided :-</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?xdg.IconTheme.html%23refresh"><code>xdg.IconTheme.refresh()</code></a> resets everything connected with the icon theme mapping from icon names to files; and <a href="http://objecticon.sourceforge.net/libref/index.html?xdg.Mime.html%23refresh"><code>xdg.Mime.refresh()</code></a> resets all other mime type and desktop file data.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

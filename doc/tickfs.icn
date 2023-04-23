@@ -1,0 +1,28 @@
+import plan9, io, ipl.server9p
+
+global sched
+
+class Ticker(Regular9P)
+   private t
+
+   public override read(count, pos)
+      sched.curr_task.sleep(t * 100)
+      return "*"
+   end
+
+   public override new(t)
+      Regular9P.new(t)
+      self.t := t
+      set_fixed_perm(8r444)
+      return
+   end
+end
+
+procedure main(a)
+   local root, sess
+   sched := Scheduler(100)
+   root := Root9P().set_fixed_perm(8r555)
+   every root.add_child(Ticker(1 to 10))
+   sess := Session9P(TreeData9P(root))
+   server_main_0(a, sess, sched)
+end

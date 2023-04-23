@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>memdebug</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">memdebug</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#startup">Startup</a></li>
+<li><a href="#entering-commands">Entering commands</a></li>
+<li><a href="#stopping-the-monitored-program">Stopping the monitored program</a></li>
+<li><a href="#examining-memory">Examining memory</a><ul>
+<li><a href="#globals">Globals</a></li>
+<li><a href="#report">Report</a></li>
+<li><a href="#statics">Statics</a></li>
+<li><a href="#search-for-instances-of-a-type">Search for instances of a type</a></li>
+<li><a href="#search-for-references-to-an-instance">Search for references to an instance</a></li>
+<li><a href="#dump">Dump</a></li>
+<li><a href="#values-without-serial-numbers">Values without serial numbers</a></li>
+<li><a href="#orphaned-memory">Orphaned memory</a></li>
+</ul></li>
+<li><a href="#programs-which-load-other-programs">Programs which load other programs</a><ul>
+<li><a href="#values-in-loaded-programs">Values in loaded programs</a></li>
+<li><a href="#references-found-in-other-programs">References found in other programs</a></li>
+<li><a href="#listing-and-selecting-the-current-program">Listing and selecting the current program</a></li>
+</ul></li>
+<li><a href="#other-commands">Other commands</a></li>
+<li><a href="#example">Example</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This is a program to debug memory allocation in a program. It is particularly useful for tracking down memory leaks; in other words, unwanted references to objects which prevent them from being garbage collected.</p>
+<p>It can also function as a very simple debugger.</p>
+<p>Unfortunately this program is only available under Unix. This is because it is partly implemented in a loadable library (a “.so” file), which requires full access to the runtime memory of <code>oix</code>.</p>
+<h1 id="startup">Startup</h1>
+<p>Start the program by giving the command line for the program to be monitored, as follows :-</p>
+<pre><code>memdebug flowterm /tmp</code></pre>
+<p>The <code>flowterm</code> program will then load and start and, concurrently, a <code>?</code> prompt will appear at which commands can be given to <code>memdebug</code>.</p>
+<p>This works well for a graphical program, which doesn’t use the terminal. For a terminal-based program, it may be easier to use <code>memdebug</code>’s graphics mode, with the <code>-g</code> option :-</p>
+<pre><code>memdebug -g oidoc -html -d -o /tmp/libref -a</code></pre>
+<p>Using memdebug with the terminal has the advantage that command output can be piped (usually to <code>less</code>).</p>
+<h1 id="entering-commands">Entering commands</h1>
+<p>Commands to <code>memdebug</code> take a simple shell-like form; for example</p>
+<pre><code>? list MyClass#2</code></pre>
+<p>Output can be redirected by ending a command with <code>&gt;file</code> or <code>&gt;&gt;file</code>, just like the shell. Output can also be piped to a command using the <code>|</code> character followed by the command, but this doesn’t work if <code>memdebug</code> is using its graphical mode (the <code>-g</code> option).</p>
+<h1 id="stopping-the-monitored-program">Stopping the monitored program</h1>
+<p>This can be done by entering the <code>stop</code> command at the prompt. It happens automatically when the monitored program returns from <code>main</code>, or when it stops with a runtime error.</p>
+<p>Note that if the monitored program causes a fatal or system error, then the entire interpreter (including <code>memdebug</code>) exits.</p>
+<p>A breakpoint can also be set using the <code>breakpoint</code> command; for example :-</p>
+<pre><code>? breakpoint /tmp/file.icn 123</code></pre>
+<p>Note that the full file path must be given. To clear the breakpoint, just use <code>breakpoint</code> with no arguments.</p>
+<p>A break can also be set in a procedure or method; for example</p>
+<pre><code>? breakproc gui.Dialog.show_modal</code></pre>
+<p>To clear the break procedure, just use <code>breakproc</code> with no argument.</p>
+<p>If the <code>&amp;break</code> keyword is evaluated in the target program, then that too will cause a break.</p>
+<p>To stop the program at startup, run <code>memdebug</code> with the <code>-m</code> option; this sets an initial <code>breakproc</code> in <code>main</code>.</p>
+<h1 id="examining-memory">Examining memory</h1>
+<h2 id="globals">Globals</h2>
+<p>To examine memory, it is helpful to start with the <code>globals</code> command. This shows the global variable and keywords values. For example :-</p>
+<pre><code>? globals
+glob_cmds=list#90(0)
+ipl.functional._a=&amp;null
+ipl.functional._l=&amp;null
+ipl.graphics.hilite_table=table#2119(1)
+ipl.graphics.shadow_table=table#2086(1)
+opts=table#11(0)
+&amp;pos=1
+&amp;subject=&quot;&quot;
+&amp;why=(0x7fd267683e6c)&quot;No such file or directory (errno=2)&quot;
+&amp;progname=(0x7fd26bb5e225)&quot;/home/rparlett/objecticon/examples/flowterm&quot;
+&amp;random=2029852714
+&amp;trace=0
+&amp;maxlevel=500
+&amp;dump=0
+&amp;handler=&amp;null
+&amp;main=co-expression#2(0)
+&amp;current=co-expression#2(0)
+&amp;source=co-expression#2(0)
+&amp;errortext=
+&amp;errorvalue=
+&amp;errorcoexpr=
+&amp;errornumber=
+&amp;file=&quot;/home/rparlett/objecticon/lib/gui/dispatcher.icn&quot;
+&amp;line=148
+&amp;level=6</code></pre>
+<p>Note that the value of <code>&amp;current</code> will show us where the program was stopped. To see a “stack trace”, use the <code>list</code> command with that co-expression :-</p>
+<pre><code>? list co-expression#2
+co-expression#2(0)
+    SP=0x246a610
+    PF=0x246f360
+    operator unary !
+        0x246a610
+        Arg 0=set#25(1)
+        Tended 0=D_TendPtr -&gt; set#25(1)
+        Tended 1=D_TendPtr -&gt; &amp;null
+        Tended 2=&quot;&quot;
+        Tended 3=&amp;null
+        Tended 4=set#25(1)
+    method gui.Dispatcher.do_validate
+        0x246f360, caller=0x242ae70
+        File dispatcher.icn; Line 148
+        Temp 0=set#25(1)
+        Temp 1=object FlowTermDialog#1(84)
+        Temp 2=&amp;null
+        Temp 3=&amp;null
+        d=object FlowTermDialog#1(84)
+        bag=&amp;null
+    method gui.Dispatcher.work
+        0x242ae70, caller=0x2454f60
+        File dispatcher.icn; Line 58
+        Temp 0=&amp;null
+    method gui.Dispatcher.work_or_sleep
+        0x2454f60, caller=0x2453a90
+        File dispatcher.icn; Line 108
+        Temp 0=&amp;null
+    method gui.Dispatcher.message_loop
+        0x2453a90, caller=0x22c07f0
+        File dispatcher.icn; Line 71
+        Temp 0=&amp;null
+        Temp 1=object graphics.Window#127(1)
+        r=object FlowTermDialog#1(84)
+        (more output...)</code></pre>
+<p>This shows all the values stored in internal structures and local (non-static) variables. Structures can be further examined by using <code>list</code>; for example :-</p>
+<pre><code>? list FlowTermDialog#1</code></pre>
+<h2 id="report">Report</h2>
+<p>Another potential starting point is the <code>report</code> command. This traverses memory and counts the types and sizes of what it encounters, and then produces a report. For example :-</p>
+<pre><code>? report
+Builtin types
+=============
+     15638  String
+    296096     Total length
+      1771  Ucs
+     14475     Total length
+         4  Cset
+        40     Total size
+      2871  List
+      5134     Total size
+        95  Set
+      9042     Total size
+       417  Table
+      3918     Total size
+        79  Co-expression
+       588  Methp
+
+Objects and Records
+===================
+      1122  class xdg.GlobMatch
+       607  class util.Listener
+       306  class io.Stat
+       306  class ipl.filegui.AnnotatedListEntryWithIcon
+       177  class ipl.vt.KeyEntry
+       110  class graphics.Window
+        83  class gui.EmptyBorder
+        74  class io.FilePath
+        71  class xdg.CachedDir
+        69  class xdg.ThemeDirectory
+ ... more output
+         1  class HistoryList
+         1  class gui.Style
+         1  class ipl.filegui.FileTrailList</code></pre>
+<p>The second section outputs a sorted list of the numbers of instances of objects and records encountered.</p>
+<p><code>report</code> could be particularly useful if it were run twice at different times during a program’s run, and the output compared. Unexpected increases in a particular type’s count could then be investigated with the <code>list</code> command.</p>
+<h2 id="statics">Statics</h2>
+<p>To view static variables in a class, procedure or method, use the statics command, for example :-</p>
+<pre><code>? statics gui.Dialog
+class gui.Dialog
+        ROOT_WATTRIBS=table#19(1)
+        POINTER=&quot;left ptr&quot;
+        DND_NEGATIVE_POINTER=&quot;circle&quot;
+        DND_POSITIVE_POINTER=&quot;hand2&quot;
+        DOUBLE_CLICK_DELAY=500
+        DOUBLE_CLICK_TOLERANCE=2
+        DRAG_GESTURE_OFFSET=7
+        TOOLTIP_START_DELAY=1000
+        TOOLTIP_END_DELAY=4000
+        TOOLTIP_CONTINUE_DELAY=1500
+        TOOLTIP_X_OFFSET=9
+        TOOLTIP_Y_OFFSET=26
+        FOCUS_UP=set#10(3)
+        FOCUS_DOWN=set#11(3)</code></pre>
+<h2 id="search-for-instances-of-a-type">Search for instances of a type</h2>
+<p>It is often useful to search memory for all the instances of a type. To do this, use <code>list</code>, and give the name of the type to search for; for example :-</p>
+<pre><code>? list Columns
+object Columns#1
+        Instance variable columns in object Terminal#1
+object Columns#2
+        Instance variable columns in object Terminal#2</code></pre>
+<p>The indented line shows the thing that refers to the instance shown (there may be other things of course; see <code>refs</code> below). If the <code>-r</code> option is given to <code>list</code>, then this reference is expanded to show the complete path from the instance back to a garbage collector root. For example :-</p>
+<pre><code>? list -r Columns
+object Columns#1
+        Instance variable columns in object Terminal#1
+        Instance variable revert_tab in object Terminal#2
+        Instance variable which_one in object gui.TabSet#1
+        Instance variable tabs in object FlowTermDialog#1
+        Variable d in frame of method gui.Dispatcher.do_event in chain of co-expression#3
+        &amp;main
+object Columns#2
+        Instance variable columns in object Terminal#2
+        Instance variable which_one in object gui.TabSet#1
+        Instance variable tabs in object FlowTermDialog#1
+        Variable d in frame of method gui.Dispatcher.do_event in chain of co-expression#3
+        &amp;main</code></pre>
+<p>Apart from class names, the type given can be a record type name, or any of the following builtin type names :-</p>
+<ul>
+<li>“co-expression”</li>
+<li>“cset”</li>
+<li>“integer”</li>
+<li>“lelem”</li>
+<li>“list”</li>
+<li>“methp”</li>
+<li>“set”</li>
+<li>“table”</li>
+<li>“telem”</li>
+<li>“ucs”</li>
+<li>“weakref”</li>
+</ul>
+<p>Note that <code>telem</code> and <code>lelem</code> refer to orphaned table and list block elements; see below.</p>
+<p>Please note that the output for some of the above may be voluminous :-</p>
+<pre><code>$ memdebug flowterm
+? list -r string | wc
+ 114105  489652 4992356</code></pre>
+<h2 id="search-for-references-to-an-instance">Search for references to an instance</h2>
+<p>If the <code>list</code> command above returns instances which you think should no longer be reachable (and hence will not be garbage collected), then the <code>refs</code> command can be used to see why. It prints out a list of all the things that refer to a particular object. For example :-</p>
+<pre><code>? refs Terminal#3
+Instance variable which_one in object gui.TabSet#1
+Instance variable ui in object ipl.vt.Vt#3
+List element list#4412(3)[3]
+List element list#12969(3)[3]
+List element list#12972(3)[3]
+Instance variable parent in object gui.MessageLabel#4
+Instance variable parent in object gui.Split#4
+Instance variable parent in object gui.GridLayout#28
+List element list#13203(3)[3]
+(more output...)</code></pre>
+<p><code>refs</code> can then be used to explore these references further; for example the first one in the list above :-</p>
+<pre><code>? refs gui.TabSet#1
+Instance variable tabs in object FlowTermDialog#1
+List element list#127(2)[2]
+(more output...)</code></pre>
+<p>With the <code>-r</code> option, <code>refs</code> will list the path back to a garbage collector root, for each result. For example :-</p>
+<pre><code>? refs -r Terminal#3
+Instance variable which_one in object gui.TabSet#1
+    Instance variable tabs in object FlowTermDialog#1
+    Variable d in frame of method gui.Dispatcher.do_validate in chain of co-expression#3
+    &amp;main
+Instance variable ui in object ipl.vt.Vt#3
+    Instance variable focus in object FlowTermDialog#1
+    Variable d in frame of method gui.Dispatcher.do_validate in chain of co-expression#3
+    &amp;main
+(more output...)</code></pre>
+<p>Each indented line gives the first reference to the item mentioned in the line above; eventually a root is reached, in the above two cases <code>&amp;main</code>.</p>
+<p>By default <code>refs</code> doesn’t traverse the reference graph further on from the search target itself. This means that paths that reach the target via the target itself are not included in the results. Such paths aren’t very useful for tracking down memory leaks, and tend to obfuscate the relevant, direct paths to the target. But if you wish to include these paths too, pass the <code>-a</code> option to <code>refs</code>.</p>
+<p>Two other points should be mentioned about <code>refs</code>. Firstly, breadth first search is used, so the shortest results come first. Secondly, <code>refs</code> does not show all conceivable paths to the target. If there are several paths from a root to an intermediate object on a path to the target, then only the first encountered path from the root to the intermediate object is shown. This will be the shortest path, but it may not be unique (there may be another of the same path length). For example, given the program :-</p>
+<pre><code>global a, b, t
+
+procedure main()
+   t := set()
+   a := b := [1, 2, t]
+   &amp;break
+end</code></pre>
+<p>the <code>refs -r</code> command applied to the <code>set</code> <code>t</code> will report the path</p>
+<pre><code>List element list#89(3)[3]
+        Global variable a</code></pre>
+<p>but not</p>
+<pre><code>List element list#89(3)[3]
+        Global variable b</code></pre>
+<p>(the “intermediate object” in this case being <code>list#89</code>).</p>
+<h2 id="dump">Dump</h2>
+<p>The <code>dump</code> command lists the values of all globals, keywords, statics and structures. Its output is usually extensive, so it is best to redirect it to a file (or view it with <code>less</code>).</p>
+<h2 id="values-without-serial-numbers">Values without serial numbers</h2>
+<p>Strings, csets, ucs strings, large integers and (on 32 bit systems) real numbers, lack the identifying serial numbers found in structure objects such as lists. Therefore they have to be identified by address.</p>
+<p>For example, in the <code>globals</code> output above, <code>&amp;file</code> was shown as :-</p>
+<pre><code>&amp;progname=(0x7fd26bb5e225)&quot;/home/rparlett/objecticon/examples/flowterm&quot;</code></pre>
+<p>This address can now be used with <code>list</code> and <code>refs</code>, in the same way for structure objects, for example :-</p>
+<pre><code>? refs 0x7fd26bb5e252
+&amp;progname</code></pre>
+<p>which tells us that this string is just referenced in this one place, as the value of this keyword.</p>
+<p>Note that some values will be allocated outside of the garbage-collected memory regions. These don’t have their addresses shown, and are not subject to garbage collection, so finding references to them is not useful. For example, the value of <code>&amp;file</code> in the <code>globals</code> output was :-</p>
+<pre><code>&amp;file=&quot;/home/rparlett/objecticon/lib/gui/dispatcher.icn&quot;</code></pre>
+<p>This string value is actually contained in the executable icode file loaded by the interpreter, and hence no address is shown.</p>
+<p>Since Object Icon uses a relocating garbage collector, over a program’s run the addresses of particular objects may change.</p>
+<h2 id="orphaned-memory">Orphaned memory</h2>
+<p>Under certain rare circumstances parts of list or table data structures can become detached from their enclosing instances, yet still be referenced by variables. These “orphaned” sections are always listed by address, since they don’t have the serial numbers of normal data types.</p>
+<p>These references are reported with output like :-</p>
+<pre><code>? refs set#4
+Value of Orphaned table element block(0x7fc7988351e0)
+Slot 77 in Orphaned list element block(0x7fc798838e50)</code></pre>
+<p>The addresses shown can be then used with further <code>ref</code> and <code>list</code> commands.</p>
+<p>A similar phenomenon is a “stuck” element in a list. In this case, the list data block is still attached to its parent list, but a particular unused slot in the block contains data, inaccessible to the program. This can only happen if a list is changed between the creation of a variable, and the assignment to it; for example :-</p>
+<pre><code>L := [ ... ]
+1(L[5], clear(L)) := 123</code></pre>
+<p>The stuck element is then reported with <code>list</code> after the normal elements; for example :-</p>
+<pre><code>? list list#89
+list#89(0)
+        Stuck element=123</code></pre>
+<h1 id="programs-which-load-other-programs">Programs which load other programs</h1>
+<h2 id="values-in-loaded-programs">Values in loaded programs</h2>
+<p>When a program loads another program and uses classes and records in it, there can be ambiguity in the global names. For this reason, class and record type names are prefixed with the program’s <code>&amp;main</code>. For example,</p>
+<pre><code>(prog=co-expression#9(0))class Something</code></pre>
+<p>is a class from a loaded program whose <code>&amp;main</code> is <code>co-expression#9</code>, whilst an instance of that class might appear as :-</p>
+<pre><code>(prog=co-expression#9(0))(0x7f9e73ec1480)object Something#11(3)</code></pre>
+<p>Note that the address of the instance is also shown, and that must be used rather than the usual class and serial combination <code>Something#11</code>, to search for the object with <code>list</code> and <code>refs</code>. This is because the command <code>list Something#11</code> would refer to the class <code>Something</code> in the current program (see below) rather than in the loaded program. They will either be distinct classes (with the same name), or more likely, the current program won’t even have a class <code>Something</code>.</p>
+<h2 id="references-found-in-other-programs">References found in other programs</h2>
+<p>When a reference to an object is found in another program, it is shown with a reference to the other program’s <code>&amp;main</code>; for example :-</p>
+<pre><code>? refs Something#2
+Global variable g2 of program co-expression#9(0)</code></pre>
+<h2 id="listing-and-selecting-the-current-program">Listing and selecting the current program</h2>
+<p>Memdebug has the notion of a monitored program (the one given on the command line), and the current program, which is the one whose memory is being examined. They start off as the same program. If the monitored program loads other programs, then it may be necessary to change the current program. This is because :-</p>
+<ul>
+<li>class and record type names refer to the current program only</li>
+<li><code>list</code> and <code>dump</code> only display values contained in the current program’s memory regions (although list has a <code>-a</code> option to extend to all programs’ regions).</li>
+<li><code>globals</code>, <code>nglobals</code> and similar commands relate to the current program</li>
+</ul>
+<p>To list the programs loaded by the interpreter use the <code>progs</code> command :-</p>
+<pre><code>? progs
+Program 0x2209e00
+        &amp;main=co-expression#9(0)
+Program 0x21eea10 (current)
+        &amp;main=co-expression#2(0)
+Program 0x6bf140
+        &amp;main=co-expression#1(1)</code></pre>
+<p>Here, the monitored program is the current program, which has loaded another program (<code>co-expression#9</code>). <code>co-expression#1</code> is the <code>memdebug</code> program itself. To change to the loaded program, use :-</p>
+<pre><code>? prog co-expression#9
+prog set to 0x2209e00</code></pre>
+<p>Note that, although the current program can be changed, the monitored program cannot. Therefore, for example, breakpoints cannot be set in a loaded program.</p>
+<h1 id="other-commands">Other commands</h1>
+<p>Type <code>help</code> at the prompt to see a list of other commands.</p>
+<h1 id="example">Example</h1>
+<p>Here is an example of exposing and tracking down a memory leak. The program in question is <a href="FlowTerm.html"><code>flowterm</code></a>, which allows the user to open and close multiple tabs during its run, rather like a web browser. This raises the question of whether or not the tabs are properly unreferenced after they are closed.</p>
+<p>To check this, the program is started with the command</p>
+<pre><code>memdebug flowterm </code></pre>
+<p>and then two tabs are opened. Each tab is an instance of a class named <code>Terminal</code>, and the instances can be listed with :-</p>
+<pre><code>? list Terminal
+object Terminal#1
+        Variable t in frame of procedure main in chain of co-expression#3
+object Terminal#2
+        Instance variable which_one in object gui.TabSet#1</code></pre>
+<p>If either tab is closed, then only the other should appear when the above command is repeated. I noted that this was the case if the second tab was closed, but not the first. In other words, closing the first tab, and repeating the above command would give the same results.</p>
+<p>To investigate further, the <code>refs</code> command may be used :-</p>
+<pre><code>? refs -r Terminal#1
+Variable t in frame of procedure main in chain of co-expression#3
+    &amp;main
+Temporary descriptor 9 in frame of procedure main in chain of co-expression#3
+    &amp;main
+Instance variable revert_tab in object Terminal#2
+    Instance variable which_one in object gui.TabSet#1
+    Temporary descriptor 0 in frame of procedure main in chain of co-expression#3
+    &amp;main</code></pre>
+<p>Two particular problems are indicated. Firstly, references to the first tab in the <code>main()</code> procedure, which looks like this :-</p>
+<pre><code>procedure main(a)
+   local d, t
+   ...
+   d := FlowTermDialog()
+   d.do_tab_cmd(a) | help_stop(&amp;why)
+   t := \d.tabs.which_one | d.tabs.children[1]
+   d.set_focus(t.remembered_focus)
+   d.show_modal()
+   ...
+end</code></pre>
+<p>Listing <code>co-expression#3</code> shows the variables residing in that procedure’s invocation frame :-</p>
+<pre><code>? list co-expression#3
+co-expression#3
+        SP=0x562d6b267688
+        PF=0x562d6b267688
+        method gui.Dispatcher.message_loop
+                0x562d6b267688, caller=0x562d6b061148
+                File dispatcher.icn; Line 120
+                Temp 0=&amp;null
+                Temp 1=object graphics.Window#56
+                r=object FlowTermDialog#1
+... (several frames omitted)
+        procedure main
+                0x562d6b056358, caller=0x562d6b0536e8
+                File flowterm.icn; Line 3613
+                Temp 0=object gui.TabSet#1
+                Temp 1=class gui.ImageCache
+                Temp 2=object ipl.options.Opt#3
+                Temp 3=methp#12(object ipl.functional.LRPartial#1,method ipl.functional.LRPartial.lcall)
+                Temp 4=object ipl.options.Opt#4
+                Temp 5=methp#13(object ipl.functional.LRPartial#2,method ipl.functional.LRPartial.lcall)
+                Temp 6=object ipl.options.Opt#5
+                Temp 7=object ipl.options.Opt#6
+                Temp 8=struct_var -&gt; object gui.TabSet#1.which_one
+                Temp 9=struct_var -&gt; object Terminal#1.remembered_focus
+                a=list#27(0)
+                d=object FlowTermDialog#1
+                t=object Terminal#1
+        internal main_wrapper
+                0x562d6b0536e8, caller=(nil)
+                Temp 0=procedure main
+                Temp 1=list#27(0)</code></pre>
+<p>One reference is caused by the local variable <code>t</code>, and the other is the intermediate result of the parameter to the <code>d.set_focus()</code> method call. The first could be resolved by adding an assignment to <code>t</code> to set it to <code>&amp;null</code>. The other reference is more difficult, since the use of internal temporary variables is unpredictable. The easiest recourse is to simply move the problem code into an auxiliary procedure called <code>get_dialog</code>. This procedure’s frame will be removed when it returns, eliminating all local and temporary references. So <code>main()</code> now looks like this :-</p>
+<pre><code>procedure get_dialog(a)
+   local d, t
+   d := FlowTermDialog()
+   d.do_tab_cmd(a) | help_stop(&amp;why)
+   t := \d.tabs.which_one | d.tabs.children[1]
+   d.set_focus(t.remembered_focus)
+   return d
+end
+
+procedure main(a)
+   local d
+   ...
+   d := get_dialog(a)
+   d.show_modal()
+   ...
+end</code></pre>
+<p>and when the <code>list</code> command above is repeated, the output looks like this :-</p>
+<pre><code>? list co-expression#3
+...
+        procedure main
+                0x563e888a83a8, caller=0x563e888a56e8
+                File flowterm.icn; Line 3625
+                Temp 0=class gui.ImageCache
+                Temp 1=class gui.ImageCache
+                Temp 2=object ipl.options.Opt#3
+                Temp 3=methp#12(object ipl.functional.LRPartial#1,method ipl.functional.LRPartial.lcall)
+                Temp 4=object ipl.options.Opt#4
+                Temp 5=methp#13(object ipl.functional.LRPartial#2,method ipl.functional.LRPartial.lcall)
+                Temp 6=object ipl.options.Opt#5
+                Temp 7=object ipl.options.Opt#6
+                Temp 8=object graphics.Pixels#17
+                Temp 9=object FlowTermDialog#1
+                a=list#31(0)
+                d=object FlowTermDialog#1
+...</code></pre>
+<p>Now there are no references to <code>Terminal#1</code>.</p>
+<p>The second problem indicated by the <code>refs</code> output above was the presence of a reference to the first tab in the second tab, via the instance variable <code>revert_tab</code>. This variable is used to select the tab to bring forward when a tab is closed. It is of course not useful if the chosen tab has itself already closed. So the solution in this case is to simply clear any such references in other tabs when a tab is closed :-</p>
+<pre><code>   public close_tab()      # A method in Terminal, called when the tab is closed.
+      local t, i
+      if *parent.children = 1 then
+         parent_dialog.dispose()
+      else {
+         # To help the garbage collector, clear references to this tab
+         # in the other tabs.
+         every t := !parent.children do {
+            if t.revert_tab === self then
+               t.revert_tab := &amp;null
+         }
+      ... etc
+   end</code></pre>
+<p>Having put this fix into place, the list command can be run again, after creating a new tab, and closing the first :-</p>
+<pre><code>? list Terminal
+object Terminal#2
+        Instance variable which_one in object gui.TabSet#1</code></pre>
+<p>Now all references to the first tab have been removed, and it will be garbage collected in the usual way.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

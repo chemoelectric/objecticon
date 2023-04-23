@@ -1,0 +1,34 @@
+import mail, io, net, lang
+
+procedure main(a)
+   local p, m, t, id
+
+   (*a = 2) | stop("Usage: poplist username password")
+
+   #
+   # Create a client.  You may need to customize p to change the defaults :
+   #    set_server(x) - the POP server to use (default "localhost")
+   #    set_port(n) - the port to use (default 110)
+   #   
+   p := PopClient().
+      set_auth(Authentication(a[1], a[2]))
+
+   p.open().login() | stop("Failed to connect/login: ", &why)
+
+   t := p.stat() | stop("Failed to stat messages: ", &why)
+   write("Stat OK: ", to_string(t))
+
+   t := p.uidl() | stop("Failed to uidl messages: ", &why)
+   write("UIDL OK: ", to_string(t))
+
+   t := p.list() | stop("Failed to list messages: ", &why)
+   write("List OK: ", to_string(t))
+   
+   if *t > 0 then {
+      id := t[1].number
+      m := p.retr(id) | stop("Failed to retrieve message: ", &why)
+      write("Got a message OK: ", image(m))
+   }
+
+   p.close()
+end

@@ -1,0 +1,75 @@
+import plan9, io, util, ipl.server9p, exception
+
+global sched
+
+class Serv2(QueueFile9P)
+   private reading, done_flag
+
+   public override write(s, pos)
+      local t
+      case t := trim(s, ' \n\r\t') of {
+         "one": sendln("first command output")
+         "two": sendln("second command output")
+         "date": sendln(&dateline)
+         "q" : done()
+         default: sendln("odd command:" ||  image(t))
+      }
+      send("1> ")
+      return *s
+   end
+
+   public sendln(s)
+      send(s || "\n")
+   end
+
+   public send(s)
+      add(s)
+      (\reading).notify()
+   end
+
+   public done()
+      (\reading).interrupt()
+      done_flag := &yes
+   end
+
+   public override read(count, pos)
+      /reading | throw("Already reading")
+      /done_flag | throw("Session finsihed")
+      while len = 0 do {
+         use {
+            reading := sched.curr_task,
+            reading.sleep(),
+            reading := &null
+         } | throw(&why)
+      }
+      return QueueFile9P.read(count, pos)
+   end
+
+   public override close()
+      done()
+   end
+
+   public override new(n)
+      QueueFile9P.new(n)
+      sendln("Enter q to exit")
+      send("1> ")
+      return
+   end
+end
+
+class Serv(Regular9P)
+   public override open(mode)
+      return Serv2("serv2").
+         set_fixed_perm(perm).
+         set_parent(parent)
+   end
+end
+
+procedure main(a)
+   local root, sess
+   sched := Scheduler(100)
+   root := Root9P().set_fixed_perm(8r555)
+   root.add_child(Serv("serv").set_fixed_perm(8r666))
+   sess := Session9P(TreeData9P(root))
+   server_main_0(a, sess, sched)
+end

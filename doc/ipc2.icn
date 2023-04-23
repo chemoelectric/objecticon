@@ -1,0 +1,28 @@
+import
+   io(write),
+   ipc(Shm),
+   util(Process)
+
+global var
+
+procedure run()
+   write("In child, setting var")
+   var.set_value(2)
+end
+
+procedure main()
+   local c
+
+   # Create a Shm instance with initial value 1
+   var := Shm.create_private(1)
+
+   write("In parent var=", var.get_value())
+
+   c := Process{run()}
+   c.start()
+   c.close()
+
+   write("Finished, var=", var.get_value())
+
+   var.close()
+end

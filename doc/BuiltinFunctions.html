@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>List of builtin functions</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">List of builtin functions</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#abs">abs</a></li>
+<li><a href="#any">any</a></li>
+<li><a href="#back">back</a></li>
+<li><a href="#bal">bal</a></li>
+<li><a href="#center">center</a></li>
+<li><a href="#char">char</a></li>
+<li><a href="#classof">classof</a></li>
+<li><a href="#clear">clear</a></li>
+<li><a href="#coact">coact</a></li>
+<li><a href="#cocopy">cocopy</a></li>
+<li><a href="#cofail">cofail</a></li>
+<li><a href="#collect">collect</a></li>
+<li><a href="#copy">copy</a></li>
+<li><a href="#cset">cset</a></li>
+<li><a href="#delay">delay</a></li>
+<li><a href="#delete">delete</a></li>
+<li><a href="#detab">detab</a></li>
+<li><a href="#display">display</a></li>
+<li><a href="#echo">echo</a></li>
+<li><a href="#entab">entab</a></li>
+<li><a href="#errorclear">errorclear</a></li>
+<li><a href="#exit">exit</a></li>
+<li><a href="#fatalerr">fatalerr</a></li>
+<li><a href="#find">find</a></li>
+<li><a href="#forward">forward</a></li>
+<li><a href="#get">get</a></li>
+<li><a href="#iand">iand</a></li>
+<li><a href="#icom">icom</a></li>
+<li><a href="#image">image</a></li>
+<li><a href="#insert">insert</a></li>
+<li><a href="#integer">integer</a></li>
+<li><a href="#ior">ior</a></li>
+<li><a href="#is">is</a></li>
+<li><a href="#ishift">ishift</a></li>
+<li><a href="#ixor">ixor</a></li>
+<li><a href="#key">key</a></li>
+<li><a href="#keyof">keyof</a></li>
+<li><a href="#keyval">keyval</a></li>
+<li><a href="#left">left</a></li>
+<li><a href="#list">list</a></li>
+<li><a href="#many">many</a></li>
+<li><a href="#map">map</a></li>
+<li><a href="#match">match</a></li>
+<li><a href="#max">max</a></li>
+<li><a href="#member">member</a></li>
+<li><a href="#min">min</a></li>
+<li><a href="#move">move</a></li>
+<li><a href="#numeric">numeric</a></li>
+<li><a href="#ord">ord</a></li>
+<li><a href="#pop">pop</a></li>
+<li><a href="#pos">pos</a></li>
+<li><a href="#proc">proc</a></li>
+<li><a href="#pull">pull</a></li>
+<li><a href="#push">push</a></li>
+<li><a href="#put">put</a></li>
+<li><a href="#real">real</a></li>
+<li><a href="#repl">repl</a></li>
+<li><a href="#reverse">reverse</a></li>
+<li><a href="#right">right</a></li>
+<li><a href="#runerr">runerr</a></li>
+<li><a href="#seq">seq</a></li>
+<li><a href="#serial">serial</a></li>
+<li><a href="#set">set</a></li>
+<li><a href="#sort">sort</a></li>
+<li><a href="#sortf">sortf</a></li>
+<li><a href="#string">string</a></li>
+<li><a href="#syserr">syserr</a></li>
+<li><a href="#system">system</a></li>
+<li><a href="#tab">tab</a></li>
+<li><a href="#table">table</a></li>
+<li><a href="#text">text</a></li>
+<li><a href="#trim">trim</a></li>
+<li><a href="#type">type</a></li>
+<li><a href="#uchar">uchar</a></li>
+<li><a href="#ucs">ucs</a></li>
+<li><a href="#upto">upto</a></li>
+<li><a href="#variable">variable</a></li>
+<li><a href="#vimage">vimage</a></li>
+<li><a href="#weakref">weakref</a></li>
+<li><a href="#weakrefval">weakrefval</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page lists Object Icon’s builtin functions.</p>
+<h2 id="abs">abs</h2>
+<p><code>abs (N) : N</code> – compute absolute value</p>
+<p>Produces the absolute value of <code>N</code>.</p>
+<h2 id="any">any</h2>
+<p><code>any (c,s,i1,i2) : i3</code> – locate initial character</p>
+<p>Succeeds and produces <code>i1 + 1</code> if <code>s[i1]</code> is in <code>c</code> and <code>i2 &gt; i1</code>, but fails otherwise.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>s</code> <code>&amp;subject</code></li>
+<li><code>i1</code> <code>&amp;pos</code> if <code>s</code> defaulted, otherwise <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<p>See also: <code>many()</code> and <code>match()</code></p>
+<h2 id="back">back</h2>
+<p><code>back (x1,i) : x2</code> – reverse order generation</p>
+<p>Generate the elements of <code>x1</code> in reverse order, beginning with the element immediately before position <code>i</code> (the first element generated will be <code>x1[i-1]</code>). <code>x1</code> may be a list, cset, ucs, record or string.</p>
+<p>See also: <code>forward()</code></p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>0</code></li>
+</ul>
+<h2 id="bal">bal</h2>
+<p><code>bal (c1,c2,c3,s,i1,i2) : i3,i4,...,in</code> – locate balanced characters</p>
+<p>Generates the sequence of integer positions in <code>s</code> preceding a character of <code>c1</code> in <code>s[i1:i2]</code> that is balanced with respect to the characters of <code>c2</code> and <code>c3</code>, but fails if there is no such position.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>c1</code> <code>&amp;cset</code></li>
+<li><code>c2</code> <code>'('</code></li>
+<li><code>c3</code> <code>')'</code></li>
+<li><code>s</code> <code>&amp;subject</code></li>
+<li><code>i1</code> <code>&amp;pos</code> if <code>s</code> defaulted, otherwise <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<p>See also: <code>find()</code> and <code>upto()</code></p>
+<h2 id="center">center</h2>
+<p><code>center (s1,i,s2) : s3</code> – position string at center</p>
+<p>Produces a string of size <code>i</code> in which <code>s1</code> is centered, with <code>s2</code> used for padding at left and right as necessary.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+<li><code>s2</code> <code>" "</code> (blank)</li>
+</ul>
+<p>See also: <code>left()</code> and <code>right()</code></p>
+<h2 id="char">char</h2>
+<p><code>char (i) : s</code> – produce character</p>
+<p>Produces a string of length <code>1</code> consisting of the character whose internal representation is <code>i</code>. Fails if <code>i</code> is not a valid character number.</p>
+<p>See also: <code>ord()</code></p>
+<h2 id="classof">classof</h2>
+<p><code>classof (o) : cl</code> – return the class of object <code>o</code></p>
+<p>If <code>o</code> is a class or an object, the corresponding class is returned. If <code>o</code> is a record or a constructor, then the corresponding constructor is returned.</p>
+<h2 id="clear">clear</h2>
+<p><code>clear (X) : X</code> – clear structure</p>
+<p>Clears all the elements from <code>X</code> which must be a set, list or table. Produces <code>X</code>.</p>
+<h2 id="coact">coact</h2>
+<p><code>coact (value,ce,activator) : x</code> – general co-expression transmission</p>
+<p>This function is like the <code>@</code> operator, but more flexible. It transmits <code>value</code> to <code>ce</code>, optionally setting <code>ce</code>’s activator. If <code>activator</code> is <code>&amp;null</code>, then the activator of <code>ce</code> is left unchanged.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>ce</code> <code>&amp;source</code></li>
+</ul>
+<h2 id="cocopy">cocopy</h2>
+<p><code>cocopy (ce) : ce</code> – refresh with copy</p>
+<p>Return a refreshed copy of <code>ce</code>, but with a copied set of local variables.</p>
+<h2 id="cofail">cofail</h2>
+<p><code>cofail (ce,activator) : x</code> – transmit failure to co-expression</p>
+<p>This function behaves like <code>coact</code>, except that rather than transmitting a value, failure is transmitted instead.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>ce</code> <code>&amp;source</code></li>
+</ul>
+<h2 id="collect">collect</h2>
+<p><code>collect () : n</code> – perform garbage collection</p>
+<h2 id="copy">copy</h2>
+<p><code>copy (x1) : x2</code> – copy value</p>
+<p>Produces a copy of <code>x1</code> if <code>x1</code> is a structure; otherwise it produces <code>x1</code>.</p>
+<h2 id="cset">cset</h2>
+<p><code>cset (x)</code> – convert to cset</p>
+<p>Produces a cset resulting from converting <code>x</code>, but fails if the conversion is not possible.</p>
+<h2 id="delay">delay</h2>
+<p><code>delay (i) : n</code> – delay execution</p>
+<p>Delays execution <code>i</code> milliseconds.</p>
+<h2 id="delete">delete</h2>
+<p><code>delete (X,x) : X</code> – delete element</p>
+<p>If <code>X</code> is a set, deletes <code>x</code> from <code>X</code>, failing if <code>x</code> is not currently a member. If <code>X</code> is a table, deletes the element for key <code>x</code> from <code>X</code>, failing if <code>x</code> is not a key. If <code>X</code> is a list, delete the <code>x</code>th element of the list, failing if the index is out of range.</p>
+<p>On success, produces <code>X</code>.</p>
+<p>See also: <code>insert()</code> and <code>member()</code></p>
+<h2 id="detab">detab</h2>
+<p><code>detab (s1,i1,i2,...,in) : s2</code> – remove tabs</p>
+<p>Produces a string based on <code>s1</code> in which each tab character is replaced by one or more blanks. Tab stops are at <code>i1, i2, ..., in</code>, with additional stops obtained by repeating the last interval.</p>
+<p>Default:</p>
+<ul>
+<li><code>i1</code> <code>9</code></li>
+</ul>
+<p>See also: <code>entab()</code></p>
+<h2 id="display">display</h2>
+<p><code>display (i,c) : n</code> – display variables</p>
+<p>Writes the image of the given co-expression and the values of the local variables in the current procedure call. If <code>i</code> is given, the local variables in the <code>i</code> preceding procedure calls are displayed as well. After all local variables are displayed, the values of global variables are displayed. Output is written to standard error.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>-1</code>, meaning display all levels</li>
+<li><code>c</code> <code>&amp;current</code></li>
+</ul>
+<h2 id="echo">echo</h2>
+<p><code>echo (x) : x</code> – generate x repeatedly without dereferencing</p>
+<p>Since <code>x</code> isn’t dereferenced, this function can be used, with the help of a co-expression, to “store” a variable. For example :-</p>
+<pre><code>   s := &quot;The quick brown fox&quot;
+   e := create echo(s[4])
+   @e := &quot;*&quot;    # s is now &quot;The*quick brown fox&quot;
+   @e := &quot;#&quot;    # s is now &quot;The#quick brown fox&quot;
+   ... etc</code></pre>
+<p>Note that in the above, the expression <code>s[4]</code> is only evaluated once, but the variable it produces is used several times.</p>
+<h2 id="entab">entab</h2>
+<p><code>entab (s1,i1,i2,...,in) : s2</code> – insert tabs</p>
+<p>Produces a string based on <code>s1</code> in which runs of blanks are replaced by tabs. Tab stops are at <code>i1, i2, ..., in</code>, with additional stops obtained by repeating the last interval.</p>
+<p>Default:</p>
+<ul>
+<li><code>i1</code> <code>9</code></li>
+</ul>
+<p>See also: <code>detab()</code></p>
+<h2 id="errorclear">errorclear</h2>
+<p><code>errorclear () : n</code> – clear error indication</p>
+<p>Clears the indications of the last error.</p>
+<p>See also: <code>&amp;error</code></p>
+<h2 id="exit">exit</h2>
+<p><code>exit (i)</code> – exit program</p>
+<p>Terminates the program with exit status i.</p>
+<p>Default:</p>
+<ul>
+<li><code>i</code> normal exit (system dependent)</li>
+</ul>
+<p>See also: <code>stop()</code></p>
+<h2 id="fatalerr">fatalerr</h2>
+<p><code>fatalerr (x1,x2)</code> – stop with fatal error</p>
+<p>This is the same as <code>runerr</code>, but disables error handling by <code>&amp;handler</code> first.</p>
+<p>See also: <code>runerr()</code></p>
+<h2 id="find">find</h2>
+<p><code>find (s1,s2,i1,i2) : i3,i4,...,in</code> – find string</p>
+<p>Generates the sequence of integer positions in <code>s2</code> at which <code>s1</code> occurs as a substring in <code>s2[i1:i2]</code>, but fails if there is no such position.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>s2</code> <code>&amp;subject</code></li>
+<li><code>i1</code> <code>&amp;pos</code> if <code>s2</code> defaulted, otherwise <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<p>See also: <code>bal(), match(), and upto()</code></p>
+<h2 id="forward">forward</h2>
+<p><code>forward (x1,i) : x2</code> – forward order generation</p>
+<p>Generate the elements of <code>x1</code>, beginning with the element immediately after position <code>i</code> (the first element generated will be <code>x1[i]</code>) <code>x1</code> may be a list, cset, ucs, record or string.</p>
+<p>See also: <code>back()</code></p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+</ul>
+<h2 id="get">get</h2>
+<p><code>get (L) : x</code> – get value from list</p>
+<p>Produces the leftmost element of <code>L</code> and removes it from <code>L</code>, but fails if <code>L</code> is empty; synonym for <code>pop(L)</code>.</p>
+<p>See also: <code>pop(), pull(), push(), and put()</code></p>
+<h2 id="iand">iand</h2>
+<p><code>iand (i1,i2,...,in) : i3</code> – compute bit-wise and</p>
+<p>Produces the bitwise and of the given parameters.</p>
+<p>See also: <code>icom(), ior(), ishift(), and ixor()</code></p>
+<h2 id="icom">icom</h2>
+<p><code>icom (i1) : i2</code> – compute bit-wise complement</p>
+<p>Produces the bitwise complement (1’s complement) of <code>i1</code>.</p>
+<p>See also: <code>iand(), ior(), ishift(), and ixor()</code></p>
+<h2 id="image">image</h2>
+<p><code>image (x) : s</code> – produce string image</p>
+<p>Produces a string image of <code>x</code>.</p>
+<h2 id="insert">insert</h2>
+<p><code>insert (X,x1,x2) : X</code> – insert element</p>
+<p>If <code>X</code> is a table, inserts the key <code>x1</code> with value <code>x2</code> into <code>X</code>. If <code>X</code> is a set, inserts <code>x1</code> into <code>X</code>. These cases always succeed.</p>
+<p>If <code>X</code> is a list, insert the value <code>x2</code> into position <code>x1</code>. Fails if <code>x1</code> is out of range, with the exception that <code>x1</code> may be zero, or equal to <code>*X + 1</code>, in which case the behaviour is equivalent to <code>put(</code>X<code>,</code>x2`).</p>
+<p>On success, produces <code>X</code>.</p>
+<p>Default:</p>
+<ul>
+<li><code>x2</code> <code>&amp;null</code></li>
+</ul>
+<p>See also: <code>delete() and member()</code></p>
+<h2 id="integer">integer</h2>
+<p><code>integer (x) : i</code> – convert to integer</p>
+<p>Produces the integer resulting from converting <code>x</code>, but fails if the conversion is not possible.</p>
+<p>See also: <code>numeric() and real()</code></p>
+<h2 id="ior">ior</h2>
+<p><code>ior (i1,i2,...,in) : i3</code> – compute bit-wise inclusive or</p>
+<p>Produces the bitwise inclusive or of the given parameters.</p>
+<p>See also: <code>iand(), icom(), ishift(), and ixor()</code></p>
+<h2 id="is">is</h2>
+<p><code>is (o, cl) : cl</code> – test class of object</p>
+<p>If <code>cl</code> is a class, then succeed if and only if <code>o</code> is an instance of class cl. If <code>cl</code> is a constructor, then succeed if and only if <code>o</code> is a record instance of <code>cl</code>.</p>
+<h2 id="ishift">ishift</h2>
+<p><code>ishift (i1,i2) : i3</code> – shift bits</p>
+<p>Produces the result of shifting the bits in <code>i1</code> by <code>i2</code> positions. Positive values of <code>i2</code> shift to the left, negative to the right. Vacated bit positions are zero-filled.</p>
+<p>See also: <code>iand(), ior(), ior(), and ixor()</code></p>
+<h2 id="ixor">ixor</h2>
+<p><code>ixor (i1,i2,...,in) : i3</code> – compute bit-wise exclusive or</p>
+<p>Produces the bitwise exclusive or of the given parameters.</p>
+<p>See also: <code>iand(), icom(), ior(), and ixor()</code></p>
+<h2 id="key">key</h2>
+<p><code>key (T) : x1,x2,...,xn</code> – generate keys from table</p>
+<p>Generates the keys in table <code>T</code>.</p>
+<h2 id="keyof">keyof</h2>
+<p><code>keyof (x1,x2) : x3</code> – generate keys for a given value</p>
+<p>Given a table, record or list <code>x1</code> and a value <code>x2</code>, generate the keys <code>x3</code> such that <code>x1[x3] === x2</code></p>
+<h2 id="keyval">keyval</h2>
+<p><code>keyval (T) : x</code> – generate keys and values.</p>
+<p>Generate alternate keys and their corresponding values (as variables) from table <code>T</code></p>
+<h2 id="left">left</h2>
+<p><code>left (s1,i,s2) : s3</code> – position string at left</p>
+<p>Produces a string of size <code>i</code> in which <code>s1</code> is positioned at the left, with <code>s2</code> used for padding on the right as necessary.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+<li><code>s2</code> <code>" "</code> (blank)</li>
+</ul>
+<p>See also: <code>center() and right()</code></p>
+<h2 id="list">list</h2>
+<p><code>list (i,x) : L</code> – create list</p>
+<p>Produces a list of size <code>i</code> in which each value is <code>x</code>.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>0</code></li>
+<li><code>x</code> <code>&amp;null</code></li>
+</ul>
+<h2 id="many">many</h2>
+<p><code>many (c,s,i1,i2) : i3</code> – locate many characters</p>
+<p>Succeeds and produces the position in <code>s</code> after the longest initial sequence of characters in <code>c</code> in <code>s[i1:i2]</code>. It fails if <code>s[i1]</code> is not in <code>c</code>.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>s</code> <code>&amp;subject</code></li>
+<li><code>i1</code> <code>&amp;pos</code> if <code>s</code> defaulted, otherwise <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<p>See also: <code>any() and match()</code></p>
+<h2 id="map">map</h2>
+<p><code>map (s1,s2,s3) : s4</code> – map characters</p>
+<p>Produces a string of size <code>*s1</code> obtained by mapping characters of <code>s1</code> that occur in <code>s2</code> into corresponding characters in s3.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>s2</code> <code>string(&amp;ucase)</code></li>
+<li><code>s3</code> <code>string(&amp;lcase)</code></li>
+</ul>
+<h2 id="match">match</h2>
+<p><code>match (s1,s2,i1,i2) : i3</code> – match initial string</p>
+<p>Produces <code>i1 + *s1</code> if <code>s1 == s2[i1+:*s1]</code>, but fails otherwise.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>s2</code> <code>&amp;subject</code></li>
+<li><code>i1</code> <code>&amp;pos</code> if <code>s2</code> defaulted, otherwise <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<p>See also: <code>=s, any(), and many()</code></p>
+<h2 id="max">max</h2>
+<p><code>max (N1, N2, ...) : N3</code> – maximum</p>
+<p>Return the maximum of <code>N1</code>, <code>N2</code>, etc.</p>
+<h2 id="member">member</h2>
+<p><code>member (X,x) : x</code> – test for membership</p>
+<p>If <code>X</code> is a set, succeeds if <code>x</code> is a member of <code>X</code>, but fails otherwise. If <code>X</code> is a table, succeeds if <code>x</code> is a key of an element in <code>X</code>, but fails otherwise. Produces <code>x</code> if it succeeds.</p>
+<p>See also: <code>delete()</code>, <code>insert()</code>, and <code>keyof()</code>. The latter provides an easy way to test for membership of a list.</p>
+<h2 id="min">min</h2>
+<p><code>min (N1, N2, ...) : N3</code> – minimum</p>
+<p>Return the minimum of <code>N1</code>, <code>N2</code>, etc.</p>
+<h2 id="move">move</h2>
+<p><code>move (i) : s</code> – move scanning position</p>
+<p>Produces <code>&amp;subject[&amp;pos:&amp;pos + i]</code> and assigns <code>i + &amp;pos</code> to <code>&amp;pos</code>, but fails if i is out of range; reverses assignment to <code>&amp;pos</code> if resumed.</p>
+<p>See also: <code>tab()</code></p>
+<h2 id="numeric">numeric</h2>
+<p><code>numeric (x) : N</code> – convert to numeric</p>
+<p>Produces an integer or real number resulting from converting <code>x</code>, but fails if the conversion is not possible.</p>
+<p>See also: <code>integer() and real()</code></p>
+<h2 id="ord">ord</h2>
+<p><code>ord (x,i1,i2) : i3</code> – generate code points</p>
+<p>Generate the code points in a cset, ucs or string for the range of entries <code>i1:i2</code></p>
+<p>Defaults:</p>
+<ul>
+<li><code>i1</code> <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<h2 id="pop">pop</h2>
+<p><code>pop (L) : x</code> – pop from list</p>
+<p>Produces the leftmost element of <code>L</code> and removes it from <code>L</code>, but fails if <code>L</code> is empty; synonym for <code>get(L)</code>.</p>
+<p>See also: <code>get(), pull(), push(), and put()</code></p>
+<h2 id="pos">pos</h2>
+<p><code>pos (i1) : i2</code> – test scanning position</p>
+<p>Produces <code>&amp;pos</code> if <code>&amp;pos</code> = <code>i1</code>, but fails otherwise.</p>
+<p>See also: <code>&amp;pos</code> and <code>&amp;subject</code></p>
+<h2 id="proc">proc</h2>
+<p><code>proc (x,i,c) : p</code> – convert to procedure</p>
+<p>Produces a procedure corresponding to the value of <code>x</code>, but fails if <code>x</code> does not correspond to a procedure. Firstly the global variables of the program <code>c</code> are searched. If a match is found then it is returned if it is a procedure, otherwise the call fails. If no global match is found, then an operator of arity <code>i</code> is searched for and returned if found. Failing that, built-in functions and keyword functions are searched. If no match is found there either, the call fails.</p>
+<p>Default:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+<li><code>c</code> <code>&amp;main</code></li>
+</ul>
+<h2 id="pull">pull</h2>
+<p><code>pull (L) : x</code> – pull from list</p>
+<p>Produces the rightmost element of <code>L</code> and removes it from <code>L</code>, but fails if <code>L</code> is empty.</p>
+<p>See also: <code>get(), pop(), push(), and put()</code></p>
+<h2 id="push">push</h2>
+<p><code>push (L,x) : L</code> – push onto list</p>
+<p>Pushes <code>x</code> onto the left end of <code>L</code>.</p>
+<p>See also: <code>get(), pop(), pull(), and put()</code></p>
+<h2 id="put">put</h2>
+<p><code>put (L,x) : L</code> – put onto list</p>
+<p>Put <code>x</code> onto the right end of <code>L</code>.</p>
+<p>See also: <code>get(), pop(), pull(), and push()</code></p>
+<h2 id="real">real</h2>
+<p><code>real (x) : r</code> – convert to real</p>
+<p>Produces a real number resulting from type conversion of <code>x</code>, but fails if the conversion is not possible.</p>
+<p>See also: <code>integer() and numeric()</code></p>
+<h2 id="repl">repl</h2>
+<p><code>repl (s1,i) : s2</code> – replicate string</p>
+<p>Produces a string consisting of <code>i</code> concatenations of <code>s1</code>.</p>
+<h2 id="reverse">reverse</h2>
+<p><code>reverse (s1) : s2</code> – reverse string</p>
+<p>Produces a string consisting of the reversal of <code>s</code>.</p>
+<h2 id="right">right</h2>
+<p><code>right (s1,i,s2) : s3</code> – position string at right</p>
+<p>Produces a string of size <code>i</code> in which <code>s1</code> is positioned at the right, with <code>s2</code> used for padding on the left as necessary.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+<li><code>s2</code> <code>" "</code> (blank)</li>
+</ul>
+<p>See also: <code>center() and left()</code></p>
+<h2 id="runerr">runerr</h2>
+<p><code>runerr (x1,x2)</code> – terminate with run-time error</p>
+<p>Terminates program execution with error <code>x1</code> and offending value <code>x2</code>. <code>x1</code> may be an integer, being a standard error number, or a string, being a custom error message.</p>
+<h2 id="seq">seq</h2>
+<p><code>seq (i1,i2) : i3,i4,...</code> – generate sequence of integers</p>
+<p>Generates an endless sequence of integers starting at <code>i1</code> with increments of <code>i2</code>.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>i1</code> <code>1</code></li>
+<li><code>i2</code> <code>1</code></li>
+</ul>
+<p>See also: <code>i1 to i2 by i3</code></p>
+<h2 id="serial">serial</h2>
+<p><code>serial (x) : i</code> – produce serial number</p>
+<p>Produces the serial number of <code>x</code> if it is a type that has one but fails otherwise.</p>
+<h2 id="set">set</h2>
+<p><code>set (x1,x2,...,xn) : S</code> – create set</p>
+<p>Produces a set whose members are the values <code>x1</code>,<code>x2</code>,…,<code>xn</code></p>
+<h2 id="sort">sort</h2>
+<p><code>sort (X,i) : L</code> – sort structure</p>
+<p>Produces a list containing values from <code>X</code>. If <code>X</code> is a list, record, or set, <code>sort(X,i)</code> produces the values of <code>X</code> in sorted order. If <code>X</code> is a table, <code>sort(X,i)</code> produces a list obtained by sorting the elements of <code>X</code>, depending on the value of <code>i</code>. For <code>i</code> = <code>1</code> or <code>2</code>, the list elements are two-element lists of key/value pairs. For <code>i</code> = <code>3</code> or <code>4</code>, the list elements are alternating keys and values. Sorting is by keys for <code>i</code> odd, by value for <code>i</code> even.</p>
+<p>Default:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+</ul>
+<p>See also: <code>sortf()</code></p>
+<h2 id="sortf">sortf</h2>
+<p><code>sortf (X,i) : L</code> – sort list or set by field</p>
+<p>Produces a sorted list of the values in <code>X</code>. Sorting is primarily by type and in most respects is the same as with <code>sort(X,i)</code>. However, among lists and among records, two structures are ordered by comparing their ith fields. <code>i</code> can be negative but not zero. Two structures having the equal <code>i</code>th fields are ordered as they would be in regular sorting, but structures lacking an ith field appear before structures having them.</p>
+<p>Default:</p>
+<ul>
+<li><code>i</code> <code>1</code></li>
+</ul>
+<p>See also: <code>sort()</code></p>
+<h2 id="string">string</h2>
+<p><code>string (x) : s</code> – convert to string</p>
+<p>Produces a string resulting from converting x, but fails if the conversion is not possible.</p>
+<h2 id="syserr">syserr</h2>
+<p><code>syserr (s)</code> – stop execution, indicating an internal error</p>
+<h2 id="system">system</h2>
+<p><code>system (s) : i</code> – call system function</p>
+<p>Calls the C library function <code>system()</code> to execute <code>s</code> and produces the resulting integer exit status.</p>
+<h2 id="tab">tab</h2>
+<p><code>tab (i) : s</code> – set scanning position</p>
+<p>Produces <code>&amp;subject[&amp;pos:i]</code> and assigns i to <code>&amp;pos</code>, but fails if i is out of range. It reverses assignment to <code>&amp;pos</code> if resumed.</p>
+<p>See also: move()</p>
+<h2 id="table">table</h2>
+<p><code>table (x,k1,v1,k2,v2,...,kn,vn) : T</code> – create table</p>
+<p>Produces a table with a default value <code>x</code>, and initial mappings <code>k1-&gt;v1</code>, <code>k2-&gt;v2</code>, etc.</p>
+<p>Default:</p>
+<ul>
+<li>x <code>&amp;null</code></li>
+</ul>
+<h2 id="text">text</h2>
+<p><code>text (x1) : x2</code> – convert to string or ucs type</p>
+<p>If <code>x1</code> is a string or ucs, it is just returned. If <code>x1</code> is a cset then it is converted to a string if its highest char is &lt; 256; otherwise it is converted to a ucs. For any other type, normal string conversion is attempted.</p>
+<h2 id="trim">trim</h2>
+<p><code>trim (s1,c,i) : s2</code> – trim string</p>
+<p>Produces a string consisting of the characters of s1 with leading and/or trailing characters contained in <code>c</code> removed according to the third parameter, <code>i</code>, as follows :-</p>
+<ul>
+<li>if <code>i &gt;= 0</code> then leading characters are removed (“left trimming”);</li>
+<li>if <code>i &lt;= 0</code> then trailing characters are removed (“right trimming”).</li>
+</ul>
+<p>Thus, if <code>i = 0</code> (the default), both left and right trimming takes place.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>c</code> ’ ’ (blank)</li>
+<li><code>i</code> <code>0</code></li>
+</ul>
+<h2 id="type">type</h2>
+<p><code>type (x) : s</code> – produce type name</p>
+<p>Produces a string corresponding to the type of <code>x</code>.</p>
+<h2 id="uchar">uchar</h2>
+<p><code>uchar (i) : u</code> – ucs char</p>
+<p>Produce a ucs consisting of character <code>i</code>. Fails if <code>i</code> is not a valid unicode codepoint.</p>
+<h2 id="ucs">ucs</h2>
+<p><code>ucs (x) : u</code> – convert to ucs</p>
+<p>Convert <code>x</code> to a ucs (unicode character string)</p>
+<h2 id="upto">upto</h2>
+<p><code>upto (c,s,i1,i2) : i3,i4,...,in</code> – locate characters</p>
+<p>Generates the sequence of integer positions in <code>s</code> preceding a character of <code>c</code> in <code>s[i1:i2]</code>. It fails if there is no such position.</p>
+<p>Defaults:</p>
+<ul>
+<li><code>s</code> <code>&amp;subject</code></li>
+<li><code>i1</code> <code>&amp;pos</code> if <code>s</code> defaulted, otherwise <code>1</code></li>
+<li><code>i2</code> <code>0</code></li>
+</ul>
+<p>See also: <code>bal() and find()</code></p>
+<h2 id="variable">variable</h2>
+<p><code>variable (x) : x</code> – test for variable</p>
+<p>If <code>x</code> is a variable, then it is returned (without being dereferenced), otherwise this function fails.</p>
+<h2 id="vimage">vimage</h2>
+<p><code>vimage (v) : s</code> – produce variable string image</p>
+<p>Given a variable <code>v</code>, return an identifying image. If <code>v</code> is an identifier or a keyword that is a variable, the name of the identifier or keyword is produced. If <code>v</code> is a record field reference, the record name and field name are produced with a separating period. If <code>v</code> is a string, the name of the string and the subscript range are shown. If <code>v</code> is a subscripted list or table, the type name followed by the subscripting expression is produced.</p>
+<h2 id="weakref">weakref</h2>
+<p><code>weakref (x) : w</code> – create a weak reference</p>
+<p>Creates a <code>weakref</code> to <code>x</code>. This means that the reference to <code>x</code> inside the <code>weakref</code> will not prevent <code>x</code> being garbage collected. <code>x</code> must be a list, set, table, record, methp, object or coexpression. Any other type causes <code>weakref</code> to fail.</p>
+<h2 id="weakrefval">weakrefval</h2>
+<p><code>weakrefval (w) : x</code> – get weak reference value</p>
+<p>Given a weak reference, return the value inside it. If a garbage collection has taken place and the value has been collected (because this was the last reference), then <code>weakrefval</code> fails.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Weak references</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Weak references</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#creating-a-weak-reference">Creating a weak reference</a></li>
+<li><a href="#accessing-the-value">Accessing the value</a></li>
+<li><a href="#weakreftable">WeakrefTable</a></li>
+</ul>
+</nav>
+<p>Object Icon has a builtin type, <code>weakref</code>, which provides a weak reference to a value.</p>
+<h1 id="creating-a-weak-reference">Creating a weak reference</h1>
+<p>To create a weak reference, use the builtin function <code>weakref</code> as follows :-</p>
+<pre><code>w := weakref(x)</code></pre>
+<p>where <code>x</code> has one of the following permitted types :-</p>
+<ul>
+<li>list</li>
+<li>set</li>
+<li>table</li>
+<li>record</li>
+<li>methp</li>
+<li>object</li>
+<li>co-expression</li>
+</ul>
+<p>Now <code>w</code> will have the type “weakref”, and <code>image(w)</code> will produce something like this :-</p>
+<pre><code>weakref#1(list#31(3))</code></pre>
+<p>with the <code>image</code> of the inner value (in this case a 3-element list) being shown within the parentheses.</p>
+<h1 id="accessing-the-value">Accessing the value</h1>
+<p>To access the inner value, use the builtin function <code>weakrefval</code>, as follows :-</p>
+<pre><code>y := weakrefval(w)</code></pre>
+<p>At some point in the future the weak reference may hold the last reference to the inner value. When this is detected during a garbage collection, the memory used by the inner value is reclaimed, and the weak reference is cleared. Thereafter, <code>weakrefval</code> will fail.</p>
+<p>This is illustrated with the following interaction in <code>ieval</code> :-</p>
+<pre><code>&gt; l := [1,2,3]
+list#11622[1,2,3]
+&gt; w := weakref(l)
+weakref#3(
+   list#11622[1,2,3]
+)
+&gt; weakrefval(w)
+list#11622[1,2,3]
+&gt; collect()
+&amp;null
+&gt; w
+weakref#3(
+   list#11622[1,2,3]
+)
+&gt; l := &amp;null
+&amp;null
+&gt; collect()
+&amp;null
+&gt; w
+weakref#3()
+&gt; weakrefval(w)</code></pre>
+<p>Note how the first collection doesn’t affect <code>w</code>, since the variable <code>l</code> still has a strong reference to the list. However, after <code>l</code> is set to <code>&amp;null</code>, <code>w</code> does have the last reference. Therefore the second collection clears the weak reference and reclaims the memory used by the list.</p>
+<h1 id="weakreftable">WeakrefTable</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct-package.html"><code>datastruct</code></a> package contains a table-like data structure, <a href="http://objecticon.sourceforge.net/libref/index.html?datastruct.WeakrefTable.html"><code>datastruct.WeakrefTable</code></a>. This is like an ordinary table, but its keys are wrapped in weak references. This means that when the key becomes the last reference, it may be deleted from the table after a garbage collection.</p>
+<p>The following <code>ieval</code> interaction shows how this works :-</p>
+<pre><code>&gt; l := [1,2,3]
+list#2734[1,2,3]
+&gt; w := WeakrefTable()
+object datastruct.WeakrefTable#1()
+&gt; w.insert(l, 99)
+object datastruct.WeakrefTable#1(
+   list#2734[1,2,3]-&gt;99
+)
+&gt; collect()
+&amp;null
+&gt; w
+object datastruct.WeakrefTable#1(
+   list#2734[1,2,3]-&gt;99
+)
+&gt; l := &amp;null
+&amp;null
+&gt; collect()
+&amp;null
+&gt; w
+object datastruct.WeakrefTable#1()</code></pre>
+<p>Note how after the second collection, the single key is deleted from the table, leaving it empty.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

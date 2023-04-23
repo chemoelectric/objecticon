@@ -1,0 +1,115 @@
+import plan9, io, ipl.server9p, ipl.options, exception, posix, util
+
+global sched, prog
+
+class Prog2(Regular9P)
+   private reading, writing, cin, cout, pid
+
+   public override write(s, pos)
+      local f
+      /writing | throw("Already writing")
+      use {
+         writing := sched.curr_task,
+         use {
+            f := TaskStream(cout, writing).set_close_underlying(&no),
+            f.writes1(s)
+         },
+         writing := &null
+      } | throw(&why)
+      return *s
+   end
+
+   public override read(count, pos)
+      local f, s
+      /reading | throw("Already reading")
+      return use {
+         reading := sched.curr_task,
+         use {
+            f := TaskStream(cin, reading).set_close_underlying(&no),
+            # For some reason, con won't exit on eof, but only on a
+            # read error, so we send an error on eof, if the "ee"
+            # option is set.
+            if s := f.in(count) then {
+               if /s & \opts["ee"] then
+                  error("End of file")
+               else
+                  s
+            }
+         },
+         reading := &null
+      } | throw(&why)
+   end
+
+   public override close()
+      # Note that any read or write messages should have been flushed,
+      # and their Tasks interrupted, so it should be safe to close
+      # these files.
+      cin.close()
+      cout.close()
+      System.wait(pid)
+   end
+
+   private setup()
+      local l
+      l := FileStream.pipe() | fail
+      (l |||:= FileStream.pipe(, FileOpt9.OCEXEC) &
+       pid := System.fork()) | {
+          save_why{ lclose(l) }
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         cin := NonBlockStream(l[1], Stream.READ, 65536)
+         cout := NonBlockStream(l[4], Stream.WRITE,, 65536).
+            set_write_on_close(NonBlockStream.BACKGROUND_FLUSH)
+         l[2].close()
+         l[3].close()
+         return
+      } else {
+         # Child
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[3].dup2(FileStream.stdin) | stop(&why)
+         l[2].dup2(FileStream.stderr) | stop(&why)
+         lclose(l)
+         if /prog then
+            System.exec("/bin/rc", ["-i"]) | stop(&why)
+         else
+            System.exec("/bin/rc", ["-c", prog]) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+
+   public override new(n)
+      Regular9P.new(n)
+      setup() | throw(&why)
+      return
+   end
+end
+
+class Prog(Regular9P)
+   public override open(mode)
+      return Prog2("prog2").
+         set_fixed_perm(perm).
+         set_parent(parent)
+   end
+end
+
+procedure main(a)
+   local root, name, l, ff
+   l := get_optl() ||| 
+      [Opt("n", string, "The name of the single file to serve under the mountpoint; default \"prog\""),
+       Opt("p",, "Use RFNAMEG when forking the child process"),
+       Opt("ee",, "Send a read error on EOF; this makes the con client program exit on EOF")]
+   opts := options(a, l,
+                   "Usage: progfs [OPTIONS] [PROG]")
+   sched := Scheduler(100)
+   # May be null, meaning run an interactive shell.
+   prog := a[1]
+   name := \opts["n"] | "prog"
+   if \opts["p"] then
+      ff := ForkOpt.RFNAMEG
+   root := Root9P().
+      set_fixed_perm(8r555).
+      add_child(Prog(name).set_fixed_perm(8r666))
+   server_main(, Session9P(TreeData9P(root)), sched, ff)
+end

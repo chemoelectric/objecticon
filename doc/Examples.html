@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Example programs</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Example programs</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#in-the-examples-directory">In the examples directory</a></li>
+<li><a href="#in-the-apps-directory">In the apps directory</a></li>
+</ul>
+</nav>
+<h1 id="in-the-examples-directory">In the examples directory</h1>
+<p>The <code>examples/</code> directory contains some example programs, some of which are quite useful. Binaries can be found in the <code>examples/bin</code> directory.</p>
+<p>Here are some notes about the more interesting ones.</p>
+<ul>
+<li><strong>colors</strong> Interactively choose a colour in RGB/HLS format</li>
+<li><strong>cursors</strong> Show all available mouse cursors</li>
+<li><strong>dndtest</strong> Demonstrate tree/list drag and drop, and in-place editing</li>
+<li><strong>editor</strong> A simple text editor</li>
+<li><strong>explorer</strong> A simple file-system explorer</li>
+<li><strong>fonttest</strong> Explore available fonts</li>
+<li><strong>geturl</strong> A very useful command-line program for retrieving files over http (rather like wget). Run <code>geturl -?</code> for options.</li>
+<li><strong>lslinks</strong> List the HTML links in a web page.</li>
+<li><strong>stock</strong> A stock-ticker program. Enter a ticker symbol in the text field and press return, or a company name and select from the drop-down suggestions. Right-click on the ticker symbol to delete it.</li>
+<li><strong>suggest</strong> A tongue-in-cheek demo of the <code>SuggestField</code> class, which is a <code>TextField</code> with a popup list offering suggestions.</li>
+<li><strong>browser</strong> A simple web browser, built upon the classes in the <code>ipl.browser</code> package, which can render HTML documents.</li>
+<li><strong>flowterm</strong> A terminal emulator with a difference - see <a href="FlowTerm.html">this page</a> for details</li>
+<li><strong>bus</strong> A program to browse a map of the London bus network -see <a href="Bus.html">this page</a> for details</li>
+<li><strong>ttexplorer</strong> Like <code>explorer</code> above, but uses a <code>TreeTable</code></li>
+<li><strong>lsxdg</strong> A useful program to query the xdg database, as seen by the classes in the <a href="http://objecticon.sourceforge.net/libref/index.html?xdg-package.html"><code>xdg</code></a> package; see also <a href="XdgPackage.html">this page</a>.</li>
+</ul>
+<h1 id="in-the-apps-directory">In the apps directory</h1>
+<p>The <code>apps/</code> directory contains some more programs, related specifically to the language. Binaries are found in the main <code>bin</code> directory.</p>
+<ul>
+<li><strong>memorytracker</strong> Run an object icon program and show its memory usage (try <code>memorytracker ivib</code>)</li>
+<li><strong>memdebug</strong> A program to examine another program’s memory, and check for memory leaks -see <a href="Memdebug.html">this page</a> for details</li>
+<li><strong>ieval</strong> A program to interactively evaluate expressions - see <a href="Ieval.html">this page</a> for details.</li>
+<li><strong>oidoc</strong> A program to generate documentation from source files - see <a href="Oidoc.html">this page</a> for details.</li>
+<li><p><strong>fiximports</strong> This useful program takes one or more source files, and rewrites them so that import declarations such as</p>
+<pre><code>import io</code></pre>
+<p>are replaced by a declaration with the imported symbols listed explicitly; for example :-</p>
+<pre><code>import io(Stream, StringStream)</code></pre>
+If you don’t wish to rewrite the file, use the <code>-c</code> option; this outputs the result to stdout, leaving the source file unchanged.</li>
+<li><p><strong>ivib</strong> An interactive gui designer; see the documentation on the <a href="GuiPackage.html">gui package</a> for more details.</p></li>
+</ul>
+<a href="index.html">Contents</a>
+</body>
+</html>

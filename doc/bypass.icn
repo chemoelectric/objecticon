@@ -1,0 +1,51 @@
+import io, util
+
+global lim
+
+procedure do_suspend(n)
+   if n = 0 then
+      suspend 1 to lim
+   else
+      suspend do_suspend(n - 1)
+end
+
+procedure do_coact(n)
+   if n = 0 then
+      every coact(1 to lim)
+   else
+      do_coact(n - 1)
+end
+
+procedure do_act_source(n)
+   if n = 0 then
+      every (1 to lim)@&source
+   else
+      do_act_source(n - 1)
+end
+
+procedure main(a)
+   local depth, e
+
+   depth := integer(a[1]) | 100
+   lim := integer(a[2]) | 1000000
+
+   &maxlevel := depth + 1000
+
+   write("Depth=", depth, "   Generate=", lim)
+
+   note_time()
+   every do_suspend(depth)
+   note_time("procedure")
+
+   note_time()
+   e := create do_coact(depth)
+   while @e
+   note_time("coact()")
+
+   note_time()
+   e := create do_act_source(depth)
+   while @e
+   note_time("@&source")
+
+   write("Exit")
+end

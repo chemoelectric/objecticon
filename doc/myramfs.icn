@@ -1,0 +1,9 @@
+import plan9, ipl.server9p
+
+procedure main(a)
+   local root, sess
+   root := Root9P()
+   sess := Session9P(TreeData9P(root))
+   push(a, "-c")
+   server_main_0(a, sess)   
+end

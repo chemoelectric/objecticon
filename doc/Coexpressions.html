@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Co-expressions</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Co-expressions</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#co-expressions-and-local-variables">Co-expressions and local variables</a></li>
+<li><a href="#the-cocopy-function">The cocopy() function</a></li>
+<li><a href="#the-coact-function">The coact() function</a></li>
+<li><a href="#refreshing">Refreshing</a></li>
+<li><a href="#the-operator">The ! operator</a></li>
+<li><a href="#co-expression-black-holes">Co-expression “black holes”</a></li>
+<li><a href="#uses-of-co-expressions">Uses of co-expressions</a><ul>
+<li><a href="#as-an-expression-type">As an expression type</a></li>
+<li><a href="#co-routines">Co-routines</a></li>
+<li><a href="#pdcos">PDCOs</a></li>
+<li><a href="#exception-handling">Exception handling</a></li>
+<li><a href="#handling-runtime-errors">Handling runtime errors</a></li>
+<li><a href="#non-blocking-io-and-background-tasks">Non-blocking I/O and background tasks</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>The implementation and semantics of co-expressions is rather different in Object Icon, compared to traditional Icon.</p>
+<p>The first and most significant difference to mention is that co-expressions in Object Icon are cheap. Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called “frames”, with one frame corresponding to each procedure call. Each frame is quite small, typically about 100 bytes. This is in sharp contrast to the traditional Icon interpreter’s allocation for a co-expression - a fixed size region sufficient for the predicted maximum required for both C and interpreter stack. Co-expressions in Object Icon are also fast. Creating a co-expression takes about the same time as creating an empty list, and invoking a co-expression is about 30% faster than invoking a procedure.</p>
+<p>The implementation of co-expressions in Object Icon is also highly portable. The conventional Icon implementation requires a low-level context switch to swap between C stacks. This is inherently non-portable, and raises a number of other issues. The non-recursive design of the interpreter loop in Object Icon means that no context-switch is required to implement co-expressions, and the implementation is written entirely in standard C.</p>
+<h2 id="co-expressions-and-local-variables">Co-expressions and local variables</h2>
+<p>In contrast to conventional Icon, Object Icon implements co-expressions in such a way that they share the local variables of the procedure in which they were created (in Icon each co-expression gets a copy of the local variables).</p>
+<p>For example, the following program</p>
+<pre><code>import io
+
+procedure main()
+   local i, e
+   i := 1
+   e := create i := 2
+   write(i)
+   @e
+   write(i)
+end</code></pre>
+<p>outputs</p>
+<pre><code>1
+2</code></pre>
+<p>whereas in Icon the result would be</p>
+<pre><code>1
+1</code></pre>
+<p>Refreshing a co-expression creates a new co-expression, which also shares the same local variables. Thus the program</p>
+<pre><code>import io
+
+procedure main()
+   local i, e
+   i := 1
+   e := create i +:= 1
+   write(i)
+   @e
+   write(i)
+   e := ^e
+   @e
+   write(i)
+end</code></pre>
+<p>outputs</p>
+<pre><code>1
+2
+3</code></pre>
+<h2 id="the-cocopy-function">The cocopy() function</h2>
+<p><code>cocopy()</code> is a builtin function which does exactly the same as the refresh operator <code>^</code>, but instead of returning a new co-expression which also shares the local variables, a new set of local variables is allocated with values copied from the original.</p>
+<p>To illustrate how this might be useful, consider the problem of creating a list of ten co-expressions, each of which will generate a squared integer; 1 for the first, 4 for the second, 9 for the third and so on. The following obvious attempt (which would work in Icon), unfortunately doesn’t work in Object Icon :-</p>
+<pre><code>import io
+
+procedure main()
+   local x, i, e
+
+   x := []
+   every i := 1 to 10 do
+      put(x, create i * i)
+
+   every e := !x do
+      write(@e)
+end</code></pre>
+<p>The problem with this is that each <code>create i * i</code> references the same <code>i</code>, which eventually reaches the value <code>10</code>. So the output is ten <code>100</code>s.</p>
+<p>Using <code>cocopy()</code> provides a solution to the problem :-</p>
+<pre><code>import io
+
+procedure main()
+   local x, i, e
+
+   x := []
+   every i := 1 to 10 do
+      put(x, cocopy{i * i})
+
+   every e := !x do
+      write(@e)
+end</code></pre>
+<p>Note we have used <code>cocopy{i * i}</code>, which is just syntactic shorthand for <code>cocopy(create i * i)</code>.</p>
+<p>Another way to solve the problem, which doesn’t use <code>cocopy()</code>, is to use a procedure to create the co-expressions :-</p>
+<pre><code>import io
+
+procedure p(i)
+   return create i * i
+end
+
+procedure main()
+   local x, i, e
+
+   x := []
+   every i := 1 to 10 do
+      put(x, p(i))
+
+   every e := !x do
+      write(@e)
+end</code></pre>
+<p>Now each co-expression has its own copy of <code>i</code>, since each of the 10 calls to <code>p</code> creates its own set of local variables for that procedure.</p>
+<h2 id="the-coact-function">The coact() function</h2>
+<p>This builtin function is like the <code>@</code> operator, but more flexible. It takes three parameters as follows: <code>coact(value, ce, activator)</code></p>
+<p>It transmits <code>value</code> to <code>ce</code>, optionally setting <code>ce</code>’s activator. If <code>activator</code> is <code>&amp;null</code>, then the activator of <code>ce</code> is left unchanged.</p>
+<p>Note that <code>coact(val, ce, &amp;current)</code> has the same effect as <code>val@ce</code>.</p>
+<p>The default of <code>ce</code> is <code>&amp;source</code>, so <code>coact(val)</code> is like <code>val@&amp;source</code>, with the important difference that the activator of <code>&amp;source</code> is unchanged. This use of <code>coact</code> is helpful in avoiding co-expression “black holes”, described below.</p>
+<p>A related function, <code>cofail(ce, activator)</code>, can be used to transmit failure to <code>ce</code>.</p>
+<h2 id="refreshing">Refreshing</h2>
+<p>In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created. This doesn’t happen in the Object Icon implementation of co-expressions. Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed. <code>cocopy</code> does the same, but creates copies of the local variables instead.</p>
+<h2 id="the-operator">The ! operator</h2>
+<p>Object Icon lets the unary ! operator be applied to co-expressions. The effect is to generate the sequence of results from a refreshed copy of the given co-expression. In other words, the result sequence of <code>!e</code> is the same as for <code>p(e)</code>, if <code>p</code> were defined as the following procedure :-</p>
+<pre><code>procedure p(e)
+   e := ^e
+   suspend |@e
+end</code></pre>
+<p>Note that evaluating <code>!e</code> does not affect <code>e</code>, nor generate any results from it.</p>
+<h2 id="co-expression-black-holes">Co-expression “black holes”</h2>
+<p>Consider the following program :-</p>
+<pre><code>import io
+
+procedure black_hole()
+   100@&amp;source
+end
+
+procedure p()
+   local e2
+   e2 := create black_hole()
+   return @e2
+end
+
+procedure main()
+   local e1
+   e1 := create p()
+   write(@e1)
+end</code></pre>
+<p>One would expect this program to simply write “100” as output; in fact it doesn’t output anything, and enters an infinite loop. To understand why, here is the sequence of events which take place when it is run:-</p>
+<ol type="1">
+<li><code>main</code> creates a co-expression (call it #1) and invokes it.</li>
+<li><code>p</code> creates another co-expression (#2) and invokes it.</li>
+<li><code>black_hole</code> transmits 100 to its <code>&amp;source</code>, ie #1.</li>
+<li><code>p</code> now returns 100. This has the effect of resuming <code>&amp;source</code>, which is now #2, since #2 just activated #1 by transmitting 100 to it.</li>
+<li><code>black_hole</code> is resumed and fails. Failure is transmitted to <code>&amp;source</code>, which is now #1.</li>
+<li>Since <code>p</code> has already returned, #1 fails to #2.</li>
+<li>Since <code>black_hole</code> has already failed, #2 fails to #1.</li>
+<li>The above two steps repeat forever.</li>
+</ol>
+<p>The infinite loop is caused by the fact that the two co-expressions end up having each other as activators, whereas we want #1 to be the activator of #2, but <code>&amp;main</code> to remain the activator of #1. The solution is to use the <code>coact</code> function in the <code>black_hole</code> procedure, replacing <code>100@&amp;source</code> with <code>coact(100)</code>. In this simple example, we could also have just returned 100 from <code>black_hole</code>; however this wouldn’t have helped if <code>black_hole</code> had been a deeply nested procedure.</p>
+<h2 id="uses-of-co-expressions">Uses of co-expressions</h2>
+<h3 id="as-an-expression-type">As an expression type</h3>
+<p>The <code>!</code> operator, together with a co-expression’s ability to alter local variables lets us conveniently use co-expressions as a way of replaying an arbitrary expression almost as though it were a macro. For example :-</p>
+<pre><code>import io
+
+procedure main()
+   local e, i
+   e := create i +:= 1
+   i := 1
+   !e
+   !e
+   !e
+   write(i)
+end</code></pre>
+<p>Outputs <code>4</code>.</p>
+<p>As another example, the following program prints the hexadecimal numbers in the range <code>0000</code> to <code>FFFF</code>:-</p>
+<pre><code>import io
+
+procedure main()
+   local e
+   e := create !&amp;digits | !&quot;ABCDEF&quot;
+   every write(!e || !e || !e || !e)
+end</code></pre>
+<p>This use of co-expressions is inspired by the following paper.</p>
+<p><a href="http://www.cs.arizona.edu/icon/ftp/doc/tr86_20.pdf" class="uri">http://www.cs.arizona.edu/icon/ftp/doc/tr86_20.pdf</a></p>
+<h3 id="co-routines">Co-routines</h3>
+<p>Co-expressions provide a complete co-routine capability. One particularly useful feature of co-routines is to generate the elements of a deeply nested structure. For example, consider the following binary tree class :-</p>
+<pre><code>class Node()
+   public const data
+   private l, r
+
+   public insert(val)
+      if val &lt; data then
+         (/l := Node(val)) | l.insert(val)
+      else
+         (/r := Node(val)) | r.insert(val)
+   end
+
+   public traverse()
+      (\l).traverse()
+      coact(self)
+      (\r).traverse()
+   end
+
+   public new(i)
+      self.data := i
+      return
+   end
+end</code></pre>
+<p>The following <code>main</code> procedure populates a tree with random data and then uses <code>the traverse</code> method to print all the elements:-</p>
+<pre><code>import io
+
+procedure main()
+   local root, e, r
+   r := create |?1000
+   root := Node(@r)
+   every 1 to 15 do
+      root.insert(@r)
+   e := create root.traverse()
+   while write((@e).data)
+end</code></pre>
+<p>Instead of using a <code>while</code> loop to print the elements we could also use an every loop as follows :-</p>
+<pre><code>   e := create root.traverse()
+   every write((!e).data)</code></pre>
+<p>or, even more concisely</p>
+<pre><code>   every write(Seq{root.traverse()}.data)</code></pre>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?ipl.pdco.Seq.html"><code>ipl.pdco.Seq</code></a> is a procedure that simply takes a co-expression as a parameter and suspends each of its results. Note that <code>Seq{root.traverse()}</code> is just syntactic shorthand for <code>Seq(create root.traverse())</code>.</p>
+<h3 id="pdcos">PDCOs</h3>
+<p>A PDCO (“Programmer-Defined Control Operation”) is a procedure, whose parameters are intended to be co-expressions, which expresses some kind of control-structure like activity.</p>
+<p>The terminology comes from Icon; see for example page 8 of <a href="https://www2.cs.arizona.edu/icon/analyst/backiss/IA22.pdf" class="uri">https://www2.cs.arizona.edu/icon/analyst/backiss/IA22.pdf</a>.</p>
+<p>For example, here is Dijkstra’s non-deterministic “do..od” loop structure, which can be found in the <code>ipl.pdco</code> package <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.pdco.Do.html">here</a>.</p>
+<pre><code>procedure Do(a[])
+   local x, i
+   repeat {
+      x := []
+      every i := 1 to *a by 2 do
+         if @^a[i] then 
+            put(x, i)
+
+      if *x = 0 then
+         break
+
+      @^a[?x + 1]
+   }
+end</code></pre>
+<p>Here is a <a href="domult.icn">program</a> to multiply two numbers using the above.</p>
+<p><a href="domult.icn">Download domult.icn</a></p>
+<pre><code>import io, ipl.pdco
+
+procedure main(a)
+   local e, p, q, r
+
+   e := create integer(pop(a)) | stop(&quot;Integer expected&quot;)
+   p := !e
+   q := !e
+
+   writes(p, &quot; * &quot;, q, &quot; = &quot;)
+   r := 0
+   Do {
+      q &lt; 0, {
+         q := -q
+         p := -p
+      },
+
+      q &gt; 0 &amp; q % 2 = 0, {
+         q /:= 2
+         p *:= 2
+      },
+
+      q &gt; 0 &amp; q % 2 = 1, {
+         q -:= 1
+         r +:= p
+      }
+   }
+   write(r)
+end
+</code></pre>
+<p>Note that the <code>Do { ... }</code> construct above is actually just an ordinary procedure call with six parameters, since</p>
+<pre><code>P{ e1, e2, ..., en }</code></pre>
+<p>is just syntactic shorthand for</p>
+<pre><code>P(create e1, create e2, ... create en)</code></pre>
+<p>The ability of co-expressions to refer to local variables (rather than copies of them) is a big advantage here. In conventional Icon, the above code would require that <code>p</code>, <code>q</code> and <code>r</code> be global or static variables in order that their values could be changed by the co-expressions.</p>
+<p>Another nice example of the use of PDCOs is the function <code>List</code> in the package <code>ipl.pdco</code>, which is as follows :-</p>
+<pre><code>procedure List(e)
+   local t
+   t := []
+   while put(t, @e)
+   return t
+end</code></pre>
+<p>Using <code>List</code> together with mutual evaluation gives a feature very similar to Python’s list comprehensions. For example :-</p>
+<pre><code>List{(e := 0 to 9, e * e)}</code></pre>
+<p>gives the list <code>[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]</code>.</p>
+<p><code>List</code> can also be used to perform mapping and filtering on a list. For example, given one list <code>x</code>, the following produces another list with just the even elements of <code>x</code> :-</p>
+<pre><code>List{(e := !x, if e%2 = 0 then e)}</code></pre>
+<h3 id="exception-handling">Exception handling</h3>
+<p>Since co-expressions provide a way of doing what amounts to a non-local goto, they can easily be used for exception handling. The package <code>exception</code> contains procedures <code>try</code> and <code>throw</code>, which are used as follows :-</p>
+<pre><code>import io, lang, exception
+
+procedure p2()
+   throw(&quot;something&quot;)
+end
+
+procedure p1()
+   p2()
+end
+
+procedure main()
+   try {
+      p1()
+   }
+   if \thrown then {
+      write(&quot;Caught:&quot;, image(thrown))
+      Coexpression.traceback(thrower)
+   }
+end</code></pre>
+<p>This outputs :-</p>
+<pre><code>Caught:&quot;something&quot;
+Traceback:
+co-expression#2 activated by co-expression#1
+   main()
+   p1() from line 13 in test9.icn
+   p2() from line 8 in test9.icn
+   exception.throw(&quot;something&quot;) from line 4 in test9.icn
+   at line 9 in exception.icn</code></pre>
+<p>The <code>try</code> procedure works as a PDCO. It runs its body (<code>p1()</code> in this case) in a separate co-expression, but before doing so sets a global variable, <code>exception.throw_handler</code> to <code>&amp;current</code>, ie the co-expression to re-activate on a throw. In fact, all the procedure <code>throw</code> does is store its parameter in the global variable <code>exception.thrown</code>, <code>&amp;current</code> in the global variable <code>exception.thrower</code>, and activates <code>exception.throw_handler</code>. After try returns, the caller can then check the global variable <code>exception.thrown</code> to see whether an exception was raised.</p>
+<p>Note that this way of handling exceptions does not “unwind” any stack. The stack of <code>exception.thrower</code> remains fully intact, and can be printed.</p>
+<p>More information about exception handling can be found <a href="ExceptionPackage.html">on this page</a>.</p>
+<h3 id="handling-runtime-errors">Handling runtime errors</h3>
+<p>In a similar vein to the handling of exceptions, it is possible to handle runtime errors too. However, this facility is built into the implementation, since that is where runtime errors are generated.</p>
+<p>To set a runtime error handler, an assignment to the keyword variable <code>&amp;handler</code> is made. The value must be either <code>&amp;null</code> (which turns handling off), or a co-expression, which is activated when a runtime error occurs. When that happens, the keywords <code>&amp;errornumber</code>, <code>&amp;errortext</code>, <code>&amp;errorvalue</code> and <code>&amp;errorcoexpr</code> will be set to give detail about the runtime error. Note that <code>&amp;errorvalue</code> will not be set if no value was associated with the error (evaluating it will fail) and <code>&amp;errornumber</code> will not be set if the error is not one of the standard numbered ones. <code>&amp;errortext</code> is always set to the error message, and <code>&amp;errorcoexpr</code> is always set to the value of <code>&amp;current</code> when the error occurred.</p>
+<p>Here is an <a href="runerr.icn">example program</a> which handles a runtime error caused by attempting to add 1 to the null value :-</p>
+<p><a href="runerr.icn">Download runerr.icn</a></p>
+<pre><code>import io, lang
+
+procedure main()
+   local e
+   e := create {
+      write(&quot;okay&quot;)
+      1 + &amp;null
+      write(&quot;shouldn&#39;t get here&quot;)
+   }
+
+   &amp;handler := &amp;current
+   errorclear()
+   if @e then
+      write(&quot;Evaluation succeeded&quot;)
+   else {
+      if &amp;errortext then {
+         write(&quot;Evaluation caused runtime error&quot;)
+         write(&quot;\t&amp;errornumber=&quot;,image(&amp;errornumber))
+         write(&quot;\t&amp;errortext=&quot;,image(&amp;errortext))
+         write(&quot;\t&amp;errorvalue=&quot;,image(&amp;errorvalue) | &quot;&lt;none&gt;&quot;)
+         write(&quot;\t&amp;errorcoexpr=&quot;,image(&amp;errorcoexpr))
+         Coexpression.traceback(&amp;errorcoexpr)
+      } else
+         write(&quot;Evaluation failed&quot;)
+   }
+   &amp;handler := &amp;null
+end
+</code></pre>
+<p>The output is :-</p>
+<pre><code>okay
+Evaluation caused runtime error
+        &amp;errornumber=102
+        &amp;errortext=&quot;numeric expected&quot;
+        &amp;errorvalue=&amp;null
+        &amp;errorcoexpr=co-expression#2(0)
+Traceback:
+co-expression#2 activated by co-expression#1
+   main()
+   at line 7 in eg.icn</code></pre>
+<p>Note that attempting to resume the co-expression which caused the runtime error for another value will produce a runtime error. This particular runtime error is in the “fatal” category, meaning it cannot be handled and always causes immediate termination.</p>
+<h3 id="non-blocking-io-and-background-tasks">Non-blocking I/O and background tasks</h3>
+<p>Co-expressions are a very useful tool when used to perform I/O on multiple streams at the same time, in a non-blocking fashion. They provide an alternative to the conventional rather clumsy techniques of callbacks and state-machines.</p>
+<p>The co-expression technique uses a scheduler class and several worker co-expressions, each of which performs non-blocking I/O. The worker co-expressions are created by the main client program, but activated by the scheduler. A worker then runs until it wishes to do some I/O, and before it does so it re-activates the scheduler. The scheduler notes the streams which each worker wants to read from or write to, and uses the <code>poll()</code> function to determine which of them are ready. The appropriate workers are then re-activated so that they can read or write data and continue their execution until the next piece of I/O, or they exit. In either case, control returns again to the scheduler.</p>
+<p>An implementation of a scheduler along these lines can be found in the <code>io</code> package. The scheduler is called <a href="http://objecticon.sourceforge.net/libref/index.html?io.Scheduler.html"><code>io.Scheduler</code></a>. The worker co-expressions are wrapped in instances of a class called <a href="http://objecticon.sourceforge.net/libref/index.html?io.Task.html"><code>io.Task</code></a>. This class has methods to let the task sleep for a time, or to poll streams. Both these methods activate the scheduler rather than blocking the program. The most important method in <code>Scheduler</code> is <code>work()</code>, which does a slice of work on a ready <code>Task</code>, if one is ready.</p>
+<p>As an example consider the following program which uses the <a href="http://objecticon.sourceforge.net/libref/index.html?http.HttpClient.html"><code>http.HttpClient</code></a> class, which provides a way to retrieve data over HTTP. It has a <code>retrieve()</code> method which creates a <a href="http://objecticon.sourceforge.net/libref/index.html?io.SocketStream.html"><code>io.SocketStream</code></a> to communicate with the server and tries to retrieve a page of data, using conventional synchronous logic. However, it has an option to use a <code>Task</code>, which tells it to use the <code>Task</code>’s <code>poll</code> method, rather than the normal <code>poll</code> method in <code>DescStream</code>. With no further alteration to the logic of the class, it can now be used asynchronously.</p>
+<p><a href="nonblock.icn">Download nonblock.icn</a></p>
+<pre><code>import io, http, net
+
+global sched
+
+procedure download(x, t)
+   local cl, req, resp, s
+   s := RamStream()
+   cl := HttpClient().
+      set_task(t).
+      set_timeout(10000)
+   req := HttpRequest().
+      set_url(URL(x)).
+      set_output_stream(s)
+   if resp := cl.retrieve(req) then
+      write(&quot;Retrieved &quot;, *s.str(), &quot; bytes from &quot;, x)
+   else
+      write(&quot;Failed to retrieve &quot;, x, &quot;: &quot;, &amp;why)
+   s.close()
+   cl.close()
+   t.revert()
+end
+
+procedure new_task(s)
+   local t
+   t := Task(sched, create download(s, t))
+   t.start()
+end
+
+procedure main()
+   # Use a 50ms delay in the Scheduler&#39;s call to poll.
+   sched := Scheduler(50)
+   new_task(&quot;http://www.google.com&quot;)
+   new_task(&quot;http://www.yahoo.com&quot;)
+   new_task(&quot;http://news.bbc.co.uk&quot;)
+   new_task(&quot;http://www.telegraph.co.uk&quot;)
+   new_task(&quot;http://www.herald.co.zw/&quot;)
+   new_task(&quot;http://www.dailymail.co.uk&quot;)
+   new_task(&quot;http://www.independent.co.uk/&quot;)
+   new_task(&quot;http://www.guardian.co.uk/&quot;)
+   new_task(&quot;http://www.thesun.co.uk/&quot;)
+   new_task(&quot;http://www.express.co.uk/&quot;)
+
+   until sched.empty() do {
+      sched.work()
+      # Could do some extra work between polls.
+   }
+   write(&quot;Exiting&quot;)
+end
+</code></pre>
+<p>The main method creates an <code>Scheduler</code> and adds ten <code>Task</code>s which each download some data. Then it repeatedly calls <code>work</code>, until there is nothing left to do. Example output is as follows :-</p>
+<pre><code>Retrieved 73010 bytes from http://www.telegraph.co.uk
+Retrieved 190705 bytes from http://www.guardian.co.uk/
+Retrieved 150044 bytes from http://www.independent.co.uk/
+Retrieved 9558 bytes from http://www.google.com
+Retrieved 102355 bytes from http://news.bbc.co.uk
+Retrieved 153377 bytes from http://www.yahoo.com
+Retrieved 56454 bytes from http://www.herald.co.zw/
+Retrieved 131933 bytes from http://www.thesun.co.uk/
+Retrieved 154414 bytes from http://www.express.co.uk/
+Retrieved 203773 bytes from http://www.dailymail.co.uk
+Exiting</code></pre>
+<p>As a further example, here is a simple server that can handle several clients simultaneously. One task listens for incoming connections, each of which is serviced by a new task created in the <code>handle</code> procedure. These tasks make use of a useful utility class called <a href="http://objecticon.sourceforge.net/libref/index.html?io.TaskStream.html"><code>io.TaskStream</code></a> which simply wraps another <code>Stream</code> (in this case a <code>SocketStream</code>). The implementation of <code>TaskStream</code> defines the <code>in</code> and <code>out</code> methods so that they call the task’s <code>poll</code> method, and hence re-activate the scheduler before performing the I/O on the underlying <code>Stream</code>. Thus the <code>read</code> and <code>write</code> methods used in the <code>handle</code> procedure do not block the program, but allow other tasks to be scheduled instead.</p>
+<p><a href="server.icn">Download server.icn</a></p>
+<pre><code>import io
+
+global sched, x_flag
+
+procedure handle(a)
+   local t, s
+   t := Task(sched, create {
+      # Service the client with a 30s timeout
+      a := TaskStream(a, t, 30000) 
+      write(&quot;\tHandling...&quot;)
+      repeat {
+         s := a.read() | {
+            write(&quot;\tRead failed &quot;, &amp;why)
+            break
+         }
+         # An input of &quot;x&quot; shuts down the server
+         if s == &quot;x&quot; then {
+            x_flag := 1
+            break
+         }
+         # An input of &quot;q&quot; ends this client&#39;s session
+         if s == &quot;q&quot; then 
+            break
+         a.write(map(s))
+      } 
+      write(&quot;\tEnd of handling.&quot;)
+      a.close()
+      t.revert()
+   })
+   t.start()
+end
+
+procedure main()
+   local f, x
+   # Use a 50ms delay in the Scheduler&#39;s call to poll.
+   sched := Scheduler(50)
+
+   x := Task(sched, create {
+      f := SocketStream(ProtocolFormat.INET, SocketType.STREAM) | stop(&amp;why)
+      f.bind(&quot;inet:*:7000&quot;) | stop(&amp;why)
+      f.listen(5)  | stop(&amp;why)
+      write(&quot;Listening...&quot;)
+      repeat {
+         x.poll([f, Poll.IN]) | stop(&amp;why)
+         handle(f.accept())
+      }
+   })
+   x.start()
+
+   until \x_flag do {
+      sched.work()
+      # Could do some extra work between polls.
+   }
+
+   f.close()
+   write(&quot;Exiting&quot;)
+end
+</code></pre>
+<p>The scheduler class is also used by the <code>gui</code> library. Rather than performing I/O, these tasks typically perform background updates of the user interface. For example the logic to make the cursor flash in a textfield is encapsulated in a <code>Task</code>. The task sleeps for a while, then updates the cursor, and repeats the process indefinitely until the task is stopped when the textfield is disposed of.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

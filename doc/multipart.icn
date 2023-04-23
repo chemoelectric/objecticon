@@ -1,0 +1,79 @@
+import mail, io
+
+$load CHEETAH "cheetah_cubs.jpg"
+
+procedure send(m)
+   local t
+
+   #
+   # Send the message m using SMTP.  You may need to customize the object t to change the defaults :
+   #    set_server(x) - the SMTP server to use (default "localhost")
+   #    set_port(n) - the port to use (default 25)
+   #    set_hostname(x) - the hostname to use with the EHLO command (default &host).
+   #   
+
+   t := SmtpClient().
+      open().
+      send_message(m).
+      close() |  stop(&why)
+end
+
+procedure main()
+   local mp, m, fwd
+
+   # A Multipart object to build a multipart message; the preamble
+   # will be seen by non-MIME mail clients.
+   mp := Multipart().
+      set_preamble("This a MIME message.")
+
+   # The first part of the multipart message; a simple text message.
+   m := Message().
+      set_content_type(ContentType("text", "plain").set_parameter("charset", "utf-8")).
+      set_content_disposition(ContentDisposition("inline")).
+      set_content_transfer_encoding("7bit").
+      set_content_object("A simple message.")
+   mp.add_part(m)
+
+   # This message is an email to be forwarded as the second part of the multipart.
+   fwd := Message().
+      set_content_type(ContentType("text", "plain").set_parameter("charset", "utf-8")).
+      set_content_transfer_encoding("quoted-printable").
+      set_from(Mailbox.parse("\"A. Sender\" <sender@somewhere>")).
+      set_to(Mailbox.parse("\"B. Recipient\" <recipient@somewhere.else>")).
+      set_subject("An important subject").
+      set_content_object("Here is an important message.\n\tThe end.")
+
+   # The second part of the multipart.  We use a Content-Type of message/rfc822 and set
+   # the message to be forwarded as the content object.
+   m := Message().
+      set_content_type(ContentType("message", "rfc822")).
+      set_content_disposition(ContentDisposition("attachment").set_filename("important.eml")). 
+      set_content_transfer_encoding("7bit").
+      set_content_object(fwd)
+   mp.add_part(m)
+
+   # The third part of the multipart is another attachment, a base64-encoded jpeg.
+   m := Message().
+      set_content_transfer_encoding("base64").
+      set_content_type(ContentType("image", "jpeg")).
+      set_content_disposition(ContentDisposition("attachment").set_filename("cheetah_cubs.jpg")).
+      set_decoded_content(CHEETAH)
+   mp.add_part(m)
+
+   # Now create the top-level message of Content-Type multipart/mixed,
+   # and set the Multipart object as the content object.
+   #
+   # You will of course need to edit the from and to headers!
+   #
+   m := Message().
+      set_from(Mailbox.parse("\"Robert Parlett\" <rparlett@localhost>")).
+      set_to(Mailbox.parse("\"Robert Parlett\" <rparlett@localhost>")).
+      set_content_type(ContentType("multipart", "mixed")).
+      set_content_object(mp).
+      set_subject("Cats")
+
+   # ... and send this message.
+   send(m)
+
+   write("OK")
+end

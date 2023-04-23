@@ -1,0 +1,52 @@
+import io, graphics, ipl.graphics
+
+$load CAT "cheetah_cubs.jpg"
+
+procedure circle_mask(d)
+   local p, i, j, r2, r, s, a
+   p := Pixels(d, d, Pixels.A8)
+   r := d / 2
+   r2 := r * r
+   every j := 0 to d - 1 do
+      every i := 0 to d - 1 do
+         if (s := (i - r)^2 + (j - r)^2) < r2 then {
+            a := ((r2 - s) * 65535) / r2
+            p.set_rgba(i, j, 0,0,0, a)
+         }
+   return p
+end
+
+procedure main()
+   local cat, cm, w
+
+   # Create a image of the cheetahs
+   cat := Pixels(CAT) | stop(&why)
+
+   # Create a circular mask image.  The parameter gives the diameter.
+   # The further away from the centre of the circle, the more
+   # transparent is the mask, with the centre being opaque.
+   cm := circle_mask(cat.get_width())
+
+   w := Window().
+      # Copy the circle mask to w; "source" must be used here so that
+      # the mask is copied to w (rather than combined with w's
+      # underlying background).
+      set_draw_op("source").
+      set_image(cm).
+      # Now draw the cat using the "in" operator.  Where the alpha
+      # value of the mask (and hence w) is more opaque, more of the
+      # cat image is written to w.  Conversely, where it is more
+      # transparent, less of the cat image is written.  The alpha
+      # values in w are unchanged.
+      set_draw_op("in").
+      draw_image(,, cat).
+      # Finally set a background colour.  Where w is opaque, less blue
+      # is written; where transparent, more.  Afterwards, the alpha
+      # values of w will be 100% opaque.
+      set_fg("very light blue").
+      set_draw_op("dest over").
+      fill_rectangle().
+      set_canvas("normal")
+
+   WDone(w)
+end

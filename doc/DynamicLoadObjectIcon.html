@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Dynamically loading Object Icon programs.</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Dynamically loading Object Icon programs.</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#dynamically-loading-object-icon-code">Dynamically loading Object Icon code</a><ul>
+<li><a href="#some-points-to-note.">Some points to note.</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="dynamically-loading-object-icon-code">Dynamically loading Object Icon code</h1>
+<p>Object Icon includes a small enhancement to MT Icon which allows procedures and classes to be loaded and invoked dynamically from other icode files (ie executable files created by the linker).</p>
+<p>To illustrate how this works, consider the following simple source file:-</p>
+<pre><code>import io
+
+invocable X, p
+
+class X()
+   public hello()
+      write(&quot;Hello&quot;)
+   end
+end
+
+procedure p()
+   write(&quot;Hello again&quot;)
+end
+
+procedure main()
+end</code></pre>
+<p>If this were in the file <code>abc.icn</code>, then it could be compiled with the command <code>oit abc.icn</code>. Then its symbols could be loaded and used dynamically as follows :-</p>
+<pre><code>import io, lang
+
+procedure main()
+   local prog, x
+   prog := Prog.load(&quot;abc&quot;) | stop(&quot;Couldn&#39;t load&quot;)
+
+   # Create an instance of X, call hello method
+   x := Prog.get_global(&quot;X&quot;, prog)()
+   x.hello()
+
+   # Call procedure p
+   Prog.get_global(&quot;p&quot;, prog)()
+end</code></pre>
+<h2 id="some-points-to-note.">Some points to note.</h2>
+<ul>
+<li>The “library” program needs a dummy <code>main</code> procedure. It also needs to declare the procedure and class as invocable, so that the linker doesn’t discard them as unreferenced symbols.</li>
+<li>The class could also be accessed via <code>Class.for_name("X", prog)()</code>.</li>
+<li>The procedure could also be accessed via the call <code>proc("p",,prog)()</code></li>
+<li>The loaded program retains its own separate set of global identifiers. References to global identifiers in loaded procedures and methods always refer to the enclosing loaded program. Hence, several global identifiers with the same name can co-exist at the same time in separate programs.</li>
+</ul>
+<a href="index.html">Contents</a>
+</body>
+</html>

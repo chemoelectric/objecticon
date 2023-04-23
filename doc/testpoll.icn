@@ -1,0 +1,38 @@
+import io
+
+procedure main(a)
+   local f, nb, s, l
+
+   # Open a file for reading.
+   f := FileStream(a[1]) | stop(&why)
+
+   # Create a read-only NonBlockStream operating on f
+   nb := NonBlockStream(f)
+   every 1 to 5 do {
+      repeat {
+         # Poll with a zero timeout (ie return immediately).
+         l := DescStream.poll([nb, Poll.IN], 0) | stop(&why)
+         if /l then {
+            # A null result means timeout, so no data
+            writes(".")
+            delay(100)
+         } else {
+            # Otherwise print the result value and break
+            writes(" ", l[1])
+            break
+         }
+      }
+
+      # Get the result
+      if s := nb.in(32) then {
+         if /s then
+            write(" EOF")
+         else
+            write(" -> ", s)
+      } else
+         write(" failed ", &why)
+   }
+
+   # This will close f too.
+   nb.close()
+end

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Succeed and link expressions</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Succeed and link expressions</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#succeed">succeed</a></li>
+<li><a href="#link">link</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>These two expressions are designed to make returning from procedures and methods easier and more concise.</p>
+<h2 id="succeed">succeed</h2>
+<pre><code>succeed expr</code></pre>
+<p>is just the same as</p>
+<pre><code>if expr then
+   return
+else
+   fail</code></pre>
+<p>For example, consider :-</p>
+<pre><code>procedure is_positive(x)
+   succeed x &gt; 0
+end</code></pre>
+<p>This procedure will succeed with <code>&amp;null</code> if <code>x &gt; 0</code>, and fail otherwise. If we were to use <code>return</code> instead of <code>succeed</code>, then the procedure would return <code>0</code> instead of <code>&amp;null</code>.</p>
+<p><code>succeed</code> is particulary helpful in classes, which tend to have a lot of <code>is_something</code> methods. It avoids the return of rather arbitrary values, and also the accidental escape of variables to internal members and data structures.</p>
+<p><code>succeed</code> on its own (without an expression) has just the same meaning as <code>return</code>.</p>
+<h2 id="link">link</h2>
+<p>From within an instance method</p>
+<pre><code>link expr</code></pre>
+<p>is just the same as</p>
+<pre><code>if expr then
+   return self
+else
+   fail</code></pre>
+<p>and from within a static method it is the same as</p>
+<pre><code>if expr then
+   return EnclosingClass
+else
+   fail</code></pre>
+<p>where <code>EnclosingClass</code> is the class in which the method resides.</p>
+<p><code>link</code> on its own just returns <code>self</code> or <code>EnclosingClass</code> as appropriate.</p>
+<p><code>link</code> is designed to make it easier to take advantage of method chaining. For example, consider the following class :-</p>
+<pre><code>class Something()
+   public f()
+      ...
+      link
+   end
+
+   public g()
+      ...
+      link
+   end
+
+   public static p()
+      ...
+      link
+   end
+
+   public static q()
+      ...
+      link
+   end
+end</code></pre>
+<p>We could then use :-</p>
+<pre><code>x := Something().
+       f().
+       g()
+
+y := Something.
+       p().
+       q()</code></pre>
+<p>leaving <code>x</code> as the <code>Something</code> instance, and <code>y</code> as <code>Something</code>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

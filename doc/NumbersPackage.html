@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The numbers package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The numbers package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#dec-and-rat">Dec and Rat</a></li>
+<li><a href="#complex-numbers">Complex numbers</a></li>
+<li><a href="#arithmetic">Arithmetic</a></li>
+<li><a href="#rounding">Rounding</a><ul>
+<li><a href="#rounding-modes">Rounding modes</a></li>
+<li><a href="#specifying-rounding">Specifying rounding</a></li>
+</ul></li>
+<li><a href="#string-formatting">String formatting</a></li>
+<li><a href="#comparisons">Comparisons</a></li>
+<li><a href="#arithmetic-procedures">Arithmetic procedures</a></li>
+<li><a href="#bigmath">BigMath</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>The <code>numbers</code> package contains some classes and procedures for doing high-precision decimal arithmetic. Classes are provided for both decimal and rational numbers, as well as a simple complex number class.</p>
+<h1 id="dec-and-rat">Dec and Rat</h1>
+<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Dec.html"><code>numbers.Dec</code></a> represents an arbitrary decimal number. Internally it stores a number as an integer multiplied by an exponent, so that the number represented is :-</p>
+<pre><code>   i * 10^e</code></pre>
+<p>The integer is always “normalized”, so that its least significant digit is never zero (unless the number itself is zero). So for example, <code>2000</code> is stored as <code>2 * 10^3</code>, not <code>20 * 10^2</code> or <code>2000 * 10^0</code> or anything else. This means that two instances representing the same number will always have the same internal representation.</p>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Rat.html"><code>numbers.Rat</code></a> class represents a rational number. Like <code>Dec</code>, numbers are stored in a normalized form; in this case the fraction is reduced to its lowest terms, so that <code>25/10</code> say is stored as <code>5/2</code>.</p>
+<p><code>Rat</code> and <code>Dec</code> both have helpful constructors which make constructing instances convenient. <code>Dec</code> accepts two integers representing integer and exponent :-</p>
+<pre><code>  Dec(123, -1)      # 12.3</code></pre>
+<p><code>Dec</code> also accepts various single-parameter cases :-</p>
+<pre><code>  Dec(123)          # Integer converted to 123
+  Dec(123.456)      # Real converted (via string) to 123.456 exactly.
+  Dec(&quot;123e500&quot;)    # String converted to 1.23e+502
+  Dec(&quot;1/4&quot;)        # String converted (via Rat) to 0.25
+  Dec(&quot;1/3&quot;)        # Fails (see below)
+  Dec(Dec(100))     # Creates copy of other instance
+  Dec(Rat(1,10))    # Converts to 0.1
+  Dec(Rat(1,3))     # Fails
+  Dec(&quot;nonsense&quot;)   # Fails
+  Dec([])           # Runtime error</code></pre>
+<p>Two of the above require further explanation. Firstly, the conversion of the real number 123.456. This will in fact first be converted to a string “123.456” using the standard icon <code>string()</code> function. Then that string is parsed into a <code>Dec</code> instance. This avoids any unpleasant problems concerning inaccurate binary representation of fractions. However, it does mean that only ten significant figures of the real number are converted (this being the precision used by the <code>string()</code> function).</p>
+<p>Secondly, note that the constructor fails in the case of <code>Dec("1/3")</code>. This is because of course <code>1/3</code> cannot be represented as a finite decimal. (The <code>Rat</code> class does in fact provides a method, <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Rat.html%23decimal"><code>numbers.Rat.decimal()</code></a>, to convert to <code>Dec</code> with a desired rounding).</p>
+<p>The <code>Rat</code> constructor is also flexible. It also has a basic two-parameter form :-</p>
+<pre><code>  Rat(60,1024)      # 60/1024, normalized to 15/256</code></pre>
+<p>and a flexible one-parameter form :-</p>
+<pre><code>  Rat(123)         # 123/1
+  Rat(123.456)     # 15432/125
+  Rat(&quot;1 2/3&quot;)     # String parsed to 1 2/3 (ie 5/3)
+  Rat(&quot;123e500&quot;)   # 12300....000/1 - a very big numerator
+  Rat(Dec(123))    # 123/1
+  Rat(Rat(1,3))    # Creates copy of other instance
+  Rat(&quot;nonsense&quot;)  # Fails
+  Rat([])          # Runtime error</code></pre>
+<p>Note that whereas not every <code>Rat</code> can be exactly converted to a <code>Dec</code>, the converse is not true :- every <code>Dec</code> can always be converted to a <code>Rat</code>. For example :-</p>
+<pre><code>  d := Dec(&quot;12398.32894894&quot;)
+  d.rational()     # Returns Rat(12398 16447447/50000000)
+  r := Rat(&quot;1324/3747&quot;)
+  r.decimal()      # Fails, since it can&#39;t be converted exactly
+  r.decimal(12)    # Returns Dec(0.353349346144), being r
+                   # rounded to a precision of 12.</code></pre>
+<h1 id="complex-numbers">Complex numbers</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Cpx.html"><code>numbers.Cpx</code></a> class represents a complex number. Its constructor takes two parameters, each of which should be convertible to either <code>Rat</code> or <code>Dec</code>. For example :-</p>
+<pre><code>  Cpx(1, 2)        # 1 + 2i.  (Both r and i are Dec)
+  Cpx(&quot;.1&quot;, &quot;2/3&quot;) # 0.1 + (2/3)i. (r is a Dec, i a Rat)
+  Cpx(Rat(1,3), Rat(2, 3))  #  (1/3) + (2/3)i; both Rat</code></pre>
+<h1 id="arithmetic">Arithmetic</h1>
+<p>Each of the three classes described above provides the basic set of four binary arithmetic operations, plus negation. For example :-</p>
+<pre><code>  r := Rat(1,3)
+  r.add(2)        # 2 1/3
+  r.sub(1)        # -2/3
+  r.mul(&quot;7/4&quot;)    # 7/12
+  r.div(3.5)      # 2/21
+  r.neg()         # -1/3</code></pre>
+<p>In each binary operation, the parameter is first converted to <code>Rat</code> (using the constructor described above). The operation is then performed and a new <code>Rat</code> instance returned. Note that <code>r</code> is not modified. In fact, <code>Rat</code> and the two other classes are immutable; operations always create new instances rather than modifying the original.</p>
+<p>The <code>Dec</code> class is slightly more complex, for a couple of reasons. Firstly, as noted above, only some rationals can be converted exactly to a decimal. So some conversions to <code>Dec</code> may fail and raise a runtime error :-</p>
+<pre><code>  d := Dec(123.4)
+  d.add(2)        # 125.4  
+  d.add(&quot;1/2&quot;)    # 123.9
+  d.add(&quot;1/3&quot;)    # Runtime error: Decimal expected: Couldn&#39;t convert rational to an exact decimal</code></pre>
+<p>The second point is that division cannot always be performed exactly, and thus the <code>div</code> method of <code>Dec</code> takes a second optional parameter specifying how to round the result. If an integer is given, then this means round to that precision (the number of digits in the integer part) in the conventional way. (There are other options - see <a href="#rounding">Rounding</a> below). If the precision is omitted, and the division cannot be performed exactly, the the <code>div</code> method fails. For example :-</p>
+<pre><code>  d := Dec(123.4)
+  d.div(2)        # Succeeds with 61.7
+  d.div(3)        # Fails
+  d.div(3, 6)     # Succeeds with 41.1333
+  d.div(2, 2)     # Succeeds with 62</code></pre>
+<p>Note that the precision of the result of a division may be less than that requested, due to normalization. For example :-</p>
+<pre><code>  d := Dec(1111)
+  d.div(37, 10)   # 30.02702703 - ten digits.
+  d.div(37, 5)    # 30.027 - five digits.
+  d.div(37, 6)    # 30.027 - also five digits.</code></pre>
+<p>What happened with the last one was that the integer and exponent of 300270 and -4 respectively were normalized to 30027 and -3.</p>
+<p>The three other binary arithmetic methods of <code>Dec</code> also take a rounding parameter. These are equivalent to applying the <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Dec.html%23round">round</a> method to the result, so</p>
+<pre><code>  d := Dec(123.4)
+  d.add(1.234, 4)        # 124.6
+  d.add(1.234).round(4)  # ...the same</code></pre>
+<p>The reason for providing the round parameter to <code>add</code> (and <code>sub</code>) is that it is more efficient to combine the two operations if the two operands differ greatly in size. For example :-</p>
+<pre><code>  d := Dec(&quot;1.2345e60000&quot;)        # A very large number (but small precision).
+  d := d.add(1)                   # Now large with a large precision; quite a slow operation
+  d := d.round(&quot;10 up&quot;)           # Now Dec(1.234500001e+60000)</code></pre>
+<p>The <code>add</code> is quite slow because it involves creating a number with a very large precision (an integer part of 12345, followed by 59995 zeroes, followed by a 1). The <code>round</code> call then restores the number to a more manageable precision of 10 (see below for the meaning of the rounding of “10 up”).</p>
+<p>Combining the <code>add</code> and <code>round</code> into one call speeds this up considerably, by avoiding the intermediate number :-</p>
+<pre><code>  d := Dec(&quot;1.2345e60000&quot;)        # A very large number (but small precision).
+  d := d.add(1, &quot;10 up&quot;)          # Now Dec(1.234500001e+60000)</code></pre>
+<p>The <code>mul</code> method also takes an optional rounding parameter, but this is just for consistency, and has no performance advantage over calling <code>round</code> separately.</p>
+<h1 id="rounding">Rounding</h1>
+<p><code>Dec</code> provides several options for controlling how numbers are rounded. These are encapsulated in the <a href="http://objecticon.sourceforge.net/libref/index.html?numbers.Round.html"><code>numbers.Round</code></a> class. Instances of this class contain three things :-</p>
+<ul>
+<li>A flag indicating whether to round to a particular precision or the number of decimal digits after the decimal point,</li>
+<li>The number of digits, and</li>
+<li>The rounding mode, which specifies whether to round the least significant digit up, down, or leave it unchanged.</li>
+</ul>
+<h2 id="rounding-modes">Rounding modes</h2>
+<p>There are six rounding modes, identified by constants in the <code>Round</code> class, as follows :-</p>
+<ul>
+<li><code>UP</code> - round away from zero.</li>
+<li><code>DOWN</code> - round towards zero (ie, simple truncation).</li>
+<li><code>CEILING</code> - round towards positive infinity.</li>
+<li><code>FLOOR</code> - round towards negative infinity.</li>
+<li><code>HALF_UP</code> - conventional rounding, towards nearest neighbour, with halves rounded up.</li>
+<li><code>HALF_DOWN</code> - like <code>HALF_UP</code>, but round halves down.</li>
+</ul>
+<p>The following diagram may help to show the differences between the first four modes. The dots represent numbers lying between 1 and -1, and the arrows show how the number would be rounded for each mode.</p>
+<pre><code>       UP     DOWN    CEIL-   FLOOR
+                      ING  
+  1 +-------+-------+-------+-------+
+    |   ↑   |       |   ↑   |       |
+    |   •   |   •   |   •   |   •   |
+    |       |   ↓   |       |   ↓   |
+ 0  |-------|-------|-------|-------|
+    |       |   ↑   |   ↑   |       |
+    |   •   |   •   |   •   |   •   |
+    |   ↓   |       |       |   ↓   |
+-1  +-------+-------+-------+-------+
+</code></pre>
+<h2 id="specifying-rounding">Specifying rounding</h2>
+<p>The <code>Round</code> class takes a string in its constructor to make it easy to create an instance. The following examples illustrate the form used :-</p>
+<pre><code>  &quot;10&quot;                    # Ten places of precision, mode HALF_UP (ie, conventional rounding).
+  &quot;10dp&quot;                  # The same, to ten decimal places after the point.
+  &quot;8 down&quot;                # Eight places of precision, mode DOWN (ie, truncate digits after the eighth place).
+  &quot;8dp hd&quot;                # Eight decimal places, mode HALF_DOWN.</code></pre>
+<p>The strings recognized for the mode are :-</p>
+<ul>
+<li>“up” or “u” means UP</li>
+<li>“down”, “d”, “t”, “trunc” or “truncate” means DOWN</li>
+<li>“ceiling”, “ceil” or “c” means CEILING</li>
+<li>“floor” or “f” means FLOOR</li>
+<li>“half-up” or “hu” means HALF_UP</li>
+<li>“half-down” or “hd” means HALF_DOWN</li>
+</ul>
+<p>Note the use of a hyphen rather than an underscore in the last two.</p>
+<p>When a <code>Round</code> parameter is needed, it is not necessary to actually call the constructor directly; rather a string (or integer) will be converted by the called method. The following examples illustrate this :-</p>
+<pre><code>  Dec(12.5).round(2)           # 13, conventional rounding to a precision of 2
+  Dec(12.5).round(&quot;2 hd&quot;)      # 12, round halves down, a precision of 2
+  Dec(12.501).round(&quot;2 hd&quot;)    # 13
+  Dec(8.5).round(&quot;1 up&quot;)       # 9
+  Dec(-8.5).round(&quot;1 up&quot;)      # -9
+  Dec(123.499).round(&quot;4 t&quot;)    # 123.4, truncate (mode DOWN) at precision 4.
+  Dec(123.987).round(&quot;0dp t&quot;)  # 123, truncate at 0 decimal places (ie, chop off fraction).</code></pre>
+<h1 id="string-formatting">String formatting</h1>
+<p>Each of the three classes has a <code>str</code> method for formatting. These takes options similar to the <a href="http://objecticon.sourceforge.net/libref/index.html?util.Format.html%23numeric_to_string"><code>util.Format.numeric_to_string()</code></a> method. For example :-</p>
+<pre><code>  d := Dec(&quot;1234.5678&quot;)
+  d.str()             # &quot;1234.5678&quot;
+  d.str(&#39;e&#39;)          # &quot;1.2345678e+3&quot;
+  d.str(&#39;e&#39;, 3)       # &quot;1.235e+3&quot;
+  d.str(&#39;e&#39;, 12)      # &quot;1.234567800000e+3&quot;
+  d.str(&#39;,+&#39;, 3)      # &quot;+1,234.568&quot;</code></pre>
+<h1 id="comparisons">Comparisons</h1>
+<p><code>Rat</code> and <code>Dec</code> both have <code>cmp</code> methods which can be used to compare values; for example :-</p>
+<pre><code>  r1 := Rat(1, 3)
+  r2 := Rat(1, 4)
+  r1.cmp(&quot;=&quot;, r2)      # Fails
+  r1.cmp(&quot;&gt;&quot;, r2)      # Succeeds</code></pre>
+<p><code>cmp</code> is implemented by evaluating the sign of the difference of the two numbers and then applying the first parameter to compare that result and zero; in other words the last line above means notionally <code>sign(r1 - r2) &gt; 0</code>.</p>
+<p>The first parameter to the <code>cmp</code> method can be anything convertible to a procedure. The above examples take advantage of Icon’s string to function conversion, so that</p>
+<pre><code>  &quot;&lt;&quot;(1, 3)</code></pre>
+<p>has the same result as <code>1 &lt; 3</code>.</p>
+<h1 id="arithmetic-procedures">Arithmetic procedures</h1>
+<p>It may be noted that the <code>Rat</code> and <code>Dec</code> arithmetic methods are not quite symmetric in their operation. For example :-</p>
+<pre><code>  d := Dec(123.4)
+  r := Rat(1,3)        # 1/3
+  d.add(r)             # Runtime error: Decimal expected: Couldn&#39;t convert rational to an exact decimal
+  r.add(d)             # Succeeds with a `Rat` 123 11/15.
+  r.cmp(&quot;&lt;&quot;, d)        # Succeeds
+  d.cmp(&quot;&gt;&quot;, r)        # ... but another runtime error</code></pre>
+<p>For this reason, the <code>numbers</code> package includes procedures which can be used instead of the instance methods to perform arithmetic operations. For example :-</p>
+<pre><code>  d := Dec(123.4)
+  r := Rat(1,3)
+  add(d, r)            # Succeeds with a `Rat` 123 11/15.
+  add(r, d)            # ... the same
+  cmp(r, &quot;&lt;&quot;, d)       # Succeeds
+  cmp(d, &quot;&gt;&quot;, r)       # ... the same</code></pre>
+<p>The <code>div</code> procedure is also more flexible than the <code>div</code> methods. With no rounding specified, it will always give a precise result. For example :-</p>
+<pre><code>  d := Dec(123.4)
+  div(d, 2)           # Succeeds with a `Dec` 61.7
+  div(d, 3)           # Succeeds with a `Rat` 41 2/15
+  div(d, d3, 6)       # Succeeds with a `Dec` 41.1333</code></pre>
+<p>Contrast the second case with the <code>d.div(3)</code> which would fail. By applying sensible conversions, <code>div</code> returns an exact result as a rational.</p>
+<p>The arithmetic procedures are also used by the instance methods of the <code>Cpx</code> class, to give it more flexibility. For example :-</p>
+<pre><code>  c1 := Cpx(&quot;1/3&quot;, &quot;3/7&quot;)     # (1/3) + (3/7)i
+  c2 := Cpx(12.34, 11.9)      # 12.34 + 11.9i
+  c1.div(c2)                  # 34550/1102071 + (34700/7714497)i
+  c1.div(c2, 6)               # 0.0313501 + 0.00449802i</code></pre>
+<p>In the last case, the rounding parameter (6) makes <code>div</code> to convert the rational results to decimals with that precision.</p>
+<p>Another difference between the arithmetic procedures and the methods is that the procedures will carry out a very basic simplification on the result. Complex numbers with a zero <code>i</code> are simplified into their real part, and rational numbers with a denominator of 1 are simplified into a <code>Dec</code> of their numerator. So for example, contrast :-</p>
+<pre><code>   r := Rat(1, 2)
+   r.add(r)          # A `Rat`, 1/1
+   add(r, r)         # A `Dec`, 1
+
+   c := Cpx(0, 1)    # Just i
+   c.mul(c)          # A `Cpx`, -1 + 0i
+   mul(c, c)         # A `Dec`, -1</code></pre>
+<h1 id="bigmath">BigMath</h1>
+<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.numbers.BigMath.html"><code>ipl.numbers.BigMath</code></a> provides static methods to evaluate common mathematical functions using <code>Dec</code> numbers. For example,</p>
+<pre><code>  BigMath.sin(1.25, 25)   # sin to 25 digits of precision - Dec(0.9489846193555862143484908)
+  BigMath.pi(40)          # pi to 40 digits - Dec(3.141592653589793238462643383279502884197)
+  BigMath.root(&quot;1.237747e670&quot;, 100, 60)   # 100th root of a very big number.</code></pre>
+<p>The precision specified is in fact just a <code>Round</code> parameter, so you could if you wish round the result in any of the ways described above.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

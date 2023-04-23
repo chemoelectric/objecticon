@@ -1,0 +1,24 @@
+import io, lang
+
+class X()
+   private x
+
+   public static f(x)
+      local i
+      write("In X.f()")
+      i := Class.create_instance()
+      i.x := 2 * x
+      return i
+   end
+
+   public new(x)
+      write("In X.new()")
+      self.x := 3 * x
+      return
+   end
+end
+
+procedure main()
+   write(to_string(X(123)))
+   write(to_string(X.f(345)))
+end

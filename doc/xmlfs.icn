@@ -1,0 +1,104 @@
+import plan9, ipl.server9p, ipl.options, io, util, exception, xml
+
+class XMLData9P(ReadOnlyData9P)
+   private
+      user, time, root
+      
+   public new(root)
+      user := Files.file_to_string("/env/user") | "none"
+      time := Time.get_system_seconds()
+      self.root := root
+      return
+   end
+
+   public override get_root(aname)
+      if /root then {
+         if *aname = 0 then
+            throw("Mount requires an attach parameter (an XML file)")
+         return parse_file(aname) | throw(&why)
+      } else {
+         if *aname ~= 0 then
+            throw("Mount expected an empty attach parameter")
+         return root
+      }
+   end
+
+   public override get_parent(p)
+      local q
+      q := p.get_parent()
+      if is(q, XmlElement) then return q
+   end
+
+   public override get_child(p, name)
+      local c
+      every c := !p.children do {
+         if is(c, XmlElement) & c.name == name then
+            return c
+      }
+   end
+
+   public override gen_children(p)
+      local c
+      every c := !p.children do {
+         if is(c, XmlElement) then
+            suspend c
+      }
+   end
+
+   public override open(p, mode) return p end
+   public override close(p) end
+                               
+   public override read(p, count, pos)
+      local data
+      data := get_data(p)
+      if pos > *data then
+         # EOF
+         return
+      else
+         return data[pos:min(pos + count, *data + 1)]
+   end
+
+   public override get_info(p)
+      return Info(get_perm(p), time, time, get_length(p), string(p.name), user, user, user)
+   end
+
+   public override get_qid(p)
+      return Qid(ishift(get_perm(p), -24), 0, serial(p))
+   end
+
+   private get_length(p)
+      return if is_dir(p) then 0 else *get_data(p)
+   end
+
+   private get_data(p)
+      return string(p.get_trimmed_string_content())
+   end
+
+   private is_dir(p)
+      return gen_children(p)
+   end
+
+   private get_perm(p)
+      return if is_dir(p) then ior(8r555, Mode9.DMDIR) else 8r444
+   end
+end
+
+procedure parse_file(fn)
+   local s, p
+   s := Files.file_to_string(fn) | return error("Couldn't open " || fn || ": " || &why)
+   s := ucs(s)  | return error("Not UTF-8 format: " || fn)
+   p := XmlParser()
+   return p.parse(s).get_root_element() | error("Couldn't parse " || fn || ": " || &why)
+end
+
+procedure main(a)
+   local root
+   opts := options(a, get_optl(),
+                   "Usage: xmlfs [OPTIONS] [XML FILE]")
+   if *a > 0 then
+      root := parse_file(a[1]) | stop(&why)
+   # If no -s, then we must have an xml file parameter
+   if /opts["s"] & /root then
+      help_stop("Use the -s option or provide an xml file parameter.")
+   server_main(, Session9P(XMLData9P(root)))
+end

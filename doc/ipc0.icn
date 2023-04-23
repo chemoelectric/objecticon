@@ -1,0 +1,19 @@
+import
+   io(write),
+   util(Process)
+
+procedure run()
+   write("In child")
+end
+
+procedure main()
+   local c
+
+   write("In parent")
+
+   c := Process{run()}
+   c.start()
+   c.close()
+
+   write("Finished")
+end

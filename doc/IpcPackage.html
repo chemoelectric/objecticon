@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>ipc package (SysV inter-process communication).</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">ipc package (SysV inter-process communication).</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#the-shared-library">The shared library</a></li>
+</ul></li>
+<li><a href="#creating-a-sub-process">Creating a sub-process</a></li>
+<li><a href="#shared-memory">Shared Memory</a></li>
+<li><a href="#semaphores">Semaphores</a></li>
+<li><a href="#message-queues">Message queues</a></li>
+<li><a href="#public-ipc-resources">Public IPC resources</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page documents an IPC facility for object icon, based on three Unix IPC facilities, namely shared memory, semaphores and message queues. This facility enables communication between different processes, either within the same or a different programs.</p>
+<h2 id="the-shared-library">The shared library</h2>
+<p>The RTL/C portion of the library is contained in a shared library <code>objecticonipclib.so</code>, which is built in the <code>lib/native</code> subdirectory of the distribution.</p>
+<h1 id="creating-a-sub-process">Creating a sub-process</h1>
+<p>Creating a sub-process is easy, and can be done with the <code>System.fork()</code> function, or alternatively using the <code>util.Process</code> class, which is just a wrapper around <code>System.fork()</code> and some other common commands. Here is a simple use of the <code>Process</code> class.</p>
+<p><a href="ipc0.icn">Download ipc0.icn</a></p>
+<pre><code>import
+   io(write),
+   util(Process)
+
+procedure run()
+   write(&quot;In child&quot;)
+end
+
+procedure main()
+   local c
+
+   write(&quot;In parent&quot;)
+
+   c := Process{run()}
+   c.start()
+   c.close()
+
+   write(&quot;Finished&quot;)
+end
+</code></pre>
+<p>This program when compiled prints</p>
+<pre><code>In parent
+In child
+Finished</code></pre>
+<p>The child process body is given (as a co-expression) in the <code>Process</code> constructor. In the parent process in the <code>main</code> procedure, invoking the <code>start()</code> method of the child begins the process, whilst the <code>close()</code> method waits for the child to finish.</p>
+<p>This is very straightforward, but for things become more complicated when the child and parent process wish to communicate with one another. Consider the following expanded version of the above program.</p>
+<p><a href="ipc1.icn">Download ipc1.icn</a></p>
+<pre><code>import
+   io(write),
+   util(Process)
+
+global var
+
+procedure run()
+   write(&quot;In child, setting var&quot;)
+   var := 2
+end
+
+procedure main()
+   local c
+
+   var := 1
+
+   write(&quot;In parent var=&quot;, var)
+
+   c := Process{run()}
+   c.start()
+   c.close()
+
+   write(&quot;Finished, var=&quot;, var)
+end
+</code></pre>
+<p>The output of this program is :-</p>
+<pre><code>In parent var=1
+In child, setting var
+Finished, var=1</code></pre>
+<p>This is not what you would expect at first glance; the child’s attempt to set the variable has had no effect on the parent. This is because at the point the child process is created, it is given a complete copy of the memory space of the parent process, and so all assignments affect the copy, not the original.</p>
+<h1 id="shared-memory">Shared Memory</h1>
+<p>To solve this problem, shared memory can be used. Here is the same program, but this time with the variable <code>var</code> replaced by an instance of the <code>Shm</code> shared memory class.</p>
+<p><a href="ipc2.icn">Download ipc2.icn</a></p>
+<pre><code>import
+   io(write),
+   ipc(Shm),
+   util(Process)
+
+global var
+
+procedure run()
+   write(&quot;In child, setting var&quot;)
+   var.set_value(2)
+end
+
+procedure main()
+   local c
+
+   # Create a Shm instance with initial value 1
+   var := Shm.create_private(1)
+
+   write(&quot;In parent var=&quot;, var.get_value())
+
+   c := Process{run()}
+   c.start()
+   c.close()
+
+   write(&quot;Finished, var=&quot;, var.get_value())
+
+   var.close()
+end
+</code></pre>
+<p>Now the output is :-</p>
+<pre><code>In parent var=1
+In child, setting var
+Finished, var=2</code></pre>
+<p>Here, var is an instance of the <code>Shm</code> class, and is created with the “factory” method <code>create_private()</code>. The parameter <code>1</code> is just the initial value. Then <code>get_value()</code> and <code>set_value()</code> are used to get/set the value of the object, and finally <code>close()</code> cleans up the operating system resources used by the instance (if this is not done, it will be done automatically when the program ends, and a warning message output). These various calls delegate their work to the C functions in the shared library.</p>
+<p>More or less anything can be used as the parameter to <code>set_value()</code>, but note that the value is copied into and out of the shared variable, ie reference semantics do not apply. So, for example :-</p>
+<pre><code>   var := Shm.create_private([1,2,3])
+
+   put(var.get_value(), 4)  # No effect; just adds 4 to the copy returned by get_value
+   every write(!var.get_value())  # 1,2,3
+
+   var.set_value(put(var.get_value(), 4))  # OK, sets the value again with the 4 added 
+   every write(!var.get_value())   # 1,2,3,4</code></pre>
+<p>As another example, here we set an instance of a class into the shared memory :-</p>
+<p><a href="ipc3.icn">Download ipc3.icn</a></p>
+<pre><code>import
+   io(write),
+   ipc(Shm)
+
+class MyClass()
+   private x
+
+   public thing()
+      write(&quot;In thing, x=&quot;, x)
+   end
+
+   public new(x)
+      self.x := x
+      return
+   end
+end
+
+procedure main()
+   local var, c, d
+   var := Shm.create_private()
+
+   c := MyClass(10)
+   var.set_value(c)
+
+   d := var.get_value()
+   d.thing()
+
+   write(&quot;c=&quot;, image(c), &quot; d=&quot;, image(d))
+
+   var.close()
+end
+</code></pre>
+<p>The output is :-</p>
+<pre><code>In thing, x=10
+c=object MyClass#1(1) d=object MyClass#2(1)</code></pre>
+<p>Note how <code>c</code> and <code>d</code> are different instances.</p>
+<p>There is one restriction regarding the value of the shared variable, and that is that it must be encodable by the <code>lang.encode()</code> procedure, which converts an arbitrary object into a string. Some things are by their nature not encodeable, such as a <code>FileStream</code> instance.</p>
+<h1 id="semaphores">Semaphores</h1>
+<p>The <code>Sem</code> class provides the classic semaphore mechanism, based on the underlying Unix implementation, which can be used for inter-process co-ordination, critical regions, and so on.</p>
+<p>Here is an example in which a child process creates some information and puts it into a shared memory variable, whilst the parent retrieves that information. The processes are co-ordinated by two semaphores to make sure they remain in step.</p>
+<p><a href="ipc4.icn">Download ipc4.icn</a></p>
+<pre><code>import
+   io(write),
+   ipc(Sem, Shm),
+   util(Process)
+
+global var, sem1, sem2
+
+procedure run()
+   local i
+   every i := 1 to 10 do {
+      # Wait till okay to set value
+      sem1.wait()
+      var.set_value(i)
+      # Signal value set
+      sem2.signal()
+
+      # Sleep for 1/2 second
+      delay(500)
+   }
+end
+
+procedure main()
+   local i, c
+   var := Shm.create_private()
+
+   # Create two private semaphores with initial value 0.
+   sem1 := Sem.create_private(0)
+   sem2 := Sem.create_private(0)
+
+   c := Process{run()}
+   c.start()
+
+   repeat {
+      # Signal okay to set value
+      sem1.signal()
+
+      # Wait till value set
+      sem2.wait()
+      i := var.get_value()
+      write(i)
+      if i = 10 then 
+         break
+   }
+   c.close()
+   var.close()
+delay(1000)
+write(sem1.get_value())
+write(sem2.get_value())
+   sem1.close()
+   sem2.close()
+
+   write(&quot;Finished okay&quot;)
+end
+</code></pre>
+<p>Note that the semaphores are created and destroyed in a similar way to shared memory.</p>
+<p>Other than the standard wait and signal methods, the Sem class also has methods to get and set the semaphore value, and to poll it for a value without suspending.</p>
+<h1 id="message-queues">Message queues</h1>
+<p>The third IPC facility is message queues. One process adds messages to the queue and another one reads the messages. A message can be any Icon value, subject to the same rules as for shared memory, described above. Here is the same example as just shown above, but using a message queue instead.</p>
+<p><a href="ipc5.icn">Download ipc5.icn</a></p>
+<pre><code>import
+   io(write),
+   ipc(Msg),
+   util(Process)
+
+global mq
+
+procedure run()
+   local i
+   every i := 1 to 10 do {
+      # Send the message
+      mq.send(i)
+
+      # Sleep for 1/2 second
+      delay(500)
+   }
+end
+
+procedure main()
+   local i, c
+
+   mq := Msg.create_private()
+
+   c := Process{run()}
+   c.start()
+
+   repeat {
+      i := mq.receive()
+      write(i)
+      if i = 10 then 
+         break
+   }
+   c.close()
+   mq.close()
+
+   write(&quot;Finished&quot;)
+end
+</code></pre>
+<p>As you can see, this particular task is much simpler using message queues.</p>
+<h1 id="public-ipc-resources">Public IPC resources</h1>
+<p>All of the examples above used “private” resources; for example the message queue was created with</p>
+<pre><code> mq := Msg.create_private() | stop(&quot;Couldn&#39;t create:&quot;, &amp;why)</code></pre>
+<p>But it is possible to provide a pre-arranged key in order to create a “public” resource instead. For example</p>
+<pre><code> mq := Msg.create_public(999) | stop(&quot;Couldn&#39;t create:&quot;, &amp;why)</code></pre>
+<p>After this succeeds a message queue will exist with key 999. If the call fails, then this usually means a queue with id 999 already exists.</p>
+<p>This message queue may then be opened by another process, possibly in another program.</p>
+<pre><code> mq := Msg.open_public(999) | stop(&quot;Couldn&#39;t open resource:&quot;, &amp;why)</code></pre>
+<p>Similar factory procedures exist for semaphores and shared memory.</p>
+<p>There is one difference between “private” and “public” resources: the “public” variety aren’t destroyed automatically at the end of the creating process; they have to be destroyed explicitly either by calling the <code>close()</code> method, or ultimately using the Unix commands <code>ipcs</code> and <code>ipcrm</code>. Also, bear in mind that the <code>close</code> method will completely remove the resource in question, so clients that have opened a resource with one of the <code>open_public()</code> methods will usually not call <code>close()</code>, leaving it available for further clients.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

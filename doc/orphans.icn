@@ -1,0 +1,52 @@
+import ipl.pdco, io
+
+global g1, g2, g3, k, m
+
+procedure main()
+   local e1, e2, e3
+
+   # Create some data structures.  Firstly, a table with a single
+   # entry
+   g1 := table(, k := [], 99)
+   # A list comprising several blocks of elements (since it is built
+   # up iteratively).
+   g2 := List{ 1 to 1000 }
+   # A list comprising a single big block of elements
+   g3 := list(1000)
+
+   write(vimage(g1[k]))
+   write(vimage(g2[10]))
+
+   # An arbitrary data object.
+   m := set()
+
+   # Create some variables referring to data in the above.  The first
+   # will "point" to the data block representing the single entry in
+   # g1.
+   e1 := Echo{ !g1 }
+   # This will point to an entry in the last element block in g2.
+   e2 := Echo{ g2[-10] }
+   # This will point to an entry in the single block in g1.
+   e3 := Echo{ g3[10] }
+
+   every clear(g1 | g2 | g3)
+
+   write("e1: ", vimage(@e1))
+   write("e2: ", vimage(@e2))
+   write("e3: ", vimage(@e3))
+   write(vimage(g1[k]))
+
+
+   &trace := -1
+   @e1
+   @e2
+   @e3
+   &trace := 0
+
+
+
+   # Create some references to m in orphaned / stuck data
+   @e1 := @e2 := @e3 := m
+
+   &break
+end

@@ -1,0 +1,32 @@
+import io, util
+
+procedure main()
+   local f, data, ram, gdata, data2
+
+   # Create some data to compress
+   data := repl("The quick brown fox jumps over the lazy dog", 1000)
+
+   # ram will be the "sink" for the output of gzip.
+   ram := RamStream()
+   use { 
+      f := FilterOutputStream(ram, "gzip", ["-c"]),
+      f.writes(data)
+   }
+   f.succeeded() | stop("gzip problem: ", &why)
+
+   # Get the output as a string.
+   gdata := ram.done()
+   write("Compressed ", *data, " to ", *gdata, " bytes")
+
+   # Now pass the compressed data (as a StringStream source) into
+   # gunzip and read the output to end of file.
+   data2 := use {
+      f := FilterInputStream(StringStream(gdata), "gunzip", ["-c"]),
+      f.read_all()
+   }
+   f.succeeded() | stop("gunzip problem: ", &why)
+
+   # Check the results.
+   if data == data2 then
+      write("Recovered original data OK")
+end

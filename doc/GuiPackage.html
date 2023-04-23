@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Object Icon’s user interface library</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Object Icon’s user interface library</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#ivib">Ivib</a><ul>
+<li><a href="#saving-a-file">Saving a file</a></li>
+<li><a href="#separate-layout-file">Separate layout file</a></li>
+</ul></li>
+<li><a href="#the-component-class">The Component class</a><ul>
+<li><a href="#lifecycle">Lifecycle</a></li>
+<li><a href="#attributes">Attributes</a></li>
+<li><a href="#the-cloned-window">The cloned window</a></li>
+<li><a href="#display-and-invalidate">Display and invalidate</a></li>
+<li><a href="#child-components">Child components</a><ul>
+<li><a href="#attributes-1">Attributes</a></li>
+<li><a href="#z-order">Z order</a></li>
+<li><a href="#tab-order">Tab order</a></li>
+<li><a href="#clipping">Clipping</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#the-paint-class">The Paint class</a><ul>
+<li><a href="#textpaint">TextPaint</a></li>
+<li><a href="#imagepaint">ImagePaint</a></li>
+<li><a href="#gridpaint">GridPaint</a></li>
+</ul></li>
+<li><a href="#borders">Borders</a><ul>
+<li><a href="#compoundborder">CompoundBorder</a></li>
+</ul></li>
+<li><a href="#itempaint">ItemPaint</a><ul>
+<li><a href="#mapitempaint">MapItemPaint</a></li>
+<li><a href="#example">Example</a></li>
+</ul></li>
+<li><a href="#dispatcher">Dispatcher</a></li>
+<li><a href="#imagecache">ImageCache</a></li>
+<li><a href="#positioning-and-sizing">Positioning and sizing</a></li>
+<li><a href="#grid-layouts">Grid Layouts</a><ul>
+<li><a href="#constraints">Constraints</a></li>
+<li><a href="#gridifying-a-component-in-ivib">Gridifying a component in ivib</a></li>
+<li><a href="#adding-a-component">Adding a component</a></li>
+<li><a href="#expanding-a-cell-or-component">Expanding a cell or component</a></li>
+<li><a href="#changing-the-alignment">Changing the alignment</a></li>
+<li><a href="#changing-the-insets">Changing the insets</a></li>
+<li><a href="#changing-the-default-insets">Changing the default insets</a></li>
+<li><a href="#reverting-to-a-null-layout">Reverting to a null layout</a></li>
+</ul></li>
+<li><a href="#events">Events</a><ul>
+<li><a href="#event-types">Event types</a></li>
+<li><a href="#events-in-ivib">Events in ivib</a></li>
+</ul></li>
+<li><a href="#menus">Menus</a><ul>
+<li><a href="#popup-menus">Popup menus</a></li>
+</ul></li>
+<li><a href="#tabset-and-overlayset">TabSet and OverlaySet</a></li>
+<li><a href="#dialog">Dialog</a><ul>
+<li><a href="#useful-methods">Useful methods</a></li>
+</ul></li>
+<li><a href="#scaling">Scaling</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>The gui package provides an object-oriented library of user interface components, which make use of the underlying graphics facilities.</p>
+<h1 id="ivib">Ivib</h1>
+<p>Ivib is a program which lets the user design a gui interface, allowing the user to interactively place and configure components in a window area.</p>
+<p>To create a dialog window using Ivib, start the program with the name of a new source file. For example:</p>
+<pre><code>ivib myprog.icn</code></pre>
+<p>The Ivib window will appear with a blank “canvas” area, which represents the dialog window to be created.</p>
+<p><img src="gui-ivib1.png" /></p>
+<p>Most of the toolbar buttons create components to add to the dialog under construction. This doesn’t represent the full set of available components; the full list can be found under the “Objects” menu.</p>
+<p>Once a component is added to the canvas, it can be dragged into position and resized (by dragging its corners). Right-clicking brings up a context menu for the component. For example, here is the view after a button has been added, and its context menu shown :-</p>
+<p><img src="gui-ivib2.png" /></p>
+<p>Selecting “Dialog” opens up the component’s configuration dialog; this can also be done by simply pressing the return key.</p>
+<p><img src="gui-ivib3.png" /></p>
+<p>The name of the component (ie its variable name in the generated code) can be altered in the code tab :-</p>
+<p><img src="gui-code.png" /></p>
+<p>As well as adding components, the toolbar contains buttons for other useful operations. There is a save button, undo and redo buttons, a preview button which lets the user interact with the dialog under design, and a button which shows the tree structure of the components in the canvas.</p>
+<h2 id="saving-a-file">Saving a file</h2>
+<p>Ivib’s saved files are program source code that implement the interface. A subclass of the <code>Dialog</code> class is written (the actual super-class is in fact configurable), and this includes a method called <code>setup()</code>, which configures all the components of the interface. Do not edit this method, since it will be re-written next time the dialog is saved.</p>
+<h2 id="separate-layout-file">Separate layout file</h2>
+<p>Ivib normally saves its layout data along with the icon source file, as a lengthy comment. This can be rather overbearing, and so it is possible to save this data in a separate file. To do this select the “Code” tab of the dialog preferences (menu item “Canvas/Dialog prefs”). Then edit “Save layout in” field. In the entered value “$” represents the name of the icon source file (without its extension).</p>
+<p><img src="gui-dialogprefs2.png" /></p>
+<p>So in this case, if the icon file were <code>mydialog.icn</code> we would save the layout data in <code>layouts/mydialog.layout</code>. Obviously the <code>layouts</code> directory would have to exist.</p>
+<h1 id="the-component-class">The Component class</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.Component.html"><code>gui.Component</code></a> is the base class for all the components in the gui library, such as buttons, text fields, tables and so on.</p>
+<h2 id="lifecycle">Lifecycle</h2>
+<p>Each <code>Component</code> is initialized before its enclosing dialog is shown, and “finalized” just before the dialog is disposed. This is done by the methods <code>initially()</code>, and <code>finally()</code>, respectively. These methods may be overridden to include custom initialization and cleanup code, but when doing so it is important to remember to call the superclass’s overridden method; for example :-</p>
+<pre><code>class MyComponent(Component)
+   ...
+   public override initially()
+      Component.initially()
+      # custom initialization code goes here
+   end
+   
+   public override finally()
+      Component.finally()
+      # custom cleanup code goes here
+   end
+   ...
+end</code></pre>
+<h2 id="attributes">Attributes</h2>
+<p>Each component has its own set of window attributes, and its own cloned window to draw into. There are methods to set attributes which correspond to the methods in the <code>Window</code> class. For example :-</p>
+<pre><code>b := TextButton().
+        set_fg(&quot;green&quot;).
+        set_font(&quot;serif&quot;)</code></pre>
+<p>To set attributes in ivib, use the <code>WAttribs</code> tab of the component’s dialog, and add the constraints, as follows :-</p>
+<p><img src="gui-wattribs.png" /></p>
+<h2 id="the-cloned-window">The cloned window</h2>
+<p>The cloned window is held in the member variable <code>cbwin</code>. It is created in the <code>initially()</code> method. Thereafter, it can be used to calculate text dimensions, such as font heights and text widths.</p>
+<h2 id="display-and-invalidate">Display and invalidate</h2>
+<p>The <code>display()</code> method is used by the component to render itself. It draws into the cloned window, <code>cbwin</code>. Before calling <code>display()</code>, <code>cbwin</code> is clipped and erased to the rectangle which the system desires to be redrawn. This rectangle can be obtained via the <code>get_cbwin_clip()</code>, which returns a <code>Rect</code> instance, and this can be used to avoid drawing outside the clipped rectangle unnecessarily.</p>
+<p>The <code>display_children()</code> method can be called from within <code>display()</code> to draw the component’s children.</p>
+<p>When a component (or part of it) must be redrawn, it is “invalidated”. This is done by invoking the component’s <code>invalidate()</code> method, with an optional <code>Rect</code> argument indicating the part of the component which must be redrawn. The system then, at a later point, schedules a call to <code>display()</code> to redraw the component. Calling <code>invalidate()</code> is quite cheap.</p>
+<h2 id="child-components">Child components</h2>
+<p>A component can contain child components. Some components have children built-in, for example a scrollbar has up and down buttons which are both child components. But child components can be added arbitrarily too. In ivib, child components can be added to a <code>Panel</code> component by dragging them inside the <code>Panel</code>. They then act as a unit, and can be moved together.</p>
+<p><img src="gui-panel.png" /></p>
+<p>In ivib, the full tree of components may be viewed using the tree view window, which is opened via the toolbar button at the right with the tree icon.</p>
+<p><img src="gui-treeview.png" /></p>
+<h3 id="attributes-1">Attributes</h3>
+<p>A child component inherits the window attributes from its parent. Thus setting the above <code>Panel</code>’s foreground to green would give both the child components a green foreground too.</p>
+<h3 id="z-order">Z order</h3>
+<p>The children of a component have a particular Z order, which determines which child component lies on top of another, when they overlap. Most of the time, children don’t overlap each other, so this doesn’t matter.</p>
+<p>To change the Z order in ivib, click on the components in the desired order, whilst holding down the control key. The selections should then be numbered, as shown in the following example :-</p>
+<p><img src="gui-zorder1.png" /></p>
+<p>Now select the menu item Selections/Order/Set Z order. The z order is changed to the selected order, resulting in the following :-</p>
+<p><img src="gui-zorder2.png" /></p>
+<h3 id="tab-order">Tab order</h3>
+<p>The children also have a particular tab focus order, which determines how the focus changes when the tab (and cursor) keys are pressed. This can easily be changed in ivib by selecting as described for Z ordering, and using the menu option Selections/Order/Set tab order.</p>
+<h3 id="clipping">Clipping</h3>
+<p>Child components are clipped to their parent’s rectangle. So for example, in the following the button is clipped by its parent panel, and is only partly visible.</p>
+<p><img src="gui-clip.png" /></p>
+<h1 id="the-paint-class">The Paint class</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.Paint.html"><code>gui.Paint</code></a> is an abstraction for drawing. A <code>Paint</code> instance has a size, and can draw itself at an arbitrary location. The idea is that a <code>Paint</code> is used where one would intuitively use a string - for example in a button label, or a menu item, or a tab heading. But a <code>Paint</code> is abstract, so an implementation can draw anything, not just text.</p>
+<p>The following sections describe some of the common <code>Paint</code> implementations. Of course, you can also define your own.</p>
+<h2 id="textpaint">TextPaint</h2>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.TextPaint.html"><code>gui.TextPaint</code></a> is the most basic <code>Paint</code> instance; it just paints a simple string.</p>
+<pre><code>b := TextButton().
+       set_paint(TextPaint(&quot;Hello&quot;))</code></pre>
+<h2 id="imagepaint">ImagePaint</h2>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.ImagePaint.html"><code>gui.ImagePaint</code></a> paints an arbitrary image. It has options for choosing the source of the image, and for scaling it to a particular size. For example, to simply display an image from the cache :-</p>
+<pre><code>b := TextButton().
+       set_paint(ImagePaint().set_cache(&quot;cache-key&quot;))</code></pre>
+<p>In ivib, an <code>ImagePaint</code> may be configured by first selecting “Image” from the relevant drop-down list (for example in a button’s configuration dialog). Then click the “Edit” button. The following dialog is shown.</p>
+<p><img src="gui-imagepaint1.png" /></p>
+<p>The text field can contain either a file name, or a key into the <a href="#imagecache">image cache’s</a> table of named image data. The two buttons let you browse for these values if you wish to. The box to the left gives a preview of the image. The cache checkbox indicates whether the image, when loaded, should be retained by the <code>ImageCache</code>. This will make future references to the same image faster, but will take up memory.</p>
+<p><img src="gui-imagepaint2.png" /></p>
+<h2 id="gridpaint">GridPaint</h2>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.GridPaint.html"><code>gui.GridPaint</code></a> allows text and images to be combined using the same layout system used by <a href="http://objecticon.sourceforge.net/libref/index.html?gui.GridLayout.html"><code>gui.GridLayout</code></a> (see also <a href="#grid-layouts">Grid Layouts</a> below). Text attributes can be set to give different fonts and colours. A single string is used to specify everything. Ivib contains an interactive editor so that you can see the results as you make edits to the string.</p>
+<p>To access the editor, first select “Grid” from the dropdown list associated with the relevant <code>Paint</code>. It will normally be set to “Text”. Then press the “Edit” button.</p>
+<p>The grid string consists of text interspersed with commands, which begin on a newline with a “.”. These commands control the grid and its contents. The grid string should begin with a cell command.</p>
+<p>The content of each cell in the grid is split into lines. Each line is “output” to the window with a break command, <code>.br</code>. Here is a very simple grid string :-</p>
+<pre><code>.cell
+Hello
+.br
+World
+.br</code></pre>
+<p>The following screenshot shows this string being edited in the Ivib <code>GridPaint</code> editor.</p>
+<p><img src="gui-gridpaint1.png" /></p>
+<p>The following is a complete list of grid string commands. Note that if an argument contains spaces, it should be surrounded in single quotes.</p>
+<ul>
+<li><p><strong>.cell <code>&lt;constraint&gt; ...</code></strong> Create a new cell. The grid constraints are given after the <code>.cell</code> command; for example :-</p>
+<pre><code>.cell l_inset=5 eol</code></pre></li>
+<li><p><strong>.br</strong> Finish the present line within the cell, and output it, and begin a new line.</p></li>
+<li><p><strong>.img <code>&lt;key&gt;</code></strong> Insert an image from the image cache. The argument gives the key. Typically one would include an image with the <code>$load</code> preprocessor command, then put the image into the image cache (usually in the <code>main</code> procedure), and then use the key. See <a href="#imagecache">ImageCache</a> below.</p></li>
+<li><p><strong>.imgl <code>&lt;name&gt;</code></strong> Load an image using <code>ImageCache.load</code>. The argument gives the <code>ImageCache</code> name key or file name.</p></li>
+<li><p><strong>.x_spc <code>&lt;spc&gt;</code></strong> Insert the given space, in pixels, into the current line.</p></li>
+<li><p><strong>.y_spc <code>&lt;spc&gt;</code></strong> Specify that the current line in the cell is at least the given height, in pixels.</p></li>
+<li><p><strong>.fg <code>&lt;colour&gt;</code></strong> Set the foreground colour. If <code>colour</code> is omitted, the colour is reset to the parent component’s foreground.</p></li>
+<li><p><strong>.bg <code>&lt;colour&gt;</code></strong> Set the background colour. If <code>colour</code> is omitted, the colour is reset to the parent component’s background.</p></li>
+<li><p><strong>.font <code>&lt;font&gt;</code></strong> Set the font. If <code>font</code> is omitted, the font is reset to the parent component’s font.</p></li>
+<li><p><strong>.leading <code>&lt;leading&gt;</code></strong> Set the leading. If <code>leading</code> is omitted, the leading is reset to the parent component’s leading.</p></li>
+<li><p><strong>.x_ialign <code>&lt;alignment&gt;</code></strong> Set the internal X alignment, ie how a line in a cell will align with the other lines in the cell. This only has an effect at the beginning of a line, before any output. The initial value of this setting is <code>c</code>, ie centre alignment. For example :-</p>
+<p><img src="gui-gridpaint3.png" /></p></li>
+<li><p><strong>.y_ialign <code>&lt;alignment&gt;</code></strong> Set the internal Y alignment, ie how following output in a line will align vertically within the line as a whole. The initial value of this setting is <code>c</code>. For example :-</p>
+<p><img src="gui-gridpaint2.png" /></p></li>
+</ul>
+<h1 id="borders">Borders</h1>
+<p>Instances of the <a href="http://objecticon.sourceforge.net/libref/index.html?gui.ABorder.html"><code>gui.ABorder</code></a> class are used to draw borders around things. The odd name is to avoid a name-clash with a component, <a href="http://objecticon.sourceforge.net/libref/index.html?gui.Border.html"><code>gui.Border</code></a>. Unlike <code>Paint</code>, a border doesn’t have a size; rather it has four inset values, giving the width of each of its four borders. A border also has two alignment values, used to specify the alignment of the thing being drawn inside the border. For example :-</p>
+<pre><code>TextButton().
+   set_size(110, 80).
+   set_paint(TextPaint(&quot;Button&quot;)).
+   set_border(RaisedBorder().set_align(Align.R, Align.B))</code></pre>
+<p>results in</p>
+<p><img src="gui-border1.png" /></p>
+<p>Note how the button has been given a size greater than its natural preferred size based on the label. So the alignment of the border causes the label to gravitate towards the bottom right corner within the additional space.</p>
+<p>Normally of course a button will be sized to its preferred size, so there will be no extra space; and if there were the default alignment of a border is to centre the label.</p>
+<p>The following image shows some of the available border classes drawing a <code>Button</code>’s border. <a href="http://objecticon.sourceforge.net/libref/index.html?gui.NullBorder.html"><code>gui.NullBorder</code></a> is a zero size border, whilst <a href="http://objecticon.sourceforge.net/libref/index.html?gui.EmptyBorder.html"><code>gui.EmptyBorder</code></a> provides space, but nothing visible. The default space is the constant <code>Gui.X_INSET</code> horizontally and <code>Gui.Y_INSET</code> vertically.</p>
+<p><img src="gui-border2.png" /></p>
+<p>The border of a component can be changed in ivib by choosing the “Other” tab in the component’s configuration dialog, then choosing the border style from the drop-down list. Pressing the “Edit…” button allows the chosen border to be configured.</p>
+<h2 id="compoundborder">CompoundBorder</h2>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.CompoundBorder.html"><code>gui.CompoundBorder</code></a> is useful to combine two borders, one within another, usually to provide some space padding, by making one of the borders an <code>EmptyBorder</code>.</p>
+<h1 id="itempaint">ItemPaint</h1>
+<p>The <code>Paint</code> classes operate on single items of data; for example a <code>TextPaint</code> instance draws a particular string, and only that string. The <a href="http://objecticon.sourceforge.net/libref/index.html?gui.ItemPaint.html"><code>gui.ItemPaint</code></a> classes on the other hand are designed so that a single instance can operate on multiple data items. They can thus be used to provide a flexible way of rendering data in components which draw many items of data, such as lists, trees and tables. The several data items are passed to the methods of the single <code>ItemPaint</code> instance to give sizing information and to draw the data.</p>
+<p>An <code>ItemPaint</code> is generally used by a component together with a border in order to provide a border around each item.</p>
+<p>Some useful subclasses of <code>ItemPaint</code> include <a href="http://objecticon.sourceforge.net/libref/index.html?gui.TextItemPaint.html"><code>gui.TextItemPaint</code></a> for painting text data, and <a href="http://objecticon.sourceforge.net/libref/index.html?gui.PixelsItemPaint.html"><code>gui.PixelsItemPaint</code></a> for painting <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Pixels.html"><code>graphics.Pixels</code></a> data, and <a href="http://objecticon.sourceforge.net/libref/index.html?gui.ImageCacheItemPaint.html"><code>gui.ImageCacheItemPaint</code></a> for painting <a href="#imagecache">cached images</a> (the data in this case being the keys into the cache). A particularly useful <code>Component</code> is LIBREF(gui.ItemPaintList), which provides a scrollable list, rendering each item using a single <code>ItemPaint</code>.</p>
+<h2 id="mapitempaint">MapItemPaint</h2>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.MapItemPaint.html"><code>gui.MapItemPaint</code></a> is an adapter class which allows another <code>ItemPaint</code> to be easily used with a list of data items of arbitrary type. For example, suppose we had a list of records of employees, with each record including a “name” field, and wished to display the names in a list. A <code>TextItemPaint</code> couldn’t be used directly with the list, since that expects string data (rather than records), but a <code>MapItemPaint</code> can adapt the list as follows :-</p>
+<pre><code>procedure convert(x)
+   return x.name
+end
+
+...
+
+l := ItemPaintList().
+   set_item_paint(MapItemPaint(TextItemPaint(), convert)).
+   set_contents(employee_list)</code></pre>
+<p>The <code>convert</code> procedure is used to “map” the records in the list to the string data expected by the enclosed <code>ItemPaint</code>.</p>
+<h2 id="example">Example</h2>
+<p>An example of a sophisticated <code>ItemPaint</code>, is that used in the file dialog to draw file names and icons :-</p>
+<p><img src="gui-itempaint1.png" /></p>
+<p>The input data elements to the <code>ItemPaint</code> are <code>io.ListEntry</code> items, each of which gives information about a single file, returned by the <a href="http://objecticon.sourceforge.net/libref/index.html?io.Files.html%23list"><code>io.Files.list()</code></a> method. The right-hand list of files is created as follows :-</p>
+<pre><code>flist := ItemPaintList().
+   set_draggable_cursor(&amp;yes).
+   set_item_paint(AnnotatedIconFilesItemPaint()).
+   set_item_border(EmptyBorder().
+                       set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                       set_x_align(Align.L))</code></pre>
+<p>This particular <code>ItemPaint</code> is also used in the example programs <code>flowterm</code>, <code>explorer</code> and <code>ttexplorer</code>.</p>
+<h1 id="dispatcher">Dispatcher</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.Dispatcher.html"><code>gui.Dispatcher</code></a> is responsible for dispatching events and re-drawing requests to open dialogs. It also includes a scheduler that can be used to run background tasks. This is used quite widely in the gui library; for example to make the cursor in a text field go on and off. It is very easy to create a background task, as follows :-</p>
+<pre><code>t := Dispatcher.new_task{ ... }</code></pre>
+<p>where the dots contain whatever code we want to run in the task. Typically this will be a procedure or method involving a loop, which does something, then sleeps for a while, and repeats. The returned value, <code>t</code>, is an instance of the class <code>io.Task</code>. The task can now be started with</p>
+<pre><code>t.start()</code></pre>
+<p>and stopped again with</p>
+<pre><code>t.stop()</code></pre>
+<p>The <code>Task</code> class has many other methods for controlling its behaviour, and can also be used to do background I/O - (see the documentation for the <a href="http://objecticon.sourceforge.net/libref/index.html?io.Task.html"><code>io.Task</code></a>, <a href="http://objecticon.sourceforge.net/libref/index.html?io.TaskStream.html"><code>io.TaskStream</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?io.Scheduler.html"><code>io.Scheduler</code></a> classes for more details).</p>
+<p>The example program <code>sieve</code> contains a simple example of a task which calculates prime numbers. A more complex example is <code>browser</code> which is a simple web browser that does its background I/O using <code>Task</code>s.</p>
+<h1 id="imagecache">ImageCache</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?gui.ImageCache.html"><code>gui.ImageCache</code></a> is used to store image data and rendered images in a convenient and efficient way. It consists of static methods, and maintains two tables. The first table maps string keys to image data. The image data is binary string image data, in any recognised image format. The second table maps string keys to <code>Window</code>s, each containing a single image. These can then be drawn into a dialog.</p>
+<p>The data table is particularly useful for associating image data loaded with the <code>$load</code> preprocessor directive with a string key, which can then be referenced anywhere in a program. For example :-</p>
+<pre><code>$load MY_IMG_DATA &quot;/home/rparlett/images/my_img.png&quot;
+
+...
+procedure main()
+   ...
+   ImageCache.name_image(&quot;my_img&quot;, MY_IMG_DATA)
+   ...
+end
+...</code></pre>
+<p>Now we can use the key “my_img” to refer to the png image data. However, this is only data, as opposed to an actual rendered image. These are contained in hidden <code>Window</code>s, one for each image, and are stored in the cache’s image table. To lookup a <code>Window</code>, use the <code>ImageCache.get</code> method, passing either a filename, or a key into the named image table. For example :-</p>
+<pre><code>i1 := ImageCache.get(&quot;/home/rparlett/images/my_img.png&quot;)
+i2 := ImageCache.get(&quot;my_img&quot;)</code></pre>
+<p>The first example loads the image in the named file into a <code>Window</code>, puts it into the image map, and returns it. The second example looks up the key “my_img” in the data map, and assuming we have placed such an entry in the data map, as in the previous example, creates a <code>Window</code> from that data, puts it into the image map, and returns it. In both cases, subsequent calls with the same filename or data key will immediately return the <code>Window</code> cached in the image map.</p>
+<p>The most significant difference between the two examples is that the first requires the png file to be present at run-time; whilst the second will use the data stored in the data map with <code>name_image()</code>; that data will have come from the compile-time inclusion of the image data, so the png file needn’t be present at run-time.</p>
+<p>If a data key and filename clash (in the above example, perhaps there may be a file named “my_img” in the current directory), then the data key has priority. In other words, only if the data key is absent is a file loaded. If the file is absent too (or the image data is invalid), then the <code>get()</code> method fails.</p>
+<p>A <code>Window</code> returned by <code>get()</code> should never be closed by the caller, since it may be re-used later on.</p>
+<p><code>ImageCache</code> also has a <code>load()</code> method; this is like <code>get()</code>, but it doesn’t cache the image in the image table. So</p>
+<pre><code>i3 := ImageCache.load(&quot;my_img&quot;)</code></pre>
+<p>will always create a new <code>Window</code> from the “my_img” data. Unlike a <code>Window</code> returned by <code>get()</code>, the caller must ensure that a <code>Window</code> returned by <code>load()</code> is closed; otherwise a memory leak will result.</p>
+<p>In ivib, selecting cache keys presents a problem, because the cache data may be setup elsewhere in the program of which the dialog being designed will form a part; so ivib has no way of knowing what the image represented by a key may be. In order to give some flexibility, ivib allows the user to provide a list of directories containing images; these are scanned at startup and the image cache is populated with image data from any image files found. The list of directories can be set up in the dialog File/Preferences, and in the “Named image paths” tab :-</p>
+<p><img src="gui-imagepaths.png" /></p>
+<p>For instance, the examples directory, included in the above list, contains several png and gif files; for example <code>rpp.FONT_24.gif</code>. At startup, this file is loaded into the image cache names table, with the key <code>rpp.FONT_24</code> (the extension is dropped). Then this image is available (along with several others) from the list shown when a cache key is requested :-</p>
+<p><img src="gui-imagename.png" /></p>
+<p>When the dialog is incorporated into the program, it is the programmer’s responsibility to set up the cache so that any keys used are available. So for example, if the <code>rpp.FONT_24</code> key were used, then the file <code>rpp.FONT_24.gif</code> could be included with <code>$load</code> and the data named with <code>name_image()</code>, as described above. The image used in the dialog created with ivib would then render correctly.</p>
+<h1 id="positioning-and-sizing">Positioning and sizing</h1>
+<p>In order to draw a component, the system needs to know its size and position on the screen. The <code>Component</code> class is a subclass of <a href="http://objecticon.sourceforge.net/libref/index.html?gui.Rect.html"><code>gui.Rect</code></a>, which gives <code>x</code>, <code>y</code>, <code>w</code> and <code>h</code> fields to provide these values; however these values need somehow to be computed. There are several possibilities.</p>
+<ul>
+<li><p>The component may be positioned by overriding its parent’s <code>layout()</code> method; for example a <code>ScrollBar</code>’s buttons are positioned and sized in <code>ScrollBar</code>’s <code>layout()</code> method, based on the <code>ScrollBar</code>’s own position and size (which are always known when <code>layout</code> is called).</p></li>
+<li><p>The component may have its position and/or size set explicitly. <code>set_pos(x, y)</code> sets the x and y position of the component. Each coordinate can be either an absolute pixel position, or a percentage plus or minus an offset. For example :-</p>
+<pre><code>c.set_pos(50, 60)
+c.set_pos(100, &quot;25%&quot;)
+c.set_pos(&quot;50%-20&quot;, &quot;25%+100&quot;)</code></pre>
+<p>Note that the position is relative to the parent component, and the percentages are the percentage of the width (or height) of the parent component. This is in contrast to the computed positions, which are relative to the containing window.</p>
+<p>The positions may also be made relative to the left or right (in the x-direction) or the top or bottom (in the y-direction). For example :-</p>
+<pre><code>c.set_align(Align.C, Align.B)</code></pre>
+<p>The default alignment is relative to the top-left of the parent.</p>
+<p>The <code>set_size(w, h)</code> method sets the size of the component; parameters are as for set_pos() above.</p>
+<p>In ivib, the “Pos &amp; Size” tab permits the configuration of a component’s position and size, as well as its Z-order value. Alternatively, the component may be positioned and sized with the mouse, or the cursor keys. Shifted cursor keys adjust the size rather than the position.</p>
+<p><img src="gui-resize.png" /></p></li>
+<li><p>The component may provide a default size, if one isn’t set explicitly. For example, a button’s default size may be calculated from its border’s insets and its paint’s dimensions. A component provides default width and/or height by implementing the <code>get_default_width()</code> and <code>get_default_height()</code> methods.</p></li>
+<li><p>A <code>Layout</code> may be set in the component’s parent. A <code>Layout</code> is responsible for sizing and positioning all of the children in a component, and can also calculate a preferred size for the component too. The gui library is designed so that multiple <code>Layout</code> implementations can be used, but in practice only one, <code>GridLayout</code>, is needed in practice. This is described in the next section.</p></li>
+</ul>
+<h1 id="grid-layouts">Grid Layouts</h1>
+<p>As its name implies, a <a href="http://objecticon.sourceforge.net/libref/index.html?gui.GridLayout.html"><code>gui.GridLayout</code></a> lays its child components out in a grid. Each component may take up several rows or columns in a grid, and may float within its grid cell(s), or be expanded to fill them entirely. A grid is configured by way of its components’ <em>constraints</em>, which comprise several configurable settings stored in each component.</p>
+<p>Constraints are not actually specific to grid layouts, since they form part of a more general layout system. They are thus stored in a table, rather than as member fields of <code>Component</code>. To set a constraint, use :-</p>
+<pre><code>c.set_constraint(key, val)</code></pre>
+<p>where <code>key</code> is a string and <code>val</code> is some arbitrary value which will be understood by the layout to be used.</p>
+<h2 id="constraints">Constraints</h2>
+<p>The full list of constraints understood by <code>GridLayout</code> is as follows :-</p>
+<ul>
+<li><p><strong>x_tab, y_tab</strong> When this component is added, the given values are added to the cursor before its position is calculated.</p></li>
+<li><p><strong>eol</strong> Set y to the next row, and set the x position to 1.</p></li>
+<li><p><strong>x, y</strong> Specify the position explicitly. If not given, the position is calculated from the cursor position.</p></li>
+<li><p><strong>w, h</strong> Specify the size of the component in grid units. The default is one grid unit in both directions.</p></li>
+<li><p><strong>l_inset, r_inset, t_inset, b_inset</strong> Specify the insets around the outside of the cell. The default is the grid’s default outer inset, for edges at the edge of the grid, or the grid’s default inner inset for internal edges.</p></li>
+<li><p><strong>x_align, y_align</strong> The alignment of the component within the cell. Possible values for <code>x_align</code> are <code>Align.L</code>, <code>Align.R</code> or <code>Align.C</code>; for <code>y_align</code> they are <code>Align.T</code>, <code>Align.B</code> or <code>Align.C</code>. Note that alignments are calculated within the cell’s insets. So for example, to place a component at the absolute left edge of its cell, specify <code>x_align</code> as <code>Align.L</code> and <code>l_inset</code> as zero.</p></li>
+<li><p><strong>x_fill, y_fill</strong> Flag values; if set then the component expands to fill its cell.</p></li>
+<li><p><strong>x_weight, y_weight</strong> The weight is a numeric value which indicates how much of any free space should be allocated to this cell. The weights in a row or column are totalled and the extra space allocated in proportion to each cell’s weight. If all the weights in a row or column are zero, then any free space around the grid is not allocated to the cells. If the <code>extra</code> setting of the grid is not set to <code>Grid.EXTRA_CELLS</code>, then the weights are ignored.</p></li>
+</ul>
+<p>Components are initialized with a set of suitable constraints. In ivib these can be edited either in the “Constraints” tab of the component’s configuration dialog :-</p>
+<p><img src="gui-constraints1.png" /></p>
+<p>or via the right-click context sub-menu “Constraints”; for example :-</p>
+<p><img src="gui-constraints2.png" /></p>
+<h2 id="gridifying-a-component-in-ivib">Gridifying a component in ivib</h2>
+<p>Ivib supports interactive design of a <code>GridLayout</code>. To get started, it is easiest to first layout the children by hand, but without worrying about being too precise. For example, here we have four components in a <code>Panel</code> :-</p>
+<p><img src="gui-grid1.png" /></p>
+<p>Now right-click on the <code>Panel</code>, and select the option “Gridify”. The layout is changed to a <code>GridLayout</code>, and now appears as follows :-</p>
+<p><img src="gui-grid2.png" /></p>
+<p>(If your grid appears with more columns, and blank gaps, then press “Undo” and try making your original hand drawn layout more precise).</p>
+<p>Note how the <code>Panel</code> is much smaller. This is because its size is calculated by the <code>GridLayout</code>, giving it the most compact form (in the panel’s “Pos &amp; Size” configuration tab, you will find that width and height are greyed out, and the “default” checkboxes ticked).</p>
+<p><img src="gui-grid3.png" /></p>
+<p>This is not obligatory however, and you can resize the panel to a larger size if you wish, simply by dragging on its corners. For example :-</p>
+<p><img src="gui-grid4.png" /></p>
+<p>Note how the two text fields have taken up the additional horizontal space. This is because the default constraints of the text field indicate that it should expand horizontally.</p>
+<h2 id="adding-a-component">Adding a component</h2>
+<p>To add a component to a grid, drag it into the containing component. It will be added to the end of the grid. For example, here we have added a checkbox.</p>
+<p><img src="gui-grid5.png" /></p>
+<p>Now place it in the correct order position using the “Order Up” and “Order Down” toolbar buttons (third and fourth from the left on the second row). In the example, if we press “Up” twice, we will have.</p>
+<p><img src="gui-grid6.png" /></p>
+<p>Finally, adjust the constraints of the component as desired. In this case, we set the new component’s “eol” constraint, and set its grid width to 2. Both of these can be set from the right-click sub-menu, “Constraints/Position”. The final result is then :-</p>
+<p><img src="gui-grid7.png" /></p>
+<h2 id="expanding-a-cell-or-component">Expanding a cell or component</h2>
+<p>One common edit is to make a cell expand into available space. For example, we may wish the top-left button in our example expand vertically. This is done in two steps. Firstly, the cell is given a <code>y_weight</code> constraint of <code>1.0</code> (right-click menu option “Constraints/Y layout/Set y weight to 1.0”). This expands the cell (in fact the whole row) into the available empty space above :-</p>
+<p><img src="gui-grid8.png" /></p>
+<p>Now we wish to make the button fill its cell vertically, rather than float within its cell’s space. To do this we set the constraint <code>y_fill</code> to <code>&amp;yes</code> (menu option “Constraints/Y layout/Set y fill to 1”).</p>
+<p><img src="gui-grid9.png" /></p>
+<h2 id="changing-the-alignment">Changing the alignment</h2>
+<p>Having expanded the button in our example, we now see that the adjacent text field is floating vertically in the centre of its cell. We can change this so that it aligns with the top or bottom of its cell. For example, to align at the top we set constraint <code>y_align</code> to <code>t</code> (menu “Constraints/Y layout/Set y align to t”). The result is :-</p>
+<p><img src="gui-grid10.png" /></p>
+<h2 id="changing-the-insets">Changing the insets</h2>
+<p>As another example, we may wish to edit the insets around a component. For example, we may wish the textfield to be flush against the left edge of its cell. To do this, we set the constraint <code>l_inset</code> to <code>0</code> (menu “Constraints/Insets/Set l_inset to 0”). The result is :-</p>
+<p><img src="gui-grid11.png" /></p>
+<p>Setting an inset to a particular value necessitates using the component’s configuration dialog and editing the value in the “Constraints” tab.</p>
+<h2 id="changing-the-default-insets">Changing the default insets</h2>
+<p>If we don’t specify insets on a component in a grid, then the default insets are applied, as described in the <a href="#constraints">Constraints</a> section above. These can be edited by selecting the “Other” tab of the containing component’s configuration dialog, then clicking “Edit…” next to “Layout”. The following dialog appears :-</p>
+<p><img src="gui-gridlayoutsetup.png" /></p>
+<p>We can then alter the default inner and outer insets, or let the default values apply.</p>
+<p>This dialog also allows configuration of the use of extra space. The default is to allocate to the grid’s cells, according to weight.</p>
+<h2 id="reverting-to-a-null-layout">Reverting to a null layout</h2>
+<p>Having “gridified” a layout, you may at some point perhaps wish to return to the default layout, where components are positioned by hand. To do this, simply select the “Other” tab of the containing component’s configuration dialog :-</p>
+<p><img src="gui-other.png" /></p>
+<p>Then change the “Layout” setting to “&amp;null”.</p>
+<h1 id="events">Events</h1>
+<p>Components “fire” events when particular things happen, and these events can be “listened” to, so that action can be taken. Listeners are kept in a simple list, essentially of call-back procedures.</p>
+<p>To add a listener, use the <code>connect</code> method, as follows :-</p>
+<pre><code>b := TextButton()
+b.connect(callback, Event.ACTION)</code></pre>
+<p>Here <code>callback</code> should be something that may be invoked; either a procedure or a method (static or instance). <a href="http://objecticon.sourceforge.net/libref/index.html?gui.Event.html%23ACTION"><code>gui.Event.ACTION</code></a> is the type of event to listen for. Components will fire several types of event, so this acts as a filter. If this parameter is omitted, then the listener is invoked for all events, regardless of the type.</p>
+<p>The listener callback is invoked with three parameters, <code>event</code>, <code>src</code> and <code>type</code>. The first is a <a href="http://objecticon.sourceforge.net/libref/index.html?gui.WinEvent.html"><code>gui.WinEvent</code></a> structure which encapsulates the underlying graphics system event. This parameter may be null if there is no underlying event. The second is the source component firing the event, and the third is the type of event. Most of the time we know these last two parameters anyway.</p>
+<p>If we don’t care about any of the parameters, then we can use a co-expression as the callback; for example :-</p>
+<pre><code>b := TextButton()
+b.connect(create write(&quot;pressed&quot;), Event.ACTION)</code></pre>
+<p>Now a refreshed copy of the given co-expression is invoked whenever the event is fired.</p>
+<h2 id="event-types">Event types</h2>
+<p>The event types fired by the gui library are found as constants in the <a href="http://objecticon.sourceforge.net/libref/index.html?gui.Event.html"><code>gui.Event</code></a> class. This section provides a brief summary of the various types of event and when they are fired.</p>
+<p>The following event types are generated for all <code>Component</code>s, based on mouse activity within it.</p>
+<pre><code>      MOUSE_LEFT_PRESS
+      MOUSE_MIDDLE_PRESS
+      MOUSE_RIGHT_PRESS
+      MOUSE_LEFT_RELEASE
+      MOUSE_MIDDLE_RELEASE
+      MOUSE_RIGHT_RELEASE
+      MOUSE_LEFT_DRAG
+      MOUSE_MIDDLE_DRAG
+      MOUSE_RIGHT_DRAG
+      MOUSE_MOVEMENT
+      MOUSE_WHEEL_UP
+      MOUSE_WHEEL_DOWN
+      MOUSE_LEFT_DRAG_OVER
+      MOUSE_MIDDLE_DRAG_OVER
+      MOUSE_RIGHT_DRAG_OVER
+      MOUSE_LEFT_RELEASE_OVER
+      MOUSE_MIDDLE_RELEASE_OVER
+      MOUSE_RIGHT_RELEASE_OVER</code></pre>
+<p>The other event types are :-</p>
+<ul>
+<li><p><strong>MOUSE_ENTER, MOUSE_EXIT</strong> These two types indicated When the mouse enters or exits a component.</p></li>
+<li><p><strong>KEY_PRESS, KEY_RELEASE</strong> These two types are fired for the component with keyboard focus, on a key press/release. The actual key pressed can be determined from the <code>code</code> field of the event parameter.</p></li>
+<li><p><strong>WINDOW_RESIZE</strong> Fired by a <code>Dialog</code> when it is resized; the parameter is null.</p></li>
+<li><p><strong>WINDOW_CLOSE_BUTTON</strong> Fired by a <code>Dialog</code> when its close button is pressed; the parameter is null.</p></li>
+<li><p><strong>DIALOG_DISPOSED</strong> Fired by a <code>Dialog</code> when it is disposed; the parameter is null.</p></li>
+<li><p><strong>ICON</strong> Fired by a <code>Dialog</code> for all keyboard and mouse events received from the graphics system. This is useful, for example, to check for dialog-level control keys that should apply regardless of the keyboard focus.</p></li>
+<li><p><strong>BUTTON_RELEASE, BUTTON_PRESS</strong> Fired by a <code>Button</code> to indicate changes in the state of the button. Note that the <code>ACTION</code> type is usually the correct type to listen for; these are rather lower level event types.</p></li>
+<li><p><strong>BUTTON_HELD</strong> Fired repeatedly by a <code>Button</code> whilst it is held down, in the same way a key will repeat whilst held down.</p></li>
+<li><p><strong>SELECTION_CHANGED</strong> Text and list components notify that their selection has changed by firing this event type.</p></li>
+<li><p><strong>CONTENT_CHANGED</strong> Fired by text components when the user has edited the content.</p></li>
+<li><p><strong>CURSOR_MOVED</strong> Fired by text and list components when the cursor has moved.</p></li>
+<li><p><strong>VALUE_CHANGED</strong> Fired by scrollbars and sliders, and other components that represent a particular value, when that value is changed.</p></li>
+<li><p><strong>ACTION</strong> This event type is fired when a button is pressed (either with the mouse or via the keyboard), by text fields when the user presses return in the field, and by menu components when they are selected.</p></li>
+<li><p><strong>TREE_NODE_EXPANSION</strong> This type is fired by a tree when a node in the tree is expanded (or contracted).</p></li>
+<li><p><strong>SIZER_PRESS, SIZER_DRAG, SIZER_RELEASE</strong> These event types are fired by the <code>Sizer</code> component, which provides dynamic resizing of two components.</p></li>
+<li><p><strong>GOT_FOCUS, LOST_FOCUS</strong> These types are fired when a component gets, or loses, the keyboard focus.</p></li>
+<li><p><strong>IN_POINT_CHAIN</strong> This is fired before and after each mouse or keyboard event, for each component the mouse is over.</p></li>
+<li><p><strong>POPUP_CLOSED</strong> This type is fired by a <code>PopupMenu</code> when it is closed.</p></li>
+<li><p><strong>INTERRUPTED</strong> This type is fired when a <code>Component</code> is about to be shaded or become hidden, or the dialog is about to be blocked (usually by a modal dialog opening). It won’t receive subsequent events.</p></li>
+<li><p><strong>RESUMED</strong> This type is the counterpart of <code>INTERRUPTED</code>; and is fired when the <code>Component</code> is going to receive events again.</p></li>
+</ul>
+<h2 id="events-in-ivib">Events in ivib</h2>
+<p>To add one or more listeners to a component in ivib, select the “Event” tab of the component’s configuration dialog.</p>
+<p><img src="gui-events.png" /></p>
+<p>To add a listener, click “Add”. This will add a listener for the <code>ACTION</code> type. If this isn’t what you want, edit the details and click “Apply”. When the dialog is saved, a listener method is inserted. In the example shown above, the following code is generated :-</p>
+<pre><code>private on_my_button(ev)
+end</code></pre>
+<p>This method can be filled in with whatever code is required. Note that the default name for the method is generated from the component’s name, so it is best to give the component a meaningful name (by editing it in the “Code” tab), before adding a listener; then the default method name will probably make sense.</p>
+<h1 id="menus">Menus</h1>
+<p>Items in menu systems are rather like simplified <code>Component</code>s, and in fact form an independent class hierarchy, based on <a href="http://objecticon.sourceforge.net/libref/index.html?gui.MenuComponent.html"><code>gui.MenuComponent</code></a>. The top-level containers of menu items are normal <code>Component</code>s however. The familiar menu bar across the screen is <a href="http://objecticon.sourceforge.net/libref/index.html?gui.MenuBar.html"><code>gui.MenuBar</code></a> (add one using the toolbar button labelled “Menu”, or via the “Objects” menu), and ivib has an editor for creating a tree of sub-menus and menu items within it. Here is a simple menu being edited :-</p>
+<p><img src="gui-menu1.png" /></p>
+<p>There are two top-level menu entries, each with one “text” item, which is just an ordinary terminal item. The cursor is positioned so that the next item will be added at the bottom of the “Help” menu.</p>
+<p>The “Edit” button allows an entry to be edited, setting its name, icons and so on. To connect an event listener to an item, select the “Other” tab. For instance, to set a listener to call when the “Save” is chosen :-</p>
+<p><img src="gui-menu3.png" /></p>
+<h2 id="popup-menus">Popup menus</h2>
+<p>These are menus that appear on a right-click, or some such other event, rather than via a fixed top-level component. Unfortunately ivib isn’t much help here, and such menus have to be constructed manually, usually in an event handler. Some programs in the “examples/” directory might be of help; for example “dndtest” pops up menus on events in its list as follows :-</p>
+<pre><code>   #
+   # A mouse press event on the list
+   #
+   public on_list_press(ev)
+      local m, mi, pm, t
+      m := Menu()
+      ... Configure the menu; for instance :-
+      mi := TextMenuItem().set_label(&quot;Insert rows&quot;)
+      mi.connect(self.on_new_rows, Event.ACTION)
+      m.add(mi)
+      # Show the menu
+      pm := PopupMenu()
+      pm.popup(self, m, ev.x, ev.y)
+   end</code></pre>
+<p>The important class is <a href="http://objecticon.sourceforge.net/libref/index.html?gui.PopupMenu.html"><code>gui.PopupMenu</code></a> which actually undertakes the job of making the popup menu appear.</p>
+<h1 id="tabset-and-overlayset">TabSet and OverlaySet</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?gui.TabSet.html"><code>gui.TabSet</code></a> <code>Component</code> requires a bit of extra explanation. Like <code>Panel</code>, it is a container of other <code>Component</code>s, but unlike <code>Panel</code>, it employs several containers, only one of which is visible at any particular time.</p>
+<p>The edit dialog for a <code>TabSet</code> looks like this :-</p>
+<p><img src="gui-tabset1.png" /></p>
+<p>Here we have two “tabs”; more can be added via “Add”. The “*” indicates which one is visible, and this can be changed by using the “Which” button. The properties of a particular tab can be changed via “Edit”.</p>
+<p>After changing the visible tab, <code>Component</code>s can be dragged into it in the same way as a <code>Panel</code>.</p>
+<p>The “Tree view” dialog (opened via the button at the right of the main toolbar) is especially useful with <code>TabSet</code>s. It shows all of the constituent parts of the <code>TabSet</code>, regardless of which is the current tab. Right clicking on any of these <code>Component</code>s allows them to be configured; they can also be dragged around to move them from one tab to another (or out of the <code>TabSet</code> entirely).</p>
+<p>Here is what the tree view might look like for a <code>TabSet</code> :-</p>
+<p><img src="gui-tabset4.png" /></p>
+<p>An <a href="http://objecticon.sourceforge.net/libref/index.html?gui.OverlaySet.html"><code>gui.OverlaySet</code></a> is quite like a <code>TabSet</code>, except that its visible “tab” is configured programatically, rather than by the user. But its configuration in ivib follows the pattern described above.</p>
+<h1 id="dialog">Dialog</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?gui.Dialog.html"><code>gui.Dialog</code></a> class is a <code>Component</code>, which represents the top of the container hierarchy of components in a dialog. It sets up and manages the underlying graphics <code>Window</code> instance.</p>
+<p>In ivib, to access the dialog preferences, either right-click on a blank part of the canvas and select “Dialog”, or use the menu option “Canvas/Dialog prefs”.</p>
+<p><img src="gui-dialogprefs1.png" /></p>
+<h2 id="useful-methods">Useful methods</h2>
+<p>To display a dialog, invoke its <code>show()</code> method. This displays the dialog and returns immediately. The method <code>show_modal()</code> on the other hand, waits until the dialog has been closed before returning. Both these methods take a parameter, <code>d</code>, which specifies a parent dialog; the shown dialog then is “transient” for this dialog (ie it stays above it and is minimized and restored with it). Also, when the parent is closed, the child is also closed. A program in the examples directory, called <code>multi</code>, demonstrates these features.</p>
+<p>To close a dialog, invoke its <code>dispose()</code> method.</p>
+<p>Three useful empty methods may be overridden in a <code>Dialog</code> subclass. The first is <code>component_setup()</code>. This is called just before the dialog is displayed. It is a good place to tweak components set up by ivib. The second is <code>init_dialog()</code>. This is invoked just after the dialog is displayed. At this point everything has been initialized. It is a good place to start any background tasks. Finally, the converse of <code>init_dialog()</code> is <code>end_dialog()</code>. It is invoked just before the dialog is closed, and is a good place to free any resources or to stop any background tasks.</p>
+<h1 id="scaling">Scaling</h1>
+<p>In order to make an interface look acceptable on monitors with varying pixel densities, a simple scaling facility is provided by the gui library. An environment variable, <code>OI_GUI_SCALE</code> can be set to indicate the amount of scaling to apply; the default value is calculated from the monitor resolution and size, with 96 dots per inch corresponding to a scale value of <code>1.0</code>, meaning don’t scale at all. A value of <code>2.0</code> would produce an interface twice as large; for example :-</p>
+<pre><code>OI_GUI_SCALE=2.0 ivib</code></pre>
+<p>In order for an interface to support with scaling, it just needs to apply the <a href="http://objecticon.sourceforge.net/libref/index.html?gui.scale.html"><code>gui.scale</code></a> procedure to any constant which is measured in pixels. For example, a text field’s width should be set with something like :-</p>
+<pre><code>tf := TextField().
+        set_width(scale(160))</code></pre>
+<p>ivib supports scaling. Simply select the checkbox “Scale output dimensions” in the “Size” tab of the dialog’s preferences dialog. Then all pixel dimensions will have the <code>scale()</code> procedure applied in the output file.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

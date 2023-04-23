@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Some notes about the implementation.</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Some notes about the implementation.</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#frames">Frames</a><ul>
+<li><a href="#popping-used-frames">Popping used frames</a></li>
+<li><a href="#co-expressions">Co-expressions</a></li>
+<li><a href="#switching-co-expressions">Switching co-expressions</a></li>
+<li><a href="#how-c_frames-generate-results">How <code>c_frame</code>s generate results</a></li>
+<li><a href="#special-internal-p_frames">Special internal <code>p_frame</code>s</a></li>
+</ul></li>
+<li><a href="#inline-caching">Inline caching</a></li>
+<li><a href="#case-statements">Case statements</a></li>
+<li><a href="#translation">Translation</a></li>
+<li><a href="#optimisations">Optimisations</a></li>
+<li><a href="#code-generation">Code generation</a></li>
+<li><a href="#icode-addresses">Icode addresses</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page gives some details about how Object Icon is implemented, with particular reference to how the core virtual machine operates, which differs markedly to the traditional Icon implementation.</p>
+<h2 id="frames">Frames</h2>
+<p>The Object Icon interpreter doesn’t use a conventional stack structure to implement procedure and generator calls. Rather, a chain of frames is used. Each frame represents an invocation of a procedure, method, function or operator invocation. Each co-expression represents a separate thread of execution, and thus each co-expression has its own chain of frames.</p>
+<p>There are two types of frames, namely <code>c_frame</code>s and <code>p_frame</code>s. The former are for frames whose code body is implemented in C; the latter for those whose body is implemented in virtual machine instructions. The C structs for these two types are found in <code>rstructs.h</code>.</p>
+<p>One interesting point to note about the frame chain is that the currently executing procedure’s frame isn’t necessarily at the end of the chain, as one might expect. Instead, frames which represent currently suspended generators may be present, and these will appear further along the chain from the present procedure. To illustrate this, consider the following program :-</p>
+<pre><code>import io
+
+procedure f1()
+   suspend &quot;hello&quot; | &quot;goodbye&quot;
+end
+
+procedure main()
+   local s, t
+   s := &quot;the quick brown fox&quot;
+   every t := !s || f1() do
+      write(t)
+end</code></pre>
+<p>Just before the call to <code>write</code>, the state of the chain of frames will look like this :-</p>
+<p><img src="frame1.png" /></p>
+<p>The leftmost frame is a frame used to “bootstrap” the interpreter and call the <code>main</code> method. Then comes the frame for <code>main</code>. Note that the local variables are kept in a separate structure. As explained below, these variables may be shared by frames in other co-expressions. This frame for <code>main</code> is the current frame, indicated by the global variable <code>curr_pf</code>. To the right of it are two frames representing the suspended generators used in the generator expression of the <code>every</code> loop. The first is a <code>c_frame</code>, since the <code>!</code> operator is implemented by a C function. The other is another <code>p_frame</code>, since <code>f1</code> is another procedure.</p>
+<h3 id="popping-used-frames">Popping used frames</h3>
+<p>As described above, frames remain on the chain of frames even after they have produced a result, since they may be required to produce further results. This raises the question of when these frames are actually removed from the chain. In fact there are two points at which frames are removed. Firstly, when a frame is resumed, but fails. Clearly the frame cannot be resumed again, and all the frames to the right of the failing frame, and that frame itself, are discarded. Secondly, a frame (or frames) may be discarded by the <code>unmark</code> virtual machine instruction. These instructions are inserted into the VM code at points when, due to the semantics of Icon, a particular frame is no longer needed. For example, consider the following :-</p>
+<pre><code>   if f() then ...</code></pre>
+<p>Prior to invoking <code>f()</code>, a <code>mark</code> instruction is executed to note the top of the stack. If <code>f()</code> fails, its corresponding frame is simply discarded as described above. If it succeeds however, an <code>unmark</code> instruction is used to pop the stack upto the point of the corresponding <code>mark</code> instruction, thus discarding the now unwanted frame and any frames left by the invocation of <code>f</code>.</p>
+<h3 id="co-expressions">Co-expressions</h3>
+<p>Each co-expression has its own chain of frames.</p>
+<p>When a co-expression is created with the <code>create</code> operator, a new chain of frames is created. The single starting frame is a <code>p_frame</code> for the procedure in which the co-expression was created.</p>
+<p>For example, in the following program</p>
+<pre><code>import io
+
+procedure f1()
+   suspend &quot;hello&quot; | &quot;goodbye&quot;
+end
+
+procedure main()
+   local s, t, e
+   s := &quot;the quick brown fox&quot;
+   every t := !s || f1() do {
+      e := create f1()
+      @e
+      write(t)
+   }
+end</code></pre>
+<p>just before the call to <code>write</code>, the state of the chain of frames will look as follows :-</p>
+<p><img src="frame2.png" /></p>
+<p>The top row of blue boxes shows the <code>&amp;main</code> co-expressions chain of frames, whilst the lower row shows the chain for <code>e</code>. Note that the base frame of <code>e</code> shares the local variable block with its creator. This means that changes to the local variables in the co-expression will be seen by the creator co-expression.</p>
+<p>Note that the memory resources used by a new co-expression are very small, and grow (and shrink) dynamically as frames are allocated and popped.</p>
+<h3 id="switching-co-expressions">Switching co-expressions</h3>
+<p>Switching between co-expressions essentially just involves copying the values of <code>curr_pf</code> and <code>ipc</code> (the current VM program counter) to the old and from the new co-expression.</p>
+<p>Note that, in contrast to the classic Icon implementation, no interpreter state is stored in the C stack. In other words, the interpreter loop (<code>interp()</code> in interp.r) is never called recursively. This means no low-level context-switch or C stack manipulation is necessary in order to switch co-expressions.</p>
+<h3 id="how-c_frames-generate-results">How <code>c_frame</code>s generate results</h3>
+<p>It is pretty obvious how a <code>p_frame</code> can generate results: just make that frame the <code>curr_pf</code> frame and continue executing. Eventually a <code>suspend</code>, <code>fail</code> or <code>return</code> will return us back (perhaps with a suspended value) to the calling <code>p_frame</code>. But for a <code>c_frame</code>, the situation is not so clear. The implementation of a <code>c_frame</code> is in C, and C does not easily support the idea of generating a sequence of results from a function. The solution is to store the C function’s local variables in the <code>c_frame</code>, rather than on the C stack in the normal way, so that they are available when the C function is resumed. It is also necessary to store the position in the C function reached at the last suspension, so that the C function can be resumed at the correct point. This can be achieved with labels and a <code>switch</code> statement. GCC supports computed gotos, and these are used instead if they are available.</p>
+<p>Fortunately, this complexity is hidden from the C programmer, since the preprocessor <code>rtt</code> is used to translate code in its dialect of C, which includes <code>suspend</code> constructs, into code using the technique described above.</p>
+<h3 id="special-internal-p_frames">Special internal <code>p_frame</code>s</h3>
+<p>Some operations require special <code>p_frame</code>s to be pushed onto the chain of frames. These run VM instructions like normal <code>p_frame</code>s, but the VM code is hand-written rather than being translated from user source code. A simple “assembler” is provided, called <code>iasm</code>, and this can be found in the <code>oix</code> directory. The source files have the ending “.in”. A few VM instructions are provided which are only used by these special <code>p_frames</code>, most notably <code>Op_Custom</code>, which calls an arbitrary given C function (effectively providing an instruction which can do anything).</p>
+<p>An example of a situation where an internal <code>p_frame</code> is used is object creation. This involves invoking the class’s <code>new</code> method, as well as perhaps its static <code>init</code> method, and any of its parent classes’ <code>init</code> methods. Without the use of an internal <code>p_frame</code> it would be necessary to recursively call the main interpreter loop. But we cannot do that, since we don’t want any interpreter state to exist on the C stack.</p>
+<h2 id="inline-caching">Inline caching</h2>
+<p>The classic Icon implementation uses a field table to map fields to record offsets. For example, in the expression <code>rec.x</code>, if <code>x</code> was field number 10 and rec was of type number 20 then entry (10, 20) in the field table would give the offset of the field <code>x</code> in <code>rec</code>.</p>
+<p>The problem with the field table technique is that it grows to an unmanageable size as the number of records and fields increases. If the number of records and fields double, the field table quadruples in size.</p>
+<p>For this reason, Object Icon takes a different approach to field lookup, namely inline caching. In this scheme, every field access instruction is compiled with a two-word gap in the generated code, initially set to zero. These two fields constitute the inline cache for that particular instruction. The first time the field instruction is executed, we lookup the requested field in the class using binary search, in order to determine the offset. Then we store in the cache two things, namely the type of the object, and the calculated offset. The field is of course constant for that instruction. Next time the instruction is executed, we compare the type of the object with the last calculated type. If they are the same, we can use the last calculated offset again, so we are saved a binary search. Otherwise, we perform the search and store the new values. Typically, the types match about 90% of the time.</p>
+<p>The inline cache is also used to cache the result of the accessibility check of the field, since the same field in the same class referenced from the same point must always give the same result. The value stored in the cache indicates whether the field is fully accessible, or just read-only.</p>
+<h2 id="case-statements">Case statements</h2>
+<p>Whenever possible, case statements use a lookup table to provide near constant-time selection of case clauses. This is not always possible, since Icon provides a very general case syntax, with arbitrary expressions as the selectors. However, the translator tries to determine whether all of the selectors in a case statement are in fact constants, or expressions made up of constants, which won’t change during the course of execution. This is the case for the vast majority of case statements. If it is, then an optimization is applied; if not then the conventional approach is used instead, namely evaluating each selector in turn and checking for a match using the identity operator (<code>===</code>).</p>
+<p>The case optimization works as follows. The first time the case statement’s code is executed by the interpreter, a <code>tcaseinit</code> instruction is executed. This creates a regular Icon table structure, and stores it in an internal location, inaccessible to the program itself. Then instructions are executed to populate this table, by evaluating the various selector expressions. As each expression is evaluated, each result is used by a <code>tcaseinsert</code> instruction to insert a key and entry into the internal table. The key is the value generated by the selector, and the entry is the label of the clause (the address of the code implementing the clause). Each selector may generate several values for insertion; for example</p>
+<pre><code>...
+case ... of
+   ...
+   !&quot;abc&quot; : { ... }
+   ...
+...</code></pre>
+<p>would insert three entries into the internal table, namely keys <code>"a"</code>, <code>"b"</code> and <code>"c"</code>, each with the same entry value, being the label of the clause.</p>
+<p>After the initialization code has been completed, and on every subsequent execution, a <code>tcasechoose</code> instruction is executed. This looks up the value of the case expression in the internal table, and then jumps to the resulting label.</p>
+<p>If there is a default clause in the case statement, then the internal table has a default value pointing to its clause, otherwise it points to the failure label of the case statement, ie the piece of code to handle the case statement’s failure.</p>
+<p>If the translator is run with verbose level &gt; 3, then a message is produced to indicate whether or not the case optimization is being applied for each particular case statement.</p>
+<h2 id="translation">Translation</h2>
+<p>In contrast to classic Icon, <code>.u</code> files are in a binary format. Further, they bear no relation to the final output code format, and they retain the original nested structure of the original source code. They are restored into a tree-like data structure (see <code>ltree.h</code>) at the linking phase.</p>
+<h2 id="optimisations">Optimisations</h2>
+<p>During linking, simple optimisations are performed on the code trees. These include constant folding and dead code elmination.</p>
+<h2 id="code-generation">Code generation</h2>
+<p>The linking stage of <code>oit</code> creates an in-memory data structure, which retains the original tree-like structure of the source code. This data structure is then transformed into the output code using the process described in this paper :- <a href="http://www.cs.arizona.edu/icon/jcon/gde97.pdf" class="uri">http://www.cs.arizona.edu/icon/jcon/gde97.pdf</a>.</p>
+<p>This technique is also used in the Jcon implementation of Icon (see <a href="http://www.cs.arizona.edu/icon/jcon/" class="uri">http://www.cs.arizona.edu/icon/jcon/</a>). In fact, the file <code>ir.c</code> is largely based on Jcon’s <code>irgen.icn</code>. The most significant difference is the addition of “mark” and “unmark” instructions, which are used for manipulation of the frame chain, as described above.</p>
+<h2 id="icode-addresses">Icode addresses</h2>
+<p>The “icode” file contains a translated and linked program, and is loaded into memory en-bloc at runtime. One problem that arises is the fixing up of pointers inside the loaded icode. For example, there will be string descriptors, which point into the block of string data. These must be adjusted so that they point to the correct memory location after loading. Normally, this involves a scan of the code and data in the icode file to relocate all addresses. However, this scan can be avoided if the address of the icode at runtime can be predicted at translation time. Then, the addresses will be correct upon loading.</p>
+<p>This is quite easy to achieve with the <code>mmap</code> function on Unix, or <code>VirtualAlloc</code> on Windows. These functions allow a program to request an allocation at a particular address. <code>oit</code> chooses an address which is typically unused (on 64 bits the choice is enormous of course); this address may be adjusted with <code>oit</code>’s <code>-b</code> option. The address is stored in the <code>Base</code> field of the header, and all pointers in the <code>icode</code> file are set relative to this value. At runtime, this address is used to request a block of memory with <code>mmap</code> or <code>VirtualAlloc</code>. Then, the difference between the allocated address and the Base address is calculated, and stored in the <code>Offset</code> field of the <code>progstate</code> structure. This number of bytes must be added to each pointer in the icode after loading.</p>
+<p>Normally, <code>Offset</code> will be zero, and this means that all of the pointers in the icode will already be correct, and a full scan can be avoided. Some pointers still need to be set; for example pointers to native method blocks. The code for both full and reduced scan are in the <code>resolve()</code> function in <code>init.r</code>.</p>
+<p>This optimisation is particularly helpful for programs invoked many times in a shell program. One example is the test script <code>dotests.sh</code> in the <code>lib/xml</code> directory. The above optimisation reduces that script’s runtime by about 20%.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

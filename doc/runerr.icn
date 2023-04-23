@@ -1,0 +1,27 @@
+import io, lang
+
+procedure main()
+   local e
+   e := create {
+      write("okay")
+      1 + &null
+      write("shouldn't get here")
+   }
+
+   &handler := &current
+   errorclear()
+   if @e then
+      write("Evaluation succeeded")
+   else {
+      if &errortext then {
+         write("Evaluation caused runtime error")
+         write("\t&errornumber=",image(&errornumber))
+         write("\t&errortext=",image(&errortext))
+         write("\t&errorvalue=",image(&errorvalue) | "<none>")
+         write("\t&errorcoexpr=",image(&errorcoexpr))
+         Coexpression.traceback(&errorcoexpr)
+      } else
+         write("Evaluation failed")
+   }
+   &handler := &null
+end

@@ -1,0 +1,38 @@
+import io
+
+procedure dir_recurse(f)
+   local p, f2, l, s
+   write("Opening ", f)
+   s := DirStream(f) | {
+      write("Failed to open ", f, ": ", &why)
+      fail
+   }
+   suspend f
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | break
+      if /l then
+         break
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         suspend dir_recurse(f2)
+      else
+         suspend f2
+   }
+   write("Closing ", f)
+   s.close()
+end
+
+procedure main(a)
+   local f, d, n
+
+   d := a[1] | "/tmp"
+   n := integer(a[2]) | 100
+
+   every f := dir_recurse(d) \ n do
+      write("   Got ", f)
+
+   write("Exiting")
+end

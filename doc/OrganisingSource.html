@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>How to organise application and library source code</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">How to organise application and library source code</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#organising-application-and-library-source-code">Organising application and library source code</a><ul>
+<li><a href="#organising-library-code">Organising library code</a><ul>
+<li><a href="#choosing-a-package-name-or-names">Choosing a package name (or names)</a></li>
+<li><a href="#amending-oi_path">Amending OI_PATH</a></li>
+<li><a href="#makefile">Makefile</a></li>
+<li><a href="#multiple-library-directories">Multiple library directories</a></li>
+</ul></li>
+<li><a href="#organising-application-code">Organising application code</a><ul>
+<li><a href="#setting-oi_path-in-the-makefile">Setting OI_PATH in the Makefile</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="organising-application-and-library-source-code">Organising application and library source code</h1>
+<p>This page gives some information about how to organise source code. There are really two kinds of source - library code which you wish to reuse in several applications, and application code, which is just used once by a particular program. A source file with a “main” procedure would always be “application code” of course.</p>
+<h2 id="organising-library-code">Organising library code</h2>
+<p>Library source files should be placed in a separate directory from application code. Let us imagine we choose to use “/opt/oilib” for the library source files.</p>
+<h3 id="choosing-a-package-name-or-names">Choosing a package name (or names)</h3>
+<p>We now choose one or more package names to organise our source code. Package names can include the “.” character to help subdivide the name, so for example we could place files related to user interfaces in package “oilib.gui”, and those relating to I/O in “oilib.io”. Note that there is no relation between the chosen directory name and the package names.</p>
+<p>Each file in the library should now be edited so that it has the appropriate package declaration line at the top; for example “package oilib.gui”.</p>
+<h3 id="amending-oi_path">Amending OI_PATH</h3>
+<p>The next step is to amend the value of the <code>OI_PATH</code> environment variable so that it includes the new library directory. A good place to do this is just after OI_PATH has been initialized by executing the <code>paths.sh</code> file. For example :-</p>
+<pre><code>. /opt/objecticon/paths.sh
+OI_PATH=$OI_PATH:/opt/oilib</code></pre>
+<h3 id="makefile">Makefile</h3>
+<p>It is naturally useful to have a <code>Makefile</code> in the library directory. Here is an example which can be used as-is, or adapted as needs be :-</p>
+<pre><code>include $(OI_HOME)/Makedefs
+
+.NOTPARALLEL:
+
+LIBSRC=$(wildcard *.icn)
+
+LIBU=$(LIBSRC:.icn=.u)
+
+all: $(LIBU)
+
+clean:
+    $(RM) *.u packages.txt
+
+$(LIBU): %.u: %.icn
+    oit -snc $(LIBSRC)</code></pre>
+<h3 id="multiple-library-directories">Multiple library directories</h3>
+<p>It is possible to repeat the above steps, resulting in a library spread across multiple directories. The only point to bear in mind is that an individual package’s files cannot be spread across several directories.</p>
+<h2 id="organising-application-code">Organising application code</h2>
+<p>Application code should be placed in a separate directory from the library directory described above. Also, there is no advantage in placing application code in a package, since it will not be imported by external applications. Therefore it is just necessary to compile and link the application code. So for example, if we have three files in our application, then the following <code>Makefile</code> would be suitable to compile and link into an executable named <code>prog</code>.</p>
+<pre><code>include $(OI_HOME)/Makedefs
+
+SRC=one.icn two.icn three.icn
+
+U=$(SRC:.icn=.u)
+
+PROG=prog
+
+all:    $(PROG)
+
+clean:
+    $(RM) *.u packages.txt $(PROG)
+
+prog:   $(U)
+    oit -so $@ $(U)</code></pre>
+<p>One of the three files should contain a <code>main</code> procedure of course.</p>
+<h3 id="setting-oi_path-in-the-makefile">Setting OI_PATH in the Makefile</h3>
+<p>One point worth mentioning is that there is an alternative to setting the <code>OI_PATH</code> environment variable as described above. This is to set it in the application’s <code>Makefile</code>, with a line like this :-</p>
+<pre><code>export OI_PATH:=$(OI_PATH):/opt/oilib</code></pre>
+<p>The main difference with this method is that the library will not be accessible to a compilation done outside of the <code>Makefile</code>; for example by using <code>oit</code> at the command line.</p>
+<p>Since the <code>OI_PATH</code> variable is only used when linking <code>.u</code> files to make an executable, its value in fact makes no difference to the library <code>Makefile</code> show above. At that stage we are just translating <code>.icn</code> files to <code>.u</code> files.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

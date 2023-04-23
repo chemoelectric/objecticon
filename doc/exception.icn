@@ -1,0 +1,24 @@
+import io, lang, exception
+
+procedure call3()
+   throw("Error happened")
+end
+
+procedure call2()
+   call3()
+end
+
+procedure call1()
+   call2()
+end
+
+procedure main()
+   try {
+      call1()
+   }
+   if \thrown then {
+      write("Caught: ", image(thrown))
+      Coexpression.traceback(thrower)
+      eclear()
+   }
+end

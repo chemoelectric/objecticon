@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The mail package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The mail package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#the-message-class">The Message class</a><ul>
+<li><a href="#directly-setting-headers">Directly setting headers</a></li>
+<li><a href="#setting-headers-to-objects">Setting headers to objects</a></li>
+<li><a href="#message-content">Message content</a></li>
+</ul></li>
+<li><a href="#multipart-messages">Multipart messages</a></li>
+<li><a href="#sending-messages">Sending messages</a></li>
+<li><a href="#receiving-messages">Receiving messages</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page describes the classes in the mail package. These provide an API for handling emails and attachments, and for sending and receiving them via SMTP and POP servers respectively.</p>
+<h1 id="the-message-class">The Message class</h1>
+<p>At the heart of the library is the <a href="http://objecticon.sourceforge.net/libref/index.html?mail.Message.html"><code>mail.Message</code></a> class. This represents either</p>
+<ul>
+<li>A whole email message, or</li>
+<li>A single part of a multipart message (an attachment)</li>
+</ul>
+<p>The Message class comprises two basic parts :-</p>
+<ul>
+<li>A set of headers (eg “From: smith@xyz.com” is a header)</li>
+<li>Content, which is the raw content of the message</li>
+</ul>
+<h2 id="directly-setting-headers">Directly setting headers</h2>
+<p>The headers can be set directly by providing a string key and a string value :-</p>
+<pre><code>m.set_header(&quot;From&quot;, &quot;smith@xyz.com&quot;)</code></pre>
+<p>where <code>m</code> is a <code>Message</code> instance. Note that the “:” is omitted from the key.</p>
+<p>There can be several headers for each key. To add further ones (eg multiple recipients), use the add_header method, thus :-</p>
+<pre><code>m.set_header(&quot;To&quot;, &quot;bloggs@acme.com&quot;)
+...
+m.add_header(&quot;To&quot;, &quot;smith@xyz.com&quot;)
+...
+m.add_header(&quot;To&quot;, &quot;jones@xyz.com&quot;)</code></pre>
+<p>To retrieve all of the headers for a particular key, use get_headers :-</p>
+<pre><code>l := m.get_headers(&quot;To&quot;)  # now l = [&quot;bloggs@acme.com&quot;,&quot;smith@xyz.com&quot;,&quot;jones@xyz.com&quot;]</code></pre>
+<h2 id="setting-headers-to-objects">Setting headers to objects</h2>
+<p>The only drawback with setting string values directly into headers is that it is easy to set nonsense values :-</p>
+<pre><code>m.set_header(&quot;Date&quot;, &quot;32 Janvary 1891&quot;)</code></pre>
+<p>(and it is also difficult to manipulate a valid date which is provided as a string).</p>
+<p>For this reason, there are several methods which get and set header values, taking appropriate objects (as opposed to simple strings) as parameters and return values.</p>
+<p>Several sorts of objects are involved :-</p>
+<ul>
+<li><a href="http://objecticon.sourceforge.net/libref/index.html?util.Time.html"><code>util.Time</code></a>. Represents date/time values.</li>
+<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.Address.html"><code>mail.Address</code></a>. A base class with two subclasses, <code>Mailbox</code> and <code>Group</code></li>
+<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.Mailbox.html"><code>mail.Mailbox</code></a>. Represents a single simple email address, eg “smith@xyz.com”</li>
+<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.Group.html"><code>mail.Group</code></a>. Represents a named group of several Mailboxes</li>
+<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.ContentType.html"><code>mail.ContentType</code></a>. Represents a Content type specification (eg “multipart/mixed; boundary=xyzQOIU980”)</li>
+<li><a href="http://objecticon.sourceforge.net/libref/index.html?mail.ContentDisposition.html"><code>mail.ContentDisposition</code></a>. Represents a Content-disposition specification.</li>
+</ul>
+<p>The <code>Time</code> object would be used with the get_date and set_date methods.</p>
+<pre><code>m := Message()
+# Set a time 1 March, 2003 9:45:30am UTC
+t := Time(2003, 3, 1, 9, 45, 30, Timezone.UTC_TIMEZONE)
+m.set_date(t)
+write(m.get_first_header(&quot;Date&quot;))   # &quot;Sat, 1 Mar 2003 09:45:30 UTC&quot;
+t2 := m.get_date()   # t and t2 are now different objects, but represent the same date</code></pre>
+<p>The <code>Mailbox</code> class is mainly useful for parsing strings representing email addresses (mailboxes). The syntax available for valid addresses is surprisingly complex (see RFC822 for details, but all of the following are actually valid mailboxes.</p>
+<pre><code>&quot;:sysmail&quot;@  Some-Group. Some-Org
+Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA</code></pre>
+<p>The bits in brackets in the second example are actually comments, and are discarded by the parser.</p>
+<p>Other than providing parsing, the <code>Mailbox</code> class also separates a mailbox into its constituent syntactic elements, which can be useful on occasion.</p>
+<pre><code>s := &quot;\&quot;Robert Parlett\&quot; &lt;r.parlett@(comment)somewhere.com&gt;&quot;
+mb := Mailbox.parse(s) | ..parse error..
+t := mb.to_rfc822()     # Now t == &quot;\&quot;Robert Parlett\&quot; &lt;r.parlett@somewhere.com&gt;&quot;
+write(mb.get_domain())  # &quot;somewhere.com&quot;
+m := Message()
+m.set_from(mb)
+write(m.get_first_header(&quot;From&quot;))  # &quot;Robert Parlett&quot; &lt;r.parlett@somewhere.com&gt;
+mbs := m.get_from()     # Now mb and mbs[1] represent the same mailbox</code></pre>
+<p>A <code>Group</code> is a named collection of several <code>Mailbox</code>es. Its syntax is defined in RFC822, but here are some examples :-</p>
+<pre><code>The Committee: Jones@Host.Net,
+               Smith@Other.Org,
+               Doe@Somewhere-Else;
+
+Gourmets:  Pompous Person &lt;WhoZiWhatZit@Cordon-Bleu&gt;,
+           Childs@WGBH.Boston, Galloping Gourmet@ANT.Down-Under (Australian National Television),
+           Cheapie@Discount-Liquors;
+
+Cruisers:  Port@Portugal, Jones@SEA;</code></pre>
+<p>Any header that accepts an <code>Address</code> accepts a <code>Group</code> (<code>Group</code> is a subclass of <code>Address</code>). For example :-</p>
+<pre><code>s := &quot;Cruisers:  Port@Portugal, Jones@SEA;&quot;
+g := Group.parse(s) | .. parse error..
+m := Message()
+m.set_to(g)</code></pre>
+<h2 id="message-content">Message content</h2>
+<p>Message content is just a string and represents the raw content of the message. As such, according to RFC822, line breaks should be in CRLF form. For example :-</p>
+<pre><code>m := Message()
+m.set_content(&quot;Here is a line\r\nHere is another line.&quot;)</code></pre>
+<p>In fact, setting the raw content of the message is rarely the best approach. This is because the raw content is just one end of a three-stage “pipeline” transformation based on the Content-Type and Content-Transfer-Encoding header values. The three stages are :-</p>
+<ul>
+<li>The raw content, which is a CRLF separated sequence of lines (the lines also should not be &gt; 78 chars in length).</li>
+<li>The decoded content. This is the data after a transformation has been applied based on the value of the “Content-Transfer-Encoding” field. Supported values are either “base64”, “quoted-printable”, “7bit”, “8bit” or “binary”. The default, if unspecified is “7bit”, which in fact is a “straight-through” encoding, as are “8bit” and “binary”. The decoded content may be retrieved and set from a Message instance by using the methods get_decoded_content and set_decoded_content.</li>
+<li>The content object. This takes the result of the last stage and transforms it into a value based on the “Content-Type” field. There are four supported values :-
+<ol type="1">
+<li>"text/*" - the decoded content is transformed to/from a string with CRLF replaced by a single .</li>
+<li>"multipart/*" - the decoded content is transformed to/from a <a href="http://objecticon.sourceforge.net/libref/index.html?mail.Multipart.html"><code>mail.Multipart</code></a> object (see below)</li>
+<li>“message/rfc822” - the decoded content is transformed to/from a Message object.</li>
+<li>“application/octet-stream” - the decoded content is unchanged; this is a “straight-through” encoding. The default Content-Type is “text/plain”. Note that there is a <code>ContentType</code> object which can be used to handle the content type in object form; alternatively the set_header method may be used. If a Content-Type other than the above four is used, then it just means that the decoded content must be set and retrieved directly, rather than via the content object methods (which will simply fail when called).</li>
+</ol></li>
+</ul>
+<pre><code>     +--------+      +--------+
+     |  SMTP  |      |   POP  |
+     +--------+      +--------+
+         ^                |
+         |                |
+         |                V
+     +------------------------+
+     |        Message         |
+     |------------------------|
+     |        Headers         |   Various get/set methods
+     |------------------------|
+     |     Raw Content        |   get_content(), set_content()
+     +------------------------+
+                 ^
+                 |                either &quot;base64&quot;, or &quot;quoted-printable&quot;,
+      Content-Transfer-Encoding   &quot;7bit&quot;, &quot;8bit&quot; or &quot;binary&quot;
+                 |
+                 V
+     +------------------------+
+     |    Decoded Content     |   get_decoded_content(), set_decoded_content()
+     +------------------------+
+                 ^
+                 |                either &quot;multipart/*&quot;, &quot;text/*&quot;, &quot;message/rfc822&quot;
+           Content-Type           or &quot;application/octet-stream&quot;
+                 |
+                 V
+     +------------------------+
+     |     Content object     |   get_content_object(), set_content_object()
+     +------------------------+</code></pre>
+<p>Here are some examples. Firstly, a message with quoted-printable encoding :-</p>
+<pre><code>m := Message().
+  set_content_transfer_encoding(&quot;quoted-printable&quot;).
+  set_content_object(&quot;The quick brown fox\tJumps over the lazy dog\n&quot;)</code></pre>
+<p>Now <code>m</code> will have the value :-</p>
+<pre><code>object mail.Message#1(
+   content=&quot;The quick brown fox=09Jumps over the lazy dog\r\n&quot;
+   headers=
+      object datastruct.SortTable#1(
+         &quot;Content-Transfer-Encoding&quot;-&gt;list#2881[&quot;quoted-printable&quot;]
+      )
+)</code></pre>
+<p>and <code>m.get_decoded_content()</code> will be</p>
+<pre><code>&quot;The quick brown fox\tJumps over the lazy dog\r\n&quot;</code></pre>
+<p>whilst <code>m.get_content_object()</code> will be</p>
+<pre><code>&quot;The quick brown fox\tJumps over the lazy dog\n&quot;</code></pre>
+<p>Note how the data is different at each of the three levels. The raw content stored in the <code>Message</code> is in quoted-printable form, and thus escapes the tab character after the word “fox”. The decoded content has replaced “” with “”. This is the transformation applied by the (default) text/plain encoding. At the top level is the original data set with <code>set_content_object()</code>.</p>
+<p>As a second example, here is a <code>Message</code> which contains a gif file, in base64 encoding.</p>
+<pre><code>m := Message().
+  set_content_transfer_encoding(&quot;base64&quot;).
+  set_content_type(ContentType(&quot;image&quot;, &quot;gif&quot;)).
+  set_decoded_content(img_data)</code></pre>
+<p>Now <code>m</code> will have the value :-</p>
+<pre><code>object mail.Message#1(
+   content=&quot;R0lGODdhggHmAcIAADs7O7a2tqSkpJCQkHBwcPHx8dfX1xQUFCwAAAAAggHmAQAD/ki6DOTAsdGq\r\n
+            ... many more lines ...
+            EYY13LvBJ0LI5c3chZMk07TI26JUcxhaKkC5Ua42lS783mfZ3nLeGIA5w0KbpXBsxNf0ChMTiLEu\r\n
+            HTUtkAAAOw==\r\n&quot;
+   headers=
+      object datastruct.SortTable#1(
+         &quot;Content-Transfer-Encoding&quot;-&gt;list#3510[&quot;base64&quot;]
+         &quot;Content-Type&quot;-&gt;list#3515[&quot;image/gif&quot;]
+      )
+)</code></pre>
+<p>Note how in this case we use <code>set_decoded_content()</code> rather than <code>set_content_object()</code>; this is because we are not using one of the four Content-Types which allow object to decoded content transformation.</p>
+<p>If we try to get the content object with :-</p>
+<pre><code>m.get_content_object()</code></pre>
+<p>the call simply fails, setting <code>&amp;why</code> appropriately.</p>
+<h1 id="multipart-messages">Multipart messages</h1>
+<p>Multipart messages are used to create messages with attachments. <a href="http://objecticon.sourceforge.net/libref/index.html?mail.Multipart.html"><code>mail.Multipart</code></a> is a very simple class which simply holds a list of <code>Message</code>s. The <code>Multipart</code> object is then set as the content object of a <code>Message</code>, together with a Content-Type such as “multipart/mixed”. An example is given below, which shows a multipart message being sent over SMTP.</p>
+<h1 id="sending-messages">Sending messages</h1>
+<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?mail.SmtpClient.html"><code>mail.SmtpClient</code></a> is used to send messages. It is a subclass of <a href="http://objecticon.sourceforge.net/libref/index.html?net.NetClient.html"><code>net.NetClient</code></a>, which takes care of the lower-level networking. All that is required is to set the server, port and hostname (unless the defaults suffice), to open the connection and to send the message.</p>
+<p>The following example creates a multipart message, and sends it using an <code>SmtpClient</code>.</p>
+<p><a href="multipart.icn">Download multipart.icn</a></p>
+<pre><code>import mail, io
+
+$load CHEETAH &quot;cheetah_cubs.jpg&quot;
+
+procedure send(m)
+   local t
+
+   #
+   # Send the message m using SMTP.  You may need to customize the object t to change the defaults :
+   #    set_server(x) - the SMTP server to use (default &quot;localhost&quot;)
+   #    set_port(n) - the port to use (default 25)
+   #    set_hostname(x) - the hostname to use with the EHLO command (default &amp;host).
+   #   
+
+   t := SmtpClient().
+      open().
+      send_message(m).
+      close() |  stop(&amp;why)
+end
+
+procedure main()
+   local mp, m, fwd
+
+   # A Multipart object to build a multipart message; the preamble
+   # will be seen by non-MIME mail clients.
+   mp := Multipart().
+      set_preamble(&quot;This a MIME message.&quot;)
+
+   # The first part of the multipart message; a simple text message.
+   m := Message().
+      set_content_type(ContentType(&quot;text&quot;, &quot;plain&quot;).set_parameter(&quot;charset&quot;, &quot;utf-8&quot;)).
+      set_content_disposition(ContentDisposition(&quot;inline&quot;)).
+      set_content_transfer_encoding(&quot;7bit&quot;).
+      set_content_object(&quot;A simple message.&quot;)
+   mp.add_part(m)
+
+   # This message is an email to be forwarded as the second part of the multipart.
+   fwd := Message().
+      set_content_type(ContentType(&quot;text&quot;, &quot;plain&quot;).set_parameter(&quot;charset&quot;, &quot;utf-8&quot;)).
+      set_content_transfer_encoding(&quot;quoted-printable&quot;).
+      set_from(Mailbox.parse(&quot;\&quot;A. Sender\&quot; &lt;sender@somewhere&gt;&quot;)).
+      set_to(Mailbox.parse(&quot;\&quot;B. Recipient\&quot; &lt;recipient@somewhere.else&gt;&quot;)).
+      set_subject(&quot;An important subject&quot;).
+      set_content_object(&quot;Here is an important message.\n\tThe end.&quot;)
+
+   # The second part of the multipart.  We use a Content-Type of message/rfc822 and set
+   # the message to be forwarded as the content object.
+   m := Message().
+      set_content_type(ContentType(&quot;message&quot;, &quot;rfc822&quot;)).
+      set_content_disposition(ContentDisposition(&quot;attachment&quot;).set_filename(&quot;important.eml&quot;)). 
+      set_content_transfer_encoding(&quot;7bit&quot;).
+      set_content_object(fwd)
+   mp.add_part(m)
+
+   # The third part of the multipart is another attachment, a base64-encoded jpeg.
+   m := Message().
+      set_content_transfer_encoding(&quot;base64&quot;).
+      set_content_type(ContentType(&quot;image&quot;, &quot;jpeg&quot;)).
+      set_content_disposition(ContentDisposition(&quot;attachment&quot;).set_filename(&quot;cheetah_cubs.jpg&quot;)).
+      set_decoded_content(CHEETAH)
+   mp.add_part(m)
+
+   # Now create the top-level message of Content-Type multipart/mixed,
+   # and set the Multipart object as the content object.
+   #
+   # You will of course need to edit the from and to headers!
+   #
+   m := Message().
+      set_from(Mailbox.parse(&quot;\&quot;Robert Parlett\&quot; &lt;rparlett@localhost&gt;&quot;)).
+      set_to(Mailbox.parse(&quot;\&quot;Robert Parlett\&quot; &lt;rparlett@localhost&gt;&quot;)).
+      set_content_type(ContentType(&quot;multipart&quot;, &quot;mixed&quot;)).
+      set_content_object(mp).
+      set_subject(&quot;Cats&quot;)
+
+   # ... and send this message.
+   send(m)
+
+   write(&quot;OK&quot;)
+end
+</code></pre>
+<p>The resulting message looks like this when viewed in Thunderbird :-</p>
+<p><img src="mail.png" /></p>
+<h1 id="receiving-messages">Receiving messages</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?mail.PopClient.html"><code>mail.PopClient</code></a> is a very simple class for retrieving messages using the POP mail protocol. Here is a simple example :-</p>
+<p><a href="poplist.icn">Download poplist.icn</a></p>
+<pre><code>import mail, io, net, lang
+
+procedure main(a)
+   local p, m, t, id
+
+   (*a = 2) | stop(&quot;Usage: poplist username password&quot;)
+
+   #
+   # Create a client.  You may need to customize p to change the defaults :
+   #    set_server(x) - the POP server to use (default &quot;localhost&quot;)
+   #    set_port(n) - the port to use (default 110)
+   #   
+   p := PopClient().
+      set_auth(Authentication(a[1], a[2]))
+
+   p.open().login() | stop(&quot;Failed to connect/login: &quot;, &amp;why)
+
+   t := p.stat() | stop(&quot;Failed to stat messages: &quot;, &amp;why)
+   write(&quot;Stat OK: &quot;, to_string(t))
+
+   t := p.uidl() | stop(&quot;Failed to uidl messages: &quot;, &amp;why)
+   write(&quot;UIDL OK: &quot;, to_string(t))
+
+   t := p.list() | stop(&quot;Failed to list messages: &quot;, &amp;why)
+   write(&quot;List OK: &quot;, to_string(t))
+   
+   if *t &gt; 0 then {
+      id := t[1].number
+      m := p.retr(id) | stop(&quot;Failed to retrieve message: &quot;, &amp;why)
+      write(&quot;Got a message OK: &quot;, image(m))
+   }
+
+   p.close()
+end
+</code></pre>
+<p>Example output in this case, after sending the multipart attachment in the previous example might be :-</p>
+<pre><code>List OK: table#2{1-&gt;93292}
+Got a message OK: object mail.Message#1(2)</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

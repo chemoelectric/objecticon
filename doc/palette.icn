@@ -1,0 +1,51 @@
+import io, graphics, ipl.graphics, ipl.options, ipl.pdco
+
+# Copy a source image to a paletted destination image, and then
+# display it, and optionally save it.
+#
+# With the -k option, the Window.palette_key() method is used to
+# calculate each destination pixel's palette index, rather than the
+# Pixel's set() method.
+#
+procedure main(a)
+   local w, pix, qix, pal, opts, f
+   opts := options(a, [Opt("w", string, "FILE#Write result to given file"),
+                       Opt("k",, "Use palette_key()")],
+                       "Usage: palette [OPTIONS...] SOURCE-FILE [PALETTE]")
+   if *a < 1 then
+      stop("Need a parameter")
+   pal := a[2] | "c6"
+   Window.palette_chars(pal) | stop("Invalid palette")
+   pix := Pixels(a[1]) | stop("Couldn't open image file: ", &why)
+
+   # Create a paletted Pixels, with the palette set to the given Icon
+   # palette.
+   qix := Pixels(pix.get_width(),
+                 pix.get_height(),
+                 Pixels.PALETTE8).
+      load_palette(pal)
+
+   # Copy data from the source image to the paletted image.
+   if \opts["k"] then
+      # Form a string of palette keys by applying Window.palette_key()
+      # on the source data, and then set the resulting string as the
+      # paletted image's data.
+      qix.set_data( String2{ Window.palette_key(pal, pix.gen().pixel) } )
+   else
+      # Copy source to destination; this is like calling set() for
+      # each individual destination pixel.
+      pix.copy_to(,,,, qix)
+
+   # Display the resulting paletted image in a window.
+   w := Window().
+      set_image(qix).
+      set_canvas("normal")
+
+   # Optionally save the image to a file.
+   if f := \opts["w"] then {
+      write("Writing to file ", f)
+      qix.to_file(f) | stop("Failed to write image: ", &why)
+   }
+
+   WDone(w)
+end

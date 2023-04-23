@@ -1,0 +1,214 @@
+import
+   gui, ipl.options, plan9, ipl.server9p
+
+global dialog
+
+class GuiFSDialog(Dialog)
+   private readable
+      output,
+      received
+
+   public override component_setup()
+      self.setup()
+   end
+
+   public override end_dialog()
+   end
+
+   public override init_dialog()
+   end
+
+   public override new()
+      Dialog.new()
+      return
+   end
+
+   private setup()
+      local label_2, paint_2, layout_1, label_1, paint_1, border_2, layout_3, paint_3, border_content_1, border_content_2, border_1, layout_2, text_button_1
+      self.set_resize(&yes)
+      self.set_size(scale(800 / 1.71), scale(800 / 1.71))
+      paint_1 := TextPaint("Received")
+      label_1 := Label().
+         set_pos(scale(160 / 1.71), scale(160 / 1.71)).
+         clear_constraints().
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_paint(paint_1)
+      received := EditableTextList().
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_contents([u""]).
+         set_is_editable(&no)
+      layout_2 := GridLayout().
+         set_extra("cells")
+      border_content_1 := Component().
+         clear_constraints().
+         set_layout(layout_2).
+         add(received)
+      border_1 := Border().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_title(label_1).
+         set_content(border_content_1)
+      self.add(border_1)
+      paint_2 := TextPaint("Output")
+      label_2 := Label().
+         set_pos(scale(187 / 1.71), scale(418 / 1.71)).
+         clear_constraints().
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_paint(paint_2)
+      output := EditableTextList().
+         clear_constraints().
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_contents([u""])
+      layout_1 := GridLayout().
+         set_extra("cells")
+      border_content_2 := Component().
+         clear_constraints().
+         set_layout(layout_1).
+         add(output)
+      border_2 := Border().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_title(label_2).
+         set_content(border_content_2)
+      self.add(border_2)
+      paint_3 := TextPaint("Close")
+      text_button_1 := TextButton().
+         clear_constraints().
+         connect(self.dispose, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_3)
+      self.add(text_button_1)
+      self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
+      layout_3 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_3)
+   end
+end
+
+class SendEdit(StringFile9P)
+   public override close()
+      if *data > 0 then
+         dialog.received.log_str(ucs(data), 100)
+   end
+end
+
+class Send(Regular9P)
+   public override open(mode)
+      return SendEdit("send-edit").
+         set_fixed_perm(perm).
+         set_parent(parent)
+   end
+end
+
+class Get(Regular9P)
+   public override open(mode)
+      return StringFile9P("get-copy").
+         set_fixed_perm(perm).
+         set_data(dialog.output.get_contents_str()).
+         set_parent(parent)
+   end
+end
+
+procedure main(a)
+   local root, sess
+   opts := options(a, get_optl())
+   root := Root9P().
+      set_fixed_perm(8r555).
+      add_child(Send("send").set_fixed_perm(8r222)).
+      add_child(Get("get").set_fixed_perm(8r444))
+   sess := Session9P().set_data(TreeData9P(root))
+   gui_main(, sess, &no, create {{
+      dialog := GuiFSDialog()
+      dialog.show_modal()
+   }})
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I20SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|GSGen Component Setup|GSGe
+#n Init Dialog|GSGen Constructor|GSDialog Struct|CCDialog|I1SWAttribs|T
+#1NSresize|GSName|SGuiFSDialog|SIs Component|NSWidth|S800|SHeight|S800|
+#SChildren|L3CCanvasBorder|I30SParent Canvas|X1SName|Sborder_1|SClass N
+#ame|SBorder|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|
+#NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|S
+#Z|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx_weight|B1.0
+#|Sx_fill|GSy_weight|B1.0|Sy_fill|GSeol|GSTooltip|NSAccel|NSLayout dele
+#gate|NSBorder opts|NSEvent Handlers|L0SParent Component|X1SInternal Al
+#ignment|Sl|SChildren|L2CCanvasBorderContent|I27SParent Canvas|X1SName|
+#Sborder_content_1|SClass Name|SComponent|SImport Name|Sgui|SClass Vari
+#able|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Sp
+#ec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NS
+#Constraints|T0NSTooltip|NSAccel|NSLayout delegate|CCanvasGridLayout|I8
+#SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_2|SClass Name|SGridLay
+#out|SImport Name|Sgui|SClass Variable|NSParent|X12SBorder opts|NSEvent
+# Handlers|L0SParent Component|X7SChildren|L1CCanvasEditableTextList|I2
+#9SParent Canvas|X1SName|Sreceived|SClass Name|SEditableTextList|SImpor
+#t Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|
+#NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SI
+#s shaded|NSWAttribs|T0NSConstraints|T4NSx_weight|B1.0|Sx_fill|GSy_weig
+#ht|B1.0|Sy_fill|GSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEv
+#ent Handlers|L0SParent Component|X12SContents|L1U|SIs editable flag|NS
+#Move on rpress flag|GCCanvasLabel|I27SParent Canvas|X1SName|Slabel_1|S
+#Class Name|SLabel|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NS
+#W Fix|NSH Fix|NSX Spec|S160|SY Spec|S160|SW Spec|NSH Spec|NSX Align|Sl
+#|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T1N
+#Sx_align|Sl|STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent H
+#andlers|L0SParent Component|X7SPaint|CCanvasTextPaint|I6SParent Canvas
+#|X1SName|Spaint_1|SClass Name|STextPaint|SImport Name|Sgui|SClass Vari
+#able|NSStr|SReceived|STitle Obj|X23SContent|X12CCanvasBorder|I30SParen
+#t Canvas|X1SName|Sborder_2|SClass Name|SBorder|SImport Name|Sgui|SClas
+#s Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|
+#NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttrib
+#s|T0NSConstraints|T5NSx_weight|B1.0|Sx_fill|GSy_weight|B1.0|Sy_fill|GS
+#eol|GSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers
+#|L0SParent Component|X1SInternal Alignment|Sl|SChildren|L2CCanvasBorde
+#rContent|I27SParent Canvas|X1SName|Sborder_content_2|SClass Name|SComp
+#onent|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fi
+#x|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0ST
+#ab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSL
+#ayout delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExtra|Scells|S
+#Name|Slayout_1|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variab
+#le|NSParent|X33SBorder opts|NSEvent Handlers|L0SParent Component|X28SC
+#hildren|L1CCanvasEditableTextList|I29SParent Canvas|X1SName|Soutput|SC
+#lass Name|SEditableTextList|SImport Name|Sgui|SClass Variable|I1SX Fix
+#|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align
+#|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|
+#T4NSx_weight|B1.0|Sx_fill|GSy_weight|B1.0|Sy_fill|GSTooltip|NSAccel|NS
+#Layout delegate|NSBorder opts|NSEvent Handlers|L0SParent Component|X33
+#SContents|L1U|SIs editable flag|GSMove on rpress flag|GCCanvasLabel|I2
+#7SParent Canvas|X1SName|Slabel_2|SClass Name|SLabel|SImport Name|Sgui|
+#SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|S187|SY Spec|
+#S418|SW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs sha
+#ded|NSWAttribs|T0NSConstraints|T1NSx_align|Sl|STooltip|NSAccel|NSLayou
+#t delegate|NSBorder opts|NSEvent Handlers|L0SParent Component|X28SPain
+#t|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_2|SClass Name|SText
+#Paint|SImport Name|Sgui|SClass Variable|NSStr|SOutput|STitle Obj|X44SC
+#ontent|X33CCanvasTextButton|I34SParent Canvas|X1SName|Stext_button_1|S
+#Class Name|STextButton|SImport Name|Sgui|SClass Variable|NSX Fix|NSY F
+#ix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY
+# Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTo
+#oltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2SEv
+#ent.ACTION|Sdispose|SParent Component|X1SNo click focus|NSAccepts focu
+#s Flag|GSIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSP
+#arent Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|S
+#paint_3|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr
+#|SClose|SPaint down|NSInitial Focus|NSEvent Handlers|L1L2SEvent.WINDOW
+#_CLOSE_BUTTON|Sdispose|SLayout delegate|CCanvasGridLayout|I8SDII val|N
+#SDOI val|NSExtra|Scells|SName|Slayout_3|SClass Name|SGridLayout|SImpor
+#t Name|Sgui|SClass Variable|NSParent|X1SScale Dimensions Flag|GSEdit S
+#cale|B1.71|

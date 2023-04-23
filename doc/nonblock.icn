@@ -1,0 +1,48 @@
+import io, http, net
+
+global sched
+
+procedure download(x, t)
+   local cl, req, resp, s
+   s := RamStream()
+   cl := HttpClient().
+      set_task(t).
+      set_timeout(10000)
+   req := HttpRequest().
+      set_url(URL(x)).
+      set_output_stream(s)
+   if resp := cl.retrieve(req) then
+      write("Retrieved ", *s.str(), " bytes from ", x)
+   else
+      write("Failed to retrieve ", x, ": ", &why)
+   s.close()
+   cl.close()
+   t.revert()
+end
+
+procedure new_task(s)
+   local t
+   t := Task(sched, create download(s, t))
+   t.start()
+end
+
+procedure main()
+   # Use a 50ms delay in the Scheduler's call to poll.
+   sched := Scheduler(50)
+   new_task("http://www.google.com")
+   new_task("http://www.yahoo.com")
+   new_task("http://news.bbc.co.uk")
+   new_task("http://www.telegraph.co.uk")
+   new_task("http://www.herald.co.zw/")
+   new_task("http://www.dailymail.co.uk")
+   new_task("http://www.independent.co.uk/")
+   new_task("http://www.guardian.co.uk/")
+   new_task("http://www.thesun.co.uk/")
+   new_task("http://www.express.co.uk/")
+
+   until sched.empty() do {
+      sched.work()
+      # Could do some extra work between polls.
+   }
+   write("Exiting")
+end

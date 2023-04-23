@@ -1,0 +1,61 @@
+import io,  util, exception
+
+record Msg(file, revert)
+
+procedure dir_recurse2(s, f, revert)
+   local p, f2, l
+   coact(Msg(f, &current), revert)
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | fail
+      if /l then
+         return
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         dir_recurse1(f2, revert)
+      else
+         coact(Msg(f2, &current), revert)
+   }
+end
+
+
+procedure dir_recurse1(f, revert)
+   local s
+   use {
+      {
+         write("Opening ", f)
+         s := DirStream(f)
+      },
+      dir_recurse2(s, f, revert),
+      {
+         write("Closing ", f)
+         s.close()
+      }
+   } | throw("Problem accessing " || f || ": " || &why)
+end
+
+procedure dir_recurse(f)
+   local v, here, e
+   here := &current
+   e := create dir_recurse1(f, here)
+   v := @e | fail
+   repeat {
+      suspend v.file
+      v := coact(, v.revert) | fail
+   }
+end
+
+procedure main(a)
+   local f, d, n
+
+   d := a[1] | "/tmp"
+   n := integer(a[2]) | 100
+   clean { try1 {
+      every f := dir_recurse(d) \ n do
+         write("   Got ", f)
+   }} | write(&why)
+
+   write("Exiting")
+end

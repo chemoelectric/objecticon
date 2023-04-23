@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Native methods</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Native methods</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#native-methods">Native methods</a><ul>
+<li><a href="#native-methods-in-the-runtime-system">Native methods in the runtime system</a></li>
+<li><a href="#native-methods-resolved-at-runtime">Native methods resolved at runtime</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="native-methods">Native methods</h1>
+<p>A native method is one in which there is no body, and the actual functionality of the method is defined elsewhere, in a function written in C, or more precisely in the language RTL, which is translated into C by the <code>rtl</code> program. For example :-</p>
+<pre><code>class X()
+   public native f()
+end</code></pre>
+<p>Parameters can be declared if desired, but they are ignored by the linker.</p>
+<p>There are two possible ways to provide the functionality of a native method.</p>
+<ul>
+<li><a href="#native-methods-in-the-runtime-system">Native methods in the runtime system</a></li>
+<li><a href="#native-methods-resolved-at-runtime">Native methods resolved at runtime</a></li>
+</ul>
+<h2 id="native-methods-in-the-runtime-system">Native methods in the runtime system</h2>
+<p>This necessitates editing and re-building the C/RTL source code of the runtime system and the translator.</p>
+<p>The first step is to add a line to the file <code>base/h/nativedefs.h</code> defining the class, method and name of the implementing RTL function. By convention, the name of the RTL function is the class followed by an underscore, followed by the method name, with dots in the class name being replaced by underscores. So, for example, say we were implementing method <code>my_method</code> in class <code>MyClass</code> in package <code>my.package</code>, then we would write a runtime function named <code>my_package_MyClass_my_method</code> and add a line to <code>nativedefs.h</code></p>
+<pre><code>NativeDef(my.package.MyClass,my_method,my_package_MyClass_my_method)</code></pre>
+<p>Next, the function must be implemented somewhere in the runtime, as an RTL function, which might look like this :-</p>
+<pre><code>function my_package_MyClass_my_method(x, y)
+   ... RTL code
+end</code></pre>
+<p>Note that for an instance method, the first parameter will be the instance on which the method was invoked. In this case, add a <code>self</code> parameter to the parameter list :-</p>
+<pre><code>function my_package_MyClass_my_method(self, x, y)
+   ... RTL code
+end</code></pre>
+<p>Finally, both the translator and the runtime must be re-compiled. The easiest way to do this is to go into the <code>base</code> directory and run</p>
+<pre><code>make clean all</code></pre>
+<h2 id="native-methods-resolved-at-runtime">Native methods resolved at runtime</h2>
+<p>This involves writing a dynamic library (a “.so” file) of RTL/C code. The contents are loaded and the functions in the library are matched to the corresponding native methods by the <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html%23load_library"><code>lang.Class.load_library()</code></a> method. This is explained in more detail <a href="DynamicLoadC.html">here</a>.</p>
+<p>For working examples, see the source files <code>lib/main/mysql.icn</code> and <code>lib/main/cairo.icn</code> and their corresponding RTL source files in <code>lib/native</code>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

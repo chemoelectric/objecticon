@@ -1,0 +1,37 @@
+import io
+
+class Parent()
+   public f()
+      write("\tParent.f()")
+   end
+end
+
+class Child1(Parent)
+   public override f()
+      write("\tChild1.f()")
+   end
+end
+
+class Child2(Child1)
+end
+
+class Child3(Child2)
+end
+
+class Mixin(Parent)
+   public g()
+      write("Mixin.g()")
+      f()
+   end
+end
+
+class Child4a(Child3,Mixin)
+end
+
+class Child4b(Child3,Child2,Mixin)
+end
+
+procedure main()
+   Child4a().g()
+   Child4b().g()
+end

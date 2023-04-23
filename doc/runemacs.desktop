@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Run GNU Emacs
+GenericName=Text Editor
+Comment=View and edit files
+MimeType=text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;application/json;text/markdown
+Exec=/home/rparlett/bin/runemacs.sh %F
+ExecLine=/home/rparlett/bin/runemacs.sh +%P %F
+TryExec=/home/rparlett/bin/runemacs.sh
+Icon=emacs
+Type=Application
+Terminal=false
+Categories=Utility;Development;TextEditor;
+InitialPreference=20

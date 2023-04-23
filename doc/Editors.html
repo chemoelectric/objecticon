@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Editors</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Editors</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#emacs">Emacs</a><ul>
+<li><a href="#tag-files">Tag files</a></li>
+</ul></li>
+<li><a href="#geany-gedit-jed-mc-micro-vim">geany, gedit, jed, mc, micro, vim</a></li>
+<li><a href="#editpad">Editpad</a></li>
+</ul>
+</nav>
+<p>This page provides some details about editing Object Icon source code with particular editors.</p>
+<h1 id="emacs">Emacs</h1>
+<p>The “misc” directory contains some elisp source files which provide an Object Icon mode. There are two relevant files. The first is “objecticon-mode.el” provides the mode itself, and should be placed somewhere on your emacs “load-path”. The second, “objecticon-setup.el”, just provides sets a few useful file associations and other variables. Its contents can be copied into your emacs init file, or it can also be placed on the load path and loaded as follows :-</p>
+<pre><code>(require &#39;objecticon-setup)</code></pre>
+<p>To customize the mode, a hook function can be added. For example, the following can be added to your init file after the above line :-</p>
+<pre><code>(add-hook &#39;objecticon-mode-hook 
+          &#39;(lambda ()
+             (setq objecticon-indent-level 3)
+             (setq objecticon-continued-statement-offset objecticon-indent-level)
+             (setq objecticon-class-indent-level objecticon-indent-level)
+             (setq objecticon-brace-offset (- objecticon-indent-level))
+             (setq objecticon-indent-use-only-spaces t)))</code></pre>
+<p>Please refer to the mode source file for a full list of configuration variables which can be set.</p>
+<h2 id="tag-files">Tag files</h2>
+<p>The <code>Makedefs</code> file (created during configuration in the root distribution directory), contains a definition <code>ICNTAGS</code>, which can be used with the <code>etags</code> program to create an emacs tags file from Object Icon source code. For example :-</p>
+<pre><code>        etacs -o TAGS $(ICNTAGS) $(SOURCEFILES)</code></pre>
+<p>This definition is used with by the top-level make target “etags”, to create a tags file of all the source code in the distribution.</p>
+<h1 id="geany-gedit-jed-mc-micro-vim">geany, gedit, jed, mc, micro, vim</h1>
+<p>Jason Martin has kindly contributed syntax files for editing Object Icon source code with the above editors.</p>
+<p>The latest version of Jason’s work can be found here :-</p>
+<p><a href="https://github.com/agrellum/Object-Icon-Syntax-Files" class="uri">https://github.com/agrellum/Object-Icon-Syntax-Files</a></p>
+<h1 id="editpad">Editpad</h1>
+<p>Kim Bastin has kindly contributed a syntax colouring scheme for Editpad, a Windows text editor (see <a href="https://www.editpadpro.com/index.html" class="uri">https://www.editpadpro.com/index.html</a>).</p>
+<p>Kim’s scheme can be found via this page: <a href="https://www.editpadpro.com/cgi-bin/cscslist5.pl" class="uri">https://www.editpadpro.com/cgi-bin/cscslist5.pl</a>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

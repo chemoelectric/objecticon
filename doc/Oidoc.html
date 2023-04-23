@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The oidoc program</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The oidoc program</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#placement-of-comments">Placement of comments</a><ul>
+<li><a href="#procedures-methods-records-and-classes.">Procedures, methods, records and classes.</a></li>
+<li><a href="#global-variables-and-class-variables">Global variables, and class variables</a></li>
+</ul></li>
+<li><a href="#markdown-syntax">Markdown syntax</a><ul>
+<li><a href="#bullet-lists">Bullet lists</a></li>
+<li><a href="#ordered-lists">Ordered lists</a></li>
+<li><a href="#definition-lists">Definition lists</a></li>
+<li><a href="#nesting-lists">Nesting lists</a></li>
+<li><a href="#pre-formatted-text">Pre-formatted text</a></li>
+<li><a href="#paragraphs">Paragraphs</a></li>
+<li><a href="#font-attributes">Font attributes</a></li>
+<li><a href="#links">Links</a></li>
+<li><a href="#anchors">Anchors</a></li>
+<li><a href="#line-breaks">Line breaks</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Oidoc is a program to produce HTML documentation from comments in source code. A simple markdown syntax can be used in the comments. It is used to generate the online documentation at <a href="http://objecticon.sourceforge.net/libref">http://objecticon.sourceforge.net/libref</a>.</p>
+<h1 id="placement-of-comments">Placement of comments</h1>
+<p>Comments must be placed in the right location in order to be matched by <code>oidoc</code> with the particular thing they are documenting.</p>
+<p>Empty comment lines at the beginning or end of a comment block are ignored.</p>
+<h2 id="procedures-methods-records-and-classes.">Procedures, methods, records and classes.</h2>
+<p>The comment should be placed before the item concerned, as follows :-</p>
+<pre><code># Here is a comment about the procedure.
+#
+procedure test()
+end
+
+# And about the record...
+#
+record R(x, y, z)
+
+# And the class...
+class C(Super1)
+
+   # A comment about a method.
+   public static test()
+   end
+   ...
+end</code></pre>
+<h2 id="global-variables-and-class-variables">Global variables, and class variables</h2>
+<p>For a global declaration with one variable, put the comment before the “global” keyword. For a declaration with several variables, put the comments before each variable :-</p>
+<pre><code># For a global with one variable, put the comment here.
+global 
+   glob1
+
+global
+   # For a global with two or more variables, put the first comment here.
+   # It may take up several lines if desired.
+   glob2,
+   # And the second here, and so on.
+   glob3</code></pre>
+<p>Alternatively, a one-line comment may follow the variable on the same line :-</p>
+<pre><code>global
+   glob2,         # First comment
+   glob3          # Second comment</code></pre>
+<p>Variable declarations within a class follow the same pattern :-</p>
+<pre><code>class SomeClass()
+   # This is the place to put a variable declaration with just one
+   # variable in it.
+   public static const
+      VARIABLE
+
+   # But with several vars...
+   private readable 
+      # Put the first one here.
+      another_var,
+      # And the next one here, and so on.
+      and_another,
+      # And another one
+      yet_another
+
+   # Alternatively, place one-line comments on the same line
+   private readable 
+      more_var1,       # Comment 1
+      more_var2        # Comment 2</code></pre>
+<h1 id="markdown-syntax">Markdown syntax</h1>
+<h2 id="bullet-lists">Bullet lists</h2>
+<p>An asterisk, followed by one or more spaces, indicates each list item. Each asterisk must be indented to the same level :-</p>
+<pre><code>Some text before the list...
+  * The first item.
+    More about the first item.
+  * The second item.
+  * The third item.  The following blank line indicates a paragraph
+    break in the third item&#39;s text.
+
+    More about the third item, in a new paragraph.
+This line ends the list, since its indentation is less than or equal to the asterisks.</code></pre>
+<h2 id="ordered-lists">Ordered lists</h2>
+<p>Each item is indicated by either</p>
+<ul>
+<li>a number</li>
+<li>a single lower-case letter, or</li>
+<li>a single upper-case letter</li>
+</ul>
+<p>followed by a “.”, and one or more spaces. The actual number or letter values are ignored, except to indicate the start of a list rather than the continuation of an existing one. Like bullet lists, the item numbers or letters must have the same indentation. For example :-</p>
+<pre><code>Some text before the list...
+  1. The first item.
+     More about the first item.
+  2. The second item.
+  3. The third item.  The following blank line indicates a paragraph
+     break in the third item&#39;s text.
+
+     More about the third item, in a new paragraph.
+  a. A new list.
+  b. The second item.
+  A. Another new list.
+  B. And its second item.
+This line ends the third list, since its indentation is less than or equal to the asterisks.</code></pre>
+<h2 id="definition-lists">Definition lists</h2>
+<p>These are slightly different, since the list comprises two kinds of entry, namely titles and definitions. A title is indicated by a “:” followed by the title, with no space in-between. A definition is also starts with a “:”, followed by one or more spaces. Like the other list types, the “:” characters must all align. For example :-</p>
+<pre><code>Some text before the list...
+  :The first title.
+  :   Here is its definition.
+      This continues the first definition.
+  :The second title.
+  :   Its definition.
+This ends the definition list.</code></pre>
+<p>There is no need to have a title before a definition. For example, a single definition makes a useful way to do block quotations :-</p>
+<pre><code>Some text before the block quotation...
+: Edward Frederic &quot;E. F.&quot; Benson (24 July 1867 – 29 February 1940) was an English novelist, biographer, memoirist, archaeologist
+  and short story writer.
+This ends the quote.</code></pre>
+<h2 id="nesting-lists">Nesting lists</h2>
+<p>Lists may be nested arbitrarily. A nested list simply needs to use a greater indentation for its particular list indication character ("*“,”:", etc). For example :-</p>
+<pre><code>  1. The first item
+     1. A sub-list.
+     2. Its second item
+        a. Another sub-list.
+        b. Another item.
+  2. Back to the first list.
+  The end</code></pre>
+<h2 id="pre-formatted-text">Pre-formatted text</h2>
+<p>A pre-formatted block of text begins with a line with spaces, followed by one or more tildes. It ends with an identical line. For example :-</p>
+<pre><code>   Here is a pre-formatted block :-
+   ~~
+      if x &gt; 0 then
+         x := -x
+   ~~
+   Normal formatting again.</code></pre>
+<p>Note that spaces up to the level of the tildes are stripped from the pre-formatted text, so the above example would have a three character indent, regardless of the indentation of the tildes. This ensures pre-format blocks used within a nested list structure look correct.</p>
+<h2 id="paragraphs">Paragraphs</h2>
+<p>A blank line indicates a new paragraph. This will not close any list or list item. For example</p>
+<pre><code>  * First item.
+
+    Still the first item, with a new paragraph.
+  * Second item.</code></pre>
+<p>A blank line with a single backtick (`) also indicates a new paragraph, but will close lists and items up to and including the indentation of the level of the backtick. This is rarely useful, but could be used to indicate that a paragraph separated two separate bullet lists :-</p>
+<pre><code>  * First item.
+  * Second item; the following blank line with a backtick will close
+    this list and insert a paragraph.
+  `
+  * First item of a different list.
+  * Second item</code></pre>
+<p>However, the output is likely to appear the same whether or not the backtick is used. Note that the backtick is not needed to separate two adjacent ordered lists, since the item number or letter indicates the start of a new list (“1”, “a” or “A”).</p>
+<h2 id="font-attributes">Font attributes</h2>
+<p>Bold, italic and underline text can be specified as follows :-</p>
+<pre><code>  Here is some **BOLD** text
+  Here is some __Underline__ text
+  Here is some //Italic// text
+  Here is some ~~Monospace~~ text</code></pre>
+<p>These attributes can be spread over several lines, with the proviso that they cannot escape from an inner list structure to an outer one.</p>
+<pre><code>  Start //italics 
+  * List
+  * in
+  * italics
+  End italics//.  Back to normal.
+
+  * List
+  * Start //italics
+  * Not in italics
+  Also not in italics.</code></pre>
+<p>Note that :// and /// don’t start italics, to avoid clashes with URLs.</p>
+<h2 id="links">Links</h2>
+<p>If text (within a single source line) is enclosed in backticks, then the output is in monospace font, and an attempt is made to resolve the enclosed text to a symbol in the symbol table created by <code>oidoc</code> from the various source files being documented. If a symbol is found, then an anchor link is produced in the output. For example :-</p>
+<pre><code>   import io
+
+   # This procedure does something with the `Stream` `s`.
+   procedure p(s)
+   end</code></pre>
+<p>Here, <code>`Stream`</code> will resolve to <code>io.Stream</code>, and a link will be created to the documentation for that class. <code>`s`</code>, on the other hand, will not resolve to a symbol, and will just appear in a monospace font.</p>
+<p>Note that, within a procedure or method’s comment, parameter names never resolve to symbols. So in the above example, <code>`s`</code> would not produce a link even if there were a global variable of that name. The same applies to record comments and record field names. Should such a link be needed, the fully qualified name must be used.</p>
+<p>If, instead of two backticks, a backtick and a quote are used, then the enclosed text is never resolved as a symbol. This gives a shorter way of specifying monospace font with two tildes :-</p>
+<pre><code>   This is never resolved to `Stream&#39;, and looks just like ~~Stream~~.</code></pre>
+<p>The backtick syntax also provides a way to output characters which would otherwise be interpreted by oidoc as being markdown syntax. For example :-</p>
+<pre><code>   This shows &quot;x to the power y&quot;, as you might expect :- `x ** y`.
+   But this doesn&#39;t : ~~x ** y~~ - it is a mis-balanced combination of monospace and bold font.</code></pre>
+<p>The only way to output backticks, however, is using a pre-formatted block.</p>
+<h2 id="anchors">Anchors</h2>
+<p>Links to http, file and ftp URLs can be enclosed in angle brackets, as follows :-</p>
+<pre><code>  Heap&#39;s algorithm for permutation generation.
+  See : &lt;https://en.wikipedia.org/wiki/Heap%27s_algorithm&gt;</code></pre>
+<p>The output will contain an anchor link to the specified URL.</p>
+<h2 id="line-breaks">Line breaks</h2>
+<p>Two or more spaces at the end of a line indicates a line break.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

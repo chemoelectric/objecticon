@@ -1,0 +1,53 @@
+import
+   io(write),
+   ipc(Sem, Shm),
+   util(Process)
+
+global var, sem1, sem2
+
+procedure run()
+   local i
+   every i := 1 to 10 do {
+      # Wait till okay to set value
+      sem1.wait()
+      var.set_value(i)
+      # Signal value set
+      sem2.signal()
+
+      # Sleep for 1/2 second
+      delay(500)
+   }
+end
+
+procedure main()
+   local i, c
+   var := Shm.create_private()
+
+   # Create two private semaphores with initial value 0.
+   sem1 := Sem.create_private(0)
+   sem2 := Sem.create_private(0)
+
+   c := Process{run()}
+   c.start()
+
+   repeat {
+      # Signal okay to set value
+      sem1.signal()
+
+      # Wait till value set
+      sem2.wait()
+      i := var.get_value()
+      write(i)
+      if i = 10 then 
+         break
+   }
+   c.close()
+   var.close()
+delay(1000)
+write(sem1.get_value())
+write(sem2.get_value())
+   sem1.close()
+   sem2.close()
+
+   write("Finished okay")
+end

@@ -1,0 +1,69 @@
+import plan9, io, util, ipl.server9p, exception
+
+global receivers, sched
+
+class Recv2(QueueFile9P)
+   private sleeping
+
+   public sent(s)
+      add(s)
+      (\sleeping).notify()
+   end
+
+   public override read(count, pos)
+      while len = 0 do {
+         use {
+            sleeping := sched.curr_task,
+            sleeping.sleep(),
+            sleeping := &null
+         } | throw(&why)
+      }
+      return QueueFile9P.read(count, pos)
+   end
+
+   public override close()
+      delete(receivers, self)
+      (\sleeping).interrupt()
+   end
+
+   public override new(n)
+      QueueFile9P.new(n)
+      insert(receivers, self)
+      return
+   end
+end
+
+class Recv(Regular9P)
+   public override open(mode)
+      return Recv2("recv2").
+         set_fixed_perm(perm).
+         set_parent(parent)
+   end
+end
+
+class Send2(StringFile9P)
+   public override close()
+      if *data > 0 then
+         every (!receivers).sent(data)
+   end
+end
+
+class Send(Regular9P)
+   public override open(mode)
+      return Send2("send2").
+         set_fixed_perm(perm).
+         set_parent(parent)
+   end
+end
+
+procedure main(a)
+   local root, sess
+   sched := Scheduler(100)
+   receivers := set()
+   root := Root9P().
+      set_fixed_perm(8r555).
+      add_child(Send("send").set_fixed_perm(8r222)).
+      add_child(Recv("recv").set_fixed_perm(8r444))
+   sess := Session9P(TreeData9P(root))
+   server_main_0(a, sess, sched)
+end

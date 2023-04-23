@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Low-level graphics interface.</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Low-level graphics interface.</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#opening-a-window">Opening a window</a></li>
+<li><a href="#canvas-and-context">Canvas and Context</a></li>
+<li><a href="#canvas-states">Canvas states</a></li>
+<li><a href="#window-attributes">Window attributes</a><ul>
+<li><a href="#window-aspect-ratio">Window aspect ratio</a></li>
+</ul></li>
+<li><a href="#drawing-methods">Drawing methods</a></li>
+<li><a href="#fonts">Fonts</a><ul>
+<li><a href="#x11-and-fontconfig">X11 and Fontconfig</a></li>
+</ul></li>
+<li><a href="#colours">Colours</a></li>
+<li><a href="#images-and-the-pixels-class">Images and the Pixels class</a><ul>
+<li><a href="#palettes">Palettes</a></li>
+</ul></li>
+<li><a href="#compositing-masks-and-draw_op">Compositing, masks and draw_op</a></li>
+<li><a href="#filters">Filters</a></li>
+<li><a href="#events">Events</a></li>
+</ul></li>
+<li><a href="#additional-x11-configuration">Additional X11 configuration</a><ul>
+<li><a href="#window-id">Window ID</a></li>
+<li><a href="#resource-name-and-class">Resource name and class</a></li>
+<li><a href="#selections">Selections</a></li>
+</ul></li>
+<li><a href="#cairo-graphics-library">Cairo graphics library</a></li>
+<li><a href="#triangles-and-trapezoids">Triangles and trapezoids</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Object Icon’s graphic facilities are based on Icon’s, but with quite a large number of features omitted, and a few added, most notably support for transluscent colours, alpha channels and compositing. Also, the programming interface is re-cast into an object-oriented form, consistent with the rest of the library.</p>
+<p>The following notable features in Icon’s graphic facilities are omitted from Object Icon’s :-</p>
+<ul>
+<li>The notion of a window as a file; in Object Icon a window is merely an object.</li>
+<li>Mutable colors.</li>
+<li>The use of a window as a sort of terminal, with a notional cursor position.</li>
+<li>Gamma correction</li>
+<li>The bit manipulation drawops and the color reversal flag.</li>
+<li>The Icon image string and pattern string formats</li>
+</ul>
+<p>Icon’s graphics facilities are described in the following document :- <a href="http://www.cs.arizona.edu/icon/docs/ipd281.htm" class="uri">http://www.cs.arizona.edu/icon/docs/ipd281.htm</a></p>
+<h2 id="opening-a-window">Opening a window</h2>
+<p>Use the constructor of <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html"><code>graphics.Window</code></a> to open a window. This gives a hidden window of size 1 pixel by 1 pixel, with default attributes. These can then be modified using setter methods before the window is made visible by setting the canvas type to “normal”. For example :-</p>
+<pre><code>   w := Window().
+      set_size(200,200).
+      set_fg(&quot;blue&quot;).
+      set_bg(&quot;light grey&quot;).
+      set_font(&quot;serif,24&quot;).
+      erase_area().
+      set_canvas(&quot;normal&quot;) | stop(&amp;why)</code></pre>
+<p>The <code>Window</code> class has methods for manipulating the window and drawing in it.</p>
+<h2 id="canvas-and-context">Canvas and Context</h2>
+<p>A <code>Window</code> actually encapsulates two separate objects internally, a “canvas” and a “context”.</p>
+<p>The canvas is the thing which drawing operations draw onto. This may be just an off-screen image, (a canvas in the “hidden” state; see below), or an off-screen image plus a visible window (a canvas in any other state). In the latter case, the contents of the two are kept in synch automatically.</p>
+<p>The context is a collection of drawing attributes, such as background colour, line width and so on (see the next section for the complete list).</p>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23clone"><code>clone</code></a> method can be used to create a new <code>Window</code> which shares the canvas of another, but has its own context, which starts out at as a copy of the original. For example, suppose we already have a window, <code>w</code>, and wish to draw some text in a particular font in red, but without disturbing the existing font and color settings of <code>w</code> :-</p>
+<pre><code>   w2 := w.clone().
+       set_font(&quot;typewriter&quot;).
+       set_fg(&quot;red)
+   w2.draw_string(100, 200, &quot;Some text&quot;)
+   w2.close()</code></pre>
+<p>Note that <code>w2</code> must be closed after use. Both canvas and context are referenced counted, and not actually released until the last reference is closed.</p>
+<p>The methods used to alter the context are as follows :-</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 31%" />
+<col style="width: 55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><em>Method</em></th>
+<th><em>Parameter(s)</em></th>
+<th><em>Description</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_bg"><code>set_bg</code></a></td>
+<td>string</td>
+<td>Background color</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_fg"><code>set_fg</code></a></td>
+<td>string</td>
+<td>Foreground color</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23clip"><code>clip</code></a></td>
+<td>4xinteger</td>
+<td>Clipping region</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23unclip"><code>unclip</code></a></td>
+<td>-</td>
+<td>Unset clipping region</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_draw_op"><code>set_draw_op</code></a></td>
+<td>string</td>
+<td>Compositing operator</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_dx"><code>set_dx</code></a></td>
+<td>integer</td>
+<td>Drawing horizontal offset</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_dy"><code>set_dy</code></a></td>
+<td>integer</td>
+<td>Drawing vertical offset</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_font"><code>set_font</code></a></td>
+<td>string</td>
+<td>Current text font</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_leading"><code>set_leading</code></a></td>
+<td>real</td>
+<td>Proportion of font height to add as vertical inter-line spacing</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_line_join"><code>set_line_join</code></a></td>
+<td>string</td>
+<td>Line joining style to use in drawing</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_line_end"><code>set_line_end</code></a></td>
+<td>string</td>
+<td>Line ending style to use in drawing</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_line_width"><code>set_line_width</code></a></td>
+<td>real</td>
+<td>Line width to use in drawing</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_fill_rule"><code>set_fill_rule</code></a></td>
+<td>string</td>
+<td>Rule used to fill polygons</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_pattern"><code>set_pattern</code></a></td>
+<td>string or <code>Pixels</code></td>
+<td>Image to use to fill instead of foreground colour</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_mask"><code>set_mask</code></a></td>
+<td>string or <code>Pixels</code></td>
+<td>Image to use as an alpha mask with drawing operations</td>
+</tr>
+</tbody>
+</table>
+<p>There are several corresponding get methods, as well as several methods to retrieve information about the current font’s metrics.</p>
+<h2 id="canvas-states">Canvas states</h2>
+<p>A <code>Window</code>’s canvas can be in one of several different states. Most notably, it can be “hidden”. This means that the <code>Window</code> is just an off-screen image (on X11, this is termed a Pixmap). If a <code>Window</code> is not in the “hidden” state, then it also has a conventional visible window, in one of a selection of states. The following table shows the possible states allowed on the various systems :-</p>
+<table>
+<thead>
+<tr class="header">
+<th><em>Type</em></th>
+<th><em>Meaning</em></th>
+<th><em>X11</em></th>
+<th><em>Windows</em></th>
+<th><em>Plan9</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>hidden</td>
+<td>Off-screen image only</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr class="even">
+<td>iconic</td>
+<td>Minimized window</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr class="odd">
+<td>normal</td>
+<td>Normal visible window</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr class="even">
+<td>popup</td>
+<td>Transient window with no border; used for popup menus</td>
+<td>X</td>
+<td>X</td>
+<td>X</td>
+</tr>
+<tr class="odd">
+<td>fullscreen</td>
+<td>A full screen window</td>
+<td>X</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>maximized</td>
+<td>A maximized visible window</td>
+<td>X</td>
+<td>X</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>root</td>
+<td>The root (background) window</td>
+<td>X</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>shaded</td>
+<td>A visible window with only a title bar</td>
+<td>X</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>withdrawn</td>
+<td>A window not visible in any way</td>
+<td>X</td>
+<td>X</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The canvas state can be changed with <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_canvas"><code>set_canvas</code></a>, although some state changes are prohibited. The current state can be retrieved with <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23get_canvas"><code>get_canvas</code></a>. There is also a test program in the examples directory, <code>canvasstate</code>, which allows experimentation with various canvas state and other settings.</p>
+<h2 id="window-attributes">Window attributes</h2>
+<p>The various setter methods for configuring the canvas are summarised in the following table.</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 31%" />
+<col style="width: 55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><em>Method</em></th>
+<th><em>Parameter(s)</em></th>
+<th><em>Description</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_canvas"><code>set_canvas</code></a></td>
+<td>string</td>
+<td>Window kind</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_geometry"><code>set_geometry</code></a></td>
+<td>4xinteger</td>
+<td>Window position and size</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_height"><code>set_height</code></a></td>
+<td>integer</td>
+<td>Window height</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_icon"><code>set_icon</code></a></td>
+<td>string or <code>Pixels</code></td>
+<td>Window icon</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_image"><code>set_image</code></a></td>
+<td>string or <code>Pixels</code></td>
+<td>Draw an image and set window size to image size</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_label"><code>set_label</code></a></td>
+<td>ucs</td>
+<td>Window label (title)</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_max_height"><code>set_max_height</code></a></td>
+<td>integer</td>
+<td>Maximum window height</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_max_size"><code>set_max_size</code></a></td>
+<td>2xinteger</td>
+<td>Maximum window size</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_max_width"><code>set_max_width</code></a></td>
+<td>integer</td>
+<td>Maximum window width</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_min_height"><code>set_min_height</code></a></td>
+<td>integer</td>
+<td>Minimum window height</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_min_size"><code>set_min_size</code></a></td>
+<td>2xinteger</td>
+<td>Minimum window size</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_min_width"><code>set_min_width</code></a></td>
+<td>integer</td>
+<td>Minimum window width</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_pointer"><code>set_pointer</code></a></td>
+<td>string</td>
+<td>Mouse pointer</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_pos"><code>set_pos</code></a></td>
+<td>2xinteger</td>
+<td>Window position on screen</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_transient_for"><code>set_transient_for</code></a></td>
+<td><code>Window</code></td>
+<td>Transient-for window</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_x"><code>set_x</code></a></td>
+<td>integer</td>
+<td>Window x position</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_y"><code>set_y</code></a></td>
+<td>integer</td>
+<td>Window y position</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_resize"><code>set_resize</code></a></td>
+<td>flag</td>
+<td>Resizable flag</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_size"><code>set_size</code></a></td>
+<td>2xinteger</td>
+<td>Window size</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_width"><code>set_width</code></a></td>
+<td>integer</td>
+<td>Window width</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_base_size"><code>set_base_size</code></a></td>
+<td>2xinteger</td>
+<td>Base window height for aspect ratio and increment resize calculations (X11 only)</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_base_height"><code>set_base_height</code></a></td>
+<td>integer</td>
+<td>Base window height</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_base_width"><code>set_base_width</code></a></td>
+<td>integer</td>
+<td>Base window width</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_increment_size"><code>set_increment_size</code></a></td>
+<td>2xinteger</td>
+<td>Window size increment dimensions during resizing (X11 only)</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_increment_height"><code>set_increment_height</code></a></td>
+<td>integer</td>
+<td>Increment height</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_increment_width"><code>set_increment_width</code></a></td>
+<td>integer</td>
+<td>Increment width</td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_min_aspect_ratio"><code>set_min_aspect_ratio</code></a></td>
+<td>real</td>
+<td>Minimum aspect ratio during resizing (X11 only)</td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_max_aspect_ratio"><code>set_max_aspect_ratio</code></a></td>
+<td>real</td>
+<td>Maximum aspect ratio during resizing (X11 only)</td>
+</tr>
+</tbody>
+</table>
+<p>Most of the attributes have corresponding <code>get</code> methods.</p>
+<h3 id="window-aspect-ratio">Window aspect ratio</h3>
+<p>The aspect ratio and size increment methods in the above list indicate to an X11 window manager how to behave during a window resize. To illustrate this, here is an example program which uses the <a href="http://objecticon.sourceforge.net/libref/index.html?gui-package.html"><code>gui</code></a> package to display an image and a button, and on a resize keeps the window in the correct aspect ratio so that the image remains nicely sized in the window. It looks like this before and after a resize :-</p>
+<p><img src="asptest1.png" title="Before" /></p>
+<p><img src="asptest2.png" title="After" /></p>
+<p><a href="asptest.icn">Download asptest.icn</a></p>
+<p>The interesting part of this program is the <code>initially()</code> method, used to set up the window just before it is displayed :-</p>
+<pre><code>   public override initially()
+      local bh, bw, s1, r
+      Dialog.initially()
+      if /img.win then
+         stop(&quot;Invalid image&quot;)
+      s1 := img.win.get_size()
+      bh := get_preferred_height() - s1.height
+      bw := get_preferred_width() - s1.width
+      set_base_size(bw, bh)
+      set_min_size(bw, bh)
+      r := real(s1.width) / s1.height
+      set_min_aspect_ratio(r)
+      set_max_aspect_ratio(r)
+      write(to_string(wattribs))
+   end</code></pre>
+<p><code>s1</code> is set to the image size, and <code>bh</code> and <code>bw</code> are set to the preferred height and width respectively, after subtracting the image size. This is the base size, and is subtracted from the window size by the window manager before calculating the aspect ratio. It is necessary to set the minimum size too to satisfy the window manager. Then the aspect ratio is set to the ratio of the image to be displayed.</p>
+<h2 id="drawing-methods">Drawing methods</h2>
+<p>The various draw and fill methods in <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html"><code>graphics.Window</code></a> class really fall into two categories.</p>
+<p>The first category are very basic methods to draw and fill simple rectangular shapes and images. Integer coordinates and dimensions are used (rather than reals). The output should be identical on any platform (excepting font differences). The <a href="http://objecticon.sourceforge.net/libref/index.html?gui-package.html"><code>gui</code></a> package toolkit restricts itself to using these basic methods only, for the sake of simplicity and portability.</p>
+<p>The chief methods in this category are :-</p>
+<table>
+<thead>
+<tr class="header">
+<th><em>Method</em></th>
+<th><em>Parameter(s)</em></th>
+<th><em>Description</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_rectangle"><code>draw_rectangle</code></a></td>
+<td>(x, y, width, height, thickness)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23fill_rectangle"><code>fill_rectangle</code></a></td>
+<td>(x, y, width, height)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23erase_area"><code>erase_area</code></a></td>
+<td>(x, y, width, height)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_point"><code>draw_point</code></a></td>
+<td>(x, y)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_string"><code>draw_string</code></a></td>
+<td>(x, y, s)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_image"><code>draw_image</code></a></td>
+<td>(x, y, v)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23copy_to"><code>copy_to</code></a></td>
+<td>(x1, y1, width, height, dest, x2, y2, mask, x3, y3)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23filter"><code>filter</code></a></td>
+<td>(x, y, width, height, filter)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>All of the attributes of the context apply to these methods, with the exception of those relating to line drawing (line width, line join style and line end style).</p>
+<p>The second category comprises methods which can be used to draw and fill simple geometric shapes, including ellipses, curves and polygons. These methods alone use real number coordinates and dimensions. The output however may appear somewhat different on different platforms. These methods use all of the context attributes, including the line drawing ones.</p>
+<p>The methods in this category are :-</p>
+<table>
+<thead>
+<tr class="header">
+<th><em>Method</em></th>
+<th><em>Parameter(s)</em></th>
+<th><em>Description</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23fill_arc"><code>fill_arc</code></a></td>
+<td>(x, y, rx, ry, angle1, angle2)</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23fill_circle"><code>fill_circle</code></a></td>
+<td>(x, y, r, angle1, angle2)</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23fill_polygon"><code>fill_polygon</code></a></td>
+<td>(a[])</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23fill_triangles"><code>fill_triangles</code></a></td>
+<td>(a[])</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_polygon"><code>draw_polygon</code></a></td>
+<td>(a[])</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_line"><code>draw_line</code></a></td>
+<td>(a[])</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_curve"><code>draw_curve</code></a></td>
+<td>(a[])</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_circle"><code>draw_circle</code></a></td>
+<td>(x, y, r, angle1, angle2)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="fonts">Fonts</h2>
+<p>Fonts follow the same format as in Icon, with some minor enhancements. An Icon font is specified as a list of comma-separated fields :-</p>
+<ul>
+<li>The first field gives the font family;</li>
+<li>At most one field gives the font size (in points), and</li>
+<li>The other fields specify font attributes.</li>
+</ul>
+<p>For example :-</p>
+<pre><code>serif,bold,18.5
+sans,24,italic,medium</code></pre>
+<p>Five family names are “standard”, and are interpreted specially :-</p>
+<ul>
+<li>fixed</li>
+<li>mono</li>
+<li>typewriter</li>
+<li>sans</li>
+<li>serif</li>
+</ul>
+<p>Any other family name is interpreted by the underlying font system.</p>
+<p>The font attributes fall into several categories, as follows :-</p>
+<ul>
+<li>Weight
+<ul>
+<li>bold</li>
+<li>demibold</li>
+<li>light</li>
+<li>medium</li>
+<li>thin</li>
+</ul></li>
+<li>Width
+<ul>
+<li>condensed</li>
+<li>extended</li>
+<li>narrow</li>
+<li>normal</li>
+<li>wide</li>
+</ul></li>
+<li>Slant
+<ul>
+<li>italic</li>
+<li>oblique</li>
+<li>roman</li>
+</ul></li>
+<li>Spacing
+<ul>
+<li>mono</li>
+<li>proportional</li>
+</ul></li>
+<li>Serif
+<ul>
+<li>sans</li>
+<li>serif</li>
+</ul></li>
+</ul>
+<p>At most one item from each category can be selected in any specification.</p>
+<p>The actual interpretation of these various attributes depends on the underlying font system.</p>
+<p>The environment variable <code>OI_FONT</code> specifies the default font to use in a window, and <code>OI_FONT_SIZE</code> specifies the default fontsize; if not given the default font size is 12.</p>
+<p>Font sizes can also be specified as relative to the default font size, by prefixing with a <code>+</code> or a <code>-</code>, or as a factor of the default font size by prefixing with a <code>*</code>. So for example, if <code>OI_FONT_SIZE</code> was set to “11.5”, then “sans” would be the same as “sans,11.5”, and “sans,+2” would be the same as “sans,13.5”, and “sans,*2” would be the same as “sans,23” A static method, <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23get_default_font_size"><code>Window.get_default_font_size()</code></a>, returns the default font size.</p>
+<h3 id="x11-and-fontconfig">X11 and Fontconfig</h3>
+<p>On X11, Xft, Fontconfig and Freetype are used for fonts. With fontconfig, further customization can be achieved by editing the user configuration file, found in <code>~/.config/fontconfig/fonts.conf</code>, and defining patterns for the following family names :-</p>
+<table>
+<thead>
+<tr class="header">
+<th><em>Icon font family</em></th>
+<th><em>Xft family name</em></th>
+<th><em>Default value</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>fixed</td>
+<td>Object Icon fixed</td>
+<td>mono</td>
+</tr>
+<tr class="even">
+<td>mono</td>
+<td>Object Icon mono</td>
+<td>mono</td>
+</tr>
+<tr class="odd">
+<td>typewriter</td>
+<td>Object Icon typewriter</td>
+<td>courier</td>
+</tr>
+<tr class="even">
+<td>sans</td>
+<td>Object Icon sans</td>
+<td>helvetica</td>
+</tr>
+<tr class="odd">
+<td>serif</td>
+<td>Object Icon serif</td>
+<td>times</td>
+</tr>
+</tbody>
+</table>
+<p>An example entry, which makes the Icon mono family use the “Deja Vu Sans Mono” font, is as follows :-</p>
+<pre><code>&lt;match target=&quot;pattern&quot;&gt;
+   &lt;test name=&quot;family&quot;&gt;
+      &lt;string&gt;Object Icon mono&lt;/string&gt;
+   &lt;/test&gt;
+   &lt;edit name=&quot;family&quot; mode=&quot;prepend&quot; binding=&quot;same&quot;&gt;
+      &lt;string&gt;Deja Vu Sans Mono&lt;/string&gt;
+   &lt;/edit&gt;
+ &lt;/match&gt;</code></pre>
+<p>A font specifier may specify a string to be interpreted directly by the platform’s font system. When using fontconfig, this is done by prepending the string “fc:” to the specifier (for example, “fc:Bitstream Vera Sans-11”). The result of the <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23get_font"><code>get_font</code></a> method will in fact always be in this platform-specific format. Note that the setting of <code>OI_FONT_SIZE</code> has no effect on a font specified in this way.</p>
+<h2 id="colours">Colours</h2>
+<p>Colour specifications follow the same format as in Icon, with an enhancement to allow specification of transluscent colours. The following is adapted from the Icon documentation :-</p>
+<p>Colors are named by English phrases. Examples are “brown”, “yellowish green”, and “moderate purple-gray”. The syntax of a color name is</p>
+<p>[ [“very”] <em>Lightness</em> ] [ <em>Saturation</em> ] [ <em>Hue</em> [ “ish” ] ] <em>Hue</em> [ <em>Opacity</em> ]</p>
+<p>where choices enclosed in brackets are optional and a single hyphen or space separates each word from its neighbour. Color names are insensitive to case; purple and Purple are equivalent.</p>
+<p><em>Lightness</em> can be one of dark, deep, light, medium, pale.</p>
+<p><em>Saturation</em> can be one of moderate, strong, vivid, weak.</p>
+<p><em>Hue</em> can be one of black, gray (or grey), white, pink, violet, brown, red, orange, yellow, green, cyan, blue, purple, or magenta.</p>
+<p><em>Opacity</em> specifies an integer percentage alpha channel value; for example “25%”.</p>
+<p>Conventional English spelling is used. When adding “ish” to a hue ending in “e”, the “e” is dropped. For example, “purple” becomes “purplish”. The “ish” form of “red” is “reddish”.</p>
+<p>When two hues are supplied and the first hue has no “ish” suffix, the resulting hue is halfway between the two named hues. When a hue with an “ish” suffix precedes a hue, the resulting hue is three-fourths of the way from the “ish” hue to the main hue. The default lightness is “medium” and the default saturation is “vivid”.</p>
+<p>The special colour specification “transparent” means the colour black, with a zero alpha value.</p>
+<p>Colors can also be specified in terms of red, green, and blue brightness components, and an optional opacity value. There are three possible formats :-</p>
+<ul>
+<li>The decimal integer form uses three or four comma-separated values ranging from 0 to 65535, as in “12000,0,65535”.</li>
+<li>The decimal fraction form uses three or four comma-separated values ranging from 0.0 to 1.0, as in “1.0,0.3,0.5”.</li>
+<li>The hexadecimal forms are “#rgb[a]”, “#rrggbb[aa]”, “#rrrgggbbb[aaa]”, and “#rrrrggggbbbb[aaaa]”, with the longer forms providing greater precision.</li>
+</ul>
+<p>Here are some examples of colours which specify an opacity :-</p>
+<pre><code>“dark blue 50%”     # dark blue, 50% alpha
+“45874,0,0,52428”   # 70% red, 80% alpha
+“#00ffeea0”         # 100% green, 93% blue, 63% alpha
+“0.1,0.2,0.3,0.4”   # 10% red, 20% blue, 30% green 40% alpha</code></pre>
+<p>The default opacity in any specification is of course 100% opacity.</p>
+<p>Unlike Icon, colour specifications which are not recognized in the above formats are <em>not</em> interpreted by the underlying graphics system.</p>
+<h2 id="images-and-the-pixels-class">Images and the Pixels class</h2>
+<p>Image data is represented using the <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Pixels.html"><code>graphics.Pixels</code></a> class. This is just a two-dimensional array of pixel data, stored in various formats. The data is easy to examine and edit at the pixel level, and is independent of the underlying window system. This is in contrast to a hidden <code>Window</code>, which may at first glance appear similar. In X11 terms, a hidden window is represented as a <code>Pixmap</code> on the server, whilst a <code>Pixels</code> instance is just data on the client.</p>
+<p><code>Pixel</code> data can come from a number of sources :-</p>
+<ul>
+<li>An image file. Possible formats are gif, png and jpeg; the latter two depend on the right libraries being available.</li>
+<li>Raw image data stored as a string, also in gif, png or jpeg format.</li>
+<li>An image grabbed from part of a <code>Window</code></li>
+<li>A blank image</li>
+</ul>
+<p>To create an instance from an image file use the <code>Pixels</code> constructor, passing the filename. The constructor is also used to create an instance from raw data. This can easily be done using the preprocessor <code>$load</code> directive to compile image data into the executable. An example of this would be</p>
+<pre><code>$load FLINTSTONES &quot;/tmp/flintstones.jpg&quot;
+
+...
+   i := Pixels(FLINTSTONES)
+...</code></pre>
+<p>The <code>$load</code> directive defines the preprocessor symbol <code>FLINTSTONES</code> with the value being a string containing the contents of the specified file. An advantage of using this technique is that the image file does not of course have to be present at runtime (only at compile time).</p>
+<p>To get pixels from a <code>Window</code>, use its <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23get_pixels"><code>get_pixels</code></a> method, and to create a new blank image, use the <code>Pixels</code> constructor, passing width, height and optionally the desired underlying format. For example :-</p>
+<pre><code>   i := Pixels(3, 3, Pixels.RGBA32)</code></pre>
+<p>creates a 3x3 image using 32 bits per pixel. Some formats do not store an alpha channel; in this case reading back from the image always gives an opaque pixel.</p>
+<p>A <code>Pixels</code> image can be used with a <code>Window</code> in several ways :-</p>
+<ul>
+<li>The image can be written to the window with <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_image"><code>draw_image</code></a></li>
+<li>The image can be used as a fill pattern with <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_pattern"><code>set_pattern</code></a>; it is then used instead of the foreground colour.</li>
+<li>The window icon can be set with <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_icon"><code>set_icon</code></a></li>
+<li>The window’s contents and size can be set according to an image with <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_image"><code>set_image</code></a></li>
+</ul>
+<p>After use, a <code>Pixels</code> instance should be closed in order to free the memory it uses.</p>
+<h3 id="palettes">Palettes</h3>
+<p><code>Pixels</code> supports paletted images. Rather than storing pixel data directly, indices into a palette of colours are stored instead. Additional methods in <code>Pixels</code> are provided for editing the palette for such formats; in particular <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Pixels.html%23load_palette"><code>load_palette</code></a> allows a <a href="https://www2.cs.arizona.edu/icon/docs/ipd281/gipd_f.htm">traditional Icon palette</a> to be set as the palette. <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23palette_key"><code>Window.palette_key</code></a> can then be used to map a colour to a key for use in the image. Alternatively, the usual <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Pixels.html%23set"><code>Pixels.set</code></a> method can be used, which simply calculates and applies the closest palette entry for the given input colour. These two methods give slightly different results, as illustrated by the following program :-</p>
+<p><a href="palette.icn">Download palette.icn</a></p>
+<pre><code>import io, graphics, ipl.graphics, ipl.options, ipl.pdco
+
+# Copy a source image to a paletted destination image, and then
+# display it, and optionally save it.
+#
+# With the -k option, the Window.palette_key() method is used to
+# calculate each destination pixel&#39;s palette index, rather than the
+# Pixel&#39;s set() method.
+#
+procedure main(a)
+   local w, pix, qix, pal, opts, f
+   opts := options(a, [Opt(&quot;w&quot;, string, &quot;FILE#Write result to given file&quot;),
+                       Opt(&quot;k&quot;,, &quot;Use palette_key()&quot;)],
+                       &quot;Usage: palette [OPTIONS...] SOURCE-FILE [PALETTE]&quot;)
+   if *a &lt; 1 then
+      stop(&quot;Need a parameter&quot;)
+   pal := a[2] | &quot;c6&quot;
+   Window.palette_chars(pal) | stop(&quot;Invalid palette&quot;)
+   pix := Pixels(a[1]) | stop(&quot;Couldn&#39;t open image file: &quot;, &amp;why)
+
+   # Create a paletted Pixels, with the palette set to the given Icon
+   # palette.
+   qix := Pixels(pix.get_width(),
+                 pix.get_height(),
+                 Pixels.PALETTE8).
+      load_palette(pal)
+
+   # Copy data from the source image to the paletted image.
+   if \opts[&quot;k&quot;] then
+      # Form a string of palette keys by applying Window.palette_key()
+      # on the source data, and then set the resulting string as the
+      # paletted image&#39;s data.
+      qix.set_data( String2{ Window.palette_key(pal, pix.gen().pixel) } )
+   else
+      # Copy source to destination; this is like calling set() for
+      # each individual destination pixel.
+      pix.copy_to(,,,, qix)
+
+   # Display the resulting paletted image in a window.
+   w := Window().
+      set_image(qix).
+      set_canvas(&quot;normal&quot;)
+
+   # Optionally save the image to a file.
+   if f := \opts[&quot;w&quot;] then {
+      write(&quot;Writing to file &quot;, f)
+      qix.to_file(f) | stop(&quot;Failed to write image: &quot;, &amp;why)
+   }
+
+   WDone(w)
+end
+</code></pre>
+<p>Here is an example output of the above, using the “c6” palette. To the left is the source image. The second image is the result without “-k”, and the third is with “-k”.</p>
+<p><img src="tiger.jpg" title="Source" /> <img src="tiger1.png" title="Using set()" /> <img src="tiger2.png" title="Using palette_key()" /></p>
+<p>And here are some results for other palettes; each run with “-k”.</p>
+<p><img src="tiger_c2.png" title="c2 palette" /> <img src="tiger_g2.png" title="g2 palette" /> <img src="tiger_g256.png" title="g256 palette" /></p>
+<h2 id="compositing-masks-and-draw_op">Compositing, masks and draw_op</h2>
+<p>The compositing operator used by the drawing functions can be set using <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23set_draw_op"><code>set_draw_op</code></a>. The possible values are :-</p>
+<p>“atop”, “clear”, “dest”, “dest atop”, “dest in”, “dest out”, “dest over”, “in”, “out”, “over”, “source”, “xor”</p>
+<p>The default is “over”.</p>
+<p>If a mask is set in the context, then the alpha values from the mask are combined with the colour values of the foreground colour (or the pattern, if set), and then this combination is applied to the destination using the drawing operator.</p>
+<p>The mask also applies in two cases where the foreground colour or pattern is ignored. These are <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23draw_image"><code>draw_image</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23copy_area"><code>copy_area</code></a>.</p>
+<p>Here is an example (it requires this <a href="cheetah_cubs.jpg">image</a> to compile) which illustrates how a mask can be used. It loads an image and creates a circular mask. Both are represented as <code>Pixels</code> instances. Then a window is created and a light blue background set. The mask is set and the image drawn, and so the alpha values of the mask are applied to the image’s pixels, resulting in some of the blue background showing through.</p>
+<p><a href="cheetah2.icn">Download cheetah2.icn</a></p>
+<pre><code>import graphics, ipl.graphics
+
+$load CAT &quot;cheetah_cubs.jpg&quot;
+
+procedure circle_mask(d)
+   local p, i, j, r2, r, s, a
+   p := Pixels(d, d, Pixels.A8)
+   r := d / 2
+   r2 := r * r
+   every j := 0 to d - 1 do
+      every i := 0 to d - 1 do
+         if (s := (i - r)^2 + (j - r)^2) &lt; r2 then {
+            a := ((r2 - s) * 65535) / r2
+            p.set_rgba(i, j, 0,0,0, a)
+         }
+   return p
+end
+
+procedure main()
+   local cm, w, cat
+
+   # Get the cat image
+   cat := Pixels(CAT)
+
+   # Create a circular mask image.  The parameter gives the diameter.
+   # The further away from the centre of the circle, the more
+   # transparent is the mask, with the centre being opaque.
+   cm := circle_mask(cat.get_width())
+
+   # Create a destination window with a light blue background.
+   w := Window().
+      set_mask(cm).
+      set_bg(&quot;very light blue&quot;).erase_area().
+      set_image(cat)
+
+   # Display the destination window.
+   w.set_canvas(&quot;normal&quot;)
+   WDone(w)
+end
+</code></pre>
+<p>The cheetah image looks like this in its raw form :-</p>
+<p><img src="cheetah_cubs.jpg" /></p>
+<p>The resulting window is as follows :-</p>
+<p><img src="maskresult.png" /></p>
+<p>Unfortunately there is only limited support for compositing and masks in the Windows implementation (which is based on GDI+). Only the “over” and “source” operators are supported, and the mask setting in the context is ignored. The above example would have to be done in a different way, by combining the mask and image <code>Pixels</code> manually, and then drawing the resulting <code>Pixels</code> to the window.</p>
+<h2 id="filters">Filters</h2>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23filter"><code>filter</code></a> method (based on <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Pixels.html%23filter"><code>filter</code></a>) is used to efficiently transform a rectangular area of pixels, according to one of several pre-defined filters. The available filters are as follows :-</p>
+<ul>
+<li><p><em>linear</em>. The linear filter accepts 4 float parameters followed by 4 optional integer parameters (which default to zero). Each pair provides a linear transformation to apply to the red, green, blue and alpha values of each pixel. For example</p>
+<pre><code>W.filter(,,,, &quot;linear,0.6,0.75,1.0,1.0&quot;)</code></pre></li>
+<li><p><em>shade</em>. This filter accepts three integer parameters, and an optional background colour, which defaults to white. The background colour is specified after the integers, and they are separated by a “:” character. It is a rather specialised filter, used to “grey-out” gui components. The first parameter specifies a range of grey bands. The grey band of the background is calculated. Then each pixel’s grey band value is calculated. If it differs from the background’s band value, then a new grey pixel is calculated by multipling the existing pixel’s grey band value by the second parameter, and adding the third parameter. The default filter used by the “gui” package is :-</p>
+<pre><code>W.filter(,,,, &quot;shade,4,5000,40000:&quot; || W.get_bg())</code></pre>
+<p>Note that the maximum possible new pixel value is <code>4*5000 + 40000 = 60000</code>, within the defined range of values (ie, <code>0 - 65535</code>). Out of range values are brought into range anyway.</p></li>
+<li><p><em>invert</em>. This filter takes no parameters. Each pixel’s red, green and blue values is replaced with the value 65535 - <em>current value</em>.</p></li>
+<li><p><em>coerce</em>. This filter takes one string parameter, namely a palette. Each pixel is coerced into the permitted colors in that palette. Thus the following example transforms the image into one in which each pixel has one of 256 possible greyscale values.</p>
+<pre><code>W.filter(,,,, &quot;coerce,g256&quot;)</code></pre></li>
+</ul>
+<h2 id="events">Events</h2>
+<p>Events are generated from a window as lists. The first element of the list gives the event code, which is one of the following. The number and type of the other elements depends on the code.</p>
+<table>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><em>Type</em></th>
+<th><em>Description</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Mouse.LEFT_PRESS</td>
+<td>Mouse left button press</td>
+</tr>
+<tr class="even">
+<td>Mouse.MIDDLE_PRESS</td>
+<td>Mouse middle button press</td>
+</tr>
+<tr class="odd">
+<td>Mouse.RIGHT_PRESS</td>
+<td>Mouse right button press</td>
+</tr>
+<tr class="even">
+<td>Mouse.LEFT_RELEASE</td>
+<td>Mouse left button release</td>
+</tr>
+<tr class="odd">
+<td>Mouse.MIDDLE_RELEASE</td>
+<td>Mouse middle button release</td>
+</tr>
+<tr class="even">
+<td>Mouse.RIGHT_RELEASE</td>
+<td>Mouse right button release</td>
+</tr>
+<tr class="odd">
+<td>Mouse.DRAG</td>
+<td>Mouse drag with any button down</td>
+</tr>
+<tr class="even">
+<td>Mouse.MOVEMENT</td>
+<td>Mouse movement with no button down</td>
+</tr>
+<tr class="odd">
+<td>Mouse.WHEEL_UP</td>
+<td>Mouse wheel upward direction</td>
+</tr>
+<tr class="even">
+<td>Mouse.WHEEL_DOWN</td>
+<td>Mouse wheel downward direction</td>
+</tr>
+<tr class="odd">
+<td>Mouse.WHEEL_LEFT</td>
+<td>Mouse wheel leftward direction</td>
+</tr>
+<tr class="even">
+<td>Mouse.WHEEL_RIGHT</td>
+<td>Mouse wheel rightward direction</td>
+</tr>
+<tr class="odd">
+<td>Mouse.ENTER</td>
+<td>Mouse cursor enters window</td>
+</tr>
+<tr class="even">
+<td>Mouse.EXIT</td>
+<td>Mouse cursor leaves window</td>
+</tr>
+<tr class="odd">
+<td>Window.RESIZE</td>
+<td>Window resized</td>
+</tr>
+<tr class="even">
+<td>Window.MOVE</td>
+<td>Window moved</td>
+</tr>
+<tr class="odd">
+<td>Window.STATE</td>
+<td>Window canvas state (iconic, normal, etc) changed</td>
+</tr>
+<tr class="even">
+<td>Window.FOCUS_IN</td>
+<td>Window received focus</td>
+</tr>
+<tr class="odd">
+<td>Window.FOCUS_OUT</td>
+<td>Window lost focus</td>
+</tr>
+<tr class="even">
+<td>Window.CLOSE_BUTTON</td>
+<td>Window close button pressed</td>
+</tr>
+<tr class="odd">
+<td>Window.INVOKE_LATER</td>
+<td>Internal use by gui package</td>
+</tr>
+<tr class="even">
+<td>Selection.REQUEST</td>
+<td>Another application has requested a selection</td>
+</tr>
+<tr class="odd">
+<td>Selection.RESPONSE</td>
+<td>Another application has responded to a request for a selection</td>
+</tr>
+<tr class="even">
+<td>Selection.CLEAR</td>
+<td>A selection must be cleared</td>
+</tr>
+<tr class="odd">
+<td>String or ucs</td>
+<td>A key representing the given string has been pressed or released</td>
+</tr>
+<tr class="even">
+<td>Positive integer</td>
+<td>A key with the numeric code has been pressed or released</td>
+</tr>
+</tbody>
+</table>
+<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Key.html"><code>graphics.Key</code></a> contains a several constants which match the numeric key codes in the last class of event in the above table.</p>
+<p>The keyboard and mouse events all produce a list of 5 items (including the initial code) :-</p>
+<ol type="1">
+<li>Code</li>
+<li>Mouse x position</li>
+<li>Mouse y position</li>
+<li>Timestamp in milliseconds</li>
+<li>Keyboard state flags, being a combination of
+<ul>
+<li>Key.MOD_SHIFT - the shift key was pressed</li>
+<li>Key.MOD_LOCK - the caps lock key was pressed</li>
+<li>Key.MOD_CTRL - the ctrl key was pressed</li>
+<li>Key.MOD_META - the meta key was pressed</li>
+<li>Key.MOD_META2</li>
+<li>Key.MOD_META3</li>
+<li>Key.MOD_META4</li>
+<li>Key.MOD_META5</li>
+<li>Key.MOD_RELEASE - the key event was a release (rather than a press).</li>
+</ul></li>
+</ol>
+<h1 id="additional-x11-configuration">Additional X11 configuration</h1>
+<h2 id="window-id">Window ID</h2>
+<p>The X11 Window ID number can be retrieved from a window using the <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Window.html%23get_id"><code>get_id</code></a> method. This returns a string like “0x2a000cb”, which can then be used with external programs to configure or otherwise manipulate the window. Two possible such programs are <a href="http://manpages.ubuntu.com/manpages/trusty/man1/xdotool.1.html">xdotool</a> and <a href="http://tripie.sweb.cz/utils/wmctrl/">wmctrl</a>.</p>
+<p>For example, <code>wmctrl</code> could be used to make a <a href="http://objecticon.sourceforge.net/libref/index.html?gui-package.html"><code>gui</code></a> dialog “sticky” (ie present on all virtual desktops) :-</p>
+<pre><code> class SomeDialog(Dialog)
+    ...
+
+    public override init_dialog()
+       system(&quot;wmctrl -i -r &quot; || win.get_id() || &quot; -b add,sticky&quot;)
+    end
+
+    ...</code></pre>
+<h2 id="resource-name-and-class">Resource name and class</h2>
+<p>Two environment variables are also X11 specific. <code>OI_RESOURCE_NAME</code> and <code>OI_RESOURCE_CLASS</code> may be used to set the resource name or class name hint of each window, respectively; by default these hints take values based on the program name.</p>
+<h2 id="selections">Selections</h2>
+<p>Two environment variables control the X11 selection functionality.</p>
+<p><code>OI_MAX_X_SELECTION_SIZE</code> sets the maximum size (in bytes) of a selection (either sent or received). The default is 2MB.</p>
+<p><code>OI_MAX_X_SELECTION_CHUNK</code> sets the maximum size (in bytes) of a selection to be sent as a single chunk. Larger selections (within the maximum size limit) will be sent as several chunks using X11’s incremental protocol. The default is 64KB.</p>
+<h1 id="cairo-graphics-library">Cairo graphics library</h1>
+<p>There is an Object Icon interface to the <a href="https://cairographics.org/">Cairo 2D graphics library</a>, which can be used as an alternative to the built-in drawing methods. The various classes can be found in the <a href="http://objecticon.sourceforge.net/libref/index.html?cairo-package.html"><code>cairo</code></a> package. There is a program <code>cairotest</code> in the <code>examples</code> directory which shows the various features in action.</p>
+<p>Unfortunately this library is only available under X11.</p>
+<h1 id="triangles-and-trapezoids">Triangles and trapezoids</h1>
+<p>The Xrender extension allows clients to draw shapes by drawing lists of either of the above simple geometric shapes. However, the performance of the two alternatives differs considerably, depending on the X server driver being used.</p>
+<p><code>OI_X_TRIANGLES</code> indicates when to use triangles, as opposed to trapezoids. If zero or unset, then triangles are not used. If <code>1</code>, then triangles are used when they are most appropriate for the particular drawing operation. If <code>2</code>, then triangles are always used.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

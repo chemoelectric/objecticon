@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The &amp;why keyword</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The &amp;why keyword</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#errno">errno</a></li>
+<li><a href="#save_why">save_why</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Classic Icon traditionally uses failure to indicate that a particular operation has not succeeded. For example, the builtin <code>open</code> function will fail if, for some reason, the given file cannot be opened. Unfortunately, this leaves the caller guessing as to <em>why</em> the operation didn’t succeed.</p>
+<p>Object Icon uses a very simple way to improve things. A keyword <code>&amp;why</code> is provided, which is really just a simple global string variable. A procedure or function performing an operation can, on failure, set this keyword to a string indicating the reason for failure. For example, consider the following interaction in <code>ieval</code> :-</p>
+<pre><code>$ ieval -i io
+&gt; open(&quot;nonsense.txt&quot;)
+&gt; &amp;why
+&quot;No such file or directory (errno=2)&quot;
+&gt; open(&quot;/root/nonsense.txt&quot;)
+&gt; &amp;why
+&quot;Permission denied (errno=13)&quot;
+&gt;</code></pre>
+<p><code>&amp;why</code> can be assigned to like any other variable. It is helpful when propagating errors, to keep any existing value of <code>&amp;why</code>, and prepend a message, usually separated with a colon and a space (“:”). For example :-</p>
+<pre><code>procedure open_database(x)
+   ...
+   (f := open(x || &quot;.db&quot;)) | {
+      &amp;why := &quot;Failed to open database: &quot; || &amp;why
+      fail
+   }
+   ...
+end</code></pre>
+<p>Since assignment to <code>&amp;why</code> is almost always followed by failure, there is a helpful utility procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?util.error.html"><code>util.error</code></a>, which simply sets <code>&amp;why</code> and fails. This would make the above code a little more concise :-</p>
+<pre><code>procedure open_database(x)
+   ...
+   (f := open(x || &quot;.db&quot;)) | return error(&quot;Failed to open database: &quot; || &amp;why)
+   ...
+end</code></pre>
+<p>Another useful library procedure is <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.printf.whyf.html"><code>ipl.printf.whyf</code></a>. This takes a printf-style format and parameters and sets <code>&amp;why</code> to the resulting string. The format “%w” can be used to insert <code>&amp;why</code> into the result, so the above example using <code>error()</code> could be written as :-</p>
+<pre><code>   return whyf(&quot;Failed to open database: %w&quot;)</code></pre>
+<h2 id="errno">errno</h2>
+<p>C programmers will notice that <code>&amp;why</code> is very similar to <code>errno</code>, the global variable by which various C library functions communicate error information. Indeed, in the <code>ieval</code> output given above, the values for <code>&amp;why</code> come from turning <code>errno</code> into a string form. When <code>errno</code> is used in this way by Object Icon, the raw value of <code>errno</code> is retained by appending its value to the end of the string; thus rather than simply “Permission denied”, we set <code>&amp;why</code> to “Permission denied (errno=13)”. This is occasionally useful when we wish to do something if failure occurred for a specific reason. To extract the raw <code>errno</code> value from &amp;why, the utility procedure <a href="http://objecticon.sourceforge.net/libref/index.html?util.errno.html"><code>util.errno</code></a> may be used, as follows :-</p>
+<pre><code>$ ieval -i io,util
+&gt; open(&quot;/root/nonsense.txt&quot;)
+&gt; &amp;why
+&quot;Permission denied (errno=13)&quot;
+&gt; errno()
+13
+&gt;</code></pre>
+<p>The various constant values which <code>errno</code> may take can be found in the class <a href="http://objecticon.sourceforge.net/libref/index.html?posix.Errno.html"><code>posix.Errno</code></a>. We could then use logic like :-</p>
+<pre><code>(f := open(s)) | {
+   if errno() = Errno.EACCES then
+      # Do something if permission denied (EACCES is 13).
+   else
+      # Any other reason
+}</code></pre>
+<p>One point to note is that the presence of these constants is somewhat system dependent. Plan 9 for example, doesn’t use <code>errno</code> at all and uses a string-based error message system.</p>
+<h2 id="save_why">save_why</h2>
+<p>Occasionally it is useful to call a procedure, but to prevent it from altering the value of <code>&amp;why</code>. This is easily achieved with the utility procedure <a href="http://objecticon.sourceforge.net/libref/index.html?util.save_why.html"><code>util.save_why</code></a>, which can be used as follows :-</p>
+<pre><code># &amp;why has some important value...
+save_why{Files.remove(tmp_file)}
+# &amp;why still has the same value, regardless of whether `remove` failed.</code></pre>
+<p><code>save_why</code> makes use of the technique described on <a href="GlobalState.html">this page</a>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

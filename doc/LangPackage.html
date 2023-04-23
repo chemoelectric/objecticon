@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The lang package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The lang package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#classes">Classes</a></li>
+<li><a href="#outputting-values">Outputting values</a></li>
+<li><a href="#encoding-and-decoding-values-to-strings">Encoding and decoding values to strings</a></li>
+<li><a href="#cloning-objects">Cloning objects</a></li>
+<li><a href="#comparing-for-equality">Comparing for equality</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page gives an overview of the <code>lang</code> package, which provides some basic language-related utilities.</p>
+<h1 id="classes">Classes</h1>
+<p>The following are the notable classes in the <code>lang</code> package. Most just contain static methods.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.Class.html"><code>lang.Class</code></a> contains methods to look inside a class and get information about its members, superclasses, etc.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.Coexpression.html"><code>lang.Coexpression</code></a> contains methods to manipulate co-expressions, including printing stack traces.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.Constructor.html"><code>lang.Constructor</code></a> is the equivalent of <code>Class</code>, but for record constructors.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.Proc.html"><code>lang.Proc</code></a> contains methods to get information about a procedure, function or operator.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.Prog.html"><code>lang.Prog</code></a> contains methods to manipulate and get information about loaded programs.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.Text.html"><code>lang.Text</code></a> contains methods for manipulating csets.</p>
+<h1 id="outputting-values">Outputting values</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.to_stderr.html"><code>lang.to_stderr</code></a>, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.to_stdout.html"><code>lang.to_stdout</code></a>, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.to_string.html"><code>lang.to_string</code></a> output arbitrary objects in a human-readable format. These actually use a special type of <code>Stream</code>, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.ObjectOutputStream.html"><code>lang.ObjectOutputStream</code></a>, which has several options for altering the output. <code>ieval</code> uses this class to output its results; for example :-</p>
+<pre><code>$ ieval -i lang
+&gt; l := [1,2,[&quot;cat&quot;]]
+list#2707[
+   1,
+   2,
+   list#2706[&quot;cat&quot;]
+]
+&gt; put(l,l)
+list#2707[
+   1,
+   2,
+   list#2706[&quot;cat&quot;],
+   ref list#2707
+]</code></pre>
+<p>If a class wishes to customise its output, then it can subclass the <a href="http://objecticon.sourceforge.net/libref/index.html?lang.ObjectOutput.html"><code>lang.ObjectOutput</code></a>, and implement its only method, <code>object_output</code>. This takes a single parameter, namely the <code>ObjectOutputStream</code> to output to. <code>ObjectOutputStream</code> also contains some helpful methods which a class can use to produce output in a format consistent with other classes. For example, given :-</p>
+<pre><code>import lang
+
+class Thing(ObjectOutput)
+   protected override object_output(oo)
+      oo.object_string(self, &quot;Here is a thing&quot;)
+   end
+end</code></pre>
+<p>Then <code>to_string(Thing())</code> will produce <code>"object Thing#1(Here is a thing)"</code>.</p>
+<h1 id="encoding-and-decoding-values-to-strings">Encoding and decoding values to strings</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.encode.html"><code>lang.encode</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?lang.decode.html"><code>lang.decode</code></a> transform arbitrary objects to and from concise strings. For example, given</p>
+<pre><code>l := [1,2,[&quot;cat&quot;]]
+put(l,l)
+...
+s := encode(l)</code></pre>
+<p>This would leave <code>s</code> as the string <code>"L4I1I2L1Scat|X1"</code>.</p>
+<p>Some things cannot be encoded (for example co-expressions, files, windows and so on). In this case, <code>encode</code> will fail, setting <code>&amp;why</code> appropriately. <code>decode</code> may fail too, it the input string is invalid in some way.</p>
+<p>A class may customise which fields are encoded by subclassing <a href="http://objecticon.sourceforge.net/libref/index.html?lang.ObjectCodec.html"><code>lang.ObjectCodec</code></a>, and implementing its two methods. For example :-</p>
+<pre><code>import lang
+
+class Thing(ObjectCodec)
+   private x, y, junk
+
+   protected override object_encode(c)
+      every c.encode(x | y)
+   end
+
+   protected override object_decode(c)
+      x := c.decode()
+      y := c.decode()
+      # Could assign some value to junk if desired...
+   end
+
+   public new()
+      x := 1
+      y := 2
+      junk := 999
+      return
+   end
+end</code></pre>
+<p>Here the <code>x</code> and <code>y</code> fields are saved in the string created by <code>encode</code>, but not <code>junk</code>. On restoration, it will be left as <code>&amp;null</code>.</p>
+<p>Another way of doing the same thing is to use the helpful class <a href="http://objecticon.sourceforge.net/libref/index.html?lang.SelectiveObjectCodec.html"><code>lang.SelectiveObjectCodec</code></a>. This allows a class to specify in a single method which fields to encode :-</p>
+<pre><code>import lang
+
+class Thing(SelectiveObjectCodec)
+   private x, y, junk
+
+   protected override get_template()
+      suspend &quot;x&quot; | &quot;y&quot;
+   end
+
+   public new()
+      x := 1
+      y := 2
+      junk := 999
+      return
+   end
+end</code></pre>
+<p>A class which wishes to prevent encoding may subclass <a href="http://objecticon.sourceforge.net/libref/index.html?lang.Unencodable.html"><code>lang.Unencodable</code></a>. Any attempt to use it with <code>encode</code> will cause that procedure to fail.</p>
+<h1 id="cloning-objects">Cloning objects</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.clone.html"><code>lang.clone</code></a> clones an arbitrary object, ie perform a deep copy.</p>
+<p>A class which wishes to customise its cloning can subclass <a href="http://objecticon.sourceforge.net/libref/index.html?lang.ObjectClone.html"><code>lang.ObjectClone</code></a> and implement its single method. <a href="http://objecticon.sourceforge.net/libref/index.html?lang.SelfClone.html"><code>lang.SelfClone</code></a> can be subclassed for an object which wishes to prevent cloning; in this case cloning an instance just results in the instance itself.</p>
+<h1 id="comparing-for-equality">Comparing for equality</h1>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?lang.equals.html"><code>lang.equals</code></a> compares arbitrary objects for equality. A related procedure, <a href="http://objecticon.sourceforge.net/libref/index.html?lang.hash.html"><code>lang.hash</code></a>, calculates a hash value for an arbitrary object. For any two objects for which <code>equals</code> indicates equality, the hash code should be the same.</p>
+<p>A class may customise its equality comparison and/or hash calculation by subclassing <a href="http://objecticon.sourceforge.net/libref/index.html?lang.ObjectEquals.html"><code>lang.ObjectEquals</code></a> and <a href="http://objecticon.sourceforge.net/libref/index.html?lang.ObjectHash.html"><code>lang.ObjectHash</code></a>. For example :-</p>
+<pre><code>import lang
+
+class Thing(ObjectEquals, ObjectHash)
+   private x, y
+
+   protected override object_equals(d)
+      return x = d.x
+   end
+
+   protected override object_hash()
+      return x
+   end
+
+   public new(x, y)
+      self.x := x
+      self.y := y
+      return
+   end
+end</code></pre>
+<p>Here, the value of the field <code>y</code> is regarded as irrelevant for equality and hash calculations.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

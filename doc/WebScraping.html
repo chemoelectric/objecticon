@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Web scraping</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Web scraping</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#scrape-ids">Scrape IDs</a></li>
+<li><a href="#showtemplate">showtemplate</a></li>
+<li><a href="#anchors">Anchors</a></li>
+<li><a href="#creating-a-webscraper">Creating a WebScraper</a></li>
+<li><a href="#an-example">An example</a><ul>
+<li><a href="#testing-the-template">Testing the template</a></li>
+<li><a href="#a-test-program">A test program</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This article describes a technique for web scraping, and a particular class, <a href="http://objecticon.sourceforge.net/libref/index.html?ipl.webscraper.WebScraper.html"><code>ipl.webscraper.WebScraper</code></a>.</p>
+<p>This class works by taking a sample web page which has the same structure as the web pages we will subsequently be scraping data from. This sample page is called the template, and is an ordinary HTML document, but contains special directives which mark the particular elements we wish to locate in the pages we will be scraping data from.</p>
+<h1 id="scrape-ids">Scrape IDs</h1>
+<p>There are two types of special directives. The first is the “scrape ID”. We insert these into the template to indicate which corresponding elements we wish to retrieve from subsequent web pages.</p>
+<p>A scrape ID can either refer to a tag, in which case it takes the form of an HTML attribute :-</p>
+<pre><code>&lt;table scrapeid=&quot;spellingtable&quot;&gt;</code></pre>
+<p>or it can be placed at the start of text content :-</p>
+<pre><code>&lt;a href=&quot;/news/special_reports&quot; class=&quot;navigation-wide-list__link&quot;&gt;
+    &lt;span&gt;$scrapeid=title$Special Reports&lt;/span&gt;
+&lt;/a&gt;</code></pre>
+<p>In this case the lookup process will return the corresponding string in the subject web page we are searching, rather than a matching element.</p>
+<p>A template can contain several scrape IDs.</p>
+<h1 id="showtemplate">showtemplate</h1>
+<p>There is a useful utility program, <code>showtemplate</code>, in the <code>examples</code> directory of the Object Icon distribution. This shows how scrape IDs are used by the <code>WebScraper</code> class to define the path to a particular element. <code>showtemplate</code> can be used as follows :-</p>
+<pre><code>$ showtemplate template.html
+object ipl.webscraper.WebScraper#1(
+   paths=table#4784{
+         &quot;deflist&quot;-&gt;
+            list#1216[
+               record ipl.webscraper.RootCmd#1(),
+               record ipl.webscraper.TagCmd#1(n=1;name=&quot;BODY&quot;),
+               record ipl.webscraper.TagCmd#2(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#3(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#4(n=4;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#5(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#6(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#7(n=1;name=&quot;MAIN&quot;),
+               record ipl.webscraper.TagCmd#8(n=1;name=&quot;ARTICLE&quot;),
+               record ipl.webscraper.TagCmd#9(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#10(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#11(n=4;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#12(n=1;name=&quot;UL&quot;)
+            ]
+      }
+   debug_flag=&amp;yes
+)</code></pre>
+<p>Here we have defined one scrape ID, “deflist”, in a template file “template.html” :-</p>
+<pre><code>...
+&lt;ul scrapeid=&quot;deflist&quot;&gt;
+...</code></pre>
+<p>The list of “commands” give the steps necessary to locate the desired element. The <code>RootCmd</code> step means start at the root element of the document. Each subsequent <code>TagCmd</code> step means descend one level, taking the <code>n</code>th child element with the tag name matching <code>name</code>. So,</p>
+<pre><code>record ipl.webscraper.TagCmd#4(n=4;name=&quot;DIV&quot;),</code></pre>
+<p>means the 4th <code>&lt;DIV&gt;</code> child tag under the element reached thus far. If, when searching a subject document, we find that the present element doesn’t have such a child, then the lookup process fails. On the other hand, when we get to the end of the list of steps, we have found the desired element. Note that the last <code>TagCmd</code> searches for a <code>&lt;UL&gt;</code> tag, the same tag type as the one containing the scrape ID.</p>
+<h1 id="anchors">Anchors</h1>
+<p>It turns out that navigating from the root element of an HTML document tends to be very fragile to minor changes in the document structure of the subject pages.</p>
+<p>To mitigate this problem, “anchor” directives can be declared in the template file. The idea is that some unique, non-changing text content is chosen, near to a scrape ID location. This is then marked as an “anchor”, and the scrape ID is made to refer to the anchor. The scrape ID element will then be located by first searching for the anchor text, and then by following a <em>relative</em> path to the target location, rather than the absolute path from the root element. This relative path will hopefully be more robust against changes.</p>
+<p>Extending our above example, we could use an anchor and scrape together like this :-</p>
+<pre><code>...
+&lt;ul scrapeid=&quot;a1:deflist&quot;&gt;
+...
+&lt;div class=&quot;simple-def-source&quot;&gt;$anchorid=a1$Source: Merriam-Webster&#39;s Learner&#39;s Dictionary&lt;/div&gt;
+...</code></pre>
+<p>Here the anchor id is “a1”, and the anchor text is “Source: Merriam-Webster’s Learner’s Dictionary”. The scrape ID is still “deflist”, and the link to the anchor is indicated by prefixing this with “a1:”. Now, so long as this relative structure doesn’t change, and future documents still contain the anchor text, the scrape will successfully retrieve the desired element.</p>
+<p>Running <code>showtemplate</code> with this template might now give output like the following :-</p>
+<pre><code>$ showtemplate template.html
+object ipl.webscraper.WebScraper#1(
+   paths=table#4784{
+         &quot;deflist&quot;-&gt;
+            list#1216[
+               record ipl.webscraper.AnchorStringCmd#1(str=&quot;Source: Merriam-Webster&#39;s Learner&#39;s Dictionary&quot;),
+               record ipl.webscraper.UpCmd#1(n=1),
+               record ipl.webscraper.TagCmd#1(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#2(n=4;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#3(n=1;name=&quot;UL&quot;)
+            ]
+      }
+   debug_flag=&amp;yes
+)</code></pre>
+<p>Note that here there is no <code>RootCmd</code> to begin; rather there are two different steps. The first is a search for the anchor string. Then comes <code>UpCmd</code>, meaning go up one level in the document structure. This is necessary since the anchor is in a different branch of the document to the scrape ID. Then we proceed with the usual navigation down the document structure; the last three steps are the same as before.</p>
+<p>An anchor can also refer to an element, rather than text, although this tends to be less useful :-</p>
+<pre><code>&lt;div anchorid=&quot;a2&quot; class=&quot;definition-block def-text&quot;&gt;</code></pre>
+<p>Now a reference to this anchor will cause a search for the first element with the same tag name and attributes in the target document.</p>
+<h1 id="creating-a-webscraper">Creating a WebScraper</h1>
+<p>A <code>WebScraper</code> instance is created by passing the text data containing the template document. This can either be loaded from a file, or included using a <code>$load</code> (or <code>$uload</code>) directive, if it is not too unwieldy. In the former case, there are a couple of static methods in <code>WebScraper</code> to make this easier.</p>
+<p>Once created, subject web pages can be searched using the <code>lookup</code> method. This takes a parsed HTML document and a scrape ID and returns the element in the document which corresponds to the scrape ID in the template. If the scrape ID pointed to a string, rather than an element, then the corresponding string is returned. If the element cannot be matched, then <code>lookup</code> fails, setting <code>&amp;why</code> appropriately.</p>
+<p>The string type (plain string or ucs) of the template must match the type of the source data for the parsed HTML document given to <code>lookup</code>; a runtime error will result if they differ.</p>
+<h1 id="an-example">An example</h1>
+<p>The above template example with the single scrape ID, “deflist”, in fact comes from a sample web page from Merriam-Webster’s online dictionary (as you may have guessed from the anchor text).</p>
+<p>The template comes from the page for an arbitrary word, “example”. As described above, the template is edited to introduce a single scrape ID (and associated anchor), at the <code>&lt;UL&gt;</code> element under which the word definitions can be found. The resulting template file is <a href="template.html">template.html</a>.</p>
+<h2 id="testing-the-template">Testing the template</h2>
+<p>We can test the effectiveness of the template, by testing it against sample web pages. Firstly, we download a test web page :-</p>
+<pre><code>$ geturl http://www.merriam-webster.com/dictionary/sanguine -o sanguine.html</code></pre>
+<p>and then run it against the template using <code>showtemplate</code> :-</p>
+<pre><code>$ showtemplate template.html sanguine.html -d
+object ipl.webscraper.WebScraper#1(
+   paths=table#4784{
+         &quot;deflist&quot;-&gt;
+            list#1216[
+               record ipl.webscraper.AnchorStringCmd#1(str=&quot;Source: Merriam-Webster&#39;s Learner&#39;s Dictionary&quot;),
+               record ipl.webscraper.UpCmd#1(n=1),
+               record ipl.webscraper.TagCmd#1(n=1;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#2(n=4;name=&quot;DIV&quot;),
+               record ipl.webscraper.TagCmd#3(n=1;name=&quot;UL&quot;)
+            ]
+      }
+   debug_flag=&amp;yes
+)
+
+Testing path deflist
+Command: record ipl.webscraper.AnchorStringCmd#1(str=&quot;Source: Merriam-Webster&#39;s Learner&#39;s Dictionary&quot;)
+OK: Now at DIV table#5554{&quot;CLASS&quot;-&gt;&quot;simple-def-source&quot;}
+Command: record ipl.webscraper.UpCmd#1(n=1)
+OK: Now at DIV table#5432{&quot;CLASS&quot;-&gt;&quot;tense-box quick-def-box simple-def-box card-box def-text &quot;}
+Command: record ipl.webscraper.TagCmd#1(n=1;name=&quot;DIV&quot;)
+OK: Now at DIV table#5435{&quot;CLASS&quot;-&gt;&quot;inner-box-wrapper&quot;}
+Command: record ipl.webscraper.TagCmd#2(n=4;name=&quot;DIV&quot;)
+OK: Now at DIV table#5522{&quot;CLASS&quot;-&gt;&quot;definition-block def-text&quot;}
+Command: record ipl.webscraper.TagCmd#3(n=1;name=&quot;UL&quot;)
+OK: Now at UL table#5525{&quot;CLASS&quot;-&gt;&quot;definition-list no-count&quot;}
+Success: object xml.HtmlElement#1149(4)</code></pre>
+<p><code>showtemplate</code> first shows the <code>WebScraper</code> object derived from the template, as described previously.</p>
+<p>The second part of the output shows the lookup process applied to the test page, <code>sanguine.html</code>. At each point the current element in the search is shown, and at the end we note a successful search.</p>
+<h2 id="a-test-program">A test program</h2>
+<p>It is quite easy to use the dictionary <code>WebScraper</code> in a simple program, as shown in the following example.</p>
+<p><a href="dictionary.icn">Download dictionary.icn</a></p>
+<pre><code>import net, http, io, xml, ipl.webscraper, ipl.options
+
+$load TEMPLATE &quot;template.html&quot;
+
+procedure main(a)
+   local url, hreq, hc, hres, out, ws, doc, el, x, s, opts
+
+   ws := WebScraper(TEMPLATE) | stop(&amp;why)
+
+   opts := options(a, [Opt(&quot;v&quot;,, &quot;Output scraped element in HTML format&quot;)])
+
+   # The URL we wish to scrape
+   url := URL(&quot;http://www.merriam-webster.com/dictionary/&quot; || a[1])  | stop(&quot;usage: dictionary word&quot;)
+
+   # A stream for the resulting data
+   out := RamStream()
+
+   # Get the page.
+   hreq := HttpRequest().
+      set_url(url).
+      set_output_stream(out)
+
+   hc := HttpClient()
+
+   hres := hc.retrieve(hreq) | stop(&amp;why)
+
+   # Parse into a HTML document
+   doc := HtmlParser().parse(out.done())
+
+   # Search the document for the desired element
+   el := ws.lookup(doc, &quot;deflist&quot;) | stop(&amp;why)
+
+   if \opts[&quot;v&quot;] then {
+      write(&quot;HTML formatted output :-&quot;)
+      HtmlFormatter().el
+      write(&quot;\n&quot;)
+   }
+
+   # Output the results
+   every x := el.search_tree() do {
+      s := x.get_trimmed_string_content()
+      if *s &gt; 1 then
+         write(s)
+   }
+end
+</code></pre>
+<p>This gives the following results :-</p>
+<pre><code>$ ./dictionary german
+a person born, raised, or living in Germany : a person whose family is from Germany
+the language of Germany that is also spoken in Austria, parts of Switzerland, and other places
+$ ./dictionary sanguine
+confident and hopeful
+$ ./dictionary patient
+able to remain calm and not become annoyed when waiting for a long time or when dealing with problems or difficult people
+done in a careful way over a long period of time without hurrying</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

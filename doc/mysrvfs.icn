@@ -1,0 +1,138 @@
+import plan9, ipl.server9p, io, util, exception
+
+global sched
+
+record File(fpath,       # A FilePath giving the source location
+            depth,       # The depth in the source tree
+            worker,      # A FileWorker for background i/o
+            qpath        # An integer, the qid path
+            )
+
+class SrvData9P(ReadOnlyData9P)
+   private const
+      qpath_table,        # A table of string paths to unique qid path values;
+                          #     this is a one-to-one mapping
+      qpath_seq,          # For generating qid paths
+      timeout             # Timeout for FileWorker i/o
+
+   public new()
+      qpath_table := table()
+      qpath_seq := create seq()
+      timeout := 100000
+      return
+   end
+
+   # Return an integer qid path for the string path s
+   private get_qpath(s)
+      local i
+      (i := member(qpath_table, s)) |
+         insert(qpath_table, s, i := @qpath_seq)
+      return i
+   end
+
+   private mk_file(fpath, depth, worker)
+      return File(fpath, depth, worker, get_qpath(fpath.str()))
+   end
+
+   public override get_root(aname)
+      Files.is_directory(aname) | throw("Not a directory: " || aname)
+      return mk_file(FilePath(aname).canonical(), 0)
+   end
+
+   public override get_parent(p)
+      if p.depth > 0 then
+         return mk_file(p.fpath.parent(), p.depth - 1)
+   end
+
+   public override get_child(p, name)
+      local t
+      t := p.fpath.child(name)
+      if Files.access(t.str()) then
+         return mk_file(t, p.depth + 1)
+   end
+
+   private gen_children1(fp, s)
+      local t
+      repeat {
+         t := s.read_line() | throwf("Failed to read dir: %w")
+         if /t then
+            fail
+         if Files.is_relative_dir(t) then
+            next
+         suspend fp.child(t)
+      }
+   end
+
+   public override gen_children(p)
+      local s, ps
+      ps := p.fpath.str()
+      suspend use_seq {
+         s := DirStream(ps) | throwf("Couldn't open dir '%s': %w", ps),
+         mk_file(gen_children1(p.fpath, s), p.depth + 1)
+      }
+   end
+
+   private poll_and_await(w)
+      local x
+      # Poll will fail if we were flushed (ie: interrupted).
+      x := sched.curr_task.poll([w, Poll.IN], timeout) | fail
+      return if /x then
+         error("Timeout")
+      else
+         w.await()
+   end
+
+   public override open(p, mode)
+      local w
+      (mode = (FileOpt9.OREAD | FileOpt9.OEXEC)) | read_only()
+      w := FileWorker(, 16 * 1024)
+      if w.op_open(p.fpath.str(), mode) & poll_and_await(w) then
+         return mk_file(p.fpath, p.depth, w)
+      else {
+         save_why{ w.close() }
+         throw(&why)
+      }
+   end
+
+   public override read(p, count, pos)
+      local w, s
+      w := \p.worker | throw("File not open")
+      w.await() | throw(&why)
+      # A zero length read can occur, but is not allowed by op_pread().
+      if count = 0 then
+         return
+      if w.op_pread(count, pos) & s := w.get_buff(poll_and_await(w)) then
+         # await() may return 0, indicating an empty string and eof
+         return s
+      else
+         throw(&why)
+   end
+
+   public override close(p)
+   end
+
+   public override get_info(p)
+      local st, s
+      s := p.fpath.str()
+      st := Files.stat(s) | throwf("Failed to stat '%s': %w", s)
+      return Info(st.mode, st.atime, st.mtime, st.size, st.name, st.uid, st.gid, st.muid)
+   end
+
+   public override get_qid(p)
+      local st, s
+      s := p.fpath.str()
+      st := Files.stat(s) | throwf("Failed to stat '%s': %w", s)
+      return Qid(st.qtype, st.qvers, p.qpath)
+   end
+
+   public override path_unreferenced(p)
+      (\p.worker).close()
+   end
+end
+
+procedure main(a)
+   local sess
+   sched := Scheduler(100)
+   sess := Session9P(SrvData9P()).set_track_refs(&yes)
+   server_main_1(a, sess, sched)
+end

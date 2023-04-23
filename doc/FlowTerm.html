@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Flowterm</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Flowterm</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#tabs">Tabs</a></li>
+<li><a href="#clickable-links">Clickable links</a></li>
+<li><a href="#graphical-completion">Graphical completion</a></li>
+<li><a href="#toolbar">Toolbar</a></li>
+<li><a href="#popup-menus">Popup menus</a></li>
+<li><a href="#mouse-bindings">Mouse bindings</a><ul>
+<li><a href="#multiple-insert">Multiple insert</a></li>
+</ul></li>
+<li><a href="#the-flowterm-extras-programs">The flowterm-extras programs</a></li>
+<li><a href="#escape-sequences">Escape sequences</a><ul>
+<li><a href="#the-link-escape-sequence">The link escape sequence</a><ul>
+<li><a href="#an-alternative-link-escape-sequence">An alternative link escape sequence</a></li>
+</ul></li>
+<li><a href="#the-popup-escape-sequence">The popup escape sequence</a></li>
+<li><a href="#other-escape-sequences">Other escape sequences</a></li>
+</ul></li>
+<li><a href="#url-schemes">URL schemes</a><ul>
+<li><a href="#file">file:</a></li>
+<li><a href="#launch">launch:</a></li>
+<li><a href="#text">text:</a></li>
+<li><a href="#run">run:</a></li>
+<li><a href="#tab">tab:</a></li>
+<li><a href="#clone">clone:</a></li>
+<li><a href="#other-url-schemes">Other URL schemes</a></li>
+</ul></li>
+<li><a href="#favourites-files-and-other-useful-tips">Favourites files and other useful tips</a></li>
+<li><a href="#the-flowterm-environment-variable">The FLOWTERM environment variable</a></li>
+<li><a href="#limitations">Limitations</a></li>
+<li><a href="#tab-options">Tab options</a></li>
+<li><a href="#font-setting">Font setting</a></li>
+<li><a href="#command-line-options">Command line options</a></li>
+<li><a href="#custom-key-settings">Custom key settings</a><ul>
+<li><a href="#clearing-key-settings">Clearing key settings</a></li>
+<li><a href="#examples">Examples</a></li>
+</ul></li>
+<li><a href="#custom-menu-items">Custom menu items</a><ul>
+<li><a href="#examples-1">Examples</a></li>
+</ul></li>
+<li><a href="#startup-script">Startup script</a></li>
+<li><a href="#file-associations">File associations</a></li>
+<li><a href="#helper-programs">Helper programs</a><ul>
+<li><a href="#fl---working-with-programs-that-dont-output-links"><code>fl</code> - Working with programs that don’t output links</a></li>
+<li><a href="#ern---renaming-files"><code>ern</code> - Renaming files</a></li>
+<li><a href="#plain---processing-log-files"><code>plain</code> - Processing log files</a></li>
+<li><a href="#note---storing-links"><code>note</code> - Storing links</a></li>
+<li><a href="#lsxdg---examining-file-associations"><code>lsxdg</code> - Examining file associations</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page provides some notes about one of the programs in the <code>examples</code> directory, namely <code>flowterm</code>. It is an experimental replacement for terminal emulator programs like <code>xterm</code> and <code>konsole</code>.</p>
+<h1 id="tabs">Tabs</h1>
+<p>The program presents one or more tabs to the user, each of which contains an independent shell process. Each tab contains a split pane. To the left (or top if so oriented), is a list of the contents of the shell process’s current directory. To the right (or bottom) is a fairly conventional terminal emulator, albeit one with some important extensions.</p>
+<p><img src="flowterm-full.jpg" title="Terminal image" /></p>
+<h1 id="clickable-links">Clickable links</h1>
+<p>The most significant thing that <code>flowterm</code> does differently to conventional terminal emulators like <code>xterm</code>, is the provision of clickable hyperlinks to files and other objects. For example, look at the following image, showing the output of <code>ls</code>.</p>
+<p><img src="flowterm-link.png" /></p>
+<p>As the mouse pointer moves over the filename output by <code>ls</code>, the mouse pointer changes and the link is highlighted. Left-clicking on the link opens the system-registered application for viewing that particular file type; right-clicking brings up a context menu, and middle-clicking inserts the filename into the terminal.</p>
+<p>This effect is achieved by a combination of two things. Firstly, the terminal emulator understands special escape sequences which encapsulate file links in much the same way as a web browser understands HTML anchor tags. Secondly, a small collection of programs, including <code>ls</code>, have been modified to produce these special escape sequences, and thus provide the desired links in the terminal. To continue the web analogy, if the terminal is the browser, then these programs are the equivalent of web servers, but instead of producing HTML containing anchor tags, they produce their normal textual output, but containing embedded link escape sequences.</p>
+<p>The modified programs include <code>ls</code>, <code>grep</code> and <code>find</code>. Although the selection of programs cannot be complete, it is large enough to considerably improve the usability of the shell.</p>
+<p>These modified programs are provided in a separate download; the section <a href="#The-flowterm-extras-programs">flowterm extras</a> below explains more.</p>
+<h1 id="graphical-completion">Graphical completion</h1>
+<p>Another frustation of using the shell which <code>flowterm</code> tries to address is filename completion (in fact completion in general, not just files). Users of bash will certainly be familiar with how annoying its completion facility can be. To alleviate this distress, another escape sequence is employed, and <code>bash</code> is modified to send this escape sequence when tab completion occurs (in fact, <code>bash</code> is not modified, rather its readline library, which is statically linked into it, is modified instead).</p>
+<p>With this modification, a popup list appears to implement tab completion, as shown in the following image :-</p>
+<p><img src="flowterm-popup.png" /></p>
+<p>The user may now use the mouse or the cursor keys in order to select from the list in the normal way.</p>
+<h1 id="toolbar">Toolbar</h1>
+<p>The various items in the toolbar should be mostly self-explanatory.</p>
+<p><img src="flowterm-toolbar.png" /></p>
+<p>Going from left to right, we have the close tab button, the goto home directory button, go up one level button and refresh directory button.</p>
+<p>Then come buttons to go backward and forward in the history, and to display the history as a drop-down list (the egg timer icon).</p>
+<p>Next is the “columns focus” button, which is a toggle button. When set, it allows the list to take the keyboard focus. The cursor keys can then be used to navigate, and the return key used to “open” the currently selected item (equivalent to left-clicking).</p>
+<p>The drop-down edit list is a filter, which restricts the files (and optionally directories) on view in the list. The contents of the drop-down provides a convenient list of file extensions in the current directory.</p>
+<p>The three buttons to the right of the filter drop-down are used to control the sort used in the list, which is by default alphabetic in descending order. The small arrow in the corner of the button indicates which sort is in use, and whether it is ascending or descending. Clicking on the button with the arrow toggles the order between ascending and descending, whilst clicking on one of the other buttons sets the sort to the corresponding button, leaving the order unchanged.</p>
+<p>Next to the sort buttons comes the favourites button. This is a list of directories, which can be edited via the “Favourite dirs…” item in the File menu.</p>
+<p>Finally, to the right of that comes the file trail. This shows the current directory. Clicking on one of the file names in the trail changes the directory. Also, clicking on one of the slash separators pops up the list of directories for that location. Selecting from one goes to that directory. The following image shows that in action :-</p>
+<p><img src="flowterm-trail.png" /></p>
+<p>Right-clicking on one of the entries brings up the file context menu.</p>
+<p><img src="flowterm-trail-context-menu.png" /></p>
+<h1 id="popup-menus">Popup menus</h1>
+<p>Both the file list and terminal portions of the tab have popup menus. They appear either by clicking in an area without links, or via the menu bar at the top of the window.</p>
+<p>The terminal menu is shown below.</p>
+<p><img src="flowterm-vt-menu.png" /></p>
+<p>The first five items relate to copy and paste. “Copy URLs” will be present if there are any links in the selected area; they may be copied to the clipboard (with a mime-type of “text/uri-list”) using this option. “Paste escaped” is the same as “Paste”, but applies shell escaping to the pasted text. Reorient toggles the horizontal/vertical orientation of the split. Horizontal orientation is especially useful if you have a directory containing many very long file names. The “Maximize” option makes the terminal take up all of the tab’s space. After a maximize, a “Restore” option is shown, which restores the split to the usual dual view. “Search” opens a text entry box at the bottom of the window, allowing the terminal scrollback text to be searched. “Log” asks for a file name and thereafter copies all data received from the tty driver to the log file. Whilst logging is active, the text color in the tab title changes to a dark orange, to act as a reminder, for logging can of course consume considerable disk space. For information about processing log files, see <a href="#plain---processing-log-files">below</a>.</p>
+<p><a href="#custom-menu-items">Custom entries</a> may be appended to the terminal menu if desired.</p>
+<p>The file list’s popup menu is as follows :-</p>
+<p><img src="flowterm-list-menu.png" /></p>
+<p>The first two items indicate that the date or size should be shown alongside the name. To reduce clutter, this is only applied to directory entries if the “Sort dirs” or “Mix files &amp; dirs” option is checked. “Mix files &amp; dirs” means sort and display files and directories together; normally directories come first. “Show hidden files” is self-explanatory. “Sort dirs” means apply the same sort to directories as to files; normally they are just sorted by alphabetical order regardless of the sort option selected in the toolbar. “Filter dirs” means apply the filename filter to directories as well as files. The “Reorient”, “Maximize” and “Restore” options have the corresponding effect for the list pane as for the terminal pane.</p>
+<p>When a URL link (or an entry in the file list) is right-clicked, a file context menu such as the following is shown. Some entries may not appear, depending on the type of the link. The clicked URL turns red.</p>
+<p><img src="flowterm-url-menu.png" /></p>
+<p>“Copy” will copy the filename to the clipboard. No escape characters are added, so to paste this into the shell, use the “Paste escaped” option described above. “Copy URL” copies the source URL to the clipboard. “Copy command” copies the text of the shell command that a left-click would run, to the clipboard. “Open with” is a submenu listing all of the system’s dekstop applications which can recognise this file or URL type.</p>
+<p>Within the “Open with” submenu, middle-clicking inserts the command text into the terminal, whilst right-clicking brings up a further menu option, “Copy command”, to copy the text of the shell command for that particular entry. After a middle-click, the command can of course be edited (perhaps to add a command-line flag), before being run. But this has a downside, namely that it will run the command within the shell, and therefore occupy the shell. To neatly detach the command from the shell, I have found the following bash definition to be useful :-</p>
+<pre><code># Run a command in the background with i/o set to null, and setsid
+function q {
+    setsid -f &quot;$@&quot; &lt;/dev/null &amp;&gt;/dev/null
+}</code></pre>
+<p>Then, to detach a command from the shell, simply prefix the command line with “q”; for example :-</p>
+<pre><code>$ q mpv --player-operation-mode=pseudo-gui -- /tmp/Movie.mkv</code></pre>
+<p>Right-clicking on a tab header brings up the following context menu :-</p>
+<p><img src="flowterm-tab-menu.png" /></p>
+<p>“New” opens a new tab with default settings in the tab to the right of the one clicked. “Close” obviously closes the tab, and “Clone” opens a new tab to the right of the one clicked, but reproduces as much of that tab’s settings (history, current directory and so on) in the new tab as possible.</p>
+<p>The other items, under the separator, provide the standard file context menu for the current directory of the tab.</p>
+<p>Apart from the places just mentioned above, the file context menu also appears on a right click in several other places as well :-</p>
+<ul>
+<li>The entries in the favourite directories list (the heart button),</li>
+<li>The current directory history list (the egg timer button), and</li>
+<li>The directories shown in the file trail.</li>
+</ul>
+<h1 id="mouse-bindings">Mouse bindings</h1>
+<p>Generally speaking, wherever it is possible to right click on a filename and get the file context menu, it is also possible to middle click and insert the shell-escaped form of the file path. For the sake of brevity, the path inserted is a relative one if is below the current directory, but the absolute path can be inserted instead if either alt key is held down whilst pressing the middle button.</p>
+<p>To take an example of how this might be used, suppose that you have two tabs open and wish to copy a file from the directory of one to the directory of the other. In the first tab, you could type “cp” and then middle click the source file in the file list, and then middle click on the second tab’s tab header to insert the destination directory, and then press return.</p>
+<p>When moving the mouse in the terminal, if either control key is held down then links are not recognized. This enables the text inside the links to be copied.</p>
+<h2 id="multiple-insert">Multiple insert</h2>
+<p>In both the file list and the terminal it is possible to do a multi-file insert using the middle mouse button. The first file is inserted using a middle click as described above. A second middle click, this time with the shift key held down, will insert all the files between the first and the second. For example, suppose we have the following situation and wish to copy the four “Chopin” files to another directory :-</p>
+<p><img src="flowterm-multi1.png" /></p>
+<p>Firstly, we type “cp” and then middle click on the first file. This results in :-</p>
+<p><img src="flowterm-multi2.png" /></p>
+<p>Secondly, we middle click again, this time with shift held down, on the last file. The result :-</p>
+<p><img src="flowterm-multi3.png" /></p>
+<p>It then just remains to provide the destination directory (perhaps by way of another middle click).</p>
+<p>A alternative way of achieving the same thing is to select the region including the desired files, and then copy the URLs to the clipboard, thus :-</p>
+<p><img src="flowterm-multi4.png" /></p>
+<p>The URLs can then be pasted by selecting the context menu’s “Paste” option; the result is the same as before. This technique has the advantage of allowing the files to be pasted into another tab.</p>
+<h1 id="the-flowterm-extras-programs">The flowterm-extras programs</h1>
+<p>This is a collection of common utility programs, modified to provide output containing escape sequences recognised by <code>flowterm</code>. For example, a version of <code>ls</code> is provided which turns each file output into a clickable link to a <code>file:</code> URL.</p>
+<p>To build the flowterm-extras programs, proceeds as follows.</p>
+<p>Firstly, download the <code>.tar.gz</code> file, from the following link :-</p>
+<p><a href="http://sourceforge.net/projects/objecticon/files/misc/flowterm-extras.tar.gz/download">flowterm-extras.tar.gz (25MB)</a></p>
+<p>It is best to extract this file in your home directory, since it will then be found automatically by <code>flowterm</code>. (If you extract it somewhere else, then you will need to provide the <code>-x</code> option to tell <code>flowterm</code> where).</p>
+<p>In any case, extract it as follows :-</p>
+<pre><code>tar xfz flowterm-extras.tar.gz</code></pre>
+<p>This will create a <code>flowterm-extras</code> directory. Cd into that directory, and run</p>
+<pre><code>./build.sh</code></pre>
+<p>A considerable amount of output will be produced, but if everything was successful, the message “Finished OK” will be printed. In that case, a directory <code>bin</code> will have been created, containing the resulting executables. The <code>build.sh</code> script doesn’t actually install anything outside of its directory, which can simply be deleted if you no longer have any use for it.</p>
+<h1 id="escape-sequences">Escape sequences</h1>
+<p>There are several special escape sequences recognised by the terminal, as follows.</p>
+<h2 id="the-link-escape-sequence">The link escape sequence</h2>
+<p>This takes the form</p>
+<pre><code>\e[!&quot;url&quot;Lvisible-text\e[!L</code></pre>
+<p>where <code>\e</code> is the escape character (ascii 27), <code>url</code> is a URL, (with the normal percent encoding), and <code>visible-text</code> is the text which appears on the screen to represent the clickable URL. In fact, the above actually represents two separate escape sequences; the second comes after the <code>visible-text</code>, in order to denote its endpoint. If you’re familiar with HTML, then you will see the similarity with an anchor tag. The first escape sequence mirrors the opening <code>&lt;A HREF=URL&gt;</code> tag, and the second the closing <code>&lt;/A&gt;</code> tag, whilst <code>visible-text</code> fulfils the same role as the content between the tags.</p>
+<p>Most URLs in these escape sequences will be <code>file</code> URLs, but as explained below, other types of URLs, including custom ones, are allowed too. These can be particularly useful when they are placed in simple “favourites” files which, when printed to the terminal, provide a selection of clickable links to launch applications, open new tabs, and so on.</p>
+<p>Some examples of a link escape sequences are :-</p>
+<pre><code>\e[!&quot;file:///some/file/or/other.txt?line=120&quot;LA file with an associated line number\e[!L
+\e[!&quot;http://www.google.com&quot;LA link to google\e[!L
+\e[!&quot;launch:konqueror&quot;LOpen konqueror\e[!L</code></pre>
+<h3 id="an-alternative-link-escape-sequence">An alternative link escape sequence</h3>
+<p>I recently came across this page :-</p>
+<p><a href="https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda" class="uri">https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda</a></p>
+<p>which puts forward some similar ideas to those contained in <code>flowterm</code>. The link escape sequence described therein has found its way into <code>ls</code> via a new option <code>--hyperlink</code>. Flowterm recognises this escape sequence, and the latest version of <code>ls</code> in <code>flowterm-extras</code> makes use of it, by automatically selecting the new option if links are required.</p>
+<h2 id="the-popup-escape-sequence">The popup escape sequence</h2>
+<p>This escape sequence is used to provide a more friendly and usable name completion system. The sequence takes the form :-</p>
+<pre><code>\e[!&quot;k1&quot;;&quot;i1&quot;;&quot;k2&quot;;&quot;i2&quot;;&quot;k3&quot;;&quot;i3&quot;,....,&quot;kn&quot;;&quot;in&quot;P</code></pre>
+<p>In other words, there are <code>n</code> pairs of string parameters. All parameters are URL encoded. On receipt of this escape sequence, the terminal pops up a list, showing each of the <code>k</code> parameters. When one is selected, its corresponding <code>i</code> parameter is sent to the output, as though it had been typed.</p>
+<p>Unlike the link escape sequence, this sequence only really makes sense when it is generated by a program.</p>
+<h2 id="other-escape-sequences">Other escape sequences</h2>
+<p>The escape sequence</p>
+<pre><code>\e[9J</code></pre>
+<p>is a non-standard addition, which clears the terminal scrollback history.</p>
+<p>The escape sequence</p>
+<pre><code>\e[7K</code></pre>
+<p>is also a non-standard addition. It is the same as a normal erase-right command (<code>\e[K</code>), but works differently if a character has just been written to the last column. In the jargon of the VT-100, we are then in a special state with the “last column flag” set. At that point a normal erase right will erase the character in the last column. This custom escape sequence will not. (It is a “no-op” in this case).</p>
+<p>This escape sequence is used in the versions of <code>ls</code> and <code>grep</code> in <code>flowterm-extras</code> in order to work around bugs in the colour output code of those two programs, which can lead to garbled results. The problem is that both these programs normally use <code>\e[K</code>, without fully comprehending its semantics. To see a typical example of the problems thus caused, consider this screenshot of an interaction in a linux console terminal :-</p>
+<p><img src="ls-color-bug.png" /></p>
+<p>Note how the file just created has had its name truncated by one character, caused by a <code>\e[K</code> in just the wrong place. <code>grep</code> suffers from the same problem; see <a href="https://invisible-island.net/xterm/xterm.faq.html#grep_colors" class="uri">https://invisible-island.net/xterm/xterm.faq.html#grep_colors</a> for more information.</p>
+<h1 id="url-schemes">URL schemes</h1>
+<h2 id="file">file:</h2>
+<p>A file URL has the following syntax :-</p>
+<pre><code>file://[host]/path[?line=line-no[&amp;col=col-no]]</code></pre>
+<p>If the <code>path</code> (which includes the <code>/</code> to its left), is a directory then clicking on the link sends a <code>cd</code> command to the shell process in order to change its current working directory.</p>
+<p>Otherwise, the file associations database is searched to find an application to launch to view the file. If found, then the application is launched by forking a new process.</p>
+<p>The optional <code>host</code> element is just used to check whether the URL refers to a file on the host running <code>flowterm</code>. If not, then there is no point trying to launch an application for it, and an error message is shown in the message bar.</p>
+<p>The optional <code>line</code> and <code>col</code> parameters may be passed to the application if its desktop entry file contains an entry <code>ExecLine=...</code>, as opposed to the normal <code>Exec=...</code>. The <code>ExecLine</code> string may contain the following escape sequences (termed “field codes” in the freedesktop specification) :-</p>
+<ul>
+<li><code>%L</code> - substitute the line number if given.</li>
+<li><code>%C</code> - substitute the column number if given.</li>
+<li><code>%P</code> - subtitute “line:col” if both are given; otherwise just the line number, if given.</li>
+</ul>
+<p>These field codes, and the <code>ExecLine</code> entry are entirely non-standard unfortunately, so you must create your own <code>.desktop</code> file in order to make use of them. An example which I use to launch <code>emacs</code> is :-</p>
+<pre><code>[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=GNU Emacs
+GenericName=Text Editor
+Comment=View and edit files
+MimeType=text/plain
+Exec=emacs %F
+ExecLine=emacs +%P %F
+Icon=emacs
+Type=Application
+Terminal=false
+Categories=Utility;Development;TextEditor;
+InitialPreference=20</code></pre>
+<p>This is placed in my <code>~/.local/share/applications</code> directory. The effect of launching this desktop entry file with the URL</p>
+<pre><code>file:///home/rparlett/prog.c?line=124</code></pre>
+<p>is then to launch the program</p>
+<pre><code>emacs +124 /home/rparlett/prog.c</code></pre>
+<h2 id="launch">launch:</h2>
+<p>A launch URL has the following syntax :-</p>
+<pre><code>launch:command-string[?wd=working-dir]</code></pre>
+<p>Both <code>command-string</code> and <code>working-dir</code> portions are URL encoded. When clicked, a launch URL forks a new process, sets its current directory to <code>working-dir</code> (or the user’s home directory if <code>working-dir</code> was omitted), and then runs <code>command-string</code>, which may include bash shell syntax.</p>
+<p>An example of a launch URL is :-</p>
+<pre><code>launch:qemu-system-x86_64 -hda ubuntu.img -m 3G -vga vmware?wd=/mnt/disk/qemu-stuff</code></pre>
+<p>Middle-clicking on a launch URL inserts the command string into the terminal, to allow it to be edited before being run.</p>
+<h2 id="text">text:</h2>
+<p>A text URL has the following syntax :-</p>
+<pre><code>text:string</code></pre>
+<p>The <code>string</code> is URL encoded. The effect of clicking on such a link is simply to send the string to the input of the forked shell process. In other words, the effect is the same as if the string had been typed at the keyboard.</p>
+<p>An example might be :-</p>
+<pre><code>text:hello world</code></pre>
+<p>If we were to click on a link with this URL, then “hello world” would be sent to the shell process, which would then echo it back so it appeared on the screen (unless it was running a command at the time).</p>
+<h2 id="run">run:</h2>
+<p>A run URL has the following syntax :-</p>
+<pre><code>run:command-string</code></pre>
+<p>The <code>command-string</code> is URL encoded. The effect of clicking on such a link is, like a text URL, simply to send the string to the input of the forked shell process, with a carriage return appended, causing the command to be run (unless the shell process is doing something else).</p>
+<p>An example :-</p>
+<pre><code>run:ps -a</code></pre>
+<p>Clicking on a link with this URL would run the command “ps -a”.</p>
+<p>Note that the difference between a launch URL and a run URL is that a launch URL forks a new process which runs independently of the shell, whilst run just sends the command string to the shell for execution as though it had been typed at the keyboard.</p>
+<p>Middle-clicking on a run URL behaves in a similar way to the launch URL.</p>
+<h2 id="tab">tab:</h2>
+<p>A tab URL enables new tabs to be opened and configured when it is clicked. It has the following syntax :-</p>
+<pre><code>tab:arg1[;arg2][;arg3]...</code></pre>
+<p>Each “argument” is URL encoded. Each argument is either a directory name, which opens a new tab with that directory as a starting point, or a string beginning with “:” which configures the tab just opened using a <a href="#tab-options">tab option</a>, as described below. An empty string argument just opens a new tab, without setting its directory. If any configuration options come before a directory argument, then they apply to the currently selected tab.</p>
+<p>An example of a tab URL is :-</p>
+<pre><code>tab:/mnt/disk/films;:reorient;:sort-date;:select</code></pre>
+<p>When clicked, this URL opens a new tab, changes its directory to <code>/mnt/disk/films</code>, toggles the orientation of the split, sets the sort to date order, and selects the tab.</p>
+<p>Another example is :-</p>
+<pre><code>tab::re-orient</code></pre>
+<p>This doesn’t open a new tab, because the first item after the <code>tab:</code> is a tab command (ie it begins with a <code>:</code>), so it operates on the current tab, and reorients the split setting. URLs like this can be quite useful when linked to <a href="#custom-key-settings">custom key settings</a>.</p>
+<h2 id="clone">clone:</h2>
+<p>This is rather like <code>tab:</code>, but clones the current tab’s settings in a new tab. Then, any additional given tab commands are applied to the new tab. The syntax is :-</p>
+<pre><code>clone:cmd1[;cmd2][;cmd3]...</code></pre>
+<p>For example :-</p>
+<pre><code>clone:adjacent;select</code></pre>
+<p>Note that, unlike <code>tab:</code>, the commands shouldn’t be prefixed with ‘:’ (as they don’t need to be distinguished from directories).</p>
+<h2 id="other-url-schemes">Other URL schemes</h2>
+<p>All other URL schemes are handled by looking up the desktop entry matching the mime type <code>x-scheme-handler/[scheme]</code>. The matching application is then launched in a forked process.</p>
+<h1 id="favourites-files-and-other-useful-tips">Favourites files and other useful tips</h1>
+<p>It is very easy and useful to create small shell script files which simply output links which can be clicked on. These links can be <code>file:</code> URLs, in order to change to particular directories, or launch specific files. They could also use some of the custom schemes mentioned <a href="#url-schemes">above</a>, which can launch applications, open new tabs, and so on.</p>
+<p>For example, if I created the following file, called it <code>favs</code>, and put it somewhere on my path (and made it executable)</p>
+<pre><code>#!/bin/bash
+cat &lt;&lt;EOF
+\e[!&quot;tab:/mnt/sg1/music;:reorient;:sort-date;:mix-entries;:select&quot;LMusic tab\e[!L
+\e[!&quot;launch:qemu-system-x86_64 -hda some.img -m 3G?wd=/mnt/qemu-stuff&quot;LAn emulation\e[!L
+\e[!&quot;launch:xterm -e ssh rparlett@somehost&quot;Lssh to somehost\e[!L
+\e[!&quot;file:///tmp&quot;Lcd to /tmp\e[!L
+EOF</code></pre>
+<p>then whenever I typed <code>favs</code> at the prompt, the above links would be printed, and I would simply have to click on one of them to perform the desired action.</p>
+<p>Note that creating the above file with a text editor does present one problem, namely how to input the escape character (ascii 27), shown in the above as the two characters <code>\e</code>. In emacs, this character can be input by typing control-q, and then pressing the escape key.</p>
+<p>As an alternative to using <code>cat</code>, one can also simply use a sequence of <code>echo</code> commands. The above file could then be written as follows :-</p>
+<pre><code>#!/bin/bash
+echo -e \\e[!\&quot;tab:/mnt/sg1/videos/music\;:reorient\;:sort-date\;:mix-entries\;:select\&quot;LMusic tab\\e[!L
+echo -e \\e[!\&quot;launch:qemu-system-x86_64 -hda some.img -m 3G?wd=/mnt/qemu-stuff\&quot;LAn emulation\\e[!L
+echo -e \\e[!\&quot;launch:xterm -e ssh rparlett@somehost\&quot;Lssh to somehost\\e[!L
+echo -e \\e[!\&quot;file:///tmp\&quot;Lcd to /tmp\\e[!L</code></pre>
+<p>Note that the escape character is written as <code>\\e</code> (no awkward key entry is needed), and double quotes (") and semicolons need to be escaped.</p>
+<h1 id="the-flowterm-environment-variable">The FLOWTERM environment variable</h1>
+<p>One problem that faces programs that output the special link and popup escape sequences (such as the <code>flowterm-extras</code> programs), is the question of what kind of terminal the program is connected to. It is obviously undesirable to output these escape sequences on a conventional terminal, since the output will be garbled. However, detecting the type of the terminal is awkward. Therefore, a simple environment variable, <code>FLOWTERM</code>, is used by programs to determine whether or not to output the special escape sequences. The following values are used :-</p>
+<ul>
+<li><strong>0 or unset</strong> Don’t output special escape sequences.</li>
+<li><strong>1</strong> Output special escape sequences, but only if the output file is a tty. This is the default setting at startup.</li>
+<li><strong>2</strong> Always output special escape sequences</li>
+</ul>
+<p>The last option can be useful when using a pipeline. For example, assuming <code>FLOWTERM</code> is <code>1</code>, the output of</p>
+<pre><code>ls -t | head</code></pre>
+<p>will not contain escape sequences, since <code>ls</code> will detect that its output is a pipe, rather than a tty. (For the same reason, if you use colour ls output, you won’t see colours either).</p>
+<p>To fix this, set <code>FLOWTERM</code> to <code>2</code> when invoking <code>ls</code>, thus :-</p>
+<pre><code>FLOWTERM=2 ls -t | head</code></pre>
+<p>If this seems a little verbose, a bash alias can reduce typing. Place this in your bash startup file :-</p>
+<pre><code>alias f2=&#39;FLOWTERM=2&#39;</code></pre>
+<p>and then you can use :-</p>
+<pre><code>f2 ls -t | head</code></pre>
+<h1 id="limitations">Limitations</h1>
+<p>The terminal emulation is missing a few features which are found in <code>xterm</code> :-</p>
+<ul>
+<li>Blinking characters</li>
+<li>Embedded escape sequences</li>
+<li>Double width and double height characters</li>
+<li>Local echo</li>
+</ul>
+<p>The file handling parts of the program, including the file list and the file trail, assume UTF-8 encoding of filenames, and will ignore files in other encodings.</p>
+<p>The insertion of shell-escaped strings (for example on a mouse middle-press of a filename) assumes a shell that is compatible with <code>bash</code>’s escape syntax. This includes <code>zsh</code>, and <code>ksh</code>, but <code>csh</code> isn’t compatible unfortunately. Nor, oddly enough, is <code>bash</code> run in its <code>sh</code>-compatible form (ie, started with the command <code>sh</code>). The <code>$'\ch'</code> escape combination appears to be a <code>bash</code>-ism.</p>
+<p>The coordination between the file list and the terminal emulator also has some limitations. The list’s current directory is kept synchronized with the shell process’s current directory (on Linux this is read from the file <code>/proc/&lt;pid&gt;/cwd</code>, where <code>pid</code> is the shell process’s process id). This means that the list doesn’t synchronize with a sub-shell process. For example, if you start another shell program, such as <code>zsh</code>, as in</p>
+<pre><code>bash $ zsh
+$ cd /tmp</code></pre>
+<p>then the list won’t synchronize to <code>/tmp</code>, since the original bash process is still in whatever directory it was in when <code>zsh</code> started. If you know you won’t return to bash, you can instead type</p>
+<pre><code>bash $ exec zsh
+$ cd /tmp</code></pre>
+<p>Then it will work as desired, since <code>zsh</code> has taken over (and replaced) the bash shell’s process.</p>
+<p>The <code>screen</code> program also suffers from the same problem, since it starts its own processes. Also, since it implements its own internal terminal emulation, it cannot understand understand the special escape sequences used by <code>flowterm</code>. Therefore it is desirable to set <code>FLOWTERM</code> to zero (or unset it) before launching <code>screen</code>.</p>
+<pre><code>$ FLOWTERM=0 screen</code></pre>
+<p>In view of these limitations, there is in fact no advantage to running <code>screen</code> in <code>flowterm</code>, and it may just as well be started in a conventional terminal emulator program :-</p>
+<pre><code>$ FLOWTERM=0 xterm -e screen &amp;</code></pre>
+<h1 id="tab-options">Tab options</h1>
+<p>Tab options are string commands used to configure or control particular tabs. They can be used in four places :-</p>
+<ul>
+<li>In the command line when <code>flowterm</code> is started.</li>
+<li>As part of a <a href="#tab"><code>tab:</code> URL</a>, to configure and open a new tab, or modify the current tab.</li>
+<li>As the command to carry out when a <a href="#custom-key-settings">custom key binding</a> is activated.</li>
+<li>As the command to carry out when a <a href="#custom-menu-items">custom menu item</a> is activated.</li>
+</ul>
+<p>The following tab options are allowed. Parameters are optional for some commands. A null value is specified by omitting the parameter. Commands taking a <code>FLAG</code> (yes/no) parameter typically toggle their setting when the parameter is omitted. So for example <code>:max_term</code> will toggle the maximized state of the terminal, where as <code>:max_term=on</code> will just maximize it.</p>
+<ul>
+<li><strong>:max-list=FLAG</strong> Toggle or set whether the file list is maximized.</li>
+<li><strong>:max-term=FLAG</strong> Toggle or set whether the terminal is maximized.</li>
+<li><strong>:list-focus=FLAG</strong> Toggle or set whether the file list accepts keyboard focus.</li>
+<li><strong>:reorient=FLAG or :re-orient=FLAG</strong> Toggle or set the orientation of the file list/terminal split. Vertical split is “yes”, horizontal “no”.</li>
+<li><strong>:sort-name=FLAG</strong> Sort the file list by name, or if the file list is already sorted by name, toggle the sort order. With a parameter, set the sort order (ascending is “no”, descending is “yes”).</li>
+<li><strong>:sort-date=FLAG</strong> As <code>sort-name</code>, but sort by date (newest first is “no”, oldest first is “yes”).</li>
+<li><strong>:sort-size=FLAG</strong> As <code>sort-name</code>, but sort by size (biggest first is “no”, smallest first is “yes”).</li>
+<li><strong>:show-name-only</strong> Show only the name in the file list.</li>
+<li><strong>:show-date=FLAG</strong> Toggle or set whether to show the date in the file list.</li>
+<li><strong>:show-size=FLAG</strong> Toggle or set whether to show the size in the file list.</li>
+<li><strong>:mix-entries=FLAG</strong> Toggle or set whether or not to mix directories and files together in the list.</li>
+<li><strong>:show-hidden=FLAG</strong> Toggle or set whether or not to show hidden files and directories in the list.</li>
+<li><strong>:filter-dirs=FLAG</strong> Toggle or set whether or not to filter directories using the filter setting (by default, the directories are not filtered).</li>
+<li><strong>:sort-dirs=FLAG</strong> Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).</li>
+<li><strong>:select=FLAG</strong> Set whether to make this tab the selected tab. The default is “yes”.</li>
+<li><strong>:history=INTEGER</strong> Specify the directory history size. The default is 100.</li>
+<li><strong>:adjacent=FLAG</strong> Set whether to add this tab adjacent to the current tab, rather than at the end of all the tabs. The default is “yes”.</li>
+<li><strong>:sh=STRING</strong> Specify the shell to run. The default is null, meaning use the user’s default shell.</li>
+<li><strong>:sh-arg=STRING</strong> Specify an argument to pass to the shell; may be given several times to give multiple arguments.</li>
+<li><strong>:sh-var=NAME=STRING</strong> Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.</li>
+<li><strong>:reset-sh-args</strong> Forget any arguments previously set with <code>:sh-arg</code>.</li>
+<li><strong>:reset-sh-vars</strong> Forget any values previously set with <code>:sh-var</code>.</li>
+<li><strong>:run=STRING</strong> Run the given string in the shell; the same as :send-tty with a carriage return appended.</li>
+<li><strong>:font=FONT</strong> Set the font, which should be fixed width. The default is the font ‘fixed’.</li>
+<li><strong>:fg=COLOUR</strong> Specify the foreground colour. The default is null, meaning use the dialog’s foreground colour.</li>
+<li><strong>:bg=COLOUR</strong> Specify the background colour. The default is null, meaning use the dialog’s foreground colour.</li>
+<li><strong>:reverse-fg=COLOUR</strong> Specify the reverse-mode foreground colour. The default is null, meaning use the background colour.</li>
+<li><strong>:reverse-bg=COLOUR</strong> Specify the reverse-mode background colour. The default is null, meaning use the foreground colour.</li>
+<li><strong>:scroll=INTEGER</strong> Specify the scroll history size. The default is 500.</li>
+<li><strong>:list-width=INTEGER</strong> The width of the list component in pixels. The default is 300 scaled pixels.</li>
+<li><strong>:list-height=INTEGER</strong> The height of the list component in pixels. The default is 300 scaled pixels.</li>
+<li><strong>:auto-close=FLAG</strong> Set whether to automatically close the tab if the forked shell process ends. The default is “yes”.</li>
+<li><strong>:dont-quieten=FLAG</strong> Toggle or set whether to turn off the default cursor quietening behaviour.</li>
+<li><strong>:title=STRING</strong> Set the title of the tab. The default is null, meaning show the shell’s current directory.</li>
+<li><strong>:key=KEY,BITS,MASK,COMMAND</strong> Set/clear a custom key setting. See <a href="#custom-key-settings">below</a> for details.</li>
+<li><strong>:terminal-menu=LABEL,COMMAND</strong> Set/clear a custom menu setting in the terminal menu. See <a href="#custom-menu-items">below</a> for details.</li>
+<li><strong>:list-menu=LABEL,COMMAND</strong> Set/clear a custom menu setting in the list menu.</li>
+<li><strong>:misc-menu=LABEL,COMMAND</strong> Set/clear a custom menu setting in the misc menu.</li>
+<li><strong>:reset-keys</strong> Reset custom key settings back to their default state.</li>
+<li><strong>:reset-terminal-menus</strong> Reset (clear) custom terminal menu settings.</li>
+<li><strong>:reset-list-menus</strong> Reset (clear) custom list menu settings.</li>
+<li><strong>:reset-misc-menus</strong> Reset (clear) custom misc menu settings.</li>
+<li><strong>:string=STRING</strong> Insert a string as though typed by the user; like :send-tty, but quietens the cursor and goes to the bottom of the terminal content.</li>
+<li><strong>:search=FLAG</strong> Toggle or set the visibility of the search panel.</li>
+<li><strong>:filter=PATTERN</strong> Set the list filter to the given pattern; default is “*”, meaning show all files.</li>
+<li><strong>:reset-filters</strong> Forget any remembered filters previously set with <code>:filter</code>.</li>
+<li><strong>:focus-filter</strong> Give the filter field the keyboard focus.</li>
+<li><strong>:send-tty=STRING</strong> Send a string directly to the pseudo-terminal.</li>
+<li><strong>:fav-dir=DIR</strong> Add a directory to the favourites list.</li>
+<li><strong>:reset-fav-dirs</strong> Forget any directories previously added with <code>:fav-dir</code>.</li>
+</ul>
+<p>The following commands only apply to the currently active tab (not new tabs).</p>
+<ul>
+<li><strong>:log=DEST</strong> Start logging to file DEST, or stop logging if already logging.</li>
+<li><strong>:url=URL</strong> Activate a URL as though clicked by the user.</li>
+<li><strong>:copy-cwd</strong> Copy the current directory to the clipboard.</li>
+<li><strong>:copy</strong> Copy the current selection to the clipboard.</li>
+<li><strong>:copy-urls</strong> Copy any URLs in the current selection to the clipboard.</li>
+<li><strong>:paste</strong> Paste from the clipboard.</li>
+<li><strong>:paste-alt</strong> Paste from the clipboard, with no relative URL file paths (like middle click with the alt key).</li>
+<li><strong>:paste-escaped</strong> Paste from the clipboard, with shell escaping.</li>
+<li><strong>:pgup</strong> Go up one page.</li>
+<li><strong>:pgdn</strong> Go down one page.</li>
+<li><strong>:top</strong> Go to the top.</li>
+<li><strong>:bottom</strong> Go to the bottom.</li>
+<li><strong>:select-all</strong> Select all text.</li>
+<li><strong>:close-tab</strong> Close the tab.</li>
+<li><strong>:clone-tab</strong> Clone the tab.</li>
+<li><strong>:new-tab</strong> Open a new tab.</li>
+<li><strong>:quit</strong> Quit the program.</li>
+<li><strong>:home</strong> Go to the home directory.</li>
+<li><strong>:refresh</strong> Refresh the columns list.</li>
+<li><strong>:up</strong> Go up one directory level.</li>
+<li><strong>:prev</strong> Go to the previous directory in the history.</li>
+<li><strong>:next</strong> Go to the next directory in the history.</li>
+<li><strong>:open-history</strong> Open the history list.</li>
+<li><strong>:open-filter</strong> Open the filter list.</li>
+<li><strong>:open-favourites</strong> Open the favourites list.</li>
+<li><strong>:open-menu=N</strong> Open top-level menu bar; with optional parameter <code>N</code>, also open sub-menu index <code>N</code>.</li>
+<li><strong>:info=MSG</strong> Output MSG to the status bar.</li>
+<li><strong>:tab-left</strong> Select the next tab to the left.</li>
+<li><strong>:tab-right</strong> Select the next tab to the right.</li>
+<li><strong>:move-tab-left</strong> Move the current tab to the left.</li>
+<li><strong>:move-tab-right</strong> Move the current tab to the right.</li>
+<li><strong>:send-vt=STRING</strong> Send a string directly to the terminal. Note that the string won’t be captured in any active log file, nor be noticed by whatever program is using the tty (usually the shell). So it is almost always better to use <code>:send_tty</code> (or one of its variants <code>:run</code> and <code>:string</code>).</li>
+</ul>
+<h1 id="font-setting">Font setting</h1>
+<p>The font used in the terminal may be configured using the <code>:font</code> tab option described above. This changes the font in the current tab, or configures the font for a new tab. The default if no configuration is made is the font “fixed”.</p>
+<p>Font settings should use the font description syntax described <a href="GraphicsPackage.html#fonts">here</a>. There are also some limitations :-</p>
+<ul>
+<li>The font must be monospace;</li>
+<li>The font must not contain a weight or a slant attribute;</li>
+<li>The specifier must not be a raw fontconfig description (the “fc:” prefix).</li>
+</ul>
+<p>When specifying a font family other than one of the standard Icon names, it is helpful to append the “mono” attribute; this will help select a monospace font for the default, bold and italic faces :-</p>
+<pre><code>flowterm &quot;:font=Source Code Pro,mono&quot;</code></pre>
+<h1 id="command-line-options">Command line options</h1>
+<p><code>flowterm</code> accepts the following command-line options :-</p>
+<ul>
+<li><strong>-x</strong> The location of the <code>flowterm-extras</code> directory; by default <code>flowterm-extras</code> in your home directory. This directory’s <code>bin</code> subdirectory is added to the front of the <code>PATH</code> variable.</li>
+<li><strong>-nx</strong> Don’t add any flowterm extras directory to the <code>PATH</code>. The <code>-x</code> option is ignored.</li>
+<li><strong>-v</strong> Provide some verbose output (useful for debugging).</li>
+<li><strong>-width</strong> The preferred width of the terminal, in characters. This only applies to the first visible terminal tab.</li>
+<li><strong>-height</strong> The preferred height of the terminal, in lines. This only applies to the first visible terminal tab.</li>
+<li><strong>-t</strong> The window title, by default “FlowTerm”.</li>
+</ul>
+<p>In addition to these options, one or more tabs can be configured on the command line. Passing a directory name as an argument will add a new tab with that directory as a starting point. Passing a string beginning with “:” will then configure that tab using a <a href="#tab-options">tab option</a>. Arguments beginning with a “:” that come before the first directory are applied to all tabs, except those that are cloned from other tabs.</p>
+<p>For example, the following example starts the program with four tabs with various options :-</p>
+<pre><code>flowterm :fg=blue :font=typewriter \
+         ~ :title=Home \
+         ~/objecticon \
+         /mnt/disk/Documents :reorient :sort-date :mix-entries \
+         /mnt/disk/Music :reorient :sort-date</code></pre>
+<p>Note that the first two options (configuring foreground colour and font), will apply to all four opened tabs (and any new tabs added later).</p>
+<h1 id="custom-key-settings">Custom key settings</h1>
+<p>The <strong>:key</strong> <a href="#tab-options">tab option</a> is used to make custom key settings. The syntax is :-</p>
+<pre><code>:key=KEY,BITS,MASK,COMMAND</code></pre>
+<p><code>KEY</code> specifies the key, and must take one of three forms :-</p>
+<ul>
+<li>A one-character string, with the hex ascii code of the single character specified as <code>x&lt;digits&gt;</code>; eg <code>x11</code> <code>x3</code>, etc.</li>
+<li>A one-character ucs string, specified as <code>u&lt;digits&gt;</code>; eg <code>u20ac</code>, or</li>
+<li>A character name corresponding to one of the constants in the <a href="http://objecticon.sourceforge.net/libref/index.html?graphics.Key.html"><code>graphics.Key</code></a> class; eg <code>F1</code>, <code>PGUP</code>, etc.</li>
+</ul>
+<p>To decide which of the above to use, try running the <code>grabtest</code> example program, and typing the key. The event code is shown in the window, and will either be a string, a ucs string, or a key code.</p>
+<p><code>BITS</code> and <code>MASK</code> both take the same format, and specify which modifier key or keys is to be held down (or not) for this key binding. Exactly those keys in <code>BITS</code> among those in <code>MASK</code> must be down. The format is a string consisting of the following characters :-</p>
+<ul>
+<li><strong>0</strong> : No key</li>
+<li><strong>C</strong> : Either control key</li>
+<li><strong>S</strong> : Either shift key</li>
+<li><strong>M</strong> : Meta key (usually left Alt)</li>
+<li><strong>4</strong> : Meta 4 key (usually either Windows key)</li>
+<li><strong>5</strong> : Meta 5 key (usually Alt Gr)</li>
+<li><strong>K</strong> : Set if the terminal’s keypad mode is in effect</li>
+<li><strong>U</strong> : Set if the terminal’s cursor mode is in effect</li>
+<li><strong><code>*</code></strong> : Equivalent to <strong>CSM45</strong>, ie all modifier keys.</li>
+</ul>
+<p>For example, the combination <strong>C,CS</strong> would mean the control would be down, and the shift key would not be down, and the state of the meta keys is ignored.</p>
+<p>When several settings are made on one key, an error is signalled if they are inconsistent; ie more than one could match a particular key combination. For example the two combinations <strong>S,S</strong> and <strong>CS,CS</strong> are erroneous since both match the case when control and shift are down. A correct version would use <strong>S,CS</strong> for the first one.</p>
+<p>The <code>grabtest</code> program also shows which modifiers are set when a key is pressed.</p>
+<p><code>COMMAND</code> is one of the <a href="#tab-options">tab options</a> listed above, but without the <code>:</code> prefix. The command is applied when the key is pressed.</p>
+<h2 id="clearing-key-settings">Clearing key settings</h2>
+<p>To clear all settings for a particular key, use the form</p>
+<pre><code>:key=KEY</code></pre>
+<p>To clear one particular setting matching a particular bit/mask combination, use</p>
+<pre><code>:key=KEY,BITS,MASK</code></pre>
+<p>Finally, to reset the key table to its default (empty) form, use</p>
+<pre><code>:reset-keys</code></pre>
+<p>This would be useful if, for example one used default settings for the function keys, but wanted a tab which didn’t have those settings, perhaps to run a particular application that had its own use for the function keys. This tab would be opened via a <a href="#tab"><code>tab:</code> URL</a> like</p>
+<pre><code>tab:;:reset-keys</code></pre>
+<h2 id="examples">Examples</h2>
+<p>Here are some examples of custom key settings, shown using bash shell syntax for escapes and quotes, where necessary. To experiment, just run flowterm with the setting as a parameter and try pressing the key.</p>
+<ul>
+<li><p>Copy to clipboard when <code>F10</code> is pressed.</p>
+<pre><code>:key=F10,0,0,copy</code></pre></li>
+<li><p>Quit the program on control Q. <code>x11</code> means string character 17 (decimal), which the <code>grabtest</code> program shows as the key code generated on control Q.</p>
+<pre><code>:key=x11,C,*,quit</code></pre></li>
+<li><p>As above, but instead use “q” and either Windows key. <code>grabtest</code> indicates this combination produces a code of “q” (ascii 112) with the <code>meta4</code> flag set. A conversion to hex gives <code>x71</code> for the key, whilst <code>4</code> is the code for <code>meta4</code> (see the table above).</p>
+<pre><code>:key=x71,4,*,quit</code></pre></li>
+<li><p>Launch <code>xterm</code> when <code>F9</code> is pressed.</p>
+<pre><code>:key=F9,0,*,url=launch:xterm</code></pre></li>
+<li><p>Open and select a new tab on shift <code>F9</code>, with directory <code>/tmp</code> and horizontal split orientation. Note this one requires shell quotes around it because of the semicolons.</p>
+<pre><code>&quot;:key=F9,S,*,url=tab:/tmp;:reorient;:select&quot;</code></pre></li>
+<li><p>Copy to clipboard when <code>F10</code> is pressed, and show a message in the status bar. This shows how to do several actions on a single key, by using a <a href="#tab"><code>tab:</code> URL</a>.</p>
+<pre><code>&quot;:key=F10,0,*,url=tab::copy;:info=Copied&quot;</code></pre></li>
+<li><p>Run the command <code>ls -l</code> when <code>F9</code> is pressed.</p>
+<pre><code>&quot;:key=F9,0,*,run=ls -l&quot;</code></pre>
+<p>Another way to do this would be</p>
+<pre><code>:key=F9,0,*,url=tab::send-tty=ls%20-l%0D</code></pre>
+<p>a URL is used since they are percent encoded, and this allows the space and carriage return to be easily specified.</p></li>
+<li><p>Maximize and focus the file list, as a toggle, with <code>F1</code>.</p>
+<pre><code>&quot;:key=F1,0,*,url=tab::max-list;:list-focus&quot;</code></pre></li>
+<li><p>Send control-C when the Pause button is pressed. The “$’” shell syntax lets us use bash’s “\x” escape sequence.</p>
+<pre><code>$&#39;:key=PAUSE,0,*,string=\x03&#39;</code></pre></li>
+<li><p>Send control-S when the Pause button is pressed, control-Q when shifted Pause is pressed. Two separate <code>:key</code> commands are needed.</p>
+<pre><code>$&#39;:key=PAUSE,0,*,string=\x13&#39;
+$&#39;:key=PAUSE,S,*,string=\x11&#39;</code></pre></li>
+<li><p>Run a command to clear the screen when <code>F9</code> is pressed.</p>
+<pre><code>$&#39;:key=F9,0,*,run=echo -n -e \&#39;\\e[2J\\e[H\&#39;&#39;</code></pre></li>
+<li><p>Move left and right through tabs with <code>F9</code>. Again, two commands are needed.</p>
+<pre><code>:key=F9,S,*,tab-left
+:key=F9,0,*,tab-right</code></pre></li>
+<li><p>Provide movement within the terminal history with shifted page up, down, home and end. This needs four commands.</p>
+<pre><code>:key=PGUP,S,*,pgup
+:key=PGDN,S,*,pgdn
+:key=HOME,S,*,top
+:key=END,S,*,bottom</code></pre></li>
+<li><p>Provide copy and paste on control-insert and shift-insert respectively. This is a setting commonly found in other terminal emulators, and needs two commands.</p>
+<pre><code>:key=INSERT,C,*,copy
+:key=INSERT,S,*,paste</code></pre></li>
+</ul>
+<h1 id="custom-menu-items">Custom menu items</h1>
+<p>The <strong>:terminal-menu</strong> <strong>:list-menu</strong> and <strong>:misc-menu</strong> <a href="#tab-options">tab option</a> allows custom menu items to be appended to the terminal menu, the list menu and the “Misc” menu, respectively. The syntax for each follows the same form; for example :-</p>
+<pre><code>:terminal-menu=LABEL,COMMAND</code></pre>
+<p><code>LABEL</code> gives the label of the menu entry. It may contain “/” characters, in which case a path of sub-menus is indicated, with the last element being the name of the actual entry. A name of “-” declares a menu separator.</p>
+<p>Just like for <strong>:key</strong>, <code>COMMAND</code> is one of the <a href="#tab-options">tab options</a> listed above, but without the <code>:</code> prefix. The command is applied when the menu entry is selected.</p>
+<h2 id="examples-1">Examples</h2>
+<p>Here are some examples of custom terminal menu items. Again, they are shown using bash shell syntax for escapes and quotes, where necessary. To experiment, just run flowterm with the setting as a parameter and try right-clicking in the terminal area.</p>
+<ul>
+<li><p>Create a separator and a menu entry “Home”, to go to the home directory.</p>
+<pre><code>:terminal-menu=- :terminal-menu=Home,home</code></pre></li>
+<li><p>An entry to run a command to clear the screen and the scrollback history.</p>
+<pre><code>$&#39;:terminal-menu=Clear,run=echo -n -e \&#39;\\e[9J\\e[2J\\e[H\&#39;&#39;</code></pre>
+<p>A variant of this might be :-</p>
+<pre><code>$&#39;:terminal-menu=Clear,run=echo -n -e \&#39;\\e[9J\&#39;;clear&#39;</code></pre></li>
+<li><p>An entry to run the “reset” command.</p>
+<pre><code>:terminal-menu=Reset,run=reset</code></pre></li>
+<li><p>Two entries in a sub-menu to run commands.</p>
+<pre><code>:terminal-menu=Cmd/Reset,run=reset :terminal-menu=Cmd/Clear,run=clear</code></pre></li>
+<li><p>An entry to launch two xterms.</p>
+<pre><code>&quot;:terminal-menu=Xterms,url=tab::url=launch:xterm;:url=launch:xterm&quot;</code></pre>
+<p>here the first url is used so that two commands can be done with one menu entry. The next two url commands each activate a <code>launch:</code> url.</p></li>
+</ul>
+<h1 id="startup-script">Startup script</h1>
+<p>Here is my own personal <code>flowterm</code> startup script. It opens tabs in various directories, including, of course, <code>~/objecticon</code>!</p>
+<p><a href="startterminal.sh">Download startterminal.sh</a></p>
+<pre><code>#!/bin/bash
+OI_FLOWTERM_LIST_FOCUS_WIDTH=2 \
+~/objecticon/examples/bin/flowterm \
+                               -t $HOSTNAME \
+                               -width 125 \
+                               -height 45 \
+                               :key=INSERT,C,*,copy \
+                               :key=INSERT,S,*,paste \
+                               :key=PGUP,S,*,pgup \
+                               :key=PGDN,S,*,pgdn \
+                               :key=HOME,S,*,top \
+                               :key=END,S,*,bottom \
+                               :key=F1,0,*,log=/tmp/log \
+                               :key=F2,0,*,clone-tab \
+                               :key=F3,0,*,close-tab \
+                               :key=F4,0,*,open-history \
+                               :key=F5,0,*,tab-left \
+                               :key=F5,S,*,move-tab-left \
+                               :key=F6,0,*,tab-right \
+                               :key=F6,S,*,move-tab-right \
+                               :key=F7,0,*,prev \
+                               :key=F8,0,*,next \
+                               :key=F9,0,*,up \
+                               :key=F10,0,*,copy \
+                               :key=F11,0,*,paste \
+                               :key=F11,M,*,paste-alt \
+                               :key=F12,0,*,open-favourites \
+                               :key=SCROLL_LOCK,0,*,list-focus \
+                               :key=PAUSE,0,*,reorient \
+                               :key=MENU,0,*,open-menu=1 \
+                               /tmp \
+                               $OI_HOME
+</code></pre>
+<h1 id="file-associations">File associations</h1>
+<p><code>Flowterm</code> uses Object Icon’s <a href="XdgPackage.html"><code>xdg</code> package</a> for several things, including :-</p>
+<ul>
+<li>to establish the correct application to launch on a left-click,</li>
+<li>to populate the “Open with” menu, and</li>
+<li>to load the correct icons to show alongside files in the list pane.</li>
+</ul>
+<p>The above-linked page also explains how to <a href="XdgPackage.html#customizing">customize</a> the underlying XDG database; for example you may wish to change the application launched for a particular type of file.</p>
+<p>After making any changes to the underlying database files, please remember to select the menu option “File/Refresh XDG” to ensure that the changes are recognized.</p>
+<h1 id="helper-programs">Helper programs</h1>
+<p>Several programs which complement <code>flowterm</code> can be found in the <code>examples</code> directory. They are described below.</p>
+<h2 id="fl---working-with-programs-that-dont-output-links"><code>fl</code> - Working with programs that don’t output links</h2>
+<p><code>fl</code> can be used to make it easier to work with programs that output filenames, but as simple text, rather than flowterm links. <code>fl</code> can be used to effectively retro-fit these programs into the flowterm way of doing things. <code>fl</code> takes one or more filenames as arguments, or reads from standard input otherwise. It copies the input to the standard output, but along the way it tries to detect any filenames, or URLs. As it finds these it turns them into flowterm links in the output.</p>
+<p>For example, consider the command <code>svn status -q</code>. This might output something like the following :-</p>
+<pre><code>$ svn status -q
+M       misc/one.icn
+M       test/two.c
+M       util/Makefile</code></pre>
+<p>In order to turn the filenames into links, the output can be piped through <code>fl</code> :-</p>
+<pre><code>$ svn status -q | fl</code></pre>
+<p>The result will be the same as above, but the three files will now be clickable links.</p>
+<p><code>fl</code> is not perfect, however. It won’t detect filenames with spaces in, or in quotes. But it is very useful nevertheless.</p>
+<h2 id="ern---renaming-files"><code>ern</code> - Renaming files</h2>
+<p>Renaming files using the standard <code>mv</code> command can be rather awkward, especially with files containing spaces and other escaped characters. <code>ern</code>, meaning “edit and rename”, uses a dialog to edit the existing file name, and then renames the file. It also outputs a link to the renamed file.</p>
+<h2 id="plain---processing-log-files"><code>plain</code> - Processing log files</h2>
+<p>Log files (captured using the “Log” option in the terminal menu) contain a copy of the raw data received from the operating system’s tty driver, including all of the escape sequences to be processed by the terminal emulator. These escape sequences can make a log file difficult to use for other purposes; <code>plain</code> processes and removes them and outputs the result to its standard output. <code>plain</code> takes one or more filenames as arguments, or reads from standard input otherwise.</p>
+<h2 id="note---storing-links"><code>note</code> - Storing links</h2>
+<p><code>note</code>, can be used to store a list of URLs. It works a little like the clipboard, but its data is stored in a file. URLs can be added with <code>note add</code> (usually by middle clicking on links). Alternatively, several URLs can be added at once from the clipboard with <code>note u</code>. In this case, selecting a region and then using the menu option “Copy URLs” is helpful.</p>
+<p>Once a set of URLs has been built up, a command can be run with the URLs as parameters, with <code>note run</code>.</p>
+<h2 id="lsxdg---examining-file-associations"><code>lsxdg</code> - Examining file associations</h2>
+<p>This is a program which can be used to query the XDG database, which is used quite extensively by <code>flowterm</code>; see <a href="#file-associations">above</a>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

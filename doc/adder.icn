@@ -1,0 +1,28 @@
+import io
+
+class X()
+   private n
+
+   private f(x)
+      return x + n
+   end
+
+   private new(n)
+      return self.n := n
+   end
+
+   public static adder(n)
+      return X(n).f
+   end
+end
+
+procedure main()
+   local f
+   f := X.adder(20)
+   write(f(4))
+   write(f(6))
+
+   f := X.adder(100)
+   write(f(5))
+   write(f(10))
+end

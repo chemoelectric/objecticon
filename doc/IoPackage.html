@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>The io package</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">The io package</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#details">Details</a></li>
+<li><a href="#file-io">File I/O</a><ul>
+<li><a href="#standard-input-and-output">Standard input and output</a></li>
+</ul></li>
+<li><a href="#socket-io">Socket I/O</a></li>
+<li><a href="#more-robust-socket-io">More robust socket i/o</a><ul>
+<li><a href="#non-blocking-mode">Non-blocking mode</a></li>
+<li><a href="#the-poll-method">The poll() method</a></li>
+</ul></li>
+<li><a href="#in-memory-io">In-memory I/O</a></li>
+<li><a href="#filterinputstream-and-filteroutputstream">FilterInputStream and FilterOutputStream</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This page gives an overview of the <code>io</code> package, which provides Object Icon’s object-oriented replacement to Icon’s builtin <code>File</code> type.</p>
+<h1 id="details">Details</h1>
+<p>The central class in the <code>io</code> package is <a href="http://objecticon.sourceforge.net/libref/index.html?io.Stream.html"><code>io.Stream</code></a>. This class models a file-like object which can have some or all of the following operations :-</p>
+<ul>
+<li>input</li>
+<li>output</li>
+<li>seek and tell</li>
+<li>truncation</li>
+</ul>
+<p>The <code>io</code> package also provides some procedures which emulate the old Icon builtin functions which the package replaces (<code>write</code>, <code>open</code>, etc).</p>
+<h1 id="file-io">File I/O</h1>
+<p>The class <a href="http://objecticon.sourceforge.net/libref/index.html?io.FileStream.html"><code>io.FileStream</code></a> provides conventional filesystem I/O. To open a new <code>FileStream</code>, use the constructor :-</p>
+<pre><code>   f := FileStream(&quot;test.txt&quot;, ior(FileOpt.WRONLY, 
+                                   FileOpt.TRUNC, 
+                                   FileOpt.CREAT)) | stop(&amp;why)
+   f.write(&quot;some text&quot;)
+   f.close()</code></pre>
+<p>The second parameter is made up by taking some constants from the <code>FileOpt</code> class and or-ing them together. These constants match the constants used in the underlying Posix <code>open</code> system call, except that their names lack the “O” prefix. So in the above example the <code>open</code> call is logically equivalent to the C call</p>
+<pre><code>   f = open(&quot;test.txt&quot;, O_WRONLY | O_TRUNC | O_CREAT);</code></pre>
+<p>As an alternative to using <code>FileStream</code> directly, the <code>open</code> procedure can be used to open a file, as follows :-</p>
+<pre><code>   f := open(&quot;test.txt&quot;, &quot;w&quot;) | stop(&amp;why)
+   f.write(&quot;some text&quot;)
+   f.close()</code></pre>
+<p><code>open</code> emulates the traditional Icon builtin function of the same name. It also returns a different type of <code>Stream</code> - rather than a <code>FileStream</code>, it returns a <a href="http://objecticon.sourceforge.net/libref/index.html?io.BufferStream.html"><code>io.BufferStream</code></a> wrapping a <code>FileStream</code>. This provides better performance than a raw <code>FileStream</code> because it tends to read or write data to the underlying filesystem in larger chunks.</p>
+<h2 id="standard-input-and-output">Standard input and output</h2>
+<p>Standard input and output, and error output, are available via the following static constants.</p>
+<ul>
+<li><code>FileStream.stdin</code> - standard input</li>
+<li><code>FileStream.stdout</code> - standard output</li>
+<li><code>FileStream.stderr</code> - standard error output</li>
+</ul>
+<p>These are all <code>FileStream</code> instances, and are hence unbuffered. If you intend to read or write a large amount of data to one of these streams, performance will be improved by using a <code>BufferStream</code> wrapper. For example, consider the following program to count lines :-</p>
+<pre><code>import io
+
+procedure main()
+   local n
+   n := 0
+   while read() do
+      n +:= 1
+   write(&quot;n=&quot;, n)
+end</code></pre>
+<p>On my system this takes about 2.4 seconds to read a 47000-line file. The following simple change reduces the run time to only 0.45 seconds :-</p>
+<pre><code>import io
+
+procedure main()
+   local n, f
+   n := 0
+   f := BufferStream(FileStream.stdin)
+   while f.read() do
+      n +:= 1
+   write(&quot;n=&quot;, n)
+end</code></pre>
+<h1 id="socket-io">Socket I/O</h1>
+<p>The <a href="http://objecticon.sourceforge.net/libref/index.html?io.SocketStream.html"><code>io.SocketStream</code></a> class represents a stream based on an underlying socket. There are several static methods in that class to create sockets either for a client or a server. Both local and network sockets are supported.</p>
+<p>Here is a simple example to create a client to perform a HTTP HEAD request.</p>
+<pre><code>import io
+
+procedure main()
+   local f
+   f := SocketStream()
+   f.connect(&quot;inet:www.google.com:80&quot;) | stop(&amp;why)
+   f.writes(&quot;HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n&quot;)
+   while write(f.read())
+   f.close()
+end</code></pre>
+<h1 id="more-robust-socket-io">More robust socket i/o</h1>
+<p>One problem with the bit of socket code shown above is that it is vulnerable to network problems. Either the <code>connect</code>, <code>writes</code> or <code>read</code> calls could potentially hang and never return. The <code>io</code> package provides the necessary interface to the underlying system calls which can be used to deal with this problem.</p>
+<h2 id="non-blocking-mode">Non-blocking mode</h2>
+<p>This mode is used to ensure an i/o request won’t block. To enable it, use the <code>flag</code> method as follows :-</p>
+<pre><code>   f.flag(FileOpt.NONBLOCK)</code></pre>
+<p><code>flag</code> accepts a second parameter, which are flags to turn off, so you could turn non-blocking mode off again as follows :-</p>
+<pre><code>   f.flag(, FileOpt.NONBLOCK)</code></pre>
+<p>When set, calls to a stream’s <code>in</code> and <code>out</code> methods will fail, setting <code>&amp;why</code> to a message like “Resource temporarily unavailable (errno=11)”. The <code>errno</code> constant can be extracted from <code>&amp;why</code> with the <code>errno()</code> procedure; in this case it would return 11, which is equal to the constant <code>Errno.EAGAIN</code>. <code>errno</code> and <code>Errno</code> can be found in the <code>util</code> package and the <code>posix</code> package respectively (they aren’t in the <code>io</code> package because the errno feature applies more generally than just to i/o).</p>
+<h2 id="the-poll-method">The poll() method</h2>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?io.DescStream.html%23poll">poll()</a> is a static method in the <a href="http://objecticon.sourceforge.net/libref/index.html?io.DescStream.html"><code>io.DescStream</code></a> class (the common parent of <code>FileStream</code> and <code>SocketStream</code>). It provides an interface to the posix function of the same name, and is used to wait, with an optional timeout, for one or more files to become ready for i/o. To use it, pass a list of one or more argument pairs, followed by an optional timeout. Each pair consists of a stream followed by an integer flag, made up from the constants in <code>io.Poll</code>, which indicates what event(s) we are polling for. For example :-</p>
+<pre><code>r := DescStream.poll([f1, Poll.OUT, f2, ior(Poll.IN,Poll.OUT)], 5000)</code></pre>
+<p>This will wait for up to 5 seconds, polling <code>f1</code> for input and <code>f2</code> for input or output. The return value is a list with an integer element for each pair indicating the flags which poll detected (or zero if no flags matched for that particular stream). The call fails on timeout or error and sets <code>&amp;why</code> appropriately.</p>
+<p>Here is a longer example showing how to do the HTTP HEAD request of the previous example using <code>poll</code> on a non-blocking socket.</p>
+<p><a href="httphead.icn">Download httphead.icn</a></p>
+<pre><code>import io, posix
+
+procedure main()
+   local f, r, s, i
+
+   #
+   # Create a socket and switch on non-blocking mode
+   #
+   f := SocketStream()
+   f.flag(FileOpt.NONBLOCK) | stop(&amp;why)
+
+   #
+   # Connect, which will probably fail with an EINPROGRESS error - that
+   # isn&#39;t really an error.
+   #
+   f.connect(&quot;inet:www.google.com:80&quot;) | {
+      errno() = Errno.EINPROGRESS | stop(&quot;Couldn&#39;t connect:&quot; || &amp;why)
+      # Wait up to 5s for the connection to complete
+      r := DescStream.poll([f, Poll.OUT], 5000) | stop(&amp;why)
+      r[1] = Poll.OUT | stop(&quot;Socket error&quot;)
+   }
+
+   #
+   # Send the request, in more than one piece if necessary.
+   #
+   s := &quot;HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n&quot;
+   while *s &gt; 0 do {
+      r := DescStream.poll([f, Poll.OUT], 1000) | stop(&amp;why)
+      r[1] = Poll.OUT | stop(&quot;Socket error&quot;)
+      i := f.out(s) | stop(&amp;why)
+      s := s[i+1 : 0]
+   }
+
+   # 
+   # Read the data sent back, until end-of-file
+   #
+   repeat {
+      r := DescStream.poll([f, Poll.IN], 1000) | stop(&amp;why)
+      r[1] = Poll.IN | stop(&quot;Socket error&quot;)
+      s := f.in(1024) | stop(&amp;why)
+      # &amp;null indicates EOF
+      if /s then
+         break
+      writes(s)
+   }
+
+   f.close()
+end
+</code></pre>
+<p>Note that this code uses the methods <code>in</code> and <code>out</code> to read and write data, rather than <code>read</code>, <code>reads</code>, <code>write</code> and <code>writes</code>. This is because those latter functions are implemented in terms of <code>in</code> and <code>out</code> and may call them several times in one invocation. This makes them unsuitable for use with a non-blocking file, because we need to call <code>poll</code> or select immediately before each i/o call to ensure that call has something to read or write. For similar reasons, it is not possible to use <code>BufferStream</code> to wrap a non-blocking stream.</p>
+<h1 id="in-memory-io">In-memory I/O</h1>
+<p>There are two types of stream which operate entirely on data in memory. The first is <a href="http://objecticon.sourceforge.net/libref/index.html?io.StringStream.html"><code>io.StringStream</code></a> which represents the stream’s data as an Icon string. The second is <a href="http://objecticon.sourceforge.net/libref/index.html?io.RamStream.html"><code>io.RamStream</code></a> which uses memory allocated independently from Icon’s allocation system. <code>StringStream</code> is useful when a constant string needs to be represented as a stream, but <code>RamStream</code> is much faster when the stream will be written to and changed.</p>
+<p><code>RamStream</code> can be used to efficiently concatenate long strings together. This is a potential problem in Icon if you are not careful, because of the way strings are allocated. For example, consider the following program.</p>
+<pre><code>import io
+
+procedure main()
+   local s, i
+   s := &quot;&quot;
+   every i := 1 to 20000 do {
+      if i % 200 = 0 then
+         write(i)
+      s ||:= repl(i, 5)
+   }
+   write(&quot;Done, *s=&quot;, *s)
+end</code></pre>
+<p>This program builds up a long string s consisting of each integer replicated 5 times. If you run this program you will see that the longer <code>s</code> becomes, the longer each iteration of the loop takes. This is because the implicit conversion of <code>i</code> to a string in the <code>repl</code> call creates a temporary string which separates the result of <code>repl</code> from <code>s</code>, meaning that the concatenation operation has to copy <code>s</code> in its entirety - an operation that becomes slower as <code>s</code> becomes longer.</p>
+<p>One way to dramatically speed this program up is to use a <code>RamStream</code>, to build up the string independently of Icon’s string allocation, as follows :-</p>
+<pre><code>import io
+
+procedure main()
+   local s, i
+   s := RamStream()
+   every i := 1 to 20000 do {
+      if i % 200 = 0 then
+         write(i)
+      s.writes(repl(i, 5))
+   }
+   write(&quot;Done, *s=&quot;, *s.str())
+   s.close()
+end</code></pre>
+<p>The <code>RamStream</code>’s <code>str()</code> method returns its content as an Icon string.</p>
+<p>Note that it is most important to remember to close a <code>RamStream</code> in order to free its internal memory - Icon’s garbage collector won’t do it for us.</p>
+<h1 id="filterinputstream-and-filteroutputstream">FilterInputStream and FilterOutputStream</h1>
+<p>These two classes make use of non-blocking I/O to allow useful filter programs (such as <code>gzip</code>) to be utilized. Normally it is not possible to use filter programs with blocking I/O because of the risk of deadlock. With non-blocking I/O it becomes possible, but intricate, and these two classes provide an easy-to-use interface to the complexities involved.</p>
+<p>The idea behind <a href="http://objecticon.sourceforge.net/libref/index.html?io.FilterOutputStream.html"><code>io.FilterOutputStream</code></a> is that we specify the command to be run, and its parameters. A process is forked and the command begins to run. Then we write data to the stream, and this becomes the input of the command. But what of the output of the command? That is captured in another <code>Stream</code> (called the “sink” Stream), specified in the <code>FilterOutputStream</code> constructor. This is typically a <code>RamStream</code>, or a <code>StringStream</code> if the amount of data is small. After the <code>FilterOutputStream</code> is closed, we can examine the sink <code>Stream</code> and get the results.</p>
+<p><a href="http://objecticon.sourceforge.net/libref/index.html?io.FilterInputStream.html"><code>io.FilterInputStream</code></a> works just the same way, but the order of things is switched around. Instead of a sink <code>Stream</code> we provide a “source” <code>Stream</code>. This provides the input to the command. And we read the results of the command simply by calling <code>in()</code> or <code>reads()</code> or one of the other usual <code>Stream</code> methods.</p>
+<p>Of the two options, <code>FilterOutputStream</code> seems to be the most natural to use.</p>
+<p>Both classes allow standard error output to be captured too, and can test whether the command succeeded or not. The method <code>succeeded()</code> is particularly helpful for testing for success, and getting a helpful diagnostic message from the standard error output.</p>
+<p>To illustrate these classes, here is a program which uses <code>gzip</code> to compress some data, and then <code>gunzip</code> to uncompress it again.</p>
+<p><a href="filter.icn">Download filter.icn</a></p>
+<pre><code>import io, util
+
+procedure main()
+   local f, data, ram, gdata, data2
+
+   # Create some data to compress
+   data := repl(&quot;The quick brown fox jumps over the lazy dog&quot;, 1000)
+
+   # ram will be the &quot;sink&quot; for the output of gzip.
+   ram := RamStream()
+   use { 
+      f := FilterOutputStream(ram, &quot;gzip&quot;, [&quot;-c&quot;]),
+      f.writes(data)
+   }
+   f.succeeded() | stop(&quot;gzip problem: &quot;, &amp;why)
+
+   # Get the output as a string.
+   gdata := ram.done()
+   write(&quot;Compressed &quot;, *data, &quot; to &quot;, *gdata, &quot; bytes&quot;)
+
+   # Now pass the compressed data (as a StringStream source) into
+   # gunzip and read the output to end of file.
+   data2 := use {
+      f := FilterInputStream(StringStream(gdata), &quot;gunzip&quot;, [&quot;-c&quot;]),
+      f.read_all()
+   }
+   f.succeeded() | stop(&quot;gunzip problem: &quot;, &amp;why)
+
+   # Check the results.
+   if data == data2 then
+      write(&quot;Recovered original data OK&quot;)
+end
+</code></pre>
+<p>An example run may produce the output.</p>
+<pre><code>Compressed 43000 to 203 bytes
+Recovered original data OK</code></pre>
+<p>Note the use of <code>succeeded()</code> to check the result of the command. If we introduce a deliberate error, such as in invalid flag to <code>gunzip</code>, the output might be :-</p>
+<pre><code>Compressed 43000 to 203 bytes
+gunzip problem: gunzip failed: exited with status 1: gzip: invalid option -- &#39;X&#39; Try `gzip --help&#39; for more information.</code></pre>
+<a href="index.html">Contents</a>
+</body>
+</html>

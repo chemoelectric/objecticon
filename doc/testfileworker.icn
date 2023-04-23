@@ -1,0 +1,34 @@
+import io
+
+procedure main(a)
+   local w, n
+
+   # Create a worker
+   w := FileWorker()
+
+   # Start an open operation in the background
+   w.op_open(a[1], FileOpt.RDONLY)
+   # Wait for it to finish, and stop if there was an error
+   w.await() | stop(&why)
+
+   every 1 to 5 do {
+      # Start a read into the buffer
+      w.op_read()
+      # Print some dots whilst we're waiting
+      while w.is_running() do {
+         writes(".")
+         delay(100)
+      }
+      # Get the result (await won't block since the worker isn't
+      # running now).
+      if n := w.await() then {
+         if n = 0 then
+            write(" EOF")
+         else
+            write(" -> ", w.get_buff(n))
+      } else
+         write(" failed ", &why)
+   }
+
+   w.close()
+end

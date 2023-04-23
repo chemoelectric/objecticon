@@ -1,0 +1,48 @@
+import io, posix
+
+procedure main()
+   local f, r, s, i
+
+   #
+   # Create a socket and switch on non-blocking mode
+   #
+   f := SocketStream()
+   f.flag(FileOpt.NONBLOCK) | stop(&why)
+
+   #
+   # Connect, which will probably fail with an EINPROGRESS error - that
+   # isn't really an error.
+   #
+   f.connect("inet:www.google.com:80") | {
+      errno() = Errno.EINPROGRESS | stop("Couldn't connect:" || &why)
+      # Wait up to 5s for the connection to complete
+      r := DescStream.poll([f, Poll.OUT], 5000) | stop(&why)
+      r[1] = Poll.OUT | stop("Socket error")
+   }
+
+   #
+   # Send the request, in more than one piece if necessary.
+   #
+   s := "HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n"
+   while *s > 0 do {
+      r := DescStream.poll([f, Poll.OUT], 1000) | stop(&why)
+      r[1] = Poll.OUT | stop("Socket error")
+      i := f.out(s) | stop(&why)
+      s := s[i+1 : 0]
+   }
+
+   # 
+   # Read the data sent back, until end-of-file
+   #
+   repeat {
+      r := DescStream.poll([f, Poll.IN], 1000) | stop(&why)
+      r[1] = Poll.IN | stop("Socket error")
+      s := f.in(1024) | stop(&why)
+      # &null indicates EOF
+      if /s then
+         break
+      writes(s)
+   }
+
+   f.close()
+end

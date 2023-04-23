@@ -1,0 +1,37 @@
+import plan9, ipl.server9p, io
+
+class MyTreeData9P(TreeData9P)
+   private sess
+
+   public set_session(sess)
+      self.sess := sess
+      link
+   end
+
+   public override path_unreferenced(p)
+      local q
+      while sess.is_path_unreferenced(p) &
+         p.is_empty() &
+         q := p.get_parent() do 
+      {
+         if \opts["v"] then io.write("REMOVE: ", p.name, " ", image(p))
+         q.remove_child(p)
+         p := q
+      }
+   end
+
+   public override get_child(p, x)
+      return p.get_child(x) | {
+         if \opts["v"] then io.write("CREATE: ", x)
+         p.create_child(x, p.uid, p.perm)
+   }
+   end
+end
+
+procedure main(a)
+   local root, sess, data
+   root := Root9P()
+   sess := Session9P(data := MyTreeData9P(root)).set_track_refs(&yes)
+   data.set_session(sess)
+   server_main_0(a, sess)   
+end
