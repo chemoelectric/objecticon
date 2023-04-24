@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Riox - a modified version of the rio window manager</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Riox - a modified version of the rio window manager</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#mouse-bindings">Mouse bindings</a></li>
+<li><a href="#command-line-history-and-editing">Command line history and editing</a></li>
+<li><a href="#attributed-text">Attributed text</a><ul>
+<li><a href="#fonts">Fonts</a></li>
+<li><a href="#test-file">Test file</a></li>
+</ul></li>
+<li><a href="#window-commands">Window commands</a><ul>
+<li><a href="#parameters">Parameters</a></li>
+</ul></li>
+<li><a href="#window-files">Window files</a><ul>
+<li><a href="#hist">hist</a></li>
+<li><a href="#wdir">wdir</a></li>
+<li><a href="#screeninfo">screeninfo</a></li>
+<li><a href="#logctl">logctl</a></li>
+<li><a href="#wininfo">wininfo</a></li>
+</ul></li>
+<li><a href="#additional-mouse-events">Additional mouse events</a></li>
+<li><a href="#download">Download</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Riox is a modified version of the Plan 9 window manager, rio.</p>
+<p>The added features include :-</p>
+<ul>
+<li>Transient windows, which are linked to an owning window, and always stay above it. When the owner is hidden or unhidden, so is the transient window.</li>
+<li>Window layering, so that windows may be kept above or below other windows.</li>
+<li>Window maximum and minimum sizes.</li>
+<li>Keyboard and mouse grabbing.</li>
+<li>Command line history in text windows.</li>
+<li>Attributed text in text windows (colours, underline, italics etc).</li>
+<li>A simple logging facility, to capture all data output to a console window.</li>
+</ul>
+<p><code>Riox</code> can be run from within an individual window, or on the root window, by simply editing your <code>profile</code> file so that <code>riox</code> is run at startup, rather than <code>rio</code>. In the former case, you can pass the <code>-x</code> option to <code>riox</code>, to provide an “Exit” menu option.</p>
+<h1 id="mouse-bindings">Mouse bindings</h1>
+<p>By default, <code>riox</code> uses an alternative set of mouse bindings and menu configurations, which are intended to be more in line with usage on contemporary user interfaces :-</p>
+<ul>
+<li>The edges of a window are used to move, rather than resize, a window. Only the corners are used to resize.</li>
+<li>Right-clicking on a window frame brings up a context menu for the window (on rio, this is used to move the window).</li>
+<li>Right-clicking on a text window brings up the text context menu for that window (on rio, the middle button does this).</li>
+<li>Middle-clicking on a text window appends the selected text to the end of the window, adds a space, and moves the cursor to the end.</li>
+<li>Right-clicking on a blank portion of screen brings up a menu allowing a new window to be created, as well as a list of all windows, so that hidden windows may be restored. Hidden windows have their names prefixed with an “H”, and the current window is prefixed with a “*”. (rio has a similar menu on right clicking, but only shows hidden windows).</li>
+</ul>
+<p>The conventional rio bindings can be used by starting <code>riox</code> with the <code>-c</code> option. However, this means some features are not available, namely the “Close”, “Keep above” and “Keep below” menu items, and the middle button text append feature.</p>
+<h1 id="command-line-history-and-editing">Command line history and editing</h1>
+<ul>
+<li>Up and down keys recall history items (use page up and page down to move up and down in the text buffer instead).</li>
+<li><p>View the history by viewing the file <code>hist</code> in the window directory, eg</p>
+<pre><code>cat /mnt/wsys/hist</code></pre></li>
+<li><p>Goto a particular history number with <code>^P</code> typed after the number, eg</p>
+<pre><code>% 25^P</code></pre></li>
+<li><p>Search for a history item by typing <code>^R</code> (backward) or <code>^T</code> (forward) after a string prefix, eg</p>
+<pre><code>% cat^R</code></pre>
+<p>will search backwards for the next history item beginning with <code>cat</code>.</p></li>
+<li><p><code>^Y</code> deletes the character to the right of the cursor.</p></li>
+<li><p>Pressing enter in the middle of the current edited line doesn’t split that line. So if we have</p>
+<pre><code>% ls -l /tmp</code></pre>
+<p>and the cursor is just before the <code>/</code>, then pressing return will send the whole line; on rio it would send the <code>ls -l</code> and put the <code>/tmp</code> part as the start of the next input.</p></li>
+<li><p>Pressing the delete (interrupt) key moves the cursor to the end of the input.</p></li>
+<li><p>An oddity of rio whereby the cursor would often disappear below the bottom of the window is fixed.</p></li>
+</ul>
+<h1 id="attributed-text">Attributed text</h1>
+<p>Windows can display attributed text. The attributes are set by detecting standard CSI set-attribute escape sequences (ESC followed by a ‘[’, then a parameter number, and an ‘m’). The following numbers are recognized :-</p>
+<ul>
+<li><strong>0</strong> Reset all attributes</li>
+<li><strong>1</strong> Bold font on</li>
+<li><strong>3</strong> Italic font on</li>
+<li><strong>4</strong> Underline on</li>
+<li><strong>7</strong> Inverse on (ie swap background and foreground colour)</li>
+<li><strong>8</strong> Invisible on</li>
+<li><strong>9</strong> Crossed on</li>
+<li><strong>22</strong> Bold off</li>
+<li><strong>23</strong> Italic off</li>
+<li><strong>24</strong> Underline off</li>
+<li><strong>27</strong> Inverse off</li>
+<li><strong>28</strong> Invisible off</li>
+<li><strong>29</strong> Crossed off</li>
+<li><strong>30</strong> Black foreground</li>
+<li><strong>31</strong> Red foreground</li>
+<li><strong>32</strong> Green foreground</li>
+<li><strong>33</strong> Yellow foreground</li>
+<li><strong>34</strong> Blue foreground</li>
+<li><strong>35</strong> Magenta foreground</li>
+<li><strong>36</strong> Cyan foreground</li>
+<li><strong>37</strong> White foreground (actually shown as grey)</li>
+<li><strong>39</strong> Reset foreground to default</li>
+<li><strong>40</strong> Black background</li>
+<li><strong>41</strong> Red background</li>
+<li><strong>42</strong> Green background</li>
+<li><strong>43</strong> Yellow background</li>
+<li><strong>44</strong> Blue background</li>
+<li><strong>45</strong> Magenta background</li>
+<li><strong>46</strong> Cyan background</li>
+<li><strong>47</strong> White background (actually shown as grey)</li>
+<li><strong>49</strong> Reset background to default</li>
+</ul>
+<p>Here is a replacement for <code>ls</code>, called just <code>l</code>, which uses colours to show directories and executable files.</p>
+<p><a href="l.c">Download l.c</a></p>
+<p>Unlike <code>ls</code>, this program does its own column formatting, and can also list directories recursively. A useful rc function to use with it is :-</p>
+<pre><code>fn ll { l -l $* }</code></pre>
+<h2 id="fonts">Fonts</h2>
+<p>Bold, italic and bold/italic fonts can be configured by setting the <code>fontb</code>, <code>fonti</code> and <code>fontbi</code> environment variables respectively. Otherwise, bold font defaults to the regular font, italic to bold and bold/italic to italic.</p>
+<p>The following settings give quite good results :-</p>
+<pre><code>font=/lib/font/bit/pelm/euro.8.font
+fontb=/lib/font/bit/fixed/unicode.8x13B.font
+fonti=/lib/font/bit/fixed/unicode.8x13O.font</code></pre>
+<h2 id="test-file">Test file</h2>
+<p><a href="attr.txt">Here is a simple text file</a> which tests colours and fonts. With the above font settings it gives the following output.</p>
+<p><img src="attr.png" /></p>
+<h1 id="window-commands">Window commands</h1>
+<p>The following additional commands can be written to a window’s <code>wctl</code> file.</p>
+<ul>
+<li><strong>grabpointer</strong> The window will receive all future mouse events</li>
+<li><strong>ungrabpointer</strong> Cancels the effect of <code>grabpointer</code></li>
+<li><strong>grabkeyboard</strong> The window will receive all future keyboard events</li>
+<li><strong>ungrabkeyboard</strong> Cancels the effect of <code>grabkeyboard</code></li>
+<li><strong>close</strong> Sends a mouse event with character code ‘c’ to the window. (See <a href="#additional-mouse-events">below</a>).</li>
+<li><strong>refresh</strong> Redraw the window</li>
+<li><strong>select</strong> If the window is selected, hide it; otherwise select it, unhiding it if necessary.</li>
+</ul>
+<h2 id="parameters">Parameters</h2>
+<p><code>riox</code> provides some additional parameters which can be used with the <code>new</code> and <code>set</code> window commands, and also with the attach parameter to <code>mount</code>.</p>
+<ul>
+<li><strong>-mindx W</strong> Set the minimum allowed width (the window cannot be resized below this width).</li>
+<li><strong>-maxdx W</strong> Set the maximum allowed width (the window cannot be resized above this width). Note that if <code>mindx</code> and <code>maxdx</code> are the same, then the window’s width is fixed.</li>
+<li><strong>-mindy H</strong> Set the minimum allowed height.</li>
+<li><strong>-maxdy H</strong> Set the maximum allowed height.</li>
+<li><strong>-noborder</strong> Specify that the window has no border.</li>
+<li><strong>-transientfor ID</strong> Make this window transient with respect to another window, indicated by the other’s window ID.</li>
+<li><strong>-layer N</strong> Set the layer. Windows in a layer stay above windows in a lower layer. <code>N</code> may be negative; the default layer is zero.</li>
+</ul>
+<h1 id="window-files">Window files</h1>
+<p>The following extra files are available in the window directory.</p>
+<h2 id="hist">hist</h2>
+<p>This file contains a listing of the command line history. The following <code>rc</code> function is useful :-</p>
+<pre><code>fn hist { cat $wdir/hist }</code></pre>
+<h2 id="wdir">wdir</h2>
+<p>This read-only file reports the current directory of the process with the pid set with the <code>-pid</code> option when the window was created, or <code>riox</code>’s current directory if no <code>-pid</code> was specified. It does this by reading the <code>/proc</code> directory.</p>
+<p>This file is present in <code>rio</code>, but as a simple read-write file. <code>rio</code> relies on <code>rc</code> setting its value, by writing to <code>/dev/wdir</code> each time a <code>cd</code> is run - see its <code>simple.c</code> source file. The problem with this is that <code>/dev/wdir</code> isn’t always the right file to write to (for example in a window running rc, but sharing the namespace of another window). Also an interactive sub-shell won’t reset <code>wdir</code> when it exits. And finally, if you’re using <code>/bin/sh</code>, it won’t keep <code>wdir</code> in synch at all.</p>
+<p>The value of <code>wdir</code> is potentially useful for distinguishing different shell windows, and is used internally for the <code>^F</code> file completion facility in text windows.</p>
+<h2 id="screeninfo">screeninfo</h2>
+<p>This file contains six integers. The first two give the mouse position, the next two give the location of the top left of the image <code>riox</code> is running in, and the final two give the location of the bottom right of the image.</p>
+<h2 id="logctl">logctl</h2>
+<p>This is a write-only file which controls a simple logging facility. Writing <code>open &lt;filename&gt;</code> truncates or creates the given file, and thereafter writes to it everything that is read from or written to the <code>cons</code> file. Logging is finished by writing <code>close</code>. The result should be a transcript of the session.</p>
+<p>Note that, since the log file is opened by <code>riox</code>, the filename is resolved relative to <code>riox</code>’s working directory and namespace.</p>
+<p>Here is a script file which uses the log facility to emulate the unix <code>script</code> program :-</p>
+<p><a href="script">Download script</a></p>
+<pre><code>#!/bin/rc
+rfork e
+d=`{date}
+if (~ $1 -d) {
+   echo &#39;Script done on &#39;^$&quot;d
+   echo -n close &gt;$wdir/logctl
+}
+if not {
+   if (~ $#* 0) f=typescript
+   if not f=$1
+   # Make f an absolute filename
+   if (! ~ $f /*) f=`{pwd}^/$f
+   echo Opening log file $f
+   if (echo -n &#39;open &#39;^$f &gt;$wdir/logctl)
+      echo &#39;Script started on &#39;^$&quot;d
+}
+</code></pre>
+<p>Use <code>script</code> with an optional filename (the default is “typescript”) to begin, and <code>script -d</code> to finish.</p>
+<h2 id="wininfo">wininfo</h2>
+<p>This file begins with four integers giving the position and size of the window. After that, the file contains some strings, separated by spaces, as follows :-</p>
+<ul>
+<li><strong>hidden</strong> if the window is hidden</li>
+<li><strong>current</strong> if the window has the focus</li>
+<li><strong>noborder</strong> if the window has no border</li>
+<li><strong>layer:N</strong> if the window is in a layer other than 0</li>
+<li><strong>transientfor:ID</strong> if the window is transient with respect to another window</li>
+<li><strong>pid:ID</strong> if the window has a -pid specified</li>
+<li><strong>mindx:W</strong> if the window has a minimum width set</li>
+<li><strong>maxdx:W</strong> if the window has a maximum width set</li>
+<li><strong>mindy:H</strong> if the window has a minimum height set</li>
+<li><strong>maxdy:H</strong> if the window has a maximum height set</li>
+</ul>
+<h1 id="additional-mouse-events">Additional mouse events</h1>
+<p>The following additional mouse events are sent to the reader of the <code>mouse</code> file. The messages follow the same format as the <code>m</code> and <code>r</code> events, but have a different letter code.</p>
+<ul>
+<li><strong>c</strong> a close event, requesting that the window in question close; but it is entirely up to the application whether it does so.</li>
+<li><strong>x</strong> an exit event, indicating that the mouse has left the window.</li>
+<li><strong>e</strong> an enter event, indicating that the mouse has entered the window.</li>
+<li><strong>l</strong> a limited event, indicating that the requested move or resize command did not change the window due to the min/max limits in place.</li>
+<li><strong>f</strong> a focus in event, indicating the window has gained the input focus.</li>
+<li><strong>g</strong> a focus out event, indicating the window has lost the input focus.</li>
+</ul>
+<h1 id="download">Download</h1>
+<p><code>Riox</code> is part of the Plan 9 branch of Object Icon, and is built along with the rest of Object Icon, with the <code>riox</code> executable ending up in the <code>bin</code> directory. For details, see <a href="Plan9.html">this page</a>.</p>
+<p>However, since <code>riox</code> is a useful standalone program, a separate archive file is provided, which just contains the <code>riox</code> source code. This can be found <a href="http://sourceforge.net/projects/objecticon/files/misc/riox.tar.gz/download">here</a>.</p>
+<p>To build, just cd into the extracted directory and run <code>mk</code>. This should build <code>riox</code>, the <code>ls</code> replacement mentioned above (<code>l</code>), and the <code>script</code> shell script, also mentioned above. These executables can then be copied to convenient locations on your <code>$path</code>.</p>
+<a href="index.html">Contents</a>
+</body>
+</html>

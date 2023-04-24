@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Drawterm</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="pandoc.css" />
+</head>
+<body>
+<a href="index.html">Contents</a>
+<header id="title-block-header">
+<h1 class="title">Drawterm</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#scaling">Scaling</a></li>
+<li><a href="#full-screen-mode">Full-screen mode</a></li>
+<li><a href="#clipboard">Clipboard</a></li>
+<li><a href="#command-line-options">Command line options</a></li>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#compilation">Compilation</a></li>
+<li><a href="#links-and-download">Links and download</a></li>
+</ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>This is a version of <code>drawterm</code>, with enhancements and modifications to the X11 interface, as described below.</p>
+<h1 id="scaling">Scaling</h1>
+<p>The X11 window is a scaled view of the Plan 9 screen. The default scaling factor used assumes the Plan 9 screen is 96 dpi, and calculates the dpi of the X11 desktop using the various X11 screen size functions. The scale factor may be manually set using the <code>-S</code> option.</p>
+<p>A scale factor of 1.0 means a 1:1 mapping of Plan 9 to X, 2.0 means each Plan 9 pixel is doubled in size, and so on.</p>
+<p>Resizing the X11 window changes the scaling factor, but not the size of the underlying Plan 9 screen.</p>
+<h1 id="full-screen-mode">Full-screen mode</h1>
+<p>Pressing <code>F12</code> toggles full-screen mode. The key may be configured with the <code>-K</code> option.</p>
+<h1 id="clipboard">Clipboard</h1>
+<p>Writing to and reading from the snarf file copies to and from the X11 clipboard selection. The primary selection is not used.</p>
+<h1 id="command-line-options">Command line options</h1>
+<p>The following X11-specific options are available :-</p>
+<ul>
+<li><strong>-A</strong> Use the X11 arrow cursor rather than the Plan 9 arrow cursor as the default cursor.</li>
+<li><strong>-F</strong> Start in full-screen mode.</li>
+<li><strong>-K KEY</strong> Set the key to use to toggle full-screen mode; KEY should be recognized by X11’s <code>XStringToKeysym</code> function. The default key is <code>F12</code>.</li>
+<li><strong>-M</strong> Suppress the full-screen exit message.</li>
+<li><strong>-R WxH</strong> Set the size in unscaled Plan 9 pixels of the window; the visible window will be scaled to a different size.</li>
+<li><strong>-S VAL</strong> Set the scaling factor to use.</li>
+<li><strong>-E</strong> Center the Plan 9 screen within the window, rather than aligning it with the top-left.</li>
+<li><strong>-B VAL</strong> Set the background colour to use to fill margins around the Plan 9 screen. VAL should be a hex integer. The default is black.</li>
+</ul>
+<p>There is also an additional generic option, <code>-p</code> can be used to set the login password.</p>
+<h1 id="dependencies">Dependencies</h1>
+<p>In addition to the X11 client libraries, this version needs the cairo and XRender client libaries and headers. On a ubuntu system, installing the following packages will provide these :-</p>
+<pre><code>libx11-dev
+libxrender-dev
+libcairo2-dev</code></pre>
+<h1 id="compilation">Compilation</h1>
+<p>Just run <code>make</code> in the <code>drawterm</code> directory. Hopefully an executable <code>drawterm</code> in that directory will be the result.</p>
+<h1 id="links-and-download">Links and download</h1>
+<p>The drawterm man page :- <a href="http://man.cat-v.org/plan_9/8/drawterm" class="uri">http://man.cat-v.org/plan_9/8/drawterm</a></p>
+<p>Download this version :- <a href="http://sourceforge.net/projects/objecticon/files/misc/drawterm.tar.gz/download" class="uri">http://sourceforge.net/projects/objecticon/files/misc/drawterm.tar.gz/download</a></p>
+<a href="index.html">Contents</a>
+</body>
+</html>
